@@ -2,6 +2,8 @@
 
 **BIT × Infineon Excellence Program**  
 **Project:** Sustainable Farm - Product Transformation System  
+**Branch:** prod_trans_app (dedicated application branch)  
+**Current Feature:** feat/backend-foundation  
 **Technology Stack:** React + Spring Boot + PostgreSQL  
 **Owner:** Abdoul Ben Fatao SANON  
 **Status:** Implementation Phase (Weeks 5-8)
@@ -111,6 +113,23 @@ The system implements the following functional requirements (FR-01 through FR-09
 - **FR-09:** Historical data analysis
 
 ---
+
+## Branch Governance
+
+This application follows a structured branch governance strategy:
+
+```
+main (stable reference)
+ │
+ └── prod_trans_app (dedicated Product Transformation branch)
+      ├── feat/backend-foundation (current)
+      ├── feat/database-schema
+      ├── feat/api
+      ├── feat/frontend
+      └── feat/integration
+```
+
+**Rule:** Never develop directly on main. All development happens in feature branches under prod_trans_app.
 
 ## Getting Started
 
