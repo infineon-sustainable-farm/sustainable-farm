@@ -1,0 +1,98 @@
+package com.sustainablefarm.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+
+/**
+ * WashSortRecord Entity
+ * Washing and sorting stage data - Core Processing Entity
+ * 
+ * Business Rule: Record created only when batch assigned to washing stage
+ * Business Rule: Equipment can be assigned to one batch at a time
+ * 
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
+ */
+@Entity
+@Table(name = "wash_sort_record")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class WashSortRecord {
+
+    @Id
+    @Column(name = "record_id", length = 50)
+    private String recordId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    private Batch batch;
+
+    @Column(name = "input_quantity_kg", nullable = false, precision = 10, scale = 2)
+    private Double inputQuantityKg;
+
+    @Column(name = "output_quantity_kg", nullable = false, precision = 10, scale = 2)
+    private Double outputQuantityKg;
+
+    @Column(name = "waste_quantity_kg", nullable = false, precision = 10, scale = 2)
+    private Double wasteQuantityKg;
+
+    @Column(name = "water_usage_liters", nullable = false, precision = 10, scale = 2)
+    private Double waterUsageLiters;
+
+    @Column(name = "start_time", nullable = false)
+    private LocalDateTime startTime;
+
+    @Column(name = "end_time", nullable = false)
+    private LocalDateTime endTime;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipment_id", referencedColumnName = "equipment_id")
+    private Equipment equipment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "operator_id", referencedColumnName = "operator_id")
+    private Operator operator;
+
+    @Column(name = "created_at", updatable = false)
+    private java.time.Timestamp createdAt;
+
+    @Column(name = "updated_at")
+    private java.time.Timestamp updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
+        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
+    }
+
+    /**
+     * Calculate yield percentage
+     * Business Rule: Output/Input * 100
+     */
+    public Double calculateYieldPercentage() {
+        if (inputQuantityKg == null || inputQuantityKg == 0) {
+            return 0.0;
+        }
+        return (outputQuantityKg / inputQuantityKg) * 100;
+    }
+
+    /**
+     * Calculate waste percentage
+     * Business Rule: Waste/Input * 100
+     */
+    public Double calculateWastePercentage() {
+        if (inputQuantityKg == null || inputQuantityKg == 0) {
+            return 0.0;
+        }
+        return (wasteQuantityKg / inputQuantityKg) * 100;
+    }
+}
