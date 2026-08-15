@@ -2,8 +2,11 @@ package com.sustainablefarm.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import java.time.LocalDate;
 
 /**
@@ -17,7 +20,10 @@ import java.time.LocalDate;
  */
 @Entity
 @Table(name = "compliance_record")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class ComplianceRecord {
@@ -28,6 +34,8 @@ public class ComplianceRecord {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Batch batch;
 
     @Enumerated(EnumType.STRING)

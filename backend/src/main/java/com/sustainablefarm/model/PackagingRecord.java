@@ -3,8 +3,11 @@ package com.sustainablefarm.model;
 import jakarta.persistence.*;
 import jakarta.persistence.Convert;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import java.time.LocalDate;
 
 /**
@@ -19,7 +22,10 @@ import java.time.LocalDate;
  */
 @Entity
 @Table(name = "packaging_record")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class PackagingRecord {
@@ -30,6 +36,8 @@ public class PackagingRecord {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Batch batch;
 
     @Convert(converter = com.sustainablefarm.config.PackageTypeConverter.class)

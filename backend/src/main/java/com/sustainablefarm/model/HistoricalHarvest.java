@@ -2,8 +2,11 @@ package com.sustainablefarm.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * HistoricalHarvest Entity
@@ -17,7 +20,11 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "historical_harvest")
-@Data
+@IdClass(HistoricalHarvestId.class)
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class HistoricalHarvest {
@@ -26,12 +33,15 @@ public class HistoricalHarvest {
     @Column(name = "year", nullable = false)
     private Integer year;
 
+    @Id
     @Column(name = "month", nullable = false)
     private Integer month;
 
+    @Id
     @Column(name = "week", nullable = false)
     private Integer week;
 
+    @Id
     @Enumerated(EnumType.STRING)
     @Column(name = "mango_variety", nullable = false, length = 20)
     private HarvestEvent.MangoVariety mangoVariety;

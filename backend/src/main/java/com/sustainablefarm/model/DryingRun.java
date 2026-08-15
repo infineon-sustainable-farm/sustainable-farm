@@ -2,8 +2,11 @@ package com.sustainablefarm.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import java.time.LocalDateTime;
 
 /**
@@ -18,7 +21,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "drying_run")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class DryingRun {
@@ -29,6 +35,8 @@ public class DryingRun {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Batch batch;
 
     @Column(name = "duration_hours", nullable = false, precision = 5, scale = 2)
