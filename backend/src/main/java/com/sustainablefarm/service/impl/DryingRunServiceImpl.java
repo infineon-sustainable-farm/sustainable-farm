@@ -1,7 +1,11 @@
 package com.sustainablefarm.service.impl;
 
 import com.sustainablefarm.model.DryingRun;
+import com.sustainablefarm.model.Equipment;
+import com.sustainablefarm.model.Operator;
 import com.sustainablefarm.repository.DryingRunRepository;
+import com.sustainablefarm.repository.EquipmentRepository;
+import com.sustainablefarm.repository.OperatorRepository;
 import com.sustainablefarm.service.DryingRunService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,24 +32,56 @@ import java.util.List;
 public class DryingRunServiceImpl implements DryingRunService {
 
     private final DryingRunRepository dryingRunRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final OperatorRepository operatorRepository;
 
     @Autowired
-    public DryingRunServiceImpl(DryingRunRepository dryingRunRepository) {
+    public DryingRunServiceImpl(DryingRunRepository dryingRunRepository,
+                                 EquipmentRepository equipmentRepository,
+                                 OperatorRepository operatorRepository) {
         this.dryingRunRepository = dryingRunRepository;
+        this.equipmentRepository = equipmentRepository;
+        this.operatorRepository = operatorRepository;
     }
 
     @Override
     public DryingRun createDryingRun(DryingRun dryingRun) {
         // Business Rule: Validate equipment availability before drying
         if (dryingRun.getEquipment() != null) {
-            // Equipment availability check would be done here
-            // This is a placeholder for the actual validation
+            Equipment equipment = dryingRun.getEquipment();
+            // Verify equipment exists and is available
+            Equipment dbEquipment = equipmentRepository.findById(equipment.getEquipmentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + equipment.getEquipmentId()));
+            
+            if (dbEquipment.getMaintenanceStatus() != Equipment.MaintenanceStatus.ACTIVE) {
+                throw new IllegalArgumentException(
+                    "Equipment is not available for drying. Equipment ID: " + equipment.getEquipmentId() + 
+                    " must be in ACTIVE status. Current status: " + dbEquipment.getMaintenanceStatus()
+                );
+            }
         }
         
         // Business Rule: Validate operator certification
         if (dryingRun.getOperator() != null) {
-            // Operator certification check would be done here
-            // This is a placeholder for the actual validation
+            Operator operator = dryingRun.getOperator();
+            // Verify operator exists and is active
+            Operator dbOperator = operatorRepository.findById(operator.getOperatorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operator.getOperatorId()));
+            
+            if (dbOperator.getActiveStatus() != Operator.ActiveStatus.ACTIVE) {
+                throw new IllegalArgumentException(
+                    "Operator is not active for drying. Operator ID: " + operator.getOperatorId() + 
+                    " must be in ACTIVE status. Current status: " + dbOperator.getActiveStatus()
+                );
+            }
+            
+            // Verify operator has appropriate role for drying operations
+            if (dbOperator.getRole() != Operator.Role.DRYER) {
+                throw new IllegalArgumentException(
+                    "Operator must have DRYER role for drying operations. Operator ID: " + operator.getOperatorId() + 
+                    ", Current role: " + dbOperator.getRole()
+                );
+            }
         }
         
         return dryingRunRepository.save(dryingRun);

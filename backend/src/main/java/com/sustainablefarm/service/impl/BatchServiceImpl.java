@@ -5,6 +5,7 @@ import com.sustainablefarm.model.Batch.BatchStatus;
 import com.sustainablefarm.model.HarvestEvent.MangoVariety;
 import com.sustainablefarm.repository.BatchRepository;
 import com.sustainablefarm.service.BatchService;
+import com.sustainablefarm.service.QcCheckpointService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +31,13 @@ import java.util.List;
 public class BatchServiceImpl implements BatchService {
 
     private final BatchRepository batchRepository;
+    private final QcCheckpointService qcCheckpointService;
 
     @Autowired
-    public BatchServiceImpl(BatchRepository batchRepository) {
+    public BatchServiceImpl(BatchRepository batchRepository,
+                            QcCheckpointService qcCheckpointService) {
         this.batchRepository = batchRepository;
+        this.qcCheckpointService = qcCheckpointService;
     }
 
     @Override
@@ -154,6 +158,29 @@ public class BatchServiceImpl implements BatchService {
     @Override
     public Batch advanceBatchStatus(String batchId) {
         Batch batch = getBatchById(batchId);
+        
+        // Business Rule: Enforce mandatory QC checkpoints before advancing status
+        // WASHING checkpoint must be completed before advancing from WASHING to DRYING
+        if (batch.getCurrentStatus() == BatchStatus.WASHING) {
+            long washingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId, 
+                com.sustainablefarm.model.QcCheckpoint.QcStage.WASHING);
+            if (washingCheckpointCount == 0) {
+                throw new IllegalArgumentException(
+                    "Cannot advance batch from WASHING: mandatory WASHING QC checkpoint not completed"
+                );
+            }
+        }
+        
+        // Business Rule: COOLING checkpoint must be completed before advancing from DRYING to PACKAGING
+        if (batch.getCurrentStatus() == BatchStatus.DRYING) {
+            long coolingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId, 
+                com.sustainablefarm.model.QcCheckpoint.QcStage.COOLING);
+            if (coolingCheckpointCount == 0) {
+                throw new IllegalArgumentException(
+                    "Cannot advance batch from DRYING: mandatory COOLING QC checkpoint not completed"
+                );
+            }
+        }
         
         // Business Rule: Status transitions must follow the processing workflow
         try {

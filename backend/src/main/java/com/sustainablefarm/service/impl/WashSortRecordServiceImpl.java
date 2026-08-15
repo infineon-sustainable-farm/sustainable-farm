@@ -1,7 +1,11 @@
 package com.sustainablefarm.service.impl;
 
 import com.sustainablefarm.model.WashSortRecord;
+import com.sustainablefarm.model.Equipment;
+import com.sustainablefarm.model.Operator;
 import com.sustainablefarm.repository.WashSortRecordRepository;
+import com.sustainablefarm.repository.EquipmentRepository;
+import com.sustainablefarm.repository.OperatorRepository;
 import com.sustainablefarm.service.WashSortRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,24 +31,56 @@ import java.util.List;
 public class WashSortRecordServiceImpl implements WashSortRecordService {
 
     private final WashSortRecordRepository washSortRecordRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final OperatorRepository operatorRepository;
 
     @Autowired
-    public WashSortRecordServiceImpl(WashSortRecordRepository washSortRecordRepository) {
+    public WashSortRecordServiceImpl(WashSortRecordRepository washSortRecordRepository,
+                                     EquipmentRepository equipmentRepository,
+                                     OperatorRepository operatorRepository) {
         this.washSortRecordRepository = washSortRecordRepository;
+        this.equipmentRepository = equipmentRepository;
+        this.operatorRepository = operatorRepository;
     }
 
     @Override
     public WashSortRecord createWashSortRecord(WashSortRecord washSortRecord) {
         // Business Rule: Validate equipment availability
         if (washSortRecord.getEquipment() != null) {
-            // Equipment availability check would be done here
-            // This is a placeholder for the actual validation
+            Equipment equipment = washSortRecord.getEquipment();
+            // Verify equipment exists and is available
+            Equipment dbEquipment = equipmentRepository.findById(equipment.getEquipmentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + equipment.getEquipmentId()));
+            
+            if (dbEquipment.getMaintenanceStatus() != Equipment.MaintenanceStatus.ACTIVE) {
+                throw new IllegalArgumentException(
+                    "Equipment is not available for washing. Equipment ID: " + equipment.getEquipmentId() + 
+                    " must be in ACTIVE status. Current status: " + dbEquipment.getMaintenanceStatus()
+                );
+            }
         }
         
         // Business Rule: Validate operator certification
         if (washSortRecord.getOperator() != null) {
-            // Operator certification check would be done here
-            // This is a placeholder for the actual validation
+            Operator operator = washSortRecord.getOperator();
+            // Verify operator exists and is active
+            Operator dbOperator = operatorRepository.findById(operator.getOperatorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operator.getOperatorId()));
+            
+            if (dbOperator.getActiveStatus() != Operator.ActiveStatus.ACTIVE) {
+                throw new IllegalArgumentException(
+                    "Operator is not active for washing. Operator ID: " + operator.getOperatorId() + 
+                    " must be in ACTIVE status. Current status: " + dbOperator.getActiveStatus()
+                );
+            }
+            
+            // Verify operator has appropriate role for washing operations
+            if (dbOperator.getRole() != Operator.Role.WASHER) {
+                throw new IllegalArgumentException(
+                    "Operator must have WASHER role for washing operations. Operator ID: " + operator.getOperatorId() + 
+                    ", Current role: " + dbOperator.getRole()
+                );
+            }
         }
         
         return washSortRecordRepository.save(washSortRecord);
