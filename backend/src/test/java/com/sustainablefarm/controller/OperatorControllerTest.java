@@ -51,14 +51,14 @@ class OperatorControllerTest {
         testOperator = new Operator();
         testOperator.setOperatorId("OP-001");
         testOperator.setOperatorName("Jane Doe");
-        testOperator.setRole(Role.OPERATOR);
+        testOperator.setRole(Role.SUPERVISOR);
         testOperator.setActiveStatus(ActiveStatus.ACTIVE);
         testOperator.setHireDate(LocalDate.of(2024, 1, 15));
 
         testResponse = OperatorResponse.builder()
                 .operatorId("OP-001")
                 .operatorName("Jane Doe")
-                .role(Role.OPERATOR)
+                .role(Role.SUPERVISOR)
                 .activeStatus(ActiveStatus.ACTIVE)
                 .hireDate(LocalDate.of(2024, 1, 15))
                 .build();
@@ -67,7 +67,7 @@ class OperatorControllerTest {
     @Test
     void createOperator_success() throws Exception {
         OperatorCreateRequest request = new OperatorCreateRequest(
-                "OP-001", "Jane Doe", Role.OPERATOR, "HACCP", ActiveStatus.ACTIVE, LocalDate.of(2024, 1, 15));
+                "OP-001", "Jane Doe", Role.SUPERVISOR, "HACCP", ActiveStatus.ACTIVE, LocalDate.of(2024, 1, 15));
 
         when(dtoMapper.toEntity(any(OperatorCreateRequest.class))).thenReturn(testOperator);
         when(operatorService.createOperator(any(Operator.class))).thenReturn(testOperator);
@@ -78,7 +78,7 @@ class OperatorControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.operatorId").value("OP-001"))
-                .andExpect(jsonPath("$.role").value("OPERATOR"));
+                .andExpect(jsonPath("$.role").value("SUPERVISOR"));
     }
 
     @Test
