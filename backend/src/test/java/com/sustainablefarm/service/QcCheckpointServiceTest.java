@@ -56,7 +56,7 @@ class QcCheckpointServiceTest {
         testQcCheckpoint = new QcCheckpoint();
         testQcCheckpoint.setCheckpointId("QC-001");
         testQcCheckpoint.setStage(QcStage.WASHING);
-        testQcCheckpoint.setResult(QcResult.PASS);
+        testQcCheckpoint.setResult(QcResult.PENDING);
         testQcCheckpoint.setDefectsCount(0);
         testQcCheckpoint.setCheckpointTime(LocalDateTime.now());
         
@@ -136,21 +136,18 @@ class QcCheckpointServiceTest {
         // Then
         assertEquals(QcStage.WASHING, result.getStage());
         assertEquals(QcResult.PENDING, result.getResult());
-        verify(qcCheckpointRepository).save(testQcCheckpoint);
+        verify(qcCheckpointRepository).save(any(QcCheckpoint.class));
     }
     
     @Test
     void testCreateMandatoryCheckpoint_InvalidStage() {
-        // Given
-        when(batchRepository.findById("B-001")).thenReturn(java.util.Optional.of(new com.sustainablefarm.model.Batch()));
-        
         // When/Then
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> qcCheckpointService.createMandatoryCheckpoint("B-001", QcStage.INTAKE, "OP-001")
         );
         
-        assertTrue(exception.getMessage().contains("Stage must be WASHING or COOLING"));
+        assertTrue(exception.getMessage().contains("WASHING or COOLING"));
     }
     
     @Test

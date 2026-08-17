@@ -82,7 +82,7 @@ class WashSortRecordServiceTest {
         Equipment inactiveEquipment = new Equipment();
         inactiveEquipment.setEquipmentId("EQ-001");
         inactiveEquipment.setEquipmentType(EquipmentType.WASHING);
-        inactiveEquipment.setMaintenanceStatus(MaintenanceStatus.UNDER_MAINTENANCE);
+        inactiveEquipment.setMaintenanceStatus(MaintenanceStatus.MAINTENANCE);
         
         when(equipmentRepository.findById("EQ-001")).thenReturn(java.util.Optional.of(inactiveEquipment));
         

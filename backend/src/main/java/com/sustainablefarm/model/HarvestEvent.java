@@ -87,10 +87,10 @@ public class HarvestEvent {
     private String storageLocation;
 
     @Column(name = "created_at", updatable = false)
-    private java.time.Timestamp createdAt;
+    private java.sql.Timestamp createdAt;
 
     @Column(name = "updated_at")
-    private java.time.Timestamp updatedAt;
+    private java.sql.Timestamp updatedAt;
 
     @PrePersist
     protected void onCreate() {

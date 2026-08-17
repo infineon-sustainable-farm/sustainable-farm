@@ -1,6 +1,7 @@
 package com.sustainablefarm.service;
 
 import com.sustainablefarm.model.PackagingRecord;
+import com.sustainablefarm.model.PackagingRecord.PackageType;
 import com.sustainablefarm.repository.PackagingRecordRepository;
 import com.sustainablefarm.service.impl.PackagingRecordServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +41,7 @@ class PackagingRecordServiceTest {
     void setUp() {
         testPackagingRecord = new PackagingRecord();
         testPackagingRecord.setRecordId("PR-001");
-        testPackagingRecord.setPackageType("1KG_BAG");
+        testPackagingRecord.setPackageType(PackagingRecord.PackageType.ONE_KG_BAG);
         testPackagingRecord.setPackageQuantityKg(10.0);
         testPackagingRecord.setLotCode("LOT-2026-001");
         testPackagingRecord.setExportReady(false);
@@ -148,7 +149,7 @@ class PackagingRecordServiceTest {
         PackagingRecord result = packagingRecordService.markAsExportReady("PR-001");
         
         // Then
-        assertTrue(result.isExportReady());
+        assertTrue(result.getExportReady());
         verify(packagingRecordRepository).save(testPackagingRecord);
     }
 }

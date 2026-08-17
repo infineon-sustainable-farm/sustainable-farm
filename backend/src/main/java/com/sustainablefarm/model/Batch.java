@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDate;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,10 +57,10 @@ public class Batch {
     private String blockId;
 
     @Column(name = "created_at", updatable = false)
-    private java.time.Timestamp createdAt;
+    private java.sql.Timestamp createdAt;
 
     @Column(name = "updated_at")
-    private java.time.Timestamp updatedAt;
+    private java.sql.Timestamp updatedAt;
 
     // Relationships
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)

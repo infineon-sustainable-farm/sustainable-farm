@@ -85,7 +85,7 @@ class DryingRunServiceTest {
         Equipment inactiveEquipment = new Equipment();
         inactiveEquipment.setEquipmentId("EQ-001");
         inactiveEquipment.setEquipmentType(EquipmentType.DRYING);
-        inactiveEquipment.setMaintenanceStatus(MaintenanceStatus.UNDER_MAINTENANCE);
+        inactiveEquipment.setMaintenanceStatus(MaintenanceStatus.MAINTENANCE);
         
         when(equipmentRepository.findById("EQ-001")).thenReturn(java.util.Optional.of(inactiveEquipment));
         
@@ -144,7 +144,6 @@ class DryingRunServiceTest {
     void testCompleteDryingRun_InvalidMoistureContent() {
         // Given
         when(dryingRunRepository.findById("DR-001")).thenReturn(java.util.Optional.of(testDryingRun));
-        when(dryingRunRepository.save(any(DryingRun.class))).thenReturn(testDryingRun);
         
         // When/Then
         IllegalArgumentException exception = assertThrows(
