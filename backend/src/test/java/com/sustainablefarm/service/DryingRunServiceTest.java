@@ -165,7 +165,7 @@ class DryingRunServiceTest {
         DryingRun result = dryingRunService.completeDryingRun("DR-001", new java.math.BigDecimal("14.0"));
         
         // Then
-        assertEquals(14.0, result.getEndMoisturePct());
+        assertEquals(new java.math.BigDecimal("14.0"), result.getEndMoisturePct());
         verify(dryingRunRepository).save(testDryingRun);
     }
     

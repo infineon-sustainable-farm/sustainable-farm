@@ -177,8 +177,8 @@ class WashSortRecordServiceTest {
         WashSortRecord result = washSortRecordService.completeWashSortRecord("WS-001", new java.math.BigDecimal("950.0"), new java.math.BigDecimal("50.0"));
         
         // Then
-        assertEquals(950.0, result.getOutputQuantityKg());
-        assertEquals(50.0, result.getWasteQuantityKg());
+        assertEquals(new java.math.BigDecimal("950.0"), result.getOutputQuantityKg());
+        assertEquals(new java.math.BigDecimal("50.0"), result.getWasteQuantityKg());
         assertNotNull(result.getEndTime());
         verify(washSortRecordRepository).save(testWashSortRecord);
     }
