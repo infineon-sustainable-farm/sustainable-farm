@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 /**
  * WashSortRecord Entity
@@ -40,16 +41,16 @@ public class WashSortRecord {
     private Batch batch;
 
     @Column(name = "input_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double inputQuantityKg;
+    private BigDecimal inputQuantityKg;
 
     @Column(name = "output_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double outputQuantityKg;
+    private BigDecimal outputQuantityKg;
 
     @Column(name = "waste_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double wasteQuantityKg;
+    private BigDecimal wasteQuantityKg;
 
     @Column(name = "water_usage_liters", nullable = false, precision = 10, scale = 2)
-    private Double waterUsageLiters;
+    private BigDecimal waterUsageLiters;
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
@@ -87,10 +88,10 @@ public class WashSortRecord {
      * Business Rule: Output/Input * 100
      */
     public Double calculateYieldPercentage() {
-        if (inputQuantityKg == null || inputQuantityKg == 0) {
+        if (inputQuantityKg == null || inputQuantityKg.compareTo(BigDecimal.ZERO) == 0) {
             return 0.0;
         }
-        return (outputQuantityKg / inputQuantityKg) * 100;
+        return outputQuantityKg.divide(inputQuantityKg, 4, java.math.RoundingMode.HALF_UP).multiply(new BigDecimal("100")).doubleValue();
     }
 
     /**
@@ -98,9 +99,9 @@ public class WashSortRecord {
      * Business Rule: Waste/Input * 100
      */
     public Double calculateWastePercentage() {
-        if (inputQuantityKg == null || inputQuantityKg == 0) {
+        if (inputQuantityKg == null || inputQuantityKg.compareTo(BigDecimal.ZERO) == 0) {
             return 0.0;
         }
-        return (wasteQuantityKg / inputQuantityKg) * 100;
+        return wasteQuantityKg.divide(inputQuantityKg, 4, java.math.RoundingMode.HALF_UP).multiply(new BigDecimal("100")).doubleValue();
     }
 }

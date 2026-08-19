@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * Batch Entity
@@ -44,7 +45,7 @@ public class Batch {
     private HarvestEvent.MangoVariety mangoVariety;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "current_status", nullable = false, length = 30)

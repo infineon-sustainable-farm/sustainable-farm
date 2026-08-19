@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -20,16 +21,16 @@ import java.time.LocalDateTime;
 public class WashSortRecordUpdateRequest {
 
     @Positive(message = "Input quantity must be positive")
-    private Double inputQuantityKg;
+    private BigDecimal inputQuantityKg;
 
     @Positive(message = "Output quantity must be positive")
-    private Double outputQuantityKg;
+    private BigDecimal outputQuantityKg;
 
     @PositiveOrZero(message = "Waste quantity cannot be negative")
-    private Double wasteQuantityKg;
+    private BigDecimal wasteQuantityKg;
 
     @PositiveOrZero(message = "Water usage cannot be negative")
-    private Double waterUsageLiters;
+    private BigDecimal waterUsageLiters;
 
     private LocalDateTime startTime;
 

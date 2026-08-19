@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -45,7 +46,7 @@ public class HarvestEventCreateRequest {
 
     @NotNull(message = "Harvest quantity is required")
     @Positive(message = "Harvest quantity must be positive")
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
 
     @NotNull(message = "Quality grade is required")
     private QualityGrade qualityGrade;

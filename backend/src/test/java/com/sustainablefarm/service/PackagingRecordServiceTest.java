@@ -42,7 +42,7 @@ class PackagingRecordServiceTest {
         testPackagingRecord = new PackagingRecord();
         testPackagingRecord.setRecordId("PR-001");
         testPackagingRecord.setPackageType(PackagingRecord.PackageType.ONE_KG_BAG);
-        testPackagingRecord.setPackageQuantityKg(10.0);
+        testPackagingRecord.setPackageQuantityKg(new java.math.BigDecimal("10.0"));
         testPackagingRecord.setLotCode("LOT-2026-001");
         testPackagingRecord.setExportReady(false);
         testPackagingRecord.setPackagingDate(LocalDate.now());

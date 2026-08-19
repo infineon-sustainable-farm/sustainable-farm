@@ -96,7 +96,7 @@ class OperatorControllerTest {
     @Test
     void getOperatorById_notFound() throws Exception {
         when(operatorService.getOperatorById("MISSING"))
-                .thenThrow(new IllegalArgumentException("Operator not found with ID: MISSING"));
+                .thenThrow(new com.sustainablefarm.exception.ResourceNotFoundException("Operator not found with ID: MISSING"));
 
         mockMvc.perform(get("/api/operators/MISSING"))
                 .andExpect(status().isNotFound())

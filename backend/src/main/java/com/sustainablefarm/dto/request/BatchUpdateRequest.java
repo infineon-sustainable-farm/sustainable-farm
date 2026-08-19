@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -25,7 +26,7 @@ public class BatchUpdateRequest {
     private MangoVariety mangoVariety;
 
     @Positive(message = "Harvest quantity must be positive")
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
 
     private String farmId;
 

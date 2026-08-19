@@ -2,6 +2,7 @@ package com.sustainablefarm.service;
 
 import com.sustainablefarm.model.WashSortRecord;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -82,5 +83,5 @@ public interface WashSortRecordService {
     /**
      * Complete wash sort record with final quantities
      */
-    WashSortRecord completeWashSortRecord(String recordId, Double outputQuantityKg, Double wasteQuantityKg);
+    WashSortRecord completeWashSortRecord(String recordId, BigDecimal outputQuantityKg, BigDecimal wasteQuantityKg);
 }

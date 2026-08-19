@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -25,10 +26,10 @@ public class EquipmentUpdateRequest {
     private EquipmentType equipmentType;
 
     @Positive(message = "Capacity must be positive")
-    private Double capacityKgPerHour;
+    private BigDecimal capacityKgPerHour;
 
     @Positive(message = "Energy consumption must be positive")
-    private Double energyConsumptionKwhPerKg;
+    private BigDecimal energyConsumptionKwhPerKg;
 
     private String location;
 

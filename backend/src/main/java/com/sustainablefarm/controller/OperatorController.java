@@ -1,18 +1,13 @@
 package com.sustainablefarm.controller;
 
 import com.sustainablefarm.dto.mapper.DtoMapper;
-import com.sustainablefarm.dto.request.OperatorCertificationRequest;
 import com.sustainablefarm.dto.request.OperatorCreateRequest;
-import com.sustainablefarm.dto.request.OperatorStatusUpdateRequest;
 import com.sustainablefarm.dto.request.OperatorUpdateRequest;
 import com.sustainablefarm.dto.response.OperatorResponse;
-import com.sustainablefarm.dto.response.PageResponse;
 import com.sustainablefarm.model.Operator;
-import com.sustainablefarm.model.Operator.ActiveStatus;
-import com.sustainablefarm.model.Operator.Role;
 import com.sustainablefarm.service.OperatorService;
-import com.sustainablefarm.util.PaginationUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +18,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * REST Controller for Operator operations
+ * 
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
+ */
 @RestController
 @RequestMapping("/api/operators")
-@Tag(name = "Operator Management", description = "APIs for personnel and role management")
+@Tag(name = "Operator Management", description = "APIs for managing personnel/operators")
 public class OperatorController {
 
     private final OperatorService operatorService;
@@ -38,142 +39,109 @@ public class OperatorController {
     }
 
     @PostMapping
-    @Operation(summary = "Create operator")
+    @Operation(summary = "Create new operator", description = "Creates a new operator record")
     public ResponseEntity<OperatorResponse> createOperator(@Valid @RequestBody OperatorCreateRequest request) {
         Operator operator = dtoMapper.toEntity(request);
-        Operator created = operatorService.createOperator(operator);
-        return ResponseEntity.status(HttpStatus.CREATED).body(dtoMapper.toResponse(created));
+        Operator createdOperator = operatorService.createOperator(operator);
+        OperatorResponse response = dtoMapper.toResponse(createdOperator);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{operatorId}")
-    @Operation(summary = "Get operator by ID")
-    public ResponseEntity<OperatorResponse> getOperatorById(@PathVariable String operatorId) {
-        return ResponseEntity.ok(dtoMapper.toResponse(operatorService.getOperatorById(operatorId)));
+    @Operation(summary = "Get operator by ID", description = "Retrieves specific operator by their ID")
+    public ResponseEntity<OperatorResponse> getOperatorById(
+            @Parameter(description = "Operator ID") @PathVariable String operatorId) {
+        Operator operator = operatorService.getOperatorById(operatorId);
+        OperatorResponse response = dtoMapper.toResponse(operator);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    @Operation(summary = "Get all operators (paginated)")
-    public ResponseEntity<PageResponse<OperatorResponse>> getAllOperators(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        List<OperatorResponse> responses = operatorService.getAllOperators().stream()
+    @Operation(summary = "Get all operators", description = "Retrieves all operator records")
+    public ResponseEntity<List<OperatorResponse>> getAllOperators() {
+        List<Operator> operators = operatorService.getAllOperators();
+        List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(PaginationUtils.paginate(responses, page, size));
+        return ResponseEntity.ok(responses);
     }
 
     @PutMapping("/{operatorId}")
-    @Operation(summary = "Update operator")
+    @Operation(summary = "Update operator", description = "Updates an existing operator record")
     public ResponseEntity<OperatorResponse> updateOperator(
-            @PathVariable String operatorId,
+            @Parameter(description = "Operator ID") @PathVariable String operatorId,
             @Valid @RequestBody OperatorUpdateRequest request) {
-        Operator existing = operatorService.getOperatorById(operatorId);
-        applyUpdate(existing, request);
-        Operator updated = operatorService.updateOperator(operatorId, existing);
-        return ResponseEntity.ok(dtoMapper.toResponse(updated));
+        Operator existingOperator = operatorService.getOperatorById(operatorId);
+        
+        if (request.getOperatorName() != null) {
+            existingOperator.setOperatorName(request.getOperatorName());
+        }
+        if (request.getRole() != null) {
+            existingOperator.setRole(request.getRole());
+        }
+        if (request.getCertifications() != null) {
+            existingOperator.setCertifications(request.getCertifications());
+        }
+        if (request.getActiveStatus() != null) {
+            existingOperator.setActiveStatus(request.getActiveStatus());
+        }
+        if (request.getHireDate() != null) {
+            existingOperator.setHireDate(request.getHireDate());
+        }
+        
+        Operator updatedOperator = operatorService.updateOperator(operatorId, existingOperator);
+        OperatorResponse response = dtoMapper.toResponse(updatedOperator);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{operatorId}")
-    @Operation(summary = "Delete operator")
-    public ResponseEntity<Void> deleteOperator(@PathVariable String operatorId) {
+    @Operation(summary = "Delete operator", description = "Deletes an operator record by their ID")
+    public ResponseEntity<Void> deleteOperator(
+            @Parameter(description = "Operator ID") @PathVariable String operatorId) {
         operatorService.deleteOperator(operatorId);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{operatorId}/status")
-    @Operation(summary = "Update operator active status")
-    public ResponseEntity<OperatorResponse> updateActiveStatus(
-            @PathVariable String operatorId,
-            @Valid @RequestBody OperatorStatusUpdateRequest request) {
-        Operator operator = operatorService.updateActiveStatus(operatorId, request.getActiveStatus());
-        return ResponseEntity.ok(dtoMapper.toResponse(operator));
-    }
-
-    @PostMapping("/{operatorId}/certifications")
-    @Operation(summary = "Add certification to operator")
-    public ResponseEntity<OperatorResponse> addCertification(
-            @PathVariable String operatorId,
-            @Valid @RequestBody OperatorCertificationRequest request) {
-        Operator operator = operatorService.addCertification(operatorId, request.getCertification());
-        return ResponseEntity.ok(dtoMapper.toResponse(operator));
-    }
-
     @GetMapping("/role/{role}")
-    @Operation(summary = "Get operators by role")
-    public ResponseEntity<List<OperatorResponse>> getOperatorsByRole(@PathVariable Role role) {
-        List<OperatorResponse> responses = operatorService.getOperatorsByRole(role).stream()
+    @Operation(summary = "Get operators by role", description = "Retrieves operators filtered by role")
+    public ResponseEntity<List<OperatorResponse>> getOperatorsByRole(
+            @Parameter(description = "Operator role") @PathVariable com.sustainablefarm.model.Operator.Role role) {
+        List<Operator> operators = operatorService.getOperatorsByRole(role);
+        List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
-    @GetMapping("/status/{status}")
-    @Operation(summary = "Get operators by active status")
-    public ResponseEntity<List<OperatorResponse>> getOperatorsByStatus(@PathVariable ActiveStatus status) {
-        List<OperatorResponse> responses = operatorService.getOperatorsByStatus(status).stream()
+    @GetMapping("/status/{activeStatus}")
+    @Operation(summary = "Get operators by status", description = "Retrieves operators filtered by active status")
+    public ResponseEntity<List<OperatorResponse>> getOperatorsByStatus(
+            @Parameter(description = "Active status") @PathVariable com.sustainablefarm.model.Operator.ActiveStatus activeStatus) {
+        List<Operator> operators = operatorService.getOperatorsByStatus(activeStatus);
+        List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
-    @GetMapping("/active/role/{role}")
-    @Operation(summary = "Get active operators by role")
-    public ResponseEntity<List<OperatorResponse>> getActiveOperatorsByRole(@PathVariable Role role) {
-        List<OperatorResponse> responses = operatorService.getActiveOperatorsByRole(role).stream()
+    @GetMapping("/active")
+    @Operation(summary = "Get active operators", description = "Retrieves operators with ACTIVE status")
+    public ResponseEntity<List<OperatorResponse>> getActiveOperators() {
+        List<Operator> operators = operatorService.getOperatorsByStatus(com.sustainablefarm.model.Operator.ActiveStatus.ACTIVE);
+        List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
-    @GetMapping("/active/qc-inspectors")
-    @Operation(summary = "Get active QC inspectors")
-    public ResponseEntity<List<OperatorResponse>> getActiveQcInspectors() {
-        List<OperatorResponse> responses = operatorService.getActiveQcInspectors().stream()
+    @GetMapping("/certified/{role}")
+    @Operation(summary = "Get certified operators by role", description = "Retrieves active operators with specific role")
+    public ResponseEntity<List<OperatorResponse>> getCertifiedOperatorsByRole(
+            @Parameter(description = "Operator role") @PathVariable com.sustainablefarm.model.Operator.Role role) {
+        List<Operator> operators = operatorService.getActiveOperatorsByRole(role);
+        List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/active/auditors")
-    @Operation(summary = "Get active auditors")
-    public ResponseEntity<List<OperatorResponse>> getActiveAuditors() {
-        List<OperatorResponse> responses = operatorService.getActiveAuditors().stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/{operatorId}/active")
-    @Operation(summary = "Check if operator is active")
-    public ResponseEntity<Boolean> isOperatorActive(@PathVariable String operatorId) {
-        return ResponseEntity.ok(operatorService.isOperatorActive(operatorId));
-    }
-
-    @GetMapping("/certification/{certification}")
-    @Operation(summary = "Get operators by certification")
-    public ResponseEntity<List<OperatorResponse>> getOperatorsByCertification(
-            @PathVariable String certification) {
-        List<OperatorResponse> responses = operatorService.getOperatorsByCertification(certification).stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    private void applyUpdate(Operator existing, OperatorUpdateRequest request) {
-        if (request.getOperatorName() != null) {
-            existing.setOperatorName(request.getOperatorName());
-        }
-        if (request.getRole() != null) {
-            existing.setRole(request.getRole());
-        }
-        if (request.getCertifications() != null) {
-            existing.setCertifications(request.getCertifications());
-        }
-        if (request.getActiveStatus() != null) {
-            existing.setActiveStatus(request.getActiveStatus());
-        }
-        if (request.getHireDate() != null) {
-            existing.setHireDate(request.getHireDate());
-        }
     }
 }

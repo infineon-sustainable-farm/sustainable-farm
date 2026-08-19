@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.math.BigDecimal;
 
 /**
  * HarvestEvent Entity
@@ -65,7 +66,7 @@ public class HarvestEvent {
     private String blockId;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "quality_grade", nullable = false, length = 1)

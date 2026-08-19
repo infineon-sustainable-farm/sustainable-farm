@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,12 +60,12 @@ class DryingRunServiceTest {
     void setUp() {
         testDryingRun = new DryingRun();
         testDryingRun.setRunId("DR-001");
-        testDryingRun.setDurationHours(24.0);
-        testDryingRun.setTargetTemperatureC(60.0);
-        testDryingRun.setActualTemperatureC(58.0);
-        testDryingRun.setStartMoisturePct(80.0);
-        testDryingRun.setEndMoisturePct(15.0);
-        testDryingRun.setEnergyUsageKwh(100.0);
+        testDryingRun.setDurationHours(new java.math.BigDecimal("24.0"));
+        testDryingRun.setTargetTemperatureC(new java.math.BigDecimal("60.0"));
+        testDryingRun.setActualTemperatureC(new java.math.BigDecimal("58.0"));
+        testDryingRun.setStartMoisturePct(new java.math.BigDecimal("80.0"));
+        testDryingRun.setEndMoisturePct(new java.math.BigDecimal("15.0"));
+        testDryingRun.setEnergyUsageKwh(new java.math.BigDecimal("100.0"));
         testDryingRun.setStartTime(LocalDateTime.now());
         
         testEquipment = new Equipment();
@@ -148,7 +149,7 @@ class DryingRunServiceTest {
         // When/Then
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
-            () -> dryingRunService.completeDryingRun("DR-001", 19.0)
+            () -> dryingRunService.completeDryingRun("DR-001", new java.math.BigDecimal("19.0"))
         );
         
         assertTrue(exception.getMessage().contains("End moisture content must be between 6% and 18%"));
@@ -161,7 +162,7 @@ class DryingRunServiceTest {
         when(dryingRunRepository.save(any(DryingRun.class))).thenReturn(testDryingRun);
         
         // When
-        DryingRun result = dryingRunService.completeDryingRun("DR-001", 14.0);
+        DryingRun result = dryingRunService.completeDryingRun("DR-001", new java.math.BigDecimal("14.0"));
         
         // Then
         assertEquals(14.0, result.getEndMoisturePct());

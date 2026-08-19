@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * DTO for creating a new HistoricalHarvest (for forecasting)
  * 
@@ -38,23 +40,23 @@ public class HistoricalHarvestCreateRequest {
 
     @NotNull(message = "Harvest quantity is required")
     @Positive(message = "Harvest quantity must be positive")
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
 
     @Min(value = 0, message = "Grade A percentage must be between 0 and 100")
     @Max(value = 100, message = "Grade A percentage must be between 0 and 100")
-    private Double qualityGradeAPct;
+    private BigDecimal qualityGradeAPct;
 
     @Min(value = 0, message = "Grade B percentage must be between 0 and 100")
     @Max(value = 100, message = "Grade B percentage must be between 0 and 100")
-    private Double qualityGradeBPct;
+    private BigDecimal qualityGradeBPct;
 
     @Min(value = 0, message = "Grade C percentage must be between 0 and 100")
     @Max(value = 100, message = "Grade C percentage must be between 0 and 100")
-    private Double qualityGradeCPct;
+    private BigDecimal qualityGradeCPct;
 
     private String weatherCondition;
 
-    private Double rainfallMm;
+    private BigDecimal rainfallMm;
 
-    private Double temperatureAvgC;
+    private BigDecimal temperatureAvgC;
 }

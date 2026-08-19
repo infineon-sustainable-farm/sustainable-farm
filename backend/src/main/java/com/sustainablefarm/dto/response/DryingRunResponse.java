@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -22,12 +23,12 @@ public class DryingRunResponse {
 
     private String runId;
     private String batchId;
-    private Double durationHours;
-    private Double targetTemperatureC;
-    private Double actualTemperatureC;
-    private Double startMoisturePct;
-    private Double endMoisturePct;
-    private Double energyUsageKwh;
+    private BigDecimal durationHours;
+    private BigDecimal targetTemperatureC;
+    private BigDecimal actualTemperatureC;
+    private BigDecimal startMoisturePct;
+    private BigDecimal endMoisturePct;
+    private BigDecimal energyUsageKwh;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String equipmentId;

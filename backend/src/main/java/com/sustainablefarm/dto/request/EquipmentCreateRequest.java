@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -33,11 +34,11 @@ public class EquipmentCreateRequest {
 
     @NotNull(message = "Capacity is required")
     @Positive(message = "Capacity must be positive")
-    private Double capacityKgPerHour;
+    private BigDecimal capacityKgPerHour;
 
     @NotNull(message = "Energy consumption is required")
     @Positive(message = "Energy consumption must be positive")
-    private Double energyConsumptionKwhPerKg;
+    private BigDecimal energyConsumptionKwhPerKg;
 
     private String location;
 

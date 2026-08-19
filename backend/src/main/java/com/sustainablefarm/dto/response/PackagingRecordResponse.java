@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
@@ -24,7 +25,7 @@ public class PackagingRecordResponse {
     private String recordId;
     private String batchId;
     private PackageType packageType;
-    private Double packageQuantityKg;
+    private BigDecimal packageQuantityKg;
     private String lotCode;
     private Boolean exportReady;
     private LocalDate packagingDate;

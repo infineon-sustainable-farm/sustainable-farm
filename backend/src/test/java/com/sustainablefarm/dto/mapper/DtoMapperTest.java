@@ -27,7 +27,7 @@ class DtoMapperTest {
                 "B-2026-001",
                 LocalDate.of(2026, 8, 15),
                 MangoVariety.KEITT,
-                1000.0,
+                new java.math.BigDecimal("1000.0"),
                 "FARM-001",
                 "BLOCK-001",
                 BatchStatus.CREATED
@@ -46,7 +46,7 @@ class DtoMapperTest {
         entity.setBatchId("B-2026-001");
         entity.setHarvestDate(LocalDate.of(2026, 8, 15));
         entity.setMangoVariety(MangoVariety.KEITT);
-        entity.setHarvestQuantityKg(1000.0);
+        entity.setHarvestQuantityKg(new java.math.BigDecimal("1000.0"));
         entity.setFarmId("FARM-001");
         entity.setBlockId("BLOCK-001");
         entity.setCurrentStatus(BatchStatus.CREATED);

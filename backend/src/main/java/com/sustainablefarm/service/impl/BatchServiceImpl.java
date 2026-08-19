@@ -1,5 +1,8 @@
 package com.sustainablefarm.service.impl;
 
+import com.sustainablefarm.exception.BusinessRuleViolationException;
+import com.sustainablefarm.exception.InvalidStateException;
+import com.sustainablefarm.exception.ResourceNotFoundException;
 import com.sustainablefarm.model.Batch;
 import com.sustainablefarm.model.Batch.BatchStatus;
 import com.sustainablefarm.model.HarvestEvent.MangoVariety;
@@ -71,7 +74,7 @@ public class BatchServiceImpl implements BatchService {
     @Override
     public void deleteBatch(String batchId) {
         if (!batchRepository.existsById(batchId)) {
-            throw new IllegalArgumentException("Batch not found with ID: " + batchId);
+            throw new ResourceNotFoundException("Batch not found with ID: " + batchId);
         }
         batchRepository.deleteById(batchId);
     }
@@ -80,7 +83,7 @@ public class BatchServiceImpl implements BatchService {
     @Transactional(readOnly = true)
     public Batch getBatchById(String batchId) {
         return batchRepository.findById(batchId)
-                .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + batchId));
+                .orElseThrow(() -> new ResourceNotFoundException("Batch not found with ID: " + batchId));
     }
 
     @Override
@@ -165,7 +168,7 @@ public class BatchServiceImpl implements BatchService {
             long washingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId, 
                 com.sustainablefarm.model.QcCheckpoint.QcStage.WASHING);
             if (washingCheckpointCount == 0) {
-                throw new IllegalArgumentException(
+                throw new BusinessRuleViolationException(
                     "Cannot advance batch from WASHING: mandatory WASHING QC checkpoint not completed"
                 );
             }
@@ -176,7 +179,7 @@ public class BatchServiceImpl implements BatchService {
             long coolingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId, 
                 com.sustainablefarm.model.QcCheckpoint.QcStage.COOLING);
             if (coolingCheckpointCount == 0) {
-                throw new IllegalArgumentException(
+                throw new BusinessRuleViolationException(
                     "Cannot advance batch from DRYING: mandatory COOLING QC checkpoint not completed"
                 );
             }
@@ -186,7 +189,7 @@ public class BatchServiceImpl implements BatchService {
         try {
             batch.advanceStatus();
         } catch (IllegalStateException e) {
-            throw new IllegalArgumentException("Cannot advance batch status: " + e.getMessage());
+            throw new InvalidStateException("Cannot advance batch status: " + e.getMessage());
         }
         
         return batchRepository.save(batch);

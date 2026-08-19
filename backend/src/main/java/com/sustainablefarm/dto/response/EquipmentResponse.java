@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
@@ -25,8 +26,8 @@ public class EquipmentResponse {
     private String equipmentId;
     private String equipmentName;
     private EquipmentType equipmentType;
-    private Double capacityKgPerHour;
-    private Double energyConsumptionKwhPerKg;
+    private BigDecimal capacityKgPerHour;
+    private BigDecimal energyConsumptionKwhPerKg;
     private String location;
     private MaintenanceStatus maintenanceStatus;
     private LocalDate lastMaintenanceDate;

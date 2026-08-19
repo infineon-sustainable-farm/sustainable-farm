@@ -49,7 +49,7 @@ class BatchServiceTest {
         testBatch.setBatchId("B-2026-001");
         testBatch.setHarvestDate(LocalDate.of(2026, 8, 15));
         testBatch.setMangoVariety(MangoVariety.KEITT);
-        testBatch.setHarvestQuantityKg(1000.0);
+        testBatch.setHarvestQuantityKg(new java.math.BigDecimal("1000.0"));
         testBatch.setFarmId("FARM-001");
         testBatch.setBlockId("BLOCK-001");
         testBatch.setCurrentStatus(BatchStatus.CREATED);
@@ -76,8 +76,8 @@ class BatchServiceTest {
         when(batchRepository.findById("B-2026-001")).thenReturn(java.util.Optional.of(testBatch));
         
         // When/Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        com.sustainablefarm.exception.InvalidStateException exception = assertThrows(
+            com.sustainablefarm.exception.InvalidStateException.class,
             () -> batchService.advanceBatchStatus("B-2026-001")
         );
         
@@ -92,8 +92,8 @@ class BatchServiceTest {
         when(qcCheckpointService.countByBatchAndStage("B-2026-001", com.sustainablefarm.model.QcCheckpoint.QcStage.WASHING)).thenReturn(0L);
         
         // When/Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.exception.BusinessRuleViolationException.class,
             () -> batchService.advanceBatchStatus("B-2026-001")
         );
         
@@ -108,8 +108,8 @@ class BatchServiceTest {
         when(qcCheckpointService.countByBatchAndStage("B-2026-001", com.sustainablefarm.model.QcCheckpoint.QcStage.COOLING)).thenReturn(0L);
         
         // When/Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.exception.BusinessRuleViolationException.class,
             () -> batchService.advanceBatchStatus("B-2026-001")
         );
         

@@ -1,5 +1,7 @@
 package com.sustainablefarm.service.impl;
 
+import com.sustainablefarm.exception.BusinessRuleViolationException;
+import com.sustainablefarm.exception.ResourceNotFoundException;
 import com.sustainablefarm.model.Batch;
 import com.sustainablefarm.model.RawIntake;
 import com.sustainablefarm.repository.BatchRepository;
@@ -43,12 +45,12 @@ public class RawIntakeServiceImpl implements RawIntakeService {
         // Business Rule: Validate batch exists
         if (rawIntake.getBatch() != null) {
             Batch batch = batchRepository.findById(rawIntake.getBatch().getBatchId())
-                    .orElseThrow(() -> new IllegalArgumentException("Batch not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
             
             // Business Rule: Validate batch is in appropriate status for intake
             if (batch.getCurrentStatus() != Batch.BatchStatus.CREATED && 
                 batch.getCurrentStatus() != Batch.BatchStatus.INTAKE) {
-                throw new IllegalArgumentException(
+                throw new BusinessRuleViolationException(
                     "Batch must be in CREATED or INTAKE status for raw intake. Current: " + batch.getCurrentStatus()
                 );
             }
@@ -76,7 +78,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
     @Override
     public void deleteRawIntake(String intakeId) {
         if (!rawIntakeRepository.existsById(intakeId)) {
-            throw new IllegalArgumentException("Raw intake not found with ID: " + intakeId);
+            throw new ResourceNotFoundException("Raw intake not found with ID: " + intakeId);
         }
         rawIntakeRepository.deleteById(intakeId);
     }
@@ -85,7 +87,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
     @Transactional(readOnly = true)
     public RawIntake getRawIntakeById(String intakeId) {
         return rawIntakeRepository.findById(intakeId)
-                .orElseThrow(() -> new IllegalArgumentException("Raw intake not found with ID: " + intakeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Raw intake not found with ID: " + intakeId));
     }
 
     @Override
@@ -93,7 +95,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
     public RawIntake getRawIntakeByBatchId(String batchId) {
         // Business Rule: One intake initializes exactly one batch
         return rawIntakeRepository.findByBatchBatchId(batchId)
-                .orElseThrow(() -> new IllegalArgumentException("Raw intake not found for batch ID: " + batchId));
+                .orElseThrow(() -> new ResourceNotFoundException("Raw intake not found for batch ID: " + batchId));
     }
 
     @Override

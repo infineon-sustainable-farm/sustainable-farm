@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -22,21 +23,21 @@ import java.time.LocalDateTime;
 public class DryingRunUpdateRequest {
 
     @Positive(message = "Duration must be positive")
-    private Double durationHours;
+    private BigDecimal durationHours;
 
-    private Double targetTemperatureC;
+    private BigDecimal targetTemperatureC;
 
-    private Double actualTemperatureC;
+    private BigDecimal actualTemperatureC;
 
     @Positive(message = "Start moisture must be positive")
-    private Double startMoisturePct;
+    private BigDecimal startMoisturePct;
 
     @DecimalMin(value = "6.0", message = "End moisture must be at least 6% for EU compliance")
     @DecimalMax(value = "18.0", message = "End moisture must be at most 18% for EU compliance")
-    private Double endMoisturePct;
+    private BigDecimal endMoisturePct;
 
     @PositiveOrZero(message = "Energy usage cannot be negative")
-    private Double energyUsageKwh;
+    private BigDecimal energyUsageKwh;
 
     private LocalDateTime startTime;
 

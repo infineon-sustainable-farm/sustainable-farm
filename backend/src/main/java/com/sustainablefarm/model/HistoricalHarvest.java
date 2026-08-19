@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import java.math.BigDecimal;
 
 /**
  * HistoricalHarvest Entity
@@ -47,25 +48,25 @@ public class HistoricalHarvest {
     private HarvestEvent.MangoVariety mangoVariety;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
 
     @Column(name = "quality_grade_a_pct", precision = 5, scale = 2)
-    private Double qualityGradeAPct;
+    private BigDecimal qualityGradeAPct;
 
     @Column(name = "quality_grade_b_pct", precision = 5, scale = 2)
-    private Double qualityGradeBPct;
+    private BigDecimal qualityGradeBPct;
 
     @Column(name = "quality_grade_c_pct", precision = 5, scale = 2)
-    private Double qualityGradeCPct;
+    private BigDecimal qualityGradeCPct;
 
     @Column(name = "weather_condition", length = 50)
     private String weatherCondition;
 
     @Column(name = "rainfall_mm", precision = 10, scale = 2)
-    private Double rainfallMm;
+    private BigDecimal rainfallMm;
 
     @Column(name = "temperature_avg_c", precision = 5, scale = 2)
-    private Double temperatureAvgC;
+    private BigDecimal temperatureAvgC;
 
     @Column(name = "created_at", updatable = false)
     private java.sql.Timestamp createdAt;

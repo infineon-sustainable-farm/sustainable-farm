@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
@@ -25,7 +26,7 @@ public class BatchResponse {
     private String batchId;
     private LocalDate harvestDate;
     private MangoVariety mangoVariety;
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
     private BatchStatus currentStatus;
     private String farmId;
     private String blockId;

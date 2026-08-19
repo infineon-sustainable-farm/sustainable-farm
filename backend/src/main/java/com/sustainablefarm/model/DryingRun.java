@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 /**
  * DryingRun Entity
@@ -40,22 +41,22 @@ public class DryingRun {
     private Batch batch;
 
     @Column(name = "duration_hours", nullable = false, precision = 5, scale = 2)
-    private Double durationHours;
+    private BigDecimal durationHours;
 
     @Column(name = "target_temperature_c", nullable = false, precision = 5, scale = 2)
-    private Double targetTemperatureC;
+    private BigDecimal targetTemperatureC;
 
     @Column(name = "actual_temperature_c", nullable = false, precision = 5, scale = 2)
-    private Double actualTemperatureC;
+    private BigDecimal actualTemperatureC;
 
     @Column(name = "start_moisture_pct", nullable = false, precision = 5, scale = 2)
-    private Double startMoisturePct;
+    private BigDecimal startMoisturePct;
 
     @Column(name = "end_moisture_pct", nullable = false, precision = 5, scale = 2)
-    private Double endMoisturePct;
+    private BigDecimal endMoisturePct;
 
     @Column(name = "energy_usage_kwh", nullable = false, precision = 10, scale = 2)
-    private Double energyUsageKwh;
+    private BigDecimal energyUsageKwh;
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
@@ -95,7 +96,7 @@ public class DryingRun {
      * Business Rule: Target moisture 12-18% (range: 6-17.44%)
      */
     private void validateMoistureContent() {
-        if (endMoisturePct != null && (endMoisturePct < 6 || endMoisturePct > 18)) {
+        if (endMoisturePct != null && (endMoisturePct.compareTo(new BigDecimal("6")) < 0 || endMoisturePct.compareTo(new BigDecimal("18")) > 0)) {
             throw new IllegalArgumentException(
                 "End moisture content must be between 6% and 18% for EU compliance. Current: " + endMoisturePct + "%"
             );
@@ -107,10 +108,10 @@ public class DryingRun {
      * Business Rule: (Start - End) / Start * 100
      */
     public Double calculateMoistureReductionPct() {
-        if (startMoisturePct == null || endMoisturePct == null || startMoisturePct == 0) {
+        if (startMoisturePct == null || endMoisturePct == null || startMoisturePct.compareTo(BigDecimal.ZERO) == 0) {
             return 0.0;
         }
-        return ((startMoisturePct - endMoisturePct) / startMoisturePct) * 100;
+        return startMoisturePct.subtract(endMoisturePct).divide(startMoisturePct, 4, java.math.RoundingMode.HALF_UP).multiply(new BigDecimal("100")).doubleValue();
     }
 
     /**
@@ -118,10 +119,10 @@ public class DryingRun {
      * Business Rule: Energy / (Batch quantity * yield)
      */
     public Double calculateEnergyEfficiencyKwhPerKg() {
-        if (energyUsageKwh == null || batch == null || batch.getHarvestQuantityKg() == null) {
+        if (energyUsageKwh == null || batch == null || batch.getHarvestQuantityKg() == null || batch.getHarvestQuantityKg().compareTo(BigDecimal.ZERO) == 0) {
             return 0.0;
         }
-        return energyUsageKwh / batch.getHarvestQuantityKg();
+        return energyUsageKwh.divide(batch.getHarvestQuantityKg(), 4, java.math.RoundingMode.HALF_UP).doubleValue();
     }
 
     /**
@@ -129,6 +130,6 @@ public class DryingRun {
      * Business Rule: 12-18% is optimal range
      */
     public boolean isWithinTargetRange() {
-        return endMoisturePct != null && endMoisturePct >= 12 && endMoisturePct <= 18;
+        return endMoisturePct != null && endMoisturePct.compareTo(new BigDecimal("12")) >= 0 && endMoisturePct.compareTo(new BigDecimal("18")) <= 0;
     }
 }

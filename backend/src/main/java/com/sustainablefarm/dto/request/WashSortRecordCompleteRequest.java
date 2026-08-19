@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * DTO for completing a WashSortRecord with final quantities
  * 
@@ -19,9 +21,9 @@ public class WashSortRecordCompleteRequest {
 
     @NotNull(message = "Output quantity is required")
     @PositiveOrZero(message = "Output quantity cannot be negative")
-    private Double outputQuantityKg;
+    private BigDecimal outputQuantityKg;
 
     @NotNull(message = "Waste quantity is required")
     @PositiveOrZero(message = "Waste quantity cannot be negative")
-    private Double wasteQuantityKg;
+    private BigDecimal wasteQuantityKg;
 }

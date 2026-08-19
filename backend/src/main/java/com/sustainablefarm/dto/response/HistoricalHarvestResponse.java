@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
@@ -24,13 +25,13 @@ public class HistoricalHarvestResponse {
     private Integer month;
     private Integer week;
     private MangoVariety mangoVariety;
-    private Double harvestQuantityKg;
-    private Double qualityGradeAPct;
-    private Double qualityGradeBPct;
-    private Double qualityGradeCPct;
+    private BigDecimal harvestQuantityKg;
+    private BigDecimal qualityGradeAPct;
+    private BigDecimal qualityGradeBPct;
+    private BigDecimal qualityGradeCPct;
     private String weatherCondition;
-    private Double rainfallMm;
-    private Double temperatureAvgC;
+    private BigDecimal rainfallMm;
+    private BigDecimal temperatureAvgC;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

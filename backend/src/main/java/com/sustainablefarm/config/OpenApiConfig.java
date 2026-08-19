@@ -4,46 +4,49 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.tags.Tag;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
 /**
- * OpenAPI/Swagger configuration for the Product Transformation API.
+ * OpenAPI/Swagger configuration for API documentation
+ * 
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
  */
 @Configuration
 public class OpenApiConfig {
 
-    @Bean
-    public OpenAPI productTransformationOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("Sustainable Farm Product Transformation API")
-                        .description("""
-                                REST API for mango processing traceability, quality control, \
-                                compliance, and export readiness workflows.
+    @Value("${server.port:8080}")
+    private String serverPort;
 
-                                Business errors are returned as structured JSON with fields: \
-                                timestamp, status, error, message, path, and optional validationErrors.""")
-                        .version("1.0.0")
-                        .contact(new Contact()
-                                .name("Abdoul Ben Fatao SANON")
-                                .email("abdoul.sanon@example.com"))
-                        .license(new License().name("BIT × Infineon Excellence Program")))
-                .tags(List.of(
-                        new Tag().name("Batch Management").description("Core batch lifecycle and status transitions"),
-                        new Tag().name("Raw Intake Management").description("Raw material intake from Plants"),
-                        new Tag().name("Wash & Sort Management").description("Washing and sorting operations"),
-                        new Tag().name("Drying Management").description("Drying process records"),
-                        new Tag().name("Packaging Management").description("Packaging and export readiness"),
-                        new Tag().name("Quality Control").description("QC checkpoints and mandatory inspections"),
-                        new Tag().name("Compliance Management").description("HACCP compliance audits"),
-                        new Tag().name("Equipment Management").description("Equipment registry and maintenance"),
-                        new Tag().name("Operator Management").description("Personnel and role management"),
-                        new Tag().name("Harvest Integration").description("Harvest events from Plants workstream"),
-                        new Tag().name("Historical Harvest").description("Aggregated data for forecasting")
-                ));
+    @Bean
+    public OpenAPI sustainableFarmOpenAPI() {
+        Server server = new Server();
+        server.setUrl("http://localhost:" + serverPort);
+        server.setDescription("Development server");
+
+        Contact contact = new Contact();
+        contact.setName("Abdoul Ben Fatao SANON");
+        contact.setEmail("contact@sustainablefarm.com");
+        contact.setUrl("https://github.com/yourusername/sustainable-farm");
+
+        License license = new License()
+                .name("MIT License")
+                .url("https://choosealicense.com/licenses/mit/");
+
+        Info info = new Info()
+                .title("Sustainable Farm Product Transformation API")
+                .version("1.0.0")
+                .description("REST API for managing mango processing operations including batch tracking, quality control, compliance, and equipment management.")
+                .contact(contact)
+                .license(license);
+
+        return new OpenAPI()
+                .info(info)
+                .servers(List.of(server));
     }
 }

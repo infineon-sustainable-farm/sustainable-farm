@@ -58,10 +58,10 @@ class WashSortRecordServiceTest {
     void setUp() {
         testWashSortRecord = new WashSortRecord();
         testWashSortRecord.setRecordId("WS-001");
-        testWashSortRecord.setInputQuantityKg(1000.0);
-        testWashSortRecord.setOutputQuantityKg(950.0);
-        testWashSortRecord.setWasteQuantityKg(50.0);
-        testWashSortRecord.setWaterUsageLiters(200.0);
+        testWashSortRecord.setInputQuantityKg(new java.math.BigDecimal("1000.0"));
+        testWashSortRecord.setOutputQuantityKg(new java.math.BigDecimal("950.0"));
+        testWashSortRecord.setWasteQuantityKg(new java.math.BigDecimal("50.0"));
+        testWashSortRecord.setWaterUsageLiters(new java.math.BigDecimal("200.0"));
         testWashSortRecord.setStartTime(LocalDateTime.now());
         
         testEquipment = new Equipment();
@@ -87,8 +87,8 @@ class WashSortRecordServiceTest {
         when(equipmentRepository.findById("EQ-001")).thenReturn(java.util.Optional.of(inactiveEquipment));
         
         // When/Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.exception.BusinessRuleViolationException.class,
             () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
         );
         
@@ -108,8 +108,8 @@ class WashSortRecordServiceTest {
         when(operatorRepository.findById("OP-001")).thenReturn(java.util.Optional.of(inactiveOperator));
         
         // When/Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.exception.BusinessRuleViolationException.class,
             () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
         );
         
@@ -129,8 +129,8 @@ class WashSortRecordServiceTest {
         when(operatorRepository.findById("OP-001")).thenReturn(java.util.Optional.of(unauthorizedOperator));
         
         // When/Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.exception.BusinessRuleViolationException.class,
             () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
         );
         
@@ -174,7 +174,7 @@ class WashSortRecordServiceTest {
         when(washSortRecordRepository.save(any(WashSortRecord.class))).thenReturn(testWashSortRecord);
         
         // When
-        WashSortRecord result = washSortRecordService.completeWashSortRecord("WS-001", 950.0, 50.0);
+        WashSortRecord result = washSortRecordService.completeWashSortRecord("WS-001", new java.math.BigDecimal("950.0"), new java.math.BigDecimal("50.0"));
         
         // Then
         assertEquals(950.0, result.getOutputQuantityKg());

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -22,7 +23,7 @@ public class PackagingRecordUpdateRequest {
     private PackageType packageType;
 
     @Positive(message = "Package quantity must be positive")
-    private Double packageQuantityKg;
+    private BigDecimal packageQuantityKg;
 
     // Lot code not updatable - mandatory for traceability compliance
     // private String lotCode;

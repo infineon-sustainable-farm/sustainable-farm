@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -195,12 +196,12 @@ public class DryingRunServiceImpl implements DryingRunService {
     }
 
     @Override
-    public DryingRun completeDryingRun(String runId, Double endMoisturePct) {
+    public DryingRun completeDryingRun(String runId, BigDecimal endMoisturePct) {
         DryingRun dryingRun = getDryingRunById(runId);
         
         // Business Rule: End moisture content must be 6-18% for EU compliance
         // This validation is also done at entity level in @PrePersist/@PreUpdate
-        if (endMoisturePct < 6 || endMoisturePct > 18) {
+        if (endMoisturePct.compareTo(new BigDecimal("6")) < 0 || endMoisturePct.compareTo(new BigDecimal("18")) > 0) {
             throw new IllegalArgumentException(
                 "End moisture content must be between 6% and 18% for EU compliance. Current: " + endMoisturePct + "%"
             );

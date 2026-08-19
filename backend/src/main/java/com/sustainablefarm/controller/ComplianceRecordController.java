@@ -1,22 +1,17 @@
 package com.sustainablefarm.controller;
 
 import com.sustainablefarm.dto.mapper.DtoMapper;
-import com.sustainablefarm.dto.request.ComplianceRecordCompleteAuditRequest;
 import com.sustainablefarm.dto.request.ComplianceRecordCreateRequest;
-import com.sustainablefarm.dto.request.ComplianceRecordScheduleAuditRequest;
 import com.sustainablefarm.dto.request.ComplianceRecordUpdateRequest;
 import com.sustainablefarm.dto.response.ComplianceRecordResponse;
-import com.sustainablefarm.dto.response.PageResponse;
 import com.sustainablefarm.model.Batch;
 import com.sustainablefarm.model.ComplianceRecord;
-import com.sustainablefarm.model.ComplianceRecord.ComplianceResult;
-import com.sustainablefarm.model.ComplianceRecord.ComplianceType;
 import com.sustainablefarm.model.Operator;
 import com.sustainablefarm.repository.BatchRepository;
 import com.sustainablefarm.repository.OperatorRepository;
 import com.sustainablefarm.service.ComplianceRecordService;
-import com.sustainablefarm.util.PaginationUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +23,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * REST Controller for ComplianceRecord operations
+ * 
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
+ */
 @RestController
 @RequestMapping("/api/compliance-records")
-@Tag(name = "Compliance Management", description = "APIs for HACCP compliance records and audits")
+@Tag(name = "Compliance Management", description = "APIs for managing HACCP compliance records")
 public class ComplianceRecordController {
 
     private final ComplianceRecordService complianceRecordService;
@@ -40,9 +41,9 @@ public class ComplianceRecordController {
 
     @Autowired
     public ComplianceRecordController(ComplianceRecordService complianceRecordService,
-                                      BatchRepository batchRepository,
-                                      OperatorRepository operatorRepository,
-                                      DtoMapper dtoMapper) {
+                                    BatchRepository batchRepository,
+                                    OperatorRepository operatorRepository,
+                                    DtoMapper dtoMapper) {
         this.complianceRecordService = complianceRecordService;
         this.batchRepository = batchRepository;
         this.operatorRepository = operatorRepository;
@@ -50,159 +51,149 @@ public class ComplianceRecordController {
     }
 
     @PostMapping
-    @Operation(summary = "Create compliance record")
-    public ResponseEntity<ComplianceRecordResponse> createComplianceRecord(
-            @Valid @RequestBody ComplianceRecordCreateRequest request) {
+    @Operation(summary = "Create a new compliance record", description = "Creates a new HACCP compliance record")
+    public ResponseEntity<ComplianceRecordResponse> createComplianceRecord(@Valid @RequestBody ComplianceRecordCreateRequest request) {
         Batch batch = batchRepository.findById(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
-        Operator auditor = resolveAuditor(request.getAuditorId());
-
+        
+        Operator auditor = null;
+        if (request.getAuditorId() != null) {
+            auditor = operatorRepository.findById(request.getAuditorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getAuditorId()));
+        }
+        
         ComplianceRecord record = dtoMapper.toEntity(request, batch, auditor);
-        ComplianceRecord created = complianceRecordService.createComplianceRecord(record);
-        return ResponseEntity.status(HttpStatus.CREATED).body(dtoMapper.toResponse(created));
+        ComplianceRecord createdRecord = complianceRecordService.createComplianceRecord(record);
+        ComplianceRecordResponse response = dtoMapper.toResponse(createdRecord);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{recordId}")
-    @Operation(summary = "Get compliance record by ID")
-    public ResponseEntity<ComplianceRecordResponse> getComplianceRecordById(@PathVariable String recordId) {
-        return ResponseEntity.ok(dtoMapper.toResponse(complianceRecordService.getComplianceRecordById(recordId)));
+    @Operation(summary = "Get compliance record by ID", description = "Retrieves a specific compliance record by its ID")
+    public ResponseEntity<ComplianceRecordResponse> getComplianceRecordById(
+            @Parameter(description = "Record ID") @PathVariable String recordId) {
+        ComplianceRecord record = complianceRecordService.getComplianceRecordById(recordId);
+        ComplianceRecordResponse response = dtoMapper.toResponse(record);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/batch/{batchId}")
+    @Operation(summary = "Get compliance records by batch", description = "Retrieves compliance records for a specific batch")
+    public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByBatch(
+            @Parameter(description = "Batch ID") @PathVariable String batchId) {
+        List<ComplianceRecord> records = complianceRecordService.getComplianceRecordsByBatch(batchId);
+        List<ComplianceRecordResponse> responses = records.stream()
+                .map(dtoMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping
-    @Operation(summary = "Get all compliance records (paginated)")
-    public ResponseEntity<PageResponse<ComplianceRecordResponse>> getAllComplianceRecords(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        List<ComplianceRecordResponse> responses = complianceRecordService.getAllComplianceRecords().stream()
+    @Operation(summary = "Get all compliance records", description = "Retrieves all compliance records")
+    public ResponseEntity<List<ComplianceRecordResponse>> getAllComplianceRecords() {
+        List<ComplianceRecord> records = complianceRecordService.getAllComplianceRecords();
+        List<ComplianceRecordResponse> responses = records.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(PaginationUtils.paginate(responses, page, size));
+        return ResponseEntity.ok(responses);
     }
 
     @PutMapping("/{recordId}")
-    @Operation(summary = "Update compliance record")
+    @Operation(summary = "Update compliance record", description = "Updates an existing compliance record")
     public ResponseEntity<ComplianceRecordResponse> updateComplianceRecord(
-            @PathVariable String recordId,
+            @Parameter(description = "Record ID") @PathVariable String recordId,
             @Valid @RequestBody ComplianceRecordUpdateRequest request) {
-        ComplianceRecord existing = complianceRecordService.getComplianceRecordById(recordId);
-        applyUpdate(existing, request);
-        ComplianceRecord updated = complianceRecordService.updateComplianceRecord(recordId, existing);
-        return ResponseEntity.ok(dtoMapper.toResponse(updated));
+        ComplianceRecord existingRecord = complianceRecordService.getComplianceRecordById(recordId);
+        
+        if (request.getComplianceType() != null) {
+            existingRecord.setComplianceType(request.getComplianceType());
+        }
+        if (request.getRequirement() != null) {
+            existingRecord.setRequirement(request.getRequirement());
+        }
+        if (request.getResult() != null) {
+            existingRecord.setResult(request.getResult());
+        }
+        if (request.getEvidence() != null) {
+            existingRecord.setEvidence(request.getEvidence());
+        }
+        if (request.getAuditorId() != null) {
+            Operator auditor = operatorRepository.findById(request.getAuditorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getAuditorId()));
+            existingRecord.setAuditor(auditor);
+        }
+        if (request.getAuditDate() != null) {
+            existingRecord.setAuditDate(request.getAuditDate());
+        }
+        if (request.getNextAuditDate() != null) {
+            existingRecord.setNextAuditDate(request.getNextAuditDate());
+        }
+        
+        ComplianceRecord updatedRecord = complianceRecordService.updateComplianceRecord(recordId, existingRecord);
+        ComplianceRecordResponse response = dtoMapper.toResponse(updatedRecord);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{recordId}")
-    @Operation(summary = "Delete compliance record")
-    public ResponseEntity<Void> deleteComplianceRecord(@PathVariable String recordId) {
+    @Operation(summary = "Delete compliance record", description = "Deletes a compliance record by its ID")
+    public ResponseEntity<Void> deleteComplianceRecord(
+            @Parameter(description = "Record ID") @PathVariable String recordId) {
         complianceRecordService.deleteComplianceRecord(recordId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{recordId}/complete-audit")
-    @Operation(summary = "Complete compliance audit")
-    public ResponseEntity<ComplianceRecordResponse> completeAudit(
-            @PathVariable String recordId,
-            @Valid @RequestBody ComplianceRecordCompleteAuditRequest request) {
-        ComplianceRecord record = complianceRecordService.completeAudit(
-                recordId, request.getResult(), request.getEvidence());
-        return ResponseEntity.ok(dtoMapper.toResponse(record));
-    }
-
-    @PostMapping("/{recordId}/schedule-audit")
-    @Operation(summary = "Schedule next compliance audit")
-    public ResponseEntity<ComplianceRecordResponse> scheduleNextAudit(
-            @PathVariable String recordId,
-            @Valid @RequestBody ComplianceRecordScheduleAuditRequest request) {
-        ComplianceRecord record = complianceRecordService.scheduleNextAudit(recordId, request.getNextAuditDate());
-        return ResponseEntity.ok(dtoMapper.toResponse(record));
-    }
-
-    @GetMapping("/batch/{batchId}")
-    @Operation(summary = "Get compliance records by batch")
-    public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByBatch(@PathVariable String batchId) {
-        List<ComplianceRecordResponse> responses = complianceRecordService.getComplianceRecordsByBatch(batchId).stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/overdue")
-    @Operation(summary = "Get overdue compliance audits")
-    public ResponseEntity<List<ComplianceRecordResponse>> getOverdueAudits() {
-        List<ComplianceRecordResponse> responses = complianceRecordService.getOverdueAudits().stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/pending")
-    @Operation(summary = "Get pending compliance records")
-    public ResponseEntity<List<ComplianceRecordResponse>> getPendingComplianceRecords() {
-        List<ComplianceRecordResponse> responses = complianceRecordService.getPendingComplianceRecords().stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/type/{type}")
-    @Operation(summary = "Get compliance records by type")
-    public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByType(@PathVariable ComplianceType type) {
-        List<ComplianceRecordResponse> responses = complianceRecordService.getComplianceRecordsByType(type).stream()
+    @GetMapping("/type/{complianceType}")
+    @Operation(summary = "Get compliance records by type", description = "Retrieves compliance records filtered by compliance type")
+    public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByType(
+            @Parameter(description = "Compliance type") @PathVariable com.sustainablefarm.model.ComplianceRecord.ComplianceType complianceType) {
+        List<ComplianceRecord> records = complianceRecordService.getComplianceRecordsByType(complianceType);
+        List<ComplianceRecordResponse> responses = records.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/result/{result}")
-    @Operation(summary = "Get compliance records by result")
+    @Operation(summary = "Get compliance records by result", description = "Retrieves compliance records filtered by result")
     public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByResult(
-            @PathVariable ComplianceResult result) {
-        List<ComplianceRecordResponse> responses = complianceRecordService.getComplianceRecordsByResult(result).stream()
+            @Parameter(description = "Compliance result") @PathVariable com.sustainablefarm.model.ComplianceRecord.ComplianceResult result) {
+        List<ComplianceRecord> records = complianceRecordService.getComplianceRecordsByResult(result);
+        List<ComplianceRecordResponse> responses = records.stream()
+                .map(dtoMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/auditor/{auditorId}")
+    @Operation(summary = "Get compliance records by auditor", description = "Retrieves compliance records filtered by auditor")
+    public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByAuditor(
+            @Parameter(description = "Auditor ID") @PathVariable String auditorId) {
+        List<ComplianceRecord> records = complianceRecordService.getComplianceRecordsByAuditor(auditorId);
+        List<ComplianceRecordResponse> responses = records.stream()
+                .map(dtoMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/overdue")
+    @Operation(summary = "Get overdue compliance records", description = "Retrieves compliance records with overdue next audit dates")
+    public ResponseEntity<List<ComplianceRecordResponse>> getOverdueComplianceRecords() {
+        List<ComplianceRecord> records = complianceRecordService.getOverdueAudits();
+        List<ComplianceRecordResponse> responses = records.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/date-range")
-    @Operation(summary = "Get compliance records by audit date range")
+    @Operation(summary = "Get compliance records by audit date range", description = "Retrieves compliance records within an audit date range")
     public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByDateRange(
-            @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate) {
-        List<ComplianceRecordResponse> responses = complianceRecordService
-                .getComplianceRecordsByDateRange(startDate, endDate).stream()
+            @Parameter(description = "Start date") @RequestParam LocalDate startDate,
+            @Parameter(description = "End date") @RequestParam LocalDate endDate) {
+        List<ComplianceRecord> records = complianceRecordService.getComplianceRecordsByDateRange(startDate, endDate);
+        List<ComplianceRecordResponse> responses = records.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
-    }
-
-    private void applyUpdate(ComplianceRecord existing, ComplianceRecordUpdateRequest request) {
-        if (request.getComplianceType() != null) {
-            existing.setComplianceType(request.getComplianceType());
-        }
-        if (request.getRequirement() != null) {
-            existing.setRequirement(request.getRequirement());
-        }
-        if (request.getResult() != null) {
-            existing.setResult(request.getResult());
-        }
-        if (request.getEvidence() != null) {
-            existing.setEvidence(request.getEvidence());
-        }
-        if (request.getAuditorId() != null) {
-            existing.setAuditor(resolveAuditor(request.getAuditorId()));
-        }
-        if (request.getAuditDate() != null) {
-            existing.setAuditDate(request.getAuditDate());
-        }
-        if (request.getNextAuditDate() != null) {
-            existing.setNextAuditDate(request.getNextAuditDate());
-        }
-    }
-
-    private Operator resolveAuditor(String auditorId) {
-        if (auditorId == null) {
-            return null;
-        }
-        return operatorRepository.findById(auditorId)
-                .orElseThrow(() -> new IllegalArgumentException("Auditor not found with ID: " + auditorId));
     }
 }

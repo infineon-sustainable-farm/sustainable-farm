@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -33,7 +34,7 @@ public class BatchCreateRequest {
 
     @NotNull(message = "Harvest quantity is required")
     @Positive(message = "Harvest quantity must be positive")
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
 
     @NotBlank(message = "Farm ID is required")
     private String farmId;

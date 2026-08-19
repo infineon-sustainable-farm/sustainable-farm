@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -162,10 +163,10 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
         );
         
         // Filter by variety and week (simplified logic)
-        double totalQuantity = harvestEvents.stream()
+        BigDecimal totalQuantity = harvestEvents.stream()
             .filter(he -> he.getMangoVariety() == variety)
-            .mapToDouble(HarvestEvent::getHarvestQuantityKg)
-            .sum();
+            .map(HarvestEvent::getHarvestQuantityKg)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         // Calculate quality grade distribution
         long gradeACount = harvestEvents.stream()
@@ -190,9 +191,9 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
         historicalHarvest.setHarvestQuantityKg(totalQuantity);
         
         if (totalGraded > 0) {
-            historicalHarvest.setQualityGradeAPct((gradeACount * 100.0) / totalGraded);
-            historicalHarvest.setQualityGradeBPct((gradeBCount * 100.0) / totalGraded);
-            historicalHarvest.setQualityGradeCPct((gradeCCount * 100.0) / totalGraded);
+            historicalHarvest.setQualityGradeAPct(new BigDecimal(gradeACount * 100.0).divide(new BigDecimal(totalGraded), 2, java.math.RoundingMode.HALF_UP));
+            historicalHarvest.setQualityGradeBPct(new BigDecimal(gradeBCount * 100.0).divide(new BigDecimal(totalGraded), 2, java.math.RoundingMode.HALF_UP));
+            historicalHarvest.setQualityGradeCPct(new BigDecimal(gradeCCount * 100.0).divide(new BigDecimal(totalGraded), 2, java.math.RoundingMode.HALF_UP));
         }
         
         return historicalHarvestRepository.save(historicalHarvest);

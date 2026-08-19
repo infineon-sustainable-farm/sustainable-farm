@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 /**
  * RawIntake Entity
@@ -48,7 +49,7 @@ public class RawIntake {
     private LocalDate intakeDate;
 
     @Column(name = "received_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double receivedQuantityKg;
+    private BigDecimal receivedQuantityKg;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "received_variety", nullable = false, length = 20)

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 /**
  * PackagingRecord Entity
@@ -45,7 +46,7 @@ public class PackagingRecord {
     private PackageType packageType;
 
     @Column(name = "package_quantity_kg", nullable = false, precision = 10, scale = 2)
-    private Double packageQuantityKg;
+    private BigDecimal packageQuantityKg;
 
     @Column(name = "lot_code", nullable = false, unique = true, length = 50)
     private String lotCode;

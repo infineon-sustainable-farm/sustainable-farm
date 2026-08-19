@@ -42,8 +42,8 @@ class EquipmentServiceTest {
         testEquipment.setEquipmentId("EQ-001");
         testEquipment.setEquipmentName("Washing Machine 1");
         testEquipment.setEquipmentType(EquipmentType.WASHING);
-        testEquipment.setCapacityKgPerHour(500.0);
-        testEquipment.setEnergyConsumptionKwhPerKg(0.5);
+        testEquipment.setCapacityKgPerHour(new java.math.BigDecimal("500.0"));
+        testEquipment.setEnergyConsumptionKwhPerKg(new java.math.BigDecimal("0.5"));
         testEquipment.setLocation("Production Line A");
         testEquipment.setMaintenanceStatus(MaintenanceStatus.ACTIVE);
     }

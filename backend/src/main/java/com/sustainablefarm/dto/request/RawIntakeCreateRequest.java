@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -39,7 +40,7 @@ public class RawIntakeCreateRequest {
 
     @NotNull(message = "Received quantity is required")
     @Positive(message = "Received quantity must be positive")
-    private Double receivedQuantityKg;
+    private BigDecimal receivedQuantityKg;
 
     @NotNull(message = "Received variety is required")
     private MangoVariety receivedVariety;

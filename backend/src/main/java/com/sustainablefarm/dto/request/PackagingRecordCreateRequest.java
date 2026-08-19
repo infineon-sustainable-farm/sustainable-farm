@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -32,7 +33,7 @@ public class PackagingRecordCreateRequest {
 
     @NotNull(message = "Package quantity is required")
     @Positive(message = "Package quantity must be positive")
-    private Double packageQuantityKg;
+    private BigDecimal packageQuantityKg;
 
     @NotBlank(message = "Lot code is mandatory for traceability compliance")
     private String lotCode;

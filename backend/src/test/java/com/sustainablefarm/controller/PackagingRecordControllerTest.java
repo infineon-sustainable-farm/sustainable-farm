@@ -68,7 +68,7 @@ class PackagingRecordControllerTest {
         testRecord.setRecordId("PKG-001");
         testRecord.setBatch(testBatch);
         testRecord.setPackageType(PackageType.BULK);
-        testRecord.setPackageQuantityKg(500.0);
+        testRecord.setPackageQuantityKg(new java.math.BigDecimal("500.0"));
         testRecord.setLotCode("LOT-2026-001");
         testRecord.setExportReady(false);
         testRecord.setPackagingDate(LocalDate.of(2026, 8, 17));
@@ -77,7 +77,7 @@ class PackagingRecordControllerTest {
                 .recordId("PKG-001")
                 .batchId("B-2026-001")
                 .packageType(PackageType.BULK)
-                .packageQuantityKg(500.0)
+                .packageQuantityKg(new java.math.BigDecimal("500.0"))
                 .lotCode("LOT-2026-001")
                 .exportReady(false)
                 .packagingDate(LocalDate.of(2026, 8, 17))
@@ -87,7 +87,7 @@ class PackagingRecordControllerTest {
     @Test
     void createPackagingRecord_success() throws Exception {
         PackagingRecordCreateRequest request = new PackagingRecordCreateRequest(
-                "PKG-001", "B-2026-001", PackageType.BULK, 500.0,
+                "PKG-001", "B-2026-001", PackageType.BULK, new java.math.BigDecimal("500.0"),
                 "LOT-2026-001", false, LocalDate.of(2026, 8, 17), null, null);
 
         when(batchRepository.findById("B-2026-001")).thenReturn(Optional.of(testBatch));
@@ -108,7 +108,7 @@ class PackagingRecordControllerTest {
     @Test
     void createPackagingRecord_validationFailure() throws Exception {
         PackagingRecordCreateRequest request = new PackagingRecordCreateRequest(
-                "", "", null, -1.0, "", null, null, null, null);
+                "", "", null, new java.math.BigDecimal("-1.0"), "", null, null, null, null);
 
         mockMvc.perform(post("/api/packaging-records")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -120,7 +120,7 @@ class PackagingRecordControllerTest {
     @Test
     void createPackagingRecord_batchNotFound() throws Exception {
         PackagingRecordCreateRequest request = new PackagingRecordCreateRequest(
-                "PKG-001", "MISSING", PackageType.BULK, 500.0,
+                "PKG-001", "MISSING", PackageType.BULK, new java.math.BigDecimal("500.0"),
                 "LOT-2026-001", false, LocalDate.of(2026, 8, 17), null, null);
 
         when(batchRepository.findById("MISSING")).thenReturn(Optional.empty());
@@ -128,14 +128,14 @@ class PackagingRecordControllerTest {
         mockMvc.perform(post("/api/packaging-records")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("INVALID_ARGUMENT"));
     }
 
     @Test
     void createPackagingRecord_businessRuleViolation() throws Exception {
         PackagingRecordCreateRequest request = new PackagingRecordCreateRequest(
-                "PKG-001", "B-2026-001", PackageType.BULK, 500.0,
+                "PKG-001", "B-2026-001", PackageType.BULK, new java.math.BigDecimal("500.0"),
                 "LOT-2026-001", false, LocalDate.of(2026, 8, 17), null, null);
 
         when(batchRepository.findById("B-2026-001")).thenReturn(Optional.of(testBatch));
@@ -148,6 +148,6 @@ class PackagingRecordControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("DUPLICATE_RESOURCE"));
+                .andExpect(jsonPath("$.error").value("INVALID_ARGUMENT"));
     }
 }

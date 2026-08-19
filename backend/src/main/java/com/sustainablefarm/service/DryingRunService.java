@@ -2,6 +2,7 @@ package com.sustainablefarm.service;
 
 import com.sustainablefarm.model.DryingRun;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -99,5 +100,5 @@ public interface DryingRunService {
      * Complete drying run with final moisture validation
      * Business Rule: End moisture content must be 6-18% for EU compliance
      */
-    DryingRun completeDryingRun(String runId, Double endMoisturePct);
+    DryingRun completeDryingRun(String runId, BigDecimal endMoisturePct);
 }

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -22,10 +23,10 @@ public class WashSortRecordResponse {
 
     private String recordId;
     private String batchId;
-    private Double inputQuantityKg;
-    private Double outputQuantityKg;
-    private Double wasteQuantityKg;
-    private Double waterUsageLiters;
+    private BigDecimal inputQuantityKg;
+    private BigDecimal outputQuantityKg;
+    private BigDecimal wasteQuantityKg;
+    private BigDecimal waterUsageLiters;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String equipmentId;

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -29,19 +30,19 @@ public class WashSortRecordCreateRequest {
 
     @NotNull(message = "Input quantity is required")
     @Positive(message = "Input quantity must be positive")
-    private Double inputQuantityKg;
+    private BigDecimal inputQuantityKg;
 
     @NotNull(message = "Output quantity is required")
     @Positive(message = "Output quantity must be positive")
-    private Double outputQuantityKg;
+    private BigDecimal outputQuantityKg;
 
     @NotNull(message = "Waste quantity is required")
     @PositiveOrZero(message = "Waste quantity cannot be negative")
-    private Double wasteQuantityKg;
+    private BigDecimal wasteQuantityKg;
 
     @NotNull(message = "Water usage is required")
     @PositiveOrZero(message = "Water usage cannot be negative")
-    private Double waterUsageLiters;
+    private BigDecimal waterUsageLiters;
 
     @NotNull(message = "Start time is required")
     private LocalDateTime startTime;

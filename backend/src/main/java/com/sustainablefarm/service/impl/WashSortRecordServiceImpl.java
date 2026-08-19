@@ -1,5 +1,7 @@
 package com.sustainablefarm.service.impl;
 
+import com.sustainablefarm.exception.BusinessRuleViolationException;
+import com.sustainablefarm.exception.ResourceNotFoundException;
 import com.sustainablefarm.model.WashSortRecord;
 import com.sustainablefarm.model.Equipment;
 import com.sustainablefarm.model.Operator;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -50,10 +53,10 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
             Equipment equipment = washSortRecord.getEquipment();
             // Verify equipment exists and is available
             Equipment dbEquipment = equipmentRepository.findById(equipment.getEquipmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + equipment.getEquipmentId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with ID: " + equipment.getEquipmentId()));
             
             if (dbEquipment.getMaintenanceStatus() != Equipment.MaintenanceStatus.ACTIVE) {
-                throw new IllegalArgumentException(
+                throw new BusinessRuleViolationException(
                     "Equipment is not available for washing. Equipment ID: " + equipment.getEquipmentId() + 
                     " must be in ACTIVE status. Current status: " + dbEquipment.getMaintenanceStatus()
                 );
@@ -65,10 +68,10 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
             Operator operator = washSortRecord.getOperator();
             // Verify operator exists and is active
             Operator dbOperator = operatorRepository.findById(operator.getOperatorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operator.getOperatorId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Operator not found with ID: " + operator.getOperatorId()));
             
             if (dbOperator.getActiveStatus() != Operator.ActiveStatus.ACTIVE) {
-                throw new IllegalArgumentException(
+                throw new BusinessRuleViolationException(
                     "Operator is not active for washing. Operator ID: " + operator.getOperatorId() + 
                     " must be in ACTIVE status. Current status: " + dbOperator.getActiveStatus()
                 );
@@ -76,7 +79,7 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
             
             // Verify operator has appropriate role for washing operations
             if (dbOperator.getRole() != Operator.Role.WASHER) {
-                throw new IllegalArgumentException(
+                throw new BusinessRuleViolationException(
                     "Operator must have WASHER role for washing operations. Operator ID: " + operator.getOperatorId() + 
                     ", Current role: " + dbOperator.getRole()
                 );
@@ -106,7 +109,7 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
     @Override
     public void deleteWashSortRecord(String recordId) {
         if (!washSortRecordRepository.existsById(recordId)) {
-            throw new IllegalArgumentException("Wash sort record not found with ID: " + recordId);
+            throw new ResourceNotFoundException("Wash sort record not found with ID: " + recordId);
         }
         washSortRecordRepository.deleteById(recordId);
     }
@@ -115,7 +118,7 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
     @Transactional(readOnly = true)
     public WashSortRecord getWashSortRecordById(String recordId) {
         return washSortRecordRepository.findById(recordId)
-                .orElseThrow(() -> new IllegalArgumentException("Wash sort record not found with ID: " + recordId));
+                .orElseThrow(() -> new ResourceNotFoundException("Wash sort record not found with ID: " + recordId));
     }
 
     @Override
@@ -173,16 +176,16 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
     }
 
     @Override
-    public WashSortRecord completeWashSortRecord(String recordId, Double outputQuantityKg, Double wasteQuantityKg) {
+    public WashSortRecord completeWashSortRecord(String recordId, BigDecimal outputQuantityKg, BigDecimal wasteQuantityKg) {
         WashSortRecord record = getWashSortRecordById(recordId);
         
         // Validate quantities
-        if (outputQuantityKg < 0) {
-            throw new IllegalArgumentException("Output quantity cannot be negative");
+        if (outputQuantityKg.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessRuleViolationException("Output quantity cannot be negative");
         }
         
-        if (wasteQuantityKg < 0) {
-            throw new IllegalArgumentException("Waste quantity cannot be negative");
+        if (wasteQuantityKg.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessRuleViolationException("Waste quantity cannot be negative");
         }
         
         // Update final quantities

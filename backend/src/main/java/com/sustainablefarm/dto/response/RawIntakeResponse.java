@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
@@ -27,7 +28,7 @@ public class RawIntakeResponse {
     private String sourceFarm;
     private String sourceBlock;
     private LocalDate intakeDate;
-    private Double receivedQuantityKg;
+    private BigDecimal receivedQuantityKg;
     private MangoVariety receivedVariety;
     private QualityGrade receivedGrade;
     private String intakeOperator;

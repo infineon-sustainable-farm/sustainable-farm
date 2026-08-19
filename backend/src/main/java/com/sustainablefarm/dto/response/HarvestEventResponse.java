@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -30,7 +31,7 @@ public class HarvestEventResponse {
     private MangoVariety mangoVariety;
     private String farmId;
     private String blockId;
-    private Double harvestQuantityKg;
+    private BigDecimal harvestQuantityKg;
     private QualityGrade qualityGrade;
     private String qualityGradeDescription;
     private String harvestTeamId;

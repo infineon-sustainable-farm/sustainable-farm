@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 /**
  * Equipment Entity
@@ -40,10 +41,10 @@ public class Equipment {
     private EquipmentType equipmentType;
 
     @Column(name = "capacity_kg_per_hour", nullable = false, precision = 10, scale = 2)
-    private Double capacityKgPerHour;
+    private BigDecimal capacityKgPerHour;
 
     @Column(name = "energy_consumption_kwh_per_kg", nullable = false, precision = 10, scale = 4)
-    private Double energyConsumptionKwhPerKg;
+    private BigDecimal energyConsumptionKwhPerKg;
 
     @Column(name = "location", length = 100)
     private String location;
