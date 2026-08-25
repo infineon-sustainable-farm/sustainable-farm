@@ -1,14 +1,44 @@
+import { useState, useEffect } from 'react'
+import { WaterSupplyApp } from './features/watersupply/components/WaterSupplyApp'
+import { LoginForm } from './features/watersupply/components/LoginForm'
+import { useAuth } from './shared/hooks/useAuth'
+import { getToken } from './shared/api/client'
+
 function App() {
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [checking, setChecking] = useState(true)
+  const { user, logout } = useAuth()
+
+  // Check if a token already exists on mount
+  useEffect(() => {
+    const token = getToken()
+    if (token) {
+      setLoggedIn(true)
+    }
+    setChecking(false)
+  }, [])
+
+  const handleLogin = (response) => {
+    setLoggedIn(true)
+  }
+
+  const handleLogout = () => {
+    logout()
+    setLoggedIn(false)
+  }
+
+  if (checking) {
+    return <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', fontFamily: 'Inter, sans-serif', color: '#6b7a78' }}>Loading...</div>
+  }
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white text-center px-4">
-      <img src="/logo.webp" alt="Sustainable Farm logo" className="w-24 h-24 mb-6" />
-      <h1 className="font-heading text-3xl font-bold text-primary mb-2">
-        Sustainable Farm Platform
-      </h1>
-      <p className="font-sans text-gray-600">
-        You're ready to start.
-      </p>
-    </div>
+    <>
+      {loggedIn ? (
+        <WaterSupplyApp user={user} onLogout={handleLogout} />
+      ) : (
+        <LoginForm onLogin={handleLogin} />
+      )}
+    </>
   )
 }
 

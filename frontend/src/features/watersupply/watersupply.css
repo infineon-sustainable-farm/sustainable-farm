@@ -1,0 +1,716 @@
+/* ============================================
+   Water Supply Management - Design System
+   Based on the NADINGA template mockup
+   ============================================ */
+
+:root {
+  --ws-primary: #0a8276;
+  --ws-primary-dark: #07655c;
+  --ws-primary-tint: #e3f2ef;
+  --ws-orange: #ef6c00;
+  --ws-orange-tint: #fdf1e6;
+  --ws-red: #c62828;
+  --ws-red-tint: #fbeaea;
+  --ws-green: #4caf50;
+  --ws-green-tint: #eef8ef;
+  --ws-blue: #2764b8;
+  --ws-blue-tint: #eaf1fb;
+  --ws-ink: #1c2b29;
+  --ws-muted: #6b7a78;
+  --ws-line: #e2e9e7;
+  --ws-bg: #f6f8f8;
+  --ws-card: #ffffff;
+  --ws-sidebar-w: 264px;
+}
+
+.ws-app {
+  min-height: 100vh;
+  background: var(--ws-bg);
+  color: var(--ws-ink);
+  font-family: 'Inter', Arial, sans-serif;
+  display: flex;
+}
+
+.ws-app h1, .ws-app h2, .ws-app h3,
+.ws-module-name, .ws-value, .ws-kpi-value {
+  font-family: 'Montserrat', Arial, sans-serif;
+}
+
+/* ============ SIDEBAR ============ */
+.ws-sidebar {
+  width: var(--ws-sidebar-w);
+  min-width: var(--ws-sidebar-w);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--ws-primary);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 20px;
+  z-index: 10;
+}
+
+.ws-sidebar-top { padding: 0 24px; }
+
+.ws-app-logo {
+  display: block;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #fff;
+  object-fit: contain;
+  padding: 10px;
+  margin: 0 auto 16px;
+}
+
+.ws-module-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 18px;
+}
+
+.ws-sidebar hr {
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,.18);
+  margin: 0 24px 14px;
+}
+
+.ws-main-nav {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 14px;
+}
+
+.ws-nav-section-label {
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.48);
+  font-weight: 700;
+  padding: 16px 14px 6px;
+}
+
+.ws-nav-item, .ws-logout-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.84);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 3px;
+  font-family: inherit;
+}
+
+.ws-nav-item svg, .ws-logout-item svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.ws-nav-item:hover, .ws-logout-item:hover {
+  background: rgba(255,255,255,.09);
+  color: #fff;
+}
+
+.ws-nav-item.active {
+  background: rgba(255,255,255,.17);
+  color: #fff;
+  box-shadow: inset 3px 0 0 #fff;
+}
+
+.ws-sidebar-bottom { padding: 14px 14px 0; }
+
+/* ============ MAIN ============ */
+.ws-main {
+  flex: 1;
+  min-width: 0;
+  padding: 34px 42px 50px;
+}
+
+.ws-view { display: none; }
+.ws-view.active { display: block; }
+
+/* ============ TOPBAR ============ */
+.ws-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.ws-title-block { padding-bottom: 18px; border-bottom: 1px solid var(--ws-line); flex: 1; }
+
+.ws-title-block h1 {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 800;
+  color: var(--ws-primary);
+}
+
+.ws-title-block p {
+  margin: 5px 0 0;
+  color: var(--ws-muted);
+  font-size: 14px;
+}
+
+.ws-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.ws-user-chip span { font-size: 14px; font-weight: 700; }
+
+.ws-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--ws-primary-tint);
+  color: var(--ws-primary-dark);
+  display: grid;
+  place-items: center;
+  font: 800 13px Montserrat, Arial;
+}
+
+/* ============ KPI GRID ============ */
+.ws-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.ws-kpi-card, .ws-panel, .ws-feature-card {
+  background: var(--ws-card);
+  border: 1px solid var(--ws-line);
+  border-radius: 10px;
+}
+
+.ws-kpi-card {
+  padding: 20px 22px;
+  border-top: 4px solid var(--ws-primary);
+}
+
+.ws-kpi-card:hover, .ws-feature-card:hover, .ws-panel.hoverable:hover {
+  box-shadow: 0 8px 22px rgba(10,130,118,.12);
+}
+
+.ws-kpi-label {
+  font-size: 11.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.ws-kpi-value { font-size: 32px; font-weight: 800; }
+
+.ws-kpi-card.hero {
+  background: var(--ws-primary);
+  color: #fff;
+  border-top-color: var(--ws-green);
+}
+
+.ws-kpi-card.hero .ws-kpi-label { color: rgba(255,255,255,.74); }
+.ws-kpi-card.hero .ws-kpi-value { color: #fff; }
+.ws-kpi-card.orange .ws-kpi-value { color: var(--ws-orange); }
+
+/* ============ SECTION HEADING ============ */
+.ws-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px 0 16px;
+}
+
+.ws-section-heading h2 { margin: 0; font-size: 17px; }
+.ws-section-heading span { color: var(--ws-muted); font-size: 13px; }
+
+/* ============ FEATURE GRID ============ */
+.ws-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 20px;
+}
+
+.ws-feature-card {
+  padding: 22px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 220px;
+}
+
+.ws-feature-icon, .ws-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--ws-primary-tint);
+  color: var(--ws-primary-dark);
+  display: grid;
+  place-items: center;
+}
+
+.ws-feature-icon svg, .ws-icon-wrap svg { width: 22px; height: 22px; }
+
+.ws-feature-card h3 { margin: 0; font-size: 15px; line-height: 1.35; }
+.ws-feature-card p { margin: 0; color: var(--ws-muted); font-size: 12.8px; line-height: 1.55; flex: 1; }
+
+/* ============ DASHBOARD GRID ============ */
+.ws-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.35fr .95fr;
+  gap: 22px;
+  align-items: start;
+  margin-top: 22px;
+}
+
+.ws-dashboard-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.ws-status-card {
+  background: #fff;
+  border: 1px solid var(--ws-line);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.ws-status-card strong {
+  display: block;
+  font: 800 20px Montserrat, Arial;
+  margin: 8px 0 2px;
+}
+
+.ws-status-card span { color: var(--ws-muted); font-size: 12.5px; line-height: 1.45; }
+
+/* ============ SUMMARY LIST ============ */
+.ws-summary-list { display: grid; gap: 12px; }
+
+.ws-summary-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--ws-line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 13px 14px;
+}
+
+.ws-summary-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ws-primary);
+}
+
+.ws-summary-dot.orange { background: var(--ws-orange); }
+.ws-summary-dot.red { background: var(--ws-red); }
+.ws-summary-dot.green { background: var(--ws-green); }
+
+.ws-summary-title { font-size: 13px; font-weight: 800; }
+.ws-summary-title small {
+  display: block;
+  margin-top: 3px;
+  font-weight: 500;
+  color: var(--ws-muted);
+}
+
+/* ============ QUICK ACTIONS ============ */
+.ws-quick-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.ws-action-btn {
+  border: 0;
+  border-radius: 8px;
+  background: var(--ws-primary);
+  color: #fff;
+  padding: 10px 13px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ws-action-btn.secondary { background: var(--ws-primary-tint); color: var(--ws-primary-dark); }
+.ws-action-btn.warning { background: var(--ws-orange-tint); color: var(--ws-orange); }
+.ws-action-btn:hover { filter: brightness(.96); }
+
+/* ============ TAGS ============ */
+.ws-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ws-tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ws-tag.primary { background: var(--ws-primary-tint); color: var(--ws-primary-dark); }
+.ws-tag.green { background: var(--ws-green-tint); color: #2e7d32; }
+.ws-tag.orange { background: var(--ws-orange-tint); color: var(--ws-orange); }
+.ws-tag.red { background: var(--ws-red-tint); color: var(--ws-red); }
+.ws-tag.blue { background: var(--ws-blue-tint); color: var(--ws-blue); }
+
+/* ============ METRIC BANNER ============ */
+.ws-metric-banner {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.ws-metric-pill {
+  background: #fff;
+  border: 1px solid var(--ws-line);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ws-metric-pill .label {
+  font-size: 11px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+  font-weight: 800;
+}
+
+.ws-metric-pill .value {
+  font-size: 17px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+/* ============ LAYOUTS ============ */
+.ws-layout-2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 22px; align-items: start; }
+.ws-layout-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+
+/* ============ PANEL ============ */
+.ws-panel { overflow: hidden; }
+
+.ws-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--ws-line);
+}
+
+.ws-panel-header h2 { margin: 0; font-size: 15.5px; }
+.ws-panel-header span { color: var(--ws-muted); font-size: 12.5px; }
+
+.ws-panel-body { padding: 18px 22px; }
+
+/* ============ ROW ============ */
+.ws-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.25fr .85fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--ws-line);
+}
+
+.ws-row:last-child { border-bottom: 0; }
+
+.ws-row-title { font-size: 13.5px; font-weight: 800; }
+.ws-row-title small, .ws-row-detail small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ws-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.ws-row-detail { font-size: 13px; }
+
+.ws-actions { display: flex; gap: 8px; justify-self: end; }
+
+.ws-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--ws-line);
+  background: #fff;
+  color: var(--ws-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.ws-icon-btn svg { width: 15px; height: 15px; }
+.ws-icon-btn:hover { border-color: var(--ws-primary); color: var(--ws-primary-dark); background: var(--ws-primary-tint); }
+
+.ws-note {
+  grid-column: 1/-1;
+  background: var(--ws-red-tint);
+  border: 1px solid #f3c9c9;
+  color: #8f1f1f;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ws-stack { display: flex; flex-direction: column; gap: 18px; }
+
+/* ============ TABLE ============ */
+.ws-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.ws-table th {
+  text-align: left;
+  color: var(--ws-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  padding: 0 0 10px;
+}
+
+.ws-table td { padding: 13px 0; border-top: 1px solid var(--ws-line); vertical-align: middle; }
+
+/* ============ SWITCHER / CHIPS ============ */
+.ws-switcher { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.ws-chip {
+  border: 1px solid var(--ws-line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ws-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ws-chip.active { background: var(--ws-primary); border-color: var(--ws-primary); color: #fff; }
+
+/* ============ CHART ============ */
+.ws-chart {
+  height: 280px;
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  border-left: 1px solid var(--ws-line);
+  border-bottom: 1px solid var(--ws-line);
+  padding: 12px 10px 34px;
+  margin-top: 16px;
+  overflow: visible;
+}
+
+.ws-bar-pair {
+  flex: 1;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+  position: relative;
+}
+
+.ws-bar {
+  width: 34%;
+  min-width: 12px;
+  border-radius: 5px 5px 0 0;
+  background: var(--ws-primary);
+}
+
+.ws-bar.ref { background: #b9d9d5; }
+
+.ws-bar-pair span {
+  position: absolute;
+  bottom: -26px;
+  font-size: 11px;
+  color: var(--ws-muted);
+  white-space: nowrap;
+}
+
+/* ============ GAUGE / TANK ============ */
+.ws-gauge-wrap { display: grid; place-items: center; padding: 24px; }
+
+.ws-tank {
+  width: 190px;
+  height: 190px;
+  border: 10px solid var(--ws-line);
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.ws-tank::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 72%;
+  background: var(--ws-primary-tint);
+}
+
+.ws-tank .value {
+  position: relative;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--ws-primary-dark);
+}
+
+.ws-tank .sub {
+  position: relative;
+  color: var(--ws-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ============ ZONE GRID ============ */
+.ws-zone-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+
+.ws-zone-card { border: 1px solid var(--ws-line); border-radius: 10px; padding: 15px; background: #fff; }
+
+.ws-zone-card h3 { margin: 8px 0 4px; font-size: 14px; }
+
+.ws-flow {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ws-line);
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.ws-flow span { display: block; height: 100%; background: var(--ws-primary); border-radius: inherit; }
+.ws-flow.warn span { background: var(--ws-orange); }
+.ws-flow.danger span { background: var(--ws-red); }
+
+/* ============ RISK GAUGE ============ */
+.ws-risk-gauge {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ws-risk-step {
+  height: 44px;
+  border-radius: 8px;
+  background: var(--ws-line);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ws-muted);
+}
+
+.ws-risk-step.active:nth-child(1) { background: var(--ws-green-tint); color: #2e7d32; }
+.ws-risk-step.active:nth-child(2) { background: var(--ws-primary-tint); color: var(--ws-primary-dark); }
+.ws-risk-step.active:nth-child(3) { background: var(--ws-orange-tint); color: var(--ws-orange); }
+.ws-risk-step.active:nth-child(4) { background: var(--ws-red-tint); color: var(--ws-red); }
+
+.ws-timeline {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  height: 120px;
+  margin-top: 14px;
+}
+
+.ws-timeline span {
+  flex: 1;
+  border-radius: 6px 6px 0 0;
+  background: var(--ws-primary-tint);
+  border: 1px solid #c9dfdc;
+}
+
+.ws-timeline span.warn { background: var(--ws-orange-tint); border-color: #f2c99e; }
+.ws-timeline span.danger { background: var(--ws-red-tint); border-color: #edaeae; }
+
+/* ============ TOAST ============ */
+.ws-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  background: #102f2b;
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(0,0,0,.18);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: .2s ease;
+}
+
+.ws-toast.show { opacity: 1; transform: translateY(0); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1180px) {
+  .ws-kpi-grid, .ws-feature-grid, .ws-layout-3, .ws-dashboard-strip {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+  .ws-layout-2, .ws-dashboard-grid { grid-template-columns: 1fr; }
+  .ws-row { grid-template-columns: 1fr; }
+  .ws-actions { justify-self: start; }
+  .ws-note { grid-column: auto; }
+}
+
+@media (max-width: 760px) {
+  .ws-app { display: block; }
+  .ws-sidebar {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    position: relative;
+  }
+  .ws-main-nav { max-height: none; }
+  .ws-kpi-grid, .ws-feature-grid, .ws-metric-banner, .ws-layout-3, .ws-zone-grid, .ws-dashboard-strip {
+    grid-template-columns: 1fr;
+  }
+  .ws-main { padding: 24px; }
+  .ws-topbar { align-items: flex-start; }
+  .ws-user-chip { display: none; }
+  .ws-chart { gap: 8px; }
+  .ws-summary-item { grid-template-columns: 1fr; }
+  .ws-summary-dot { display: none; }
+}
