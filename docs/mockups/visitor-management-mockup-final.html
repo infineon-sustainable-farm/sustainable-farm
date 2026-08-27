@@ -29,6 +29,7 @@
   body{
     background:var(--bg);
     font-family:'Inter', sans-serif;
+    font-size:15px;
     color:var(--ink);
   }
   .app-shell{
@@ -129,9 +130,9 @@
     align-items:center;
     background:var(--white);
     border-radius:50%;
-    width:150px;
-    height:150px;
-    margin:6px auto 20px;
+    width:120px;
+    height:120px;
+    margin:6px auto 18px;
     padding:0;
     box-shadow:0 4px 18px rgba(0,0,0,0.18);
   }
@@ -139,7 +140,7 @@
   .side-nav .module-name{
     font-family:'Montserrat', sans-serif;
     font-weight:700;
-    font-size:12px;
+    font-size:14px;
     letter-spacing:0.06em;
     color:var(--white);
     text-transform:uppercase;
@@ -164,7 +165,7 @@
     padding:10px 12px;
     font-family:'Inter', sans-serif;
     font-weight:500;
-    font-size:13.5px;
+    font-size:14.5px;
     color:rgba(255,255,255,0.85);
     cursor:pointer;
     border-radius:7px;
@@ -186,7 +187,7 @@
     padding:10px 12px;
     font-family:'Inter', sans-serif;
     font-weight:500;
-    font-size:13.5px;
+    font-size:14.5px;
     color:rgba(255,255,255,0.85);
     cursor:pointer;
     border-radius:7px;
@@ -233,16 +234,17 @@
 
   .slot-actions{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
   .tiny-btn{
-    font-size:9px;
+    font-size:11px;
     color:var(--primary);
-    border:1px solid var(--line);
+    border:1px solid #C3D8D4;
     background:var(--white);
-    border-radius:3px;
-    padding:1px 5px;
+    border-radius:5px;
+    padding:3px 8px;
     cursor:pointer;
+    font-weight:600;
   }
-  .tiny-btn:hover{border-color:var(--primary);background:#F2FBF9;}
-  .tiny-btn.danger{color:var(--secondary-red);}
+  .tiny-btn:hover{border-color:var(--primary);background:#ECFAF7;}
+  .tiny-btn.danger{color:var(--secondary-red);border-color:#EDC9C9;}
   .tiny-btn.danger:hover{border-color:var(--secondary-red);background:#FBEAEA;}
 
   /* Dashboard */
@@ -451,16 +453,19 @@
   .stop .stop-title{font-family:'Montserrat', sans-serif;font-weight:700;font-size:16px;color:var(--primary-dark);}
   .stop .stop-meta{font-family:'Inter', sans-serif;font-size:11px;color:var(--grey);margin-top:2px;}
 
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th, td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th, td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tbody tr:hover{background:#F4F9F8;}
   th{
-    background:var(--primary-dark);color:var(--white);
-    font-family:'Inter', sans-serif;font-size:11px;
+    background:#F4F8F8;color:var(--ink);
+    font-family:'Inter', sans-serif;font-size:12px;font-weight:600;
     text-transform:uppercase;letter-spacing:0.03em;
+    border-bottom:2px solid var(--line);
+    white-space:nowrap;
   }
   .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
 
-  .tag{display:inline-block;padding:3px 9px;border-radius:11px;font-size:11px;font-family:'Inter', sans-serif;font-weight:600;}
+  .tag{display:inline-block;padding:3px 9px;border-radius:11px;font-size:12px;font-family:'Inter', sans-serif;font-weight:600;}
   .tag.done{background:#E7F5E8;color:var(--secondary-green);}
   .tag.pending{background:#FDF0E3;color:var(--secondary-orange);}
   .tag.cancelled{background:#FBEAEA;color:var(--secondary-red);}
@@ -667,7 +672,7 @@
             <div class="cell"><span class="slot">2/10</span><span class="slot-info">E. Kaboré (2)</span>
               <div class="slot-actions"><span class="tiny-btn">edit</span><span class="tiny-btn">cancel</span><span class="tiny-btn">done</span></div></div>
           </div>
-          <div class="footer-note">Max capacity: 10 visitors/slot · 2 slots per day · closed on Sundays. Each slot can be edited, cancelled or marked as completed. Guides: 3 (Alix, P. Nikiéma, S. Traoré). Holiday note: farm closed on Eid al-Adha.</div>
+          <div class="footer-note">Max capacity: 10 visitors/slot (limited by the smart irrigation & processing unit stops — Phares, Abdoul) · 2 slots per day · closed on Sundays. Each slot can be edited, cancelled or marked as completed. Guides: 3 (Alix, P. Nikiéma, S. Traoré). Holiday note: farm closed on Eid al-Adha.</div>
         </div>
       </div>
 
@@ -734,26 +739,30 @@
           <div class="stops">
             <div class="stop">
               <div class="stop-title">Welcome & safety briefing</div>
-              <div class="stop-meta">10 min · meeting point · access control notice (face recognition) · safety rules & zones</div>
+              <div class="stop-meta">5-10 min · meeting point · delivered by the Front Desk / Accueil · briefing strictly gates site access · content: site limits & zones, restricted zones, circulation, gate rules, PPE, fire & evacuation, emergency contact (Filomène)</div>
+            </div>
+            <div class="stop">
+              <div class="stop-title">Mango orchard</div>
+              <div class="stop-meta">20 min · variety Keitt, 200 trees over 2 ha, spacing 8×8 m · growth cycle 0-2 / 3-5 / 5-7 years · ~44,000 kg/year expected · tree health tracked in % · seasonal observation, fruits at harvest</div>
+            </div>
+            <div class="stop">
+              <div class="stop-title">Smart drip irrigation (orchard)</div>
+              <div class="stop-meta">10-15 min · pump + drip network (200 trees / 2 ha) · irrigation triggered by humidity threshold, not fixed calendar · demo: valve opening + live consumption meter · max 10 pers · watch slippery ground, electric pump area off-limits</div>
             </div>
             <div class="stop">
               <div class="stop-title">Solar plant & tracking system</div>
-              <div class="stop-meta">20 min · PV panels with solar tracker, Infineon sensors · 25 kW installed capacity</div>
+              <div class="stop-meta">15 min · capacity 15 pers (observation path) · 86.4 kWp installed, +20% yield with solar tracking · live dashboard screen (Infineon sensors) · ≈4,180 kg CO₂ avoided/month (≈-82% vs grid/diesel) · observation path only — always accompanied by a team member, don't touch panels/cabling; tracker, battery/inverter &amp; running generator are restricted</div>
             </div>
             <div class="stop">
-              <div class="stop-title">Mango orchard (Kent, Keitt, Amélie)</div>
-              <div class="stop-meta">20 min · smart drip irrigation, 200 trees over 2 ha · harvesting season Jun–Sep</div>
-            </div>
-            <div class="stop">
-              <div class="stop-title">Dryer & processing unit</div>
-              <div class="stop-meta">20 min · slicing, drying, packaging for export to Germany · HACCP hygiene rules</div>
+              <div class="stop-title">Processing unit (dried mango)</div>
+              <div class="stop-meta">20 min · capacity 10 pers · washing → slicing → drying → quality control → packaging → export · real live demo: slicing, refractometer QC, heat-sealing (drying takes days, too long for a live demo) · hygiene: lab coat, hairnet, adapted shoes · dried mango tasting</div>
             </div>
             <div class="stop">
               <div class="stop-title">Wrap-up & questions</div>
-              <div class="stop-meta">15 min · closing, hot feedback, translation support if needed</div>
+              <div class="stop-meta">15 min · closing, hot feedback on the tablet, translation support if needed</div>
             </div>
           </div>
-          <div class="footer-note">Standard tour — 85 min. Content validated by module owners (Aida, Jean-Louis, Delwende, Phares, Abdoul).</div>
+          <div class="footer-note">Standard tour — ~100 min. Capacity per stop: orchard & solar 15 pers (observation path), irrigation 10 pers, processing unit 10 pers → max 10 pers per slot (limiting: irrigation + processing unit). Content validated by module owners (Aida, Jean-Louis, Delwende, Phares, Abdoul).</div>
 
           <h3 class="section-title">Workshops & tour templates</h3>
           <div style="display:flex;gap:10px;margin-bottom:16px;">
@@ -774,7 +783,7 @@
           <table>
             <tr><th>Workshop / template</th><th>Duration</th><th>Target group</th><th>Facilitator</th><th>Status</th><th>Actions</th></tr>
             <tr>
-              <td>Standard farm tour</td><td>85 min</td><td>All</td><td>Alix</td><td><span class="tag done">Active</span></td>
+              <td>Standard farm tour</td><td>~100 min</td><td>All</td><td>Alix</td><td><span class="tag done">Active</span></td>
               <td><div class="row-actions"><span class="tiny-btn">✎ edit</span><span class="tiny-btn">assign</span><span class="tiny-btn danger">✕ deactivate</span></div></td>
             </tr>
             <tr>
@@ -797,6 +806,10 @@
       <div class="screen" id="safety">
         <div class="detail-panel">
           <h2>Safety briefing tracker</h2>
+
+          <div class="notice" style="margin-bottom:16px;">
+            <strong>Briefing process (Filomène — Site Security):</strong> 5-10 min at the meeting point, delivered by the Front Desk / Accueil · standard content listed (restricted zones, circulation, gate rules, PPE, fire &amp; evacuation, emergency contact) · proof = tablet checkbox + group-leader signature, timestamped, staff recorded · log retained 3 years, PDF-exportable · briefing <strong>strictly gates site access</strong> · missing briefing alerts Security agent + Front Desk (dashboard alert) · zoning Open → Controlled → Restricted → Critical · entry/exit access log per visitor.
+          </div>
 
           <div class="toolbar">
             <button class="btn">Record briefing</button>
@@ -831,7 +844,7 @@
               <td><div class="row-actions"><span class="tiny-btn">record</span><span class="tiny-btn">remind</span></div></td>
             </tr>
           </table>
-          <div class="footer-note">Every briefing is timestamped and linked to the group leader. Site access is BLOCKED until the briefing is marked as done. The log is exportable (PDF) for liability proof.</div>
+          <div class="footer-note">Every briefing is delivered by the Front Desk / Accueil at the meeting point, timestamped and recorded with the delivering staff. Proof = tablet checkbox + group-leader signature. Site access is STRICTLY BLOCKED until the briefing is marked as done; a missing briefing alerts the security agent + Front Desk (dashboard alert). The log is retained 3 years and exportable (PDF) for liability proof.</div>
         </div>
       </div>
 
