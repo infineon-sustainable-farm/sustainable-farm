@@ -1,8 +1,8 @@
 package com.sustainablefarm.service.impl;
 
-import com.sustainablefarm.exception.BusinessRuleViolationException;
-import com.sustainablefarm.exception.InvalidStateException;
-import com.sustainablefarm.exception.ResourceNotFoundException;
+import com.sustainablefarm.core.exception.BusinessRuleViolationException;
+import com.sustainablefarm.core.exception.InvalidStateException;
+import com.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.sustainablefarm.model.Batch;
 import com.sustainablefarm.model.Batch.BatchStatus;
 import com.sustainablefarm.model.HarvestEvent.MangoVariety;

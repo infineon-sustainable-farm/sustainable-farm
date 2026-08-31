@@ -1,5 +1,6 @@
-package com.sustainablefarm.dto.mapper;
+package com.sustainablefarm.core.dto.mapper;
 
+import com.sustainablefarm.core.dto.mapper.DtoMapper;
 import com.sustainablefarm.dto.request.BatchCreateRequest;
 import com.sustainablefarm.dto.response.BatchResponse;
 import com.sustainablefarm.model.Batch;

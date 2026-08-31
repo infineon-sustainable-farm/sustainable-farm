@@ -41,7 +41,7 @@ public class PackagingRecord {
     @EqualsAndHashCode.Exclude
     private Batch batch;
 
-    @Convert(converter = com.sustainablefarm.config.PackageTypeConverter.class)
+    @Convert(converter = com.sustainablefarm.core.config.PackageTypeConverter.class)
     @Column(name = "package_type", nullable = false, length = 20)
     private PackageType packageType;
 

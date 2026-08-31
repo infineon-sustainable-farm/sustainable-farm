@@ -87,8 +87,8 @@ class WashSortRecordServiceTest {
         when(equipmentRepository.findById("EQ-001")).thenReturn(java.util.Optional.of(inactiveEquipment));
         
         // When/Then
-        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
-            com.sustainablefarm.exception.BusinessRuleViolationException.class,
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
             () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
         );
         
@@ -108,8 +108,8 @@ class WashSortRecordServiceTest {
         when(operatorRepository.findById("OP-001")).thenReturn(java.util.Optional.of(inactiveOperator));
         
         // When/Then
-        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
-            com.sustainablefarm.exception.BusinessRuleViolationException.class,
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
             () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
         );
         
@@ -129,8 +129,8 @@ class WashSortRecordServiceTest {
         when(operatorRepository.findById("OP-001")).thenReturn(java.util.Optional.of(unauthorizedOperator));
         
         // When/Then
-        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
-            com.sustainablefarm.exception.BusinessRuleViolationException.class,
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
             () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
         );
         

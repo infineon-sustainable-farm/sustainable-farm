@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -76,8 +77,8 @@ class BatchServiceTest {
         when(batchRepository.findById("B-2026-001")).thenReturn(java.util.Optional.of(testBatch));
         
         // When/Then
-        com.sustainablefarm.exception.InvalidStateException exception = assertThrows(
-            com.sustainablefarm.exception.InvalidStateException.class,
+        com.sustainablefarm.core.exception.InvalidStateException exception = assertThrows(
+            com.sustainablefarm.core.exception.InvalidStateException.class,
             () -> batchService.advanceBatchStatus("B-2026-001")
         );
         
@@ -92,8 +93,8 @@ class BatchServiceTest {
         when(qcCheckpointService.countByBatchAndStage("B-2026-001", com.sustainablefarm.model.QcCheckpoint.QcStage.WASHING)).thenReturn(0L);
         
         // When/Then
-        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
-            com.sustainablefarm.exception.BusinessRuleViolationException.class,
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
             () -> batchService.advanceBatchStatus("B-2026-001")
         );
         
@@ -108,8 +109,8 @@ class BatchServiceTest {
         when(qcCheckpointService.countByBatchAndStage("B-2026-001", com.sustainablefarm.model.QcCheckpoint.QcStage.COOLING)).thenReturn(0L);
         
         // When/Then
-        com.sustainablefarm.exception.BusinessRuleViolationException exception = assertThrows(
-            com.sustainablefarm.exception.BusinessRuleViolationException.class,
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
             () -> batchService.advanceBatchStatus("B-2026-001")
         );
         

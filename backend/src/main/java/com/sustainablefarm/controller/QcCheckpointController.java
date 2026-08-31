@@ -1,6 +1,6 @@
 package com.sustainablefarm.controller;
 
-import com.sustainablefarm.dto.mapper.DtoMapper;
+import com.sustainablefarm.core.dto.mapper.DtoMapper;
 import com.sustainablefarm.dto.request.QcCheckpointCreateRequest;
 import com.sustainablefarm.dto.request.QcCheckpointUpdateRequest;
 import com.sustainablefarm.dto.response.QcCheckpointResponse;

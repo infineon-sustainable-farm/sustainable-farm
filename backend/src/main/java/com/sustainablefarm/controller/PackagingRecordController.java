@@ -1,6 +1,6 @@
 package com.sustainablefarm.controller;
 
-import com.sustainablefarm.dto.mapper.DtoMapper;
+import com.sustainablefarm.core.dto.mapper.DtoMapper;
 import com.sustainablefarm.dto.request.PackagingRecordCreateRequest;
 import com.sustainablefarm.dto.request.PackagingRecordExportReadyRequest;
 import com.sustainablefarm.dto.request.PackagingRecordUpdateRequest;

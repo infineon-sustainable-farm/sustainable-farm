@@ -1,4 +1,4 @@
-package com.sustainablefarm.exception;
+package com.sustainablefarm.core.exception;
 
 /**
  * Categorization of API error responses.

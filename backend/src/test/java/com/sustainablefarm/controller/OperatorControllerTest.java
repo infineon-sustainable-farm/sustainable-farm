@@ -1,10 +1,10 @@
 package com.sustainablefarm.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sustainablefarm.dto.mapper.DtoMapper;
+import com.sustainablefarm.core.dto.mapper.DtoMapper;
 import com.sustainablefarm.dto.request.OperatorCreateRequest;
 import com.sustainablefarm.dto.response.OperatorResponse;
-import com.sustainablefarm.exception.GlobalExceptionHandler;
+import com.sustainablefarm.core.exception.GlobalExceptionHandler;
 import com.sustainablefarm.model.Operator;
 import com.sustainablefarm.model.Operator.ActiveStatus;
 import com.sustainablefarm.model.Operator.Role;
@@ -96,7 +96,7 @@ class OperatorControllerTest {
     @Test
     void getOperatorById_notFound() throws Exception {
         when(operatorService.getOperatorById("MISSING"))
-                .thenThrow(new com.sustainablefarm.exception.ResourceNotFoundException("Operator not found with ID: MISSING"));
+                .thenThrow(new com.sustainablefarm.core.exception.ResourceNotFoundException("Operator not found with ID: MISSING"));
 
         mockMvc.perform(get("/api/operators/MISSING"))
                 .andExpect(status().isNotFound())

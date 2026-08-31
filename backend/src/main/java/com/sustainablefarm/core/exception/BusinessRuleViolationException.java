@@ -1,4 +1,4 @@
-package com.sustainablefarm.exception;
+package com.sustainablefarm.core.exception;
 
 /**
  * Exception thrown when a business rule is violated

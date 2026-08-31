@@ -1,4 +1,4 @@
-package com.sustainablefarm.dto.response;
+package com.sustainablefarm.core.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

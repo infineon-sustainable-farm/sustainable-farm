@@ -1,10 +1,10 @@
 package com.sustainablefarm.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sustainablefarm.dto.mapper.DtoMapper;
+import com.sustainablefarm.core.dto.mapper.DtoMapper;
 import com.sustainablefarm.dto.request.PackagingRecordCreateRequest;
 import com.sustainablefarm.dto.response.PackagingRecordResponse;
-import com.sustainablefarm.exception.GlobalExceptionHandler;
+import com.sustainablefarm.core.exception.GlobalExceptionHandler;
 import com.sustainablefarm.model.Batch;
 import com.sustainablefarm.model.PackagingRecord;
 import com.sustainablefarm.model.PackagingRecord.PackageType;
@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 

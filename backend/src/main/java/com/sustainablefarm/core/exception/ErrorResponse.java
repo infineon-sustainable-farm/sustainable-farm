@@ -1,4 +1,4 @@
-package com.sustainablefarm.exception;
+package com.sustainablefarm.core.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

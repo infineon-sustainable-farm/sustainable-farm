@@ -1,4 +1,4 @@
-package com.sustainablefarm.config;
+package com.sustainablefarm.core.config;
 
 import com.sustainablefarm.model.PackagingRecord.PackageType;
 import jakarta.persistence.AttributeConverter;

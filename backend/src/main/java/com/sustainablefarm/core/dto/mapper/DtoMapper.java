@@ -1,4 +1,4 @@
-package com.sustainablefarm.dto.mapper;
+package com.sustainablefarm.core.dto.mapper;
 
 import com.sustainablefarm.dto.request.*;
 import com.sustainablefarm.dto.response.*;
