@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,6 +46,12 @@ public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Stri
      * Find QC checkpoints by date range
      */
     List<QcCheckpoint> findByCheckpointTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Find QC checkpoints by checkpoint date range (LocalDate)
+     */
+    @Query("SELECT q FROM QcCheckpoint q WHERE DATE(q.checkpointTime) BETWEEN :startDate AND :endDate")
+    List<QcCheckpoint> findByCheckpointDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     /**
      * Find QC checkpoints by batch and stage

@@ -1,6 +1,5 @@
 package com.sustainablefarm.dto.request;
 
-import com.sustainablefarm.model.HarvestEvent.MangoVariety;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;

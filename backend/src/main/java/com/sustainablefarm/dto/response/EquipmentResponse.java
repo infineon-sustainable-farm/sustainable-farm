@@ -1,36 +1,15 @@
 package com.sustainablefarm.dto.response;
 
-import com.sustainablefarm.model.Equipment.EquipmentType;
-import com.sustainablefarm.model.Equipment.MaintenanceStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-
 /**
- * DTO for Equipment response
+ * Compatibility stub for EquipmentResponse.
+ * The actual DTO has been moved to:
+ * com.sustainablefarm.modules.producttransformation.resources.equipment.dto.response.EquipmentResponse
  * 
- * @author Abdoul Ben Fatao SANON
- * @version 1.0.0
+ * @deprecated Use {@link com.sustainablefarm.modules.producttransformation.resources.equipment.dto.response.EquipmentResponse} instead
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class EquipmentResponse {
-
-    private String equipmentId;
-    private String equipmentName;
-    private EquipmentType equipmentType;
-    private BigDecimal capacityKgPerHour;
-    private BigDecimal energyConsumptionKwhPerKg;
-    private String location;
-    private MaintenanceStatus maintenanceStatus;
-    private LocalDate lastMaintenanceDate;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+@Deprecated
+public class EquipmentResponse extends com.sustainablefarm.modules.producttransformation.resources.equipment.dto.response.EquipmentResponse {
+    public EquipmentResponse() {
+        super();
+    }
 }
