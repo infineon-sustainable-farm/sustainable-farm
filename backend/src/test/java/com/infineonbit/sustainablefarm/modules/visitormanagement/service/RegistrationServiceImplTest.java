@@ -121,6 +121,7 @@ class RegistrationServiceImplTest {
         RegistrationRequest req = new RegistrationRequest();
         req.setVisitorId(1L);
         req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.TOURISM);
 
         assertThatThrownBy(() -> service.register(req))
                 .isInstanceOf(BusinessRuleException.class)
@@ -136,6 +137,7 @@ class RegistrationServiceImplTest {
         RegistrationRequest req = new RegistrationRequest();
         req.setVisitorId(1L);
         req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.TOURISM);
 
         assertThatThrownBy(() -> service.register(req))
                 .isInstanceOf(ConflictException.class)
@@ -152,6 +154,7 @@ class RegistrationServiceImplTest {
         RegistrationRequest req = new RegistrationRequest();
         req.setVisitorId(1L);
         req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.TOURISM);
 
         assertThatThrownBy(() -> service.register(req))
                 .isInstanceOf(BusinessRuleException.class)
@@ -174,11 +177,83 @@ class RegistrationServiceImplTest {
         RegistrationRequest req = new RegistrationRequest();
         req.setVisitorId(1L);
         req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.TOURISM);
 
         RegistrationResponse resp = service.register(req);
         assertThat(resp.getId()).isEqualTo(100L);
         assertThat(resp.getStatus()).isEqualTo(RegistrationStatus.PENDING);
+        assertThat(resp.getVisitPurpose()).isEqualTo(VisitPurpose.TOURISM);
+        assertThat(resp.isProspect()).isFalse();
         verify(schedulingService).refreshStatus(slot);
+    }
+
+    @Test
+    void register_withPurchasePurpose_createsProspect() {
+        when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
+        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
+        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
+        when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
+            Registration r = inv.getArgument(0);
+            r.setId(100L);
+            return r;
+        });
+        when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RegistrationRequest req = new RegistrationRequest();
+        req.setVisitorId(1L);
+        req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.PURCHASE);
+
+        RegistrationResponse resp = service.register(req);
+        assertThat(resp.getVisitPurpose()).isEqualTo(VisitPurpose.PURCHASE);
+        assertThat(resp.isProspect()).isTrue();
+    }
+
+    @Test
+    void register_withPartnershipPurpose_createsProspect() {
+        when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
+        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
+        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
+        when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
+            Registration r = inv.getArgument(0);
+            r.setId(100L);
+            return r;
+        });
+        when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RegistrationRequest req = new RegistrationRequest();
+        req.setVisitorId(1L);
+        req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.PARTNERSHIP);
+
+        RegistrationResponse resp = service.register(req);
+        assertThat(resp.getVisitPurpose()).isEqualTo(VisitPurpose.PARTNERSHIP);
+        assertThat(resp.isProspect()).isTrue();
+    }
+
+    @Test
+    void register_withInvestmentPurpose_createsProspect() {
+        when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
+        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
+        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
+        when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
+            Registration r = inv.getArgument(0);
+            r.setId(100L);
+            return r;
+        });
+        when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RegistrationRequest req = new RegistrationRequest();
+        req.setVisitorId(1L);
+        req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.INVESTMENT);
+
+        RegistrationResponse resp = service.register(req);
+        assertThat(resp.getVisitPurpose()).isEqualTo(VisitPurpose.INVESTMENT);
+        assertThat(resp.isProspect()).isTrue();
     }
 
     // --- Approve ---
@@ -335,7 +410,28 @@ class RegistrationServiceImplTest {
         RegistrationRequest req = new RegistrationRequest();
         req.setVisitorId(1L);
         req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.TOURISM);
         service.register(req);
         verify(schedulingService).refreshStatus(slot);
+    }
+
+    // --- Prospects ---
+
+    @Test
+    void getProspects_delegatesToRepository() {
+        Registration prospect = new Registration();
+        prospect.setId(200L);
+        prospect.setVisitor(visitor);
+        prospect.setTimeSlot(slot);
+        prospect.setVisitPurpose(VisitPurpose.PURCHASE);
+        prospect.setProspect(true);
+        prospect.setStatus(RegistrationStatus.CONFIRMED);
+
+        when(registrationRepository.findByIsProspectTrue()).thenReturn(List.of(prospect));
+
+        List<RegistrationResponse> result = service.getProspects();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).isProspect()).isTrue();
+        assertThat(result.get(0).getVisitPurpose()).isEqualTo(VisitPurpose.PURCHASE);
     }
 }

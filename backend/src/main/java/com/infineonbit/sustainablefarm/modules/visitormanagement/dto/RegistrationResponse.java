@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.dto;
 
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Registration;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.RegistrationStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitPurpose;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -21,6 +22,8 @@ public class RegistrationResponse {
     private LocalDate slotDate;
     private LocalTime slotStart;
     private Long eventId;
+    private VisitPurpose visitPurpose;
+    private boolean isProspect;
     private RegistrationStatus status;
     private Long briefingId;
     private Instant createdAt;
@@ -36,6 +39,8 @@ public class RegistrationResponse {
         r.slotDate = reg.getTimeSlot().getDate();
         r.slotStart = reg.getTimeSlot().getStartTime();
         r.eventId = reg.getEventId();
+        r.visitPurpose = reg.getVisitPurpose();
+        r.isProspect = reg.isProspect();
         r.status = reg.getStatus();
         if (reg.getBriefing() != null) {
             r.briefingId = reg.getBriefing().getId();
@@ -77,6 +82,14 @@ public class RegistrationResponse {
         return eventId;
     }
 
+    public VisitPurpose getVisitPurpose() {
+        return visitPurpose;
+    }
+
+    public boolean isProspect() {
+        return isProspect;
+    }
+
     public RegistrationStatus getStatus() {
         return status;
     }
@@ -101,6 +114,8 @@ public class RegistrationResponse {
     public void setSlotDate(LocalDate slotDate) { this.slotDate = slotDate; }
     public void setSlotStart(LocalTime slotStart) { this.slotStart = slotStart; }
     public void setEventId(Long eventId) { this.eventId = eventId; }
+    public void setVisitPurpose(VisitPurpose visitPurpose) { this.visitPurpose = visitPurpose; }
+    public void setIsProspect(boolean isProspect) { this.isProspect = isProspect; }
     public void setStatus(RegistrationStatus status) { this.status = status; }
     public void setBriefingId(Long briefingId) { this.briefingId = briefingId; }
 }

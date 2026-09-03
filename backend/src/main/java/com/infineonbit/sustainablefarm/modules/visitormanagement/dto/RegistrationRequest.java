@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.dto;
 
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitPurpose;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -12,6 +13,9 @@ public class RegistrationRequest {
 
     @NotNull(message = "timeSlotId is required")
     private Long timeSlotId;
+
+    @NotNull(message = "visitPurpose is required")
+    private VisitPurpose visitPurpose;
 
     private Long eventId;
 
@@ -29,6 +33,14 @@ public class RegistrationRequest {
 
     public void setTimeSlotId(Long timeSlotId) {
         this.timeSlotId = timeSlotId;
+    }
+
+    public VisitPurpose getVisitPurpose() {
+        return visitPurpose;
+    }
+
+    public void setVisitPurpose(VisitPurpose visitPurpose) {
+        this.visitPurpose = visitPurpose;
     }
 
     public Long getEventId() {

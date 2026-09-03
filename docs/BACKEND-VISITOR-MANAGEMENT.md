@@ -67,6 +67,8 @@
 │ visitor_id    BIGINT│ FK → visitor (NOT NULL)            │
 │ time_slot_id  BIGINT│ FK → time_slot (NOT NULL)         │
 │ event_id      BIGINT│                                    │
+│ visit_purpose VARCHAR(20)│ NOT NULL                      │
+│ is_prospect   BOOLEAN│ NOT NULL, DEFAULT false           │
 │ status   VARCHAR(20)│ NOT NULL, DEFAULT 'PENDING'       │
 │ created_at    INSTANT│ NOT NULL                          │
 │ updated_at    INSTANT│ NOT NULL                          │
@@ -106,7 +108,8 @@
 | `TimeSlotStatus` | `AVAILABLE`, `RESERVED`, `FULL`, `CANCELLED`, `COMPLETED` | `time_slot.status` |
 | `RegistrationStatus` | `PENDING`, `CONFIRMED`, `REJECTED`, `CHECKED_IN`, `CANCELLED` | `registration.status` |
 | `BriefingStatus` | `PENDING`, `DONE` | `briefing.status` |
-| `VisitorType` | `INDIVIDUAL`, `GROUP` | `visitor.visitor_type` |
+| `VisitorType` | `INDIVIDUAL`, `GROUP`, `SCHOOL`, `PARTNER` | `visitor.visitor_type` |
+| `VisitPurpose` | `TOURISM`, `PURCHASE`, `PARTNERSHIP`, `INVESTMENT`, `EDUCATION`, `OTHER` | `registration.visit_purpose` |
 
 ---
 
@@ -193,9 +196,9 @@ Base URL: `http://localhost:8080/api/v1`
 
 | Method | Path | Description | Status Codes |
 |--------|------|-------------|-------------|
-| `GET` | `/registrations` | List (filter by `?timeSlotId=` or `?date=`) | 200 |
+| `GET` | `/registrations` | List (filter by `?timeSlotId=`, `?date=`, or `?prospect=true`) | 200 |
 | `GET` | `/registrations/{id}` | Get registration by ID | 200, 404 |
-| `POST` | `/registrations` | Create registration (visitor→slot) | 201, 400, 409, 422 |
+| `POST` | `/registrations` | Create registration (visitor→slot, requires `visitPurpose`) | 201, 400, 409, 422 |
 | `PATCH` | `/registrations/{id}/approve` | Approve → triggers briefing creation | 200, 404, 422 |
 | `PATCH` | `/registrations/{id}/reject` | Reject a pending registration | 200, 404, 422 |
 | `PATCH` | `/registrations/{id}/check-in` | Check in a confirmed visitor | 200, 404, 422 |
@@ -206,7 +209,28 @@ Base URL: `http://localhost:8080/api/v1`
 {
   "visitorId": 1,
   "timeSlotId": 10,
+  "visitPurpose": "PURCHASE",
   "eventId": null
+}
+```
+
+**RegistrationResponse (new fields):**
+```json
+{
+  "id": 1,
+  "visitorId": 1,
+  "visitorName": "Alice Dupont",
+  "groupSize": 2,
+  "timeSlotId": 10,
+  "slotDate": "2026-09-08",
+  "slotStart": "09:00",
+  "eventId": null,
+  "visitPurpose": "PURCHASE",
+  "prospect": true,
+  "status": "PENDING",
+  "briefingId": null,
+  "createdAt": "2026-09-01T10:00:00Z",
+  "updatedAt": "2026-09-01T10:00:00Z"
 }
 ```
 
@@ -259,6 +283,32 @@ Base URL: `http://localhost:8080/api/v1`
 | Duplicate email → `ConflictException` (409) | On create and update |
 | `@NotBlank` on fullName | Bean validation (400) |
 | `@Email` on email | Bean validation (400) |
+
+### Lead Generation (Prospect Detection)
+
+The visitor management app doubles as a **marketing tool** for the Sales & Marketing team. When a visitor registers with a commercial purpose, the system automatically flags them as a prospect.
+
+**How it works:**
+1. During registration, the visitor **must** select a `visitPurpose` (mandatory field)
+2. If the purpose is `PURCHASE`, `PARTNERSHIP`, or `INVESTMENT`, the system sets `isProspect = true` automatically
+3. Sales & Marketing can query all prospects via `GET /api/v1/registrations?prospect=true`
+
+**VisitPurpose values:**
+
+| Purpose | Prospect? | Description |
+|---------|-----------|-------------|
+| `TOURISM` | No | Leisure visit, tourism |
+| `PURCHASE` | **Yes** | Interested in buying products |
+| `PARTNERSHIP` | **Yes** | Business partnership opportunity |
+| `INVESTMENT` | **Yes** | Investment opportunity |
+| `EDUCATION` | No | Training, educational visit |
+| `OTHER` | No | Other reasons |
+
+**Prospect query example:**
+```
+GET /api/v1/registrations?prospect=true
+```
+Returns all registrations where `isProspect = true`, including visitor name, email, phone, and visit purpose.
 
 ---
 
@@ -361,11 +411,11 @@ All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
 
 | Layer | Annotation | Tests | Framework |
 |-------|-----------|-------|-----------|
-| Repository | `@DataJpaTest` + H2 | 15 | Spring Data + AssertJ |
-| Service | `@ExtendWith(MockitoExtension.class)` | 31 | Mockito + AssertJ |
-| Controller | `@WebMvcTest` + MockMvc | 32 | MockMvc + Mockito |
+| Repository | `@DataJpaTest` + H2 | 16 | Spring Data + AssertJ |
+| Service | `@ExtendWith(MockitoExtension.class)` | 34 | Mockito + AssertJ |
+| Controller | `@WebMvcTest` + MockMvc | 34 | MockMvc + Mockito |
 | Context | `@SpringBootTest` | 1 | Spring Boot |
-| **Total** | | **79** | |
+| **Total** | | **85** | |
 
 ### Test Files
 
@@ -376,15 +426,15 @@ src/test/java/com/infineonbit/sustainablefarm/
     ├── repository/
     │   ├── TimeSlotRepositoryTest.java       (5 tests)
     │   ├── VisitorRepositoryTest.java        (4 tests)
-    │   ├── RegistrationRepositoryTest.java   (4 tests)
+    │   ├── RegistrationRepositoryTest.java   (5 tests)
     │   └── BriefingRepositoryTest.java       (2 tests)
     ├── service/
     │   ├── SchedulingServiceImplTest.java    (13 tests)
-    │   └── RegistrationServiceImplTest.java  (18 tests)
+    │   └── RegistrationServiceImplTest.java  (21 tests)
     └── controller/
         ├── TimeSlotControllerTest.java       (9 tests)
         ├── VisitorControllerTest.java        (7 tests)
-        ├── RegistrationControllerTest.java   (11 tests)
+        ├── RegistrationControllerTest.java   (12 tests)
         └── BriefingControllerTest.java       (5 tests)
 ```
 

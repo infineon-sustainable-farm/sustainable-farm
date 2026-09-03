@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.core.exception.GlobalExceptionHandler;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.RegistrationStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitPurpose;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.service.RegistrationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,8 @@ class RegistrationControllerTest {
         r.setTimeSlotId(10L);
         r.setSlotDate(LocalDate.of(2026, 9, 8));
         r.setSlotStart(LocalTime.of(9, 0));
+        r.setVisitPurpose(VisitPurpose.TOURISM);
+        r.setIsProspect(false);
         r.setStatus(status);
         return r;
     }
@@ -138,5 +141,18 @@ class RegistrationControllerTest {
         mockMvc.perform(patch("/api/v1/registrations/1/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    void list_byProspect() throws Exception {
+        RegistrationResponse prospect = buildResponse(1L, RegistrationStatus.CONFIRMED);
+        prospect.setVisitPurpose(VisitPurpose.PURCHASE);
+        prospect.setIsProspect(true);
+        when(registrationService.getProspects()).thenReturn(List.of(prospect));
+
+        mockMvc.perform(get("/api/v1/registrations").param("prospect", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].prospect").value(true))
+                .andExpect(jsonPath("$[0].visitPurpose").value("PURCHASE"));
     }
 }

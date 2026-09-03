@@ -40,6 +40,8 @@ public interface RegistrationService {
 
     List<RegistrationResponse> getRegistrationsByDate(LocalDate date);
 
+    List<RegistrationResponse> getProspects();
+
     BriefingResponse getBriefingForRegistration(Long registrationId);
 
     BriefingResponse deliverBriefing(Long registrationId, BriefingDeliverRequest request);

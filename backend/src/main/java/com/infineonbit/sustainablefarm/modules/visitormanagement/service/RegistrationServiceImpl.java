@@ -17,6 +17,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitorType;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitPurpose;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BriefingRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
@@ -123,6 +124,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         registration.setVisitor(visitor);
         registration.setTimeSlot(slot);
         registration.setEventId(request.getEventId());
+        registration.setVisitPurpose(request.getVisitPurpose());
+        registration.setProspect(isCommercialPurpose(request.getVisitPurpose()));
         registration.setStatus(RegistrationStatus.PENDING);
         Registration saved = registrationRepository.save(registration);
 
@@ -220,6 +223,14 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<RegistrationResponse> getProspects() {
+        return registrationRepository.findByIsProspectTrue().stream()
+                .map(RegistrationResponse::from)
+                .collect(Collectors.toList());
+    }
+
     // ---------------- Briefing ----------------
 
     @Override
@@ -273,5 +284,11 @@ public class RegistrationServiceImpl implements RegistrationService {
     private Registration getRegistrationEntity(Long id) {
         return registrationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Registration " + id + " not found"));
+    }
+
+    private boolean isCommercialPurpose(VisitPurpose purpose) {
+        return purpose == VisitPurpose.PURCHASE
+                || purpose == VisitPurpose.PARTNERSHIP
+                || purpose == VisitPurpose.INVESTMENT;
     }
 }

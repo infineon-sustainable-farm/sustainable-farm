@@ -27,4 +27,6 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     long countByTimeSlotIdAndStatusNotIn(Long timeSlotId, Collection<RegistrationStatus> statuses);
 
     long countByTimeSlotIdAndStatus(Long timeSlotId, RegistrationStatus status);
+
+    List<Registration> findByIsProspectTrue();
 }

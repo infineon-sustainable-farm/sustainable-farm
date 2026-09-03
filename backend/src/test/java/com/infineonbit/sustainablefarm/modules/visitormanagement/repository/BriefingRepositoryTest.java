@@ -46,6 +46,7 @@ class BriefingRepositoryTest {
         registration = new Registration();
         registration.setVisitor(visitor);
         registration.setTimeSlot(slot);
+        registration.setVisitPurpose(VisitPurpose.TOURISM);
         registration.setStatus(RegistrationStatus.CONFIRMED);
         registration = registrationRepository.save(registration);
     }

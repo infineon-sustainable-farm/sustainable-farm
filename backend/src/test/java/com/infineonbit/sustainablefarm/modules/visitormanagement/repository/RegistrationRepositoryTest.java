@@ -49,6 +49,17 @@ class RegistrationRepositoryTest {
         Registration r = new Registration();
         r.setVisitor(v);
         r.setTimeSlot(s);
+        r.setVisitPurpose(VisitPurpose.TOURISM);
+        r.setStatus(status);
+        return repository.save(r);
+    }
+
+    private Registration createRegWithPurpose(Visitor v, TimeSlot s, RegistrationStatus status, VisitPurpose purpose, boolean isProspect) {
+        Registration r = new Registration();
+        r.setVisitor(v);
+        r.setTimeSlot(s);
+        r.setVisitPurpose(purpose);
+        r.setProspect(isProspect);
         r.setStatus(status);
         return repository.save(r);
     }
@@ -103,5 +114,22 @@ class RegistrationRepositoryTest {
         assertThat(all).hasSize(2);
         assertThat(all.get(0).getTimeSlot().getStartTime()).isEqualTo(LocalTime.of(9, 0));
         assertThat(all.get(1).getTimeSlot().getStartTime()).isEqualTo(LocalTime.of(14, 0));
+    }
+
+    @Test
+    void findByIsProspectTrue_returnsOnlyProspects() {
+        createRegWithPurpose(visitor, slot, RegistrationStatus.CONFIRMED, VisitPurpose.PURCHASE, true);
+
+        Visitor v2 = new Visitor();
+        v2.setFullName("Tourist");
+        v2.setGroupSize(1);
+        v2.setType(VisitorType.INDIVIDUAL);
+        v2 = visitorRepository.save(v2);
+        createRegWithPurpose(v2, slot, RegistrationStatus.CONFIRMED, VisitPurpose.TOURISM, false);
+
+        List<Registration> prospects = repository.findByIsProspectTrue();
+        assertThat(prospects).hasSize(1);
+        assertThat(prospects.get(0).getVisitPurpose()).isEqualTo(VisitPurpose.PURCHASE);
+        assertThat(prospects.get(0).isProspect()).isTrue();
     }
 }

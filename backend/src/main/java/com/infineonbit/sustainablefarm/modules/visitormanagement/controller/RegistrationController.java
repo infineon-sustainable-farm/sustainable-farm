@@ -30,7 +30,11 @@ public class RegistrationController {
 
     @GetMapping
     public List<RegistrationResponse> list(@RequestParam(required = false) Long timeSlotId,
-                                           @RequestParam(required = false) LocalDate date) {
+                                           @RequestParam(required = false) LocalDate date,
+                                           @RequestParam(required = false) Boolean prospect) {
+        if (Boolean.TRUE.equals(prospect)) {
+            return registrationService.getProspects();
+        }
         if (timeSlotId != null) {
             return registrationService.getRegistrationsBySlot(timeSlotId);
         }

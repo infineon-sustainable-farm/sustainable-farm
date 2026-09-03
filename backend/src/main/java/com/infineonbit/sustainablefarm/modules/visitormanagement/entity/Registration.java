@@ -39,6 +39,14 @@ public class Registration extends BaseEntity {
 
     @NotNull
     @Enumerated(EnumType.STRING)
+    @Column(name = "visit_purpose", nullable = false, length = 20)
+    private VisitPurpose visitPurpose;
+
+    @Column(name = "is_prospect", nullable = false)
+    private boolean isProspect = false;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private RegistrationStatus status = RegistrationStatus.PENDING;
 
@@ -67,6 +75,22 @@ public class Registration extends BaseEntity {
 
     public void setEventId(Long eventId) {
         this.eventId = eventId;
+    }
+
+    public VisitPurpose getVisitPurpose() {
+        return visitPurpose;
+    }
+
+    public void setVisitPurpose(VisitPurpose visitPurpose) {
+        this.visitPurpose = visitPurpose;
+    }
+
+    public boolean isProspect() {
+        return isProspect;
+    }
+
+    public void setProspect(boolean isProspect) {
+        this.isProspect = isProspect;
     }
 
     public RegistrationStatus getStatus() {
