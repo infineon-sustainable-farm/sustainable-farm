@@ -1,0 +1,65 @@
+/*
+  Energy Supply Systems module — validated design tokens.
+  Copy this block into frontend/src/index.css, inside (or right after)
+  the existing @theme block, so bg-primary / text-primary / border-border
+  etc. resolve to these exact, team-approved values everywhere.
+  Source: v0 mockup tailwind.config, corrected after team feedback
+  (primary = green #4caf50, not teal — teal kept as secondary accent).
+*/
+
+@theme {
+  --color-background: #f5f7fa;
+  --color-foreground: #1a2422;
+
+  --color-card: #ffffff;
+  --color-card-foreground: #1a2422;
+
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a2422;
+
+  --color-primary: #4caf50;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #0a8276;
+  --color-secondary-foreground: #ffffff;
+
+  --color-muted: #eef2f1;
+  --color-muted-foreground: #5c6b68;
+
+  --color-accent: #e3efed;
+  --color-accent-foreground: #4caf50;
+
+  --color-destructive: #c62828;
+  --color-destructive-foreground: #ffffff;
+
+  --color-warning: #ef6c00;
+  --color-warning-foreground: #ffffff;
+
+  --color-success: #4caf50;
+  --color-success-foreground: #ffffff;
+
+  --color-border: #dbe3e1;
+  --color-input: #dbe3e1;
+  --color-ring: #4caf50;
+
+  --color-chart-1: #4caf50;
+  --color-chart-2: #ef6c00;
+  --color-chart-3: #c62828;
+  --color-chart-4: #4a9d93;
+  --color-chart-5: #7fb8b1;
+
+  --color-sidebar: #4caf50;
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-primary: #4caf50;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #5cbf60;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #5cbf60;
+  --color-sidebar-ring: #ffffff;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-lg: 0.5rem;
+}
+
