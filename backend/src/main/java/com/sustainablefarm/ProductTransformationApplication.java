@@ -2,6 +2,8 @@ package com.sustainablefarm;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Main Spring Boot Application for Product Transformation System
@@ -15,6 +17,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @version 1.0.0
  */
 @SpringBootApplication
+@ComponentScan(basePackages = {
+    "com.sustainablefarm",
+    "com.sustainablefarm.modules.producttransformation"
+})
+@EntityScan(basePackages = {
+    "com.sustainablefarm.model",
+    "com.sustainablefarm.modules.producttransformation"
+})
 public class ProductTransformationApplication {
 
     public static void main(String[] args) {

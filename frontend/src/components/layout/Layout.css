@@ -1,0 +1,26 @@
+/* Layout Styles */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  padding: var(--space-lg);
+  max-width: 1400px;
+  width: 100%;
+}
+
+/* Reduce main content width on mobile when sidebar is hidden */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 220px;
+  }
+}

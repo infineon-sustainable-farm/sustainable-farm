@@ -1,6 +1,6 @@
 package com.sustainablefarm.core.config;
 
-import com.sustainablefarm.model.PackagingRecord.PackageType;
+import com.sustainablefarm.modules.producttransformation.resources.packagingrecord.model.PackagingRecord.PackageType;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

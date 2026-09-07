@@ -1,0 +1,185 @@
+package com.sustainablefarm.modules.producttransformation.resources.washsortrecord.service;
+
+import com.sustainablefarm.modules.producttransformation.resources.washsortrecord.model.WashSortRecord;
+import com.sustainablefarm.modules.producttransformation.resources.equipment.model.Equipment;
+import com.sustainablefarm.modules.producttransformation.resources.equipment.model.Equipment.MaintenanceStatus;
+import com.sustainablefarm.modules.producttransformation.resources.equipment.model.Equipment.EquipmentType;
+import com.sustainablefarm.modules.producttransformation.resources.operator.model.Operator;
+import com.sustainablefarm.modules.producttransformation.resources.operator.model.Operator.ActiveStatus;
+import com.sustainablefarm.modules.producttransformation.resources.operator.model.Operator.Role;
+import com.sustainablefarm.modules.producttransformation.resources.washsortrecord.repository.WashSortRecordRepository;
+import com.sustainablefarm.modules.producttransformation.resources.equipment.repository.EquipmentRepository;
+import com.sustainablefarm.modules.producttransformation.resources.operator.repository.OperatorRepository;
+import com.sustainablefarm.modules.producttransformation.resources.washsortrecord.impl.WashSortRecordServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+/**
+ * Unit tests for WashSortRecordService
+ * 
+ * Tests for:
+ * - WashSort equipment validation
+ * - Inactive equipment rejection
+ * - Unauthorized operator rejection
+ * 
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
+ */
+@ExtendWith(MockitoExtension.class)
+class WashSortRecordServiceTest {
+
+    @Mock
+    private WashSortRecordRepository washSortRecordRepository;
+    
+    @Mock
+    private EquipmentRepository equipmentRepository;
+    
+    @Mock
+    private OperatorRepository operatorRepository;
+    
+    @InjectMocks
+    private WashSortRecordServiceImpl washSortRecordService;
+    
+    private WashSortRecord testWashSortRecord;
+    private Equipment testEquipment;
+    private Operator testOperator;
+    
+    @BeforeEach
+    void setUp() {
+        testWashSortRecord = new WashSortRecord();
+        testWashSortRecord.setRecordId("WS-001");
+        testWashSortRecord.setInputQuantityKg(new java.math.BigDecimal("1000.0"));
+        testWashSortRecord.setOutputQuantityKg(new java.math.BigDecimal("950.0"));
+        testWashSortRecord.setWasteQuantityKg(new java.math.BigDecimal("50.0"));
+        testWashSortRecord.setWaterUsageLiters(new java.math.BigDecimal("200.0"));
+        testWashSortRecord.setStartTime(LocalDateTime.now());
+        
+        testEquipment = new Equipment();
+        testEquipment.setEquipmentId("EQ-001");
+        testEquipment.setEquipmentType(EquipmentType.WASHING);
+        testEquipment.setMaintenanceStatus(MaintenanceStatus.ACTIVE);
+        
+        testOperator = new Operator();
+        testOperator.setOperatorId("OP-001");
+        testOperator.setRole(Role.WASHER);
+        testOperator.setActiveStatus(ActiveStatus.ACTIVE);
+    }
+    
+    @Test
+    void testCreateWashSortRecord_WithInactiveEquipment() {
+        // Given
+        testWashSortRecord.setEquipment(testEquipment);
+        Equipment inactiveEquipment = new Equipment();
+        inactiveEquipment.setEquipmentId("EQ-001");
+        inactiveEquipment.setEquipmentType(EquipmentType.WASHING);
+        inactiveEquipment.setMaintenanceStatus(MaintenanceStatus.MAINTENANCE);
+        
+        when(equipmentRepository.findById("EQ-001")).thenReturn(java.util.Optional.of(inactiveEquipment));
+        
+        // When/Then
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
+            () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
+        );
+        
+        assertTrue(exception.getMessage().contains("Equipment is not available for washing"));
+        assertTrue(exception.getMessage().contains("must be in ACTIVE status"));
+    }
+    
+    @Test
+    void testCreateWashSortRecord_WithInactiveOperator() {
+        // Given
+        testWashSortRecord.setOperator(testOperator);
+        Operator inactiveOperator = new Operator();
+        inactiveOperator.setOperatorId("OP-001");
+        inactiveOperator.setRole(Role.WASHER);
+        inactiveOperator.setActiveStatus(ActiveStatus.INACTIVE);
+        
+        when(operatorRepository.findById("OP-001")).thenReturn(java.util.Optional.of(inactiveOperator));
+        
+        // When/Then
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
+            () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
+        );
+        
+        assertTrue(exception.getMessage().contains("Operator is not active for washing"));
+        assertTrue(exception.getMessage().contains("must be in ACTIVE status"));
+    }
+    
+    @Test
+    void testCreateWashSortRecord_WithUnauthorizedOperator() {
+        // Given
+        testWashSortRecord.setOperator(testOperator);
+        Operator unauthorizedOperator = new Operator();
+        unauthorizedOperator.setOperatorId("OP-001");
+        unauthorizedOperator.setRole(Role.DRYER); // Wrong role
+        unauthorizedOperator.setActiveStatus(ActiveStatus.ACTIVE);
+        
+        when(operatorRepository.findById("OP-001")).thenReturn(java.util.Optional.of(unauthorizedOperator));
+        
+        // When/Then
+        com.sustainablefarm.core.exception.BusinessRuleViolationException exception = assertThrows(
+            com.sustainablefarm.core.exception.BusinessRuleViolationException.class,
+            () -> washSortRecordService.createWashSortRecord(testWashSortRecord)
+        );
+        
+        assertTrue(exception.getMessage().contains("Operator must have WASHER role"));
+    }
+    
+    @Test
+    void testCreateWashSortRecord_WithValidEquipmentAndOperator() {
+        // Given
+        testWashSortRecord.setEquipment(testEquipment);
+        testWashSortRecord.setOperator(testOperator);
+        when(equipmentRepository.findById("EQ-001")).thenReturn(java.util.Optional.of(testEquipment));
+        when(operatorRepository.findById("OP-001")).thenReturn(java.util.Optional.of(testOperator));
+        when(washSortRecordRepository.save(any(WashSortRecord.class))).thenReturn(testWashSortRecord);
+        
+        // When
+        WashSortRecord result = washSortRecordService.createWashSortRecord(testWashSortRecord);
+        
+        // Then
+        assertEquals(testWashSortRecord, result);
+        verify(washSortRecordRepository).save(testWashSortRecord);
+    }
+    
+    @Test
+    void testGetAverageYieldPercentageByBatch() {
+        // Given
+        when(washSortRecordRepository.getAverageYieldPercentageByBatch("B-001")).thenReturn(95.0);
+        
+        // When
+        Double result = washSortRecordService.getAverageYieldPercentageByBatch("B-001");
+        
+        // Then
+        assertEquals(95.0, result);
+        verify(washSortRecordRepository).getAverageYieldPercentageByBatch("B-001");
+    }
+    
+    @Test
+    void testCompleteWashSortRecord() {
+        // Given
+        when(washSortRecordRepository.findById("WS-001")).thenReturn(java.util.Optional.of(testWashSortRecord));
+        when(washSortRecordRepository.save(any(WashSortRecord.class))).thenReturn(testWashSortRecord);
+        
+        // When
+        WashSortRecord result = washSortRecordService.completeWashSortRecord("WS-001", new java.math.BigDecimal("950.0"), new java.math.BigDecimal("50.0"));
+        
+        // Then
+        assertEquals(new java.math.BigDecimal("950.0"), result.getOutputQuantityKg());
+        assertEquals(new java.math.BigDecimal("50.0"), result.getWasteQuantityKg());
+        assertNotNull(result.getEndTime());
+        verify(washSortRecordRepository).save(testWashSortRecord);
+    }
+}

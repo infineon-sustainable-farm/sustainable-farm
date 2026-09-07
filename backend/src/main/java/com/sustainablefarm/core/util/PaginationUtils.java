@@ -1,6 +1,6 @@
 package com.sustainablefarm.core.util;
 
-import com.sustainablefarm.core.dto.response.PageResponse;
+import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.PageResponse;
 
 import java.util.Collections;
 import java.util.List;

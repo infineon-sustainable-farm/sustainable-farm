@@ -1,0 +1,10 @@
+.page-container { padding: 0; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); }
+.page-header h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 600; color: var(--ink); }
+.table-responsive { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { background: var(--surface-2); padding: var(--space-md); border-bottom: 1px solid var(--hair); font-size: 0.875rem; font-weight: 600; color: var(--ink); text-align: left; }
+.data-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--hair); font-size: 0.875rem; color: var(--ink); }
+.data-table tr:last-child td { border-bottom: none; }
+.empty-row { text-align: center; color: var(--muted); padding: var(--space-xl); }
+.row-actions { display: flex; gap: var(--space-xs); }
