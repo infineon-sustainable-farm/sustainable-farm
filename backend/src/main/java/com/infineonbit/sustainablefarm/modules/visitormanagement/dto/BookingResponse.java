@@ -33,6 +33,8 @@ public class BookingResponse {
     private BookingPaymentStatus paymentStatus;
     private BookingStatus status;
     private Instant reminderScheduledAt;
+    private Instant confirmationSentAt;
+    private Instant reminderSentAt;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -56,6 +58,8 @@ public class BookingResponse {
         r.paymentStatus = booking.getPaymentStatus();
         r.status = booking.getStatus();
         r.reminderScheduledAt = booking.getReminderScheduledAt();
+        r.confirmationSentAt = booking.getConfirmationSentAt();
+        r.reminderSentAt = booking.getReminderSentAt();
         r.createdAt = booking.getCreatedAt();
         r.updatedAt = booking.getUpdatedAt();
         return r;
@@ -133,6 +137,14 @@ public class BookingResponse {
         return reminderScheduledAt;
     }
 
+    public Instant getConfirmationSentAt() {
+        return confirmationSentAt;
+    }
+
+    public Instant getReminderSentAt() {
+        return reminderSentAt;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -159,6 +171,8 @@ public class BookingResponse {
     public void setPaymentStatus(BookingPaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
     public void setStatus(BookingStatus status) { this.status = status; }
     public void setReminderScheduledAt(Instant reminderScheduledAt) { this.reminderScheduledAt = reminderScheduledAt; }
+    public void setConfirmationSentAt(Instant confirmationSentAt) { this.confirmationSentAt = confirmationSentAt; }
+    public void setReminderSentAt(Instant reminderSentAt) { this.reminderSentAt = reminderSentAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

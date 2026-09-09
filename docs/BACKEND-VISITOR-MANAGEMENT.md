@@ -18,6 +18,7 @@
 │  SchedulingServiceImpl · RegistrationServiceImpl             │
 │  EventServiceImpl · FeedbackServiceImpl                     │
 │  EducationalProgramServiceImpl · BookingServiceImpl         │
+│  BookingReminderJob (rappel 24h)                             │
 │  SchedulingRules (constants)                                 │
 ├──────────────────────────────────────────────────────────────┤
 │                     Repositories (JPA)                        │
@@ -37,12 +38,12 @@
 │          core/ — shared infrastructure                        │
 │  BaseEntity · GlobalExceptionHandler · ApiError              │
 │  ResourceNotFoundException · ConflictException               │
-│  BusinessRuleException                                       │
+│  BusinessRuleException · NotificationService (console/SMTP)  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 **Packages:**
-- `core/` — shared infra only (BaseEntity, exceptions, handler)
+- `core/` — shared infra only (BaseEntity, exceptions, handler, notification)
 - `modules/visitormanagement/` — Scheduling + Registration sub-modules
 - Enums live in the module package (not `core/`)
 
@@ -210,6 +211,8 @@
        │ payment_status VARCHAR(20)│ UNPAID │
        │ status        VARCHAR(20)│ PENDING │
        │ reminder_scheduled_at INSTANT│      │
+       │ confirmation_sent_at INSTANT│       │
+       │ reminder_sent_at INSTANT│          │
        │ created_at   INSTANT│ NOT NULL       │
        │ updated_at   INSTANT│ NOT NULL       │
        └───────────────────────────────────┘
@@ -553,7 +556,7 @@ On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: 
 | `POST` | `/bookings` | Create a booking (validates capacity) | 201, 400, 404, 409 |
 | `PUT` | `/bookings/{id}` | Update a booking (PENDING/CONFIRMED only) | 200, 404, 409, 422 |
 | `POST` | `/bookings/{id}/pay` | Record payment → `PAID` | 200, 404, 422 |
-| `POST` | `/bookings/{id}/confirm` | Confirm (only PENDING + PAID), schedules 24h reminder | 200, 404, 422 |
+| `POST` | `/bookings/{id}/confirm` | Confirm (only PENDING + PAID), sends confirmation email, schedules 24h reminder | 200, 404, 422 |
 | `POST` | `/bookings/{id}/complete` | Mark a CONFIRMED booking COMPLETED | 200, 404, 422 |
 | `POST` | `/bookings/{id}/cancel` | Cancel PENDING/CONFIRMED; paid → REFUNDED; frees capacity | 200, 404, 422 |
 
@@ -581,7 +584,14 @@ On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: 
 }
 ```
 
-Reference data from the mockup: Standard tour 5,000 FCFA/person (family rate 3,500 FCFA); payment accepted in cash, Orange Money, Moov Money. Booking flow: choose slot & tour type → registration form → email confirmation (mockup only) → reminder 24 h before (computed on `confirmBooking`, actual email delivery is a documented follow-up).
+Reference data from the mockup: Standard tour 5,000 FCFA/person (family rate 3,500 FCFA); payment accepted in cash, Orange Money, Moov Money.
+
+**Emails (confirmation + rappel 24 h).** À la confirmation, un email de confirmation est envoyé au visiteur (référence `BK-xxxxx`, activité, date/créneau, personnes, total) et `confirmationSentAt` est posé. Un job planifié (`BookingReminderJob`, toutes les 60 s par défaut) envoie le rappel « moins de 24 h » aux réservations confirmées dont l'échéance est atteinte (`reminderScheduledAt ≤ now`) et passe `reminderSentAt`. **Un échec d'envoi ne bloque jamais la réservation** : l'erreur est loggée et la confirmation est maintenue. Deux implémentations de `NotificationService` :
+
+| Mode | Condition | Comportement |
+|------|-----------|-------------|
+| `ConsoleNotificationServiceImpl` | `app.mail.enabled=false` (défaut) | Email loggé en console (dev) |
+| `SmtpNotificationServiceImpl` | `app.mail.enabled=true` | Envoi réel via `JavaMailSender` (SMTP) |
 
 ---
 
@@ -660,6 +670,9 @@ Reference data from the mockup: Standard tour 5,000 FCFA/person (family rate 3,5
 | Confirm schedules the 24 h reminder (`slot start − 24h`) | Service layer |
 | Completing requires **CONFIRMED** status | `BusinessRuleException` (422) |
 | Cancelling a **PAID** booking marks it **REFUNDED** | Service layer |
+| Confirm sends the booking confirmation email | `NotificationService` (never blocks) |
+| 24 h reminder sent for due, unsent reminders | `BookingReminderJob` (fixed delay, 60 s) |
+| Reminder / confirmation deliveries are idempotent (`confirmationSentAt`, `reminderSentAt`) | Repository query + service |
 
 ### Visitor Rules
 
@@ -831,11 +844,12 @@ All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
 
 | Layer | Annotation | Tests | Framework |
 |-------|-----------|-------|-----------|
-| Repository | `@DataJpaTest` + H2 | 38 | Spring Data + AssertJ |
-| Service | `@ExtendWith(MockitoExtension.class)` | 91 | Mockito + AssertJ |
+| Repository | `@DataJpaTest` + H2 | 39 | Spring Data + AssertJ |
+| Service | `@ExtendWith(MockitoExtension.class)` | 94 | Mockito + AssertJ |
 | Controller | `@WebMvcTest` + MockMvc | 82 | MockMvc + Mockito |
 | Context | `@SpringBootTest` | 1 | Spring Boot |
-| **Total** | | **212** | |
+| Core (notification) | plain Mockito | 3 | Mockito + AssertJ |
+| **Total** | | **219** | |
 
 ### Test Files
 
@@ -851,14 +865,15 @@ src/test/java/com/infineonbit/sustainablefarm/
     │   ├── EventRepositoryTest.java          (4 tests)
     │   ├── FeedbackRepositoryTest.java       (7 tests)
     │   ├── EducationalProgramRepositoryTest.java (5 tests)
-    │   └── AgriTourismRepositoryTest.java (6 tests)
+    │   └── AgriTourismRepositoryTest.java (7 tests)
     ├── service/
     │   ├── SchedulingServiceImplTest.java    (13 tests)
     │   ├── RegistrationServiceImplTest.java  (21 tests)
     │   ├── EventServiceImplTest.java         (16 tests)
     │   ├── FeedbackServiceImplTest.java      (12 tests)
     │   ├── EducationalProgramServiceImplTest.java (12 tests)
-    │   └── BookingServiceImplTest.java       (17 tests)
+    │   ├── BookingServiceImplTest.java       (18 tests)
+    │   └── BookingReminderJobTest.java       (2 tests)
     └── controller/
         ├── TimeSlotControllerTest.java       (9 tests)
         ├── VisitorControllerTest.java        (7 tests)
@@ -868,6 +883,8 @@ src/test/java/com/infineonbit/sustainablefarm/
         ├── FeedbackControllerTest.java       (10 tests)
         ├── EducationalProgramControllerTest.java (12 tests)
         └── BookingControllerTest.java        (13 tests)
+├── core/notification/
+│   └── NotificationServiceTest.java        (3 tests)
 ```
 
 ---
@@ -898,6 +915,21 @@ docker run --rm -v "$PWD":/src -w /src \
   maven:3.9-eclipse-temurin-21 ./mvnw compile
 ```
 
+### Email notifications (env vars)
+
+Real SMTP delivery requires `MAIL_ENABLED=true` plus SMTP credentials. Without it,
+emails are only logged to the console (dev mode).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAIL_ENABLED` | `false` | `true` → real SMTP, `false` → console log |
+| `MAIL_HOST` | *(empty)* | SMTP host (e.g. `smtp.orange.bf`) |
+| `MAIL_PORT` | `587` | SMTP port |
+| `MAIL_USERNAME` | *(empty)* | SMTP username |
+| `MAIL_PASSWORD` | *(empty)* | SMTP password |
+| `MAIL_FROM` | `visits@sustainable-farm.local` | Sender address |
+| `MAIL_REMINDER_INTERVAL_MS` | `60000` | Reminder poll interval (fixed delay) |
+
 ---
 
 ## 9. Technology Stack
@@ -911,6 +943,7 @@ docker run --rm -v "$PWD":/src -w /src \
 | PostgreSQL | 17-alpine | Production database |
 | H2 | 2.x | Test-only in-memory DB |
 | SpringDoc OpenAPI | 2.8.5 | Swagger UI auto-generated |
+| Spring Mail | 4.1.0 | `JavaMailSender` + SMTP (emails booking) |
 | Lombok | 1.18.46 | Boilerplate reduction |
 | Jackson | 3.1.4 | JSON serialization |
 | Mockito | 5.23.0 | Service + controller tests |

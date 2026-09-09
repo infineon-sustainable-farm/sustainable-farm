@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.core.notification.NotificationService;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingOccupancyResponse;
@@ -34,7 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +50,8 @@ class BookingServiceImplTest {
     private AgriActivityRepository activityRepository;
     @Mock
     private TimeSlotRepository timeSlotRepository;
+    @Mock
+    private NotificationService notificationService;
     @InjectMocks
     private BookingServiceImpl service;
 
@@ -245,6 +251,22 @@ class BookingServiceImplTest {
         Instant expected = LocalDate.of(2026, 8, 26).atTime(14, 0)
                 .minusHours(24).toInstant(ZoneOffset.UTC);
         assertThat(booking.getReminderScheduledAt()).isEqualTo(expected);
+        assertThat(booking.getConfirmationSentAt()).isNotNull();
+        verify(notificationService).send(eq(booking.getVisitorEmail()), anyString(), anyString());
+    }
+
+    @Test
+    void confirmBooking_emailFailure_confirmsAnyway() {
+        Booking booking = buildBooking(BookingStatus.PENDING, BookingPaymentStatus.PAID, 3);
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+        doThrow(new RuntimeException("relay down"))
+                .when(notificationService).send(anyString(), anyString(), anyString());
+
+        BookingResponse response = service.confirmBooking(bookingId);
+
+        assertThat(response.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        assertThat(booking.getConfirmationSentAt()).isNull();
     }
 
     @Test

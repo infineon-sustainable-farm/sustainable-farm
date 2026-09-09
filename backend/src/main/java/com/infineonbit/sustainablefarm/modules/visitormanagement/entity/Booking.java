@@ -74,6 +74,12 @@ public class Booking extends BaseEntity {
     @Column(name = "reminder_scheduled_at")
     private Instant reminderScheduledAt;
 
+    @Column(name = "confirmation_sent_at")
+    private Instant confirmationSentAt;
+
+    @Column(name = "reminder_sent_at")
+    private Instant reminderSentAt;
+
     public AgriActivity getActivity() {
         return activity;
     }
@@ -152,5 +158,21 @@ public class Booking extends BaseEntity {
 
     public void setReminderScheduledAt(Instant reminderScheduledAt) {
         this.reminderScheduledAt = reminderScheduledAt;
+    }
+
+    public Instant getConfirmationSentAt() {
+        return confirmationSentAt;
+    }
+
+    public void setConfirmationSentAt(Instant confirmationSentAt) {
+        this.confirmationSentAt = confirmationSentAt;
+    }
+
+    public Instant getReminderSentAt() {
+        return reminderSentAt;
+    }
+
+    public void setReminderSentAt(Instant reminderSentAt) {
+        this.reminderSentAt = reminderSentAt;
     }
 }

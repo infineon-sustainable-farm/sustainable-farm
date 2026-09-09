@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.core.notification.NotificationService;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingOccupancyResponse;
@@ -17,9 +18,12 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.AgriActivityRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BookingRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.HashMap;
@@ -30,19 +34,24 @@ import java.util.stream.Collectors;
 @Service
 public class BookingServiceImpl implements BookingService {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingServiceImpl.class);
+
     private static final List<BookingStatus> INACTIVE_STATUSES =
             List.of(BookingStatus.CANCELLED);
 
     private final BookingRepository bookingRepository;
     private final AgriActivityRepository activityRepository;
     private final TimeSlotRepository timeSlotRepository;
+    private final NotificationService notificationService;
 
     public BookingServiceImpl(BookingRepository bookingRepository,
                               AgriActivityRepository activityRepository,
-                              TimeSlotRepository timeSlotRepository) {
+                              TimeSlotRepository timeSlotRepository,
+                              NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.activityRepository = activityRepository;
         this.timeSlotRepository = timeSlotRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -157,7 +166,19 @@ public class BookingServiceImpl implements BookingService {
                 .atTime(booking.getTimeSlot().getStartTime())
                 .minusHours(24)
                 .toInstant(ZoneOffset.UTC));
+        sendConfirmation(booking);
         return BookingResponse.from(bookingRepository.save(booking));
+    }
+
+    private void sendConfirmation(Booking booking) {
+        try {
+            BookingEmailBuilder.MailContent mail = BookingEmailBuilder.confirmation(booking);
+            notificationService.send(booking.getVisitorEmail(), mail.subject(), mail.html());
+            booking.setConfirmationSentAt(Instant.now());
+        } catch (Exception e) {
+            log.warn("Could not send confirmation email for booking {}: {}",
+                    booking.getId(), e.getMessage());
+        }
     }
 
     @Override

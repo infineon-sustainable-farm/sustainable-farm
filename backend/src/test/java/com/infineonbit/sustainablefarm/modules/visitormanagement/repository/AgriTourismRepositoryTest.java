@@ -12,6 +12,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -149,6 +150,33 @@ class AgriTourismRepositoryTest {
                 assertBoth(row, tour.getId(), 5));
         assertThat(rows).anySatisfy(row ->
                 assertBoth(row, tasting.getId(), 7));
+    }
+
+    @Test
+    void dueReminders_queryReturnsOnlyDueNotYetSent() {
+        AgriActivity tour = createActivity("Tour", 10);
+        TimeSlot slot = createSlot(LocalDate.of(2026, 8, 26));
+        Instant now = Instant.now();
+
+        Booking due = createBooking(tour, slot, 3, BookingStatus.CONFIRMED);
+        due.setReminderScheduledAt(now.minusSeconds(3600));
+        bookingRepository.save(due);
+
+        Booking future = createBooking(createActivity("Tasting", 15),
+                createSlot(LocalDate.of(2026, 8, 27)), 5, BookingStatus.CONFIRMED);
+        future.setReminderScheduledAt(now.plusSeconds(3600));
+        bookingRepository.save(future);
+
+        Booking alreadySent = createBooking(createActivity("Sunset", 12),
+                createSlot(LocalDate.of(2026, 8, 28)), 2, BookingStatus.CONFIRMED);
+        alreadySent.setReminderScheduledAt(now.minusSeconds(7200));
+        alreadySent.setReminderSentAt(now);
+        bookingRepository.save(alreadySent);
+
+        List<Booking> result = bookingRepository.findDueReminders(BookingStatus.CONFIRMED, now);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(due.getId());
     }
 
     private void assertBoth(Object[] row, long activityId, long sum) {
