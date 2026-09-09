@@ -11,20 +11,22 @@
 │                        REST Controllers                       │
 │  TimeSlotController · VisitorController                      │
 │  RegistrationController · BriefingController                 │
-│  EventController                                            │
+│  EventController · FeedbackController                        │
 ├──────────────────────────────────────────────────────────────┤
 │                         Services                              │
 │  SchedulingServiceImpl · RegistrationServiceImpl             │
-│  EventServiceImpl                                          │
+│  EventServiceImpl · FeedbackServiceImpl                     │
 │  SchedulingRules (constants)                                 │
 ├──────────────────────────────────────────────────────────────┤
 │                     Repositories (JPA)                        │
 │  TimeSlotRepository · VisitorRepository                      │
 │  RegistrationRepository · BriefingRepository                 │
-│  EventRepository                                            │
+│  EventRepository · FeedbackRepository                        │
+│  SurveySendRepository                                        │
 ├──────────────────────────────────────────────────────────────┤
 │                      JPA Entities                             │
-│  TimeSlot · Visitor · Registration · Briefing · Event       │
+│  TimeSlot · Visitor · Registration · Briefing · Event        │
+│  Feedback · SurveySend                                      │
 │  (extend BaseEntity: id + createdAt + updatedAt)             │
 ├──────────────────────────────────────────────────────────────┤
 │          core/ — shared infrastructure                        │
@@ -112,6 +114,37 @@
        │ created_at   INSTANT│ NOT NULL       │
        │ updated_at   INSTANT│ NOT NULL       │
        └───────────────────────────────────┘
+
+       ┌───────────────────────────────────┐
+       │             feedback               │
+       ├───────────────────────────────────┤
+       │ id            BIGINT│ PK             │
+       │ visitor_id    BIGINT│ FK → visitor (NOT NULL)│
+       │ survey_send_id BIGINT│ FK → survey_send (nullable)│
+       │ origin   VARCHAR(20)│ NOT NULL     │
+       │ rating       INT│ NOT NULL (1..5)    │
+       │ briefing_clear VARCHAR(1000)│       │
+       │ educational_value VARCHAR(1000)│    │
+       │ recommend    VARCHAR(1000)│         │
+       │ comment     VARCHAR(1000)│          │
+       │ routed_to   VARCHAR(60)│            │
+       │ submitted_at INSTANT│ NOT NULL       │
+       │ created_at   INSTANT│ NOT NULL       │
+       │ updated_at   INSTANT│ NOT NULL       │
+       └───────────────────────────────────┘
+
+       ┌───────────────────────────────────┐
+       │            survey_send              │
+       ├───────────────────────────────────┤
+       │ id            BIGINT│ PK             │
+       │ visitor_id    BIGINT│ FK → visitor (NOT NULL)│
+       │ channel   VARCHAR(20)│ NOT NULL    │
+       │ message_template VARCHAR(500)│      │
+       │ sent_at    INSTANT│ NOT NULL         │
+       │ status   VARCHAR(20)│ NOT NULL, 'SENT'│
+       │ created_at   INSTANT│ NOT NULL       │
+       │ updated_at   INSTANT│ NOT NULL       │
+       └───────────────────────────────────┘
 ```
 
 ### Table Summary
@@ -123,6 +156,8 @@
 | `registration` | ~4,000 | Links visitor → time slot **or** event |
 | `briefing` | ~3,000 | Safety briefing per confirmed registration |
 | `event` | ~50/year | Open days, buyer visits, school/community days |
+| `feedback` | ~3,000 | Satisfaction responses (tablet + survey links) |
+| `survey_send` | ~8,000 | Post-visit surveys sent by email/SMS/WhatsApp |
 
 ### Enums
 
@@ -135,6 +170,8 @@
 | `VisitPurpose` | `TOURISM`, `PURCHASE`, `PARTNERSHIP`, `INVESTMENT`, `EDUCATION`, `OTHER` | `registration.visit_purpose` |
 | `EventType` | `OPEN_DAY`, `PARTNER_BUYER`, `SCHOOL`, `COMMUNITY`, `OTHER` | `event.event_type` |
 | `EventStatus` | `DRAFT`, `PUBLISHED`, `CANCELLED`, `COMPLETED` | `event.status` |
+| `FeedbackChannel` | `ON_SITE`, `EMAIL`, `SMS`, `WHATSAPP` | `feedback.origin`, `survey_send.channel` |
+| `SurveyStatus` | `SENT`, `RECEIVED` | `survey_send.status` |
 
 ---
 
@@ -328,6 +365,73 @@ Base URL: `http://localhost:8080/api/v1`
 
 The registration created for an event has `timeSlotId: null` and carries the visitor's `visitPurpose`. Commercial purposes (`PURCHASE`, `PARTNERSHIP`, `INVESTMENT`) automatically mark the visitor as a prospect, exactly like time-slot registrations.
 
+### 3.6 Feedback & Surveys — `/api/v1`
+
+| Method | Path | Description | Status Codes |
+|--------|------|-------------|-------------|
+| `GET` | `/feedback` | List responses (`?visitorId=`, `?from=`, `?to=`) | 200 |
+| `GET` | `/feedback/summary` | Compiled stats (`?from=`, `?to=`) | 200 |
+| `POST` | `/feedback` | Submit response (on-site or linked to a sent survey) | 201, 400, 404, 422 |
+| `PATCH` | `/feedback/{id}/route` | Route a response to a module owner | 200, 404, 400 |
+| `GET` | `/surveys` | List sent surveys (`?visitorId=`, `?status=`) | 200 |
+| `POST` | `/surveys` | Send a post-visit survey (email/SMS/WhatsApp) | 201, 400, 404, 422 |
+
+**FeedbackRequest:** `visitorId` (required), `surveyId` (optional — links the response to a sent survey and marks it RECEIVED), `rating` (1–5, required), `briefingClear`, `educationalValue`, `recommend`, `comment`.
+```json
+{
+  "visitorId": 1,
+  "surveyId": 12,
+  "rating": 4,
+  "briefingClear": "Yes, very clear",
+  "educationalValue": "The solar tracking was interesting",
+  "recommend": "Definitely",
+  "comment": "Would love a German-language brochure"
+}
+```
+
+**FeedbackResponse:**
+```json
+{
+  "id": 1,
+  "visitorId": 1,
+  "visitorName": "Alice Dupont",
+  "surveyId": 12,
+  "origin": "EMAIL",
+  "rating": 4,
+  "briefingClear": "Yes, very clear",
+  "educationalValue": "The solar tracking was interesting",
+  "recommend": "Definitely",
+  "comment": "Would love a German-language brochure",
+  "routedTo": "Sales (Mariata)",
+  "submittedAt": "2026-08-26T13:00:00Z",
+  "createdAt": "2026-08-26T13:00:00Z",
+  "updatedAt": "2026-08-26T13:00:00Z"
+}
+```
+
+**FeedbackSummaryResponse** (compiled weekly report):
+```json
+{
+  "averageRating": 4.2,
+  "total": 18,
+  "recommendPct": 92.0,
+  "distribution": { "1": 0, "2": 0, "3": 3, "4": 6, "5": 9 }
+}
+```
+
+**SurveyRequest:**
+```json
+{
+  "visitorId": 3,
+  "channel": "EMAIL",
+  "messageTemplate": "Thank you for visiting Sustainable Farm! Share your feedback: [link]"
+}
+```
+
+**SurveyResponse:** id, visitorId, visitorName, channel, messageTemplate, sentAt, status (`SENT`/`RECEIVED`), `rating` (once the visitor responded), createdAt, updatedAt.
+
+On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: "ON_SITE"`. A sent survey becomes `RECEIVED` automatically when a response is linked to it.
+
 ---
 
 ## 4. Business Rules
@@ -368,6 +472,18 @@ The registration created for an event has `timeSlotId: null` and carries the vis
 | No duplicate registration (visitor + event) | `ConflictException` (409) |
 | `booked + groupSize > maxCapacity` → reject | `BusinessRuleException` (422) |
 | Booked count excludes `REJECTED` / `CANCELLED` registrations | Repository query |
+
+### Feedback & Survey Rules
+
+| Rule | Enforcement |
+|------|-------------|
+| Rating must be between 1 and 5 | Bean validation (400) |
+| Response linked to a survey must match the survey's visitor | `BusinessRuleException` (422) |
+| A survey can only be answered once (RECEIVED is final) | `BusinessRuleException` (422) |
+| Survey channel cannot be `ON_SITE` (tablet responses are direct) | `BusinessRuleException` (422) |
+| Response without a survey → recorded as `ON_SITE` | Service layer |
+| Linking a response marks the survey `RECEIVED` | Service layer |
+| Routing targets are free-text tags (no coupling to other modules) | Data model |
 
 ### Visitor Rules
 
@@ -497,6 +613,20 @@ Returns all registrations where `isProspect = true`, including visitor name, ema
           └───────────┘
 ```
 
+### Survey Status Flow
+```
+              ┌─────────┐
+   POST  │ SENT    │  ← survey link dispatched by email/SMS/WhatsApp
+  ─────► └────┬────┘
+              │
+         response linked
+              │
+              ▼
+        ┌───────────┐
+        │ RECEIVED  │  ← linked Feedback (rating visible)
+        └───────────┘
+```
+
 ---
 
 ## 6. Error Handling
@@ -525,11 +655,11 @@ All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
 
 | Layer | Annotation | Tests | Framework |
 |-------|-----------|-------|-----------|
-| Repository | `@DataJpaTest` + H2 | 20 | Spring Data + AssertJ |
-| Service | `@ExtendWith(MockitoExtension.class)` | 50 | Mockito + AssertJ |
-| Controller | `@WebMvcTest` + MockMvc | 47 | MockMvc + Mockito |
+| Repository | `@DataJpaTest` + H2 | 27 | Spring Data + AssertJ |
+| Service | `@ExtendWith(MockitoExtension.class)` | 62 | Mockito + AssertJ |
+| Controller | `@WebMvcTest` + MockMvc | 57 | MockMvc + Mockito |
 | Context | `@SpringBootTest` | 1 | Spring Boot |
-| **Total** | | **118** | |
+| **Total** | | **147** | |
 
 ### Test Files
 
@@ -542,17 +672,20 @@ src/test/java/com/infineonbit/sustainablefarm/
     │   ├── VisitorRepositoryTest.java        (4 tests)
     │   ├── RegistrationRepositoryTest.java   (5 tests)
     │   ├── BriefingRepositoryTest.java       (2 tests)
-    │   └── EventRepositoryTest.java          (4 tests)
+    │   ├── EventRepositoryTest.java          (4 tests)
+    │   └── FeedbackRepositoryTest.java       (7 tests)
     ├── service/
     │   ├── SchedulingServiceImplTest.java    (13 tests)
     │   ├── RegistrationServiceImplTest.java  (21 tests)
-    │   └── EventServiceImplTest.java         (16 tests)
+    │   ├── EventServiceImplTest.java         (16 tests)
+    │   └── FeedbackServiceImplTest.java      (12 tests)
     └── controller/
         ├── TimeSlotControllerTest.java       (9 tests)
         ├── VisitorControllerTest.java        (7 tests)
         ├── RegistrationControllerTest.java   (12 tests)
         ├── BriefingControllerTest.java       (5 tests)
-        └── EventControllerTest.java          (13 tests)
+        ├── EventControllerTest.java          (13 tests)
+        └── FeedbackControllerTest.java       (10 tests)
 ```
 
 ---
