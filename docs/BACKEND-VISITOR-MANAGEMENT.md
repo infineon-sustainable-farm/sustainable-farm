@@ -11,17 +11,20 @@
 │                        REST Controllers                       │
 │  TimeSlotController · VisitorController                      │
 │  RegistrationController · BriefingController                 │
+│  EventController                                            │
 ├──────────────────────────────────────────────────────────────┤
 │                         Services                              │
 │  SchedulingServiceImpl · RegistrationServiceImpl             │
+│  EventServiceImpl                                          │
 │  SchedulingRules (constants)                                 │
 ├──────────────────────────────────────────────────────────────┤
 │                     Repositories (JPA)                        │
 │  TimeSlotRepository · VisitorRepository                      │
 │  RegistrationRepository · BriefingRepository                 │
+│  EventRepository                                            │
 ├──────────────────────────────────────────────────────────────┤
 │                      JPA Entities                             │
-│  TimeSlot · Visitor · Registration · Briefing                │
+│  TimeSlot · Visitor · Registration · Briefing · Event       │
 │  (extend BaseEntity: id + createdAt + updatedAt)             │
 ├──────────────────────────────────────────────────────────────┤
 │          core/ — shared infrastructure                        │
@@ -65,7 +68,8 @@
 ├─────────────────────────────────────────────────────────┤
 │ id            BIGINT│ PK                                 │
 │ visitor_id    BIGINT│ FK → visitor (NOT NULL)            │
-│ time_slot_id  BIGINT│ FK → time_slot (NOT NULL)         │
+│ time_slot_id  BIGINT│ FK → time_slot (nullable, NULL for    │
+│                   │    event-only registrations)           │
 │ event_id      BIGINT│                                    │
 │ visit_purpose VARCHAR(20)│ NOT NULL                      │
 │ is_prospect   BOOLEAN│ NOT NULL, DEFAULT false           │
@@ -88,8 +92,26 @@
               │ signature   VARCHAR(500)                   │
               │ status  VARCHAR(20)│ NOT NULL, 'PENDING'  │
               │ created_at  INSTANT│ NOT NULL              │
-              │ updated_at  INSTANT│ NOT NULL              │
-              └──────────────────┘
+│ updated_at  INSTANT│ NOT NULL              │
+               └──────────────────┘
+
+      registration.event_id → event.id (no FK constraint, soft link)
+
+       ┌───────────────────────────────────┐
+       │                event                │
+       ├───────────────────────────────────┤
+       │ id            BIGINT│ PK             │
+       │ title     VARCHAR(150)│ NOT NULL   │
+       │ event_type VARCHAR(30)│ NOT NULL   │
+       │ start_date_time TIMESTAMP│ NOT NULL│
+       │ end_date_time   TIMESTAMP│ NOT NULL│
+       │ max_capacity  INT│ NOT NULL, DEFAULT 10│
+       │ status   VARCHAR(20)│ NOT NULL, 'DRAFT'│
+       │ description VARCHAR(1000)│          │
+       │ location   VARCHAR(150)│            │
+       │ created_at   INSTANT│ NOT NULL       │
+       │ updated_at   INSTANT│ NOT NULL       │
+       └───────────────────────────────────┘
 ```
 
 ### Table Summary
@@ -98,8 +120,9 @@
 |-------|--------------|---------|
 | `time_slot` | ~500/year | Farm tour calendar slots (2/day max) |
 | `visitor` | ~2,000 | Visitor database (individuals/groups) |
-| `registration` | ~4,000 | Links visitor → time slot |
+| `registration` | ~4,000 | Links visitor → time slot **or** event |
 | `briefing` | ~3,000 | Safety briefing per confirmed registration |
+| `event` | ~50/year | Open days, buyer visits, school/community days |
 
 ### Enums
 
@@ -110,6 +133,8 @@
 | `BriefingStatus` | `PENDING`, `DONE` | `briefing.status` |
 | `VisitorType` | `INDIVIDUAL`, `GROUP`, `SCHOOL`, `PARTNER` | `visitor.visitor_type` |
 | `VisitPurpose` | `TOURISM`, `PURCHASE`, `PARTNERSHIP`, `INVESTMENT`, `EDUCATION`, `OTHER` | `registration.visit_purpose` |
+| `EventType` | `OPEN_DAY`, `PARTNER_BUYER`, `SCHOOL`, `COMMUNITY`, `OTHER` | `event.event_type` |
+| `EventStatus` | `DRAFT`, `PUBLISHED`, `CANCELLED`, `COMPLETED` | `event.status` |
 
 ---
 
@@ -249,6 +274,60 @@ Base URL: `http://localhost:8080/api/v1`
 }
 ```
 
+### 3.5 Events — `/api/v1/events`
+
+| Method | Path | Description | Status Codes |
+|--------|------|-------------|-------------|
+| `GET` | `/events` | List events (`?type=`, `?date=YYYY-MM-DD`) | 200 |
+| `GET` | `/events/{id}` | Get event by ID | 200, 404 |
+| `POST` | `/events` | Create event (default status `DRAFT`) | 201, 400, 422 |
+| `PUT` | `/events/{id}` | Update event (not allowed when CANCELLED/COMPLETED) | 200, 404, 422 |
+| `DELETE` | `/events/{id}` | Cancel event (soft-delete) | 204, 404, 422 |
+| `POST` | `/events/{id}/publish` | Publish a DRAFT event | 200, 404, 422 |
+| `GET` | `/events/{id}/registrations` | List registrations for the event | 200, 404 |
+| `POST` | `/events/{id}/register` | Register a visitor for the event | 201, 400, 404, 409, 422 |
+
+**EventRequest:**
+```json
+{
+  "title": "Open Farm Day",
+  "type": "OPEN_DAY",
+  "startDateTime": "2026-10-04T10:00:00",
+  "endDateTime": "2026-10-04T16:00:00",
+  "maxCapacity": 60,
+  "description": "Discover the farm, meet the team, taste our products",
+  "location": "Farm entrance hall"
+}
+```
+
+**EventResponse:**
+```json
+{
+  "id": 1,
+  "title": "Open Farm Day",
+  "type": "OPEN_DAY",
+  "startDateTime": "2026-10-04T10:00:00",
+  "endDateTime": "2026-10-04T16:00:00",
+  "maxCapacity": 60,
+  "booked": 3,
+  "status": "PUBLISHED",
+  "description": "Discover the farm, meet the team, taste our products",
+  "location": "Farm entrance hall",
+  "createdAt": "2026-09-01T10:00:00Z",
+  "updatedAt": "2026-09-01T10:00:00Z"
+}
+```
+
+**EventRegistrationRequest:**
+```json
+{
+  "visitorId": 1,
+  "visitPurpose": "PURCHASE"
+}
+```
+
+The registration created for an event has `timeSlotId: null` and carries the visitor's `visitPurpose`. Commercial purposes (`PURCHASE`, `PARTNERSHIP`, `INVESTMENT`) automatically mark the visitor as a prospect, exactly like time-slot registrations.
+
 ---
 
 ## 4. Business Rules
@@ -275,6 +354,20 @@ Base URL: `http://localhost:8080/api/v1`
 | Cannot cancel after **CHECKED_IN** | `BusinessRuleException` |
 | **CONFIRMED** → auto-creates `Briefing` (PENDING) | Service layer |
 | Briefing delivery requires PENDING status | `BusinessRuleException` |
+
+### Event Rules
+
+| Rule | Enforcement |
+|------|-------------|
+| `endDateTime` must be after `startDateTime` | `BusinessRuleException` |
+| Only **DRAFT** events can be published | `BusinessRuleException` |
+| Cannot publish an event that has already ended | `BusinessRuleException` |
+| Cannot update **CANCELLED** or **COMPLETED** events | `BusinessRuleException` |
+| Cannot cancel a **COMPLETED** event | `BusinessRuleException` |
+| Registration only on **PUBLISHED** events | `BusinessRuleException` |
+| No duplicate registration (visitor + event) | `ConflictException` (409) |
+| `booked + groupSize > maxCapacity` → reject | `BusinessRuleException` (422) |
+| Booked count excludes `REJECTED` / `CANCELLED` registrations | Repository query |
 
 ### Visitor Rules
 
@@ -383,6 +476,27 @@ Returns all registrations where `isProspect = true`, including visitor name, ema
         └──────────┘
 ```
 
+### Event Status Flow
+```
+               ┌─────────┐
+   create      │  DRAFT  │
+  ─────────►   └────┬────┘
+                    │
+              publish (not ended)
+                    │
+                    ▼
+            ┌───────────┐      cancel from any non-completed
+            │ PUBLISHED │◄───────────┐
+            └─────┬─────┘            │
+                  │            ┌─────┴─────┐
+          ended   │            │ CANCELLED │
+                  │            └───────────┘
+                  ▼
+          ┌───────────┐
+          │ COMPLETED │
+          └───────────┘
+```
+
 ---
 
 ## 6. Error Handling
@@ -411,11 +525,11 @@ All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
 
 | Layer | Annotation | Tests | Framework |
 |-------|-----------|-------|-----------|
-| Repository | `@DataJpaTest` + H2 | 16 | Spring Data + AssertJ |
-| Service | `@ExtendWith(MockitoExtension.class)` | 34 | Mockito + AssertJ |
-| Controller | `@WebMvcTest` + MockMvc | 34 | MockMvc + Mockito |
+| Repository | `@DataJpaTest` + H2 | 20 | Spring Data + AssertJ |
+| Service | `@ExtendWith(MockitoExtension.class)` | 50 | Mockito + AssertJ |
+| Controller | `@WebMvcTest` + MockMvc | 47 | MockMvc + Mockito |
 | Context | `@SpringBootTest` | 1 | Spring Boot |
-| **Total** | | **85** | |
+| **Total** | | **118** | |
 
 ### Test Files
 
@@ -427,15 +541,18 @@ src/test/java/com/infineonbit/sustainablefarm/
     │   ├── TimeSlotRepositoryTest.java       (5 tests)
     │   ├── VisitorRepositoryTest.java        (4 tests)
     │   ├── RegistrationRepositoryTest.java   (5 tests)
-    │   └── BriefingRepositoryTest.java       (2 tests)
+    │   ├── BriefingRepositoryTest.java       (2 tests)
+    │   └── EventRepositoryTest.java          (4 tests)
     ├── service/
     │   ├── SchedulingServiceImplTest.java    (13 tests)
-    │   └── RegistrationServiceImplTest.java  (21 tests)
+    │   ├── RegistrationServiceImplTest.java  (21 tests)
+    │   └── EventServiceImplTest.java         (16 tests)
     └── controller/
         ├── TimeSlotControllerTest.java       (9 tests)
         ├── VisitorControllerTest.java        (7 tests)
         ├── RegistrationControllerTest.java   (12 tests)
-        └── BriefingControllerTest.java       (5 tests)
+        ├── BriefingControllerTest.java       (5 tests)
+        └── EventControllerTest.java          (13 tests)
 ```
 
 ---
@@ -486,4 +603,4 @@ docker run --rm -v "$PWD":/src -w /src \
 
 ---
 
-*Last updated: 2026-09-03*
+*Last updated: 2026-09-09*

@@ -29,4 +29,10 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     long countByTimeSlotIdAndStatus(Long timeSlotId, RegistrationStatus status);
 
     List<Registration> findByIsProspectTrue();
+
+    List<Registration> findByEventId(Long eventId);
+
+    boolean existsByEventIdAndVisitorId(Long eventId, Long visitorId);
+
+    long countByEventIdAndStatusNotIn(Long eventId, Collection<RegistrationStatus> statuses);
 }

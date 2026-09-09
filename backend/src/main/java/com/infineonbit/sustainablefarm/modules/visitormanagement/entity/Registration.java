@@ -29,9 +29,8 @@ public class Registration extends BaseEntity {
     @JoinColumn(name = "visitor_id", nullable = false)
     private Visitor visitor;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "time_slot_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "time_slot_id")
     private TimeSlot timeSlot;
 
     @Column(name = "event_id")

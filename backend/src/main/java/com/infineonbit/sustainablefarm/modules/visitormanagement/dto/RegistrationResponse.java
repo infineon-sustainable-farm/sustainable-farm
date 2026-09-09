@@ -35,9 +35,9 @@ public class RegistrationResponse {
         r.visitorId = reg.getVisitor().getId();
         r.visitorName = reg.getVisitor().getFullName();
         r.groupSize = reg.getVisitor().getGroupSize();
-        r.timeSlotId = reg.getTimeSlot().getId();
-        r.slotDate = reg.getTimeSlot().getDate();
-        r.slotStart = reg.getTimeSlot().getStartTime();
+        r.timeSlotId = reg.getTimeSlot() == null ? null : reg.getTimeSlot().getId();
+        r.slotDate = reg.getTimeSlot() == null ? null : reg.getTimeSlot().getDate();
+        r.slotStart = reg.getTimeSlot() == null ? null : reg.getTimeSlot().getStartTime();
         r.eventId = reg.getEventId();
         r.visitPurpose = reg.getVisitPurpose();
         r.isProspect = reg.isProspect();
