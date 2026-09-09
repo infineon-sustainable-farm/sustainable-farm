@@ -26,4 +26,6 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
             "ORDER BY t.startTime")
     List<TimeSlot> findActiveByDate(@Param("date") LocalDate date,
                                     @Param("excluded") TimeSlotStatus excluded);
+
+    List<TimeSlot> findByDateGreaterThanEqualOrderByDateAscStartTimeAsc(LocalDate from);
 }

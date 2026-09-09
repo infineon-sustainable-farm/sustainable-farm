@@ -39,11 +39,12 @@
 │  BaseEntity · GlobalExceptionHandler · ApiError              │
 │  ResourceNotFoundException · ConflictException               │
 │  BusinessRuleException · NotificationService (console/SMTP)  │
+│  WebConfig (CORS) · DevDataSeeder (dev profile only)         │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 **Packages:**
-- `core/` — shared infra only (BaseEntity, exceptions, handler, notification)
+- `core/` — shared infra only (BaseEntity, exceptions, handler, notification, CORS config, dev seeder)
 - `modules/visitormanagement/` — Scheduling + Registration sub-modules
 - Enums live in the module package (not `core/`)
 
@@ -847,9 +848,9 @@ All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
 | Repository | `@DataJpaTest` + H2 | 39 | Spring Data + AssertJ |
 | Service | `@ExtendWith(MockitoExtension.class)` | 94 | Mockito + AssertJ |
 | Controller | `@WebMvcTest` + MockMvc | 82 | MockMvc + Mockito |
-| Context | `@SpringBootTest` | 1 | Spring Boot |
+| Context | `@SpringBootTest` | 4 | Spring Boot (+MockMvc CORS preflight) |
 | Core (notification) | plain Mockito | 3 | Mockito + AssertJ |
-| **Total** | | **219** | |
+| **Total** | | **222** | |
 
 ### Test Files
 
@@ -885,6 +886,7 @@ src/test/java/com/infineonbit/sustainablefarm/
         └── BookingControllerTest.java        (13 tests)
 ├── core/notification/
 │   └── NotificationServiceTest.java        (3 tests)
+└── CorsConfigurationTest.java             (3 tests, @SpringBootTest + MockMvc)
 ```
 
 ---
@@ -929,6 +931,31 @@ emails are only logged to the console (dev mode).
 | `MAIL_PASSWORD` | *(empty)* | SMTP password |
 | `MAIL_FROM` | `visits@sustainable-farm.local` | Sender address |
 | `MAIL_REMINDER_INTERVAL_MS` | `60000` | Reminder poll interval (fixed delay) |
+
+### CORS (env vars)
+
+The backend allows cross-origin calls on `/api/**` for the configured origins.
+Adjust `APP_CORS_ORIGINS` to your frontend addresses (Vite dev server / container).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173` | `Comma-separated allowed origins` |
+
+### Dev reference data (env vars)
+
+Enable with `SPRING_PROFILES_ACTIVE=dev`. `DevDataSeeder` (idempotent: seeds each
+table only when empty) loads the confirmed mockup data — **never active in production**:
+
+- **Tour stops**: 6 stops (Accueil → Mango orchard → Irrigation → Solar → Processing → Wrap-up)
+- **Workshops**: 4 (Standard farm tour, Solar workshop, Mango tasting [DRAFT]*, School day)
+- **Agri activities**: 3 (Standard tour 5 000 FCFA, Mango tasting 3 000 FCFA, Solar workshop 5 000 FCFA)
+- **Time slots**: next 7 days (2/day 09-11 & 14-16, Sundays skipped, capacity 10)
+- **Event**: "Journée portes ouvertes" (`OPEN_DAY`, PUBLISHED, +2 weeks)
+- **Sample visitor**: "Awa Ouédraogo" (group of 8) with a pending `PURCHASE` registration (prospect)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SPRING_PROFILES_ACTIVE` | *(empty)* | `dev` → seed reference data |
 
 ---
 
