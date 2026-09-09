@@ -12,12 +12,12 @@
 │  TimeSlotController · VisitorController                      │
 │  RegistrationController · BriefingController                 │
 │  EventController · FeedbackController                        │
-│  EducationalProgramController                                │
+│  EducationalProgramController · BookingController            │
 ├──────────────────────────────────────────────────────────────┤
 │                         Services                              │
 │  SchedulingServiceImpl · RegistrationServiceImpl             │
 │  EventServiceImpl · FeedbackServiceImpl                     │
-│  EducationalProgramServiceImpl                               │
+│  EducationalProgramServiceImpl · BookingServiceImpl         │
 │  SchedulingRules (constants)                                 │
 ├──────────────────────────────────────────────────────────────┤
 │                     Repositories (JPA)                        │
@@ -25,11 +25,13 @@
 │  RegistrationRepository · BriefingRepository                 │
 │  EventRepository · FeedbackRepository                        │
 │  SurveySendRepository · TourStopRepository                   │
-│  WorkshopRepository                                          │
+│  WorkshopRepository · AgriActivityRepository                 │
+│  BookingRepository                                          │
 ├──────────────────────────────────────────────────────────────┤
 │                      JPA Entities                             │
 │  TimeSlot · Visitor · Registration · Briefing · Event        │
 │  Feedback · SurveySend · TourStop · Workshop                │
+│  AgriActivity · Booking                                     │
 │  (extend BaseEntity: id + createdAt + updatedAt)             │
 ├──────────────────────────────────────────────────────────────┤
 │          core/ — shared infrastructure                        │
@@ -179,6 +181,38 @@
        │ created_at   INSTANT│ NOT NULL       │
        │ updated_at   INSTANT│ NOT NULL       │
        └───────────────────────────────────┘
+
+       ┌───────────────────────────────────┐
+       │            agri_activity           │
+       ├───────────────────────────────────┤
+       │ id            BIGINT│ PK             │
+       │ name     VARCHAR(150)│ NOT NULL    │
+       │ price DECIMAL(12,2)│ NOT NULL     │
+       │ capacity         INT│ NOT NULL     │
+       │ duration_minutes INT│ NOT NULL     │
+       │ description VARCHAR(1000)│         │
+       │ active      BOOLEAN│ NOT NULL, true │
+       │ created_at   INSTANT│ NOT NULL       │
+       │ updated_at   INSTANT│ NOT NULL       │
+       └───────────────────────────────────┘
+
+       ┌───────────────────────────────────┐
+       │             booking                │
+       ├───────────────────────────────────┤
+       │ id            BIGINT│ PK             │
+       │ agri_activity_id BIGINT│ FK NOT NULL│
+       │ time_slot_id   BIGINT│ FK NOT NULL │
+       │ visitor_full_name VARCHAR(150)│ NN│
+       │ visitor_email  VARCHAR(255)│ NN   │
+       │ visitor_phone  VARCHAR(30)│        │
+       │ people_count        INT│ NOT NULL   │
+       │ payment_method VARCHAR(20)│         │
+       │ payment_status VARCHAR(20)│ UNPAID │
+       │ status        VARCHAR(20)│ PENDING │
+       │ reminder_scheduled_at INSTANT│      │
+       │ created_at   INSTANT│ NOT NULL       │
+       │ updated_at   INSTANT│ NOT NULL       │
+       └───────────────────────────────────┘
 ```
 
 ### Table Summary
@@ -194,6 +228,8 @@
 | `survey_send` | ~8,000 | Post-visit surveys sent by email/SMS/WhatsApp |
 | `tour_stop` | ~8 | Standard guided-tour stops (seeded via API) |
 | `workshop` | ~10 | Tour templates / workshops (Active / Draft / Inactive) |
+| `agri_activity` | ~5 | Paid agritourism offers (catalogue) |
+| `booking` | ~2,000/yr | Paid reservations linked to an activity + time slot |
 
 ### Enums
 
@@ -209,6 +245,9 @@
 | `FeedbackChannel` | `ON_SITE`, `EMAIL`, `SMS`, `WHATSAPP` | `feedback.origin`, `survey_send.channel` |
 | `SurveyStatus` | `SENT`, `RECEIVED` | `survey_send.status` |
 | `WorkshopStatus` | `DRAFT`, `ACTIVE`, `INACTIVE` | `workshop.status` |
+| `BookingStatus` | `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED` | `booking.status` |
+| `BookingPaymentStatus` | `UNPAID`, `PAID`, `REFUNDED` | `booking.payment_status` |
+| `BookingPaymentMethod` | `CASH`, `ORANGE_MONEY`, `MOOV_MONEY` | `booking.payment_method` |
 
 ---
 
@@ -501,6 +540,49 @@ On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: 
 
 **Confirmed reference content** (module owners: Aida, Jean-Louis, Delwende, Phares, Abdoul): standard tour stops — Welcome & safety briefing (5-10 min, Front Desk), Mango orchard (20 min, Keitt 200 trees/2 ha), Smart drip irrigation (10-15 min, max 10), Solar plant & tracking (15 min, max 15), Processing unit (20 min, max 10), Wrap-up & questions (15 min) → **max 10 pers/slot** (limiting stops: irrigation + processing). Reference workshops: Standard farm tour (~100 min, All, Alix), Solar workshop (45 min, Professional, Guest Aida), Mango tasting & processing (40 min, General public, Guest Abdoul), School discovery day (120 min, Schools, P. Nikiéma).
 
+### 3.8 Agritourism Booking System — `/api/v1`
+
+| Method | Path | Description | Status Codes |
+|--------|------|-------------|-------------|
+| `GET` | `/activities` | List agritourism activities (alphabetical) | 200 |
+| `POST` | `/activities` | Create an activity (name, price FCFA, capacity, durationMinutes) | 201, 400 |
+| `PUT` | `/activities/{id}` | Update an activity | 200, 404, 400 |
+| `DELETE` | `/activities/{id}` | Deactivate an activity (soft-delete) | 204, 404 |
+| `GET` | `/bookings` | List bookings (`?status=PENDING\|CONFIRMED\|COMPLETED\|CANCELLED`, `?activityId=`, `?date=`) | 200 |
+| `GET` | `/bookings/occupancy` | Occupancy % per activity | 200 |
+| `POST` | `/bookings` | Create a booking (validates capacity) | 201, 400, 404, 409 |
+| `PUT` | `/bookings/{id}` | Update a booking (PENDING/CONFIRMED only) | 200, 404, 409, 422 |
+| `POST` | `/bookings/{id}/pay` | Record payment → `PAID` | 200, 404, 422 |
+| `POST` | `/bookings/{id}/confirm` | Confirm (only PENDING + PAID), schedules 24h reminder | 200, 404, 422 |
+| `POST` | `/bookings/{id}/complete` | Mark a CONFIRMED booking COMPLETED | 200, 404, 422 |
+| `POST` | `/bookings/{id}/cancel` | Cancel PENDING/CONFIRMED; paid → REFUNDED; frees capacity | 200, 404, 422 |
+
+**AgriActivityRequest / AgriActivityResponse:** `name` (150), `price` (BigDecimal ≥ 0, FCFA), `capacity` (≥ 1), `durationMinutes` (≥ 1), `description` (1000), `active`.
+```json
+{
+  "name": "Solar workshop",
+  "price": 5000,
+  "capacity": 15,
+  "durationMinutes": 45,
+  "description": "Guided visit of the 86.4 kWp solar plant with tracking"
+}
+```
+
+**BookingRequest / BookingResponse:** `activityId`, `timeSlotId`, `visitorFullName`, `visitorEmail` (valid email), `visitorPhone`, `peopleCount` (≥ 1), `paymentMethod` (`CASH`, `ORANGE_MONEY`, `MOOV_MONEY`). Response adds `reference` (`BK-00001` format), `activityName`, `activityPrice`, slot date/times, `totalAmount` (price × people), `paymentStatus`, `status`, `reminderScheduledAt`.
+```json
+{
+  "activityId": 1,
+  "timeSlotId": 2,
+  "visitorFullName": "Lucas Weber",
+  "visitorEmail": "lucas@example.com",
+  "visitorPhone": "+22612345678",
+  "peopleCount": 5,
+  "paymentMethod": "ORANGE_MONEY"
+}
+```
+
+Reference data from the mockup: Standard tour 5,000 FCFA/person (family rate 3,500 FCFA); payment accepted in cash, Orange Money, Moov Money. Booking flow: choose slot & tour type → registration form → email confirmation (mockup only) → reminder 24 h before (computed on `confirmBooking`, actual email delivery is a documented follow-up).
+
 ---
 
 ## 4. Business Rules
@@ -564,6 +646,20 @@ On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: 
 | Create → status `DRAFT` | Service layer |
 | Only **DRAFT** workshops can be published | `BusinessRuleException` (422) |
 | Only **ACTIVE** workshops can be deactivated | `BusinessRuleException` (422) |
+
+### Agritourism Booking Rules
+
+| Rule | Enforcement |
+|------|-------------|
+| Capacity counts **non-cancelled** bookings only | Repository aggregate query |
+| A booking can never exceed the **slot capacity** (10 pers) | `ConflictException` (409) |
+| A booking can never exceed the **activity capacity** | `ConflictException` (409) |
+| Bookings only on **active** activities and non-cancelled slots | `BusinessRuleException` (422) |
+| Cannot update **COMPLETED / CANCELLED** bookings | `BusinessRuleException` (422) |
+| Can only confirm a **PENDING** booking that is **PAID** | `BusinessRuleException` (422) |
+| Confirm schedules the 24 h reminder (`slot start − 24h`) | Service layer |
+| Completing requires **CONFIRMED** status | `BusinessRuleException` (422) |
+| Cancelling a **PAID** booking marks it **REFUNDED** | Service layer |
 
 ### Visitor Rules
 
@@ -735,11 +831,11 @@ All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
 
 | Layer | Annotation | Tests | Framework |
 |-------|-----------|-------|-----------|
-| Repository | `@DataJpaTest` + H2 | 32 | Spring Data + AssertJ |
-| Service | `@ExtendWith(MockitoExtension.class)` | 74 | Mockito + AssertJ |
-| Controller | `@WebMvcTest` + MockMvc | 69 | MockMvc + Mockito |
+| Repository | `@DataJpaTest` + H2 | 38 | Spring Data + AssertJ |
+| Service | `@ExtendWith(MockitoExtension.class)` | 91 | Mockito + AssertJ |
+| Controller | `@WebMvcTest` + MockMvc | 82 | MockMvc + Mockito |
 | Context | `@SpringBootTest` | 1 | Spring Boot |
-| **Total** | | **176** | |
+| **Total** | | **212** | |
 
 ### Test Files
 
@@ -754,13 +850,15 @@ src/test/java/com/infineonbit/sustainablefarm/
     │   ├── BriefingRepositoryTest.java       (2 tests)
     │   ├── EventRepositoryTest.java          (4 tests)
     │   ├── FeedbackRepositoryTest.java       (7 tests)
-    │   └── EducationalProgramRepositoryTest.java (5 tests)
+    │   ├── EducationalProgramRepositoryTest.java (5 tests)
+    │   └── AgriTourismRepositoryTest.java (6 tests)
     ├── service/
     │   ├── SchedulingServiceImplTest.java    (13 tests)
     │   ├── RegistrationServiceImplTest.java  (21 tests)
     │   ├── EventServiceImplTest.java         (16 tests)
     │   ├── FeedbackServiceImplTest.java      (12 tests)
-    │   └── EducationalProgramServiceImplTest.java (12 tests)
+    │   ├── EducationalProgramServiceImplTest.java (12 tests)
+    │   └── BookingServiceImplTest.java       (17 tests)
     └── controller/
         ├── TimeSlotControllerTest.java       (9 tests)
         ├── VisitorControllerTest.java        (7 tests)
@@ -768,7 +866,8 @@ src/test/java/com/infineonbit/sustainablefarm/
         ├── BriefingControllerTest.java       (5 tests)
         ├── EventControllerTest.java          (13 tests)
         ├── FeedbackControllerTest.java       (10 tests)
-        └── EducationalProgramControllerTest.java (12 tests)
+        ├── EducationalProgramControllerTest.java (12 tests)
+        └── BookingControllerTest.java        (13 tests)
 ```
 
 ---
