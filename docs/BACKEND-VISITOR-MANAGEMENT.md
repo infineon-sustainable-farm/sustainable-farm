@@ -12,21 +12,24 @@
 │  TimeSlotController · VisitorController                      │
 │  RegistrationController · BriefingController                 │
 │  EventController · FeedbackController                        │
+│  EducationalProgramController                                │
 ├──────────────────────────────────────────────────────────────┤
 │                         Services                              │
 │  SchedulingServiceImpl · RegistrationServiceImpl             │
 │  EventServiceImpl · FeedbackServiceImpl                     │
+│  EducationalProgramServiceImpl                               │
 │  SchedulingRules (constants)                                 │
 ├──────────────────────────────────────────────────────────────┤
 │                     Repositories (JPA)                        │
 │  TimeSlotRepository · VisitorRepository                      │
 │  RegistrationRepository · BriefingRepository                 │
 │  EventRepository · FeedbackRepository                        │
-│  SurveySendRepository                                        │
+│  SurveySendRepository · TourStopRepository                   │
+│  WorkshopRepository                                          │
 ├──────────────────────────────────────────────────────────────┤
 │                      JPA Entities                             │
 │  TimeSlot · Visitor · Registration · Briefing · Event        │
-│  Feedback · SurveySend                                      │
+│  Feedback · SurveySend · TourStop · Workshop                │
 │  (extend BaseEntity: id + createdAt + updatedAt)             │
 ├──────────────────────────────────────────────────────────────┤
 │          core/ — shared infrastructure                        │
@@ -145,6 +148,37 @@
        │ created_at   INSTANT│ NOT NULL       │
        │ updated_at   INSTANT│ NOT NULL       │
        └───────────────────────────────────┘
+
+       ┌───────────────────────────────────┐
+       │             tour_stop              │
+       ├───────────────────────────────────┤
+       │ id            BIGINT│ PK             │
+       │ name     VARCHAR(150)│ NOT NULL    │
+       │ position      INT│ NOT NULL         │
+       │ description VARCHAR(2000)│          │
+       │ duration_minutes INT│ NOT NULL      │
+       │ max_capacity INT│                   │
+       │ location   VARCHAR(150)│            │
+       │ demo      VARCHAR(1000)│            │
+       │ safety_notes VARCHAR(1000)│         │
+       │ active      BOOLEAN│ NOT NULL, true │
+       │ created_at   INSTANT│ NOT NULL       │
+       │ updated_at   INSTANT│ NOT NULL       │
+       └───────────────────────────────────┘
+
+       ┌───────────────────────────────────┐
+       │             workshop               │
+       ├───────────────────────────────────┤
+       │ id            BIGINT│ PK             │
+       │ name     VARCHAR(150)│ NOT NULL    │
+       │ duration_minutes INT│ NOT NULL      │
+       │ target_group VARCHAR(60)│ NOT NULL │
+       │ facilitator VARCHAR(100)│           │
+       │ description VARCHAR(1000)│          │
+       │ status   VARCHAR(20)│ NOT NULL,'DRAFT'│
+       │ created_at   INSTANT│ NOT NULL       │
+       │ updated_at   INSTANT│ NOT NULL       │
+       └───────────────────────────────────┘
 ```
 
 ### Table Summary
@@ -158,6 +192,8 @@
 | `event` | ~50/year | Open days, buyer visits, school/community days |
 | `feedback` | ~3,000 | Satisfaction responses (tablet + survey links) |
 | `survey_send` | ~8,000 | Post-visit surveys sent by email/SMS/WhatsApp |
+| `tour_stop` | ~8 | Standard guided-tour stops (seeded via API) |
+| `workshop` | ~10 | Tour templates / workshops (Active / Draft / Inactive) |
 
 ### Enums
 
@@ -172,6 +208,7 @@
 | `EventStatus` | `DRAFT`, `PUBLISHED`, `CANCELLED`, `COMPLETED` | `event.status` |
 | `FeedbackChannel` | `ON_SITE`, `EMAIL`, `SMS`, `WHATSAPP` | `feedback.origin`, `survey_send.channel` |
 | `SurveyStatus` | `SENT`, `RECEIVED` | `survey_send.status` |
+| `WorkshopStatus` | `DRAFT`, `ACTIVE`, `INACTIVE` | `workshop.status` |
 
 ---
 
@@ -432,6 +469,38 @@ The registration created for an event has `timeSlotId: null` and carries the vis
 
 On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: "ON_SITE"`. A sent survey becomes `RECEIVED` automatically when a response is linked to it.
 
+### 3.7 Educational Program — `/api/v1`
+
+| Method | Path | Description | Status Codes |
+|--------|------|-------------|-------------|
+| `GET` | `/tour-stops` | List guided-tour stops (ordered by position) | 200 |
+| `POST` | `/tour-stops` | Create a tour stop | 201, 400, 409 |
+| `PUT` | `/tour-stops/{id}` | Update a stop (position must stay unique among active stops) | 200, 404, 409, 400 |
+| `DELETE` | `/tour-stops/{id}` | Deactivate a stop (soft-delete) | 204, 404 |
+| `GET` | `/workshops` | List workshops/templates (`?status=DRAFT|ACTIVE|INACTIVE`) | 200 |
+| `POST` | `/workshops` | Create a workshop (status `DRAFT`) | 201, 400 |
+| `PUT` | `/workshops/{id}` | Update a workshop | 200, 404, 400 |
+| `POST` | `/workshops/{id}/publish` | Publish a DRAFT workshop → ACTIVE | 200, 404, 422 |
+| `POST` | `/workshops/{id}/deactivate` | Deactivate an ACTIVE workshop → INACTIVE | 200, 404, 422 |
+
+**TourStopRequest / TourStopResponse:** `name` (required), `position` (required, ≥1, unique among active stops), `description`, `durationMinutes` (required, ≥1), `maxCapacity` (optional, ≥1), `location`, `demo`, `safetyNotes`, `active`.
+```json
+{
+  "name": "Solar plant & tracking system",
+  "position": 4,
+  "description": "86.4 kWp installed, +20% yield with tracking",
+  "durationMinutes": 15,
+  "maxCapacity": 15,
+  "location": "Solar field — observation path",
+  "demo": "Live dashboard screen (Infineon sensors)",
+  "safetyNotes": "Observation path only; tracker, battery/inverter and running generator restricted"
+}
+```
+
+**WorkshopRequest / WorkshopResponse:** `name` (required), `durationMinutes` (required, ≥1), `targetGroup` (required, e.g. `All`, `Professional`, `Schools`), `facilitator`, `description`, `status` (`DRAFT` by default).
+
+**Confirmed reference content** (module owners: Aida, Jean-Louis, Delwende, Phares, Abdoul): standard tour stops — Welcome & safety briefing (5-10 min, Front Desk), Mango orchard (20 min, Keitt 200 trees/2 ha), Smart drip irrigation (10-15 min, max 10), Solar plant & tracking (15 min, max 15), Processing unit (20 min, max 10), Wrap-up & questions (15 min) → **max 10 pers/slot** (limiting stops: irrigation + processing). Reference workshops: Standard farm tour (~100 min, All, Alix), Solar workshop (45 min, Professional, Guest Aida), Mango tasting & processing (40 min, General public, Guest Abdoul), School discovery day (120 min, Schools, P. Nikiéma).
+
 ---
 
 ## 4. Business Rules
@@ -484,6 +553,17 @@ On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: 
 | Response without a survey → recorded as `ON_SITE` | Service layer |
 | Linking a response marks the survey `RECEIVED` | Service layer |
 | Routing targets are free-text tags (no coupling to other modules) | Data model |
+
+### Educational Program Rules
+
+| Rule | Enforcement |
+|------|-------------|
+| Position must be ≥ 1 | Bean validation (400) |
+| Position must be unique among **active** stops | `ConflictException` (409) |
+| Deactivating a stop frees its position (soft-delete) | `DELETE /tour-stops/{id}` |
+| Create → status `DRAFT` | Service layer |
+| Only **DRAFT** workshops can be published | `BusinessRuleException` (422) |
+| Only **ACTIVE** workshops can be deactivated | `BusinessRuleException` (422) |
 
 ### Visitor Rules
 
@@ -655,11 +735,11 @@ All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
 
 | Layer | Annotation | Tests | Framework |
 |-------|-----------|-------|-----------|
-| Repository | `@DataJpaTest` + H2 | 27 | Spring Data + AssertJ |
-| Service | `@ExtendWith(MockitoExtension.class)` | 62 | Mockito + AssertJ |
-| Controller | `@WebMvcTest` + MockMvc | 57 | MockMvc + Mockito |
+| Repository | `@DataJpaTest` + H2 | 32 | Spring Data + AssertJ |
+| Service | `@ExtendWith(MockitoExtension.class)` | 74 | Mockito + AssertJ |
+| Controller | `@WebMvcTest` + MockMvc | 69 | MockMvc + Mockito |
 | Context | `@SpringBootTest` | 1 | Spring Boot |
-| **Total** | | **147** | |
+| **Total** | | **176** | |
 
 ### Test Files
 
@@ -673,19 +753,22 @@ src/test/java/com/infineonbit/sustainablefarm/
     │   ├── RegistrationRepositoryTest.java   (5 tests)
     │   ├── BriefingRepositoryTest.java       (2 tests)
     │   ├── EventRepositoryTest.java          (4 tests)
-    │   └── FeedbackRepositoryTest.java       (7 tests)
+    │   ├── FeedbackRepositoryTest.java       (7 tests)
+    │   └── EducationalProgramRepositoryTest.java (5 tests)
     ├── service/
     │   ├── SchedulingServiceImplTest.java    (13 tests)
     │   ├── RegistrationServiceImplTest.java  (21 tests)
     │   ├── EventServiceImplTest.java         (16 tests)
-    │   └── FeedbackServiceImplTest.java      (12 tests)
+    │   ├── FeedbackServiceImplTest.java      (12 tests)
+    │   └── EducationalProgramServiceImplTest.java (12 tests)
     └── controller/
         ├── TimeSlotControllerTest.java       (9 tests)
         ├── VisitorControllerTest.java        (7 tests)
         ├── RegistrationControllerTest.java   (12 tests)
         ├── BriefingControllerTest.java       (5 tests)
         ├── EventControllerTest.java          (13 tests)
-        └── FeedbackControllerTest.java       (10 tests)
+        ├── FeedbackControllerTest.java       (10 tests)
+        └── EducationalProgramControllerTest.java (12 tests)
 ```
 
 ---
