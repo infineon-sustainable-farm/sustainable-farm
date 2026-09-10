@@ -1,981 +1,299 @@
-# Visitor Management Backend — Technical Documentation
+# Visitor Management — Backend (guide simple)
 
-> Spring Boot 4.1.0 · Java 21 · PostgreSQL 17 · Hibernate 7.4
+> **Ce document explique ce que fait le backend de la gestion des visiteurs, simplement,
+> sans jargon.** Si tu veux le détail de l'API, ouvre Swagger (voir § 5).
+> *Simple guide — what the Visitor Management backend does, how its data is organized,
+> and how to run it.*
 
----
-
-## 1. Architecture Overview
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        REST Controllers                       │
-│  TimeSlotController · VisitorController                      │
-│  RegistrationController · BriefingController                 │
-│  EventController · FeedbackController                        │
-│  EducationalProgramController · BookingController            │
-├──────────────────────────────────────────────────────────────┤
-│                         Services                              │
-│  SchedulingServiceImpl · RegistrationServiceImpl             │
-│  EventServiceImpl · FeedbackServiceImpl                     │
-│  EducationalProgramServiceImpl · BookingServiceImpl         │
-│  BookingReminderJob (rappel 24h)                             │
-│  SchedulingRules (constants)                                 │
-├──────────────────────────────────────────────────────────────┤
-│                     Repositories (JPA)                        │
-│  TimeSlotRepository · VisitorRepository                      │
-│  RegistrationRepository · BriefingRepository                 │
-│  EventRepository · FeedbackRepository                        │
-│  SurveySendRepository · TourStopRepository                   │
-│  WorkshopRepository · AgriActivityRepository                 │
-│  BookingRepository                                          │
-├──────────────────────────────────────────────────────────────┤
-│                      JPA Entities                             │
-│  TimeSlot · Visitor · Registration · Briefing · Event        │
-│  Feedback · SurveySend · TourStop · Workshop                │
-│  AgriActivity · Booking                                     │
-│  (extend BaseEntity: id + createdAt + updatedAt)             │
-├──────────────────────────────────────────────────────────────┤
-│          core/ — shared infrastructure                        │
-│  BaseEntity · GlobalExceptionHandler · ApiError              │
-│  ResourceNotFoundException · ConflictException               │
-│  BusinessRuleException · NotificationService (console/SMTP)  │
-│  WebConfig (CORS) · DevDataSeeder (dev profile only)         │
-└──────────────────────────────────────────────────────────────┘
-```
-
-**Packages:**
-- `core/` — shared infra only (BaseEntity, exceptions, handler, notification, CORS config, dev seeder)
-- `modules/visitormanagement/` — Scheduling + Registration sub-modules
-- Enums live in the module package (not `core/`)
+**Projet :** Sustainable Farm — ferme de mangues séchées, Burkina Faso → Allemagne (Infineon × BIT Excellence Program)
+**Module :** Visitor Management (développé par Alix Carine VEBAMBA)
+**Assistant technique :** opencode
 
 ---
 
-## 2. Database Schema
+## 1. En bref
 
-### Entity-Relationship Diagram
+Le backend couvre **tout le parcours d'un visiteur** : choix d'un créneau de visite,
+inscription, confirmation avec email, briefing sécurité, visite guidée, feedback, et
+participation à des événements. C'est un **outil interne** pour l'équipe de la ferme
+(guides, accueil), pas une application grand public.
 
-```
-┌─────────────────────┐         ┌─────────────────────────┐
-│     time_slot        │         │        visitor           │
-├─────────────────────┤         ├─────────────────────────┤
-│ id            BIGINT│ PK      │ id            BIGINT│ PK │
-│ slot_date     DATE  │ NOT NULL│ full_name  VARCHAR(150)  │ NOT NULL
-│ start_time    TIME  │ NOT NULL│ group_size     INT       │ NOT NULL, DEFAULT 1
-│ end_time      TIME  │ NOT NULL│ email     VARCHAR(200)   │ UNIQUE
-│ max_capacity  INT   │ NOT NULL│ phone     VARCHAR(30)    │
-│ status   VARCHAR(20)│ NOT NULL│ language  VARCHAR(40)    │
-│ guide_id    BIGINT  │         │ visitor_type VARCHAR(20) │ NOT NULL
-│ created_at INSTANT │ NOT NULL│ special_needs VARCHAR(500)│
-│ updated_at INSTANT │ NOT NULL│ created_at INSTANT│ NOT NULL
-└─────────┬───────────┘         │ updated_at INSTANT│ NOT NULL
-          │                     └──────────┬──────────────┘
-          │ 1                            1 │
-          │                                │
-          │ *                        1 │ *
-┌─────────┴───────────────────────────────┴──────────────┐
-│                    registration                          │
-├─────────────────────────────────────────────────────────┤
-│ id            BIGINT│ PK                                 │
-│ visitor_id    BIGINT│ FK → visitor (NOT NULL)            │
-│ time_slot_id  BIGINT│ FK → time_slot (nullable, NULL for    │
-│                   │    event-only registrations)           │
-│ event_id      BIGINT│                                    │
-│ visit_purpose VARCHAR(20)│ NOT NULL                      │
-│ is_prospect   BOOLEAN│ NOT NULL, DEFAULT false           │
-│ status   VARCHAR(20)│ NOT NULL, DEFAULT 'PENDING'       │
-│ created_at    INSTANT│ NOT NULL                          │
-│ updated_at    INSTANT│ NOT NULL                          │
-│ UNIQUE (visitor_id, time_slot_id)                        │
-└─────────────────────┬───────────────────────────────────┘
-                      │ 1
-                      │
-                      │ 1
-              ┌───────┴──────────┐
-              │    briefing       │
-              ├──────────────────┤
-              │ id          BIGINT│ PK                    │
-              │ registration_id   │ FK → registration    │
-              │                   │    (NOT NULL, UNIQUE) │
-              │ delivered_at INSTANT│                     │
-              │ staff_member VARCHAR(150)                  │
-              │ signature   VARCHAR(500)                   │
-              │ status  VARCHAR(20)│ NOT NULL, 'PENDING'  │
-              │ created_at  INSTANT│ NOT NULL              │
-│ updated_at  INSTANT│ NOT NULL              │
-               └──────────────────┘
-
-      registration.event_id → event.id (no FK constraint, soft link)
-
-       ┌───────────────────────────────────┐
-       │                event                │
-       ├───────────────────────────────────┤
-       │ id            BIGINT│ PK             │
-       │ title     VARCHAR(150)│ NOT NULL   │
-       │ event_type VARCHAR(30)│ NOT NULL   │
-       │ start_date_time TIMESTAMP│ NOT NULL│
-       │ end_date_time   TIMESTAMP│ NOT NULL│
-       │ max_capacity  INT│ NOT NULL, DEFAULT 10│
-       │ status   VARCHAR(20)│ NOT NULL, 'DRAFT'│
-       │ description VARCHAR(1000)│          │
-       │ location   VARCHAR(150)│            │
-       │ created_at   INSTANT│ NOT NULL       │
-       │ updated_at   INSTANT│ NOT NULL       │
-       └───────────────────────────────────┘
-
-       ┌───────────────────────────────────┐
-       │             feedback               │
-       ├───────────────────────────────────┤
-       │ id            BIGINT│ PK             │
-       │ visitor_id    BIGINT│ FK → visitor (NOT NULL)│
-       │ survey_send_id BIGINT│ FK → survey_send (nullable)│
-       │ origin   VARCHAR(20)│ NOT NULL     │
-       │ rating       INT│ NOT NULL (1..5)    │
-       │ briefing_clear VARCHAR(1000)│       │
-       │ educational_value VARCHAR(1000)│    │
-       │ recommend    VARCHAR(1000)│         │
-       │ comment     VARCHAR(1000)│          │
-       │ routed_to   VARCHAR(60)│            │
-       │ submitted_at INSTANT│ NOT NULL       │
-       │ created_at   INSTANT│ NOT NULL       │
-       │ updated_at   INSTANT│ NOT NULL       │
-       └───────────────────────────────────┘
-
-       ┌───────────────────────────────────┐
-       │            survey_send              │
-       ├───────────────────────────────────┤
-       │ id            BIGINT│ PK             │
-       │ visitor_id    BIGINT│ FK → visitor (NOT NULL)│
-       │ channel   VARCHAR(20)│ NOT NULL    │
-       │ message_template VARCHAR(500)│      │
-       │ sent_at    INSTANT│ NOT NULL         │
-       │ status   VARCHAR(20)│ NOT NULL, 'SENT'│
-       │ created_at   INSTANT│ NOT NULL       │
-       │ updated_at   INSTANT│ NOT NULL       │
-       └───────────────────────────────────┘
-
-       ┌───────────────────────────────────┐
-       │             tour_stop              │
-       ├───────────────────────────────────┤
-       │ id            BIGINT│ PK             │
-       │ name     VARCHAR(150)│ NOT NULL    │
-       │ position      INT│ NOT NULL         │
-       │ description VARCHAR(2000)│          │
-       │ duration_minutes INT│ NOT NULL      │
-       │ max_capacity INT│                   │
-       │ location   VARCHAR(150)│            │
-       │ demo      VARCHAR(1000)│            │
-       │ safety_notes VARCHAR(1000)│         │
-       │ active      BOOLEAN│ NOT NULL, true │
-       │ created_at   INSTANT│ NOT NULL       │
-       │ updated_at   INSTANT│ NOT NULL       │
-       └───────────────────────────────────┘
-
-       ┌───────────────────────────────────┐
-       │             workshop               │
-       ├───────────────────────────────────┤
-       │ id            BIGINT│ PK             │
-       │ name     VARCHAR(150)│ NOT NULL    │
-       │ duration_minutes INT│ NOT NULL      │
-       │ target_group VARCHAR(60)│ NOT NULL │
-       │ facilitator VARCHAR(100)│           │
-       │ description VARCHAR(1000)│          │
-       │ status   VARCHAR(20)│ NOT NULL,'DRAFT'│
-       │ created_at   INSTANT│ NOT NULL       │
-       │ updated_at   INSTANT│ NOT NULL       │
-       └───────────────────────────────────┘
-
-       ┌───────────────────────────────────┐
-       │            agri_activity           │
-       ├───────────────────────────────────┤
-       │ id            BIGINT│ PK             │
-       │ name     VARCHAR(150)│ NOT NULL    │
-       │ price DECIMAL(12,2)│ NOT NULL     │
-       │ capacity         INT│ NOT NULL     │
-       │ duration_minutes INT│ NOT NULL     │
-       │ description VARCHAR(1000)│         │
-       │ active      BOOLEAN│ NOT NULL, true │
-       │ created_at   INSTANT│ NOT NULL       │
-       │ updated_at   INSTANT│ NOT NULL       │
-       └───────────────────────────────────┘
-
-       ┌───────────────────────────────────┐
-       │             booking                │
-       ├───────────────────────────────────┤
-       │ id            BIGINT│ PK             │
-       │ agri_activity_id BIGINT│ FK NOT NULL│
-       │ time_slot_id   BIGINT│ FK NOT NULL │
-       │ visitor_full_name VARCHAR(150)│ NN│
-       │ visitor_email  VARCHAR(255)│ NN   │
-       │ visitor_phone  VARCHAR(30)│        │
-       │ people_count        INT│ NOT NULL   │
-       │ payment_method VARCHAR(20)│         │
-       │ payment_status VARCHAR(20)│ UNPAID │
-       │ status        VARCHAR(20)│ PENDING │
-       │ reminder_scheduled_at INSTANT│      │
-       │ confirmation_sent_at INSTANT│       │
-       │ reminder_sent_at INSTANT│          │
-       │ created_at   INSTANT│ NOT NULL       │
-       │ updated_at   INSTANT│ NOT NULL       │
-       └───────────────────────────────────┘
-```
-
-### Table Summary
-
-| Table | Rows (design) | Purpose |
-|-------|--------------|---------|
-| `time_slot` | ~500/year | Farm tour calendar slots (2/day max) |
-| `visitor` | ~2,000 | Visitor database (individuals/groups) |
-| `registration` | ~4,000 | Links visitor → time slot **or** event |
-| `briefing` | ~3,000 | Safety briefing per confirmed registration |
-| `event` | ~50/year | Open days, buyer visits, school/community days |
-| `feedback` | ~3,000 | Satisfaction responses (tablet + survey links) |
-| `survey_send` | ~8,000 | Post-visit surveys sent by email/SMS/WhatsApp |
-| `tour_stop` | ~8 | Standard guided-tour stops (seeded via API) |
-| `workshop` | ~10 | Tour templates / workshops (Active / Draft / Inactive) |
-| `agri_activity` | ~5 | Paid agritourism offers (catalogue) |
-| `booking` | ~2,000/yr | Paid reservations linked to an activity + time slot |
-
-### Enums
-
-| Enum | Values | Table Column |
-|------|--------|--------------|
-| `TimeSlotStatus` | `AVAILABLE`, `RESERVED`, `FULL`, `CANCELLED`, `COMPLETED` | `time_slot.status` |
-| `RegistrationStatus` | `PENDING`, `CONFIRMED`, `REJECTED`, `CHECKED_IN`, `CANCELLED` | `registration.status` |
-| `BriefingStatus` | `PENDING`, `DONE` | `briefing.status` |
-| `VisitorType` | `INDIVIDUAL`, `GROUP`, `SCHOOL`, `PARTNER` | `visitor.visitor_type` |
-| `VisitPurpose` | `TOURISM`, `PURCHASE`, `PARTNERSHIP`, `INVESTMENT`, `EDUCATION`, `OTHER` | `registration.visit_purpose` |
-| `EventType` | `OPEN_DAY`, `PARTNER_BUYER`, `SCHOOL`, `COMMUNITY`, `OTHER` | `event.event_type` |
-| `EventStatus` | `DRAFT`, `PUBLISHED`, `CANCELLED`, `COMPLETED` | `event.status` |
-| `FeedbackChannel` | `ON_SITE`, `EMAIL`, `SMS`, `WHATSAPP` | `feedback.origin`, `survey_send.channel` |
-| `SurveyStatus` | `SENT`, `RECEIVED` | `survey_send.status` |
-| `WorkshopStatus` | `DRAFT`, `ACTIVE`, `INACTIVE` | `workshop.status` |
-| `BookingStatus` | `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED` | `booking.status` |
-| `BookingPaymentStatus` | `UNPAID`, `PAID`, `REFUNDED` | `booking.payment_status` |
-| `BookingPaymentMethod` | `CASH`, `ORANGE_MONEY`, `MOOV_MONEY` | `booking.payment_method` |
+- **Technologie :** Spring Boot (Java 21), base PostgreSQL, API REST.
+- **Fiabilité :** 222 tests automatisés, 0 échec.
+- **Emails :** la confirmation de réservation et le rappel 24 h avant sont réellement
+  envoyés (SMTP), ou simplement affichés en console en phase de développement.
+- **À jour pour le frontend :** l'API accepte les appels du site web (CORS) et dispose
+  de données d'exemple pour développer immédiatement (profil `dev`).
 
 ---
 
-## 3. REST API Endpoints
+## 2. Ce que fait le module (les écrans fonctionnels)
 
-Base URL: `http://localhost:8080/api/v1`
+| N° | Fonction | En une phrase |
+|----|----------|---------------|
+| 1 | **Dashboard** | Vue d'ensemble : visiteurs de la semaine, créneaux occupés, briefings en attente, satisfaction, événements à venir. |
+| 2 | **Planification des visites** | L'équipe crée les créneaux (ex. 09 h – 11 h, 14 h – 16 h), avec capacité max 10 personnes, fermé le dimanche. |
+| 3 | **Inscription visiteurs** | Formulaire (nom, contact, langue, besoins spéciaux…) + suivi : en attente → confirmé → check-in. Détecte les **prospects** (visiteurs avec intention d'achat). |
+| 4 | **Programme éducatif** | Le parcours type de la visite : 6 étapes (accueil → verger → irrigation → solaire → transformation → questions). Gestion d'**ateliers** (solaire, dégustation de mangues, journée écoles). |
+| 5 | **Briefing sécurité** | Chaque visite confirmée a un briefing sécurité obligatoire (qui, quand, signature). Obligatoire avant l'accès au site. |
+| 6 | **Réservations agritouristiques** | Les activités payantes (visite 5 000 F, dégustation 3 000 F…) avec réservation, paiement, **confirmation par email** et **rappel 24 h avant** (automatique). |
+| 7 | **Feedback** | Après la visite : note de satisfaction, avis sur le briefing, la valeur éducative, la recommandation + envoi d'enquêtes. |
+| 8 | **Événements** | Regrouper des visiteurs : porte-ouvertes, visite d'acheteurs, écoles… |
 
-### 3.1 Time Slots — `/api/v1/time-slots`
+En résumé, l'**ordre de vie d'un visiteur** :
 
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/time-slots` | List all slots (optional `?date=YYYY-MM-DD`) | 200 |
-| `GET` | `/time-slots/{id}` | Get slot by ID | 200, 404 |
-| `POST` | `/time-slots` | Create a new slot | 201, 400, 409, 422 |
-| `PUT` | `/time-slots/{id}` | Update slot details | 200, 404, 422 |
-| `DELETE` | `/time-slots/{id}` | Cancel a slot (soft-delete) | 204, 404, 422 |
-| `POST` | `/time-slots/{id}/assign-guide` | Assign a guide (`?guideId=N`) | 200, 404, 422 |
-| `GET` | `/time-slots/availability?date=...` | Availability view for a date | 200 |
-
-**Create/Update Request Body:**
-```json
-{
-  "date": "2026-09-08",
-  "startTime": "09:00",
-  "endTime": "11:00",
-  "maxCapacity": 10,
-  "guideId": 5
-}
 ```
-
-**TimeSlotResponse:**
-```json
-{
-  "id": 1,
-  "date": "2026-09-08",
-  "startTime": "09:00",
-  "endTime": "11:00",
-  "maxCapacity": 10,
-  "booked": 3,
-  "status": "RESERVED",
-  "guideId": 5,
-  "createdAt": "2026-09-01T10:00:00Z",
-  "updatedAt": "2026-09-01T10:00:00Z"
-}
-```
-
-**AvailabilityResponse:**
-```json
-{
-  "id": 1,
-  "date": "2026-09-08",
-  "startTime": "09:00",
-  "endTime": "11:00",
-  "maxCapacity": 10,
-  "remaining": 7,
-  "status": "RESERVED",
-  "guideId": 5
-}
-```
-
-### 3.2 Visitors — `/api/v1/visitors`
-
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/visitors` | List all visitors | 200 |
-| `GET` | `/visitors/{id}` | Get visitor by ID | 200, 404 |
-| `POST` | `/visitors` | Create visitor | 201, 400, 409 |
-| `PUT` | `/visitors/{id}` | Update visitor | 200, 404, 409 |
-
-**VisitorRequest:**
-```json
-{
-  "fullName": "Alice Dupont",
-  "groupSize": 2,
-  "email": "alice@example.com",
-  "phone": "+241 06 12 34 56",
-  "language": "French",
-  "type": "INDIVIDUAL",
-  "specialNeeds": "Wheelchair access required"
-}
-```
-
-### 3.3 Registrations — `/api/v1/registrations`
-
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/registrations` | List (filter by `?timeSlotId=`, `?date=`, or `?prospect=true`) | 200 |
-| `GET` | `/registrations/{id}` | Get registration by ID | 200, 404 |
-| `POST` | `/registrations` | Create registration (visitor→slot, requires `visitPurpose`) | 201, 400, 409, 422 |
-| `PATCH` | `/registrations/{id}/approve` | Approve → triggers briefing creation | 200, 404, 422 |
-| `PATCH` | `/registrations/{id}/reject` | Reject a pending registration | 200, 404, 422 |
-| `PATCH` | `/registrations/{id}/check-in` | Check in a confirmed visitor | 200, 404, 422 |
-| `PATCH` | `/registrations/{id}/cancel` | Cancel a registration | 200, 404, 422 |
-
-**RegistrationRequest:**
-```json
-{
-  "visitorId": 1,
-  "timeSlotId": 10,
-  "visitPurpose": "PURCHASE",
-  "eventId": null
-}
-```
-
-**RegistrationResponse (new fields):**
-```json
-{
-  "id": 1,
-  "visitorId": 1,
-  "visitorName": "Alice Dupont",
-  "groupSize": 2,
-  "timeSlotId": 10,
-  "slotDate": "2026-09-08",
-  "slotStart": "09:00",
-  "eventId": null,
-  "visitPurpose": "PURCHASE",
-  "prospect": true,
-  "status": "PENDING",
-  "briefingId": null,
-  "createdAt": "2026-09-01T10:00:00Z",
-  "updatedAt": "2026-09-01T10:00:00Z"
-}
-```
-
-### 3.4 Briefings — `/api/v1`
-
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/registrations/{registrationId}/briefing` | Get briefing for registration | 200, 404 |
-| `PATCH` | `/registrations/{registrationId}/briefing/deliver` | Mark briefing delivered | 200, 422 |
-
-**BriefingDeliverRequest:**
-```json
-{
-  "staffMember": "Guard Camille",
-  "signature": "digital-signature-or-name"
-}
-```
-
-### 3.5 Events — `/api/v1/events`
-
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/events` | List events (`?type=`, `?date=YYYY-MM-DD`) | 200 |
-| `GET` | `/events/{id}` | Get event by ID | 200, 404 |
-| `POST` | `/events` | Create event (default status `DRAFT`) | 201, 400, 422 |
-| `PUT` | `/events/{id}` | Update event (not allowed when CANCELLED/COMPLETED) | 200, 404, 422 |
-| `DELETE` | `/events/{id}` | Cancel event (soft-delete) | 204, 404, 422 |
-| `POST` | `/events/{id}/publish` | Publish a DRAFT event | 200, 404, 422 |
-| `GET` | `/events/{id}/registrations` | List registrations for the event | 200, 404 |
-| `POST` | `/events/{id}/register` | Register a visitor for the event | 201, 400, 404, 409, 422 |
-
-**EventRequest:**
-```json
-{
-  "title": "Open Farm Day",
-  "type": "OPEN_DAY",
-  "startDateTime": "2026-10-04T10:00:00",
-  "endDateTime": "2026-10-04T16:00:00",
-  "maxCapacity": 60,
-  "description": "Discover the farm, meet the team, taste our products",
-  "location": "Farm entrance hall"
-}
-```
-
-**EventResponse:**
-```json
-{
-  "id": 1,
-  "title": "Open Farm Day",
-  "type": "OPEN_DAY",
-  "startDateTime": "2026-10-04T10:00:00",
-  "endDateTime": "2026-10-04T16:00:00",
-  "maxCapacity": 60,
-  "booked": 3,
-  "status": "PUBLISHED",
-  "description": "Discover the farm, meet the team, taste our products",
-  "location": "Farm entrance hall",
-  "createdAt": "2026-09-01T10:00:00Z",
-  "updatedAt": "2026-09-01T10:00:00Z"
-}
-```
-
-**EventRegistrationRequest:**
-```json
-{
-  "visitorId": 1,
-  "visitPurpose": "PURCHASE"
-}
-```
-
-The registration created for an event has `timeSlotId: null` and carries the visitor's `visitPurpose`. Commercial purposes (`PURCHASE`, `PARTNERSHIP`, `INVESTMENT`) automatically mark the visitor as a prospect, exactly like time-slot registrations.
-
-### 3.6 Feedback & Surveys — `/api/v1`
-
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/feedback` | List responses (`?visitorId=`, `?from=`, `?to=`) | 200 |
-| `GET` | `/feedback/summary` | Compiled stats (`?from=`, `?to=`) | 200 |
-| `POST` | `/feedback` | Submit response (on-site or linked to a sent survey) | 201, 400, 404, 422 |
-| `PATCH` | `/feedback/{id}/route` | Route a response to a module owner | 200, 404, 400 |
-| `GET` | `/surveys` | List sent surveys (`?visitorId=`, `?status=`) | 200 |
-| `POST` | `/surveys` | Send a post-visit survey (email/SMS/WhatsApp) | 201, 400, 404, 422 |
-
-**FeedbackRequest:** `visitorId` (required), `surveyId` (optional — links the response to a sent survey and marks it RECEIVED), `rating` (1–5, required), `briefingClear`, `educationalValue`, `recommend`, `comment`.
-```json
-{
-  "visitorId": 1,
-  "surveyId": 12,
-  "rating": 4,
-  "briefingClear": "Yes, very clear",
-  "educationalValue": "The solar tracking was interesting",
-  "recommend": "Definitely",
-  "comment": "Would love a German-language brochure"
-}
-```
-
-**FeedbackResponse:**
-```json
-{
-  "id": 1,
-  "visitorId": 1,
-  "visitorName": "Alice Dupont",
-  "surveyId": 12,
-  "origin": "EMAIL",
-  "rating": 4,
-  "briefingClear": "Yes, very clear",
-  "educationalValue": "The solar tracking was interesting",
-  "recommend": "Definitely",
-  "comment": "Would love a German-language brochure",
-  "routedTo": "Sales (Mariata)",
-  "submittedAt": "2026-08-26T13:00:00Z",
-  "createdAt": "2026-08-26T13:00:00Z",
-  "updatedAt": "2026-08-26T13:00:00Z"
-}
-```
-
-**FeedbackSummaryResponse** (compiled weekly report):
-```json
-{
-  "averageRating": 4.2,
-  "total": 18,
-  "recommendPct": 92.0,
-  "distribution": { "1": 0, "2": 0, "3": 3, "4": 6, "5": 9 }
-}
-```
-
-**SurveyRequest:**
-```json
-{
-  "visitorId": 3,
-  "channel": "EMAIL",
-  "messageTemplate": "Thank you for visiting Sustainable Farm! Share your feedback: [link]"
-}
-```
-
-**SurveyResponse:** id, visitorId, visitorName, channel, messageTemplate, sentAt, status (`SENT`/`RECEIVED`), `rating` (once the visitor responded), createdAt, updatedAt.
-
-On-site tablet submissions use `POST /feedback` without `surveyId` → `origin: "ON_SITE"`. A sent survey becomes `RECEIVED` automatically when a response is linked to it.
-
-### 3.7 Educational Program — `/api/v1`
-
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/tour-stops` | List guided-tour stops (ordered by position) | 200 |
-| `POST` | `/tour-stops` | Create a tour stop | 201, 400, 409 |
-| `PUT` | `/tour-stops/{id}` | Update a stop (position must stay unique among active stops) | 200, 404, 409, 400 |
-| `DELETE` | `/tour-stops/{id}` | Deactivate a stop (soft-delete) | 204, 404 |
-| `GET` | `/workshops` | List workshops/templates (`?status=DRAFT|ACTIVE|INACTIVE`) | 200 |
-| `POST` | `/workshops` | Create a workshop (status `DRAFT`) | 201, 400 |
-| `PUT` | `/workshops/{id}` | Update a workshop | 200, 404, 400 |
-| `POST` | `/workshops/{id}/publish` | Publish a DRAFT workshop → ACTIVE | 200, 404, 422 |
-| `POST` | `/workshops/{id}/deactivate` | Deactivate an ACTIVE workshop → INACTIVE | 200, 404, 422 |
-
-**TourStopRequest / TourStopResponse:** `name` (required), `position` (required, ≥1, unique among active stops), `description`, `durationMinutes` (required, ≥1), `maxCapacity` (optional, ≥1), `location`, `demo`, `safetyNotes`, `active`.
-```json
-{
-  "name": "Solar plant & tracking system",
-  "position": 4,
-  "description": "86.4 kWp installed, +20% yield with tracking",
-  "durationMinutes": 15,
-  "maxCapacity": 15,
-  "location": "Solar field — observation path",
-  "demo": "Live dashboard screen (Infineon sensors)",
-  "safetyNotes": "Observation path only; tracker, battery/inverter and running generator restricted"
-}
-```
-
-**WorkshopRequest / WorkshopResponse:** `name` (required), `durationMinutes` (required, ≥1), `targetGroup` (required, e.g. `All`, `Professional`, `Schools`), `facilitator`, `description`, `status` (`DRAFT` by default).
-
-**Confirmed reference content** (module owners: Aida, Jean-Louis, Delwende, Phares, Abdoul): standard tour stops — Welcome & safety briefing (5-10 min, Front Desk), Mango orchard (20 min, Keitt 200 trees/2 ha), Smart drip irrigation (10-15 min, max 10), Solar plant & tracking (15 min, max 15), Processing unit (20 min, max 10), Wrap-up & questions (15 min) → **max 10 pers/slot** (limiting stops: irrigation + processing). Reference workshops: Standard farm tour (~100 min, All, Alix), Solar workshop (45 min, Professional, Guest Aida), Mango tasting & processing (40 min, General public, Guest Abdoul), School discovery day (120 min, Schools, P. Nikiéma).
-
-### 3.8 Agritourism Booking System — `/api/v1`
-
-| Method | Path | Description | Status Codes |
-|--------|------|-------------|-------------|
-| `GET` | `/activities` | List agritourism activities (alphabetical) | 200 |
-| `POST` | `/activities` | Create an activity (name, price FCFA, capacity, durationMinutes) | 201, 400 |
-| `PUT` | `/activities/{id}` | Update an activity | 200, 404, 400 |
-| `DELETE` | `/activities/{id}` | Deactivate an activity (soft-delete) | 204, 404 |
-| `GET` | `/bookings` | List bookings (`?status=PENDING\|CONFIRMED\|COMPLETED\|CANCELLED`, `?activityId=`, `?date=`) | 200 |
-| `GET` | `/bookings/occupancy` | Occupancy % per activity | 200 |
-| `POST` | `/bookings` | Create a booking (validates capacity) | 201, 400, 404, 409 |
-| `PUT` | `/bookings/{id}` | Update a booking (PENDING/CONFIRMED only) | 200, 404, 409, 422 |
-| `POST` | `/bookings/{id}/pay` | Record payment → `PAID` | 200, 404, 422 |
-| `POST` | `/bookings/{id}/confirm` | Confirm (only PENDING + PAID), sends confirmation email, schedules 24h reminder | 200, 404, 422 |
-| `POST` | `/bookings/{id}/complete` | Mark a CONFIRMED booking COMPLETED | 200, 404, 422 |
-| `POST` | `/bookings/{id}/cancel` | Cancel PENDING/CONFIRMED; paid → REFUNDED; frees capacity | 200, 404, 422 |
-
-**AgriActivityRequest / AgriActivityResponse:** `name` (150), `price` (BigDecimal ≥ 0, FCFA), `capacity` (≥ 1), `durationMinutes` (≥ 1), `description` (1000), `active`.
-```json
-{
-  "name": "Solar workshop",
-  "price": 5000,
-  "capacity": 15,
-  "durationMinutes": 45,
-  "description": "Guided visit of the 86.4 kWp solar plant with tracking"
-}
-```
-
-**BookingRequest / BookingResponse:** `activityId`, `timeSlotId`, `visitorFullName`, `visitorEmail` (valid email), `visitorPhone`, `peopleCount` (≥ 1), `paymentMethod` (`CASH`, `ORANGE_MONEY`, `MOOV_MONEY`). Response adds `reference` (`BK-00001` format), `activityName`, `activityPrice`, slot date/times, `totalAmount` (price × people), `paymentStatus`, `status`, `reminderScheduledAt`.
-```json
-{
-  "activityId": 1,
-  "timeSlotId": 2,
-  "visitorFullName": "Lucas Weber",
-  "visitorEmail": "lucas@example.com",
-  "visitorPhone": "+22612345678",
-  "peopleCount": 5,
-  "paymentMethod": "ORANGE_MONEY"
-}
-```
-
-Reference data from the mockup: Standard tour 5,000 FCFA/person (family rate 3,500 FCFA); payment accepted in cash, Orange Money, Moov Money.
-
-**Emails (confirmation + rappel 24 h).** À la confirmation, un email de confirmation est envoyé au visiteur (référence `BK-xxxxx`, activité, date/créneau, personnes, total) et `confirmationSentAt` est posé. Un job planifié (`BookingReminderJob`, toutes les 60 s par défaut) envoie le rappel « moins de 24 h » aux réservations confirmées dont l'échéance est atteinte (`reminderScheduledAt ≤ now`) et passe `reminderSentAt`. **Un échec d'envoi ne bloque jamais la réservation** : l'erreur est loggée et la confirmation est maintenue. Deux implémentations de `NotificationService` :
-
-| Mode | Condition | Comportement |
-|------|-----------|-------------|
-| `ConsoleNotificationServiceImpl` | `app.mail.enabled=false` (défaut) | Email loggé en console (dev) |
-| `SmtpNotificationServiceImpl` | `app.mail.enabled=true` | Envoi réel via `JavaMailSender` (SMTP) |
-
----
-
-## 4. Business Rules
-
-### Scheduling Rules (`SchedulingRules.java`)
-
-| Rule | Value | Source |
-|------|-------|--------|
-| Max visitors per slot | **10** | Confirmed with module owners (Abdoul) |
-| Max slots per day | **2** | Mockup: morning + afternoon |
-| Closed day | **Sunday** | All module owners |
-| Morning slot | 09:00–11:00 | Default |
-| Afternoon slot | 14:00–16:00 | Default |
-
-### Registration Rules
-
-| Rule | Enforcement |
-|------|-------------|
-| Cannot register on a **CANCELLED** slot | `BusinessRuleException` |
-| No duplicate registration (visitor + slot) | `ConflictException` (409) |
-| Group size must fit remaining capacity | `BusinessRuleException` |
-| Only **PENDING** → approve/reject | `BusinessRuleException` |
-| Only **CONFIRMED** → check-in | `BusinessRuleException` |
-| Cannot cancel after **CHECKED_IN** | `BusinessRuleException` |
-| **CONFIRMED** → auto-creates `Briefing` (PENDING) | Service layer |
-| Briefing delivery requires PENDING status | `BusinessRuleException` |
-
-### Event Rules
-
-| Rule | Enforcement |
-|------|-------------|
-| `endDateTime` must be after `startDateTime` | `BusinessRuleException` |
-| Only **DRAFT** events can be published | `BusinessRuleException` |
-| Cannot publish an event that has already ended | `BusinessRuleException` |
-| Cannot update **CANCELLED** or **COMPLETED** events | `BusinessRuleException` |
-| Cannot cancel a **COMPLETED** event | `BusinessRuleException` |
-| Registration only on **PUBLISHED** events | `BusinessRuleException` |
-| No duplicate registration (visitor + event) | `ConflictException` (409) |
-| `booked + groupSize > maxCapacity` → reject | `BusinessRuleException` (422) |
-| Booked count excludes `REJECTED` / `CANCELLED` registrations | Repository query |
-
-### Feedback & Survey Rules
-
-| Rule | Enforcement |
-|------|-------------|
-| Rating must be between 1 and 5 | Bean validation (400) |
-| Response linked to a survey must match the survey's visitor | `BusinessRuleException` (422) |
-| A survey can only be answered once (RECEIVED is final) | `BusinessRuleException` (422) |
-| Survey channel cannot be `ON_SITE` (tablet responses are direct) | `BusinessRuleException` (422) |
-| Response without a survey → recorded as `ON_SITE` | Service layer |
-| Linking a response marks the survey `RECEIVED` | Service layer |
-| Routing targets are free-text tags (no coupling to other modules) | Data model |
-
-### Educational Program Rules
-
-| Rule | Enforcement |
-|------|-------------|
-| Position must be ≥ 1 | Bean validation (400) |
-| Position must be unique among **active** stops | `ConflictException` (409) |
-| Deactivating a stop frees its position (soft-delete) | `DELETE /tour-stops/{id}` |
-| Create → status `DRAFT` | Service layer |
-| Only **DRAFT** workshops can be published | `BusinessRuleException` (422) |
-| Only **ACTIVE** workshops can be deactivated | `BusinessRuleException` (422) |
-
-### Agritourism Booking Rules
-
-| Rule | Enforcement |
-|------|-------------|
-| Capacity counts **non-cancelled** bookings only | Repository aggregate query |
-| A booking can never exceed the **slot capacity** (10 pers) | `ConflictException` (409) |
-| A booking can never exceed the **activity capacity** | `ConflictException` (409) |
-| Bookings only on **active** activities and non-cancelled slots | `BusinessRuleException` (422) |
-| Cannot update **COMPLETED / CANCELLED** bookings | `BusinessRuleException` (422) |
-| Can only confirm a **PENDING** booking that is **PAID** | `BusinessRuleException` (422) |
-| Confirm schedules the 24 h reminder (`slot start − 24h`) | Service layer |
-| Completing requires **CONFIRMED** status | `BusinessRuleException` (422) |
-| Cancelling a **PAID** booking marks it **REFUNDED** | Service layer |
-| Confirm sends the booking confirmation email | `NotificationService` (never blocks) |
-| 24 h reminder sent for due, unsent reminders | `BookingReminderJob` (fixed delay, 60 s) |
-| Reminder / confirmation deliveries are idempotent (`confirmationSentAt`, `reminderSentAt`) | Repository query + service |
-
-### Visitor Rules
-
-| Rule | Enforcement |
-|------|-------------|
-| Duplicate email → `ConflictException` (409) | On create and update |
-| `@NotBlank` on fullName | Bean validation (400) |
-| `@Email` on email | Bean validation (400) |
-
-### Lead Generation (Prospect Detection)
-
-The visitor management app doubles as a **marketing tool** for the Sales & Marketing team. When a visitor registers with a commercial purpose, the system automatically flags them as a prospect.
-
-**How it works:**
-1. During registration, the visitor **must** select a `visitPurpose` (mandatory field)
-2. If the purpose is `PURCHASE`, `PARTNERSHIP`, or `INVESTMENT`, the system sets `isProspect = true` automatically
-3. Sales & Marketing can query all prospects via `GET /api/v1/registrations?prospect=true`
-
-**VisitPurpose values:**
-
-| Purpose | Prospect? | Description |
-|---------|-----------|-------------|
-| `TOURISM` | No | Leisure visit, tourism |
-| `PURCHASE` | **Yes** | Interested in buying products |
-| `PARTNERSHIP` | **Yes** | Business partnership opportunity |
-| `INVESTMENT` | **Yes** | Investment opportunity |
-| `EDUCATION` | No | Training, educational visit |
-| `OTHER` | No | Other reasons |
-
-**Prospect query example:**
-```
-GET /api/v1/registrations?prospect=true
-```
-Returns all registrations where `isProspect = true`, including visitor name, email, phone, and visit purpose.
-
----
-
-## 5. Status Flow Diagrams
-
-### TimeSlot Status Flow
-```
-                ┌──────────┐
-     create     │ AVAILABLE│
-   ──────────►  └────┬─────┘
-                     │
-           ┌─────────┼──────────┐
-           │         │          │
-      register   assign     cancel
-           │      guide         │
-           ▼         │          ▼
-     ┌──────────┐   │   ┌──────────┐
-     │ RESERVED │   │   │ CANCELLED│
-     └────┬─────┘   │   └──────────┘
-          │         │
-     full │         │
-          ▼         │
-     ┌──────┐      │
-     │ FULL │◄─────┘ (booked >= capacity)
-     └──┬───┘
-        │
-   end_time passes
-        ▼
-  ┌───────────┐
-  │ COMPLETED │
-  └───────────┘
-```
-
-### Registration Status Flow
-```
-                ┌─────────┐
-    register    │ PENDING │
-   ──────────►  └────┬────┘
-                     │
-            ┌────────┼──────────┐
-            │        │          │
-        approve   reject     cancel
-            │        │          │
-            ▼        ▼          ▼
-     ┌──────────┐ ┌──────────┐ ┌───────────┐
-     │CONFIRMED │ │ REJECTED │ │ CANCELLED │
-     └────┬─────┘ └──────────┘ └───────────┘
-          │
-     check-in
-          │
-          ▼
-   ┌───────────┐
-   │CHECKED_IN │
-   └─────┬─────┘
-         │
-    cancel blocked
-         │
-    (final state)
-```
-
-### Briefing Status Flow
-```
-         ┌─────────┐
-  auto   │ PENDING │  ← created when registration CONFIRMED
- ──────► └────┬────┘
-              │
-         deliver briefing
-              │
-              ▼
-        ┌──────────┐
-        │   DONE   │  ← staffMember + signature + deliveredAt
-        └──────────┘
-```
-
-### Event Status Flow
-```
-               ┌─────────┐
-   create      │  DRAFT  │
-  ─────────►   └────┬────┘
-                    │
-              publish (not ended)
-                    │
-                    ▼
-            ┌───────────┐      cancel from any non-completed
-            │ PUBLISHED │◄───────────┐
-            └─────┬─────┘            │
-                  │            ┌─────┴─────┐
-          ended   │            │ CANCELLED │
-                  │            └───────────┘
-                  ▼
-          ┌───────────┐
-          │ COMPLETED │
-          └───────────┘
-```
-
-### Survey Status Flow
-```
-              ┌─────────┐
-   POST  │ SENT    │  ← survey link dispatched by email/SMS/WhatsApp
-  ─────► └────┬────┘
-              │
-         response linked
-              │
-              ▼
-        ┌───────────┐
-        │ RECEIVED  │  ← linked Feedback (rating visible)
-        └───────────┘
+Choix du créneau → Inscription → Confirmation email → Briefing sécurité
+   → Visite (programme éducatif) → Feedback → (éventuel événement)
 ```
 
 ---
 
-## 6. Error Handling
+## 3. Comment c'est organisé
 
-All errors return a consistent JSON envelope via `GlobalExceptionHandler`:
+Un seul backend, une seule base de données. Le site web (frontend React) viendra ensuite
+s'y brancher.
 
-```json
-{
-  "status": 404,
-  "error": "Not Found",
-  "message": "Time slot 999 not found",
-  "path": "/api/v1/time-slots/999"
-}
+```ascii
+         +-----------+        +------------------+        +----------+
+Navigateur │  Frontend  │ ────>│    API Spring    │ ────> │  Base de  │
+  (site)   │  React     │ HTTP │   Boot (:8080)   │ SQL    │ données  │
+           +-----------+      +------------------+        │ Postgres │
+                                     │                     +----------+
+                                     │ email (SMTP) / console
+                                     v
+                          Confirmation + rappel 24 h
 ```
 
-| Exception | HTTP Status | When |
-|-----------|-------------|------|
-| `ResourceNotFoundException` | 404 | Entity not found |
-| `ConflictException` | 409 | Duplicate email, duplicate registration, overlapping slot |
-| `BusinessRuleException` | 422 | Invalid state transition, capacity exceeded, Sunday creation |
-| `MethodArgumentNotValidException` | 400 | Bean validation failures (`@NotBlank`, `@Email`, etc.) |
+- Toutes les fonctions sont regroupées dans le module **Visitor Management**
+  (`modules/visitormanagement/`), avec le partage technique dans `core/`.
+- L'interface Web de l'API (Swagger) est automatiquement générée : c'est la meilleure
+  façon de voir chaque écran → chaque URL → chaque donnée.
 
 ---
 
-## 7. Test Coverage Summary
+## 4. Les données (schéma et diagrammes de classes)
 
-| Layer | Annotation | Tests | Framework |
-|-------|-----------|-------|-----------|
-| Repository | `@DataJpaTest` + H2 | 39 | Spring Data + AssertJ |
-| Service | `@ExtendWith(MockitoExtension.class)` | 94 | Mockito + AssertJ |
-| Controller | `@WebMvcTest` + MockMvc | 82 | MockMvc + Mockito |
-| Context | `@SpringBootTest` | 4 | Spring Boot (+MockMvc CORS preflight) |
-| Core (notification) | plain Mockito | 3 | Mockito + AssertJ |
-| **Total** | | **222** | |
+Clés de lecture des diagrammes :
 
-### Test Files
-
+```ascii
+  Un A concerne plusieurs B :         Un A correspond à un seul B :
+  +----------+ 1  *  +----------+       +--------+ 1 1 +--------+
+  |    A     |────────>|    B     |       |   A    |────>|   B    |
+  +----------+         +----------+       +--------+     +--------+
 ```
-src/test/java/com/infineonbit/sustainablefarm/
-├── SustainableFarmApplicationTests.java
-└── modules/visitormanagement/
-    ├── repository/
-    │   ├── TimeSlotRepositoryTest.java       (5 tests)
-    │   ├── VisitorRepositoryTest.java        (4 tests)
-    │   ├── RegistrationRepositoryTest.java   (5 tests)
-    │   ├── BriefingRepositoryTest.java       (2 tests)
-    │   ├── EventRepositoryTest.java          (4 tests)
-    │   ├── FeedbackRepositoryTest.java       (7 tests)
-    │   ├── EducationalProgramRepositoryTest.java (5 tests)
-    │   └── AgriTourismRepositoryTest.java (7 tests)
-    ├── service/
-    │   ├── SchedulingServiceImplTest.java    (13 tests)
-    │   ├── RegistrationServiceImplTest.java  (21 tests)
-    │   ├── EventServiceImplTest.java         (16 tests)
-    │   ├── FeedbackServiceImplTest.java      (12 tests)
-    │   ├── EducationalProgramServiceImplTest.java (12 tests)
-    │   ├── BookingServiceImplTest.java       (18 tests)
-    │   └── BookingReminderJobTest.java       (2 tests)
-    └── controller/
-        ├── TimeSlotControllerTest.java       (9 tests)
-        ├── VisitorControllerTest.java        (7 tests)
-        ├── RegistrationControllerTest.java   (12 tests)
-        ├── BriefingControllerTest.java       (5 tests)
-        ├── EventControllerTest.java          (13 tests)
-        ├── FeedbackControllerTest.java       (10 tests)
-        ├── EducationalProgramControllerTest.java (12 tests)
-        └── BookingControllerTest.java        (13 tests)
-├── core/notification/
-│   └── NotificationServiceTest.java        (3 tests)
-└── CorsConfigurationTest.java             (3 tests, @SpringBootTest + MockMvc)
+
+### 4.1 Planification, inscription, briefing
+
+C'est le cœur : qui vient, quand, et qui a reçu le briefing sécurité.
+
+```ascii
++---------------------+   +----------------------+   +----------------------+
+|      TimeSlot       | 1 |     Registration      | 1 |      Briefing        |
+|  (créneau de visite)|──>|  (inscription)        |──>|  (briefing sécurité) |
++---------------------+   +----------------------+   +----------------------+
+| id                  |   | id                   |   | id                   |
+| date                |   | visitor      (FK)    |   | registration (FK)    |
+| startTime           |   | timeSlot     (FK)    |   | deliveredAt          |
+| endTime             |   | eventId      (FK)    |   | staffMember          |
+| maxCapacity (10)    |   | visitPurpose         |   | signature            |
+| status              |   | isProspect (prospect)|   | status               |
+| guideId             |   | status               |   +----------------------+
++---------------------+   +----------------------+
+        1│                                │
+         *│                                │ 1..*
++---------------------+                    │
+|       Visitor       |<───────────────────┘
+| (visiteur / groupe) |
++---------------------+
+| id                  |
+| fullName            |   Relations :
+| groupSize           |   • 1 créneau → plusieurs inscriptions
+| email / phone       |   • 1 visiteur → plusieurs inscriptions
+| language            |   • 1 inscription → 1 briefing
+| type (individu/     |
+|   groupe / école /  |
+|   partenaire)       |
+| specialNeeds        |
++---------------------+
 ```
+
+### 4.2 Réservations agritouristiques
+
+Le catalogue d'activités payantes et les réservations, avec leurs emails.
+
+```ascii
++----------------------+   +-------------------------+
+|      AgriActivity    | 1 |        Booking          |
+| (offre / activité)   |──>| (réservation)           |
++----------------------+   +-------------------------+
+| id                   |   | id                      |
+| name                 |   | activity      (FK)      |
+| price (FCFA)         |   | timeSlot      (FK)      |
+| capacity             |   | visitorFullName         |
+| durationMinutes      |   | visitorEmail            |
+| description          |   | visitorPhone            |
+| active               |   | peopleCount             |
++----------------------+   | totalAmount             |
+                            | status / paymentStatus /|
+                            |   paymentMethod         |
+                            | reminder (rappel 24h)   |
+                            | confirmation/reminder   |
+                            |   emails envoyés        |
+                            +-------------------------+
+```
+
+Une réservation réserve aussi un créneau de la journée (le `TimeSlot` de la partie 4.1).
+
+### 4.3 Programme éducatif
+
+Le parcours de visite et les ateliers. Deux listes indépendantes (pas de lien entre elles).
+
+```ascii
++-------------------------+        +--------------------------+
+|        TourStop         |        |         Workshop         |
+|   (étape de la visite)  |        |    (atelier programmé)   |
++-------------------------+        +--------------------------+
+| id                      |        | id                       |
+| name                    |        | name                     |
+| position (1 à 6)        |        | durationMinutes          |
+| description             |        | targetGroup (public)     |
+| durationMinutes         |        | facilitator (animateur)  |
+| maxCapacity             |        | description              |
+| location / demo         |        | status (brouillon / actif)|
+| safetyNotes             |        +--------------------------+
+| active                  |
++-------------------------+
+```
+
+Les 6 étapes actuelles : 1) Accueil & briefing  2) Verger de manguiers  3) Irrigation
+goutte-à-goutte  4) Centrale solaire & tracking  5) Unité de transformation  6) Questions finales.
+
+### 4.4 Feedback et enquêtes
+
+Le visiteur répond à une enquête (SurveySend), qui produit un feedback.
+
+```ascii
++---------------------+   +----------------------+ 1 1 +--------------------+
+|      Visitor        | 1 |      SurveySend      |────>|      Feedback      |
+| (visiteur / groupe) |──>| (enquête envoyée)    |     | (réponse du v.)    |
++---------------------+   +----------------------+     +--------------------+
+                          | id                   |     | id                 |
+                          | visitor      (FK)    |     | visitor     (FK)   |
+                          | channel (email /...) |     | surveySend (FK)    |
+                          | messageTemplate      |     | origin / channel   |
+                          | sentAt               |     | rating (note 1-5)  |
+                          | status               |     | briefingClear      |
+                          +----------------------+     | educationalValue   |
+                                                      | recommend          |
+                                                      | comment            |
+                                                      | routedTo / submittedAt
+                                                      +--------------------+
+```
+
+### 4.5 Événements
+
+Un événement regroupe plusieurs inscriptions (d'où le champ `eventId` dans Registration).
+
+```ascii
++-------------------------+ 1    * +--------------------------+
+|          Event          |───────>|       Registration        |
+|  (événement programmé)  |        | (voir 4.1 — le champ eventId |
++-------------------------+        |  relie une inscription à un |
+| id                      |        |  événement)               |
+| title                   |        +--------------------------+
+| type (porte-ouvertes /  |
+| acheteur / école /      |
+| communauté)             |
+| startDateTime / end     |
+| maxCapacity             |
+| location / description  |
+| status (brouillon /     |
+| publié / annulé / ...)  |
++-------------------------+
+```
+
+### 4.6 Récapitulatif des relations
+
+| Entité | Rôle | Liens |
+|--------|------|-------|
+| `TimeSlot` | Créneau de visite (date/heure/capacité) | → plusieurs `Registration` et `Booking` |
+| `Visitor` | Visiteur ou groupe | → plusieurs `Registration`, `Feedback`, `SurveySend` |
+| `Registration` | Inscription à un créneau (ou événement) | → 1 `Visitor`, 1 `TimeSlot`, 1 `Briefing`, option `Event` |
+| `Briefing` | Preuve du briefing sécurité | → 1 `Registration` |
+| `Event` | Événement regroupant des visiteurs | → plusieurs `Registration` |
+| `AgriActivity` | Activité payante du catalogue | → plusieurs `Booking` |
+| `Booking` | Réservation d'activité + emails | → 1 `AgriActivity`, 1 `TimeSlot` |
+| `TourStop` | Étape du parcours de visite | indépendant |
+| `Workshop` | Atelier (éducatif) | indépendant |
+| `SurveySend` | Enquête envoyée au visiteur | → 1 `Visitor`, → 1 `Feedback` |
+| `Feedback` | Réponse du visiteur | → 1 `Visitor`, 1 `SurveySend` |
+
+> Toutes les entités partagent un identifiant `id` et les dates `createdAt` / `updatedAt`.
 
 ---
 
-## 8. Running the Backend
+## 5. Accéder à l'API (Swagger)
+
+La meilleure porte d'entrée : l'interface Swagger, générée automatiquement.
+
+- **Swagger UI :** `http://localhost:8080/swagger-ui/index.html`
+- **Vérifier que le backend tourne :** `http://localhost:8080/actuator/health`
+
+Aperçu des groupes d'URLs (tout est sous `/api/v1`) :
+
+| Ressource | URLs principales |
+|-----------|------------------|
+| Créneaux | `/time-slots` (+ `/availability`) |
+| Visiteurs | `/visitors` |
+| Inscriptions | `/registrations` (+ `/approve`, `/reject`, `/check-in`, `/cancel`) |
+| Briefings | `/registrations/{id}/briefing` (+ `/deliver`) |
+| Programme éducatif | `/tour-stops`, `/workshops` (+ `/publish`, `/deactivate`) |
+| Réservations | `/activities`, `/bookings` (+ `/pay`, `/confirm`, `/complete`, `/cancel`) |
+| Feedback | `/feedback`, `/feedback/summary`, `/surveys` |
+| Événements | `/events` (+ `/register`, `/publish`, `/registrations`) |
+
+---
+
+## 6. Démarrer
+
+Prérequis : Docker. Copier `.env.example` vers `.env`, puis :
 
 ```bash
-# Start PostgreSQL + Backend
-docker compose up -d backend
-
-# Backend available at
-http://localhost:8080
-
-# Swagger UI
-http://localhost:8080/swagger-ui/index.html
-
-# Actuator health
-http://localhost:8080/actuator/health
-
-# Run tests (Docker, no local JDK required)
-docker run --rm -v "$PWD":/src -w /src \
-  -v "$HOME/.m2":/root/.m2 \
-  maven:3.9-eclipse-temurin-21 ./mvnw test
-
-# Compile only
-docker run --rm -v "$PWD":/src -w /src \
-  -v "$HOME/.m2":/root/.m2 \
-  maven:3.9-eclipse-temurin-21 ./mvnw compile
+docker compose up -d --build
+# Backend :  http://localhost:8080
+# Swagger :  http://localhost:8080/swagger-ui/index.html
 ```
 
-### Email notifications (env vars)
+### Options utiles (dans `.env`)
 
-Real SMTP delivery requires `MAIL_ENABLED=true` plus SMTP credentials. Without it,
-emails are only logged to the console (dev mode).
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MAIL_ENABLED` | `false` | `true` → real SMTP, `false` → console log |
-| `MAIL_HOST` | *(empty)* | SMTP host (e.g. `smtp.orange.bf`) |
-| `MAIL_PORT` | `587` | SMTP port |
-| `MAIL_USERNAME` | *(empty)* | SMTP username |
-| `MAIL_PASSWORD` | *(empty)* | SMTP password |
-| `MAIL_FROM` | `visits@sustainable-farm.local` | Sender address |
-| `MAIL_REMINDER_INTERVAL_MS` | `60000` | Reminder poll interval (fixed delay) |
-
-### CORS (env vars)
-
-The backend allows cross-origin calls on `/api/**` for the configured origins.
-Adjust `APP_CORS_ORIGINS` to your frontend addresses (Vite dev server / container).
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `APP_CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173` | `Comma-separated allowed origins` |
-
-### Dev reference data (env vars)
-
-Enable with `SPRING_PROFILES_ACTIVE=dev`. `DevDataSeeder` (idempotent: seeds each
-table only when empty) loads the confirmed mockup data — **never active in production**:
-
-- **Tour stops**: 6 stops (Accueil → Mango orchard → Irrigation → Solar → Processing → Wrap-up)
-- **Workshops**: 4 (Standard farm tour, Solar workshop, Mango tasting [DRAFT]*, School day)
-- **Agri activities**: 3 (Standard tour 5 000 FCFA, Mango tasting 3 000 FCFA, Solar workshop 5 000 FCFA)
-- **Time slots**: next 7 days (2/day 09-11 & 14-16, Sundays skipped, capacity 10)
-- **Event**: "Journée portes ouvertes" (`OPEN_DAY`, PUBLISHED, +2 weeks)
-- **Sample visitor**: "Awa Ouédraogo" (group of 8) with a pending `PURCHASE` registration (prospect)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SPRING_PROFILES_ACTIVE` | *(empty)* | `dev` → seed reference data |
+| Variable | À quoi ça sert | Exemple |
+|----------|----------------|---------|
+| `SPRING_PROFILES_ACTIVE` | Charge des **données d'exemple** (stops, ateliers, activités, créneaux, un événement et un visiteur) pour développer. **Jamais en production.** | `dev` |
+| `APP_CORS_ORIGINS` | Autorise le site web (frontend) à appeler l'API. | `http://localhost:3000,http://localhost:5173` |
+| `MAIL_ENABLED` | `true` → envoi réel des emails (SMTP) ; `false` → affichage en console. | `false` |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | Paramètres du serveur SMTP. | `smtp.orange.bf` / `587` |
 
 ---
 
-## 9. Technology Stack
+## 7. Qualité
 
-| Component | Version | Notes |
-|-----------|---------|-------|
-| Java | 21 | LTS |
-| Spring Boot | 4.1.0 | Modular monolith |
-| Spring Data JPA | 4.1.0 | Derived queries + `@Query` |
-| Hibernate ORM | 7.4.1 | `ddl-auto=update` (no Flyway) |
-| PostgreSQL | 17-alpine | Production database |
-| H2 | 2.x | Test-only in-memory DB |
-| SpringDoc OpenAPI | 2.8.5 | Swagger UI auto-generated |
-| Spring Mail | 4.1.0 | `JavaMailSender` + SMTP (emails booking) |
-| Lombok | 1.18.46 | Boilerplate reduction |
-| Jackson | 3.1.4 | JSON serialization |
-| Mockito | 5.23.0 | Service + controller tests |
-| AssertJ | 3.27.7 | Fluent assertions |
+- **222 tests automatisés, 0 échec** : règles de gestion (capacités, statuts, paiements),
+  emails (confirmation, rappel 24 h, échec d'envoi), toutes les URLs et le schéma de données.
+- Relancer les tests (via Docker, aucun JDK local nécessaire) :
+
+```bash
+docker run --rm -v "$PWD/backend":/src -w /src -v "$HOME/.m2":/root/.m2 \
+  maven:3.9-eclipse-temurin-21 ./mvnw test
+```
 
 ---
 
-*Last updated: 2026-09-09*
+## 8. Et maintenant
+
+Le backend est **terminé et prêt**. Reste à construire le frontend (les écrans portent
+sur les 8 fonctions du § 2). La base de données contiendra les données d'exemple dès
+qu'on lance avec `SPRING_PROFILES_ACTIVE=dev`, donc le site pourra être développé et
+testé immédiatement.
+
+*Dernière mise à jour : 2026-09-10*
