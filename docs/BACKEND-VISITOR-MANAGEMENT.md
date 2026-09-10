@@ -1,96 +1,92 @@
-# Visitor Management — Backend (guide simple)
+# Visitor Management — Backend (Simple Guide)
 
-> **Ce document explique ce que fait le backend de la gestion des visiteurs, simplement,
-> sans jargon.** Si tu veux le détail de l'API, ouvre Swagger (voir § 5).
-> *Simple guide — what the Visitor Management backend does, how its data is organized,
-> and how to run it.*
+> **This document explains what the Visitor Management backend does, and how its data
+> is organized, in plain words.** For the full API details, open Swagger (see § 5).
 
-**Projet :** Sustainable Farm — ferme de mangues séchées, Burkina Faso → Allemagne (Infineon × BIT Excellence Program)
-**Module :** Visitor Management (développé par Alix Carine VEBAMBA)
-**Assistant technique :** opencode
+**Project:** Sustainable Farm — dried mango farm, Burkina Faso → Germany (Infineon × BIT Excellence Program)
+**Module:** Visitor Management (developed by Alix Carine VEBAMBA)
+**Built with:** opencode (AI assistant)
 
 ---
 
-## 1. En bref
+## 1. In a nutshell
 
-Le backend couvre **tout le parcours d'un visiteur** : choix d'un créneau de visite,
-inscription, confirmation avec email, briefing sécurité, visite guidée, feedback, et
-participation à des événements. C'est un **outil interne** pour l'équipe de la ferme
-(guides, accueil), pas une application grand public.
+The backend covers the **full visitor journey**: choosing a visit slot, registration,
+email confirmation, safety briefing, guided tour, feedback — plus events. It is an
+**internal tool** for the farm team (guides, front desk), not a public website.
 
-- **Technologie :** Spring Boot (Java 21), base PostgreSQL, API REST.
-- **Fiabilité :** 222 tests automatisés, 0 échec.
-- **Emails :** la confirmation de réservation et le rappel 24 h avant sont réellement
-  envoyés (SMTP), ou simplement affichés en console en phase de développement.
-- **À jour pour le frontend :** l'API accepte les appels du site web (CORS) et dispose
-  de données d'exemple pour développer immédiatement (profil `dev`).
+- **Technology:** Spring Boot (Java 21), PostgreSQL database, REST API.
+- **Reliability:** 222 automated tests, 0 failures.
+- **Emails:** booking confirmation and the 24 h reminder are really sent (SMTP), or
+  simply printed to the console during development.
+- **Frontend-ready:** the API accepts calls from the web app (CORS) and ships with
+  sample data to start developing immediately (`dev` profile).
 
 ---
 
-## 2. Ce que fait le module (les écrans fonctionnels)
+## 2. What the module does (the screens)
 
-| N° | Fonction | En une phrase |
-|----|----------|---------------|
-| 1 | **Dashboard** | Vue d'ensemble : visiteurs de la semaine, créneaux occupés, briefings en attente, satisfaction, événements à venir. |
-| 2 | **Planification des visites** | L'équipe crée les créneaux (ex. 09 h – 11 h, 14 h – 16 h), avec capacité max 10 personnes, fermé le dimanche. |
-| 3 | **Inscription visiteurs** | Formulaire (nom, contact, langue, besoins spéciaux…) + suivi : en attente → confirmé → check-in. Détecte les **prospects** (visiteurs avec intention d'achat). |
-| 4 | **Programme éducatif** | Le parcours type de la visite : 6 étapes (accueil → verger → irrigation → solaire → transformation → questions). Gestion d'**ateliers** (solaire, dégustation de mangues, journée écoles). |
-| 5 | **Briefing sécurité** | Chaque visite confirmée a un briefing sécurité obligatoire (qui, quand, signature). Obligatoire avant l'accès au site. |
-| 6 | **Réservations agritouristiques** | Les activités payantes (visite 5 000 F, dégustation 3 000 F…) avec réservation, paiement, **confirmation par email** et **rappel 24 h avant** (automatique). |
-| 7 | **Feedback** | Après la visite : note de satisfaction, avis sur le briefing, la valeur éducative, la recommandation + envoi d'enquêtes. |
-| 8 | **Événements** | Regrouper des visiteurs : porte-ouvertes, visite d'acheteurs, écoles… |
+| # | Feature | In one sentence |
+|---|---------|-----------------|
+| 1 | **Dashboard** | Overview: this week's visitors, occupied slots, pending briefings, satisfaction, upcoming events. |
+| 2 | **Farm tour scheduling** | Staff creates slots (e.g. 09:00–11:00, 14:00–16:00), max capacity 10 people, closed on Sundays. |
+| 3 | **Visitor registration** | Registration form (name, contact, language, special needs…) + tracking: pending → confirmed → check-in. Flags **prospects** (visitors with purchase intent). |
+| 4 | **Educational program** | The standard tour path: 6 stops (welcome → orchard → irrigation → solar → processing → questions). Workshops (solar, mango tasting, school days) management. |
+| 5 | **Safety briefing** | Every confirmed visit has a mandatory safety briefing (who, when, signature). Required before site access. |
+| 6 | **Agritourism bookings** | Paid activities (tour 5,000 F, tasting 3,000 F…) with booking, payment, **email confirmation** and an automatic **24 h reminder**. |
+| 7 | **Feedback** | After the visit: satisfaction rating, opinion on the briefing, the educational value, recommendation + sending surveys. |
+| 8 | **Events** | Group visitors: open days, buyer visits, schools… |
 
-En résumé, l'**ordre de vie d'un visiteur** :
+In short, the **visitor lifecycle**:
 
 ```
-Choix du créneau → Inscription → Confirmation email → Briefing sécurité
-   → Visite (programme éducatif) → Feedback → (éventuel événement)
+Choose a slot → Register → Email confirmation → Safety briefing
+   → Tour (educational program) → Feedback → (optional event)
 ```
 
 ---
 
-## 3. Comment c'est organisé
+## 3. How it is organized
 
-Un seul backend, une seule base de données. Le site web (frontend React) viendra ensuite
-s'y brancher.
+One backend, one database. The (upcoming) React frontend will connect to it.
 
 ```ascii
          +-----------+        +------------------+        +----------+
-Navigateur │  Frontend  │ ────>│    API Spring    │ ────> │  Base de  │
-  (site)   │  React     │ HTTP │   Boot (:8080)   │ SQL    │ données  │
-           +-----------+      +------------------+        │ Postgres │
-                                     │                     +----------+
-                                     │ email (SMTP) / console
-                                     v
-                          Confirmation + rappel 24 h
+Browser   │  Frontend  │ ────> │    Spring Boot   │ ────>  │   Data   │
+ (site)   │  React     │ HTTP  │     API (:8080)  │ SQL     │   base   │
+         +-----------+        +------------------+        │ Postgres │
+                                      │                    +----------+
+                                      │ email (SMTP) / console
+                                      v
+                          Confirmation + 24 h reminder
 ```
 
-- Toutes les fonctions sont regroupées dans le module **Visitor Management**
-  (`modules/visitormanagement/`), avec le partage technique dans `core/`.
-- L'interface Web de l'API (Swagger) est automatiquement générée : c'est la meilleure
-  façon de voir chaque écran → chaque URL → chaque donnée.
+- All features live in the **Visitor Management** module
+  (`modules/visitormanagement/`); shared plumbing is in `core/`.
+- The API browser (Swagger) is generated automatically — the best way to map each
+  screen → each URL → each piece of data.
 
 ---
 
-## 4. Les données (schéma et diagrammes de classes)
+## 4. The data (schema & class diagrams)
 
-Clés de lecture des diagrammes :
+How to read the diagrams:
 
 ```ascii
-  Un A concerne plusieurs B :         Un A correspond à un seul B :
-  +----------+ 1  *  +----------+       +--------+ 1 1 +--------+
-  |    A     |────────>|    B     |       |   A    |────>|   B    |
-  +----------+         +----------+       +--------+     +--------+
+   One A relates to many B :          One A relates to one B :
++----------+ 1  *  +----------+      +--------+ 1 1 +--------+
+|    A     |────────>|    B     |      |   A    |────>|   B    |
++----------+         +----------+      +--------+     +--------+
 ```
 
-### 4.1 Planification, inscription, briefing
+### 4.1 Scheduling, registration, briefing
 
-C'est le cœur : qui vient, quand, et qui a reçu le briefing sécurité.
+The core: who comes, when, and who received the safety briefing.
 
 ```ascii
 +---------------------+   +----------------------+   +----------------------+
-|      TimeSlot       | 1 |     Registration      | 1 |      Briefing        |
-|  (créneau de visite)|──>|  (inscription)        |──>|  (briefing sécurité) |
+|       TimeSlot      | 1 |     Registration      | 1 |      Briefing        |
+|  (tour time slot)   |──>|  (registration)       |──>|  (safety briefing)   |
 +---------------------+   +----------------------+   +----------------------+
 | id                  |   | id                   |   | id                   |
 | date                |   | visitor      (FK)    |   | registration (FK)    |
@@ -104,28 +100,28 @@ C'est le cœur : qui vient, quand, et qui a reçu le briefing sécurité.
          *│                                │ 1..*
 +---------------------+                    │
 |       Visitor       |<───────────────────┘
-| (visiteur / groupe) |
+| (visitor / group)   |
 +---------------------+
 | id                  |
-| fullName            |   Relations :
-| groupSize           |   • 1 créneau → plusieurs inscriptions
-| email / phone       |   • 1 visiteur → plusieurs inscriptions
-| language            |   • 1 inscription → 1 briefing
-| type (individu/     |
-|   groupe / école /  |
-|   partenaire)       |
+| fullName            |   Relationships :
+| groupSize           |   • 1 slot → many registrations
+| email / phone       |   • 1 visitor → many registrations
+| language            |   • 1 registration → 1 briefing
+| type (individual /  |
+|   group / school /  |
+|   partner)          |
 | specialNeeds        |
 +---------------------+
 ```
 
-### 4.2 Réservations agritouristiques
+### 4.2 Agritourism bookings
 
-Le catalogue d'activités payantes et les réservations, avec leurs emails.
+The paid-activity catalog and the bookings, with their emails.
 
 ```ascii
 +----------------------+   +-------------------------+
 |      AgriActivity    | 1 |        Booking          |
-| (offre / activité)   |──>| (réservation)           |
+| (offered activity)   |──>| (booking)               |
 +----------------------+   +-------------------------+
 | id                   |   | id                      |
 | name                 |   | activity      (FK)      |
@@ -137,52 +133,52 @@ Le catalogue d'activités payantes et les réservations, avec leurs emails.
 +----------------------+   | totalAmount             |
                             | status / paymentStatus /|
                             |   paymentMethod         |
-                            | reminder (rappel 24h)   |
+                            | reminder (24 h ahead)   |
                             | confirmation/reminder   |
-                            |   emails envoyés        |
+                            |   emails sent           |
                             +-------------------------+
 ```
 
-Une réservation réserve aussi un créneau de la journée (le `TimeSlot` de la partie 4.1).
+A booking also reserves a slot of the day (the `TimeSlot` from 4.1).
 
-### 4.3 Programme éducatif
+### 4.3 Educational program
 
-Le parcours de visite et les ateliers. Deux listes indépendantes (pas de lien entre elles).
+The tour path and the workshops. Two independent lists (no link between them).
 
 ```ascii
 +-------------------------+        +--------------------------+
 |        TourStop         |        |         Workshop         |
-|   (étape de la visite)  |        |    (atelier programmé)   |
+|   (tour stop / stage)   |        |  (scheduled workshop)    |
 +-------------------------+        +--------------------------+
 | id                      |        | id                       |
 | name                    |        | name                     |
-| position (1 à 6)        |        | durationMinutes          |
-| description             |        | targetGroup (public)     |
-| durationMinutes         |        | facilitator (animateur)  |
+| position (1 to 6)       |        | durationMinutes          |
+| description             |        | targetGroup (audience)   |
+| durationMinutes         |        | facilitator (host)       |
 | maxCapacity             |        | description              |
-| location / demo         |        | status (brouillon / actif)|
+| location / demo         |        | status (draft / active)  |
 | safetyNotes             |        +--------------------------+
 | active                  |
 +-------------------------+
 ```
 
-Les 6 étapes actuelles : 1) Accueil & briefing  2) Verger de manguiers  3) Irrigation
-goutte-à-goutte  4) Centrale solaire & tracking  5) Unité de transformation  6) Questions finales.
+The current 6 stops: 1) Welcome & briefing  2) Mango orchard  3) Drip irrigation
+4) Solar plant & tracking  5) Processing unit  6) Wrap-up & questions.
 
-### 4.4 Feedback et enquêtes
+### 4.4 Feedback and surveys
 
-Le visiteur répond à une enquête (SurveySend), qui produit un feedback.
+The visitor answers a survey (SurveySend), which produces a feedback entry.
 
 ```ascii
 +---------------------+   +----------------------+ 1 1 +--------------------+
 |      Visitor        | 1 |      SurveySend      |────>|      Feedback      |
-| (visiteur / groupe) |──>| (enquête envoyée)    |     | (réponse du v.)    |
+| (visitor / group)   |──>| (survey sent)        |     | (visitor answer)   |
 +---------------------+   +----------------------+     +--------------------+
                           | id                   |     | id                 |
                           | visitor      (FK)    |     | visitor     (FK)   |
                           | channel (email /...) |     | surveySend (FK)    |
                           | messageTemplate      |     | origin / channel   |
-                          | sentAt               |     | rating (note 1-5)  |
+                          | sentAt               |     | rating (1-5 score) |
                           | status               |     | briefingClear      |
                           +----------------------+     | educationalValue   |
                                                       | recommend          |
@@ -191,73 +187,72 @@ Le visiteur répond à une enquête (SurveySend), qui produit un feedback.
                                                       +--------------------+
 ```
 
-### 4.5 Événements
+### 4.5 Events
 
-Un événement regroupe plusieurs inscriptions (d'où le champ `eventId` dans Registration).
+An event groups several registrations (hence the `eventId` field in Registration).
 
 ```ascii
 +-------------------------+ 1    * +--------------------------+
 |          Event          |───────>|       Registration        |
-|  (événement programmé)  |        | (voir 4.1 — le champ eventId |
-+-------------------------+        |  relie une inscription à un |
-| id                      |        |  événement)               |
+|  (scheduled event)      |        | (see 4.1 — the eventId    |
++-------------------------+        |  field links a registration|
+| id                      |        |  to an event)             |
 | title                   |        +--------------------------+
-| type (porte-ouvertes /  |
-| acheteur / école /      |
-| communauté)             |
+| type (open day / buyer /|
+| school / community)     |
 | startDateTime / end     |
 | maxCapacity             |
 | location / description  |
-| status (brouillon /     |
-| publié / annulé / ...)  |
+| status (draft/ published|
+| / cancelled / ...)      |
 +-------------------------+
 ```
 
-### 4.6 Récapitulatif des relations
+### 4.6 Relationships summary
 
-| Entité | Rôle | Liens |
+| Entity | Role | Links |
 |--------|------|-------|
-| `TimeSlot` | Créneau de visite (date/heure/capacité) | → plusieurs `Registration` et `Booking` |
-| `Visitor` | Visiteur ou groupe | → plusieurs `Registration`, `Feedback`, `SurveySend` |
-| `Registration` | Inscription à un créneau (ou événement) | → 1 `Visitor`, 1 `TimeSlot`, 1 `Briefing`, option `Event` |
-| `Briefing` | Preuve du briefing sécurité | → 1 `Registration` |
-| `Event` | Événement regroupant des visiteurs | → plusieurs `Registration` |
-| `AgriActivity` | Activité payante du catalogue | → plusieurs `Booking` |
-| `Booking` | Réservation d'activité + emails | → 1 `AgriActivity`, 1 `TimeSlot` |
-| `TourStop` | Étape du parcours de visite | indépendant |
-| `Workshop` | Atelier (éducatif) | indépendant |
-| `SurveySend` | Enquête envoyée au visiteur | → 1 `Visitor`, → 1 `Feedback` |
-| `Feedback` | Réponse du visiteur | → 1 `Visitor`, 1 `SurveySend` |
+| `TimeSlot` | Tour slot (date/time/capacity) | → many `Registration` and `Booking` |
+| `Visitor` | Visitor or group | → many `Registration`, `Feedback`, `SurveySend` |
+| `Registration` | Sign-up for a slot (or event) | → 1 `Visitor`, 1 `TimeSlot`, 1 `Briefing`, optional `Event` |
+| `Briefing` | Proof of the safety briefing | → 1 `Registration` |
+| `Event` | Event grouping visitors | → many `Registration` |
+| `AgriActivity` | Paid activity in the catalog | → many `Booking` |
+| `Booking` | Activity reservation + emails | → 1 `AgriActivity`, 1 `TimeSlot` |
+| `TourStop` | Tour path stage | independent |
+| `Workshop` | (Educational) workshop | independent |
+| `SurveySend` | Survey sent to the visitor | → 1 `Visitor`, → 1 `Feedback` |
+| `Feedback` | Visitor's answer | → 1 `Visitor`, 1 `SurveySend` |
 
-> Toutes les entités partagent un identifiant `id` et les dates `createdAt` / `updatedAt`.
+> Every entity shares an `id` and the timestamps `createdAt` / `updatedAt`.
 
 ---
 
-## 5. Accéder à l'API (Swagger)
+## 5. Accessing the API (Swagger)
 
-La meilleure porte d'entrée : l'interface Swagger, générée automatiquement.
+The best entry point is Swagger, generated automatically.
 
-- **Swagger UI :** `http://localhost:8080/swagger-ui/index.html`
-- **Vérifier que le backend tourne :** `http://localhost:8080/actuator/health`
+- **Swagger UI:** `http://localhost:8080/swagger-ui/index.html`
+- **Health check:** `http://localhost:8080/actuator/health`
 
-Aperçu des groupes d'URLs (tout est sous `/api/v1`) :
+All endpoints live under `/api/v1`:
 
-| Ressource | URLs principales |
-|-----------|------------------|
-| Créneaux | `/time-slots` (+ `/availability`) |
-| Visiteurs | `/visitors` |
-| Inscriptions | `/registrations` (+ `/approve`, `/reject`, `/check-in`, `/cancel`) |
+| Resource | Main URLs |
+|----------|-----------|
+| Time slots | `/time-slots` (+ `/availability`) |
+| Visitors | `/visitors` |
+| Registrations | `/registrations` (+ `/approve`, `/reject`, `/check-in`, `/cancel`) |
 | Briefings | `/registrations/{id}/briefing` (+ `/deliver`) |
-| Programme éducatif | `/tour-stops`, `/workshops` (+ `/publish`, `/deactivate`) |
-| Réservations | `/activities`, `/bookings` (+ `/pay`, `/confirm`, `/complete`, `/cancel`) |
+| Educational program | `/tour-stops`, `/workshops` (+ `/publish`, `/deactivate`) |
+| Bookings | `/activities`, `/bookings` (+ `/pay`, `/confirm`, `/complete`, `/cancel`) |
 | Feedback | `/feedback`, `/feedback/summary`, `/surveys` |
-| Événements | `/events` (+ `/register`, `/publish`, `/registrations`) |
+| Events | `/events` (+ `/register`, `/publish`, `/registrations`) |
 
 ---
 
-## 6. Démarrer
+## 6. Getting started
 
-Prérequis : Docker. Copier `.env.example` vers `.env`, puis :
+Prerequisite: Docker. Copy `.env.example` to `.env`, then:
 
 ```bash
 docker compose up -d --build
@@ -265,22 +260,22 @@ docker compose up -d --build
 # Swagger :  http://localhost:8080/swagger-ui/index.html
 ```
 
-### Options utiles (dans `.env`)
+### Useful options (in `.env`)
 
-| Variable | À quoi ça sert | Exemple |
-|----------|----------------|---------|
-| `SPRING_PROFILES_ACTIVE` | Charge des **données d'exemple** (stops, ateliers, activités, créneaux, un événement et un visiteur) pour développer. **Jamais en production.** | `dev` |
-| `APP_CORS_ORIGINS` | Autorise le site web (frontend) à appeler l'API. | `http://localhost:3000,http://localhost:5173` |
-| `MAIL_ENABLED` | `true` → envoi réel des emails (SMTP) ; `false` → affichage en console. | `false` |
-| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | Paramètres du serveur SMTP. | `smtp.orange.bf` / `587` |
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `SPRING_PROFILES_ACTIVE` | Loads **sample data** (stops, workshops, activities, slots, one event and one visitor) for development. **Never in production.** | `dev` |
+| `APP_CORS_ORIGINS` | Allows the web app (frontend) to call the API. | `http://localhost:3000, http://localhost:5173` |
+| `MAIL_ENABLED` | `true` → real email sending (SMTP); `false` → prints to console. | `false` |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | SMTP server settings. | `smtp.orange.bf` / `587` |
 
 ---
 
-## 7. Qualité
+## 7. Quality
 
-- **222 tests automatisés, 0 échec** : règles de gestion (capacités, statuts, paiements),
-  emails (confirmation, rappel 24 h, échec d'envoi), toutes les URLs et le schéma de données.
-- Relancer les tests (via Docker, aucun JDK local nécessaire) :
+- **222 automated tests, 0 failures:** business rules (capacities, statuses, payments),
+  emails (confirmation, 24 h reminder, failed send), all URLs and the data schema.
+- Re-run the tests (via Docker, no local JDK required):
 
 ```bash
 docker run --rm -v "$PWD/backend":/src -w /src -v "$HOME/.m2":/root/.m2 \
@@ -289,11 +284,10 @@ docker run --rm -v "$PWD/backend":/src -w /src -v "$HOME/.m2":/root/.m2 \
 
 ---
 
-## 8. Et maintenant
+## 8. What's next
 
-Le backend est **terminé et prêt**. Reste à construire le frontend (les écrans portent
-sur les 8 fonctions du § 2). La base de données contiendra les données d'exemple dès
-qu'on lance avec `SPRING_PROFILES_ACTIVE=dev`, donc le site pourra être développé et
-testé immédiatement.
+The backend is **completed and ready**. Next: build the frontend (the screens around the
+8 features of § 2). As soon as the backend runs with `SPRING_PROFILES_ACTIVE=dev`,
+the database contains the sample data, so the site can be developed and tested right away.
 
-*Dernière mise à jour : 2026-09-10*
+*Last updated: 2026-09-10*
