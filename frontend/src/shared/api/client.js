@@ -1,33 +1,36 @@
+import axios from "axios";
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-async function request(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
+const instance = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 10000,
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
 
-    const config = {
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
-        ...options,
-    };
-    const response = await fetch(url, config);
-
-    if (!response.ok) {
-        const errorBody = await response.text().catch(() => "");
+instance.interceptors.response.use(
+    (response) => {
+        if (response.status === 204) return { ...response, data: null };
+        return response;
+    },
+    (error) => {
+        const status = error.response?.status;
+        const body = error.response?.data;
         throw new Error(
-            `API Error ${response.status}: ${errorBody || response.statusText}`
+            `API Error ${status}: ${body || error.message}`
         );
     }
+);
 
-    if (response.status === 204) return null;
-
-    return response.json();
-}
 export const apiClient = {
-    get: (endpoint) => request(endpoint),
-    post: (endpoint, data) =>
-        request(endpoint, { method: "POST", body: JSON.stringify(data) }),
-    patch: (endpoint, data) =>
-        request(endpoint, { method: "PATCH", body: JSON.stringify(data) }),
-    delete: (endpoint) => request(endpoint, { method: "DELETE" }),
-};     
+    get: (endpoint, config) =>
+        instance.get(endpoint, config).then((r) => r.data),
+    post: (endpoint, data, config) =>
+        instance.post(endpoint, data, config).then((r) => r.data),
+    patch: (endpoint, data, config) =>
+        instance.patch(endpoint, data, config).then((r) => r.data),
+    delete: (endpoint, config) =>
+        instance.delete(endpoint, config).then((r) => r.data),
+};
