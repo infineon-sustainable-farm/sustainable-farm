@@ -23,6 +23,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByTimeSlotDate(LocalDate date);
 
+    List<Booking> findByStatusAndReminderScheduledAtIsNotNullAndReminderSentAtIsNullOrderByReminderScheduledAtAsc(
+            BookingStatus status);
+
     @Query("SELECT COALESCE(SUM(b.peopleCount), 0) FROM Booking b "
             + "WHERE b.activity.id = :activityId AND b.timeSlot.id = :slotId "
             + "AND b.status NOT IN :excluded")

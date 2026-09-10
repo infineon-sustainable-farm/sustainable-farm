@@ -16,7 +16,7 @@ email confirmation, safety briefing, guided tour, feedback — plus events. It i
 **internal tool** for the farm team (guides, front desk), not a public website.
 
 - **Technology:** Spring Boot (Java 21), PostgreSQL database, REST API.
-- **Reliability:** 222 automated tests, 0 failures.
+- **Reliability:** 229 automated tests, 0 failures.
 - **Emails:** booking confirmation and the 24 h reminder are really sent (SMTP), or
   simply printed to the console during development.
 - **Frontend-ready:** the API accepts calls from the web app (CORS) and ships with
@@ -239,6 +239,7 @@ All endpoints live under `/api/v1`:
 
 | Resource | Main URLs |
 |----------|-----------|
+| Dashboard | `/dashboard` (KPIs of the week + upcoming tasks) |
 | Time slots | `/time-slots` (+ `/availability`) |
 | Visitors | `/visitors` |
 | Registrations | `/registrations` (+ `/approve`, `/reject`, `/check-in`, `/cancel`) |
@@ -273,7 +274,7 @@ docker compose up -d --build
 
 ## 7. Quality
 
-- **222 automated tests, 0 failures:** business rules (capacities, statuses, payments),
+- **229 automated tests, 0 failures:** business rules (capacities, statuses, payments),
   emails (confirmation, 24 h reminder, failed send), all URLs and the data schema.
 - Re-run the tests (via Docker, no local JDK required):
 

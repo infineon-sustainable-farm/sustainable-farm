@@ -22,6 +22,8 @@ class RegistrationRepositoryTest {
     @Autowired
     private VisitorRepository visitorRepository;
     @Autowired
+    private BriefingRepository briefingRepository;
+    @Autowired
     private RegistrationRepository repository;
 
     private TimeSlot slot;
@@ -131,5 +133,60 @@ class RegistrationRepositoryTest {
         assertThat(prospects).hasSize(1);
         assertThat(prospects.get(0).getVisitPurpose()).isEqualTo(VisitPurpose.PURCHASE);
         assertThat(prospects.get(0).isProspect()).isTrue();
+    }
+
+    private Visitor newVisitor(String name, VisitorType type) {
+        Visitor v = new Visitor();
+        v.setFullName(name);
+        v.setGroupSize(1);
+        v.setType(type);
+        return visitorRepository.save(v);
+    }
+
+    @Test
+    void countVisitorsBetween_countsActiveWithinRange() {
+        createReg(visitor, slot, RegistrationStatus.CONFIRMED);
+        createReg(newVisitor("Rejected", VisitorType.INDIVIDUAL), slot, RegistrationStatus.REJECTED);
+
+        TimeSlot out = new TimeSlot();
+        out.setDate(LocalDate.of(2026, 9, 20));
+        out.setStartTime(LocalTime.of(9, 0));
+        out.setEndTime(LocalTime.of(11, 0));
+        out.setMaxCapacity(10);
+        out.setStatus(TimeSlotStatus.AVAILABLE);
+        out = timeSlotRepository.save(out);
+        createReg(newVisitor("Later", VisitorType.GROUP), out, RegistrationStatus.CONFIRMED);
+
+        long count = repository.countVisitorsBetween(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 9),
+                List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED));
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void countBusySlotsBetween_countsDistinctSlots() {
+        createReg(visitor, slot, RegistrationStatus.CONFIRMED);
+        createReg(newVisitor("Second", VisitorType.GROUP), slot, RegistrationStatus.CONFIRMED);
+
+        long count = repository.countBusySlotsBetween(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 9),
+                List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED));
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void findPendingBriefingsBetween_returnsConfirmedWithoutDoneBriefing() {
+        Registration withoutBriefing = createReg(visitor, slot, RegistrationStatus.CONFIRMED);
+
+        Registration withBriefing = createReg(newVisitor("Briefed", VisitorType.GROUP), slot, RegistrationStatus.CONFIRMED);
+        Briefing briefing = new Briefing();
+        briefing.setRegistration(withBriefing);
+        briefing.setStaffMember("Alix");
+        briefing.setStatus(BriefingStatus.DONE);
+        briefingRepository.save(briefing);
+
+        List<Registration> pending = repository.findPendingBriefingsBetween(
+                LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 9),
+                List.of(RegistrationStatus.CONFIRMED, RegistrationStatus.CHECKED_IN), BriefingStatus.DONE);
+        assertThat(pending).hasSize(1);
+        assertThat(pending.get(0).getId()).isEqualTo(withoutBriefing.getId());
     }
 }
