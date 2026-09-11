@@ -30,6 +30,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
     ports:
       - "8080:8080"
 
