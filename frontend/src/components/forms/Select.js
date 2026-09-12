@@ -1,11 +1,12 @@
 import React from 'react';
 import './Select.css';
 
-const Select = ({ value = '', onChange, disabled = false, error = false, options = [], placeholder, children, ...props }) => {
+const Select = ({ value = '', onChange, onBlur, disabled = false, error = false, options = [], placeholder, children, ...props }) => {
   return (
     <select
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       disabled={disabled}
       className={`form-select ${error ? 'input-error' : ''}`}
       {...props}

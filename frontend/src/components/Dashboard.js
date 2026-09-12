@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { dashboardApi } from '../services/api';
+import DashboardCharts from './DashboardCharts';
 import './Dashboard.css';
+import './DashboardCharts.css';
 
 function Dashboard() {
   const [kpiData, setKpiData] = useState(null);
@@ -14,6 +16,7 @@ function Dashboard() {
   const fetchDashboardKPIs = async () => {
     try {
       setLoading(true);
+      
       const response = await dashboardApi.getDashboardKPIs();
       setKpiData(response.data);
       setError(null);
@@ -124,6 +127,9 @@ function Dashboard() {
           trend="Optimizing"
         />
       </div>
+
+      {/* Charts Section */}
+      <DashboardCharts />
 
       <div className="dashboard-footer">
         <p className="update-time">

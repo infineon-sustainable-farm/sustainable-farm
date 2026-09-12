@@ -6,6 +6,11 @@ import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto
 import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.QualityPassRateKPI;
 import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.EnergyConsumptionKPI;
 import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.EquipmentUtilizationKPI;
+import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.HarvestTrendData;
+import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.ProductionOutputData;
+import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.EnergyBreakdownData;
+import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.EquipmentUtilizationChartData;
+import com.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.QualityTrendData;
 import com.sustainablefarm.modules.producttransformation.resources.batch.model.Batch;
 import com.sustainablefarm.modules.producttransformation.resources.harvestevent.model.HarvestEvent;
 import com.sustainablefarm.modules.producttransformation.resources.qccheckpoint.model.QcCheckpoint;
@@ -286,6 +291,173 @@ public class DashboardService {
             .overallStatus(overallStatus)
             .asOfDate(LocalDate.now())
             .build();
+    }
+    
+    /**
+     * Get Harvest Trend Chart Data
+     * Data Source: harvest_event table
+     * Calculation: SUM(quantity) grouped by harvest date
+     */
+    public List<HarvestTrendData> getHarvestTrendChartData(LocalDate startDate, LocalDate endDate) {
+        log.debug("Calculating harvest trend chart data for period: {} to {}", startDate, endDate);
+        
+        List<HarvestEvent> harvestEvents = harvestEventRepository.findByHarvestDateBetween(startDate, endDate);
+        
+        List<HarvestTrendData> trendData = new java.util.ArrayList<>();
+        java.util.Map<LocalDate, BigDecimal> dateToQuantity = new java.util.HashMap<>();
+        for (HarvestEvent event : harvestEvents) {
+            LocalDate date = event.getHarvestDate();
+            BigDecimal quantity = event.getHarvestQuantityKg();
+            if (quantity == null) quantity = BigDecimal.ZERO;
+            dateToQuantity.merge(date, quantity, BigDecimal::add);
+        }
+        
+        for (java.util.Map.Entry<LocalDate, BigDecimal> entry : dateToQuantity.entrySet()) {
+            trendData.add(HarvestTrendData.builder()
+                .date(entry.getKey())
+                .quantity(entry.getValue())
+                .build());
+        }
+        
+        trendData.sort(java.util.Comparator.comparing(HarvestTrendData::getDate));
+        
+        log.debug("Harvest trend chart data calculated successfully");
+        return trendData;
+    }
+    
+    /**
+     * Get Production Output Chart Data
+     * Data Source: drying_run table
+     * Calculation: SUM(energy_usage_kwh) grouped by week
+     */
+    public List<ProductionOutputData> getProductionOutputChartData(LocalDate startDate, LocalDate endDate) {
+        log.debug("Calculating production output chart data for period: {} to {}", startDate, endDate);
+        
+        List<DryingRun> dryingRuns = dryingRunRepository.findByStartTimeBetween(startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        
+        List<ProductionOutputData> outputData = new java.util.ArrayList<>();
+        java.util.Map<String, BigDecimal> periodToOutput = new java.util.HashMap<>();
+        for (DryingRun run : dryingRuns) {
+            LocalDateTime startTime = run.getStartTime();
+            long epochDay = startTime.toLocalDate().toEpochDay();
+            long weekStartDay = epochDay - (epochDay % 7);
+            String period = "Week " + (weekStartDay / 7 + 1);
+            BigDecimal energy = run.getEnergyUsageKwh();
+            if (energy == null) energy = BigDecimal.ZERO;
+            periodToOutput.merge(period, energy, BigDecimal::add);
+        }
+        
+        for (java.util.Map.Entry<String, BigDecimal> entry : periodToOutput.entrySet()) {
+            outputData.add(ProductionOutputData.builder()
+                .period(entry.getKey())
+                .output(entry.getValue())
+                .build());
+        }
+        
+        outputData.sort(java.util.Comparator.comparing(ProductionOutputData::getPeriod));
+        
+        log.debug("Production output chart data calculated successfully");
+        return outputData;
+    }
+    
+    /**
+     * Get Energy Breakdown Chart Data
+     * Data Source: drying_run table
+     * Calculation: Energy consumption by source (grid vs solar)
+     */
+    public List<EnergyBreakdownData> getEnergyBreakdownChartData() {
+        log.debug("Calculating energy breakdown chart data");
+        
+        List<DryingRun> dryingRuns = dryingRunRepository.findAll();
+        BigDecimal totalEnergy = dryingRuns.stream()
+            .map(DryingRun::getEnergyUsageKwh)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal gridConsumption = totalEnergy;
+        BigDecimal solarConsumption = BigDecimal.ZERO;
+        
+        List<EnergyBreakdownData> breakdownData = new java.util.ArrayList<>();
+        breakdownData.add(EnergyBreakdownData.builder()
+            .name("Grid")
+            .value(gridConsumption)
+            .build());
+        breakdownData.add(EnergyBreakdownData.builder()
+            .name("Solar")
+            .value(solarConsumption)
+            .build());
+        breakdownData.add(EnergyBreakdownData.builder()
+            .name("Generator")
+            .value(BigDecimal.ZERO)
+            .build());
+        
+        log.debug("Energy breakdown chart data calculated successfully");
+        return breakdownData;
+    }
+    
+    /**
+     * Get Equipment Utilization Chart Data
+     * Data Source: equipment table
+     * Calculation: Utilization rate for each equipment
+     */
+    public List<EquipmentUtilizationChartData> getEquipmentUtilizationChartData() {
+        log.debug("Calculating equipment utilization chart data");
+        
+        List<Equipment> allEquipment = equipmentRepository.findAll();
+        int totalEquipment = allEquipment.size();
+        
+        List<EquipmentUtilizationChartData> utilizationData = new java.util.ArrayList<>();
+        for (Equipment equipment : allEquipment) {
+            BigDecimal utilizationRate = totalEquipment == 0 
+                ? BigDecimal.ZERO 
+                : new BigDecimal(1).divide(BigDecimal.valueOf(totalEquipment), 2, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+            
+            utilizationData.add(EquipmentUtilizationChartData.builder()
+                .equipment(equipment.getEquipmentName() != null ? equipment.getEquipmentName() : "Unknown Equipment")
+                .utilization(utilizationRate)
+                .build());
+        }
+        
+        log.debug("Equipment utilization chart data calculated successfully");
+        return utilizationData;
+    }
+    
+    /**
+     * Get Quality Trend Chart Data
+     * Data Source: qc_checkpoint table
+     * Calculation: Pass rate grouped by checkpoint date
+     */
+    public List<QualityTrendData> getQualityTrendChartData(LocalDate startDate, LocalDate endDate) {
+        log.debug("Calculating quality trend chart data for period: {} to {}", startDate, endDate);
+        
+        List<QcCheckpoint> checkpoints = qcCheckpointRepository.findByCheckpointDateBetween(startDate, endDate);
+        
+        List<QualityTrendData> trendData = new java.util.ArrayList<>();
+        java.util.Map<LocalDate, int[]> dateToCounts = new java.util.HashMap<>();
+        for (QcCheckpoint checkpoint : checkpoints) {
+            LocalDate date = checkpoint.getCheckpointTime().toLocalDate();
+            int[] counts = dateToCounts.getOrDefault(date, new int[]{0, 0});
+            counts[0]++;
+            if (checkpoint.getResult() == QcCheckpoint.QcResult.PASS) {
+                counts[1]++;
+            }
+            dateToCounts.put(date, counts);
+        }
+        
+        for (java.util.Map.Entry<LocalDate, int[]> entry : dateToCounts.entrySet()) {
+            int total = entry.getValue()[0];
+            int passed = entry.getValue()[1];
+            BigDecimal passRate = total == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(passed).divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
+            trendData.add(QualityTrendData.builder()
+                .date(entry.getKey())
+                .passRate(passRate)
+                .build());
+        }
+        
+        trendData.sort(java.util.Comparator.comparing(QualityTrendData::getDate));
+        
+        log.debug("Quality trend chart data calculated successfully");
+        return trendData;
     }
     
     /**

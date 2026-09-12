@@ -35,6 +35,36 @@ const dashboardApi = {
   
   getEquipmentUtilizationKPI: () => {
     return apiClient.get('/api/dashboard/kpi/equipment-utilization');
+  },
+  
+  // Chart data endpoints
+  getHarvestTrendChart: (startDate = null, endDate = null) => {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return apiClient.get('/api/dashboard/charts/harvest-trend', { params });
+  },
+  
+  getProductionOutputChart: (startDate = null, endDate = null) => {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return apiClient.get('/api/dashboard/charts/production-output', { params });
+  },
+  
+  getEnergyBreakdownChart: () => {
+    return apiClient.get('/api/dashboard/charts/energy-breakdown');
+  },
+  
+  getEquipmentUtilizationChart: () => {
+    return apiClient.get('/api/dashboard/charts/equipment-utilization');
+  },
+  
+  getQualityTrendChart: (startDate = null, endDate = null) => {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return apiClient.get('/api/dashboard/charts/quality-trend', { params });
   }
 };
 

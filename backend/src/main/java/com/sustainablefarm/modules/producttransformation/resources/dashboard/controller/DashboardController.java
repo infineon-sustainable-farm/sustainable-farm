@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Dashboard Controller
@@ -163,6 +164,110 @@ public class DashboardController {
         log.info("GET /api/dashboard/kpi/equipment-utilization");
         
         EquipmentUtilizationKPI response = dashboardService.calculateEquipmentUtilization();
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Get Harvest Trend Chart Data
+     * Chart Data - Harvest quantity trend over time
+     */
+    @GetMapping("/charts/harvest-trend")
+    @Operation(summary = "Get Harvest Trend Chart Data", description = "Returns harvest quantity data for trend chart")
+    public ResponseEntity<List<HarvestTrendData>> getHarvestTrendChart(
+        @Parameter(description = "Start date (format: yyyy-MM-dd)")
+        @RequestParam(required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate startDate,
+        
+        @Parameter(description = "End date (format: yyyy-MM-dd)")
+        @RequestParam(required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate endDate
+    ) {
+        log.info("GET /api/dashboard/charts/harvest-trend - startDate: {}, endDate: {}", startDate, endDate);
+        
+        if (startDate == null) startDate = LocalDate.now().minusDays(7);
+        if (endDate == null) endDate = LocalDate.now();
+        
+        List<HarvestTrendData> response = dashboardService.getHarvestTrendChartData(startDate, endDate);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Get Production Output Chart Data
+     * Chart Data - Production output comparison over time
+     */
+    @GetMapping("/charts/production-output")
+    @Operation(summary = "Get Production Output Chart Data", description = "Returns production output data for bar chart")
+    public ResponseEntity<List<ProductionOutputData>> getProductionOutputChart(
+        @Parameter(description = "Start date (format: yyyy-MM-dd)")
+        @RequestParam(required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate startDate,
+        
+        @Parameter(description = "End date (format: yyyy-MM-dd)")
+        @RequestParam(required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate endDate
+    ) {
+        log.info("GET /api/dashboard/charts/production-output - startDate: {}, endDate: {}", startDate, endDate);
+        
+        if (startDate == null) startDate = LocalDate.now().minusDays(7);
+        if (endDate == null) endDate = LocalDate.now();
+        
+        List<ProductionOutputData> response = dashboardService.getProductionOutputChartData(startDate, endDate);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Get Energy Breakdown Chart Data
+     * Chart Data - Energy consumption breakdown by source
+     */
+    @GetMapping("/charts/energy-breakdown")
+    @Operation(summary = "Get Energy Breakdown Chart Data", description = "Returns energy consumption breakdown for pie chart")
+    public ResponseEntity<List<EnergyBreakdownData>> getEnergyBreakdownChart() {
+        log.info("GET /api/dashboard/charts/energy-breakdown");
+        
+        List<EnergyBreakdownData> response = dashboardService.getEnergyBreakdownChartData();
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Get Equipment Utilization Chart Data
+     * Chart Data - Equipment utilization by equipment
+     */
+    @GetMapping("/charts/equipment-utilization")
+    @Operation(summary = "Get Equipment Utilization Chart Data", description = "Returns equipment utilization data for bar chart")
+    public ResponseEntity<List<EquipmentUtilizationChartData>> getEquipmentUtilizationChart() {
+        log.info("GET /api/dashboard/charts/equipment-utilization");
+        
+        List<EquipmentUtilizationChartData> response = dashboardService.getEquipmentUtilizationChartData();
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Get Quality Trend Chart Data
+     * Chart Data - Quality pass rate trend over time
+     */
+    @GetMapping("/charts/quality-trend")
+    @Operation(summary = "Get Quality Trend Chart Data", description = "Returns quality pass rate data for trend chart")
+    public ResponseEntity<List<QualityTrendData>> getQualityTrendChart(
+        @Parameter(description = "Start date (format: yyyy-MM-dd)")
+        @RequestParam(required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate startDate,
+        
+        @Parameter(description = "End date (format: yyyy-MM-dd)")
+        @RequestParam(required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate endDate
+    ) {
+        log.info("GET /api/dashboard/charts/quality-trend - startDate: {}, endDate: {}", startDate, endDate);
+        
+        if (startDate == null) startDate = LocalDate.now().minusDays(7);
+        if (endDate == null) endDate = LocalDate.now();
+        
+        List<QualityTrendData> response = dashboardService.getQualityTrendChartData(startDate, endDate);
         return ResponseEntity.ok(response);
     }
 }

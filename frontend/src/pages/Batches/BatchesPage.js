@@ -7,12 +7,15 @@ import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import Button from '../../components/common/Button';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import SearchBar from '../../components/common/SearchBar';
+import FilterPanel from '../../components/common/FilterPanel';
 import BatchForm from './BatchForm';
 import './BatchesPage.css';
 
 const BatchesPage = () => {
   const navigate = useNavigate();
   const [batches, setBatches] = React.useState([]);
+  const [filteredBatches, setFilteredBatches] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
@@ -21,6 +24,9 @@ const BatchesPage = () => {
 
   const [deleteConfirm, setDeleteConfirm] = React.useState({ open: false, record: null });
   const [deleting, setDeleting] = React.useState(false);
+
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [activeFilters, setActiveFilters] = React.useState({});
 
   React.useEffect(() => {
     fetchBatches();
@@ -31,6 +37,7 @@ const BatchesPage = () => {
       setLoading(true);
       const response = await batchApi.getAll();
       setBatches(response.data || []);
+      setFilteredBatches(response.data || []);
       setError(null);
     } catch (err) {
       console.error('Error fetching batches:', err);
@@ -38,6 +45,89 @@ const BatchesPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Filter definitions
+  const filterDefinitions = [
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'CREATED', label: 'Created' },
+        { value: 'INTAKE', label: 'Intake' },
+        { value: 'WASHING', label: 'Washing' },
+        { value: 'DRYING', label: 'Drying' },
+        { value: 'PACKAGING', label: 'Packaging' },
+        { value: 'COMPLETED', label: 'Completed' },
+        { value: 'SHIPPED', label: 'Shipped' },
+        { value: 'REJECTED', label: 'Rejected' },
+      ],
+      placeholder: 'All statuses'
+    },
+    {
+      name: 'variety',
+      label: 'Mango Variety',
+      type: 'select',
+      options: [
+        { value: 'KEITT', label: 'Keitt' },
+        { value: 'KENT', label: 'Kent' },
+        { value: 'TOMMY', label: 'Tommy' },
+        { value: 'AMÉLIE', label: 'Amélie' },
+        { value: 'OTHER', label: 'Other' },
+      ],
+      placeholder: 'All varieties'
+    },
+    {
+      name: 'dateRange',
+      label: 'Harvest Date Range',
+      type: 'date-range'
+    }
+  ];
+
+  // Apply search and filters
+  React.useEffect(() => {
+    let filtered = [...batches];
+
+    // Apply search
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(batch =>
+        batch.batchId?.toLowerCase().includes(term) ||
+        batch.mangoVariety?.toLowerCase().includes(term) ||
+        batch.farmId?.toLowerCase().includes(term) ||
+        batch.currentStatus?.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply filters
+    if (activeFilters.status) {
+      filtered = filtered.filter(batch => batch.currentStatus === activeFilters.status);
+    }
+    if (activeFilters.variety) {
+      filtered = filtered.filter(batch => batch.mangoVariety === activeFilters.variety);
+    }
+    if (activeFilters.dateRange_from || activeFilters.dateRange_to) {
+      filtered = filtered.filter(batch => {
+        const batchDate = new Date(batch.harvestDate);
+        const fromDate = activeFilters.dateRange_from ? new Date(activeFilters.dateRange_from) : null;
+        const toDate = activeFilters.dateRange_to ? new Date(activeFilters.dateRange_to) : null;
+        
+        if (fromDate && batchDate < fromDate) return false;
+        if (toDate && batchDate > toDate) return false;
+        return true;
+      });
+    }
+
+    setFilteredBatches(filtered);
+  }, [searchTerm, activeFilters, batches]);
+
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
+  const handleFilterChange = (filters) => {
+    setActiveFilters(filters);
   };
 
   const handleCreate = () => {
@@ -93,6 +183,20 @@ const BatchesPage = () => {
         </Button>
       </div>
 
+      {/* Search and Filter Section */}
+      <div className="search-filter-section">
+        <SearchBar
+          onSearch={handleSearch}
+          placeholder="Search by batch ID, variety, farm, or status..."
+          initialValue={searchTerm}
+        />
+        <FilterPanel
+          filters={filterDefinitions}
+          onFilterChange={handleFilterChange}
+          initialFilters={activeFilters}
+        />
+      </div>
+
       <Card>
         <div className="table-responsive">
           <table className="data-table">
@@ -109,10 +213,12 @@ const BatchesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {batches.length === 0 ? (
-                <tr><td colSpan="8" className="empty-row">No batches found</td></tr>
+              {filteredBatches.length === 0 ? (
+                <tr><td colSpan="8" className="empty-row">
+                  {batches.length === 0 ? 'No batches found' : 'No batches match your search or filters'}
+                </td></tr>
               ) : (
-                batches.map((batch) => (
+                filteredBatches.map((batch) => (
                   <tr key={batch.batchId}>
                     <td>{batch.batchId}</td>
                     <td>{batch.harvestDate}</td>
