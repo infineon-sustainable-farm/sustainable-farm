@@ -59,3 +59,6 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+
+# Documentation (local working docs)
+docs/
