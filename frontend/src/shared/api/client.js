@@ -18,9 +18,12 @@ instance.interceptors.response.use(
     (error) => {
         const status = error.response?.status;
         const body = error.response?.data;
-        throw new Error(
-            `API Error ${status}: ${body || error.message}`
+        const apiError = new Error(
+            typeof body === "string" ? body : body?.message || error.message
         );
+        apiError.status = status;
+        apiError.data = body;
+        throw apiError;
     }
 );
 
