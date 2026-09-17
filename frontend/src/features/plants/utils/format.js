@@ -83,12 +83,16 @@ export function formatAge(years, months) {
 }
 
 /**
- * Growth phase and its year band, both computed by the API. The phase scale lives
- * only in the backend: nothing here knows a threshold, it only presents the text.
+ * Year band of the growth phase, as computed and named by the API — "0–2 yrs".
+ *
+ * The band is what the column shows, like the mock-up. The phase name arrives in
+ * the same response and is spelled out once, in the legend under the table. No
+ * threshold is known here: this only picks which of the two given strings to
+ * show, and falls back to the phase name if the API sent no band.
  */
-export function formatGrowthPhase(phase, yearsBand) {
+export function formatPhaseBand(phase, yearsBand) {
+    if (!isMissing(yearsBand)) return String(yearsBand).trim();
     if (isMissing(phase)) return NO_VALUE;
     const text = String(phase).trim();
-    const label = text.charAt(0).toUpperCase() + text.slice(1);
-    return isMissing(yearsBand) ? label : `${label} (${String(yearsBand).trim()})`;
+    return text.charAt(0).toUpperCase() + text.slice(1);
 }

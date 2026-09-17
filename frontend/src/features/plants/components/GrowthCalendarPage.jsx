@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Info, Loader2, TriangleAlert } from "lucide-react";
-import EmptyState from "../../../shared/components/EmptyState";
+import PlantsEmptyState from "./PlantsEmptyState";
 import { useGrowthCalendar, useGrowthCalendarBlocks } from "../hooks/useGrowthCalendar";
 import BlockFilter from "./BlockFilter";
 import GrowthCalendarTable from "./GrowthCalendarTable";
@@ -26,6 +26,20 @@ function MissingPlantingDateNote({ entries }) {
                 shown until it is recorded.
             </p>
         </div>
+    );
+}
+
+/**
+ * Spells out, once, what the year bands in the Phase column mean. The wording is
+ * the growth phase scale of the reference study; the bands and the phase names
+ * both come from the API, and nothing here computes or decides a threshold.
+ */
+function PhaseLegend() {
+    return (
+        <p className="px-1 text-xs text-gray-500">
+            Growth phases (Zalka 2025): 0–2 yrs establishment · 3–5 yrs gradual
+            production · 6+ yrs full production.
+        </p>
     );
 }
 
@@ -94,14 +108,16 @@ export default function GrowthCalendarPage() {
                 )}
 
                 {!isPending && !isError && entries.length === 0 && (
-                    <div className="rounded-xl border border-gray-200 bg-white">
-                        <EmptyState message="No growth calendar records match this filter" />
-                    </div>
+                    <PlantsEmptyState
+                        title="No growth calendar records match this filter"
+                        hint="Try another block, or select “All blocks”."
+                    />
                 )}
 
                 {!isPending && !isError && entries.length > 0 && (
                     <>
                         <GrowthCalendarTable entries={entries} />
+                        <PhaseLegend />
                         <MissingPlantingDateNote entries={entries} />
                     </>
                 )}

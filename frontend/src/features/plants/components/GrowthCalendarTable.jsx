@@ -2,7 +2,7 @@ import {
     formatAge,
     formatBlock,
     formatDate,
-    formatGrowthPhase,
+    formatPhaseBand,
     formatList,
     formatMillimeters,
     formatText,
@@ -60,7 +60,7 @@ export default function GrowthCalendarTable({ entries }) {
                                 {formatText(entry.stade_actuel)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatGrowthPhase(entry.phase_croissance, entry.phase_tranche_annees)}
+                                {formatPhaseBand(entry.phase_croissance, entry.phase_tranche_annees)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatMillimeters(entry.pluviometrie_locale_mm)}
