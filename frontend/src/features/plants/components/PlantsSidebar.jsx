@@ -32,12 +32,15 @@ const NAV_ITEMS = [
 const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";
 
 /**
- * Active entry: the mock-up's white overlay plus its inset left marker.
- * Colours come from --color-primary and white only; no new hue is introduced.
+ * Active entry: a dark overlay plus the mock-up's inset left marker. The mock-up
+ * lightens the row instead, which pushes its background towards its own white
+ * label — 3.64:1, under the AA minimum. Darkening raises the label to 6.66:1 and
+ * detaches the row from the bar. Colours stay white and black over the existing
+ * --color-primary token; no new hue is introduced.
  */
 const linkStyles = ({ isActive }) =>
-    `${ITEM_BASE} font-medium text-white/80 hover:bg-white/10 ${
-        isActive ? "bg-white/15 font-semibold text-white shadow-[inset_3px_0_0_#fff]" : ""
+    `${ITEM_BASE} font-medium text-white hover:bg-white/10 ${
+        isActive ? "bg-black/20 font-semibold shadow-[inset_3px_0_0_#fff]" : ""
     }`;
 
 /**
@@ -49,7 +52,7 @@ function PlannedItem({ label, icon: Icon }) {
     return (
         <span
             aria-disabled="true"
-            className={`${ITEM_BASE} cursor-not-allowed font-medium text-white/70`}
+            className={`${ITEM_BASE} cursor-not-allowed font-normal text-white/70`}
         >
             <Icon size={17} className="shrink-0" />
             {label}
@@ -87,9 +90,14 @@ export default function PlantsSidebar() {
                     transition-transform duration-300 md:static md:translate-x-0
                     ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
-                <p className="font-heading px-3 text-center text-xs font-bold tracking-widest text-white uppercase">
-                    Plants
-                </p>
+                <div className="flex flex-col items-center gap-2 px-2">
+                    {/* The application's logo, served from public/ as machinery serves it.
+                        Empty alt: the module name follows immediately, in text. */}
+                    <img src="/logo.webp" alt="" width="150" />
+                    <p className="font-heading text-center text-xs font-bold tracking-widest text-white uppercase">
+                        Plants
+                    </p>
+                </div>
 
                 <div className="my-4 h-px w-full bg-white/20" />
 
