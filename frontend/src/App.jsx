@@ -1,44 +1,17 @@
-import { useState, useEffect } from 'react'
+import { BrowserRouter } from 'react-router-dom'
 import { WaterSupplyApp } from './features/watersupply/components/WaterSupplyApp'
-import { LoginForm } from './features/watersupply/components/LoginForm'
-import { useAuth } from './shared/hooks/useAuth'
-import { getToken } from './shared/api/client'
 
+/**
+ * Point d'entrée du frontend.
+ * Aucune authentification n'est requise — l'utilisateur arrive directement sur l'application.
+ * BrowserRouter fournit une URL directe pour chaque vue (ex. /irrigation, /consommation).
+ * En production, nginx redirige toute route vers index.html (try_files).
+ */
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [checking, setChecking] = useState(true)
-  const { user, logout } = useAuth()
-
-  // Check if a token already exists on mount
-  useEffect(() => {
-    const token = getToken()
-    if (token) {
-      setLoggedIn(true)
-    }
-    setChecking(false)
-  }, [])
-
-  const handleLogin = (response) => {
-    setLoggedIn(true)
-  }
-
-  const handleLogout = () => {
-    logout()
-    setLoggedIn(false)
-  }
-
-  if (checking) {
-    return <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', fontFamily: 'Inter, sans-serif', color: '#6b7a78' }}>Loading...</div>
-  }
-
   return (
-    <>
-      {loggedIn ? (
-        <WaterSupplyApp user={user} onLogout={handleLogout} />
-      ) : (
-        <LoginForm onLogin={handleLogin} />
-      )}
-    </>
+    <BrowserRouter>
+      <WaterSupplyApp />
+    </BrowserRouter>
   )
 }
 

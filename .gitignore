@@ -1,1 +1,9 @@
 .env
+*.log
+
+# Artefacts d'analyse et de session (dumps temporaires a la racine)
+_*.txt
+_*.log
+
+# Outillage local de l'agent / apercu
+.freebuff/

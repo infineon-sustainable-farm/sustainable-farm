@@ -1,14 +1,20 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.controller;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
-import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationPostponeRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.IrrigationService;
 import jakarta.validation.Valid;
-import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,91 +23,118 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
 public class IrrigationController {
-    private final IrrigationScheduleRepository scheduleRepository;
-    private final IrrigationLogRepository logRepository;
+    private final IrrigationService irrigationService;
 
-    public IrrigationController(IrrigationScheduleRepository scheduleRepository, IrrigationLogRepository logRepository) {
-        this.scheduleRepository = scheduleRepository;
-        this.logRepository = logRepository;
+    public IrrigationController(IrrigationService irrigationService) {
+        this.irrigationService = irrigationService;
     }
 
     @GetMapping("/irrigations")
-    public List<IrrigationSchedule> irrigations() {
-        return scheduleRepository.findAll();
+    public Object irrigations(
+            @RequestParam(required = false) @Min(0) Integer page,
+            @RequestParam(required = false) @Min(1) Integer size,
+            @RequestParam(required = false) UUID zoneId) {
+        if (page == null && size == null && zoneId == null) return irrigationService.findSchedules();
+        return irrigationService.findSchedules(pageRequest(page, size), zoneId);
     }
 
     @PostMapping("/irrigations")
     @ResponseStatus(HttpStatus.CREATED)
-    public IrrigationSchedule createIrrigation(@Valid @RequestBody IrrigationSchedule schedule) {
-        return scheduleRepository.save(schedule);
+    public IrrigationScheduleResponse createIrrigation(@Valid @RequestBody IrrigationScheduleCreateRequest request) {
+        return irrigationService.createSchedule(request);
     }
 
     @GetMapping("/irrigations/{scheduleId}")
-    public IrrigationSchedule irrigation(@PathVariable UUID scheduleId) {
-        return scheduleRepository.findById(scheduleId).orElseThrow(() -> new NotFoundException("Irrigation"));
+    public IrrigationScheduleResponse irrigation(@PathVariable UUID scheduleId) {
+        return irrigationService.getSchedule(scheduleId);
     }
 
     @PutMapping("/irrigations/{scheduleId}")
-    public IrrigationSchedule updateIrrigation(@PathVariable UUID scheduleId, @RequestBody IrrigationSchedule payload) {
-        IrrigationSchedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new NotFoundException("Irrigation"));
-        schedule.setZoneId(payload.getZoneId() == null ? schedule.getZoneId() : payload.getZoneId());
-        schedule.setStartTime(payload.getStartTime() == null ? schedule.getStartTime() : payload.getStartTime());
-        schedule.setDurationMinutes(payload.getDurationMinutes() == null ? schedule.getDurationMinutes() : payload.getDurationMinutes());
-        schedule.setWaterQuantityLiters(payload.getWaterQuantityLiters() == null ? schedule.getWaterQuantityLiters() : payload.getWaterQuantityLiters());
-        schedule.setStatus(payload.getStatus() == null ? schedule.getStatus() : payload.getStatus());
-        schedule.setCreatedBy(payload.getCreatedBy() == null ? schedule.getCreatedBy() : payload.getCreatedBy());
-        return scheduleRepository.save(schedule);
+    public IrrigationScheduleResponse updateIrrigation(@PathVariable UUID scheduleId, @RequestBody IrrigationScheduleUpdateRequest request) {
+        return irrigationService.updateSchedule(scheduleId, request);
     }
 
     @DeleteMapping("/irrigations/{scheduleId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteIrrigation(@PathVariable UUID scheduleId) {
-        scheduleRepository.delete(scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new NotFoundException("Irrigation")));
+        irrigationService.deleteSchedule(scheduleId);
+    }
+
+    /**
+     * Suggestions de report : liste les irrigations planifiees qui peuvent etre evitees
+     * parce que la pluie prevue couvrira le besoin (premier levier d'economie d'eau).
+     */
+    @GetMapping("/irrigation/suggestions")
+    public Map<String, Object> suggestions() {
+        return irrigationService.suggestions();
+    }
+
+    /**
+     * Reporte une irrigation planifiee suite a une suggestion (la decision reste humaine).
+     */
+    @PostMapping("/irrigations/{scheduleId}/postpone")
+    public IrrigationScheduleResponse postpone(
+            @PathVariable UUID scheduleId,
+            @RequestBody(required = false) IrrigationPostponeRequest request) {
+        return irrigationService.postpone(scheduleId, request == null ? null : request.reason());
     }
 
     @GetMapping("/irrigation-logs")
-    public List<IrrigationLog> logs() {
-        return logRepository.findAll();
+    public Object logs(
+            @RequestParam(required = false) @Min(0) Integer page,
+            @RequestParam(required = false) @Min(1) Integer size,
+            @RequestParam(required = false) UUID scheduleId) {
+        if (page == null && size == null && scheduleId == null) return irrigationService.findLogs();
+        return irrigationService.findLogs(pageRequest(page, size), scheduleId);
+    }
+
+    /**
+     * Création d'un log d'irrigation dédié (Tâche 4.3). Permet de saisir un log
+     * manuellement sans passer par start/stop implicites.
+     */
+    @PostMapping("/irrigation-logs")
+    @ResponseStatus(HttpStatus.CREATED)
+    public IrrigationLogResponse createLog(@Valid @RequestBody IrrigationLogCreateRequest request) {
+        return irrigationService.createLog(request);
+    }
+
+    @GetMapping("/irrigation-logs/{logId}")
+    public IrrigationLogResponse log(@PathVariable UUID logId) {
+        return irrigationService.getLog(logId);
+    }
+
+    @PutMapping("/irrigation-logs/{logId}")
+    public IrrigationLogResponse updateLog(@PathVariable UUID logId, @RequestBody IrrigationLogUpdateRequest request) {
+        return irrigationService.updateLog(logId, request);
+    }
+
+    @DeleteMapping("/irrigation-logs/{logId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLog(@PathVariable UUID logId) {
+        irrigationService.deleteLog(logId);
     }
 
     @PostMapping("/irrigations/{scheduleId}/start")
     @ResponseStatus(HttpStatus.CREATED)
-    public IrrigationLog start(@PathVariable UUID scheduleId) {
-        IrrigationSchedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new NotFoundException("Irrigation"));
-        schedule.setStatus("running");
-        scheduleRepository.save(schedule);
-
-        IrrigationLog log = new IrrigationLog();
-        log.setScheduleId(scheduleId);
-        log.setActualStartTime(Instant.now());
-        log.setWaterUsedLiters(0.0);
-        log.setStatus("started");
-        return logRepository.save(log);
+    public IrrigationLogResponse start(@PathVariable UUID scheduleId) {
+        return irrigationService.start(scheduleId);
     }
 
     @PostMapping("/irrigations/{scheduleId}/stop")
     @ResponseStatus(HttpStatus.CREATED)
-    public IrrigationLog stop(@PathVariable UUID scheduleId) {
-        IrrigationSchedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new NotFoundException("Irrigation"));
-        schedule.setStatus("completed");
-        scheduleRepository.save(schedule);
+    public IrrigationLogResponse stop(@PathVariable UUID scheduleId) {
+        return irrigationService.stop(scheduleId);
+    }
 
-        IrrigationLog log = new IrrigationLog();
-        log.setScheduleId(scheduleId);
-        log.setActualStartTime(Instant.now());
-        log.setActualEndTime(Instant.now());
-        log.setWaterUsedLiters(schedule.getWaterQuantityLiters() == null ? 0.0 : schedule.getWaterQuantityLiters());
-        log.setStatus("completed");
-        return logRepository.save(log);
+    private PageRequest pageRequest(Integer page, Integer size) {
+        return PageRequest.of(page == null ? 0 : page, size == null ? 20 : size,
+                Sort.by(Sort.Direction.ASC, "createdAt"));
     }
 }

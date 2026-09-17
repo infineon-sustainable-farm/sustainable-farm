@@ -33,6 +33,9 @@ public class IrrigationSchedule extends BaseEntity {
     @Column(nullable = false)
     private UUID createdBy;
 
+    @Column(name = "postpone_reason", length = 120)
+    private String postponeReason;
+
     public UUID getZoneId() {
         return zoneId;
     }
@@ -79,5 +82,13 @@ public class IrrigationSchedule extends BaseEntity {
 
     public void setCreatedBy(UUID createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public String getPostponeReason() {
+        return postponeReason;
+    }
+
+    public void setPostponeReason(String postponeReason) {
+        this.postponeReason = postponeReason;
     }
 }

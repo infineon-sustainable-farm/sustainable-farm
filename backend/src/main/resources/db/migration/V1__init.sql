@@ -54,7 +54,11 @@ CREATE TABLE IF NOT EXISTS water_sources (
     longitude DOUBLE PRECISION
 );
 
-CREATE TABLE IF NOT EXISTS water_consumptions (
+-- Le nom doit correspondre a @Table(name = "water_consumption") de l'entite WaterConsumption.
+-- V2 renommait water_consumptions -> water_consumption, ce qui echouait des que la table
+-- portant le bon nom existait deja (base creee par Hibernate). Avec ce nom correct, le
+-- RENAME de V2 devient un no-op grace a son ALTER TABLE IF EXISTS.
+CREATE TABLE IF NOT EXISTS water_consumption (
     id UUID PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     farm_id UUID NOT NULL,

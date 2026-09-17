@@ -40,14 +40,18 @@ async function request(method, path, body = null) {
   const response = await fetch(`${API_BASE}${path}`, options)
 
   if (!response.ok) {
+    // Format d'erreur unifié : { message, code, status } consommé par tout le frontend.
     let errorData
     try {
       errorData = await response.json()
     } catch {
-      errorData = { message: response.statusText }
+      errorData = {}
     }
-    const error = new Error(errorData.message || `HTTP ${response.status}`)
+    const error = new Error(
+      errorData.message || errorData.error || errorData.detail || `HTTP ${response.status} ${response.statusText}`,
+    )
     error.status = response.status
+    error.code = errorData.code || `HTTP_${response.status}`
     error.data = errorData
     throw error
   }

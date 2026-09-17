@@ -4,7 +4,9 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumpti
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.AlertService;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,13 +23,16 @@ public class AIService {
     private final WaterSourceRepository waterSourceRepository;
     private final ZoneRepository zoneRepository;
     private final WaterConsumptionRepository waterConsumptionRepository;
+    private final AlertService alertService;
 
     public AIService(WaterSourceRepository waterSourceRepository,
                      ZoneRepository zoneRepository,
-                     WaterConsumptionRepository waterConsumptionRepository) {
+                     WaterConsumptionRepository waterConsumptionRepository,
+                     AlertService alertService) {
         this.waterSourceRepository = waterSourceRepository;
         this.zoneRepository = zoneRepository;
         this.waterConsumptionRepository = waterConsumptionRepository;
+        this.alertService = alertService;
     }
 
     private double reservoirLevelPercent() {
@@ -80,25 +85,59 @@ public class AIService {
 
     public Map<String, Object> droughtPrediction() {
         double levelPercent = reservoirLevelPercent();
+
+        // 1) Suivi de consommation : moyenne quotidienne sur les 7 derniers jours.
+        Instant since = Instant.now().minus(java.time.Duration.ofDays(7));
+        List<WaterConsumption> recent = waterConsumptionRepository.findAll().stream()
+                .filter(c -> c.getConsumptionDate() != null && c.getConsumptionDate().isAfter(since))
+                .toList();
+        double dailyAverage = recent.stream()
+                .mapToDouble(c -> c.getConsumptionLiters() == null ? 0 : c.getConsumptionLiters())
+                .sum() / 7.0;
+
+        // 2) Quantite d eau contenue dans les reservoirs.
+        double totalReserve = waterSourceRepository.findAll().stream()
+                .mapToDouble(s -> s.getCurrentLevelLiters() == null ? 0 : s.getCurrentLevelLiters())
+                .sum();
+        double totalCapacity = waterSourceRepository.findAll().stream()
+                .mapToDouble(s -> s.getCapacityLiters() == null ? 0 : s.getCapacityLiters())
+                .sum();
+
+        // 3) Jours de reserve restants au rythme de consommation observe.
+        Double daysRemaining = dailyAverage > 0 ? totalReserve / dailyAverage : null;
+        String daysText = daysRemaining == null ? "n/d (aucune consommation recente)"
+                : String.format("%.1f", daysRemaining) + " jours";
+
+        // 4) Risque = combinaison du niveau des reservoirs ET de la consommation observee.
         String risk;
         String advice;
-        if (levelPercent < 15) {
+        if (levelPercent < 15 || (daysRemaining != null && daysRemaining <= 1)) {
             risk = "CRITICAL";
-            advice = "Peniere d'eau imminente. Arreter les usages non-essentiels et mobiliser des sources de secours.";
-        } else if (levelPercent < 30) {
+            advice = "Penurie imminente : " + daysText + " de reserve au rythme actuel ("
+                    + String.format("%.0f", dailyAverage) + " L/jour). Arreter les usages non-essentiels et mobiliser des sources de secours.";
+        } else if (levelPercent < 30 || (daysRemaining != null && daysRemaining <= 3)) {
             risk = "HIGH";
-            advice = "Risque eleve. Restreindre l'irrigation aux cultures prioritaires et annuler les irrigations reportables.";
-        } else if (levelPercent < 50) {
+            advice = "Risque eleve : environ " + daysText + " de reserve (consommation moyenne "
+                    + String.format("%.0f", dailyAverage) + " L/jour). Restreindre l'irrigation aux cultures prioritaires.";
+        } else if (levelPercent < 50 || (daysRemaining != null && daysRemaining <= 7)) {
             risk = "MEDIUM";
-            advice = "Risque moyen. Surveiller le niveau des reservoirs et maintenir le goutte-à-goutte.";
+            advice = "Risque modere : environ " + daysText + " de reserve (consommation moyenne "
+                    + String.format("%.0f", dailyAverage) + " L/jour). Surveiller les niveaux et maintenir le goutte-a-goutte.";
         } else {
             risk = "LOW";
-            advice = "Risque faible. Les ressources en eau sont suffisantes pour la periode.";
+            advice = "Risque faible : les reservoirs (" + String.format("%.0f", totalReserve)
+                    + " L) couvrent plus de 7 jours de consommation moyenne ("
+                    + String.format("%.0f", dailyAverage) + " L/jour).";
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("risk_level", risk);
         result.put("reservoir_level_percentage", Math.round(levelPercent));
+        result.put("total_reserve_liters", Math.round(totalReserve));
+        result.put("total_capacity_liters", Math.round(totalCapacity));
+        result.put("daily_average_consumption_liters_7d", Math.round(dailyAverage));
+        result.put("consumption_window_days", 7);
+        result.put("days_of_reserve_remaining", daysRemaining);
         result.put("confidence", 0.85);
         result.put("recommendations", advice);
         result.put("prediction_date", Instant.now().toString());
@@ -124,6 +163,19 @@ public class AIService {
                         "amount_liters", c.getConsumptionLiters(),
                         "date", c.getConsumptionDate() == null ? c.getCreatedAt().toString() : c.getConsumptionDate().toString()));
             }
+        }
+
+        // Notification automatique critique si des anomalies sont detectees (P4b)
+        if (!anomalies.isEmpty()) {
+            double totalSuspect = anomalies.stream()
+                    .mapToDouble(a -> ((Number) a.get("amount_liters")).doubleValue())
+                    .sum();
+            alertService.raise("critical",
+                    "Anomalie de consommation detectee",
+                    "Detection de " + anomalies.size() + " point(s) de consommation anormale " +
+                            "(ecart > 50 % vs moyenne). Volume suspecte : " + Math.round(totalSuspect) + " L. " +
+                            "Verifier les vannes et les deduire.",
+                    "/consumption");
         }
 
         Map<String, Object> result = new LinkedHashMap<>();

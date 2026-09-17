@@ -24,6 +24,14 @@ public class Zone extends BaseEntity {
 
     private String irrigationMethod;
 
+    /**
+     * Coefficient cultural (Kc) utilisé pour estimer le besoin hydrique théorique de la zone
+     * (besoin = surface x ET0 x Kc / efficacité du système). Null = valeur par défaut 1.0,
+     * ce qui reste plus juste qu'aucune référence du tout.
+     */
+    @Column(name = "crop_coefficient")
+    private Double cropCoefficient;
+
     public UUID getFieldId() {
         return fieldId;
     }
@@ -54,5 +62,13 @@ public class Zone extends BaseEntity {
 
     public void setIrrigationMethod(String irrigationMethod) {
         this.irrigationMethod = irrigationMethod;
+    }
+
+    public Double getCropCoefficient() {
+        return cropCoefficient;
+    }
+
+    public void setCropCoefficient(Double cropCoefficient) {
+        this.cropCoefficient = cropCoefficient;
     }
 }

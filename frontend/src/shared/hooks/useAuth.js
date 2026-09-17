@@ -1,31 +1,31 @@
-import { useCallback, useEffect, useState } from 'react'
-import { apiClient, setToken, getToken } from '../api/client.js'
+import { useCallback, useState } from 'react'
+import { apiClient, getToken, setToken } from '../api/client.js'
 
-/**
- * Hook d'authentification - gère le login, logout et l'état de l'utilisateur connecté.
- */
+function readUserFromToken() {
+  const token = getToken()
+  if (!token) return null
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    // Expiration JWT : un token expiré est supprimé et l'utilisateur considéré déconnecté.
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      setToken(null)
+      return null
+    }
+    return {
+      id: payload.userId,
+      email: payload.sub,
+    }
+  } catch {
+    setToken(null)
+    return null
+  }
+}
+
 export function useAuth() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => readUserFromToken())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-
-  // Vérifie au montage si un token existe déjà
-  useEffect(() => {
-    const token = getToken()
-    if (token) {
-      // Décoder le token pour récupérer les infos utilisateur de base
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        setUser({
-          id: payload.userId,
-          email: payload.sub,
-        })
-      } catch {
-        // Token invalide, on le supprime
-        setToken(null)
-      }
-    }
-  }, [])
 
   const login = useCallback(async (email, password) => {
     setLoading(true)
@@ -47,8 +47,7 @@ export function useAuth() {
     setLoading(true)
     setError(null)
     try {
-      const response = await apiClient.post('/auth/register', { firstName, lastName, email, password })
-      return response
+      return await apiClient.post('/auth/register', { firstName, lastName, email, password })
     } catch (err) {
       setError(err)
       throw err
@@ -62,8 +61,6 @@ export function useAuth() {
     setUser(null)
   }, [])
 
-  const isAuthenticated = !!user
-
   return {
     user,
     loading,
@@ -71,6 +68,6 @@ export function useAuth() {
     login,
     register,
     logout,
-    isAuthenticated,
+    isAuthenticated: !!user,
   }
 }

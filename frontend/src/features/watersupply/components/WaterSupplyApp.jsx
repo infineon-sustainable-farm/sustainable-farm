@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { cloneElement, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import '../watersupply.css'
 import { DashboardView } from './views/DashboardView'
 import { IrrigationView } from './views/IrrigationView'
@@ -7,15 +8,22 @@ import { RainwaterView } from './views/RainwaterView'
 import { DripView } from './views/DripView'
 import { QualityView } from './views/QualityView'
 import { DroughtView } from './views/DroughtView'
+import { FarmsView } from './views/FarmsView'
+import { SourcesView } from './views/SourcesView'
+import { NotificationsView } from './views/NotificationsView'
 
+// Chaque vue possède une URL directe (ex. /watersupply/consommation) — voir App.jsx.
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', section: null },
-  { id: 'irrigation', label: 'Irrigation Scheduling', section: 'Water saving planning' },
-  { id: 'consumption', label: 'Consumption Tracking', section: 'Water saving planning' },
-  { id: 'rainwater', label: 'Rainwater Harvesting', section: 'Water saving planning' },
-  { id: 'drip', label: 'Drip Irrigation', section: 'Water saving planning' },
-  { id: 'quality', label: 'Water Quality', section: 'Water saving planning' },
-  { id: 'drought', label: 'Drought Alerts', section: 'Water saving planning' },
+  { id: 'dashboard', path: '', label: 'Tableau de bord', section: null, element: <DashboardView /> },
+  { id: 'farms', path: 'fermes', label: 'Fermes & Champs', section: 'Gestion des données', element: <FarmsView /> },
+  { id: 'sources', path: 'sources', label: "Sources d'eau", section: 'Gestion des données', element: <SourcesView /> },
+  { id: 'irrigation', path: 'irrigation', label: "Planification d'irrigation", section: 'Planification de l’eau', element: <IrrigationView /> },
+  { id: 'consumption', path: 'consommation', label: 'Suivi consommation', section: 'Planification de l’eau', element: <ConsumptionView /> },
+  { id: 'rainwater', path: 'pluvial', label: 'Récupération pluviale', section: 'Planification de l’eau', element: <RainwaterView /> },
+  { id: 'drip', path: 'goutte-a-goutte', label: 'Maintenance', section: 'Planification de l’eau', element: <DripView /> },
+  { id: 'quality', path: 'qualite', label: 'Qualité de l’eau', section: 'Planification de l’eau', element: <QualityView /> },
+  { id: 'drought', path: 'secheresse', label: 'Alertes sécheresse', section: 'Planification de l’eau', element: <DroughtView /> },
+  { id: 'notifications', path: 'notifications', label: 'Notifications', section: 'Opérations', element: <NotificationsView /> },
 ]
 
 const ICONS = {
@@ -25,6 +33,14 @@ const ICONS = {
       <rect width="7" height="5" x="14" y="3" rx="1" />
       <rect width="7" height="9" x="14" y="12" rx="1" />
       <rect width="7" height="5" x="3" y="16" rx="1" />
+    </svg>
+  ),
+  farms: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+      <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+      <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+      <path d="M10 6h4M10 10h4M10 14h4" />
     </svg>
   ),
   irrigation: (
@@ -67,16 +83,17 @@ const ICONS = {
       <path d="M12 9v4M12 17h.01" />
     </svg>
   ),
-  logout: (
+  notifications: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <path d="M16 17l5-5-5-5M21 12H9" />
+      <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+      <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8a6 6 0 0 0-12 0c0 4.499-1.411 5.956-2.738 7.326" />
     </svg>
   ),
-}
+  }
 
-export function WaterSupplyApp({ user, onLogout }) {
-  const [activeView, setActiveView] = useState('dashboard')
+export function WaterSupplyApp() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [toast, setToast] = useState(null)
   const [toastTimer, setToastTimer] = useState(null)
 
@@ -86,27 +103,25 @@ export function WaterSupplyApp({ user, onLogout }) {
     setToastTimer(setTimeout(() => setToast(null), 2400))
   }
 
+  const activeItem = NAV_ITEMS.find((item) => (item.path === '' ? location.pathname === '/' : location.pathname === `/${item.path}`))
   const showView = (id) => {
-    setActiveView(id)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    const item = NAV_ITEMS.find((nav) => nav.id === id)
+    if (item) navigate(item.path === '' ? '/' : `/${item.path}`)
   }
 
-  const handleLogout = () => {
-    if (onLogout) onLogout()
-    notify('Session closed.')
-  }
 
-  const userName = user?.firstName || user?.email || 'Yenouyaba'
-  const initials = userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'YN'
+  const renderView = (item) =>
+    cloneElement(item.element, {
+      notify,
+      onNavigate: item.id === 'dashboard' ? showView : undefined,
+    })
 
   return (
     <div className="ws-app">
       <aside className="ws-sidebar">
         <div className="ws-sidebar-top">
-          <div className="ws-app-logo" style={{ display: 'grid', placeItems: 'center', fontSize: '40px', fontWeight: 800, color: 'var(--ws-primary)' }}>
-            💧
-          </div>
-          <div className="ws-module-name">Water Supply<br />Management</div>
+          <img src="/logo.webp" alt="Sustainable Farm" className="ws-app-logo" />
+          <div className="ws-module-name">Sustainable Farm</div>
         </div>
         <hr />
         <nav className="ws-main-nav">
@@ -116,7 +131,7 @@ export function WaterSupplyApp({ user, onLogout }) {
               <div key={item.id}>
                 {showSection && <div className="ws-nav-section-label">{item.section}</div>}
                 <button
-                  className={`ws-nav-item ${activeView === item.id ? 'active' : ''}`}
+                  className={`ws-nav-item ${activeItem?.id === item.id ? 'active' : ''}`}
                   onClick={() => showView(item.id)}
                 >
                   {ICONS[item.id]}
@@ -126,35 +141,16 @@ export function WaterSupplyApp({ user, onLogout }) {
             )
           })}
         </nav>
-        <div className="ws-sidebar-bottom">
-          <button className="ws-logout-item" onClick={handleLogout}>
-            {ICONS.logout}
-            Logout
-          </button>
-        </div>
       </aside>
 
       <main className="ws-main">
-        <div className={`ws-view ${activeView === 'dashboard' ? 'active' : ''}`}>
-          <DashboardView onNavigate={showView} notify={notify} userName={userName} initials={initials} />
-        </div>
-        <div className={`ws-view ${activeView === 'irrigation' ? 'active' : ''}`}>
-          <IrrigationView notify={notify} userName={userName} initials={initials} />
-        </div>
-        <div className={`ws-view ${activeView === 'consumption' ? 'active' : ''}`}>
-          <ConsumptionView notify={notify} userName={userName} initials={initials} />
-        </div>
-        <div className={`ws-view ${activeView === 'rainwater' ? 'active' : ''}`}>
-          <RainwaterView notify={notify} userName={userName} initials={initials} />
-        </div>
-        <div className={`ws-view ${activeView === 'drip' ? 'active' : ''}`}>
-          <DripView notify={notify} userName={userName} initials={initials} />
-        </div>
-        <div className={`ws-view ${activeView === 'quality' ? 'active' : ''}`}>
-          <QualityView notify={notify} userName={userName} initials={initials} />
-        </div>
-        <div className={`ws-view ${activeView === 'drought' ? 'active' : ''}`}>
-          <DroughtView notify={notify} userName={userName} initials={initials} />
+        <div className="ws-view active">
+          <Routes>
+            {NAV_ITEMS.map((item) => (
+              <Route key={item.id} path={item.path === '' ? '/' : item.path} element={renderView(item)} />
+            ))}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
       </main>
 

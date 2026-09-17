@@ -67,6 +67,17 @@ export const waterConsumptionApi = {
   deleteConsumption: (consumptionId) => apiClient.delete(`/water/consumption/${consumptionId}`),
 }
 
+// --- Water Quotas (P8) ---
+export const waterQuotaApi = {
+  getQuotas: (params = '') => apiClient.get(`/water/quotas${params}`),
+  createQuota: (quota) => apiClient.post('/water/quotas', quota),
+  getQuota: (quotaId) => apiClient.get(`/water/quotas/${quotaId}`),
+  updateQuota: (quotaId, payload) => apiClient.put(`/water/quotas/${quotaId}`, payload),
+  deleteQuota: (quotaId) => apiClient.delete(`/water/quotas/${quotaId}`),
+  // Suivi du mois courant (ou d'un mois passe) : consommation cumulee + statut par quota.
+  getUsage: (month) => apiClient.get(`/water/quotas/usage${month ? `?month=${month}` : ''}`),
+}
+
 // --- Water Quality Tests ---
 export const waterQualityApi = {
   getTests: () => apiClient.get('/water/quality'),
@@ -84,8 +95,14 @@ export const irrigationApi = {
   updateSchedule: (scheduleId, payload) => apiClient.put(`/irrigations/${scheduleId}`, payload),
   deleteSchedule: (scheduleId) => apiClient.delete(`/irrigations/${scheduleId}`),
   getLogs: () => apiClient.get('/irrigation-logs'),
+  createLog: (log) => apiClient.post('/irrigation-logs', log),
+  updateLog: (logId, payload) => apiClient.put(`/irrigation-logs/${logId}`, payload),
+  deleteLog: (logId) => apiClient.delete(`/irrigation-logs/${logId}`),
   startIrrigation: (scheduleId) => apiClient.post(`/irrigations/${scheduleId}/start`),
   stopIrrigation: (scheduleId) => apiClient.post(`/irrigations/${scheduleId}/stop`),
+  // Report pour cause de pluie : proposition fondee sur la meteo, la decision reste humaine.
+  getSuggestions: () => apiClient.get('/irrigation/suggestions'),
+  postpone: (scheduleId, reason) => apiClient.post(`/irrigations/${scheduleId}/postpone`, { reason }),
 }
 
 // --- Notifications ---
@@ -122,6 +139,12 @@ export const dripMaintenanceApi = {
 export const dashboardApi = {
   getKpis: () => apiClient.get('/dashboard/kpis'),
   getWaterSavings: (period = 'month') => apiClient.get(`/dashboard/water-savings?period=${period}`),
+  // Economie d'eau vue dans le temps : besoin cumule des cultures vs consommation cumulee.
+  getSavingsSeries: (days = 30) => apiClient.get(`/dashboard/savings-series?days=${days}`),
+  // Bilan hydrique : entrees (pluie recuperee) vs sorties (eau consommee) et niveau des reservoirs.
+  getWaterBalance: (period = 'month') => apiClient.get(`/dashboard/water-balance?period=${period}`),
+  // Anomalies de debit = fuites probables (diagnostic deja calcule cote backend).
+  getLeaks: () => apiClient.get('/dashboard/leaks'),
   getActivities: () => apiClient.get('/dashboard/activities'),
   getAlerts: () => apiClient.get('/dashboard/alerts'),
 }
@@ -148,6 +171,28 @@ export const reportApi = {
   getIrrigationReport: (period = 'month') =>
     apiClient.get(`/reports/irrigation?period=${period}`),
   getQualityReport: () => apiClient.get('/reports/quality'),
+}
+
+// --- Exports CSV (P10) ---
+// Telechargement direct de fichiers : passe par une URL native (fetch + blob) car l'apiClient
+// parse le JSON. Le token JWT est rejoue manuellement pour les memes droits que l'API.
+export async function downloadCsv(kind, period = 'month') {
+  const token = localStorage.getItem('access_token')
+  const response = await fetch(`/api/reports/${kind}/csv?period=${encodeURIComponent(period)}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
+  if (!response.ok) {
+    throw new Error(`Export impossible (HTTP ${response.status})`)
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${kind}-${period}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
 
 // --- Health ---

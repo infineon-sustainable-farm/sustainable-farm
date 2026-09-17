@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { farmApi, fieldApi, zoneApi } from '../api/watersupplyApi'
 
 /**
@@ -9,7 +9,7 @@ export function useFarms() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchFarms = () => {
+  const fetchFarms = useCallback(() => {
     setLoading(true)
     farmApi
       .getFarms()
@@ -21,10 +21,27 @@ export function useFarms() {
         setError(err)
         setLoading(false)
       })
-  }
+  }, [])
 
   useEffect(() => {
-    fetchFarms()
+    let cancelled = false
+    farmApi
+      .getFarms()
+      .then((res) => {
+        if (!cancelled) {
+          setFarms(res)
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err)
+          setLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return { farms, loading, error, refetch: fetchFarms }
@@ -41,7 +58,6 @@ export function useFarmFields(farmId) {
   useEffect(() => {
     if (!farmId) return
     let cancelled = false
-    setLoading(true)
     farmApi
       .getFarmFields(farmId)
       .then((res) => {
@@ -75,7 +91,6 @@ export function useFieldZones(fieldId) {
   useEffect(() => {
     if (!fieldId) return
     let cancelled = false
-    setLoading(true)
     fieldApi
       .getFieldZones(fieldId)
       .then((res) => {

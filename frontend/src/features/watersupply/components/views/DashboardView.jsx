@@ -1,142 +1,243 @@
-export function DashboardView({ onNavigate, notify, userName, initials }) {
+import { useKpis, useAlerts, useActivities, useRecommendations, useDroughtPrediction, useWeather, useHealthCheck } from '../../hooks/useDashboard'
+import { Spinner } from '../../../../shared/components/Spinner'
+import { EmptyState } from '../../../../shared/components/EmptyState'
+
+/**
+ * Dashboard connecté à l'API (Tâche 2).
+ * Remplace les données figées par des données réelles via les hooks useDashboard,
+ * en conservant le design system .ws-* (couleurs/typo inchangées).
+ * Gère les états loading / error / empty.
+ */
+export function DashboardView({ onNavigate, notify }) {
+  const { data: kpis, loading: kpisLoading, error: kpisError } = useKpis()
+  const { data: alerts, loading: alertsLoading } = useAlerts()
+  const { data: activities, loading: activitiesLoading } = useActivities()
+  const { data: recommendations, loading: recLoading } = useRecommendations()
+  const { data: drought, loading: droughtLoading } = useDroughtPrediction()
+  const { data: weather, loading: weatherLoading } = useWeather(10.5, -61.2)
+  const { healthy: backendHealthy, loading: healthLoading } = useHealthCheck()
+
+  const anythingLoading = kpisLoading || alertsLoading || activitiesLoading || weatherLoading
+
   return (
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Water supply dashboard</h1>
-          <p>Operational view for irrigation, tanks, quality and drought risk.</p>
-        </div>
-        <div className="ws-user-chip">
-          <span>{userName}</span>
-          <div className="ws-avatar">{initials}</div>
+          <h1>Tableau de bord de l'eau</h1>
+          <p>Vue opérationnelle : irrigation, réservoirs, qualité et risque de sécheresse.</p>
         </div>
       </div>
 
-      <div className="ws-kpi-grid">
-        <div className="ws-kpi-card">
-          <div className="ws-kpi-label">Reservoir level</div>
-          <div className="ws-kpi-value">58%</div>
-        </div>
-        <div className="ws-kpi-card">
-          <div className="ws-kpi-label">Rain tank</div>
-          <div className="ws-kpi-value">72%</div>
-        </div>
-        <div className="ws-kpi-card orange">
-          <div className="ws-kpi-label">Active alerts</div>
-          <div className="ws-kpi-value">3</div>
-        </div>
-        <div className="ws-kpi-card hero">
-          <div className="ws-kpi-label">Water saved this month</div>
-          <div className="ws-kpi-value">18%</div>
-        </div>
+      {/* Statut backend */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px', fontFamily: "'Inter', Arial, sans-serif", fontSize: '13px', color: 'var(--ws-muted)' }}>
+        <span
+          className={`ws-summary-dot ${backendHealthy ? 'green' : 'red'}`}
+          style={{ width: '10px', height: '10px', borderRadius: '50%', display: 'inline-block' }}
+        />
+        <span>
+          {healthLoading
+            ? 'Vérification du backend…'
+            : backendHealthy
+              ? 'Backend connecté'
+              : 'Backend déconnecté'}
+        </span>
       </div>
 
-      <div className="ws-dashboard-strip">
-        <div className="ws-status-card">
-          <span className="ws-tag green">Irrigation</span>
-          <strong>2 950 L</strong>
-          <span>Planned today across 5 active zones. Zone D is postponed automatically.</span>
-        </div>
-        <div className="ws-status-card">
-          <span className="ws-tag orange">Drought</span>
-          <strong>Alert</strong>
-          <span>Demand is high and reservoir recovery is slower than expected.</span>
-        </div>
-        <div className="ws-status-card">
-          <span className="ws-tag red">Quality</span>
-          <strong>1 issue</strong>
-          <span>Reservoir pH is out of range and needs retesting before processing use.</span>
-        </div>
-      </div>
-
-      <div className="ws-dashboard-grid">
-        <div className="ws-stack">
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Today's field operations</h2>
-              <span>Updated 5 min ago</span>
+      {anythingLoading ? (
+        <Spinner label="Chargement du dashboard…" full />
+      ) : kpisError ? (
+        <EmptyState
+          title="Impossible de charger les données"
+          description={kpisError.message || 'Vérifiez que le backend est démarré puis réessayez.'}
+        />
+      ) : kpis ? (
+        <>
+          {/* ===== KPI ===== */}
+          <div className="ws-kpi-grid">
+            <Kpi label="Consommation quotidienne" value={`${kpis.daily_consumption_liters ?? 0} L`} />
+            <Kpi label="Consommation mensuelle" value={`${kpis.monthly_consumption_liters ?? 0} L`} />
+            <Kpi label="Niveau réservoirs" value={`${kpis.tank_level_percentage ?? 0}%`} tone="orange" />
+            <Kpi label="Économie d'eau" value={`${kpis.water_savings_percentage ?? 0}%`} tone="hero" />
+            <Kpi label="Irrigations aujourd'hui" value={kpis.irrigation_count_today ?? 0} />
+            <Kpi label="Anomalies" value={kpis.anomaly_count ?? 0} tone="orange" />
+            <Kpi label="Qualité de l'eau" value={kpis.water_quality_status ?? '—'} />
+            <Kpi label="Capteurs dispo." value={`${kpis.sensor_availability_percentage ?? 0}%`} />
+          </div>
+{/* ===== Météo ===== */}
+          {weather && (
+            <div className="ws-panel" style={{ marginTop: '22px' }}>
+              <div className="ws-panel-header">
+                <h2>Météo actuelle</h2>
+                <span>Open-Meteo</span>
+              </div>
+              <div className="ws-panel-body">
+                <div className="ws-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0,1fr))' }}>
+                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.temperature ?? '—'}°C</strong><small>Température</small></div>
+                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.humidity ?? '—'}%</strong><small>Humidité</small></div>
+                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.wind_speed ?? '—'} km/h</strong><small>Vent</small></div>
+                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.weather_condition ?? '—'}</strong><small>Condition</small></div>
+                </div>
+              </div>
             </div>
-            <div className="ws-panel-body ws-summary-list">
-              <div className="ws-summary-item">
-                <span className="ws-summary-dot green"></span>
-                <div className="ws-summary-title">Zone A completed<small>05:30 - 06:15, 1 200 L used on drip network</small></div>
-                <span className="ws-tag green">Done</span>
-              </div>
-              <div className="ws-summary-item">
-                <span className="ws-summary-dot orange"></span>
-                <div className="ws-summary-title">Zone B running<small>Flow at 15.5 L/min, lower than the 20 L/min reference</small></div>
-                <span className="ws-tag orange">Watch</span>
-              </div>
-              <div className="ws-summary-item">
-                <span className="ws-summary-dot"></span>
-                <div className="ws-summary-title">Zone C planned<small>17:00 - 17:30, nursery sprinkler, 400 L planned</small></div>
-                <span className="ws-tag primary">Planned</span>
-              </div>
-              <div className="ws-summary-item">
-                <span className="ws-summary-dot red"></span>
-                <div className="ws-summary-title">Zone D postponed<small>Soil humidity is above seasonal threshold, next check tomorrow</small></div>
-                <span className="ws-tag red">Saved</span>
+          )}
+
+          {/* ===== Contenu principal ===== */}
+          <div className="ws-dashboard-grid" style={{ marginTop: '22px' }}>
+            <div className="ws-stack">
+              {recLoading ? (
+                <Spinner label="Recommandations…" />
+              ) : recommendations && recommendations.length > 0 ? (
+                <div className="ws-panel">
+                  <div className="ws-panel-header">
+                    <h2>Recommandations</h2>
+                    <span>Priorisées</span>
+                  </div>
+                  <div className="ws-panel-body ws-summary-list">
+                    {recommendations.map((rec, i) => (
+                      <div className="ws-summary-item" key={i}>
+                        <span className={`ws-summary-dot ${recPriorityDot(rec.priority)}`} />
+                        <div className="ws-summary-title">
+                          <span className={`ws-tag ${recTag(rec.priority)}`}>{rec.priority}</span>
+                          <div>
+                            <small style={{ marginTop: '4px' }}>{rec.recommendation}</small>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyState title="Aucune recommandation" description="Aucune recommandation à afficher pour le moment." />
+              )}
+
+              {activitiesLoading ? (
+                <Spinner label="Activités…" />
+              ) : activities && activities.length > 0 ? (
+                <div className="ws-panel">
+                  <div className="ws-panel-header">
+                    <h2>Activités récentes</h2>
+                    <span>Historique</span>
+                  </div>
+                  <div className="ws-panel-body ws-summary-list">
+                    {activities.map((a, i) => (
+                      <div className="ws-summary-item" key={i}>
+                        <span className="ws-summary-dot green" />
+                        <div className="ws-summary-title">
+                          {a.message}
+                          <small style={{ marginTop: '4px' }}>{a.timestamp}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyState title="Aucune activité" description="Les consommations enregistrées apparaîtront ici." />
+              )}
+            </div>
+<div className="ws-stack">
+              {!droughtLoading && drought && (
+                <div className="ws-panel">
+                  <div className="ws-panel-header">
+                    <h2>Prédiction de sécheresse</h2>
+                    <span>Prévision</span>
+                  </div>
+                  <div className="ws-panel-body">
+                    <div className={`ws-tag ${droughtRiskTag(drought.risk_level)}`} style={{ marginBottom: '8px' }}>
+                      {drought.risk_level}
+                    </div>
+                    <p style={{ margin: 0, fontFamily: "'Inter', Arial, sans-serif", fontSize: '13px', color: 'var(--ws-muted)', lineHeight: 1.55 }}>
+                      {drought.recommendations}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {alertsLoading ? (
+                <Spinner label="Alertes…" />
+              ) : alerts && alerts.length > 0 ? (
+                <div className="ws-panel">
+                  <div className="ws-panel-header">
+                    <h2>Alertes récentes</h2>
+                    <span>Non lues</span>
+                  </div>
+                  <div className="ws-panel-body ws-summary-list">
+                    {alerts.map((al, i) => (
+                      <div className="ws-summary-item" key={i}>
+                        <span className={`ws-summary-dot ${alertDot(al.type)}`} />
+                        <div className="ws-summary-title">
+                          {al.title}
+                          <small style={{ marginTop: '4px' }}>{al.message}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyState title="Aucune alerte" description="Tout est nominal." />
+              )}
+
+              <div className="ws-panel">
+                <div className="ws-panel-header">
+                  <h2>Actions</h2>
+                </div>
+                <div className="ws-panel-body">
+                  <div className="ws-quick-actions">
+                    <button className="ws-action-btn" onClick={() => onNavigate('irrigation')}>Gerer l irrigation</button>
+                    <button className="ws-action-btn secondary" onClick={() => onNavigate('consumption')}>Voir la consommation</button>
+                    <button className="ws-action-btn secondary" onClick={() => onNavigate('quality')}>Voir la qualité de l'eau</button>
+                    <button className="ws-action-btn warning" onClick={() => notify('Voir la vue Sécheresse pour le plan.')}>Plan de sécheresse</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Consumption snapshot</h2>
-              <span>Actual vs reference</span>
-            </div>
-            <div className="ws-panel-body">
-              <div className="ws-chart">
-                <div className="ws-bar-pair"><div className="ws-bar ref" style={{ height: '64%' }}></div><div className="ws-bar" style={{ height: '51%' }}></div><span>Irr.</span></div>
-                <div className="ws-bar-pair"><div className="ws-bar ref" style={{ height: '34%' }}></div><div className="ws-bar" style={{ height: '39%' }}></div><span>Wash</span></div>
-                <div className="ws-bar-pair"><div className="ws-bar ref" style={{ height: '52%' }}></div><div className="ws-bar" style={{ height: '46%' }}></div><span>Proc.</span></div>
-                <div className="ws-bar-pair"><div className="ws-bar ref" style={{ height: '28%' }}></div><div className="ws-bar" style={{ height: '29%' }}></div><span>Clean</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="ws-stack">
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Water sources</h2>
-              <button className="ws-chip active" onClick={() => onNavigate('rainwater')}>Rain tank details</button>
-            </div>
-            <div className="ws-panel-body">
-              <table className="ws-table">
-                <tbody>
-                  <tr><td>Main reservoir</td><td><strong>58%</strong></td><td><span className="ws-tag orange">Alert</span></td></tr>
-                  <tr><td>Rain tank</td><td><strong>72%</strong></td><td><span className="ws-tag green">Usable</span></td></tr>
-                  <tr><td>Borehole</td><td><strong>Online</strong></td><td><span className="ws-tag primary">Reserve</span></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="ws-panel">
-            <div className="ws-panel-header"><h2>Immediate actions</h2></div>
-            <div className="ws-panel-body">
-              <div className="ws-quick-actions">
-                <button className="ws-action-btn" onClick={() => onNavigate('irrigation')}>Manage irrigation</button>
-                <button className="ws-action-btn secondary" onClick={() => onNavigate('consumption')}>Review consumption</button>
-                <button className="ws-action-btn warning" onClick={() => notify('Rainwater priority activated for washing and processing.')}>Use rainwater first</button>
-                <button className="ws-action-btn secondary" onClick={() => onNavigate('quality')}>Record quality test</button>
-                <button className="ws-action-btn warning" onClick={() => onNavigate('drought')}>Prepare drought plan</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="ws-panel">
-            <div className="ws-panel-header"><h2>Current recommendations</h2></div>
-            <div className="ws-panel-body">
-              <span className="ws-tag orange">Water saving</span>
-              <p style={{ color: 'var(--ws-muted)', lineHeight: 1.55 }}>
-                Reduce non-essential washing by 25%, keep humidity-triggered irrigation active, and reserve pumped water for crop blocks A, B and C.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        </>
+      ) : (
+        <EmptyState title="Aucune donnée" description="Ajoutez des données pour visualiser le tableau de bord." />
+      )}
     </>
   )
+}
+
+function Kpi({ label, value, tone }) {
+  return (
+    <div className={`ws-kpi-card ${tone || ''}`}>
+      <div className="ws-kpi-label">{label}</div>
+      <div className="ws-kpi-value">{value}</div>
+    </div>
+  )
+}
+
+function recPriorityDot(p) {
+  switch (p) {
+    case 'critical': return 'red'
+    case 'high': case 'medium': return 'orange'
+    case 'low': return 'green'
+    default: return 'green'
+  }
+}
+
+function recTag(p) {
+  switch (p) {
+    case 'critical': case 'high': return 'red'
+    case 'medium': return 'orange'
+    case 'low': return 'green'
+    default: return 'primary'
+  }
+}
+
+function droughtRiskTag(r) {
+  switch ((r || '').toUpperCase()) {
+    case 'CRITICAL': case 'HIGH': return 'red'
+    case 'MEDIUM': return 'orange'
+    case 'LOW': return 'green'
+    default: return 'primary'
+  }
+}
+
+function alertDot(type) {
+  switch (type) {
+    case 'warning': case 'critical': return 'red'
+    default: return 'green'
+  }
 }

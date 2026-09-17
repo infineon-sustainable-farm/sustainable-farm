@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   waterSourceApi,
   waterConsumptionApi,
@@ -9,255 +9,87 @@ import {
   dripMaintenanceApi,
 } from '../api/watersupplyApi'
 
-/**
- * Hook pour récupérer les sources d'eau.
- */
-export function useWaterSources() {
-  const [sources, setSources] = useState([])
+function useApiList(fetcher, dataKey) {
+  const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    let cancelled = false
-    waterSourceApi
-      .getSources()
-      .then((res) => {
-        if (!cancelled) {
-          setSources(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const normalize = useCallback((res) => (Array.isArray(res) ? res : res?.content ?? []), [])
 
-  return { sources, loading, error }
-}
-
-/**
- * Hook pour récupérer les consommations d'eau.
- */
-export function useWaterConsumptions() {
-  const [consumptions, setConsumptions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    waterConsumptionApi
-      .getConsumptions()
-      .then((res) => {
-        if (!cancelled) {
-          setConsumptions(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { consumptions, loading, error }
-}
-
-/**
- * Hook pour récupérer les tests de qualité de l'eau.
- */
-export function useWaterQualityTests() {
-  const [tests, setTests] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    waterQualityApi
-      .getTests()
-      .then((res) => {
-        if (!cancelled) {
-          setTests(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { tests, loading, error }
-}
-
-/**
- * Hook pour récupérer les plannings d'irrigation.
- */
-export function useIrrigationSchedules() {
-  const [schedules, setSchedules] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    irrigationApi
-      .getSchedules()
-      .then((res) => {
-        if (!cancelled) {
-          setSchedules(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { schedules, loading, error }
-}
-
-/**
- * Hook pour récupérer les logs d'irrigation.
- */
-export function useIrrigationLogs() {
-  const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    irrigationApi
-      .getLogs()
-      .then((res) => {
-        if (!cancelled) {
-          setLogs(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { logs, loading, error }
-}
-
-/**
- * Hook pour récupérer les notifications.
- */
-export function useNotifications() {
-  const [notifications, setNotifications] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  const fetchNotifications = () => {
+  const refetch = useCallback(() => {
     setLoading(true)
-    notificationApi
-      .getNotifications()
+    setError(null)
+    return fetcher()
       .then((res) => {
-        setNotifications(res)
-        setLoading(false)
+        setData(normalize(res))
+        return res
       })
       .catch((err) => {
         setError(err)
-        setLoading(false)
+        throw err
       })
-  }
+      .finally(() => setLoading(false))
+  }, [fetcher, normalize])
 
   useEffect(() => {
-    fetchNotifications()
-  }, [])
+    let cancelled = false
+    fetcher()
+      .then((res) => {
+        if (!cancelled) {
+          setData(normalize(res))
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err)
+          setLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [fetcher, normalize])
 
-  return { notifications, loading, error, refetch: fetchNotifications }
+  return { [dataKey]: data, loading, error, refetch }
 }
 
-/**
- * Hook pour récupérer les récoltes d'eau de pluie.
- */
+export function useWaterSources() {
+  const fetcher = useCallback(() => waterSourceApi.getSources(), [])
+  return useApiList(fetcher, 'sources')
+}
+
+export function useWaterConsumptions() {
+  const fetcher = useCallback(() => waterConsumptionApi.getConsumptions(), [])
+  return useApiList(fetcher, 'consumptions')
+}
+
+export function useWaterQualityTests() {
+  const fetcher = useCallback(() => waterQualityApi.getTests(), [])
+  return useApiList(fetcher, 'tests')
+}
+
+export function useIrrigationSchedules() {
+  const fetcher = useCallback(() => irrigationApi.getSchedules(), [])
+  return useApiList(fetcher, 'schedules')
+}
+
+export function useIrrigationLogs() {
+  const fetcher = useCallback(() => irrigationApi.getLogs(), [])
+  return useApiList(fetcher, 'logs')
+}
+
+export function useNotifications() {
+  const fetcher = useCallback(() => notificationApi.getNotifications(), [])
+  return useApiList(fetcher, 'notifications')
+}
+
 export function useRainwaterHarvests() {
-  const [harvests, setHarvests] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    rainwaterHarvestApi
-      .getHarvests()
-      .then((res) => {
-        if (!cancelled) {
-          setHarvests(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { harvests, loading, error }
+  const fetcher = useCallback(() => rainwaterHarvestApi.getHarvests(), [])
+  return useApiList(fetcher, 'harvests')
 }
 
-/**
- * Hook pour récupérer les logs de maintenance goutte-à-goutte.
- */
 export function useDripMaintenanceLogs() {
-  const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    dripMaintenanceApi
-      .getLogs()
-      .then((res) => {
-        if (!cancelled) {
-          setLogs(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { logs, loading, error }
+  const fetcher = useCallback(() => dripMaintenanceApi.getLogs(), [])
+  return useApiList(fetcher, 'logs')
 }

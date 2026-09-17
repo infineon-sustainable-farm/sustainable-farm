@@ -1,8 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.controller;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.DripMaintenanceService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -21,55 +20,41 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/drip-maintenance-logs")
 public class DripMaintenanceController {
-    private final DripMaintenanceLogRepository logRepository;
+    private final DripMaintenanceService maintenanceService;
 
-    public DripMaintenanceController(DripMaintenanceLogRepository logRepository) {
-        this.logRepository = logRepository;
+    public DripMaintenanceController(DripMaintenanceService maintenanceService) {
+        this.maintenanceService = maintenanceService;
     }
 
     @GetMapping
     public List<DripMaintenanceLog> list() {
-        return logRepository.findAll();
+        return maintenanceService.findAll();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DripMaintenanceLog create(@Valid @RequestBody DripMaintenanceLog log) {
-        return logRepository.save(log);
+        return maintenanceService.create(log);
     }
 
     @GetMapping("/{logId}")
     public DripMaintenanceLog get(@PathVariable UUID logId) {
-        return logRepository.findById(logId).orElseThrow(() -> new NotFoundException("DripMaintenanceLog"));
+        return maintenanceService.get(logId);
     }
 
     @PutMapping("/{logId}")
     public DripMaintenanceLog update(@PathVariable UUID logId, @RequestBody DripMaintenanceLog payload) {
-        DripMaintenanceLog log = logRepository.findById(logId)
-                .orElseThrow(() -> new NotFoundException("DripMaintenanceLog"));
-        log.setZoneId(payload.getZoneId() == null ? log.getZoneId() : payload.getZoneId());
-        log.setMaintenanceDate(payload.getMaintenanceDate() == null ? log.getMaintenanceDate() : payload.getMaintenanceDate());
-        log.setMaintenanceType(payload.getMaintenanceType() == null ? log.getMaintenanceType() : payload.getMaintenanceType());
-        log.setFilterCleaned(payload.getFilterCleaned());
-        log.setCloggingDetected(payload.getCloggingDetected());
-        log.setCloggingSeverity(payload.getCloggingSeverity());
-        log.setEmitterReplacedCount(payload.getEmitterReplacedCount());
-        log.setNotes(payload.getNotes());
-        log.setPerformedBy(payload.getPerformedBy());
-        return logRepository.save(log);
+        return maintenanceService.update(logId, payload);
     }
 
     @DeleteMapping("/{logId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID logId) {
-        logRepository.delete(logRepository.findById(logId).orElseThrow(() -> new NotFoundException("DripMaintenanceLog")));
+        maintenanceService.delete(logId);
     }
 
     @GetMapping("/schedule")
     public List<Map<String, Object>> schedule() {
-        return List.of(
-                Map.of("task_type", "inspection", "frequency", "weekly"),
-                Map.of("task_type", "filter_cleaning", "frequency", "biweekly"),
-                Map.of("task_type", "flush", "frequency", "monthly"));
+        return maintenanceService.schedule();
     }
 }
