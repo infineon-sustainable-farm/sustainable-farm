@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.service.SiteSecurityService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -9,8 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping({"/api/v1/sitesecurity", "/api/sitesecurity"})
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
+@RequestMapping("/api/v1/sitesecurity")
 @RequiredArgsConstructor
 public class SiteSecurityController {
 
@@ -32,7 +32,7 @@ public class SiteSecurityController {
     }
 
     @PostMapping("/credentials")
-    public ResponseEntity<UserDto> createCredential(@RequestBody CreateUserRequestDto request) {
+    public ResponseEntity<UserDto> createCredential(@Valid @RequestBody CreateUserRequestDto request) {
         UserDto created = siteSecurityService.createCredential(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

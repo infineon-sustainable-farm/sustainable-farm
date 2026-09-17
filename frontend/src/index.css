@@ -3,7 +3,17 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Shared base tokens used across all modules (machinery, plants, shared components).
+     Kept alongside the FenceLine scale below; do not remove without a team decision. */
+  --color-primary: #0a8276;
+
+  --color-success: #2e9e6b;
+  --color-warning: #d9a441;
+  --color-error: #c1503f;
+  --color-info: #3a7ca5;
 
   --color-primary-900: #05453f;
   --color-primary-800: #075b52;

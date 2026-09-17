@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CredentialUserRepository extends JpaRepository<CredentialUserEntity, String> {
+    boolean existsByName(String name);
 }

@@ -10,12 +10,16 @@ import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.GateRepos
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.LogEntryRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.ZoneRepository;
 import jakarta.annotation.PostConstruct;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -97,17 +101,39 @@ public class SiteSecurityService {
                 .collect(Collectors.toList());
     }
 
+    private static final Set<String> ALLOWED_TYPES = Set.of("Staff", "Service", "Security", "Visitor");
+    private static final Set<String> ALLOWED_STATUSES = Set.of("Active", "Authorized", "Suspended", "Expired");
+
+    @Transactional
     public UserDto createCredential(CreateUserRequestDto req) {
+        String name = req.getName().trim();
+        if (userRepository.existsByName(name)) {
+            throw new IllegalArgumentException("A credential for '" + name + "' already exists.");
+        }
+        if (!zoneRepository.existsById(req.getLevel())) {
+            throw new IllegalArgumentException("Unknown access level '" + req.getLevel()
+                    + "': no zone with this id is defined.");
+        }
+        if (!ALLOWED_TYPES.contains(req.getType())) {
+            throw new IllegalArgumentException("Invalid credential type '" + req.getType()
+                    + "'. Allowed values: " + String.join(", ", ALLOWED_TYPES) + ".");
+        }
+        if (req.getStatus() != null && !ALLOWED_STATUSES.contains(req.getStatus())) {
+            throw new IllegalArgumentException("Invalid status '" + req.getStatus()
+                    + "'. Allowed values: " + String.join(", ", ALLOWED_STATUSES) + ".");
+        }
+        validateValidUntil(req.getValidUntil());
+
         String id = "u-" + System.currentTimeMillis();
         CredentialUserEntity entity = CredentialUserEntity.builder()
                 .id(id)
-                .name(req.getName())
+                .name(name)
                 .role(req.getRole())
                 .type(req.getType())
                 .level(req.getLevel())
                 .validUntil(req.getValidUntil())
                 .status(req.getStatus() != null ? req.getStatus() : "Active")
-                .initials(req.getInitials() != null ? req.getInitials() : initialsOf(req.getName()))
+                .initials(req.getInitials() != null ? req.getInitials() : initialsOf(name))
                 .lastActive("Just now")
                 .build();
 
@@ -193,6 +219,22 @@ public class SiteSecurityService {
                 .method(e.getMethod())
                 .note(e.getNote())
                 .build();
+    }
+
+    private void validateValidUntil(String validUntil) {
+        if ("Permanent".equalsIgnoreCase(validUntil)) {
+            return;
+        }
+        LocalDate parsed;
+        try {
+            parsed = LocalDate.parse(validUntil);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException(
+                    "Invalid validUntil '" + validUntil + "': expected an ISO date (yyyy-MM-dd) or 'Permanent'.");
+        }
+        if (parsed.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("validUntil '" + validUntil + "' is in the past.");
+        }
     }
 
     private String initialsOf(String name) {

@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -76,13 +78,25 @@ public class SiteSecurityDtos {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    @Builder
+    @Builder(toBuilder = true)
     public static class CreateUserRequestDto {
+        @NotBlank(message = "Name is required")
+        @Size(max = 100, message = "Name must not exceed 100 characters")
         private String name;
+
+        @NotBlank(message = "Role is required")
+        @Size(max = 100, message = "Role must not exceed 100 characters")
         private String role;
+
+        @NotBlank(message = "Type is required")
         private String type;
+
+        @NotBlank(message = "Level is required")
         private String level;
+
+        @NotBlank(message = "validUntil is required")
         private String validUntil;
+
         private String status;
         private String initials;
     }
