@@ -22,3 +22,18 @@ export function fetchVarieties({ bloc_parcelle, id_ferme } = {}) {
 export function fetchVarietyById(id) {
     return apiClient.get(`${ENDPOINTS.VARIETIES}/${id}`);
 }
+
+/**
+ * Fetches the growth calendar entries, optionally filtered.
+ *
+ * Same filter rules as fetchVarieties: raw block value, empty filters omitted.
+ * Tree age and growth phase come computed by the API; they are never computed
+ * or guessed here.
+ */
+export function fetchGrowthCalendar({ bloc_parcelle, id_ferme } = {}) {
+    const params = {};
+    if (bloc_parcelle) params.bloc_parcelle = bloc_parcelle;
+    if (id_ferme !== null && id_ferme !== undefined) params.id_ferme = id_ferme;
+
+    return apiClient.get(ENDPOINTS.GROWTH_CALENDAR, { params });
+}

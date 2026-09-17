@@ -51,3 +51,44 @@ export function formatTimestamp(value) {
         minute: "2-digit",
     });
 }
+
+export function formatMillimeters(value) {
+    return isMissing(value) ? NO_VALUE : `${Number(value).toLocaleString("en-US")} mm`;
+}
+
+/** Several values are all shown, comma-separated; none is picked. */
+export function formatList(values) {
+    if (!Array.isArray(values)) return NO_VALUE;
+    const present = values.filter((value) => !isMissing(value)).map((value) => String(value).trim());
+    return present.length === 0 ? NO_VALUE : present.join(", ");
+}
+
+/**
+ * Calendar date sent by the API as "YYYY-MM-DD", shown as DD/MM/YYYY.
+ * Parsed from the string, not through Date, so no timezone can shift the day.
+ */
+export function formatDate(value) {
+    if (isMissing(value)) return NO_VALUE;
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value).trim());
+    if (!match) return NO_VALUE;
+    const [, year, month, day] = match;
+    return `${day}/${month}/${year}`;
+}
+
+/** Tree age as computed by the API: completed years and remaining months. */
+export function formatAge(years, months) {
+    if (isMissing(years) || isMissing(months)) return NO_VALUE;
+    const yearLabel = Number(years) === 1 ? "yr" : "yrs";
+    return `${years} ${yearLabel} ${months} mo`;
+}
+
+/**
+ * Growth phase and its year band, both computed by the API. The phase scale lives
+ * only in the backend: nothing here knows a threshold, it only presents the text.
+ */
+export function formatGrowthPhase(phase, yearsBand) {
+    if (isMissing(phase)) return NO_VALUE;
+    const text = String(phase).trim();
+    const label = text.charAt(0).toUpperCase() + text.slice(1);
+    return isMissing(yearsBand) ? label : `${label} (${String(yearsBand).trim()})`;
+}
