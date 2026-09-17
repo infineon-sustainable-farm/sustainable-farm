@@ -1,7 +1,7 @@
 import { apiClient } from "../../../shared/api/client";
 import { ENDPOINTS } from "../../../shared/api/endpoints";
 
-export function fetchEquipments(page, size = 20) {
+export function fetchEquipments(page, size = 10) {
   return apiClient.get(ENDPOINTS.EQUIPMENTS, { params: { page, size } });
 }
 
