@@ -18,7 +18,7 @@ import java.time.LocalDate;
  * Planting calendar of a block of the farm.
  *
  * <p>Column names are the domain names of the schema and are mapped explicitly,
- * like {@link Variete}.
+ * like {@link Variety}.
  *
  * <p>There is deliberately no tree-age column. The age of the trees is never
  * stored nor entered: it is computed from {@code datePlantation} and the

@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.CalendrierCroissance;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variete;
+import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.repository.CalendrierCroissanceRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarieteRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -34,18 +34,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class PlantsDataSeeder implements CommandLineRunner {
 
-    private final VarieteRepository varieteRepository;
+    private final VarietyRepository varietyRepository;
     private final CalendrierCroissanceRepository calendrierCroissanceRepository;
 
-    public PlantsDataSeeder(VarieteRepository varieteRepository,
+    public PlantsDataSeeder(VarietyRepository varietyRepository,
                             CalendrierCroissanceRepository calendrierCroissanceRepository) {
-        this.varieteRepository = varieteRepository;
+        this.varietyRepository = varietyRepository;
         this.calendrierCroissanceRepository = calendrierCroissanceRepository;
     }
 
     @Override
     public void run(String... args) {
-        if (varieteRepository.count() == 0) {
+        if (varietyRepository.count() == 0) {
             seedZalka2025();
         }
         if (calendrierCroissanceRepository.count() == 0) {
@@ -54,19 +54,19 @@ public class PlantsDataSeeder implements CommandLineRunner {
     }
 
     private void seedZalka2025() {
-        Variete keitt = new Variete();
-        keitt.setNom("Keitt");
-        keitt.setNombreArbres(200);
-        keitt.setEspacementInterRangM(8.0);
-        keitt.setEspacementIntraRangM(8.0);
-        keitt.setRendementAttenduKg(44000.0);
-        keitt.setBlocParcelle("A");
+        Variety keitt = new Variety();
+        keitt.setName("Keitt");
+        keitt.setTreeCount(200);
+        keitt.setRowSpacingM(8.0);
+        keitt.setTreeSpacingM(8.0);
+        keitt.setExpectedYieldKg(44000.0);
+        keitt.setBlockCode("A");
         keitt.setSource("Zalka_2025");
-        // densiteArbresHa, rendementReelKg, vigueur, originePlant and dateMaj:
-        // no source data in the study, left NULL. dateMaj records when the variety
+        // treeDensityPerHa, actualYieldKg, vigor, plantOrigin and lastUpdated:
+        // no source data in the study, left NULL. lastUpdated records when the variety
         // record itself was last revised, which the study does not state; seeding it
         // with the current time would date 2025 data to the day the container started.
-        varieteRepository.save(keitt);
+        varietyRepository.save(keitt);
     }
 
     private void seedZalka2025GrowthCalendar() {

@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice(basePackages = "com.infineonbit.sustainablefarm.modules.plants")
 public class PlantsExceptionHandler {
 
-    @ExceptionHandler(VarieteNotFoundException.class)
-    public ResponseEntity<String> handleVarieteNotFound(VarieteNotFoundException e) {
+    @ExceptionHandler(VarietyNotFoundException.class)
+    public ResponseEntity<String> handleVarietyNotFound(VarietyNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 

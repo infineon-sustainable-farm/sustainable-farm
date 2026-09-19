@@ -20,8 +20,8 @@ import java.time.Instant;
  * mapped explicitly, so the snake_case schema stays stable no matter what the
  * Java field naming strategy does.
  *
- * <p>Nullable on purpose: {@code densiteArbresHa}, {@code rendementReelKg},
- * {@code vigueur} and {@code originePlant} have no source data yet. They stay
+ * <p>Nullable on purpose: {@code treeDensityPerHa}, {@code actualYieldKg},
+ * {@code vigor} and {@code plantOrigin} have no source data yet. They stay
  * NULL rather than being filled with a default or a derived value.
  */
 @Entity
@@ -30,52 +30,52 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Variete {
+public class Variety {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "id_ferme")
-    private Integer idFerme;
+    private Integer farmId;
 
     @Column(name = "nom", nullable = false)
-    private String nom;
+    private String name;
 
     @Column(name = "nombre_arbres")
-    private Integer nombreArbres;
+    private Integer treeCount;
 
     @Column(name = "espacement_inter_rang_m")
-    private Double espacementInterRangM;
+    private Double rowSpacingM;
 
     @Column(name = "espacement_intra_rang_m")
-    private Double espacementIntraRangM;
+    private Double treeSpacingM;
 
     /** Not available in the source study. Stays NULL until measured. */
     @Column(name = "densite_arbres_ha")
-    private Double densiteArbresHa;
+    private Double treeDensityPerHa;
 
     @Column(name = "rendement_attendu_kg")
-    private Double rendementAttenduKg;
+    private Double expectedYieldKg;
 
     /** Not harvested yet. Stays NULL until the harvest is recorded. */
     @Column(name = "rendement_reel_kg")
-    private Double rendementReelKg;
+    private Double actualYieldKg;
 
     /** Not assessed yet. Stays NULL until an agronomist rates it. */
     @Column(name = "vigueur")
-    private String vigueur;
+    private String vigor;
 
     @Column(name = "bloc_parcelle")
-    private String blocParcelle;
+    private String blockCode;
 
     /** Not documented in the source study. Stays NULL. */
     @Column(name = "origine_plant")
-    private String originePlant;
+    private String plantOrigin;
 
     @Column(name = "source")
     private String source;
 
     @Column(name = "date_maj")
-    private Instant dateMaj;
+    private Instant lastUpdated;
 }

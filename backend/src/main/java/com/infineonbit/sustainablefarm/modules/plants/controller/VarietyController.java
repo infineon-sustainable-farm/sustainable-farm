@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.VarietyResponse;
-import com.infineonbit.sustainablefarm.modules.plants.service.VarieteService;
+import com.infineonbit.sustainablefarm.modules.plants.service.VarietyService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,9 +37,9 @@ import java.util.List;
 @RequestMapping("/api/plants/varieties")
 @AllArgsConstructor
 @Tag(name = "Plants — Varieties", description = "Trees, spacing and yield by variety and block")
-public class VarieteController {
+public class VarietyController {
 
-   private final VarieteService varieteService;
+   private final VarietyService varietyService;
 
    @GetMapping
    @Operation(summary = "List varieties",
@@ -48,9 +48,9 @@ public class VarieteController {
          @ApiResponse(responseCode = "200", description = "Matching varieties, possibly an empty list")
    })
    public ResponseEntity<List<VarietyResponse>> getAllVarieties(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "id_ferme", required = false) Integer idFerme,
-         @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "bloc_parcelle", required = false) String blocParcelle) {
-      List<VarietyResponse> varietyResponses = varieteService.obtainAllVarieties(idFerme, blocParcelle);
+         @Parameter(description = "Farm identifier") @RequestParam(name = "id_ferme", required = false) Integer farmId,
+         @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "bloc_parcelle", required = false) String blockCode) {
+      List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(farmId, blockCode);
       return ResponseEntity.status(HttpStatus.OK).body(varietyResponses);
    }
 
@@ -61,7 +61,7 @@ public class VarieteController {
          @ApiResponse(responseCode = "404", description = "No variety with this ID")
    })
    public ResponseEntity<VarietyResponse> getVarietyById(@PathVariable Long id) {
-      VarietyResponse varietyResponse = varieteService.obtainVarietyById(id);
+      VarietyResponse varietyResponse = varietyService.obtainVarietyById(id);
       return ResponseEntity.status(HttpStatus.OK).body(varietyResponse);
    }
 }
