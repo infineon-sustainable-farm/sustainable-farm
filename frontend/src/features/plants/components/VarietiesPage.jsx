@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { useVarieties, useVarietyBlocks } from "../hooks/useVarieties";
+import PlantsEmptyState from "./PlantsEmptyState";
 import BlockFilter from "./BlockFilter";
 import VarietiesTable from "./VarietiesTable";
 import VarietyDetailModal from "./VarietyDetailModal";
@@ -71,14 +72,10 @@ export default function VarietiesPage() {
                 )}
 
                 {!isPending && !isError && varieties.length === 0 && (
-                    <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
-                        <p className="font-heading text-base font-bold text-gray-900">
-                            No variety records match this filter
-                        </p>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Try another block, or select “All blocks”.
-                        </p>
-                    </div>
+                    <PlantsEmptyState
+                        title="No variety records match this filter"
+                        hint="Try another block, or select “All blocks”."
+                    />
                 )}
 
                 {!isPending && !isError && varieties.length > 0 && (

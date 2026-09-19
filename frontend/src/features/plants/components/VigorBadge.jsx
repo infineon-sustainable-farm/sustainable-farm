@@ -1,4 +1,5 @@
 import { formatText, NO_VALUE } from "../utils/format";
+import Value from "./Value";
 
 /*
  * Border: shared token from index.css (--color-success / warning / error).
@@ -26,7 +27,8 @@ const VIGOR_STYLES = {
 export default function VigorBadge({ value }) {
     const label = formatText(value);
     if (label === NO_VALUE) {
-        return <span className="text-gray-400">{NO_VALUE}</span>;
+        // Same dash, same colour as every other missing value in the module.
+        return <Value>{NO_VALUE}</Value>;
     }
 
     // An unrecognised rating is still shown, in neutral styling — the value is

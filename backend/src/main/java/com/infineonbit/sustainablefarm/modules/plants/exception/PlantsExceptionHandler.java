@@ -19,4 +19,9 @@ public class PlantsExceptionHandler {
     public ResponseEntity<String> handleVarieteNotFound(VarieteNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
+
+    @ExceptionHandler(CalendrierCroissanceNotFoundException.class)
+    public ResponseEntity<String> handleCalendrierCroissanceNotFound(CalendrierCroissanceNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
 }
