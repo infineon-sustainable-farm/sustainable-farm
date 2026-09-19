@@ -21,10 +21,10 @@ import java.time.LocalDate;
  * like {@link Variety}.
  *
  * <p>There is deliberately no tree-age column. The age of the trees is never
- * stored nor entered: it is computed from {@code datePlantation} and the
+ * stored nor entered: it is computed from {@code plantingDate} and the
  * current date when the entry is read (see the service layer).
  *
- * <p>{@code stadeActuel} is a field observation, not the computed growth phase.
+ * <p>{@code currentStage} is a field observation, not the computed growth phase.
  * It stays NULL until someone records it.
  */
 @Entity
@@ -33,40 +33,40 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CalendrierCroissance {
+public class GrowthCalendar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "id_ferme")
-    private Integer idFerme;
+    private Integer farmId;
 
     @Column(name = "bloc_parcelle", nullable = false)
-    private String blocParcelle;
+    private String blockCode;
 
     /** Not provided by the source study. Stays NULL until recorded. */
     @Column(name = "date_plantation")
-    private LocalDate datePlantation;
+    private LocalDate plantingDate;
 
     /** How precise the planting date is, in the words the source allows. */
     @Column(name = "precision_date")
-    private String precisionDate;
+    private String datePrecision;
 
     /** Observed growth stage. Not the computed phase. Stays NULL until observed. */
     @Column(name = "stade_actuel")
-    private String stadeActuel;
+    private String currentStage;
 
     @Column(name = "phase_annees")
-    private String phaseAnnees;
+    private String phaseYears;
 
     /** Local rainfall for this block. The source only gives a farm-wide range. */
     @Column(name = "pluviometrie_locale_mm")
-    private Double pluviometrieLocaleMm;
+    private Double localRainfallMm;
 
     @Column(name = "source")
     private String source;
 
     @Column(name = "date_maj")
-    private Instant dateMaj;
+    private Instant lastUpdated;
 }

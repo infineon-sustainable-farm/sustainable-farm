@@ -1,10 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthCalendarResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.CalendrierCroissance;
+import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
-import com.infineonbit.sustainablefarm.modules.plants.exception.CalendrierCroissanceNotFoundException;
-import com.infineonbit.sustainablefarm.modules.plants.repository.CalendrierCroissanceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.exception.GrowthCalendarNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,29 +24,29 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class CalendrierCroissanceServiceTest {
+public class GrowthCalendarServiceTest {
 
     private static final LocalDate TODAY = LocalDate.of(2026, 9, 16);
 
     @Mock
-    private CalendrierCroissanceRepository calendrierCroissanceRepository;
+    private GrowthCalendarRepository growthCalendarRepository;
 
     @Mock
     private VarietyRepository varietyRepository;
 
     @InjectMocks
-    private CalendrierCroissanceService calendrierCroissanceService;
+    private GrowthCalendarService growthCalendarService;
 
     /** The seeded Zalka 2025 row: no planting date, so no age and no phase. */
-    private static CalendrierCroissance zalkaBlockA() {
-        return new CalendrierCroissance(
+    private static GrowthCalendar zalkaBlockA() {
+        return new GrowthCalendar(
                 1L, null, "A", null, "rainy season (year unknown)",
                 null, null, null, "Zalka_2025", null);
     }
 
-    private static CalendrierCroissance blockWithPlantingDate(String bloc, LocalDate datePlantation) {
-        return new CalendrierCroissance(
-                2L, null, bloc, datePlantation, null,
+    private static GrowthCalendar blockWithPlantingDate(String block, LocalDate plantingDate) {
+        return new GrowthCalendar(
+                2L, null, block, plantingDate, null,
                 null, null, null, "TEST", null);
     }
 
@@ -61,10 +61,10 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainAllGrowthCalendarEntries_shouldReturnMatchingEntries_whenFilterMatches() {
         // Arrange
-        when(calendrierCroissanceRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(zalkaBlockA()));
+        when(growthCalendarRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(zalkaBlockA()));
         when(varietyRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(variety("Keitt", "A", null)));
         // Act
-        List<GrowthCalendarResponse> responses = calendrierCroissanceService.obtainAllGrowthCalendarEntries(null, "A", TODAY);
+        List<GrowthCalendarResponse> responses = growthCalendarService.obtainAllGrowthCalendarEntries(null, "A", TODAY);
         // Assert
         assertEquals(1, responses.size());
         assertEquals("A", responses.get(0).bloc_parcelle());
@@ -75,9 +75,9 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainAllGrowthCalendarEntries_shouldReturnEmptyList_whenFilterMatchesNothing() {
         // Arrange
-        when(calendrierCroissanceRepository.findByOptionalFilters(null, "ZZZ")).thenReturn(List.of());
+        when(growthCalendarRepository.findByOptionalFilters(null, "ZZZ")).thenReturn(List.of());
         // Act
-        List<GrowthCalendarResponse> responses = calendrierCroissanceService.obtainAllGrowthCalendarEntries(null, "ZZZ", TODAY);
+        List<GrowthCalendarResponse> responses = growthCalendarService.obtainAllGrowthCalendarEntries(null, "ZZZ", TODAY);
         // Assert
         assertTrue(responses.isEmpty());
         verifyNoInteractions(varietyRepository);
@@ -86,10 +86,10 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainGrowthCalendarEntryById_shouldReturnEntry_whenIdExists() {
         // Arrange
-        when(calendrierCroissanceRepository.findById(1L)).thenReturn(Optional.of(zalkaBlockA()));
+        when(growthCalendarRepository.findById(1L)).thenReturn(Optional.of(zalkaBlockA()));
         when(varietyRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(variety("Keitt", "A", null)));
         // Act
-        GrowthCalendarResponse response = calendrierCroissanceService.obtainGrowthCalendarEntryById(1L, TODAY);
+        GrowthCalendarResponse response = growthCalendarService.obtainGrowthCalendarEntryById(1L, TODAY);
         // Assert
         assertEquals(1L, response.id());
         assertEquals(List.of("Keitt"), response.varietes());
@@ -99,10 +99,10 @@ public class CalendrierCroissanceServiceTest {
     void obtainGrowthCalendarEntryById_shouldThrowException_whenIdDoesNotExist() {
         // Arrange
         Long nonExistentId = 999L;
-        when(calendrierCroissanceRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(growthCalendarRepository.findById(nonExistentId)).thenReturn(Optional.empty());
         // Act
-        CalendrierCroissanceNotFoundException ex = assertThrows(CalendrierCroissanceNotFoundException.class, () -> {
-            calendrierCroissanceService.obtainGrowthCalendarEntryById(nonExistentId, TODAY);
+        GrowthCalendarNotFoundException ex = assertThrows(GrowthCalendarNotFoundException.class, () -> {
+            growthCalendarService.obtainGrowthCalendarEntryById(nonExistentId, TODAY);
         });
         // Assert
         assertEquals("Growth calendar entry with ID 999 not found", ex.getMessage());
@@ -111,10 +111,10 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainAllGrowthCalendarEntries_shouldLeaveAgeAndPhaseNull_whenPlantingDateIsNull() {
         // Arrange
-        when(calendrierCroissanceRepository.findByOptionalFilters(null, null)).thenReturn(List.of(zalkaBlockA()));
+        when(growthCalendarRepository.findByOptionalFilters(null, null)).thenReturn(List.of(zalkaBlockA()));
         when(varietyRepository.findByOptionalFilters(null, null)).thenReturn(List.of());
         // Act
-        GrowthCalendarResponse response = calendrierCroissanceService.obtainAllGrowthCalendarEntries(null, null, TODAY).get(0);
+        GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, null, TODAY).get(0);
         // Assert
         assertNull(response.date_plantation());
         assertNull(response.age_annees());
@@ -128,11 +128,11 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainAllGrowthCalendarEntries_shouldComputeAgeAndPhase_whenPlantingDateIsKnown() {
         // Arrange: planted 4 years and 6 months before TODAY
-        when(calendrierCroissanceRepository.findByOptionalFilters(null, "B"))
+        when(growthCalendarRepository.findByOptionalFilters(null, "B"))
                 .thenReturn(List.of(blockWithPlantingDate("B", LocalDate.of(2022, 3, 16))));
         when(varietyRepository.findByOptionalFilters(null, "B")).thenReturn(List.of());
         // Act
-        GrowthCalendarResponse response = calendrierCroissanceService.obtainAllGrowthCalendarEntries(null, "B", TODAY).get(0);
+        GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "B", TODAY).get(0);
         // Assert
         assertEquals(4, response.age_annees());
         assertEquals(6, response.age_mois());
@@ -143,13 +143,13 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainAllGrowthCalendarEntries_shouldListEveryVariety_whenBlockHasSeveral() {
         // Arrange
-        when(calendrierCroissanceRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(zalkaBlockA()));
+        when(growthCalendarRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(zalkaBlockA()));
         when(varietyRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(
                 variety("Keitt", "A", null),
                 variety("Kent", "A", null),
                 variety("Keitt", "A", null)));
         // Act
-        GrowthCalendarResponse response = calendrierCroissanceService.obtainAllGrowthCalendarEntries(null, "A", TODAY).get(0);
+        GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "A", TODAY).get(0);
         // Assert
         assertEquals(List.of("Keitt", "Kent"), response.varietes());
     }
@@ -157,11 +157,11 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainAllGrowthCalendarEntries_shouldReturnNoVariety_whenBlockHasNone() {
         // Arrange
-        when(calendrierCroissanceRepository.findByOptionalFilters(null, "B"))
+        when(growthCalendarRepository.findByOptionalFilters(null, "B"))
                 .thenReturn(List.of(blockWithPlantingDate("B", null)));
         when(varietyRepository.findByOptionalFilters(null, "B")).thenReturn(List.of());
         // Act
-        GrowthCalendarResponse response = calendrierCroissanceService.obtainAllGrowthCalendarEntries(null, "B", TODAY).get(0);
+        GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "B", TODAY).get(0);
         // Assert
         assertTrue(response.varietes().isEmpty());
     }
@@ -169,12 +169,12 @@ public class CalendrierCroissanceServiceTest {
     @Test
     void obtainAllGrowthCalendarEntries_shouldIgnoreVarietiesOfAnotherFarm_whenBlockNameIsShared() {
         // Arrange: entry has no farm; a block "A" variety of farm 7 must not be attached
-        when(calendrierCroissanceRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(zalkaBlockA()));
+        when(growthCalendarRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(zalkaBlockA()));
         when(varietyRepository.findByOptionalFilters(null, "A")).thenReturn(List.of(
                 variety("Keitt", "A", null),
                 variety("Amelie", "A", 7)));
         // Act
-        GrowthCalendarResponse response = calendrierCroissanceService.obtainAllGrowthCalendarEntries(null, "A", TODAY).get(0);
+        GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "A", TODAY).get(0);
         // Assert
         assertEquals(List.of("Keitt"), response.varietes());
     }

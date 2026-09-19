@@ -20,8 +20,8 @@ public class PlantsExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
-    @ExceptionHandler(CalendrierCroissanceNotFoundException.class)
-    public ResponseEntity<String> handleCalendrierCroissanceNotFound(CalendrierCroissanceNotFoundException e) {
+    @ExceptionHandler(GrowthCalendarNotFoundException.class)
+    public ResponseEntity<String> handleGrowthCalendarNotFound(GrowthCalendarNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }

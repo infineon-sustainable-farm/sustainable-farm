@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthCalendarResponse;
-import com.infineonbit.sustainablefarm.modules.plants.service.CalendrierCroissanceService;
+import com.infineonbit.sustainablefarm.modules.plants.service.GrowthCalendarService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,9 +38,9 @@ import java.util.List;
 @RequestMapping("/api/plants/growth-calendar")
 @AllArgsConstructor
 @Tag(name = "Plants — Growth calendar", description = "Planting dates, computed tree age and growth phase by block")
-public class CalendrierCroissanceController {
+public class GrowthCalendarController {
 
-   private final CalendrierCroissanceService calendrierCroissanceService;
+   private final GrowthCalendarService growthCalendarService;
 
    @GetMapping
    @Operation(summary = "List growth calendar entries",
@@ -50,9 +50,9 @@ public class CalendrierCroissanceController {
          @ApiResponse(responseCode = "200", description = "Matching entries, possibly an empty list")
    })
    public ResponseEntity<List<GrowthCalendarResponse>> getAllGrowthCalendarEntries(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "id_ferme", required = false) Integer idFerme,
-         @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "bloc_parcelle", required = false) String blocParcelle) {
-      List<GrowthCalendarResponse> growthCalendarResponses = calendrierCroissanceService.obtainAllGrowthCalendarEntries(idFerme, blocParcelle);
+         @Parameter(description = "Farm identifier") @RequestParam(name = "id_ferme", required = false) Integer farmId,
+         @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "bloc_parcelle", required = false) String blockCode) {
+      List<GrowthCalendarResponse> growthCalendarResponses = growthCalendarService.obtainAllGrowthCalendarEntries(farmId, blockCode);
       return ResponseEntity.status(HttpStatus.OK).body(growthCalendarResponses);
    }
 
@@ -63,7 +63,7 @@ public class CalendrierCroissanceController {
          @ApiResponse(responseCode = "404", description = "No entry with this ID")
    })
    public ResponseEntity<GrowthCalendarResponse> getGrowthCalendarEntryById(@PathVariable Long id) {
-      GrowthCalendarResponse growthCalendarResponse = calendrierCroissanceService.obtainGrowthCalendarEntryById(id);
+      GrowthCalendarResponse growthCalendarResponse = growthCalendarService.obtainGrowthCalendarEntryById(id);
       return ResponseEntity.status(HttpStatus.OK).body(growthCalendarResponse);
    }
 }

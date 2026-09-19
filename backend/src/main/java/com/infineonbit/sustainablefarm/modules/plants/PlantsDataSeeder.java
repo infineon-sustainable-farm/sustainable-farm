@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.plants;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.CalendrierCroissance;
+import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
-import com.infineonbit.sustainablefarm.modules.plants.repository.CalendrierCroissanceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -35,12 +35,12 @@ import org.springframework.stereotype.Component;
 public class PlantsDataSeeder implements CommandLineRunner {
 
     private final VarietyRepository varietyRepository;
-    private final CalendrierCroissanceRepository calendrierCroissanceRepository;
+    private final GrowthCalendarRepository growthCalendarRepository;
 
     public PlantsDataSeeder(VarietyRepository varietyRepository,
-                            CalendrierCroissanceRepository calendrierCroissanceRepository) {
+                            GrowthCalendarRepository growthCalendarRepository) {
         this.varietyRepository = varietyRepository;
-        this.calendrierCroissanceRepository = calendrierCroissanceRepository;
+        this.growthCalendarRepository = growthCalendarRepository;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class PlantsDataSeeder implements CommandLineRunner {
         if (varietyRepository.count() == 0) {
             seedZalka2025();
         }
-        if (calendrierCroissanceRepository.count() == 0) {
+        if (growthCalendarRepository.count() == 0) {
             seedZalka2025GrowthCalendar();
         }
     }
@@ -70,21 +70,21 @@ public class PlantsDataSeeder implements CommandLineRunner {
     }
 
     private void seedZalka2025GrowthCalendar() {
-        CalendrierCroissance blockA = new CalendrierCroissance();
+        GrowthCalendar blockA = new GrowthCalendar();
         // Same block as the Keitt variety row.
-        blockA.setBlocParcelle("A");
+        blockA.setBlockCode("A");
         blockA.setSource("Zalka_2025");
         // The only qualification the source allows: "Beginning of the rainy season",
         // with no year.
-        blockA.setPrecisionDate("rainy season (year unknown)");
-        // datePlantation: no date in the source. Never replaced by a "plausible" one.
-        // stadeActuel: a field observation; none recorded.
-        // phaseAnnees: the Zalka phase scale is a general reference, not data about
+        blockA.setDatePrecision("rainy season (year unknown)");
+        // plantingDate: no date in the source. Never replaced by a "plausible" one.
+        // currentStage: a field observation; none recorded.
+        // phaseYears: the Zalka phase scale is a general reference, not data about
         // this block.
-        // pluviometrieLocaleMm: the source gives 1000-1200 mm/year for the farm, a
+        // localRainfallMm: the source gives 1000-1200 mm/year for the farm, a
         // range and not a local value; taking its midpoint would be an invention.
-        // dateMaj: not stated by the source, as for the variety row.
-        // idFerme: left NULL, as for the variety row.
-        calendrierCroissanceRepository.save(blockA);
+        // lastUpdated: not stated by the source, as for the variety row.
+        // farmId: left NULL, as for the variety row.
+        growthCalendarRepository.save(blockA);
     }
 }
