@@ -1,16 +1,16 @@
 import { AlertTriangle } from 'lucide-react'
 
 /**
- * Modale de confirmation avant suppression (design system ws-*).
+ * Confirmation modal before deletion (ws-* design system).
  * @param {object} props
- * @param {string} [props.title] - titre de la boîte de dialogue.
- * @param {string} props.message - texte d'avertissement/conséquence.
- * @param {string} [props.confirmLabel] - libellé du bouton de confirmation.
+ * @param {string} [props.title] - dialog title.
+ * @param {string} props.message - warning/consequence text.
+ * @param {string} [props.confirmLabel] - confirm button label.
  * @param {() => void} props.onConfirm
  * @param {() => void} props.onCancel
  * @param {boolean} [props.busy] - désactive les boutons pendant l'appel API.
  */
-export function ConfirmDialog({ title = 'Confirmer la suppression', message, confirmLabel = 'Supprimer', onConfirm, onCancel, busy = false }) {
+export function ConfirmDialog({ title = 'Confirm deletion', message, confirmLabel = 'Delete', onConfirm, onCancel, busy = false }) {
   return (
     <div
       role="dialog"
@@ -66,7 +66,7 @@ export function ConfirmDialog({ title = 'Confirmer la suppression', message, con
             onClick={onCancel}
             style={buttonStyle(false)}
           >
-            Annuler
+            Cancel
           </button>
           <button
             type="button"
@@ -74,7 +74,7 @@ export function ConfirmDialog({ title = 'Confirmer la suppression', message, con
             onClick={onConfirm}
             style={buttonStyle(true)}
           >
-            {busy ? 'Suppression…' : confirmLabel}
+            {busy ? 'Deleting…' : confirmLabel}
           </button>
         </div>
       </div>

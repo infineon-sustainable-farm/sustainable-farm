@@ -1,3 +1,5 @@
+# Racine : règles transverses au monorepo (les règles backend/frontend vivent
+# respectivement dans backend/.gitignore et frontend/.gitignore — structure develop).
 .env
 *.log
 

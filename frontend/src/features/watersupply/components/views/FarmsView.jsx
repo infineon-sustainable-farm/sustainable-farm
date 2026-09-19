@@ -56,8 +56,8 @@ const btnDanger = {
 }
 
 /**
- * Vue CRUD Farms / Fields / Zones (Tâche 4.1).
- * Utilise les composants réutilisables du design system.
+ * CRUD view for Farms / Fields / Zones (Task 4.1).
+ * Uses the reusable design-system components.
  */
 export function FarmsView({ notify }) {
   const [farms, setFarms] = useState([])
@@ -88,7 +88,7 @@ export function FarmsView({ notify }) {
         setFields(fi)
         setZones(z)
       })
-      .catch((e) => setError(e.message || 'Erreur de chargement'))
+      .catch((e) => setError(e.message || 'Loading error'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -97,15 +97,15 @@ export function FarmsView({ notify }) {
     return () => window.clearTimeout(timeoutId)
   }, [loadAll])
 const farmColumns = [
-    { key: 'name', label: 'Nom', sortable: true },
-    { key: 'address', label: 'Adresse' },
-    { key: 'areaHectares', label: 'Superficie (ha)', sortable: true, render: (r) => `${r.areaHectares ?? 0} ha` },
-    { key: 'description', label: 'Description', render: (r) => r.description || 'â€”' },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'address', label: 'Address' },
+    { key: 'areaHectares', label: 'Area (ha)', sortable: true, render: (r) => `${r.areaHectares ?? 0} ha` },
+    { key: 'description', label: 'Description', render: (r) => r.description || '—' },
   ]
 
   const filteredFields = selectedFarm ? fields.filter((f) => f.farmId === selectedFarm) : fields
 
-  // Recherche globale : filtre les fermes, champs et zones par nom.
+  // Global search: filters farms, fields and zones by name.
   const matchesQuery = useCallback(
     (item) => {
       const q = query.trim().toLowerCase()
@@ -140,11 +140,11 @@ const farmColumns = [
     const req = editingFarm ? farmApi.updateFarm(editingFarm.id, payload) : farmApi.createFarm(payload)
     req
       .then(() => {
-        notify(editingFarm ? 'Ferme mise à jour' : 'Ferme créée')
+        notify(editingFarm ? 'Farm updated' : 'Farm created')
         setShowFarmForm(false)
         loadAll()
       })
-      .catch((err) => setError(err.message || "Erreur d'enregistrement"))
+      .catch((err) => setError(err.message || 'Save error'))
       .finally(() => setBusy(false))
   }
 
@@ -161,12 +161,12 @@ const farmColumns = [
     fieldApi
       .createField(payload)
       .then(() => {
-        notify('Champ créé')
+        notify('Field created')
         setShowFieldForm(false)
         setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '' }))
         loadAll()
       })
-      .catch((err) => setError(err.message || "Erreur d'enregistrement"))
+      .catch((err) => setError(err.message || 'Save error'))
       .finally(() => setBusy(false))
   }
 
@@ -182,12 +182,12 @@ const farmColumns = [
     zoneApi
       .createZone(payload)
       .then(() => {
-        notify('Zone créée')
+        notify('Zone created')
         setShowZoneForm(false)
         setZoneForm((p) => ({ ...p, name: '', areaHectares: '', irrigationMethod: '' }))
         loadAll()
       })
-      .catch((err) => setError(err.message || "Erreur d'enregistrement"))
+      .catch((err) => setError(err.message || 'Save error'))
       .finally(() => setBusy(false))
   }
 
@@ -202,19 +202,19 @@ const farmColumns = [
         : () => api.deleteZone(deleteTarget.id)
     fn()
       .then(() => {
-        notify('Supprimé')
+        notify('Deleted')
         setDeleteTarget(null)
         loadAll()
       })
-      .catch((err) => setError(err.message || "Erreur de suppression"))
+      .catch((err) => setError(err.message || 'Delete error'))
       .finally(() => setBusy(false))
   }
 return (
     <div>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Fermes, champs & zones</h1>
-          <p>Gérez les sites de production, leurs champs et zones d'irrigation.</p>
+          <h1>Farms, fields & zones</h1>
+          <p>Manage production sites, their fields and irrigation zones.</p>
         </div>
       </div>
 
@@ -225,22 +225,22 @@ return (
       )}
 
       <div className="ws-filters">
-        <SearchInput value={query} onChange={setQuery} placeholder="Rechercher une ferme, un champ, une zone…" />
+        <SearchInput value={query} onChange={setQuery} placeholder="Search a farm, a field, a zone…" />
       </div>
 
       {loading ? (
-        <Spinner label="Chargement des donnéesâ€¦" full />
+        <Spinner label="Loading data…" full />
       ) : (
         <>
           <div style={panelBox}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h2 style={sectionLabel}>Fermes</h2>
+              <h2 style={sectionLabel}>Farms</h2>
               <button style={btn('primary')} onClick={() => openFarmForm(null)}>
-                <Plus size={15} /> Nouvelle ferme
+                <Plus size={15} /> New farm
               </button>
             </div>
             {visibleFarms.length === 0 ? (
-              <EmptyState title="Aucune ferme" description="Créez votre première exploitation." />
+              <EmptyState title="No farms" description="Create your first farm." />
             ) : (
               <DataTable
                 columns={farmColumns}
@@ -248,14 +248,14 @@ return (
                 keyField="id"
                 actions={(row) => (
                   <span style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
-                    <button title="Éditer" onClick={() => openFarmForm(row)} style={btn('ghost')}>
+                    <button title="Edit" onClick={() => openFarmForm(row)} style={btn('ghost')}>
                       <Pencil size={14} />
                     </button>
-                    <button title="Supprimer" onClick={() => setDeleteTarget({ kind: 'farm', id: row.id, title: row.name })} style={btnDanger}>
+                    <button title="Delete" onClick={() => setDeleteTarget({ kind: 'farm', id: row.id, title: row.name })} style={btnDanger}>
                       <Trash2 size={14} />
                     </button>
                     <button style={{ padding: '7px 10px', ...btn('ghost') }} onClick={() => setSelectedFarm((prev) => (prev === row.id ? null : row.id))}>
-                      {selectedFarm === row.id ? 'Tous' : 'Champs'}
+                      {selectedFarm === row.id ? 'All' : 'Fields'}
                     </button>
                   </span>
                 )}
@@ -265,25 +265,25 @@ return (
 
           <div style={panelBox}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h2 style={sectionLabel}>{selectedFarm ? 'Fields (filtre actif)' : 'Fields'}</h2>
+              <h2 style={sectionLabel}>{selectedFarm ? 'Fields (filtered)' : 'Fields'}</h2>
               <button style={btn('primary')} onClick={() => setShowFieldForm(true)}>
-                <Plus size={15} /> Nouveau champ
+                <Plus size={15} /> New field
               </button>
             </div>
             {visibleFields.length === 0 ? (
-              <EmptyState title="Aucun champ" description="Ajoutez un champ à une ferme." />
+              <EmptyState title="No fields" description="Add a field to a farm." />
             ) : (
               <DataTable
                 columns={[
-                  { key: 'name', label: 'Nom', sortable: true },
-                  { key: 'cropType', label: 'Culture', render: (r) => r.cropType || '—' },
-                  { key: 'soilType', label: 'Sol', render: (r) => r.soilType || '—' },
-                  { key: 'areaHectares', label: 'Superficie (ha)', render: (r) => `${r.areaHectares ?? 0} ha` },
+                  { key: 'name', label: 'Name', sortable: true },
+                  { key: 'cropType', label: 'Crop', render: (r) => r.cropType || '—' },
+                  { key: 'soilType', label: 'Soil', render: (r) => r.soilType || '—' },
+                  { key: 'areaHectares', label: 'Area (ha)', render: (r) => `${r.areaHectares ?? 0} ha` },
                 ]}
                 rows={visibleFields}
                 keyField="id"
                 actions={(row) => (
-                  <button title="Supprimer" style={btnDanger} onClick={() => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })}>
+                  <button title="Delete" style={btnDanger} onClick={() => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })}>
                     <Trash2 size={14} />
                   </button>
                 )}
@@ -294,22 +294,22 @@ return (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h2 style={sectionLabel}>Zones</h2>
               <button style={btn('primary')} onClick={() => setShowZoneForm(true)}>
-                <Plus size={15} /> Nouvelle zone
+                <Plus size={15} /> New zone
               </button>
             </div>
             {visibleZones.length === 0 ? (
-              <EmptyState title="Aucune zone" description="Ajoutez des zones d'irrigation." />
+              <EmptyState title="No zones" description="Add irrigation zones." />
             ) : (
               <DataTable
                 columns={[
-                  { key: 'name', label: 'Nom', sortable: true },
-                  { key: 'irrigationMethod', label: "Méthode d'irrigation", render: (r) => r.irrigationMethod || '—' },
-                  { key: 'areaHectares', label: 'Superficie (ha)', render: (r) => `${r.areaHectares ?? 0} ha` },
+                  { key: 'name', label: 'Name', sortable: true },
+                  { key: 'irrigationMethod', label: 'Irrigation method', render: (r) => r.irrigationMethod || '—' },
+                  { key: 'areaHectares', label: 'Area (ha)', render: (r) => `${r.areaHectares ?? 0} ha` },
                 ]}
                 rows={visibleZones}
                 keyField="id"
                 actions={(row) => (
-                  <button title="Supprimer" style={btnDanger} onClick={() => setDeleteTarget({ kind: 'zone', id: row.id, title: row.name })}>
+                  <button title="Delete" style={btnDanger} onClick={() => setDeleteTarget({ kind: 'zone', id: row.id, title: row.name })}>
                     <Trash2 size={14} />
                   </button>
                 )}
@@ -332,7 +332,7 @@ return (
 
       {showFieldForm && (
         <ChildFormModal
-          title="Nouveau champ"
+          title="New field"
           farmId={fieldForm.farmId}
           farms={farms}
           fields={[]}
@@ -346,7 +346,7 @@ return (
 
       {showZoneForm && (
         <ChildFormModal
-          title="Nouvelle zone"
+          title="New zone"
           farmId={zoneForm.fieldId}
           farms={farms}
           fields={fields}
@@ -360,8 +360,8 @@ return (
 
       {deleteTarget && (
         <ConfirmDialog
-          title={`Supprimer ${deleteTarget.title}`}
-          message="Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible."
+          title={`Delete ${deleteTarget.title}`}
+          message="Do you really want to delete this item? This action cannot be undone."
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
           busy={busy}
@@ -370,28 +370,28 @@ return (
     </div>
   )
 }
-/* ===== Formulaire Farm ===== */
+/* ===== Farm form ===== */
 function FarmFormModal({ editing, form, setForm, onCancel, onSave, busy }) {
   const field = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }))
   return (
     <ModalShell onCancel={onCancel}>
-      <h3 style={modalTitle}>{editing ? "Editer la ferme" : "Nouvelle ferme"}</h3>
+      <h3 style={modalTitle}>{editing ? 'Edit farm' : 'New farm'}</h3>
       <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <FormField label="Nom" required>
+        <FormField label="Name" required>
           <input style={inputStyle} value={form.name} onChange={field('name')} required />
         </FormField>
-        <FormField label="Adresse">
+        <FormField label="Address">
           <input style={inputStyle} value={form.address} onChange={field('address')} />
         </FormField>
-        <FormField label="Superficie (ha)">
+        <FormField label="Area (ha)">
           <input style={inputStyle} type="number" step="0.01" value={form.areaHectares} onChange={field('areaHectares')} />
         </FormField>
         <FormField label="Description">
           <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} value={form.description} onChange={field('description')} />
         </FormField>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
-          <button type="button" style={btn('ghost')} onClick={onCancel}>Annuler</button>
-          <button type="submit" style={btn('primary')} disabled={busy}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
+          <button type="button" style={btn('ghost')} onClick={onCancel}>Cancel</button>
+          <button type="submit" style={btn('primary')} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </form>
     </ModalShell>
@@ -399,7 +399,7 @@ function FarmFormModal({ editing, form, setForm, onCancel, onSave, busy }) {
 
 }
 
-/* ===== Formulaire Field / Zone ===== */
+/* ===== Field / Zone form ===== */
 function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave, busy }) {
   const isZone = 'fieldId' in form
   const parentKey = isZone ? 'fieldId' : 'farmId'
@@ -409,45 +409,45 @@ function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave,
     <ModalShell onCancel={onCancel}>
       <h3 style={modalTitle}>{title}</h3>
       <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <FormField label={isZone ? 'Champ parent' : 'Ferme parente'} required>
+        <FormField label={isZone ? 'Parent field' : 'Parent farm'} required>
           <select style={inputStyle} value={form[parentKey]} onChange={field(parentKey)} required>
-            <option value="">-- Selectionner --</option>
+            <option value="">-- Select --</option>
             {parents.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
         </FormField>
-        <FormField label="Nom" required>
+        <FormField label="Name" required>
           <input style={inputStyle} value={form.name} onChange={field('name')} required />
         </FormField>
         {isZone && (
-          <FormField label="Methode d'irrigation">
+          <FormField label="Irrigation method">
             <select style={inputStyle} value={form.irrigationMethod} onChange={field('irrigationMethod')}>
-              <option value="">-- Selectionner --</option>
-              <option value="drip">Goutte-a-goutte</option>
-              <option value="sprinkler">Aspersion</option>
+              <option value="">-- Select --</option>
+              <option value="drip">Drip</option>
+              <option value="sprinkler">Sprinkler</option>
               <option value="surface">Surface</option>
             </select>
           </FormField>
         )}
         {!isZone && (
-          <FormField label="Type de culture">
+          <FormField label="Crop type">
             <input style={inputStyle} value={form.cropType} onChange={field('cropType')} />
           </FormField>
         )}
-        <FormField label="Superficie (ha)" required>
+        <FormField label="Area (ha)" required>
           <input style={inputStyle} type="number" step="0.01" value={form.areaHectares} onChange={field('areaHectares')} required />
         </FormField>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
-          <button type="button" style={btn('ghost')} onClick={onCancel}>Annuler</button>
-          <button type="submit" style={btn('primary')} disabled={busy}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
+          <button type="button" style={btn('ghost')} onClick={onCancel}>Cancel</button>
+          <button type="submit" style={btn('primary')} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </form>
     </ModalShell>
   )
 }
 
-/* ===== Shell de modale ===== */
+/* ===== Modal shell ===== */
 function ModalShell({ onCancel, children }) {
   return (
     <div

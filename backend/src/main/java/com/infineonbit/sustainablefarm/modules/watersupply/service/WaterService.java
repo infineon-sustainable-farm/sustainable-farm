@@ -286,7 +286,7 @@ public class WaterService {
 
         Notification notification = new Notification();
         notification.setUserId(recipient);
-        notification.setTitle("Eau non conforme");
+        notification.setTitle("Non-compliant water");
         notification.setMessage(buildQualityMessage(test, phOutOfRange, turbidityHigh));
         notification.setType("warning");
         notification.setRead(false);
@@ -295,13 +295,13 @@ public class WaterService {
     }
 
     private String buildQualityMessage(WaterQualityTest test, boolean phOut, boolean turbidityHigh) {
-        StringBuilder message = new StringBuilder("Test qualite hors-norme sur la source ")
-                .append(test.getSourceId()).append(" : ");
+        StringBuilder message = new StringBuilder("Out-of-range quality test on source ")
+                .append(test.getSourceId()).append(": ");
         if (phOut) {
-            message.append("pH=").append(test.getPh()).append(" (hors 6.0-7.5) ");
+            message.append("pH=").append(test.getPh()).append(" (outside 6.0-7.5) ");
         }
         if (turbidityHigh) {
-            message.append("turbidite=").append(test.getTurbidityNtu()).append(" NTU (> 5) ");
+            message.append("turbidity=").append(test.getTurbidityNtu()).append(" NTU (> 5) ");
         }
         return message.toString().trim();
     }

@@ -230,7 +230,7 @@ class WatersupplyApiIntegrationTest {
                 .content("{}"))
             .andExpect(status().isAccepted())
             .andExpect(jsonPath("$[0].status").value("rejected"))
-            .andExpect(jsonPath("$[0].message").value("Champ 'device_id' manquant"));
+            .andExpect(jsonPath("$[0].message").value("Missing 'device_id' field"));
         }
 
         @Test

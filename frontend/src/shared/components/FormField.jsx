@@ -1,14 +1,14 @@
 /**
- * Champ de formulaire générique conforme au design system.
- * Labels en Inter 12px/Medium (>= 12px), saisie 14px.
- * Compatible react-hook-form (spread {...register(...)} sur `inputProps`).
+ * Generic form field matching the design system.
+ * Labels in Inter 12px/Medium (>= 12px), input 14px.
+ * Compatible with react-hook-form (spread {...register(...)} on `inputProps`).
  *
  * @param {object} props
- * @param {string} props.label - libellé du champ.
- * @param {ReactNode} props.children - l'input/select/textarea enfant.
- * @param {string} [props.error] - message d'erreur éventuel.
- * @param {boolean} [props.hint] - texte d'aide optionnel.
- * @param {boolean} [props.required] - affiche un astérisque.
+ * @param {string} props.label - field label.
+ * @param {ReactNode} props.children - the child input/select/textarea.
+ * @param {string} [props.error] - optional error message.
+ * @param {boolean} [props.hint] - optional helper text.
+ * @param {boolean} [props.required] - shows an asterisk.
  */
 export function FormField({ label, children, error, hint, required }) {
   return (

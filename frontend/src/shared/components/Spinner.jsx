@@ -1,10 +1,10 @@
 import { Loader2 } from 'lucide-react'
 
 /**
- * Indicateur de chargement inspiré du design system ws-*
- * (couleurs --ws-*, Inter). Aucun texte obligatoire.
+ * Loading indicator based on the ws-* design system
+ * (--ws-* colors, Inter). No text required.
  */
-export function Spinner({ label = 'Chargement…', size = 22, full = false }) {
+export function Spinner({ label = 'Loading…', size = 22, full = false }) {
   return (
     <div
       style={{

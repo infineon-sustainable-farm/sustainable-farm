@@ -22,20 +22,20 @@ export function DroughtView({ notify }) {
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Alertes de sécheresse</h1>
-          <p>Niveau de risque basé sur le niveau des réservoirs, la saison et la demande opérationnelle.</p>
+          <h1>Drought alerts</h1>
+          <p>Risk level based on reservoir levels, season and operational demand.</p>
         </div>
       </div>
 
       {loading ? (
-        <Spinner label="Chargement…" full />
+        <Spinner label="Loading…" full />
       ) : error ? (
-        <EmptyState title="Erreur" description={error.message || 'Impossible de charger.'} />
+        <EmptyState title="Error" description={error.message || 'Unable to load.'} />
       ) : data ? (
         <div className="ws-layout-2">
           <div className="ws-panel">
             <div className="ws-panel-header">
-              <h2>Jauge de risque actuelle</h2>
+              <h2>Current risk gauge</h2>
               <span className={`ws-tag ${meta.tag}`}>{meta.text}</span>
             </div>
             <div className="ws-panel-body">
@@ -61,45 +61,45 @@ export function DroughtView({ notify }) {
 
           <div className="ws-stack">
             <div className="ws-panel">
-              <div className="ws-panel-header"><h2>Recommandation</h2></div>
+              <div className="ws-panel-header">              <h2>Recommendation</h2></div>
               <div className="ws-panel-body">
                 <span className={`ws-tag ${meta.tag}`}>{meta.text}</span>
                 <div style={{ display: 'flex', gap: '22px', marginTop: 12, marginBottom: 4, fontSize: '13px' }}>
                   <div>
-                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Jours de réserve</div>
+                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Reserve days</div>
                     <strong>{data.days_of_reserve_remaining != null ? (Math.round(data.days_of_reserve_remaining * 10) / 10) + ' j' : 'n/d'}</strong>
                   </div>
                   <div>
-                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Consommation moy. (7 j)</div>
+                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Avg. consumption (7 d)</div>
                     <strong>{data.daily_average_consumption_liters_7d ?? 0} L/j</strong>
                   </div>
                   <div>
-                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Réserve</div>
+                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Reserve</div>
                     <strong>{data.total_reserve_liters ?? 0} / {data.total_capacity_liters ?? 0} L</strong>
                   </div>
                 </div>
                 <p style={{ color: 'var(--ws-muted)', lineHeight: 1.55, marginTop: 8 }}>
-                  {data.recommendations || 'Réservez l\'eau aux cultures prioritaires.'}
+                  {data.recommendations || 'Reserve water for priority crops.'}
                 </p>
                 <p style={{ color: 'var(--ws-muted)', fontSize: '12px' }}>
-                  Prédiction du {data.prediction_date ? new Date(data.prediction_date).toLocaleString() : '—'} · confiance {(data.confidence ?? 0) * 100}%
+                  Prediction from {data.prediction_date ? new Date(data.prediction_date).toLocaleString() : '—'} · confidence {(data.confidence ?? 0) * 100}%
                 </p>
               </div>
             </div>
             <div className="ws-panel">
-              <div className="ws-panel-header"><h2>Automatisation critique</h2></div>
+              <div className="ws-panel-header">              <h2>Critical automation</h2></div>
               <div className="ws-panel-body">
                 <span className="ws-tag red">If critical</span>
                 <p style={{ color: 'var(--ws-muted)', lineHeight: 1.55 }}>
-                  Proposez le report des irrigations non-essentielles jusqu'au rétablissement du réservoir.
+                  Proposes postponing non-essential irrigation until the reservoir recovers.
                 </p>
-                <button className="ws-chip active" onClick={() => notify('Plan de report préparé (démo).')}>Preparer le plan de report</button>
+                <button className="ws-chip active" onClick={() => notify('Postponement plan prepared (demo).')}>Prepare postponement plan</button>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <EmptyState title="Aucune prédiction" />
+        <EmptyState title="No prediction" />
       )}
     </>
   )

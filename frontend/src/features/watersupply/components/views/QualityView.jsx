@@ -11,10 +11,10 @@ function isOutOfRange(test) {
 }
 
 /**
- * Qualite de l eau - vue en LECTURE SEULE.
- * Les mesures proviennent des sondes IoT (pH, turbidite, temperature, conductivite)
- * remontees via l endpoint d ingestion : aucune saisie manuelle.
- * Seuils : pH 6 - 7,5 et turbidite < 5 NTU -> alerte + notification automatique.
+ * Water quality - READ-ONLY view.
+ * Measurements come from IoT probes (pH, turbidity, temperature, conductivity)
+ * reported through the ingestion endpoint: no manual entry.
+ * Thresholds: pH 6 - 7.5 and turbidity < 5 NTU -> alert + automatic notification.
  */
 export function QualityView() {
   const { tests, loading, error } = useWaterQualityTests()
@@ -36,31 +36,31 @@ export function QualityView() {
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Qualité de l'eau</h1>
-          <p>Mesures des sondes IoT - alertes automatiques hors seuil : pH 6-7,5 - turbidite &lt; 5 NTU.</p>
+          <h1>Water quality</h1>
+          <p>IoT probe measurements - automatic out-of-range alerts: pH 6-7.5 - turbidity &lt; 5 NTU.</p>
         </div>
       </div>
 
       <div className="ws-layout-2">
         <div className="ws-panel">
           <div className="ws-panel-header">
-            <h2>Historique des mesures</h2>
-            <span>{alertsCount} alerte(s)</span>
+            <h2>Measurement history</h2>
+            <span>{alertsCount} alert(s)</span>
           </div>
           <div className="ws-filters">
             <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
-              <option value="">Toutes les sources</option>
+              <option value="">All sources</option>
               {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
             </select>
-            <SearchInput value={list.query} onChange={list.setQuery} placeholder="Rechercher par date..." />
+            <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search by date..." />
           </div>
           <div className="ws-panel-body">
             {loading ? (
-              <Spinner label="Chargement des mesures..." full />
+              <Spinner label="Loading measurements..." full />
             ) : error ? (
-              <EmptyState title="Erreur" description={error.message || 'Impossible de charger les mesures.'} />
+              <EmptyState title="Error" description={error.message || 'Unable to load measurements.'} />
             ) : sourceFiltered.length === 0 ? (
-              <EmptyState title="Aucune mesure" description="Les mesures des sondes IoT (pH, turbidite) apparaitront ici des leur remontee." />
+              <EmptyState title="No measurements" description="IoT probe measurements (pH, turbidity) will appear here as soon as they are reported." />
             ) : (
               <table className="ws-table">
                 <thead>
@@ -70,8 +70,8 @@ export function QualityView() {
                     </th>
                     <th>Source</th>
                     <th>pH</th>
-                    <th>Turbidité</th>
-                    <th>Statut</th>
+                    <th>Turbidity</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -83,7 +83,7 @@ export function QualityView() {
                         <td>{sources.find((source) => source.id === test.sourceId)?.name || test.sourceId?.slice(0, 8) || '-'}</td>
                         <td><strong style={{ color: test.ph < 6 || test.ph > 7.5 ? 'var(--ws-red)' : undefined }}>{test.ph ?? '-'}</strong></td>
                         <td><strong style={{ color: test.turbidityNtu > 5 ? 'var(--ws-orange)' : undefined }}>{test.turbidityNtu ?? '-'} NTU</strong></td>
-                        <td><span className={`ws-tag ${out ? 'red' : 'green'}`}>{out ? 'Alerte' : 'Conforme'}</span></td>
+                        <td><span className={`ws-tag ${out ? 'red' : 'green'}`}>{out ? 'Alert' : 'Compliant'}</span></td>
                       </tr>
                     )
                   })}
@@ -96,31 +96,31 @@ export function QualityView() {
 
         <div className="ws-stack">
           <div className="ws-panel">
-            <div className="ws-panel-header"><h2>Seuils de reference</h2></div>
+            <div className="ws-panel-header">            <h2>Reference thresholds</h2></div>
             <div className="ws-panel-body">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--ws-muted)' }}>pH conforme</span>
-                  <strong>6,0 - 7,5</strong>
+                  <span style={{ color: 'var(--ws-muted)' }}>Compliant pH</span>
+                  <strong>6.0 - 7.5</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--ws-muted)' }}>Turbidité maximale</span>
+                  <span style={{ color: 'var(--ws-muted)' }}>Maximum turbidity</span>
                   <strong>5 NTU</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--ws-muted)' }}>Hors seuil</span>
-                  <span className="ws-tag red">Alerte + notification automatique</span>
+                  <span style={{ color: 'var(--ws-muted)' }}>Out of range</span>
+                  <span className="ws-tag red">Alert + automatic notification</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="ws-panel">
-            <div className="ws-panel-header"><h2>Source des données</h2></div>
+            <div className="ws-panel-header">            <h2>Data source</h2></div>
             <div className="ws-panel-body">
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--ws-muted)', lineHeight: 1.6 }}>
-                Les mesures proviennent des sondes IoT installees sur les sources.
-                Elles remontent automatiquement via l endpoint d ingestion - aucune saisie manuelle.
+                Measurements come from IoT probes installed on the sources.
+                They are reported automatically via the ingestion endpoint - no manual entry.
               </p>
             </div>
           </div>

@@ -171,13 +171,13 @@ public class WaterQuotaService {
         String actionUrl = "/consommation";
 
         if (used >= CRITICAL_THRESHOLD * quotaLiters) {
-            alertService.raiseOnce("critical", "Quota d'eau depasse - " + name,
-                    String.format("Quota mensuel de %s atteint : %.0f L consommes sur %.0f L autorises (%.0f%%).",
+            alertService.raiseOnce("critical", "Water quota exceeded - " + name,
+                    String.format("Monthly quota for %s reached: %.0f L used out of %.0f L allowed (%.0f%%).",
                             name, used, quotaLiters, used / quotaLiters * 100),
                     actionUrl);
         } else if (used >= WARNING_THRESHOLD * quotaLiters) {
-            alertService.raiseOnce("warning", "Quota d'eau bientot atteint - " + name,
-                    String.format("Quota mensuel de %s bientot atteint : %.0f L consommes sur %.0f L autorises (%.0f%%).",
+            alertService.raiseOnce("warning", "Water quota almost reached - " + name,
+                    String.format("Monthly quota for %s almost reached: %.0f L used out of %.0f L allowed (%.0f%%).",
                             name, used, quotaLiters, used / quotaLiters * 100),
                     actionUrl);
         }
@@ -254,10 +254,10 @@ public class WaterQuotaService {
     private String targetName(String targetType, UUID targetId) {
         return switch (targetType) {
             case TARGET_FARM -> farmRepository.findById(targetId)
-                    .map(farm -> farm.getName()).orElse("Ferme inconnue");
+                    .map(farm -> farm.getName()).orElse("Unknown farm");
             case TARGET_ZONE -> zoneRepository.findById(targetId)
-                    .map(zone -> zone.getName()).orElse("Zone inconnue");
-            default -> "Cible inconnue";
+                    .map(zone -> zone.getName()).orElse("Unknown zone");
+            default -> "Unknown target";
         };
     }
 
@@ -265,30 +265,30 @@ public class WaterQuotaService {
         if (label != null && !label.isBlank()) {
             return label;
         }
-        String prefix = TARGET_FARM.equals(targetType) ? "Quota ferme" : "Quota zone";
+        String prefix = TARGET_FARM.equals(targetType) ? "Farm quota" : "Zone quota";
         return prefix + " - " + targetName(targetType, targetId) + " - " + YearMonth.from(month);
     }
 
     private String normalizeTargetType(String targetType) {
         if (targetType == null) {
-            throw new IllegalArgumentException("Le type de cible du quota est obligatoire (farm ou zone).");
+            throw new IllegalArgumentException("The quota target type is required (farm or zone).");
         }
         String normalized = targetType.trim().toLowerCase();
         if (!TARGET_FARM.equals(normalized) && !TARGET_ZONE.equals(normalized)) {
-            throw new IllegalArgumentException("Type de cible invalide : farm ou zone attendus.");
+            throw new IllegalArgumentException("Invalid target type: farm or zone expected.");
         }
         return normalized;
     }
 
     private void requireFirstDayOfMonth(LocalDate quotaMonth) {
         if (quotaMonth.getDayOfMonth() != 1) {
-            throw new IllegalArgumentException("Le mois du quota doit etre le premier jour du mois (YYYY-MM-01).");
+            throw new IllegalArgumentException("The quota month must be the first day of the month (YYYY-MM-01).");
         }
     }
 
     private void requireTarget(String targetType, UUID targetId) {
         if (targetId == null) {
-            throw new IllegalArgumentException("La cible du quota est obligatoire.");
+            throw new IllegalArgumentException("The quota target is required.");
         }
         boolean exists = switch (targetType) {
             case TARGET_FARM -> farmRepository.findById(targetId).isPresent();

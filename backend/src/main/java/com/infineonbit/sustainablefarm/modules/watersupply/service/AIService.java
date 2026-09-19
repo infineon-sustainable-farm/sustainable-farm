@@ -49,19 +49,19 @@ public class AIService {
 
         if (levelPercent < 20) {
             recommendations.add(rec("critical",
-                    "Niveau des reservoirs critique (" + Math.round(levelPercent) + "%). Reduire fortement les irrigations non-essentielles.",
+                    "Critical reservoir level (" + Math.round(levelPercent) + "%). Strongly reduce non-essential irrigation.",
                     "reservoir_level"));
         } else if (levelPercent < 35) {
             recommendations.add(rec("high",
-                    "Reserve d'eau faible (" + Math.round(levelPercent) + "%). Privilégier le goutte-à-goutte et reserver l'eau aux cultures critiques.",
+                    "Low water reserve (" + Math.round(levelPercent) + "%). Favor drip irrigation and reserve water for critical crops.",
                     "reservoir_level"));
         } else if (levelPercent < 55) {
             recommendations.add(rec("medium",
-                    "Reserve d'eau moderee (" + Math.round(levelPercent) + "%). Suivre le plan d'irrigation prevu.",
+                    "Moderate water reserve (" + Math.round(levelPercent) + "%). Follow the planned irrigation schedule.",
                     "reservoir_level"));
         } else {
             recommendations.add(rec("low",
-                    "Reserve d'eau confortable (" + Math.round(levelPercent) + "%). Les besoins en irrigation peuvent etre couverts normalement.",
+                    "Comfortable water reserve (" + Math.round(levelPercent) + "%). Irrigation needs can be met normally.",
                     "reservoir_level"));
         }
 
@@ -72,12 +72,12 @@ public class AIService {
                 .count();
         if (dripZones > 0) {
             recommendations.add(rec("info",
-                    dripZones + " zone(s) equipee(s) en goutte-à-goutte : prioriser ces zones pour maximiser l'efficience de l'eau.",
+                    dripZones + " zone(s) equipped with drip irrigation: prioritize these zones to maximize water efficiency.",
                     "drip_efficiency"));
         }
 
         recommendations.add(rec("info",
-                "Le systeme propose des recommandations; valider et creer les irrigations via l'interface de planification.",
+                "The system provides recommendations; validate and create irrigations through the planning interface.",
                 "user_action"));
 
         return recommendations;
@@ -105,29 +105,29 @@ public class AIService {
 
         // 3) Jours de reserve restants au rythme de consommation observe.
         Double daysRemaining = dailyAverage > 0 ? totalReserve / dailyAverage : null;
-        String daysText = daysRemaining == null ? "n/d (aucune consommation recente)"
-                : String.format("%.1f", daysRemaining) + " jours";
+        String daysText = daysRemaining == null ? "n/a (no recent consumption)"
+                : String.format("%.1f", daysRemaining) + " days";
 
         // 4) Risque = combinaison du niveau des reservoirs ET de la consommation observee.
         String risk;
         String advice;
         if (levelPercent < 15 || (daysRemaining != null && daysRemaining <= 1)) {
             risk = "CRITICAL";
-            advice = "Penurie imminente : " + daysText + " de reserve au rythme actuel ("
-                    + String.format("%.0f", dailyAverage) + " L/jour). Arreter les usages non-essentiels et mobiliser des sources de secours.";
+            advice = "Imminent shortage: " + daysText + " of reserve at the current rate ("
+                    + String.format("%.0f", dailyAverage) + " L/day). Stop non-essential uses and mobilize backup sources.";
         } else if (levelPercent < 30 || (daysRemaining != null && daysRemaining <= 3)) {
             risk = "HIGH";
-            advice = "Risque eleve : environ " + daysText + " de reserve (consommation moyenne "
-                    + String.format("%.0f", dailyAverage) + " L/jour). Restreindre l'irrigation aux cultures prioritaires.";
+            advice = "High risk: about " + daysText + " of reserve (average consumption "
+                    + String.format("%.0f", dailyAverage) + " L/day). Restrict irrigation to priority crops.";
         } else if (levelPercent < 50 || (daysRemaining != null && daysRemaining <= 7)) {
             risk = "MEDIUM";
-            advice = "Risque modere : environ " + daysText + " de reserve (consommation moyenne "
-                    + String.format("%.0f", dailyAverage) + " L/jour). Surveiller les niveaux et maintenir le goutte-a-goutte.";
+            advice = "Moderate risk: about " + daysText + " of reserve (average consumption "
+                    + String.format("%.0f", dailyAverage) + " L/day). Monitor levels and keep drip irrigation running.";
         } else {
             risk = "LOW";
-            advice = "Risque faible : les reservoirs (" + String.format("%.0f", totalReserve)
-                    + " L) couvrent plus de 7 jours de consommation moyenne ("
-                    + String.format("%.0f", dailyAverage) + " L/jour).";
+            advice = "Low risk: reservoirs (" + String.format("%.0f", totalReserve)
+                    + " L) cover more than 7 days of average consumption ("
+                    + String.format("%.0f", dailyAverage) + " L/day).";
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -159,7 +159,7 @@ public class AIService {
             if (deviation > 0.5) {
                 anomalies.add(Map.of(
                         "type", "possible_leak",
-                        "message", "Consommation anormalement elevee (+" + Math.round(deviation * 100) + "% vs moyenne)",
+                        "message", "Abnormally high consumption (+" + Math.round(deviation * 100) + "% vs average)",
                         "amount_liters", c.getConsumptionLiters(),
                         "date", c.getConsumptionDate() == null ? c.getCreatedAt().toString() : c.getConsumptionDate().toString()));
             }
@@ -171,10 +171,10 @@ public class AIService {
                     .mapToDouble(a -> ((Number) a.get("amount_liters")).doubleValue())
                     .sum();
             alertService.raise("critical",
-                    "Anomalie de consommation detectee",
-                    "Detection de " + anomalies.size() + " point(s) de consommation anormale " +
-                            "(ecart > 50 % vs moyenne). Volume suspecte : " + Math.round(totalSuspect) + " L. " +
-                            "Verifier les vannes et les deduire.",
+                    "Consumption anomaly detected",
+                    "Detected " + anomalies.size() + " abnormal consumption point(s) " +
+                            "(deviation > 50% vs average). Suspected volume: " + Math.round(totalSuspect) + " L. " +
+                            "Check the valves and deduct it.",
                     "/consumption");
         }
 

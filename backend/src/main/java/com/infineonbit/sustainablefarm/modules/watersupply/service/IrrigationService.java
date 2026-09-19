@@ -247,7 +247,7 @@ public class IrrigationService {
     private Map<String, Object> suggestion(IrrigationSchedule schedule, double probability, double rainMm) {
         double planned = schedule.getWaterQuantityLiters() == null ? 0d : schedule.getWaterQuantityLiters();
         String zoneName = zoneRepository.findById(schedule.getZoneId())
-                .map(Zone::getName).orElse("Zone inconnue");
+                .map(Zone::getName).orElse("Unknown zone");
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("schedule_id", schedule.getId());
@@ -258,22 +258,22 @@ public class IrrigationService {
         item.put("rain_probability", probability);
         item.put("rain_mm", rainMm);
         item.put("potential_saving_liters", planned);
-        item.put("message", "Pluie annoncee le " + LocalDate.ofInstant(schedule.getStartTime(), ZoneOffset.UTC)
-                + " : " + Math.round(rainMm) + " mm (" + Math.round(probability) + "% de probabilite). "
-                + "Reporter l'irrigation de " + zoneName + " economiserait " + Math.round(planned)
-                + " L d'eau d'appoint.");
+        item.put("message", "Rain forecast on " + LocalDate.ofInstant(schedule.getStartTime(), ZoneOffset.UTC)
+                + ": " + Math.round(rainMm) + " mm (" + Math.round(probability) + "% probability). "
+                + "Postponing irrigation of " + zoneName + " would save " + Math.round(planned)
+                + " L of supply water.");
         return item;
     }
 
     /**
-     * Reporte une irrigation planifiee (decision prise apres une suggestion meteo) et trace
-     * l'alerte correspondante afin que l'economie d'eau realisee soit historisee.
+     * Postpones a planned irrigation (decision taken after a weather suggestion) and records
+     * the matching alert so the achieved water saving is kept in history.
      */
     @Transactional
     public IrrigationScheduleResponse postpone(UUID scheduleId, String reason) {
         IrrigationSchedule schedule = getScheduleEntity(scheduleId);
         if ("completed".equalsIgnoreCase(schedule.getStatus())) {
-            throw new IllegalArgumentException("Une irrigation terminee ne peut plus etre reportee.");
+            throw new IllegalArgumentException("A completed irrigation can no longer be postponed.");
         }
         String previousStatus = schedule.getStatus();
         schedule.setStatus("postponed");
@@ -283,9 +283,9 @@ public class IrrigationService {
         IrrigationScheduleResponse response = IrrigationScheduleResponse.from(scheduleRepository.save(schedule));
 
         double planned = schedule.getWaterQuantityLiters() == null ? 0d : schedule.getWaterQuantityLiters();
-        alertService.raise("info", "Irrigation reportee - eau economisee",
-                "Irrigation de " + Math.round(planned) + " L reportee (statut : " + previousStatus + " -> postponed)."
-                        + (reason == null || reason.isBlank() ? "" : " Motif : " + reason),
+        alertService.raise("info", "Irrigation postponed - water saved",
+                "Irrigation of " + Math.round(planned) + " L postponed (status: " + previousStatus + " -> postponed)."
+                        + (reason == null || reason.isBlank() ? "" : " Reason: " + reason),
                 "/irrigation");
         return response;
     }

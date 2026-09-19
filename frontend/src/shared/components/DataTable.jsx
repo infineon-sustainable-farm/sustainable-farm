@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
 /**
- * Tableau de données réutilisable conforme au design system (table 13px, Inter).
- * Supporte le tri par clé et une colonne d'actions.
+ * Reusable data table matching the design system (13px table, Inter).
+ * Supports sorting by key and an actions column.
  *
  * @param {Array} columns - [{ key, label, sortable?, render? }]
- * @param {Array} rows - les données brutes.
- * @param {string | null} keyField - nom de la clé unique (par défaut 'id').
- * @param {ReactNode} [actions] - render prop (row) => ReactNode, affiché en dernière colonne.
+ * @param {Array} rows - the raw data.
+ * @param {string | null} keyField - unique key name (defaults to 'id').
+ * @param {ReactNode} [actions] - render prop (row) => ReactNode, shown as last column.
  */
 export function DataTable({ columns, rows = [], keyField = 'id', actions }) {
   const [sort, setSort] = useState({ key: null, dir: 'asc' })

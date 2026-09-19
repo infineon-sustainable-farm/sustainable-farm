@@ -15,8 +15,8 @@ import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
 const SOURCE_TYPES = ['borehole', 'rain', 'river', 'well', 'municipal']
 
 /**
- * Vue Sources d'eau : CRUD complet avec association ferme et validation.
- * Contrat backend : WaterSource { farmId, name, type, capacityLiters, currentLevelLiters }.
+ * Water sources view: full CRUD with farm association and validation.
+ * Backend contract: WaterSource { farmId, name, type, capacityLiters, currentLevelLiters }.
  */
 export function SourcesView({ notify }) {
   const { sources, loading, error, refetch } = useWaterSources()
@@ -28,14 +28,14 @@ export function SourcesView({ notify }) {
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
 
-  const farmName = (farmId) => farms.find((f) => f.id === farmId)?.name || (farmId ? `Ferme ${String(farmId).slice(0, 8)}` : '—')
+  const farmName = (farmId) => farms.find((f) => f.id === farmId)?.name || (farmId ? `Farm ${String(farmId).slice(0, 8)}` : '—')
 
   const farmFiltered = useMemo(
     () => sources.filter((item) => !farmFilter || item.farmId === farmFilter),
     [sources, farmFilter],
   )
 
-  // Recherche + tri + pagination côté client.
+  // Client-side search + sort + pagination.
   const list = useListControls(farmFiltered, {
     searchFields: ['name', 'type'],
     defaultSort: { key: 'name', dir: 'asc' },
@@ -52,21 +52,21 @@ export function SourcesView({ notify }) {
   const submitSource = (event) => {
     event.preventDefault()
     if (!form.farmId) {
-      setFormError('La ferme est obligatoire.')
+      setFormError('The farm is required.')
       return
     }
     if (!form.name.trim()) {
-      setFormError('Le nom est obligatoire.')
+      setFormError('The name is required.')
       return
     }
     const capacity = Number(form.capacityLiters)
     if (!(capacity > 0)) {
-      setFormError('La capacité doit être supérieure à 0.')
+      setFormError('The capacity must be greater than 0.')
       return
     }
     const level = form.currentLevelLiters === '' ? 0 : Number(form.currentLevelLiters)
     if (level < 0 || level > capacity) {
-      setFormError('Le niveau actuel doit être compris entre 0 et la capacité.')
+      setFormError('The current level must be between 0 and the capacity.')
       return
     }
     setBusy(true)
@@ -82,10 +82,10 @@ export function SourcesView({ notify }) {
     request
       .then(() => refetch())
       .then(() => {
-        notify(editingId ? 'Source mise à jour' : 'Source créée')
+        notify(editingId ? 'Source updated' : 'Source created')
         resetForm()
       })
-      .catch((err) => setFormError(err.message || 'Enregistrement impossible.'))
+      .catch((err) => setFormError(err.message || 'Unable to save.'))
       .finally(() => setBusy(false))
   }
 
@@ -108,10 +108,10 @@ export function SourcesView({ notify }) {
       .deleteSource(deleteTarget.id)
       .then(() => refetch())
       .then(() => {
-        notify('Source supprimée')
+        notify('Source deleted')
         setDeleteTarget(null)
       })
-      .catch((err) => setFormError(err.message || 'Suppression impossible.'))
+      .catch((err) => setFormError(err.message || 'Unable to delete.'))
       .finally(() => setBusy(false))
   }
 
@@ -119,42 +119,42 @@ export function SourcesView({ notify }) {
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Sources d'eau</h1>
-          <p>Forages, cuves de pluie, rivières : gérez les points de prélèvement par ferme.</p>
+          <h1>Water sources</h1>
+          <p>Boreholes, rain tanks, rivers: manage abstraction points per farm.</p>
         </div>
       </div>
 
       <div className="ws-layout-2">
         <div className="ws-panel">
           <div className="ws-panel-header">
-            <h2>Liste des sources</h2>
+            <h2>Source list</h2>
             <span>{list.total} source(s)</span>
           </div>
           <div className="ws-filters">
             <select value={farmFilter} onChange={(event) => setFarmFilter(event.target.value)}>
-              <option value="">Toutes les fermes</option>
+              <option value="">All farms</option>
               {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
             </select>
-            <SearchInput value={list.query} onChange={list.setQuery} placeholder="Rechercher une source…" />
+            <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search a source…" />
           </div>
           <div className="ws-panel-body">
             {loading ? (
-              <Spinner label="Chargement des sources..." full />
+              <Spinner label="Loading sources..." full />
             ) : error ? (
-              <EmptyState title="Erreur" description={error.message || 'Impossible de charger les sources.'} />
+              <EmptyState title="Error" description={error.message || 'Unable to load sources.'} />
             ) : farmFiltered.length === 0 ? (
-              <EmptyState title="Aucune source" description="Créez une source d'eau associée à une ferme pour démarrer." />
+              <EmptyState title="No sources" description="Create a water source linked to a farm to get started." />
             ) : (
               <table className="ws-table">
                 <thead>
                   <tr>
                     <th onClick={() => list.toggleSort('name')} style={{ cursor: 'pointer' }}>
-                      Nom {list.sort?.key === 'name' ? (list.sort.dir === 'asc' ? '↑' : '↓') : ''}
+                      Name {list.sort?.key === 'name' ? (list.sort.dir === 'asc' ? '↑' : '↓') : ''}
                     </th>
-                    <th>Ferme</th>
+                    <th>Farm</th>
                     <th>Type</th>
-                    <th>Capacité</th>
-                    <th>Niveau</th>
+                    <th>Capacity</th>
+                    <th>Level</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -171,8 +171,8 @@ export function SourcesView({ notify }) {
                           <span className={`ws-tag ${pct >= 90 ? 'orange' : pct > 0 ? 'green' : 'red'}`}>{item.currentLevelLiters ?? 0} L ({pct}%)</span>
                         </td>
                         <td className="ws-table-actions">
-                          <button className="ws-chip" onClick={() => editSource(item)}>Modifier</button>
-                          <button className="ws-icon-btn danger" title="Supprimer" onClick={() => setDeleteTarget(item)}>
+                          <button className="ws-chip" onClick={() => editSource(item)}>Edit</button>
+                          <button className="ws-icon-btn danger" title="Delete" onClick={() => setDeleteTarget(item)}>
                             <Trash2 size={14} />
                           </button>
                         </td>
@@ -187,19 +187,19 @@ export function SourcesView({ notify }) {
         </div>
         <div className="ws-panel">
           <div className="ws-panel-header">
-            <h2>{editingId ? 'Modifier la source' : 'Nouvelle source'}</h2>
+            <h2>{editingId ? 'Edit source' : 'New source'}</h2>
             <Plus size={16} />
           </div>
           <div className="ws-panel-body">
             {formError && <div className="ws-inline-error">{formError}</div>}
             <form className="ws-form-grid" onSubmit={submitSource}>
-              <FormField label="Ferme" required>
+              <FormField label="Farm" required>
                 <select style={inputStyle} value={form.farmId} onChange={updateForm('farmId')} required>
-                  <option value="">Sélectionner</option>
+                  <option value="">Select</option>
                   {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
                 </select>
               </FormField>
-              <FormField label="Nom" required>
+              <FormField label="Name" required>
                 <input style={inputStyle} value={form.name} onChange={updateForm('name')} required />
               </FormField>
               <FormField label="Type" required>
@@ -207,12 +207,12 @@ export function SourcesView({ notify }) {
                   {SOURCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                 </select>
               </FormField>
-              <FormField label="Capacité (L)" required>
+              <FormField label="Capacity (L)" required>
                 <input style={inputStyle} type="number" min="0" step="0.01" value={form.capacityLiters} onChange={updateForm('capacityLiters')} required />
               </FormField>
               <div className="ws-form-actions">
-                {editingId && <button type="button" className="ws-chip" onClick={resetForm}>Annuler</button>}
-                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Enregistrer'}</button>
+                {editingId && <button type="button" className="ws-chip" onClick={resetForm}>Cancel</button>}
+                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Save'}</button>
               </div>
             </form>
           </div>
@@ -220,8 +220,8 @@ export function SourcesView({ notify }) {
       </div>
       {deleteTarget && (
         <ConfirmDialog
-          title={`Supprimer ${deleteTarget.name || 'la source'}`}
-          message="Cette source sera retirée. Les consommations et tests qualité liés pourraient être impactés."
+          title={`Delete ${deleteTarget.name || 'the source'}`}
+          message="This source will be removed. Related consumption and quality tests could be impacted."
           onConfirm={deleteSource}
           onCancel={() => setDeleteTarget(null)}
           busy={busy}

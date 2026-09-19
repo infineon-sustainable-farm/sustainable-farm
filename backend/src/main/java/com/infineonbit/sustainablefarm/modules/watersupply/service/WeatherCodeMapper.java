@@ -12,7 +12,7 @@ public final class WeatherCodeMapper {
     }
 
     public static String mapCondition(Number code) {
-        return CONDITIONS.getOrDefault(normalize(code), "Inconnu");
+        return CONDITIONS.getOrDefault(normalize(code), "Unknown");
     }
 
     public static String mapIcon(Number code) {
@@ -34,17 +34,17 @@ public final class WeatherCodeMapper {
     }
 
     private static final Map<Integer, String> CONDITIONS = Map.ofEntries(
-            Map.entry(-1, "Inconnu"),
-            Map.entry(0, "Ensoleille"),
-            Map.entry(1, "Tres ensoleille"),
-            Map.entry(2, "Partiellement nuageux"),
-            Map.entry(3, "Nuageux"),
-            Map.entry(45, "Brouillard"),
-            Map.entry(51, "Bruine"),
-            Map.entry(61, "Pluie"),
-            Map.entry(71, "Neige"),
-            Map.entry(80, "Averses"),
-            Map.entry(95, "Orage"));
+            Map.entry(-1, "Unknown"),
+            Map.entry(0, "Sunny"),
+            Map.entry(1, "Very sunny"),
+            Map.entry(2, "Partly cloudy"),
+            Map.entry(3, "Cloudy"),
+            Map.entry(45, "Fog"),
+            Map.entry(51, "Drizzle"),
+            Map.entry(61, "Rain"),
+            Map.entry(71, "Snow"),
+            Map.entry(80, "Showers"),
+            Map.entry(95, "Thunderstorm"));
 
     private static final Map<Integer, String> ICONS = Map.ofEntries(
             Map.entry(-1, "question"),

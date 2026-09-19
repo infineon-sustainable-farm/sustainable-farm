@@ -7,170 +7,170 @@ import { apiClient } from '../../../shared/api/client.js'
 
 // --- Auth ---
 export const authApi = {
-  login: (email, password) => apiClient.post('/auth/login', { email, password }),
+  login: (email, password) => apiClient.post('/api/auth/login', { email, password }),
   register: (firstName, lastName, email, password) =>
-    apiClient.post('/auth/register', { firstName, lastName, email, password }),
-  logout: () => apiClient.post('/auth/logout'),
-  forgotPassword: () => apiClient.post('/auth/forgot-password'),
-  resetPassword: () => apiClient.post('/auth/reset-password'),
-  refresh: () => apiClient.post('/auth/refresh'),
-  getUsers: () => apiClient.get('/users'),
-  getUser: (userId) => apiClient.get(`/users/${userId}`),
-  updateUser: (userId, payload) => apiClient.put(`/users/${userId}`, payload),
-  deleteUser: (userId) => apiClient.delete(`/users/${userId}`),
+    apiClient.post('/api/auth/register', { firstName, lastName, email, password }),
+  logout: () => apiClient.post('/api/auth/logout'),
+  forgotPassword: () => apiClient.post('/api/auth/forgot-password'),
+  resetPassword: () => apiClient.post('/api/auth/reset-password'),
+  refresh: () => apiClient.post('/api/auth/refresh'),
+  getUsers: () => apiClient.get('/api/users'),
+  getUser: (userId) => apiClient.get(`/api/users/${userId}`),
+  updateUser: (userId, payload) => apiClient.put(`/api/users/${userId}`, payload),
+  deleteUser: (userId) => apiClient.delete(`/api/users/${userId}`),
 }
 
 // --- Farms ---
 export const farmApi = {
-  getFarms: () => apiClient.get('/farms'),
-  createFarm: (farm) => apiClient.post('/farms', farm),
-  getFarm: (farmId) => apiClient.get(`/farms/${farmId}`),
-  updateFarm: (farmId, payload) => apiClient.put(`/farms/${farmId}`, payload),
-  deleteFarm: (farmId) => apiClient.delete(`/farms/${farmId}`),
-  getFarmFields: (farmId) => apiClient.get(`/farms/${farmId}/fields`),
+  getFarms: () => apiClient.get('/api/farms'),
+  createFarm: (farm) => apiClient.post('/api/farms', farm),
+  getFarm: (farmId) => apiClient.get(`/api/farms/${farmId}`),
+  updateFarm: (farmId, payload) => apiClient.put(`/api/farms/${farmId}`, payload),
+  deleteFarm: (farmId) => apiClient.delete(`/api/farms/${farmId}`),
+  getFarmFields: (farmId) => apiClient.get(`/api/farms/${farmId}/fields`),
 }
 
 // --- Fields ---
 export const fieldApi = {
-  getFields: () => apiClient.get('/fields'),
-  createField: (field) => apiClient.post('/fields', field),
-  getField: (fieldId) => apiClient.get(`/fields/${fieldId}`),
-  updateField: (fieldId, payload) => apiClient.put(`/fields/${fieldId}`, payload),
-  deleteField: (fieldId) => apiClient.delete(`/fields/${fieldId}`),
-  getFieldZones: (fieldId) => apiClient.get(`/fields/${fieldId}/zones`),
+  getFields: () => apiClient.get('/api/fields'),
+  createField: (field) => apiClient.post('/api/fields', field),
+  getField: (fieldId) => apiClient.get(`/api/fields/${fieldId}`),
+  updateField: (fieldId, payload) => apiClient.put(`/api/fields/${fieldId}`, payload),
+  deleteField: (fieldId) => apiClient.delete(`/api/fields/${fieldId}`),
+  getFieldZones: (fieldId) => apiClient.get(`/api/fields/${fieldId}/zones`),
 }
 
 // --- Zones ---
 export const zoneApi = {
-  getZones: () => apiClient.get('/zones'),
-  createZone: (zone) => apiClient.post('/zones', zone),
-  getZone: (zoneId) => apiClient.get(`/zones/${zoneId}`),
-  updateZone: (zoneId, payload) => apiClient.put(`/zones/${zoneId}`, payload),
-  deleteZone: (zoneId) => apiClient.delete(`/zones/${zoneId}`),
+  getZones: () => apiClient.get('/api/zones'),
+  createZone: (zone) => apiClient.post('/api/zones', zone),
+  getZone: (zoneId) => apiClient.get(`/api/zones/${zoneId}`),
+  updateZone: (zoneId, payload) => apiClient.put(`/api/zones/${zoneId}`, payload),
+  deleteZone: (zoneId) => apiClient.delete(`/api/zones/${zoneId}`),
 }
 
 // --- Water Sources ---
 export const waterSourceApi = {
-  getSources: () => apiClient.get('/water/sources'),
-  createSource: (source) => apiClient.post('/water/sources', source),
-  getSource: (sourceId) => apiClient.get(`/water/sources/${sourceId}`),
-  updateSource: (sourceId, payload) => apiClient.put(`/water/sources/${sourceId}`, payload),
-  deleteSource: (sourceId) => apiClient.delete(`/water/sources/${sourceId}`),
+  getSources: () => apiClient.get('/api/water/sources'),
+  createSource: (source) => apiClient.post('/api/water/sources', source),
+  getSource: (sourceId) => apiClient.get(`/api/water/sources/${sourceId}`),
+  updateSource: (sourceId, payload) => apiClient.put(`/api/water/sources/${sourceId}`, payload),
+  deleteSource: (sourceId) => apiClient.delete(`/api/water/sources/${sourceId}`),
 }
 
 // --- Water Consumption ---
 export const waterConsumptionApi = {
-  getConsumptions: () => apiClient.get('/water/consumption'),
-  createConsumption: (consumption) => apiClient.post('/water/consumption', consumption),
-  getConsumption: (consumptionId) => apiClient.get(`/water/consumption/${consumptionId}`),
-  updateConsumption: (consumptionId, payload) => apiClient.put(`/water/consumption/${consumptionId}`, payload),
-  deleteConsumption: (consumptionId) => apiClient.delete(`/water/consumption/${consumptionId}`),
+  getConsumptions: () => apiClient.get('/api/water/consumption'),
+  createConsumption: (consumption) => apiClient.post('/api/water/consumption', consumption),
+  getConsumption: (consumptionId) => apiClient.get(`/api/water/consumption/${consumptionId}`),
+  updateConsumption: (consumptionId, payload) => apiClient.put(`/api/water/consumption/${consumptionId}`, payload),
+  deleteConsumption: (consumptionId) => apiClient.delete(`/api/water/consumption/${consumptionId}`),
 }
 
 // --- Water Quotas (P8) ---
 export const waterQuotaApi = {
-  getQuotas: (params = '') => apiClient.get(`/water/quotas${params}`),
-  createQuota: (quota) => apiClient.post('/water/quotas', quota),
-  getQuota: (quotaId) => apiClient.get(`/water/quotas/${quotaId}`),
-  updateQuota: (quotaId, payload) => apiClient.put(`/water/quotas/${quotaId}`, payload),
-  deleteQuota: (quotaId) => apiClient.delete(`/water/quotas/${quotaId}`),
+  getQuotas: (params = '') => apiClient.get(`/api/water/quotas${params}`),
+  createQuota: (quota) => apiClient.post('/api/water/quotas', quota),
+  getQuota: (quotaId) => apiClient.get(`/api/water/quotas/${quotaId}`),
+  updateQuota: (quotaId, payload) => apiClient.put(`/api/water/quotas/${quotaId}`, payload),
+  deleteQuota: (quotaId) => apiClient.delete(`/api/water/quotas/${quotaId}`),
   // Suivi du mois courant (ou d'un mois passe) : consommation cumulee + statut par quota.
-  getUsage: (month) => apiClient.get(`/water/quotas/usage${month ? `?month=${month}` : ''}`),
+  getUsage: (month) => apiClient.get(`/api/water/quotas/usage${month ? `?month=${month}` : ''}`),
 }
 
 // --- Water Quality Tests ---
 export const waterQualityApi = {
-  getTests: () => apiClient.get('/water/quality'),
-  createTest: (test) => apiClient.post('/water/quality', test),
-  getTest: (testId) => apiClient.get(`/water/quality/${testId}`),
-  updateTest: (testId, payload) => apiClient.put(`/water/quality/${testId}`, payload),
-  deleteTest: (testId) => apiClient.delete(`/water/quality/${testId}`),
+  getTests: () => apiClient.get('/api/water/quality'),
+  createTest: (test) => apiClient.post('/api/water/quality', test),
+  getTest: (testId) => apiClient.get(`/api/water/quality/${testId}`),
+  updateTest: (testId, payload) => apiClient.put(`/api/water/quality/${testId}`, payload),
+  deleteTest: (testId) => apiClient.delete(`/api/water/quality/${testId}`),
 }
 
 // --- Irrigation ---
 export const irrigationApi = {
-  getSchedules: () => apiClient.get('/irrigations'),
-  createSchedule: (schedule) => apiClient.post('/irrigations', schedule),
-  getSchedule: (scheduleId) => apiClient.get(`/irrigations/${scheduleId}`),
-  updateSchedule: (scheduleId, payload) => apiClient.put(`/irrigations/${scheduleId}`, payload),
-  deleteSchedule: (scheduleId) => apiClient.delete(`/irrigations/${scheduleId}`),
-  getLogs: () => apiClient.get('/irrigation-logs'),
-  createLog: (log) => apiClient.post('/irrigation-logs', log),
-  updateLog: (logId, payload) => apiClient.put(`/irrigation-logs/${logId}`, payload),
-  deleteLog: (logId) => apiClient.delete(`/irrigation-logs/${logId}`),
-  startIrrigation: (scheduleId) => apiClient.post(`/irrigations/${scheduleId}/start`),
-  stopIrrigation: (scheduleId) => apiClient.post(`/irrigations/${scheduleId}/stop`),
+  getSchedules: () => apiClient.get('/api/irrigations'),
+  createSchedule: (schedule) => apiClient.post('/api/irrigations', schedule),
+  getSchedule: (scheduleId) => apiClient.get(`/api/irrigations/${scheduleId}`),
+  updateSchedule: (scheduleId, payload) => apiClient.put(`/api/irrigations/${scheduleId}`, payload),
+  deleteSchedule: (scheduleId) => apiClient.delete(`/api/irrigations/${scheduleId}`),
+  getLogs: () => apiClient.get('/api/irrigation-logs'),
+  createLog: (log) => apiClient.post('/api/irrigation-logs', log),
+  updateLog: (logId, payload) => apiClient.put(`/api/irrigation-logs/${logId}`, payload),
+  deleteLog: (logId) => apiClient.delete(`/api/irrigation-logs/${logId}`),
+  startIrrigation: (scheduleId) => apiClient.post(`/api/irrigations/${scheduleId}/start`),
+  stopIrrigation: (scheduleId) => apiClient.post(`/api/irrigations/${scheduleId}/stop`),
   // Report pour cause de pluie : proposition fondee sur la meteo, la decision reste humaine.
-  getSuggestions: () => apiClient.get('/irrigation/suggestions'),
-  postpone: (scheduleId, reason) => apiClient.post(`/irrigations/${scheduleId}/postpone`, { reason }),
+  getSuggestions: () => apiClient.get('/api/irrigation/suggestions'),
+  postpone: (scheduleId, reason) => apiClient.post(`/api/irrigations/${scheduleId}/postpone`, { reason }),
 }
 
 // --- Notifications ---
 export const notificationApi = {
-  getNotifications: () => apiClient.get('/notifications'),
-  createNotification: (notification) => apiClient.post('/notifications', notification),
-  getNotification: (notificationId) => apiClient.get(`/notifications/${notificationId}`),
-  markAsRead: (notificationId) => apiClient.patch(`/notifications/${notificationId}/read`),
-  markAllAsRead: () => apiClient.patch('/notifications/read-all'),
-  deleteNotification: (notificationId) => apiClient.delete(`/notifications/${notificationId}`),
+  getNotifications: () => apiClient.get('/api/notifications'),
+  createNotification: (notification) => apiClient.post('/api/notifications', notification),
+  getNotification: (notificationId) => apiClient.get(`/api/notifications/${notificationId}`),
+  markAsRead: (notificationId) => apiClient.patch(`/api/notifications/${notificationId}/read`),
+  markAllAsRead: () => apiClient.patch('/api/notifications/read-all'),
+  deleteNotification: (notificationId) => apiClient.delete(`/api/notifications/${notificationId}`),
 }
 
 // --- Rainwater Harvest ---
 export const rainwaterHarvestApi = {
-  getHarvests: () => apiClient.get('/rainwater-harvests'),
-  createHarvest: (harvest) => apiClient.post('/rainwater-harvests', harvest),
-  getHarvest: (harvestId) => apiClient.get(`/rainwater-harvests/${harvestId}`),
-  updateHarvest: (harvestId, payload) => apiClient.put(`/rainwater-harvests/${harvestId}`, payload),
-  deleteHarvest: (harvestId) => apiClient.delete(`/rainwater-harvests/${harvestId}`),
-  getCoverage: (period = 'month') => apiClient.get(`/rainwater-harvests/coverage?period=${period}`),
+  getHarvests: () => apiClient.get('/api/rainwater-harvests'),
+  createHarvest: (harvest) => apiClient.post('/api/rainwater-harvests', harvest),
+  getHarvest: (harvestId) => apiClient.get(`/api/rainwater-harvests/${harvestId}`),
+  updateHarvest: (harvestId, payload) => apiClient.put(`/api/rainwater-harvests/${harvestId}`, payload),
+  deleteHarvest: (harvestId) => apiClient.delete(`/api/rainwater-harvests/${harvestId}`),
+  getCoverage: (period = 'month') => apiClient.get(`/api/rainwater-harvests/coverage?period=${period}`),
 }
 
 // --- Drip Maintenance ---
 export const dripMaintenanceApi = {
-  getLogs: () => apiClient.get('/drip-maintenance-logs'),
-  createLog: (log) => apiClient.post('/drip-maintenance-logs', log),
-  getLog: (logId) => apiClient.get(`/drip-maintenance-logs/${logId}`),
-  updateLog: (logId, payload) => apiClient.put(`/drip-maintenance-logs/${logId}`, payload),
-  deleteLog: (logId) => apiClient.delete(`/drip-maintenance-logs/${logId}`),
-  getSchedule: () => apiClient.get('/drip-maintenance-logs/schedule'),
+  getLogs: () => apiClient.get('/api/drip-maintenance-logs'),
+  createLog: (log) => apiClient.post('/api/drip-maintenance-logs', log),
+  getLog: (logId) => apiClient.get(`/api/drip-maintenance-logs/${logId}`),
+  updateLog: (logId, payload) => apiClient.put(`/api/drip-maintenance-logs/${logId}`, payload),
+  deleteLog: (logId) => apiClient.delete(`/api/drip-maintenance-logs/${logId}`),
+  getSchedule: () => apiClient.get('/api/drip-maintenance-logs/schedule'),
 }
 
 // --- Dashboard ---
 export const dashboardApi = {
-  getKpis: () => apiClient.get('/dashboard/kpis'),
-  getWaterSavings: (period = 'month') => apiClient.get(`/dashboard/water-savings?period=${period}`),
+  getKpis: () => apiClient.get('/api/dashboard/kpis'),
+  getWaterSavings: (period = 'month') => apiClient.get(`/api/dashboard/water-savings?period=${period}`),
   // Economie d'eau vue dans le temps : besoin cumule des cultures vs consommation cumulee.
-  getSavingsSeries: (days = 30) => apiClient.get(`/dashboard/savings-series?days=${days}`),
+  getSavingsSeries: (days = 30) => apiClient.get(`/api/dashboard/savings-series?days=${days}`),
   // Bilan hydrique : entrees (pluie recuperee) vs sorties (eau consommee) et niveau des reservoirs.
-  getWaterBalance: (period = 'month') => apiClient.get(`/dashboard/water-balance?period=${period}`),
+  getWaterBalance: (period = 'month') => apiClient.get(`/api/dashboard/water-balance?period=${period}`),
   // Anomalies de debit = fuites probables (diagnostic deja calcule cote backend).
-  getLeaks: () => apiClient.get('/dashboard/leaks'),
-  getActivities: () => apiClient.get('/dashboard/activities'),
-  getAlerts: () => apiClient.get('/dashboard/alerts'),
+  getLeaks: () => apiClient.get('/api/dashboard/leaks'),
+  getActivities: () => apiClient.get('/api/dashboard/activities'),
+  getAlerts: () => apiClient.get('/api/dashboard/alerts'),
 }
 
 // --- AI ---
 export const aiApi = {
-  getRecommendations: () => apiClient.get('/ai/recommendations'),
-  getDroughtPrediction: () => apiClient.get('/ai/drought-prediction'),
-  analyze: () => apiClient.post('/ai/analyze'),
+  getRecommendations: () => apiClient.get('/api/ai/recommendations'),
+  getDroughtPrediction: () => apiClient.get('/api/ai/drought-prediction'),
+  analyze: () => apiClient.post('/api/ai/analyze'),
 }
 
 // --- Weather ---
 export const weatherApi = {
   getCurrent: (latitude = 10.5, longitude = -61.2) =>
-    apiClient.get(`/weather/current?latitude=${latitude}&longitude=${longitude}`),
+    apiClient.get(`/api/weather/current?latitude=${latitude}&longitude=${longitude}`),
   getForecast: (latitude = 10.5, longitude = -61.2) =>
-    apiClient.get(`/weather/forecast?latitude=${latitude}&longitude=${longitude}`),
+    apiClient.get(`/api/weather/forecast?latitude=${latitude}&longitude=${longitude}`),
 }
 
 // --- Reports ---
 export const reportApi = {
   getConsumptionReport: (period = 'month') =>
-    apiClient.get(`/reports/consumption?period=${period}`),
+    apiClient.get(`/api/reports/consumption?period=${period}`),
   getIrrigationReport: (period = 'month') =>
-    apiClient.get(`/reports/irrigation?period=${period}`),
-  getQualityReport: () => apiClient.get('/reports/quality'),
+    apiClient.get(`/api/reports/irrigation?period=${period}`),
+  getQualityReport: () => apiClient.get('/api/reports/quality'),
 }
 
 // --- Exports CSV (P10) ---
@@ -197,5 +197,5 @@ export async function downloadCsv(kind, period = 'month') {
 
 // --- Health ---
 export const healthApi = {
-  check: () => apiClient.get('/health'),
+  check: () => apiClient.get('/api/health'),
 }

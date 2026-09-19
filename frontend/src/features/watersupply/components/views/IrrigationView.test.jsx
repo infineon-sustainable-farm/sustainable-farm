@@ -25,14 +25,14 @@ vi.mock('../../hooks/useFarms', () => ({
 const SCHEDULES = [
   { id: 'sch-1', zoneId: 'zone-1', startTime: '2026-09-01T06:00:00Z', durationMinutes: 45, waterQuantityLiters: 1200, status: 'scheduled' },
   { id: 'sch-2', zoneId: 'zone-1', startTime: '2026-09-01T08:00:00Z', durationMinutes: 30, waterQuantityLiters: 800, status: 'running' },
-  // Planning terminé : archivé dans le journal, il ne doit plus apparaître dans les plannings actifs.
+  // Completed schedule: archived in the journal, it must no longer appear in the active schedules.
   { id: 'sch-3', zoneId: 'zone-1', startTime: '2026-08-30T06:00:00Z', durationMinutes: 20, waterQuantityLiters: 900, status: 'completed' },
 ]
 
 const LOGS = [
-  // Cycle terminé : visible dans le journal.
+  // Completed cycle: visible in the journal.
   { id: 'log-1', scheduleId: 'sch-3', actualStartTime: '2026-08-30T06:00:00Z', actualEndTime: '2026-08-30T06:20:00Z', waterUsedLiters: 300, status: 'completed' },
-  // Cycle encore en cours : il ne doit PAS apparaître dans le journal.
+  // Cycle still running: it must NOT appear in the journal.
   { id: 'log-2', scheduleId: 'sch-2', actualStartTime: '2026-09-01T08:00:00Z', actualEndTime: null, waterUsedLiters: 120, status: 'in_progress' },
 ]
 
@@ -49,31 +49,31 @@ beforeEach(() => {
 const props = { notify: vi.fn() }
 
 describe('IrrigationView', () => {
-  it('affiche les plannings actifs et les cycles terminés du journal', async () => {
+  it('displays the active schedules and the completed journal cycles', async () => {
     render(<IrrigationView {...props} />)
 
     await waitFor(() => expect(screen.getByText('Zone A')).toBeTruthy())
     expect(screen.getByText(/45 min/)).toBeTruthy()
 
-    // Journal : le cycle terminé est listé avec son volume réel.
+    // Journal: the completed cycle is listed with its actual volume.
     expect(screen.getByText('300 L')).toBeTruthy()
-    // Le cycle encore en cours ne figure pas dans le journal.
+    // The cycle still running does not appear in the journal.
     expect(screen.queryByText('120 L')).toBeNull()
-    // Le planning terminé est archivé : absent du panneau des plannings actifs.
-    expect(screen.queryByText('900 L prévus')).toBeNull()
+    // The completed schedule is archived: absent from the active schedules panel.
+    expect(screen.queryByText('900 L planned')).toBeNull()
   })
 
-  it('affiche un état vide quand aucune donnée', async () => {
+  it('displays an empty state when there is no data', async () => {
     irrigationApi.getSchedules.mockResolvedValue([])
     irrigationApi.getLogs.mockResolvedValue([])
 
     render(<IrrigationView {...props} />)
 
-    await waitFor(() => expect(screen.getByText('Aucun planning en cours ou prévu')).toBeTruthy())
-    expect(screen.getByText('Aucun cycle terminé')).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('No running or scheduled plans')).toBeTruthy())
+    expect(screen.getByText('No completed cycles')).toBeTruthy()
   })
 
-  it('limite le journal aux 10 derniers cycles terminés (le reste reste en base)', async () => {
+  it('limits the journal to the last 10 completed cycles (the rest stays in the database)', async () => {
     const many = Array.from({ length: 12 }, (_, i) => {
       const day = String(20 - i).padStart(2, '0')
       return {
@@ -89,48 +89,48 @@ describe('IrrigationView', () => {
 
     render(<IrrigationView {...props} />)
 
-    await waitFor(() => expect(screen.getByText('12 cycle(s) terminé(s)')).toBeTruthy())
-    // Seuls les 10 plus récents sont rendus (volumes 100 L à 109 L).
+    await waitFor(() => expect(screen.getByText('12 completed cycle(s)')).toBeTruthy())
+    // Only the 10 most recent are rendered (volumes 100 L to 109 L).
     expect(screen.getAllByText(/^1\d\d L$/).length).toBe(10)
-    // Le 11e reste en base : non affiché, mais signalé à l'utilisateur.
+    // The 11th stays in the database: not displayed, but reported to the user.
     expect(screen.queryByText('110 L')).toBeNull()
-    expect(screen.getByText(/2 cycle\(s\) plus ancien\(s\)/)).toBeTruthy()
+    expect(screen.getByText(/Older cycles remain stored/)).toBeTruthy()
   })
 
-  it('affiche une erreur exploitable quand l’API échoue', async () => {
-    irrigationApi.getSchedules.mockRejectedValue(new Error('Backend injoignable'))
+  it('displays a usable error when the API fails', async () => {
+    irrigationApi.getSchedules.mockRejectedValue(new Error('Backend unreachable'))
 
     render(<IrrigationView {...props} />)
 
-    await waitFor(() => expect(screen.getByText('Erreur')).toBeTruthy())
-    expect(screen.getByText(/Backend injoignable/)).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('Error')).toBeTruthy())
+    expect(screen.getByText(/Backend unreachable/)).toBeTruthy()
   })
 
-  it('démarre une irrigation planifiée et rafraîchit', async () => {
+  it('starts a scheduled irrigation and refreshes', async () => {
     irrigationApi.startIrrigation.mockResolvedValue({ id: 'log-new' })
 
     render(<IrrigationView {...props} />)
-    const startButtons = await screen.findAllByTitle('Démarrer maintenant')
+    const startButtons = await screen.findAllByTitle('Start now')
     fireEvent.click(startButtons[0])
 
     await waitFor(() => expect(irrigationApi.startIrrigation).toHaveBeenCalledWith('sch-1'))
-    // refetch : getSchedules rappelé après l'action
+    // refetch: getSchedules called again after the action
     await waitFor(() => expect(irrigationApi.getSchedules).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(props.notify).toHaveBeenCalledWith(expect.stringContaining('démarrée')))
+    await waitFor(() => expect(props.notify).toHaveBeenCalledWith(expect.stringContaining('started')))
   })
 
-  it('arrête une irrigation en cours', async () => {
+  it('stops a running irrigation', async () => {
     irrigationApi.stopIrrigation.mockResolvedValue({ id: 'log-closed' })
 
     render(<IrrigationView {...props} />)
-    const stopButtons = await screen.findAllByTitle("Arrêter l'irrigation")
+    const stopButtons = await screen.findAllByTitle('Stop irrigation')
     fireEvent.click(stopButtons[0])
 
     await waitFor(() => expect(irrigationApi.stopIrrigation).toHaveBeenCalledWith('sch-2'))
     await waitFor(() => expect(irrigationApi.getLogs).toHaveBeenCalledTimes(2))
   })
 
-  it('crée manuellement un planning et rafraîchit', async () => {
+  it('creates a schedule manually and refreshes', async () => {
     irrigationApi.createSchedule.mockResolvedValue({ id: 'sch-new' })
 
     render(<IrrigationView {...props} />)
@@ -142,7 +142,7 @@ describe('IrrigationView', () => {
     fireEvent.change(selects[0], { target: { value: 'zone-1' } })
     const inputs = scheduleForm.querySelectorAll('input')
     fireEvent.change(inputs[0], { target: { value: '2026-09-05T06:00' } }) // datetime-local
-    fireEvent.change(inputs[1], { target: { value: '30' } }) // durée
+    fireEvent.change(inputs[1], { target: { value: '30' } }) // duration
     fireEvent.change(inputs[2], { target: { value: '500' } }) // volume
     fireEvent.submit(scheduleForm)
 
@@ -154,7 +154,7 @@ describe('IrrigationView', () => {
     await waitFor(() => expect(irrigationApi.getSchedules).toHaveBeenCalledTimes(2))
   })
 
-  it('affiche une erreur de validation si la durée est invalide', async () => {
+  it('displays a validation error when the duration is invalid', async () => {
     render(<IrrigationView {...props} />)
     await screen.findByText('Zone A')
 
@@ -167,7 +167,7 @@ describe('IrrigationView', () => {
     fireEvent.change(inputs[2], { target: { value: '500' } })
     fireEvent.submit(scheduleForm)
 
-    await waitFor(() => expect(screen.getByText('La durée doit être supérieure à 0.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Duration must be greater than 0.')).toBeTruthy())
     expect(irrigationApi.createSchedule).not.toHaveBeenCalled()
   })
 })

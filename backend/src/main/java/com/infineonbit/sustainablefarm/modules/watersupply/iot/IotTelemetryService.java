@@ -70,7 +70,7 @@ public class IotTelemetryService {
     @SuppressWarnings("unchecked")
     public Telemetry parse(Object raw) {
         if (!(raw instanceof Map<?, ?> nodeMap)) {
-            throw new IllegalArgumentException("Corps JSON attendu : objet de mesure");
+            throw new IllegalArgumentException("Expected JSON body: measurement object");
         }
         Map<String, Object> node = (Map<String, Object>) nodeMap;
         String deviceId = node.get("device_id") == null ? null : String.valueOf(node.get("device_id"));
@@ -114,7 +114,7 @@ public class IotTelemetryService {
         }
         // Sans identifiant de capteur, aucune ecriture n'a de sens : on rejette avant toute requete.
         if (t.deviceId() == null || t.deviceId().isBlank()) {
-            return rejected(t, "Champ 'device_id' manquant");
+            return rejected(t, "Missing 'device_id' field");
         }
         try {
             return itemTransaction.execute(status -> {
@@ -156,7 +156,7 @@ public class IotTelemetryService {
         if (t.type() == null || "?".equals(t.type())) {
             Object err = t.values() != null ? t.values().get("error") : null;
             return new Result("?", t.sourceId(), "rejected",
-                    err != null ? String.valueOf(err) : "Champ 'type' manquant");
+                    err != null ? String.valueOf(err) : "Missing 'type' field");
         }
         return switch (t.type().toLowerCase()) {
             case "level" -> routeLevel(t);
@@ -165,7 +165,7 @@ public class IotTelemetryService {
             case "rain" -> routeRain(t);
             case "clogging" -> routeClogging(t);
             case "soil" -> routeSoil(t);
-            default -> new Result(t.type(), t.sourceId(), "rejected", "Type de mesure inconnu");
+            default -> new Result(t.type(), t.sourceId(), "rejected", "Unknown measurement type");
         };
     }
 
@@ -175,19 +175,19 @@ public class IotTelemetryService {
         if (liters == null) {
             Double percent = doubleValue(t, "level_percent");
             if (percent == null || source.getCapacityLiters() == null) {
-                return new Result("level", t.sourceId(), "rejected", "Valeur 'level_liters' (ou 'level_percent') manquante");
+                return new Result("level", t.sourceId(), "rejected", "Missing 'level_liters' (or 'level_percent') value");
             }
             liters = source.getCapacityLiters() * percent / 100.0;
         }
         source.setCurrentLevelLiters(liters);
         waterSourceRepository.save(source);
-        return new Result("level", t.sourceId(), "processed", "Niveau reservoir = " + liters + " L");
+        return new Result("level", t.sourceId(), "processed", "Reservoir level = " + liters + " L");
     }
 
     private Result routeFlow(Telemetry t) {
         Double liters = doubleValue(t, "flow_liters");
         if (liters == null) {
-            return new Result("flow", t.sourceId(), "rejected", "Valeur 'flow_liters' manquante");
+            return new Result("flow", t.sourceId(), "rejected", "Missing 'flow_liters' value");
         }
         WaterSource source = requireSource(t.sourceId());
         java.time.Instant measuredAt = t.timestamp() == null ? Instant.now() : t.timestamp();
@@ -199,14 +199,14 @@ public class IotTelemetryService {
         } catch (RuntimeException ignored) {
             // La mesure est enregistree meme si l'evaluation de quota echoue.
         }
-        return new Result("flow", t.sourceId(), "processed", "Consommation enregistree : " + liters + " L");
+        return new Result("flow", t.sourceId(), "processed", "Consumption recorded: " + liters + " L");
     }
 
     private Result routeQuality(Telemetry t) {
         Double ph = doubleValue(t, "ph");
         Double ntu = doubleValue(t, "turbidity_ntu");
         if (ph == null && ntu == null) {
-            return new Result("quality", t.sourceId(), "rejected", "Valeurs 'ph' ou 'turbidity_ntu' manquantes");
+            return new Result("quality", t.sourceId(), "rejected", "Missing 'ph' or 'turbidity_ntu' values");
         }
         waterService.createQualityTest(new WaterQualityCreateRequest(
                 t.sourceId(),
@@ -218,18 +218,18 @@ public class IotTelemetryService {
                 t.timestamp() == null ? Instant.now() : t.timestamp()));
         boolean outOfRange = (ph != null && (ph < 6.0 || ph > 7.5)) || (ntu != null && ntu > 5.0);
         return new Result("quality", t.sourceId(), "processed",
-                outOfRange ? "Mesure HORS SEUIL enregistree (alerte generee)" : "Mesure conforme enregistree");
+                outOfRange ? "Out-of-range reading recorded (alert generated)" : "Compliant reading recorded");
     }
     private Result routeSoil(Telemetry t) {
         if (t.zoneId() == null) {
-            return new Result("soil", t.sourceId(), "rejected", "Champ 'zone_id' manquant");
+            return new Result("soil", t.sourceId(), "rejected", "Missing 'zone_id' field");
         }
         Double moisture = doubleValue(t, "moisture_percent");
         if (moisture == null) {
-            return new Result("soil", t.sourceId(), "rejected", "Valeur 'moisture_percent' manquante");
+            return new Result("soil", t.sourceId(), "rejected", "Missing 'moisture_percent' value");
         }
         if (moisture < 0 || moisture > 100) {
-            return new Result("soil", t.sourceId(), "rejected", "'moisture_percent' hors plage (0-100)");
+            return new Result("soil", t.sourceId(), "rejected", "'moisture_percent' out of range (0-100)");
         }
         SoilMoistureReading reading = new SoilMoistureReading();
         reading.setZoneId(t.zoneId());
@@ -240,7 +240,7 @@ public class IotTelemetryService {
         reading.setMeasuredAt(t.timestamp() == null ? Instant.now() : t.timestamp());
         soilMoistureReadingRepository.save(reading);
         return new Result("soil", t.zoneId(), "processed",
-                "Humidite du sol = " + Math.round(moisture) + " % (zone " + t.zoneId() + ")");
+                "Soil moisture = " + Math.round(moisture) + " % (zone " + t.zoneId() + ")");
     }
 
 
@@ -248,7 +248,7 @@ public class IotTelemetryService {
     private Result routeRain(Telemetry t) {
         Double mm = doubleValue(t, "rainfall_mm");
         if (mm == null) {
-            return new Result("rain", t.sourceId(), "rejected", "Valeur 'rainfall_mm' manquante");
+            return new Result("rain", t.sourceId(), "rejected", "Missing 'rainfall_mm' value");
         }
         RainwaterHarvest harvest = new RainwaterHarvest();
         harvest.setSourceId(requireSource(t.sourceId()).getId());
@@ -259,12 +259,12 @@ public class IotTelemetryService {
         harvest.setCaptureDate(t.timestamp() == null ? Instant.now() : t.timestamp());
         RainwaterHarvest saved = rainwaterHarvestService.create(harvest);
         return new Result("rain", t.sourceId(), "processed",
-                "Recolte pluviale enregistree : " + saved.getHarvestedLiters() + " L");
+                "Rainwater harvest recorded: " + saved.getHarvestedLiters() + " L");
     }
 
     private Result routeClogging(Telemetry t) {
         if (t.zoneId() == null) {
-            return new Result("clogging", t.sourceId(), "rejected", "Champ 'zone_id' manquant");
+            return new Result("clogging", t.sourceId(), "rejected", "Missing 'zone_id' field");
         }
         DripMaintenanceLog log = new DripMaintenanceLog();
         log.setZoneId(t.zoneId());
@@ -276,18 +276,18 @@ public class IotTelemetryService {
                 ? String.valueOf(t.values().get("severity")).toLowerCase() : "medium";
         log.setCloggingSeverity(severity);
         log.setEmitterReplacedCount(0);
-        log.setNotes("Detection capteur IoT - debit anormal (" + severity + ")");
-        log.setPerformedBy(t.deviceId() == null ? "Capteur IoT" : t.deviceId());
+        log.setNotes("IoT sensor detection - abnormal flow (" + severity + ")");
+        log.setPerformedBy(t.deviceId() == null ? "IoT sensor" : t.deviceId());
         dripMaintenanceService.create(log);
-        return new Result("clogging", t.zoneId(), "processed", "Colmatage " + severity + " enregistre");
+        return new Result("clogging", t.zoneId(), "processed", "Clogging " + severity + " recorded");
     }
 
     private WaterSource requireSource(UUID sourceId) {
         if (sourceId == null) {
-            throw new IllegalArgumentException("Champ 'source_id' manquant");
+            throw new IllegalArgumentException("Missing 'source_id' field");
         }
         return waterSourceRepository.findById(sourceId)
-                .orElseThrow(() -> new IllegalArgumentException("Source inconnue : " + sourceId));
+                .orElseThrow(() -> new IllegalArgumentException("Unknown source: " + sourceId));
     }
 
     private Double doubleValue(Telemetry t, String key) {

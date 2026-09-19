@@ -33,7 +33,7 @@ export function NotificationsView({ notify }) {
     [notifications, typeFilter],
   )
 
-  // Recherche + pagination côté client.
+  // Client-side search + pagination.
   const list = useListControls(typeFiltered, { searchFields: ['title', 'message', 'type'] })
   const filtered = list.items
 
@@ -42,13 +42,13 @@ export function NotificationsView({ notify }) {
     request()
       .then(() => refetch())
       .then(() => notify(message))
-      .catch((err) => notify(err.message || 'Action impossible.'))
+      .catch((err) => notify(err.message || 'Action failed.'))
       .finally(() => setBusy(false))
   }
 
   const deleteNotification = () => {
     if (!deleteTarget) return
-    run(() => notificationApi.deleteNotification(deleteTarget.id), 'Notification supprimee')
+    run(() => notificationApi.deleteNotification(deleteTarget.id), 'Notification deleted')
     setDeleteTarget(null)
   }
 
@@ -56,7 +56,7 @@ export function NotificationsView({ notify }) {
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Centre de notifications</h1>
+          <h1>Notification center</h1>
           <p>Operational alerts from quality, irrigation and storage checks.</p>
         </div>
       </div>
@@ -64,24 +64,24 @@ export function NotificationsView({ notify }) {
       <div className="ws-panel">
         <div className="ws-panel-header">
           <h2>Notifications</h2>
-          <button className="ws-action-btn secondary" disabled={busy || notifications.length === 0} onClick={() => run(notificationApi.markAllAsRead, 'Notifications marquees comme lues')}>
-            <CheckCheck size={15} /> Tout marquer lu
+          <button className="ws-action-btn secondary" disabled={busy || notifications.length === 0}  onClick={() => run(notificationApi.markAllAsRead, 'Notifications marked as read')}>
+            <CheckCheck size={15} /> Mark all as read
           </button>
         </div>
         <div className="ws-filters">
           <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-            <option value="">Tous les niveaux</option>
+            <option value="">All levels</option>
             {types.map((type) => <option key={type} value={type}>{type}</option>)}
           </select>
-          <SearchInput value={list.query} onChange={list.setQuery} placeholder="Rechercher une notification…" />
+          <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search a notification…" />
         </div>
         <div className="ws-panel-body">
           {loading ? (
-            <Spinner label="Chargement des notifications..." full />
+            <Spinner label="Loading notifications..." full />
           ) : error ? (
-            <EmptyState title="Erreur" description={error.message || 'Impossible de charger.'} />
+            <EmptyState title="Error" description={error.message || 'Unable to load.'} />
           ) : filtered.length === 0 ? (
-            <EmptyState title="Aucune notification" description="Les alertes apparaitront ici." />
+            <EmptyState title="No notifications" description="Alerts will appear here." />
           ) : (
             <div className="ws-summary-list">
               {filtered.map((item) => (
@@ -94,11 +94,11 @@ export function NotificationsView({ notify }) {
                   </div>
                   <div className="ws-actions">
                     {!item.read && (
-                      <button className="ws-icon-btn" title="Marquer comme lu" onClick={() => run(() => notificationApi.markAsRead(item.id), 'Notification marquee comme lue')}>
+                      <button className="ws-icon-btn" title="Mark as read" onClick={() => run(() => notificationApi.markAsRead(item.id), 'Notification marked as read')}>
                         <Check size={15} />
                       </button>
                     )}
-                    <button className="ws-icon-btn danger" title="Supprimer" onClick={() => setDeleteTarget(item)}>
+                    <button className="ws-icon-btn danger" title="Delete" onClick={() => setDeleteTarget(item)}>
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -112,8 +112,8 @@ export function NotificationsView({ notify }) {
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Supprimer la notification"
-          message="Cette notification sera retiree du centre de notifications."
+          title="Delete notification"
+          message="This notification will be removed from the notification center."
           onConfirm={deleteNotification}
           onCancel={() => setDeleteTarget(null)}
           busy={busy}

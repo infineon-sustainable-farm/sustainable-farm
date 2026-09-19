@@ -10,9 +10,9 @@ import { EmptyState } from '../../../../shared/components/EmptyState'
 const DAY_MS = 24 * 3600 * 1000
 
 /**
- * Recuperation d eau de pluie - vue en LECTURE SEULE.
- * Les pluies sont mesurees par le pluviometre (capteur IoT) et les volumes
- * de recolte sont calcules automatiquement par le backend : aucune saisie manuelle.
+ * Rainwater harvesting - READ-ONLY view.
+ * Rainfall is measured by the rain gauge (IoT sensor) and harvest volumes
+ * are computed automatically by the backend: no manual entry.
  */
 export function RainwaterView() {
   const { harvests, loading, error } = useRainwaterHarvests()
@@ -57,27 +57,27 @@ export function RainwaterView() {
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Récupération d'eau de pluie</h1>
-          <p>Pluviometrie mesuree par capteur IoT - volumes de recolte calcules automatiquement.</p>
+          <h1>Rainwater harvesting</h1>
+          <p>Rainfall measured by IoT sensor - harvest volumes computed automatically.</p>
         </div>
       </div>
 
       <div className="ws-metric-banner">
         <div className="ws-metric-pill">
           <div>
-            <div className="label">Période</div>
-            <div className="value">{period === 'all' ? 'Tout historique' : period === 'week' ? 'Dernière semaine' : 'Dernier mois'}</div>
+            <div className="label">Period</div>
+            <div className="value">{period === 'all' ? 'All history' : period === 'week' ? 'Last week' : 'Last month'}</div>
           </div>
         </div>
         <div className="ws-metric-pill">
           <div>
-            <div className="label">Total collecte</div>
+            <div className="label">Total collected</div>
             <div className="value" style={{ color: 'var(--ws-primary-dark)' }}>{Math.round(totalCollected)} L</div>
           </div>
         </div>
         <div className="ws-metric-pill">
           <div>
-            <div className="label">Taux de couverture</div>
+            <div className="label">Coverage rate</div>
             <div className="value">{Math.round(coveragePct)} %</div>
           </div>
         </div>
@@ -86,47 +86,47 @@ export function RainwaterView() {
       <div className="ws-layout-2">
         <div className="ws-panel">
           <div className="ws-panel-header">
-            <h2>Niveau de la cuve</h2>
+            <h2>Tank level</h2>
             <span>{rainSource ? rainSource.name : '-'}</span>
           </div>
           <div className="ws-panel-body">
             <WsRadialGauge value={levelPct} color={levelPct >= 90 ? 'var(--ws-orange)' : 'var(--ws-primary)'} />
             <p style={{ margin: '10px 0 0', fontSize: '12px', color: 'var(--ws-muted)', textAlign: 'center' }}>
-              Niveau mesure par capteur IoT - alerte orange au-dela de 90 pourcent (SC-06).
+              Level measured by IoT sensor - orange alert above 90 percent (SC-06).
             </p>
           </div>
         </div>
 
         <div className="ws-panel">
           <div className="ws-panel-header">
-            <h2>Recolte par evenement de pluie</h2>
+            <h2>Harvest per rain event</h2>
             <div className="ws-switcher">
-              {[['week', 'Semaine'], ['month', 'Mois'], ['all', 'Tout']].map(([item, label]) => (
+              {[['week', 'Week'], ['month', 'Month'], ['all', 'All']].map(([item, label]) => (
                 <button key={item} className={`ws-chip ${period === item ? 'active' : ''}`} onClick={() => setPeriod(item)}>{label}</button>
               ))}
             </div>
           </div>
           <div className="ws-filters">
             <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
-              <option value="">Toutes les sources</option>
+              <option value="">All sources</option>
               {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
             </select>
-            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Rechercher par date..." />
+            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Search by date..." />
           </div>
           <div className="ws-panel-body">
             {loading ? (
-              <Spinner label="Chargement des recoltes..." full />
+              <Spinner label="Loading harvests..." full />
             ) : error ? (
-              <EmptyState title="Erreur" description={error.message || 'Impossible de charger les recoltes.'} />
+              <EmptyState title="Error" description={error.message || 'Unable to load harvests.'} />
             ) : barData.length === 0 ? (
-              <EmptyState title="Aucune recolte" description="Les pluies mesurees par le pluviometre IoT apparaitront ici - volumes calcules automatiquement." />
+              <EmptyState title="No harvest" description="Rainfall measured by the IoT rain gauge will appear here - volumes computed automatically." />
             ) : (
               <>
                 <WsBarChart
                   data={barData}
                   xKey="day"
-                  bars={[{ key: 'collected', name: 'Volume collecte (L)', color: 'var(--ws-primary)' }]}
-                  exportName="recolte-pluviale"
+                  bars={[{ key: 'collected', name: 'Collected volume (L)', color: 'var(--ws-primary)' }]}
+                  exportName="rainwater-harvest"
                 />
                 <table className="ws-table">
                   <thead>
@@ -134,7 +134,7 @@ export function RainwaterView() {
                       <th onClick={() => tableList.toggleSort('captureDate')} style={{ cursor: 'pointer' }}>
                         Date {tableList.sort && tableList.sort.key === 'captureDate' ? (tableList.sort.dir === 'asc' ? '↑' : '↓') : ''}
                       </th>
-                      <th>Volume collecte</th>
+                      <th>Collected volume</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -146,7 +146,7 @@ export function RainwaterView() {
                     ))}
                   </tbody>
                 </table>
-                <Pagination page={tableList.page} pageCount={tableList.pageCount} onPage={tableList.setPage} total={tableList.total} unit="recolte" />
+                <Pagination page={tableList.page} pageCount={tableList.pageCount} onPage={tableList.setPage} total={tableList.total} unit="harvest" />
               </>
             )}
           </div>

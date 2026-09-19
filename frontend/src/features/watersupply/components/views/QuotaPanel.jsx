@@ -6,17 +6,17 @@ import { WsBulletChart } from '../charts'
 import { Spinner } from '../../../../shared/components/Spinner'
 import { EmptyState } from '../../../../shared/components/EmptyState'
 
-/** Libellé et tonalité d'un statut de quota (ok / warning 80 % / exceeded 100 %). */
+/** Label and tone of a quota status (ok / warning 80% / exceeded 100%). */
 function statusTag(status) {
   switch (status) {
-    case 'exceeded': return { label: 'Quota dépassé', tone: 'red' }
-    case 'warning': return { label: '80 % du quota atteint', tone: 'orange' }
-    case 'ok': return { label: 'Sous le quota', tone: 'green' }
-    default: return { label: 'Sans référence', tone: 'primary' }
+    case 'exceeded': return { label: 'Quota exceeded', tone: 'red' }
+    case 'warning': return { label: '80% of quota reached', tone: 'orange' }
+    case 'ok': return { label: 'Under quota', tone: 'green' }
+    default: return { label: 'No baseline', tone: 'primary' }
   }
 }
 
-/** Mois courant au format attendu par l'API (premier jour du mois, YYYY-MM-01). */
+/** Current month in the format expected by the API (first day of the month, YYYY-MM-01). */
 function currentMonthValue() {
   const now = new Date()
   const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -24,9 +24,9 @@ function currentMonthValue() {
 }
 
 /**
- * Quotas mensuels d'eau (P8) : suivi « objectif vs réel » par ferme ou par zone,
- * avec seuils visuels à 80 % et 100 %. Le backend génère en plus une notification
- * automatique (warning puis critical) à chaque franchissement.
+ * Monthly water quotas (P8): "target vs actual" tracking per farm or per zone,
+ * with visual thresholds at 80% and 100%. The backend also generates an automatic
+ * notification (warning then critical) on each threshold crossing.
  */
 export function QuotaPanel({ notify }) {
   const { usage, loading, error, refetch } = useQuotaUsage()
@@ -43,19 +43,19 @@ export function QuotaPanel({ notify }) {
 
   const monthLabel = useMemo(() => {
     const [year, month] = currentMonthValue().split('-')
-    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   }, [])
 
   const submit = (event) => {
     event.preventDefault()
     setFormError(null)
     if (!targetId) {
-      setFormError(targetType === 'farm' ? 'Choisissez une ferme.' : 'Choisissez une zone.')
+      setFormError(targetType === 'farm' ? 'Choose a farm.' : 'Choose a zone.')
       return
     }
     const liters = Number(quotaLiters)
     if (!liters || liters <= 0) {
-      setFormError('Le quota doit être un volume positif (litres).')
+      setFormError('Quota must be a positive volume (liters).')
       return
     }
     setBusy(true)
@@ -64,10 +64,10 @@ export function QuotaPanel({ notify }) {
       .then(() => {
         setQuotaLiters('')
         setTargetId('')
-        notify?.('Quota enregistré.')
+        notify?.('Quota saved.')
         return refetch()
       })
-      .catch((err) => setFormError(err.message || 'Impossible d enregistrer le quota.'))
+      .catch((err) => setFormError(err.message || 'Unable to save the quota.'))
       .finally(() => setBusy(false))
   }
 
@@ -75,26 +75,26 @@ export function QuotaPanel({ notify }) {
     waterQuotaApi
       .deleteQuota(quotaId)
       .then(() => {
-        notify?.('Quota supprimé.')
+        notify?.('Quota deleted.')
         return refetch()
       })
-      .catch((err) => setFormError(err.message || 'Impossible de supprimer le quota.'))
+      .catch((err) => setFormError(err.message || 'Unable to delete the quota.'))
   }
 
   return (
     <div className="ws-panel" style={{ marginTop: '22px' }}>
       <div className="ws-panel-header">
-        <h2>Quotas mensuels d&apos;eau</h2>
+        <h2>Monthly water quotas</h2>
         <span>{monthLabel}</span>
       </div>
       <div className="ws-panel-body">
         <form className="ws-filters ws-quota-form" onSubmit={submit}>
           <select value={targetType} onChange={(event) => { setTargetType(event.target.value); setTargetId('') }}>
-            <option value="farm">Ferme</option>
+            <option value="farm">Farm</option>
             <option value="zone">Zone</option>
           </select>
           <select value={targetId} onChange={(event) => setTargetId(event.target.value)}>
-            <option value="">{targetType === 'farm' ? 'Choisir une ferme...' : 'Choisir une zone...'}</option>
+            <option value="">{targetType === 'farm' ? 'Choose a farm…' : 'Choose a zone…'}</option>
             {targets.map((target) => <option key={target.id} value={target.id}>{target.name}</option>)}
           </select>
           <input type="month" value={quotaMonth.slice(0, 7)} onChange={(event) => setQuotaMonth(`${event.target.value}-01`)} />
@@ -102,24 +102,24 @@ export function QuotaPanel({ notify }) {
             type="number"
             min="1"
             step="1"
-            placeholder="Quota mensuel (L)"
+            placeholder="Monthly quota (L)"
             value={quotaLiters}
             onChange={(event) => setQuotaLiters(event.target.value)}
           />
           <button className="ws-action-btn" type="submit" disabled={busy}>
-            {busy ? 'Enregistrement…' : 'Définir le quota'}
+            {busy ? 'Saving…' : 'Set quota'}
           </button>
         </form>
         {formError && <p className="ws-quota-error" role="alert">{formError}</p>}
 
         {loading ? (
-          <Spinner label="Chargement des quotas..." />
+          <Spinner label="Loading quotas…" />
         ) : error ? (
-          <EmptyState title="Erreur" description={error.message || 'Impossible de charger les quotas.'} />
+          <EmptyState title="Error" description={error.message || 'Unable to load quotas.'} />
         ) : usage.length === 0 ? (
           <EmptyState
-            title="Aucun quota défini"
-            description="Définissez un quota mensuel par ferme ou par zone : la consommation des capteurs sera comparée à cet objectif, avec alerte automatique à 80 % puis à 100 %."
+            title="No quota defined"
+            description="Set a monthly quota per farm or per zone: sensor consumption will be compared with this target, with an automatic alert at 80% then 100%."
           />
         ) : (
           <div className="ws-quota-list">
@@ -131,9 +131,9 @@ export function QuotaPanel({ notify }) {
                 <div className="ws-quota-item" key={item.quota_id}>
                   <div className="ws-quota-head">
                     <strong>
-                      {item.target_name || 'Cible inconnue'}
+                      {item.target_name || 'Unknown target'}
                       <small style={{ marginLeft: '8px', fontWeight: 400, color: 'var(--ws-muted)' }}>
-                        {item.target_type === 'zone' ? 'Zone' : 'Ferme'}
+                        {item.target_type === 'zone' ? 'Zone' : 'Farm'}
                       </small>
                     </strong>
                     <div className="ws-quota-actions">
@@ -141,10 +141,10 @@ export function QuotaPanel({ notify }) {
                       <button
                         type="button"
                         className="ws-quota-delete"
-                        title="Supprimer"
+                        title="Delete"
                         onClick={() => remove(item.quota_id)}
                       >
-                        Supprimer
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -160,10 +160,10 @@ export function QuotaPanel({ notify }) {
                     ]}
                   />
                   <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--ws-muted)' }}>
-                    {Math.round(Number(item.usage_percentage) || 0)} % du quota utilisé
+                    {Math.round(Number(item.usage_percentage) || 0)}% of quota used
                     {Number(item.remaining_liters) < 0
-                      ? ` — dépassement de ${Math.abs(Math.round(Number(item.remaining_liters)))} L`
-                      : ` — reste ${Math.round(Number(item.remaining_liters) || 0)} L`}
+                      ? ` — over by ${Math.abs(Math.round(Number(item.remaining_liters)))} L`
+                      : ` — ${Math.round(Number(item.remaining_liters) || 0)} L left`}
                   </p>
                 </div>
               )

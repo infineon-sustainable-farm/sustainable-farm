@@ -1,75 +1,59 @@
-/**
- * Client API partagé - wrapper autour de fetch pour communiquer avec le backend Spring Boot.
- * Gère automatiquement le token JWT dans le localStorage.
- */
+import axios from "axios";
 
-const API_BASE = '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
-function getToken() {
-  return localStorage.getItem('access_token')
-}
+const instance = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 10000,
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
 
-function setToken(token) {
-  if (token) {
-    localStorage.setItem('access_token', token)
-  } else {
-    localStorage.removeItem('access_token')
-  }
-}
-
-function getHeaders() {
-  const headers = {
-    'Content-Type': 'application/json',
-  }
-  const token = getToken()
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-  return headers
-}
-
-async function request(method, path, body = null) {
-  const options = {
-    method,
-    headers: getHeaders(),
-  }
-  if (body) {
-    options.body = JSON.stringify(body)
-  }
-
-  const response = await fetch(`${API_BASE}${path}`, options)
-
-  if (!response.ok) {
-    // Format d'erreur unifié : { message, code, status } consommé par tout le frontend.
-    let errorData
-    try {
-      errorData = await response.json()
-    } catch {
-      errorData = {}
+instance.interceptors.response.use(
+    (response) => {
+        if (response.status === 204) return { ...response, data: null };
+        return response;
+    },
+    (error) => {
+        const status = error.response?.status;
+        const body = error.response?.data;
+        const apiError = new Error(
+            typeof body === "string" ? body : body?.message || error.message
+        );
+        apiError.status = status;
+        // Readable machine code (NOT_FOUND, METHOD_NOT_ALLOWED, ...) for fine-grained handling.
+        apiError.code = body?.code;
+        apiError.data = body;
+        throw apiError;
     }
-    const error = new Error(
-      errorData.message || errorData.error || errorData.detail || `HTTP ${response.status} ${response.statusText}`,
-    )
-    error.status = response.status
-    error.code = errorData.code || `HTTP_${response.status}`
-    error.data = errorData
-    throw error
-  }
+);
 
-  // Handle empty responses (e.g., 204 No Content)
-  const text = await response.text()
-  if (!text) {
-    return null
-  }
-  return JSON.parse(text)
+// JWT token: kept for the useAuth hook and future protected routes.
+const TOKEN_KEY = "access_token";
+
+export function getToken() {
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token) {
+    if (token) {
+        localStorage.setItem(TOKEN_KEY, token);
+    } else {
+        localStorage.removeItem(TOKEN_KEY);
+    }
 }
 
 export const apiClient = {
-  get: (path) => request('GET', path),
-  post: (path, body) => request('POST', path, body),
-  put: (path, body) => request('PUT', path, body),
-  delete: (path) => request('DELETE', path),
-  patch: (path, body) => request('PATCH', path, body),
-}
-
-export { getToken, setToken }
+    get: (endpoint, config) =>
+        instance.get(endpoint, config).then((r) => r.data),
+    post: (endpoint, data, config) =>
+        instance.post(endpoint, data, config).then((r) => r.data),
+    // Used by the watersupply module updates (PUT /api/.../{id}).
+    put: (endpoint, data, config) =>
+        instance.put(endpoint, data, config).then((r) => r.data),
+    patch: (endpoint, data, config) =>
+        instance.patch(endpoint, data, config).then((r) => r.data),
+    delete: (endpoint, config) =>
+        instance.delete(endpoint, config).then((r) => r.data),
+};

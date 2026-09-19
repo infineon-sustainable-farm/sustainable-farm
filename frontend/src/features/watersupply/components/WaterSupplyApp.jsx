@@ -1,5 +1,5 @@
 import { cloneElement, useState } from 'react'
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import '../watersupply.css'
 import { DashboardView } from './views/DashboardView'
 import { IrrigationView } from './views/IrrigationView'
@@ -12,18 +12,18 @@ import { FarmsView } from './views/FarmsView'
 import { SourcesView } from './views/SourcesView'
 import { NotificationsView } from './views/NotificationsView'
 
-// Chaque vue possède une URL directe (ex. /watersupply/consommation) — voir App.jsx.
+// Each view has a direct URL (e.g. /consumption) - see routes.jsx.
 const NAV_ITEMS = [
-  { id: 'dashboard', path: '', label: 'Tableau de bord', section: null, element: <DashboardView /> },
-  { id: 'farms', path: 'fermes', label: 'Fermes & Champs', section: 'Gestion des données', element: <FarmsView /> },
-  { id: 'sources', path: 'sources', label: "Sources d'eau", section: 'Gestion des données', element: <SourcesView /> },
-  { id: 'irrigation', path: 'irrigation', label: "Planification d'irrigation", section: 'Planification de l’eau', element: <IrrigationView /> },
-  { id: 'consumption', path: 'consommation', label: 'Suivi consommation', section: 'Planification de l’eau', element: <ConsumptionView /> },
-  { id: 'rainwater', path: 'pluvial', label: 'Récupération pluviale', section: 'Planification de l’eau', element: <RainwaterView /> },
-  { id: 'drip', path: 'goutte-a-goutte', label: 'Maintenance', section: 'Planification de l’eau', element: <DripView /> },
-  { id: 'quality', path: 'qualite', label: 'Qualité de l’eau', section: 'Planification de l’eau', element: <QualityView /> },
-  { id: 'drought', path: 'secheresse', label: 'Alertes sécheresse', section: 'Planification de l’eau', element: <DroughtView /> },
-  { id: 'notifications', path: 'notifications', label: 'Notifications', section: 'Opérations', element: <NotificationsView /> },
+  { id: 'dashboard', path: '', label: 'Dashboard', section: null, element: <DashboardView /> },
+  { id: 'farms', path: 'farms', label: 'Farms & Fields', section: 'Data management', element: <FarmsView /> },
+  { id: 'sources', path: 'sources', label: 'Water sources', section: 'Data management', element: <SourcesView /> },
+  { id: 'irrigation', path: 'irrigation', label: 'Irrigation planning', section: 'Water planning', element: <IrrigationView /> },
+  { id: 'consumption', path: 'consumption', label: 'Consumption tracking', section: 'Water planning', element: <ConsumptionView /> },
+  { id: 'rainwater', path: 'rainwater', label: 'Rainwater harvesting', section: 'Water planning', element: <RainwaterView /> },
+  { id: 'drip', path: 'maintenance', label: 'Maintenance', section: 'Water planning', element: <DripView /> },
+  { id: 'quality', path: 'quality', label: 'Water quality', section: 'Water planning', element: <QualityView /> },
+  { id: 'drought', path: 'drought', label: 'Drought alerts', section: 'Water planning', element: <DroughtView /> },
+  { id: 'notifications', path: 'notifications', label: 'Notifications', section: 'Operations', element: <NotificationsView /> },
 ]
 
 const ICONS = {
@@ -145,12 +145,9 @@ export function WaterSupplyApp() {
 
       <main className="ws-main">
         <div className="ws-view active">
-          <Routes>
-            {NAV_ITEMS.map((item) => (
-              <Route key={item.id} path={item.path === '' ? '/' : item.path} element={renderView(item)} />
-            ))}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          {/* Direct render of the active view (derived from the URL): no nested <Routes>,
+              whose matching breaks at the root under a parent splat route. */}
+          {activeItem ? renderView(activeItem) : <Navigate to="/" replace />}
         </div>
       </main>
 

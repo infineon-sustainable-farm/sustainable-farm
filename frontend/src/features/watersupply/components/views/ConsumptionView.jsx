@@ -23,9 +23,9 @@ function groupDailySeries(consumptions) {
 }
 
 /**
- * Suivi de la consommation — vue en LECTURE SEULE.
- * Les volumes sont mesurés par les capteurs IoT et remontés automatiquement :
- * aucune saisie manuelle (pas de création/modification/suppression côté UI).
+ * Consumption tracking — READ-ONLY view.
+ * Volumes are measured by IoT sensors and reported automatically:
+ * no manual entry (no create/edit/delete in the UI).
  */
 export function ConsumptionView({ notify }) {
   const { consumptions, loading, error } = useWaterConsumptions()
@@ -36,12 +36,12 @@ export function ConsumptionView({ notify }) {
   const [sourceFilter, setSourceFilter] = useState('')
   const [exporting, setExporting] = useState(false)
 
-  // Export serveur du rapport de consommation (CSV, periode courante) — P10.
+  // Server-side export of the consumption report (CSV, current period) — P10.
   const exportReport = () => {
     setExporting(true)
     downloadCsv('consumption', period === 'all' ? 'month' : period)
-      .then(() => notify?.('Rapport CSV téléchargé.'))
-      .catch((err) => notify?.(err.message || 'Export impossible.'))
+      .then(() => notify?.('CSV report downloaded.'))
+      .catch((err) => notify?.(err.message || 'Export failed.'))
       .finally(() => setExporting(false))
   }
 
@@ -51,7 +51,7 @@ export function ConsumptionView({ notify }) {
     return true
   }), [consumptions, farmFilter, sourceFilter])
 
-  // Recherche + tri + pagination pour la table (le graphique reste sur les données filtrées).
+  // Search + sort + pagination for the table (the chart stays on the filtered data).
   const tableList = useListControls(filteredConsumptions, {
     searchFields: ['consumptionDate', 'createdAt'],
     defaultSort: { key: 'consumptionDate', dir: 'desc' },
@@ -85,26 +85,26 @@ export function ConsumptionView({ notify }) {
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Suivi de la consommation</h1>
-          <p>Mesures remontees automatiquement par les capteurs IoT - comparees a la reference theorique.</p>
+          <h1>Consumption tracking</h1>
+          <p>Measurements reported automatically by IoT sensors - compared with the theoretical baseline.</p>
         </div>
       </div>
 
       <div className="ws-metric-banner">
         <div className="ws-metric-pill">
           <div>
-            <div className="label">Période sélectionnée</div>
-            <div className="value">{period === 'all' ? 'Tout historique' : period === 'week' ? 'Dernière semaine' : 'Dernier mois'}</div>
+            <div className="label">Selected period</div>
+            <div className="value">{period === 'all' ? 'All history' : period === 'week' ? 'Last week' : 'Last month'}</div>
           </div>
         </div>
         <div className="ws-metric-pill">
           <div>
-            <div className="label">Total consomme</div>
+            <div className="label">Total consumed</div>
             <div className="value" style={{ color: 'var(--ws-primary-dark)' }}>{totalLiters} L</div>
           </div>
         <div className="ws-metric-pill">
           <div>
-            <div className="label">Pic</div>
+            <div className="label">Peak</div>
             <div className="value">{peakDay ? `${peakDay.day.slice(5)} - ${peakDay.liters} L` : '-'}</div>
           </div>
         </div>
@@ -114,54 +114,54 @@ export function ConsumptionView({ notify }) {
       <div className="ws-layout-2">
         <div className="ws-panel">
           <div className="ws-panel-header">
-            <h2>Consommation dans le temps</h2>
+            <h2>Consumption over time</h2>
             <div className="ws-switcher">
-              {[['week', 'Semaine'], ['month', 'Mois'], ['all', 'Tout']].map(([item, label]) => (
+              {[['week', 'Week'], ['month', 'Month'], ['all', 'All']].map(([item, label]) => (
                 <button key={item} className={`ws-chip ${period === item ? 'active' : ''}`} onClick={() => setPeriod(item)}>
                   {label}
                 </button>
               ))}
-              <button className="ws-chip" onClick={exportReport} disabled={exporting} title="Télécharger le rapport de consommation (CSV)">
-                {exporting ? 'Export…' : 'Rapport CSV'}
+              <button className="ws-chip" onClick={exportReport} disabled={exporting} title="Download the consumption report (CSV)">
+                {exporting ? 'Exporting…' : 'CSV report'}
               </button>
             </div>
           </div>
           <div className="ws-panel-body">
             {loading ? (
-              <Spinner label="Chargement des consommations..." />
+              <Spinner label="Loading consumptions…" />
             ) : error ? (
-              <EmptyState title="Erreur" description={error.message || 'Impossible de charger les données.'} />
+              <EmptyState title="Error" description={error.message || 'Unable to load data.'} />
             ) : series.length === 0 ? (
-              <EmptyState title="Aucune consommation" description="Les mesures des capteurs IoT apparaitront ici des leur remontee." />
+              <EmptyState title="No consumption" description="IoT sensor measurements will appear here as soon as they are reported." />
             ) : (
               <WsAreaChart
                 data={series}
                 xKey="day"
                 series={[{ key: 'liters', name: 'Volume (L)', color: C.primary }]}
-                exportName="consommation-eau"
+                exportName="water-consumption"
               />
             )}
           </div>
         </div>
 
         <div className="ws-panel">
-          <div className="ws-panel-header"><h2>Historique des mesures</h2><span>{tableList.total} mesure(s)</span></div>
+          <div className="ws-panel-header"><h2>Measurement history</h2><span>{tableList.total} measurement(s)</span></div>
           <div className="ws-filters">
             <select value={farmFilter} onChange={(event) => setFarmFilter(event.target.value)}>
-              <option value="">Toutes les fermes</option>
+              <option value="">All farms</option>
               {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
             </select>
             <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
-              <option value="">Toutes les sources</option>
+              <option value="">All sources</option>
               {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
             </select>
-            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Rechercher par date..." />
+            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Search by date…" />
           </div>
           <div className="ws-panel-body">
             {loading ? (
-              <Spinner label="Chargement des mesures..." />
+              <Spinner label="Loading measurements…" />
             ) : filteredConsumptions.length === 0 ? (
-              <EmptyState title="Aucune consommation enregistree" description="Les volumes sont mesures par les capteurs IoT et remontent automatiquement - aucune saisie manuelle." />
+              <EmptyState title="No recorded consumption" description="Volumes are measured by IoT sensors and reported automatically - no manual entry." />
             ) : (
               <table className="ws-table">
                 <thead>
@@ -182,7 +182,7 @@ export function ConsumptionView({ notify }) {
                 </tbody>
               </table>
             )}
-            <Pagination page={tableList.page} pageCount={tableList.pageCount} onPage={tableList.setPage} total={tableList.total} unit="mesure" />
+            <Pagination page={tableList.page} pageCount={tableList.pageCount} onPage={tableList.setPage} total={tableList.total} unit="measurement" />
           </div>
         </div>
       </div>

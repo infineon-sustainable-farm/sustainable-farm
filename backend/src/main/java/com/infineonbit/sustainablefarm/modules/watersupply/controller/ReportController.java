@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Generation de rapports exportables (TXT) pour l'analyse et le partage.
+ * Generates exportable (TXT) reports for analysis and sharing.
  */
 @RestController
 @RequestMapping("/api/reports")
@@ -54,7 +54,7 @@ public class ReportController {
         return new InstantPeriod(start.atStartOfDay().toInstant(ZoneOffset.UTC), today.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
     }
 
-    /** Date de génération du rapport : toujours l'instant courant (corrige un bug B4 où la date était figée au démarrage). */
+    /** Date of report generation: always the current instant (fixes a B4 bug where the date was frozen at startup). */
     private Instant reportGeneratedAt() {
         return Instant.now();
     }
@@ -74,10 +74,10 @@ public class ReportController {
                 .sum();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("=== RAPPORT DE CONSOMMATION D'EAU ===\n");
-        sb.append("Periode : ").append(period).append("\n");
-        sb.append("Genere le : ").append(reportGeneratedAt()).append("\n\n");
-        sb.append("Date | Source | Litres\n");
+        sb.append("=== WATER CONSUMPTION REPORT ===\n");
+        sb.append("Period: ").append(period).append("\n");
+        sb.append("Generated at: ").append(reportGeneratedAt()).append("\n\n");
+        sb.append("Date | Source | Liters\n");
         sb.append("--------------------------------\n");
         for (WaterConsumption c : consumptions) {
             sb.append(c.getConsumptionDate()).append(" | ")
@@ -85,7 +85,7 @@ public class ReportController {
               .append(c.getConsumptionLiters()).append(" L\n");
         }
         sb.append("--------------------------------\n");
-        sb.append("TOTAL : ").append(String.format("%.2f", total)).append(" L\n");
+        sb.append("TOTAL: ").append(String.format("%.2f", total)).append(" L\n");
 
         return txt("consumption-report-" + period + ".txt", sb.toString());
     }
@@ -104,10 +104,10 @@ public class ReportController {
                 .sum();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("=== RAPPORT D'IRRIGATION ===\n");
-        sb.append("Periode : ").append(period).append("\n");
-        sb.append("Genere le : ").append(reportGeneratedAt()).append("\n\n");
-        sb.append("Zone | Debut | Duree | Volume | Statut\n");
+        sb.append("=== IRRIGATION REPORT ===\n");
+        sb.append("Period: ").append(period).append("\n");
+        sb.append("Generated at: ").append(reportGeneratedAt()).append("\n\n");
+        sb.append("Zone | Start | Duration | Volume | Status\n");
         sb.append("-------------------------------------------\n");
         for (var s : schedules) {
             sb.append(s.getZoneId()).append(" | ")
@@ -117,7 +117,7 @@ public class ReportController {
               .append(s.getStatus()).append("\n");
         }
         sb.append("-------------------------------------------\n");
-        sb.append("VOLUME PLANIFIE : ").append(String.format("%.2f", planned)).append(" L\n");
+        sb.append("PLANNED VOLUME: ").append(String.format("%.2f", planned)).append(" L\n");
 
         return txt("irrigation-report-" + period + ".txt", sb.toString());
     }
@@ -130,18 +130,18 @@ public class ReportController {
                 .toList();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("=== RAPPORT DE QUALITE DE L'EAU ===\n");
-        sb.append("Genere le : ").append(reportGeneratedAt()).append("\n\n");
-        sb.append("Source | pH | Turbidite | Statut\n");
+        sb.append("=== WATER QUALITY REPORT ===\n");
+        sb.append("Generated at: ").append(reportGeneratedAt()).append("\n\n");
+        sb.append("Source | pH | Turbidity | Status\n");
         sb.append("------------------------------------\n");
         for (WaterQualityTest t : tests) {
             boolean phOut = t.getPh() != null && (t.getPh() < 6.0 || t.getPh() > 7.5);
             boolean turb = t.getTurbidityNtu() != null && t.getTurbidityNtu() > 5.0;
-            String statut = (phOut || turb) ? "NON-CONFORME" : "Conforme";
+            String status = (phOut || turb) ? "NON-COMPLIANT" : "Compliant";
             sb.append(t.getSourceId()).append(" | ")
               .append(t.getPh()).append(" | ")
               .append(t.getTurbidityNtu()).append(" NTU | ")
-              .append(statut).append("\n");
+              .append(status).append("\n");
         }
 
         return txt("quality-report.txt", sb.toString());
@@ -157,8 +157,8 @@ public class ReportController {
     // ==================== P10 : Exports CSV ====================
 
     /**
-     * Export CSV des consommations de la periode (columns : date, source_id, litres, farm_id).
-     * Format preuve pour le suivi des economies d'eau : reimportable dans un tableur.
+     * Export CSV of the period's water consumptions (columns: date, source_id, liters, farm_id).
+     * Evidence format for tracking water savings: re-importable into a spreadsheet.
      */
     @GetMapping("/consumption/csv")
     public ResponseEntity<byte[]> consumptionCsv(@RequestParam(defaultValue = "month") String period) {
@@ -182,11 +182,11 @@ public class ReportController {
                     string(c.getFarmId()) });
         }
         rows.add(new String[] { "TOTAL", "", formatFr(total), "" });
-        return csv("consommation-" + period + ".csv",
-                new String[] { "date", "source_id", "litres", "farm_id" }, rows);
+        return csv("consumption-" + period + ".csv",
+                new String[] { "date", "source_id", "liters", "farm_id" }, rows);
     }
 
-    /** Export CSV des irrigations planifiees de la periode. */
+    /** Export CSV of the planned irrigations for the period. */
     @GetMapping("/irrigation/csv")
     public ResponseEntity<byte[]> irrigationCsv(@RequestParam(defaultValue = "month") String period) {
         var range = period(period);
@@ -209,12 +209,12 @@ public class ReportController {
                     String.valueOf(liters),
                     string(s.getStatus()) });
         }
-        rows.add(new String[] { "TOTAL PLANIFIE", "", "", formatFr(planned), "" });
+        rows.add(new String[] { "PLANNED TOTAL", "", "", formatFr(planned), "" });
         return csv("irrigation-" + period + ".csv",
-                new String[] { "debut", "zone_id", "duree_min", "litres", "statut" }, rows);
+                new String[] { "start", "zone_id", "duration_min", "liters", "status" }, rows);
     }
 
-    /** Export CSV des tests de qualite de l'eau (toutes periodes). */
+    /** Export CSV of the water quality tests (all periods). */
     @GetMapping("/quality/csv")
     public ResponseEntity<byte[]> qualityCsv() {
         List<WaterQualityTest> tests = waterQualityTestRepository.findAll().stream()
@@ -231,15 +231,15 @@ public class ReportController {
                     string(t.getSourceId()),
                     t.getPh() == null ? "" : formatFr(t.getPh()),
                     t.getTurbidityNtu() == null ? "" : formatFr(t.getTurbidityNtu()),
-                    (phOut || turb) ? "NON-CONFORME" : "Conforme" });
+                    (phOut || turb) ? "NON-COMPLIANT" : "Compliant" });
         }
-        return csv("qualite-eau.csv",
-                new String[] { "date", "source_id", "ph", "turbidite_ntu", "statut" }, rows);
+        return csv("quality-water.csv",
+                new String[] { "date", "source_id", "ph", "turbidity_ntu", "status" }, rows);
     }
 
     /**
-     * Genere la reponse CSV (separateur point-virgule, compatible Excel FR ; BOM UTF-8 pour
-     * l'ouverture directe avec les accents corrects).
+     * Builds the CSV response (semicolon separator, FR Excel compatible; UTF-8 BOM so the file
+     * opens directly with correct characters).
      */
     private ResponseEntity<byte[]> csv(String filename, String[] headers, List<String[]> rows) {
         StringJoiner joiner = new StringJoiner("\r\n");
@@ -261,7 +261,7 @@ public class ReportController {
                 .body(withBom);
     }
 
-    /** Echappe une ligne CSV (guillemets, separateur, retours ligne). */
+    /** Escapes a CSV row (quotes, separator, line breaks). */
     private String encodeCsvRow(String[] cells) {
         StringJoiner row = new StringJoiner(";");
         for (String cell : cells) {
@@ -273,12 +273,12 @@ public class ReportController {
         return row.toString();
     }
 
-    /** Valeur textuelle tolérante (null -> cellule vide) pour les colonnes CSV non numériques. */
+    /** Tolerant textual value (null -> empty cell) for the non-numeric CSV columns. */
     private String string(Object value) {
         return value == null ? "" : value.toString();
     }
 
-    /** Formate un nombre avec la virgule decimale Francaise (tableurs FR). */
+    /** Formats a number with the French decimal comma (FR spreadsheets). */
     private String formatFr(double value) {
         return String.format(java.util.Locale.FRANCE, "%.2f", value);
     }

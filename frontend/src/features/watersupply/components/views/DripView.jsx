@@ -24,7 +24,7 @@ function severityTag(severity) {
 }
 
 /**
- * Vue Goutte-à-goutte : interventions de maintenance (CRUD complet).
+ * Drip view: maintenance interventions (full CRUD).
  * Contrat backend : DripMaintenanceLog { zoneId, maintenanceDate, maintenanceType,
  * filterCleaned, cloggingDetected, cloggingSeverity, emitterReplacedCount, notes, performedBy }.
  */
@@ -49,7 +49,7 @@ export function DripView({ notify }) {
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
 
-  // Filtre basé sur la date max des données (fonction pure — pas de Date.now() pendant le rendu).
+  // Filter based on the max data date (pure function - no Date.now() during render).
   const maxDateMs = useMemo(() => {
     let max = 0
     for (const item of logs) {
@@ -61,15 +61,15 @@ export function DripView({ notify }) {
 
   const zoneFiltered = useMemo(() => {
     let list = logs.filter((item) => !zoneFilter || item.zoneId === zoneFilter)
-    if (period !== 'tout') {
-      const days = period === 'semaine' ? 7 : 30
+    if (period !== 'all') {
+      const days = period === 'week' ? 7 : 30
       const cutoff = maxDateMs - days * DAY_MS
       list = list.filter((item) => new Date(item.maintenanceDate || item.createdAt).getTime() >= cutoff)
     }
     return list
   }, [logs, zoneFilter, period, maxDateMs])
 
-  // Recherche + tri + pagination côté client (tri par date décroissante par défaut).
+  // Client-side search + sort + pagination (sort by date desc by default).
   const list = useListControls(zoneFiltered, {
     searchFields: ['maintenanceType', 'notes', 'performedBy'],
     defaultSort: { key: 'maintenanceDate', dir: 'desc' },
@@ -106,11 +106,11 @@ export function DripView({ notify }) {
   const submitLog = (event) => {
     event.preventDefault()
     if (!form.zoneId) {
-      setFormError('La zone est obligatoire.')
+      setFormError('The zone is required.')
       return
     }
     if (!form.maintenanceDate) {
-      setFormError("La date d'intervention est obligatoire.")
+      setFormError("The intervention date is required.")
       return
     }
     setBusy(true)
@@ -130,10 +130,10 @@ export function DripView({ notify }) {
     request
       .then(() => refetch())
       .then(() => {
-        notify(editingId ? 'Intervention mise à jour' : 'Intervention enregistrée')
+        notify(editingId ? 'Intervention updated' : 'Intervention saved')
         resetForm()
       })
-      .catch((err) => setFormError(err.message || 'Enregistrement impossible.'))
+      .catch((err) => setFormError(err.message || 'Unable to save.'))
       .finally(() => setBusy(false))
   }
 
@@ -160,10 +160,10 @@ export function DripView({ notify }) {
       .deleteLog(deleteTarget.id)
       .then(() => refetch())
       .then(() => {
-        notify('Intervention supprimée')
+        notify('Intervention deleted')
         setDeleteTarget(null)
       })
-      .catch((err) => setFormError(err.message || 'Suppression impossible.'))
+      .catch((err) => setFormError(err.message || 'Unable to delete.'))
       .finally(() => setBusy(false))
   }
 
@@ -171,8 +171,8 @@ export function DripView({ notify }) {
     <>
       <div className="ws-topbar">
         <div className="ws-title-block">
-          <h1>Maintenance </h1>
-          <p>Suivi des interventions et planification de l'entretien des émetteurs.</p>
+          <h1>Maintenance</h1>
+          <p>Track interventions and plan emitter upkeep.</p>
         </div>
       </div>
 
@@ -180,27 +180,27 @@ export function DripView({ notify }) {
         <div className="ws-stack">
           <div className="ws-panel">
             <div className="ws-panel-header">
-              <h2>Historique des interventions</h2>
+              <h2>Intervention history</h2>
               <div className="ws-switcher">
-                {['semaine', 'mois', 'tout'].map((item) => (
+                {['week', 'month', 'all'].map((item) => (
                   <button key={item} className={`ws-chip ${period === item ? 'active' : ''}`} onClick={() => setPeriod(item)}>{item}</button>
                 ))}
               </div>
             </div>
             <div className="ws-filters">
               <select value={zoneFilter} onChange={(event) => setZoneFilter(event.target.value)}>
-                <option value="">Toutes les zones</option>
+                <option value="">All zones</option>
                 {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
               </select>
-              <SearchInput value={list.query} onChange={list.setQuery} placeholder="Rechercher une intervention…" />
+              <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search an intervention…" />
             </div>
             <div className="ws-panel-body">
               {loading ? (
-                <Spinner label="Chargement des interventions..." full />
+                <Spinner label="Loading interventions..." full />
               ) : error ? (
-                <EmptyState title="Erreur" description={error.message || 'Impossible de charger les interventions.'} />
+                <EmptyState title="Error" description={error.message || 'Unable to load interventions.'} />
               ) : filtered.length === 0 ? (
-                <EmptyState title="Aucune intervention" description="Enregistrez une intervention de maintenance pour démarrer l'historique." />
+                <EmptyState title="No interventions" description="Record a maintenance intervention to start the history." />
               ) : (
                 <table className="ws-table">
                   <thead>
@@ -212,8 +212,8 @@ export function DripView({ notify }) {
                       <th onClick={() => list.toggleSort('maintenanceType')} style={{ cursor: 'pointer' }}>
                         Type {list.sort?.key === 'maintenanceType' ? (list.sort.dir === 'asc' ? '↑' : '↓') : ''}
                       </th>
-                      <th>État</th>
-                      <th>Émetteurs</th>
+                      <th>State</th>
+                      <th>Emitters</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -225,15 +225,15 @@ export function DripView({ notify }) {
                         <td>{item.maintenanceType || '—'}</td>
                         <td>
                           {item.cloggingDetected ? (
-                            <span className={`ws-tag ${severityTag(item.cloggingSeverity)}`}>Colmatage {item.cloggingSeverity || ''}</span>
+                            <span className={`ws-tag ${severityTag(item.cloggingSeverity)}`}>Clogging {item.cloggingSeverity || ''}</span>
                           ) : (
                             <span className="ws-tag green">OK</span>
                           )}
                         </td>
                         <td>{item.emitterReplacedCount ?? 0}</td>
                         <td className="ws-table-actions">
-                          <button className="ws-chip" onClick={() => editLog(item)}>Modifier</button>
-                          <button className="ws-icon-btn danger" title="Supprimer" onClick={() => setDeleteTarget(item)}>
+                          <button className="ws-chip" onClick={() => editLog(item)}>Edit</button>
+                          <button className="ws-icon-btn danger" title="Delete" onClick={() => setDeleteTarget(item)}>
                             <Trash2 size={14} />
                           </button>
                         </td>
@@ -246,15 +246,15 @@ export function DripView({ notify }) {
             </div>
           </div>
           <div className="ws-panel">
-            <div className="ws-panel-header"><h2>Planning de maintenance</h2></div>
+            <div className="ws-panel-header"><h2>Maintenance planning</h2></div>
             <div className="ws-panel-body">
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--ws-muted)', lineHeight: 1.6 }}>
-                Recommandation : contrôlez les filtres chaque semaine et remplacez les émetteurs colmatés.
+                Recommended: check filters weekly and replace clogged emitters.
                 {(() => {
                   const recent = logs
                     .filter((item) => new Date(item.maintenanceDate || item.createdAt).getTime() >= maxDateMs - 7 * DAY_MS)
                     .length
-                  return ` ${recent} intervention(s) sur les 7 derniers jours (relatif à la dernière donnée).`
+                  return ` ${recent} intervention(s) in the last 7 days (relative to the latest data).`
                 })()}
               </p>
             </div>
@@ -262,7 +262,7 @@ export function DripView({ notify }) {
         </div>
         <div className="ws-panel">
           <div className="ws-panel-header">
-            <h2>{editingId ? "Modifier l'intervention" : 'Nouvelle intervention'}</h2>
+            <h2>{editingId ? 'Edit intervention' : 'New intervention'}</h2>
             <Plus size={16} />
           </div>
           <div className="ws-panel-body">
@@ -274,46 +274,46 @@ export function DripView({ notify }) {
                   {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
                 </select>
               </FormField>
-              <FormField label="Type d'intervention" required>
+              <FormField label="Intervention type" required>
                 <select style={inputStyle} value={form.maintenanceType} onChange={updateForm('maintenanceType')} required>
                   {MAINTENANCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                 </select>
               </FormField>
-              <FormField label="Date d'intervention" required>
+              <FormField label="Intervention date" required>
                 <input style={inputStyle} type="datetime-local" value={form.maintenanceDate} onChange={updateForm('maintenanceDate')} required />
               </FormField>
-              <FormField label="Filtre nettoyé">
+              <FormField label="Filter cleaned">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                  <input type="checkbox" checked={form.filterCleaned} onChange={updateForm('filterCleaned')} /> Oui
+                  <input type="checkbox" checked={form.filterCleaned} onChange={updateForm('filterCleaned')} /> Yes
                 </label>
               </FormField>
-              <FormField label="Colmatage détecté">
+              <FormField label="Clogging detected">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                  <input type="checkbox" checked={form.cloggingDetected} onChange={updateForm('cloggingDetected')} /> Oui
+                  <input type="checkbox" checked={form.cloggingDetected} onChange={updateForm('cloggingDetected')} /> Yes
                 </label>
               </FormField>
               {form.cloggingDetected && (
-                <FormField label="Gravité du colmatage">
+                <FormField label="Clogging severity">
                   <select style={inputStyle} value={form.cloggingSeverity} onChange={updateForm('cloggingSeverity')}>
-                    <option value="">Sélectionner</option>
-                    <option value="low">Faible</option>
-                    <option value="medium">Moyenne</option>
-                    <option value="high">Élevée</option>
+                    <option value="">Select</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                   </select>
                 </FormField>
               )}
-              <FormField label="Émetteurs remplacés">
+              <FormField label="Emitters replaced">
                 <input style={inputStyle} type="number" min="0" step="1" value={form.emitterReplacedCount} onChange={updateForm('emitterReplacedCount')} />
               </FormField>
-              <FormField label="Effectué par">
+              <FormField label="Performed by">
                 <input style={inputStyle} value={form.performedBy} onChange={updateForm('performedBy')} />
               </FormField>
               <FormField label="Notes">
                 <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} value={form.notes} onChange={updateForm('notes')} />
               </FormField>
               <div className="ws-form-actions">
-                {editingId && <button type="button" className="ws-chip" onClick={resetForm}>Annuler</button>}
-                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Enregistrer'}</button>
+                {editingId && <button type="button" className="ws-chip" onClick={resetForm}>Cancel</button>}
+                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Save'}</button>
               </div>
             </form>
           </div>
@@ -321,8 +321,8 @@ export function DripView({ notify }) {
       </div>
       {deleteTarget && (
         <ConfirmDialog
-          title="Supprimer l'intervention"
-          message="Cette intervention sera retirée de l'historique de maintenance."
+          title="Delete intervention"
+          message="This intervention will be removed from the maintenance history."
           onConfirm={deleteLog}
           onCancel={() => setDeleteTarget(null)}
           busy={busy}

@@ -235,7 +235,7 @@ public class WaterEconomyService {
         response.put("reserve_level_percentage",
                 capacity <= 0 ? 0 : Math.round((currentLevel / capacity) * 100));
         response.put("unbalanced_liters", Math.round(unbalanced));
-        response.put("balance_status", capacity <= 0 ? "inconnu"
+        response.put("balance_status", capacity <= 0 ? "unknown"
                 : (currentLevel / capacity) >= 0.30 ? "equilibre" : "deficit");
         return response;
     }

@@ -48,15 +48,15 @@ public class WaterNeedService {
         };
     }
 
-    /** Libelle lisible du mode d'irrigation (utilise dans l'interface et les messages). */
+    /** Readable label of the irrigation method (used in the UI and messages). */
     public String methodLabel(Zone zone) {
         String method = zone == null || zone.getIrrigationMethod() == null
                 ? "" : zone.getIrrigationMethod().trim().toLowerCase();
         return switch (method) {
-            case "drip", "goutte-a-goutte", "goutte", "goutte a goutte" -> "goutte-à-goutte";
-            case "sprinkler", "aspersion" -> "aspersion";
-            case "gravity", "gravitaire", "flood", "submersion" -> "gravitaire";
-            default -> "non précisé";
+            case "drip", "goutte-a-goutte", "goutte", "goutte a goutte" -> "drip";
+            case "sprinkler", "aspersion" -> "sprinkler";
+            case "gravity", "gravitaire", "flood", "submersion" -> "gravity";
+            default -> "not specified";
         };
     }
 

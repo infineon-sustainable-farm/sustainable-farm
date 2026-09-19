@@ -19,8 +19,8 @@ vi.mock('../../api/watersupplyApi', () => ({
 }))
 
 vi.mock('../../hooks/useFarms', () => ({
-  useFarms: () => ({ farms: [{ id: 'farm-1', name: 'Ferme Nord' }] }),
-  useZones: () => ({ zones: [{ id: 'zone-1', name: 'Zone Sud' }] }),
+  useFarms: () => ({ farms: [{ id: 'farm-1', name: 'North Farm' }] }),
+  useZones: () => ({ zones: [{ id: 'zone-1', name: 'South Zone' }] }),
 }))
 
 vi.mock('../charts', () => ({
@@ -36,49 +36,49 @@ const CONSUMPTIONS = [
 beforeEach(() => {
   vi.clearAllMocks()
   waterConsumptionApi.getConsumptions.mockResolvedValue([...CONSUMPTIONS])
-  waterSourceApi.getSources.mockResolvedValue([{ id: 'src-1', farmId: 'farm-1', name: 'Forage A' }])
+  waterSourceApi.getSources.mockResolvedValue([{ id: 'src-1', farmId: 'farm-1', name: 'Borehole A' }])
   waterQuotaApi.getUsage.mockResolvedValue([])
 })
 
 const props = { initials: 'YN' }
 
-describe('ConsumptionView (lecture seule - capteurs IoT)', () => {
-  it('affiche les consommations et le graphique', async () => {
+describe('ConsumptionView (read-only - IoT sensors)', () => {
+  it('displays the consumptions and the chart', async () => {
     render(<ConsumptionView {...props} />)
 
     await waitFor(() => expect(screen.getByTestId('area-chart')).toBeTruthy())
     expect(screen.getAllByText('150 L').length).toBeGreaterThan(0)
-    expect(screen.getByText('Pic')).toBeTruthy()
+    expect(screen.getByText('Peak')).toBeTruthy()
   })
 
-  it('affiche un état vide avec une base vide', async () => {
+  it('displays an empty state with an empty database', async () => {
     waterConsumptionApi.getConsumptions.mockResolvedValue([])
 
     render(<ConsumptionView {...props} />)
 
-    await waitFor(() => expect(screen.getByText('Aucune consommation')).toBeTruthy())
-    expect(screen.getAllByText(/capteurs IoT/).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getByText('No consumption')).toBeTruthy())
+    expect(screen.getAllByText(/IoT sensor/).length).toBeGreaterThan(0)
   })
 
-  it('n expose aucune saisie de consommation (données capteurs)', async () => {
+  it('exposes no consumption input (IoT sensor data)', async () => {
     render(<ConsumptionView {...props} />)
     await screen.findByTestId('area-chart')
 
-    // Le seul formulaire de la vue concerne les quotas mensuels, pas la saisie de consommation.
+    // The only form of the view concerns the monthly quotas, not consumption input.
     const forms = document.querySelectorAll('form')
     expect(forms.length).toBe(1)
-    expect(forms[0].textContent).toMatch(/Définir le quota/)
-    expect(screen.queryByText('Modifier')).toBeNull()
-    expect(screen.queryByTitle('Supprimer')).toBeNull()
+    expect(forms[0].textContent).toMatch(/Set quota/)
+    expect(screen.queryByText('Edit')).toBeNull()
+    expect(screen.queryByTitle('Delete')).toBeNull()
   })
 
-  it('affiche le suivi des quotas mensuels avec leur statut', async () => {
+  it('displays the monthly quota tracking with its status', async () => {
     waterQuotaApi.getUsage.mockResolvedValue([
       {
         quota_id: 'q1',
         target_type: 'farm',
         target_id: 'farm-1',
-        target_name: 'Ferme Nord',
+        target_name: 'North Farm',
         quota_month: '2026-09-01',
         quota_liters: 1000,
         used_liters: 850,
@@ -90,20 +90,20 @@ describe('ConsumptionView (lecture seule - capteurs IoT)', () => {
 
     render(<ConsumptionView {...props} />)
 
-    // « Ferme Nord » apparait aussi dans le filtre des fermes : on cible le panneau quotas.
-    await waitFor(() => expect(screen.getAllByText('Ferme Nord').length).toBeGreaterThan(1))
-    expect(screen.getByText('80 % du quota atteint')).toBeTruthy()
-    expect(screen.getByText(/85 % du quota utilisé/)).toBeTruthy()
+    // « North Farm » also appears in the farm filter: we target the quota panel.
+    await waitFor(() => expect(screen.getAllByText('North Farm').length).toBeGreaterThan(1))
+    expect(screen.getByText('80% of quota reached')).toBeTruthy()
+    expect(screen.getByText(/85% of quota used/)).toBeTruthy()
     expect(screen.getByTestId('bullet-chart')).toBeTruthy()
   })
 
-  it('signale un quota dépassé', async () => {
+  it('reports an exceeded quota', async () => {
     waterQuotaApi.getUsage.mockResolvedValue([
       {
         quota_id: 'q2',
         target_type: 'zone',
         target_id: 'zone-1',
-        target_name: 'Zone Sud',
+        target_name: 'South Zone',
         quota_month: '2026-09-01',
         quota_liters: 500,
         used_liters: 640,
@@ -115,11 +115,11 @@ describe('ConsumptionView (lecture seule - capteurs IoT)', () => {
 
     render(<ConsumptionView {...props} />)
 
-    await waitFor(() => expect(screen.getByText('Quota dépassé')).toBeTruthy())
-    expect(screen.getByText(/dépassement de 140 L/)).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('Quota exceeded')).toBeTruthy())
+    expect(screen.getByText(/over by 140 L/)).toBeTruthy()
   })
 
-  it('filtre par ferme', async () => {
+  it('filters by farm', async () => {
     waterConsumptionApi.getConsumptions.mockResolvedValue([
       ...CONSUMPTIONS,
       { id: 'c2', farmId: 'farm-2', sourceId: 'src-1', consumptionLiters: 90, consumptionDate: '2026-09-02T08:00:00Z' },

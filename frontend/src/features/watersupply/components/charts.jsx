@@ -84,7 +84,7 @@ function ChartShell({ children, unit, note, exportName, exportRows, exportColumn
   return (
     <div className="ws-chart-shell">
       <div className="ws-chart-shell-top">
-        {unit && <span className="ws-chart-unit">Unité : {unit}</span>}
+        {unit && <span className="ws-chart-unit">Unit: {unit}</span>}
         {canExport && (
           <div className="ws-chart-toolbar">
             <button
@@ -385,7 +385,7 @@ export function WsComboChart({ data, xKey, bars = [], lines = [], height = 280, 
   const lineUnit = axisUnit((data || []).flatMap((row) => lines.map((l) => row[l.key])), 'liters')
   return (
     <ChartShell
-      unit="pluie en millimètres (barres) · volumes en litres (ligne)"
+      unit="rain in millimeters (bars) · volumes in liters (line)"
       exportName={exportName}
       exportRows={data}
       exportColumns={columnsOf(xKey, [...bars, ...lines])}

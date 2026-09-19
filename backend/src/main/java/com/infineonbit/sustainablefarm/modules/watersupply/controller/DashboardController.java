@@ -170,7 +170,7 @@ public class DashboardController {
                 .limit(5)
                 .map(consumption -> Map.<String, Object>of(
                         "type", "consumption",
-                        "message", consumption.getConsumptionLiters() + "L consommés",
+                        "message", consumption.getConsumptionLiters() + "L consumed",
                         "timestamp", consumption.getConsumptionDate() == null
                                 ? consumption.getCreatedAt().toString() : consumption.getConsumptionDate().toString()))
                 .toList();

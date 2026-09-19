@@ -1,12 +1,14 @@
 import { Inbox } from 'lucide-react'
 
 /**
- * État vide (aucune donnée) conforme au design system.
- * @param {string} title - Message principal.
+ * Empty state (no data) - shared across modules.
+ * @param {string} [title] - Main text (default: "No data").
  * @param {string} [description] - sous-texte optionnel.
- * @param {ReactNode} [action] - bouton d'action optionnel (ex. "Créer une ferme").
+ * @param {ReactNode} [action] - bouton d'action optionnel.
+ * @param {string} [message] - alias historique du paramètre `title` (module machinery).
  */
-export function EmptyState({ title = 'Aucune donnée', description, action }) {
+export function EmptyState({ title, description, action, message }) {
+  const mainText = message || title || 'No data'
   return (
     <div
       style={{
@@ -37,7 +39,7 @@ export function EmptyState({ title = 'Aucune donnée', description, action }) {
         <Inbox size={24} />
       </div>
       <div style={{ fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 600, fontSize: '16px', color: 'var(--ws-ink, #1c2b29)' }}>
-        {title}
+        {mainText}
       </div>
       {description && (
         <div style={{ fontFamily: "'Inter', Arial, sans-serif", fontSize: '13px', color: 'var(--ws-muted, #6b7a78)', lineHeight: 1.5 }}>
@@ -48,3 +50,5 @@ export function EmptyState({ title = 'Aucune donnée', description, action }) {
     </div>
   )
 }
+
+export default EmptyState
