@@ -21,7 +21,18 @@ public class GlobalExceptionHandler{
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException e){
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("This equipment already exists.");
+        String message = e.getMostSpecificCause().getMessage();
+        if (message != null && (message.contains("duplicate key") || message.contains("Duplicate entry")
+                || message.contains("unique constraint") || message.contains("UNIQUE constraint"))) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("A record with the same unique value already exists.");
+        }
+        if (message != null && message.contains("foreign key")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("This operation conflicts with a related record. Please refresh and try again.");
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body("The request conflicts with the current state of the data. Please refresh and try again.");
     }
 
     @ExceptionHandler (MethodArgumentNotValidException.class)
@@ -41,6 +52,11 @@ public class GlobalExceptionHandler{
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
+    @ExceptionHandler(SparePartNotFoundException.class)
+    public ResponseEntity<String> handleSparePartNotFound(SparePartNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
     @ExceptionHandler(EquipmentAlreadyAssignedException.class)
     public ResponseEntity<String> handleEquipmentAlreadyAssigned(EquipmentAlreadyAssignedException e){
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
@@ -54,7 +70,7 @@ public class GlobalExceptionHandler{
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<String> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException e){
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body("This operator assignment was modified by another user. Please retry.");
+                .body("This record was modified or deleted by another user. Please refresh and try again.");
     }
 
 }
