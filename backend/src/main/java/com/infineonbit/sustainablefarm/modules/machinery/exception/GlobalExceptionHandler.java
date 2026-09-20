@@ -57,6 +57,26 @@ public class GlobalExceptionHandler{
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
+    @ExceptionHandler(MaintenanceScheduleNotFoundException.class)
+    public ResponseEntity<String> handleMaintenanceScheduleNotFound(MaintenanceScheduleNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(UsageLogNotFoundException.class)
+    public ResponseEntity<String> handleUsageLogNotFound(UsageLogNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(FuelLogNotFoundException.class)
+    public ResponseEntity<String> handleFuelLogNotFound(FuelLogNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(RepairLogNotFoundException.class)
+    public ResponseEntity<String> handleRepairLogNotFound(RepairLogNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
     @ExceptionHandler(EquipmentAlreadyAssignedException.class)
     public ResponseEntity<String> handleEquipmentAlreadyAssigned(EquipmentAlreadyAssignedException e){
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
