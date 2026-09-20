@@ -6,7 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import java.util.Properties;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -22,14 +22,13 @@ class NotificationServiceTest {
         SmtpNotificationServiceImpl service = new SmtpNotificationServiceImpl(
                 mailSender, "visits@sustainable-farm.local");
 
-        assertThatCode(() -> service.send("lucas@example.com", "Rappel", "<p>Demain</p>"))
-                .doesNotThrowAnyException();
+        assertThat(service.send("lucas@example.com", "Rappel", "<p>Demain</p>")).isTrue();
 
         verify(mailSender).send(any(MimeMessage.class));
     }
 
     @Test
-    void smtpImplementer_swallowsDeliveryFailure() {
+    void smtpImplementer_reportsDeliveryFailure() {
         JavaMailSender mailSender = mock(JavaMailSender.class);
         when(mailSender.createMimeMessage()).thenReturn(
                 new MimeMessage(jakarta.mail.Session.getInstance(new Properties())));
@@ -38,15 +37,13 @@ class NotificationServiceTest {
         SmtpNotificationServiceImpl service = new SmtpNotificationServiceImpl(
                 mailSender, "visits@sustainable-farm.local");
 
-        assertThatCode(() -> service.send("lucas@example.com", "Rappel", "<p>Demain</p>"))
-                .doesNotThrowAnyException();
+        assertThat(service.send("lucas@example.com", "Rappel", "<p>Demain</p>")).isFalse();
     }
 
     @Test
-    void consoleImplementer_neverThrows() {
+    void consoleImplementer_reportsSuccess() {
         ConsoleNotificationServiceImpl service = new ConsoleNotificationServiceImpl();
 
-        assertThatCode(() -> service.send("lucas@example.com", "Rappel", "<p>Demain</p>"))
-                .doesNotThrowAnyException();
+        assertThat(service.send("lucas@example.com", "Rappel", "<p>Demain</p>")).isTrue();
     }
 }

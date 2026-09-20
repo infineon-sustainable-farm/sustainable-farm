@@ -44,9 +44,13 @@ public class BookingReminderJob {
     private void sendReminder(Booking booking) {
         try {
             BookingEmailBuilder.MailContent mail = BookingEmailBuilder.reminder(booking);
-            notificationService.send(booking.getVisitorEmail(), mail.subject(), mail.html());
-            booking.setReminderSentAt(Instant.now());
-            bookingRepository.save(booking);
+            if (notificationService.send(booking.getVisitorEmail(), mail.subject(), mail.html())) {
+                booking.setReminderSentAt(Instant.now());
+                bookingRepository.save(booking);
+            } else {
+                log.warn("Reminder not marked as sent for booking {} (delivery failed)",
+                        booking.getId());
+            }
         } catch (Exception e) {
             log.warn("Could not send reminder for booking {}: {}",
                     booking.getId(), e.getMessage());

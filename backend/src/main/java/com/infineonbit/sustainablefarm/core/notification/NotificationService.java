@@ -11,7 +11,11 @@ public interface NotificationService {
 
     /**
      * Sends an email. Implementations must never throw: a delivery failure
-     * is logged and must not block the surrounding business transaction.
+     * is logged and reported through the return value so that callers only
+     * record a delivery when it actually succeeded.
+     *
+     * @return {@code true} when the message was handed over successfully,
+     *         {@code false} otherwise
      */
-    void send(String to, String subject, String htmlBody);
+    boolean send(String to, String subject, String htmlBody);
 }

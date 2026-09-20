@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,6 +66,7 @@ class BookingReminderJobTest {
         Booking booking = buildBooking(BookingStatus.CONFIRMED, Instant.now().minusSeconds(3600));
         when(bookingRepository.findDueReminders(eq(BookingStatus.CONFIRMED), any(Instant.class)))
                 .thenReturn(List.of(booking));
+        when(notificationService.send(anyString(), anyString(), anyString())).thenReturn(true);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
 
         job.sendDueReminders();
@@ -83,9 +83,9 @@ class BookingReminderJobTest {
         when(bookingRepository.findDueReminders(eq(BookingStatus.CONFIRMED), any(Instant.class)))
                 .thenReturn(List.of(first, second));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
-        doThrow(new RuntimeException("smtp down"))
-                .doNothing()
-                .when(notificationService).send(anyString(), anyString(), anyString());
+        when(notificationService.send(anyString(), anyString(), anyString()))
+                .thenReturn(false)
+                .thenReturn(true);
 
         job.sendDueReminders();
 

@@ -31,7 +31,7 @@ public class SmtpNotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void send(String to, String subject, String htmlBody) {
+    public boolean send(String to, String subject, String htmlBody) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -41,8 +41,10 @@ public class SmtpNotificationServiceImpl implements NotificationService {
             helper.setText(htmlBody, true);
             mailSender.send(message);
             log.info("Email sent to {} (subject: {})", to, subject);
+            return true;
         } catch (Exception e) {
             log.error("Failed to send email to {} (subject: {}): {}", to, subject, e.getMessage());
+            return false;
         }
     }
 }

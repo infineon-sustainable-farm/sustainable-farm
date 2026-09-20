@@ -16,8 +16,9 @@ public class ConsoleNotificationServiceImpl implements NotificationService {
     private static final Logger log = LoggerFactory.getLogger(ConsoleNotificationServiceImpl.class);
 
     @Override
-    public void send(String to, String subject, String htmlBody) {
+    public boolean send(String to, String subject, String htmlBody) {
         log.info("\n----[DEMO EMAIL]----\nto: {}\nsubject: {}\n{}\n--------------------",
                 to, subject, htmlBody);
+        return true;
     }
 }
