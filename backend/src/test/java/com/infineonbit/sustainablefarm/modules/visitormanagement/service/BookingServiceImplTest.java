@@ -1,8 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
-import com.infineonbit.sustainablefarm.core.exception.ConflictException;
-import com.infineonbit.sustainablefarm.core.notification.NotificationService;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingOccupancyResponse;
@@ -19,9 +17,11 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.Book
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -35,9 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,7 +49,7 @@ class BookingServiceImplTest {
     @Mock
     private TimeSlotRepository timeSlotRepository;
     @Mock
-    private NotificationService notificationService;
+    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private BookingServiceImpl service;
 
@@ -151,8 +149,8 @@ class BookingServiceImplTest {
     void createBooking_success() {
         AgriActivity activity = buildActivity(10);
         TimeSlot slot = buildSlot();
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
-        when(timeSlotRepository.findById(slotId)).thenReturn(Optional.of(slot));
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(activity));
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(slot));
         when(bookingRepository.sumPeopleCountByActivityAndSlot(eq(activityId), eq(slotId), anyList()))
                 .thenReturn(0L);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
@@ -170,36 +168,50 @@ class BookingServiceImplTest {
 
     @Test
     void createBooking_exceedsSlotCapacity_throws() {
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(buildActivity(10)));
-        when(timeSlotRepository.findById(slotId)).thenReturn(Optional.of(buildSlot()));
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(buildActivity(10)));
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(buildSlot()));
         when(bookingRepository.sumPeopleCountByActivityAndSlot(eq(activityId), eq(slotId), anyList()))
                 .thenReturn(0L);
 
         assertThatThrownBy(() -> service.createBooking(buildBookingRequest(15)))
-                .isInstanceOf(ConflictException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("slot capacity");
     }
 
     @Test
     void createBooking_exceedsActivityCapacity_throws() {
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(buildActivity(10)));
-        when(timeSlotRepository.findById(slotId)).thenReturn(Optional.of(buildSlot()));
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(buildActivity(10)));
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(buildSlot()));
         when(bookingRepository.sumPeopleCountByActivityAndSlot(eq(activityId), eq(slotId), anyList()))
                 .thenReturn(8L);
 
         assertThatThrownBy(() -> service.createBooking(buildBookingRequest(3)))
-                .isInstanceOf(ConflictException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("remaining capacity");
+    }
+
+    @Test
+    void createBooking_exceedsSlotCumulativeCapacity_throws() {
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(buildActivity(20)));
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(buildSlot()));
+        when(bookingRepository.sumPeopleCountByActivityAndSlot(eq(activityId), eq(slotId), anyList()))
+                .thenReturn(0L);
+        when(bookingRepository.sumPeopleCountBySlot(eq(slotId), anyList())).thenReturn(9L);
+
+        assertThatThrownBy(() -> service.createBooking(buildBookingRequest(3)))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("slot");
     }
 
     @Test
     void updateBooking_success_recomputesCapacity() {
         Booking booking = buildBooking(BookingStatus.PENDING, BookingPaymentStatus.UNPAID, 2);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(buildActivity(10)));
-        when(timeSlotRepository.findById(slotId)).thenReturn(Optional.of(buildSlot()));
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(buildActivity(10)));
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(buildSlot()));
         when(bookingRepository.sumPeopleCountByActivityAndSlot(eq(activityId), eq(slotId), anyList()))
                 .thenReturn(5L);
+        when(bookingRepository.sumPeopleCountBySlot(eq(slotId), anyList())).thenReturn(5L);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
 
         BookingResponse response = service.updateBooking(bookingId, buildBookingRequest(4));
@@ -240,7 +252,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void confirmBooking_success_schedulesReminder() {
+    void confirmBooking_success_schedulesReminderAndPublishesEvent() {
         Booking booking = buildBooking(BookingStatus.PENDING, BookingPaymentStatus.PAID, 3);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -251,22 +263,14 @@ class BookingServiceImplTest {
         Instant expected = LocalDate.of(2026, 8, 26).atTime(14, 0)
                 .minusHours(24).toInstant(ZoneOffset.UTC);
         assertThat(booking.getReminderScheduledAt()).isEqualTo(expected);
-        assertThat(booking.getConfirmationSentAt()).isNotNull();
-        verify(notificationService).send(eq(booking.getVisitorEmail()), anyString(), anyString());
-    }
-
-    @Test
-    void confirmBooking_emailFailure_confirmsAnyway() {
-        Booking booking = buildBooking(BookingStatus.PENDING, BookingPaymentStatus.PAID, 3);
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
-        doThrow(new RuntimeException("relay down"))
-                .when(notificationService).send(anyString(), anyString(), anyString());
-
-        BookingResponse response = service.confirmBooking(bookingId);
-
-        assertThat(response.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
         assertThat(booking.getConfirmationSentAt()).isNull();
+
+        ArgumentCaptor<BookingNotificationEvent> captor =
+                ArgumentCaptor.forClass(BookingNotificationEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().bookingId()).isEqualTo(bookingId);
+        assertThat(captor.getValue().type())
+                .isEqualTo(BookingNotificationEvent.Type.CONFIRMATION);
     }
 
     @Test
@@ -337,5 +341,18 @@ class BookingServiceImplTest {
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).getBooked()).isEqualTo(5);
         assertThat(responses.get(0).getOccupancyPercent()).isEqualTo(50);
+    }
+
+    @Test
+    void occupancy_capsAt100WhenOverbooked() {
+        AgriActivity activity = buildActivity(10);
+        when(activityRepository.findAll()).thenReturn(List.of(activity));
+        when(bookingRepository.sumPeopleCountGroupedByActivity(anyList()))
+                .thenReturn(List.<Object[]>of(new Object[]{activityId, 25L}));
+
+        List<BookingOccupancyResponse> responses = service.getOccupancy();
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getOccupancyPercent()).isEqualTo(100);
     }
 }

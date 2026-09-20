@@ -50,15 +50,28 @@ class TimeSlotRepositoryTest {
     }
 
     @Test
-    void existsByDateAndStartTime_true() {
+    void existsOverlapping_true() {
         createSlot(monday, LocalTime.of(9, 0), LocalTime.of(11, 0), TimeSlotStatus.AVAILABLE);
 
-        assertThat(repository.existsByDateAndStartTime(monday, LocalTime.of(9, 0))).isTrue();
+        assertThat(repository.existsOverlapping(
+                monday, LocalTime.of(10, 0), LocalTime.of(12, 0))).isTrue();
     }
 
     @Test
-    void existsByDateAndStartTime_false() {
-        assertThat(repository.existsByDateAndStartTime(monday, LocalTime.of(9, 0))).isFalse();
+    void existsOverlapping_adjacent_isFalse() {
+        createSlot(monday, LocalTime.of(9, 0), LocalTime.of(11, 0), TimeSlotStatus.AVAILABLE);
+
+        assertThat(repository.existsOverlapping(
+                monday, LocalTime.of(11, 0), LocalTime.of(13, 0))).isFalse();
+    }
+
+    @Test
+    void existsOverlappingExcluding_ignoresSelf() {
+        TimeSlot slot = createSlot(monday, LocalTime.of(9, 0), LocalTime.of(11, 0),
+                TimeSlotStatus.AVAILABLE);
+
+        assertThat(repository.existsOverlappingExcluding(
+                monday, LocalTime.of(9, 0), LocalTime.of(11, 0), slot.getId())).isFalse();
     }
 
     @Test

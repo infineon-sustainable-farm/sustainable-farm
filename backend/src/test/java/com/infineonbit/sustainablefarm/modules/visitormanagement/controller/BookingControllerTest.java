@@ -163,6 +163,16 @@ class BookingControllerTest {
     }
 
     @Test
+    void createBooking_invalidPhone_returns400() throws Exception {
+        mockMvc.perform(post("/api/v1/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"activityId\":1,\"timeSlotId\":2,"
+                                + "\"visitorFullName\":\"Lucas Weber\",\"visitorEmail\":\"lucas@example.com\","
+                                + "\"visitorPhone\":\"not-a-phone\",\"peopleCount\":3}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void createBooking_exceedsCapacity_returns409() throws Exception {
         when(bookingService.createBooking(any(BookingRequest.class)))
                 .thenThrow(new ConflictException("Not enough remaining capacity"));

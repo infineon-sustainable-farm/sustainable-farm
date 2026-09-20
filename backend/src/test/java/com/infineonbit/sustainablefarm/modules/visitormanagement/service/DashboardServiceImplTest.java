@@ -164,7 +164,7 @@ class DashboardServiceImplTest {
 
         Booking pending = booking(1L, "Marie Dubois", monday.plusDays(2), null);
         Booking reminder = booking(2L, "Lucas Weber", monday.plusDays(3),
-                Instant.parse("2026-09-10T12:00:00Z"));
+                monday.plusDays(4).atTime(12, 0).toInstant(ZoneOffset.UTC));
         when(bookingRepository.findByStatus(BookingStatus.PENDING)).thenReturn(List.of(pending));
         when(bookingRepository.findByStatusAndReminderScheduledAtIsNotNullAndReminderSentAtIsNullOrderByReminderScheduledAtAsc(
                 BookingStatus.CONFIRMED)).thenReturn(List.of(reminder));

@@ -105,7 +105,11 @@ class EventRepositoryTest {
         registrationRepository.save(active);
 
         Registration rejected = new Registration();
-        rejected.setVisitor(visitor);
+        Visitor other = new Visitor();
+        other.setFullName("Pierre Martin");
+        other.setGroupSize(1);
+        other = visitorRepository.save(other);
+        rejected.setVisitor(other);
         rejected.setEventId(event.getId());
         rejected.setStatus(RegistrationStatus.REJECTED);
         rejected.setVisitPurpose(VisitPurpose.PARTNERSHIP);

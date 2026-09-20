@@ -116,7 +116,7 @@ class RegistrationServiceImplTest {
     void register_cancelledSlot_throws() {
         slot.setStatus(TimeSlotStatus.CANCELLED);
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
 
         RegistrationRequest req = new RegistrationRequest();
         req.setVisitorId(1L);
@@ -131,7 +131,7 @@ class RegistrationServiceImplTest {
     @Test
     void register_duplicate_throws() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(true);
 
         RegistrationRequest req = new RegistrationRequest();
@@ -147,7 +147,7 @@ class RegistrationServiceImplTest {
     @Test
     void register_noCapacity_throws() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(9L);
 
@@ -164,7 +164,7 @@ class RegistrationServiceImplTest {
     @Test
     void register_success() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
@@ -188,9 +188,29 @@ class RegistrationServiceImplTest {
     }
 
     @Test
+    void register_withoutVisitor_skipsVisitorLookup() {
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
+        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(0L);
+        when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
+            Registration r = inv.getArgument(0);
+            r.setId(100L);
+            return r;
+        });
+        when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RegistrationRequest req = new RegistrationRequest();
+        req.setTimeSlotId(10L);
+        req.setVisitPurpose(VisitPurpose.TOURISM);
+
+        RegistrationResponse resp = service.register(req);
+        assertThat(resp.getVisitorId()).isNull();
+        verify(visitorRepository, never()).findById(anyLong());
+    }
+
+    @Test
     void register_withPurchasePurpose_createsProspect() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
@@ -213,7 +233,7 @@ class RegistrationServiceImplTest {
     @Test
     void register_withPartnershipPurpose_createsProspect() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
@@ -236,7 +256,7 @@ class RegistrationServiceImplTest {
     @Test
     void register_withInvestmentPurpose_createsProspect() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
@@ -361,7 +381,20 @@ class RegistrationServiceImplTest {
     }
 
     @Test
+    void deliverBriefing_notConfirmed_throws() {
+        when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
+
+        BriefingDeliverRequest req = new BriefingDeliverRequest();
+        req.setStaffMember("Staff");
+
+        assertThatThrownBy(() -> service.deliverBriefing(100L, req))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("confirmed or checked-in");
+    }
+
+    @Test
     void deliverBriefing_noBriefing_throws() {
+        registration.setStatus(RegistrationStatus.CONFIRMED);
         when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
@@ -374,6 +407,7 @@ class RegistrationServiceImplTest {
 
     @Test
     void deliverBriefing_success() {
+        registration.setStatus(RegistrationStatus.CONFIRMED);
         Briefing briefing = new Briefing();
         briefing.setId(200L);
         briefing.setRegistration(registration);
@@ -392,12 +426,33 @@ class RegistrationServiceImplTest {
         assertThat(resp.getStaffMember()).isEqualTo("Guard Camille");
     }
 
+    @Test
+    void deliverBriefing_alreadyDone_isIdempotent() {
+        registration.setStatus(RegistrationStatus.CHECKED_IN);
+        Briefing briefing = new Briefing();
+        briefing.setId(200L);
+        briefing.setRegistration(registration);
+        briefing.setStatus(BriefingStatus.DONE);
+        briefing.setStaffMember("Guard Camille");
+        briefing.setDeliveredAt(java.time.Instant.parse("2026-09-08T09:00:00Z"));
+        registration.setBriefing(briefing);
+
+        when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
+
+        BriefingDeliverRequest req = new BriefingDeliverRequest();
+        req.setStaffMember("Someone Else");
+
+        BriefingResponse resp = service.deliverBriefing(100L, req);
+        assertThat(resp.getStaffMember()).isEqualTo("Guard Camille");
+        verify(briefingRepository, never()).save(any(Briefing.class));
+    }
+
     // --- RefreshStatus interaction ---
 
     @Test
     void register_then_approve_refreshesStatus() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
-        when(timeSlotRepository.findById(10L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(0L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {

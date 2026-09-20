@@ -99,6 +99,23 @@ class VisitorControllerTest {
     }
 
     @Test
+    void create_invalidPhone_returns400() throws Exception {
+        mockMvc.perform(post("/api/v1/visitors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"fullName\":\"Alice\",\"groupSize\":1,"
+                                + "\"phone\":\"abc\",\"type\":\"INDIVIDUAL\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_unknownVisitorType_returns400() throws Exception {
+        mockMvc.perform(post("/api/v1/visitors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"fullName\":\"Alice\",\"groupSize\":1,\"type\":\"FAMILY\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void update_returns200() throws Exception {
         when(registrationService.updateVisitor(any(Long.class), any(VisitorRequest.class)))
                 .thenReturn(buildResponse(1L));

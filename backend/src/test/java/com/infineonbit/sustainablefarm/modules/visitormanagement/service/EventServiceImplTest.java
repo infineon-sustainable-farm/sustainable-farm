@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -171,8 +172,9 @@ class EventServiceImplTest {
     @Test
     void cancelEvent_success() {
         Event event = buildEvent(EventStatus.PUBLISHED);
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(event));
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(registrationRepository.findByEventIdAndStatusIn(eq(eventId), any())).thenReturn(List.of());
 
         service.cancelEvent(eventId);
 
@@ -181,11 +183,34 @@ class EventServiceImplTest {
 
     @Test
     void cancelEvent_completed_throws() {
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.COMPLETED)));
+        when(eventRepository.findByIdForUpdate(eventId))
+                .thenReturn(Optional.of(buildEvent(EventStatus.COMPLETED)));
 
         assertThatThrownBy(() -> service.cancelEvent(eventId))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("completed");
+    }
+
+    @Test
+    void cancelEvent_cancelsActiveRegistrations() {
+        Event event = buildEvent(EventStatus.PUBLISHED);
+        Registration reg = new Registration();
+        reg.setId(5L);
+        Visitor visitor = new Visitor();
+        visitor.setId(10L);
+        reg.setVisitor(visitor);
+        reg.setEventId(eventId);
+        reg.setStatus(RegistrationStatus.PENDING);
+
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(registrationRepository.findByEventIdAndStatusIn(eq(eventId), any()))
+                .thenReturn(List.of(reg));
+
+        service.cancelEvent(eventId);
+
+        assertThat(reg.getStatus()).isEqualTo(RegistrationStatus.CANCELLED);
+        verify(registrationRepository).saveAll(any());
     }
 
     @Test
@@ -217,7 +242,7 @@ class EventServiceImplTest {
         visitor.setFullName("Test Visitor");
         visitor.setGroupSize(2);
 
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
         when(visitorRepository.findById(10L)).thenReturn(Optional.of(visitor));
         when(registrationRepository.existsByEventIdAndVisitorId(eventId, 10L)).thenReturn(false);
         when(registrationRepository.countByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(4L);
@@ -235,7 +260,7 @@ class EventServiceImplTest {
 
     @Test
     void registerVisitor_notPublished_throws() {
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.DRAFT)));
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.DRAFT)));
 
         assertThatThrownBy(() -> service.registerVisitor(eventId, buildRegistrationRequest()))
                 .isInstanceOf(BusinessRuleException.class)
@@ -249,7 +274,7 @@ class EventServiceImplTest {
         visitor.setFullName("Test Visitor");
         visitor.setGroupSize(2);
 
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
         when(visitorRepository.findById(10L)).thenReturn(Optional.of(visitor));
         when(registrationRepository.existsByEventIdAndVisitorId(eventId, 10L)).thenReturn(true);
 
@@ -264,7 +289,7 @@ class EventServiceImplTest {
         visitor.setFullName("Test Visitor");
         visitor.setGroupSize(20);
 
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
         when(visitorRepository.findById(10L)).thenReturn(Optional.of(visitor));
         when(registrationRepository.existsByEventIdAndVisitorId(eventId, 10L)).thenReturn(false);
         when(registrationRepository.countByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(50L);
@@ -278,7 +303,7 @@ class EventServiceImplTest {
     void listEvents_filtersByType() {
         Event event = buildEvent(EventStatus.PUBLISHED);
         when(eventRepository.findByType(EventType.OPEN_DAY)).thenReturn(List.of(event));
-        when(registrationRepository.countByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(0L);
+        when(registrationRepository.countByEventIds(any(), any())).thenReturn(List.of());
 
         List<EventResponse> responses = service.listEvents(EventType.OPEN_DAY, null);
 

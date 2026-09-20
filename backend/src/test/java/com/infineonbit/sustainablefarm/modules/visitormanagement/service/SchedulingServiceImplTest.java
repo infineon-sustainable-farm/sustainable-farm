@@ -7,9 +7,11 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.Availabilit
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.RegistrationStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Staff;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.StaffRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,10 @@ class SchedulingServiceImplTest {
     private TimeSlotRepository timeSlotRepository;
     @Mock
     private RegistrationRepository registrationRepository;
+    @Mock
+    private BookingService bookingService;
+    @Mock
+    private StaffRepository staffRepository;
     @InjectMocks
     private SchedulingServiceImpl service;
 
@@ -79,7 +85,8 @@ class SchedulingServiceImplTest {
 
     @Test
     void create_duplicateTime_throws() {
-        when(timeSlotRepository.existsByDateAndStartTime(monday, LocalTime.of(9, 0))).thenReturn(true);
+        when(timeSlotRepository.existsOverlapping(monday, LocalTime.of(9, 0), LocalTime.of(11, 0)))
+                .thenReturn(true);
 
         assertThatThrownBy(() -> service.create(buildRequest()))
                 .isInstanceOf(ConflictException.class);
@@ -87,7 +94,8 @@ class SchedulingServiceImplTest {
 
     @Test
     void create_success() {
-        when(timeSlotRepository.existsByDateAndStartTime(monday, LocalTime.of(9, 0))).thenReturn(false);
+        when(timeSlotRepository.existsOverlapping(monday, LocalTime.of(9, 0), LocalTime.of(11, 0)))
+                .thenReturn(false);
         when(timeSlotRepository.countByDateAndStatusNot(monday, TimeSlotStatus.CANCELLED)).thenReturn(0L);
         when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> {
             TimeSlot ts = inv.getArgument(0);
@@ -103,7 +111,8 @@ class SchedulingServiceImplTest {
 
     @Test
     void create_maxSlotsReached_throws() {
-        when(timeSlotRepository.existsByDateAndStartTime(monday, LocalTime.of(9, 0))).thenReturn(false);
+        when(timeSlotRepository.existsOverlapping(monday, LocalTime.of(9, 0), LocalTime.of(11, 0)))
+                .thenReturn(false);
         when(timeSlotRepository.countByDateAndStatusNot(monday, TimeSlotStatus.CANCELLED))
                 .thenReturn((long) SchedulingRules.MAX_SLOTS_PER_DAY);
 
@@ -125,7 +134,7 @@ class SchedulingServiceImplTest {
     @Test
     void cancel_completedSlot_throws() {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.COMPLETED);
-        when(timeSlotRepository.findById(1L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
 
         assertThatThrownBy(() -> service.cancel(1L))
                 .isInstanceOf(BusinessRuleException.class)
@@ -133,19 +142,34 @@ class SchedulingServiceImplTest {
     }
 
     @Test
-    void cancel_success() {
+    void cancel_success_propagatesToRegistrationsAndBookings() {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.AVAILABLE);
-        when(timeSlotRepository.findById(1L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(registrationRepository.findByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(List.of());
 
         service.cancel(1L);
         assertThat(slot.getStatus()).isEqualTo(TimeSlotStatus.CANCELLED);
+        verify(bookingService).cancelBookingsForSlot(1L);
+    }
+
+    @Test
+    void cancel_twice_isIdempotent() {
+        TimeSlot slot = buildSlot(1L, TimeSlotStatus.CANCELLED);
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
+
+        service.cancel(1L);
+        verify(bookingService, never()).cancelBookingsForSlot(anyLong());
     }
 
     @Test
     void assignGuide_success() {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.AVAILABLE);
+        Staff guide = new Staff();
+        guide.setId(42L);
+        guide.setFullName("Awa");
         when(timeSlotRepository.findById(1L)).thenReturn(Optional.of(slot));
+        when(staffRepository.findById(42L)).thenReturn(Optional.of(guide));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
 
