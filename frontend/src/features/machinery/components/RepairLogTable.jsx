@@ -18,8 +18,12 @@ function RepairLogTable({ repairLogs, getEquipmentName, onEdit, onDelete }) {
           </tr>
         </thead>
         <tbody>
-          {repairLogs.map((repairLog) => (
-            <tr key={repairLog.id} className="border-b border-gray-100">
+          {repairLogs.map((repairLog, index) => (
+            <tr
+              key={repairLog.id}
+              className="border-b border-gray-100 animate-fade-up-sm"
+              style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+            >
               <td className="py-2 whitespace-nowrap">{formatDate(repairLog.date)}</td>
               <td className="py-2">{getEquipmentName(repairLog.equipmentId)}</td>
               <td className="py-2 max-w-xs truncate" title={repairLog.issue}>

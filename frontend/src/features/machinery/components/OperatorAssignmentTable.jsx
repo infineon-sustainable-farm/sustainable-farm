@@ -15,8 +15,12 @@ function OperatorAssignmentTable({ assignments, getEquipmentName, onEdit, onDele
         </tr>
       </thead>
       <tbody>
-        {assignments.map((assignment) => (
-          <tr key={assignment.id} className="border-b border-gray-100">
+        {assignments.map((assignment, index) => (
+          <tr
+            key={assignment.id}
+            className="border-b border-gray-100 animate-fade-up-sm"
+            style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+          >
             <td className="py-2 font-medium">{assignment.fullName}</td>
             <td className="py-2">{assignment.jobTitle}</td>
             <td className="py-2">{getEquipmentName(assignment.equipmentId)}</td>

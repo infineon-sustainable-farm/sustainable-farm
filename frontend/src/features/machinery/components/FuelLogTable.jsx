@@ -16,8 +16,12 @@ function FuelLogTable({ fuelLogs, getEquipmentName, onEdit, onDelete }) {
           </tr>
         </thead>
         <tbody>
-          {fuelLogs.map((fuelLog) => (
-            <tr key={fuelLog.id} className="border-b border-gray-100">
+          {fuelLogs.map((fuelLog, index) => (
+            <tr
+              key={fuelLog.id}
+              className="border-b border-gray-100 animate-fade-up-sm"
+              style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+            >
               <td className="py-2 whitespace-nowrap">{formatDate(fuelLog.date)}</td>
               <td className="py-2">{getEquipmentName(fuelLog.equipmentId)}</td>
               <td className="py-2">{formatDecimal(fuelLog.liters)} L</td>

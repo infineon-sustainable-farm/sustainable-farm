@@ -21,11 +21,15 @@ function SparePartTable({ spareParts, getEquipmentName, onEdit, onDelete }) {
           </tr>
         </thead>
         <tbody>
-          {spareParts.map((sparePart) => {
+          {spareParts.map((sparePart, index) => {
             const isLowStock = sparePart.quantity <= sparePart.reorderThreshold;
 
             return (
-              <tr key={sparePart.id} className="border-b border-gray-100">
+              <tr
+                key={sparePart.id}
+                className="border-b border-gray-100 animate-fade-up-sm"
+                style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+              >
                 <td className="py-2 font-medium">{sparePart.name}</td>
                 <td className="py-2">{getEquipmentName(sparePart.equipmentId)}</td>
                 <td className="py-2 whitespace-nowrap">

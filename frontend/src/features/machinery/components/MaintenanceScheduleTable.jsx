@@ -19,8 +19,12 @@ function MaintenanceScheduleTable({ schedules, getEquipmentName, onEdit, onDelet
           </tr>
         </thead>
         <tbody>
-          {schedules.map((schedule) => (
-            <tr key={schedule.id} className="border-b border-gray-100">
+          {schedules.map((schedule, index) => (
+            <tr
+              key={schedule.id}
+              className="border-b border-gray-100 animate-fade-up-sm"
+              style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+            >
               <td className="py-2">{formatEnumLabel(schedule.type)}</td>
               <td className="py-2">{getEquipmentName(schedule.equipmentId)}</td>
               <td className="py-2">{schedule.frequency ?? "—"}</td>

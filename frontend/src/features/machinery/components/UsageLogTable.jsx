@@ -17,8 +17,12 @@ function UsageLogTable({ usageLogs, getEquipmentName, onEdit, onDelete }) {
           </tr>
         </thead>
         <tbody>
-          {usageLogs.map((usageLog) => (
-            <tr key={usageLog.id} className="border-b border-gray-100">
+          {usageLogs.map((usageLog, index) => (
+            <tr
+              key={usageLog.id}
+              className="border-b border-gray-100 animate-fade-up-sm"
+              style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+            >
               <td className="py-2 whitespace-nowrap">{formatDate(usageLog.date)}</td>
               <td className="py-2">{getEquipmentName(usageLog.equipmentId)}</td>
               <td className="py-2">{formatDecimal(usageLog.hoursUsed)} h</td>
