@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Menu, X, LayoutDashboard, Cog, Wrench, Fuel, ClipboardList, Users, Boxes, LogOut } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import LowStockNotifications from "./LowStockNotifications";
 
 const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/machinery" },
@@ -60,13 +61,16 @@ function Sidebar() {
                     ))}
                 </ul>
 
-                <button
-                    type="button"
-                    className={`${logoutStyles} mt-auto mb-[max(1.5rem,env(safe-area-inset-bottom))]`}
-                >
-                    <LogOut size={18} />
-                    Logout
-                </button>
+                <div className="mt-auto flex flex-col gap-1 mb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                    <LowStockNotifications />
+                    <button
+                        type="button"
+                        className={logoutStyles}
+                    >
+                        <LogOut size={18} />
+                        Logout
+                    </button>
+                </div>
             </nav>
         </>
     );
