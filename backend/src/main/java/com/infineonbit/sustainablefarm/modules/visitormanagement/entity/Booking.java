@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
@@ -56,6 +57,10 @@ public class Booking extends BaseEntity {
     @Min(value = 1, message = "peopleCount must be at least 1")
     @Column(name = "people_count", nullable = false)
     private Integer peopleCount;
+
+    @NotNull
+    @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", length = 20)
@@ -126,6 +131,14 @@ public class Booking extends BaseEntity {
 
     public void setPeopleCount(Integer peopleCount) {
         this.peopleCount = peopleCount;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
     public BookingPaymentMethod getPaymentMethod() {

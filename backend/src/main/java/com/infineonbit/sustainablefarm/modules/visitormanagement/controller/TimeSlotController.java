@@ -31,9 +31,14 @@ public class TimeSlotController {
     }
 
     @GetMapping
-    public List<TimeSlotResponse> list(@RequestParam(required = false) LocalDate date) {
+    public Object list(@RequestParam(required = false) LocalDate date,
+                       @RequestParam(required = false) Integer page,
+                       @RequestParam(required = false) Integer size) {
         if (date != null) {
             return schedulingService.findByDate(date);
+        }
+        if (page != null) {
+            return schedulingService.findAll(page, size == null ? 20 : size);
         }
         return schedulingService.findAll();
     }

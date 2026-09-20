@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
  */
 public class EventRegistrationRequest {
 
-    @NotNull(message = "visitorId is required")
     private Long visitorId;
 
     @NotNull(message = "visitPurpose is required")

@@ -32,9 +32,11 @@ public class RegistrationResponse {
     public static RegistrationResponse from(Registration reg) {
         RegistrationResponse r = new RegistrationResponse();
         r.id = reg.getId();
-        r.visitorId = reg.getVisitor().getId();
-        r.visitorName = reg.getVisitor().getFullName();
-        r.groupSize = reg.getVisitor().getGroupSize();
+        if (reg.getVisitor() != null) {
+            r.visitorId = reg.getVisitor().getId();
+            r.visitorName = reg.getVisitor().getFullName();
+            r.groupSize = reg.getVisitor().getGroupSize();
+        }
         r.timeSlotId = reg.getTimeSlot() == null ? null : reg.getTimeSlot().getId();
         r.slotDate = reg.getTimeSlot() == null ? null : reg.getTimeSlot().getDate();
         r.slotStart = reg.getTimeSlot() == null ? null : reg.getTimeSlot().getStartTime();

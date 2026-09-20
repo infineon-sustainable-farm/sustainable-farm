@@ -22,6 +22,9 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.Brie
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,7 +83,9 @@ public class RegistrationServiceImpl implements RegistrationService {
                     });
         }
         apply(visitor, request);
-        return VisitorResponse.from(visitorRepository.save(visitor));
+        visitorRepository.save(visitor);
+        visitorRepository.flush();
+        return VisitorResponse.from(visitor);
     }
 
     @Override
@@ -97,25 +102,45 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<VisitorResponse> listVisitors(int page, int size) {
+        return visitorRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "fullName")))
+                .map(VisitorResponse::from);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RegistrationResponse> listRegistrations(int page, int size) {
+        return registrationRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
+                .map(RegistrationResponse::from);
+    }
+
     // ---------------- Registrations ----------------
 
     @Override
     @Transactional
     public RegistrationResponse register(RegistrationRequest request) {
-        Visitor visitor = getVisitorEntity(request.getVisitorId());
+        Visitor visitor = request.getVisitorId() != null
+                ? getVisitorEntity(request.getVisitorId())
+                : null;
         TimeSlot slot = getSlotEntity(request.getTimeSlotId());
 
         if (slot.getStatus() == TimeSlotStatus.CANCELLED) {
             throw new BusinessRuleException("Cannot register on a cancelled time slot " + slot.getId());
         }
-        if (registrationRepository.existsByVisitorIdAndTimeSlotId(visitor.getId(), slot.getId())) {
+        if (visitor != null
+                && registrationRepository.existsByVisitorIdAndTimeSlotId(visitor.getId(), slot.getId())) {
             throw new ConflictException("Visitor " + visitor.getId()
                     + " is already registered on time slot " + slot.getId());
         }
 
+        int groupSize = visitor != null ? visitor.getGroupSize() : 1;
         long booked = registrationRepository
                 .countByTimeSlotIdAndStatusNotIn(slot.getId(), INACTIVE_STATUSES);
-        if (booked + visitor.getGroupSize() > slot.getMaxCapacity()) {
+        if (booked + groupSize > slot.getMaxCapacity()) {
             throw new BusinessRuleException("Not enough capacity on time slot " + slot.getId()
                     + " (max " + slot.getMaxCapacity() + ")");
         }
@@ -154,9 +179,13 @@ public class RegistrationServiceImpl implements RegistrationService {
             briefingRepository.save(briefing);
             registration.setBriefing(briefing);
         }
-        schedulingService.refreshStatus(registration.getTimeSlot());
-        timeSlotRepository.save(registration.getTimeSlot());
-        return RegistrationResponse.from(registrationRepository.save(registration));
+        if (registration.getTimeSlot() != null) {
+            schedulingService.refreshStatus(registration.getTimeSlot());
+            timeSlotRepository.save(registration.getTimeSlot());
+        }
+        registrationRepository.save(registration);
+        registrationRepository.flush();
+        return RegistrationResponse.from(registration);
     }
 
     @Override
@@ -169,6 +198,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
         registration.setStatus(RegistrationStatus.REJECTED);
         registrationRepository.save(registration);
+        registrationRepository.flush();
         schedulingService.refreshStatus(registration.getTimeSlot());
         timeSlotRepository.save(registration.getTimeSlot());
         return RegistrationResponse.from(registration);
@@ -183,7 +213,9 @@ public class RegistrationServiceImpl implements RegistrationService {
                     + registration.getStatus() + ")");
         }
         registration.setStatus(RegistrationStatus.CHECKED_IN);
-        return RegistrationResponse.from(registrationRepository.save(registration));
+        registrationRepository.save(registration);
+        registrationRepository.flush();
+        return RegistrationResponse.from(registration);
     }
 
     @Override
@@ -196,6 +228,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
         registration.setStatus(RegistrationStatus.CANCELLED);
         registrationRepository.save(registration);
+        registrationRepository.flush();
         schedulingService.refreshStatus(registration.getTimeSlot());
         timeSlotRepository.save(registration.getTimeSlot());
         return RegistrationResponse.from(registration);
@@ -248,15 +281,25 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Transactional
     public BriefingResponse deliverBriefing(Long registrationId, BriefingDeliverRequest request) {
         Registration registration = getRegistrationEntity(registrationId);
+        if (registration.getStatus() != RegistrationStatus.CONFIRMED
+                && registration.getStatus() != RegistrationStatus.CHECKED_IN) {
+            throw new BusinessRuleException(
+                    "Briefing can only be delivered for a confirmed or checked-in registration");
+        }
         Briefing briefing = registration.getBriefing();
         if (briefing == null) {
             throw new BusinessRuleException("No briefing to deliver for registration " + registrationId);
+        }
+        if (briefing.getStatus() == BriefingStatus.DONE) {
+            return BriefingResponse.from(briefing);
         }
         briefing.setStaffMember(request.getStaffMember());
         briefing.setSignature(request.getSignature());
         briefing.setDeliveredAt(Instant.now());
         briefing.setStatus(BriefingStatus.DONE);
-        return BriefingResponse.from(briefingRepository.save(briefing));
+        briefingRepository.save(briefing);
+        briefingRepository.flush();
+        return BriefingResponse.from(briefing);
     }
 
     // ---------------- Helpers ----------------
@@ -277,7 +320,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     private TimeSlot getSlotEntity(Long id) {
-        return timeSlotRepository.findById(id)
+        return timeSlotRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Time slot " + id + " not found"));
     }
 

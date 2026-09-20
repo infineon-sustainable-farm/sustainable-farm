@@ -53,7 +53,9 @@ public class BookingResponse {
         r.visitorEmail = booking.getVisitorEmail();
         r.visitorPhone = booking.getVisitorPhone();
         r.peopleCount = booking.getPeopleCount();
-        r.totalAmount = booking.getActivity().getPrice().multiply(BigDecimal.valueOf(booking.getPeopleCount()));
+        r.totalAmount = booking.getTotalAmount() != null
+                ? booking.getTotalAmount()
+                : booking.getActivity().getPrice().multiply(BigDecimal.valueOf(booking.getPeopleCount()));
         r.paymentMethod = booking.getPaymentMethod();
         r.paymentStatus = booking.getPaymentStatus();
         r.status = booking.getStatus();

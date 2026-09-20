@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.Availabilit
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,6 +17,8 @@ public interface SchedulingService {
     List<TimeSlotResponse> findByDate(LocalDate date);
 
     List<TimeSlotResponse> findAll();
+
+    Page<TimeSlotResponse> findAll(int page, int size);
 
     TimeSlotResponse findById(Long id);
 

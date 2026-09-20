@@ -6,6 +6,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.Registratio
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.VisitorRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.VisitorResponse;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +25,8 @@ public interface RegistrationService {
 
     List<VisitorResponse> listVisitors();
 
+    Page<VisitorResponse> listVisitors(int page, int size);
+
     RegistrationResponse register(RegistrationRequest request);
 
     RegistrationResponse approve(Long registrationId);
@@ -35,6 +38,8 @@ public interface RegistrationService {
     RegistrationResponse cancel(Long registrationId);
 
     RegistrationResponse getRegistration(Long id);
+
+    Page<RegistrationResponse> listRegistrations(int page, int size);
 
     List<RegistrationResponse> getRegistrationsBySlot(Long timeSlotId);
 

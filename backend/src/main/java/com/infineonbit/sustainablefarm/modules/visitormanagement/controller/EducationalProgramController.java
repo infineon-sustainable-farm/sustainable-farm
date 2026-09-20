@@ -32,7 +32,11 @@ public class EducationalProgramController {
     }
 
     @GetMapping("/tour-stops")
-    public List<TourStopResponse> stops() {
+    public Object stops(@RequestParam(required = false) Integer page,
+                        @RequestParam(required = false) Integer size) {
+        if (page != null) {
+            return programService.listStops(page, size == null ? 20 : size);
+        }
         return programService.listStops();
     }
 
@@ -53,7 +57,12 @@ public class EducationalProgramController {
     }
 
     @GetMapping("/workshops")
-    public List<WorkshopResponse> workshops(@RequestParam(required = false) WorkshopStatus status) {
+    public Object workshops(@RequestParam(required = false) WorkshopStatus status,
+                            @RequestParam(required = false) Integer page,
+                            @RequestParam(required = false) Integer size) {
+        if (page != null) {
+            return programService.listWorkshops(status, page, size == null ? 20 : size);
+        }
         return programService.listWorkshops(status);
     }
 

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -27,7 +28,11 @@ public class VisitorController {
     }
 
     @GetMapping
-    public List<VisitorResponse> list() {
+    public Object list(@RequestParam(required = false) Integer page,
+                       @RequestParam(required = false) Integer size) {
+        if (page != null) {
+            return registrationService.listVisitors(page, size == null ? 20 : size);
+        }
         return registrationService.listVisitors();
     }
 

@@ -7,6 +7,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
@@ -50,8 +52,9 @@ public class TimeSlot extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private TimeSlotStatus status = TimeSlotStatus.AVAILABLE;
 
-    @Column(name = "guide_id")
-    private Long guideId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guide_id")
+    private Staff guide;
 
     @OneToMany(mappedBy = "timeSlot", cascade = CascadeType.ALL,
             orphanRemoval = true, fetch = FetchType.LAZY)
@@ -98,11 +101,15 @@ public class TimeSlot extends BaseEntity {
     }
 
     public Long getGuideId() {
-        return guideId;
+        return guide == null ? null : guide.getId();
     }
 
-    public void setGuideId(Long guideId) {
-        this.guideId = guideId;
+    public void setGuide(Staff guide) {
+        this.guide = guide;
+    }
+
+    public Staff getGuide() {
+        return guide;
     }
 
     public List<Registration> getRegistrations() {

@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RouteFeedba
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.SurveyRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.SurveyResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.SurveyStatus;
+import org.springframework.data.domain.Page;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,6 +21,8 @@ public interface FeedbackService {
 
     List<FeedbackResponse> listFeedback(Long visitorId, Instant from, Instant to);
 
+    Page<FeedbackResponse> listFeedback(int page, int size);
+
     FeedbackResponse submitFeedback(FeedbackRequest request);
 
     FeedbackSummaryResponse summary(Instant from, Instant to);
@@ -27,6 +30,8 @@ public interface FeedbackService {
     FeedbackResponse routeFeedback(Long id, RouteFeedbackRequest request);
 
     List<SurveyResponse> listSurveys(Long visitorId, SurveyStatus status);
+
+    Page<SurveyResponse> listSurveys(int page, int size);
 
     SurveyResponse sendSurvey(SurveyRequest request);
 }

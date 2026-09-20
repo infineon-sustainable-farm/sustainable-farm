@@ -1,24 +1,23 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.dto;
 
 import com.infineonbit.sustainablefarm.core.validation.Phone;
-import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitorType;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.StaffRole;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request to create or update a visitor.
+ * Request to create or update a staff member / guide (A5).
  */
-public class VisitorRequest {
+public class StaffRequest {
 
     @NotBlank(message = "fullName is required")
     @Size(max = 150, message = "fullName must be at most 150 characters")
     private String fullName;
 
-    @Min(value = 1, message = "groupSize must be at least 1")
-    private Integer groupSize = 1;
+    @NotNull(message = "role is required")
+    private StaffRole role;
 
     @Email(message = "email must be a valid email address")
     @Size(max = 200)
@@ -28,14 +27,7 @@ public class VisitorRequest {
     @Phone
     private String phone;
 
-    @Size(max = 40)
-    private String language;
-
-    @NotNull(message = "type is required")
-    private VisitorType type;
-
-    @Size(max = 500)
-    private String specialNeeds;
+    private Boolean active;
 
     public String getFullName() {
         return fullName;
@@ -45,12 +37,12 @@ public class VisitorRequest {
         this.fullName = fullName;
     }
 
-    public Integer getGroupSize() {
-        return groupSize;
+    public StaffRole getRole() {
+        return role;
     }
 
-    public void setGroupSize(Integer groupSize) {
-        this.groupSize = groupSize;
+    public void setRole(StaffRole role) {
+        this.role = role;
     }
 
     public String getEmail() {
@@ -69,27 +61,11 @@ public class VisitorRequest {
         this.phone = phone;
     }
 
-    public String getLanguage() {
-        return language;
+    public Boolean getActive() {
+        return active;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
-    }
-
-    public VisitorType getType() {
-        return type;
-    }
-
-    public void setType(VisitorType type) {
-        this.type = type;
-    }
-
-    public String getSpecialNeeds() {
-        return specialNeeds;
-    }
-
-    public void setSpecialNeeds(String specialNeeds) {
-        this.specialNeeds = specialNeeds;
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

@@ -16,6 +16,9 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.FeedbackRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.SurveySendRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +58,14 @@ public class FeedbackServiceImpl implements FeedbackService {
         return feedback.stream()
                 .map(FeedbackResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FeedbackResponse> listFeedback(int page, int size) {
+        return feedbackRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "submittedAt")))
+                .map(FeedbackResponse::from);
     }
 
     @Override
@@ -134,7 +145,9 @@ public class FeedbackServiceImpl implements FeedbackService {
     public FeedbackResponse routeFeedback(Long id, RouteFeedbackRequest request) {
         Feedback feedback = getFeedbackEntity(id);
         feedback.setRoutedTo(request.getRoutedTo());
-        return FeedbackResponse.from(feedbackRepository.save(feedback));
+        feedbackRepository.save(feedback);
+        feedbackRepository.flush();
+        return FeedbackResponse.from(feedback);
     }
 
     @Override
@@ -146,11 +159,19 @@ public class FeedbackServiceImpl implements FeedbackService {
         } else if (status != null) {
             surveys = surveySendRepository.findByStatus(status);
         } else {
-            surveys = surveySendRepository.findAll();
+            surveys = surveySendRepository.findAllWithRefs();
         }
         return surveys.stream()
                 .map(SurveyResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SurveyResponse> listSurveys(int page, int size) {
+        return surveySendRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
+                .map(SurveyResponse::from);
     }
 
     @Override

@@ -85,7 +85,9 @@ public class DashboardServiceImpl implements DashboardService {
                 "Send reminder - " + b.getVisitorFullName() + " (" + b.getPeopleCount() + ")",
                 b.getReminderScheduledAt())));
         pendingBriefings.forEach(r -> tasks.add(UpcomingTask.of(UpcomingTask.Type.DELIVER_BRIEFING,
-                "Deliver briefing - " + r.getVisitor().getFullName(),
+                "Deliver briefing - " + (r.getVisitor() != null
+                        ? r.getVisitor().getFullName()
+                        : "registration " + r.getId()),
                 slotInstant(r))));
         tasks.sort(Comparator.comparing(UpcomingTask::getDueAt,
                 Comparator.nullsLast(Comparator.naturalOrder())));

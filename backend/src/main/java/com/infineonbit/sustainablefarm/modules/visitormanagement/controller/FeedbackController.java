@@ -35,9 +35,14 @@ public class FeedbackController {
     }
 
     @GetMapping("/feedback")
-    public List<FeedbackResponse> list(@RequestParam(required = false) Long visitorId,
-                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+    public Object list(@RequestParam(required = false) Long visitorId,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+                       @RequestParam(required = false) Integer page,
+                       @RequestParam(required = false) Integer size) {
+        if (page != null && visitorId == null && from == null && to == null) {
+            return feedbackService.listFeedback(page, size == null ? 20 : size);
+        }
         return feedbackService.listFeedback(visitorId, from, to);
     }
 
@@ -58,8 +63,13 @@ public class FeedbackController {
     }
 
     @GetMapping("/surveys")
-    public List<SurveyResponse> surveys(@RequestParam(required = false) Long visitorId,
-                                        @RequestParam(required = false) SurveyStatus status) {
+    public Object surveys(@RequestParam(required = false) Long visitorId,
+                          @RequestParam(required = false) SurveyStatus status,
+                          @RequestParam(required = false) Integer page,
+                          @RequestParam(required = false) Integer size) {
+        if (page != null && visitorId == null && status == null) {
+            return feedbackService.listSurveys(page, size == null ? 20 : size);
+        }
         return feedbackService.listSurveys(visitorId, status);
     }
 

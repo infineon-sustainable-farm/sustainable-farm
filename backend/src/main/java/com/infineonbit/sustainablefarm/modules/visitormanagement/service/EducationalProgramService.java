@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TourStopRes
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.WorkshopRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.WorkshopResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.WorkshopStatus;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -17,6 +18,8 @@ public interface EducationalProgramService {
 
     List<TourStopResponse> listStops();
 
+    Page<TourStopResponse> listStops(int page, int size);
+
     TourStopResponse createStop(TourStopRequest request);
 
     TourStopResponse updateStop(Long id, TourStopRequest request);
@@ -24,6 +27,8 @@ public interface EducationalProgramService {
     void deactivateStop(Long id);
 
     List<WorkshopResponse> listWorkshops(WorkshopStatus status);
+
+    Page<WorkshopResponse> listWorkshops(WorkshopStatus status, int page, int size);
 
     WorkshopResponse createWorkshop(WorkshopRequest request);
 

@@ -33,8 +33,13 @@ public class EventController {
     }
 
     @GetMapping
-    public List<EventResponse> list(@RequestParam(required = false) EventType type,
-                                    @RequestParam(required = false) LocalDate date) {
+    public Object list(@RequestParam(required = false) EventType type,
+                       @RequestParam(required = false) LocalDate date,
+                       @RequestParam(required = false) Integer page,
+                       @RequestParam(required = false) Integer size) {
+        if (page != null && type == null && date == null) {
+            return eventService.listEvents(page, size == null ? 20 : size);
+        }
         return eventService.listEvents(type, date);
     }
 

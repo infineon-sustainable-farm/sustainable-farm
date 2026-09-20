@@ -19,14 +19,18 @@ import jakarta.validation.constraints.NotNull;
  */
 @Entity
 @Table(name = "registration",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_registration_visitor_timeslot",
-                columnNames = {"visitor_id", "time_slot_id"}))
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_registration_visitor_timeslot",
+                        columnNames = {"visitor_id", "time_slot_id"}),
+                @UniqueConstraint(
+                        name = "uk_registration_event_visitor",
+                        columnNames = {"event_id", "visitor_id"})
+        })
 public class Registration extends BaseEntity {
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "visitor_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "visitor_id")
     private Visitor visitor;
 
     @ManyToOne(fetch = FetchType.LAZY)

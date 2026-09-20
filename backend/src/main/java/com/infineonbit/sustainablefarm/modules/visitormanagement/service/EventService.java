@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.EventReques
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.EventResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.EventType;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.List;
 public interface EventService {
 
     List<EventResponse> listEvents(EventType type, LocalDate date);
+
+    Page<EventResponse> listEvents(int page, int size);
 
     EventResponse getEvent(Long id);
 

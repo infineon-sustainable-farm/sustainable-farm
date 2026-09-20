@@ -12,6 +12,9 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Workshop
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.WorkshopStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TourStopRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.WorkshopRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,14 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<TourStopResponse> listStops(int page, int size) {
+        return tourStopRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "position")))
+                .map(TourStopResponse::from);
+    }
+
+    @Override
     @Transactional
     public TourStopResponse createStop(TourStopRequest request) {
         assertPositionFree(request.getPosition(), null);
@@ -53,7 +64,9 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         TourStop stop = getStopEntity(id);
         assertPositionFree(request.getPosition(), id);
         apply(stop, request);
-        return TourStopResponse.from(tourStopRepository.save(stop));
+        tourStopRepository.save(stop);
+        tourStopRepository.flush();
+        return TourStopResponse.from(stop);
     }
 
     @Override
@@ -76,6 +89,19 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<WorkshopResponse> listWorkshops(WorkshopStatus status, int page, int size) {
+        if (status != null) {
+            return workshopRepository.findByStatus(status,
+                            PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
+                    .map(WorkshopResponse::from);
+        }
+        return workshopRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
+                .map(WorkshopResponse::from);
+    }
+
+    @Override
     @Transactional
     public WorkshopResponse createWorkshop(WorkshopRequest request) {
         Workshop workshop = new Workshop();
@@ -89,7 +115,9 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
     public WorkshopResponse updateWorkshop(Long id, WorkshopRequest request) {
         Workshop workshop = getWorkshopEntity(id);
         apply(workshop, request);
-        return WorkshopResponse.from(workshopRepository.save(workshop));
+        workshopRepository.save(workshop);
+        workshopRepository.flush();
+        return WorkshopResponse.from(workshop);
     }
 
     @Override
@@ -101,7 +129,9 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
                     + workshop.getStatus() + ")");
         }
         workshop.setStatus(WorkshopStatus.ACTIVE);
-        return WorkshopResponse.from(workshopRepository.save(workshop));
+        workshopRepository.save(workshop);
+        workshopRepository.flush();
+        return WorkshopResponse.from(workshop);
     }
 
     @Override
@@ -113,7 +143,9 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
                     + workshop.getStatus() + ")");
         }
         workshop.setStatus(WorkshopStatus.INACTIVE);
-        return WorkshopResponse.from(workshopRepository.save(workshop));
+        workshopRepository.save(workshop);
+        workshopRepository.flush();
+        return WorkshopResponse.from(workshop);
     }
 
     private void assertPositionFree(int position, Long excludeId) {

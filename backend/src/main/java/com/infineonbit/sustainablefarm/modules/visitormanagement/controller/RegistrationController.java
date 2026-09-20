@@ -29,9 +29,11 @@ public class RegistrationController {
     }
 
     @GetMapping
-    public List<RegistrationResponse> list(@RequestParam(required = false) Long timeSlotId,
-                                           @RequestParam(required = false) LocalDate date,
-                                           @RequestParam(required = false) Boolean prospect) {
+    public Object list(@RequestParam(required = false) Long timeSlotId,
+                       @RequestParam(required = false) LocalDate date,
+                       @RequestParam(required = false) Boolean prospect,
+                       @RequestParam(required = false) Integer page,
+                       @RequestParam(required = false) Integer size) {
         if (Boolean.TRUE.equals(prospect)) {
             return registrationService.getProspects();
         }
@@ -40,6 +42,9 @@ public class RegistrationController {
         }
         if (date != null) {
             return registrationService.getRegistrationsByDate(date);
+        }
+        if (page != null) {
+            return registrationService.listRegistrations(page, size == null ? 20 : size);
         }
         return List.of();
     }

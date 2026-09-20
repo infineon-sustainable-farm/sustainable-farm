@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.dto;
 
+import com.infineonbit.sustainablefarm.core.validation.Phone;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingPaymentMethod;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
@@ -28,6 +29,7 @@ public class BookingRequest {
     private String visitorEmail;
 
     @Size(max = 30, message = "visitorPhone must be at most 30 characters")
+    @Phone
     private String visitorPhone;
 
     @NotNull(message = "peopleCount is required")

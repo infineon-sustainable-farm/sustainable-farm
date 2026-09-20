@@ -6,11 +6,17 @@ import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AvailabilityResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotResponse;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Registration;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.RegistrationStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Staff;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.StaffRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,13 +32,23 @@ public class SchedulingServiceImpl implements SchedulingService {
     private static final List<RegistrationStatus> INACTIVE_STATUSES =
             List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED);
 
+    private static final List<RegistrationStatus> ACTIVE_STATUSES =
+            List.of(RegistrationStatus.PENDING, RegistrationStatus.CONFIRMED,
+                    RegistrationStatus.CHECKED_IN);
+
     private final TimeSlotRepository timeSlotRepository;
     private final RegistrationRepository registrationRepository;
+    private final BookingService bookingService;
+    private final StaffRepository staffRepository;
 
     public SchedulingServiceImpl(TimeSlotRepository timeSlotRepository,
-                                 RegistrationRepository registrationRepository) {
+                                 RegistrationRepository registrationRepository,
+                                 BookingService bookingService,
+                                 StaffRepository staffRepository) {
         this.timeSlotRepository = timeSlotRepository;
         this.registrationRepository = registrationRepository;
+        this.bookingService = bookingService;
+        this.staffRepository = staffRepository;
     }
 
     @Override
@@ -53,6 +69,14 @@ public class SchedulingServiceImpl implements SchedulingService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<TimeSlotResponse> findAll(int page, int size) {
+        return timeSlotRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "slotDate", "startTime")))
+                .map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public TimeSlotResponse findById(Long id) {
         return toResponse(getSlot(id));
     }
@@ -61,9 +85,11 @@ public class SchedulingServiceImpl implements SchedulingService {
     @Transactional
     public TimeSlotResponse create(TimeSlotRequest request) {
         validateCommon(request);
-        if (timeSlotRepository.existsByDateAndStartTime(request.getDate(), request.getStartTime())) {
+        if (timeSlotRepository.existsOverlapping(
+                request.getDate(), request.getStartTime(), request.getEndTime())) {
             throw new ConflictException(
-                    "A time slot already exists on " + request.getDate() + " at " + request.getStartTime());
+                    "A time slot already overlaps " + request.getDate() + " between "
+                            + request.getStartTime() + " and " + request.getEndTime());
         }
         long slotsThatDay = timeSlotRepository.countByDateAndStatusNot(request.getDate(), TimeSlotStatus.CANCELLED);
         if (slotsThatDay >= SchedulingRules.MAX_SLOTS_PER_DAY) {
@@ -84,23 +110,44 @@ public class SchedulingServiceImpl implements SchedulingService {
             throw new BusinessRuleException("Cannot update a cancelled time slot " + id);
         }
         validateCommon(request);
+        if (timeSlotRepository.existsOverlappingExcluding(
+                request.getDate(), request.getStartTime(), request.getEndTime(), id)) {
+            throw new ConflictException(
+                    "A time slot already overlaps " + request.getDate() + " between "
+                            + request.getStartTime() + " and " + request.getEndTime()
+                            + " (excluding " + id + ")");
+        }
         if (slot.getStatus() == TimeSlotStatus.COMPLETED) {
             throw new BusinessRuleException("Cannot update a completed time slot " + id);
         }
         apply(slot, request);
         refreshStatus(slot);
-        return toResponse(timeSlotRepository.save(slot));
+        timeSlotRepository.save(slot);
+        timeSlotRepository.flush();
+        return toResponse(slot);
     }
 
     @Override
     @Transactional
     public void cancel(Long id) {
-        TimeSlot slot = getSlot(id);
+        TimeSlot slot = getSlotForUpdate(id);
         if (slot.getStatus() == TimeSlotStatus.COMPLETED) {
             throw new BusinessRuleException("Cannot cancel a completed time slot " + id);
         }
+        if (slot.getStatus() == TimeSlotStatus.CANCELLED) {
+            return;
+        }
         slot.setStatus(TimeSlotStatus.CANCELLED);
         timeSlotRepository.save(slot);
+
+        List<Registration> registrations = registrationRepository
+                .findByTimeSlotIdAndStatusNotIn(id, INACTIVE_STATUSES);
+        for (Registration registration : registrations) {
+            registration.setStatus(RegistrationStatus.CANCELLED);
+        }
+        registrationRepository.saveAll(registrations);
+
+        bookingService.cancelBookingsForSlot(id);
     }
 
     @Override
@@ -110,8 +157,10 @@ public class SchedulingServiceImpl implements SchedulingService {
         if (guideId == null) {
             throw new BusinessRuleException("guideId is required");
         }
-        slot.setGuideId(guideId);
-        return toResponse(timeSlotRepository.save(slot));
+        slot.setGuide(resolveGuide(guideId));
+        timeSlotRepository.save(slot);
+        timeSlotRepository.flush();
+        return toResponse(slot);
     }
 
     @Override
@@ -170,11 +219,23 @@ public class SchedulingServiceImpl implements SchedulingService {
         slot.setStartTime(request.getStartTime());
         slot.setEndTime(request.getEndTime());
         slot.setMaxCapacity(request.getMaxCapacity() == null ? 10 : request.getMaxCapacity());
-        slot.setGuideId(request.getGuideId());
+        if (request.getGuideId() != null) {
+            slot.setGuide(resolveGuide(request.getGuideId()));
+        }
+    }
+
+    private Staff resolveGuide(Long guideId) {
+        return staffRepository.findById(guideId)
+                .orElseThrow(() -> new ResourceNotFoundException("Staff member " + guideId + " not found"));
     }
 
     private TimeSlot getSlot(Long id) {
         return timeSlotRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Time slot " + id + " not found"));
+    }
+
+    private TimeSlot getSlotForUpdate(Long id) {
+        return timeSlotRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Time slot " + id + " not found"));
     }
 

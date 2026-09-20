@@ -35,7 +35,11 @@ public class BookingController {
     }
 
     @GetMapping("/activities")
-    public List<AgriActivityResponse> activities() {
+    public Object activities(@RequestParam(required = false) Integer page,
+                             @RequestParam(required = false) Integer size) {
+        if (page != null) {
+            return bookingService.listActivities(page, size == null ? 20 : size);
+        }
         return bookingService.listActivities();
     }
 
@@ -58,11 +62,16 @@ public class BookingController {
     }
 
     @GetMapping("/bookings")
-    public List<BookingResponse> bookings(
+    public Object bookings(
             @RequestParam(required = false) BookingStatus status,
             @RequestParam(required = false) Long activityId,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && status == null && activityId == null && date == null) {
+            return bookingService.listBookings(page, size == null ? 20 : size);
+        }
         return bookingService.listBookings(status, activityId, date);
     }
 

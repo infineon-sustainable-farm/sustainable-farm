@@ -17,13 +17,18 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.EventRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +36,10 @@ public class EventServiceImpl implements EventService {
 
     private static final List<RegistrationStatus> INACTIVE_STATUSES =
             List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED);
+
+    private static final List<RegistrationStatus> ACTIVE_STATUSES =
+            List.of(RegistrationStatus.PENDING, RegistrationStatus.CONFIRMED,
+                    RegistrationStatus.CHECKED_IN);
 
     private final EventRepository eventRepository;
     private final RegistrationRepository registrationRepository;
@@ -56,9 +65,35 @@ public class EventServiceImpl implements EventService {
         } else {
             events = eventRepository.findAll();
         }
+        if (events.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : registrationRepository.countByEventIds(
+                events.stream().map(Event::getId).collect(Collectors.toList()),
+                INACTIVE_STATUSES)) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
         return events.stream()
-                .map(this::toResponse)
+                .map(event -> EventResponse.from(event, counts.getOrDefault(event.getId(), 0L)))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EventResponse> listEvents(int page, int size) {
+        Page<Event> events = eventRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startDateTime")));
+        if (events.isEmpty()) {
+            return Page.empty(events.getPageable());
+        }
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : registrationRepository.countByEventIds(
+                events.getContent().stream().map(Event::getId).collect(Collectors.toList()),
+                INACTIVE_STATUSES)) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return events.map(event -> EventResponse.from(event, counts.getOrDefault(event.getId(), 0L)));
     }
 
     @Override
@@ -88,18 +123,30 @@ public class EventServiceImpl implements EventService {
         }
         validateCommon(request);
         apply(event, request);
-        return toResponse(eventRepository.save(event));
+        eventRepository.save(event);
+        eventRepository.flush();
+        return toResponse(event);
     }
 
     @Override
     @Transactional
     public void cancelEvent(Long id) {
-        Event event = getEventEntity(id);
+        Event event = getEventEntityForUpdate(id);
         if (event.getStatus() == EventStatus.COMPLETED) {
             throw new BusinessRuleException("Cannot cancel a completed event " + id);
         }
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            return;
+        }
         event.setStatus(EventStatus.CANCELLED);
         eventRepository.save(event);
+
+        List<Registration> registrations = registrationRepository
+                .findByEventIdAndStatusIn(id, ACTIVE_STATUSES);
+        for (Registration registration : registrations) {
+            registration.setStatus(RegistrationStatus.CANCELLED);
+        }
+        registrationRepository.saveAll(registrations);
     }
 
     @Override
@@ -114,7 +161,9 @@ public class EventServiceImpl implements EventService {
             throw new BusinessRuleException("Cannot publish an event that has already ended");
         }
         event.setStatus(EventStatus.PUBLISHED);
-        return toResponse(eventRepository.save(event));
+        eventRepository.save(event);
+        eventRepository.flush();
+        return toResponse(event);
     }
 
     @Override
@@ -129,18 +178,22 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public RegistrationResponse registerVisitor(Long eventId, EventRegistrationRequest request) {
-        Event event = getEventEntity(eventId);
+        Event event = getEventEntityForUpdate(eventId);
         if (event.getStatus() != EventStatus.PUBLISHED) {
             throw new BusinessRuleException("Cannot register on an event that is not PUBLISHED "
                     + "(current: " + event.getStatus() + ")");
         }
-        Visitor visitor = getVisitorEntity(request.getVisitorId());
-        if (registrationRepository.existsByEventIdAndVisitorId(eventId, visitor.getId())) {
+        Visitor visitor = request.getVisitorId() != null
+                ? getVisitorEntity(request.getVisitorId())
+                : null;
+        if (visitor != null
+                && registrationRepository.existsByEventIdAndVisitorId(eventId, visitor.getId())) {
             throw new ConflictException("Visitor " + visitor.getId()
                     + " is already registered on event " + eventId);
         }
+        int groupSize = visitor != null ? visitor.getGroupSize() : 1;
         long booked = registrationRepository.countByEventIdAndStatusNotIn(eventId, INACTIVE_STATUSES);
-        if (booked + visitor.getGroupSize() > event.getMaxCapacity()) {
+        if (booked + groupSize > event.getMaxCapacity()) {
             throw new BusinessRuleException("Not enough capacity on event " + eventId
                     + " (max " + event.getMaxCapacity() + ")");
         }
@@ -172,6 +225,11 @@ public class EventServiceImpl implements EventService {
 
     private Event getEventEntity(Long id) {
         return eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event " + id + " not found"));
+    }
+
+    private Event getEventEntityForUpdate(Long id) {
+        return eventRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event " + id + " not found"));
     }
 

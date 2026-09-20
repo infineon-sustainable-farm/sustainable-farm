@@ -6,6 +6,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingOccu
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingStatus;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,6 +18,8 @@ public interface BookingService {
 
     List<AgriActivityResponse> listActivities();
 
+    Page<AgriActivityResponse> listActivities(int page, int size);
+
     AgriActivityResponse createActivity(AgriActivityRequest request);
 
     AgriActivityResponse updateActivity(Long id, AgriActivityRequest request);
@@ -24,6 +27,8 @@ public interface BookingService {
     void deactivateActivity(Long id);
 
     List<BookingResponse> listBookings(BookingStatus status, Long activityId, LocalDate date);
+
+    Page<BookingResponse> listBookings(int page, int size);
 
     BookingResponse createBooking(BookingRequest request);
 
@@ -36,6 +41,12 @@ public interface BookingService {
     BookingResponse completeBooking(Long id);
 
     BookingResponse cancelBooking(Long id);
+
+    /** Cancels all active bookings of a time slot (slot cancellation propagation). */
+    void cancelBookingsForSlot(Long timeSlotId);
+
+    /** Cancels all active bookings of an activity (activity deactivation propagation). */
+    void cancelBookingsForActivity(Long activityId);
 
     List<BookingOccupancyResponse> getOccupancy();
 }

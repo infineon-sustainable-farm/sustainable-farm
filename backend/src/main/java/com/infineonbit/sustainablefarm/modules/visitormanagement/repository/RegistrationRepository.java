@@ -13,7 +13,21 @@ import java.util.List;
 
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
 
-    List<Registration> findByTimeSlotId(Long timeSlotId);
+    @Query("SELECT r FROM Registration r "
+            + "LEFT JOIN FETCH r.visitor LEFT JOIN FETCH r.timeSlot "
+            + "WHERE r.timeSlot.id = :timeSlotId")
+    List<Registration> findByTimeSlotId(@Param("timeSlotId") Long timeSlotId);
+
+    @Query("SELECT r FROM Registration r "
+            + "LEFT JOIN FETCH r.visitor LEFT JOIN FETCH r.timeSlot "
+            + "WHERE r.timeSlot.id = :timeSlotId AND r.status NOT IN :statuses")
+    List<Registration> findByTimeSlotIdAndStatusNotIn(
+            @Param("timeSlotId") Long timeSlotId, @Param("statuses") Collection<RegistrationStatus> statuses);
+
+    @Query("SELECT r FROM Registration r LEFT JOIN FETCH r.visitor LEFT JOIN FETCH r.timeSlot "
+            + "WHERE r.eventId = :eventId AND r.status IN :statuses")
+    List<Registration> findByEventIdAndStatusIn(
+            @Param("eventId") Long eventId, @Param("statuses") Collection<RegistrationStatus> statuses);
 
     List<Registration> findByStatus(RegistrationStatus status);
 
@@ -21,21 +35,33 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     boolean existsByVisitorIdAndTimeSlotId(Long visitorId, Long timeSlotId);
 
-    @Query("SELECT r FROM Registration r WHERE r.timeSlot.date = :date " +
-            "ORDER BY r.timeSlot.startTime, r.visitor.fullName")
+    @Query("SELECT r FROM Registration r LEFT JOIN FETCH r.visitor v LEFT JOIN FETCH r.timeSlot t "
+            + "WHERE t.date = :date " +
+            "ORDER BY t.startTime, v.fullName")
     List<Registration> findAllByTimeSlotDate(@Param("date") LocalDate date);
 
     long countByTimeSlotIdAndStatusNotIn(Long timeSlotId, Collection<RegistrationStatus> statuses);
 
     long countByTimeSlotIdAndStatus(Long timeSlotId, RegistrationStatus status);
 
+    @Query("SELECT r FROM Registration r "
+            + "LEFT JOIN FETCH r.visitor LEFT JOIN FETCH r.timeSlot LEFT JOIN FETCH r.briefing "
+            + "WHERE r.isProspect = true")
     List<Registration> findByIsProspectTrue();
 
-    List<Registration> findByEventId(Long eventId);
+    @Query("SELECT r FROM Registration r "
+            + "LEFT JOIN FETCH r.visitor LEFT JOIN FETCH r.timeSlot LEFT JOIN FETCH r.briefing "
+            + "WHERE r.eventId = :eventId")
+    List<Registration> findByEventId(@Param("eventId") Long eventId);
 
     boolean existsByEventIdAndVisitorId(Long eventId, Long visitorId);
 
     long countByEventIdAndStatusNotIn(Long eventId, Collection<RegistrationStatus> statuses);
+
+    @Query("SELECT r.eventId, COUNT(r) FROM Registration r "
+            + "WHERE r.eventId IN :eventIds AND r.status NOT IN :excluded GROUP BY r.eventId")
+    List<Object[]> countByEventIds(@Param("eventIds") Collection<Long> eventIds,
+                                   @Param("excluded") Collection<RegistrationStatus> excluded);
 
     @Query("SELECT COUNT(DISTINCT r) FROM Registration r " +
             "WHERE r.timeSlot.date BETWEEN :start AND :end AND r.status NOT IN :excluded")
