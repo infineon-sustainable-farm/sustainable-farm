@@ -9,7 +9,11 @@ import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
 import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.FuelLogRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceScheduleRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.RepairLogRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.SparePartRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.UsageLogRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -36,6 +40,18 @@ public class EquipmentServiceTest {
 
     @Mock
     private SparePartRepository sparePartRepository;
+
+    @Mock
+    private MaintenanceScheduleRepository maintenanceScheduleRepository;
+
+    @Mock
+    private UsageLogRepository usageLogRepository;
+
+    @Mock
+    private FuelLogRepository fuelLogRepository;
+
+    @Mock
+    private RepairLogRepository repairLogRepository;
 
     @InjectMocks
     private EquipmentService equipmentService;
@@ -138,9 +154,19 @@ public class EquipmentServiceTest {
         // Act
         equipmentService.deleteEquipment(6L);
 
-        // Assert: spare parts are detached first, then the equipment is removed
-        InOrder deletionOrder = inOrder(sparePartRepository, equipmentRepository);
+        // Assert: all related records are detached first, then the equipment is removed
+        InOrder deletionOrder = inOrder(
+                sparePartRepository,
+                maintenanceScheduleRepository,
+                usageLogRepository,
+                fuelLogRepository,
+                repairLogRepository,
+                equipmentRepository);
         deletionOrder.verify(sparePartRepository).detachAllFromEquipment(6L);
+        deletionOrder.verify(maintenanceScheduleRepository).detachAllFromEquipment(6L);
+        deletionOrder.verify(usageLogRepository).detachAllFromEquipment(6L);
+        deletionOrder.verify(fuelLogRepository).detachAllFromEquipment(6L);
+        deletionOrder.verify(repairLogRepository).detachAllFromEquipment(6L);
         deletionOrder.verify(equipmentRepository).deleteEquipmentById(6L);
     }
 

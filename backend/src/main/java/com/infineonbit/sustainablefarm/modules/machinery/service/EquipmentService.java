@@ -6,7 +6,11 @@ import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.EquipmentO
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.FuelLogRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceScheduleRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.RepairLogRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.SparePartRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.UsageLogRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
@@ -20,6 +24,10 @@ import org.springframework.stereotype.Service;
 public class EquipmentService {
     private final EquipmentRepository equipmentRepository;
     private final SparePartRepository sparePartRepository;
+    private final MaintenanceScheduleRepository maintenanceScheduleRepository;
+    private final UsageLogRepository usageLogRepository;
+    private final FuelLogRepository fuelLogRepository;
+    private final RepairLogRepository repairLogRepository;
 
     /**
      * Equipments Management Service
@@ -122,9 +130,10 @@ public class EquipmentService {
     /**
      * Permanently deletes a piece of equipment (hard delete, not soft delete).
      *
-     * <p>Spare parts linked to this equipment are preserved: they are first
+     * <p>Related spare parts and machinery logs are preserved: they are first
      * detached (their {@code equipment_id} is set to null) so that deleting a
-     * piece of equipment never removes or corrupts its spare parts.
+     * piece of equipment never removes or corrupts its maintenance, usage,
+     * fuel or repair history.
      *
      * @param id the ID of the equipment to delete
      * @throws EquipmentNotFoundException if no equipment exists with this ID
@@ -135,6 +144,10 @@ public class EquipmentService {
             throw new EquipmentNotFoundException(id);
         }
         sparePartRepository.detachAllFromEquipment(id);
+        maintenanceScheduleRepository.detachAllFromEquipment(id);
+        usageLogRepository.detachAllFromEquipment(id);
+        fuelLogRepository.detachAllFromEquipment(id);
+        repairLogRepository.detachAllFromEquipment(id);
         int affectedRows = equipmentRepository.deleteEquipmentById(id);
         if (affectedRows == 0) {
             throw new EquipmentNotFoundException(id);
