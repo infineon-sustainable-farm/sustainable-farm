@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.controller;
 
-import com.infineonbit.sustainablefarm.core.exception.GlobalExceptionHandler;
+import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.DashboardResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.UpcomingTask;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.service.DashboardService;
@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DashboardController.class)
-@Import(GlobalExceptionHandler.class)
+@Import(CoreExceptionHandler.class)
 class DashboardControllerTest {
 
     @Autowired

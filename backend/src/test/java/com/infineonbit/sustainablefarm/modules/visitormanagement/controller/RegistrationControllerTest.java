@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
-import com.infineonbit.sustainablefarm.core.exception.GlobalExceptionHandler;
+import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.RegistrationStatus;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RegistrationController.class)
-@Import(GlobalExceptionHandler.class)
+@Import(CoreExceptionHandler.class)
 class RegistrationControllerTest {
 
     @Autowired

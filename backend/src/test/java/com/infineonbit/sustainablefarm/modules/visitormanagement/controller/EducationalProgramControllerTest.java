@@ -2,7 +2,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
-import com.infineonbit.sustainablefarm.core.exception.GlobalExceptionHandler;
+import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TourStopRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TourStopResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.WorkshopRequest;
@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(EducationalProgramController.class)
-@Import(GlobalExceptionHandler.class)
+@Import(CoreExceptionHandler.class)
 class EducationalProgramControllerTest {
 
     @Autowired

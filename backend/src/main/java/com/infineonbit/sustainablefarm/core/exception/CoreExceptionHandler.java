@@ -18,7 +18,7 @@ import java.util.Map;
  * consistent JSON error envelope across every module.
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class CoreExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex, WebRequest request) {

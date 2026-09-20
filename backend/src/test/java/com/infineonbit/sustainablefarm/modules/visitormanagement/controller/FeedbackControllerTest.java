@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
-import com.infineonbit.sustainablefarm.core.exception.GlobalExceptionHandler;
+import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.FeedbackRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.FeedbackResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.FeedbackSummaryResponse;
@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FeedbackController.class)
-@Import(GlobalExceptionHandler.class)
+@Import(CoreExceptionHandler.class)
 class FeedbackControllerTest {
 
     @Autowired

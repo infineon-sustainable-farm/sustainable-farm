@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
-import com.infineonbit.sustainablefarm.core.exception.GlobalExceptionHandler;
+import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.VisitorRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.VisitorResponse;
@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(VisitorController.class)
-@Import(GlobalExceptionHandler.class)
+@Import(CoreExceptionHandler.class)
 class VisitorControllerTest {
 
     @Autowired
