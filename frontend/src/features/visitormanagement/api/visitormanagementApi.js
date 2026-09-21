@@ -184,6 +184,20 @@ export function createActivity(data) {
     return apiClient.post(VM_ENDPOINTS.ACTIVITIES, data);
 }
 
+/** Updates an activity's fields (the payload has no active flag). */
+export function updateActivity(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.ACTIVITIES}/${id}`, data);
+}
+
+/**
+ * Deactivates an activity. The API also cancels every booking of that
+ * activity, and there is no reactivation call, so the screen asks for
+ * confirmation first.
+ */
+export function deactivateActivity(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.ACTIVITIES}/${id}`);
+}
+
 /**
  * The bookings, most recent first. The endpoint is paginated; the screen asks
  * for one large page rather than hiding rows behind pagination.

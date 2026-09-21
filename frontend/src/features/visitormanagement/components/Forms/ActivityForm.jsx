@@ -5,16 +5,26 @@ const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py
 const ERROR_CLASS = "mt-1 text-xs text-error";
 
 /**
- * The mockup's "+ New activity" form. The API also supports updating and
- * deactivating an activity, but the mockup only shows creation, so this form
- * does exactly that.
+ * Activity form, used to create an activity and to edit one. The API has no
+ * reactivation call, so deactivation is handled by the table, not here.
  */
-export default function ActivityForm({ isSubmitting, submitError, serverFieldErrors, onSubmit, onCancel }) {
-    const [name, setName] = useState("");
-    const [price, setPrice] = useState("");
-    const [capacity, setCapacity] = useState("");
-    const [durationMinutes, setDurationMinutes] = useState("");
-    const [description, setDescription] = useState("");
+export default function ActivityForm({
+    activity,
+    isSubmitting,
+    submitError,
+    serverFieldErrors,
+    onSubmit,
+    onCancel,
+}) {
+    const isEditing = Boolean(activity);
+
+    const [name, setName] = useState(activity?.name ?? "");
+    const [price, setPrice] = useState(activity ? String(activity.price) : "");
+    const [capacity, setCapacity] = useState(activity ? String(activity.capacity) : "");
+    const [durationMinutes, setDurationMinutes] = useState(
+        activity ? String(activity.durationMinutes) : "",
+    );
+    const [description, setDescription] = useState(activity?.description ?? "");
     const [fieldErrors, setFieldErrors] = useState({});
 
     function validate() {
@@ -154,7 +164,7 @@ export default function ActivityForm({ isSubmitting, submitError, serverFieldErr
                     disabled={isSubmitting}
                     className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    {isSubmitting ? "Saving…" : "Create activity"}
+                    {isSubmitting ? "Saving…" : isEditing ? "Save activity" : "Create activity"}
                 </button>
                 <button
                     type="button"

@@ -6,9 +6,12 @@ import {
     useBookings,
     useCreateActivity,
     useCreateBooking,
+    useDeactivateActivity,
     useOccupancy,
+    useUpdateActivity,
     useUpdateBooking,
 } from "../../hooks/useBooking";
+import ActivitiesTable from "../ActivitiesTable";
 import ActivityForm from "../Forms/ActivityForm";
 import BookingForm from "../Forms/BookingForm";
 import BookingsTable from "../BookingsTable";
@@ -27,7 +30,8 @@ const FLOW_STEPS = [
 ];
 
 export default function BookingPage() {
-    const [activityFormOpen, setActivityFormOpen] = useState(false);
+    const [activityFormState, setActivityFormState] = useState({ open: false, activity: null });
+    const [activityFormKey, setActivityFormKey] = useState(0);
     const [createFormOpen, setCreateFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [formKey, setFormKey] = useState(0);
@@ -53,9 +57,56 @@ export default function BookingPage() {
     } = useOccupancy();
 
     const createActivityMutation = useCreateActivity();
+    const updateActivityMutation = useUpdateActivity();
+    const deactivateActivityMutation = useDeactivateActivity();
     const createBookingMutation = useCreateBooking();
     const updateBookingMutation = useUpdateBooking();
     const actionMutation = useBookingAction();
+
+    const editingActivity = activityFormState.activity;
+    const activityFormMutation = editingActivity ? updateActivityMutation : createActivityMutation;
+
+    function resetActivityForm() {
+        setActivityFormState({ open: false, activity: null });
+        setActivityFormKey((current) => current + 1);
+        createActivityMutation.reset();
+        updateActivityMutation.reset();
+    }
+
+    function openCreateActivity() {
+        createActivityMutation.reset();
+        updateActivityMutation.reset();
+        setActivityFormState({ open: true, activity: null });
+        setActivityFormKey((current) => current + 1);
+    }
+
+    function openEditActivity(activity) {
+        createActivityMutation.reset();
+        updateActivityMutation.reset();
+        setActivityFormState({ open: true, activity });
+        setActivityFormKey((current) => current + 1);
+    }
+
+    function handleActivitySubmit(values) {
+        if (editingActivity) {
+            updateActivityMutation.mutate(
+                { id: editingActivity.id, data: values },
+                { onSuccess: resetActivityForm },
+            );
+        } else {
+            createActivityMutation.mutate(values, { onSuccess: resetActivityForm });
+        }
+    }
+
+    const pendingDeactivateId = deactivateActivityMutation.isPending
+        ? deactivateActivityMutation.variables
+        : null;
+    const deactivateActivityError = deactivateActivityMutation.isError
+        ? {
+              id: deactivateActivityMutation.variables,
+              message: deactivateActivityMutation.error.message,
+          }
+        : null;
 
     function resetEdit() {
         setEditing(null);
@@ -128,16 +179,6 @@ export default function BookingPage() {
                     >
                         + New booking
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            createActivityMutation.reset();
-                            setActivityFormOpen((open) => !open);
-                        }}
-                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
-                    >
-                        + New activity
-                    </button>
                 </div>
 
                 {createFormOpen && (
@@ -160,23 +201,6 @@ export default function BookingPage() {
                             onCancel={resetCreateBooking}
                         />
                     </>
-                )}
-
-                {activityFormOpen && (
-                    <ActivityForm
-                        isSubmitting={createActivityMutation.isPending}
-                        submitError={createActivityMutation.error?.message}
-                        serverFieldErrors={createActivityMutation.error?.data?.fieldErrors}
-                        onSubmit={(values) =>
-                            createActivityMutation.mutate(values, {
-                                onSuccess: () => setActivityFormOpen(false),
-                            })
-                        }
-                        onCancel={() => {
-                            createActivityMutation.reset();
-                            setActivityFormOpen(false);
-                        }}
-                    />
                 )}
 
                 {editing && (
@@ -248,6 +272,58 @@ export default function BookingPage() {
                         }
                         onEdit={startEdit}
                     />
+                )}
+
+                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
+                    Activities
+                </h3>
+
+                <div className="mb-4 flex flex-wrap gap-2.5">
+                    <button
+                        type="button"
+                        onClick={openCreateActivity}
+                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                    >
+                        + New activity
+                    </button>
+                </div>
+
+                {activityFormState.open && (
+                    <>
+                        {editingActivity && (
+                            <h4 className="font-heading mb-2 text-sm font-bold text-ink">
+                                Edit activity: {editingActivity.name}
+                            </h4>
+                        )}
+                        <ActivityForm
+                            key={activityFormKey}
+                            activity={editingActivity}
+                            isSubmitting={activityFormMutation.isPending}
+                            submitError={activityFormMutation.error?.message}
+                            serverFieldErrors={activityFormMutation.error?.data?.fieldErrors}
+                            onSubmit={handleActivitySubmit}
+                            onCancel={resetActivityForm}
+                        />
+                    </>
+                )}
+
+                {activitiesError ? (
+                    <p className="text-sm text-muted">Activities could not be loaded.</p>
+                ) : (
+                    <>
+                        <ActivitiesTable
+                            activities={activities ?? []}
+                            pendingDeactivateId={pendingDeactivateId}
+                            deactivateError={deactivateActivityError}
+                            onDeactivate={(activity) =>
+                                deactivateActivityMutation.mutate(activity.id)
+                            }
+                            onEdit={openEditActivity}
+                        />
+                        <p className="mt-3 text-[11px] text-muted">
+                            Deactivating an activity cancels all its bookings and cannot be undone.
+                        </p>
+                    </>
                 )}
 
                 <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">

@@ -30,6 +30,19 @@ export function formatNumber(value) {
     return new Intl.NumberFormat("en-US").format(value);
 }
 
+const fcfaFormat = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
+
+/**
+ * A price in FCFA, e.g. "5 000 FCFA". The API sends prices as numbers; a
+ * missing or non-numeric value renders as an em dash.
+ */
+export function formatFcfa(value) {
+    if (value === null || value === undefined) return "—";
+    const amount = Number(value);
+    if (Number.isNaN(amount)) return "—";
+    return `${fcfaFormat.format(amount)} FCFA`;
+}
+
 /**
  * Formats the average satisfaction rating to one decimal, following the
  * mockup's "4.2/5". Zero is rendered as an em dash: before any feedback exists

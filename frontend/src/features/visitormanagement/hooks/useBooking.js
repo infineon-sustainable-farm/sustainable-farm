@@ -5,10 +5,12 @@ import {
     confirmBooking,
     createActivity,
     createBooking,
+    deactivateActivity,
     fetchActivities,
     fetchBookings,
     fetchOccupancy,
     payBooking,
+    updateActivity,
     updateBooking,
 } from "../api/visitormanagementApi";
 
@@ -64,6 +66,33 @@ export function useCreateActivity() {
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ACTIVITIES_KEY });
             queryClient.invalidateQueries({ queryKey: OCCUPANCY_KEY });
+        },
+    });
+}
+
+export function useUpdateActivity() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }) => updateActivity(id, data),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ACTIVITIES_KEY });
+            queryClient.invalidateQueries({ queryKey: OCCUPANCY_KEY });
+        },
+    });
+}
+
+/*
+ * Deactivating an activity also cancels its bookings on the backend, so the
+ * bookings list, the occupancy and the dashboard are all refreshed.
+ */
+export function useDeactivateActivity() {
+    const invalidate = useInvalidateBookings();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deactivateActivity,
+        onSettled: () => {
+            invalidate();
+            queryClient.invalidateQueries({ queryKey: ACTIVITIES_KEY });
         },
     });
 }
