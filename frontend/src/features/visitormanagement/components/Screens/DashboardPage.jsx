@@ -7,14 +7,40 @@ import { formatNumber, formatSatisfaction, getIsoWeekNumber } from "../../utils/
 /*
  * The five counter cards of the mockup, in its order and with its wording.
  * "Slots booked" is the count of booked slots; the backend does not expose the
- * week's total, so the mockup's "6/12" fraction is not reproduced.
+ * week's total, so the mockup's "6/12" fraction is not reproduced. Each card
+ * opens the screen its figure comes from.
  */
 const COUNTERS = [
-    { label: "Visitors this week", key: "visitorsThisWeek", format: formatNumber },
-    { label: "Slots booked", key: "slotsBooked", format: formatNumber },
-    { label: "Safety briefings pending", key: "pendingBriefings", format: formatNumber },
-    { label: "Avg. satisfaction", key: "averageSatisfaction", format: formatSatisfaction },
-    { label: "Upcoming events", key: "upcomingEvents", format: null },
+    {
+        label: "Visitors this week",
+        key: "visitorsThisWeek",
+        format: formatNumber,
+        path: "/visitormanagement/visitors",
+    },
+    {
+        label: "Slots booked",
+        key: "slotsBooked",
+        format: formatNumber,
+        path: "/visitormanagement/scheduling",
+    },
+    {
+        label: "Safety briefings pending",
+        key: "pendingBriefings",
+        format: formatNumber,
+        path: "/visitormanagement/safety",
+    },
+    {
+        label: "Avg. satisfaction",
+        key: "averageSatisfaction",
+        format: formatSatisfaction,
+        path: "/visitormanagement/feedback",
+    },
+    {
+        label: "Upcoming events",
+        key: "upcomingEvents",
+        format: null,
+        path: "/visitormanagement/events",
+    },
 ];
 
 /*
@@ -32,15 +58,25 @@ const FEATURE_CARDS = [
     { title: "Events", target: "events", path: "/visitormanagement/events" },
 ];
 
-function CounterCard({ label, value, format }) {
+/*
+ * A KPI card, rendered as a button so the figure leads to the screen it comes
+ * from. Spans rather than paragraphs: a button only accepts phrasing content.
+ */
+function CounterCard({ label, value, format, path }) {
+    const navigate = useNavigate();
     const display = format === null ? formatNumber(value?.length) : format(value);
     return (
-        <div className="rounded-lg border border-line bg-white px-4 py-4">
-            <p className="mb-1.5 text-xs text-muted">{label}</p>
-            <p className="font-heading text-[28px] leading-none font-bold text-primary-dark">
+        <button
+            type="button"
+            onClick={() => navigate(path)}
+            title={`Open ${label}`}
+            className="rounded-lg border border-line bg-white px-4 py-4 text-left transition-shadow duration-150 hover:shadow-[0_4px_14px_rgba(10,130,118,0.15)]"
+        >
+            <span className="mb-1.5 block text-xs text-muted">{label}</span>
+            <span className="font-heading block text-[28px] leading-none font-bold text-primary-dark">
                 {display}
-            </p>
-        </div>
+            </span>
+        </button>
     );
 }
 
@@ -79,10 +115,23 @@ function FeatureCard({ card, built }) {
 }
 
 /*
+ * Where each staff task type leads. The API task carries no entity id — only a
+ * type, a label and a due date — so the click opens the screen that owns the
+ * task rather than the exact record.
+ */
+const TASK_TARGETS = {
+    CONFIRM_BOOKING: "/visitormanagement/booking",
+    SEND_REMINDER: "/visitormanagement/booking",
+    DELIVER_BRIEFING: "/visitormanagement/safety",
+};
+
+/*
  * The upcoming tasks of the mockup's side panel. Due timestamps are shown next
- * to each task; the label itself comes from the API.
+ * to each task; the label itself comes from the API. Each task is a button
+ * that opens the screen owning that kind of work.
  */
 function TasksPanel({ tasks }) {
+    const navigate = useNavigate();
     return (
         <aside className="flex flex-col gap-3.5 rounded-lg border border-line bg-white p-4.5">
             <h3 className="font-heading text-[17px] font-bold text-ink">Upcoming tasks</h3>
@@ -91,11 +140,20 @@ function TasksPanel({ tasks }) {
             ) : (
                 <ul className="flex flex-col gap-2">
                     {tasks.map((task, index) => (
-                        <li
-                            key={`${task.type}-${index}`}
-                            className="rounded-md border-l-[3px] border-primary bg-[#F2FBF9] px-2.5 py-2 text-[13px] text-ink"
-                        >
-                            {task.label}
+                        <li key={`${task.type}-${index}`}>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    navigate(TASK_TARGETS[task.type] ?? "/visitormanagement")
+                                }
+                                title="Open the screen for this task"
+                                className="flex w-full items-center justify-between gap-2 rounded-md border-l-[3px] border-primary bg-[#F2FBF9] px-2.5 py-2 text-left text-[13px] text-ink hover:bg-[#E7F7F4]"
+                            >
+                                <span>{task.label}</span>
+                                <span aria-hidden="true" className="text-primary">
+                                    ›
+                                </span>
+                            </button>
                         </li>
                     ))}
                 </ul>
@@ -150,12 +208,13 @@ export default function DashboardPage() {
             {!isPending && !isError && dashboard && (
                 <div className="flex flex-col gap-5">
                     <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-5">
-                        {COUNTERS.map(({ label, key, format }) => (
+                        {COUNTERS.map(({ label, key, format, path }) => (
                             <CounterCard
                                 key={key}
                                 label={label}
                                 value={dashboard[key]}
                                 format={format}
+                                path={path}
                             />
                         ))}
                     </div>
