@@ -1,19 +1,15 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-
 COPY pom.xml .
-RUN mvn -B dependency:go-offline
-
+RUN mvn dependency:go-offline
 COPY src ./src
-RUN mvn -B clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S app && adduser -S -G app app
 WORKDIR /app
-
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
-
 COPY --from=build /app/target/*.jar app.jar
-
+RUN chown -R app:app /app
+USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
