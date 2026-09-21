@@ -1,0 +1,299 @@
+import { Fragment, useEffect, useState } from "react";
+import { Loader2, TriangleAlert } from "lucide-react";
+import {
+    useActivities,
+    useBookingAction,
+    useBookings,
+    useCreateActivity,
+    useCreateBooking,
+    useOccupancy,
+    useUpdateBooking,
+} from "../hooks/useBooking";
+import ActivityForm from "./ActivityForm";
+import BookingForm from "./BookingForm";
+import BookingsTable from "./BookingsTable";
+import OccupancyBars from "./OccupancyBars";
+
+/*
+ * The four steps of the booking journey, exactly as the mockup's flow strip
+ * describes them. They are explanatory, not interactive: the mockup does not
+ * define a booking creation form on this screen.
+ */
+const FLOW_STEPS = [
+    "Choose time slot & tour type",
+    "Registration form",
+    "Email confirmation",
+    "Reminder 24h before",
+];
+
+export default function BookingPage() {
+    const [activityFormOpen, setActivityFormOpen] = useState(false);
+    const [createFormOpen, setCreateFormOpen] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [formKey, setFormKey] = useState(0);
+
+    useEffect(() => {
+        document.title = "Agritourism Booking System — Visitor Management";
+    }, []);
+
+    const {
+        data: bookings,
+        isPending: bookingsPending,
+        isError: bookingsError,
+        refetch: refetchBookings,
+        isFetching: bookingsFetching,
+    } = useBookings();
+    const { data: activities, isError: activitiesError } = useActivities();
+    const {
+        data: occupancy,
+        isPending: occupancyPending,
+        isError: occupancyError,
+        refetch: refetchOccupancy,
+        isFetching: occupancyFetching,
+    } = useOccupancy();
+
+    const createActivityMutation = useCreateActivity();
+    const createBookingMutation = useCreateBooking();
+    const updateBookingMutation = useUpdateBooking();
+    const actionMutation = useBookingAction();
+
+    function resetEdit() {
+        setEditing(null);
+        setFormKey((current) => current + 1);
+        updateBookingMutation.reset();
+    }
+
+    function startEdit(booking) {
+        updateBookingMutation.reset();
+        createBookingMutation.reset();
+        setCreateFormOpen(false);
+        setEditing(booking);
+        setFormKey((current) => current + 1);
+    }
+
+    function openCreateBooking() {
+        createBookingMutation.reset();
+        updateBookingMutation.reset();
+        setEditing(null);
+        setCreateFormOpen(true);
+        setFormKey((current) => current + 1);
+    }
+
+    function resetCreateBooking() {
+        setCreateFormOpen(false);
+        setFormKey((current) => current + 1);
+        createBookingMutation.reset();
+    }
+
+    const pendingAction = actionMutation.isPending ? actionMutation.variables : null;
+    const actionError = actionMutation.isError
+        ? { id: actionMutation.variables?.id, message: actionMutation.error.message }
+        : null;
+
+    return (
+        <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
+            <section className="rounded-lg border border-line bg-white p-7">
+                <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
+                    Agritourism booking system
+                </h2>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0">
+                    {FLOW_STEPS.map((step, index) => (
+                        <Fragment key={step}>
+                            {index > 0 && (
+                                <span className="hidden self-center px-2.5 text-lg text-accent sm:block">
+                                    →
+                                </span>
+                            )}
+                            <div className="border border-line border-t-[3px] border-t-primary bg-[#F7FDFB] px-4 py-3.5 text-[13px] sm:min-w-[140px]">
+                                <div className="mb-1 text-[11px] text-primary">Step {index + 1}</div>
+                                {step}
+                            </div>
+                        </Fragment>
+                    ))}
+                </div>
+
+                <p className="mt-6 text-[11px] text-muted">
+                    Each activity carries its own price and capacity; payment is accepted in cash or
+                    mobile money. A booking must be paid before it can be confirmed.
+                </p>
+
+                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">Bookings</h3>
+
+                <div className="mb-4 flex flex-wrap gap-2.5">
+                    <button
+                        type="button"
+                        onClick={openCreateBooking}
+                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                    >
+                        + New booking
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            createActivityMutation.reset();
+                            setActivityFormOpen((open) => !open);
+                        }}
+                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                    >
+                        + New activity
+                    </button>
+                </div>
+
+                {createFormOpen && (
+                    <>
+                        <h4 className="font-heading mb-2 text-sm font-bold text-ink">
+                            New booking
+                        </h4>
+                        <BookingForm
+                            key={`create-${formKey}`}
+                            booking={null}
+                            activities={activities ?? []}
+                            isSubmitting={createBookingMutation.isPending}
+                            submitError={createBookingMutation.error?.message}
+                            serverFieldErrors={createBookingMutation.error?.data?.fieldErrors}
+                            onSubmit={(values) =>
+                                createBookingMutation.mutate(values, {
+                                    onSuccess: resetCreateBooking,
+                                })
+                            }
+                            onCancel={resetCreateBooking}
+                        />
+                    </>
+                )}
+
+                {activityFormOpen && (
+                    <ActivityForm
+                        isSubmitting={createActivityMutation.isPending}
+                        submitError={createActivityMutation.error?.message}
+                        serverFieldErrors={createActivityMutation.error?.data?.fieldErrors}
+                        onSubmit={(values) =>
+                            createActivityMutation.mutate(values, {
+                                onSuccess: () => setActivityFormOpen(false),
+                            })
+                        }
+                        onCancel={() => {
+                            createActivityMutation.reset();
+                            setActivityFormOpen(false);
+                        }}
+                    />
+                )}
+
+                {editing && (
+                    <>
+                        <h4 className="font-heading mb-2 text-sm font-bold text-ink">
+                            Edit booking {editing.reference}
+                        </h4>
+                        <BookingForm
+                            key={formKey}
+                            booking={editing}
+                            activities={activities ?? []}
+                            isSubmitting={updateBookingMutation.isPending}
+                            submitError={updateBookingMutation.error?.message}
+                            serverFieldErrors={updateBookingMutation.error?.data?.fieldErrors}
+                            onSubmit={(values) =>
+                                updateBookingMutation.mutate(
+                                    { id: editing.id, data: values },
+                                    { onSuccess: resetEdit },
+                                )
+                            }
+                            onCancel={resetEdit}
+                        />
+                    </>
+                )}
+
+                {activitiesError && (
+                    <p className="mb-3 text-xs text-muted">
+                        Activities could not be loaded — editing a booking is unavailable until the
+                        list returns.
+                    </p>
+                )}
+
+                {bookingsPending && (
+                    <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
+                        <Loader2 size={18} className="animate-spin" />
+                        Loading bookings…
+                    </div>
+                )}
+
+                {bookingsError && (
+                    <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
+                        <TriangleAlert size={28} className="text-error" />
+                        <div>
+                            <p className="font-heading text-base font-bold text-ink">
+                                Bookings could not be loaded
+                            </p>
+                            <p className="mt-1 text-sm text-muted">
+                                The request to the server did not succeed.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => refetchBookings()}
+                            disabled={bookingsFetching}
+                            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
+                        >
+                            {bookingsFetching ? "Retrying…" : "Retry"}
+                        </button>
+                    </div>
+                )}
+
+                {!bookingsPending && !bookingsError && (
+                    <BookingsTable
+                        bookings={bookings ?? []}
+                        pendingAction={pendingAction}
+                        actionError={actionError}
+                        onAction={(booking, action) =>
+                            actionMutation.mutate({ id: booking.id, action })
+                        }
+                        onEdit={startEdit}
+                    />
+                )}
+
+                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
+                    Occupancy per activity
+                </h3>
+
+                {occupancyPending && (
+                    <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
+                        <Loader2 size={18} className="animate-spin" />
+                        Loading occupancy…
+                    </div>
+                )}
+
+                {occupancyError && (
+                    <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
+                        <TriangleAlert size={28} className="text-error" />
+                        <div>
+                            <p className="font-heading text-base font-bold text-ink">
+                                Occupancy could not be loaded
+                            </p>
+                            <p className="mt-1 text-sm text-muted">
+                                The request to the server did not succeed.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => refetchOccupancy()}
+                            disabled={occupancyFetching}
+                            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
+                        >
+                            {occupancyFetching ? "Retrying…" : "Retry"}
+                        </button>
+                    </div>
+                )}
+
+                {!occupancyPending && !occupancyError && (
+                    <>
+                        <OccupancyBars occupancy={occupancy ?? []} />
+                        <p className="mt-6 text-[11px] text-muted">
+                            Confirmations are linked to the scheduling module, so a booking can never
+                            exceed the slot capacity. Cancelling a booking releases its seats and
+                            refunds a recorded payment.
+                        </p>
+                    </>
+                )}
+            </section>
+        </div>
+    );
+}

@@ -26,7 +26,7 @@ const NAV_ITEMS = [
     { label: "Registration", icon: UserPlus, path: "/visitormanagement/registration" },
     { label: "Education", icon: BookOpen, path: "/visitormanagement/education" },
     { label: "Safety", icon: ShieldCheck, path: "/visitormanagement/safety" },
-    { label: "Booking", icon: Ticket },
+    { label: "Booking", icon: Ticket, path: "/visitormanagement/booking" },
     { label: "Feedback", icon: MessageSquare },
     { label: "Events", icon: PartyPopper },
 ];

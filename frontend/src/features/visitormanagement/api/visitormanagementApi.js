@@ -155,3 +155,58 @@ export function deliverBriefing(registrationId, data) {
         data,
     );
 }
+
+/** Every agritourism activity, active and inactive. */
+export function fetchActivities() {
+    return apiClient.get(VM_ENDPOINTS.ACTIVITIES);
+}
+
+/** Creates an activity from an AgriActivityRequest payload. */
+export function createActivity(data) {
+    return apiClient.post(VM_ENDPOINTS.ACTIVITIES, data);
+}
+
+/**
+ * The bookings, most recent first. The endpoint is paginated; the screen asks
+ * for one large page rather than hiding rows behind pagination.
+ */
+export function fetchBookings({ page = 0, size = 100 } = {}) {
+    return apiClient.get(VM_ENDPOINTS.BOOKINGS, { params: { page, size } });
+}
+
+/** Updates a booking from a BookingRequest payload. */
+export function updateBooking(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.BOOKINGS}/${id}`, data);
+}
+
+/** Creates a booking from a BookingRequest payload. */
+export function createBooking(data) {
+    return apiClient.post(VM_ENDPOINTS.BOOKINGS, data);
+}
+
+/*
+ * Booking lifecycle. The API enforces the order: a booking must be PAID before
+ * it can be confirmed, only a CONFIRMED booking can be completed, and
+ * cancelling refunds a payment already recorded. The table only offers the
+ * action each row currently allows.
+ */
+export function payBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/pay`);
+}
+
+export function confirmBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/confirm`);
+}
+
+export function completeBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/complete`);
+}
+
+export function cancelBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/cancel`);
+}
+
+/** Occupancy per activity: capacity, booked and percentage. */
+export function fetchOccupancy() {
+    return apiClient.get(`${VM_ENDPOINTS.BOOKINGS}/occupancy`);
+}
