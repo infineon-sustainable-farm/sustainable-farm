@@ -7,6 +7,7 @@ import {
     useUpdateEvent,
 } from "../../hooks/useEvents";
 import EventCard from "../EventCard";
+import Modal from "../Modal";
 import EventForm from "../Forms/EventForm";
 import EventParticipants from "../EventParticipants";
 import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
@@ -15,9 +16,11 @@ const EVENT_TYPES = ["OPEN_DAY", "PARTNER_BUYER", "SCHOOL", "COMMUNITY"];
 
 export default function EventsPage() {
     const [editingEvent, setEditingEvent] = useState(null);
+    const [formOpen, setFormOpen] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [formKey, setFormKey] = useState(0);
     const [filters, setFilters] = useState({ type: "", date: "" });
+    const [showCancelledEvents, setShowCancelledEvents] = useState(false);
 
     /*
      * The API applies only the first non-null filter, so the type and the date
@@ -50,11 +53,25 @@ export default function EventsPage() {
     // Derived from the list so the panel stays fresh after an invalidation.
     const selectedEvent = (events ?? []).find((event) => event.id === selectedEventId) ?? null;
 
+    // Cancelled events stay out of the grid unless asked for.
+    const visibleEvents = (events ?? []).filter(
+        (event) => showCancelledEvents || event.status !== "CANCELLED",
+    );
+
     function resetForm() {
         setEditingEvent(null);
+        setFormOpen(false);
         setFormKey((current) => current + 1);
         createMutation.reset();
         updateMutation.reset();
+    }
+
+    function openCreate() {
+        createMutation.reset();
+        updateMutation.reset();
+        setEditingEvent(null);
+        setFormOpen(true);
+        setFormKey((current) => current + 1);
     }
 
     function openEdit(event) {
@@ -62,6 +79,7 @@ export default function EventsPage() {
         updateMutation.reset();
         setSelectedEventId(null);
         setEditingEvent(event);
+        setFormOpen(true);
         setFormKey((current) => current + 1);
     }
 
@@ -136,6 +154,24 @@ export default function EventsPage() {
                             Clear filters
                         </button>
                     )}
+
+                    <label className="flex items-center gap-2 pb-2.5 text-xs text-ink">
+                        <input
+                            type="checkbox"
+                            checked={showCancelledEvents}
+                            onChange={(event) => setShowCancelledEvents(event.target.checked)}
+                            className="h-4 w-4 accent-[#0a8276]"
+                        />
+                        Show cancelled
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={openCreate}
+                        className="ml-auto rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                    >
+                        + New event
+                    </button>
                 </div>
 
                 {isPending && (
@@ -170,10 +206,10 @@ export default function EventsPage() {
                 {!isPending && !isError && (
                     <>
                         <div className="mb-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-                            {events.length === 0 && (
-                                <p className="text-sm text-muted">No event yet.</p>
+                            {visibleEvents.length === 0 && (
+                                <p className="text-sm text-muted">No event to show.</p>
                             )}
-                            {events.map((event) => (
+                            {visibleEvents.map((event) => (
                                 <EventCard
                                     key={event.id}
                                     event={event}
@@ -201,12 +237,22 @@ export default function EventsPage() {
                             />
                         )}
 
-                        <h3 className="font-heading mb-3 text-[17px] font-bold text-ink">
-                            {editingEvent ? `Edit event: ${editingEvent.title}` : "Create new event"}
-                        </h3>
+                        <p className="mt-6 text-[11px] text-muted">
+                            Events bring several visitors or groups together under one occasion.
+                            Registrations, safety briefings and feedback stay linked to each
+                            visitor's own record, and past events are completed automatically.
+                        </p>
+                    </>
+                )}
 
-                        {/* The mockup keeps the create form visible at all times; it
-                            switches to edit mode when a card's edit action is used. */}
+                {formOpen && (
+                    <Modal
+                        title={
+                            editingEvent ? `Edit event — ${editingEvent.title}` : "New event"
+                        }
+                        onClose={resetForm}
+                        widthClass="max-w-3xl"
+                    >
                         <EventForm
                             key={formKey}
                             event={editingEvent}
@@ -216,13 +262,7 @@ export default function EventsPage() {
                             onSubmit={handleSubmit}
                             onCancel={resetForm}
                         />
-
-                        <p className="mt-6 text-[11px] text-muted">
-                            Events bring several visitors or groups together under one occasion.
-                            Registrations, safety briefings and feedback stay linked to each
-                            visitor's own record, and past events are completed automatically.
-                        </p>
-                    </>
+                    </Modal>
                 )}
             </section>
         </div>

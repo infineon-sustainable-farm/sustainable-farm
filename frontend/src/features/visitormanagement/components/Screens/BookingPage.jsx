@@ -10,6 +10,7 @@ import {
     useUpdateActivity,
     useUpdateBooking,
 } from "../../hooks/useBooking";
+import Modal from "../Modal";
 import ActivitiesTable from "../ActivitiesTable";
 import ActivityForm from "../Forms/ActivityForm";
 import BookingForm from "../Forms/BookingForm";
@@ -35,6 +36,8 @@ export default function BookingPage() {
     const [editing, setEditing] = useState(null);
     const [formKey, setFormKey] = useState(0);
     const [filters, setFilters] = useState({ status: "", activityId: "", date: "" });
+    const [showCancelledBookings, setShowCancelledBookings] = useState(false);
+    const [showInactiveActivities, setShowInactiveActivities] = useState(false);
 
     /*
      * The API applies only the first non-null filter, so the controls clear one
@@ -47,7 +50,6 @@ export default function BookingPage() {
             date: key === "date" ? value : "",
         });
     }
-
     const hasActiveFilter = Boolean(filters.status || filters.activityId || filters.date);
 
     useEffect(() => {
@@ -137,6 +139,14 @@ export default function BookingPage() {
     const actionError = actionMutation.isError
         ? { id: actionMutation.variables?.id, message: actionMutation.error.message }
         : null;
+
+    // Cancelled bookings and inactive activities stay out of view unless asked for.
+    const visibleBookings = (bookings ?? []).filter(
+        (booking) => showCancelledBookings || booking.status !== "CANCELLED",
+    );
+    const visibleActivities = (activities ?? []).filter(
+        (activity) => showInactiveActivities || activity.active,
+    );
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
@@ -243,6 +253,16 @@ export default function BookingPage() {
                             Clear filters
                         </button>
                     )}
+
+                    <label className="flex items-center gap-2 pb-2.5 text-xs text-ink">
+                        <input
+                            type="checkbox"
+                            checked={showCancelledBookings}
+                            onChange={(event) => setShowCancelledBookings(event.target.checked)}
+                            className="h-4 w-4 accent-[#0a8276]"
+                        />
+                        Show cancelled
+                    </label>
                 </div>
 
                 {editing && (
@@ -306,7 +326,7 @@ export default function BookingPage() {
 
                 {!bookingsPending && !bookingsError && (
                     <BookingsTable
-                        bookings={bookings ?? []}
+                        bookings={visibleBookings}
                         pendingAction={pendingAction}
                         actionError={actionError}
                         onAction={(booking, action) =>
@@ -316,11 +336,17 @@ export default function BookingPage() {
                     />
                 )}
 
-                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
-                    Activities
-                </h3>
-
-                <div className="mb-4 flex flex-wrap gap-2.5">
+                <div className="mb-4 flex flex-wrap items-center gap-4">
+                    <h3 className="font-heading text-[17px] font-bold text-ink">Activities</h3>
+                    <label className="ml-auto flex items-center gap-2 text-xs text-ink">
+                        <input
+                            type="checkbox"
+                            checked={showInactiveActivities}
+                            onChange={(event) => setShowInactiveActivities(event.target.checked)}
+                            className="h-4 w-4 accent-[#0a8276]"
+                        />
+                        Show inactive
+                    </label>
                     <button
                         type="button"
                         onClick={openCreateActivity}
@@ -330,31 +356,12 @@ export default function BookingPage() {
                     </button>
                 </div>
 
-                {activityFormState.open && (
-                    <>
-                        {editingActivity && (
-                            <h4 className="font-heading mb-2 text-sm font-bold text-ink">
-                                Edit activity: {editingActivity.name}
-                            </h4>
-                        )}
-                        <ActivityForm
-                            key={activityFormKey}
-                            activity={editingActivity}
-                            isSubmitting={activityFormMutation.isPending}
-                            submitError={activityFormMutation.error?.message}
-                            serverFieldErrors={activityFormMutation.error?.data?.fieldErrors}
-                            onSubmit={handleActivitySubmit}
-                            onCancel={resetActivityForm}
-                        />
-                    </>
-                )}
-
                 {activitiesError ? (
                     <p className="text-sm text-muted">Activities could not be loaded.</p>
                 ) : (
                     <>
                         <ActivitiesTable
-                            activities={activities ?? []}
+                            activities={visibleActivities}
                             pendingDeactivateId={pendingDeactivateId}
                             deactivateError={deactivateActivityError}
                             onDeactivate={(activity) =>
@@ -410,6 +417,27 @@ export default function BookingPage() {
                             refunds a recorded payment.
                         </p>
                     </>
+                )}
+
+                {activityFormState.open && (
+                    <Modal
+                        title={
+                            editingActivity
+                                ? `Edit activity — ${editingActivity.name}`
+                                : "New activity"
+                        }
+                        onClose={resetActivityForm}
+                    >
+                        <ActivityForm
+                            key={activityFormKey}
+                            activity={editingActivity}
+                            isSubmitting={activityFormMutation.isPending}
+                            submitError={activityFormMutation.error?.message}
+                            serverFieldErrors={activityFormMutation.error?.data?.fieldErrors}
+                            onSubmit={handleActivitySubmit}
+                            onCancel={resetActivityForm}
+                        />
+                    </Modal>
                 )}
             </section>
         </div>
