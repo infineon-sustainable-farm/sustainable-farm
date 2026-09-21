@@ -266,10 +266,11 @@ export default function BookingPage() {
                 </div>
 
                 {editing && (
-                    <>
-                        <h4 className="font-heading mb-2 text-sm font-bold text-ink">
-                            Edit booking {editing.reference}
-                        </h4>
+                    <Modal
+                        title={`Edit booking — ${editing.reference}`}
+                        onClose={resetEdit}
+                        widthClass="max-w-2xl"
+                    >
                         <BookingForm
                             key={formKey}
                             booking={editing}
@@ -285,7 +286,7 @@ export default function BookingPage() {
                             }
                             onCancel={resetEdit}
                         />
-                    </>
+                    </Modal>
                 )}
 
                 {activitiesError && (
