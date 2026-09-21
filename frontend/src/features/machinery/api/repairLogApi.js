@@ -1,18 +1,18 @@
 import { apiClient } from "../../../shared/api/client";
-import { ENDPOINTS } from "../../../shared/api/endpoints";
+import { MACHINERY_ENDPOINTS } from "./endpoints";
 
 export function fetchRepairLogs(page, size = 10) {
-  return apiClient.get(ENDPOINTS.REPAIR_LOGS, { params: { page, size } });
+  return apiClient.get(MACHINERY_ENDPOINTS.REPAIR_LOGS, { params: { page, size } });
 }
 
 export function createRepairLog(data) {
-  return apiClient.post(ENDPOINTS.REPAIR_LOGS, data);
+  return apiClient.post(MACHINERY_ENDPOINTS.REPAIR_LOGS, data);
 }
 
 export function updateRepairLog(id, data) {
-  return apiClient.put(`${ENDPOINTS.REPAIR_LOGS}/${id}`, data);
+  return apiClient.put(`${MACHINERY_ENDPOINTS.REPAIR_LOGS}/${id}`, data);
 }
 
 export function deleteRepairLog(id) {
-  return apiClient.delete(`${ENDPOINTS.REPAIR_LOGS}/${id}`);
+  return apiClient.delete(`${MACHINERY_ENDPOINTS.REPAIR_LOGS}/${id}`);
 }
