@@ -7,6 +7,7 @@ import {
     useUpdateStaff,
 } from "../../hooks/useStaff";
 import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
+import Modal from "../Modal";
 import StaffForm from "../Forms/StaffForm";
 import StaffTable from "../StaffTable";
 
@@ -16,6 +17,7 @@ export default function StaffPage() {
     const [formState, setFormState] = useState({ open: false, staff: null });
     const [formKey, setFormKey] = useState(0);
     const [roleFilter, setRoleFilter] = useState("");
+    const [showInactive, setShowInactive] = useState(false);
 
     useEffect(() => {
         document.title = "Staff — Visitor Management";
@@ -37,7 +39,9 @@ export default function StaffPage() {
     const formMutation = editingStaff ? updateMutation : createMutation;
 
     const visibleStaff = (staff ?? []).filter(
-        (member) => roleFilter === "" || member.role === roleFilter,
+        (member) =>
+            (roleFilter === "" || member.role === roleFilter) &&
+            (showInactive || member.active),
     );
 
     function resetForm() {
@@ -106,6 +110,15 @@ export default function StaffPage() {
                             ))}
                         </select>
                     </div>
+                    <label className="flex items-center gap-2 pb-2.5 text-xs text-ink">
+                        <input
+                            type="checkbox"
+                            checked={showInactive}
+                            onChange={(event) => setShowInactive(event.target.checked)}
+                            className="h-4 w-4 accent-[#0a8276]"
+                        />
+                        Show inactive
+                    </label>
                     <button
                         type="button"
                         onClick={openCreate}
@@ -116,15 +129,24 @@ export default function StaffPage() {
                 </div>
 
                 {formState.open && (
-                    <StaffForm
-                        key={formKey}
-                        staff={editingStaff}
-                        isSubmitting={formMutation.isPending}
-                        submitError={formMutation.error?.message}
-                        serverFieldErrors={formMutation.error?.data?.fieldErrors}
-                        onSubmit={handleSubmit}
-                        onCancel={resetForm}
-                    />
+                    <Modal
+                        title={
+                            editingStaff
+                                ? `Edit staff member — ${editingStaff.fullName}`
+                                : "New staff member"
+                        }
+                        onClose={resetForm}
+                    >
+                        <StaffForm
+                            key={formKey}
+                            staff={editingStaff}
+                            isSubmitting={formMutation.isPending}
+                            submitError={formMutation.error?.message}
+                            serverFieldErrors={formMutation.error?.data?.fieldErrors}
+                            onSubmit={handleSubmit}
+                            onCancel={resetForm}
+                        />
+                    </Modal>
                 )}
 
                 {isPending && (

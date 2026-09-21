@@ -6,6 +6,7 @@ import {
     useVisitors,
 } from "../../hooks/useVisitors";
 import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
+import Modal from "../Modal";
 import VisitorForm from "../Forms/VisitorForm";
 
 const TINY_BUTTON =
@@ -128,15 +129,20 @@ export default function VisitorsPage() {
                 </div>
 
                 {formState.open && (
-                    <VisitorForm
-                        key={formKey}
-                        visitor={editingVisitor}
-                        isSubmitting={formMutation.isPending}
-                        submitError={formMutation.error?.message}
-                        serverFieldErrors={formMutation.error?.data?.fieldErrors}
-                        onSubmit={handleSubmit}
-                        onCancel={resetForm}
-                    />
+                    <Modal
+                        title={editingVisitor ? `Edit visitor — ${editingVisitor.fullName}` : "New visitor"}
+                        onClose={resetForm}
+                    >
+                        <VisitorForm
+                            key={formKey}
+                            visitor={editingVisitor}
+                            isSubmitting={formMutation.isPending}
+                            submitError={formMutation.error?.message}
+                            serverFieldErrors={formMutation.error?.data?.fieldErrors}
+                            onSubmit={handleSubmit}
+                            onCancel={resetForm}
+                        />
+                    </Modal>
                 )}
 
                 {isPending && (
