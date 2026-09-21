@@ -10,6 +10,7 @@ import {
     useWorkshopStatusAction,
     useWorkshops,
 } from "../../hooks/useEducation";
+import Modal from "../Modal";
 import TourStopsTimeline from "../TourStopsTimeline";
 import TourStopForm from "../Forms/TourStopForm";
 import WorkshopForm from "../Forms/WorkshopForm";
@@ -20,6 +21,8 @@ export default function EducationPage() {
     const [formKey, setFormKey] = useState(0);
     const [stopFormState, setStopFormState] = useState({ open: false, stop: null });
     const [stopFormKey, setStopFormKey] = useState(0);
+    const [showInactiveStops, setShowInactiveStops] = useState(false);
+    const [showInactiveWorkshops, setShowInactiveWorkshops] = useState(false);
 
     useEffect(() => {
         document.title = "Educational Program — Visitor Management";
@@ -57,6 +60,11 @@ export default function EducationPage() {
     // Only active stops make up the standard tour shown in the timeline.
     const activeStops = (stops ?? []).filter((stop) => stop.active);
     const inactiveStopCount = (stops ?? []).length - activeStops.length;
+
+    // Deactivated workshops stay out of the table unless asked for.
+    const visibleWorkshops = (workshops ?? []).filter(
+        (workshop) => showInactiveWorkshops || workshop.status !== "INACTIVE",
+    );
 
     function resetStopForm() {
         setStopFormState({ open: false, stop: null });
@@ -169,40 +177,39 @@ export default function EducationPage() {
 
                 {!stopsPending && !stopsError && (
                     <>
-                        <div className="mb-4 flex flex-wrap items-center gap-3">
+                        <div className="mb-4 flex flex-wrap items-center gap-4">
                             <h3 className="font-heading text-[17px] font-bold text-ink">
                                 Standard tour stops
                             </h3>
+                            <label className="ml-auto flex items-center gap-2 text-xs text-ink">
+                                <input
+                                    type="checkbox"
+                                    checked={showInactiveStops}
+                                    onChange={(event) =>
+                                        setShowInactiveStops(event.target.checked)
+                                    }
+                                    className="h-4 w-4 accent-[#0a8276]"
+                                />
+                                Show inactive
+                            </label>
                             <button
                                 type="button"
                                 onClick={openCreateStop}
-                                className="ml-auto rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                                className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
                             >
                                 + New stop
                             </button>
                         </div>
 
-                        {stopFormState.open && (
-                            <TourStopForm
-                                key={stopFormKey}
-                                stop={editingStop}
-                                isSubmitting={stopFormMutation.isPending}
-                                submitError={stopFormMutation.error?.message}
-                                serverFieldErrors={stopFormMutation.error?.data?.fieldErrors}
-                                onSubmit={handleStopSubmit}
-                                onCancel={resetStopForm}
-                            />
-                        )}
-
                         <TourStopsTimeline
-                            stops={activeStops}
+                            stops={showInactiveStops ? (stops ?? []) : activeStops}
                             pendingDeactivateId={pendingStopDeactivateId}
                             deactivateError={stopDeactivateError}
                             onEdit={openEditStop}
                             onDeactivate={(stop) => deactivateStopMutation.mutate(stop.id)}
                         />
 
-                        {inactiveStopCount > 0 && (
+                        {!showInactiveStops && inactiveStopCount > 0 && (
                             <p className="mt-3 text-[11px] text-muted">
                                 {inactiveStopCount} deactivated stop
                                 {inactiveStopCount > 1 ? "s are" : " is"} hidden from the tour —
@@ -212,11 +219,19 @@ export default function EducationPage() {
                     </>
                 )}
 
-                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
-                    Workshops &amp; tour templates
-                </h3>
-
-                <div className="mb-4 flex gap-2.5">
+                <div className="mb-3 mt-6.5 flex flex-wrap items-center gap-4">
+                    <h3 className="font-heading text-[17px] font-bold text-ink">
+                        Workshops &amp; tour templates
+                    </h3>
+                    <label className="ml-auto flex items-center gap-2 text-xs text-ink">
+                        <input
+                            type="checkbox"
+                            checked={showInactiveWorkshops}
+                            onChange={(event) => setShowInactiveWorkshops(event.target.checked)}
+                            className="h-4 w-4 accent-[#0a8276]"
+                        />
+                        Show inactive
+                    </label>
                     <button
                         type="button"
                         onClick={openCreate}
@@ -225,18 +240,6 @@ export default function EducationPage() {
                         + New workshop
                     </button>
                 </div>
-
-                {formState.open && (
-                    <WorkshopForm
-                        key={formKey}
-                        workshop={editingWorkshop}
-                        isSubmitting={formMutation.isPending}
-                        submitError={formMutation.error?.message}
-                        serverFieldErrors={formMutation.error?.data?.fieldErrors}
-                        onSubmit={handleSubmit}
-                        onCancel={resetForm}
-                    />
-                )}
 
                 {workshopsPending && (
                     <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
@@ -270,7 +273,7 @@ export default function EducationPage() {
                 {!workshopsPending && !workshopsError && (
                     <>
                         <WorkshopsTable
-                            workshops={workshops ?? []}
+                            workshops={visibleWorkshops}
                             pendingAction={pendingAction}
                             actionError={actionError}
                             onAction={(workshop, action) =>
@@ -284,6 +287,44 @@ export default function EducationPage() {
                             its record but removes it from the offer.
                         </p>
                     </>
+                )}
+
+                {stopFormState.open && (
+                    <Modal
+                        title={editingStop ? `Edit stop — ${editingStop.name}` : "New tour stop"}
+                        onClose={resetStopForm}
+                    >
+                        <TourStopForm
+                            key={stopFormKey}
+                            stop={editingStop}
+                            isSubmitting={stopFormMutation.isPending}
+                            submitError={stopFormMutation.error?.message}
+                            serverFieldErrors={stopFormMutation.error?.data?.fieldErrors}
+                            onSubmit={handleStopSubmit}
+                            onCancel={resetStopForm}
+                        />
+                    </Modal>
+                )}
+
+                {formState.open && (
+                    <Modal
+                        title={
+                            editingWorkshop
+                                ? `Edit workshop — ${editingWorkshop.name}`
+                                : "New workshop"
+                        }
+                        onClose={resetForm}
+                    >
+                        <WorkshopForm
+                            key={formKey}
+                            workshop={editingWorkshop}
+                            isSubmitting={formMutation.isPending}
+                            submitError={formMutation.error?.message}
+                            serverFieldErrors={formMutation.error?.data?.fieldErrors}
+                            onSubmit={handleSubmit}
+                            onCancel={resetForm}
+                        />
+                    </Modal>
                 )}
             </section>
         </div>

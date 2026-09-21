@@ -81,13 +81,18 @@ export default function TourStopsTimeline({
     return (
         <div className="flex flex-col gap-4.5 border-l-[3px] border-primary pl-4.5">
             {stops.map((stop) => (
-                <div key={stop.id} className="relative">
+                <div key={stop.id} className={`relative ${stop.active ? "" : "opacity-60"}`}>
                     <span
                         aria-hidden="true"
                         className="absolute top-1 -left-[25px] h-2.5 w-2.5 rounded-full border-2 border-primary-dark bg-accent"
                     />
-                    <p className="font-heading text-base font-bold text-primary-dark">
+                    <p className="font-heading flex items-center gap-2 text-base font-bold text-primary-dark">
                         {stop.name}
+                        {!stop.active && (
+                            <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-gray-600 uppercase">
+                                Inactive
+                            </span>
+                        )}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted">
                         {stop.durationMinutes} min
