@@ -1,5 +1,5 @@
 import { apiClient } from "../../../shared/api/client";
-import { ENDPOINTS } from "../../../shared/api/endpoints";
+import { SITESECURITY_ENDPOINTS as ENDPOINTS } from "./endpoints";
 import { GATES, LOGS, USERS, ZONES } from "./sitesecurityMockFixtures";
 
 // Mock data is only ever used as a development fallback, never in production.

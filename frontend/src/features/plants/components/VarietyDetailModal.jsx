@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 import VigorBadge from "./VigorBadge";
+import Value from "./Value";
 import {
     formatBlock,
     formatDensity,
@@ -18,7 +19,9 @@ function Field({ label, children }) {
             <dt className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 {label}
             </dt>
-            <dd className="text-sm text-gray-800">{children}</dd>
+            <dd className="text-sm text-gray-800">
+                <Value>{children}</Value>
+            </dd>
         </div>
     );
 }

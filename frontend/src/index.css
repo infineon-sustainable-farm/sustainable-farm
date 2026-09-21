@@ -9,6 +9,11 @@
   /* Shared base tokens used across all modules (machinery, plants, shared components).
      Kept alongside the FenceLine scale below; do not remove without a team decision. */
   --color-primary: #0a8276;
+  --color-primary-dark: #065e55;
+  --color-accent: #0fa396;
+  --color-ink: #0f2a26;
+  --color-muted: #5a6b7a;
+  --color-line: #cdefe9;
 
   --color-success: #2e9e6b;
   --color-warning: #d9a441;

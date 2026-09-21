@@ -1,5 +1,5 @@
 import { apiClient } from "../../../shared/api/client";
-import { ENDPOINTS } from "../../../shared/api/endpoints";
+import { PLANTS_ENDPOINTS } from "./endpoints";
 
 /**
  * Fetches the varieties, optionally filtered.
@@ -13,12 +13,27 @@ export function fetchVarieties({ bloc_parcelle, id_ferme } = {}) {
     if (bloc_parcelle) params.bloc_parcelle = bloc_parcelle;
     if (id_ferme !== null && id_ferme !== undefined) params.id_ferme = id_ferme;
 
-    return apiClient.get(ENDPOINTS.VARIETIES, { params });
+    return apiClient.get(PLANTS_ENDPOINTS.VARIETIES, { params });
 }
 
 /**
  * Fetches a single variety by its identifier.
  */
 export function fetchVarietyById(id) {
-    return apiClient.get(`${ENDPOINTS.VARIETIES}/${id}`);
+    return apiClient.get(`${PLANTS_ENDPOINTS.VARIETIES}/${id}`);
+}
+
+/**
+ * Fetches the growth calendar entries, optionally filtered.
+ *
+ * Same filter rules as fetchVarieties: raw block value, empty filters omitted.
+ * Tree age and growth phase come computed by the API; they are never computed
+ * or guessed here.
+ */
+export function fetchGrowthCalendar({ bloc_parcelle, id_ferme } = {}) {
+    const params = {};
+    if (bloc_parcelle) params.bloc_parcelle = bloc_parcelle;
+    if (id_ferme !== null && id_ferme !== undefined) params.id_ferme = id_ferme;
+
+    return apiClient.get(PLANTS_ENDPOINTS.GROWTH_CALENDAR, { params });
 }
