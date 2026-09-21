@@ -43,7 +43,7 @@ public class EquipmentController {
    }
 
    @GetMapping
-   public ResponseEntity<Page<EquipmentObtainingResponse>> getAllEquipment(@PageableDefault(size = 20)Pageable pageable) {
+   public ResponseEntity<Page<EquipmentObtainingResponse>> getAllEquipment(@PageableDefault(size = 10)Pageable pageable) {
       Page<EquipmentObtainingResponse> pageOfEquipmentObtaininResponse = equipmentService.obtainAllEquipments(pageable);
       return ResponseEntity.status(HttpStatus.OK).body(pageOfEquipmentObtaininResponse);
    }

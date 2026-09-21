@@ -1,7 +1,7 @@
 import { apiClient } from "../../../shared/api/client";
 import { MACHINERY_ENDPOINTS } from "./endpoints";
 
-export function fetchEquipments(page, size = 20) {
+export function fetchEquipments(page, size = 10) {
   return apiClient.get(MACHINERY_ENDPOINTS.EQUIPMENTS, { params: { page, size } });
 }
 
