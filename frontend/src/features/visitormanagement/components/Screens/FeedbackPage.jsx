@@ -10,6 +10,7 @@ import {
 } from "../../hooks/useFeedback";
 import { useVisitors } from "../../hooks/useVisitors";
 import { startOfWeek } from "../../utils/format";
+import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
 import FeedbackSummary from "../FeedbackSummary";
 import FeedbackTable from "../FeedbackTable";
 import SendSurveyForm from "../Forms/SendSurveyForm";
@@ -52,6 +53,33 @@ function SectionLoading({ label }) {
 export default function FeedbackPage() {
     const [sendFormOpen, setSendFormOpen] = useState(false);
     const [formKey, setFormKey] = useState(0);
+    const [feedbackFilters, setFeedbackFilters] = useState({ visitorId: "", from: "", to: "" });
+    const [surveyStatus, setSurveyStatus] = useState("");
+
+    /*
+     * The API applies visitorId first and the date range only when both bounds
+     * are given, so the controls clear each other and the range stays idle
+     * until it is complete.
+     */
+    function updateVisitorFilter(value) {
+        setFeedbackFilters({ visitorId: value, from: "", to: "" });
+    }
+
+    function updateDateFilter(key, value) {
+        setFeedbackFilters((current) => ({
+            visitorId: "",
+            from: key === "from" ? value : current.from,
+            to: key === "to" ? value : current.to,
+        }));
+    }
+
+    const hasFeedbackFilter = Boolean(
+        feedbackFilters.visitorId || feedbackFilters.from || feedbackFilters.to,
+    );
+    const incompleteRange =
+        !feedbackFilters.visitorId &&
+        ((feedbackFilters.from && !feedbackFilters.to) ||
+            (!feedbackFilters.from && feedbackFilters.to));
 
     /*
      * The summary window is the current week, frozen once so the query key
@@ -78,14 +106,14 @@ export default function FeedbackPage() {
         isError: feedbackError,
         refetch: refetchFeedback,
         isFetching: feedbackFetching,
-    } = useFeedbackList();
+    } = useFeedbackList(feedbackFilters);
     const {
         data: surveys,
         isPending: surveysPending,
         isError: surveysError,
         refetch: refetchSurveys,
         isFetching: surveysFetching,
-    } = useSurveys();
+    } = useSurveys({ status: surveyStatus });
     const {
         data: summary,
         isPending: summaryPending,
@@ -187,6 +215,31 @@ export default function FeedbackPage() {
                 <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
                     Sent surveys (after visit)
                 </h3>
+
+                <div className="mb-4 flex flex-wrap items-end gap-3.5">
+                    <div>
+                        <label
+                            htmlFor="sv-filter-status"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            Status
+                        </label>
+                        <select
+                            id="sv-filter-status"
+                            value={surveyStatus}
+                            onChange={(event) => setSurveyStatus(event.target.value)}
+                            className="min-w-[150px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        >
+                            <option value="">All statuses</option>
+                            {["SENT", "RECEIVED"].map((status) => (
+                                <option key={status} value={status}>
+                                    {formatEnumLabel(status)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
                 {surveysPending && <SectionLoading label="Loading surveys…" />}
                 {surveysError && (
                     <SectionError
@@ -211,6 +264,81 @@ export default function FeedbackPage() {
                 <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
                     Recent responses
                 </h3>
+
+                <div className="mb-4 flex flex-wrap items-end gap-3.5">
+                    <div>
+                        <label
+                            htmlFor="fb-filter-visitor"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            Visitor
+                        </label>
+                        <select
+                            id="fb-filter-visitor"
+                            value={feedbackFilters.visitorId}
+                            onChange={(event) => updateVisitorFilter(event.target.value)}
+                            className="min-w-[190px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        >
+                            <option value="">All visitors</option>
+                            {(visitors ?? []).map((visitor) => (
+                                <option key={visitor.id} value={visitor.id}>
+                                    {visitor.fullName}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="fb-filter-from"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            From
+                        </label>
+                        <input
+                            id="fb-filter-from"
+                            type="date"
+                            value={feedbackFilters.from}
+                            onChange={(event) => updateDateFilter("from", event.target.value)}
+                            className="rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="fb-filter-to"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            To
+                        </label>
+                        <input
+                            id="fb-filter-to"
+                            type="date"
+                            value={feedbackFilters.to}
+                            onChange={(event) => updateDateFilter("to", event.target.value)}
+                            className="rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        />
+                    </div>
+
+                    {hasFeedbackFilter && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setFeedbackFilters({ visitorId: "", from: "", to: "" })
+                            }
+                            className="rounded-md border border-line bg-white px-3.5 py-2 text-xs text-primary hover:bg-[#F2FBF9]"
+                        >
+                            Clear filters
+                        </button>
+                    )}
+
+                    {incompleteRange && (
+                        <p className="text-xs text-muted">
+                            Set both dates to filter on a period.
+                        </p>
+                    )}
+                </div>
+
                 {feedbackPending && <SectionLoading label="Loading responses…" />}
                 {feedbackError && (
                     <SectionError

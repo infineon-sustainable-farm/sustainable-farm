@@ -13,13 +13,19 @@ const EVENTS_KEY = ["visitormanagement", "events"];
 const EVENT_REGISTRATIONS_KEY = ["visitormanagement", "events", "registrations"];
 const DASHBOARD_KEY = ["visitormanagement", "dashboard"];
 
-/** The events, one page of up to 100 rows, most recent start first. */
-export function useEvents() {
-    const params = { page: 0, size: 100 };
+/**
+ * The events. Without filters the API returns a Page (most recent start
+ * first); with a filter it returns a plain array, so the select normalises
+ * both to a list. Filters are exclusive on the backend.
+ */
+export function useEvents(filters = {}) {
+    const { type = "", date = "" } = filters;
+    const hasFilter = Boolean(type || date);
+    const query = hasFilter ? { type, date } : { page: 0, size: 100 };
     return useQuery({
-        queryKey: [...EVENTS_KEY, params],
-        queryFn: () => fetchEvents(params),
-        select: (page) => page.content,
+        queryKey: [...EVENTS_KEY, query],
+        queryFn: () => fetchEvents(query),
+        select: (data) => (Array.isArray(data) ? data : data.content),
     });
 }
 

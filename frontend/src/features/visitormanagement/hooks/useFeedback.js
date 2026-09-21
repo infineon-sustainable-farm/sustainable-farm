@@ -11,13 +11,22 @@ import {
 const FEEDBACK_KEY = ["visitormanagement", "feedback"];
 const SURVEYS_KEY = ["visitormanagement", "surveys"];
 
-/** The feedback responses, one page of up to 100 rows, newest first. */
-export function useFeedbackList() {
-    const params = { page: 0, size: 100 };
+/**
+ * The feedback responses. Filters are exclusive on the backend: a visitor, or
+ * a complete date range, otherwise the paginated list. The select normalises
+ * the array and Page shapes to one list.
+ */
+export function useFeedbackList(filters = {}) {
+    const { visitorId = "", from = "", to = "" } = filters;
+    const query = visitorId
+        ? { visitorId }
+        : from && to
+          ? { from, to }
+          : { page: 0, size: 100 };
     return useQuery({
-        queryKey: [...FEEDBACK_KEY, params],
-        queryFn: () => fetchFeedback(params),
-        select: (page) => page.content,
+        queryKey: [...FEEDBACK_KEY, query],
+        queryFn: () => fetchFeedback(query),
+        select: (data) => (Array.isArray(data) ? data : data.content),
     });
 }
 
@@ -33,13 +42,17 @@ export function useFeedbackSummary({ from, to }) {
     });
 }
 
-/** The post-visit surveys, one page of up to 100 rows, newest first. */
-export function useSurveys() {
-    const params = { page: 0, size: 100 };
+/**
+ * The post-visit surveys. A status filter switches the API to a plain array;
+ * the select normalises both shapes to a list.
+ */
+export function useSurveys(filters = {}) {
+    const { status = "" } = filters;
+    const query = status ? { status } : { page: 0, size: 100 };
     return useQuery({
-        queryKey: [...SURVEYS_KEY, params],
-        queryFn: () => fetchSurveys(params),
-        select: (page) => page.content,
+        queryKey: [...SURVEYS_KEY, query],
+        queryFn: () => fetchSurveys(query),
+        select: (data) => (Array.isArray(data) ? data : data.content),
     });
 }
 

@@ -19,13 +19,20 @@ const ACTIVITIES_KEY = ["visitormanagement", "activities"];
 const OCCUPANCY_KEY = ["visitormanagement", "occupancy"];
 const DASHBOARD_KEY = ["visitormanagement", "dashboard"];
 
-/** The booking queue, one page of up to 100 rows, newest first. */
-export function useBookings() {
-    const params = { page: 0, size: 100 };
+/**
+ * The booking queue. Without filters the API returns a Page (newest first);
+ * with a filter it returns a plain array, so the select normalises both to a
+ * list. Filters are exclusive on the backend and the screen keeps only one
+ * active at a time.
+ */
+export function useBookings(filters = {}) {
+    const { status = "", activityId = "", date = "" } = filters;
+    const hasFilter = Boolean(status || activityId || date);
+    const query = hasFilter ? { status, activityId, date } : { page: 0, size: 100 };
     return useQuery({
-        queryKey: [...BOOKINGS_KEY, params],
-        queryFn: () => fetchBookings(params),
-        select: (page) => page.content,
+        queryKey: [...BOOKINGS_KEY, query],
+        queryFn: () => fetchBookings(query),
+        select: (data) => (Array.isArray(data) ? data : data.content),
     });
 }
 

@@ -225,11 +225,20 @@ export function deactivateActivity(id) {
 }
 
 /**
- * The bookings, most recent first. The endpoint is paginated; the screen asks
- * for one large page rather than hiding rows behind pagination.
+ * The bookings. Without filters the endpoint is paginated and returns a Page;
+ * with one filter (status, activityId or date — the API applies only the first
+ * one) it returns a plain array. The screen asks for one large page.
  */
-export function fetchBookings({ page = 0, size = 100 } = {}) {
-    return apiClient.get(VM_ENDPOINTS.BOOKINGS, { params: { page, size } });
+export function fetchBookings({ page = 0, size = 100, status, activityId, date } = {}) {
+    const params = {};
+    if (status) params.status = status;
+    if (activityId) params.activityId = activityId;
+    if (date) params.date = date;
+    if (!status && !activityId && !date) {
+        params.page = page;
+        params.size = size;
+    }
+    return apiClient.get(VM_ENDPOINTS.BOOKINGS, { params });
 }
 
 /** Updates a booking from a BookingRequest payload. */
@@ -270,10 +279,17 @@ export function fetchOccupancy() {
 }
 
 /**
- * The feedback responses, most recent first. The endpoint is paginated; the
- * screen asks for one large page rather than hiding rows behind pagination.
+ * The feedback responses. The API applies visitorId first, otherwise a
+ * from/to window when both are given, otherwise it paginates. Each branch
+ * returns a different shape (array or Page), normalised by the hook.
  */
-export function fetchFeedback({ page = 0, size = 100 } = {}) {
+export function fetchFeedback({ page = 0, size = 100, visitorId, from, to } = {}) {
+    if (visitorId) {
+        return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { visitorId } });
+    }
+    if (from && to) {
+        return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { from, to } });
+    }
     return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { page, size } });
 }
 
@@ -300,10 +316,16 @@ export function routeFeedback(id, data) {
 }
 
 /**
- * The post-visit surveys, most recent first. The endpoint is paginated; the
- * screen asks for one large page.
+ * The post-visit surveys. The API applies visitorId first, otherwise status,
+ * otherwise it paginates; the hook normalises the two shapes to a list.
  */
-export function fetchSurveys({ page = 0, size = 100 } = {}) {
+export function fetchSurveys({ page = 0, size = 100, visitorId, status } = {}) {
+    if (visitorId) {
+        return apiClient.get(VM_ENDPOINTS.SURVEYS, { params: { visitorId } });
+    }
+    if (status) {
+        return apiClient.get(VM_ENDPOINTS.SURVEYS, { params: { status } });
+    }
     return apiClient.get(VM_ENDPOINTS.SURVEYS, { params: { page, size } });
 }
 
@@ -317,11 +339,19 @@ export function sendSurvey(data) {
 }
 
 /**
- * The events, most recent first. The endpoint is paginated; the screen asks
- * for one large page rather than hiding rows behind pagination.
+ * The events. Without filters the endpoint is paginated and returns a Page;
+ * with one filter (type or date — the API applies only the first one) it
+ * returns a plain array. The screen asks for one large page.
  */
-export function fetchEvents({ page = 0, size = 100 } = {}) {
-    return apiClient.get(VM_ENDPOINTS.EVENTS, { params: { page, size } });
+export function fetchEvents({ page = 0, size = 100, type, date } = {}) {
+    const params = {};
+    if (type) params.type = type;
+    if (date) params.date = date;
+    if (!type && !date) {
+        params.page = page;
+        params.size = size;
+    }
+    return apiClient.get(VM_ENDPOINTS.EVENTS, { params });
 }
 
 /** Creates an event from an EventRequest payload (stored as DRAFT). */

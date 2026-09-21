@@ -9,11 +9,25 @@ import {
 import EventCard from "../EventCard";
 import EventForm from "../Forms/EventForm";
 import EventParticipants from "../EventParticipants";
+import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
+
+const EVENT_TYPES = ["OPEN_DAY", "PARTNER_BUYER", "SCHOOL", "COMMUNITY"];
 
 export default function EventsPage() {
     const [editingEvent, setEditingEvent] = useState(null);
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [formKey, setFormKey] = useState(0);
+    const [filters, setFilters] = useState({ type: "", date: "" });
+
+    /*
+     * The API applies only the first non-null filter, so the type and the date
+     * clear each other.
+     */
+    function updateFilter(key, value) {
+        setFilters({ type: key === "type" ? value : "", date: key === "date" ? value : "" });
+    }
+
+    const hasActiveFilter = Boolean(filters.type || filters.date);
 
     useEffect(() => {
         document.title = "Events — Visitor Management";
@@ -25,7 +39,7 @@ export default function EventsPage() {
         isError,
         refetch,
         isFetching,
-    } = useEvents();
+    } = useEvents(filters);
 
     const createMutation = useCreateEvent();
     const updateMutation = useUpdateEvent();
@@ -73,6 +87,56 @@ export default function EventsPage() {
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Events
                 </h2>
+
+                <div className="mb-5 flex flex-wrap items-end gap-3.5">
+                    <div>
+                        <label
+                            htmlFor="ev-filter-type"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            Type
+                        </label>
+                        <select
+                            id="ev-filter-type"
+                            value={filters.type}
+                            onChange={(event) => updateFilter("type", event.target.value)}
+                            className="min-w-[170px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        >
+                            <option value="">All types</option>
+                            {EVENT_TYPES.map((type) => (
+                                <option key={type} value={type}>
+                                    {formatEnumLabel(type)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="ev-filter-date"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            Date
+                        </label>
+                        <input
+                            id="ev-filter-date"
+                            type="date"
+                            value={filters.date}
+                            onChange={(event) => updateFilter("date", event.target.value)}
+                            className="rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        />
+                    </div>
+
+                    {hasActiveFilter && (
+                        <button
+                            type="button"
+                            onClick={() => setFilters({ type: "", date: "" })}
+                            className="rounded-md border border-line bg-white px-3.5 py-2 text-xs text-primary hover:bg-[#F2FBF9]"
+                        >
+                            Clear filters
+                        </button>
+                    )}
+                </div>
 
                 {isPending && (
                     <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">

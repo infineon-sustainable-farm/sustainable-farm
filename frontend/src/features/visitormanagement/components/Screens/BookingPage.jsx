@@ -16,6 +16,7 @@ import ActivityForm from "../Forms/ActivityForm";
 import BookingForm from "../Forms/BookingForm";
 import BookingsTable from "../BookingsTable";
 import OccupancyBars from "../OccupancyBars";
+import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
 
 /*
  * The four steps of the booking journey, exactly as the mockup's flow strip
@@ -35,6 +36,21 @@ export default function BookingPage() {
     const [createFormOpen, setCreateFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [formKey, setFormKey] = useState(0);
+    const [filters, setFilters] = useState({ status: "", activityId: "", date: "" });
+
+    /*
+     * The API applies only the first non-null filter, so the controls clear one
+     * another: choosing a status drops the activity and the date, and so on.
+     */
+    function updateFilter(key, value) {
+        setFilters({
+            status: key === "status" ? value : "",
+            activityId: key === "activityId" ? value : "",
+            date: key === "date" ? value : "",
+        });
+    }
+
+    const hasActiveFilter = Boolean(filters.status || filters.activityId || filters.date);
 
     useEffect(() => {
         document.title = "Agritourism Booking System — Visitor Management";
@@ -46,7 +62,7 @@ export default function BookingPage() {
         isError: bookingsError,
         refetch: refetchBookings,
         isFetching: bookingsFetching,
-    } = useBookings();
+    } = useBookings(filters);
     const { data: activities, isError: activitiesError } = useActivities();
     const {
         data: occupancy,
@@ -179,6 +195,78 @@ export default function BookingPage() {
                     >
                         + New booking
                     </button>
+                </div>
+
+                <div className="mb-4 flex flex-wrap items-end gap-3.5">
+                    <div>
+                        <label
+                            htmlFor="bk-filter-status"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            Status
+                        </label>
+                        <select
+                            id="bk-filter-status"
+                            value={filters.status}
+                            onChange={(event) => updateFilter("status", event.target.value)}
+                            className="min-w-[150px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        >
+                            <option value="">All statuses</option>
+                            {["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map((status) => (
+                                <option key={status} value={status}>
+                                    {formatEnumLabel(status)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="bk-filter-activity"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            Activity
+                        </label>
+                        <select
+                            id="bk-filter-activity"
+                            value={filters.activityId}
+                            onChange={(event) => updateFilter("activityId", event.target.value)}
+                            className="min-w-[180px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        >
+                            <option value="">All activities</option>
+                            {(activities ?? []).map((activity) => (
+                                <option key={activity.id} value={activity.id}>
+                                    {activity.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="bk-filter-date"
+                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
+                        >
+                            Date
+                        </label>
+                        <input
+                            id="bk-filter-date"
+                            type="date"
+                            value={filters.date}
+                            onChange={(event) => updateFilter("date", event.target.value)}
+                            className="rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
+                        />
+                    </div>
+
+                    {hasActiveFilter && (
+                        <button
+                            type="button"
+                            onClick={() => setFilters({ status: "", activityId: "", date: "" })}
+                            className="rounded-md border border-line bg-white px-3.5 py-2 text-xs text-primary hover:bg-[#F2FBF9]"
+                        >
+                            Clear filters
+                        </button>
+                    )}
                 </div>
 
                 {createFormOpen && (
