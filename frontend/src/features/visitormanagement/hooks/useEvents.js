@@ -2,12 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     cancelEvent,
     createEvent,
+    fetchEventRegistrations,
     fetchEvents,
     publishEvent,
+    registerEventAttendee,
     updateEvent,
 } from "../api/visitormanagementApi";
 
 const EVENTS_KEY = ["visitormanagement", "events"];
+const EVENT_REGISTRATIONS_KEY = ["visitormanagement", "events", "registrations"];
 const DASHBOARD_KEY = ["visitormanagement", "dashboard"];
 
 /** The events, one page of up to 100 rows, most recent start first. */
@@ -59,5 +62,33 @@ export function useEventStatusAction() {
         mutationFn: ({ id, action }) =>
             action === "publish" ? publishEvent(id) : cancelEvent(id),
         onSettled: invalidate,
+    });
+}
+
+/**
+ * The participants of one event. Disabled until an event is selected in the
+ * panel.
+ */
+export function useEventRegistrations(eventId, enabled = true) {
+    return useQuery({
+        queryKey: [...EVENT_REGISTRATIONS_KEY, { eventId }],
+        queryFn: () => fetchEventRegistrations(eventId),
+        enabled: Boolean(eventId) && enabled,
+    });
+}
+
+/*
+ * Registering an attendee changes the participant list, the event's booked
+ * count and the dashboard, so all three keys are invalidated.
+ */
+export function useRegisterEventAttendee() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ eventId, data }) => registerEventAttendee(eventId, data),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: EVENT_REGISTRATIONS_KEY });
+            queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
+        },
     });
 }

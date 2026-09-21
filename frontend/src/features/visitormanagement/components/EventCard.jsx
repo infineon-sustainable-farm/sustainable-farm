@@ -10,14 +10,22 @@ const TINY_DANGER =
  * Publish is only legal from DRAFT; cancel is legal until the event is
  * COMPLETED. There is no manual "complete" call — the visit lifecycle job
  * completes past events — so the mockup's complete button has no counterpart.
+ * The participants action opens the attendee panel for any status.
  */
 function cardActions(status) {
-    if (status === "DRAFT") return ["publish", "edit", "cancel"];
-    if (status === "PUBLISHED") return ["edit", "cancel"];
-    return [];
+    if (status === "DRAFT") return ["participants", "publish", "edit", "cancel"];
+    if (status === "PUBLISHED") return ["participants", "edit", "cancel"];
+    return ["participants"];
 }
 
-export default function EventCard({ event, pendingAction, actionError, onAction, onEdit }) {
+export default function EventCard({
+    event,
+    pendingAction,
+    actionError,
+    onAction,
+    onEdit,
+    onParticipants,
+}) {
     const isPending = pendingAction?.id === event.id;
     const failed = actionError?.id === event.id;
 
@@ -53,11 +61,14 @@ export default function EventCard({ event, pendingAction, actionError, onAction,
                         key={action}
                         type="button"
                         disabled={isPending}
-                        onClick={() =>
-                            action === "edit" ? onEdit(event) : onAction(event, action)
-                        }
+                        onClick={() => {
+                            if (action === "edit") onEdit(event);
+                            else if (action === "participants") onParticipants(event);
+                            else onAction(event, action);
+                        }}
                         className={action === "cancel" ? TINY_DANGER : TINY_BUTTON}
                     >
+                        {action === "participants" && "participants"}
                         {action === "publish" && "✓ publish"}
                         {action === "edit" && "✎ edit"}
                         {action === "cancel" && "✕ cancel"}

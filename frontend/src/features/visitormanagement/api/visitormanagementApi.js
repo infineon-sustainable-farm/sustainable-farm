@@ -306,3 +306,17 @@ export function publishEvent(id) {
 export function cancelEvent(id) {
     return apiClient.delete(`${VM_ENDPOINTS.EVENTS}/${id}`);
 }
+
+/** The registrations attached to one event, for the participants panel. */
+export function fetchEventRegistrations(eventId) {
+    return apiClient.get(`${VM_ENDPOINTS.EVENTS}/${eventId}/registrations`);
+}
+
+/**
+ * Registers a visitor on an event. `data` is an EventRegistrationRequest:
+ * visitorId and visitPurpose. The API only accepts PUBLISHED events and
+ * enforces the event capacity.
+ */
+export function registerEventAttendee(eventId, data) {
+    return apiClient.post(`${VM_ENDPOINTS.EVENTS}/${eventId}/register`, data);
+}

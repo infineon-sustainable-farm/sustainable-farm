@@ -8,9 +8,11 @@ import {
 } from "../../hooks/useEvents";
 import EventCard from "../EventCard";
 import EventForm from "../Forms/EventForm";
+import EventParticipants from "../EventParticipants";
 
 export default function EventsPage() {
     const [editingEvent, setEditingEvent] = useState(null);
+    const [selectedEventId, setSelectedEventId] = useState(null);
     const [formKey, setFormKey] = useState(0);
 
     useEffect(() => {
@@ -31,6 +33,9 @@ export default function EventsPage() {
 
     const formMutation = editingEvent ? updateMutation : createMutation;
 
+    // Derived from the list so the panel stays fresh after an invalidation.
+    const selectedEvent = (events ?? []).find((event) => event.id === selectedEventId) ?? null;
+
     function resetForm() {
         setEditingEvent(null);
         setFormKey((current) => current + 1);
@@ -41,6 +46,7 @@ export default function EventsPage() {
     function openEdit(event) {
         createMutation.reset();
         updateMutation.reset();
+        setSelectedEventId(null);
         setEditingEvent(event);
         setFormKey((current) => current + 1);
     }
@@ -115,9 +121,21 @@ export default function EventsPage() {
                                         statusMutation.mutate({ id: target.id, action })
                                     }
                                     onEdit={openEdit}
+                                    onParticipants={(target) =>
+                                        setSelectedEventId((current) =>
+                                            current === target.id ? null : target.id,
+                                        )
+                                    }
                                 />
                             ))}
                         </div>
+
+                        {selectedEvent && (
+                            <EventParticipants
+                                event={selectedEvent}
+                                onClose={() => setSelectedEventId(null)}
+                            />
+                        )}
 
                         <h3 className="font-heading mb-3 text-[17px] font-bold text-ink">
                             {editingEvent ? `Edit event: ${editingEvent.title}` : "Create new event"}
