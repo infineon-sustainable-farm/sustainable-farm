@@ -32,7 +32,7 @@ function buildRows(slots) {
 export default function SchedulingPage() {
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
     const [guideFilter, setGuideFilter] = useState("");
-    const [formState, setFormState] = useState({ open: false, slot: null, prefill: null });
+    const [formState, setFormState] = useState({ open: false, slot: null });
     const currentWeekStart = startOfWeek(new Date());
 
     useEffect(() => {
@@ -62,7 +62,6 @@ export default function SchedulingPage() {
     );
 
     const formSlot = formState.slot;
-    const formPrefill = formState.prefill;
     const formMutation = formSlot ? updateMutation : createMutation;
 
     function changeWeek(offset) {
@@ -70,25 +69,25 @@ export default function SchedulingPage() {
         // Past weeks are read-only: no picking a closed week in the past.
         if (target < currentWeekStart) return;
         setWeekStart(target);
-        setFormState({ open: false, slot: null, prefill: null });
+        setFormState({ open: false, slot: null });
         createMutation.reset();
         updateMutation.reset();
     }
 
-    function openCreate(prefill = null) {
+    function openCreate() {
         createMutation.reset();
         updateMutation.reset();
-        setFormState({ open: true, slot: null, prefill });
+        setFormState({ open: true, slot: null });
     }
 
     function openEdit(slot) {
         createMutation.reset();
         updateMutation.reset();
-        setFormState({ open: true, slot, prefill: null });
+        setFormState({ open: true, slot });
     }
 
     function closeForm() {
-        setFormState({ open: false, slot: null, prefill: null });
+        setFormState({ open: false, slot: null });
         createMutation.reset();
         updateMutation.reset();
     }
@@ -188,7 +187,6 @@ export default function SchedulingPage() {
                             guides={guides ?? []}
                             guidesError={guidesError}
                             slot={formSlot}
-                            prefill={formPrefill}
                             isSubmitting={formMutation.isPending}
                             submitError={formMutation.error?.message}
                             onSubmit={handleSubmit}
@@ -232,9 +230,7 @@ export default function SchedulingPage() {
                             rows={rows}
                             days={days}
                             slotsByCell={slotsByCell}
-                            isPastWeek={weekStart < currentWeekStart}
                             onEdit={openEdit}
-                            onQuickCreate={openCreate}
                             onCancel={handleCancelSlot}
                             cancelPendingId={
                                 cancelMutation.isPending ? cancelMutation.variables : null

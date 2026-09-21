@@ -16,7 +16,6 @@ export default function SlotForm({
     guides,
     guidesError,
     slot,
-    prefill,
     isSubmitting,
     submitError,
     onSubmit,
@@ -32,23 +31,10 @@ export default function SlotForm({
             endTime: slot.endTime,
         });
     }
-    if (prefill && !ranges.some((range) => range.key === rangeKey(prefill.startTime, prefill.endTime))) {
-        ranges.push({
-            key: rangeKey(prefill.startTime, prefill.endTime),
-            startTime: prefill.startTime,
-            endTime: prefill.endTime,
-        });
-    }
 
-    const [date, setDate] = useState(
-        slot ? slot.date : prefill ? prefill.date : toIsoDate(weekStart),
-    );
+    const [date, setDate] = useState(slot ? slot.date : toIsoDate(weekStart));
     const [range, setRange] = useState(
-        slot
-            ? rangeKey(slot.startTime, slot.endTime)
-            : prefill
-              ? rangeKey(prefill.startTime, prefill.endTime)
-              : SLOT_PRESETS[0].key,
+        slot ? rangeKey(slot.startTime, slot.endTime) : SLOT_PRESETS[0].key,
     );
     const [maxCapacity, setMaxCapacity] = useState(slot ? String(slot.maxCapacity) : "10");
     const [guideId, setGuideId] = useState(slot?.guideId ? String(slot.guideId) : "");
@@ -82,10 +68,7 @@ export default function SlotForm({
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-           
-        >
+        <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div>
                     <label
