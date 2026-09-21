@@ -8,11 +8,11 @@ import {
     useCreateBooking,
     useOccupancy,
     useUpdateBooking,
-} from "../hooks/useBooking";
-import ActivityForm from "./ActivityForm";
-import BookingForm from "./BookingForm";
-import BookingsTable from "./BookingsTable";
-import OccupancyBars from "./OccupancyBars";
+} from "../../hooks/useBooking";
+import ActivityForm from "../Forms/ActivityForm";
+import BookingForm from "../Forms/BookingForm";
+import BookingsTable from "../BookingsTable";
+import OccupancyBars from "../OccupancyBars";
 
 /*
  * The four steps of the booking journey, exactly as the mockup's flow strip

@@ -6,11 +6,11 @@ import {
     useGuides,
     useTimeSlots,
     useUpdateTimeSlot,
-} from "../hooks/useScheduling";
-import { addDays, formatWeekLabel, startOfWeek, toIsoDate } from "../utils/format";
-import { SLOT_PRESETS } from "../utils/scheduling";
-import SchedulingGrid from "./SchedulingGrid";
-import SlotForm from "./SlotForm";
+} from "../../hooks/useScheduling";
+import { addDays, formatWeekLabel, startOfWeek, toIsoDate } from "../../utils/format";
+import { SLOT_PRESETS } from "../../utils/scheduling";
+import SchedulingGrid from "../SchedulingGrid";
+import SlotForm from "../Forms/SlotForm";
 
 /*
  * Rows of the grid: the two canonical farm slots always show, and any slot

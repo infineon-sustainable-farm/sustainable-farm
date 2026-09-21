@@ -7,14 +7,14 @@ import {
     useSendSurvey,
     useSubmitFeedback,
     useSurveys,
-} from "../hooks/useFeedback";
-import { useVisitors } from "../hooks/useRegistrations";
-import { startOfWeek } from "../utils/format";
-import FeedbackSummary from "./FeedbackSummary";
-import FeedbackTable from "./FeedbackTable";
-import SendSurveyForm from "./SendSurveyForm";
-import SurveysTable from "./SurveysTable";
-import TabletSurveyForm from "./TabletSurveyForm";
+} from "../../hooks/useFeedback";
+import { useVisitors } from "../../hooks/useRegistrations";
+import { startOfWeek } from "../../utils/format";
+import FeedbackSummary from "../FeedbackSummary";
+import FeedbackTable from "../FeedbackTable";
+import SendSurveyForm from "../Forms/SendSurveyForm";
+import SurveysTable from "../SurveysTable";
+import TabletSurveyForm from "../Forms/TabletSurveyForm";
 
 /**
  * Error/retry block shared by the three feedback sections, so each one can

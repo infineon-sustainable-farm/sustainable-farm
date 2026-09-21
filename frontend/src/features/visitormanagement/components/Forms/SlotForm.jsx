@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { addDays, formatTimeRange, formatWeekday, toIsoDate } from "../utils/format";
-import { SLOT_PRESETS } from "../utils/scheduling";
+import { addDays, formatTimeRange, formatWeekday, toIsoDate } from "../../utils/format";
+import { SLOT_PRESETS } from "../../utils/scheduling";
 
 function rangeKey(startTime, endTime) {
     return `${startTime}-${endTime}`;

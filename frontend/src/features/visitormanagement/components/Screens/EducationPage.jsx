@@ -6,10 +6,10 @@ import {
     useUpdateWorkshop,
     useWorkshopStatusAction,
     useWorkshops,
-} from "../hooks/useEducation";
-import TourStopsTimeline from "./TourStopsTimeline";
-import WorkshopForm from "./WorkshopForm";
-import WorkshopsTable from "./WorkshopsTable";
+} from "../../hooks/useEducation";
+import TourStopsTimeline from "../TourStopsTimeline";
+import WorkshopForm from "../Forms/WorkshopForm";
+import WorkshopsTable from "../WorkshopsTable";
 
 export default function EducationPage() {
     const [formState, setFormState] = useState({ open: false, workshop: null });

@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
-import { useRegistrations } from "../hooks/useRegistrations";
-import { useActiveStaff, useDeliverBriefing } from "../hooks/useSafety";
-import BriefingRow from "./BriefingRow";
+import { useRegistrations } from "../../hooks/useRegistrations";
+import { useActiveStaff, useDeliverBriefing } from "../../hooks/useSafety";
+import BriefingRow from "../BriefingRow";
 
 const COLUMNS = [
     "Visitor",

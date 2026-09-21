@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useDashboard } from "../hooks/useDashboard";
-import { formatNumber, formatSatisfaction, getIsoWeekNumber } from "../utils/format";
+import { useDashboard } from "../../hooks/useDashboard";
+import { formatNumber, formatSatisfaction, getIsoWeekNumber } from "../../utils/format";
 
 /*
  * The five counter cards of the mockup, in its order and with its wording.

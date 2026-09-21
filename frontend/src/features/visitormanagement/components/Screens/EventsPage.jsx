@@ -5,9 +5,9 @@ import {
     useEventStatusAction,
     useEvents,
     useUpdateEvent,
-} from "../hooks/useEvents";
-import EventCard from "./EventCard";
-import EventForm from "./EventForm";
+} from "../../hooks/useEvents";
+import EventCard from "../EventCard";
+import EventForm from "../Forms/EventForm";
 
 export default function EventsPage() {
     const [editingEvent, setEditingEvent] = useState(null);

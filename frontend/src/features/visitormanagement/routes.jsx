@@ -1,12 +1,12 @@
 import VisitorManagementLayout from "./components/VisitorManagementLayout";
-import DashboardPage from "./components/DashboardPage";
-import SchedulingPage from "./components/SchedulingPage";
-import RegistrationPage from "./components/RegistrationPage";
-import EducationPage from "./components/EducationPage";
-import SafetyPage from "./components/SafetyPage";
-import BookingPage from "./components/BookingPage";
-import FeedbackPage from "./components/FeedbackPage";
-import EventsPage from "./components/EventsPage";
+import DashboardPage from "./components/Screens/DashboardPage";
+import SchedulingPage from "./components/Screens/SchedulingPage";
+import RegistrationPage from "./components/Screens/RegistrationPage";
+import EducationPage from "./components/Screens/EducationPage";
+import SafetyPage from "./components/Screens/SafetyPage";
+import BookingPage from "./components/Screens/BookingPage";
+import FeedbackPage from "./components/Screens/FeedbackPage";
+import EventsPage from "./components/Screens/EventsPage";
 
 export default [
     {

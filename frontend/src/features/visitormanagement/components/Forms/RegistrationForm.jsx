@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatTimeRange } from "../utils/format";
+import { formatTimeRange } from "../../utils/format";
 
 /*
  * The mockup's three visitor choices. The backend separates the kind of group

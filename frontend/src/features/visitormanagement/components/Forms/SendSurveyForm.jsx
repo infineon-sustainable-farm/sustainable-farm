@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
+import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
 
 const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
 const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";

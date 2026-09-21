@@ -7,11 +7,11 @@ import {
     useRegistrations,
     useUpdateVisitor,
     useVisitors,
-} from "../hooks/useRegistrations";
-import { useTimeSlots } from "../hooks/useScheduling";
-import { toIsoDate } from "../utils/format";
-import RegistrationForm from "./RegistrationForm";
-import RegistrationsTable from "./RegistrationsTable";
+} from "../../hooks/useRegistrations";
+import { useTimeSlots } from "../../hooks/useScheduling";
+import { toIsoDate } from "../../utils/format";
+import RegistrationForm from "../Forms/RegistrationForm";
+import RegistrationsTable from "../RegistrationsTable";
 
 export default function RegistrationPage() {
     const [date, setDate] = useState(() => toIsoDate(new Date()));
