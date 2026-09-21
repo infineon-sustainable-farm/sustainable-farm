@@ -7,9 +7,7 @@ import {
     createVisitor,
     fetchAvailability,
     fetchRegistrations,
-    fetchVisitors,
     rejectRegistration,
-    updateVisitor,
 } from "../api/visitormanagementApi";
 
 const REGISTRATIONS_KEY = ["visitormanagement", "registrations"];
@@ -28,17 +26,8 @@ export function useRegistrations() {
 }
 
 /**
- * Every visitor, used to show language and type on the queue (the registration
- * payload only carries the visitor id) and to prefill the edit form.
+ * The bookable slots of a date; disabled until a date is chosen.
  */
-export function useVisitors() {
-    return useQuery({
-        queryKey: VISITORS_KEY,
-        queryFn: fetchVisitors,
-    });
-}
-
-/** The bookable slots of a date; disabled until a date is chosen. */
 export function useAvailability(date) {
     return useQuery({
         queryKey: [...SLOTS_KEY, "availability", { date }],
@@ -70,18 +59,6 @@ export function useRegisterVisitor() {
             queryClient.invalidateQueries({ queryKey: VISITORS_KEY });
             queryClient.invalidateQueries({ queryKey: SLOTS_KEY });
             queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
-        },
-    });
-}
-
-/** Saves the visitor fields edited from a queue row. */
-export function useUpdateVisitor() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ id, visitor }) => updateVisitor(id, visitor),
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: VISITORS_KEY });
-            queryClient.invalidateQueries({ queryKey: REGISTRATIONS_KEY });
         },
     });
 }

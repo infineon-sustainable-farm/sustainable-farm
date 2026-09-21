@@ -1,6 +1,6 @@
 import { Loader2, TriangleAlert, X } from "lucide-react";
 import { useEventRegistrations, useRegisterEventAttendee } from "../hooks/useEvents";
-import { useVisitors } from "../hooks/useRegistrations";
+import { useVisitors } from "../hooks/useVisitors";
 import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
 import StatusBadge from "./StatusBadge";
 import EventAttendeeForm from "./Forms/EventAttendeeForm";

@@ -5,9 +5,8 @@ import {
     useRegisterVisitor,
     useRegistrationAction,
     useRegistrations,
-    useUpdateVisitor,
-    useVisitors,
 } from "../../hooks/useRegistrations";
+import { useUpdateVisitor, useVisitors } from "../../hooks/useVisitors";
 import { useTimeSlots } from "../../hooks/useScheduling";
 import { toIsoDate } from "../../utils/format";
 import RegistrationForm from "../Forms/RegistrationForm";

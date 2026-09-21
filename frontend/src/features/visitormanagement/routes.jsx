@@ -2,6 +2,7 @@ import VisitorManagementLayout from "./components/VisitorManagementLayout";
 import DashboardPage from "./components/Screens/DashboardPage";
 import SchedulingPage from "./components/Screens/SchedulingPage";
 import RegistrationPage from "./components/Screens/RegistrationPage";
+import VisitorsPage from "./components/Screens/VisitorsPage";
 import EducationPage from "./components/Screens/EducationPage";
 import SafetyPage from "./components/Screens/SafetyPage";
 import BookingPage from "./components/Screens/BookingPage";
@@ -17,6 +18,7 @@ export default [
             { index: true, element: <DashboardPage /> },
             { path: "scheduling", element: <SchedulingPage /> },
             { path: "registration", element: <RegistrationPage /> },
+            { path: "visitors", element: <VisitorsPage /> },
             { path: "education", element: <EducationPage /> },
             { path: "safety", element: <SafetyPage /> },
             { path: "booking", element: <BookingPage /> },

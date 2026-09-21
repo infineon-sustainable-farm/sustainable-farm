@@ -11,6 +11,7 @@ import {
     ShieldCheck,
     Ticket,
     UserPlus,
+    Users,
     X,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/visitormanagement" },
     { label: "Scheduling", icon: Calendar, path: "/visitormanagement/scheduling" },
     { label: "Registration", icon: UserPlus, path: "/visitormanagement/registration" },
+    { label: "Visitors", icon: Users, path: "/visitormanagement/visitors" },
     { label: "Education", icon: BookOpen, path: "/visitormanagement/education" },
     { label: "Safety", icon: ShieldCheck, path: "/visitormanagement/safety" },
     { label: "Booking", icon: Ticket, path: "/visitormanagement/booking" },

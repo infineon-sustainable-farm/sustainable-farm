@@ -8,7 +8,7 @@ import {
     useSubmitFeedback,
     useSurveys,
 } from "../../hooks/useFeedback";
-import { useVisitors } from "../../hooks/useRegistrations";
+import { useVisitors } from "../../hooks/useVisitors";
 import { startOfWeek } from "../../utils/format";
 import FeedbackSummary from "../FeedbackSummary";
 import FeedbackTable from "../FeedbackTable";
