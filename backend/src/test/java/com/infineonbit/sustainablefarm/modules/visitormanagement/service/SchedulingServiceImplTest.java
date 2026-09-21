@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -43,6 +44,8 @@ class SchedulingServiceImplTest {
     private BookingService bookingService;
     @Mock
     private StaffRepository staffRepository;
+    @Mock
+    private PlatformTransactionManager transactionManager;
     @InjectMocks
     private SchedulingServiceImpl service;
 
@@ -124,7 +127,7 @@ class SchedulingServiceImplTest {
     @Test
     void update_cancelledSlot_throws() {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.CANCELLED);
-        when(timeSlotRepository.findById(1L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
 
         assertThatThrownBy(() -> service.update(1L, buildRequest()))
                 .isInstanceOf(BusinessRuleException.class)
@@ -168,7 +171,7 @@ class SchedulingServiceImplTest {
         Staff guide = new Staff();
         guide.setId(42L);
         guide.setFullName("Awa");
-        when(timeSlotRepository.findById(1L)).thenReturn(Optional.of(slot));
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
         when(staffRepository.findById(42L)).thenReturn(Optional.of(guide));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
         when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
