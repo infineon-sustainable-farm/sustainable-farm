@@ -108,3 +108,33 @@ export function checkInRegistration(id) {
 export function fetchAvailability(date) {
     return apiClient.get(`${VM_ENDPOINTS.TIME_SLOTS}/availability`, { params: { date } });
 }
+
+/** The standard tour stops, ordered by position by the API. */
+export function fetchTourStops() {
+    return apiClient.get(VM_ENDPOINTS.TOUR_STOPS);
+}
+
+/** Every workshop / tour template, all statuses included. */
+export function fetchWorkshops() {
+    return apiClient.get(VM_ENDPOINTS.WORKSHOPS);
+}
+
+/** Creates a workshop; the API stores it as DRAFT. */
+export function createWorkshop(data) {
+    return apiClient.post(VM_ENDPOINTS.WORKSHOPS, data);
+}
+
+/** Updates a workshop's fields. */
+export function updateWorkshop(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.WORKSHOPS}/${id}`, data);
+}
+
+/** Publishes a DRAFT workshop (the API rejects any other status). */
+export function publishWorkshop(id) {
+    return apiClient.post(`${VM_ENDPOINTS.WORKSHOPS}/${id}/publish`);
+}
+
+/** Deactivates an ACTIVE workshop (the API rejects any other status). */
+export function deactivateWorkshop(id) {
+    return apiClient.post(`${VM_ENDPOINTS.WORKSHOPS}/${id}/deactivate`);
+}

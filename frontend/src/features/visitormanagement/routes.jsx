@@ -2,6 +2,7 @@ import VisitorManagementLayout from "./components/VisitorManagementLayout";
 import DashboardPage from "./components/DashboardPage";
 import SchedulingPage from "./components/SchedulingPage";
 import RegistrationPage from "./components/RegistrationPage";
+import EducationPage from "./components/EducationPage";
 
 export default [
     {
@@ -11,6 +12,7 @@ export default [
             { index: true, element: <DashboardPage /> },
             { path: "scheduling", element: <SchedulingPage /> },
             { path: "registration", element: <RegistrationPage /> },
+            { path: "education", element: <EducationPage /> },
         ],
     },
 ];

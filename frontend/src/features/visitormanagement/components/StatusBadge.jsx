@@ -10,6 +10,7 @@ const STATUS_COLORS = {
     DRAFT: "bg-gray-100 text-gray-600",
     PUBLISHED: "bg-success/15 text-success",
     ACTIVE: "bg-success/15 text-success",
+    INACTIVE: "bg-gray-200 text-gray-600",
     CONFIRMED: "bg-success/15 text-success",
     COMPLETED: "bg-info/15 text-info",
     CHECKED_IN: "bg-info/15 text-info",
