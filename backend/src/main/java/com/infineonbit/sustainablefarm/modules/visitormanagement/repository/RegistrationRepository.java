@@ -44,6 +44,18 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     long countByTimeSlotIdAndStatus(Long timeSlotId, RegistrationStatus status);
 
+    /**
+     * Number of people booked on a slot: the sum of the group sizes of the
+     * active registrations. A registration without a visitor counts as one
+     * person. This is the figure the capacity rules use — counting rows would
+     * let a group of ten pass as one visitor.
+     */
+    @Query("SELECT COALESCE(SUM(COALESCE(v.groupSize, 1)), 0) FROM Registration r "
+            + "LEFT JOIN r.visitor v "
+            + "WHERE r.timeSlot.id = :timeSlotId AND r.status NOT IN :statuses")
+    long sumGroupSizeByTimeSlotIdAndStatusNotIn(
+            @Param("timeSlotId") Long timeSlotId, @Param("statuses") Collection<RegistrationStatus> statuses);
+
     @Query("SELECT r FROM Registration r "
             + "LEFT JOIN FETCH r.visitor LEFT JOIN FETCH r.timeSlot LEFT JOIN FETCH r.briefing "
             + "WHERE r.isProspect = true")

@@ -149,7 +149,7 @@ class RegistrationServiceImplTest {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
         when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(9L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(9L);
 
         RegistrationRequest req = new RegistrationRequest();
         req.setVisitorId(1L);
@@ -166,7 +166,7 @@ class RegistrationServiceImplTest {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
         when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
             Registration r = inv.getArgument(0);
             r.setId(100L);
@@ -190,7 +190,7 @@ class RegistrationServiceImplTest {
     @Test
     void register_withoutVisitor_skipsVisitorLookup() {
         when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(0L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(0L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
             Registration r = inv.getArgument(0);
             r.setId(100L);
@@ -212,7 +212,7 @@ class RegistrationServiceImplTest {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
         when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
             Registration r = inv.getArgument(0);
             r.setId(100L);
@@ -235,7 +235,7 @@ class RegistrationServiceImplTest {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
         when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
             Registration r = inv.getArgument(0);
             r.setId(100L);
@@ -258,7 +258,7 @@ class RegistrationServiceImplTest {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
         when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(2L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
             Registration r = inv.getArgument(0);
             r.setId(100L);
@@ -454,7 +454,7 @@ class RegistrationServiceImplTest {
         when(visitorRepository.findById(1L)).thenReturn(Optional.of(visitor));
         when(timeSlotRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(slot));
         when(registrationRepository.existsByVisitorIdAndTimeSlotId(1L, 10L)).thenReturn(false);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(0L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(10L, INACTIVE)).thenReturn(0L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
             Registration r = inv.getArgument(0);
             r.setId(100L);

@@ -139,7 +139,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         int groupSize = visitor != null ? visitor.getGroupSize() : 1;
         long booked = registrationRepository
-                .countByTimeSlotIdAndStatusNotIn(slot.getId(), INACTIVE_STATUSES);
+                .sumGroupSizeByTimeSlotIdAndStatusNotIn(slot.getId(), INACTIVE_STATUSES);
         if (booked + groupSize > slot.getMaxCapacity()) {
             throw new BusinessRuleException("Not enough capacity on time slot " + slot.getId()
                     + " (max " + slot.getMaxCapacity() + ")");

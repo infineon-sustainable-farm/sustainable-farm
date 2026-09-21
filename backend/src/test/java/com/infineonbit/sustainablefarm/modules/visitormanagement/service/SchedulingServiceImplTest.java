@@ -105,7 +105,7 @@ class SchedulingServiceImplTest {
             ts.setId(1L);
             return ts;
         });
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
 
         TimeSlotResponse resp = service.create(buildRequest());
         assertThat(resp.getStatus()).isEqualTo(TimeSlotStatus.AVAILABLE);
@@ -174,7 +174,7 @@ class SchedulingServiceImplTest {
         when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
         when(staffRepository.findById(42L)).thenReturn(Optional.of(guide));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
 
         TimeSlotResponse resp = service.assignGuide(1L, 42L);
         assertThat(resp.getGuideId()).isEqualTo(42L);
@@ -193,7 +193,7 @@ class SchedulingServiceImplTest {
         TimeSlot active = buildSlot(1L, TimeSlotStatus.AVAILABLE);
         TimeSlot cancelled = buildSlot(2L, TimeSlotStatus.CANCELLED);
         when(timeSlotRepository.findByDate(monday)).thenReturn(List.of(active, cancelled));
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
 
         List<AvailabilityResponse> result = service.getAvailability(monday);
         assertThat(result).hasSize(1);
@@ -203,7 +203,7 @@ class SchedulingServiceImplTest {
     @Test
     void refreshStatus_noBookings_setsAvailable() {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.AVAILABLE);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(0L);
 
         service.refreshStatus(slot);
         assertThat(slot.getStatus()).isEqualTo(TimeSlotStatus.AVAILABLE);
@@ -212,7 +212,7 @@ class SchedulingServiceImplTest {
     @Test
     void refreshStatus_hasBookings_setsReserved() {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.AVAILABLE);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(3L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(3L);
 
         service.refreshStatus(slot);
         assertThat(slot.getStatus()).isEqualTo(TimeSlotStatus.RESERVED);
@@ -221,7 +221,7 @@ class SchedulingServiceImplTest {
     @Test
     void refreshStatus_full_setsFull() {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.RESERVED);
-        when(registrationRepository.countByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(10L);
+        when(registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(eq(1L), any())).thenReturn(10L);
 
         service.refreshStatus(slot);
         assertThat(slot.getStatus()).isEqualTo(TimeSlotStatus.FULL);

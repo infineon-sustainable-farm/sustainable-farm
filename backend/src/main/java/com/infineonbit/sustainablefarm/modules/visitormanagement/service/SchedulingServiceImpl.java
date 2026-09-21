@@ -245,7 +245,7 @@ public class SchedulingServiceImpl implements SchedulingService {
     }
 
     private long countBooked(Long slotId) {
-        return registrationRepository.countByTimeSlotIdAndStatusNotIn(slotId, INACTIVE_STATUSES);
+        return registrationRepository.sumGroupSizeByTimeSlotIdAndStatusNotIn(slotId, INACTIVE_STATUSES);
     }
 
     private void validateCommon(TimeSlotRequest request) {

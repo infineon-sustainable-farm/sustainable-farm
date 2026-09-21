@@ -94,6 +94,30 @@ class RegistrationRepositoryTest {
     }
 
     @Test
+    void sumGroupSizeByTimeSlotIdAndStatusNotIn_sumsActivePeople() {
+        // The fixture visitor travels with a group of two.
+        createReg(visitor, slot, RegistrationStatus.CONFIRMED);
+
+        Visitor group = new Visitor();
+        group.setFullName("Group of five");
+        group.setGroupSize(5);
+        group.setType(VisitorType.GROUP);
+        group = visitorRepository.save(group);
+        createReg(group, slot, RegistrationStatus.PENDING);
+
+        Visitor rejected = new Visitor();
+        rejected.setFullName("Rejected");
+        rejected.setGroupSize(9);
+        rejected.setType(VisitorType.GROUP);
+        rejected = visitorRepository.save(rejected);
+        createReg(rejected, slot, RegistrationStatus.REJECTED);
+
+        long people = repository.sumGroupSizeByTimeSlotIdAndStatusNotIn(
+                slot.getId(), List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED));
+        assertThat(people).isEqualTo(7);
+    }
+
+    @Test
     void findAllByTimeSlotDate_ordersBySlotThenName() {
         createReg(visitor, slot, RegistrationStatus.CONFIRMED);
 
