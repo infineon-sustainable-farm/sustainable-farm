@@ -25,7 +25,7 @@ const NAV_ITEMS = [
     { label: "Scheduling", icon: Calendar, path: "/visitormanagement/scheduling" },
     { label: "Registration", icon: UserPlus, path: "/visitormanagement/registration" },
     { label: "Education", icon: BookOpen, path: "/visitormanagement/education" },
-    { label: "Safety", icon: ShieldCheck },
+    { label: "Safety", icon: ShieldCheck, path: "/visitormanagement/safety" },
     { label: "Booking", icon: Ticket },
     { label: "Feedback", icon: MessageSquare },
     { label: "Events", icon: PartyPopper },

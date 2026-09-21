@@ -138,3 +138,20 @@ export function publishWorkshop(id) {
 export function deactivateWorkshop(id) {
     return apiClient.post(`${VM_ENDPOINTS.WORKSHOPS}/${id}/deactivate`);
 }
+
+/** The safety briefing attached to a registration (404 when there is none). */
+export function fetchBriefing(registrationId) {
+    return apiClient.get(`${VM_ENDPOINTS.REGISTRATIONS}/${registrationId}/briefing`);
+}
+
+/**
+ * Records a briefing as delivered. `data` is a BriefingDeliverRequest:
+ * staffMember (required) and an optional signature. The API returns the
+ * briefing unchanged when it is already DONE.
+ */
+export function deliverBriefing(registrationId, data) {
+    return apiClient.patch(
+        `${VM_ENDPOINTS.REGISTRATIONS}/${registrationId}/briefing/deliver`,
+        data,
+    );
+}
