@@ -70,7 +70,7 @@ export default function RegistrationForm({
     submitError,
     serverFieldErrors,
     onSubmit,
-    onCancelEdit,
+    onCancel,
 }) {
     const isEditing = Boolean(editingVisitor);
     const needsSlot = mode === "TOUR" || mode === "ACTIVITY";
@@ -538,16 +538,14 @@ export default function RegistrationForm({
                               ? "Book activity"
                               : "Register visitor"}
                 </button>
-                {isEditing && (
-                    <button
-                        type="button"
-                        onClick={onCancelEdit}
-                        disabled={isSubmitting}
-                        className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
-                    >
-                        Cancel
-                    </button>
-                )}
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                    className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
+                >
+                    Cancel
+                </button>
             </div>
         </form>
     );

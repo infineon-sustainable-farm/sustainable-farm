@@ -11,6 +11,7 @@ import { useRegisterEventVisitor, useEvents } from "../../hooks/useEvents";
 import { useActivities, useCreateBooking } from "../../hooks/useBooking";
 import { useTimeSlots } from "../../hooks/useScheduling";
 import { toIsoDate } from "../../utils/format";
+import Modal from "../Modal";
 import RegistrationForm from "../Forms/RegistrationForm";
 import RegistrationsTable from "../RegistrationsTable";
 import ProspectsSection from "../ProspectsSection";
@@ -19,7 +20,9 @@ export default function RegistrationPage() {
     const [mode, setMode] = useState("TOUR");
     const [date, setDate] = useState(() => toIsoDate(new Date()));
     const [editing, setEditing] = useState(null);
+    const [formOpen, setFormOpen] = useState(false);
     const [formKey, setFormKey] = useState(0);
+    const [showCancelled, setShowCancelled] = useState(false);
 
     useEffect(() => {
         document.title = "Visitor Registration — Visitor Management";
@@ -70,6 +73,14 @@ export default function RegistrationPage() {
               : registerMutation;
     const formMutation = editing ? updateVisitorMutation : submitMutation;
 
+    /*
+     * Cancelled registrations are hidden by default: the API has no hard
+     * delete, so hiding them keeps the queue focused on the live rows.
+     */
+    const visibleRegistrations = (registrations ?? []).filter(
+        (registration) => showCancelled || registration.status !== "CANCELLED",
+    );
+
     function resetMutations() {
         registerMutation.reset();
         eventRegisterMutation.reset();
@@ -79,8 +90,16 @@ export default function RegistrationPage() {
 
     function resetForm() {
         setEditing(null);
+        setFormOpen(false);
         setFormKey((current) => current + 1);
         resetMutations();
+    }
+
+    function openCreate() {
+        resetMutations();
+        setEditing(null);
+        setFormOpen(true);
+        setFormKey((current) => current + 1);
     }
 
     function changeMode(nextMode) {
@@ -91,6 +110,7 @@ export default function RegistrationPage() {
     function startEdit(registration) {
         resetMutations();
         setEditing(registration);
+        setFormOpen(true);
         setFormKey((current) => current + 1);
     }
 
@@ -129,25 +149,24 @@ export default function RegistrationPage() {
                     Visitor registration
                 </h2>
 
-                <RegistrationForm
-                    key={formKey}
-                    mode={mode}
-                    onModeChange={changeMode}
-                    date={date}
-                    onDateChange={setDate}
-                    availability={availability ?? []}
-                    availabilityLoading={availabilityLoading}
-                    availabilityError={availabilityError}
-                    onRetryAvailability={refetchAvailability}
-                    events={publishedEvents}
-                    activities={activeActivities}
-                    editingVisitor={editing ? visitorsById.get(editing.visitorId) : null}
-                    isSubmitting={formMutation.isPending}
-                    submitError={formMutation.error?.message}
-                    serverFieldErrors={formMutation.error?.data?.fieldErrors}
-                    onSubmit={handleSubmit}
-                    onCancelEdit={resetForm}
-                />
+                <div className="mb-4 flex flex-wrap items-center justify-end gap-4">
+                    <label className="flex items-center gap-2 text-xs text-ink">
+                        <input
+                            type="checkbox"
+                            checked={showCancelled}
+                            onChange={(event) => setShowCancelled(event.target.checked)}
+                            className="h-4 w-4 accent-[#0a8276]"
+                        />
+                        Show cancelled
+                    </label>
+                    <button
+                        type="button"
+                        onClick={openCreate}
+                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                    >
+                        + New registration
+                    </button>
+                </div>
 
                 {visitorsError && (
                     <p className="mt-3 text-xs text-muted">
@@ -192,7 +211,7 @@ export default function RegistrationPage() {
                 {!isPending && !isError && (
                     <>
                         <RegistrationsTable
-                            registrations={registrations ?? []}
+                            registrations={visibleRegistrations}
                             visitorsById={visitorsById}
                             slotsById={slotsById}
                             eventsById={eventsById}
@@ -210,6 +229,42 @@ export default function RegistrationPage() {
                 )}
 
                 <ProspectsSection />
+
+                {formOpen && (
+                    <Modal
+                        title={
+                            editing
+                                ? `Edit visitor — ${
+                                      visitorsById.get(editing.visitorId)?.fullName ?? ""
+                                  }`
+                                : "New registration"
+                        }
+                        onClose={resetForm}
+                        widthClass="max-w-3xl"
+                    >
+                        <RegistrationForm
+                            key={formKey}
+                            mode={mode}
+                            onModeChange={changeMode}
+                            date={date}
+                            onDateChange={setDate}
+                            availability={availability ?? []}
+                            availabilityLoading={availabilityLoading}
+                            availabilityError={availabilityError}
+                            onRetryAvailability={refetchAvailability}
+                            events={publishedEvents}
+                            activities={activeActivities}
+                            editingVisitor={
+                                editing ? visitorsById.get(editing.visitorId) : null
+                            }
+                            isSubmitting={formMutation.isPending}
+                            submitError={formMutation.error?.message}
+                            serverFieldErrors={formMutation.error?.data?.fieldErrors}
+                            onSubmit={handleSubmit}
+                            onCancel={resetForm}
+                        />
+                    </Modal>
+                )}
             </section>
         </div>
     );
