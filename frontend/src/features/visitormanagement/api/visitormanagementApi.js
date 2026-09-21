@@ -140,6 +140,24 @@ export function fetchTourStops() {
     return apiClient.get(VM_ENDPOINTS.TOUR_STOPS);
 }
 
+/** Creates a tour stop from a TourStopRequest payload. */
+export function createTourStop(data) {
+    return apiClient.post(VM_ENDPOINTS.TOUR_STOPS, data);
+}
+
+/**
+ * Updates a tour stop. The payload has no active flag, so deactivation is
+ * one-way through the API.
+ */
+export function updateTourStop(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.TOUR_STOPS}/${id}`, data);
+}
+
+/** Deactivates a tour stop (no hard delete, no reactivation endpoint). */
+export function deactivateTourStop(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.TOUR_STOPS}/${id}`);
+}
+
 /** Every workshop / tour template, all statuses included. */
 export function fetchWorkshops() {
     return apiClient.get(VM_ENDPOINTS.WORKSHOPS);
