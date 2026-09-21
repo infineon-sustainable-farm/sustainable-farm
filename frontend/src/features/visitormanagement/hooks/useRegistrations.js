@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     approveRegistration,
+    cancelRegistration,
     checkInRegistration,
     createRegistration,
     createVisitor,
@@ -86,8 +87,8 @@ export function useUpdateVisitor() {
 }
 
 /*
- * One mutation for the three status transitions. `action` is "approve",
- * "reject" or "check-in"; the backend enforces which transition is legal, and
+ * One mutation for the status transitions. `action` is "approve", "reject",
+ * "check-in" or "cancel"; the backend enforces which transition is legal, and
  * the table only offers the buttons that match the row's current status.
  */
 export function useRegistrationAction() {
@@ -96,6 +97,7 @@ export function useRegistrationAction() {
         mutationFn: ({ id, action }) => {
             if (action === "approve") return approveRegistration(id);
             if (action === "reject") return rejectRegistration(id);
+            if (action === "cancel") return cancelRegistration(id);
             return checkInRegistration(id);
         },
         onSettled: () => {

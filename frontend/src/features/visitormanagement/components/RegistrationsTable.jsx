@@ -1,3 +1,4 @@
+import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import { formatDateShort, formatTime, formatTimeRange } from "../utils/format";
 import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
@@ -11,35 +12,69 @@ const COLUMNS = ["Name", "Group", "Date / Slot", "Language", "Type", "Status", "
 
 /*
  * Which transitions the backend accepts, per current status: approve and
- * reject only from PENDING, check-in only from CONFIRMED. Showing any other
- * button would guarantee a 422, so the table never offers it.
+ * reject only from PENDING, check-in only from CONFIRMED, and cancel while the
+ * registration is still active (the API refuses after check-in). Showing any
+ * other button would guarantee a 422, so the table never offers it.
  */
 function rowActions(status) {
-    if (status === "PENDING") return ["approve", "reject"];
-    if (status === "CONFIRMED") return ["check-in"];
+    if (status === "PENDING") return ["approve", "reject", "cancel"];
+    if (status === "CONFIRMED") return ["check-in", "cancel"];
     return [];
 }
 
 function ActionButtons({ registration, pendingAction, onAction }) {
+    const [confirmingCancel, setConfirmingCancel] = useState(false);
     const actions = rowActions(registration.status);
+    const isPending = pendingAction?.id === registration.id;
+
+    if (confirmingCancel) {
+        return (
+            <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] text-error">Cancel registration?</span>
+                <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => {
+                        setConfirmingCancel(false);
+                        onAction(registration, "cancel");
+                    }}
+                    className={TINY_DANGER}
+                >
+                    {isPending ? "…" : "Yes"}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setConfirmingCancel(false)}
+                    className={TINY_BUTTON}
+                >
+                    No
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-wrap gap-1.5">
-            {actions.map((action) => {
-                const isPending = pendingAction?.id === registration.id;
-                return (
-                    <button
-                        key={action}
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => onAction(registration, action)}
-                        className={action === "reject" ? TINY_DANGER : TINY_BUTTON}
-                    >
-                        {action === "approve" && "✓ approve"}
-                        {action === "reject" && "✗ reject"}
-                        {action === "check-in" && "☑ check-in"}
-                    </button>
-                );
-            })}
+            {actions.map((action) => (
+                <button
+                    key={action}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() =>
+                        action === "cancel"
+                            ? setConfirmingCancel(true)
+                            : onAction(registration, action)
+                    }
+                    className={
+                        action === "reject" || action === "cancel" ? TINY_DANGER : TINY_BUTTON
+                    }
+                >
+                    {action === "approve" && "✓ approve"}
+                    {action === "reject" && "✗ reject"}
+                    {action === "check-in" && "☑ check-in"}
+                    {action === "cancel" && "✕ cancel"}
+                </button>
+            ))}
         </div>
     );
 }

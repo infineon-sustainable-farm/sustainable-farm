@@ -120,6 +120,14 @@ export function checkInRegistration(id) {
 }
 
 /**
+ * Cancels a registration. The API refuses once the visitor has checked in,
+ * and releases the slot seats either way.
+ */
+export function cancelRegistration(id) {
+    return apiClient.patch(`${VM_ENDPOINTS.REGISTRATIONS}/${id}/cancel`);
+}
+
+/**
  * The bookable slots of a date with their remaining capacity, used by the
  * registration form. Cancelled slots are already filtered out by the API.
  */
