@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { useRegistrations } from "../../hooks/useRegistrations";
 import { useActiveStaff, useDeliverBriefing } from "../../hooks/useSafety";
+import Modal from "../Modal";
+import BriefingForm from "../Forms/BriefingForm";
 import BriefingRow from "../BriefingRow";
 
 const COLUMNS = [
@@ -23,6 +25,8 @@ const COLUMNS = [
 const TRACKED_STATUSES = new Set(["CONFIRMED", "CHECKED_IN"]);
 
 export default function SafetyPage() {
+    const [recording, setRecording] = useState(null);
+
     useEffect(() => {
         document.title = "Safety Briefing Tracker — Visitor Management";
     }, []);
@@ -167,9 +171,7 @@ export default function SafetyPage() {
                                                     ? deliverError.message
                                                     : null
                                             }
-                                            onDeliver={(registrationId, data) =>
-                                                deliverMutation.mutate({ registrationId, data })
-                                            }
+                                            onRecord={setRecording}
                                         />
                                     ))}
                                 </tbody>
@@ -180,6 +182,27 @@ export default function SafetyPage() {
                             Site access is strictly blocked until the briefing is marked as done.
                         </p>
                     </>
+                )}
+
+                {recording && (
+                    <Modal
+                        title={`Record briefing — ${recording.visitorName ?? ""}`}
+                        onClose={() => setRecording(null)}
+                    >
+                        <BriefingForm
+                            registrationId={recording.id}
+                            isSubmitting={deliverMutation.isPending}
+                            submitError={deliverMutation.error?.message}
+                            serverFieldErrors={deliverMutation.error?.data?.fieldErrors}
+                            onSubmit={(data) =>
+                                deliverMutation.mutate(
+                                    { registrationId: recording.id, data },
+                                    { onSuccess: () => setRecording(null) },
+                                )
+                            }
+                            onCancel={() => setRecording(null)}
+                        />
+                    </Modal>
                 )}
             </section>
         </div>

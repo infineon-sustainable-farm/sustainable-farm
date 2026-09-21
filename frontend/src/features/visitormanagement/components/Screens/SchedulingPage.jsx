@@ -10,6 +10,7 @@ import {
 import { addDays, formatWeekLabel, startOfWeek, toIsoDate } from "../../utils/format";
 import { SLOT_PRESETS } from "../../utils/scheduling";
 import SchedulingGrid from "../SchedulingGrid";
+import Modal from "../Modal";
 import SlotForm from "../Forms/SlotForm";
 
 /*
@@ -166,17 +167,22 @@ export default function SchedulingPage() {
                 </div>
 
                 {formState.open && (
-                    <SlotForm
-                        key={`${toIsoDate(weekStart)}-${formSlot?.id ?? "new"}`}
-                        weekStart={weekStart}
-                        guides={guides ?? []}
-                        guidesError={guidesError}
-                        slot={formSlot}
-                        isSubmitting={formMutation.isPending}
-                        submitError={formMutation.error?.message}
-                        onSubmit={handleSubmit}
-                        onCancel={closeForm}
-                    />
+                    <Modal
+                        title={formSlot ? "Edit slot" : "New slot"}
+                        onClose={closeForm}
+                    >
+                        <SlotForm
+                            key={`${toIsoDate(weekStart)}-${formSlot?.id ?? "new"}`}
+                            weekStart={weekStart}
+                            guides={guides ?? []}
+                            guidesError={guidesError}
+                            slot={formSlot}
+                            isSubmitting={formMutation.isPending}
+                            submitError={formMutation.error?.message}
+                            onSubmit={handleSubmit}
+                            onCancel={closeForm}
+                        />
+                    </Modal>
                 )}
 
                 {isPending && (
