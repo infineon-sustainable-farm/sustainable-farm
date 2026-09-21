@@ -53,6 +53,24 @@ export function fetchStaff() {
     return apiClient.get(VM_ENDPOINTS.STAFF);
 }
 
+/** Creates a staff member from a StaffRequest payload. */
+export function createStaff(data) {
+    return apiClient.post(VM_ENDPOINTS.STAFF, data);
+}
+
+/**
+ * Updates a staff member. Sending `active: true` is also how a deactivated
+ * member is brought back, since the API only offers deactivation.
+ */
+export function updateStaff(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.STAFF}/${id}`, data);
+}
+
+/** Deactivates a staff member (the API has no hard delete). */
+export function deactivateStaff(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.STAFF}/${id}`);
+}
+
 /** Every visitor, used to join language and type onto registrations. */
 export function fetchVisitors() {
     return apiClient.get(VM_ENDPOINTS.VISITORS);

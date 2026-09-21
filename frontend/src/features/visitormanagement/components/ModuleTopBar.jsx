@@ -13,6 +13,7 @@ const TITLES = {
     "/visitormanagement/booking": "Agritourism Booking System",
     "/visitormanagement/feedback": "Satisfaction Survey",
     "/visitormanagement/events": "Events",
+    "/visitormanagement/staff": "Staff & Guides",
 };
 
 /**

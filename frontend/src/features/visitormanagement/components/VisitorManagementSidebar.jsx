@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
     BookOpen,
+    Briefcase,
     Calendar,
     LayoutDashboard,
     LogOut,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
     { label: "Booking", icon: Ticket, path: "/visitormanagement/booking" },
     { label: "Feedback", icon: MessageSquare, path: "/visitormanagement/feedback" },
     { label: "Events", icon: PartyPopper, path: "/visitormanagement/events" },
+    { label: "Staff", icon: Briefcase, path: "/visitormanagement/staff" },
 ];
 
 const ITEM_BASE = "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm";

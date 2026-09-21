@@ -7,6 +7,7 @@ import SafetyPage from "./components/Screens/SafetyPage";
 import BookingPage from "./components/Screens/BookingPage";
 import FeedbackPage from "./components/Screens/FeedbackPage";
 import EventsPage from "./components/Screens/EventsPage";
+import StaffPage from "./components/Screens/StaffPage";
 
 export default [
     {
@@ -21,6 +22,7 @@ export default [
             { path: "booking", element: <BookingPage /> },
             { path: "feedback", element: <FeedbackPage /> },
             { path: "events", element: <EventsPage /> },
+            { path: "staff", element: <StaffPage /> },
         ],
     },
 ];
