@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     useAvailability,
     useRegisterVisitor,
@@ -17,10 +18,16 @@ import RegistrationsTable from "../RegistrationsTable";
 import ProspectsSection from "../ProspectsSection";
 
 export default function RegistrationPage() {
-    const [mode, setMode] = useState("TOUR");
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const preselectedEventId = searchParams.get("eventId");
+    const [mode, setMode] = useState(preselectedEventId ? "EVENT" : "TOUR");
     const [date, setDate] = useState(() => toIsoDate(new Date()));
     const [editing, setEditing] = useState(null);
-    const [formOpen, setFormOpen] = useState(false);
+    const [formOpen, setFormOpen] = useState(Boolean(preselectedEventId));
+    const [preselectedEvent, setPreselectedEvent] = useState(
+        preselectedEventId ? Number(preselectedEventId) : null,
+    );
     const [formKey, setFormKey] = useState(0);
     const [showCancelled, setShowCancelled] = useState(false);
 
@@ -62,6 +69,17 @@ export default function RegistrationPage() {
     const activeActivities = (activities ?? []).filter((activity) => activity.active);
 
     /*
+     * The next date, at or after today, that has at least one live slot. It is
+     * offered to the user when the date being edited has no bookable slot
+     * (e.g. today is a closed or empty day), instead of showing a bare error.
+     */
+    const today = toIsoDate(new Date());
+    const nextAvailableDate =
+        (timeSlots ?? [])
+            .filter((slot) => slot.status !== "CANCELLED" && slot.date >= today)
+            .sort((a, b) => a.date.localeCompare(b.date))[0]?.date ?? null;
+
+    /*
      * The active mutation depends on the mode, so the form's pending and error
      * state follows the target the user picked.
      */
@@ -92,12 +110,17 @@ export default function RegistrationPage() {
         setEditing(null);
         setFormOpen(false);
         setFormKey((current) => current + 1);
+        setPreselectedEvent(null);
         resetMutations();
+        if (preselectedEventId) {
+            navigate("/visitormanagement/registration", { replace: true });
+        }
     }
 
     function openCreate() {
         resetMutations();
         setEditing(null);
+        setPreselectedEvent(null);
         setFormOpen(true);
         setFormKey((current) => current + 1);
     }
@@ -252,8 +275,11 @@ export default function RegistrationPage() {
                             availabilityLoading={availabilityLoading}
                             availabilityError={availabilityError}
                             onRetryAvailability={refetchAvailability}
+                            nextAvailableDate={nextAvailableDate}
+                            onUseNextDate={(nextDate) => setDate(nextDate)}
                             events={publishedEvents}
                             activities={activeActivities}
+                            preselectedEventId={preselectedEvent}
                             editingVisitor={
                                 editing ? visitorsById.get(editing.visitorId) : null
                             }

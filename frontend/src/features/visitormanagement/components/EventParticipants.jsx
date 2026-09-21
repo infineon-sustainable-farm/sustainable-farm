@@ -1,4 +1,6 @@
+import { UserPlus } from "lucide-react";
 import { Loader2, TriangleAlert, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useEventRegistrations } from "../hooks/useEvents";
 import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
 import StatusBadge from "./StatusBadge";
@@ -11,6 +13,7 @@ const COLUMNS = ["Visitor", "Group", "Purpose", "Status"];
  * Event), which is the single entry point for registering visitors.
  */
 export default function EventParticipants({ event, onClose }) {
+    const navigate = useNavigate();
     const {
         data: registrations,
         isPending,
@@ -18,6 +21,10 @@ export default function EventParticipants({ event, onClose }) {
         refetch,
         isFetching,
     } = useEventRegistrations(event.id);
+
+    function goToRegistration() {
+        navigate(`/visitormanagement/registration?eventId=${event.id}`);
+    }
 
     return (
         <section className="mb-6 rounded-lg border border-line bg-[#F7FDFB] p-4.5">
@@ -31,14 +38,25 @@ export default function EventParticipants({ event, onClose }) {
                         {` · max ${event.maxCapacity}`}
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close participants"
-                    className="rounded-md border border-line bg-white p-1.5 text-primary hover:bg-[#F2FBF9]"
-                >
-                    <X size={16} />
-                </button>
+                <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                        type="button"
+                        onClick={goToRegistration}
+                        title="Register a visitor on this event"
+                        className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                    >
+                        <UserPlus size={14} />
+                        Register visitor
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close participants"
+                        className="rounded-md border border-line bg-white p-1.5 text-primary hover:bg-[#F2FBF9]"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
             </div>
 
             {isPending && (
@@ -112,8 +130,8 @@ export default function EventParticipants({ event, onClose }) {
             )}
 
             <p className="mt-4 rounded-md border border-line bg-white px-3 py-2 text-xs text-muted">
-                To register a visitor on this event, use the Registration screen and choose the
-                Event target.
+                “Register visitor” opens the Registration screen with this event preselected; the
+                visitor is then registered on the event.
             </p>
         </section>
     );

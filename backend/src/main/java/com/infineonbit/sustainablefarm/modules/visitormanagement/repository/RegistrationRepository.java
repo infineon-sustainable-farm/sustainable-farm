@@ -98,11 +98,11 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
                               @Param("end") LocalDate end,
                               @Param("excluded") Collection<RegistrationStatus> excluded);
 
-    @Query("SELECT COUNT(DISTINCT r.timeSlot.id) FROM Registration r " +
+    @Query("SELECT DISTINCT r.timeSlot.id FROM Registration r " +
             "WHERE r.timeSlot.date BETWEEN :start AND :end AND r.status NOT IN :excluded")
-    long countBusySlotsBetween(@Param("start") LocalDate start,
-                               @Param("end") LocalDate end,
-                               @Param("excluded") Collection<RegistrationStatus> excluded);
+    List<Long> findBusySlotIdsBetween(@Param("start") LocalDate start,
+                                      @Param("end") LocalDate end,
+                                      @Param("excluded") Collection<RegistrationStatus> excluded);
 
     @Query("SELECT r FROM Registration r " +
             "LEFT JOIN FETCH r.briefing b " +

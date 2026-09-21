@@ -32,7 +32,8 @@ function buildRows(slots) {
 export default function SchedulingPage() {
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
     const [guideFilter, setGuideFilter] = useState("");
-    const [formState, setFormState] = useState({ open: false, slot: null });
+    const [formState, setFormState] = useState({ open: false, slot: null, prefill: null });
+    const currentWeekStart = startOfWeek(new Date());
 
     useEffect(() => {
         document.title = "Farm Tour Scheduling — Visitor Management";
@@ -61,29 +62,33 @@ export default function SchedulingPage() {
     );
 
     const formSlot = formState.slot;
+    const formPrefill = formState.prefill;
     const formMutation = formSlot ? updateMutation : createMutation;
 
     function changeWeek(offset) {
-        setWeekStart((current) => addDays(current, offset * 7));
-        setFormState({ open: false, slot: null });
+        const target = addDays(weekStart, offset * 7);
+        // Past weeks are read-only: no picking a closed week in the past.
+        if (target < currentWeekStart) return;
+        setWeekStart(target);
+        setFormState({ open: false, slot: null, prefill: null });
         createMutation.reset();
         updateMutation.reset();
     }
 
-    function openCreate() {
+    function openCreate(prefill = null) {
         createMutation.reset();
         updateMutation.reset();
-        setFormState({ open: true, slot: null });
+        setFormState({ open: true, slot: null, prefill });
     }
 
     function openEdit(slot) {
         createMutation.reset();
         updateMutation.reset();
-        setFormState({ open: true, slot });
+        setFormState({ open: true, slot, prefill: null });
     }
 
     function closeForm() {
-        setFormState({ open: false, slot: null });
+        setFormState({ open: false, slot: null, prefill: null });
         createMutation.reset();
         updateMutation.reset();
     }
@@ -116,7 +121,13 @@ export default function SchedulingPage() {
                         <button
                             type="button"
                             onClick={() => changeWeek(-1)}
-                            className="rounded border border-line bg-white px-3.5 py-1.5 text-xs text-primary hover:bg-[#F2FBF9]"
+                            disabled={weekStart <= currentWeekStart}
+                            title={
+                                weekStart <= currentWeekStart
+                                    ? "Past weeks are read-only"
+                                    : "Previous week"
+                            }
+                            className="rounded border border-line bg-white px-3.5 py-1.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             ‹ Prev
                         </button>
@@ -177,6 +188,7 @@ export default function SchedulingPage() {
                             guides={guides ?? []}
                             guidesError={guidesError}
                             slot={formSlot}
+                            prefill={formPrefill}
                             isSubmitting={formMutation.isPending}
                             submitError={formMutation.error?.message}
                             onSubmit={handleSubmit}
@@ -220,7 +232,9 @@ export default function SchedulingPage() {
                             rows={rows}
                             days={days}
                             slotsByCell={slotsByCell}
+                            isPastWeek={weekStart < currentWeekStart}
                             onEdit={openEdit}
+                            onQuickCreate={openCreate}
                             onCancel={handleCancelSlot}
                             cancelPendingId={
                                 cancelMutation.isPending ? cancelMutation.variables : null
@@ -229,7 +243,8 @@ export default function SchedulingPage() {
                         />
                         <p className="mt-6 text-[11px] text-muted">
                             Max capacity: 10 visitors/slot · 2 slots per day · closed on Sundays.
-                            Cancelling a slot also cancels its registrations and bookings.
+                            Past weeks are read-only. Cancelling a slot also cancels its
+                            registrations and bookings.
                         </p>
                     </>
                 )}

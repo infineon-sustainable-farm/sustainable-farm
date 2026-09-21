@@ -63,8 +63,11 @@ export default function RegistrationForm({
     availabilityLoading,
     availabilityError,
     onRetryAvailability,
+    nextAvailableDate,
+    onUseNextDate,
     events,
     activities,
+    preselectedEventId,
     editingVisitor,
     isSubmitting,
     submitError,
@@ -89,7 +92,7 @@ export default function RegistrationForm({
     );
     const [specialNeeds, setSpecialNeeds] = useState(editingVisitor?.specialNeeds ?? "");
     const [timeSlotId, setTimeSlotId] = useState("");
-    const [eventId, setEventId] = useState("");
+    const [eventId, setEventId] = useState(preselectedEventId ? String(preselectedEventId) : "");
     const [activityId, setActivityId] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("CASH");
     const [fieldErrors, setFieldErrors] = useState({});
@@ -144,7 +147,11 @@ export default function RegistrationForm({
             errors.specialNeeds = "Special requirements must be at most 500 characters.";
         }
         if (needsSlot && !effectiveTimeSlotId) {
-            errors.timeSlotId = "Pick a visit date with an available slot.";
+            if (nextAvailableDate) {
+                errors.timeSlotId = `No bookable slot on this date — the next date with slots is ${nextAvailableDate}.`;
+            } else {
+                errors.timeSlotId = "Pick a visit date with an available slot.";
+            }
         }
         if (mode === "EVENT" && !effectiveEventId) {
             errors.eventId = "Pick a published event.";
@@ -373,6 +380,22 @@ export default function RegistrationForm({
                                 onChange={(event) => onDateChange(event.target.value)}
                                 className={INPUT_CLASS}
                             />
+                            {!availabilityLoading &&
+                                !availabilityError &&
+                                (availability ?? []).length === 0 &&
+                                nextAvailableDate &&
+                                nextAvailableDate !== date && (
+                                    <p className="mt-1.5 text-xs text-muted">
+                                        No slots on this date.{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() => onUseNextDate(nextAvailableDate)}
+                                            className="font-semibold text-primary underline hover:text-primary-dark"
+                                        >
+                                            Use {nextAvailableDate} instead
+                                        </button>
+                                    </p>
+                                )}
                         </div>
 
                         <div>
@@ -387,9 +410,16 @@ export default function RegistrationForm({
                                 className={`${INPUT_CLASS} disabled:opacity-60`}
                             >
                                 {availabilityLoading && <option value="">Loading slots…</option>}
+                                {availabilityError && <option value="">Slots unavailable</option>}
                                 {!availabilityLoading && (availability ?? []).length === 0 && (
                                     <option value="">No slots on this date</option>
                                 )}
+                                {!availabilityLoading &&
+                                    !availabilityError &&
+                                    (availability ?? []).length > 0 &&
+                                    bookableSlots.length === 0 && (
+                                        <option value="">No slot fits {groupSize} people</option>
+                                    )}
                                 {(availability ?? []).map((slot) => (
                                     <option
                                         key={slot.id}
@@ -404,6 +434,12 @@ export default function RegistrationForm({
                                     </option>
                                 ))}
                             </select>
+                            {!availabilityLoading && !availabilityError && (availability ?? []).length > 0 &&
+                                bookableSlots.length === 0 && (
+                                    <p className="mt-1 text-xs text-muted">
+                                        Every slot on this date is too small for {groupSize} people.
+                                    </p>
+                                )}
                             {fieldError("timeSlotId") && (
                                 <p className={ERROR_CLASS}>{fieldError("timeSlotId")}</p>
                             )}

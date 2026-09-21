@@ -133,6 +133,7 @@ public class SchedulingServiceImpl implements SchedulingService {
     public TimeSlotResponse create(TimeSlotRequest request) {
         return withDateLock(request.getDate(), () -> transactionTemplate.execute(status -> {
             validateCommon(request);
+            validateNotInPast(request.getDate());
             if (timeSlotRepository.existsOverlapping(
                     request.getDate(), request.getStartTime(), request.getEndTime())) {
                 throw new ConflictException(
@@ -216,8 +217,10 @@ public class SchedulingServiceImpl implements SchedulingService {
     @Override
     @Transactional(readOnly = true)
     public List<AvailabilityResponse> getAvailability(LocalDate date) {
+        LocalDate today = LocalDate.now();
         return timeSlotRepository.findByDate(date).stream()
                 .filter(s -> s.getStatus() != TimeSlotStatus.CANCELLED)
+                .filter(s -> !s.getDate().isBefore(today))
                 .map(s -> {
                     long booked = countBooked(s.getId());
                     int remaining = Math.max(0, s.getMaxCapacity() - (int) booked);
@@ -249,6 +252,9 @@ public class SchedulingServiceImpl implements SchedulingService {
     }
 
     private void validateCommon(TimeSlotRequest request) {
+        if (request.getDate() == null) {
+            throw new BusinessRuleException("date is required");
+        }
         if (request.getDate().getDayOfWeek() == SchedulingRules.CLOSED_DAY) {
             throw new BusinessRuleException(
                     "Farm is closed on " + SchedulingRules.CLOSED_DAY + " — no slots allowed on "
@@ -261,6 +267,13 @@ public class SchedulingServiceImpl implements SchedulingService {
         if (capacity > SchedulingRules.MAX_VISITORS_PER_SLOT) {
             throw new BusinessRuleException(
                     "maxCapacity cannot exceed " + SchedulingRules.MAX_VISITORS_PER_SLOT);
+        }
+    }
+
+    private void validateNotInPast(LocalDate date) {
+        if (date.isBefore(LocalDate.now())) {
+            throw new BusinessRuleException(
+                    "Cannot create a time slot in the past: " + date);
         }
     }
 

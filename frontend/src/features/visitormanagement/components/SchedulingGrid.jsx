@@ -115,6 +115,31 @@ function SlotCell({ slot, onEdit, onCancel, cancelPendingId, cancelError }) {
     );
 }
 
+/*
+ * A confirmed week in the past is read-only: no creating or editing slots. The
+ * backend also refuses to create slots in the past, so the grid only gates the
+ * UI.
+ */
+function AddCellButton({ day, startTime, endTime, isPastWeek, onQuickCreate }) {
+    if (isPastWeek) {
+        return (
+            <span className="text-[11px] text-gray-300" aria-hidden="true">
+                —
+            </span>
+        );
+    }
+    return (
+        <button
+            type="button"
+            onClick={() => onQuickCreate({ date: toIsoDate(day), startTime, endTime })}
+            title="Add a slot at this time"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-[#C3D8D4] text-sm leading-none text-primary transition-colors hover:border-primary hover:bg-[#ECFAF7] hover:text-primary-dark"
+        >
+            +
+        </button>
+    );
+}
+
 /**
  * The mockup's week grid: one column per opening day (Monday–Saturday) and one
  * row per slot time. Rows come from the slots actually stored in the week,
@@ -125,23 +150,25 @@ export default function SchedulingGrid({
     rows,
     days,
     slotsByCell,
+    isPastWeek = false,
     onEdit,
+    onQuickCreate,
     onCancel,
     cancelPendingId,
     cancelError,
 }) {
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-line shadow-sm">
             <table className="w-full border-collapse text-xs">
                 <thead>
                     <tr>
-                        <th className="w-20 border-t border-l border-line bg-primary-dark px-2 py-2 text-center text-[11px] font-medium text-white">
+                        <th className="w-20 border-b border-r border-line bg-primary-dark px-2 py-2.5 text-center text-[11px] font-medium text-white">
                             <span className="sr-only">Time slot</span>
                         </th>
                         {days.map((day) => (
                             <th
                                 key={toIsoDate(day)}
-                                className="border-t border-r border-line bg-primary-dark px-2 py-2 text-center text-[11px] font-medium text-white"
+                                className="border-b border-r border-line bg-primary-dark px-2 py-2.5 text-center text-[11px] font-medium text-white"
                             >
                                 {day.toLocaleDateString("en-GB", { weekday: "short" })}
                                 <span className="block text-[10px] font-normal text-white/70">
@@ -153,8 +180,8 @@ export default function SchedulingGrid({
                 </thead>
                 <tbody>
                     {rows.map((row) => (
-                        <tr key={row.key}>
-                            <th className="border-r border-b border-line bg-white px-2 py-2 text-center text-[11px] font-semibold whitespace-nowrap text-primary-dark">
+                        <tr key={row.key} className="group/row">
+                            <th className="border-r border-b border-line bg-[#F7FDFB] px-2 py-2 text-center text-[11px] font-semibold whitespace-nowrap text-primary-dark">
                                 {formatTimeRange(row.startTime, row.endTime)}
                             </th>
                             {days.map((day) => {
@@ -163,9 +190,15 @@ export default function SchedulingGrid({
                                     return (
                                         <td
                                             key={`${toIsoDate(day)}|${row.key}`}
-                                            className={`${CELL_BORDER} text-center text-muted`}
+                                            className={`${CELL_BORDER} text-center`}
                                         >
-                                            —
+                                            <AddCellButton
+                                                day={day}
+                                                startTime={row.startTime}
+                                                endTime={row.endTime}
+                                                isPastWeek={isPastWeek}
+                                                onQuickCreate={onQuickCreate}
+                                            />
                                         </td>
                                     );
                                 }

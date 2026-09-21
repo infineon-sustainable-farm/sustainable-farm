@@ -1,117 +1,78 @@
 import { useEffect } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import {
+    CalendarDays,
+    ClipboardCheck,
+    Loader2,
+    PartyPopper,
+    Star,
+    TriangleAlert,
+    Users,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "../../hooks/useDashboard";
-import { formatNumber, formatSatisfaction, getIsoWeekNumber } from "../../utils/format";
+import { formatDateTime, formatNumber, formatSatisfaction, getIsoWeekNumber } from "../../utils/format";
 
 /*
- * The five counter cards of the mockup, in its order and with its wording.
- * "Slots booked" is the count of booked slots; the backend does not expose the
- * week's total, so the mockup's "6/12" fraction is not reproduced. Each card
- * opens the screen its figure comes from.
+ * The five counters of the mockup. Each opens the screen its figure comes from
+ * when clicked; the label stays the mockup wording.
  */
 const COUNTERS = [
     {
         label: "Visitors this week",
         key: "visitorsThisWeek",
         format: formatNumber,
+        icon: Users,
         path: "/visitormanagement/visitors",
     },
     {
         label: "Slots booked",
         key: "slotsBooked",
         format: formatNumber,
+        icon: CalendarDays,
         path: "/visitormanagement/scheduling",
     },
     {
         label: "Safety briefings pending",
         key: "pendingBriefings",
         format: formatNumber,
+        icon: ClipboardCheck,
         path: "/visitormanagement/safety",
     },
     {
         label: "Avg. satisfaction",
         key: "averageSatisfaction",
         format: formatSatisfaction,
+        icon: Star,
         path: "/visitormanagement/feedback",
     },
     {
         label: "Upcoming events",
         key: "upcomingEvents",
         format: null,
+        icon: PartyPopper,
         path: "/visitormanagement/events",
     },
 ];
 
 /*
- * The mockup's quick-access grid. Each card opens the screen listed here; the
- * path field is only present once that screen actually exists (the sidebar
- * follows the same rule). Planned cards keep the mockup look but stay inert.
+ * A KPI card. A pure stat card carries the figure and its label; clicking the
+ * card opens the screen the figure comes from.
  */
-const FEATURE_CARDS = [
-    { title: "Farm tour scheduling", target: "scheduling", path: "/visitormanagement/scheduling" },
-    { title: "Visitor registration", target: "registration", path: "/visitormanagement/registration" },
-    { title: "Educational program", target: "education", path: "/visitormanagement/education" },
-    { title: "Safety briefings tracking", target: "safety", path: "/visitormanagement/safety" },
-    { title: "Agritourism booking system", target: "booking", path: "/visitormanagement/booking" },
-    { title: "Visitor feedback collection", target: "feedback", path: "/visitormanagement/feedback" },
-    { title: "Events", target: "events", path: "/visitormanagement/events" },
-];
-
-/*
- * A KPI card, rendered as a button so the figure leads to the screen it comes
- * from. Spans rather than paragraphs: a button only accepts phrasing content.
- */
-function CounterCard({ label, value, format, path }) {
-    const navigate = useNavigate();
+function KpiCard({ label, value, format, icon: Icon }) {
     const display = format === null ? formatNumber(value?.length) : format(value);
     return (
-        <button
-            type="button"
-            onClick={() => navigate(path)}
-            title={`Open ${label}`}
-            className="rounded-lg border border-line bg-white px-4 py-4 text-left transition-shadow duration-150 hover:shadow-[0_4px_14px_rgba(10,130,118,0.15)]"
-        >
-            <span className="mb-1.5 block text-xs text-muted">{label}</span>
-            <span className="font-heading block text-[28px] leading-none font-bold text-primary-dark">
-                {display}
+        <div className="flex items-center gap-3.5 rounded-xl border border-line bg-white p-4 shadow-sm">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E7F7F4] text-primary">
+                <Icon size={20} strokeWidth={2} />
             </span>
-        </button>
-    );
-}
-
-/*
- * A quick-access card as a button only when its screen exists; otherwise a
- * disabled span with the same look. Both states carry the exact mockup wording,
- * including "Open →".
- */
-function FeatureCard({ card, built }) {
-    const navigate = useNavigate();
-    const body = (
-        <>
-            <span className="font-heading text-[17px] leading-snug font-bold text-ink">
-                {card.title}
+            <span className="min-w-0">
+                <span className="block truncate text-xs text-muted">{label}</span>
+                <span className="font-heading block text-[24px] leading-tight font-bold text-ink">
+                    {display}
+                </span>
             </span>
-            <span className="mt-2.5 text-xs text-primary">Open →</span>
-        </>
+        </div>
     );
-    const classes =
-        "flex min-h-[110px] flex-col justify-between rounded-lg border border-line bg-white p-4.5";
-    const inner = built ? (
-        <button
-            type="button"
-            onClick={() => navigate(card.path)}
-            className={`${classes} cursor-pointer text-left transition-shadow duration-150 hover:shadow-[0_4px_14px_rgba(10,130,118,0.15)]`}
-        >
-            {body}
-        </button>
-    ) : (
-        <span aria-disabled="true" className={`${classes} cursor-not-allowed`}>
-            {body}
-            <span className="sr-only"> (planned, not available yet)</span>
-        </span>
-    );
-    return inner;
 }
 
 /*
@@ -133,8 +94,8 @@ const TASK_TARGETS = {
 function TasksPanel({ tasks }) {
     const navigate = useNavigate();
     return (
-        <aside className="flex flex-col gap-3.5 rounded-lg border border-line bg-white p-4.5">
-            <h3 className="font-heading text-[17px] font-bold text-ink">Upcoming tasks</h3>
+        <aside className="flex flex-col gap-3.5 rounded-xl border border-line bg-white p-4.5 shadow-sm">
+            <h3 className="font-heading text-[16px] font-bold text-ink">Upcoming tasks</h3>
             {tasks.length === 0 ? (
                 <p className="text-sm text-muted">No pending tasks.</p>
             ) : (
@@ -167,6 +128,35 @@ function TasksPanel({ tasks }) {
     );
 }
 
+/*
+ * A single upcoming event in the dashboard list. Shows the essentials from the
+ * API: time, title, type and capacity — following the mockup's event row.
+ */
+function UpcomingEventRow({ event }) {
+    const navigate = useNavigate();
+    return (
+        <button
+            type="button"
+            onClick={() => navigate("/visitormanagement/events")}
+            title="Open the Events screen"
+            className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-white px-3.5 py-3 text-left transition-shadow duration-150 hover:shadow-[0_4px_14px_rgba(10,130,118,0.15)]"
+        >
+            <span className="min-w-0">
+                <span className="font-heading block truncate text-[14px] font-bold text-ink">
+                    {event.title}
+                </span>
+                <span className="mt-0.5 block text-xs text-muted">
+                    {formatDateTime(event.startDateTime)}
+                </span>
+            </span>
+            <span className="shrink-0 text-right text-xs text-primary">
+                {event.booked}/{event.maxCapacity}
+                <span className="block font-semibold tracking-wider uppercase">booked</span>
+            </span>
+        </button>
+    );
+}
+
 export default function DashboardPage() {
     useEffect(() => {
         document.title = "Dashboard Overview — Visitor Management";
@@ -176,6 +166,16 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
+            <div className="mb-5 flex flex-col gap-1">
+                <h1 className="font-heading text-[22px] font-bold text-ink">Dashboard</h1>
+                <p className="text-sm text-muted">
+                    At a glance for this week —{" "}
+                    <span className="font-semibold text-primary-dark">
+                        Week {getIsoWeekNumber(new Date())}
+                    </span>
+                </p>
+            </div>
+
             {isPending && (
                 <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
                     <Loader2 size={18} className="animate-spin" />
@@ -207,24 +207,27 @@ export default function DashboardPage() {
 
             {!isPending && !isError && dashboard && (
                 <div className="flex flex-col gap-5">
-                    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-5">
-                        {COUNTERS.map(({ label, key, format, path }) => (
-                            <CounterCard
-                                key={key}
-                                label={label}
-                                value={dashboard[key]}
-                                format={format}
-                                path={path}
-                            />
+                    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-5">
+                        {COUNTERS.map(({ label, key, format, icon }) => (
+                            <KpiCard key={key} label={label} value={dashboard[key]} format={format} icon={icon} />
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_280px]">
-                        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-                            {FEATURE_CARDS.map((card) => (
-                                <FeatureCard key={card.target} card={card} built={Boolean(card.path)} />
-                            ))}
-                        </div>
+                    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px]">
+                        <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-4.5 shadow-sm">
+                            <h3 className="font-heading text-[16px] font-bold text-ink">Upcoming events</h3>
+                            {(dashboard.upcomingEvents ?? []).length === 0 ? (
+                                <p className="text-sm text-muted">No upcoming events.</p>
+                            ) : (
+                                <ul className="flex flex-col gap-2">
+                                    {dashboard.upcomingEvents.map((event) => (
+                                        <li key={event.id}>
+                                            <UpcomingEventRow event={event} />
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
                         <TasksPanel tasks={dashboard.upcomingTasks ?? []} />
                     </div>
                 </div>
