@@ -67,8 +67,8 @@ public class GrowthCalendarServiceTest {
         List<GrowthCalendarResponse> responses = growthCalendarService.obtainAllGrowthCalendarEntries(null, "A", TODAY);
         // Assert
         assertEquals(1, responses.size());
-        assertEquals("A", responses.get(0).bloc_parcelle());
-        assertEquals("rainy season (year unknown)", responses.get(0).precision_date());
+        assertEquals("A", responses.get(0).blockCode());
+        assertEquals("rainy season (year unknown)", responses.get(0).datePrecision());
         assertEquals("Zalka_2025", responses.get(0).source());
     }
 
@@ -92,7 +92,7 @@ public class GrowthCalendarServiceTest {
         GrowthCalendarResponse response = growthCalendarService.obtainGrowthCalendarEntryById(1L, TODAY);
         // Assert
         assertEquals(1L, response.id());
-        assertEquals(List.of("Keitt"), response.varietes());
+        assertEquals(List.of("Keitt"), response.varieties());
     }
 
     @Test
@@ -116,13 +116,13 @@ public class GrowthCalendarServiceTest {
         // Act
         GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, null, TODAY).get(0);
         // Assert
-        assertNull(response.date_plantation());
-        assertNull(response.age_annees());
-        assertNull(response.age_mois());
-        assertNull(response.phase_croissance());
-        assertNull(response.phase_tranche_annees());
-        assertNull(response.stade_actuel());
-        assertNull(response.pluviometrie_locale_mm());
+        assertNull(response.plantingDate());
+        assertNull(response.ageYears());
+        assertNull(response.ageMonths());
+        assertNull(response.growthPhase());
+        assertNull(response.phaseYearsBand());
+        assertNull(response.currentStage());
+        assertNull(response.localRainfallMm());
     }
 
     @Test
@@ -134,10 +134,10 @@ public class GrowthCalendarServiceTest {
         // Act
         GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "B", TODAY).get(0);
         // Assert
-        assertEquals(4, response.age_annees());
-        assertEquals(6, response.age_mois());
-        assertEquals("gradual production", response.phase_croissance());
-        assertEquals("3–5 yrs", response.phase_tranche_annees());
+        assertEquals(4, response.ageYears());
+        assertEquals(6, response.ageMonths());
+        assertEquals("gradual production", response.growthPhase());
+        assertEquals("3–5 yrs", response.phaseYearsBand());
     }
 
     @Test
@@ -151,7 +151,7 @@ public class GrowthCalendarServiceTest {
         // Act
         GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "A", TODAY).get(0);
         // Assert
-        assertEquals(List.of("Keitt", "Kent"), response.varietes());
+        assertEquals(List.of("Keitt", "Kent"), response.varieties());
     }
 
     @Test
@@ -163,7 +163,7 @@ public class GrowthCalendarServiceTest {
         // Act
         GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "B", TODAY).get(0);
         // Assert
-        assertTrue(response.varietes().isEmpty());
+        assertTrue(response.varieties().isEmpty());
     }
 
     @Test
@@ -176,6 +176,6 @@ public class GrowthCalendarServiceTest {
         // Act
         GrowthCalendarResponse response = growthCalendarService.obtainAllGrowthCalendarEntries(null, "A", TODAY).get(0);
         // Assert
-        assertEquals(List.of("Keitt"), response.varietes());
+        assertEquals(List.of("Keitt"), response.varieties());
     }
 }

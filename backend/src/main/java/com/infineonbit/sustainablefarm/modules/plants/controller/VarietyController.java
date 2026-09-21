@@ -48,8 +48,8 @@ public class VarietyController {
          @ApiResponse(responseCode = "200", description = "Matching varieties, possibly an empty list")
    })
    public ResponseEntity<List<VarietyResponse>> getAllVarieties(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "id_ferme", required = false) Integer farmId,
-         @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "bloc_parcelle", required = false) String blockCode) {
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode) {
       List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(farmId, blockCode);
       return ResponseEntity.status(HttpStatus.OK).body(varietyResponses);
    }

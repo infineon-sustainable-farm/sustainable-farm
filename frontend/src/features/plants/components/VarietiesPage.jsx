@@ -16,7 +16,7 @@ export default function VarietiesPage() {
     }, []);
 
     const { data: varieties, isPending, isError, refetch, isFetching } = useVarieties({
-        bloc_parcelle: selectedBlock || null,
+        blockCode: selectedBlock || null,
     });
     const { data: blocks } = useVarietyBlocks();
 

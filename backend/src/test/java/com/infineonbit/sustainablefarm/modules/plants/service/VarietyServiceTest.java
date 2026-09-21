@@ -61,11 +61,11 @@ public class VarietyServiceTest {
         List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(null, "A");
         // Assert
         assertEquals(1, varietyResponses.size());
-        assertEquals("Keitt", varietyResponses.get(0).nom());
-        assertEquals("A", varietyResponses.get(0).bloc_parcelle());
-        assertEquals(200, varietyResponses.get(0).nombre_arbres());
-        assertNull(varietyResponses.get(0).rendement_reel_kg());
-        assertNull(varietyResponses.get(0).vigueur());
+        assertEquals("Keitt", varietyResponses.get(0).name());
+        assertEquals("A", varietyResponses.get(0).blockCode());
+        assertEquals(200, varietyResponses.get(0).treeCount());
+        assertNull(varietyResponses.get(0).actualYieldKg());
+        assertNull(varietyResponses.get(0).vigor());
     }
 
     @Test
@@ -87,8 +87,8 @@ public class VarietyServiceTest {
         VarietyResponse varietyResponse = varietyService.obtainVarietyById(1L);
         // Assert
         assertEquals(1L, varietyResponse.id());
-        assertEquals("Keitt", varietyResponse.nom());
-        assertEquals(44000.0, varietyResponse.rendement_attendu_kg());
+        assertEquals("Keitt", varietyResponse.name());
+        assertEquals(44000.0, varietyResponse.expectedYieldKg());
         assertEquals("Zalka_2025", varietyResponse.source());
     }
 
