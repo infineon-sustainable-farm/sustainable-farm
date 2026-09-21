@@ -50,9 +50,13 @@ const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py
 const ERROR_CLASS = "mt-1 text-xs text-error";
 
 /**
- * Registration form: visitor details plus the target — a farm tour slot, an
- * event, or an activity booking. In edit mode it only edits the visitor fields;
- * the API has no endpoint to move a registration to another slot or event.
+ * Registration form: pick an existing visitor by full name first (their
+ * details are fetched from the directory and reused — no re-typing), or type
+ * a name that is not in the directory to create the visitor, then choose the
+ * target — a farm tour slot, an event, or an activity booking.
+ *
+ * In edit mode it only edits the visitor fields; the API has no endpoint to
+ * move a registration to another slot or event.
  */
 export default function RegistrationForm({
     mode,
@@ -69,6 +73,7 @@ export default function RegistrationForm({
     activities,
     preselectedEventId,
     editingVisitor,
+    visitors = [],
     isSubmitting,
     submitError,
     serverFieldErrors,
@@ -97,6 +102,19 @@ export default function RegistrationForm({
     const [paymentMethod, setPaymentMethod] = useState("CASH");
     const [fieldErrors, setFieldErrors] = useState({});
 
+    /*
+     * The visitor is either picked from the directory (id set, details shown
+     * from the record and no visitor is created) or typed as a new visitor.
+     * The picker is hidden in edit mode, which only edits the existing visitor.
+     */
+    const [pickedVisitorId, setPickedVisitorId] = useState(null);
+    const [pickerFocused, setPickerFocused] = useState(false);
+
+    const pickedVisitor =
+        !isEditing && pickedVisitorId
+            ? visitors.find((visitor) => visitor.id === pickedVisitorId) ?? null
+            : null;
+
     const groupSizeNumber = Number(groupSize);
     const validGroupSize = Number.isInteger(groupSizeNumber) && groupSizeNumber >= 1;
 
@@ -123,12 +141,65 @@ export default function RegistrationForm({
     const effectiveActivityId =
         activityId || (firstActiveActivity ? String(firstActiveActivity.id) : "");
 
+    const query = fullName.trim();
+    const suggestions = !isEditing && !pickedVisitor && pickerFocused && query
+        ? visitors
+              .filter((visitor) => visitor.fullName.toLowerCase().includes(query.toLowerCase()))
+              .slice(0, 6)
+        : [];
+
+    function pickVisitor(visitor) {
+        setPickedVisitorId(visitor.id);
+        setFullName(visitor.fullName ?? "");
+        setGroupSize(String(visitor.groupSize ?? 1));
+        setEmail(visitor.email ?? "");
+        setPhone(visitor.phone ?? "");
+        setLanguage(visitor.language ?? "French");
+        setVisitorType(
+            visitor.type === "SCHOOL"
+                ? "SCHOOL"
+                : visitor.type === "PARTNER"
+                  ? "BUYER"
+                  : "GENERAL",
+        );
+        setSpecialNeeds(visitor.specialNeeds ?? "");
+        setFieldErrors({});
+    }
+
+    function handleNameChange(value) {
+        setFullName(value);
+        if (!isEditing) {
+            setPickedVisitorId(null);
+            setFieldErrors((errors) => {
+                const rest = { ...errors };
+                delete rest.fullName;
+                return rest;
+            });
+            /*
+             * Typing a name the directory already has picks that visitor, so a
+             * known visitor needs no further data entry.
+             */
+            const exactMatch = visitors.find(
+                (visitor) =>
+                    visitor.fullName.trim().toLowerCase() === value.trim().toLowerCase(),
+            );
+            if (exactMatch) setPickedVisitorId(exactMatch.id);
+        }
+    }
+
+    function clearPick() {
+        setPickedVisitorId(null);
+        setFieldErrors({});
+    }
+
     function validate() {
         const errors = {};
-        if (!fullName.trim()) {
-            errors.fullName = "Full name is required.";
-        } else if (fullName.trim().length > 150) {
-            errors.fullName = "Full name must be at most 150 characters.";
+        if (isEditing || !pickedVisitor) {
+            if (!fullName.trim()) {
+                errors.fullName = "Type the visitor's full name, or pick a match above.";
+            } else if (fullName.trim().length > 150) {
+                errors.fullName = "Full name must be at most 150 characters.";
+            }
         }
         if (!validGroupSize) {
             errors.groupSize = "Group size must be a whole number of at least 1.";
@@ -143,7 +214,7 @@ export default function RegistrationForm({
         if (phone.trim() && !PHONE_PATTERN.test(phone.trim())) {
             errors.phone = "Enter a valid phone number.";
         }
-        if (specialNeeds.trim().length > 500) {
+        if (!isEditing && !pickedVisitor && specialNeeds.trim().length > 500) {
             errors.specialNeeds = "Special requirements must be at most 500 characters.";
         }
         if (needsSlot && !effectiveTimeSlotId) {
@@ -190,13 +261,30 @@ export default function RegistrationForm({
                 booking: {
                     activityId: Number(effectiveActivityId),
                     timeSlotId: Number(effectiveTimeSlotId),
-                    visitorFullName: fullName.trim(),
+                    visitorFullName: (pickedVisitor?.fullName ?? fullName).trim(),
                     visitorEmail: email.trim(),
                     visitorPhone: phone.trim() || null,
                     peopleCount: groupSizeNumber,
                     paymentMethod,
                 },
             });
+            return;
+        }
+
+        if (pickedVisitor) {
+            if (mode === "EVENT") {
+                onSubmit({
+                    visitorId: pickedVisitor.id,
+                    eventId: Number(effectiveEventId),
+                    visitPurpose: purpose,
+                });
+            } else {
+                onSubmit({
+                    visitorId: pickedVisitor.id,
+                    timeSlotId: Number(effectiveTimeSlotId),
+                    visitPurpose: purpose,
+                });
+            }
             return;
         }
 
@@ -227,8 +315,107 @@ export default function RegistrationForm({
 
     const fieldError = (name) => fieldErrors[name] ?? serverFieldErrors?.[name];
 
+    /*
+     * The visitor's directory fields are only edited for a brand-new visitor,
+     * except the activity booking, whose email / phone / people count are the
+     * booking's own contact fields even when the visitor is known.
+     */
+    const showContactFields = isEditing || !pickedVisitor || mode === "ACTIVITY";
+
     return (
         <form onSubmit={handleSubmit}>
+            {/* Step 1 — the visitor, fetched by full name from the directory. */}
+            {!isEditing && (
+                <div className="mb-4 rounded-md border border-line bg-[#F7FDFB] px-4 py-3.5">
+                    <label
+                        htmlFor="reg-name"
+                        className={`${LABEL_CLASS} !mb-0.5 text-[10px] tracking-widest text-muted`}
+                    >
+                        Step 1 · Visitor
+                    </label>
+
+                    {pickedVisitor ? (
+                        <div className="mt-1 flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-ink">
+                                    {pickedVisitor.fullName}
+                                </p>
+                                <p className="mt-0.5 text-xs text-muted">
+                                    {formatEnumLabel(pickedVisitor.type)} ·{" "}
+                                    {pickedVisitor.groupSize}{" "}
+                                    {pickedVisitor.groupSize > 1 ? "people" : "person"}
+                                    {pickedVisitor.email ? ` · ${pickedVisitor.email}` : ""}
+                                    {pickedVisitor.phone ? ` · ${pickedVisitor.phone}` : ""}
+                                    {pickedVisitor.language ? ` · ${pickedVisitor.language}` : ""}
+                                </p>
+                                {pickedVisitor.specialNeeds && (
+                                    <p className="mt-0.5 text-xs text-muted">
+                                        Needs: {pickedVisitor.specialNeeds}
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={clearPick}
+                                className="shrink-0 rounded-md border border-line bg-white px-2.5 py-1.5 text-[11px] font-semibold text-primary hover:bg-[#F2FBF9]"
+                            >
+                                Use a different visitor
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <input
+                                id="reg-name"
+                                type="text"
+                                value={fullName}
+                                onChange={(event) => handleNameChange(event.target.value)}
+                                onFocus={() => setPickerFocused(true)}
+                                onBlur={() => setPickerFocused(false)}
+                                placeholder="Type a full name — known visitors are found and reused"
+                                className={INPUT_CLASS}
+                            />
+                            {suggestions.length > 0 && (
+                                <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-white shadow-lg">
+                                    {suggestions.map((visitor) => (
+                                        <li key={visitor.id}>
+                                            <button
+                                                type="button"
+                                                onMouseDown={(event) => event.preventDefault()}
+                                                onClick={() => pickVisitor(visitor)}
+                                                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-[#F2FBF9]"
+                                            >
+                                                <span className="truncate font-medium text-ink">
+                                                    {visitor.fullName}
+                                                </span>
+                                                <span className="shrink-0 text-[11px] text-muted">
+                                                    {formatEnumLabel(visitor.type)} ·{" "}
+                                                    {visitor.groupSize}
+                                                </span>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                            {pickerFocused && query && suggestions.length === 0 && (
+                                <p className="mt-1 text-xs text-muted">
+                                    No visitor matches “{query}” — the fields below create a new
+                                    visitor.
+                                </p>
+                            )}
+                        </div>
+                    )}
+                    {fieldError("fullName") && (
+                        <p className={ERROR_CLASS}>{fieldError("fullName")}</p>
+                    )}
+                </div>
+            )}
+
+            {/* Step 2 — the target of the registration. */}
+            {!isEditing && (
+                <label className={`${LABEL_CLASS} text-[10px] tracking-widest text-muted`}>
+                    Step 2 · Registration for
+                </label>
+            )}
             {!isEditing && (
                 <div className="mb-4 flex flex-wrap gap-2">
                     {MODES.map((choice) => (
@@ -249,300 +436,318 @@ export default function RegistrationForm({
                 </div>
             )}
 
+            {/* The target fields always show; the visitor's contact fields show
+                only for a brand-new visitor, or for an activity booking whose
+                email / phone / people count are the booking's own contact
+                fields (activity bookings have no visitor link). */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                    <label htmlFor="reg-name" className={LABEL_CLASS}>
-                        Full name
-                    </label>
-                    <input
-                        id="reg-name"
-                        type="text"
-                        value={fullName}
-                        onChange={(event) => setFullName(event.target.value)}
-                        placeholder="e.g. Marie Dubois"
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("fullName") && (
-                        <p className={ERROR_CLASS}>{fieldError("fullName")}</p>
-                    )}
-                </div>
+                {isEditing && (
+                    <div>
+                        <label htmlFor="reg-name" className={LABEL_CLASS}>
+                            Full name
+                        </label>
+                        <input
+                            id="reg-name"
+                            type="text"
+                            value={fullName}
+                            onChange={(event) => handleNameChange(event.target.value)}
+                            className={INPUT_CLASS}
+                        />
+                        {fieldError("fullName") && (
+                            <p className={ERROR_CLASS}>{fieldError("fullName")}</p>
+                        )}
+                    </div>
+                )}
 
-                <div>
-                    <label htmlFor="reg-group" className={LABEL_CLASS}>
-                        {mode === "ACTIVITY" ? "People" : "Group size"}
-                    </label>
-                    <input
-                        id="reg-group"
-                        type="number"
-                        min="1"
-                        value={groupSize}
-                        onChange={(event) => setGroupSize(event.target.value)}
-                        placeholder="e.g. 4"
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("groupSize") && (
-                        <p className={ERROR_CLASS}>{fieldError("groupSize")}</p>
-                    )}
-                </div>
+                {showContactFields && (
+                    <div>
+                        <label htmlFor="reg-group" className={LABEL_CLASS}>
+                            {mode === "ACTIVITY" ? "People" : "Group size"}
+                        </label>
+                        <input
+                            id="reg-group"
+                            type="number"
+                            min="1"
+                            value={groupSize}
+                            onChange={(event) => setGroupSize(event.target.value)}
+                            placeholder="e.g. 4"
+                            className={INPUT_CLASS}
+                        />
+                        {fieldError("groupSize") && (
+                            <p className={ERROR_CLASS}>{fieldError("groupSize")}</p>
+                        )}
+                    </div>
+                )}
 
-                <div>
-                    <label htmlFor="reg-email" className={LABEL_CLASS}>
-                        Email
-                    </label>
-                    <input
-                        id="reg-email"
-                        type="email"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        placeholder="email@example.com"
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("email") && <p className={ERROR_CLASS}>{fieldError("email")}</p>}
-                </div>
+                {showContactFields && (
+                    <div>
+                        <label htmlFor="reg-email" className={LABEL_CLASS}>
+                            Email
+                        </label>
+                        <input
+                            id="reg-email"
+                            type="email"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            placeholder="email@example.com"
+                            className={INPUT_CLASS}
+                        />
+                        {fieldError("email") && <p className={ERROR_CLASS}>{fieldError("email")}</p>}
+                    </div>
+                )}
 
-                <div>
-                    <label htmlFor="reg-phone" className={LABEL_CLASS}>
-                        Phone
-                    </label>
-                    <input
-                        id="reg-phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(event) => setPhone(event.target.value)}
-                        placeholder="+226 ..."
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("phone") && <p className={ERROR_CLASS}>{fieldError("phone")}</p>}
-                </div>
+                {showContactFields && (
+                    <div>
+                        <label htmlFor="reg-phone" className={LABEL_CLASS}>
+                            Phone
+                        </label>
+                        <input
+                            id="reg-phone"
+                            type="tel"
+                            value={phone}
+                            onChange={(event) => setPhone(event.target.value)}
+                            placeholder="+226 ..."
+                            className={INPUT_CLASS}
+                        />
+                        {fieldError("phone") && <p className={ERROR_CLASS}>{fieldError("phone")}</p>}
+                    </div>
+                )}
 
                 {!isEditing && mode === "EVENT" && (
-                    <div>
-                        <label htmlFor="reg-event" className={LABEL_CLASS}>
-                            Event
-                        </label>
-                        <select
-                            id="reg-event"
-                            value={effectiveEventId}
-                            onChange={(event) => setEventId(event.target.value)}
-                            disabled={events.length === 0}
-                            className={`${INPUT_CLASS} disabled:opacity-60`}
-                        >
-                            {events.length === 0 && (
-                                <option value="">No published event</option>
-                            )}
-                            {events.map((event) => (
-                                <option key={event.id} value={event.id}>
-                                    {event.title} · {event.booked}/{event.maxCapacity}
-                                </option>
-                            ))}
-                        </select>
-                        {fieldError("eventId") && (
-                            <p className={ERROR_CLASS}>{fieldError("eventId")}</p>
-                        )}
-                    </div>
-                )}
-
-                {!isEditing && mode === "ACTIVITY" && (
-                    <div>
-                        <label htmlFor="reg-activity" className={LABEL_CLASS}>
-                            Activity
-                        </label>
-                        <select
-                            id="reg-activity"
-                            value={effectiveActivityId}
-                            onChange={(event) => setActivityId(event.target.value)}
-                            disabled={activities.length === 0}
-                            className={`${INPUT_CLASS} disabled:opacity-60`}
-                        >
-                            {activities.length === 0 && <option value="">No active activity</option>}
-                            {activities.map((activity) => (
-                                <option key={activity.id} value={activity.id}>
-                                    {activity.name} · {activity.price} FCFA
-                                </option>
-                            ))}
-                        </select>
-                        {fieldError("activityId") && (
-                            <p className={ERROR_CLASS}>{fieldError("activityId")}</p>
-                        )}
-                    </div>
-                )}
-
-                {!isEditing && needsSlot && (
-                    <>
                         <div>
-                            <label htmlFor="reg-date" className={LABEL_CLASS}>
-                                Visit date
+                            <label htmlFor="reg-event" className={LABEL_CLASS}>
+                                Event
                             </label>
-                            <input
-                                id="reg-date"
-                                type="date"
-                                value={date}
-                                onChange={(event) => onDateChange(event.target.value)}
-                                className={INPUT_CLASS}
-                            />
-                            {!availabilityLoading &&
-                                !availabilityError &&
-                                (availability ?? []).length === 0 &&
-                                nextAvailableDate &&
-                                nextAvailableDate !== date && (
-                                    <p className="mt-1.5 text-xs text-muted">
-                                        No slots on this date.{" "}
+                            <select
+                                id="reg-event"
+                                value={effectiveEventId}
+                                onChange={(event) => setEventId(event.target.value)}
+                                disabled={events.length === 0}
+                                className={`${INPUT_CLASS} disabled:opacity-60`}
+                            >
+                                {events.length === 0 && (
+                                    <option value="">No published event</option>
+                                )}
+                                {events.map((event) => (
+                                    <option key={event.id} value={event.id}>
+                                        {event.title} · {event.booked}/{event.maxCapacity}
+                                    </option>
+                                ))}
+                            </select>
+                            {fieldError("eventId") && (
+                                <p className={ERROR_CLASS}>{fieldError("eventId")}</p>
+                            )}
+                        </div>
+                    )}
+
+                    {!isEditing && mode === "ACTIVITY" && (
+                        <div>
+                            <label htmlFor="reg-activity" className={LABEL_CLASS}>
+                                Activity
+                            </label>
+                            <select
+                                id="reg-activity"
+                                value={effectiveActivityId}
+                                onChange={(event) => setActivityId(event.target.value)}
+                                disabled={activities.length === 0}
+                                className={`${INPUT_CLASS} disabled:opacity-60`}
+                            >
+                                {activities.length === 0 && <option value="">No active activity</option>}
+                                {activities.map((activity) => (
+                                    <option key={activity.id} value={activity.id}>
+                                        {activity.name} · {activity.price} FCFA
+                                    </option>
+                                ))}
+                            </select>
+                            {fieldError("activityId") && (
+                                <p className={ERROR_CLASS}>{fieldError("activityId")}</p>
+                            )}
+                        </div>
+                    )}
+
+                    {!isEditing && needsSlot && (
+                        <>
+                            <div>
+                                <label htmlFor="reg-date" className={LABEL_CLASS}>
+                                    Visit date
+                                </label>
+                                <input
+                                    id="reg-date"
+                                    type="date"
+                                    value={date}
+                                    onChange={(event) => onDateChange(event.target.value)}
+                                    className={INPUT_CLASS}
+                                />
+                                {!availabilityLoading &&
+                                    !availabilityError &&
+                                    (availability ?? []).length === 0 &&
+                                    nextAvailableDate &&
+                                    nextAvailableDate !== date && (
+                                        <p className="mt-1.5 text-xs text-muted">
+                                            No slots on this date.{" "}
+                                            <button
+                                                type="button"
+                                                onClick={() => onUseNextDate(nextAvailableDate)}
+                                                className="font-semibold text-primary underline hover:text-primary-dark"
+                                            >
+                                                Use {nextAvailableDate} instead
+                                            </button>
+                                        </p>
+                                    )}
+                            </div>
+
+                            <div>
+                                <label htmlFor="reg-slot" className={LABEL_CLASS}>
+                                    Time slot
+                                </label>
+                                <select
+                                    id="reg-slot"
+                                    value={effectiveTimeSlotId}
+                                    onChange={(event) => setTimeSlotId(event.target.value)}
+                                    disabled={availabilityLoading || Boolean(availabilityError)}
+                                    className={`${INPUT_CLASS} disabled:opacity-60`}
+                                >
+                                    {availabilityLoading && <option value="">Loading slots…</option>}
+                                    {availabilityError && <option value="">Slots unavailable</option>}
+                                    {!availabilityLoading && (availability ?? []).length === 0 && (
+                                        <option value="">No slots on this date</option>
+                                    )}
+                                    {!availabilityLoading &&
+                                        !availabilityError &&
+                                        (availability ?? []).length > 0 &&
+                                        bookableSlots.length === 0 && (
+                                            <option value="">No slot fits {groupSize} people</option>
+                                        )}
+                                    {(availability ?? []).map((slot) => (
+                                        <option
+                                            key={slot.id}
+                                            value={slot.id}
+                                            disabled={
+                                                slot.remaining <
+                                                (validGroupSize ? groupSizeNumber : 1)
+                                            }
+                                        >
+                                            {formatTimeRange(slot.startTime, slot.endTime)} ·{" "}
+                                            {slot.remaining} left
+                                        </option>
+                                    ))}
+                                </select>
+                                {!availabilityLoading && !availabilityError && (availability ?? []).length > 0 &&
+                                    bookableSlots.length === 0 && (
+                                        <p className="mt-1 text-xs text-muted">
+                                            Every slot on this date is too small for {groupSize} people.
+                                        </p>
+                                    )}
+                                {fieldError("timeSlotId") && (
+                                    <p className={ERROR_CLASS}>{fieldError("timeSlotId")}</p>
+                                )}
+                                {availabilityError && (
+                                    <p className={ERROR_CLASS}>
+                                        Slots could not be loaded.{" "}
                                         <button
                                             type="button"
-                                            onClick={() => onUseNextDate(nextAvailableDate)}
-                                            className="font-semibold text-primary underline hover:text-primary-dark"
+                                            onClick={onRetryAvailability}
+                                            className="underline"
                                         >
-                                            Use {nextAvailableDate} instead
+                                            Retry
                                         </button>
                                     </p>
                                 )}
-                        </div>
+                            </div>
+                        </>
+                    )}
 
+                    {!isEditing && mode !== "ACTIVITY" && !pickedVisitor && (
+                        <>
+                            <div>
+                                <label htmlFor="reg-language" className={LABEL_CLASS}>
+                                    Preferred language
+                                </label>
+                                <select
+                                    id="reg-language"
+                                    value={language}
+                                    onChange={(event) => setLanguage(event.target.value)}
+                                    className={INPUT_CLASS}
+                                >
+                                    {LANGUAGES.map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="reg-type" className={LABEL_CLASS}>
+                                    Visitor type
+                                </label>
+                                <select
+                                    id="reg-type"
+                                    value={visitorType}
+                                    onChange={(event) => setVisitorType(event.target.value)}
+                                    className={INPUT_CLASS}
+                                >
+                                    {VISITOR_TYPE_CHOICES.map((choice) => (
+                                        <option key={choice.value} value={choice.value}>
+                                            {choice.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    )}
+
+                    {!isEditing && mode === "ACTIVITY" && (
                         <div>
-                            <label htmlFor="reg-slot" className={LABEL_CLASS}>
-                                Time slot
+                            <label htmlFor="reg-payment" className={LABEL_CLASS}>
+                                Payment method
                             </label>
                             <select
-                                id="reg-slot"
-                                value={effectiveTimeSlotId}
-                                onChange={(event) => setTimeSlotId(event.target.value)}
-                                disabled={availabilityLoading || Boolean(availabilityError)}
-                                className={`${INPUT_CLASS} disabled:opacity-60`}
-                            >
-                                {availabilityLoading && <option value="">Loading slots…</option>}
-                                {availabilityError && <option value="">Slots unavailable</option>}
-                                {!availabilityLoading && (availability ?? []).length === 0 && (
-                                    <option value="">No slots on this date</option>
-                                )}
-                                {!availabilityLoading &&
-                                    !availabilityError &&
-                                    (availability ?? []).length > 0 &&
-                                    bookableSlots.length === 0 && (
-                                        <option value="">No slot fits {groupSize} people</option>
-                                    )}
-                                {(availability ?? []).map((slot) => (
-                                    <option
-                                        key={slot.id}
-                                        value={slot.id}
-                                        disabled={
-                                            slot.remaining <
-                                            (validGroupSize ? groupSizeNumber : 1)
-                                        }
-                                    >
-                                        {formatTimeRange(slot.startTime, slot.endTime)} ·{" "}
-                                        {slot.remaining} left
-                                    </option>
-                                ))}
-                            </select>
-                            {!availabilityLoading && !availabilityError && (availability ?? []).length > 0 &&
-                                bookableSlots.length === 0 && (
-                                    <p className="mt-1 text-xs text-muted">
-                                        Every slot on this date is too small for {groupSize} people.
-                                    </p>
-                                )}
-                            {fieldError("timeSlotId") && (
-                                <p className={ERROR_CLASS}>{fieldError("timeSlotId")}</p>
-                            )}
-                            {availabilityError && (
-                                <p className={ERROR_CLASS}>
-                                    Slots could not be loaded.{" "}
-                                    <button
-                                        type="button"
-                                        onClick={onRetryAvailability}
-                                        className="underline"
-                                    >
-                                        Retry
-                                    </button>
-                                </p>
-                            )}
-                        </div>
-                    </>
-                )}
-
-                {!isEditing && mode !== "ACTIVITY" && (
-                    <>
-                        <div>
-                            <label htmlFor="reg-language" className={LABEL_CLASS}>
-                                Preferred language
-                            </label>
-                            <select
-                                id="reg-language"
-                                value={language}
-                                onChange={(event) => setLanguage(event.target.value)}
+                                id="reg-payment"
+                                value={paymentMethod}
+                                onChange={(event) => setPaymentMethod(event.target.value)}
                                 className={INPUT_CLASS}
                             >
-                                {LANGUAGES.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
+                                {PAYMENT_METHODS.map((method) => (
+                                    <option key={method} value={method}>
+                                        {formatEnumLabel(method)}
                                     </option>
                                 ))}
                             </select>
                         </div>
-
-                        <div>
-                            <label htmlFor="reg-type" className={LABEL_CLASS}>
-                                Visitor type
-                            </label>
-                            <select
-                                id="reg-type"
-                                value={visitorType}
-                                onChange={(event) => setVisitorType(event.target.value)}
-                                className={INPUT_CLASS}
-                            >
-                                {VISITOR_TYPE_CHOICES.map((choice) => (
-                                    <option key={choice.value} value={choice.value}>
-                                        {choice.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </>
-                )}
-
-                {!isEditing && mode === "ACTIVITY" && (
-                    <div>
-                        <label htmlFor="reg-payment" className={LABEL_CLASS}>
-                            Payment method
-                        </label>
-                        <select
-                            id="reg-payment"
-                            value={paymentMethod}
-                            onChange={(event) => setPaymentMethod(event.target.value)}
-                            className={INPUT_CLASS}
-                        >
-                            {PAYMENT_METHODS.map((method) => (
-                                <option key={method} value={method}>
-                                    {formatEnumLabel(method)}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+                    )}
             </div>
 
-            {!isEditing && mode !== "ACTIVITY" && (
-                <div className="mt-4">
-                    <label htmlFor="reg-needs" className={LABEL_CLASS}>
-                        Special requirements
-                    </label>
-                    <input
-                        id="reg-needs"
-                        type="text"
-                        value={specialNeeds}
-                        onChange={(event) => setSpecialNeeds(event.target.value)}
-                        placeholder="Allergies, mobility needs, etc."
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("specialNeeds") && (
-                        <p className={ERROR_CLASS}>{fieldError("specialNeeds")}</p>
-                    )}
-                </div>
-            )}
+            {!isEditing &&
+                mode !== "ACTIVITY" &&
+                (pickedVisitor ? (
+                    <p className="mt-3 rounded-md border border-line bg-[#F2FBF9] px-3 py-2 text-xs text-muted">
+                        The visitor's details come from the directory — they are shared, not
+                        re-entered here.
+                    </p>
+                ) : (
+                    <div className="mt-4">
+                        <label htmlFor="reg-needs" className={LABEL_CLASS}>
+                            Special requirements
+                        </label>
+                        <input
+                            id="reg-needs"
+                            type="text"
+                            value={specialNeeds}
+                            onChange={(event) => setSpecialNeeds(event.target.value)}
+                            placeholder="Allergies, mobility needs, etc."
+                            className={INPUT_CLASS}
+                        />
+                        {fieldError("specialNeeds") && (
+                            <p className={ERROR_CLASS}>{fieldError("specialNeeds")}</p>
+                        )}
+                    </div>
+                ))}
 
             {!isEditing && mode === "ACTIVITY" && (
                 <p className="mt-3 rounded-md border border-line bg-[#F2FBF9] px-3 py-2 text-xs text-muted">
                     An activity booking keeps the contact details on the booking itself; it does not
-                    create a visitor record in the directory.
+                    create a new visitor record — {pickedVisitor ? `“${pickedVisitor.fullName}” stays their directory entry.` : "the email and phone stay on the booking."}
                 </p>
             )}
 

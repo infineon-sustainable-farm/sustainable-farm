@@ -50,7 +50,9 @@ export function useProspects(enabled = true) {
 }
 
 /*
- * Registering is two API calls in order: the visitor is created first, then
+ * Registering is one or two API calls in order. When an existing visitor is
+ * picked by name (the registration screen's main flow) only the registration
+ * is sent; when the visitor is new the visitor is created first, then
  * registered on the slot. Chaining them in one mutation keeps the form's
  * pending and error state single. A failure on the second call leaves the
  * visitor created — a visitor without a registration is valid data, so no
@@ -59,10 +61,10 @@ export function useProspects(enabled = true) {
 export function useRegisterVisitor() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ visitor, timeSlotId, visitPurpose }) => {
-            const created = await createVisitor(visitor);
+        mutationFn: async ({ visitorId, visitor, timeSlotId, visitPurpose }) => {
+            const id = visitorId ?? (await createVisitor(visitor)).id;
             return createRegistration({
-                visitorId: created.id,
+                visitorId: id,
                 timeSlotId,
                 visitPurpose,
             });

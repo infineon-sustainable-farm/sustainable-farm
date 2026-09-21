@@ -279,6 +279,7 @@ export default function RegistrationPage() {
                             onUseNextDate={(nextDate) => setDate(nextDate)}
                             events={publishedEvents}
                             activities={activeActivities}
+                            visitors={visitors ?? []}
                             preselectedEventId={preselectedEvent}
                             editingVisitor={
                                 editing ? visitorsById.get(editing.visitorId) : null

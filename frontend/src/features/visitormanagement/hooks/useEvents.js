@@ -101,18 +101,19 @@ export function useRegisterEventAttendee() {
 }
 
 /**
- * The registration screen's event target: the visitor is created first, then
- * registered on the event. Chaining both calls in one mutation keeps a single
- * pending/error state; a failure on the second call leaves the visitor
- * created, which is valid data.
+ * The registration screen's event target: when an existing visitor is picked
+ * by name, only the attendee registration is sent with that visitor id; for a
+ * new visitor, the visitor is created first, then registered on the event.
+ * Chaining both calls in one mutation keeps a single pending/error state; a
+ * failure on the second call leaves the visitor created, which is valid data.
  */
 export function useRegisterEventVisitor() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ visitor, eventId, visitPurpose }) => {
-            const created = await createVisitor(visitor);
+        mutationFn: async ({ visitorId, visitor, eventId, visitPurpose }) => {
+            const id = visitorId ?? (await createVisitor(visitor)).id;
             return registerEventAttendee(eventId, {
-                visitorId: created.id,
+                visitorId: id,
                 visitPurpose,
             });
         },
