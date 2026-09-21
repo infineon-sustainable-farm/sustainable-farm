@@ -27,7 +27,7 @@ const NAV_ITEMS = [
     { label: "Education", icon: BookOpen, path: "/visitormanagement/education" },
     { label: "Safety", icon: ShieldCheck, path: "/visitormanagement/safety" },
     { label: "Booking", icon: Ticket, path: "/visitormanagement/booking" },
-    { label: "Feedback", icon: MessageSquare },
+    { label: "Feedback", icon: MessageSquare, path: "/visitormanagement/feedback" },
     { label: "Events", icon: PartyPopper },
 ];
 

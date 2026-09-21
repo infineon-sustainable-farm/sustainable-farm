@@ -5,6 +5,7 @@ import RegistrationPage from "./components/RegistrationPage";
 import EducationPage from "./components/EducationPage";
 import SafetyPage from "./components/SafetyPage";
 import BookingPage from "./components/BookingPage";
+import FeedbackPage from "./components/FeedbackPage";
 
 export default [
     {
@@ -17,6 +18,7 @@ export default [
             { path: "education", element: <EducationPage /> },
             { path: "safety", element: <SafetyPage /> },
             { path: "booking", element: <BookingPage /> },
+            { path: "feedback", element: <FeedbackPage /> },
         ],
     },
 ];

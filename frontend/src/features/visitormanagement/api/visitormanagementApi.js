@@ -210,3 +210,50 @@ export function cancelBooking(id) {
 export function fetchOccupancy() {
     return apiClient.get(`${VM_ENDPOINTS.BOOKINGS}/occupancy`);
 }
+
+/**
+ * The feedback responses, most recent first. The endpoint is paginated; the
+ * screen asks for one large page rather than hiding rows behind pagination.
+ */
+export function fetchFeedback({ page = 0, size = 100 } = {}) {
+    return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { page, size } });
+}
+
+/**
+ * Aggregated feedback for a window: average rating, total, recommend
+ * percentage and the 1–5 distribution. `from`/`to` are ISO instants; both must
+ * be given for the API to filter, otherwise it aggregates everything.
+ */
+export function fetchFeedbackSummary({ from, to } = {}) {
+    const params = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+    return apiClient.get(`${VM_ENDPOINTS.FEEDBACK}/summary`, { params });
+}
+
+/** Submits a feedback response (on-site tablet or linked to a survey). */
+export function submitFeedback(data) {
+    return apiClient.post(VM_ENDPOINTS.FEEDBACK, data);
+}
+
+/** Routes a feedback response to a team ("Sales", "Energy", …). */
+export function routeFeedback(id, data) {
+    return apiClient.patch(`${VM_ENDPOINTS.FEEDBACK}/${id}/route`, data);
+}
+
+/**
+ * The post-visit surveys, most recent first. The endpoint is paginated; the
+ * screen asks for one large page.
+ */
+export function fetchSurveys({ page = 0, size = 100 } = {}) {
+    return apiClient.get(VM_ENDPOINTS.SURVEYS, { params: { page, size } });
+}
+
+/**
+ * Sends a survey to one visitor. `data` is a SurveyRequest: visitorId,
+ * channel (EMAIL/SMS/WHATSAPP — ON_SITE is rejected by the API) and an
+ * optional message template.
+ */
+export function sendSurvey(data) {
+    return apiClient.post(VM_ENDPOINTS.SURVEYS, data);
+}
