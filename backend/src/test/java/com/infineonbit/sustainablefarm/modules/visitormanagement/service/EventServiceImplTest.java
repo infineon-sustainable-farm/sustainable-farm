@@ -127,7 +127,7 @@ class EventServiceImplTest {
     void updateEvent_success() {
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.DRAFT)));
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(registrationRepository.countByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(3L);
+        when(registrationRepository.sumGroupSizeByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(3L);
 
         EventRequest req = buildRequest();
         req.setTitle("Updated Title");
@@ -142,7 +142,7 @@ class EventServiceImplTest {
         Event event = buildEvent(EventStatus.DRAFT);
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(registrationRepository.countByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(0L);
+        when(registrationRepository.sumGroupSizeByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(0L);
 
         EventResponse response = service.publishEvent(eventId);
 
@@ -245,7 +245,7 @@ class EventServiceImplTest {
         when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
         when(visitorRepository.findById(10L)).thenReturn(Optional.of(visitor));
         when(registrationRepository.existsByEventIdAndVisitorId(eventId, 10L)).thenReturn(false);
-        when(registrationRepository.countByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(4L);
+        when(registrationRepository.sumGroupSizeByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(4L);
         when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> inv.getArgument(0));
 
         RegistrationResponse response = service.registerVisitor(eventId, buildRegistrationRequest());
@@ -292,7 +292,7 @@ class EventServiceImplTest {
         when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
         when(visitorRepository.findById(10L)).thenReturn(Optional.of(visitor));
         when(registrationRepository.existsByEventIdAndVisitorId(eventId, 10L)).thenReturn(false);
-        when(registrationRepository.countByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(50L);
+        when(registrationRepository.sumGroupSizeByEventIdAndStatusNotIn(eq(eventId), any())).thenReturn(50L);
 
         assertThatThrownBy(() -> service.registerVisitor(eventId, buildRegistrationRequest()))
                 .isInstanceOf(BusinessRuleException.class)
@@ -303,7 +303,7 @@ class EventServiceImplTest {
     void listEvents_filtersByType() {
         Event event = buildEvent(EventStatus.PUBLISHED);
         when(eventRepository.findByType(EventType.OPEN_DAY)).thenReturn(List.of(event));
-        when(registrationRepository.countByEventIds(any(), any())).thenReturn(List.of());
+        when(registrationRepository.sumGroupSizeByEventIds(any(), any())).thenReturn(List.of());
 
         List<EventResponse> responses = service.listEvents(EventType.OPEN_DAY, null);
 

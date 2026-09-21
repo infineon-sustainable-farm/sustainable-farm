@@ -70,6 +70,23 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     long countByEventIdAndStatusNotIn(Long eventId, Collection<RegistrationStatus> statuses);
 
+    /**
+     * Number of people registered on an event: the sum of the group sizes of
+     * the active registrations, a registration without a visitor counting as
+     * one. Event capacity uses people for the same reason slots do.
+     */
+    @Query("SELECT COALESCE(SUM(COALESCE(v.groupSize, 1)), 0) FROM Registration r "
+            + "LEFT JOIN r.visitor v "
+            + "WHERE r.eventId = :eventId AND r.status NOT IN :statuses")
+    long sumGroupSizeByEventIdAndStatusNotIn(
+            @Param("eventId") Long eventId, @Param("statuses") Collection<RegistrationStatus> statuses);
+
+    @Query("SELECT r.eventId, SUM(COALESCE(v.groupSize, 1)) FROM Registration r "
+            + "LEFT JOIN r.visitor v "
+            + "WHERE r.eventId IN :eventIds AND r.status NOT IN :excluded GROUP BY r.eventId")
+    List<Object[]> sumGroupSizeByEventIds(@Param("eventIds") Collection<Long> eventIds,
+                                          @Param("excluded") Collection<RegistrationStatus> excluded);
+
     @Query("SELECT r.eventId, COUNT(r) FROM Registration r "
             + "WHERE r.eventId IN :eventIds AND r.status NOT IN :excluded GROUP BY r.eventId")
     List<Object[]> countByEventIds(@Param("eventIds") Collection<Long> eventIds,

@@ -69,7 +69,7 @@ public class EventServiceImpl implements EventService {
             return List.of();
         }
         Map<Long, Long> counts = new HashMap<>();
-        for (Object[] row : registrationRepository.countByEventIds(
+        for (Object[] row : registrationRepository.sumGroupSizeByEventIds(
                 events.stream().map(Event::getId).collect(Collectors.toList()),
                 INACTIVE_STATUSES)) {
             counts.put((Long) row[0], (Long) row[1]);
@@ -88,7 +88,7 @@ public class EventServiceImpl implements EventService {
             return Page.empty(events.getPageable());
         }
         Map<Long, Long> counts = new HashMap<>();
-        for (Object[] row : registrationRepository.countByEventIds(
+        for (Object[] row : registrationRepository.sumGroupSizeByEventIds(
                 events.getContent().stream().map(Event::getId).collect(Collectors.toList()),
                 INACTIVE_STATUSES)) {
             counts.put((Long) row[0], (Long) row[1]);
@@ -192,7 +192,8 @@ public class EventServiceImpl implements EventService {
                     + " is already registered on event " + eventId);
         }
         int groupSize = visitor != null ? visitor.getGroupSize() : 1;
-        long booked = registrationRepository.countByEventIdAndStatusNotIn(eventId, INACTIVE_STATUSES);
+        long booked = registrationRepository.sumGroupSizeByEventIdAndStatusNotIn(
+                eventId, INACTIVE_STATUSES);
         if (booked + groupSize > event.getMaxCapacity()) {
             throw new BusinessRuleException("Not enough capacity on event " + eventId
                     + " (max " + event.getMaxCapacity() + ")");
@@ -239,7 +240,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private long countBooked(Long eventId) {
-        return registrationRepository.countByEventIdAndStatusNotIn(eventId, INACTIVE_STATUSES);
+        return registrationRepository.sumGroupSizeByEventIdAndStatusNotIn(eventId, INACTIVE_STATUSES);
     }
 
     private EventResponse toResponse(Event event) {
