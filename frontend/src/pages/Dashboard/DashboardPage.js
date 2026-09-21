@@ -4,6 +4,7 @@ import { dashboardApi } from '../../services/api';
 import Dashboard from '../../components/Dashboard';
 import { KPICardSkeleton } from '../../components/common/LoadingSkeleton';
 import ErrorMessage from '../../components/common/ErrorMessage';
+import PlantsInfo from '../../components/PlantsInfo';
 
 import './DashboardPage.css';
 
@@ -46,6 +47,9 @@ const DashboardPage = () => {
   return (
     <div className="dashboard-page">
       <Dashboard />
+      
+      {/* Plants Integration - Show all varieties */}
+      <PlantsInfo showGrowthCalendar={false} />
     </div>
   );
 };

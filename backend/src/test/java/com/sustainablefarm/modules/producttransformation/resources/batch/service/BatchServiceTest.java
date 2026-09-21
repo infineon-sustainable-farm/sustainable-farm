@@ -6,6 +6,7 @@ import com.sustainablefarm.modules.producttransformation.resources.harvestevent.
 import com.sustainablefarm.modules.producttransformation.resources.batch.repository.BatchRepository;
 import com.sustainablefarm.modules.producttransformation.resources.batch.impl.BatchServiceImpl;
 import com.sustainablefarm.modules.producttransformation.resources.qccheckpoint.service.QcCheckpointService;
+import com.sustainablefarm.modules.producttransformation.resources.audittrail.service.AuditTrailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,9 @@ class BatchServiceTest {
     
     @Mock
     private QcCheckpointService qcCheckpointService;
+    
+    @Mock
+    private AuditTrailService auditTrailService;
     
     @InjectMocks
     private BatchServiceImpl batchService;

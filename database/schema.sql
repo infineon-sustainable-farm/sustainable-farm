@@ -5,6 +5,7 @@
 -- Date: 2026-08-14
 
 -- Drop existing tables (for clean setup)
+DROP TABLE IF EXISTS audit_trail CASCADE;
 DROP TABLE IF EXISTS compliance_record CASCADE;
 DROP TABLE IF EXISTS packaging_record CASCADE;
 DROP TABLE IF EXISTS qc_checkpoint CASCADE;
@@ -104,6 +105,19 @@ CREATE TABLE batch (
     block_id VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AUDIT_TRAIL: Batch status change audit trail
+CREATE TABLE audit_trail (
+    audit_id SERIAL PRIMARY KEY,
+    batch_id VARCHAR(50) NOT NULL REFERENCES batch(batch_id) ON DELETE CASCADE,
+    previous_status VARCHAR(30),
+    new_status VARCHAR(30) NOT NULL,
+    operator_id VARCHAR(50) REFERENCES operator(operator_id),
+    change_reason TEXT,
+    change_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(50),
+    user_agent TEXT
 );
 
 -- RAW_INTAKE: Raw material intake from Plants

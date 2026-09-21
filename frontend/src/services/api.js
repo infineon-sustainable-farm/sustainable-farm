@@ -40,5 +40,7 @@ export { dryingApi } from './dryingService';
 export { washingSortingApi } from './washingSortingService';
 export { equipmentApi } from './equipmentService';
 export { operatorApi } from './operatorService';
+export { traceabilityApi } from './traceabilityService';
+export { auditTrailApi } from './auditTrailService';
 
 export default apiClient;

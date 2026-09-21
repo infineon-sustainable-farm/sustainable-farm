@@ -3,6 +3,7 @@ package com.sustainablefarm.modules.producttransformation.resources.batch.impl;
 import com.sustainablefarm.core.exception.BusinessRuleViolationException;
 import com.sustainablefarm.core.exception.InvalidStateException;
 import com.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.sustainablefarm.modules.producttransformation.resources.audittrail.service.AuditTrailService;
 import com.sustainablefarm.modules.producttransformation.resources.batch.model.Batch;
 import com.sustainablefarm.modules.producttransformation.resources.batch.model.Batch.BatchStatus;
 import com.sustainablefarm.modules.producttransformation.resources.harvestevent.model.HarvestEvent.MangoVariety;
@@ -35,12 +36,15 @@ public class BatchServiceImpl implements BatchService {
 
     private final BatchRepository batchRepository;
     private final QcCheckpointService qcCheckpointService;
+    private final AuditTrailService auditTrailService;
 
     @Autowired
     public BatchServiceImpl(BatchRepository batchRepository,
-                            QcCheckpointService qcCheckpointService) {
+                            QcCheckpointService qcCheckpointService,
+                            AuditTrailService auditTrailService) {
         this.batchRepository = batchRepository;
         this.qcCheckpointService = qcCheckpointService;
+        this.auditTrailService = auditTrailService;
     }
 
     @Override
@@ -161,6 +165,7 @@ public class BatchServiceImpl implements BatchService {
     @Override
     public Batch advanceBatchStatus(String batchId) {
         Batch batch = getBatchById(batchId);
+        String previousStatus = batch.getCurrentStatus().name();
         
         // Business Rule: Enforce mandatory QC checkpoints before advancing status
         // WASHING checkpoint must be completed before advancing from WASHING to DRYING
@@ -192,17 +197,30 @@ public class BatchServiceImpl implements BatchService {
             throw new InvalidStateException("Cannot advance batch status: " + e.getMessage());
         }
         
-        return batchRepository.save(batch);
+        Batch savedBatch = batchRepository.save(batch);
+        
+        // Log status change to audit trail
+        auditTrailService.logStatusChange(batchId, previousStatus, savedBatch.getCurrentStatus().name(), 
+            "SYSTEM", "Batch status advanced via workflow");
+        
+        return savedBatch;
     }
 
     @Override
     public Batch setBatchStatus(String batchId, BatchStatus status) {
         Batch batch = getBatchById(batchId);
+        String previousStatus = batch.getCurrentStatus().name();
         
         // Business Rule: Allow manual status setting for operations like REJECTED
         batch.setCurrentStatus(status);
         
-        return batchRepository.save(batch);
+        Batch savedBatch = batchRepository.save(batch);
+        
+        // Log status change to audit trail
+        auditTrailService.logStatusChange(batchId, previousStatus, savedBatch.getCurrentStatus().name(), 
+            "SYSTEM", "Batch status manually set to " + status.name());
+        
+        return savedBatch;
     }
 
     @Override

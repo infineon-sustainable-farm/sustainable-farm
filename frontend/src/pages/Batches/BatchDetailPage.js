@@ -10,6 +10,7 @@ import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import Button from '../../components/common/Button';
 import WorkflowProgressionBar from '../../components/common/WorkflowProgressionBar';
+import PlantsInfo from '../../components/PlantsInfo';
 import './BatchDetailPage.css';
 
 const BatchDetailPage = () => {
@@ -121,6 +122,15 @@ const BatchDetailPage = () => {
         onAdvance={handleAdvanceStatus}
         canAdvance={!advancing}
       />
+
+      {/* Plants Integration */}
+      {batch.farmId && batch.blockId && (
+        <PlantsInfo 
+          farmId={batch.farmId}
+          parcelId={batch.blockId}
+          showGrowthCalendar={true}
+        />
+      )}
 
       {/* Batch Information */}
       <Card className="detail-card">
