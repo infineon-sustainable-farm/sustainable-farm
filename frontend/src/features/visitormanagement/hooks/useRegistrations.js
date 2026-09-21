@@ -6,6 +6,7 @@ import {
     createRegistration,
     createVisitor,
     fetchAvailability,
+    fetchProspects,
     fetchRegistrations,
     rejectRegistration,
 } from "../api/visitormanagementApi";
@@ -33,6 +34,18 @@ export function useAvailability(date) {
         queryKey: [...SLOTS_KEY, "availability", { date }],
         queryFn: () => fetchAvailability(date),
         enabled: Boolean(date),
+    });
+}
+
+/**
+ * The commercial prospects, loaded only when the section is expanded so the
+ * registration screen does not pay for an extra request by default.
+ */
+export function useProspects(enabled = true) {
+    return useQuery({
+        queryKey: [...REGISTRATIONS_KEY, "prospects"],
+        queryFn: fetchProspects,
+        enabled,
     });
 }
 

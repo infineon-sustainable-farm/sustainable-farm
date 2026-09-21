@@ -95,6 +95,14 @@ export function fetchRegistrations({ page = 0, size = 100 } = {}) {
 }
 
 /**
+ * The commercial prospects: registrations the API flags automatically when the
+ * visit purpose is a purchase, a partnership or an investment.
+ */
+export function fetchProspects() {
+    return apiClient.get(VM_ENDPOINTS.REGISTRATIONS, { params: { prospect: true } });
+}
+
+/**
  * Registers a visitor on a time slot. `data` is a RegistrationRequest:
  * visitorId, timeSlotId, visitPurpose and an optional eventId.
  */

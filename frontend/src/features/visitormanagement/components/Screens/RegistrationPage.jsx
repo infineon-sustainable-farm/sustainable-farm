@@ -11,6 +11,7 @@ import { useTimeSlots } from "../../hooks/useScheduling";
 import { toIsoDate } from "../../utils/format";
 import RegistrationForm from "../Forms/RegistrationForm";
 import RegistrationsTable from "../RegistrationsTable";
+import ProspectsSection from "../ProspectsSection";
 
 export default function RegistrationPage() {
     const [date, setDate] = useState(() => toIsoDate(new Date()));
@@ -161,6 +162,8 @@ export default function RegistrationPage() {
                         </p>
                     </>
                 )}
+
+                <ProspectsSection />
             </section>
         </div>
     );
