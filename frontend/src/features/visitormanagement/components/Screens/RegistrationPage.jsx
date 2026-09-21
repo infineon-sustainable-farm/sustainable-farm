@@ -7,6 +7,8 @@ import {
     useRegistrations,
 } from "../../hooks/useRegistrations";
 import { useUpdateVisitor, useVisitors } from "../../hooks/useVisitors";
+import { useRegisterEventVisitor, useEvents } from "../../hooks/useEvents";
+import { useActivities, useCreateBooking } from "../../hooks/useBooking";
 import { useTimeSlots } from "../../hooks/useScheduling";
 import { toIsoDate } from "../../utils/format";
 import RegistrationForm from "../Forms/RegistrationForm";
@@ -14,6 +16,7 @@ import RegistrationsTable from "../RegistrationsTable";
 import ProspectsSection from "../ProspectsSection";
 
 export default function RegistrationPage() {
+    const [mode, setMode] = useState("TOUR");
     const [date, setDate] = useState(() => toIsoDate(new Date()));
     const [editing, setEditing] = useState(null);
     const [formKey, setFormKey] = useState(0);
@@ -31,6 +34,8 @@ export default function RegistrationPage() {
     } = useRegistrations();
     const { data: visitors, isError: visitorsError } = useVisitors();
     const { data: timeSlots } = useTimeSlots();
+    const { data: events } = useEvents();
+    const { data: activities } = useActivities();
     const {
         data: availability,
         isPending: availabilityLoading,
@@ -39,24 +44,52 @@ export default function RegistrationPage() {
     } = useAvailability(date);
 
     const registerMutation = useRegisterVisitor();
+    const eventRegisterMutation = useRegisterEventVisitor();
+    const createBookingMutation = useCreateBooking();
     const updateVisitorMutation = useUpdateVisitor();
     const actionMutation = useRegistrationAction();
 
     const visitorsById = new Map((visitors ?? []).map((visitor) => [visitor.id, visitor]));
     const slotsById = new Map((timeSlots ?? []).map((slot) => [slot.id, slot]));
+    const eventsById = new Map((events ?? []).map((event) => [event.id, event]));
 
-    const formMutation = editing ? updateVisitorMutation : registerMutation;
+    // Only published events accept registrations; only active activities can
+    // be booked.
+    const publishedEvents = (events ?? []).filter((event) => event.status === "PUBLISHED");
+    const activeActivities = (activities ?? []).filter((activity) => activity.active);
+
+    /*
+     * The active mutation depends on the mode, so the form's pending and error
+     * state follows the target the user picked.
+     */
+    const submitMutation =
+        mode === "EVENT"
+            ? eventRegisterMutation
+            : mode === "ACTIVITY"
+              ? createBookingMutation
+              : registerMutation;
+    const formMutation = editing ? updateVisitorMutation : submitMutation;
+
+    function resetMutations() {
+        registerMutation.reset();
+        eventRegisterMutation.reset();
+        createBookingMutation.reset();
+        updateVisitorMutation.reset();
+    }
 
     function resetForm() {
         setEditing(null);
         setFormKey((current) => current + 1);
-        registerMutation.reset();
-        updateVisitorMutation.reset();
+        resetMutations();
+    }
+
+    function changeMode(nextMode) {
+        resetMutations();
+        setMode(nextMode);
     }
 
     function startEdit(registration) {
-        registerMutation.reset();
-        updateVisitorMutation.reset();
+        resetMutations();
         setEditing(registration);
         setFormKey((current) => current + 1);
     }
@@ -67,9 +100,17 @@ export default function RegistrationPage() {
                 { id: editing.visitorId, visitor: values.visitor },
                 { onSuccess: resetForm },
             );
-        } else {
-            registerMutation.mutate(values, { onSuccess: resetForm });
+            return;
         }
+        if (values.booking) {
+            createBookingMutation.mutate(values.booking, { onSuccess: resetForm });
+            return;
+        }
+        if (values.eventId) {
+            eventRegisterMutation.mutate(values, { onSuccess: resetForm });
+            return;
+        }
+        registerMutation.mutate(values, { onSuccess: resetForm });
     }
 
     function handleAction(registration, action) {
@@ -90,12 +131,16 @@ export default function RegistrationPage() {
 
                 <RegistrationForm
                     key={formKey}
+                    mode={mode}
+                    onModeChange={changeMode}
                     date={date}
                     onDateChange={setDate}
                     availability={availability ?? []}
                     availabilityLoading={availabilityLoading}
                     availabilityError={availabilityError}
                     onRetryAvailability={refetchAvailability}
+                    events={publishedEvents}
+                    activities={activeActivities}
                     editingVisitor={editing ? visitorsById.get(editing.visitorId) : null}
                     isSubmitting={formMutation.isPending}
                     submitError={formMutation.error?.message}
@@ -150,6 +195,7 @@ export default function RegistrationPage() {
                             registrations={registrations ?? []}
                             visitorsById={visitorsById}
                             slotsById={slotsById}
+                            eventsById={eventsById}
                             pendingAction={pendingAction}
                             actionError={actionError}
                             onAction={handleAction}

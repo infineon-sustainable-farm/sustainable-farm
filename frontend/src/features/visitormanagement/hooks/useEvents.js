@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     cancelEvent,
     createEvent,
+    createVisitor,
     fetchEventRegistrations,
     fetchEvents,
     publishEvent,
@@ -94,6 +95,32 @@ export function useRegisterEventAttendee() {
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: EVENT_REGISTRATIONS_KEY });
             queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
+        },
+    });
+}
+
+/**
+ * The registration screen's event target: the visitor is created first, then
+ * registered on the event. Chaining both calls in one mutation keeps a single
+ * pending/error state; a failure on the second call leaves the visitor
+ * created, which is valid data.
+ */
+export function useRegisterEventVisitor() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ visitor, eventId, visitPurpose }) => {
+            const created = await createVisitor(visitor);
+            return registerEventAttendee(eventId, {
+                visitorId: created.id,
+                visitPurpose,
+            });
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: EVENT_REGISTRATIONS_KEY });
+            queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+            queryClient.invalidateQueries({ queryKey: ["visitormanagement", "registrations"] });
+            queryClient.invalidateQueries({ queryKey: ["visitormanagement", "visitors"] });
             queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
         },
     });

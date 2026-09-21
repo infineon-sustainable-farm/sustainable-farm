@@ -5,7 +5,6 @@ import {
     useBookingAction,
     useBookings,
     useCreateActivity,
-    useCreateBooking,
     useDeactivateActivity,
     useOccupancy,
     useUpdateActivity,
@@ -33,7 +32,6 @@ const FLOW_STEPS = [
 export default function BookingPage() {
     const [activityFormState, setActivityFormState] = useState({ open: false, activity: null });
     const [activityFormKey, setActivityFormKey] = useState(0);
-    const [createFormOpen, setCreateFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [formKey, setFormKey] = useState(0);
     const [filters, setFilters] = useState({ status: "", activityId: "", date: "" });
@@ -75,7 +73,6 @@ export default function BookingPage() {
     const createActivityMutation = useCreateActivity();
     const updateActivityMutation = useUpdateActivity();
     const deactivateActivityMutation = useDeactivateActivity();
-    const createBookingMutation = useCreateBooking();
     const updateBookingMutation = useUpdateBooking();
     const actionMutation = useBookingAction();
 
@@ -132,24 +129,8 @@ export default function BookingPage() {
 
     function startEdit(booking) {
         updateBookingMutation.reset();
-        createBookingMutation.reset();
-        setCreateFormOpen(false);
         setEditing(booking);
         setFormKey((current) => current + 1);
-    }
-
-    function openCreateBooking() {
-        createBookingMutation.reset();
-        updateBookingMutation.reset();
-        setEditing(null);
-        setCreateFormOpen(true);
-        setFormKey((current) => current + 1);
-    }
-
-    function resetCreateBooking() {
-        setCreateFormOpen(false);
-        setFormKey((current) => current + 1);
-        createBookingMutation.reset();
     }
 
     const pendingAction = actionMutation.isPending ? actionMutation.variables : null;
@@ -187,15 +168,10 @@ export default function BookingPage() {
 
                 <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">Bookings</h3>
 
-                <div className="mb-4 flex flex-wrap gap-2.5">
-                    <button
-                        type="button"
-                        onClick={openCreateBooking}
-                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
-                    >
-                        + New booking
-                    </button>
-                </div>
+                <p className="mb-4 text-xs text-muted">
+                    Bookings are created from the Registration screen (target: Activity booking);
+                    this screen records payments and moves them through their lifecycle.
+                </p>
 
                 <div className="mb-4 flex flex-wrap items-end gap-3.5">
                     <div>
@@ -268,28 +244,6 @@ export default function BookingPage() {
                         </button>
                     )}
                 </div>
-
-                {createFormOpen && (
-                    <>
-                        <h4 className="font-heading mb-2 text-sm font-bold text-ink">
-                            New booking
-                        </h4>
-                        <BookingForm
-                            key={`create-${formKey}`}
-                            booking={null}
-                            activities={activities ?? []}
-                            isSubmitting={createBookingMutation.isPending}
-                            submitError={createBookingMutation.error?.message}
-                            serverFieldErrors={createBookingMutation.error?.data?.fieldErrors}
-                            onSubmit={(values) =>
-                                createBookingMutation.mutate(values, {
-                                    onSuccess: resetCreateBooking,
-                                })
-                            }
-                            onCancel={resetCreateBooking}
-                        />
-                    </>
-                )}
 
                 {editing && (
                     <>

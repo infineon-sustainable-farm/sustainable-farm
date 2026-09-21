@@ -88,6 +88,7 @@ export default function RegistrationsTable({
     registrations,
     visitorsById,
     slotsById,
+    eventsById,
     pendingAction,
     actionError,
     onAction,
@@ -129,11 +130,21 @@ export default function RegistrationsTable({
                                 </td>
                                 <td className="px-3 py-2.5 text-ink">{registration.groupSize ?? "—"}</td>
                                 <td className="px-3 py-2.5 whitespace-nowrap text-ink">
-                                    {formatDateShort(registration.slotDate)}
-                                    {" · "}
-                                    {slot
-                                        ? formatTimeRange(slot.startTime, slot.endTime)
-                                        : formatTime(registration.slotStart)}
+                                    {registration.eventId ? (
+                                        <>
+                                            Event ·{" "}
+                                            {eventsById?.get(registration.eventId)?.title ??
+                                                `#${registration.eventId}`}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {formatDateShort(registration.slotDate)}
+                                            {" · "}
+                                            {slot
+                                                ? formatTimeRange(slot.startTime, slot.endTime)
+                                                : formatTime(registration.slotStart)}
+                                        </>
+                                    )}
                                 </td>
                                 <td className="px-3 py-2.5 text-ink">{visitor?.language ?? "—"}</td>
                                 <td className="px-3 py-2.5 text-ink">
