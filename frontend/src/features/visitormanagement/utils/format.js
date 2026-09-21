@@ -54,3 +54,79 @@ export function getIsoWeekNumber(date) {
     firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNumber + 3);
     return 1 + Math.round((target - firstThursday) / (7 * 24 * 3600 * 1000));
 }
+
+const dayMonthFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+const weekdayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long" });
+
+/*
+ * All date helpers below work on local calendar dates only. They never go
+ * through toISOString(), which would shift the day around midnight for users
+ * east or west of UTC — and a slot's date must be the farm's date, not UTC.
+ */
+
+/** Midnight of the Monday starting the week of `date`. */
+export function startOfWeek(date) {
+    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    day.setDate(day.getDate() - ((day.getDay() + 6) % 7));
+    return day;
+}
+
+/** A new local date shifted by `days`, leaving the input untouched. */
+export function addDays(date, days) {
+    const shifted = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    shifted.setDate(shifted.getDate() + days);
+    return shifted;
+}
+
+/** The API's date format: "YYYY-MM-DD", in local time. */
+export function toIsoDate(date) {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/** "Monday" for a day selector. */
+export function formatWeekday(date) {
+    return weekdayFormat.format(date);
+}
+
+/**
+ * The mockup's week heading, e.g. "Week 38 · 14–20 Sep 2026". The week shown
+ * runs Monday to Saturday, matching the farm's opening days.
+ */
+export function formatWeekLabel(weekStart) {
+    const weekEnd = addDays(weekStart, 5);
+    const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+    const startLabel = sameMonth ? String(weekStart.getDate()) : dayMonthFormat.format(weekStart);
+    return `Week ${getIsoWeekNumber(weekStart)} · ${startLabel}–${dayMonthFormat.format(weekEnd)} ${weekEnd.getFullYear()}`;
+}
+
+/**
+ * A time from the API ("09:00:00") as "9am", "2pm" or "9:30am". Invalid or
+ * missing values render as an em dash.
+ */
+export function formatTime(value) {
+    if (!value) return "—";
+    const [hours, minutes] = value.split(":").map(Number);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) return "—";
+    const suffix = hours < 12 ? "am" : "pm";
+    const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+    return minutes === 0 ? `${hour12}${suffix}` : `${hour12}:${String(minutes).padStart(2, "0")}${suffix}`;
+}
+
+/**
+ * A slot's time range in the mockup's compact style: "9–11am" when both ends
+ * share the same half of the day, "2–4pm" likewise, and the full form
+ * ("9:30am–11am") otherwise.
+ */
+export function formatTimeRange(start, end) {
+    const startLabel = formatTime(start);
+    const endLabel = formatTime(end);
+    if (startLabel.endsWith("am") && endLabel.endsWith("am")) {
+        return `${startLabel.slice(0, -2)}–${endLabel}`;
+    }
+    if (startLabel.endsWith("pm") && endLabel.endsWith("pm")) {
+        return `${startLabel.slice(0, -2)}–${endLabel}`;
+    }
+    return `${startLabel}–${endLabel}`;
+}
