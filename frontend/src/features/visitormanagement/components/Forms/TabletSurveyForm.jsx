@@ -16,6 +16,7 @@ export default function TabletSurveyForm({
     submitError,
     serverFieldErrors,
     onSubmit,
+    onCancel,
 }) {
     const [visitorId, setVisitorId] = useState("");
     const [rating, setRating] = useState(0);
@@ -163,13 +164,21 @@ export default function TabletSurveyForm({
                 </p>
             )}
 
-            <div>
+            <div className="mt-4 flex gap-2.5">
                 <button
                     type="submit"
                     disabled={isSubmitting}
                     className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {isSubmitting ? "Submitting…" : "Submit feedback (tablet)"}
+                </button>
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                    className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
+                >
+                    Cancel
                 </button>
             </div>
         </form>

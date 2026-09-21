@@ -13,6 +13,7 @@ import { startOfWeek } from "../../utils/format";
 import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
 import FeedbackSummary from "../FeedbackSummary";
 import FeedbackTable from "../FeedbackTable";
+import Modal from "../Modal";
 import SendSurveyForm from "../Forms/SendSurveyForm";
 import SurveysTable from "../SurveysTable";
 import TabletSurveyForm from "../Forms/TabletSurveyForm";
@@ -52,6 +53,7 @@ function SectionLoading({ label }) {
 
 export default function FeedbackPage() {
     const [sendFormOpen, setSendFormOpen] = useState(false);
+    const [tabletFormOpen, setTabletFormOpen] = useState(false);
     const [formKey, setFormKey] = useState(0);
     const [feedbackFilters, setFeedbackFilters] = useState({ visitorId: "", from: "", to: "" });
     const [surveyStatus, setSurveyStatus] = useState("");
@@ -169,21 +171,23 @@ export default function FeedbackPage() {
                 </div>
 
                 {sendFormOpen && (
-                    <SendSurveyForm
-                        visitors={visitors ?? []}
-                        isSubmitting={sendMutation.isPending}
-                        submitError={sendMutation.error?.message}
-                        serverFieldErrors={sendMutation.error?.data?.fieldErrors}
-                        onSubmit={(values) =>
-                            sendMutation.mutate(values, {
-                                onSuccess: () => setSendFormOpen(false),
-                            })
-                        }
-                        onCancel={() => {
-                            sendMutation.reset();
-                            setSendFormOpen(false);
-                        }}
-                    />
+                    <Modal title="Send survey" onClose={() => setSendFormOpen(false)}>
+                        <SendSurveyForm
+                            visitors={visitors ?? []}
+                            isSubmitting={sendMutation.isPending}
+                            submitError={sendMutation.error?.message}
+                            serverFieldErrors={sendMutation.error?.data?.fieldErrors}
+                            onSubmit={(values) =>
+                                sendMutation.mutate(values, {
+                                    onSuccess: () => setSendFormOpen(false),
+                                })
+                            }
+                            onCancel={() => {
+                                sendMutation.reset();
+                                setSendFormOpen(false);
+                            }}
+                        />
+                    </Modal>
                 )}
 
                 {visitorsError && (
@@ -193,24 +197,48 @@ export default function FeedbackPage() {
                     </p>
                 )}
 
-                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
-                    On-site tablet survey (wrap-up stop)
-                </h3>
-                <TabletSurveyForm
-                    key={formKey}
-                    visitors={visitors ?? []}
-                    isSubmitting={submitMutation.isPending}
-                    submitError={submitMutation.error?.message}
-                    serverFieldErrors={submitMutation.error?.data?.fieldErrors}
-                    onSubmit={(values) =>
-                        submitMutation.mutate(values, {
-                            onSuccess: () => setFormKey((current) => current + 1),
-                        })
-                    }
-                />
-                <p className="mt-3.5 text-[11px] text-muted">
+                <div className="mb-3 mt-6.5 flex flex-wrap items-center gap-4">
+                    <h3 className="font-heading text-[17px] font-bold text-ink">
+                        On-site tablet survey (wrap-up stop)
+                    </h3>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            submitMutation.reset();
+                            setTabletFormOpen(true);
+                            setFormKey((current) => current + 1);
+                        }}
+                        className="ml-auto rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+                    >
+                        + New on-site response
+                    </button>
+                </div>
+
+                <p className="text-[11px] text-muted">
                     Responses collected on the tablet are stored with the ON_SITE origin.
                 </p>
+
+                {tabletFormOpen && (
+                    <Modal
+                        title="On-site tablet survey"
+                        onClose={() => setTabletFormOpen(false)}
+                        widthClass="max-w-3xl"
+                    >
+                        <TabletSurveyForm
+                            key={formKey}
+                            visitors={visitors ?? []}
+                            isSubmitting={submitMutation.isPending}
+                            submitError={submitMutation.error?.message}
+                            serverFieldErrors={submitMutation.error?.data?.fieldErrors}
+                            onSubmit={(values) =>
+                                submitMutation.mutate(values, {
+                                    onSuccess: () => setTabletFormOpen(false),
+                                })
+                            }
+                            onCancel={() => setTabletFormOpen(false)}
+                        />
+                    </Modal>
+                )}
 
                 <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
                     Sent surveys (after visit)
