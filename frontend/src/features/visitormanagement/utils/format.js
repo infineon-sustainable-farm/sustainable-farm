@@ -57,6 +57,11 @@ export function getIsoWeekNumber(date) {
 
 const dayMonthFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 const weekdayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long" });
+const shortDateFormat = new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+});
 
 /*
  * All date helpers below work on local calendar dates only. They never go
@@ -88,6 +93,25 @@ export function toIsoDate(date) {
 /** "Monday" for a day selector. */
 export function formatWeekday(date) {
     return weekdayFormat.format(date);
+}
+
+/**
+ * Parses the API's date format ("YYYY-MM-DD") as a local calendar date.
+ * `new Date("2026-09-21")` would be UTC midnight and could display the
+ * previous day for users west of UTC, so the parts are read explicitly.
+ */
+export function parseIsoDate(value) {
+    if (!value) return null;
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+}
+
+/** "Mon 21 Sep" for a registration's slot date. */
+export function formatDateShort(value) {
+    const date = parseIsoDate(value);
+    if (!date) return "—";
+    return shortDateFormat.format(date);
 }
 
 /**

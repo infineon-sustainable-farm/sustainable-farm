@@ -23,7 +23,7 @@ import { NavLink } from "react-router-dom";
 const NAV_ITEMS = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/visitormanagement" },
     { label: "Scheduling", icon: Calendar, path: "/visitormanagement/scheduling" },
-    { label: "Registration", icon: UserPlus },
+    { label: "Registration", icon: UserPlus, path: "/visitormanagement/registration" },
     { label: "Education", icon: BookOpen },
     { label: "Safety", icon: ShieldCheck },
     { label: "Booking", icon: Ticket },
