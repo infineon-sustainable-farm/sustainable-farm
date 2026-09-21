@@ -28,7 +28,7 @@ const NAV_ITEMS = [
     { label: "Safety", icon: ShieldCheck, path: "/visitormanagement/safety" },
     { label: "Booking", icon: Ticket, path: "/visitormanagement/booking" },
     { label: "Feedback", icon: MessageSquare, path: "/visitormanagement/feedback" },
-    { label: "Events", icon: PartyPopper },
+    { label: "Events", icon: PartyPopper, path: "/visitormanagement/events" },
 ];
 
 const ITEM_BASE = "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm";

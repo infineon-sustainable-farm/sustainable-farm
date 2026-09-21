@@ -257,3 +257,34 @@ export function fetchSurveys({ page = 0, size = 100 } = {}) {
 export function sendSurvey(data) {
     return apiClient.post(VM_ENDPOINTS.SURVEYS, data);
 }
+
+/**
+ * The events, most recent first. The endpoint is paginated; the screen asks
+ * for one large page rather than hiding rows behind pagination.
+ */
+export function fetchEvents({ page = 0, size = 100 } = {}) {
+    return apiClient.get(VM_ENDPOINTS.EVENTS, { params: { page, size } });
+}
+
+/** Creates an event from an EventRequest payload (stored as DRAFT). */
+export function createEvent(data) {
+    return apiClient.post(VM_ENDPOINTS.EVENTS, data);
+}
+
+/** Updates an event from an EventRequest payload. */
+export function updateEvent(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.EVENTS}/${id}`, data);
+}
+
+/** Publishes a DRAFT event (the API rejects any other status). */
+export function publishEvent(id) {
+    return apiClient.post(`${VM_ENDPOINTS.EVENTS}/${id}/publish`);
+}
+
+/**
+ * Cancels an event. The API also cancels its registrations. There is no
+ * "complete" call: the visit lifecycle job moves past events to COMPLETED.
+ */
+export function cancelEvent(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.EVENTS}/${id}`);
+}
