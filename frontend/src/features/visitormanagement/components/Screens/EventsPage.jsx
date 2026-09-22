@@ -12,7 +12,7 @@ import EventForm from "../Forms/EventForm";
 import EventParticipants from "../EventParticipants";
 import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
 
-const EVENT_TYPES = ["OPEN_DAY", "PARTNER_BUYER", "SCHOOL", "COMMUNITY"];
+const EVENT_TYPES = ["OPEN_DAY", "PARTNER_BUYER", "SCHOOL"];
 
 export default function EventsPage() {
     const [editingEvent, setEditingEvent] = useState(null);
@@ -101,7 +101,7 @@ export default function EventsPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Events
                 </h2>
@@ -209,10 +209,11 @@ export default function EventsPage() {
                             {visibleEvents.length === 0 && (
                                 <p className="text-sm text-muted">No event to show.</p>
                             )}
-                            {visibleEvents.map((event) => (
+                            {visibleEvents.map((event, index) => (
                                 <EventCard
                                     key={event.id}
                                     event={event}
+                                    delay={60 + index * 60}
                                     pendingAction={pendingAction}
                                     actionError={
                                         actionError?.id === event.id ? actionError : null

@@ -5,13 +5,12 @@ const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
 const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
 const ERROR_CLASS = "mt-1 text-xs text-error";
 
-const ROLES = ["GUIDE", "RECEPTION", "FARM", "MANAGER"];
+const ROLES = ["GUIDE", "RECEPTION", "MANAGER"];
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 
 /**
- * Staff create/edit form. The API has no hard delete, so a member is
- * deactivated instead (see the table action), and the Active checkbox is how
- * an edit brings one back.
+ * Staff create/edit form. A new member is always created active; deactivation
+ * and reactivation are handled by the table actions, not by this form.
  */
 export default function StaffForm({
     staff,
@@ -27,8 +26,11 @@ export default function StaffForm({
     const [role, setRole] = useState(staff?.role ?? "GUIDE");
     const [email, setEmail] = useState(staff?.email ?? "");
     const [phone, setPhone] = useState(staff?.phone ?? "");
-    const [active, setActive] = useState(staff ? staff.active : true);
     const [fieldErrors, setFieldErrors] = useState({});
+
+    // A new member is always created active; editing keeps the current value,
+    // since deactivation/reactivation live in the table actions.
+    const active = staff ? staff.active : true;
 
     function validate() {
         const errors = {};
@@ -139,15 +141,7 @@ export default function StaffForm({
                 </div>
             </div>
 
-            <label className="mt-4 flex items-center gap-2 text-sm text-ink">
-                <input
-                    type="checkbox"
-                    checked={active}
-                    onChange={(event) => setActive(event.target.checked)}
-                    className="h-4 w-4 accent-[#0a8276]"
-                />
-                Active — available in the guide and staff selectors
-            </label>
+            <label className="mt-4 flex items-center gap-2 text-sm text-ink"><span className="text-xs tracking-wide text-primary uppercase">Status</span> {staff ? (staff.active ? "Active" : "Inactive") : "Active"}</label>
 
             {submitError && (
                 <p className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">

@@ -11,7 +11,7 @@ import Modal from "../Modal";
 import StaffForm from "../Forms/StaffForm";
 import StaffTable from "../StaffTable";
 
-const ROLES = ["GUIDE", "RECEPTION", "FARM", "MANAGER"];
+const ROLES = ["GUIDE", "RECEPTION", "MANAGER"];
 
 export default function StaffPage() {
     const [formState, setFormState] = useState({ open: false, staff: null });
@@ -83,7 +83,7 @@ export default function StaffPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Staff &amp; guides
                 </h2>

@@ -10,6 +10,7 @@ import {
     useWorkshopStatusAction,
     useWorkshops,
 } from "../../hooks/useEducation";
+import { useGuides } from "../../hooks/useScheduling";
 import Modal from "../Modal";
 import TourStopsTimeline from "../TourStopsTimeline";
 import TourStopForm from "../Forms/TourStopForm";
@@ -42,6 +43,7 @@ export default function EducationPage() {
         refetch: refetchWorkshops,
         isFetching: workshopsFetching,
     } = useWorkshops();
+    const { data: guides } = useGuides();
 
     const createMutation = useCreateWorkshop();
     const updateMutation = useUpdateWorkshop();
@@ -141,7 +143,7 @@ export default function EducationPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Educational program
                 </h2>
@@ -318,6 +320,7 @@ export default function EducationPage() {
                         <WorkshopForm
                             key={formKey}
                             workshop={editingWorkshop}
+                            guides={guides ?? []}
                             isSubmitting={formMutation.isPending}
                             submitError={formMutation.error?.message}
                             serverFieldErrors={formMutation.error?.data?.fieldErrors}
