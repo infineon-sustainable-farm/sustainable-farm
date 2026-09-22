@@ -263,11 +263,6 @@ public class SchedulingServiceImpl implements SchedulingService {
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new BusinessRuleException("endTime must be after startTime");
         }
-        int capacity = request.getMaxCapacity() == null ? 10 : request.getMaxCapacity();
-        if (capacity > SchedulingRules.MAX_VISITORS_PER_SLOT) {
-            throw new BusinessRuleException(
-                    "maxCapacity cannot exceed " + SchedulingRules.MAX_VISITORS_PER_SLOT);
-        }
     }
 
     private void validateNotInPast(LocalDate date) {
