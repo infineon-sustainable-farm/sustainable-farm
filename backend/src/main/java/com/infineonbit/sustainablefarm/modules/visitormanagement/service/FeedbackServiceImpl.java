@@ -71,10 +71,19 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Override
     @Transactional
     public FeedbackResponse submitFeedback(FeedbackRequest request) {
-        Visitor visitor = getVisitorEntity(request.getVisitorId());
+        boolean hasVisitor =
+                request.getVisitorId() != null || (request.getVisitorName() != null
+                        && !request.getVisitorName().isBlank());
+        if (!hasVisitor) {
+            throw new BusinessRuleException("A feedback must identify the visitor "
+                    + "(visitorId or visitorName)");
+        }
+        Visitor visitor = request.getVisitorId() == null ? null
+                : getVisitorEntity(request.getVisitorId());
 
         Feedback feedback = new Feedback();
         feedback.setVisitor(visitor);
+        feedback.setVisitorName(request.getVisitorName());
         feedback.setRating(request.getRating());
         feedback.setBriefingClear(request.getBriefingClear());
         feedback.setEducationalValue(request.getEducationalValue());
@@ -84,6 +93,9 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         if (request.getSurveyId() != null) {
             SurveySend survey = getSurveyEntity(request.getSurveyId());
+            if (visitor == null) {
+                throw new BusinessRuleException("A survey response must link the visitor");
+            }
             if (!survey.getVisitor().getId().equals(visitor.getId())) {
                 throw new BusinessRuleException("Survey " + survey.getId()
                         + " was sent to a different visitor");

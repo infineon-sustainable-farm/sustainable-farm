@@ -144,6 +144,31 @@ class FeedbackServiceImplTest {
     }
 
     @Test
+    void submitFeedback_visitorName_only_success() {
+        when(feedbackRepository.save(any(Feedback.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        FeedbackRequest req = buildRequest();
+        req.setVisitorId(null);
+        req.setVisitorName("Léa Nikiéma");
+        FeedbackResponse response = service.submitFeedback(req);
+
+        assertThat(response.getOrigin()).isEqualTo(FeedbackChannel.ON_SITE);
+        assertThat(response.getVisitorId()).isNull();
+        assertThat(response.getVisitorName()).isEqualTo("Léa Nikiéma");
+    }
+
+    @Test
+    void submitFeedback_noIdentity_throws() {
+        FeedbackRequest req = buildRequest();
+        req.setVisitorId(null);
+        req.setVisitorName("   ");
+
+        assertThatThrownBy(() -> service.submitFeedback(req))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("visitorId or visitorName");
+    }
+
+    @Test
     void submitFeedback_visitorNotFound_throws() {
         when(visitorRepository.findById(visitorId)).thenReturn(Optional.empty());
 
