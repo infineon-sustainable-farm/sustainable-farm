@@ -7,7 +7,8 @@ const ERROR_CLASS = "mt-1 text-xs text-error";
 /**
  * Briefing delivery form, opened from a tracker row. The staff name is a free
  * input backed by a datalist of the active staff, so a guest can still be
- * recorded if they are not in the list.
+ * recorded if they are not in the list. The group leader's signature is a
+ * plain checkbox: ticking it records the proof of delivery.
  */
 export default function BriefingForm({
     registrationId,
@@ -18,7 +19,7 @@ export default function BriefingForm({
     onCancel,
 }) {
     const [staffMember, setStaffMember] = useState("");
-    const [signature, setSignature] = useState("");
+    const [signed, setSigned] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
 
     function handleSubmit(event) {
@@ -29,15 +30,12 @@ export default function BriefingForm({
         } else if (staffMember.trim().length > 150) {
             errors.staffMember = "Staff member must be at most 150 characters.";
         }
-        if (signature.trim().length > 500) {
-            errors.signature = "Signature must be at most 500 characters.";
-        }
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
 
         onSubmit({
             staffMember: staffMember.trim(),
-            signature: signature.trim() || null,
+            signature: signed ? "signed" : null,
         });
     }
 
@@ -66,25 +64,25 @@ export default function BriefingForm({
                         <p className={ERROR_CLASS}>{fieldError("staffMember")}</p>
                     )}
                 </div>
-                <div>
-                    <label
-                        htmlFor={`briefing-signature-${registrationId}`}
-                        className={LABEL_CLASS}
-                    >
-                        Signature (group leader)
-                    </label>
+                <label
+                    htmlFor={`briefing-signature-${registrationId}`}
+                    className="flex items-end gap-2 pb-2 text-sm text-ink"
+                >
                     <input
                         id={`briefing-signature-${registrationId}`}
-                        type="text"
-                        value={signature}
-                        onChange={(event) => setSignature(event.target.value)}
-                        placeholder="Optional"
-                        className={INPUT_CLASS}
+                        type="checkbox"
+                        checked={signed}
+                        onChange={(event) => setSigned(event.target.checked)}
+                        className="mb-0.5 h-4 w-4 accent-[#0a8276]"
                     />
+                    <span>
+                        Signature (group leader) —{" "}
+                        <span className="text-muted">tick to sign</span>
+                    </span>
                     {fieldError("signature") && (
-                        <p className={ERROR_CLASS}>{fieldError("signature")}</p>
+                        <span className={ERROR_CLASS}>{fieldError("signature")}</span>
                     )}
-                </div>
+                </label>
             </div>
 
             {submitError && (

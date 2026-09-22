@@ -59,7 +59,7 @@ export default function SafetyPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Safety briefing tracker
                 </h2>
@@ -75,26 +75,6 @@ export default function SafetyPage() {
                     <span className="text-xs font-semibold text-primary-dark">
                         {tracked.length} briefing{tracked.length === 1 ? "" : "s"} tracked
                     </span>
-                    {/* The API has no reminder or export endpoint yet; the mockup's
-                        buttons are kept visible but inert, with a screen-reader note. */}
-                    <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        className="cursor-not-allowed rounded-md border border-line bg-white px-3.5 py-2 text-xs text-primary opacity-60"
-                    >
-                        Remind pending
-                        <span className="sr-only"> (not available yet)</span>
-                    </button>
-                    <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        className="cursor-not-allowed rounded-md border border-line bg-white px-3.5 py-2 text-xs text-primary opacity-60"
-                    >
-                        Export log (PDF)
-                        <span className="sr-only"> (not available yet)</span>
-                    </button>
                 </div>
 
                 {isPending && (
@@ -136,7 +116,7 @@ export default function SafetyPage() {
                         </datalist>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full border-collapse text-sm">
+                            <table className="vm-table w-full border-collapse text-sm">
                                 <thead>
                                     <tr>
                                         {COLUMNS.map((column) => (
