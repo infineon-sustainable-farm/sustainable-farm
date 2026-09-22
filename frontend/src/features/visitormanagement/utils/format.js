@@ -138,6 +138,24 @@ export function formatWeekLabel(weekStart) {
     return `Week ${getIsoWeekNumber(weekStart)} · ${startLabel}–${dayMonthFormat.format(weekEnd)} ${weekEnd.getFullYear()}`;
 }
 
+/** A date as the dashboard's compact event date, e.g. "10 Oct". */
+export function formatDayMonth(date) {
+    if (!date) return "—";
+    const value = typeof date === "string" ? new Date(date) : date;
+    if (Number.isNaN(value.getTime())) return "—";
+    return dayMonthFormat.format(value);
+}
+
+/**
+ * The dashboard week selector's range, e.g. "Sep 21 – Sep 27, 2026": Monday
+ * to Sunday of the week containing `date`, year shown once at the end.
+ */
+export function formatWeekRange(date) {
+    const start = startOfWeek(date);
+    const end = addDays(start, 6);
+    return `${dayMonthFormat.format(start)} – ${dayMonthFormat.format(end)}, ${end.getFullYear()}`;
+}
+
 /**
  * A time from the API ("09:00:00") as "9am", "2pm" or "9:30am". Invalid or
  * missing values render as an em dash.

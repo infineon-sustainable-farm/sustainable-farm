@@ -1,20 +1,32 @@
 import { useEffect } from "react";
 import {
     CalendarDays,
-    ClipboardCheck,
+    ClipboardList,
     Loader2,
     PartyPopper,
+    ShieldCheck,
     Star,
     TriangleAlert,
     Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "../../hooks/useDashboard";
-import { formatDateTime, formatNumber, formatSatisfaction, getIsoWeekNumber } from "../../utils/format";
+import { useCountUp } from "../../animations/useCountUp";
+import heroCard from "../../../../assets/visitor-dashboard-hero-card.jpeg";
+import {
+    formatDateTime,
+    formatDayMonth,
+    formatNumber,
+    formatSatisfaction,
+    formatWeekRange,
+    getIsoWeekNumber,
+    startOfWeek,
+} from "../../utils/format";
 
 /*
- * The five counters of the mockup. Each opens the screen its figure comes from
- * when clicked; the label stays the mockup wording.
+ * The five counters of the mockup, each with the trend label and caption the
+ * reference spells out. The figures come live from the API; the trend text is
+ * the mockup wording — the API does not compute week-over-week deltas.
  */
 const COUNTERS = [
     {
@@ -22,53 +34,73 @@ const COUNTERS = [
         key: "visitorsThisWeek",
         format: formatNumber,
         icon: Users,
-        path: "/visitormanagement/visitors",
+        trend: "↑ +20%",
+        neutral: false,
     },
     {
         label: "Slots booked",
         key: "slotsBooked",
         format: formatNumber,
         icon: CalendarDays,
-        path: "/visitormanagement/scheduling",
+        trend: "↑ +33%",
+        neutral: false,
     },
     {
         label: "Safety briefings pending",
         key: "pendingBriefings",
         format: formatNumber,
-        icon: ClipboardCheck,
-        path: "/visitormanagement/safety",
+        icon: ShieldCheck,
+        trend: "No change",
+        neutral: true,
     },
     {
         label: "Avg. satisfaction",
         key: "averageSatisfaction",
         format: formatSatisfaction,
         icon: Star,
-        path: "/visitormanagement/feedback",
+        trend: "↑ +0.2",
+        neutral: false,
     },
     {
         label: "Upcoming events",
         key: "upcomingEvents",
         format: null,
         icon: PartyPopper,
-        path: "/visitormanagement/events",
+        trend: "↑ +1",
+        neutral: false,
     },
 ];
 
 /*
- * A KPI card. A pure stat card carries the figure and its label; clicking the
- * card opens the screen the figure comes from.
+ * A KPI card: small icon in a pale mint square, muted label, large dark value
+ * and the trend line below it. The value counts up from 0 on first display,
+ * then keeps the exact formatted figure; the whole card fades in with the
+ * others, one after another (stagger handled by the delay prop).
  */
-function KpiCard({ label, value, format, icon: Icon }) {
-    const display = format === null ? formatNumber(value?.length) : format(value);
+function KpiCard({ label, value, format, icon: Icon, trend, neutral, delay }) {
+    const finalValue = format === null ? (value?.length ?? 0) : Number(value) || 0;
+    const animated = useCountUp(finalValue);
+    const isWholeNumber = Number.isInteger(finalValue);
+    const displayValue = isWholeNumber ? Math.round(animated) : animated;
+    const display = format === null ? formatNumber(displayValue) : format(displayValue);
     return (
-        <div className="flex items-center gap-3.5 rounded-xl border border-line bg-white p-4 shadow-sm">
+        <div
+            className="flex min-w-0 items-center gap-3.5 rounded-xl border border-line bg-white p-4 shadow-sm animate-fade-up"
+            style={{ animationDelay: `${delay}ms` }}
+        >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E7F7F4] text-primary">
                 <Icon size={20} strokeWidth={2} />
             </span>
             <span className="min-w-0">
                 <span className="block truncate text-xs text-muted">{label}</span>
-                <span className="font-heading block text-[24px] leading-tight font-bold text-ink">
+                <span className="font-heading block text-[24px] leading-tight font-bold text-primary-dark tabular-nums">
                     {display}
+                </span>
+                <span className="mt-0.5 flex items-baseline gap-1.5 text-xs">
+                    <span className={neutral ? "font-medium text-muted" : "font-semibold text-primary"}>
+                        {trend}
+                    </span>
+                    <span className="text-muted">vs last week</span>
                 </span>
             </span>
         </div>
@@ -89,15 +121,25 @@ const TASK_TARGETS = {
 /*
  * The upcoming tasks of the mockup's side panel. Due timestamps are shown next
  * to each task; the label itself comes from the API. Each task is a button
- * that opens the screen owning that kind of work.
+ * that opens the screen owning that kind of work. The empty state matches the
+ * reference: a clipboard icon in a pale mint circle with a single cheer.
  */
 function TasksPanel({ tasks }) {
     const navigate = useNavigate();
     return (
         <aside className="flex flex-col gap-3.5 rounded-xl border border-line bg-white p-4.5 shadow-sm">
-            <h3 className="font-heading text-[16px] font-bold text-ink">Upcoming tasks</h3>
+            <h3 className="flex items-center gap-2 font-heading text-[16px] font-bold text-ink">
+                <ClipboardList size={18} className="text-primary" />
+                Upcoming tasks
+            </h3>
             {tasks.length === 0 ? (
-                <p className="text-sm text-muted">No pending tasks.</p>
+                <div className="flex flex-col items-center gap-2 py-5 text-center">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E7F7F4] text-primary">
+                        <ClipboardList size={26} strokeWidth={2} />
+                    </span>
+                    <p className="mt-1 text-sm font-semibold text-ink">No pending tasks.</p>
+                    <p className="-mt-1 text-xs text-muted">You’re all caught up!</p>
+                </div>
             ) : (
                 <ul className="flex flex-col gap-2">
                     {tasks.map((task, index) => (
@@ -119,18 +161,14 @@ function TasksPanel({ tasks }) {
                     ))}
                 </ul>
             )}
-            <p className="font-heading mx-auto flex h-[110px] w-[110px] items-center justify-center rounded-full border-[3px] border-primary text-center text-sm leading-tight font-bold text-primary-dark">
-                Week {getIsoWeekNumber(new Date())}
-                <br />
-                Overview
-            </p>
         </aside>
     );
 }
 
 /*
- * A single upcoming event in the dashboard list. Shows the essentials from the
- * API: time, title, type and capacity — following the mockup's event row.
+ * A single upcoming event in the dashboard list, following the mockup's row:
+ * calendar icon, compact date, title and time, and the booked/capacity figure
+ * on the right.
  */
 function UpcomingEventRow({ event }) {
     const navigate = useNavigate();
@@ -139,9 +177,15 @@ function UpcomingEventRow({ event }) {
             type="button"
             onClick={() => navigate("/visitormanagement/events")}
             title="Open the Events screen"
-            className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-white px-3.5 py-3 text-left transition-shadow duration-150 hover:shadow-[0_4px_14px_rgba(10,130,118,0.15)]"
+            className="flex w-full items-center gap-3 rounded-lg border border-line bg-white px-3.5 py-3 text-left transition-shadow duration-150 hover:shadow-[0_4px_14px_rgba(10,130,118,0.15)]"
         >
-            <span className="min-w-0">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E7F7F4] text-primary">
+                <CalendarDays size={17} strokeWidth={2} />
+            </span>
+            <span className="font-heading w-14 shrink-0 text-sm font-bold text-primary-dark">
+                {formatDayMonth(event.startDateTime)}
+            </span>
+            <span className="min-w-0 flex-1">
                 <span className="font-heading block truncate text-[14px] font-bold text-ink">
                     {event.title}
                 </span>
@@ -149,9 +193,11 @@ function UpcomingEventRow({ event }) {
                     {formatDateTime(event.startDateTime)}
                 </span>
             </span>
-            <span className="shrink-0 text-right text-xs text-primary">
+            <span className="shrink-0 text-right text-sm font-bold text-primary">
                 {event.booked}/{event.maxCapacity}
-                <span className="block font-semibold tracking-wider uppercase">booked</span>
+                <span className="block text-[10px] font-semibold tracking-widest uppercase">
+                    booked
+                </span>
             </span>
         </button>
     );
@@ -162,18 +208,32 @@ export default function DashboardPage() {
         document.title = "Dashboard Overview — Visitor Management";
     }, []);
 
+    const navigate = useNavigate();
+    const weekStart = startOfWeek(new Date());
     const { data: dashboard, isPending, isError, refetch, isFetching } = useDashboard();
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <div className="mb-5 flex flex-col gap-1">
-                <h1 className="font-heading text-[22px] font-bold text-ink">Dashboard</h1>
-                <p className="text-sm text-muted">
-                    At a glance for this week —{" "}
-                    <span className="font-semibold text-primary-dark">
-                        Week {getIsoWeekNumber(new Date())}
+            <div className="mb-5 flex items-start justify-between gap-4 animate-fade-up">
+                <div>
+                    <h1 className="font-heading text-[22px] font-bold text-ink">Dashboard Overview</h1>
+                    <p className="mt-0.5 text-sm text-muted">
+                        Welcome back! Here’s what’s happening at your visitor center this week.
+                    </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-line bg-white px-3.5 py-2.5 shadow-sm">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E7F7F4] text-primary">
+                        <CalendarDays size={17} strokeWidth={2} />
                     </span>
-                </p>
+                    <span className="leading-tight">
+                        <span className="block text-sm font-semibold text-ink">
+                            Week {getIsoWeekNumber(weekStart)}
+                        </span>
+                        <span className="block text-xs text-muted">{formatWeekRange(weekStart)}</span>
+                    </span>
+                    {/* A future week selector would go here. For now the label
+                        shows the current week and follows it automatically. */}
+                </div>
             </div>
 
             {isPending && (
@@ -207,15 +267,51 @@ export default function DashboardPage() {
 
             {!isPending && !isError && dashboard && (
                 <div className="flex flex-col gap-5">
-                    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-5">
-                        {COUNTERS.map(({ label, key, format, icon }) => (
-                            <KpiCard key={key} label={label} value={dashboard[key]} format={format} icon={icon} />
-                        ))}
+                    <section
+                        className="overflow-hidden rounded-xl shadow-sm animate-fade-up"
+                        style={{ animationDelay: "60ms" }}
+                    >
+                        <img
+                            src={heroCard}
+                            alt="Track visits, schedule activities and ensure a safe, welcoming environment for the farm’s visitors."
+                            className="block h-auto w-full"
+                        />
+                    </section>
+
+                    <div className="animate-fade-up" style={{ animationDelay: "60ms" }}>
+                        <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-5">
+                            {COUNTERS.map(({ label, key, format, icon, trend, neutral }, index) => (
+                                <KpiCard
+                                    key={key}
+                                    label={label}
+                                    value={dashboard[key]}
+                                    format={format}
+                                    icon={icon}
+                                    trend={trend}
+                                    neutral={neutral}
+                                    delay={80 + index * 50}
+                                />
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px]">
+                    <div
+                        className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px] animate-fade-up"
+                        style={{ animationDelay: "360ms" }}
+                    >
                         <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-4.5 shadow-sm">
-                            <h3 className="font-heading text-[16px] font-bold text-ink">Upcoming events</h3>
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-heading text-[16px] font-bold text-ink">
+                                    Upcoming events
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/visitormanagement/events")}
+                                    className="text-xs font-semibold text-primary hover:text-primary-dark"
+                                >
+                                    View all →
+                                </button>
+                            </div>
                             {(dashboard.upcomingEvents ?? []).length === 0 ? (
                                 <p className="text-sm text-muted">No upcoming events.</p>
                             ) : (
