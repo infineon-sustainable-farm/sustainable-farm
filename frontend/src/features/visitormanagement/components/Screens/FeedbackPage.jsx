@@ -2,16 +2,13 @@ import { useEffect, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import {
     useFeedbackList,
-    useFeedbackSummary,
     useRouteFeedback,
     useSendSurvey,
     useSubmitFeedback,
     useSurveys,
 } from "../../hooks/useFeedback";
 import { useVisitors } from "../../hooks/useVisitors";
-import { startOfWeek } from "../../utils/format";
 import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
-import FeedbackSummary from "../FeedbackSummary";
 import FeedbackTable from "../FeedbackTable";
 import Modal from "../Modal";
 import SendSurveyForm from "../Forms/SendSurveyForm";
@@ -83,21 +80,6 @@ export default function FeedbackPage() {
         ((feedbackFilters.from && !feedbackFilters.to) ||
             (!feedbackFilters.from && feedbackFilters.to));
 
-    /*
-     * The summary window is the current week, frozen once so the query key
-     * stays stable across renders. The end is the end of today rather than the
-     * current instant, so a response submitted later today still counts when
-     * the summary is refetched after a submission.
-     */
-    const [summaryWindow] = useState(() => {
-        const endOfDay = new Date();
-        endOfDay.setHours(23, 59, 59, 999);
-        return {
-            from: startOfWeek(new Date()).toISOString(),
-            to: endOfDay.toISOString(),
-        };
-    });
-
     useEffect(() => {
         document.title = "Satisfaction Survey — Visitor Management";
     }, []);
@@ -116,13 +98,6 @@ export default function FeedbackPage() {
         refetch: refetchSurveys,
         isFetching: surveysFetching,
     } = useSurveys({ status: surveyStatus });
-    const {
-        data: summary,
-        isPending: summaryPending,
-        isError: summaryError,
-        refetch: refetchSummary,
-        isFetching: summaryFetching,
-    } = useFeedbackSummary(summaryWindow);
     const { data: visitors, isError: visitorsError } = useVisitors();
 
     const submitMutation = useSubmitFeedback();
@@ -136,15 +111,15 @@ export default function FeedbackPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Satisfaction survey
                 </h2>
 
                 <div className="mb-4 rounded-md border-l-[3px] border-primary bg-[#F2FBF9] px-3.5 py-2.5 text-[13px] text-ink">
-                    <span className="font-semibold">Feedback flow (mixed):</span> visitors give a
-                    quick rating on-site on the tablet at the wrap-up stop, and a full survey link is
-                    sent by email or SMS after the visit. All responses are collected here.
+                    <span className="font-semibold">Feedback flow:</span> visitors give a quick
+                    rating on-site on the tablet at the wrap-up stop, and the survey link is sent
+                    by email after the visit. All responses are collected here.
                 </div>
 
                 <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -156,7 +131,7 @@ export default function FeedbackPage() {
                         }}
                         className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
                     >
-                        Send survey (email/SMS)
+                        Send survey (email)
                     </button>
                     {/* No report endpoint yet; the mockup's button stays inert. */}
                     <button
@@ -192,8 +167,8 @@ export default function FeedbackPage() {
 
                 {visitorsError && (
                     <p className="mb-4 text-xs text-muted">
-                        Visitors could not be loaded — the survey and feedback forms need a visitor
-                        and are unavailable until the list returns.
+                        Visitors could not be loaded — sending a survey needs a visitor and is
+                        unavailable until the list returns.
                     </p>
                 )}
 
@@ -226,7 +201,6 @@ export default function FeedbackPage() {
                     >
                         <TabletSurveyForm
                             key={formKey}
-                            visitors={visitors ?? []}
                             isSubmitting={submitMutation.isPending}
                             submitError={submitMutation.error?.message}
                             serverFieldErrors={submitMutation.error?.data?.fieldErrors}
@@ -277,17 +251,6 @@ export default function FeedbackPage() {
                     />
                 )}
                 {!surveysPending && !surveysError && <SurveysTable surveys={surveys ?? []} />}
-
-                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">Summary</h3>
-                {summaryPending && <SectionLoading label="Loading summary…" />}
-                {summaryError && (
-                    <SectionError
-                        title="Summary could not be loaded"
-                        onRetry={() => refetchSummary()}
-                        isRetrying={summaryFetching}
-                    />
-                )}
-                {!summaryPending && !summaryError && <FeedbackSummary summary={summary} />}
 
                 <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
                     Recent responses
@@ -384,7 +347,7 @@ export default function FeedbackPage() {
                             onRoute={(id, data) => routeMutation.mutate({ id, data })}
                         />
                         <p className="mt-6 text-[11px] text-muted">
-                            Quick ratings are collected on-site, full surveys go out by email or SMS
+                            Quick ratings are collected on-site, the survey link goes out by email
                             after the visit, and each response can be routed to the team that owns
                             the follow-up.
                         </p>

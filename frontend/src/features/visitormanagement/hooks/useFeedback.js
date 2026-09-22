@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     fetchFeedback,
-    fetchFeedbackSummary,
     fetchSurveys,
     routeFeedback,
     sendSurvey,
@@ -27,18 +26,6 @@ export function useFeedbackList(filters = {}) {
         queryKey: [...FEEDBACK_KEY, query],
         queryFn: () => fetchFeedback(query),
         select: (data) => (Array.isArray(data) ? data : data.content),
-    });
-}
-
-/**
- * The feedback summary for a fixed window. The caller must keep the window
- * stable (it is part of the cache key), otherwise every render would look like
- * a new query.
- */
-export function useFeedbackSummary({ from, to }) {
-    return useQuery({
-        queryKey: [...FEEDBACK_KEY, "summary", { from, to }],
-        queryFn: () => fetchFeedbackSummary({ from, to }),
     });
 }
 

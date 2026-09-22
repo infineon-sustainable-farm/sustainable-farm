@@ -4,7 +4,9 @@ import { VM_ENDPOINTS } from "./endpoints";
 /**
  * Aggregated KPIs for the Visitor Management dashboard: weekly visitor counts,
  * booked slots, pending briefings, average satisfaction plus the upcoming
- * events and the pending staff tasks. No parameters.
+ * events and the pending staff tasks. No parameters: the backend always
+ * reports the current week, so the figures roll over automatically when a new
+ * week starts.
  */
 export function fetchDashboard() {
     return apiClient.get(VM_ENDPOINTS.DASHBOARD);
@@ -21,7 +23,7 @@ export function fetchTimeSlots() {
 
 /**
  * Creates a time slot. `data` is a TimeSlotRequest: date (YYYY-MM-DD),
- * startTime/endTime (HH:mm), maxCapacity (1–10) and an optional guideId.
+ * startTime/endTime (HH:mm), maxCapacity (at least 1) and an optional guideId.
  */
 export function createTimeSlot(data) {
     return apiClient.post(VM_ENDPOINTS.TIME_SLOTS, data);
@@ -84,6 +86,15 @@ export function createVisitor(data) {
 /** Updates a visitor from a VisitorRequest payload. */
 export function updateVisitor(id, data) {
     return apiClient.put(`${VM_ENDPOINTS.VISITORS}/${id}`, data);
+}
+
+/**
+ * Deletes a visitor. The API refuses while the visitor still has
+ * registrations, feedback or surveys; only unattached duplicates can be
+ * removed this way.
+ */
+export function deleteVisitor(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.VISITORS}/${id}`);
 }
 
 /**
@@ -299,18 +310,6 @@ export function fetchFeedback({ page = 0, size = 100, visitorId, from, to } = {}
         return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { from, to } });
     }
     return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { page, size } });
-}
-
-/**
- * Aggregated feedback for a window: average rating, total, recommend
- * percentage and the 1–5 distribution. `from`/`to` are ISO instants; both must
- * be given for the API to filter, otherwise it aggregates everything.
- */
-export function fetchFeedbackSummary({ from, to } = {}) {
-    const params = {};
-    if (from) params.from = from;
-    if (to) params.to = to;
-    return apiClient.get(`${VM_ENDPOINTS.FEEDBACK}/summary`, { params });
 }
 
 /** Submits a feedback response (on-site tablet or linked to a survey). */

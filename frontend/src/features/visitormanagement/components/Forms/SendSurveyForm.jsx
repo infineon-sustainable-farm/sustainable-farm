@@ -1,18 +1,15 @@
 import { useState } from "react";
-import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
 
 const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
 const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
 const ERROR_CLASS = "mt-1 text-xs text-error";
 
 /*
- * The API sends a survey to one visitor at a time and immediately: ON_SITE is
- * rejected (it is the tablet channel), and there is no bulk-recipient or
- * send-timing field. The mockup's recipient groups and timing are therefore not
- * reproduced.
+ * Surveys are sent by email only. The backend resolves the recipient from the
+ * visitor, so the channel is fixed and the email shown in the form is read-only
+ * information pulled from the selected visitor. The message field holds the
+ * survey link rather than a prose template.
  */
-const SENDABLE_CHANNELS = ["EMAIL", "SMS", "WHATSAPP"];
-
 export default function SendSurveyForm({
     visitors,
     isSubmitting,
@@ -22,16 +19,18 @@ export default function SendSurveyForm({
     onCancel,
 }) {
     const [visitorId, setVisitorId] = useState("");
-    const [channel, setChannel] = useState("EMAIL");
-    const [messageTemplate, setMessageTemplate] = useState("");
+    const [surveyLink, setSurveyLink] = useState("");
     const [fieldErrors, setFieldErrors] = useState({});
+
+    const selectedVisitor = visitors.find((visitor) => visitor.id === Number(visitorId));
+    const recipientEmail = selectedVisitor?.email ?? "";
 
     function validate() {
         const errors = {};
         if (!visitorId) errors.visitorId = "Pick the visitor.";
-        if (!channel) errors.channel = "Pick a channel.";
-        if (messageTemplate.trim().length > 500) {
-            errors.messageTemplate = "Message must be at most 500 characters.";
+        if (!surveyLink.trim()) errors.surveyLink = "Enter the survey link.";
+        else if (surveyLink.trim().length > 500) {
+            errors.surveyLink = "Survey link must be at most 500 characters.";
         }
         return errors;
     }
@@ -44,8 +43,8 @@ export default function SendSurveyForm({
 
         onSubmit({
             visitorId: Number(visitorId),
-            channel,
-            messageTemplate: messageTemplate.trim() || null,
+            channel: "EMAIL",
+            messageTemplate: surveyLink.trim(),
         });
     }
 
@@ -79,38 +78,37 @@ export default function SendSurveyForm({
                     )}
                 </div>
                 <div>
-                    <label htmlFor="sv-channel" className={LABEL_CLASS}>
-                        Channel
+                    <label htmlFor="sv-email" className={LABEL_CLASS}>
+                        Email
                     </label>
-                    <select
-                        id="sv-channel"
-                        value={channel}
-                        onChange={(event) => setChannel(event.target.value)}
-                        className={INPUT_CLASS}
-                    >
-                        {SENDABLE_CHANNELS.map((option) => (
-                            <option key={option} value={option}>
-                                {formatEnumLabel(option)}
-                            </option>
-                        ))}
-                    </select>
+                    <input
+                        id="sv-email"
+                        type="email"
+                        value={recipientEmail}
+                        readOnly
+                        placeholder="No email on file"
+                        className={`${INPUT_CLASS} bg-[#EFF5F3]`}
+                    />
+                    {selectedVisitor && !recipientEmail && (
+                        <p className={ERROR_CLASS}>This visitor has no email address.</p>
+                    )}
                 </div>
             </div>
 
             <div className="mt-4">
                 <label htmlFor="sv-message" className={LABEL_CLASS}>
-                    Message template
+                    Survey Link
                 </label>
                 <input
                     id="sv-message"
-                    type="text"
-                    value={messageTemplate}
-                    onChange={(event) => setMessageTemplate(event.target.value)}
-                    placeholder="Thank you for visiting Sustainable Farm! Share your feedback: [link]"
+                    type="url"
+                    value={surveyLink}
+                    onChange={(event) => setSurveyLink(event.target.value)}
+                    placeholder="https://forms.example.com/visit-survey"
                     className={INPUT_CLASS}
                 />
-                {fieldError("messageTemplate") && (
-                    <p className={ERROR_CLASS}>{fieldError("messageTemplate")}</p>
+                {fieldError("surveyLink") && (
+                    <p className={ERROR_CLASS}>{fieldError("surveyLink")}</p>
                 )}
             </div>
 

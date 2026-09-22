@@ -4,21 +4,48 @@ import RatingStars from "../RatingStars";
 const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
 const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
 const ERROR_CLASS = "mt-1 text-xs text-error";
+const YES = "Yes";
+const NO = "No";
 
 /*
- * The mockup's on-site tablet survey, submitted at the wrap-up stop. The API
- * requires a visitor, so the form starts with a visitor select; the origin is
- * set to ON_SITE by the backend when no survey is linked.
+ * The on-site tablet survey, submitted at the wrap-up stop. The visitor types
+ * their own name rather than being picked from a list, and the three questions
+ * are answered with simple Yes/No chips instead of free text. The rating stays
+ * a 1–5 star pick and a comment is optional. The backend records the response
+ * as ON_SITE with the typed name when no visitor is linked.
  */
+function ChoiceChips({ name, value, onChange, error }) {
+    return (
+        <div className="flex gap-2">
+            {[YES, NO].map((option) => (
+                <button
+                    key={option}
+                    type="button"
+                    name={name}
+                    aria-pressed={value === option}
+                    onClick={() => onChange(option === value ? "" : option)}
+                    className={`rounded-md border px-5 py-2 text-sm font-semibold text-primary transition ${
+                        value === option
+                            ? "border-primary bg-primary text-white"
+                            : "border-line bg-white hover:bg-[#F2FBF9]"
+                    }`}
+                >
+                    {option}
+                </button>
+            ))}
+            {error && <span className={ERROR_CLASS}>{error}</span>}
+        </div>
+    );
+}
+
 export default function TabletSurveyForm({
-    visitors,
     isSubmitting,
     submitError,
     serverFieldErrors,
     onSubmit,
     onCancel,
 }) {
-    const [visitorId, setVisitorId] = useState("");
+    const [visitorName, setVisitorName] = useState("");
     const [rating, setRating] = useState(0);
     const [briefingClear, setBriefingClear] = useState("");
     const [educationalValue, setEducationalValue] = useState("");
@@ -28,17 +55,16 @@ export default function TabletSurveyForm({
 
     function validate() {
         const errors = {};
-        if (!visitorId) errors.visitorId = "Pick the visitor.";
+        if (!visitorName.trim()) errors.visitorName = "Enter the visitor's name.";
+        else if (visitorName.trim().length > 150) {
+            errors.visitorName = "Name must be at most 150 characters.";
+        }
         if (rating < 1 || rating > 5) errors.rating = "Pick a rating from 1 to 5.";
-        for (const [field, value] of Object.entries({
-            briefingClear,
-            educationalValue,
-            recommend,
-            comment,
-        })) {
-            if (value.trim().length > 1000) {
-                errors[field] = "Must be at most 1000 characters.";
-            }
+        if (!briefingClear) errors.briefingClear = "Pick an answer.";
+        if (!educationalValue) errors.educationalValue = "Pick an answer.";
+        if (!recommend) errors.recommend = "Pick an answer.";
+        if (comment.trim().length > 1000) {
+            errors.comment = "Comment must be at most 1000 characters.";
         }
         return errors;
     }
@@ -50,11 +76,11 @@ export default function TabletSurveyForm({
         if (Object.keys(errors).length > 0) return;
 
         onSubmit({
-            visitorId: Number(visitorId),
+            visitorName: visitorName.trim(),
             rating,
-            briefingClear: briefingClear.trim() || null,
-            educationalValue: educationalValue.trim() || null,
-            recommend: recommend.trim() || null,
+            briefingClear,
+            educationalValue,
+            recommend,
             comment: comment.trim() || null,
         });
     }
@@ -62,27 +88,22 @@ export default function TabletSurveyForm({
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                    <label htmlFor="fb-visitor" className={LABEL_CLASS}>
-                        Visitor
+                    <label htmlFor="fb-name" className={LABEL_CLASS}>
+                        Your name
                     </label>
-                    <select
-                        id="fb-visitor"
-                        value={visitorId}
-                        onChange={(event) => setVisitorId(event.target.value)}
+                    <input
+                        id="fb-name"
+                        type="text"
+                        value={visitorName}
+                        onChange={(event) => setVisitorName(event.target.value)}
+                        placeholder="e.g. Alix VEBAMBA"
                         className={INPUT_CLASS}
-                    >
-                        <option value="">Select a visitor…</option>
-                        {visitors.map((visitor) => (
-                            <option key={visitor.id} value={visitor.id}>
-                                {visitor.fullName}
-                            </option>
-                        ))}
-                    </select>
-                    {fieldError("visitorId") && (
-                        <p className={ERROR_CLASS}>{fieldError("visitorId")}</p>
+                    />
+                    {fieldError("visitorName") && (
+                        <p className={ERROR_CLASS}>{fieldError("visitorName")}</p>
                     )}
                 </div>
                 <div>
@@ -93,59 +114,38 @@ export default function TabletSurveyForm({
             </div>
 
             <div>
-                <label htmlFor="fb-briefing" className={LABEL_CLASS}>
-                    Was the safety briefing clear?
-                </label>
-                <input
-                    id="fb-briefing"
-                    type="text"
+                <span className={LABEL_CLASS}>Was the safety briefing clear?</span>
+                <ChoiceChips
+                    name="briefingClear"
                     value={briefingClear}
-                    onChange={(event) => setBriefingClear(event.target.value)}
-                    placeholder="e.g. Yes, very clear"
-                    className={INPUT_CLASS}
+                    onChange={setBriefingClear}
+                    error={fieldError("briefingClear")}
                 />
-                {fieldError("briefingClear") && (
-                    <p className={ERROR_CLASS}>{fieldError("briefingClear")}</p>
-                )}
             </div>
 
             <div>
-                <label htmlFor="fb-education" className={LABEL_CLASS}>
-                    Did the educational program teach you something new?
-                </label>
-                <input
-                    id="fb-education"
-                    type="text"
+                <span className={LABEL_CLASS}>Did the educational program teach you something new?</span>
+                <ChoiceChips
+                    name="educationalValue"
                     value={educationalValue}
-                    onChange={(event) => setEducationalValue(event.target.value)}
-                    placeholder="e.g. Yes, especially the solar tracking"
-                    className={INPUT_CLASS}
+                    onChange={setEducationalValue}
+                    error={fieldError("educationalValue")}
                 />
-                {fieldError("educationalValue") && (
-                    <p className={ERROR_CLASS}>{fieldError("educationalValue")}</p>
-                )}
             </div>
 
             <div>
-                <label htmlFor="fb-recommend" className={LABEL_CLASS}>
-                    Would you recommend this visit?
-                </label>
-                <input
-                    id="fb-recommend"
-                    type="text"
+                <span className={LABEL_CLASS}>Would you recommend this visit?</span>
+                <ChoiceChips
+                    name="recommend"
                     value={recommend}
-                    onChange={(event) => setRecommend(event.target.value)}
-                    placeholder="e.g. Definitely"
-                    className={INPUT_CLASS}
+                    onChange={setRecommend}
+                    error={fieldError("recommend")}
                 />
-                {fieldError("recommend") && (
-                    <p className={ERROR_CLASS}>{fieldError("recommend")}</p>
-                )}
             </div>
 
             <div>
                 <label htmlFor="fb-comment" className={LABEL_CLASS}>
-                    Any comment?
+                    Any comment? <span className="text-muted">(optional)</span>
                 </label>
                 <input
                     id="fb-comment"
