@@ -48,8 +48,8 @@ export default function SlotForm({
 
         const errors = {};
         const capacity = Number(maxCapacity);
-        if (!Number.isInteger(capacity) || capacity < 1 || capacity > 10) {
-            errors.maxCapacity = "Capacity must be a whole number between 1 and 10.";
+        if (!Number.isInteger(capacity) || capacity < 1) {
+            errors.maxCapacity = "Capacity must be a whole number of at least 1.";
         }
         if (!date) {
             errors.date = "Pick a day.";
@@ -126,7 +126,6 @@ export default function SlotForm({
                         id="slot-capacity"
                         type="number"
                         min="1"
-                        max="10"
                         value={maxCapacity}
                         onChange={(event) => setMaxCapacity(event.target.value)}
                         className="w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"

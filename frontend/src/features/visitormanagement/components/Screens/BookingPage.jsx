@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import {
     useActivities,
@@ -17,18 +17,6 @@ import BookingForm from "../Forms/BookingForm";
 import BookingsTable from "../BookingsTable";
 import OccupancyBars from "../OccupancyBars";
 import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
-
-/*
- * The four steps of the booking journey, exactly as the mockup's flow strip
- * describes them. They are explanatory, not interactive: the mockup does not
- * define a booking creation form on this screen.
- */
-const FLOW_STEPS = [
-    "Choose time slot & tour type",
-    "Registration form",
-    "Email confirmation",
-    "Reminder 24h before",
-];
 
 export default function BookingPage() {
     const [activityFormState, setActivityFormState] = useState({ open: false, activity: null });
@@ -150,31 +138,10 @@ export default function BookingPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Agritourism booking system
                 </h2>
-
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0">
-                    {FLOW_STEPS.map((step, index) => (
-                        <Fragment key={step}>
-                            {index > 0 && (
-                                <span className="hidden self-center px-2.5 text-lg text-accent sm:block">
-                                    →
-                                </span>
-                            )}
-                            <div className="border border-line border-t-[3px] border-t-primary bg-[#F7FDFB] px-4 py-3.5 text-[13px] sm:min-w-[140px]">
-                                <div className="mb-1 text-[11px] text-primary">Step {index + 1}</div>
-                                {step}
-                            </div>
-                        </Fragment>
-                    ))}
-                </div>
-
-                <p className="mt-6 text-[11px] text-muted">
-                    Each activity carries its own price and capacity; payment is accepted in cash or
-                    mobile money. A booking must be paid before it can be confirmed.
-                </p>
 
                 <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">Bookings</h3>
 

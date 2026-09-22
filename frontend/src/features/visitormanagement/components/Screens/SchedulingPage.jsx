@@ -110,7 +110,7 @@ export default function SchedulingPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Farm tour scheduling
                 </h2>
@@ -238,9 +238,10 @@ export default function SchedulingPage() {
                             cancelError={cancelError}
                         />
                         <p className="mt-6 text-[11px] text-muted">
-                            Max capacity: 10 visitors/slot · 2 slots per day · closed on Sundays.
-                            Past weeks are read-only. Cancelling a slot also cancels its
-                            registrations and bookings.
+                            2 slots per day · closed on Sundays. Past weeks are read-only. The
+                            capacity is set per slot in the form, so a school group can get a
+                            dedicated slot. Cancelling a slot also cancels its registrations and
+                            bookings.
                         </p>
                     </>
                 )}
