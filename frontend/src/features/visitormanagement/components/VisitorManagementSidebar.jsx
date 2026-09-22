@@ -91,10 +91,11 @@ export default function VisitorManagementSidebar() {
                     transition-transform duration-300 md:translate-x-0
                     ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
-                <div className="mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-full bg-white shadow-lg">
-                    {/* The application's logo. Empty alt: the module name follows
-                        immediately, in text below. */}
-                    <img src="/logo.webp" alt="" className="h-4/5 w-4/5 rounded-full" />
+                <div className="mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full bg-white shadow-lg">
+                    {/* The application's logo, clipped to the white circle so the
+                        badge reads as a perfect round. Empty alt: the module name
+                        follows immediately, in text below. */}
+                    <img src="/logo.webp" alt="" className="h-full w-full object-cover" />
                 </div>
 
                 <p className="font-heading mb-2.5 border-b border-white/25 px-1.5 pb-3.5 text-center text-sm font-bold tracking-widest text-white uppercase">
