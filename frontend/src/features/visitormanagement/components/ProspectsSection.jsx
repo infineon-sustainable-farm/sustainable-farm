@@ -33,7 +33,7 @@ export default function ProspectsSection() {
     );
 
     return (
-        <section className="mt-6 rounded-lg border border-line bg-[#F7FDFB] p-4.5">
+        <section className="mt-6 rounded-lg border border-line bg-[#F7FDFB] p-4.5 animate-fade-up">
             <div className="flex flex-wrap items-center gap-3">
                 <div>
                     <h3 className="font-heading text-[17px] font-bold text-ink">
@@ -77,7 +77,7 @@ export default function ProspectsSection() {
             {open && !isPending && !isError && (
                 <>
                     <div className="mt-4 overflow-x-auto">
-                        <table className="w-full border-collapse text-sm">
+                        <table className="vm-table w-full border-collapse text-sm">
                             <thead>
                                 <tr>
                                     {COLUMNS.map((column) => (

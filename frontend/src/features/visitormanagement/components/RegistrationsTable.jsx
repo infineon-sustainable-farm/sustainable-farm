@@ -96,7 +96,7 @@ export default function RegistrationsTable({
 }) {
     return (
         <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
+            <table className="vm-table w-full border-collapse text-sm">
                 <thead>
                     <tr>
                         {COLUMNS.map((column) => (

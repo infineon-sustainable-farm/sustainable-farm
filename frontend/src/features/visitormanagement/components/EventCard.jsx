@@ -25,6 +25,7 @@ export default function EventCard({
     onAction,
     onEdit,
     onParticipants,
+    delay = 0,
 }) {
     const isPending = pendingAction?.id === event.id;
     const failed = actionError?.id === event.id;
@@ -34,7 +35,10 @@ export default function EventCard({
     const endTime = event.endDateTime?.slice(11, 19);
 
     return (
-        <article className="flex min-h-[150px] flex-col rounded-lg border border-line bg-white p-4.5">
+        <article
+            className="flex min-h-[150px] flex-col rounded-lg border border-line bg-white p-4.5 animate-fade-up"
+            style={{ animationDelay: `${delay}ms` }}
+        >
             <h3 className="font-heading text-[17px] leading-snug font-bold text-ink">
                 {event.title}
             </h3>
