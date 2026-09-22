@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import {
     useCreateVisitor,
+    useDeleteVisitor,
     useUpdateVisitor,
     useVisitors,
 } from "../../hooks/useVisitors";
@@ -11,6 +12,8 @@ import VisitorForm from "../Forms/VisitorForm";
 
 const TINY_BUTTON =
     "rounded border border-[#C3D8D4] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-[#ECFAF7] disabled:opacity-60";
+const TINY_DANGER =
+    "rounded border border-[#EDC9C9] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-error hover:bg-[#FBEAEA] disabled:opacity-60";
 
 const COLUMNS = [
     "Name",
@@ -36,6 +39,67 @@ function matchesSearch(visitor, query) {
         .some((value) => value.toLowerCase().includes(needle));
 }
 
+/**
+ * One row's actions. Deletion asks for a confirmation because it is a hard
+ * delete: the backend accepts it only while the visitor has no registrations,
+ * feedback or surveys attached.
+ */
+function VisitorActions({ visitor, isPending, deleteError, onDelete, onEdit }) {
+    const [confirming, setConfirming] = useState(false);
+
+    if (confirming) {
+        return (
+            <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] text-error">Delete?</span>
+                <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => {
+                        setConfirming(false);
+                        onDelete(visitor);
+                    }}
+                    className={TINY_DANGER}
+                >
+                    {isPending ? "…" : "Yes"}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setConfirming(false)}
+                    className={TINY_BUTTON}
+                >
+                    No
+                </button>
+                {deleteError && (
+                    <p className="w-full text-[11px] text-error">{deleteError}</p>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-wrap items-center gap-1.5">
+            <button
+                type="button"
+                onClick={() => onEdit(visitor)}
+                className={TINY_BUTTON}
+            >
+                ✎ edit
+            </button>
+            <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setConfirming(true)}
+                className={TINY_DANGER}
+            >
+                {isPending ? "deleting…" : "✕ delete"}
+            </button>
+            {deleteError && (
+                <p className="w-full text-[11px] text-error">{deleteError}</p>
+            )}
+        </div>
+    );
+}
+
 export default function VisitorsPage() {
     const [search, setSearch] = useState("");
     const [formState, setFormState] = useState({ open: false, visitor: null });
@@ -55,9 +119,19 @@ export default function VisitorsPage() {
 
     const createMutation = useCreateVisitor();
     const updateMutation = useUpdateVisitor();
+    const deleteMutation = useDeleteVisitor();
 
     const editingVisitor = formState.visitor;
     const formMutation = editingVisitor ? updateMutation : createMutation;
+
+    const pendingDeleteId = deleteMutation.isPending
+        ? deleteMutation.variables
+        : null;
+    const deleteError = deleteMutation.isError
+        ? { id: deleteMutation.variables, message: deleteMutation.error.message }
+        : null;
+    const deleteErrorFor = (id) =>
+        deleteError?.id === id ? deleteError.message : null;
 
     const visibleVisitors = (visitors ?? []).filter((visitor) =>
         matchesSearch(visitor, search),
@@ -95,9 +169,13 @@ export default function VisitorsPage() {
         }
     }
 
+    function handleDelete(visitor) {
+        deleteMutation.mutate(visitor.id);
+    }
+
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Visitors
                 </h2>
@@ -177,7 +255,7 @@ export default function VisitorsPage() {
                 {!isPending && !isError && (
                     <>
                         <div className="overflow-x-auto">
-                            <table className="w-full border-collapse text-sm">
+                            <table className="vm-table w-full border-collapse text-sm">
                                 <thead>
                                     <tr>
                                         {COLUMNS.map((column) => (
@@ -231,13 +309,13 @@ export default function VisitorsPage() {
                                                 {visitor.specialNeeds ?? "—"}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEdit(visitor)}
-                                                    className={TINY_BUTTON}
-                                                >
-                                                    ✎ edit
-                                                </button>
+                                                <VisitorActions
+                                                    visitor={visitor}
+                                                    isPending={pendingDeleteId === visitor.id}
+                                                    deleteError={deleteErrorFor(visitor.id)}
+                                                    onDelete={handleDelete}
+                                                    onEdit={openEdit}
+                                                />
                                             </td>
                                         </tr>
                                     ))}
@@ -245,8 +323,9 @@ export default function VisitorsPage() {
                             </table>
                         </div>
                         <p className="mt-6 text-[11px] text-muted">
-                            Visitors are created here or from the registration form; the API offers
-                            no deletion, and a visitor is kept even after their registrations end.
+                            Visitors are created here or from the registration form. Removing a
+                            visitor is a hard delete: only visitors without any registrations,
+                            feedback or surveys attached can be deleted.
                         </p>
                     </>
                 )}
