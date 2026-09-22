@@ -4,7 +4,9 @@ import { VM_ENDPOINTS } from "./endpoints";
 /**
  * Aggregated KPIs for the Visitor Management dashboard: weekly visitor counts,
  * booked slots, pending briefings, average satisfaction plus the upcoming
- * events and the pending staff tasks. No parameters.
+ * events and the pending staff tasks. No parameters: the backend always
+ * reports the current week, so the figures roll over automatically when a new
+ * week starts.
  */
 export function fetchDashboard() {
     return apiClient.get(VM_ENDPOINTS.DASHBOARD);
@@ -21,7 +23,7 @@ export function fetchTimeSlots() {
 
 /**
  * Creates a time slot. `data` is a TimeSlotRequest: date (YYYY-MM-DD),
- * startTime/endTime (HH:mm), maxCapacity (1–10) and an optional guideId.
+ * startTime/endTime (HH:mm), maxCapacity (at least 1) and an optional guideId.
  */
 export function createTimeSlot(data) {
     return apiClient.post(VM_ENDPOINTS.TIME_SLOTS, data);
@@ -53,6 +55,24 @@ export function fetchStaff() {
     return apiClient.get(VM_ENDPOINTS.STAFF);
 }
 
+/** Creates a staff member from a StaffRequest payload. */
+export function createStaff(data) {
+    return apiClient.post(VM_ENDPOINTS.STAFF, data);
+}
+
+/**
+ * Updates a staff member. Sending `active: true` is also how a deactivated
+ * member is brought back, since the API only offers deactivation.
+ */
+export function updateStaff(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.STAFF}/${id}`, data);
+}
+
+/** Deactivates a staff member (the API has no hard delete). */
+export function deactivateStaff(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.STAFF}/${id}`);
+}
+
 /** Every visitor, used to join language and type onto registrations. */
 export function fetchVisitors() {
     return apiClient.get(VM_ENDPOINTS.VISITORS);
@@ -69,11 +89,28 @@ export function updateVisitor(id, data) {
 }
 
 /**
+ * Deletes a visitor. The API refuses while the visitor still has
+ * registrations, feedback or surveys; only unattached duplicates can be
+ * removed this way.
+ */
+export function deleteVisitor(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.VISITORS}/${id}`);
+}
+
+/**
  * The registration queue, most recent first. The endpoint is paginated; the
  * screen asks for one large page rather than hiding rows behind pagination.
  */
 export function fetchRegistrations({ page = 0, size = 100 } = {}) {
     return apiClient.get(VM_ENDPOINTS.REGISTRATIONS, { params: { page, size } });
+}
+
+/**
+ * The commercial prospects: registrations the API flags automatically when the
+ * visit purpose is a purchase, a partnership or an investment.
+ */
+export function fetchProspects() {
+    return apiClient.get(VM_ENDPOINTS.REGISTRATIONS, { params: { prospect: true } });
 }
 
 /**
@@ -102,6 +139,14 @@ export function checkInRegistration(id) {
 }
 
 /**
+ * Cancels a registration. The API refuses once the visitor has checked in,
+ * and releases the slot seats either way.
+ */
+export function cancelRegistration(id) {
+    return apiClient.patch(`${VM_ENDPOINTS.REGISTRATIONS}/${id}/cancel`);
+}
+
+/**
  * The bookable slots of a date with their remaining capacity, used by the
  * registration form. Cancelled slots are already filtered out by the API.
  */
@@ -112,6 +157,24 @@ export function fetchAvailability(date) {
 /** The standard tour stops, ordered by position by the API. */
 export function fetchTourStops() {
     return apiClient.get(VM_ENDPOINTS.TOUR_STOPS);
+}
+
+/** Creates a tour stop from a TourStopRequest payload. */
+export function createTourStop(data) {
+    return apiClient.post(VM_ENDPOINTS.TOUR_STOPS, data);
+}
+
+/**
+ * Updates a tour stop. The payload has no active flag, so deactivation is
+ * one-way through the API.
+ */
+export function updateTourStop(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.TOUR_STOPS}/${id}`, data);
+}
+
+/** Deactivates a tour stop (no hard delete, no reactivation endpoint). */
+export function deactivateTourStop(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.TOUR_STOPS}/${id}`);
 }
 
 /** Every workshop / tour template, all statuses included. */
@@ -137,4 +200,200 @@ export function publishWorkshop(id) {
 /** Deactivates an ACTIVE workshop (the API rejects any other status). */
 export function deactivateWorkshop(id) {
     return apiClient.post(`${VM_ENDPOINTS.WORKSHOPS}/${id}/deactivate`);
+}
+
+/** The safety briefing attached to a registration (404 when there is none). */
+export function fetchBriefing(registrationId) {
+    return apiClient.get(`${VM_ENDPOINTS.REGISTRATIONS}/${registrationId}/briefing`);
+}
+
+/**
+ * Records a briefing as delivered. `data` is a BriefingDeliverRequest:
+ * staffMember (required) and an optional signature. The API returns the
+ * briefing unchanged when it is already DONE.
+ */
+export function deliverBriefing(registrationId, data) {
+    return apiClient.patch(
+        `${VM_ENDPOINTS.REGISTRATIONS}/${registrationId}/briefing/deliver`,
+        data,
+    );
+}
+
+/** Every agritourism activity, active and inactive. */
+export function fetchActivities() {
+    return apiClient.get(VM_ENDPOINTS.ACTIVITIES);
+}
+
+/** Creates an activity from an AgriActivityRequest payload. */
+export function createActivity(data) {
+    return apiClient.post(VM_ENDPOINTS.ACTIVITIES, data);
+}
+
+/** Updates an activity's fields (the payload has no active flag). */
+export function updateActivity(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.ACTIVITIES}/${id}`, data);
+}
+
+/**
+ * Deactivates an activity. The API also cancels every booking of that
+ * activity, and there is no reactivation call, so the screen asks for
+ * confirmation first.
+ */
+export function deactivateActivity(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.ACTIVITIES}/${id}`);
+}
+
+/**
+ * The bookings. Without filters the endpoint is paginated and returns a Page;
+ * with one filter (status, activityId or date — the API applies only the first
+ * one) it returns a plain array. The screen asks for one large page.
+ */
+export function fetchBookings({ page = 0, size = 100, status, activityId, date } = {}) {
+    const params = {};
+    if (status) params.status = status;
+    if (activityId) params.activityId = activityId;
+    if (date) params.date = date;
+    if (!status && !activityId && !date) {
+        params.page = page;
+        params.size = size;
+    }
+    return apiClient.get(VM_ENDPOINTS.BOOKINGS, { params });
+}
+
+/** Updates a booking from a BookingRequest payload. */
+export function updateBooking(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.BOOKINGS}/${id}`, data);
+}
+
+/** Creates a booking from a BookingRequest payload. */
+export function createBooking(data) {
+    return apiClient.post(VM_ENDPOINTS.BOOKINGS, data);
+}
+
+/*
+ * Booking lifecycle. The API enforces the order: a booking must be PAID before
+ * it can be confirmed, only a CONFIRMED booking can be completed, and
+ * cancelling refunds a payment already recorded. The table only offers the
+ * action each row currently allows.
+ */
+export function payBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/pay`);
+}
+
+export function confirmBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/confirm`);
+}
+
+export function completeBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/complete`);
+}
+
+export function cancelBooking(id) {
+    return apiClient.post(`${VM_ENDPOINTS.BOOKINGS}/${id}/cancel`);
+}
+
+/** Occupancy per activity: capacity, booked and percentage. */
+export function fetchOccupancy() {
+    return apiClient.get(`${VM_ENDPOINTS.BOOKINGS}/occupancy`);
+}
+
+/**
+ * The feedback responses. The API applies visitorId first, otherwise a
+ * from/to window when both are given, otherwise it paginates. Each branch
+ * returns a different shape (array or Page), normalised by the hook.
+ */
+export function fetchFeedback({ page = 0, size = 100, visitorId, from, to } = {}) {
+    if (visitorId) {
+        return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { visitorId } });
+    }
+    if (from && to) {
+        return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { from, to } });
+    }
+    return apiClient.get(VM_ENDPOINTS.FEEDBACK, { params: { page, size } });
+}
+
+/** Submits a feedback response (on-site tablet or linked to a survey). */
+export function submitFeedback(data) {
+    return apiClient.post(VM_ENDPOINTS.FEEDBACK, data);
+}
+
+/** Routes a feedback response to a team ("Sales", "Energy", …). */
+export function routeFeedback(id, data) {
+    return apiClient.patch(`${VM_ENDPOINTS.FEEDBACK}/${id}/route`, data);
+}
+
+/**
+ * The post-visit surveys. The API applies visitorId first, otherwise status,
+ * otherwise it paginates; the hook normalises the two shapes to a list.
+ */
+export function fetchSurveys({ page = 0, size = 100, visitorId, status } = {}) {
+    if (visitorId) {
+        return apiClient.get(VM_ENDPOINTS.SURVEYS, { params: { visitorId } });
+    }
+    if (status) {
+        return apiClient.get(VM_ENDPOINTS.SURVEYS, { params: { status } });
+    }
+    return apiClient.get(VM_ENDPOINTS.SURVEYS, { params: { page, size } });
+}
+
+/**
+ * Sends a survey to one visitor. `data` is a SurveyRequest: visitorId,
+ * channel (EMAIL/SMS/WHATSAPP — ON_SITE is rejected by the API) and an
+ * optional message template.
+ */
+export function sendSurvey(data) {
+    return apiClient.post(VM_ENDPOINTS.SURVEYS, data);
+}
+
+/**
+ * The events. Without filters the endpoint is paginated and returns a Page;
+ * with one filter (type or date — the API applies only the first one) it
+ * returns a plain array. The screen asks for one large page.
+ */
+export function fetchEvents({ page = 0, size = 100, type, date } = {}) {
+    const params = {};
+    if (type) params.type = type;
+    if (date) params.date = date;
+    if (!type && !date) {
+        params.page = page;
+        params.size = size;
+    }
+    return apiClient.get(VM_ENDPOINTS.EVENTS, { params });
+}
+
+/** Creates an event from an EventRequest payload (stored as DRAFT). */
+export function createEvent(data) {
+    return apiClient.post(VM_ENDPOINTS.EVENTS, data);
+}
+
+/** Updates an event from an EventRequest payload. */
+export function updateEvent(id, data) {
+    return apiClient.put(`${VM_ENDPOINTS.EVENTS}/${id}`, data);
+}
+
+/** Publishes a DRAFT event (the API rejects any other status). */
+export function publishEvent(id) {
+    return apiClient.post(`${VM_ENDPOINTS.EVENTS}/${id}/publish`);
+}
+
+/**
+ * Cancels an event. The API also cancels its registrations. There is no
+ * "complete" call: the visit lifecycle job moves past events to COMPLETED.
+ */
+export function cancelEvent(id) {
+    return apiClient.delete(`${VM_ENDPOINTS.EVENTS}/${id}`);
+}
+
+/** The registrations attached to one event, for the participants panel. */
+export function fetchEventRegistrations(eventId) {
+    return apiClient.get(`${VM_ENDPOINTS.EVENTS}/${eventId}/registrations`);
+}
+
+/**
+ * Registers a visitor on an event. `data` is an EventRegistrationRequest:
+ * visitorId and visitPurpose. The API only accepts PUBLISHED events and
+ * enforces the event capacity.
+ */
+export function registerEventAttendee(eventId, data) {
+    return apiClient.post(`${VM_ENDPOINTS.EVENTS}/${eventId}/register`, data);
 }

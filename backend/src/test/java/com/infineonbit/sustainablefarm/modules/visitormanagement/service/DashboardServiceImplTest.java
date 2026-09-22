@@ -87,7 +87,11 @@ class DashboardServiceImplTest {
         Registration marie = registration("Marie Dubois", monday);
         Registration diallo = registration("A. Diallo", monday.plusDays(1));
         when(registrationRepository.countVisitorsBetween(eq(monday), eq(sunday), any())).thenReturn(5L);
-        when(registrationRepository.countBusySlotsBetween(eq(monday), eq(sunday), any())).thenReturn(3L);
+        when(bookingRepository.sumPeopleCountBetween(eq(monday), eq(sunday), any())).thenReturn(2L);
+        when(registrationRepository.findBusySlotIdsBetween(eq(monday), eq(sunday), any()))
+                .thenReturn(List.of(1L, 2L, 3L));
+        when(bookingRepository.findBusySlotIdsBetween(eq(monday), eq(sunday), any()))
+                .thenReturn(List.of(3L, 4L));
         when(registrationRepository.findPendingBriefingsBetween(eq(monday), eq(sunday), any(), any()))
                 .thenReturn(List.of(marie, diallo));
         when(feedbackService.summary(any(Instant.class), any(Instant.class)))
@@ -111,8 +115,8 @@ class DashboardServiceImplTest {
 
         DashboardResponse dashboard = service.getDashboard();
 
-        assertThat(dashboard.getVisitorsThisWeek()).isEqualTo(5);
-        assertThat(dashboard.getSlotsBooked()).isEqualTo(3);
+        assertThat(dashboard.getVisitorsThisWeek()).isEqualTo(7);
+        assertThat(dashboard.getSlotsBooked()).isEqualTo(4);
         assertThat(dashboard.getPendingBriefings()).isEqualTo(2);
         assertThat(dashboard.getAverageSatisfaction()).isEqualTo(4.5);
         assertThat(dashboard.getUpcomingEvents()).hasSize(1);
@@ -131,7 +135,11 @@ class DashboardServiceImplTest {
         LocalDate monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate sunday = monday.plusDays(6);
         when(registrationRepository.countVisitorsBetween(eq(monday), eq(sunday), any())).thenReturn(0L);
-        when(registrationRepository.countBusySlotsBetween(eq(monday), eq(sunday), any())).thenReturn(0L);
+        when(bookingRepository.sumPeopleCountBetween(eq(monday), eq(sunday), any())).thenReturn(0L);
+        when(registrationRepository.findBusySlotIdsBetween(eq(monday), eq(sunday), any()))
+                .thenReturn(Collections.emptyList());
+        when(bookingRepository.findBusySlotIdsBetween(eq(monday), eq(sunday), any()))
+                .thenReturn(Collections.emptyList());
         when(registrationRepository.findPendingBriefingsBetween(eq(monday), eq(sunday), any(), any()))
                 .thenReturn(Collections.emptyList());
         when(feedbackService.summary(any(Instant.class), any(Instant.class)))
@@ -154,7 +162,11 @@ class DashboardServiceImplTest {
         LocalDate monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate sunday = monday.plusDays(6);
         when(registrationRepository.countVisitorsBetween(eq(monday), eq(sunday), any())).thenReturn(0L);
-        when(registrationRepository.countBusySlotsBetween(eq(monday), eq(sunday), any())).thenReturn(0L);
+        when(bookingRepository.sumPeopleCountBetween(eq(monday), eq(sunday), any())).thenReturn(0L);
+        when(registrationRepository.findBusySlotIdsBetween(eq(monday), eq(sunday), any()))
+                .thenReturn(Collections.emptyList());
+        when(bookingRepository.findBusySlotIdsBetween(eq(monday), eq(sunday), any()))
+                .thenReturn(Collections.emptyList());
         when(registrationRepository.findPendingBriefingsBetween(eq(monday), eq(sunday), any(), any()))
                 .thenReturn(Collections.emptyList());
         when(feedbackService.summary(any(Instant.class), any(Instant.class)))

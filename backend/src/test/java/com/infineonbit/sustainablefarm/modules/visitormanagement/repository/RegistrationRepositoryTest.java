@@ -187,12 +187,12 @@ class RegistrationRepositoryTest {
     }
 
     @Test
-    void countBusySlotsBetween_countsDistinctSlots() {
+    void findBusySlotIdsBetween_countsDistinctSlots() {
         createReg(visitor, slot, RegistrationStatus.CONFIRMED);
         createReg(newVisitor("Second", VisitorType.GROUP), slot, RegistrationStatus.CONFIRMED);
 
-        long count = repository.countBusySlotsBetween(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 9),
-                List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED));
+        long count = repository.findBusySlotIdsBetween(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 9),
+                List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED)).size();
         assertThat(count).isEqualTo(1);
     }
 

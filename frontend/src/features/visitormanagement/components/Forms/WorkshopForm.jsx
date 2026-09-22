@@ -8,10 +8,13 @@ const ERROR_CLASS = "mt-1 text-xs text-error";
  * Inline workshop form of the mockup, used both to create (status DRAFT) and
  * to edit a workshop. The mockup's "assign" action has no endpoint of its own:
  * assigning a facilitator is editing the facilitator field, which this form
- * does.
+ * does. Facilitators are the guides, so the field is a select built from the
+ * active guides; a previously stored facilitator who is no longer in the list
+ * keeps an option so the record can be saved unchanged.
  */
 export default function WorkshopForm({
     workshop,
+    guides,
     isSubmitting,
     submitError,
     serverFieldErrors,
@@ -45,14 +48,16 @@ export default function WorkshopForm({
         } else if (targetGroup.trim().length > 60) {
             errors.targetGroup = "Target group must be at most 60 characters.";
         }
-        if (facilitator.trim().length > 100) {
-            errors.facilitator = "Facilitator must be at most 100 characters.";
-        }
         if (description.trim().length > 1000) {
             errors.description = "Description must be at most 1000 characters.";
         }
         return errors;
     }
+
+    const facilitatorInList = (guides ?? []).some(
+        (guide) => guide.fullName === workshop?.facilitator,
+    );
+    const hasLegacyFacilitator = isEditing && workshop?.facilitator && !facilitatorInList;
 
     function handleSubmit(event) {
         event.preventDefault();
@@ -64,7 +69,7 @@ export default function WorkshopForm({
             name: name.trim(),
             durationMinutes: Number(durationMinutes),
             targetGroup: targetGroup.trim(),
-            facilitator: facilitator.trim() || null,
+            facilitator: facilitator || null,
             description: description.trim() || null,
         });
     }
@@ -74,7 +79,7 @@ export default function WorkshopForm({
     return (
         <form
             onSubmit={handleSubmit}
-            className="mb-4.5 rounded-lg border border-dashed border-primary bg-[#F2FBF9] p-4.5"
+           
         >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
@@ -129,16 +134,24 @@ export default function WorkshopForm({
 
                 <div>
                     <label htmlFor="ws-facilitator" className={LABEL_CLASS}>
-                        Facilitator
+                        Facilitator (guide)
                     </label>
-                    <input
+                    <select
                         id="ws-facilitator"
-                        type="text"
                         value={facilitator}
                         onChange={(event) => setFacilitator(event.target.value)}
-                        placeholder="e.g. Alix"
                         className={INPUT_CLASS}
-                    />
+                    >
+                        <option value="">Select a guide…</option>
+                        {hasLegacyFacilitator && (
+                            <option value={workshop.facilitator}>{workshop.facilitator}</option>
+                        )}
+                        {(guides ?? []).map((guide) => (
+                            <option key={guide.id} value={guide.fullName}>
+                                {guide.fullName}
+                            </option>
+                        ))}
+                    </select>
                     {fieldError("facilitator") && (
                         <p className={ERROR_CLASS}>{fieldError("facilitator")}</p>
                     )}

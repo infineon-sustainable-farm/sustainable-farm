@@ -6,11 +6,12 @@ import {
     useGuides,
     useTimeSlots,
     useUpdateTimeSlot,
-} from "../hooks/useScheduling";
-import { addDays, formatWeekLabel, startOfWeek, toIsoDate } from "../utils/format";
-import { SLOT_PRESETS } from "../utils/scheduling";
-import SchedulingGrid from "./SchedulingGrid";
-import SlotForm from "./SlotForm";
+} from "../../hooks/useScheduling";
+import { addDays, formatWeekLabel, startOfWeek, toIsoDate } from "../../utils/format";
+import { SLOT_PRESETS } from "../../utils/scheduling";
+import SchedulingGrid from "../SchedulingGrid";
+import Modal from "../Modal";
+import SlotForm from "../Forms/SlotForm";
 
 /*
  * Rows of the grid: the two canonical farm slots always show, and any slot
@@ -32,6 +33,7 @@ export default function SchedulingPage() {
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
     const [guideFilter, setGuideFilter] = useState("");
     const [formState, setFormState] = useState({ open: false, slot: null });
+    const currentWeekStart = startOfWeek(new Date());
 
     useEffect(() => {
         document.title = "Farm Tour Scheduling — Visitor Management";
@@ -63,7 +65,10 @@ export default function SchedulingPage() {
     const formMutation = formSlot ? updateMutation : createMutation;
 
     function changeWeek(offset) {
-        setWeekStart((current) => addDays(current, offset * 7));
+        const target = addDays(weekStart, offset * 7);
+        // Past weeks are read-only: no picking a closed week in the past.
+        if (target < currentWeekStart) return;
+        setWeekStart(target);
         setFormState({ open: false, slot: null });
         createMutation.reset();
         updateMutation.reset();
@@ -105,7 +110,7 @@ export default function SchedulingPage() {
 
     return (
         <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7">
+            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
                 <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
                     Farm tour scheduling
                 </h2>
@@ -115,7 +120,13 @@ export default function SchedulingPage() {
                         <button
                             type="button"
                             onClick={() => changeWeek(-1)}
-                            className="rounded border border-line bg-white px-3.5 py-1.5 text-xs text-primary hover:bg-[#F2FBF9]"
+                            disabled={weekStart <= currentWeekStart}
+                            title={
+                                weekStart <= currentWeekStart
+                                    ? "Past weeks are read-only"
+                                    : "Previous week"
+                            }
+                            className="rounded border border-line bg-white px-3.5 py-1.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             ‹ Prev
                         </button>
@@ -166,17 +177,22 @@ export default function SchedulingPage() {
                 </div>
 
                 {formState.open && (
-                    <SlotForm
-                        key={`${toIsoDate(weekStart)}-${formSlot?.id ?? "new"}`}
-                        weekStart={weekStart}
-                        guides={guides ?? []}
-                        guidesError={guidesError}
-                        slot={formSlot}
-                        isSubmitting={formMutation.isPending}
-                        submitError={formMutation.error?.message}
-                        onSubmit={handleSubmit}
-                        onCancel={closeForm}
-                    />
+                    <Modal
+                        title={formSlot ? "Edit slot" : "New slot"}
+                        onClose={closeForm}
+                    >
+                        <SlotForm
+                            key={`${toIsoDate(weekStart)}-${formSlot?.id ?? "new"}`}
+                            weekStart={weekStart}
+                            guides={guides ?? []}
+                            guidesError={guidesError}
+                            slot={formSlot}
+                            isSubmitting={formMutation.isPending}
+                            submitError={formMutation.error?.message}
+                            onSubmit={handleSubmit}
+                            onCancel={closeForm}
+                        />
+                    </Modal>
                 )}
 
                 {isPending && (
@@ -222,8 +238,10 @@ export default function SchedulingPage() {
                             cancelError={cancelError}
                         />
                         <p className="mt-6 text-[11px] text-muted">
-                            Max capacity: 10 visitors/slot · 2 slots per day · closed on Sundays.
-                            Cancelling a slot also cancels its registrations and bookings.
+                            2 slots per day · closed on Sundays. Past weeks are read-only. The
+                            capacity is set per slot in the form, so a school group can get a
+                            dedicated slot. Cancelling a slot also cancels its registrations and
+                            bookings.
                         </p>
                     </>
                 )}

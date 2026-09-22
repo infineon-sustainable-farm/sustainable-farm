@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { addDays, formatTimeRange, formatWeekday, toIsoDate } from "../utils/format";
-import { SLOT_PRESETS } from "../utils/scheduling";
+import { addDays, formatTimeRange, formatWeekday, toIsoDate } from "../../utils/format";
+import { SLOT_PRESETS } from "../../utils/scheduling";
 
 function rangeKey(startTime, endTime) {
     return `${startTime}-${endTime}`;
@@ -48,8 +48,8 @@ export default function SlotForm({
 
         const errors = {};
         const capacity = Number(maxCapacity);
-        if (!Number.isInteger(capacity) || capacity < 1 || capacity > 10) {
-            errors.maxCapacity = "Capacity must be a whole number between 1 and 10.";
+        if (!Number.isInteger(capacity) || capacity < 1) {
+            errors.maxCapacity = "Capacity must be a whole number of at least 1.";
         }
         if (!date) {
             errors.date = "Pick a day.";
@@ -68,10 +68,7 @@ export default function SlotForm({
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="mb-4.5 rounded-lg border border-dashed border-primary bg-[#F2FBF9] p-4.5"
-        >
+        <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div>
                     <label
@@ -129,7 +126,6 @@ export default function SlotForm({
                         id="slot-capacity"
                         type="number"
                         min="1"
-                        max="10"
                         value={maxCapacity}
                         onChange={(event) => setMaxCapacity(event.target.value)}
                         className="w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"

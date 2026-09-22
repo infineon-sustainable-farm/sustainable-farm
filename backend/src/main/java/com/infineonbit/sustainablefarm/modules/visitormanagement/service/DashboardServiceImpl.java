@@ -23,7 +23,9 @@ import java.time.ZoneOffset;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional(readOnly = true)
@@ -33,6 +35,8 @@ public class DashboardServiceImpl implements DashboardService {
             List.of(RegistrationStatus.REJECTED, RegistrationStatus.CANCELLED);
     private static final List<RegistrationStatus> ACTIVE_REGISTRATIONS =
             List.of(RegistrationStatus.CONFIRMED, RegistrationStatus.CHECKED_IN);
+    private static final List<BookingStatus> EXCLUDED_BOOKINGS =
+            List.of(BookingStatus.CANCELLED);
 
     private final RegistrationRepository registrationRepository;
     private final BookingRepository bookingRepository;
@@ -59,8 +63,12 @@ public class DashboardServiceImpl implements DashboardService {
         Instant weekFrom = monday.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant weekTo = sunday.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
 
-        long visitors = registrationRepository.countVisitorsBetween(monday, sunday, EXCLUDED_REGISTRATIONS);
-        long slots = registrationRepository.countBusySlotsBetween(monday, sunday, EXCLUDED_REGISTRATIONS);
+        long visitors = registrationRepository.countVisitorsBetween(monday, sunday, EXCLUDED_REGISTRATIONS)
+                + bookingRepository.sumPeopleCountBetween(monday, sunday, EXCLUDED_BOOKINGS);
+        java.util.Set<Long> busySlotIds = new java.util.HashSet<>(
+                registrationRepository.findBusySlotIdsBetween(monday, sunday, EXCLUDED_REGISTRATIONS));
+        busySlotIds.addAll(bookingRepository.findBusySlotIdsBetween(monday, sunday, EXCLUDED_BOOKINGS));
+        long slots = busySlotIds.size();
         List<Registration> pendingBriefings =
                 registrationRepository.findPendingBriefingsBetween(monday, sunday, ACTIVE_REGISTRATIONS, BriefingStatus.DONE);
         double satisfaction = feedbackService.summary(weekFrom, weekTo).getAverageRating();

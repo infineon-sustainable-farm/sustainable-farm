@@ -1,14 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     approveRegistration,
+    cancelRegistration,
     checkInRegistration,
     createRegistration,
     createVisitor,
     fetchAvailability,
+    fetchProspects,
     fetchRegistrations,
-    fetchVisitors,
     rejectRegistration,
-    updateVisitor,
 } from "../api/visitormanagementApi";
 
 const REGISTRATIONS_KEY = ["visitormanagement", "registrations"];
@@ -27,17 +27,8 @@ export function useRegistrations() {
 }
 
 /**
- * Every visitor, used to show language and type on the queue (the registration
- * payload only carries the visitor id) and to prefill the edit form.
+ * The bookable slots of a date; disabled until a date is chosen.
  */
-export function useVisitors() {
-    return useQuery({
-        queryKey: VISITORS_KEY,
-        queryFn: fetchVisitors,
-    });
-}
-
-/** The bookable slots of a date; disabled until a date is chosen. */
 export function useAvailability(date) {
     return useQuery({
         queryKey: [...SLOTS_KEY, "availability", { date }],
@@ -46,8 +37,22 @@ export function useAvailability(date) {
     });
 }
 
+/**
+ * The commercial prospects, loaded only when the section is expanded so the
+ * registration screen does not pay for an extra request by default.
+ */
+export function useProspects(enabled = true) {
+    return useQuery({
+        queryKey: [...REGISTRATIONS_KEY, "prospects"],
+        queryFn: fetchProspects,
+        enabled,
+    });
+}
+
 /*
- * Registering is two API calls in order: the visitor is created first, then
+ * Registering is one or two API calls in order. When an existing visitor is
+ * picked by name (the registration screen's main flow) only the registration
+ * is sent; when the visitor is new the visitor is created first, then
  * registered on the slot. Chaining them in one mutation keeps the form's
  * pending and error state single. A failure on the second call leaves the
  * visitor created — a visitor without a registration is valid data, so no
@@ -56,10 +61,10 @@ export function useAvailability(date) {
 export function useRegisterVisitor() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ visitor, timeSlotId, visitPurpose }) => {
-            const created = await createVisitor(visitor);
+        mutationFn: async ({ visitorId, visitor, timeSlotId, visitPurpose }) => {
+            const id = visitorId ?? (await createVisitor(visitor)).id;
             return createRegistration({
-                visitorId: created.id,
+                visitorId: id,
                 timeSlotId,
                 visitPurpose,
             });
@@ -73,21 +78,9 @@ export function useRegisterVisitor() {
     });
 }
 
-/** Saves the visitor fields edited from a queue row. */
-export function useUpdateVisitor() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ id, visitor }) => updateVisitor(id, visitor),
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: VISITORS_KEY });
-            queryClient.invalidateQueries({ queryKey: REGISTRATIONS_KEY });
-        },
-    });
-}
-
 /*
- * One mutation for the three status transitions. `action` is "approve",
- * "reject" or "check-in"; the backend enforces which transition is legal, and
+ * One mutation for the status transitions. `action` is "approve", "reject",
+ * "check-in" or "cancel"; the backend enforces which transition is legal, and
  * the table only offers the buttons that match the row's current status.
  */
 export function useRegistrationAction() {
@@ -96,6 +89,7 @@ export function useRegistrationAction() {
         mutationFn: ({ id, action }) => {
             if (action === "approve") return approveRegistration(id);
             if (action === "reject") return rejectRegistration(id);
+            if (action === "cancel") return cancelRegistration(id);
             return checkInRegistration(id);
         },
         onSettled: () => {

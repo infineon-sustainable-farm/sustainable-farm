@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.controller;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
@@ -18,6 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -124,5 +128,33 @@ class VisitorControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fullName\":\"Alice\",\"groupSize\":2,\"email\":\"alice@test.com\",\"type\":\"INDIVIDUAL\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void delete_returns204() throws Exception {
+        doNothing().when(registrationService).deleteVisitor(1L);
+
+        mockMvc.perform(delete("/api/v1/visitors/1"))
+                .andExpect(status().isNoContent());
+
+        verify(registrationService).deleteVisitor(1L);
+    }
+
+    @Test
+    void delete_notFound_returns404() throws Exception {
+        doThrow(new ResourceNotFoundException("Visitor 999 not found"))
+                .when(registrationService).deleteVisitor(999L);
+
+        mockMvc.perform(delete("/api/v1/visitors/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void delete_referenced_returns422() throws Exception {
+        doThrow(new BusinessRuleException("registrations still reference it"))
+                .when(registrationService).deleteVisitor(1L);
+
+        mockMvc.perform(delete("/api/v1/visitors/1"))
+                .andExpect(status().isUnprocessableEntity());
     }
 }

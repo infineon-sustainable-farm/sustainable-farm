@@ -14,6 +14,8 @@ public interface SurveySendRepository extends JpaRepository<SurveySend, Long> {
             + "WHERE s.visitor.id = :visitorId")
     List<SurveySend> findByVisitorId(@Param("visitorId") Long visitorId);
 
+    boolean existsByVisitorId(Long visitorId);
+
     @Query("SELECT s FROM SurveySend s JOIN FETCH s.visitor LEFT JOIN FETCH s.feedback "
             + "WHERE s.status = :status")
     List<SurveySend> findByStatus(@Param("status") SurveyStatus status);
