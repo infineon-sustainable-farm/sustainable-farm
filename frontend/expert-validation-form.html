@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIT × Infineon Expert Validation</title>
+    <style>
+        :root {
+            --color-green-primary: #1a7f37;
+            --color-green-light: #e8f5e9;
+            --color-gray-dark: #212529;
+            --color-gray-medium: #495057;
+            --color-gray-light: #f8f9fa;
+            --color-gray-border: #dee2e6;
+            --color-white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--color-gray-light);
+            color: var(--color-gray-dark);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: var(--color-white);
+            border-bottom: 1px solid var(--color-gray-border);
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .header__brand {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header__program {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-gray-dark);
+            letter-spacing: -0.3px;
+        }
+
+        .header__project {
+            font-size: 14px;
+            color: var(--color-gray-medium);
+        }
+
+        .header__badge {
+            display: inline-block;
+            background: var(--color-green-primary);
+            color: var(--color-white);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .header__year {
+            font-size: 14px;
+            color: var(--color-gray-medium);
+        }
+
+        .intro-panel {
+            background: var(--color-white);
+            padding: 24px;
+            border-bottom: 1px solid var(--color-gray-border);
+        }
+
+        .intro-panel__title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: var(--color-gray-dark);
+        }
+
+        .intro-panel__description {
+            color: var(--color-gray-medium);
+            margin: 0 0 16px 0;
+            font-size: 14px;
+        }
+
+        .intro-panel__indicators {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .indicator {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .indicator__number {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-green-primary);
+        }
+
+        .indicator__label {
+            font-size: 12px;
+            color: var(--color-gray-medium);
+        }
+
+        .app-container {
+            display: flex;
+            min-height: calc(100vh - 180px);
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--color-white);
+            border-right: 1px solid var(--color-gray-border);
+            padding: 24px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar__title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-gray-medium);
+            margin: 0 0 16px 0;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: 4px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            text-decoration: none;
+            color: var(--color-gray-medium);
+            font-size: 14px;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .nav-link:hover {
+            background: var(--color-gray-light);
+            color: var(--color-gray-dark);
+        }
+
+        .nav-link--active {
+            background: var(--color-green-light);
+            color: var(--color-green-primary);
+            font-weight: 500;
+        }
+
+        .nav-link--completed {
+            color: var(--color-green-primary);
+        }
+
+        .nav-link--completed .nav-icon {
+            color: var(--color-green-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .nav-icon--completed {
+            background: var(--color-green-primary);
+            color: var(--color-white);
+            border-radius: 50%;
+        }
+
+        .progress-bar {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--color-gray-border);
+            font-size: 12px;
+            color: var(--color-gray-medium);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .section-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--color-green-primary);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            color: var(--color-gray-dark);
+        }
+
+        .section-help {
+            color: var(--color-gray-medium);
+            font-size: 14px;
+            margin: 0 0 24px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--color-gray-dark);
+        }
+
+        .label-helper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: var(--color-gray-medium);
+        }
+
+        .required-indicator {
+            color: var(--color-green-primary);
+            font-weight: 700;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-gray-border);
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--color-white);
+            color: var(--color-gray-dark);
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--color-green-primary);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--color-gray-medium);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .char-counter {
+            font-size: 11px;
+            color: var(--color-gray-medium);
+            margin-top: 4px;
+        }
+
+        .char-counter--warning {
+            color: #ffc107;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn--primary {
+            background: var(--color-green-primary);
+            color: var(--color-white);
+        }
+
+        .btn--primary:hover {
+            background: #155e32;
+        }
+
+        .btn--secondary {
+            background: var(--color-gray-light);
+            color: var(--color-gray-medium);
+        }
+
+        .btn--secondary:hover {
+            background: var(--color-gray-border);
+        }
+
+        .btn--danger {
+            background: #dc3545;
+            color: var(--color-white);
+        }
+
+        .btn--danger:hover {
+            background: #c82333;
+        }
+
+        .section-hidden {
+            display: none;
+        }
+
+        .confirmation-panel {
+            background: var(--color-green-light);
+            border: 1px solid var(--color-green-primary);
+            border-radius: 4px;
+            padding: 16px 20px;
+            margin-top: 24px;
+        }
+
+        .confirmation-panel__title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-green-primary);
+            margin: 0 0 8px 0;
+        }
+
+        .confirmation-panel__text {
+            color: var(--color-gray-medium);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--color-gray-border);
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .intro-panel__indicators {
+                gap: 16px;
+            }
+
+            .progress-bar {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .intro-panel__indicators {
+                justify-content: center;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media print {
+            body { background: white; }
+            .header, .intro-panel, .sidebar, .actions, .nav-list, .progress-bar, .confirmation-panel { display: none !important; }
+            .app-container { display: block; }
+            .main-content { padding: 0; overflow: visible; }
+            .form-section { display: block !important; page-break-after: always; padding: 20px 0; border-bottom: 1px solid #ddd; }
+            .form-section:last-child { page-break-after: auto; }
+            .section-header { border-bottom: 2px solid var(--color-green-primary); padding-bottom: 8px; }
+            .form-group { page-break-inside: avoid; }
+            input, textarea, select { border: 1px solid #ccc; background: #f8f9fa; }
+        }
+        .header__right { display: flex; align-items: center; gap: 16px; }
+        .lang-toggle { display: flex; background: var(--color-gray-light); border: 1px solid var(--color-gray-border); border-radius: 4px; overflow: hidden; }
+        .lang-btn { padding: 5px 12px; border: none; background: transparent; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--color-gray-medium); transition: background-color 0.2s, color 0.2s; }
+        .lang-btn:hover { background: var(--color-gray-border); }
+        .lang-btn--active { background: var(--color-green-primary) !important; color: var(--color-white) !important; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header__brand">
+            <div class="header__program" data-i18n="header_program">BIT × Infineon Excellence Program</div>
+            <div class="header__project" data-i18n="header_project">Sustainable Farm — Product Transformation</div>
+            <span class="header__badge" data-i18n="header_badge">EXPERT VALIDATION</span>
+        </div>
+        <div class="header__right">
+            <div class="lang-toggle" id="langToggle">
+                <button type="button" class="lang-btn lang-btn--active" id="langEn" data-lang="en">EN</button>
+                <button type="button" class="lang-btn" id="langFr" data-lang="fr">FR</button>
+            </div>
+            <span class="header__year" data-i18n="header_year">2026</span>
+        </div>
+    </header>
+
+    <div class="intro-panel">
+        <h2 class="intro-panel__title" data-i18n="intro_title"></h2>
+        <p class="intro-panel__description" data-i18n="intro_description"></p>
+        <div class="intro-panel__indicators">
+            <div class="indicator">
+                <span class="indicator__number" data-i18n="intro_duration_num"></span>
+                <span class="indicator__label" data-i18n="intro_duration_label"></span>
+            </div>
+            <div class="indicator">
+                <span class="indicator__number" data-i18n="intro_sections_num"></span>
+                <span class="indicator__label" data-i18n="intro_sections_label"></span>
+            </div>
+            <div class="indicator">
+                <span class="indicator__number" data-i18n="intro_json_num"></span>
+                <span class="indicator__label" data-i18n="intro_json_label"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <span class="sidebar__title" data-i18n="nav_title"></span>
+            <ul class="nav-list" id="navList">
+                <li class="nav-item">
+                    <a href="#" class="nav-link nav-link--active" data-section="1">
+                        <span class="nav-icon nav-icon--filled" id="nav-icon-1"></span>
+                        <span data-i18n="nav_1"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="2">
+                        <span class="nav-icon" id="nav-icon-2"></span>
+                        <span data-i18n="nav_2"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="3">
+                        <span class="nav-icon" id="nav-icon-3"></span>
+                        <span data-i18n="nav_3"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="4">
+                        <span class="nav-icon" id="nav-icon-4"></span>
+                        <span data-i18n="nav_4"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="5">
+                        <span class="nav-icon" id="nav-icon-5"></span>
+                        <span data-i18n="nav_5"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="6">
+                        <span class="nav-icon" id="nav-icon-6"></span>
+                        <span data-i18n="nav_6"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="7">
+                        <span class="nav-icon" id="nav-icon-7"></span>
+                        <span data-i18n="nav_7"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="8">
+                        <span class="nav-icon" id="nav-icon-8"></span>
+                        <span data-i18n="nav_8"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="9">
+                        <span class="nav-icon" id="nav-icon-9"></span>
+                        <span data-i18n="nav_9"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="10">
+                        <span class="nav-icon" id="nav-icon-10"></span>
+                        <span data-i18n="nav_10"></span>
+                    </a>
+                </li>
+            </ul>
+            <div class="progress-bar" id="progressBar"></div>
+        </nav>
+
+        <main class="main-content" id="mainContent">
+            <form id="expertForm">
+
+                <section class="form-section" data-section="1">
+                    <div class="section-header">
+                        <span class="section-number">01</span>
+                        <h2 class="section-title" data-i18n="s1_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s1_help"></p>
+
+                    <div class="form-group">
+                        <label for="expert_name" data-i18n="s1_name_req"></label>
+                        <input type="text" id="expert_name" name="expert_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="profession" data-i18n="s1_profession"></label>
+                        <input type="text" id="profession" name="profession">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="experience_years" data-i18n="s1_experience"></label>
+                        <input type="number" id="experience_years" name="experience_years" min="0" max="80">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="specialization" data-i18n="s1_specialization"></label>
+                        <input type="text" id="specialization" name="specialization">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="activity" data-i18n="s1_activity"></label>
+                        <textarea id="activity" name="activity" data-i18n-placeholder="s1_activity_ph"></textarea>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--primary" data-next="2" data-i18n="s1_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="2">
+                    <div class="section-header">
+                        <span class="section-number">02</span>
+                        <h2 class="section-title" data-i18n="s2_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s2_help"></p>
+
+                    <div class="form-group">
+                        <label for="process_steps" data-i18n="s2_steps"></label>
+                        <textarea id="process_steps" name="process_steps" data-i18n-placeholder="s2_steps_ph"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="intervention_stage" data-i18n="s2_intervention"></label>
+                        <textarea id="intervention_stage" name="intervention_stage"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="critical_steps" data-i18n="s2_critical"></label>
+                        <textarea id="critical_steps" name="critical_steps"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s2_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="process_confidence" value="low"> <span data-i18n="s2_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="process_confidence" value="medium"> <span data-i18n="s2_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="process_confidence" value="high"> <span data-i18n="s2_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="1" data-i18n="s2_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="3" data-i18n="s2_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="3">
+                    <div class="section-header">
+                        <span class="section-number">03</span>
+                        <h2 class="section-title" data-i18n="s3_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s3_help"></p>
+
+                    <div class="form-group">
+                        <label data-i18n="s3_varieties"></label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" name="varieties" value="Amelie"> Amelie</label>
+                            <label class="checkbox-item"><input type="checkbox" name="varieties" value="Kent"> Kent</label>
+                            <label class="checkbox-item"><input type="checkbox" name="varieties" value="Keitt"> Keitt</label>
+                            <label class="checkbox-item"><input type="checkbox" name="varieties" value="Tommy Atkins"> Tommy Atkins</label>
+                            <label class="checkbox-item"><input type="checkbox" name="varieties" value="Mangifera Indica"> Mangifera Indica</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="varieties_other" data-i18n="s3_varieties_other"></label>
+                        <input type="text" id="varieties_other" name="varieties_other">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maturity_level" data-i18n="s3_maturity_level"></label>
+                        <select id="maturity_level" name="maturity_level">
+                            <option value="" data-i18n-opt="s3_maturity_opt0"></option>
+                            <option value="green" data-i18n-opt="s3_maturity_opt1"></option>
+                            <option value="semi-ripe" data-i18n-opt="s3_maturity_opt2"></option>
+                            <option value="ripe" data-i18n-opt="s3_maturity_opt3"></option>
+                            <option value="variable" data-i18n-opt="s3_maturity_opt4"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maturity_criteria" data-i18n="s3_maturity_criteria"></label>
+                        <textarea id="maturity_criteria" name="maturity_criteria" data-i18n-placeholder="s3_maturity_criteria_ph"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rejection_rate" data-i18n="s3_rejection_rate"></label>
+                        <input type="number" id="rejection_rate" name="rejection_rate" min="0" max="100" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s3_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="raw_material_confidence" value="low"> <span data-i18n="s3_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="raw_material_confidence" value="medium"> <span data-i18n="s3_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="raw_material_confidence" value="high"> <span data-i18n="s3_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="2" data-i18n="s3_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="4" data-i18n="s3_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="4">
+                    <div class="section-header">
+                        <span class="section-number">04</span>
+                        <h2 class="section-title" data-i18n="s4_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s4_help"></p>
+
+                    <div class="form-group">
+                        <label data-i18n="s4_indicators"></label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" name="quality_indicators" value="color"> Color</label>
+                            <label class="checkbox-item"><input type="checkbox" name="quality_indicators" value="moisture"> Moisture</label>
+                            <label class="checkbox-item"><input type="checkbox" name="quality_indicators" value="texture"> Texture</label>
+                            <label class="checkbox-item"><input type="checkbox" name="quality_indicators" value="taste"> Taste</label>
+                            <label class="checkbox-item"><input type="checkbox" name="quality_indicators" value="brix"> Brix (sugar content)</label>
+                            <label class="checkbox-item"><input type="checkbox" name="quality_indicators" value="appearance"> Appearance</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quality_indicators_other" data-i18n="s4_indicators_other"></label>
+                        <input type="text" id="quality_indicators_other" name="quality_indicators_other">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="grade_classification" data-i18n="s4_grade"></label>
+                        <textarea id="grade_classification" name="grade_classification" data-i18n-placeholder="s4_grade_ph"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="acceptance_threshold" data-i18n="s4_threshold"></label>
+                        <textarea id="acceptance_threshold" name="acceptance_threshold" data-i18n-placeholder="s4_threshold_ph"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s4_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="quality_confidence" value="low"> <span data-i18n="s4_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="quality_confidence" value="medium"> <span data-i18n="s4_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="quality_confidence" value="high"> <span data-i18n="s4_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="3" data-i18n="s4_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="5" data-i18n="s4_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="5">
+                    <div class="section-header">
+                        <span class="section-number">05</span>
+                        <h2 class="section-title" data-i18n="s5_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s5_help"></p>
+
+                    <div class="form-group">
+                        <label for="loss_percentage" data-i18n="s5_loss_pct"></label>
+                        <input type="number" id="loss_percentage" name="loss_percentage" min="0" max="100" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loss_stage" data-i18n="s5_stage"></label>
+                        <select id="loss_stage" name="loss_stage">
+                            <option value="" data-i18n-opt="s5_stage_opt0"></option>
+                            <option value="reception" data-i18n-opt="s5_stage_opt1"></option>
+                            <option value="sorting" data-i18n-opt="s5_stage_opt2"></option>
+                            <option value="peeling" data-i18n-opt="s5_stage_opt3"></option>
+                            <option value="slicing" data-i18n-opt="s5_stage_opt4"></option>
+                            <option value="drying" data-i18n-opt="s5_stage_opt5"></option>
+                            <option value="packaging" data-i18n-opt="s5_stage_opt6"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loss_cause" data-i18n="s5_cause"></label>
+                        <select id="loss_cause" name="loss_cause">
+                            <option value="" data-i18n-opt="s5_cause_opt0"></option>
+                            <option value="poor_quality" data-i18n-opt="s5_cause_opt1"></option>
+                            <option value="maturity" data-i18n-opt="s5_cause_opt2"></option>
+                            <option value="handling" data-i18n-opt="s5_cause_opt3"></option>
+                            <option value="equipment" data-i18n-opt="s5_cause_opt4"></option>
+                            <option value="operator" data-i18n-opt="s5_cause_opt5"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s5_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="losses_confidence" value="low"> <span data-i18n="s5_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="losses_confidence" value="medium"> <span data-i18n="s5_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="losses_confidence" value="high"> <span data-i18n="s5_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="4" data-i18n="s5_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="6" data-i18n="s5_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="6">
+                    <div class="section-header">
+                        <span class="section-number">06</span>
+                        <h2 class="section-title" data-i18n="s6_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s6_help"></p>
+
+                    <div class="form-group">
+                        <label for="temperature_celsius" data-i18n="s6_temp"></label>
+                        <input type="number" id="temperature_celsius" name="temperature_celsius" min="0" max="200" step="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="duration_hours" data-i18n="s6_duration"></label>
+                        <input type="number" id="duration_hours" name="duration_hours" min="0" max="72" step="0.5">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="target_moisture" data-i18n="s6_moisture"></label>
+                        <input type="number" id="target_moisture" name="target_moisture" min="0" max="50" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="batch_quantity" data-i18n="s6_batch"></label>
+                        <input type="number" id="batch_quantity" name="batch_quantity" min="0" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="energy_source" data-i18n="s6_energy"></label>
+                        <select id="energy_source" name="energy_source">
+                            <option value="" data-i18n-opt="s6_energy_opt0"></option>
+                            <option value="solar" data-i18n-opt="s6_energy_opt1"></option>
+                            <option value="gas" data-i18n-opt="s6_energy_opt2"></option>
+                            <option value="electric" data-i18n-opt="s6_energy_opt3"></option>
+                            <option value="biomass" data-i18n-opt="s6_energy_opt4"></option>
+                            <option value="hybrid" data-i18n-opt="s6_energy_opt5"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="drying_parameters" data-i18n="s6_params"></label>
+                        <textarea id="drying_parameters" name="drying_parameters" data-i18n-placeholder="s6_params_ph"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s6_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="drying_confidence" value="low"> <span data-i18n="s6_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="drying_confidence" value="medium"> <span data-i18n="s6_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="drying_confidence" value="high"> <span data-i18n="s6_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="5" data-i18n="s6_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="7" data-i18n="s6_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="7">
+                    <div class="section-header">
+                        <span class="section-number">07</span>
+                        <h2 class="section-title" data-i18n="s7_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s7_help"></p>
+
+                    <div class="form-group">
+                        <label data-i18n="s7_batch"></label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" name="batch_data" value="supplier"> Supplier</label>
+                            <label class="checkbox-item"><input type="checkbox" name="batch_data" value="variety"> Variety</label>
+                            <label class="checkbox-item"><input type="checkbox" name="batch_data" value="quantity"> Quantity</label>
+                            <label class="checkbox-item"><input type="checkbox" name="batch_data" value="date"> Date</label>
+                            <label class="checkbox-item"><input type="checkbox" name="batch_data" value="quality"> Quality grade</label>
+                            <label class="checkbox-item"><input type="checkbox" name="batch_data" value="origin"> Origin</label>
+                            <label class="checkbox-item"><input type="checkbox" name="batch_data" value="operator"> Operator</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="traceable_events" data-i18n="s7_events"></label>
+                        <textarea id="traceable_events" name="traceable_events" data-i18n-placeholder="s7_events_ph"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s7_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="traceability_confidence" value="low"> <span data-i18n="s7_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="traceability_confidence" value="medium"> <span data-i18n="s7_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="traceability_confidence" value="high"> <span data-i18n="s7_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="6" data-i18n="s7_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="8" data-i18n="s7_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="8">
+                    <div class="section-header">
+                        <span class="section-number">08</span>
+                        <h2 class="section-title" data-i18n="s8_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s8_help"></p>
+
+                    <div class="form-group">
+                        <label data-i18n="s8_kpis"></label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="harvest_quantity"> Harvest quantity</label>
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="active_batches"> Active batches</label>
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="quality_pass_rate"> Quality pass rate</label>
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="equipment_utilization"> Equipment utilization</label>
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="water_consumption"> Water consumption</label>
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="energy_consumption"> Energy consumption</label>
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="grade_a_percent"> Grade A %</label>
+                            <label class="checkbox-item"><input type="checkbox" name="kpis" value="production_efficiency"> Production efficiency</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="missing_kpis" data-i18n="s8_missing"></label>
+                        <textarea id="missing_kpis" name="missing_kpis"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s8_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="kpis_confidence" value="low"> <span data-i18n="s8_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="kpis_confidence" value="medium"> <span data-i18n="s8_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="kpis_confidence" value="high"> <span data-i18n="s8_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="7" data-i18n="s8_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="9" data-i18n="s8_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="9">
+                    <div class="section-header">
+                        <span class="section-number">09</span>
+                        <h2 class="section-title" data-i18n="s9_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s9_help"></p>
+
+                    <div class="form-group">
+                        <label for="current_data" data-i18n="s9_current"></label>
+                        <textarea id="current_data" name="current_data"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="missing_data" data-i18n="s9_missing"></label>
+                        <textarea id="missing_data" name="missing_data"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="digital_opportunities" data-i18n="s9_opportunities"></label>
+                        <textarea id="digital_opportunities" name="digital_opportunities"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s9_confidence"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="digitalization_confidence" value="low"> <span data-i18n="s9_conf_low"></span></label>
+                            <label class="radio-item"><input type="radio" name="digitalization_confidence" value="medium"> <span data-i18n="s9_conf_med"></span></label>
+                            <label class="radio-item"><input type="radio" name="digitalization_confidence" value="high"> <span data-i18n="s9_conf_high"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="8" data-i18n="s9_prev"></button>
+                        <button type="button" class="btn btn--primary" data-next="10" data-i18n="s9_next"></button>
+                    </div>
+                </section>
+
+                <section class="form-section section-hidden" data-section="10">
+                    <div class="section-header">
+                        <span class="section-number">10</span>
+                        <h2 class="section-title" data-i18n="s10_title"></h2>
+                    </div>
+                    <p class="section-help" data-i18n="s10_help"></p>
+
+                    <div class="form-group">
+                        <label for="main_recommendation" data-i18n="s10_main"></label>
+                        <textarea id="main_recommendation" name="main_recommendation"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="avoid_mistake" data-i18n="s10_avoid"></label>
+                        <textarea id="avoid_mistake" name="avoid_mistake"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="additional_comments" data-i18n="s10_additional"></label>
+                        <textarea id="additional_comments" name="additional_comments"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s10_assessment"></label>
+                        <p class="section-help" data-i18n="s10_relevance_help"></p>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="assessment_relevance" value="1"> <span data-i18n="s10_relevance_1"></span></label>
+                            <label class="radio-item"><input type="radio" name="assessment_relevance" value="2"> <span data-i18n="s10_relevance_2"></span></label>
+                            <label class="radio-item"><input type="radio" name="assessment_relevance" value="3"> <span data-i18n="s10_relevance_3"></span></label>
+                            <label class="radio-item"><input type="radio" name="assessment_relevance" value="4"> <span data-i18n="s10_relevance_4"></span></label>
+                            <label class="radio-item"><input type="radio" name="assessment_relevance" value="5"> <span data-i18n="s10_relevance_5"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="most_important_improvement" data-i18n="s10_improvement"></label>
+                        <textarea id="most_important_improvement" name="most_important_improvement"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="s10_followup"></label>
+                        <div class="radio-group">
+                            <label class="radio-item"><input type="radio" name="follow_up" value="yes"> <span data-i18n="s10_followup_yes"></span></label>
+                            <label class="radio-item"><input type="radio" name="follow_up" value="maybe"> <span data-i18n="s10_followup_maybe"></span></label>
+                            <label class="radio-item"><input type="radio" name="follow_up" value="no"> <span data-i18n="s10_followup_no"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn--secondary" data-prev="9" data-i18n="s10_prev"></button>
+                        <button type="button" class="btn btn--primary" id="saveBtn" data-i18n="s10_save"></button>
+                        <button type="button" class="btn btn--primary" id="exportBtn" data-i18n="s10_export_json"></button>
+                        <button type="button" class="btn btn--primary" id="exportPdfBtn" data-i18n="s10_export_pdf"></button>
+                        <button type="button" class="btn btn--danger" id="resetBtn" data-i18n="s10_reset"></button>
+                    </div>
+
+                    <div class="confirmation-panel section-hidden" id="confirmationPanel">
+                        <p class="confirmation-panel__title" data-i18n="s10_confirm_title"></p>
+                        <p class="confirmation-panel__text" data-i18n="s10_confirm_text"></p>
+                    </div>
+                </section>
+            </form>
+        </main>
+    </div>
+
+    <script>
+
+        const STORAGE_KEY = 'expert_validation_form';
+        let currentSection = 1;
+        const totalSections = 10;
+        let generatedJSON = null;
+
+        const translations = {
+            en: {
+                header_program: "BIT × Infineon Excellence Program",
+                header_project: "Sustainable Farm — Product Transformation",
+                header_badge: "EXPERT VALIDATION",
+                header_year: "2026",
+                intro_title: "Expert Validation Interview",
+                intro_description: "This questionnaire collects field expertise on mango transformation processes to validate the project's business requirements, data model, operational KPIs and digital solution.",
+                intro_duration_num: "15–20 min",
+                intro_duration_label: "Estimated duration",
+                intro_sections_num: "10 sections",
+                intro_sections_label: "Structured interview",
+                intro_json_num: "JSON Export",
+                intro_json_label: "Digital data format",
+                nav_title: "Navigation",
+                nav_1: "Expert Profile",
+                nav_2: "Transformation Process",
+                nav_3: "Raw Material",
+                nav_4: "Quality",
+                nav_5: "Losses",
+                nav_6: "Drying",
+                nav_7: "Traceability",
+                nav_8: "KPIs",
+                nav_9: "Digitalization",
+                nav_10: "Recommendations",
+                progress: "Section {n} of {t} — {p}%",
+                s1_title: "Expert Profile",
+                s1_help: "Identify the expert and their professional background to contextualize responses.",
+                s1_name: "Name",
+                s1_name_req: "Name <span class=\"required-indicator\">*</span>",
+                s1_profession: "Profession / Role",
+                s1_experience: "Years of experience",
+                s1_specialization: "Specialization",
+                s1_activity: "Type of activity",
+                s1_activity_ph: "Ex: production, drying, export, R&D...",
+                s1_confidence: "Confidence level",
+                s1_conf_low: "Low",
+                s1_conf_med: "Medium",
+                s1_conf_high: "High",
+                s1_next: "Next section",
+                s2_title: "Transformation Process",
+                s2_help: "Mapping the real production process helps align the digital model with operational reality.",
+                s2_steps: "What are the main steps of mango transformation?",
+                s2_steps_ph: "Ex: reception, sorting, washing, peeling, slicing, drying, packaging...",
+                s2_intervention: "At which stage does your activity take place?",
+                s2_critical: "Which steps are the most critical?",
+                s2_confidence: "Confidence level",
+                s2_conf_low: "Low",
+                s2_conf_med: "Medium",
+                s2_conf_high: "High",
+                s2_prev: "Previous",
+                s2_next: "Next section",
+                s3_title: "Raw Material",
+                s3_help: "Variety and maturity selection directly determine final product quality and yield.",
+                s3_varieties: "Mango varieties used",
+                s3_varieties_other: "Other varieties",
+                s3_maturity_level: "Typical maturity level at processing",
+                s3_maturity_opt0: "Select...",
+                s3_maturity_opt1: "Green (mature, unripe)",
+                s3_maturity_opt2: "Semi-ripe",
+                s3_maturity_opt3: "Ripe",
+                s3_maturity_opt4: "Variable",
+                s3_maturity_criteria: "How do you assess maturity?",
+                s3_maturity_criteria_ph: "Ex: color, firmness, sugar content (Brix)...",
+                s3_rejection_rate: "Typical rejection rate (%)",
+                s3_confidence: "Confidence level",
+                s3_conf_low: "Low",
+                s3_conf_med: "Medium",
+                s3_conf_high: "High",
+                s3_prev: "Previous",
+                s3_next: "Next section",
+                s4_title: "Quality",
+                s4_help: "Defining quality criteria is essential to design acceptance rules and grading logic.",
+                s4_indicators: "Quality indicators used",
+                s4_indicators_other: "Other indicators",
+                s4_grade: "Grade classification",
+                s4_grade_ph: "Ex: Grade A — premium, Grade B — standard, Reject...",
+                s4_threshold: "Acceptance threshold",
+                s4_threshold_ph: "Ex: moisture ≤ 15%, color ≥ 7/10, no visible defects...",
+                s4_confidence: "Confidence level",
+                s4_conf_low: "Low",
+                s4_conf_med: "Medium",
+                s4_conf_high: "High",
+                s4_prev: "Previous",
+                s4_next: "Next section",
+                s5_title: "Losses",
+                s5_help: "Quantifying losses helps identify improvement priorities and economic impact.",
+                s5_loss_pct: "Estimated total loss (%)",
+                s5_stage: "Main loss stage",
+                s5_stage_opt0: "Select...",
+                s5_stage_opt1: "Reception",
+                s5_stage_opt2: "Sorting",
+                s5_stage_opt3: "Peeling",
+                s5_stage_opt4: "Slicing",
+                s5_stage_opt5: "Drying",
+                s5_stage_opt6: "Packaging",
+                s5_cause: "Main loss cause",
+                s5_cause_opt0: "Select...",
+                s5_cause_opt1: "Poor raw material quality",
+                s5_cause_opt2: "Inconsistent maturity",
+                s5_cause_opt3: "Handling damage",
+                s5_cause_opt4: "Equipment failure",
+                s5_cause_opt5: "Operator variability",
+                s5_confidence: "Confidence level",
+                s5_conf_low: "Low",
+                s5_conf_med: "Medium",
+                s5_conf_high: "High",
+                s5_prev: "Previous",
+                s5_next: "Next section",
+                s6_title: "Drying Process",
+                s6_help: "Understanding drying parameters helps us model production performance, energy consumption and product quality.",
+                s6_temp: "Typical drying temperature (°C)",
+                s6_duration: "Typical drying duration (hours)",
+                s6_moisture: "Target final moisture (%)",
+                s6_batch: "Average batch quantity (kg)",
+                s6_energy: "Main energy source",
+                s6_energy_opt0: "Select...",
+                s6_energy_opt1: "Solar",
+                s6_energy_opt2: "Gas",
+                s6_energy_opt3: "Electric",
+                s6_energy_opt4: "Biomass",
+                s6_energy_opt5: "Hybrid",
+                s6_params: "What parameters do you control during drying?",
+                s6_params_ph: "Ex: temperature, duration, humidity, slice thickness, air circulation...",
+                s6_confidence: "Confidence level",
+                s6_conf_low: "Low",
+                s6_conf_med: "Medium",
+                s6_conf_high: "High",
+                s6_prev: "Previous",
+                s6_next: "Next section",
+                s7_title: "Traceability",
+                s7_help: "Traceability data is the foundation of digital transformation, food safety and certification.",
+                s7_batch: "Batch data to record",
+                s7_events: "Which events should be traceable during transformation?",
+                s7_events_ph: "Ex: reception, processing start, drying start/end, quality check, packaging...",
+                s7_confidence: "Confidence level",
+                s7_conf_low: "Low",
+                s7_conf_med: "Medium",
+                s7_conf_high: "High",
+                s7_prev: "Previous",
+                s7_next: "Next section",
+                s8_title: "KPIs",
+                s8_help: "KPIs translate operational reality into measurable indicators for decision-making.",
+                s8_kpis: "Most important KPIs",
+                s8_missing: "Which important KPIs are missing?",
+                s8_confidence: "Confidence level",
+                s8_conf_low: "Low",
+                s8_conf_med: "Medium",
+                s8_conf_high: "High",
+                s8_prev: "Previous",
+                s8_next: "Next section",
+                s9_title: "Digitalization",
+                s9_help: "Digital maturity assessment guides the prioritization of system features.",
+                s9_current: "What data is currently collected?",
+                s9_missing: "What data should be collected but is not?",
+                s9_opportunities: "What problems could a digital system solve?",
+                s9_confidence: "Confidence level",
+                s9_conf_low: "Low",
+                s9_conf_med: "Medium",
+                s9_conf_high: "High",
+                s9_prev: "Previous",
+                s9_next: "Next section",
+                s10_title: "Recommendations",
+                s10_help: "Expert recommendations frame the strategic direction and risk awareness of the project.",
+                s10_main: "What is your main recommendation to improve transformation?",
+                s10_avoid: "What mistake must we absolutely avoid in the system design?",
+                s10_additional: "Additional comments / recommendations",
+                s10_assessment: "Expert Assessment",
+                s10_relevance_help: "How relevant do you consider the proposed digital solution for mango transformation?",
+                s10_relevance_1: "1 — Not relevant",
+                s10_relevance_2: "2",
+                s10_relevance_3: "3",
+                s10_relevance_4: "4",
+                s10_relevance_5: "5 — Highly relevant",
+                s10_improvement: "What is the most important improvement you would recommend?",
+                s10_followup: "Would you be available for a follow-up validation session?",
+                s10_followup_yes: "Yes",
+                s10_followup_maybe: "Maybe",
+                s10_followup_no: "No",
+                s10_prev: "Previous",
+                s10_save: "Save Response",
+                s10_export_json: "Export JSON",
+                s10_export_pdf: "Export PDF",
+                s10_reset: "Reset",
+                s10_confirm_title: "Validation response ready",
+                s10_confirm_text: "All sections completed — JSON data generated successfully.",
+                required: "<span class=\"required-indicator\">*</span>"
+            },
+            fr: {
+                header_program: "Programme d'Excellence BIT × Infineon",
+                header_project: "Ferme Durable — Transformation de Produits",
+                header_badge: "VALIDATION EXPERT",
+                header_year: "2026",
+                intro_title: "Entretien de Validation Expert",
+                intro_description: "Ce questionnaire collecte l'expertise terrain sur les processus de transformation de la mangue pour valider les exigences métier du projet, le modèle de données, les indicateurs de performance opérationnels et la solution numérique.",
+                intro_duration_num: "15–20 min",
+                intro_duration_label: "Durée estimée",
+                intro_sections_num: "10 sections",
+                intro_sections_label: "Entretien structuré",
+                intro_json_num: "Export JSON",
+                intro_json_label: "Format de données numériques",
+                nav_title: "Navigation",
+                nav_1: "Profil Expert",
+                nav_2: "Processus de Transformation",
+                nav_3: "Matière Première",
+                nav_4: "Qualité",
+                nav_5: "Pertes",
+                nav_6: "Séchage",
+                nav_7: "Traçabilité",
+                nav_8: "Indicateurs KPI",
+                nav_9: "Digitalisation",
+                nav_10: "Recommandations",
+                progress: "Section {n} sur {t} — {p}%",
+                s1_title: "Profil Expert",
+                s1_help: "Identifiez l'expert et son parcours professionnel pour contextualiser les réponses.",
+                s1_name: "Nom",
+                s1_name_req: "Nom <span class=\"required-indicator\">*</span>",
+                s1_profession: "Profession / Rôle",
+                s1_experience: "Années d'expérience",
+                s1_specialization: "Spécialisation",
+                s1_activity: "Type d'activité",
+                s1_activity_ph: "Ex: production, séchage, export, R&D...",
+                s1_confidence: "Niveau de confiance",
+                s1_conf_low: "Faible",
+                s1_conf_med: "Moyen",
+                s1_conf_high: "Élevé",
+                s1_next: "Section suivante",
+                s2_title: "Processus de Transformation",
+                s2_help: "Cartographier le processus réel de production aide à aligner le modèle numérique sur la réalité opérationnelle.",
+                s2_steps: "Quelles sont les principales étapes de transformation de la mangue ?",
+                s2_steps_ph: "Ex: réception, tri, lavage, épluchage, tranchage, séchage, conditionnement...",
+                s2_intervention: "À quelle étape intervient votre activité ?",
+                s2_critical: "Quelles étapes sont les plus critiques ?",
+                s2_confidence: "Niveau de confiance",
+                s2_conf_low: "Faible",
+                s2_conf_med: "Moyen",
+                s2_conf_high: "Élevé",
+                s2_prev: "Précédent",
+                s2_next: "Section suivante",
+                s3_title: "Matière Première",
+                s3_help: "Le choix de la variété et de la maturité détermine directement la qualité et le rendement du produit final.",
+                s3_varieties: "Variétés de mangues utilisées",
+                s3_varieties_other: "Autres variétés",
+                s3_maturity_level: "Niveau de maturité typique à la transformation",
+                s3_maturity_opt0: "Sélectionner...",
+                s3_maturity_opt1: "Vert (mature, pas encore mûr)",
+                s3_maturity_opt2: "Mi-mûr",
+                s3_maturity_opt3: "Mûr",
+                s3_maturity_opt4: "Variable",
+                s3_maturity_criteria: "Comment évaluez-vous la maturité ?",
+                s3_maturity_criteria_ph: "Ex: couleur, fermeté, teneur en sucre (Brix)...",
+                s3_rejection_rate: "Taux de rejet typique (%)",
+                s3_confidence: "Niveau de confiance",
+                s3_conf_low: "Faible",
+                s3_conf_med: "Moyen",
+                s3_conf_high: "Élevé",
+                s3_prev: "Précédent",
+                s3_next: "Section suivante",
+                s4_title: "Qualité",
+                s4_help: "Définir les critères de qualité est essentiel pour concevoir les règles d'acceptation et la logique de classement.",
+                s4_indicators: "Indicateurs de qualité utilisés",
+                s4_indicators_other: "Autres indicateurs",
+                s4_grade: "Classification par grade",
+                s4_grade_ph: "Ex: Grade A — premium, Grade B — standard, Rejet...",
+                s4_threshold: "Seuil d'acceptation",
+                s4_threshold_ph: "Ex: humidité ≤ 15%, couleur ≥ 7/10, aucun défaut visible...",
+                s4_confidence: "Niveau de confiance",
+                s4_conf_low: "Faible",
+                s4_conf_med: "Moyen",
+                s4_conf_high: "Élevé",
+                s4_prev: "Précédent",
+                s4_next: "Section suivante",
+                s5_title: "Pertes",
+                s5_help: "Quantifier les pertes permet d'identifier les priorités d'amélioration et l'impact économique.",
+                s5_loss_pct: "Pertes totales estimées (%)",
+                s5_stage: "Étape principale des pertes",
+                s5_stage_opt0: "Sélectionner...",
+                s5_stage_opt1: "Réception",
+                s5_stage_opt2: "Tri",
+                s5_stage_opt3: "Épluchage",
+                s5_stage_opt4: "Tranchage",
+                s5_stage_opt5: "Séchage",
+                s5_stage_opt6: "Conditionnement",
+                s5_cause: "Cause principale des pertes",
+                s5_cause_opt0: "Sélectionner...",
+                s5_cause_opt1: "Mauvaise qualité de la matière première",
+                s5_cause_opt2: "Maturité incohérente",
+                s5_cause_opt3: "Dommages de manutention",
+                s5_cause_opt4: "Panne d'équipement",
+                s5_cause_opt5: "Variabilité de l'opérateur",
+                s5_confidence: "Niveau de confiance",
+                s5_conf_low: "Faible",
+                s5_conf_med: "Moyen",
+                s5_conf_high: "Élevé",
+                s5_prev: "Précédent",
+                s5_next: "Section suivante",
+                s6_title: "Processus de Séchage",
+                s6_help: "Comprendre les paramètres de séchage nous aide à modéliser les performances de production, la consommation d'énergie et la qualité du produit.",
+                s6_temp: "Température de séchage typique (°C)",
+                s6_duration: "Durée de séchage typique (heures)",
+                s6_moisture: "Humidité finale cible (%)",
+                s6_batch: "Quantité moyenne par lot (kg)",
+                s6_energy: "Source d'énergie principale",
+                s6_energy_opt0: "Sélectionner...",
+                s6_energy_opt1: "Solaire",
+                s6_energy_opt2: "Gaz",
+                s6_energy_opt3: "Électrique",
+                s6_energy_opt4: "Biomasse",
+                s6_energy_opt5: "Hybride",
+                s6_params: "Quels paramètres contrôlez-vous pendant le séchage ?",
+                s6_params_ph: "Ex: température, durée, humidité, épaisseur des tranches, circulation d'air...",
+                s6_confidence: "Niveau de confiance",
+                s6_conf_low: "Faible",
+                s6_conf_med: "Moyen",
+                s6_conf_high: "Élevé",
+                s6_prev: "Précédent",
+                s6_next: "Section suivante",
+                s7_title: "Traçabilité",
+                s7_help: "Les données de traçabilité sont le fondement de la transformation numérique, de la sécurité alimentaire et de la certification.",
+                s7_batch: "Données de lot à enregistrer",
+                s7_events: "Quels événements doivent être traçables pendant la transformation ?",
+                s7_events_ph: "Ex: réception, début de transformation, début/fin de séchage, contrôle qualité, conditionnement...",
+                s7_confidence: "Niveau de confiance",
+                s7_conf_low: "Faible",
+                s7_conf_med: "Moyen",
+                s7_conf_high: "Élevé",
+                s7_prev: "Précédent",
+                s7_next: "Section suivante",
+                s8_title: "Indicateurs KPI",
+                s8_help: "Les KPI traduisent la réalité opérationnelle en indicateurs mesurables pour la prise de décision.",
+                s8_kpis: "KPI les plus importants",
+                s8_missing: "Quels KPI importants manquent ?",
+                s8_confidence: "Niveau de confiance",
+                s8_conf_low: "Faible",
+                s8_conf_med: "Moyen",
+                s8_conf_high: "Élevé",
+                s8_prev: "Précédent",
+                s8_next: "Section suivante",
+                s9_title: "Digitalisation",
+                s9_help: "L'évaluation de la maturité digitale guide la priorisation des fonctionnalités du système.",
+                s9_current: "Quelles données sont actuellement collectées ?",
+                s9_missing: "Quelles données devraient être collectées mais ne le sont pas ?",
+                s9_opportunities: "Quels problèmes un système numérique pourrait-il résoudre ?",
+                s9_confidence: "Niveau de confiance",
+                s9_conf_low: "Faible",
+                s9_conf_med: "Moyen",
+                s9_conf_high: "Élevé",
+                s9_prev: "Précédent",
+                s9_next: "Section suivante",
+                s10_title: "Recommandations",
+                s10_help: "Les recommandations expertes orientent la direction stratégique et la sensibilisation aux risques du projet.",
+                s10_main: "Quelle serait votre principale recommandation pour améliorer la transformation ?",
+                s10_avoid: "Quelle erreur devons-nous absolument éviter dans la conception du système ?",
+                s10_additional: "Commentaires / recommandations supplémentaires",
+                s10_assessment: "Évaluation Expert",
+                s10_relevance_help: "Quelle est la pertinence de la solution numérique proposée pour la transformation de la mangue ?",
+                s10_relevance_1: "1 — Pas pertinent",
+                s10_relevance_2: "2",
+                s10_relevance_3: "3",
+                s10_relevance_4: "4",
+                s10_relevance_5: "5 — Très pertinent",
+                s10_improvement: "Quelle est l'amélioration la plus importante que vous recommanderiez ?",
+                s10_followup: "Seriez-vous disponible pour une session de validation de suivi ?",
+                s10_followup_yes: "Oui",
+                s10_followup_maybe: "Peut-être",
+                s10_followup_no: "Non",
+                s10_prev: "Précédent",
+                s10_save: "Enregistrer",
+                s10_export_json: "Exporter JSON",
+                s10_export_pdf: "Exporter PDF",
+                s10_reset: "Réinitialiser",
+                s10_confirm_title: "Réponse de validation prête",
+                s10_confirm_text: "Toutes les sections complétées — Données JSON générées avec succès.",
+                required: "<span class=\"required-indicator\">*</span>"
+            }
+        };
+
+        let currentLang = localStorage.getItem('expert_validation_lang') || 'en';
+
+        function $(selector) {
+            return document.querySelector(selector);
+        }
+
+        function $$(selector) {
+            return document.querySelectorAll(selector);
+        }
+
+        function applyTranslations(lang) {
+            const t = translations[lang];
+            if (!t) return;
+
+            $$('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key] !== undefined) {
+                    el.innerHTML = t[key];
+                }
+            });
+
+            $$('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key] !== undefined) {
+                    el.placeholder = t[key];
+                }
+            });
+
+            $$('[data-i18n-opt]').forEach(el => {
+                const key = el.getAttribute('data-i18n-opt');
+                if (t[key] !== undefined) {
+                    el.textContent = t[key];
+                }
+            });
+
+            const progressBar = $('#progressBar');
+            if (progressBar) {
+                const pct = Math.round(((currentSection - 1) / (totalSections - 1)) * 100);
+                progressBar.textContent = t.progress
+                    .replace('{n}', currentSection)
+                    .replace('{t}', totalSections)
+                    .replace('{p}', pct);
+            }
+
+            $$('.lang-btn').forEach(btn => {
+                btn.classList.toggle('lang-btn--active', btn.dataset.lang === lang);
+            });
+        }
+
+        function toggleLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('expert_validation_lang', lang);
+            applyTranslations(lang);
+            saveToLocalStorage();
+        }
+
+        function getFormData() {
+            const form = $('#expertForm');
+            const formData = new FormData(form);
+            const data = {};
+
+            form.querySelectorAll('input, textarea, select').forEach(field => {
+                if (field.type === 'checkbox') {
+                    if (!data[field.name]) data[field.name] = [];
+                    if (field.checked) data[field.name].push(field.value);
+                } else if (field.type === 'radio') {
+                    if (field.checked) data[field.name] = field.value;
+                } else {
+                    data[field.name] = field.value;
+                }
+            });
+
+            return data;
+        }
+
+        function saveToLocalStorage() {
+            const data = getFormData();
+            data._currentSection = currentSection;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+
+            try {
+                const data = JSON.parse(saved);
+
+                Object.keys(data).forEach(key => {
+                    if (key === '_currentSection') return;
+
+                    const fields = $$(`[name="${key}"]`);
+                    fields.forEach(field => {
+                        if (field.type === 'checkbox') {
+                            field.checked = data[key].includes(field.value);
+                        } else if (field.type === 'radio') {
+                            field.checked = field.value === data[key];
+                        } else {
+                            field.value = data[key];
+                        }
+                    });
+                });
+
+                if (data._currentSection) {
+                    showSection(data._currentSection);
+                }
+            } catch (e) {
+                console.warn('Failed to load saved data:', e);
+            }
+        }
+
+        function showSection(sectionNumber) {
+            currentSection = sectionNumber;
+
+            $$('.form-section').forEach(section => {
+                section.classList.add('section-hidden');
+            });
+
+            $(`.form-section[data-section="${sectionNumber}"]`).classList.remove('section-hidden');
+
+            updateNavigation();
+            saveToLocalStorage();
+        }
+
+        function updateNavigation() {
+            const navLinks = $$('.nav-link');
+            navLinks.forEach(link => {
+                const section = parseInt(link.dataset.section);
+                link.classList.remove('nav-link--active', 'nav-link--completed');
+
+                const icon = $(`#nav-icon-${section}`);
+
+                if (section === currentSection) {
+                    link.classList.add('nav-link--active');
+                    icon.textContent = section;
+                    icon.className = 'nav-icon nav-icon--filled';
+                } else if (section < currentSection) {
+                    link.classList.add('nav-link--completed');
+                    icon.innerHTML = '&#10003;';
+                    icon.className = 'nav-icon nav-icon--completed';
+                } else {
+                    icon.textContent = section;
+                    icon.className = 'nav-icon';
+                }
+
+                link.style.pointerEvents = section <= currentSection ? 'auto' : 'none';
+                link.style.opacity = section <= currentSection ? '1' : '0.5';
+            });
+
+            const progressPercent = Math.round(((currentSection - 1) / (totalSections - 1)) * 100);
+            applyTranslations(currentLang);
+        }
+
+        function generateJSON() {
+            const data = getFormData();
+
+            generatedJSON = {
+                metadata: {
+                    project: "BIT × Infineon Excellence Program",
+                    project_area: "Sustainable Farm — Product Transformation",
+                    interview_type: "Expert Validation",
+                    interview_date: new Date().toISOString(),
+                    form_version: "2.0"
+                },
+                expert: {
+                    name: data.expert_name || null,
+                    profession: data.profession || null,
+                    experience_years: data.experience_years ? parseInt(data.experience_years) : null,
+                    specialization: data.specialization || null,
+                    activity: data.activity || null
+                },
+                process: {
+                    steps: data.process_steps || null,
+                    intervention_stage: data.intervention_stage || null,
+                    critical_steps: data.critical_steps || null,
+                    confidence: data.process_confidence || null
+                },
+                raw_material: {
+                    varieties: data.varieties || [],
+                    varieties_other: data.varieties_other || null,
+                    maturity_level: data.maturity_level || null,
+                    maturity_criteria: data.maturity_criteria || null,
+                    rejection_rate_percent: data.rejection_rate ? parseFloat(data.rejection_rate) : null,
+                    confidence: data.raw_material_confidence || null
+                },
+                quality: {
+                    indicators: data.quality_indicators || [],
+                    indicators_other: data.quality_indicators_other || null,
+                    grade_classification: data.grade_classification || null,
+                    acceptance_threshold: data.acceptance_threshold || null,
+                    confidence: data.quality_confidence || null
+                },
+                losses: {
+                    total_loss_percent: data.loss_percentage ? parseFloat(data.loss_percentage) : null,
+                    main_stage: data.loss_stage || null,
+                    main_cause: data.loss_cause || null,
+                    confidence: data.losses_confidence || null
+                },
+                drying: {
+                    temperature_celsius: data.temperature_celsius ? parseInt(data.temperature_celsius) : null,
+                    duration_hours: data.duration_hours ? parseFloat(data.duration_hours) : null,
+                    target_moisture_percent: data.target_moisture ? parseFloat(data.target_moisture) : null,
+                    batch_quantity_kg: data.batch_quantity ? parseFloat(data.batch_quantity) : null,
+                    energy_source: data.energy_source || null,
+                    controlled_parameters: data.drying_parameters || null,
+                    confidence: data.drying_confidence || null
+                },
+                traceability: {
+                    batch_data_fields: data.batch_data || [],
+                    traceable_events: data.traceable_events || null,
+                    confidence: data.traceability_confidence || null
+                },
+                kpis: {
+                    important_kpis: data.kpis || [],
+                    missing_kpis: data.missing_kpis || null,
+                    confidence: data.kpis_confidence || null
+                },
+                digitalization: {
+                    current_data: data.current_data || null,
+                    missing_data: data.missing_data || null,
+                    digital_opportunities: data.digital_opportunities || null,
+                    confidence: data.digitalization_confidence || null
+                },
+                recommendations: {
+                    main_recommendation: data.main_recommendation || null,
+                    avoid_mistake: data.avoid_mistake || null,
+                    additional_comments: data.additional_comments || null
+                },
+                expert_assessment: {
+                    solution_relevance: data.assessment_relevance ? parseInt(data.assessment_relevance) : null,
+                    most_important_improvement: data.most_important_improvement || null,
+                    follow_up_available: data.follow_up || null
+                }
+            };
+
+            return generatedJSON;
+        }
+
+        function downloadJSON() {
+            if (!generatedJSON) {
+                generateJSON();
+            }
+
+            const blob = new Blob([JSON.stringify(generatedJSON, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            const date = new Date().toISOString().split('T')[0];
+            link.download = `mango-expert-validation-${date}.json`;
+            link.href = url;
+            link.click();
+
+            URL.revokeObjectURL(url);
+        }
+
+        function exportPDF() {
+            const originalTitle = document.title;
+            const date = new Date().toISOString().split('T')[0];
+            document.title = `mango-expert-validation-${date}-${currentLang}`;
+
+            $$('.form-section').forEach(section => {
+                section.classList.remove('section-hidden');
+            });
+
+            window.print();
+
+            document.title = originalTitle;
+            updateNavigation();
+        }
+
+        function saveResponse() {
+            generateJSON();
+            localStorage.setItem(STORAGE_KEY + '_json', JSON.stringify(generatedJSON));
+            $('#confirmationPanel').classList.remove('section-hidden');
+        }
+
+        function resetForm() {
+            if (!confirm('Clear all responses? This cannot be undone.')) return;
+
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEY + '_json');
+            $('#expertForm').reset();
+            showSection(1);
+            $('#confirmationPanel').classList.add('section-hidden');
+            generatedJSON = null;
+        }
+
+        function init() {
+            loadFromLocalStorage();
+
+            $$('#langToggle .lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => toggleLanguage(btn.dataset.lang));
+            });
+            applyTranslations(currentLang);
+
+            $$('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const section = parseInt(link.dataset.section);
+                    if (section <= currentSection) {
+                        showSection(section);
+                    }
+                });
+            });
+
+            $$('[data-next]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const next = parseInt(btn.dataset.next);
+                    showSection(next);
+                });
+            });
+
+            $$('[data-prev]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const prev = parseInt(btn.dataset.prev);
+                    showSection(prev);
+                });
+            });
+
+            $('#expertForm').querySelectorAll('input, textarea, select').forEach(field => {
+                field.addEventListener('change', saveToLocalStorage);
+                field.addEventListener('input', saveToLocalStorage);
+            });
+
+            $('#saveBtn').addEventListener('click', saveResponse);
+            $('#exportBtn').addEventListener('click', downloadJSON);
+            $('#exportPdfBtn').addEventListener('click', exportPDF);
+            $('#resetBtn').addEventListener('click', resetForm);
+
+            $$('textarea').forEach(ta => {
+                ta.addEventListener('input', function() {
+                    const existing = this.parentElement.querySelector('.char-counter');
+                    if (!existing) {
+                        const counter = document.createElement('span');
+                        counter.className = 'char-counter';
+                        this.parentElement.appendChild(counter);
+                    }
+                    const counter = this.parentElement.querySelector('.char-counter');
+                    counter.textContent = `${this.value.length} chars`;
+                    counter.className = 'char-counter' + (this.value.length > 900 ? ' char-counter--warning' : '');
+                });
+            });
+
+            updateNavigation();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
