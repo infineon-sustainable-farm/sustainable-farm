@@ -6,6 +6,7 @@
   Source: v0 mockup tailwind.config, corrected after team feedback
   (primary = green #4caf50, not teal — teal kept as secondary accent).
 */
+@import "tailwindcss"; 
 
 @theme {
   --color-background: #f5f7fa;
@@ -62,4 +63,4 @@
 
   --radius-lg: 0.5rem;
 }
-
+  
