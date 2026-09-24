@@ -65,6 +65,30 @@ public interface PopulationEventRepository extends JpaRepository<PopulationEvent
     Optional<PopulationEvent> findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(Long varietyId,
                                                                                  PopulationEventType eventType);
 
+    /**
+     * PLANTING events of the variety rows matching the given filters, each with
+     * its variety row.
+     *
+     * <p>Only the variety rows that were planted are returned: a row without a
+     * PLANTING event, such as the Zalka 2025 row of the dev profile, is not. Both
+     * filters work as in {@link VarietyRepository#findByOptionalFilters}: a
+     * {@code null} parameter disables its own filter.
+     *
+     * @param farmId    farm identifier, or {@code null} to ignore the farm
+     * @param blockCode raw block value as stored (for example {@code "A"}),
+     *                  or {@code null} to ignore the block
+     * @return the plantings, ordered by block, variety name, variety row, then date
+     */
+    @Query("""
+            SELECT e FROM PopulationEvent e JOIN FETCH e.variety v
+            WHERE e.eventType = com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType.PLANTING
+              AND (:farmId IS NULL OR v.farmId = :farmId)
+              AND (:blockCode IS NULL OR v.blockCode = :blockCode)
+            ORDER BY v.blockCode ASC, v.name ASC, v.id ASC, e.eventDate ASC
+            """)
+    List<PopulationEvent> findPlantingsByOptionalFilters(@Param("farmId") Integer farmId,
+                                                         @Param("blockCode") String blockCode);
+
     /** Current number of trees of one variety row, as returned by {@link #findTreeBalances}. */
     interface TreeBalance {
 

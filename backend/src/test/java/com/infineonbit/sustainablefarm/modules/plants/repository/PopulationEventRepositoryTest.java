@@ -41,6 +41,20 @@ public class PopulationEventRepositoryTest {
         return varietyRepository.save(variety);
     }
 
+    private Variety variety(Integer farmId, String blockCode, String name) {
+        Variety variety = new Variety();
+        variety.setFarmId(farmId);
+        variety.setBlockCode(blockCode);
+        variety.setName(name);
+        return varietyRepository.save(variety);
+    }
+
+    private List<String> plantedNames(Integer farmId, String blockCode) {
+        return populationEventRepository.findPlantingsByOptionalFilters(farmId, blockCode).stream()
+                .map(planting -> planting.getVariety().getBlockCode() + " " + planting.getVariety().getName())
+                .toList();
+    }
+
     private void event(Variety variety, PopulationEventType type, int treeCount) {
         PopulationEvent event = new PopulationEvent();
         event.setVariety(variety);
@@ -120,5 +134,46 @@ public class PopulationEventRepositoryTest {
         assertTrue(populationEventRepository
                 .findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(kent.getId(), PLANTING)
                 .isEmpty());
+    }
+
+    @Test
+    void findPlantingsByOptionalFilters_shouldSkipRowsWithoutPlanting_likeTheZalkaRow() {
+        // Arrange: the Zalka row has no event; another row has a mortality only
+        variety(null, "A", "Keitt");
+        Variety kent = variety(null, "A", "Kent");
+        event(kent, MORTALITY, 1);
+        Variety keittB = variety(null, "B", "Keitt");
+        event(keittB, PLANTING, 150);
+        event(keittB, MORTALITY, 2);
+        // Act & Assert: only the planting, not the mortality of the same row
+        assertEquals(List.of("B Keitt"), plantedNames(null, null));
+    }
+
+    @Test
+    void findPlantingsByOptionalFilters_shouldOrderByBlockThenName_andLoadTheVariety() {
+        // Arrange: saved out of order
+        event(variety(null, "B", "Keitt"), PLANTING, 150);
+        event(variety(null, "A", "Palmer"), PLANTING, 10);
+        event(variety(null, "A", "Kent"), PLANTING, 40);
+        // Act
+        List<PopulationEvent> plantings = populationEventRepository.findPlantingsByOptionalFilters(null, null);
+        // Assert
+        assertEquals(List.of("A Kent", "A Palmer", "B Keitt"), plantedNames(null, null));
+        assertEquals(PLANTING, plantings.get(0).getEventType());
+        assertEquals(40, plantings.get(0).getTreeCount());
+    }
+
+    @Test
+    void findPlantingsByOptionalFilters_shouldFilterOnFarmAndBlock() {
+        // Arrange
+        event(variety(null, "B", "Keitt"), PLANTING, 150);
+        event(variety(1, "B", "Keitt"), PLANTING, 80);
+        event(variety(1, "A", "Kent"), PLANTING, 40);
+        // Act & Assert: no farm filter means every farm; farm 1 leaves the row without a farm out
+        assertEquals(List.of("A Kent", "B Keitt", "B Keitt"), plantedNames(null, null));
+        assertEquals(List.of("A Kent", "B Keitt"), plantedNames(1, null));
+        assertEquals(List.of("B Keitt"), plantedNames(1, "B"));
+        assertEquals(List.of("B Keitt", "B Keitt"), plantedNames(null, "B"));
+        assertTrue(plantedNames(2, null).isEmpty());
     }
 }
