@@ -50,7 +50,7 @@ public class VarietyController {
    public ResponseEntity<List<VarietyResponse>> getAllVarieties(
          @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode) {
-      List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(farmId, blockCode);
+      List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(farmId, blockCode);
       return ResponseEntity.status(HttpStatus.OK).body(varietyResponses);
    }
 
@@ -61,7 +61,7 @@ public class VarietyController {
          @ApiResponse(responseCode = "404", description = "No variety with this ID")
    })
    public ResponseEntity<VarietyResponse> getVarietyById(@PathVariable Long id) {
-      VarietyResponse varietyResponse = varietyService.obtainVarietyById(id);
+      VarietyResponse varietyResponse = varietyService.getVarietyById(id);
       return ResponseEntity.status(HttpStatus.OK).body(varietyResponse);
    }
 }

@@ -22,12 +22,14 @@ public class GrowthCalendarService {
     private final VarietyRepository varietyRepository;
 
     /**
-     * Growth Calendar Read Service
-     * <p>Blank filter normalization method
-     * <ul>
-     *      <li>A filter sent as an empty or whitespace-only string means "no filter".</li>
-     *      <li>It is turned into {@code null} so the query ignores it.</li>
-     * </ul>
+     * Turns a blank filter into no filter at all.
+     *
+     * <p>A filter sent as an empty or whitespace-only string means "no filter".
+     * It is turned into {@code null} so the query ignores it instead of looking
+     * for an entry whose block is literally the empty string.
+     *
+     * @param value the filter value as received, possibly {@code null}
+     * @return the trimmed value, or {@code null} if it was null or blank
      */
     private static String normalizeFilter(String value) {
         if (value == null) {
@@ -40,9 +42,10 @@ public class GrowthCalendarService {
     /**
      * Names of the varieties planted on the same farm and block as the entry.
      *
-     * <p>{@code bloc_parcelle} is the link between the plants tables. The farm must
-     * match too, NULL matching NULL, so a block "A" of one farm never borrows the
-     * varieties of block "A" of another farm.
+     * <p>The link between the plants tables is made on the {@code blockCode} and
+     * {@code farmId} fields (columns {@code bloc_parcelle} and {@code id_ferme} in
+     * the database). Both must match, NULL matching NULL, so a block "A" of one
+     * farm never borrows the varieties of block "A" of another farm.
      *
      * <p>Every matching variety is returned — none is picked when there are
      * several. Names are de-duplicated and sorted so the output is stable.
@@ -104,15 +107,15 @@ public class GrowthCalendarService {
      *                  or {@code null} for every block
      * @return the matching entries, possibly empty
      */
-    public List<GrowthCalendarResponse> obtainAllGrowthCalendarEntries(Integer farmId, String blockCode) {
-        return obtainAllGrowthCalendarEntries(farmId, blockCode, LocalDate.now());
+    public List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Integer farmId, String blockCode) {
+        return getAllGrowthCalendarEntries(farmId, blockCode, LocalDate.now());
     }
 
     /**
-     * Same as {@link #obtainAllGrowthCalendarEntries(Integer, String)}, against an
+     * Same as {@link #getAllGrowthCalendarEntries(Integer, String)}, against an
      * explicit reference date so the age computation can be tested.
      */
-    List<GrowthCalendarResponse> obtainAllGrowthCalendarEntries(Integer farmId, String blockCode, LocalDate today) {
+    List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Integer farmId, String blockCode, LocalDate today) {
         String normalizedBlock = normalizeFilter(blockCode);
         List<GrowthCalendar> entries = growthCalendarRepository.findByOptionalFilters(farmId, normalizedBlock);
         if (entries.isEmpty()) {
@@ -130,15 +133,15 @@ public class GrowthCalendarService {
      * @return the representation of that entry, with age and phase computed against today
      * @throws GrowthCalendarNotFoundException if no entry exists with this ID
      */
-    public GrowthCalendarResponse obtainGrowthCalendarEntryById(Long id) {
-        return obtainGrowthCalendarEntryById(id, LocalDate.now());
+    public GrowthCalendarResponse getGrowthCalendarEntryById(Long id) {
+        return getGrowthCalendarEntryById(id, LocalDate.now());
     }
 
     /**
-     * Same as {@link #obtainGrowthCalendarEntryById(Long)}, against an explicit
+     * Same as {@link #getGrowthCalendarEntryById(Long)}, against an explicit
      * reference date so the age computation can be tested.
      */
-    GrowthCalendarResponse obtainGrowthCalendarEntryById(Long id, LocalDate today) {
+    GrowthCalendarResponse getGrowthCalendarEntryById(Long id, LocalDate today) {
         GrowthCalendar entry = growthCalendarRepository.findById(id)
                 .orElseThrow(() -> new GrowthCalendarNotFoundException(id));
         List<Variety> varieties = varietyRepository.findByOptionalFilters(null, entry.getBlockCode());
