@@ -3,10 +3,14 @@ package com.infineonbit.sustainablefarm.modules.plants.controller;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.exception.FertilizerNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.service.FertilizerMovementService;
 import com.infineonbit.sustainablefarm.modules.plants.service.FertilizerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -19,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.aMapWithSize;
@@ -26,6 +31,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,8 +55,22 @@ public class FertilizerControllerTest {
     @MockitoBean
     private FertilizerService fertilizerService;
 
+    @MockitoBean
+    private FertilizerMovementService fertilizerMovementService;
+
     private ResultActions postFertilizer(String body) throws Exception {
         return mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    private ResultActions postMovement(long fertilizerId, String kind, String body) throws Exception {
+        return mockMvc.perform(post(URL + "/" + fertilizerId + "/" + kind)
+                .contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    private static FertilizerMovementResponse npkPurchaseInEuros() {
+        return new FertilizerMovementResponse(11L, 1L, "NPK 15-15-15", FertilizerMovementType.PURCHASE,
+                LocalDate.of(2026, 6, 5), 100.0, FertilizerUnit.KG, null, null, null, null, "Supplier B", 120.0, "EUR",
+                78715L, 120.0, null, "user_entry", NOW);
     }
 
     /** Common part of every 4xx body: the application-wide ApiError envelope. */
@@ -211,6 +231,103 @@ public class FertilizerControllerTest {
         ResultActions result = mockMvc.perform(get(URL + "/999"));
         // Assert
         assertApiError(result, 404, "Not Found", "Fertilizer with ID 999 not found", URL + "/999");
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void recordPurchase_shouldReturn201WithTheCostInBothCurrencies() throws Exception {
+        // Arrange
+        when(fertilizerMovementService.recordPurchase(eq(1L), any(PurchaseRequest.class)))
+                .thenReturn(npkPurchaseInEuros());
+        // Act
+        ResultActions result = postMovement(1L, "purchases", """
+                {"purchaseDate":"2026-06-05","quantity":100,"supplier":"Supplier B","totalCost":120,"currency":"eur"}
+                """);
+        // Assert: no Location header, the purchase in the body
+        result.andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.id").value(11))
+                .andExpect(jsonPath("$.fertilizerId").value(1))
+                .andExpect(jsonPath("$.fertilizerName").value("NPK 15-15-15"))
+                .andExpect(jsonPath("$.movementType").value("PURCHASE"))
+                .andExpect(jsonPath("$.movementDate").value("2026-06-05"))
+                .andExpect(jsonPath("$.quantity").value(100.0))
+                .andExpect(jsonPath("$.unit").value("KG"))
+                .andExpect(jsonPath("$.blockCode").value(nullValue()))
+                .andExpect(jsonPath("$.supplier").value("Supplier B"))
+                .andExpect(jsonPath("$.totalCost").value(120.0))
+                .andExpect(jsonPath("$.currency").value("EUR"))
+                .andExpect(jsonPath("$.totalCostXof").value(78715))
+                .andExpect(jsonPath("$.totalCostEur").value(120.0))
+                .andExpect(jsonPath("$.reason").value(nullValue()))
+                .andExpect(jsonPath("$.source").value("user_entry"))
+                .andExpect(jsonPath("$.lastUpdated").value("2026-09-24T10:00:00Z"));
+        // Assert: the currency reaches the service as sent; it normalizes it
+        ArgumentCaptor<PurchaseRequest> captor = ArgumentCaptor.forClass(PurchaseRequest.class);
+        verify(fertilizerMovementService).recordPurchase(eq(1L), captor.capture());
+        assertEquals("eur", captor.getValue().currency());
+    }
+
+    @Test
+    void recordPurchase_shouldReturn400WithEveryFailingField_whenValuesAreInvalid() throws Exception {
+        // Arrange
+        String future = LocalDate.now().plusYears(1).toString();
+        // Act
+        ResultActions result = postMovement(1L, "purchases", """
+                {"purchaseDate":"%s","quantity":0,"supplier":"","totalCost":-5}
+                """.formatted(future));
+        // Assert
+        assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/1/purchases");
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(4)))
+                .andExpect(jsonPath("$.fieldErrors.purchaseDate").value("purchaseDate must be today or in the past"))
+                .andExpect(jsonPath("$.fieldErrors.quantity")
+                        .value("quantity must be greater than 0, with at most 3 decimals"))
+                .andExpect(jsonPath("$.fieldErrors.supplier").value("supplier is required"))
+                .andExpect(jsonPath("$.fieldErrors.totalCost")
+                        .value("totalCost must be greater than 0, with at most 2 decimals"));
+        verify(fertilizerMovementService, never()).recordPurchase(any(), any());
+    }
+
+    @Test
+    void recordPurchase_shouldReturn400WithRequiredFields_whenBodyIsEmpty() throws Exception {
+        // Act
+        ResultActions result = postMovement(1L, "purchases", "{}");
+        // Assert: the cost and its currency are optional
+        assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/1/purchases");
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(3)))
+                .andExpect(jsonPath("$.fieldErrors.purchaseDate").value("purchaseDate is required"))
+                .andExpect(jsonPath("$.fieldErrors.quantity").value("quantity is required"))
+                .andExpect(jsonPath("$.fieldErrors.supplier").value("supplier is required"));
+    }
+
+    @Test
+    void recordPurchase_shouldReturn400_whenCurrencyIsUnknownOrAmountsHaveTooManyDecimals() throws Exception {
+        // Act
+        ResultActions result = postMovement(1L, "purchases", """
+                {"purchaseDate":"2026-06-05","quantity":0.1234,"supplier":"Supplier B","totalCost":10.005,
+                 "currency":"USD"}
+                """);
+        // Assert
+        assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/1/purchases");
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(3)))
+                .andExpect(jsonPath("$.fieldErrors.quantity")
+                        .value("quantity must be greater than 0, with at most 3 decimals"))
+                .andExpect(jsonPath("$.fieldErrors.totalCost")
+                        .value("totalCost must be greater than 0, with at most 2 decimals"))
+                .andExpect(jsonPath("$.fieldErrors.currency").value("currency must be XOF or EUR"));
+    }
+
+    @Test
+    void recordPurchase_shouldReturn404WithApiError_whenFertilizerIsUnknown() throws Exception {
+        // Arrange
+        when(fertilizerMovementService.recordPurchase(eq(999L), any(PurchaseRequest.class)))
+                .thenThrow(new FertilizerNotFoundException(999L));
+        // Act
+        ResultActions result = postMovement(999L, "purchases", """
+                {"purchaseDate":"2026-06-05","quantity":100,"supplier":"Supplier B"}
+                """);
+        // Assert
+        assertApiError(result, 404, "Not Found", "Fertilizer with ID 999 not found", URL + "/999/purchases");
         result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
     }
 }
