@@ -1,7 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerResponse;
+import com.infineonbit.sustainablefarm.modules.plants.service.FertilizerMovementService;
 import com.infineonbit.sustainablefarm.modules.plants.service.FertilizerService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +33,7 @@ import java.util.List;
  * <li>{@code POST /api/plants/fertilizers} — add a fertilizer to the catalogue</li>
  * <li>{@code GET /api/plants/fertilizers} — the catalogue, each fertilizer with its stock</li>
  * <li>{@code GET /api/plants/fertilizers/{id}} — a single fertilizer with its stock</li>
+ * <li>{@code POST /api/plants/fertilizers/{id}/purchases} — record a purchase, in FCFA or euros</li>
  * </ul>
  * <p>
  * The stock is never stored: it is computed on every read from the recorded
@@ -46,6 +50,7 @@ import java.util.List;
 public class FertilizerController {
 
    private final FertilizerService fertilizerService;
+   private final FertilizerMovementService fertilizerMovementService;
 
    @PostMapping
    @Operation(summary = "Add a fertilizer to the catalogue",
@@ -82,5 +87,21 @@ public class FertilizerController {
    public ResponseEntity<FertilizerResponse> getFertilizerById(@PathVariable Long id) {
       FertilizerResponse fertilizerResponse = fertilizerService.getFertilizerById(id);
       return ResponseEntity.status(HttpStatus.OK).body(fertilizerResponse);
+   }
+
+   @PostMapping("/{id}/purchases")
+   @Operation(summary = "Record a purchase of a fertilizer",
+         description = "Adds the quantity, in the unit of the fertilizer, to its stock. totalCost is optional; its "
+               + "currency is XOF when omitted, and a currency without a cost is ignored. The response gives the "
+               + "cost in both currencies, converted with the rate stored in currency_rate.")
+   @ApiResponses({
+         @ApiResponse(responseCode = "201", description = "The recorded purchase"),
+         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "404", description = "No fertilizer with this ID")
+   })
+   public ResponseEntity<FertilizerMovementResponse> recordPurchase(@PathVariable Long id,
+                                                                    @Valid @RequestBody PurchaseRequest purchaseRequest) {
+      FertilizerMovementResponse movementResponse = fertilizerMovementService.recordPurchase(id, purchaseRequest);
+      return ResponseEntity.status(HttpStatus.CREATED).body(movementResponse);
    }
 }
