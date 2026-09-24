@@ -5,11 +5,16 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * PROVISIONAL. Loads the only real plants data of the project (the Zalka 2025
  * study) into PostgreSQL at startup: one variety row and one growth calendar row.
+ *
+ * <p>Runs under the {@code dev} Spring profile only
+ * (e.g. {@code SPRING_PROFILES_ACTIVE=dev}), like {@code DevDataSeeder}. With no
+ * profile set the bean is not created at all, so this never seeds production.
  *
  * <p>Why this exists: the project has neither Flyway nor a SQL script — the
  * schema comes from Hibernate ddl-auto=update — and the team has not yet
@@ -32,6 +37,7 @@ import org.springframework.stereotype.Component;
  * {@link #seedZalka2025GrowthCalendar()} for every field.
  */
 @Component
+@Profile("dev")
 public class PlantsDataSeeder implements CommandLineRunner {
 
     private final VarietyRepository varietyRepository;
