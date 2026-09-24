@@ -70,7 +70,7 @@ public class VarietyService {
      *                  or {@code null} for every block
      * @return the matching varieties, possibly empty
      */
-    public List<VarietyResponse> obtainAllVarieties(Integer farmId, String blockCode) {
+    public List<VarietyResponse> getAllVarieties(Integer farmId, String blockCode) {
         List<Variety> varieties = varietyRepository.findByOptionalFilters(
                 farmId,
                 normalizeFilter(blockCode));
@@ -84,7 +84,7 @@ public class VarietyService {
      * @return the representation of that variety
      * @throws VarietyNotFoundException if no variety exists with this ID
      */
-    public VarietyResponse obtainVarietyById(Long id) {
+    public VarietyResponse getVarietyById(Long id) {
         Variety variety = varietyRepository.findById(id)
                 .orElseThrow(() -> new VarietyNotFoundException(id));
         return toResponse(variety);

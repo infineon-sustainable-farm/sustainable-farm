@@ -104,15 +104,15 @@ public class GrowthCalendarService {
      *                  or {@code null} for every block
      * @return the matching entries, possibly empty
      */
-    public List<GrowthCalendarResponse> obtainAllGrowthCalendarEntries(Integer farmId, String blockCode) {
-        return obtainAllGrowthCalendarEntries(farmId, blockCode, LocalDate.now());
+    public List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Integer farmId, String blockCode) {
+        return getAllGrowthCalendarEntries(farmId, blockCode, LocalDate.now());
     }
 
     /**
-     * Same as {@link #obtainAllGrowthCalendarEntries(Integer, String)}, against an
+     * Same as {@link #getAllGrowthCalendarEntries(Integer, String)}, against an
      * explicit reference date so the age computation can be tested.
      */
-    List<GrowthCalendarResponse> obtainAllGrowthCalendarEntries(Integer farmId, String blockCode, LocalDate today) {
+    List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Integer farmId, String blockCode, LocalDate today) {
         String normalizedBlock = normalizeFilter(blockCode);
         List<GrowthCalendar> entries = growthCalendarRepository.findByOptionalFilters(farmId, normalizedBlock);
         if (entries.isEmpty()) {
@@ -130,15 +130,15 @@ public class GrowthCalendarService {
      * @return the representation of that entry, with age and phase computed against today
      * @throws GrowthCalendarNotFoundException if no entry exists with this ID
      */
-    public GrowthCalendarResponse obtainGrowthCalendarEntryById(Long id) {
-        return obtainGrowthCalendarEntryById(id, LocalDate.now());
+    public GrowthCalendarResponse getGrowthCalendarEntryById(Long id) {
+        return getGrowthCalendarEntryById(id, LocalDate.now());
     }
 
     /**
-     * Same as {@link #obtainGrowthCalendarEntryById(Long)}, against an explicit
+     * Same as {@link #getGrowthCalendarEntryById(Long)}, against an explicit
      * reference date so the age computation can be tested.
      */
-    GrowthCalendarResponse obtainGrowthCalendarEntryById(Long id, LocalDate today) {
+    GrowthCalendarResponse getGrowthCalendarEntryById(Long id, LocalDate today) {
         GrowthCalendar entry = growthCalendarRepository.findById(id)
                 .orElseThrow(() -> new GrowthCalendarNotFoundException(id));
         List<Variety> varieties = varietyRepository.findByOptionalFilters(null, entry.getBlockCode());
