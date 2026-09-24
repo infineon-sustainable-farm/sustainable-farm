@@ -1,5 +1,3 @@
-
-
 /*
   Energy Supply Systems module — validated design tokens.
   Copy this block into frontend/src/index.css, inside (or right after)
@@ -8,9 +6,65 @@
   Source: v0 mockup tailwind.config, corrected after team feedback
   (primary = green #4caf50, not teal — teal kept as secondary accent).
 */
-@import "tailwindcss"; 
+@import "tailwindcss";
 
 @theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Shared base tokens used across all modules (machinery, plants, shared components).
+     Kept alongside the FenceLine scale below; do not remove without a team decision. */
+  --color-primary: #0a8276;
+  --color-primary-dark: #065e55;
+  --color-accent: #0fa396;
+  --color-ink: #0f2a26;
+  --color-muted: #5a6b7a;
+  --color-line: #cdefe9;
+
+  --color-success: #2e9e6b;
+  --color-warning: #d9a441;
+  --color-error: #c1503f;
+  --color-info: #3a7ca5;
+
+  --color-primary-900: #05453f;
+  --color-primary-800: #075b52;
+  --color-primary-700: #086960;
+  --color-primary-600: #0a8276;
+  --color-primary-500: #0d9c8d;
+  --color-primary-400: #1ab8a7;
+  --color-primary-100: #d4f2ee;
+  --color-primary-50: #eaf8f6;
+
+  --color-navy-950: #0a111f;
+  --color-navy-900: #101b2e;
+  --color-navy-800: #16233a;
+  --color-navy-700: #223050;
+  --color-navy-100: #e6eaf2;
+  --color-navy-50: #f2f4f9;
+
+  --color-accent-50: #fff8f2;
+  --color-accent-100: #ffeedc;
+  --color-accent-200: #ffd5ab;
+  --color-accent-500: #ef6c00;
+  --color-accent-600: #d85f00;
+  --color-accent-700: #b54e00;
+
+  --color-sec-red: #c62828;
+  --color-sec-green: #4caf50;
+
+  --shadow-card: 0 1px 2px rgba(10, 130, 118, 0.04), 0 10px 30px -14px rgba(10, 130, 118, 0.12);
+  --shadow-pop: 0 24px 60px -20px rgba(10, 130, 118, 0.35);
+
+  /* --- Energy Supply module additions (non-colliding tokens only) ---
+     bg-primary / bg-muted / bg-success / bg-warning / font-heading are
+     intentionally NOT overridden: they already exist above as shared,
+     cross-module tokens (primary = teal, not the CropCore green).
+     TODO(energysupply): coordinate with the team on whether the module
+     should adopt the shared teal primary, or whether a scoped override
+     is worth doing properly — this file is shared, so this isn't a
+     decision for one module owner alone. */
   --color-background: #f5f7fa;
   --color-foreground: #1a2422;
 
@@ -20,25 +74,17 @@
   --color-popover: #ffffff;
   --color-popover-foreground: #1a2422;
 
-  --color-primary: #4caf50;
-  --color-primary-foreground: #ffffff;
-
-  --color-secondary: #0a8276;
+  --color-secondary: #4caf50;
   --color-secondary-foreground: #ffffff;
 
-  --color-muted: #eef2f1;
   --color-muted-foreground: #5c6b68;
 
-  --color-accent: #e3efed;
   --color-accent-foreground: #4caf50;
 
   --color-destructive: #c62828;
   --color-destructive-foreground: #ffffff;
 
-  --color-warning: #ef6c00;
   --color-warning-foreground: #ffffff;
-
-  --color-success: #4caf50;
   --color-success-foreground: #ffffff;
 
   --color-border: #dbe3e1;
@@ -60,9 +106,232 @@
   --color-sidebar-border: #5cbf60;
   --color-sidebar-ring: #ffffff;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
-
   --radius-lg: 0.5rem;
 }
-  
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: #f4f6f9;
+  color: #334155;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(178, 58, 104, 0.18);
+}
+
+/* --- thin scrollbars --- */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #d6dbe4;
+  border-radius: 8px;
+  border: 3px solid #f4f6f9;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- svg blueprint helpers --- */
+.svg-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+}
+.svg-body {
+  font-family: var(--font-sans);
+}
+
+@keyframes fence-sweep {
+  to {
+    stroke-dashoffset: -1920;
+  }
+}
+.fence-sweep {
+  stroke-dasharray: 110 1810;
+  animation: fence-sweep 16s linear infinite;
+}
+
+@keyframes gate-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.gate-ping {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: gate-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.status-pulse {
+  animation: status-pulse 1.8s ease-in-out infinite;
+}
+
+.bg-dotgrid {
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.075) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  background-position: center;
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+    background-color: var(--color-accent-50);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.row-in {
+  animation: row-in 0.6s ease-out both;
+}
+
+/* ---------------------------------------------------------------------------
+   Shared motion language for the Visitor Management screens.
+
+   Four short, individual-preserving entrances, all driven by opacity and
+   transform so the compositor stays on the fast path (no layout/reflow):
+
+     page-in  – whole-screen entrance on route change (layout-level)
+     fade-up  – sections and cards: fade + very slight rise
+     fade-in  – plain fade (table containers, standalone blocks)
+     vm-row-in – table rows: fade + tiny rise, used by the .vm-table class
+
+   The --animate-* theme tokens expose them to Tailwind as normal
+   `animate-<name>` utilities; the stagger (cards, rows) is applied per item
+   with an inline animation-delay, never with a shared duration plus janky
+   scheduling. ----------------------------------------------------------------- */
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vm-row-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Table container: the wrapper fades in, then the first rows are introduced
+ * one after another with a light stagger. Only the first dozen rows stagger;
+ * any further rows share the last delay so a large table never animates
+ * slowly. Opacity-only for rows: a transform would ask some engines to paint
+ * a table row off its grid.
+ */
+.vm-table tbody tr {
+  animation: vm-row-in 0.35s ease-out both;
+}
+
+.vm-table tbody tr:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.vm-table tbody tr:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.vm-table tbody tr:nth-child(4) {
+  animation-delay: 0.12s;
+}
+
+.vm-table tbody tr:nth-child(5) {
+  animation-delay: 0.16s;
+}
+
+.vm-table tbody tr:nth-child(6) {
+  animation-delay: 0.2s;
+}
+
+.vm-table tbody tr:nth-child(7) {
+  animation-delay: 0.24s;
+}
+
+.vm-table tbody tr:nth-child(8) {
+  animation-delay: 0.28s;
+}
+
+.vm-table tbody tr:nth-child(9) {
+  animation-delay: 0.32s;
+}
+
+.vm-table tbody tr:nth-child(10) {
+  animation-delay: 0.36s;
+}
+
+.vm-table tbody tr:nth-child(n + 11) {
+  animation-delay: 0.4s;
+}
+
+@theme {
+  --animate-page-in: page-in 0.4s ease-out both;
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001s !important;
+    scroll-behavior: auto !important;
+  }
+}
