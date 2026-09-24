@@ -30,4 +30,24 @@ public interface GrowthCalendarRepository extends JpaRepository<GrowthCalendar, 
             """)
     List<GrowthCalendar> findByOptionalFilters(@Param("farmId") Integer farmId,
                                                  @Param("blockCode") String blockCode);
+
+    /**
+     * Returns the growth calendar rows of one block of one farm, oldest first.
+     *
+     * <p>Same NULL-safe farm comparison as
+     * {@link VarietyRepository#findByFarmBlockAndName}: a {@code null} farm
+     * matches only the rows without a farm.
+     *
+     * @param farmId    farm identifier, or {@code null} for the rows without a farm
+     * @param blockCode block code as stored, for example {@code "A"}
+     * @return the matching rows, oldest first, possibly empty
+     */
+    @Query("""
+            SELECT c FROM GrowthCalendar c
+            WHERE ((:farmId IS NULL AND c.farmId IS NULL) OR c.farmId = :farmId)
+              AND c.blockCode = :blockCode
+            ORDER BY c.id ASC
+            """)
+    List<GrowthCalendar> findByFarmAndBlock(@Param("farmId") Integer farmId,
+                                            @Param("blockCode") String blockCode);
 }
