@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.VarietyResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variete;
-import com.infineonbit.sustainablefarm.modules.plants.exception.VarieteNotFoundException;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarieteRepository;
+import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.exception.VarietyNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,21 +21,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class VarieteServiceTest {
+public class VarietyServiceTest {
 
     @Mock
-    private VarieteRepository varieteRepository;
+    private VarietyRepository varietyRepository;
 
     @InjectMocks
-    private VarieteService varieteService;
+    private VarietyService varietyService;
 
     /**
      * The only real row of the project: Zalka 2025. The four undocumented
      * fields stay null here too, so the tests also pin down that the service
      * does not invent a value for them.
      */
-    private static Variete keittOnBlockA() {
-        return new Variete(
+    private static Variety keittOnBlockA() {
+        return new Variety(
                 1L,
                 null,
                 "Keitt",
@@ -55,26 +55,26 @@ public class VarieteServiceTest {
     @Test
     void obtainAllVarieties_shouldReturnMatchingVarieties_whenFilterMatches() {
         // Arrange
-        when(varieteRepository.findByOptionalFilters(null, "A"))
+        when(varietyRepository.findByOptionalFilters(null, "A"))
                 .thenReturn(List.of(keittOnBlockA()));
         // Act
-        List<VarietyResponse> varietyResponses = varieteService.obtainAllVarieties(null, "A");
+        List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(null, "A");
         // Assert
         assertEquals(1, varietyResponses.size());
-        assertEquals("Keitt", varietyResponses.get(0).nom());
-        assertEquals("A", varietyResponses.get(0).bloc_parcelle());
-        assertEquals(200, varietyResponses.get(0).nombre_arbres());
-        assertNull(varietyResponses.get(0).rendement_reel_kg());
-        assertNull(varietyResponses.get(0).vigueur());
+        assertEquals("Keitt", varietyResponses.get(0).name());
+        assertEquals("A", varietyResponses.get(0).blockCode());
+        assertEquals(200, varietyResponses.get(0).treeCount());
+        assertNull(varietyResponses.get(0).actualYieldKg());
+        assertNull(varietyResponses.get(0).vigor());
     }
 
     @Test
     void obtainAllVarieties_shouldReturnEmptyList_whenFilterMatchesNothing() {
         // Arrange
-        when(varieteRepository.findByOptionalFilters(null, "ZZZ"))
+        when(varietyRepository.findByOptionalFilters(null, "ZZZ"))
                 .thenReturn(List.of());
         // Act
-        List<VarietyResponse> varietyResponses = varieteService.obtainAllVarieties(null, "ZZZ");
+        List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(null, "ZZZ");
         // Assert
         assertTrue(varietyResponses.isEmpty());
     }
@@ -82,13 +82,13 @@ public class VarieteServiceTest {
     @Test
     void obtainVarietyById_shouldReturnVariety_whenIdExists() {
         // Arrange
-        when(varieteRepository.findById(1L)).thenReturn(Optional.of(keittOnBlockA()));
+        when(varietyRepository.findById(1L)).thenReturn(Optional.of(keittOnBlockA()));
         // Act
-        VarietyResponse varietyResponse = varieteService.obtainVarietyById(1L);
+        VarietyResponse varietyResponse = varietyService.obtainVarietyById(1L);
         // Assert
         assertEquals(1L, varietyResponse.id());
-        assertEquals("Keitt", varietyResponse.nom());
-        assertEquals(44000.0, varietyResponse.rendement_attendu_kg());
+        assertEquals("Keitt", varietyResponse.name());
+        assertEquals(44000.0, varietyResponse.expectedYieldKg());
         assertEquals("Zalka_2025", varietyResponse.source());
     }
 
@@ -96,10 +96,10 @@ public class VarieteServiceTest {
     void obtainVarietyById_shouldThrowException_whenIdDoesNotExist() {
         // Arrange
         Long nonExistentId = 99L;
-        when(varieteRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(varietyRepository.findById(nonExistentId)).thenReturn(Optional.empty());
         // Act
-        VarieteNotFoundException ex = assertThrows(VarieteNotFoundException.class, () -> {
-            varieteService.obtainVarietyById(nonExistentId);
+        VarietyNotFoundException ex = assertThrows(VarietyNotFoundException.class, () -> {
+            varietyService.obtainVarietyById(nonExistentId);
         });
         // Assert
         assertEquals("Variety with ID 99 not found", ex.getMessage());

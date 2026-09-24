@@ -42,28 +42,28 @@ export default function GrowthCalendarTable({ entries }) {
                     {entries.map((entry) => (
                         <tr key={entry.id} className="border-b border-gray-100 last:border-b-0">
                             <td className="px-4 py-3 font-medium text-gray-800">
-                                {formatBlock(entry.bloc_parcelle)}
+                                {formatBlock(entry.blockCode)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatList(entry.varietes)}
+                                {formatList(entry.varieties)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatDate(entry.date_plantation)}
+                                {formatDate(entry.plantingDate)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.precision_date)}
+                                {formatText(entry.datePrecision)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatAge(entry.age_annees, entry.age_mois)}
+                                {formatAge(entry.ageYears, entry.ageMonths)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.stade_actuel)}
+                                {formatText(entry.currentStage)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatPhaseBand(entry.phase_croissance, entry.phase_tranche_annees)}
+                                {formatPhaseBand(entry.growthPhase, entry.phaseYearsBand)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatMillimeters(entry.pluviometrie_locale_mm)}
+                                {formatMillimeters(entry.localRainfallMm)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(entry.source)}

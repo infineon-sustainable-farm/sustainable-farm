@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchVarieties } from "../api/plantsApi";
 
-function varietiesQueryKey({ bloc_parcelle = null, id_ferme = null } = {}) {
-    return ["plants", "varieties", { bloc_parcelle, id_ferme }];
+function varietiesQueryKey({ blockCode = null, farmId = null } = {}) {
+    return ["plants", "varieties", { blockCode, farmId }];
 }
 
 /**
@@ -11,10 +11,10 @@ function varietiesQueryKey({ bloc_parcelle = null, id_ferme = null } = {}) {
  * Loading, error and retry are handled by TanStack Query; the components read
  * its status flags instead of keeping their own.
  */
-export function useVarieties({ bloc_parcelle = null, id_ferme = null } = {}) {
+export function useVarieties({ blockCode = null, farmId = null } = {}) {
     return useQuery({
-        queryKey: varietiesQueryKey({ bloc_parcelle, id_ferme }),
-        queryFn: () => fetchVarieties({ bloc_parcelle, id_ferme }),
+        queryKey: varietiesQueryKey({ blockCode, farmId }),
+        queryFn: () => fetchVarieties({ blockCode, farmId }),
     });
 }
 
@@ -30,6 +30,6 @@ export function useVarietyBlocks() {
         queryKey: varietiesQueryKey(),
         queryFn: () => fetchVarieties(),
         select: (varieties) =>
-            [...new Set(varieties.map((variety) => variety.bloc_parcelle).filter(Boolean))].sort(),
+            [...new Set(varieties.map((variety) => variety.blockCode).filter(Boolean))].sort(),
     });
 }
