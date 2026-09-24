@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PopulationEventRepository extends JpaRepository<PopulationEvent, Long> {
@@ -51,6 +52,18 @@ public interface PopulationEventRepository extends JpaRepository<PopulationEvent
      * PLANTING: a variety row is planted once.
      */
     boolean existsByVarietyIdAndEventType(Long varietyId, PopulationEventType eventType);
+
+    /**
+     * The oldest event of this type of the variety row. Used with PLANTING to
+     * read the planting date of a variety, which is the date of its event and
+     * not the calendar date of its block.
+     *
+     * @param varietyId identifier of the variety row
+     * @param eventType the event type, PLANTING for the planting date
+     * @return the oldest such event, or empty if the variety row has none
+     */
+    Optional<PopulationEvent> findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(Long varietyId,
+                                                                                 PopulationEventType eventType);
 
     /** Current number of trees of one variety row, as returned by {@link #findTreeBalances}. */
     interface TreeBalance {

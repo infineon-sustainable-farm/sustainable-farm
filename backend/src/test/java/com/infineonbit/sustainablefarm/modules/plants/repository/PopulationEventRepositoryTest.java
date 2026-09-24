@@ -102,4 +102,23 @@ public class PopulationEventRepositoryTest {
         assertFalse(populationEventRepository.existsByVarietyIdAndEventType(kent.getId(), PLANTING));
         assertFalse(populationEventRepository.existsByVarietyIdAndEventType(keitt.getId(), MORTALITY));
     }
+
+    @Test
+    void findFirstByVarietyIdAndEventType_shouldReturnThePlantingOfThatVarietyOnly() {
+        // Arrange: a later mortality must not be taken for the planting
+        Variety keitt = variety("Keitt");
+        Variety kent = variety("Kent");
+        PopulationEvent planting = new PopulationEvent(
+                null, keitt, PLANTING, LocalDate.of(2023, 9, 24), 150, "user_entry", null);
+        populationEventRepository.save(planting);
+        event(keitt, MORTALITY, 2);
+        // Act & Assert
+        assertEquals(LocalDate.of(2023, 9, 24), populationEventRepository
+                .findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(keitt.getId(), PLANTING)
+                .orElseThrow()
+                .getEventDate());
+        assertTrue(populationEventRepository
+                .findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(kent.getId(), PLANTING)
+                .isEmpty());
+    }
 }
