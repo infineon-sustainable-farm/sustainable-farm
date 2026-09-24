@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
+import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.MovementTotal;
 
 import java.math.BigDecimal;
@@ -74,5 +75,29 @@ final class FertilizerStockCalculator {
      */
     static boolean belowThreshold(BigDecimal stock, BigDecimal threshold) {
         return threshold != null && stock.compareTo(threshold) <= 0;
+    }
+
+    /**
+     * A quantity as written in a message: without trailing zeros and never in
+     * scientific notation, so 50.000 is {@code "50"} and 12.50 is {@code "12.5"}.
+     */
+    static String plain(BigDecimal quantity) {
+        return quantity.stripTrailingZeros().toPlainString();
+    }
+
+    /**
+     * Refusal of an application or a loss larger than the stock, for example
+     * "Not enough stock of NPK 15-15-15: 50 kg left, 60 kg requested".
+     *
+     * @param name      the fertilizer name
+     * @param stock     its current stock
+     * @param requested the quantity of the refused movement
+     * @param unit      the unit of the fertilizer
+     * @return the message of the 422
+     */
+    static String notEnoughStockMessage(String name, BigDecimal stock, BigDecimal requested, FertilizerUnit unit) {
+        return "Not enough stock of " + name + ": "
+                + plain(stock) + " " + unit.getSymbol() + " left, "
+                + plain(requested) + " " + unit.getSymbol() + " requested";
     }
 }

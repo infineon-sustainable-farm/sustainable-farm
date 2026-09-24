@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -41,6 +45,30 @@ public class FertilizerMovementService {
      */
     private static String normalizeCode(String code) {
         return code.trim().toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * Block code as stored: trimmed and upper-cased, so {@code " b "} becomes
+     * {@code "B"}, as for a planting.
+     */
+    private static String normalizeBlockCode(String blockCode) {
+        return blockCode.trim().toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * An optional text as stored: trimmed, and {@code null} when it is blank.
+     * Also turns a blank list filter into no filter, as for the other lists of
+     * the module.
+     *
+     * @param value the text as received, possibly {@code null}
+     * @return the trimmed text, or {@code null} if it was null or blank
+     */
+    private static String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     /**
@@ -86,18 +114,21 @@ public class FertilizerMovementService {
     }
 
     /**
-     * A new movement of a fertilizer, with the columns shared by every type.
-     *
-     * @param quantity the quantity as received; it has at most 3 decimals, so
-     *                 its decimal form is exact
+     * A quantity as received, as an exact decimal. It has at most 3 decimals,
+     * checked by the request, so its decimal form is exact: 0.1 stays 0.1.
      */
+    private static BigDecimal toQuantity(Double quantity) {
+        return BigDecimal.valueOf(quantity);
+    }
+
+    /** A new movement of a fertilizer, with the columns shared by every type. */
     private static FertilizerMovement newMovement(FertilizerProduct product, FertilizerMovementType type,
-                                                  LocalDate date, Double quantity, Instant now) {
+                                                  LocalDate date, BigDecimal quantity, Instant now) {
         FertilizerMovement movement = new FertilizerMovement();
         movement.setProduct(product);
         movement.setMovementType(type);
         movement.setMovementDate(date);
-        movement.setQuantity(BigDecimal.valueOf(quantity));
+        movement.setQuantity(quantity);
         movement.setSource(USER_ENTRY_SOURCE);
         movement.setLastUpdated(now);
         return movement;
@@ -106,6 +137,26 @@ public class FertilizerMovementService {
     private FertilizerProduct findProduct(Long fertilizerId) {
         return fertilizerProductRepository.findById(fertilizerId)
                 .orElseThrow(() -> new FertilizerNotFoundException(fertilizerId));
+    }
+
+    /**
+     * Refuses a movement that would take more than the current stock.
+     *
+     * <p>The check uses the stock today, not the stock on the date of the
+     * movement: a late entry dated before a purchase is accepted as long as the
+     * stock covers it now.
+     *
+     * @param product  the fertilizer
+     * @param quantity the quantity to take from its stock
+     * @throws BusinessRuleException if the quantity is larger than the stock
+     */
+    private void requireStock(FertilizerProduct product, BigDecimal quantity) {
+        BigDecimal stock = FertilizerStockCalculator.stockOf(product.getId(),
+                fertilizerMovementRepository.findMovementTotals(List.of(product.getId())));
+        if (quantity.compareTo(stock) > 0) {
+            throw new BusinessRuleException(FertilizerStockCalculator.notEnoughStockMessage(
+                    product.getName(), stock, quantity, product.getUnit()));
+        }
     }
 
     /**
@@ -153,7 +204,7 @@ public class FertilizerMovementService {
     FertilizerMovementResponse recordPurchase(Long fertilizerId, PurchaseRequest request, Instant now) {
         FertilizerProduct product = findProduct(fertilizerId);
         FertilizerMovement purchase = newMovement(product, FertilizerMovementType.PURCHASE,
-                request.purchaseDate(), request.quantity(), now);
+                request.purchaseDate(), toQuantity(request.quantity()), now);
         purchase.setSupplier(request.supplier().trim());
 
         BigDecimal eurToXof = null;
@@ -166,5 +217,100 @@ public class FertilizerMovementService {
             eurToXof = eurToXofRate();
         }
         return toResponse(fertilizerMovementRepository.save(purchase), eurToXof);
+    }
+
+    /**
+     * Records an application of a fertilizer on a block, which takes from its stock.
+     *
+     * <p>The block needs no recorded planting: the base fertilizer goes into the
+     * hole before or while the tree is planted.
+     *
+     * @param fertilizerId the fertilizer applied
+     * @param request      the application, already validated
+     * @return the recorded application
+     * @throws FertilizerNotFoundException if no fertilizer has this identifier
+     * @throws BusinessRuleException       if the quantity is larger than the current stock
+     */
+    @Transactional
+    public FertilizerMovementResponse recordApplication(Long fertilizerId, ApplicationRequest request) {
+        return recordApplication(fertilizerId, request, Instant.now());
+    }
+
+    /**
+     * Same as {@link #recordApplication(Long, ApplicationRequest)}, at an
+     * explicit write time so the {@code lastUpdated} value can be tested.
+     */
+    FertilizerMovementResponse recordApplication(Long fertilizerId, ApplicationRequest request, Instant now) {
+        FertilizerProduct product = findProduct(fertilizerId);
+        BigDecimal quantity = toQuantity(request.quantity());
+        requireStock(product, quantity);
+
+        FertilizerMovement application = newMovement(product, FertilizerMovementType.APPLICATION,
+                request.applicationDate(), quantity, now);
+        application.setFarmId(request.farmId());
+        application.setBlockCode(normalizeBlockCode(request.blockCode()));
+        application.setApplicator(request.applicator().trim());
+        application.setMethod(normalizeOptionalText(request.method()));
+        return toResponse(fertilizerMovementRepository.save(application), null);
+    }
+
+    /**
+     * Records a loss of a fertilizer, which takes from its stock.
+     *
+     * @param fertilizerId the fertilizer lost
+     * @param request      the loss, already validated
+     * @return the recorded loss
+     * @throws FertilizerNotFoundException if no fertilizer has this identifier
+     * @throws BusinessRuleException       if the quantity is larger than the current stock
+     */
+    @Transactional
+    public FertilizerMovementResponse recordLoss(Long fertilizerId, LossRequest request) {
+        return recordLoss(fertilizerId, request, Instant.now());
+    }
+
+    /**
+     * Same as {@link #recordLoss(Long, LossRequest)}, at an explicit write time
+     * so the {@code lastUpdated} value can be tested.
+     */
+    FertilizerMovementResponse recordLoss(Long fertilizerId, LossRequest request, Instant now) {
+        FertilizerProduct product = findProduct(fertilizerId);
+        BigDecimal quantity = toQuantity(request.quantity());
+        requireStock(product, quantity);
+
+        FertilizerMovement loss = newMovement(product, FertilizerMovementType.LOSS, request.lossDate(), quantity, now);
+        loss.setReason(request.reason().trim());
+        return toResponse(fertilizerMovementRepository.save(loss), null);
+    }
+
+    /**
+     * Retrieves the movements matching the optional filters.
+     *
+     * <p>Every filter is independent and optional; a missing farm means every
+     * farm, as for the other lists of the module. Both dates are included. A
+     * filter that matches nothing, or a {@code from} after {@code to}, returns
+     * an empty list and is never an error. The rate is read once, and only when
+     * a listed movement has a cost.
+     *
+     * @param fertilizerId fertilizer identifier, or {@code null} for every fertilizer
+     * @param movementType movement type, or {@code null} for every type
+     * @param farmId       farm identifier, or {@code null} for every farm
+     * @param blockCode    raw block value as stored (for example {@code "B"}),
+     *                     or {@code null} for every block
+     * @param from         first movement date, included, or {@code null}
+     * @param to           last movement date, included, or {@code null}
+     * @return the matching movements, ordered by date then identifier
+     * @throws IllegalStateException if a listed movement has a cost and no rate is stored
+     */
+    public List<FertilizerMovementResponse> getAllMovements(Long fertilizerId, FertilizerMovementType movementType,
+                                                            Integer farmId, String blockCode,
+                                                            LocalDate from, LocalDate to) {
+        List<FertilizerMovement> movements = fertilizerMovementRepository.findByOptionalFilters(
+                fertilizerId, movementType, farmId, normalizeOptionalText(blockCode), from, to);
+        BigDecimal eurToXof = movements.stream().anyMatch(movement -> movement.getTotalCost() != null)
+                ? eurToXofRate()
+                : null;
+        return movements.stream()
+                .map(movement -> toResponse(movement, eurToXof))
+                .toList();
     }
 }

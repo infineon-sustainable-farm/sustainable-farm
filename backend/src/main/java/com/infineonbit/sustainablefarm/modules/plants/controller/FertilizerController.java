@@ -1,6 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerResponse;
@@ -34,12 +36,15 @@ import java.util.List;
  * <li>{@code GET /api/plants/fertilizers} — the catalogue, each fertilizer with its stock</li>
  * <li>{@code GET /api/plants/fertilizers/{id}} — a single fertilizer with its stock</li>
  * <li>{@code POST /api/plants/fertilizers/{id}/purchases} — record a purchase, in FCFA or euros</li>
+ * <li>{@code POST /api/plants/fertilizers/{id}/applications} — record an application on a block</li>
+ * <li>{@code POST /api/plants/fertilizers/{id}/losses} — record a loss</li>
  * </ul>
  * <p>
  * The stock is never stored: it is computed on every read from the recorded
- * movements. Errors use the application-wide {@code ApiError} body: 400 with
- * {@code fieldErrors} for an invalid request, 404 for an unknown fertilizer, 409
- * when the name is already in the catalogue.
+ * movements, which {@link FertilizerMovementController} lists. Errors use the
+ * application-wide {@code ApiError} body: 400 with {@code fieldErrors} for an
+ * invalid request, 404 for an unknown fertilizer, 409 when the name is already
+ * in the catalogue, 422 when an application or a loss exceeds the stock.
  *
  * @since 1.0
  */
@@ -102,6 +107,39 @@ public class FertilizerController {
    public ResponseEntity<FertilizerMovementResponse> recordPurchase(@PathVariable Long id,
                                                                     @Valid @RequestBody PurchaseRequest purchaseRequest) {
       FertilizerMovementResponse movementResponse = fertilizerMovementService.recordPurchase(id, purchaseRequest);
+      return ResponseEntity.status(HttpStatus.CREATED).body(movementResponse);
+   }
+
+   @PostMapping("/{id}/applications")
+   @Operation(summary = "Record an application of a fertilizer on a block",
+         description = "Takes the quantity, in the unit of the fertilizer, from its stock. The block needs no "
+               + "recorded planting. The quantity cannot exceed the current stock; the check uses the stock "
+               + "today, not the stock on the application date.")
+   @ApiResponses({
+         @ApiResponse(responseCode = "201", description = "The recorded application"),
+         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "404", description = "No fertilizer with this ID"),
+         @ApiResponse(responseCode = "422", description = "The quantity exceeds the current stock")
+   })
+   public ResponseEntity<FertilizerMovementResponse> recordApplication(@PathVariable Long id,
+                                                                       @Valid @RequestBody ApplicationRequest applicationRequest) {
+      FertilizerMovementResponse movementResponse = fertilizerMovementService.recordApplication(id, applicationRequest);
+      return ResponseEntity.status(HttpStatus.CREATED).body(movementResponse);
+   }
+
+   @PostMapping("/{id}/losses")
+   @Operation(summary = "Record a loss of a fertilizer",
+         description = "Takes the quantity, in the unit of the fertilizer, from its stock. The quantity cannot "
+               + "exceed the current stock.")
+   @ApiResponses({
+         @ApiResponse(responseCode = "201", description = "The recorded loss"),
+         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "404", description = "No fertilizer with this ID"),
+         @ApiResponse(responseCode = "422", description = "The quantity exceeds the current stock")
+   })
+   public ResponseEntity<FertilizerMovementResponse> recordLoss(@PathVariable Long id,
+                                                                @Valid @RequestBody LossRequest lossRequest) {
+      FertilizerMovementResponse movementResponse = fertilizerMovementService.recordLoss(id, lossRequest);
       return ResponseEntity.status(HttpStatus.CREATED).body(movementResponse);
    }
 }

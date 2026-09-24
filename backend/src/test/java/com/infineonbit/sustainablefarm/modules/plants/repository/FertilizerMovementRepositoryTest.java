@@ -50,6 +50,28 @@ public class FertilizerMovementRepositoryTest {
         return fertilizerMovementRepository.save(movement);
     }
 
+    private FertilizerMovement application(FertilizerProduct product, LocalDate date, Integer farmId,
+                                           String blockCode) {
+        FertilizerMovement application = new FertilizerMovement();
+        application.setProduct(product);
+        application.setMovementType(FertilizerMovementType.APPLICATION);
+        application.setMovementDate(date);
+        application.setQuantity(new BigDecimal("10"));
+        application.setFarmId(farmId);
+        application.setBlockCode(blockCode);
+        application.setApplicator("Team A");
+        application.setSource("user_entry");
+        return fertilizerMovementRepository.save(application);
+    }
+
+    private List<Long> find(Long fertilizerId, FertilizerMovementType type, Integer farmId, String blockCode,
+                            LocalDate from, LocalDate to) {
+        return fertilizerMovementRepository.findByOptionalFilters(fertilizerId, type, farmId, blockCode, from, to)
+                .stream()
+                .map(FertilizerMovement::getId)
+                .toList();
+    }
+
     /** The totals of one fertilizer, by movement type. */
     private static Map<FertilizerMovementType, BigDecimal> totalsOf(Long productId, List<MovementTotal> totals) {
         return totals.stream()
@@ -106,6 +128,82 @@ public class FertilizerMovementRepositoryTest {
         movement(urea, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "50");
         // Act & Assert
         assertTrue(fertilizerMovementRepository.findMovementTotals(List.of(npk.getId(), compost.getId())).isEmpty());
+    }
+
+    @Test
+    void findByOptionalFilters_shouldReturnEveryMovementByDateThenId_whenNoFilterIsGiven() {
+        // Arrange: saved out of date order, two on the same day
+        FertilizerProduct npk = product("NPK 15-15-15");
+        FertilizerMovement loss = movement(npk, FertilizerMovementType.LOSS, LocalDate.of(2026, 7, 1), "10");
+        FertilizerMovement purchase = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
+        FertilizerMovement secondPurchase =
+                movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "100");
+        FertilizerMovement application = application(npk, LocalDate.of(2026, 6, 15), null, "B");
+        // Act & Assert
+        assertEquals(List.of(purchase.getId(), secondPurchase.getId(), application.getId(), loss.getId()),
+                find(null, null, null, null, null, null));
+    }
+
+    @Test
+    void findByOptionalFilters_shouldFilterOnTheFertilizerAndTheType() {
+        // Arrange
+        FertilizerProduct npk = product("NPK 15-15-15");
+        FertilizerProduct compost = product("Compost");
+        FertilizerMovement npkPurchase = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
+        FertilizerMovement npkApplication = application(npk, LocalDate.of(2026, 6, 15), null, "B");
+        FertilizerMovement compostPurchase =
+                movement(compost, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 2), "40");
+        // Act & Assert
+        assertEquals(List.of(npkPurchase.getId(), npkApplication.getId()), find(npk.getId(), null, null, null, null, null));
+        assertEquals(List.of(npkPurchase.getId(), compostPurchase.getId()),
+                find(null, FertilizerMovementType.PURCHASE, null, null, null, null));
+        assertEquals(List.of(npkApplication.getId()),
+                find(npk.getId(), FertilizerMovementType.APPLICATION, null, null, null, null));
+        assertTrue(find(compost.getId(), FertilizerMovementType.LOSS, null, null, null, null).isEmpty());
+    }
+
+    @Test
+    void findByOptionalFilters_shouldFilterOnTheFarmAndBlockOfTheApplications() {
+        // Arrange: a purchase has no farm nor block
+        FertilizerProduct npk = product("NPK 15-15-15");
+        movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
+        FertilizerMovement noFarmB = application(npk, LocalDate.of(2026, 6, 15), null, "B");
+        FertilizerMovement farm1B = application(npk, LocalDate.of(2026, 6, 16), 1, "B");
+        FertilizerMovement farm1A = application(npk, LocalDate.of(2026, 6, 17), 1, "A");
+        // Act & Assert: farm 1 excludes the rows without a farm, and a block filter every purchase
+        assertEquals(List.of(farm1B.getId(), farm1A.getId()), find(null, null, 1, null, null, null));
+        assertEquals(List.of(noFarmB.getId(), farm1B.getId()), find(null, null, null, "B", null, null));
+        assertEquals(List.of(farm1A.getId()), find(null, null, 1, "A", null, null));
+        assertTrue(find(null, null, 2, null, null, null).isEmpty());
+        assertTrue(find(null, null, null, "C", null, null).isEmpty());
+    }
+
+    @Test
+    void findByOptionalFilters_shouldIncludeBothDates() {
+        // Arrange
+        FertilizerProduct npk = product("NPK 15-15-15");
+        FertilizerMovement june1 = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
+        FertilizerMovement june5 = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 5), "100");
+        FertilizerMovement june15 = application(npk, LocalDate.of(2026, 6, 15), null, "B");
+        FertilizerMovement july1 = movement(npk, FertilizerMovementType.LOSS, LocalDate.of(2026, 7, 1), "10");
+        // Act & Assert
+        assertEquals(List.of(june5.getId(), june15.getId()),
+                find(null, null, null, null, LocalDate.of(2026, 6, 2), LocalDate.of(2026, 6, 30)));
+        assertEquals(List.of(june5.getId(), june15.getId()),
+                find(null, null, null, null, LocalDate.of(2026, 6, 5), LocalDate.of(2026, 6, 15)));
+        assertEquals(List.of(june15.getId(), july1.getId()),
+                find(null, null, null, null, LocalDate.of(2026, 6, 15), null));
+        assertEquals(List.of(june1.getId()),
+                find(null, null, null, null, null, LocalDate.of(2026, 6, 1)));
+    }
+
+    @Test
+    void findByOptionalFilters_shouldMatchNothing_whenFromIsAfterTo() {
+        // Arrange
+        FertilizerProduct npk = product("NPK 15-15-15");
+        movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
+        // Act & Assert
+        assertTrue(find(null, null, null, null, LocalDate.of(2026, 6, 30), LocalDate.of(2026, 6, 2)).isEmpty());
     }
 
     @Test

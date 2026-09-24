@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
+import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.MovementTotal;
 import org.junit.jupiter.api.Test;
 
@@ -99,5 +100,24 @@ public class FertilizerStockCalculatorTest {
     void belowThreshold_shouldBeFalse_whenThereIsNoThreshold() {
         // Act & Assert: even an empty stock is not flagged without a threshold
         assertFalse(FertilizerStockCalculator.belowThreshold(BigDecimal.ZERO, null));
+    }
+
+    @Test
+    void notEnoughStockMessage_shouldWriteTheQuantitiesWithoutUselessZeros() {
+        // Act & Assert: 50.000 as stored in the database, 60.0 as received
+        assertEquals("Not enough stock of NPK 15-15-15: 50 kg left, 60 kg requested",
+                FertilizerStockCalculator.notEnoughStockMessage("NPK 15-15-15", new BigDecimal("50.000"),
+                        BigDecimal.valueOf(60.0), FertilizerUnit.KG));
+        assertEquals("Not enough stock of Liquid NPK: 12.5 L left, 12.75 L requested",
+                FertilizerStockCalculator.notEnoughStockMessage("Liquid NPK", new BigDecimal("12.500"),
+                        new BigDecimal("12.750"), FertilizerUnit.L));
+    }
+
+    @Test
+    void notEnoughStockMessage_shouldWriteAnEmptyStockAsZero() {
+        // Act & Assert: never "0.000" nor "0E-3"
+        assertEquals("Not enough stock of Urea: 0 kg left, 1000 kg requested",
+                FertilizerStockCalculator.notEnoughStockMessage("Urea", new BigDecimal("0.000"),
+                        BigDecimal.valueOf(1000.0), FertilizerUnit.KG));
     }
 }

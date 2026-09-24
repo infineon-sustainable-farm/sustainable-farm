@@ -1,8 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerResponse;
@@ -329,5 +332,170 @@ public class FertilizerControllerTest {
         // Assert
         assertApiError(result, 404, "Not Found", "Fertilizer with ID 999 not found", URL + "/999/purchases");
         result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void recordApplication_shouldReturn201WithTheApplication() throws Exception {
+        // Arrange
+        when(fertilizerMovementService.recordApplication(eq(1L), any(ApplicationRequest.class))).thenReturn(
+                new FertilizerMovementResponse(13L, 1L, "NPK 15-15-15", FertilizerMovementType.APPLICATION,
+                        LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, null, "B", "Team A",
+                        "around the tree base", null, null, null, null, null, null, "user_entry", NOW));
+        // Act
+        ResultActions result = postMovement(1L, "applications", """
+                {"applicationDate":"2026-06-15","quantity":250,"blockCode":" b ","applicator":"Team A",
+                 "method":"around the tree base"}
+                """);
+        // Assert: no Location header, the application in the body
+        result.andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.id").value(13))
+                .andExpect(jsonPath("$.movementType").value("APPLICATION"))
+                .andExpect(jsonPath("$.movementDate").value("2026-06-15"))
+                .andExpect(jsonPath("$.quantity").value(250.0))
+                .andExpect(jsonPath("$.unit").value("KG"))
+                .andExpect(jsonPath("$.farmId").value(nullValue()))
+                .andExpect(jsonPath("$.blockCode").value("B"))
+                .andExpect(jsonPath("$.applicator").value("Team A"))
+                .andExpect(jsonPath("$.method").value("around the tree base"))
+                .andExpect(jsonPath("$.supplier").value(nullValue()))
+                .andExpect(jsonPath("$.totalCostXof").value(nullValue()))
+                .andExpect(jsonPath("$.totalCostEur").value(nullValue()));
+        // Assert: the block reaches the service as sent; it normalizes it
+        ArgumentCaptor<ApplicationRequest> captor = ArgumentCaptor.forClass(ApplicationRequest.class);
+        verify(fertilizerMovementService).recordApplication(eq(1L), captor.capture());
+        assertEquals(" b ", captor.getValue().blockCode());
+    }
+
+    @Test
+    void recordApplication_shouldReturn400WithEveryFailingField_whenValuesAreInvalid() throws Exception {
+        // Arrange
+        String future = LocalDate.now().plusYears(1).toString();
+        // Act
+        ResultActions result = postMovement(1L, "applications", """
+                {"applicationDate":"%s","quantity":0,"farmId":0,"blockCode":"Block B","applicator":"  ",
+                 "method":"%s"}
+                """.formatted(future, "m".repeat(256)));
+        // Assert
+        assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/1/applications");
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(6)))
+                .andExpect(jsonPath("$.fieldErrors.applicationDate")
+                        .value("applicationDate must be today or in the past"))
+                .andExpect(jsonPath("$.fieldErrors.quantity")
+                        .value("quantity must be greater than 0, with at most 3 decimals"))
+                .andExpect(jsonPath("$.fieldErrors.farmId").value("farmId must be at least 1"))
+                .andExpect(jsonPath("$.fieldErrors.blockCode")
+                        .value("blockCode must be a short code such as A or B2, without prefix or space"))
+                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"))
+                .andExpect(jsonPath("$.fieldErrors.method").value("method must be at most 255 characters"));
+        verify(fertilizerMovementService, never()).recordApplication(any(), any());
+    }
+
+    @Test
+    void recordApplication_shouldReturn400WithRequiredFields_whenBodyIsEmpty() throws Exception {
+        // Act
+        ResultActions result = postMovement(1L, "applications", "{}");
+        // Assert: the farm and the method are optional
+        assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/1/applications");
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(4)))
+                .andExpect(jsonPath("$.fieldErrors.applicationDate").value("applicationDate is required"))
+                .andExpect(jsonPath("$.fieldErrors.quantity").value("quantity is required"))
+                .andExpect(jsonPath("$.fieldErrors.blockCode").value("blockCode is required"))
+                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"));
+    }
+
+    @Test
+    void recordApplication_shouldReturn422WithApiError_whenStockIsTooLow() throws Exception {
+        // Arrange
+        String message = "Not enough stock of NPK 15-15-15: 50 kg left, 60 kg requested";
+        when(fertilizerMovementService.recordApplication(eq(1L), any(ApplicationRequest.class)))
+                .thenThrow(new BusinessRuleException(message));
+        // Act
+        ResultActions result = postMovement(1L, "applications", """
+                {"applicationDate":"2026-06-16","quantity":60,"blockCode":"B","applicator":"Team A"}
+                """);
+        // Assert
+        assertApiError(result, 422, "Unprocessable Entity", message, URL + "/1/applications");
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void recordApplication_shouldReturn404WithApiError_whenFertilizerIsUnknown() throws Exception {
+        // Arrange
+        when(fertilizerMovementService.recordApplication(eq(999L), any(ApplicationRequest.class)))
+                .thenThrow(new FertilizerNotFoundException(999L));
+        // Act
+        ResultActions result = postMovement(999L, "applications", """
+                {"applicationDate":"2026-06-16","quantity":60,"blockCode":"B","applicator":"Team A"}
+                """);
+        // Assert
+        assertApiError(result, 404, "Not Found", "Fertilizer with ID 999 not found", URL + "/999/applications");
+    }
+
+    @Test
+    void recordLoss_shouldReturn201WithTheLoss() throws Exception {
+        // Arrange
+        when(fertilizerMovementService.recordLoss(eq(1L), any(LossRequest.class))).thenReturn(
+                new FertilizerMovementResponse(16L, 1L, "NPK 15-15-15", FertilizerMovementType.LOSS,
+                        LocalDate.of(2026, 7, 1), 10.0, FertilizerUnit.KG, null, null, null, null, null, null, null,
+                        null, null, "expired", "user_entry", NOW));
+        // Act
+        ResultActions result = postMovement(1L, "losses", """
+                {"lossDate":"2026-07-01","quantity":10,"reason":"expired"}
+                """);
+        // Assert
+        result.andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.id").value(16))
+                .andExpect(jsonPath("$.movementType").value("LOSS"))
+                .andExpect(jsonPath("$.quantity").value(10.0))
+                .andExpect(jsonPath("$.reason").value("expired"))
+                .andExpect(jsonPath("$.blockCode").value(nullValue()));
+    }
+
+    @Test
+    void recordLoss_shouldReturn400WithEveryFailingField_whenValuesAreInvalid() throws Exception {
+        // Arrange
+        String future = LocalDate.now().plusYears(1).toString();
+        // Act
+        ResultActions result = postMovement(1L, "losses", """
+                {"lossDate":"%s","quantity":-1,"reason":""}
+                """.formatted(future));
+        // Assert
+        assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/1/losses");
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(3)))
+                .andExpect(jsonPath("$.fieldErrors.lossDate").value("lossDate must be today or in the past"))
+                .andExpect(jsonPath("$.fieldErrors.quantity")
+                        .value("quantity must be greater than 0, with at most 3 decimals"))
+                .andExpect(jsonPath("$.fieldErrors.reason").value("reason is required"));
+        verify(fertilizerMovementService, never()).recordLoss(any(), any());
+    }
+
+    @Test
+    void recordLoss_shouldReturn422WithApiError_whenStockIsTooLow() throws Exception {
+        // Arrange
+        String message = "Not enough stock of NPK 15-15-15: 40 kg left, 41 kg requested";
+        when(fertilizerMovementService.recordLoss(eq(1L), any(LossRequest.class)))
+                .thenThrow(new BusinessRuleException(message));
+        // Act
+        ResultActions result = postMovement(1L, "losses", """
+                {"lossDate":"2026-07-02","quantity":41,"reason":"expired"}
+                """);
+        // Assert
+        assertApiError(result, 422, "Unprocessable Entity", message, URL + "/1/losses");
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void recordLoss_shouldReturn404WithApiError_whenFertilizerIsUnknown() throws Exception {
+        // Arrange
+        when(fertilizerMovementService.recordLoss(eq(999L), any(LossRequest.class)))
+                .thenThrow(new FertilizerNotFoundException(999L));
+        // Act
+        ResultActions result = postMovement(999L, "losses", """
+                {"lossDate":"2026-07-02","quantity":1,"reason":"expired"}
+                """);
+        // Assert
+        assertApiError(result, 404, "Not Found", "Fertilizer with ID 999 not found", URL + "/999/losses");
     }
 }

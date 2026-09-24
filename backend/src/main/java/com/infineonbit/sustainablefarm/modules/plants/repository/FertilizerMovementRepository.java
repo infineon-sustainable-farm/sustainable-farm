@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -36,6 +37,45 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
             GROUP BY m.product.id, m.movementType
             """)
     List<MovementTotal> findMovementTotals(@Param("productIds") Collection<Long> productIds);
+
+    /**
+     * Returns the movements matching the given filters, with their fertilizer.
+     *
+     * <p>Every parameter is optional: a {@code null} parameter disables its own
+     * filter, as in {@link HarvestRecordRepository#findByOptionalFilters}. The farm
+     * and the block are those of an application; a purchase or a loss has neither,
+     * so any farm or block filter leaves it out. Both dates are included; a
+     * {@code from} after {@code to} matches nothing and is not an error.
+     *
+     * <p>The dates are cast in their {@code IS NULL} test, for the same reason as
+     * in {@link HarvestRecordRepository#findByOptionalFilters}: without it,
+     * PostgreSQL cannot type the parameter as soon as a date is given.
+     *
+     * @param fertilizerId fertilizer identifier, or {@code null} for every fertilizer
+     * @param movementType movement type, or {@code null} for every type
+     * @param farmId       farm identifier, or {@code null} to ignore the farm
+     * @param blockCode    raw block value as stored (for example {@code "B"}),
+     *                     or {@code null} to ignore the block
+     * @param from         first movement date, included, or {@code null} for no lower bound
+     * @param to           last movement date, included, or {@code null} for no upper bound
+     * @return the matching movements, ordered by date then identifier
+     */
+    @Query("""
+            SELECT m FROM FertilizerMovement m JOIN FETCH m.product p
+            WHERE (:fertilizerId IS NULL OR p.id = :fertilizerId)
+              AND (:movementType IS NULL OR m.movementType = :movementType)
+              AND (:farmId IS NULL OR m.farmId = :farmId)
+              AND (:blockCode IS NULL OR m.blockCode = :blockCode)
+              AND (CAST(:from AS LocalDate) IS NULL OR m.movementDate >= :from)
+              AND (CAST(:to AS LocalDate) IS NULL OR m.movementDate <= :to)
+            ORDER BY m.movementDate ASC, m.id ASC
+            """)
+    List<FertilizerMovement> findByOptionalFilters(@Param("fertilizerId") Long fertilizerId,
+                                                   @Param("movementType") FertilizerMovementType movementType,
+                                                   @Param("farmId") Integer farmId,
+                                                   @Param("blockCode") String blockCode,
+                                                   @Param("from") LocalDate from,
+                                                   @Param("to") LocalDate to);
 
     /** Total quantity of one movement type of one fertilizer, as returned by {@link #findMovementTotals}. */
     interface MovementTotal {
