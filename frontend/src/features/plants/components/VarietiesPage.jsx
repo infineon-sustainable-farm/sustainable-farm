@@ -1,15 +1,31 @@
 import { useEffect, useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { Loader2, Plus, TriangleAlert } from "lucide-react";
 import { useVarieties, useVarietyBlocks } from "../hooks/useVarieties";
+import { useRecordPlanting } from "../hooks/useRecordPlanting";
 import PlantsEmptyState from "./PlantsEmptyState";
 import BlockFilter from "./BlockFilter";
+import RecordPlantingModal from "./RecordPlantingModal";
 import VarietiesTable from "./VarietiesTable";
 import VarietyDetailModal from "./VarietyDetailModal";
+
+function RecordPlantingButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+            <Plus size={16} />
+            Record a planting
+        </button>
+    );
+}
 
 export default function VarietiesPage() {
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
     const [selectedVariety, setSelectedVariety] = useState(null);
+    const [isRecordingPlanting, setIsRecordingPlanting] = useState(false);
 
     useEffect(() => {
         document.title = "Varieties — Plants";
@@ -19,20 +35,38 @@ export default function VarietiesPage() {
         blockCode: selectedBlock || null,
     });
     const { data: blocks } = useVarietyBlocks();
+    const recordPlanting = useRecordPlanting();
+
+    function openPlantingForm() {
+        recordPlanting.reset();
+        setIsRecordingPlanting(true);
+    }
+
+    function closePlantingForm() {
+        recordPlanting.reset();
+        setIsRecordingPlanting(false);
+    }
+
+    function submitPlanting(planting) {
+        recordPlanting.mutate(planting, { onSuccess: closePlantingForm });
+    }
 
     return (
         <div className="min-h-dvh bg-gray-50">
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
-                <header>
-                    <p className="font-heading text-xs font-bold tracking-widest text-primary uppercase">
-                        Task 1
-                    </p>
-                    <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">
-                        Varieties
-                    </h2>
-                    <p className="mt-2 max-w-xl text-sm text-gray-500">
-                        Trees, spacing, and expected vs actual yield by variety and block.
-                    </p>
+                <header className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p className="font-heading text-xs font-bold tracking-widest text-primary uppercase">
+                            Task 1
+                        </p>
+                        <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">
+                            Varieties
+                        </h2>
+                        <p className="mt-2 max-w-xl text-sm text-gray-500">
+                            Trees, spacing, and expected vs actual yield by variety and block.
+                        </p>
+                    </div>
+                    <RecordPlantingButton onClick={openPlantingForm} />
                 </header>
 
                 <BlockFilter
@@ -72,10 +106,17 @@ export default function VarietiesPage() {
                 )}
 
                 {!isPending && !isError && varieties.length === 0 && (
-                    <PlantsEmptyState
-                        title="No variety records match this filter"
-                        hint="Try another block, or select “All blocks”."
-                    />
+                    selectedBlock ? (
+                        <PlantsEmptyState
+                            title="No variety records match this filter"
+                            hint="Try another block, or select “All blocks”."
+                        />
+                    ) : (
+                        <PlantsEmptyState
+                            title="No planting recorded yet"
+                            action={<RecordPlantingButton onClick={openPlantingForm} />}
+                        />
+                    )
                 )}
 
                 {!isPending && !isError && varieties.length > 0 && (
@@ -87,6 +128,15 @@ export default function VarietiesPage() {
                 <VarietyDetailModal
                     variety={selectedVariety}
                     onClose={() => setSelectedVariety(null)}
+                />
+            )}
+
+            {isRecordingPlanting && (
+                <RecordPlantingModal
+                    isSubmitting={recordPlanting.isPending}
+                    error={recordPlanting.error}
+                    onSubmit={submitPlanting}
+                    onClose={closePlantingForm}
                 />
             )}
         </div>

@@ -52,7 +52,8 @@ export default function VarietyDetailModal({ variety, onClose }) {
             </div>
 
             <dl className="grid grid-cols-1 gap-5 px-6 py-5 sm:grid-cols-2">
-                <Field label="Trees">{formatNumber(variety.treeCount)}</Field>
+                <Field label="Trees planted">{formatNumber(variety.treeCount)}</Field>
+                <Field label="Trees now">{formatNumber(variety.currentTreeCount)}</Field>
                 <Field label="Spacing">
                     {formatSpacing(
                         variety.rowSpacingM,

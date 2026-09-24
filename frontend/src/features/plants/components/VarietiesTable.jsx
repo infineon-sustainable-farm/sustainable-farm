@@ -55,7 +55,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                                 {formatBlock(variety.blockCode)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatNumber(variety.treeCount)}
+                                {formatNumber(variety.currentTreeCount)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatSpacing(
