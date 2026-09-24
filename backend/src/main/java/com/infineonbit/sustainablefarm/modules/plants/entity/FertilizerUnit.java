@@ -9,6 +9,17 @@ package com.infineonbit.sustainablefarm.modules.plants.entity;
  * not widen later: every planned value is declared here from the start.
  */
 public enum FertilizerUnit {
-    KG,
-    L
+    KG("kg"),
+    L("L");
+
+    private final String symbol;
+
+    FertilizerUnit(String symbol) {
+        this.symbol = symbol;
+    }
+
+    /** The unit as written after a quantity in a message, for example {@code "kg"}. */
+    public String getSymbol() {
+        return symbol;
+    }
 }
