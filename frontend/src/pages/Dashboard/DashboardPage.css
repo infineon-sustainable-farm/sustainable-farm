@@ -1,0 +1,105 @@
+.dashboard-page {
+  padding: 0;
+}
+
+.dashboard-header {
+  margin-bottom: var(--space-2xl);
+  text-align: center;
+}
+
+.dashboard-header h1 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: var(--space-sm);
+}
+
+.dashboard-subtitle {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+}
+
+.kpi-card {
+  transition: var(--transition-normal);
+}
+
+.kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: var(--space-sm);
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: var(--space-sm);
+}
+
+.kpi-trend {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.kpi-trend.up { color: var(--pass); }
+.kpi-trend.down { color: var(--fail); }
+
+.trend-icon { font-size: 1rem; font-weight: bold; }
+
+.dashboard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-lg);
+}
+
+.update-time {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.refresh-button {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-family: var(--font-body);
+  background: var(--primary);
+  color: white;
+}
+
+.refresh-button:hover { background: var(--primary-hover); }
+
+@media (max-width: 768px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-footer { flex-direction: column; gap: var(--space-md); text-align: center; }
+  .refresh-button { width: 100%; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+}
