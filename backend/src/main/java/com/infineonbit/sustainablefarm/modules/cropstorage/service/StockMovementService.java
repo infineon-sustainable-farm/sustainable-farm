@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StockMovementRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class StockMovementService {
 
     private final StockMovementRepository stockMovementRepository;
     private final BatchRepository batchRepository;
+    private final StorageZoneRepository storageZoneRepository;
 
     @Transactional
     public StockMovement create(StockMovement movement) {
@@ -29,6 +31,12 @@ public class StockMovementService {
         Batch batch = batchRepository.findById(movement.getBatch().getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Batch not found"));
 
+        StorageZone toZone = null;
+        if (movement.getToZone() != null && movement.getToZone().getId() != null) {
+            toZone = storageZoneRepository.findById(movement.getToZone().getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zone not found"));
+        }
+
         BigDecimal quantity = movement.getQuantityKg();
         BigDecimal current = batch.getCurrentQuantityKg() != null
                 ? batch.getCurrentQuantityKg() : BigDecimal.ZERO;
@@ -36,9 +44,9 @@ public class StockMovementService {
 
         if ("IN".equals(type)) {
             BigDecimal resulting = current.add(quantity);
-            if (movement.getToZone() != null) {
-                checkCapacity(movement.getToZone(), batch, resulting);
-                batch.setStorageZone(movement.getToZone());
+            if (toZone != null) {
+                checkCapacity(toZone, batch, resulting);
+                batch.setStorageZone(toZone);
             }
             batch.setCurrentQuantityKg(resulting);
         } else if ("OUT".equals(type)) {
@@ -47,11 +55,11 @@ public class StockMovementService {
             }
             batch.setCurrentQuantityKg(current.subtract(quantity));
         } else if ("TRANSFER".equals(type)) {
-            if (movement.getToZone() == null) {
+            if (toZone == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A destination zone is required for TRANSFER");
             }
-            checkCapacity(movement.getToZone(), batch, current);
-            batch.setStorageZone(movement.getToZone());
+            checkCapacity(toZone, batch, current);
+            batch.setStorageZone(toZone);
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown movement type: " + type);
         }
@@ -70,7 +78,7 @@ public class StockMovementService {
 
     // HYPOTHESIS: total of batch quantities in a zone must stay under capacityKg
     private void checkCapacity(StorageZone zone, Batch movedBatch, BigDecimal resultingKg) {
-        if (zone.getId() == null || zone.getCapacityKg() == null) {
+        if (zone.getCapacityKg() == null) {
             return;
         }
         BigDecimal others = batchRepository.findByStorageZoneId(zone.getId()).stream()
