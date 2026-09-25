@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepos
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -19,5 +20,10 @@ public class BatchService {
 
     public List<Batch> findAll() {
         return batchRepository.findAll();
+    }
+
+    // HYPOTHESIS: FIFO = batches with remaining stock, oldest storageEntryDate first
+    public List<Batch> fifo() {
+        return batchRepository.findByCurrentQuantityKgGreaterThanOrderByStorageEntryDateAsc(BigDecimal.ZERO);
     }
 }

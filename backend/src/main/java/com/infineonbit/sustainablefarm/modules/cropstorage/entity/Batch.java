@@ -43,6 +43,9 @@ public class Batch {
     private String productStage;
 
     private String origin;
+        @ManyToOne
+    @JoinColumn(name = "supplier_id")
+    private Supplier supplier;
 
     private String mangoVariety;
 

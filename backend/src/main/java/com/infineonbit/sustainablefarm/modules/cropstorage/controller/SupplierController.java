@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
-import com.infineonbit.sustainablefarm.modules.cropstorage.service.BatchService;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.SupplierService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,24 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/batches")
+@RequestMapping("/api/suppliers")
 @RequiredArgsConstructor
-public class BatchController {
+public class SupplierController {
 
-    private final BatchService batchService;
+    private final SupplierService supplierService;
 
     @PostMapping
-    public Batch create(@Valid @RequestBody Batch batch) {
-        return batchService.create(batch);
+    public Supplier create(@Valid @RequestBody Supplier supplier) {
+        return supplierService.create(supplier);
     }
 
     @GetMapping
-    public List<Batch> findAll() {
-        return batchService.findAll();
-    }
-
-    @GetMapping("/fifo")
-    public List<Batch> fifo() {
-        return batchService.fifo();
+    public List<Supplier> findAll() {
+        return supplierService.findAll();
     }
 }
