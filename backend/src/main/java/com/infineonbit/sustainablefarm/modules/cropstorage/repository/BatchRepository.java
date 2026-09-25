@@ -8,7 +8,10 @@ import java.util.List;
 
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
-    List<Batch> findByCurrentQuantityKgGreaterThanOrderByStorageEntryDateAsc(BigDecimal minQuantity);
+    // Anar: FIFO with priority to important customers first
+    List<Batch> findByCurrentQuantityKgGreaterThanOrderByCustomerPriorityDescStorageEntryDateAsc(BigDecimal minQuantity);
 
     List<Batch> findByStorageZoneId(Long storageZoneId);
+
+    List<Batch> findByExpiryDateNotNullOrderByExpiryDateAsc();
 }

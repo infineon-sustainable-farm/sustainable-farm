@@ -40,6 +40,7 @@ public class Batch {
     @Column(nullable = false)
     private String productType;
 
+        // Anar: lifecycle stages FRESH -> DRIED -> PACKAGED -> WASTE / RETURNED
     private String productStage;
 
     private String origin;
@@ -81,6 +82,14 @@ public class Batch {
     private StorageZone storageZone;
 
     private LocalDate expectedDispatchDate;
+
+        private LocalDate expiryDate;
+
+    private Integer customerPriority;
+
+    @PositiveOrZero
+    @Column(precision = 12, scale = 2)
+    private BigDecimal valuePerKgFcfa;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

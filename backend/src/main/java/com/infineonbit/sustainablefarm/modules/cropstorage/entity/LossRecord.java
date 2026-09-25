@@ -35,6 +35,7 @@ public class LossRecord {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal quantityKg;
 
+       // Anar: top 3 root causes - overripe mango, mould/moisture, physical damage
     private String cause;
 
     @PositiveOrZero
