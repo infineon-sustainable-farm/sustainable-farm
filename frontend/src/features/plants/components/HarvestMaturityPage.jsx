@@ -1,8 +1,24 @@
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import { useVarietyBlocks } from "../hooks/useVarieties";
+import { useRecordHarvest } from "../hooks/useRecordHarvest";
 import BlockFilter from "./BlockFilter";
 import HarvestsSection from "./HarvestsSection";
+import RecordHarvestModal from "./RecordHarvestModal";
 import YieldForecastSection from "./YieldForecastSection";
+
+function RecordHarvestButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+            <Plus size={16} />
+            Record a harvest
+        </button>
+    );
+}
 
 /**
  * Harvest & Maturity: the expected yield by month first, as it is what the
@@ -14,12 +30,28 @@ import YieldForecastSection from "./YieldForecastSection";
 export default function HarvestMaturityPage() {
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
+    const [isRecordingHarvest, setIsRecordingHarvest] = useState(false);
 
     useEffect(() => {
         document.title = "Harvest & Maturity — Plants";
     }, []);
 
     const { data: blocks } = useVarietyBlocks();
+    const recordHarvest = useRecordHarvest();
+
+    function openHarvestForm() {
+        recordHarvest.reset();
+        setIsRecordingHarvest(true);
+    }
+
+    function closeHarvestForm() {
+        recordHarvest.reset();
+        setIsRecordingHarvest(false);
+    }
+
+    function submitHarvest(harvest) {
+        recordHarvest.mutate(harvest, { onSuccess: closeHarvestForm });
+    }
 
     return (
         <div className="min-h-dvh bg-gray-50">
@@ -36,14 +68,28 @@ export default function HarvestMaturityPage() {
                             Recorded harvests and expected yield by month, by block.
                         </p>
                     </div>
+                    <RecordHarvestButton onClick={openHarvestForm} />
                 </header>
 
                 <BlockFilter blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
 
                 <YieldForecastSection blockCode={selectedBlock || null} />
 
-                <HarvestsSection blockCode={selectedBlock || null} />
+                <HarvestsSection
+                    blockCode={selectedBlock || null}
+                    recordAction={<RecordHarvestButton onClick={openHarvestForm} />}
+                />
             </div>
+
+            {isRecordingHarvest && (
+                <RecordHarvestModal
+                    blocks={blocks ?? []}
+                    isSubmitting={recordHarvest.isPending}
+                    error={recordHarvest.error}
+                    onSubmit={submitHarvest}
+                    onClose={closeHarvestForm}
+                />
+            )}
         </div>
     );
 }
