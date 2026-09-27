@@ -13,7 +13,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.Month;
 import java.util.List;
@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class IrrigationAutomationServiceTest {
 
     @Mock
-    private ZoneRepository zoneRepository;
+    private FieldZoneRepository fieldZoneRepository;
 
     @Mock
     private SoilMoistureReadingRepository soilMoistureRepository;
@@ -144,7 +144,7 @@ class IrrigationAutomationServiceTest {
         Zone zone = new Zone();
         zone.setName("Zone A");
         zone.setAreaHectares(1.0);
-        when(zoneRepository.findAll()).thenReturn(List.of(zone));
+        when(fieldZoneRepository.findAll()).thenReturn(List.of(zone));
         return zone;
     }
 
@@ -157,7 +157,7 @@ class IrrigationAutomationServiceTest {
     }
 
     private IrrigationAutomationService service() {
-        return new IrrigationAutomationService(zoneRepository, soilMoistureRepository, scheduleRepository,
+        return new IrrigationAutomationService(fieldZoneRepository, soilMoistureRepository, scheduleRepository,
                 logRepository, waterNeedService, agroWeatherService, alertService);
     }
 }

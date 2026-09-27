@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variete;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarieteRepository;
+import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -32,15 +32,15 @@ import org.springframework.stereotype.Component;
 @Profile("dev")
 public class PlantsDataSeeder implements CommandLineRunner {
 
-    private final VarieteRepository varieteRepository;
+    private final VarietyRepository varietyRepository;
 
-    public PlantsDataSeeder(VarieteRepository varieteRepository) {
-        this.varieteRepository = varieteRepository;
+    public PlantsDataSeeder(VarietyRepository varietyRepository) {
+        this.varietyRepository = varietyRepository;
     }
 
     @Override
     public void run(String... args) {
-        if (varieteRepository.count() > 0) {
+        if (varietyRepository.count() > 0) {
             return; // already seeded, do nothing
         }
         seedZalka2025();

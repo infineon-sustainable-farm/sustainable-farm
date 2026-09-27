@@ -8,7 +8,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.Irrigation
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.RainwaterHarvestRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -40,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class WaterEconomyService {
 
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
     private final IrrigationScheduleRepository scheduleRepository;
     private final WaterConsumptionRepository consumptionRepository;
     private final WaterSourceRepository sourceRepository;
@@ -49,14 +49,14 @@ public class WaterEconomyService {
     private final AgroWeatherService agroWeatherService;
 
     public WaterEconomyService(
-            ZoneRepository zoneRepository,
+            FieldZoneRepository fieldZoneRepository,
             IrrigationScheduleRepository scheduleRepository,
             WaterConsumptionRepository consumptionRepository,
             WaterSourceRepository sourceRepository,
             RainwaterHarvestRepository harvestRepository,
             WaterNeedService waterNeedService,
             AgroWeatherService agroWeatherService) {
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
         this.scheduleRepository = scheduleRepository;
         this.consumptionRepository = consumptionRepository;
         this.sourceRepository = sourceRepository;
@@ -90,7 +90,7 @@ public class WaterEconomyService {
 
     /** Besoin hydrique quotidien de l'ensemble des zones pour une ET0 donnée. */
     public double dailyNeedLiters(double et0Mm) {
-        return zoneRepository.findAll().stream()
+        return fieldZoneRepository.findAll().stream()
                 .mapToDouble(zone -> waterNeedService.needLiters(zone, et0Mm))
                 .sum();
     }
@@ -98,7 +98,7 @@ public class WaterEconomyService {
     /** Détail par zone du besoin théorique : surface, Kc, efficacité et méthode d'irrigation. */
     public List<Map<String, Object>> needBreakdown(double et0Mm) {
         List<Map<String, Object>> breakdown = new ArrayList<>();
-        for (Zone zone : zoneRepository.findAll()) {
+        for (Zone zone : fieldZoneRepository.findAll()) {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("zone_id", zone.getId());
             item.put("zone_name", zone.getName());

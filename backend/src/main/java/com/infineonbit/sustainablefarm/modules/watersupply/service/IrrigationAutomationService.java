@@ -7,7 +7,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
@@ -48,7 +48,7 @@ public class IrrigationAutomationService {
     /** Origine enregistree sur les plannings crees par cette regle. */
     public static final String TRIGGER_SOURCE_AUTO = "auto";
 
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
     private final SoilMoistureReadingRepository soilMoistureRepository;
     private final IrrigationScheduleRepository scheduleRepository;
     private final IrrigationLogRepository logRepository;
@@ -57,14 +57,14 @@ public class IrrigationAutomationService {
     private final AlertService alertService;
 
     public IrrigationAutomationService(
-            ZoneRepository zoneRepository,
+            FieldZoneRepository fieldZoneRepository,
             SoilMoistureReadingRepository soilMoistureRepository,
             IrrigationScheduleRepository scheduleRepository,
             IrrigationLogRepository logRepository,
             WaterNeedService waterNeedService,
             AgroWeatherService agroWeatherService,
             AlertService alertService) {
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
         this.soilMoistureRepository = soilMoistureRepository;
         this.scheduleRepository = scheduleRepository;
         this.logRepository = logRepository;
@@ -114,7 +114,7 @@ public class IrrigationAutomationService {
 
         List<Map<String, Object>> created = new ArrayList<>();
         List<Map<String, Object>> skipped = new ArrayList<>();
-        for (Zone zone : zoneRepository.findAll()) {
+        for (Zone zone : fieldZoneRepository.findAll()) {
             Double moisture = soilMoistureRepository.findLatestMoisturePercentBefore(zone.getId(), now);
             if (moisture == null) {
                 skipped.add(skipped(zone, "no soil moisture reading"));

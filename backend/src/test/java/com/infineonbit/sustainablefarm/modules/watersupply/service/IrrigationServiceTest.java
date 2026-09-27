@@ -15,7 +15,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSche
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +33,7 @@ class IrrigationServiceTest {
     private IrrigationLogRepository logRepository;
 
     @Mock
-    private ZoneRepository zoneRepository;
+    private FieldZoneRepository fieldZoneRepository;
 
     @Mock
     private AgroWeatherService agroWeatherService;
@@ -46,7 +46,7 @@ class IrrigationServiceTest {
         UUID zoneId = UUID.randomUUID();
         IrrigationScheduleCreateRequest schedule = new IrrigationScheduleCreateRequest(
             zoneId, Instant.now(), 10, 20.0, null, UUID.randomUUID());
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
         IrrigationService service = service();
 
         assertThrows(NotFoundException.class, () -> service.createSchedule(schedule));
@@ -91,6 +91,6 @@ class IrrigationServiceTest {
     }
 
     private IrrigationService service() {
-        return new IrrigationService(scheduleRepository, logRepository, zoneRepository, agroWeatherService, alertService);
+        return new IrrigationService(scheduleRepository, logRepository, fieldZoneRepository, agroWeatherService, alertService);
     }
 }

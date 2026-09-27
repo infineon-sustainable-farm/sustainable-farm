@@ -14,7 +14,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -35,7 +35,7 @@ class AIServiceTest {
     private WaterSourceRepository waterSourceRepository;
 
     @Mock
-    private ZoneRepository zoneRepository;
+    private FieldZoneRepository fieldZoneRepository;
 
     @Mock
     private WaterConsumptionRepository waterConsumptionRepository;
@@ -46,7 +46,7 @@ class AIServiceTest {
     @Test
     void recommendationsFollowTheReserveLevel() {
         stubReserve(1000d, 100d);
-        when(zoneRepository.findAll()).thenReturn(List.of());
+        when(fieldZoneRepository.findAll()).thenReturn(List.of());
 
         List<Map<String, Object>> recommendations = service().recommendations();
 
@@ -73,7 +73,7 @@ class AIServiceTest {
     @Test
     void recommendationsMentionDripEquippedZones() {
         stubReserve(1000d, 800d);
-        when(zoneRepository.findAll()).thenReturn(List.of(zone("drip"), zone("goutte-a-goutte"), zone("sprinkler")));
+        when(fieldZoneRepository.findAll()).thenReturn(List.of(zone("drip"), zone("goutte-a-goutte"), zone("sprinkler")));
 
         List<Map<String, Object>> recommendations = service().recommendations();
 
@@ -145,7 +145,7 @@ class AIServiceTest {
     /** Priorite de la premiere recommandation pour une reserve donnee (capacite, niveau). */
     private String reservePriority(double capacity, double level) {
         stubReserve(capacity, level);
-        when(zoneRepository.findAll()).thenReturn(List.of());
+        when(fieldZoneRepository.findAll()).thenReturn(List.of());
         return String.valueOf(service().recommendations().get(0).get("priority"));
     }
 
@@ -177,6 +177,6 @@ class AIServiceTest {
     }
 
     private AIService service() {
-        return new AIService(waterSourceRepository, zoneRepository, waterConsumptionRepository, alertService);
+        return new AIService(waterSourceRepository, fieldZoneRepository, waterConsumptionRepository, alertService);
     }
 }

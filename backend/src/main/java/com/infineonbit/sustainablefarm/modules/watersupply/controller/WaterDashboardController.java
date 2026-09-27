@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/dashboard")
-public class DashboardController {
+public class WaterDashboardController {
     private final WaterConsumptionRepository waterConsumptionRepository;
     private final WaterSourceRepository waterSourceRepository;
     private final IrrigationScheduleRepository irrigationScheduleRepository;
@@ -35,7 +35,7 @@ public class DashboardController {
     private final AIService aiService;
     private final IotDeviceService iotDeviceService;
 
-    public DashboardController(
+    public WaterDashboardController(
             WaterConsumptionRepository waterConsumptionRepository,
             WaterSourceRepository waterSourceRepository,
             IrrigationScheduleRepository irrigationScheduleRepository,

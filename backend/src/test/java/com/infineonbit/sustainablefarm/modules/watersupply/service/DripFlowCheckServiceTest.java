@@ -13,7 +13,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DripFlowCheckServiceTest {
 
     @Mock
-    private ZoneRepository zoneRepository;
+    private FieldZoneRepository fieldZoneRepository;
 
     @Mock
     private WaterConsumptionRepository consumptionRepository;
@@ -92,7 +92,7 @@ class DripFlowCheckServiceTest {
         UUID zoneId = UUID.randomUUID();
         Zone zone = new Zone();
         zone.setName("Zone A");
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.of(zone));
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(zone));
 
         Map<String, Object> result = service().check(zoneId);
 
@@ -123,7 +123,7 @@ class DripFlowCheckServiceTest {
     @Test
     void rejectsUnknownZone() {
         UUID zoneId = UUID.randomUUID();
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service().check(zoneId));
     }
@@ -136,7 +136,7 @@ class DripFlowCheckServiceTest {
         zone.setIrrigationMethod("drip");
         zone.setEmitterCount(100);
         zone.setEmitterNominalFlowLh(2.0);
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.of(zone));
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(zone));
         return zoneId;
     }
 
@@ -149,6 +149,6 @@ class DripFlowCheckServiceTest {
     }
 
     private DripFlowCheckService service() {
-        return new DripFlowCheckService(zoneRepository, consumptionRepository, logRepository, alertService);
+        return new DripFlowCheckService(fieldZoneRepository, consumptionRepository, logRepository, alertService);
     }
 }

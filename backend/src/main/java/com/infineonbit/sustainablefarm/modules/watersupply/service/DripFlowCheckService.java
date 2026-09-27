@@ -5,7 +5,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -43,17 +43,17 @@ public class DripFlowCheckService {
     /** Au dessus de 110 %, une fuite est probable. */
     public static final double HIGH_FLOW_RATIO = 1.10d;
 
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
     private final WaterConsumptionRepository consumptionRepository;
     private final IrrigationLogRepository logRepository;
     private final AlertService alertService;
 
     public DripFlowCheckService(
-            ZoneRepository zoneRepository,
+            FieldZoneRepository fieldZoneRepository,
             WaterConsumptionRepository consumptionRepository,
             IrrigationLogRepository logRepository,
             AlertService alertService) {
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
         this.consumptionRepository = consumptionRepository;
         this.logRepository = logRepository;
         this.alertService = alertService;
@@ -66,7 +66,7 @@ public class DripFlowCheckService {
      */
     @Transactional
     public Map<String, Object> check(UUID zoneId) {
-        Zone zone = zoneRepository.findById(zoneId)
+        Zone zone = fieldZoneRepository.findById(zoneId)
                 .orElseThrow(() -> new NotFoundException("Zone"));
 
         Instant now = Instant.now();

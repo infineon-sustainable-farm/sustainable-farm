@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,8 +26,20 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  * <p>Attention : un handler sur {@code Exception} court-circuite la gestion par defaut de Spring.
  * Sans les handlers dedies ci-dessous, une URL inconnue (NoResourceFoundException) ou une methode
  * HTTP non supportee repondait 500 au lieu de 404 / 405.</p>
+ *
+ * <p>Scoppe avec {@code basePackages} comme {@code PlantsExceptionHandler} : cet advice
+ * porte un handler sur {@code Exception}, donc un advice global se battrait avec
+ * {@code core.exception.CoreExceptionHandler} sur toutes les URL, y compris celles des autres
+ * modules. Le contrat d'erreur (enveloppe {@code timestamp/status/code/message}) reste
+ * propre au module watersupply.</p>
+ *
+ * <p>{@code @Order} est explicite parce que le scoping seul ne suffit pas : les deux advises
+ * restent candidats pour les controleurs watersupply, et sans ordre Spring les arbitrait
+ * au hasard, en renvoyant parfois 500 via le handler generique de core. Core est en
+ * {@code LOWEST_PRECEDENCE} pour rester le filet de securite des autres modules.</p>
  */
-@RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@RestControllerAdvice(basePackages = "com.infineonbit.sustainablefarm.modules.watersupply")
 public class WaterSupplyExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(WaterSupplyExceptionHandler.class);

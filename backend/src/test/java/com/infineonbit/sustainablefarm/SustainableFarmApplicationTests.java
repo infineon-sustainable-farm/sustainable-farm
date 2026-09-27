@@ -5,6 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(classes = SustainableFarmApplication.class)
+@ActiveProfiles("test")
 class SustainableFarmApplicationTests {
 
 	@Test

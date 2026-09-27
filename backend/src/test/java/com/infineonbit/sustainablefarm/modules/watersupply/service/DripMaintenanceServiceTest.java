@@ -12,7 +12,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanc
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -31,14 +31,14 @@ class DripMaintenanceServiceTest {
     private DripMaintenanceLogRepository logRepository;
 
     @Mock
-    private ZoneRepository zoneRepository;
+    private FieldZoneRepository fieldZoneRepository;
 
     @Test
     void createRejectsUnknownZone() {
         UUID zoneId = UUID.randomUUID();
         DripMaintenanceLogRequest request = new DripMaintenanceLogRequest(
                 zoneId, Instant.now(), "inspection", null, null, null, null, null, null);
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service().create(request));
         verify(logRepository, never()).save(org.mockito.ArgumentMatchers.any());
@@ -47,7 +47,7 @@ class DripMaintenanceServiceTest {
     @Test
     void createRejectsAMissingMaintenanceDate() {
         UUID zoneId = UUID.randomUUID();
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.of(new Zone()));
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(new Zone()));
         DripMaintenanceLogRequest request = new DripMaintenanceLogRequest(
                 zoneId, null, "inspection", null, null, null, null, null, null);
 
@@ -87,7 +87,7 @@ class DripMaintenanceServiceTest {
 
     @Test
     void calendarIsEmptyWithoutZone() {
-        when(zoneRepository.findAll()).thenReturn(List.of());
+        when(fieldZoneRepository.findAll()).thenReturn(List.of());
 
         assertTrue(service().schedule().isEmpty());
     }
@@ -96,7 +96,7 @@ class DripMaintenanceServiceTest {
         Zone zone = new Zone();
         zone.setId(UUID.randomUUID());
         zone.setName("Zone A");
-        when(zoneRepository.findAll()).thenReturn(List.of(zone));
+        when(fieldZoneRepository.findAll()).thenReturn(List.of(zone));
         return zone;
     }
 
@@ -121,6 +121,6 @@ class DripMaintenanceServiceTest {
     }
 
     private DripMaintenanceService service() {
-        return new DripMaintenanceService(logRepository, zoneRepository);
+        return new DripMaintenanceService(logRepository, fieldZoneRepository);
     }
 }

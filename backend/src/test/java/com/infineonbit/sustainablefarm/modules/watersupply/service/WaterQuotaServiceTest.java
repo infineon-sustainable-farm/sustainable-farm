@@ -18,7 +18,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmReposi
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQuotaRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -42,7 +42,7 @@ class WaterQuotaServiceTest {
     private FarmRepository farmRepository;
 
     @Mock
-    private ZoneRepository zoneRepository;
+    private FieldZoneRepository fieldZoneRepository;
 
     @Mock
     private FieldRepository fieldRepository;
@@ -127,9 +127,9 @@ class WaterQuotaServiceTest {
         UUID zoneId = UUID.randomUUID();
 
         when(quotaRepository.findAll()).thenReturn(List.of(zoneQuota(zoneId, 1000d)));
-        when(zoneRepository.findById(zoneId)).thenReturn(Optional.of(zone(fieldId, "Zone Goutte A")));
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(zone(fieldId, "Zone Goutte A")));
         when(fieldRepository.findById(fieldId)).thenReturn(Optional.of(field(farmId)));
-        when(zoneRepository.findByFieldId(fieldId))
+        when(fieldZoneRepository.findByFieldId(fieldId))
                 .thenReturn(List.of(zone(fieldId, "Zone Goutte A"), zone(fieldId, "Zone Nord")));
         when(consumptionRepository.sumConsumptionByFarmIdBetween(any(), any(), eq(farmId))).thenReturn(500d);
 
@@ -227,7 +227,7 @@ class WaterQuotaServiceTest {
     }
 
     private WaterQuotaService service() {
-        return new WaterQuotaService(quotaRepository, farmRepository, zoneRepository, fieldRepository,
+        return new WaterQuotaService(quotaRepository, farmRepository, fieldZoneRepository, fieldRepository,
                 consumptionRepository, alertService, 0);
     }
 }

@@ -14,7 +14,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -55,19 +55,19 @@ public class IrrigationService {
 
     private final IrrigationScheduleRepository scheduleRepository;
     private final IrrigationLogRepository logRepository;
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
     private final AgroWeatherService agroWeatherService;
     private final AlertService alertService;
 
     public IrrigationService(
             IrrigationScheduleRepository scheduleRepository,
             IrrigationLogRepository logRepository,
-            ZoneRepository zoneRepository,
+            FieldZoneRepository fieldZoneRepository,
             AgroWeatherService agroWeatherService,
             AlertService alertService) {
         this.scheduleRepository = scheduleRepository;
         this.logRepository = logRepository;
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
         this.agroWeatherService = agroWeatherService;
         this.alertService = alertService;
     }
@@ -256,7 +256,7 @@ public class IrrigationService {
 
     private Map<String, Object> suggestion(IrrigationSchedule schedule, double probability, double rainMm) {
         double planned = schedule.getWaterQuantityLiters() == null ? 0d : schedule.getWaterQuantityLiters();
-        String zoneName = zoneRepository.findById(schedule.getZoneId())
+        String zoneName = fieldZoneRepository.findById(schedule.getZoneId())
                 .map(Zone::getName).orElse("Unknown zone");
 
         Map<String, Object> item = new LinkedHashMap<>();
@@ -301,7 +301,7 @@ public class IrrigationService {
     }
 
     private void requireZone(UUID zoneId) {
-        if (zoneId == null || zoneRepository.findById(zoneId).isEmpty()) {
+        if (zoneId == null || fieldZoneRepository.findById(zoneId).isEmpty()) {
             throw new NotFoundException("Zone");
         }
     }

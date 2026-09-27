@@ -16,7 +16,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneUpdateRequest
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -29,12 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class FarmService {
     private final FarmRepository farmRepository;
     private final FieldRepository fieldRepository;
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
 
-    public FarmService(FarmRepository farmRepository, FieldRepository fieldRepository, ZoneRepository zoneRepository) {
+    public FarmService(FarmRepository farmRepository, FieldRepository fieldRepository, FieldZoneRepository fieldZoneRepository) {
         this.farmRepository = farmRepository;
         this.fieldRepository = fieldRepository;
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
     }
 
     public List<FarmResponse> findFarms() {
@@ -130,20 +130,20 @@ public class FarmService {
 
     public List<ZoneResponse> findFieldZones(UUID fieldId) {
         getFieldEntity(fieldId);
-        return zoneRepository.findByFieldId(fieldId).stream().map(ZoneResponse::from).toList();
+        return fieldZoneRepository.findByFieldId(fieldId).stream().map(ZoneResponse::from).toList();
     }
 
     public PageResponse<ZoneResponse> findFieldZones(UUID fieldId, Pageable pageable) {
         getFieldEntity(fieldId);
-        return toPageResponse(zoneRepository.findByFieldId(fieldId, pageable).map(ZoneResponse::from));
+        return toPageResponse(fieldZoneRepository.findByFieldId(fieldId, pageable).map(ZoneResponse::from));
     }
 
     public List<ZoneResponse> findZones() {
-        return zoneRepository.findAll().stream().map(ZoneResponse::from).toList();
+        return fieldZoneRepository.findAll().stream().map(ZoneResponse::from).toList();
     }
 
     public PageResponse<ZoneResponse> findZones(Pageable pageable) {
-        return toPageResponse(zoneRepository.findAll(pageable).map(ZoneResponse::from));
+        return toPageResponse(fieldZoneRepository.findAll(pageable).map(ZoneResponse::from));
     }
 
     @Transactional
@@ -157,7 +157,7 @@ public class FarmService {
         zone.setCropCoefficient(request.cropCoefficient());
         zone.setEmitterCount(request.emitterCount());
         zone.setEmitterNominalFlowLh(request.emitterNominalFlowLh());
-        return ZoneResponse.from(zoneRepository.save(zone));
+        return ZoneResponse.from(fieldZoneRepository.save(zone));
     }
 
     public ZoneResponse getZone(UUID zoneId) {
@@ -179,12 +179,12 @@ public class FarmService {
         zone.setEmitterCount(request.emitterCount() == null ? zone.getEmitterCount() : request.emitterCount());
         zone.setEmitterNominalFlowLh(request.emitterNominalFlowLh() == null
                 ? zone.getEmitterNominalFlowLh() : request.emitterNominalFlowLh());
-        return ZoneResponse.from(zoneRepository.save(zone));
+        return ZoneResponse.from(fieldZoneRepository.save(zone));
     }
 
     @Transactional
     public void deleteZone(UUID zoneId) {
-        zoneRepository.delete(getZoneEntity(zoneId));
+        fieldZoneRepository.delete(getZoneEntity(zoneId));
     }
 
     private Farm getFarmEntity(UUID farmId) {
@@ -196,7 +196,7 @@ public class FarmService {
     }
 
     private Zone getZoneEntity(UUID zoneId) {
-        return zoneRepository.findById(zoneId).orElseThrow(() -> new NotFoundException("Zone"));
+        return fieldZoneRepository.findById(zoneId).orElseThrow(() -> new NotFoundException("Zone"));
     }
 
     private void apply(Farm farm, FarmCreateRequest request) {

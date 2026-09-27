@@ -3,7 +3,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.AlertService;
 import java.time.Instant;
 import java.time.Duration;
@@ -21,16 +21,16 @@ import org.springframework.stereotype.Service;
 public class AIService {
 
     private final WaterSourceRepository waterSourceRepository;
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
     private final WaterConsumptionRepository waterConsumptionRepository;
     private final AlertService alertService;
 
     public AIService(WaterSourceRepository waterSourceRepository,
-                     ZoneRepository zoneRepository,
+                     FieldZoneRepository fieldZoneRepository,
                      WaterConsumptionRepository waterConsumptionRepository,
                      AlertService alertService) {
         this.waterSourceRepository = waterSourceRepository;
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
         this.waterConsumptionRepository = waterConsumptionRepository;
         this.alertService = alertService;
     }
@@ -65,7 +65,7 @@ public class AIService {
                     "reservoir_level"));
         }
 
-        long dripZones = zoneRepository.findAll().stream()
+        long dripZones = fieldZoneRepository.findAll().stream()
                 .filter(z -> "drip".equalsIgnoreCase(z.getIrrigationMethod())
                         || "goutte-a-goutte".equalsIgnoreCase(z.getIrrigationMethod())
                         || "goutte".equalsIgnoreCase(z.getIrrigationMethod()))

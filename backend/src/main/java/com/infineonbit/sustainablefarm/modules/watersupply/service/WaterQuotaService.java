@@ -9,7 +9,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmReposi
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQuotaRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -45,7 +45,7 @@ public class WaterQuotaService {
 
     private final WaterQuotaRepository quotaRepository;
     private final FarmRepository farmRepository;
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
     private final FieldRepository fieldRepository;
     private final WaterConsumptionRepository consumptionRepository;
     private final AlertService alertService;
@@ -58,7 +58,7 @@ public class WaterQuotaService {
 
     public WaterQuotaService(WaterQuotaRepository quotaRepository,
                              FarmRepository farmRepository,
-                             ZoneRepository zoneRepository,
+                             FieldZoneRepository fieldZoneRepository,
                              FieldRepository fieldRepository,
                              WaterConsumptionRepository consumptionRepository,
                              AlertService alertService,
@@ -67,7 +67,7 @@ public class WaterQuotaService {
         this.alertService = alertService;
         this.consumptionRepository = consumptionRepository;
         this.fieldRepository = fieldRepository;
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
         this.farmRepository = farmRepository;
         this.quotaRepository = quotaRepository;
     }
@@ -267,7 +267,7 @@ public class WaterQuotaService {
      * la meme parcelle) : approximation documentee, a affiner avec des irrigations zonees.
      */
     private double zoneConsumption(Instant start, Instant end, UUID zoneId) {
-        return zoneRepository.findById(zoneId)
+        return fieldZoneRepository.findById(zoneId)
                 .flatMap(zone -> fieldRepository.findById(zone.getFieldId())
                         .map(field -> consumptionRepository
                                 .sumConsumptionByFarmIdBetween(start, end, field.getFarmId())
@@ -276,7 +276,7 @@ public class WaterQuotaService {
     }
 
     private long zoneCount(UUID fieldId) {
-        long count = zoneRepository.findByFieldId(fieldId).size();
+        long count = fieldZoneRepository.findByFieldId(fieldId).size();
         return count == 0 ? 1 : count;
     }
 
@@ -284,7 +284,7 @@ public class WaterQuotaService {
         return switch (targetType) {
             case TARGET_FARM -> farmRepository.findById(targetId)
                     .map(farm -> farm.getName()).orElse("Unknown farm");
-            case TARGET_ZONE -> zoneRepository.findById(targetId)
+            case TARGET_ZONE -> fieldZoneRepository.findById(targetId)
                     .map(zone -> zone.getName()).orElse("Unknown zone");
             default -> "Unknown target";
         };
@@ -321,7 +321,7 @@ public class WaterQuotaService {
         }
         boolean exists = switch (targetType) {
             case TARGET_FARM -> farmRepository.findById(targetId).isPresent();
-            case TARGET_ZONE -> zoneRepository.findById(targetId).isPresent();
+            case TARGET_ZONE -> fieldZoneRepository.findById(targetId).isPresent();
             default -> false;
         };
         if (!exists) {

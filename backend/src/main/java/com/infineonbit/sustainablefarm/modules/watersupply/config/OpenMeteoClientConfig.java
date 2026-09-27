@@ -4,8 +4,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
+/**
+ * HTTP client for the Open-Meteo weather API.
+ *
+ * <p>Named for the service it calls rather than "WebConfig": the MVC/CORS
+ * configuration lives in {@code core.config.WebConfig}, and two beans cannot
+ * share that name.
+ */
 @Configuration
-public class WebConfig {
+public class OpenMeteoClientConfig {
     @Bean
     public RestClient restClient() {
         return RestClient.builder()

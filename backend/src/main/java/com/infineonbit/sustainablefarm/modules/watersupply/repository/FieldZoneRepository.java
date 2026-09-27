@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ZoneRepository extends JpaRepository<Zone, UUID> {
+public interface FieldZoneRepository extends JpaRepository<Zone, UUID> {
     List<Zone> findByFieldId(UUID fieldId);
 
     Page<Zone> findByFieldId(UUID fieldId, Pageable pageable);

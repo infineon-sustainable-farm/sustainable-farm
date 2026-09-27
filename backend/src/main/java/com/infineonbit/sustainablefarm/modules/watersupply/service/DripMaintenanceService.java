@@ -7,7 +7,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLo
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -25,11 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class DripMaintenanceService {
     private final DripMaintenanceLogRepository logRepository;
-    private final ZoneRepository zoneRepository;
+    private final FieldZoneRepository fieldZoneRepository;
 
-    public DripMaintenanceService(DripMaintenanceLogRepository logRepository, ZoneRepository zoneRepository) {
+    public DripMaintenanceService(DripMaintenanceLogRepository logRepository, FieldZoneRepository fieldZoneRepository) {
         this.logRepository = logRepository;
-        this.zoneRepository = zoneRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
     }
 
     /** Taches recurrentes du goutte-a-goutte et leur periodicite. */
@@ -134,7 +134,7 @@ public class DripMaintenanceService {
         List<DripMaintenanceLog> logs = logRepository.findAll();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         List<Map<String, Object>> calendar = new ArrayList<>();
-        for (Zone zone : zoneRepository.findAll()) {
+        for (Zone zone : fieldZoneRepository.findAll()) {
             for (PreventiveTask task : PREVENTIVE_TASKS) {
                 calendar.add(taskEntry(zone, task, lastDone(logs, zone.getId(), task.type()), today));
             }
@@ -196,7 +196,7 @@ public class DripMaintenanceService {
     }
 
     private void requireZone(UUID zoneId) {
-        if (zoneId == null || zoneRepository.findById(zoneId).isEmpty()) {
+        if (zoneId == null || fieldZoneRepository.findById(zoneId).isEmpty()) {
             throw new NotFoundException("Zone");
         }
     }
