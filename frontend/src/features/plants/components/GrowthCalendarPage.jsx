@@ -11,7 +11,7 @@ import GrowthCalendarTable from "./GrowthCalendarTable";
  * is only quoted for rows that come from that study.
  */
 function MissingPlantingDateNote({ entries }) {
-    const undated = entries.filter((entry) => !entry.date_plantation);
+    const undated = entries.filter((entry) => !entry.plantingDate);
     if (undated.length === 0) return null;
     const fromZalka = undated.some((entry) => entry.source === "Zalka_2025");
 
@@ -52,7 +52,7 @@ export default function GrowthCalendarPage() {
     }, []);
 
     const { data: entries, isPending, isError, refetch, isFetching } = useGrowthCalendar({
-        bloc_parcelle: selectedBlock || null,
+        blockCode: selectedBlock || null,
     });
     const { data: blocks } = useGrowthCalendarBlocks();
 

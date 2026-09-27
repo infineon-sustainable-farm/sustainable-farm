@@ -49,28 +49,28 @@ export default function VarietiesTable({ varieties, onSelect }) {
                             className="cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                         >
                             <td className="px-4 py-3 font-medium text-gray-800">
-                                {formatText(variety.nom)}
+                                {formatText(variety.name)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatBlock(variety.bloc_parcelle)}
+                                {formatBlock(variety.blockCode)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatNumber(variety.nombre_arbres)}
+                                {formatNumber(variety.treeCount)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatSpacing(
-                                    variety.espacement_inter_rang_m,
-                                    variety.espacement_intra_rang_m,
+                                    variety.rowSpacingM,
+                                    variety.treeSpacingM,
                                 )}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatKilograms(variety.rendement_attendu_kg)}
+                                {formatKilograms(variety.expectedYieldKg)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatKilograms(variety.rendement_reel_kg)}
+                                {formatKilograms(variety.actualYieldKg)}
                             </td>
                             <td className="px-4 py-3">
-                                <VigorBadge value={variety.vigueur} />
+                                <VigorBadge value={variety.vigor} />
                             </td>
                         </tr>
                     ))}

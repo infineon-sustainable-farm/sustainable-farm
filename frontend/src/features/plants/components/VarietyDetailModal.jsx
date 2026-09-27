@@ -54,10 +54,10 @@ export default function VarietyDetailModal({ variety, onClose }) {
                             id="variety-detail-title"
                             className="font-heading text-xl font-bold text-gray-900"
                         >
-                            {formatText(variety.nom)}
+                            {formatText(variety.name)}
                         </h3>
                         <p className="mt-1 text-sm text-gray-500">
-                            {formatBlock(variety.bloc_parcelle)}
+                            {formatBlock(variety.blockCode)}
                         </p>
                     </div>
                     <button
@@ -71,33 +71,33 @@ export default function VarietyDetailModal({ variety, onClose }) {
                 </div>
 
                 <dl className="grid grid-cols-1 gap-5 px-6 py-5 sm:grid-cols-2">
-                    <Field label="Trees">{formatNumber(variety.nombre_arbres)}</Field>
+                    <Field label="Trees">{formatNumber(variety.treeCount)}</Field>
                     <Field label="Spacing">
                         {formatSpacing(
-                            variety.espacement_inter_rang_m,
-                            variety.espacement_intra_rang_m,
+                            variety.rowSpacingM,
+                            variety.treeSpacingM,
                         )}
                     </Field>
                     <Field label="Inter-row spacing">
-                        {formatMeters(variety.espacement_inter_rang_m)}
+                        {formatMeters(variety.rowSpacingM)}
                     </Field>
                     <Field label="Intra-row spacing">
-                        {formatMeters(variety.espacement_intra_rang_m)}
+                        {formatMeters(variety.treeSpacingM)}
                     </Field>
-                    <Field label="Tree density">{formatDensity(variety.densite_arbres_ha)}</Field>
+                    <Field label="Tree density">{formatDensity(variety.treeDensityPerHa)}</Field>
                     <Field label="Vigor">
-                        <VigorBadge value={variety.vigueur} />
+                        <VigorBadge value={variety.vigor} />
                     </Field>
                     <Field label="Expected yield">
-                        {formatKilograms(variety.rendement_attendu_kg)}
+                        {formatKilograms(variety.expectedYieldKg)}
                     </Field>
                     <Field label="Actual yield">
-                        {formatKilograms(variety.rendement_reel_kg)}
+                        {formatKilograms(variety.actualYieldKg)}
                     </Field>
-                    <Field label="Plant origin">{formatText(variety.origine_plant)}</Field>
-                    <Field label="Farm ID">{formatNumber(variety.id_ferme)}</Field>
+                    <Field label="Plant origin">{formatText(variety.plantOrigin)}</Field>
+                    <Field label="Farm ID">{formatNumber(variety.farmId)}</Field>
                     <Field label="Source">{formatText(variety.source)}</Field>
-                    <Field label="Last updated">{formatTimestamp(variety.date_maj)}</Field>
+                    <Field label="Last updated">{formatTimestamp(variety.lastUpdated)}</Field>
                 </dl>
 
                 <p className="border-t border-gray-200 px-6 py-3 text-xs text-gray-500">

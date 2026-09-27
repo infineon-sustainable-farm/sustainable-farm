@@ -5,27 +5,33 @@ import java.time.Instant;
 /**
  * API representation of a variety.
  *
- * <p>The component names deliberately keep the snake_case domain names of the
- * Zalka 2025 study ({@code nombre_arbres}, {@code rendement_attendu_kg},
- * {@code bloc_parcelle}, ...). Other modules will consume this contract, so the
- * names are part of it and must not be renamed to camelCase.
+ * <p>The component names are English camelCase, like every other module of the
+ * project (machinery, visitor management). They are the JSON contract other
+ * modules consume.
+ *
+ * <p>The physical table keeps its snake_case French column names
+ * ({@code nombre_arbres}, {@code bloc_parcelle}, ...): the mapping lives in the
+ * explicit {@code @Column} annotations of
+ * {@link com.infineonbit.sustainablefarm.modules.plants.entity.Variety}, so the
+ * schema is untouched by this naming and the two can differ without either
+ * side moving.
  *
  * <p>A component is {@code null} whenever the underlying data does not exist.
  * Consumers render that as an explicit "no value", never as zero.
  */
 public record VarietyResponse(
         Long id,
-        Integer id_ferme,
-        String nom,
-        Integer nombre_arbres,
-        Double espacement_inter_rang_m,
-        Double espacement_intra_rang_m,
-        Double densite_arbres_ha,
-        Double rendement_attendu_kg,
-        Double rendement_reel_kg,
-        String vigueur,
-        String bloc_parcelle,
-        String origine_plant,
+        Integer farmId,
+        String name,
+        Integer treeCount,
+        Double rowSpacingM,
+        Double treeSpacingM,
+        Double treeDensityPerHa,
+        Double expectedYieldKg,
+        Double actualYieldKg,
+        String vigor,
+        String blockCode,
+        String plantOrigin,
         String source,
-        Instant date_maj) {
+        Instant lastUpdated) {
 }
