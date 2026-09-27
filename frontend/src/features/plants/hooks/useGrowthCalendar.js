@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchGrowthCalendar } from "../api/plantsApi";
 
-function growthCalendarQueryKey({ bloc_parcelle = null, id_ferme = null } = {}) {
-    return ["plants", "growth-calendar", { bloc_parcelle, id_ferme }];
+function growthCalendarQueryKey({ blockCode = null, farmId = null } = {}) {
+    return ["plants", "growth-calendar", { blockCode, farmId }];
 }
 
 /**
@@ -11,10 +11,10 @@ function growthCalendarQueryKey({ bloc_parcelle = null, id_ferme = null } = {}) 
  * Loading, error and retry are handled by TanStack Query; the components read
  * its status flags instead of keeping their own.
  */
-export function useGrowthCalendar({ bloc_parcelle = null, id_ferme = null } = {}) {
+export function useGrowthCalendar({ blockCode = null, farmId = null } = {}) {
     return useQuery({
-        queryKey: growthCalendarQueryKey({ bloc_parcelle, id_ferme }),
-        queryFn: () => fetchGrowthCalendar({ bloc_parcelle, id_ferme }),
+        queryKey: growthCalendarQueryKey({ blockCode, farmId }),
+        queryFn: () => fetchGrowthCalendar({ blockCode, farmId }),
     });
 }
 
@@ -29,6 +29,6 @@ export function useGrowthCalendarBlocks() {
         queryKey: growthCalendarQueryKey(),
         queryFn: () => fetchGrowthCalendar(),
         select: (entries) =>
-            [...new Set(entries.map((entry) => entry.bloc_parcelle).filter(Boolean))].sort(),
+            [...new Set(entries.map((entry) => entry.blockCode).filter(Boolean))].sort(),
     });
 }

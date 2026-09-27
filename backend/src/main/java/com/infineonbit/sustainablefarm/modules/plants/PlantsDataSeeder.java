@@ -3,11 +3,16 @@ package com.infineonbit.sustainablefarm.modules.plants;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variete;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarieteRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * PROVISIONAL. Loads the single real variety row of the project into
  * PostgreSQL at startup.
+ *
+ * <p>Runs under the {@code dev} Spring profile only
+ * (e.g. {@code SPRING_PROFILES_ACTIVE=dev}), like {@code DevDataSeeder}. With no
+ * profile set the bean is not created at all, so this never seeds production.
  *
  * <p>Why this exists: the project has neither Flyway nor a SQL script — the
  * schema comes from Hibernate ddl-auto=update — and the team has not yet
@@ -24,6 +29,7 @@ import org.springframework.stereotype.Component;
  * mock-up are illustration only and are deliberately NOT seeded.
  */
 @Component
+@Profile("dev")
 public class PlantsDataSeeder implements CommandLineRunner {
 
     private final VarieteRepository varieteRepository;
@@ -41,18 +47,18 @@ public class PlantsDataSeeder implements CommandLineRunner {
     }
 
     private void seedZalka2025() {
-        Variete keitt = new Variete();
-        keitt.setNom("Keitt");
-        keitt.setNombreArbres(200);
-        keitt.setEspacementInterRangM(8.0);
-        keitt.setEspacementIntraRangM(8.0);
-        keitt.setRendementAttenduKg(44000.0);
-        keitt.setBlocParcelle("A");
+        Variety keitt = new Variety();
+        keitt.setName("Keitt");
+        keitt.setTreeCount(200);
+        keitt.setRowSpacingM(8.0);
+        keitt.setTreeSpacingM(8.0);
+        keitt.setExpectedYieldKg(44000.0);
+        keitt.setBlockCode("A");
         keitt.setSource("Zalka_2025");
-        // densiteArbresHa, rendementReelKg, vigueur, originePlant and dateMaj:
-        // no source data in the study, left NULL. dateMaj records when the variety
+        // treeDensityPerHa, actualYieldKg, vigor, plantOrigin and lastUpdated:
+        // no source data in the study, left NULL. lastUpdated records when the variety
         // record itself was last revised, which the study does not state; seeding it
         // with the current time would date 2025 data to the day the container started.
-        varieteRepository.save(keitt);
+        varietyRepository.save(keitt);
     }
 }

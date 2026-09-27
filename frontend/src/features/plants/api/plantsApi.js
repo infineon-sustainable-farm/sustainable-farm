@@ -1,5 +1,5 @@
 import { apiClient } from "../../../shared/api/client";
-import { ENDPOINTS } from "../../../shared/api/endpoints";
+import { PLANTS_ENDPOINTS } from "./endpoints";
 
 /**
  * Fetches the varieties, optionally filtered.
@@ -8,19 +8,19 @@ import { ENDPOINTS } from "../../../shared/api/endpoints";
  * "Block A" label used on screen. An omitted or empty filter is left out of the
  * query string entirely so the API returns every row.
  */
-export function fetchVarieties({ bloc_parcelle, id_ferme } = {}) {
+export function fetchVarieties({ blockCode, farmId } = {}) {
     const params = {};
-    if (bloc_parcelle) params.bloc_parcelle = bloc_parcelle;
-    if (id_ferme !== null && id_ferme !== undefined) params.id_ferme = id_ferme;
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
 
-    return apiClient.get(ENDPOINTS.VARIETIES, { params });
+    return apiClient.get(PLANTS_ENDPOINTS.VARIETIES, { params });
 }
 
 /**
  * Fetches a single variety by its identifier.
  */
 export function fetchVarietyById(id) {
-    return apiClient.get(`${ENDPOINTS.VARIETIES}/${id}`);
+    return apiClient.get(`${PLANTS_ENDPOINTS.VARIETIES}/${id}`);
 }
 
 /**
@@ -30,10 +30,10 @@ export function fetchVarietyById(id) {
  * Tree age and growth phase come computed by the API; they are never computed
  * or guessed here.
  */
-export function fetchGrowthCalendar({ bloc_parcelle, id_ferme } = {}) {
+export function fetchGrowthCalendar({ blockCode, farmId } = {}) {
     const params = {};
-    if (bloc_parcelle) params.bloc_parcelle = bloc_parcelle;
-    if (id_ferme !== null && id_ferme !== undefined) params.id_ferme = id_ferme;
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
 
-    return apiClient.get(ENDPOINTS.GROWTH_CALENDAR, { params });
+    return apiClient.get(PLANTS_ENDPOINTS.GROWTH_CALENDAR, { params });
 }

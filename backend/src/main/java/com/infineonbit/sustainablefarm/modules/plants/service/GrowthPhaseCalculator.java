@@ -80,16 +80,16 @@ final class GrowthPhaseCalculator {
     /**
      * Age of the trees, in completed years and remaining months.
      *
-     * @param datePlantation planting date, possibly {@code null}
-     * @param today          the reference date
+     * @param plantingDate planting date, possibly {@code null}
+     * @param today        the reference date
      * @return the age, or {@code null} if the planting date is unknown or lies
      *         after {@code today} (a future planting has no age)
      */
-    static Period computeAge(LocalDate datePlantation, LocalDate today) {
-        if (datePlantation == null || datePlantation.isAfter(today)) {
+    static Period computeAge(LocalDate plantingDate, LocalDate today) {
+        if (plantingDate == null || plantingDate.isAfter(today)) {
             return null;
         }
-        return Period.between(datePlantation, today);
+        return Period.between(plantingDate, today);
     }
 
     /**
