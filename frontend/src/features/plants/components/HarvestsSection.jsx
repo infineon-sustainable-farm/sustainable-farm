@@ -33,8 +33,11 @@ function DateFilter({ id, label, value, onChange }) {
 /**
  * Recorded harvests for the selected block, between two optional dates, both
  * included. Filters the API cannot match simply give an empty list.
+ *
+ * `recordAction` is the page's "Record a harvest" button, offered again when
+ * no harvest is recorded at all.
  */
-export default function HarvestsSection({ blockCode }) {
+export default function HarvestsSection({ blockCode, recordAction }) {
     // "YYYY-MM-DD" as the date fields give it; an empty string means "no bound".
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
@@ -93,7 +96,7 @@ export default function HarvestsSection({ blockCode }) {
                         hint="Try another block or date range, or select “All blocks”."
                     />
                 ) : (
-                    <PlantsEmptyState title="No harvest recorded yet" />
+                    <PlantsEmptyState title="No harvest recorded yet" action={recordAction} />
                 )
             )}
 
