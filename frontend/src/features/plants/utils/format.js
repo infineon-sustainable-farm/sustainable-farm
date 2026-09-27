@@ -75,6 +75,31 @@ export function formatDate(value) {
     return `${day}/${month}/${year}`;
 }
 
+/** A "YYYY-MM" month as the first day of that month in UTC, or null if malformed. */
+function parseMonth(value) {
+    if (isMissing(value)) return null;
+    const match = /^(\d{4})-(\d{2})$/.exec(String(value).trim());
+    if (!match) return null;
+    return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
+}
+
+/**
+ * Month sent by the API as "YYYY-MM", shown as "Apr 2027", or "April 2027"
+ * with the long style. Read and formatted in UTC, so no timezone can shift it.
+ */
+export function formatMonth(value, style = "short") {
+    const date = parseMonth(value);
+    if (!date) return NO_VALUE;
+    return date.toLocaleString("en-US", { month: style, year: "numeric", timeZone: "UTC" });
+}
+
+/** Month name alone, "Apr", for a chart axis that shows the year apart. */
+export function formatMonthName(value) {
+    const date = parseMonth(value);
+    if (!date) return NO_VALUE;
+    return date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+}
+
 /** Tree age as computed by the API: completed years and remaining months. */
 export function formatAge(years, months) {
     if (isMissing(years) || isMissing(months)) return NO_VALUE;
