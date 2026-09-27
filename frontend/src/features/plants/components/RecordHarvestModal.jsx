@@ -139,10 +139,12 @@ export default function RecordHarvestModal({ blocks, isSubmitting, error, onSubm
             </div>
 
             <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
+                {/* Text in the darkened error hue of VigorBadge: #9a3f32 on the tinted
+                    alert (#fcf6f5) -> 6.27:1. --color-error as text gave 4.38:1. */}
                 {formError && (
                     <p
                         role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-error"
+                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
                     >
                         {formError}
                     </p>

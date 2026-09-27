@@ -58,7 +58,9 @@ export default function HarvestMaturityPage() {
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <p className="font-heading text-xs font-bold tracking-widest text-primary uppercase">
+                        {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1.
+                            primary measured 4.498:1, just under the AA minimum of 4.5:1. */}
+                        <p className="font-heading text-xs font-bold tracking-widest text-primary-dark uppercase">
                             Task 5
                         </p>
                         <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">
