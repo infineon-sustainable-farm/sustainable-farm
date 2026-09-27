@@ -16,13 +16,14 @@ public class VarietyService {
     private final VarietyRepository varietyRepository;
 
     /**
-     * Varieties Read Service
-     * <p>Blank filter normalization method
-     * <ul>
-     *      <li>A filter sent as an empty or whitespace-only string means "no filter".</li>
-     *      <li>It is turned into {@code null} so the query ignores it instead of
-     *          looking for a variety whose block is literally the empty string.</li>
-     * </ul>
+     * Turns a blank filter into no filter at all.
+     *
+     * <p>A filter sent as an empty or whitespace-only string means "no filter".
+     * It is turned into {@code null} so the query ignores it instead of looking
+     * for a variety whose block is literally the empty string.
+     *
+     * @param value the filter value as received, possibly {@code null}
+     * @return the trimmed value, or {@code null} if it was null or blank
      */
     private static String normalizeFilter(String value) {
         if (value == null) {
@@ -70,7 +71,7 @@ public class VarietyService {
      *                  or {@code null} for every block
      * @return the matching varieties, possibly empty
      */
-    public List<VarietyResponse> obtainAllVarieties(Integer farmId, String blockCode) {
+    public List<VarietyResponse> getAllVarieties(Integer farmId, String blockCode) {
         List<Variety> varieties = varietyRepository.findByOptionalFilters(
                 farmId,
                 normalizeFilter(blockCode));
@@ -84,7 +85,7 @@ public class VarietyService {
      * @return the representation of that variety
      * @throws VarietyNotFoundException if no variety exists with this ID
      */
-    public VarietyResponse obtainVarietyById(Long id) {
+    public VarietyResponse getVarietyById(Long id) {
         Variety variety = varietyRepository.findById(id)
                 .orElseThrow(() -> new VarietyNotFoundException(id));
         return toResponse(variety);

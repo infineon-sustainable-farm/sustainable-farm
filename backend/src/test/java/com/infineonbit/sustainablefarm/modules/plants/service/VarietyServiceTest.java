@@ -53,12 +53,12 @@ public class VarietyServiceTest {
     }
 
     @Test
-    void obtainAllVarieties_shouldReturnMatchingVarieties_whenFilterMatches() {
+    void getAllVarieties_shouldReturnMatchingVarieties_whenFilterMatches() {
         // Arrange
         when(varietyRepository.findByOptionalFilters(null, "A"))
                 .thenReturn(List.of(keittOnBlockA()));
         // Act
-        List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(null, "A");
+        List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(null, "A");
         // Assert
         assertEquals(1, varietyResponses.size());
         assertEquals("Keitt", varietyResponses.get(0).name());
@@ -69,22 +69,22 @@ public class VarietyServiceTest {
     }
 
     @Test
-    void obtainAllVarieties_shouldReturnEmptyList_whenFilterMatchesNothing() {
+    void getAllVarieties_shouldReturnEmptyList_whenFilterMatchesNothing() {
         // Arrange
         when(varietyRepository.findByOptionalFilters(null, "ZZZ"))
                 .thenReturn(List.of());
         // Act
-        List<VarietyResponse> varietyResponses = varietyService.obtainAllVarieties(null, "ZZZ");
+        List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(null, "ZZZ");
         // Assert
         assertTrue(varietyResponses.isEmpty());
     }
 
     @Test
-    void obtainVarietyById_shouldReturnVariety_whenIdExists() {
+    void getVarietyById_shouldReturnVariety_whenIdExists() {
         // Arrange
         when(varietyRepository.findById(1L)).thenReturn(Optional.of(keittOnBlockA()));
         // Act
-        VarietyResponse varietyResponse = varietyService.obtainVarietyById(1L);
+        VarietyResponse varietyResponse = varietyService.getVarietyById(1L);
         // Assert
         assertEquals(1L, varietyResponse.id());
         assertEquals("Keitt", varietyResponse.name());
@@ -93,13 +93,13 @@ public class VarietyServiceTest {
     }
 
     @Test
-    void obtainVarietyById_shouldThrowException_whenIdDoesNotExist() {
+    void getVarietyById_shouldThrowException_whenIdDoesNotExist() {
         // Arrange
         Long nonExistentId = 99L;
         when(varietyRepository.findById(nonExistentId)).thenReturn(Optional.empty());
         // Act
         VarietyNotFoundException ex = assertThrows(VarietyNotFoundException.class, () -> {
-            varietyService.obtainVarietyById(nonExistentId);
+            varietyService.getVarietyById(nonExistentId);
         });
         // Assert
         assertEquals("Variety with ID 99 not found", ex.getMessage());
