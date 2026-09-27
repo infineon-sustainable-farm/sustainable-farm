@@ -205,7 +205,8 @@ export default function YieldForecastSection({ blockCode }) {
                         <p className="font-heading text-base font-bold text-gray-900">
                             Yield forecast could not be loaded
                         </p>
-                        <p className="mt-1 text-sm text-gray-500">
+                        {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
+                        <p className="mt-1 text-sm text-gray-600">
                             The request to the server did not succeed.
                         </p>
                     </div>
