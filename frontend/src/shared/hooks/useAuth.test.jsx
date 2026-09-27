@@ -1,7 +1,12 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+// @vitest-environment jsdom
+// Environnement DOM declare dans le fichier : le projet n'a pas de configuration Vitest
+// partagee, et renderHook a besoin de document (voir aussi les tests du module watersupply).
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { useAuth } from './useAuth'
 import { apiClient, getToken, setToken } from '../api/client.js'
+
+afterEach(cleanup)
 
 vi.mock('../api/client.js', () => {
   let token = null

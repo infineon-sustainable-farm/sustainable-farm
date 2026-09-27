@@ -9,5 +9,6 @@ public record WaterConsumptionCreateRequest(
         @NotNull UUID sourceId,
         @NotNull Double consumptionLiters,
         @NotNull Instant consumptionDate,
-        UUID irrigationId) {
+        UUID irrigationId,
+        UUID zoneId) {
 }

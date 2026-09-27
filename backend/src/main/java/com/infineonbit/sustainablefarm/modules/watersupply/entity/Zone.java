@@ -32,6 +32,25 @@ public class Zone extends BaseEntity {
     @Column(name = "crop_coefficient")
     private Double cropCoefficient;
 
+    /**
+     * Nombre de goutteurs de la zone et débit nominal d'un goutteur (L/h) : ils donnent le
+     * débit théorique du réseau, référence de la détection de colmatage (débit mesuré < 90 %)
+     * ou de fuite (débit mesuré > 110 %).
+     */
+    @Column(name = "emitter_count")
+    private Integer emitterCount;
+
+    @Column(name = "emitter_nominal_flow_lh")
+    private Double emitterNominalFlowLh;
+
+    /** Débit théorique du réseau de la zone (L/h), ou null si le réseau n'est pas décrit. */
+    public Double theoreticalFlowLitersPerHour() {
+        if (emitterCount == null || emitterCount <= 0 || emitterNominalFlowLh == null || emitterNominalFlowLh <= 0) {
+            return null;
+        }
+        return emitterCount * emitterNominalFlowLh;
+    }
+
     public UUID getFieldId() {
         return fieldId;
     }
@@ -70,5 +89,21 @@ public class Zone extends BaseEntity {
 
     public void setCropCoefficient(Double cropCoefficient) {
         this.cropCoefficient = cropCoefficient;
+    }
+
+    public Integer getEmitterCount() {
+        return emitterCount;
+    }
+
+    public void setEmitterCount(Integer emitterCount) {
+        this.emitterCount = emitterCount;
+    }
+
+    public Double getEmitterNominalFlowLh() {
+        return emitterNominalFlowLh;
+    }
+
+    public void setEmitterNominalFlowLh(Double emitterNominalFlowLh) {
+        this.emitterNominalFlowLh = emitterNominalFlowLh;
     }
 }

@@ -43,7 +43,7 @@ class FarmServiceTest {
     @Test
     void createZoneRejectsUnknownField() {
         UUID fieldId = UUID.randomUUID();
-        ZoneCreateRequest zone = new ZoneCreateRequest(fieldId, "Zone", 1.0, null);
+        ZoneCreateRequest zone = new ZoneCreateRequest(fieldId, "Zone", 1.0, null, null, null, null);
         when(fieldRepository.findById(fieldId)).thenReturn(Optional.empty());
         FarmService service = new FarmService(farmRepository, fieldRepository, zoneRepository);
 

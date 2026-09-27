@@ -791,6 +791,43 @@
 .ws-pagination-nav button:disabled { opacity: .4; cursor: default; }
 .ws-pagination-nav button:not(:disabled):hover { border-color: var(--ws-primary); color: var(--ws-primary-dark); }
 
+/* ============ ACCESSIBILITE ============ */
+/* Un anneau de focus visible partout : la navigation clavier est un chemin de premiere classe,
+   et currentColor garantit le contraste sur fond clair comme sur la barre laterale sombre. */
+.ws-app a:focus-visible,
+.ws-app button:focus-visible,
+.ws-app select:focus-visible,
+.ws-app input:focus-visible,
+.ws-app [tabindex]:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* ============ ETAT VIDE (aucune donnee, erreur, recherche sans resultat) ============ */
+.ws-empty {
+  padding: 26px 18px;
+  border: 1px dashed var(--ws-line);
+  border-radius: 10px;
+  background: var(--ws-card);
+  text-align: center;
+}
+
+.ws-empty-title {
+  margin: 0 0 6px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ws-ink);
+}
+
+.ws-empty-text {
+  margin: 0 auto;
+  max-width: 52ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ws-muted);
+}
+
 /* ============ EXPORT GRAPHIQUE & QUOTAS ============ */
 .ws-chart-shell { display: flex; flex-direction: column; gap: 6px; }
 
@@ -904,4 +941,9 @@
   .ws-search { min-width: 0; width: 100%; }
   .ws-filters { flex-wrap: wrap; }
   .ws-filters select { max-width: 100%; }
+  /* Les tableaux gardent leurs colonnes lisibles : ils defilent horizontalement au lieu de
+     s'ecraser, et la barre d'outils du graphique peut passer a la ligne. */
+  .ws-panel-body { overflow-x: auto; }
+  .ws-table { min-width: 560px; }
+  .ws-chart-shell-top { flex-wrap: wrap; gap: 6px; }
 }

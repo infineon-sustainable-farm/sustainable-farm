@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class IrrigationService {
+    /** Journalisation : nommee LOGGER car `log` designe deja l'entite IrrigationLog dans les methodes. */
+    private static final Logger LOGGER = LoggerFactory.getLogger(IrrigationService.class);
+
     /**
      * Identifiant systeme utilise comme createdBy quand aucun contexte utilisateur n'est fourni
      * (voir {@link SystemUsers} : l'authentification est prise en charge par le logiciel global).
@@ -174,7 +179,9 @@ public class IrrigationService {
         log.setActualStartTime(Instant.now());
         log.setWaterUsedLiters(0.0);
         log.setStatus("started");
-        return IrrigationLogResponse.from(logRepository.save(log));
+        IrrigationLog saved = logRepository.save(log);
+        LOGGER.info("Irrigation started: schedule {} of zone {}", scheduleId, schedule.getZoneId());
+        return IrrigationLogResponse.from(saved);
     }
 
     @Transactional
@@ -194,7 +201,10 @@ public class IrrigationService {
         log.setActualEndTime(stoppedAt);
         log.setWaterUsedLiters(schedule.getWaterQuantityLiters() == null ? 0.0 : schedule.getWaterQuantityLiters());
         log.setStatus("completed");
-        return IrrigationLogResponse.from(logRepository.save(log));
+        IrrigationLog saved = logRepository.save(log);
+        LOGGER.info("Irrigation stopped: schedule {} of zone {}, {} L counted",
+                scheduleId, schedule.getZoneId(), saved.getWaterUsedLiters());
+        return IrrigationLogResponse.from(saved);
     }
 
     /**

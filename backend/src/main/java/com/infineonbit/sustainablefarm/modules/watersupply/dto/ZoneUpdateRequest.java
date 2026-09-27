@@ -6,5 +6,8 @@ public record ZoneUpdateRequest(
         UUID fieldId,
         String name,
         Double areaHectares,
-        String irrigationMethod) {
+        String irrigationMethod,
+        Double cropCoefficient,
+        Integer emitterCount,
+        Double emitterNominalFlowLh) {
 }

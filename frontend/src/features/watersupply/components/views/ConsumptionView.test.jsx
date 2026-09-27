@@ -1,7 +1,13 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+// @vitest-environment jsdom
+// Environnement DOM et nettoyage entre tests declares dans le fichier : le module n'exige
+// aucune configuration Vitest partagee (voir SourcesView.test.jsx).
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { renderView as render } from './testRender'
 import { ConsumptionView } from './ConsumptionView'
 import { waterConsumptionApi, waterSourceApi, waterQuotaApi } from '../../api/watersupplyApi'
+
+afterEach(cleanup)
 
 vi.mock('../../api/watersupplyApi', () => ({
   waterConsumptionApi: {
@@ -40,7 +46,7 @@ beforeEach(() => {
   waterQuotaApi.getUsage.mockResolvedValue([])
 })
 
-const props = { initials: 'YN' }
+const props = {}
 
 describe('ConsumptionView (read-only - IoT sensors)', () => {
   it('displays the consumptions and the chart', async () => {
@@ -92,7 +98,8 @@ describe('ConsumptionView (read-only - IoT sensors)', () => {
 
     // « North Farm » also appears in the farm filter: we target the quota panel.
     await waitFor(() => expect(screen.getAllByText('North Farm').length).toBeGreaterThan(1))
-    expect(screen.getByText('80% of quota reached')).toBeTruthy()
+    // Le panneau des quotas charge sa propre requete : on attend son contenu.
+    await waitFor(() => expect(screen.getByText('80% of quota reached')).toBeTruthy())
     expect(screen.getByText(/85% of quota used/)).toBeTruthy()
     expect(screen.getByTestId('bullet-chart')).toBeTruthy()
   })

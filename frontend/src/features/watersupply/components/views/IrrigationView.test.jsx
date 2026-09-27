@@ -1,7 +1,13 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+// @vitest-environment jsdom
+// Environnement DOM et nettoyage entre tests declares dans le fichier : le module n'exige
+// aucune configuration Vitest partagee (voir SourcesView.test.jsx).
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { renderView as render } from './testRender'
 import { IrrigationView } from './IrrigationView'
 import { irrigationApi } from '../../api/watersupplyApi'
+
+afterEach(cleanup)
 
 vi.mock('../../api/watersupplyApi', () => ({
   irrigationApi: {
@@ -53,10 +59,12 @@ describe('IrrigationView', () => {
     render(<IrrigationView {...props} />)
 
     await waitFor(() => expect(screen.getByText('Zone A')).toBeTruthy())
-    expect(screen.getByText(/45 min/)).toBeTruthy()
+    // Chaque requete du module arrive dans son propre rendu (React Query) : on attend celle du
+    // planning avant d'affirmer sur son contenu, au lieu d'un rendu synchrone fragile.
+    await waitFor(() => expect(screen.getByText(/45 min/)).toBeTruthy())
 
     // Journal: the completed cycle is listed with its actual volume.
-    expect(screen.getByText('300 L')).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('300 L')).toBeTruthy())
     // The cycle still running does not appear in the journal.
     expect(screen.queryByText('120 L')).toBeNull()
     // The completed schedule is archived: absent from the active schedules panel.

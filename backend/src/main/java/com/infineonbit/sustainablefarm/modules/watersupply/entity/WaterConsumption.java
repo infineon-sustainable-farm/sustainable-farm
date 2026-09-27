@@ -28,6 +28,13 @@ public class WaterConsumption extends BaseEntity {
 
     private UUID irrigationId;
 
+    /**
+     * Zone concernee par la mesure, quand le compteur de debit est installe sur une zone
+     * precise : c'est ce lien qui permet de comparer le volume reellement mesure au volume
+     * theorique du reseau goutte-a-goutte (detection de colmatage / fuite).
+     */
+    private UUID zoneId;
+
     public UUID getFarmId() {
         return farmId;
     }
@@ -66,5 +73,13 @@ public class WaterConsumption extends BaseEntity {
 
     public void setIrrigationId(UUID irrigationId) {
         this.irrigationId = irrigationId;
+    }
+
+    public UUID getZoneId() {
+        return zoneId;
+    }
+
+    public void setZoneId(UUID zoneId) {
+        this.zoneId = zoneId;
     }
 }

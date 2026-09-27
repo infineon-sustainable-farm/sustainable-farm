@@ -1,358 +1,93 @@
-import { useEffect, useState } from 'react'
 import { dashboardApi, aiApi, weatherApi, healthApi, irrigationApi } from '../api/watersupplyApi'
+import { useModuleQuery } from './useModuleQuery'
 
 /**
- * Hook pour récupérer les KPIs du dashboard.
+ * Donnees du tableau de bord, servies par React Query via {@link useModuleQuery} : les onze
+ * hooks ci-dessous ne portent plus chacun leur `useEffect` + `useState`, la logique de
+ * chargement n'existe qu'a un seul endroit.
+ *
+ * Le contrat rendu aux vues reste celui d'avant : `{ data, loading, error }` (et `refetch`
+ * la ou une vue rafraichit apres une action).
  */
+
 export function useKpis() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    dashboardApi
-      .getKpis()
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { data, loading, error }
+  const { data, loading, error, refetch } = useModuleQuery(['watersupply', 'kpis'], dashboardApi.getKpis)
+  return { data, loading, error, refetch }
 }
 
-/**
- * Hook pour récupérer les alertes du dashboard.
- */
 export function useAlerts() {
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    dashboardApi
-      .getAlerts()
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { data, loading, error }
+  const { data, loading, error } = useModuleQuery(['watersupply', 'alerts'], dashboardApi.getAlerts)
+  return { data: data ?? [], loading, error }
 }
 
-/**
- * Hook pour récupérer les activités du dashboard.
- */
 export function useActivities() {
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    dashboardApi
-      .getActivities()
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { data, loading, error }
+  const { data, loading, error } = useModuleQuery(['watersupply', 'activities'], dashboardApi.getActivities)
+  return { data: data ?? [], loading, error }
 }
 
-/**
- * Hook pour récupérer les recommandations IA.
- */
 export function useRecommendations() {
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    aiApi
-      .getRecommendations()
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { data, loading, error }
+  const { data, loading, error } = useModuleQuery(['watersupply', 'recommendations'], aiApi.getRecommendations)
+  return { data: data ?? [], loading, error }
 }
 
-/**
- * Hook pour récupérer la prédiction de sécheresse.
- */
 export function useDroughtPrediction() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    aiApi
-      .getDroughtPrediction()
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
+  const { data, loading, error } = useModuleQuery(
+    ['watersupply', 'drought-prediction'],
+    aiApi.getDroughtPrediction,
+  )
   return { data, loading, error }
 }
 
 /**
- * Hook pour récupérer la météo actuelle.
+ * Meteo courante. Les coordonnees sont optionnelles : sans elles, le backend applique celles
+ * du site (voir app.weather.*), ce qui evite d'interroger un autre lieu par erreur.
  */
 export function useWeather(latitude, longitude) {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    weatherApi
-      .getCurrent(latitude, longitude)
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [latitude, longitude])
-
+  const { data, loading, error } = useModuleQuery(
+    ['watersupply', 'weather', latitude ?? 'site', longitude ?? 'site'],
+    () => weatherApi.getCurrent(latitude, longitude),
+  )
   return { data, loading, error }
 }
 
 /**
- * Hook pour vérifier la santé du backend.
+ * Sante du backend. Le contrat reste `{ healthy, loading }` : un backend injoignable n'est pas
+ * une erreur a afficher mais l'indicateur « Backend deconnecte » du dashboard.
  */
 export function useHealthCheck() {
-  const [healthy, setHealthy] = useState(false)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    healthApi
-      .check()
-      .then(() => {
-        if (!cancelled) {
-          setHealthy(true)
-          setLoading(false)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHealthy(false)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { healthy, loading }
+  const { data, loading, error } = useModuleQuery(['watersupply', 'health'], healthApi.check)
+  return { healthy: !loading && !error && Boolean(data), loading }
 }
 
-/**
- * Hook pour la série cumulée de l'économie d'eau : c'est la courbe de progression
- * (besoin cumulé des cultures vs consommation cumulée mesurée par les capteurs).
- * @param {number} days - taille de la fenêtre (1 à 60 jours).
- */
+/** Serie cumulee de l'economie d'eau (fenetre de 1 a 60 jours). */
 export function useSavingsSeries(days = 30) {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    dashboardApi
-      .getSavingsSeries(days)
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [days])
-
+  const { data, loading, error } = useModuleQuery(
+    ['watersupply', 'savings-series', days],
+    () => dashboardApi.getSavingsSeries(days),
+  )
   return { data, loading, error }
 }
 
-/**
- * Hook pour le bilan hydrique : entrées (pluie récupérée) contre sorties (eau consommée),
- * comparées au niveau des réservoirs. Rend visibles les pertes.
- */
+/** Bilan hydrique : entrees (pluie recuperee) contre sorties (eau consommee). */
 export function useWaterBalance(period = 'month') {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    dashboardApi
-      .getWaterBalance(period)
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [period])
-
+  const { data, loading, error } = useModuleQuery(
+    ['watersupply', 'water-balance', period],
+    () => dashboardApi.getWaterBalance(period),
+  )
   return { data, loading, error }
 }
 
-/**
- * Hook pour les anomalies de débit (fuites probables). Diagnostic calculé côté backend
- * sur les mesures de consommation.
- */
+/** Anomalies de debit (fuites probables), calculees cote backend. */
 export function useLeaks() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    dashboardApi
-      .getLeaks()
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
+  const { data, loading, error } = useModuleQuery(['watersupply', 'leaks'], dashboardApi.getLeaks)
   return { data, loading, error }
 }
 
-/**
- * Hook pour les suggestions de report d'irrigation fondées sur la pluie prévue.
- * Le backend propose, l'utilisateur décide via irrigationApi.postpone().
- */
+/** Suggestions de report d'irrigation fondees sur la pluie prevue : le backend propose, l'utilisateur decide. */
 export function useIrrigationSuggestions() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    irrigationApi
-      .getSuggestions()
-      .then((res) => {
-        if (!cancelled) {
-          setData(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
+  const { data, loading, error } = useModuleQuery(
+    ['watersupply', 'irrigation-suggestions'],
+    irrigationApi.getSuggestions,
+  )
   return { data, loading, error }
 }

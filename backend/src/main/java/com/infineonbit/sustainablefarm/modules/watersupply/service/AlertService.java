@@ -6,6 +6,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.Notificati
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class AlertService {
+
+    private static final Logger log = LoggerFactory.getLogger(AlertService.class);
 
     /** Fenetre anti-doublon : une meme alerte n'est pas repetee deux fois dans cet intervalle. */
     private static final Duration DEDUPLICATION_WINDOW = Duration.ofHours(12);
@@ -46,7 +50,11 @@ public class AlertService {
         notification.setMessage(message);
         notification.setRead(false);
         notification.setActionUrl(actionUrl);
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        // Trace d'exploitation : sans elle, une alerte automatique ne laissait aucune trace
+        // dans les journaux alors que c'est souvent la seule manifestation visible d'un incident.
+        log.info("Alert raised [{}] {} (action: {})", type, title, actionUrl);
+        return saved;
     }
 
     /**
@@ -58,11 +66,10 @@ public class AlertService {
     @Transactional
     public Optional<Notification> raiseOnce(String type, String title, String message, String actionUrl) {
         Instant threshold = Instant.now().minus(DEDUPLICATION_WINDOW);
-        boolean alreadyRaised = notificationRepository.findAll().stream()
-                .anyMatch(existing -> title.equals(existing.getTitle())
-                        && Boolean.FALSE.equals(existing.getRead())
-                        && existing.getCreatedAt() != null
-                        && existing.getCreatedAt().isAfter(threshold));
+        // Verification en base (titre + alerte encore ouverte + fenetre recente) : plus de parcours
+        // complet de la table a chaque mesure de capteur, et le classement reste deterministe.
+        boolean alreadyRaised = notificationRepository
+                .existsByTitleAndReadIsFalseAndCreatedAtAfter(title, threshold);
         if (alreadyRaised) {
             return Optional.empty();
         }

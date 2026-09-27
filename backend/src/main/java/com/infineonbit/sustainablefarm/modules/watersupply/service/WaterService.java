@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityUpdateRequest;
@@ -21,6 +22,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserReposi
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQualityTestRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -85,6 +87,28 @@ public class WaterService {
         return WaterSourceResponse.from(getSourceEntity(sourceId));
     }
 
+    /**
+     * Niveau d'une source, lu en temps reel (module 5.2 de la specification).
+     *
+     * <p>La valeur affichee est la derniere mesure envoyee par le capteur de niveau du reservoir ;
+     * le pourcentage et le statut sont calcules ici pour que l'interface et les autres modules
+     * n'aient pas a connaitre les seuils.</p>
+     */
+    public WaterLevelResponse sourceLevel(UUID sourceId) {
+        WaterSource source = getSourceEntity(sourceId);
+        Double percent = RainwaterTankRules.levelPercent(source);
+        return new WaterLevelResponse(
+                source.getId(),
+                source.getName(),
+                source.getType(),
+                source.getCapacityLiters(),
+                source.getCurrentLevelLiters(),
+                percent == null ? null : Math.round(percent * 10d) / 10d,
+                RainwaterTankRules.classify(percent),
+                RainwaterTankRules.isRainwaterTank(source),
+                Instant.now());
+    }
+
     @Transactional
     public WaterSourceResponse updateSource(UUID sourceId, WaterSourceUpdateRequest request) {
         WaterSource source = getSourceEntity(sourceId);
@@ -130,6 +154,7 @@ public class WaterService {
         consumption.setConsumptionLiters(request.consumptionLiters());
         consumption.setConsumptionDate(request.consumptionDate());
         consumption.setIrrigationId(request.irrigationId());
+        consumption.setZoneId(request.zoneId());
         validateConsumptionReferences(consumption);
         WaterConsumption saved = waterConsumptionRepository.save(consumption);
         checkQuotaThresholds(consumption);
@@ -153,6 +178,7 @@ public class WaterService {
         consumption.setConsumptionLiters(request.consumptionLiters() == null ? consumption.getConsumptionLiters() : request.consumptionLiters());
         consumption.setConsumptionDate(request.consumptionDate() == null ? consumption.getConsumptionDate() : request.consumptionDate());
         consumption.setIrrigationId(request.irrigationId() == null ? consumption.getIrrigationId() : request.irrigationId());
+        consumption.setZoneId(request.zoneId() == null ? consumption.getZoneId() : request.zoneId());
         WaterConsumption updated = waterConsumptionRepository.save(consumption);
         checkQuotaThresholds(consumption);
         return WaterConsumptionResponse.from(updated);

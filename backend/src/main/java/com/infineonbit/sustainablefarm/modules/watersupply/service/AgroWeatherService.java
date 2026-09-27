@@ -120,6 +120,14 @@ public class AgroWeatherService {
         } catch (RestClientException ex) {
             throw new ExternalServiceException("Weather service is unavailable", ex);
         }
+        return parse(data);
+    }
+
+    /**
+     * Lecture de la reponse Open-Meteo (separation entree/sortie : le reseau d'un cote, la
+     * lecture des champs de l'autre, ce qui rend la lecture testable sans appeler l'API).
+     */
+    List<DailyAgro> parse(Map<?, ?> data) {
         if (data == null || !(data.get("daily") instanceof Map<?, ?> daily)) {
             throw new ExternalServiceException("Weather service response is missing daily data", null);
         }

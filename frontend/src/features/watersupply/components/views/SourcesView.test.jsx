@@ -1,7 +1,14 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+// @vitest-environment jsdom
+// Le module ne depend d'aucune configuration Vitest partagee : l'environnement DOM et le
+// nettoyage entre tests sont declares ici (RTL n'active son nettoyage automatique qu'avec
+// les globals, qui ne sont pas actives sur ce projet).
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { renderView as render } from './testRender'
 import { SourcesView } from './SourcesView'
 import { waterSourceApi } from '../../api/watersupplyApi'
+
+afterEach(cleanup)
 
 vi.mock('../../api/watersupplyApi', () => ({
   waterSourceApi: {

@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,20 +15,34 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+/**
+ * Meteo courante et previsions, exposees a l'interface.
+ *
+ * <p>Les coordonnees par defaut viennent de la configuration ({@code app.weather.latitude}
+ * / {@code app.weather.longitude}) : une seule source de verite avec {@link AgroWeatherService},
+ * qui evite qu'un client oublie les parametres et interroge un autre lieu que le site.</p>
+ */
 @RestController
 @RequestMapping("/api/weather")
 public class WeatherController {
     private final RestClient restClient;
+    private final double defaultLatitude;
+    private final double defaultLongitude;
 
-    public WeatherController(RestClient restClient) {
+    public WeatherController(
+            RestClient restClient,
+            @Value("${app.weather.latitude:10.63}") double defaultLatitude,
+            @Value("${app.weather.longitude:-4.77}") double defaultLongitude) {
         this.restClient = restClient;
+        this.defaultLatitude = defaultLatitude;
+        this.defaultLongitude = defaultLongitude;
     }
 
     @GetMapping("/current")
     public Map<String, Object> current(
-            @RequestParam(defaultValue = "10.5") double latitude,
-            @RequestParam(defaultValue = "-61.2") double longitude) {
-        Map<?, ?> data = fetch("/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover,weather_code&timezone=UTC", latitude, longitude);
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude) {
+        Map<?, ?> data = fetch("/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover,weather_code&timezone=UTC", resolveLatitude(latitude), resolveLongitude(longitude));
 
         Map<?, ?> current = mapValue(data, "current");
         return Map.of(
@@ -43,9 +58,9 @@ public class WeatherController {
 
     @GetMapping("/forecast")
     public List<Map<String, Object>> forecast(
-            @RequestParam(defaultValue = "10.5") double latitude,
-            @RequestParam(defaultValue = "-61.2") double longitude) {
-        Map<?, ?> data = fetch("/v1/forecast?latitude={lat}&longitude={lon}&daily=temperature_2m_min,temperature_2m_max,relative_humidity_2m_mean,wind_speed_10m_mean,precipitation_probability_max,weather_code&forecast_days=7&timezone=UTC", latitude, longitude);
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude) {
+        Map<?, ?> data = fetch("/v1/forecast?latitude={lat}&longitude={lon}&daily=temperature_2m_min,temperature_2m_max,relative_humidity_2m_mean,wind_speed_10m_mean,precipitation_probability_max,weather_code&forecast_days=7&timezone=UTC", resolveLatitude(latitude), resolveLongitude(longitude));
 
         Map<?, ?> daily = mapValue(data, "daily");
         List<?> dates = listValue(daily, "time");
@@ -74,6 +89,16 @@ public class WeatherController {
                     "icon", WeatherCodeMapper.mapIcon(code)));
         }
         return forecast;
+    }
+
+    /** Latitude du site quand l'appelant n'en fournit pas (configuration). */
+    private double resolveLatitude(Double latitude) {
+        return latitude == null ? defaultLatitude : latitude;
+    }
+
+    /** Longitude du site quand l'appelant n'en fournit pas (configuration). */
+    private double resolveLongitude(Double longitude) {
+        return longitude == null ? defaultLongitude : longitude;
     }
 
         private Map<?, ?> fetch(String uri, double latitude, double longitude) {

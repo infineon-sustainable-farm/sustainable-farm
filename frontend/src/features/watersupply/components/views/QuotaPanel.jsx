@@ -4,7 +4,7 @@ import { useQuotaUsage } from '../../hooks/useQuotas'
 import { waterQuotaApi } from '../../api/watersupplyApi'
 import { WsBulletChart } from '../charts'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 
 /** Label and tone of a quota status (ok / warning 80% / exceeded 100%). */
 function statusTag(status) {

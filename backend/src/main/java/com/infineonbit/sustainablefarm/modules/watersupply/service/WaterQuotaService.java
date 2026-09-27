@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,18 +50,26 @@ public class WaterQuotaService {
     private final WaterConsumptionRepository consumptionRepository;
     private final AlertService alertService;
 
+    /** Derniere evaluation de seuil par cible : evite de recalculer a chaque impulsion de compteur. */
+    private final Map<String, Instant> lastThresholdChecks = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Fenetre minimale entre deux evaluations de seuil pour une meme cible (secondes, 0 = desactive). */
+    private final long checkThrottleSeconds;
+
     public WaterQuotaService(WaterQuotaRepository quotaRepository,
                              FarmRepository farmRepository,
                              ZoneRepository zoneRepository,
                              FieldRepository fieldRepository,
                              WaterConsumptionRepository consumptionRepository,
-                             AlertService alertService) {
-        this.quotaRepository = quotaRepository;
-        this.farmRepository = farmRepository;
-        this.zoneRepository = zoneRepository;
-        this.fieldRepository = fieldRepository;
-        this.consumptionRepository = consumptionRepository;
+                             AlertService alertService,
+                             @Value("${app.quota.check-throttle-seconds:60}") long checkThrottleSeconds) {
+        this.checkThrottleSeconds = Math.max(0, checkThrottleSeconds);
         this.alertService = alertService;
+        this.consumptionRepository = consumptionRepository;
+        this.fieldRepository = fieldRepository;
+        this.zoneRepository = zoneRepository;
+        this.farmRepository = farmRepository;
+        this.quotaRepository = quotaRepository;
     }
 
     public List<WaterQuotaResponse> findQuotas() {
@@ -146,6 +155,11 @@ public class WaterQuotaService {
      * Les alertes passent par {@link AlertService#raiseOnce} : pas de repetition toutes les minutes.
      */
     public void checkThresholds(UUID farmId, UUID zoneId, Instant consumptionDate) {
+        // Un compteur de debit peut envoyer plusieurs mesures par minute : recalculer le quota a
+        // chaque impulsion ne changerait rien au resultat et couterait une agregation par mesure.
+        if (throttled(farmId, zoneId)) {
+            return;
+        }
         LocalDate month = consumptionDate == null
                 ? LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1)
                 : consumptionDate.atZone(ZoneOffset.UTC).toLocalDate().withDayOfMonth(1);
@@ -155,6 +169,21 @@ public class WaterQuotaService {
         if (farmId != null) {
             checkThreshold("farm", farmId, month);
         }
+    }
+
+    /** Vrai si la cible a deja ete evaluee dans la fenetre de throttle (0 desactive le mecanisme). */
+    private boolean throttled(UUID farmId, UUID zoneId) {
+        if (checkThrottleSeconds == 0) {
+            return false;
+        }
+        String key = String.valueOf(farmId) + ':' + zoneId;
+        Instant now = Instant.now();
+        Instant previous = lastThresholdChecks.get(key);
+        if (previous != null && previous.plusSeconds(checkThrottleSeconds).isAfter(now)) {
+            return true;
+        }
+        lastThresholdChecks.put(key, now);
+        return false;
     }
 
     private void checkThreshold(String targetType, UUID targetId, LocalDate monthStart) {

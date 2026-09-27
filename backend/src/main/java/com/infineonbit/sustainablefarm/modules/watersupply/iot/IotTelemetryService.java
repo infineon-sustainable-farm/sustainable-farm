@@ -1,9 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.iot;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.SoilMoistureReading;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
@@ -11,6 +12,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourc
 import com.infineonbit.sustainablefarm.modules.watersupply.service.DripMaintenanceService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.IotDeviceService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.RainwaterHarvestService;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.RainwaterTankMonitor;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterQuotaService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterService;
 import java.time.Instant;
@@ -18,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -30,6 +34,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Service
 public class IotTelemetryService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IotTelemetryService.class);
 
     /** Record d'entree : une mesure d'un appareil. */
     public record Telemetry(String deviceId, String type, UUID sourceId, UUID zoneId,
@@ -45,6 +51,7 @@ public class IotTelemetryService {
     private final SoilMoistureReadingRepository soilMoistureReadingRepository;
     private final IotDeviceService iotDeviceService;
     private final WaterQuotaService waterQuotaService;
+    private final RainwaterTankMonitor rainwaterTankMonitor;
     private final TransactionTemplate itemTransaction;
 
     public IotTelemetryService(WaterSourceRepository waterSourceRepository,
@@ -54,6 +61,7 @@ public class IotTelemetryService {
                                SoilMoistureReadingRepository soilMoistureReadingRepository,
                                IotDeviceService iotDeviceService,
                                WaterQuotaService waterQuotaService,
+                               RainwaterTankMonitor rainwaterTankMonitor,
                                PlatformTransactionManager transactionManager) {
         this.waterSourceRepository = waterSourceRepository;
         this.waterService = waterService;
@@ -62,6 +70,7 @@ public class IotTelemetryService {
         this.soilMoistureReadingRepository = soilMoistureReadingRepository;
         this.iotDeviceService = iotDeviceService;
         this.waterQuotaService = waterQuotaService;
+        this.rainwaterTankMonitor = rainwaterTankMonitor;
         TransactionTemplate perItem = new TransactionTemplate(transactionManager);
         perItem.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.itemTransaction = perItem;
@@ -129,6 +138,10 @@ public class IotTelemetryService {
     }
 
     private Result rejected(Telemetry t, String message) {
+        // Une mesure rejetee est journalisee : c'est le seul endroit ou une passerelle mal
+        // configuree (identifiant absent, valeur hors plage) devient visible en exploitation.
+        LOGGER.warn("Telemetry rejected [{}] device={} source={} zone={}: {}",
+                t.type(), t.deviceId(), t.sourceId(), t.zoneId(), message);
         return new Result(t.type() == null ? "?" : t.type(), t.sourceId(), "rejected", message);
     }
 
@@ -181,7 +194,18 @@ public class IotTelemetryService {
         }
         source.setCurrentLevelLiters(liters);
         waterSourceRepository.save(source);
-        return new Result("level", t.sourceId(), "processed", "Reservoir level = " + liters + " L");
+        // Regles du reservoir de pluie (module 5.3) : elles ne concernent que les sources de pluie
+        // et ne doivent jamais faire echouer l'ingestion d'une mesure valide.
+        String alerts = "";
+        try {
+            List<String> raised = rainwaterTankMonitor.evaluate(source);
+            if (!raised.isEmpty()) {
+                alerts = " (alerts: " + String.join(", ", raised) + ")";
+            }
+        } catch (RuntimeException ex) {
+            alerts = "";
+        }
+        return new Result("level", t.sourceId(), "processed", "Reservoir level = " + liters + " L" + alerts);
     }
 
     private Result routeFlow(Telemetry t) {
@@ -192,7 +216,7 @@ public class IotTelemetryService {
         WaterSource source = requireSource(t.sourceId());
         java.time.Instant measuredAt = t.timestamp() == null ? Instant.now() : t.timestamp();
         waterService.createConsumption(new WaterConsumptionCreateRequest(
-                source.getFarmId(), source.getId(), liters, measuredAt, null));
+                source.getFarmId(), source.getId(), liters, measuredAt, null, t.zoneId()));
         // Alerte quota (80 % / 100 %) : l'ingestion capteur est le chemin principal des mesures.
         try {
             waterQuotaService.checkThresholds(source.getFarmId(), t.zoneId(), measuredAt);
@@ -250,35 +274,35 @@ public class IotTelemetryService {
         if (mm == null) {
             return new Result("rain", t.sourceId(), "rejected", "Missing 'rainfall_mm' value");
         }
-        RainwaterHarvest harvest = new RainwaterHarvest();
-        harvest.setSourceId(requireSource(t.sourceId()).getId());
         Double area = doubleValue(t, "catchment_area_m2");
-        harvest.setCatchmentAreaM2(area == null ? 180.0 : area);
-        harvest.setRainfallMm(mm);
-        harvest.setRunoffCoefficient(doubleValue(t, "runoff_coefficient") == null ? 0.8 : doubleValue(t, "runoff_coefficient"));
-        harvest.setCaptureDate(t.timestamp() == null ? Instant.now() : t.timestamp());
-        RainwaterHarvest saved = rainwaterHarvestService.create(harvest);
+        Double runoff = doubleValue(t, "runoff_coefficient");
+        RainwaterHarvestResponse saved = rainwaterHarvestService.create(new RainwaterHarvestRequest(
+                requireSource(t.sourceId()).getId(),
+                area == null ? 180.0 : area,
+                mm,
+                runoff == null ? 0.8 : runoff,
+                null,
+                t.timestamp() == null ? Instant.now() : t.timestamp()));
         return new Result("rain", t.sourceId(), "processed",
-                "Rainwater harvest recorded: " + saved.getHarvestedLiters() + " L");
+                "Rainwater harvest recorded: " + saved.harvestedLiters() + " L");
     }
 
     private Result routeClogging(Telemetry t) {
         if (t.zoneId() == null) {
             return new Result("clogging", t.sourceId(), "rejected", "Missing 'zone_id' field");
         }
-        DripMaintenanceLog log = new DripMaintenanceLog();
-        log.setZoneId(t.zoneId());
-        log.setMaintenanceType("cleaning");
-        log.setMaintenanceDate(t.timestamp() == null ? Instant.now() : t.timestamp());
-        log.setFilterCleaned(false);
-        log.setCloggingDetected(true);
         String severity = t.values() != null && t.values().get("severity") != null
                 ? String.valueOf(t.values().get("severity")).toLowerCase() : "medium";
-        log.setCloggingSeverity(severity);
-        log.setEmitterReplacedCount(0);
-        log.setNotes("IoT sensor detection - abnormal flow (" + severity + ")");
-        log.setPerformedBy(t.deviceId() == null ? "IoT sensor" : t.deviceId());
-        dripMaintenanceService.create(log);
+        dripMaintenanceService.create(new DripMaintenanceLogRequest(
+                t.zoneId(),
+                t.timestamp() == null ? Instant.now() : t.timestamp(),
+                "cleaning",
+                false,
+                true,
+                severity,
+                0,
+                "IoT sensor detection - abnormal flow (" + severity + ")",
+                t.deviceId() == null ? "IoT sensor" : t.deviceId()));
         return new Result("clogging", t.zoneId(), "processed", "Clogging " + severity + " recorded");
     }
 

@@ -9,9 +9,14 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityUpdat
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.DripFlowCheckService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.PageRequest;
@@ -28,13 +33,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Water supply - water", description = "Sources, real-time level, consumption, quality and drip flow check")
 @RestController
 @RequestMapping("/api/water")
 public class WaterController {
     private final WaterService waterService;
+    private final DripFlowCheckService dripFlowCheckService;
 
-    public WaterController(WaterService waterService) {
+    public WaterController(WaterService waterService, DripFlowCheckService dripFlowCheckService) {
         this.waterService = waterService;
+        this.dripFlowCheckService = dripFlowCheckService;
     }
 
     @GetMapping("/sources")
@@ -55,6 +63,26 @@ public class WaterController {
     @GetMapping("/sources/{sourceId}")
     public WaterSourceResponse source(@PathVariable UUID sourceId) {
         return waterService.getSource(sourceId);
+    }
+
+    /**
+     * Niveau temps reel d'une source (module 5.2 de la specification) : capacite, niveau courant,
+     * pourcentage et statut, et l'indication « reservoir de collecte de pluie » pour les regles 5.3.
+     */
+    @Operation(summary = "Real-time level of a water source (percentage, status, rainwater tank flag)")
+    @GetMapping("/sources/{sourceId}/level")
+    public WaterLevelResponse sourceLevel(@PathVariable UUID sourceId) {
+        return waterService.sourceLevel(sourceId);
+    }
+
+    /**
+     * Diagnostic de debit d'une zone (module 6.2) : compare le volume mesure par le compteur au
+     * volume attendu du reseau goutte-a-goutte sur la duree d'arrosage de la fenetre observee.
+     */
+    @Operation(summary = "Drip flow check of a zone: measured volume versus network rating (clogging or leak)")
+    @GetMapping("/zones/{zoneId}/flow-check")
+    public Map<String, Object> zoneFlowCheck(@PathVariable UUID zoneId) {
+        return dripFlowCheckService.check(zoneId);
     }
 
     @PutMapping("/sources/{sourceId}")

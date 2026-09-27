@@ -1,11 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.controller;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.DripMaintenanceService;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,24 +31,34 @@ public class DripMaintenanceController {
     }
 
     @GetMapping
-    public List<DripMaintenanceLog> list() {
-        return maintenanceService.findAll();
+    public Object list(
+            @RequestParam(required = false) @Min(0) Integer page,
+            @RequestParam(required = false) @Min(1) Integer size,
+            @RequestParam(required = false) UUID zoneId) {
+        if (page == null && size == null && zoneId == null) {
+            return maintenanceService.findAll();
+        }
+        return maintenanceService.findAll(
+                PageRequest.of(page == null ? 0 : page, size == null ? 20 : size,
+                        Sort.by(Sort.Direction.DESC, "maintenanceDate")),
+                zoneId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DripMaintenanceLog create(@Valid @RequestBody DripMaintenanceLog log) {
-        return maintenanceService.create(log);
+    public DripMaintenanceLogResponse create(@RequestBody DripMaintenanceLogRequest request) {
+        return maintenanceService.create(request);
     }
 
     @GetMapping("/{logId}")
-    public DripMaintenanceLog get(@PathVariable UUID logId) {
+    public DripMaintenanceLogResponse get(@PathVariable UUID logId) {
         return maintenanceService.get(logId);
     }
 
     @PutMapping("/{logId}")
-    public DripMaintenanceLog update(@PathVariable UUID logId, @RequestBody DripMaintenanceLog payload) {
-        return maintenanceService.update(logId, payload);
+    public DripMaintenanceLogResponse update(@PathVariable UUID logId,
+            @RequestBody DripMaintenanceLogRequest request) {
+        return maintenanceService.update(logId, request);
     }
 
     @DeleteMapping("/{logId}")

@@ -154,6 +154,9 @@ public class FarmService {
         zone.setName(request.name());
         zone.setAreaHectares(request.areaHectares());
         zone.setIrrigationMethod(request.irrigationMethod());
+        zone.setCropCoefficient(request.cropCoefficient());
+        zone.setEmitterCount(request.emitterCount());
+        zone.setEmitterNominalFlowLh(request.emitterNominalFlowLh());
         return ZoneResponse.from(zoneRepository.save(zone));
     }
 
@@ -170,7 +173,12 @@ public class FarmService {
         }
         zone.setName(request.name() == null ? zone.getName() : request.name());
         zone.setAreaHectares(request.areaHectares() == null ? zone.getAreaHectares() : request.areaHectares());
-        zone.setIrrigationMethod(request.irrigationMethod());
+        // Un champ absent ne doit pas effacer la valeur existante (meme regle que les autres champs).
+        zone.setIrrigationMethod(request.irrigationMethod() == null ? zone.getIrrigationMethod() : request.irrigationMethod());
+        zone.setCropCoefficient(request.cropCoefficient() == null ? zone.getCropCoefficient() : request.cropCoefficient());
+        zone.setEmitterCount(request.emitterCount() == null ? zone.getEmitterCount() : request.emitterCount());
+        zone.setEmitterNominalFlowLh(request.emitterNominalFlowLh() == null
+                ? zone.getEmitterNominalFlowLh() : request.emitterNominalFlowLh());
         return ZoneResponse.from(zoneRepository.save(zone));
     }
 

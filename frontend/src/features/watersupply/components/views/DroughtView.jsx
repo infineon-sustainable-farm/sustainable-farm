@@ -1,7 +1,7 @@
 import { useDroughtPrediction } from '../../hooks/useDashboard'
 import { WsRadialGauge } from '../charts'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 
 function riskMeta(risk) {
   switch ((risk || '').toUpperCase()) {

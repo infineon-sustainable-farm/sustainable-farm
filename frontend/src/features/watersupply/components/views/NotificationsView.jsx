@@ -4,9 +4,9 @@ import { notificationApi } from '../../api/watersupplyApi'
 import { useNotifications } from '../../hooks/useWaterData'
 import { useListControls } from '../../../../shared/hooks/useListControls'
 import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from '../../../../shared/components/Pagination'
+import { Pagination } from './Pagination'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
 
 function tagFor(type) {

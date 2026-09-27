@@ -27,9 +27,9 @@
 | A2 | Debit / volume consomme | YF-S201 a impulsions | `flow` -> `water_consumption` | /consommation (graphique, LECTURE SEULE), / KPIs | SC-01, SC-10, SC-12 |
 | A3 | Pluviometrie | Auget basculant | `rain` -> `rainwater_harvests` (volume calcule par le backend) | /pluvial | SC-06, SC-12 |
 | A4 | Qualite de l eau | Sonde pH + turbidite + DS18B20 | `quality` -> `water_quality_tests` (+ notification auto si hors seuil) | /qualite (alertes) | SC-05 |
-| A5 | Humidite du sol | Sonde capacitive | `soil` -> accepte, routage a venir (decision d architecture) | futur scheduler irrigation | SC-01, SC-02 |
+| A5 | Humidite du sol | Sonde capacitive | `soil` -> `soil_moisture_readings` : alimente la regle de declenchement automatique de l irrigation | /irrigation (pilotage auto) | SC-01, SC-02 |
 | A6 | Debit goutte-a-goutte anormal | Capteur pression/debit | `clogging` -> `drip_maintenance_logs` (colmatage) | /goutte-a-goutte | SC-07 |
-| A7 | Disponibilite passerelle / alimentation | heartbeat + batterie | `gateway` -> accepte, routage a venir | badges Offline / Power outage | SC-11, SC-13 |
+| A7 | Disponibilite passerelle / alimentation | heartbeat + batterie | `gateway` -> **non supporte** : les types inconnus sont rejetes (heartbeat a ajouter cote backend) | badges Offline / Power outage (a brancher) | SC-11, SC-13 |
 
 ### B. Donnees humaines (saisie manuelle legitime - pas d IoT)
 
@@ -55,7 +55,7 @@ Objet unique **ou** tableau (lot). Champs :
 | Champ | Type | Obligatoire | Description |
 |---|---|---|---|
 | device_id | string | oui | identifiant de l ESP32 |
-| type | string | oui | level - flow - quality - rain - clogging - soil - gateway |
+| type | string | oui | level - flow - quality - rain - clogging - soil (tout autre type est rejete) |
 | source_id | uuid | selon type | source concernee (level, flow, quality, rain) |
 | zone_id | uuid | selon type | zone concernee (clogging, soil) |
 | values | object | oui | valeurs mesurees (voir exemples) |
@@ -65,7 +65,7 @@ Exemples reels (testes et valides sur cette base) :
 
 ```json
 {"device_id":"esp32-a-01","type":"level","source_id":"<uuid>","values":{"level_percent":15}}
-{"device_id":"esp32-a-01","type":"flow","source_id":"<uuid>","values":{"flow_liters":250}}
+{"device_id":"esp32-a-01","type":"flow","source_id":"<uuid>","zone_id":"<uuid>","values":{"flow_liters":250}}
 {"device_id":"sonde-ph-01","type":"quality","source_id":"<uuid>","values":{"ph":5.2,"turbidity_ntu":8.4,"temperature_celsius":20}}
 {"device_id":"pluviometre-01","type":"rain","source_id":"<uuid>","values":{"rainfall_mm":15,"catchment_area_m2":180}}
 {"device_id":"capteur-debit-01","type":"clogging","zone_id":"<uuid>","values":{"severity":"high"}}
@@ -77,7 +77,7 @@ Reponse : `202 Accepted` avec le statut de chaque mesure, ex :
 [
   {"type":"level","source_id":"...","status":"processed","message":"Niveau reservoir = 1500.0 L"},
   {"type":"quality","source_id":"...","status":"processed","message":"Mesure HORS SEUIL enregistree (alerte generee)"},
-  {"type":"soil","status":"not_routed_yet","message":"Mesure acceptee - routage a venir"}
+  {"type":"soil","zone_id":"...","status":"processed","message":"Soil moisture = 32 % (zone ...)"}
 ]
 ```
 

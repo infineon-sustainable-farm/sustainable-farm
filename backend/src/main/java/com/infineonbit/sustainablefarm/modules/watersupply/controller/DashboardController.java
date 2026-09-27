@@ -109,17 +109,12 @@ public class DashboardController {
         double waterSavings = number(monthEconomy.get("savings_percentage"));
         Map<String, Object> sensorAvailability = iotDeviceService.availability();
 
-        double capacity = waterSourceRepository.findAll().stream()
-                .mapToDouble(source -> source.getCapacityLiters() == null ? 0 : source.getCapacityLiters())
-                .sum();
-        double level = waterSourceRepository.findAll().stream()
-                .mapToDouble(source -> source.getCurrentLevelLiters() == null ? 0 : source.getCurrentLevelLiters())
-                .sum();
+        double capacity = waterSourceRepository.sumCapacityLiters();
+        double level = waterSourceRepository.sumCurrentLevelLiters();
         double tankLevel = capacity == 0 ? 0 : Math.round((level / capacity) * 100);
 
-        long anomalyCount = notificationRepository.findAll().stream()
-                .filter(notification -> "critical".equalsIgnoreCase(notification.getType()))
-                .count();
+        // Anomalies = alertes critiques en base (calcul par la base, sans parcours complet).
+        long anomalyCount = notificationRepository.countByTypeIgnoreCase("critical");
 
         return Map.of(
                 "daily_consumption_liters", dailyConsumption,

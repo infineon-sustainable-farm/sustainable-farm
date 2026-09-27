@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import { useWaterQualityTests, useWaterSources } from '../../hooks/useWaterData'
 import { useListControls } from '../../../../shared/hooks/useListControls'
 import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from '../../../../shared/components/Pagination'
+import { Pagination } from './Pagination'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 
 function isOutOfRange(test) {
   return (test.ph != null && (test.ph < 6 || test.ph > 7.5)) || (test.turbidityNtu != null && test.turbidityNtu > 5)

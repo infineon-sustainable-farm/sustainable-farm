@@ -5,7 +5,7 @@ import { useListControls } from '../../../../shared/hooks/useListControls'
 import { SearchInput } from '../../../../shared/components/SearchInput'
 import { irrigationApi } from '../../api/watersupplyApi'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 import { FormField } from '../../../../shared/components/FormField'
 import { inputStyle } from '../../../../shared/components/formStyles'
 

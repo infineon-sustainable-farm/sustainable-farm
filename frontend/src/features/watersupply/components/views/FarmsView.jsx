@@ -6,7 +6,7 @@ import { SearchInput } from '../../../../shared/components/SearchInput'
 import { FormField } from '../../../../shared/components/FormField'
 import { inputStyle } from '../../../../shared/components/formStyles'
 import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 import { Spinner } from '../../../../shared/components/Spinner'
 
 const sectionLabel = {

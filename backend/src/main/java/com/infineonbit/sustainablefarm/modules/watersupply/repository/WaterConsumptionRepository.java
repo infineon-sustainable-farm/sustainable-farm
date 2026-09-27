@@ -28,4 +28,13 @@ public interface WaterConsumptionRepository extends JpaRepository<WaterConsumpti
     @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w "
             + "where w.consumptionDate >= :start and w.consumptionDate < :end and w.farmId = :farmId")
     double sumConsumptionByFarmIdBetween(Instant start, Instant end, UUID farmId);
+
+    /**
+     * Volume mesure sur une zone pendant un intervalle semi-ouvert [start, end[ : c'est le
+     * « debit reel » de la detection de colmatage (voir DripFlowCheckService), compare au
+     * volume theorique du reseau goutte-a-goutte sur la meme duree d'arrosage.
+     */
+    @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w "
+            + "where w.zoneId = :zoneId and w.consumptionDate >= :start and w.consumptionDate < :end")
+    double sumConsumptionByZoneIdBetween(Instant start, Instant end, UUID zoneId);
 }

@@ -8,5 +8,6 @@ public record WaterConsumptionUpdateRequest(
         UUID sourceId,
         Double consumptionLiters,
         Instant consumptionDate,
-        UUID irrigationId) {
+        UUID irrigationId,
+        UUID zoneId) {
 }

@@ -240,16 +240,11 @@ public class WaterEconomyService {
         return response;
     }
 
-    /** Volume d'eau de pluie récupéré sur un intervalle de dates (entrée du bilan). */
+    /** Volume d'eau de pluie récupéré sur un intervalle de dates (entrée du bilan), calculé en base. */
     private double harvestedBetween(LocalDate from, LocalDate to) {
         Instant startInstant = from.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant endInstant = to.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-        return harvestRepository.findAll().stream()
-                .filter(harvest -> harvest.getCaptureDate() != null
-                        && !harvest.getCaptureDate().isBefore(startInstant)
-                        && harvest.getCaptureDate().isBefore(endInstant))
-                .mapToDouble(harvest -> harvest.getHarvestedLiters() == null ? 0 : harvest.getHarvestedLiters())
-                .sum();
+        return harvestRepository.sumHarvestedLitersBetween(startInstant, endInstant);
     }
 
     /**
@@ -259,14 +254,7 @@ public class WaterEconomyService {
     public double postponedLitersBetween(LocalDate from, LocalDate to) {
         Instant startInstant = from.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant endInstant = to.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-        return scheduleRepository.findAll().stream()
-                .filter(schedule -> "postponed".equalsIgnoreCase(schedule.getStatus())
-                        && schedule.getStartTime() != null
-                        && !schedule.getStartTime().isBefore(startInstant)
-                        && schedule.getStartTime().isBefore(endInstant))
-                .mapToDouble(schedule -> schedule.getWaterQuantityLiters() == null
-                        ? 0 : schedule.getWaterQuantityLiters())
-                .sum();
+        return scheduleRepository.sumPostponedLitersBetween(startInstant, endInstant);
     }
 
     private double round(double value) {

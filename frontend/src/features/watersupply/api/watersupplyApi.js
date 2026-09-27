@@ -6,19 +6,9 @@ import { apiClient } from '../../../shared/api/client.js'
  */
 
 // --- Auth ---
-export const authApi = {
-  login: (email, password) => apiClient.post('/api/auth/login', { email, password }),
-  register: (firstName, lastName, email, password) =>
-    apiClient.post('/api/auth/register', { firstName, lastName, email, password }),
-  logout: () => apiClient.post('/api/auth/logout'),
-  forgotPassword: () => apiClient.post('/api/auth/forgot-password'),
-  resetPassword: () => apiClient.post('/api/auth/reset-password'),
-  refresh: () => apiClient.post('/api/auth/refresh'),
-  getUsers: () => apiClient.get('/api/users'),
-  getUser: (userId) => apiClient.get(`/api/users/${userId}`),
-  updateUser: (userId, payload) => apiClient.put(`/api/users/${userId}`, payload),
-  deleteUser: (userId) => apiClient.delete(`/api/users/${userId}`),
-}
+// Aucun client d'authentification dans ce module : le backend n'expose aucun endpoint /api/auth
+// (verifie cote serveur) et la connexion sera fournie par la plateforme globale. Un bloc authApi
+// existait ici et appelait des routes inexistantes, ce qui laissait croire que c'etait branche.
 
 // --- Farms ---
 export const farmApi = {
@@ -157,11 +147,17 @@ export const aiApi = {
 }
 
 // --- Weather ---
+// Les coordonnees par defaut viennent du backend (app.weather.latitude / app.weather.longitude,
+// site de Banfora) : le front n'en envoie que si un ecran en fournit explicitement. Un affichage
+// sans parametres ne peut donc plus interroger par erreur la meteo d'un autre lieu.
+function withCoordinates(path, latitude, longitude) {
+  if (latitude == null || longitude == null) return path
+  return `${path}?latitude=${latitude}&longitude=${longitude}`
+}
+
 export const weatherApi = {
-  getCurrent: (latitude = 10.5, longitude = -61.2) =>
-    apiClient.get(`/api/weather/current?latitude=${latitude}&longitude=${longitude}`),
-  getForecast: (latitude = 10.5, longitude = -61.2) =>
-    apiClient.get(`/api/weather/forecast?latitude=${latitude}&longitude=${longitude}`),
+  getCurrent: (latitude, longitude) => apiClient.get(withCoordinates('/api/weather/current', latitude, longitude)),
+  getForecast: (latitude, longitude) => apiClient.get(withCoordinates('/api/weather/forecast', latitude, longitude)),
 }
 
 // --- Reports ---
@@ -175,12 +171,9 @@ export const reportApi = {
 
 // --- Exports CSV (P10) ---
 // Telechargement direct de fichiers : passe par une URL native (fetch + blob) car l'apiClient
-// parse le JSON. Le token JWT est rejoue manuellement pour les memes droits que l'API.
+// parse le JSON. Aucun en-tete d'authentification : le module n'en a pas (voir la section Auth).
 export async function downloadCsv(kind, period = 'month') {
-  const token = localStorage.getItem('access_token')
-  const response = await fetch(`/api/reports/${kind}/csv?period=${encodeURIComponent(period)}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  })
+  const response = await fetch(`/api/reports/${kind}/csv?period=${encodeURIComponent(period)}`)
   if (!response.ok) {
     throw new Error(`Export impossible (HTTP ${response.status})`)
   }

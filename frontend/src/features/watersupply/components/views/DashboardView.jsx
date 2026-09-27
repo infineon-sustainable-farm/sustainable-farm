@@ -1,6 +1,6 @@
 import { useKpis, useAlerts, useActivities, useRecommendations, useDroughtPrediction, useWeather, useHealthCheck } from '../../hooks/useDashboard'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 
 /**
  * Dashboard connected to the API (Task 2).
@@ -14,7 +14,7 @@ export function DashboardView({ onNavigate, notify }) {
   const { data: activities, loading: activitiesLoading } = useActivities()
   const { data: recommendations, loading: recLoading } = useRecommendations()
   const { data: drought, loading: droughtLoading } = useDroughtPrediction()
-  const { data: weather, loading: weatherLoading } = useWeather(10.5, -61.2)
+  const { data: weather, loading: weatherLoading } = useWeather()
   const { healthy: backendHealthy, loading: healthLoading } = useHealthCheck()
 
   const anythingLoading = kpisLoading || alertsLoading || activitiesLoading || weatherLoading

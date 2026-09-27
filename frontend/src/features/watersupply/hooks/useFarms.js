@@ -1,146 +1,36 @@
-import { useCallback, useEffect, useState } from 'react'
 import { farmApi, fieldApi, zoneApi } from '../api/watersupplyApi'
+import { useModuleQuery } from './useModuleQuery'
 
 /**
- * Hook pour récupérer la liste des fermes.
+ * Fermes, champs et zones : memes hooks qu'auparavant (contrat `{ donnee, loading, error }`),
+ * servis par React Query. Les listes dependant d'un identifiant ne sont chargees que lorsque
+ * cet identifiant est fourni (`enabled`).
  */
 export function useFarms() {
-  const [farms, setFarms] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  const fetchFarms = useCallback(() => {
-    setLoading(true)
-    farmApi
-      .getFarms()
-      .then((res) => {
-        setFarms(res)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err)
-        setLoading(false)
-      })
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    farmApi
-      .getFarms()
-      .then((res) => {
-        if (!cancelled) {
-          setFarms(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { farms, loading, error, refetch: fetchFarms }
+  const { data, loading, error, refetch } = useModuleQuery(['watersupply', 'farms'], farmApi.getFarms)
+  return { farms: Array.isArray(data) ? data : data?.content ?? [], loading, error, refetch }
 }
 
-/**
- * Hook pour récupérer les champs d'une ferme.
- */
 export function useFarmFields(farmId) {
-  const [fields, setFields] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (!farmId) return
-    let cancelled = false
-    farmApi
-      .getFarmFields(farmId)
-      .then((res) => {
-        if (!cancelled) {
-          setFields(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [farmId])
-
-  return { fields, loading, error }
+  const { data, loading, error } = useModuleQuery(
+    ['watersupply', 'farm-fields', farmId ?? 'none'],
+    () => farmApi.getFarmFields(farmId),
+    { enabled: Boolean(farmId) },
+  )
+  return { fields: Array.isArray(data) ? data : data?.content ?? [], loading, error }
 }
 
-/**
- * Hook pour récupérer les zones d'un champ.
- */
 export function useFieldZones(fieldId) {
-  const [zones, setZones] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (!fieldId) return
-    let cancelled = false
-    fieldApi
-      .getFieldZones(fieldId)
-      .then((res) => {
-        if (!cancelled) {
-          setZones(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [fieldId])
-
-  return { zones, loading, error }
+  const { data, loading, error } = useModuleQuery(
+    ['watersupply', 'field-zones', fieldId ?? 'none'],
+    () => fieldApi.getFieldZones(fieldId),
+    { enabled: Boolean(fieldId) },
+  )
+  return { zones: Array.isArray(data) ? data : data?.content ?? [], loading, error }
 }
 
-/**
- * Hook pour récupérer toutes les zones.
- */
 export function useZones() {
-  const [zones, setZones] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    let cancelled = false
-    zoneApi
-      .getZones()
-      .then((res) => {
-        if (!cancelled) {
-          setZones(res)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return { zones, loading, error }
+  const { data, loading, error } = useModuleQuery(['watersupply', 'zones'], zoneApi.getZones)
+  return { zones: Array.isArray(data) ? data : data?.content ?? [], loading, error }
 }
+

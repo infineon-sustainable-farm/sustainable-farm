@@ -36,6 +36,13 @@ public class IrrigationSchedule extends BaseEntity {
     @Column(name = "postpone_reason", length = 120)
     private String postponeReason;
 
+    /**
+     * Origine du planning : {@code manual} (saisi par un utilisateur) ou {@code auto}
+     * (cree par la regle d'humidite du sol, voir IrrigationAutomationService).
+     */
+    @Column(name = "trigger_source", nullable = false, length = 20)
+    private String triggerSource = "manual";
+
     public UUID getZoneId() {
         return zoneId;
     }
@@ -90,5 +97,13 @@ public class IrrigationSchedule extends BaseEntity {
 
     public void setPostponeReason(String postponeReason) {
         this.postponeReason = postponeReason;
+    }
+
+    public String getTriggerSource() {
+        return triggerSource;
+    }
+
+    public void setTriggerSource(String triggerSource) {
+        this.triggerSource = triggerSource;
     }
 }

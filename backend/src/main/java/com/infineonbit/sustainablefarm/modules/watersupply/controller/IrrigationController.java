@@ -7,7 +7,10 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationPostpon
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.IrrigationAutomationService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.IrrigationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +30,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Water supply - irrigation", description = "Schedules, journal, weather-based postponement and automatic soil-moisture piloting")
 @RestController
 @RequestMapping("/api")
 public class IrrigationController {
     private final IrrigationService irrigationService;
+    private final IrrigationAutomationService automationService;
 
-    public IrrigationController(IrrigationService irrigationService) {
+    public IrrigationController(IrrigationService irrigationService, IrrigationAutomationService automationService) {
         this.irrigationService = irrigationService;
+        this.automationService = automationService;
     }
 
     @GetMapping("/irrigations")
@@ -71,6 +77,17 @@ public class IrrigationController {
      * Suggestions de report : liste les irrigations planifiees qui peuvent etre evitees
      * parce que la pluie prevue couvrira le besoin (premier levier d'economie d'eau).
      */
+    /**
+     * Applique tout de suite la regle d'humidite du sol (module 1.4) et renvoie le rapport :
+     * plannings crees par zone et zones ecartees avec leur motif. La meme methode est appelee
+     * periodiquement par la tache planifiee du module.
+     */
+    @Operation(summary = "Apply the soil-moisture rule now (the scheduled job calls the same code)")
+    @PostMapping("/irrigations/auto-trigger")
+    public Map<String, Object> autoTrigger() {
+        return automationService.trigger();
+    }
+
     @GetMapping("/irrigation/suggestions")
     public Map<String, Object> suggestions() {
         return irrigationService.suggestions();

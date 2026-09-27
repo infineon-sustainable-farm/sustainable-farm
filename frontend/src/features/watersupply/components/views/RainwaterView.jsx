@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react'
 import { useRainwaterHarvests, useWaterSources } from '../../hooks/useWaterData'
 import { useListControls } from '../../../../shared/hooks/useListControls'
 import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from '../../../../shared/components/Pagination'
+import { Pagination } from './Pagination'
 import { WsRadialGauge, WsBarChart } from '../charts'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 
 const DAY_MS = 24 * 3600 * 1000
 

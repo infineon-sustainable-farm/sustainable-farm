@@ -2,10 +2,13 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
@@ -29,13 +32,12 @@ class RainwaterHarvestServiceTest {
     @Test
     void createCalculatesHarvestedLiters() {
         UUID sourceId = UUID.randomUUID();
-        RainwaterHarvest harvest = harvest(sourceId, 10.0, 20.0, 0.5);
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.of(new WaterSource()));
-        when(harvestRepository.save(harvest)).thenReturn(harvest);
+        when(harvestRepository.save(any(RainwaterHarvest.class))).thenAnswer(call -> call.getArgument(0));
 
-        RainwaterHarvest saved = service().create(harvest);
+        RainwaterHarvestResponse saved = service().create(request(sourceId, 10.0, 20.0, 0.5));
 
-        assertEquals(100.0, saved.getHarvestedLiters());
+        assertEquals(100.0, saved.harvestedLiters());
     }
 
     @Test
@@ -44,25 +46,28 @@ class RainwaterHarvestServiceTest {
         UUID harvestId = UUID.randomUUID();
         RainwaterHarvest existing = harvest(sourceId, 10.0, 20.0, 0.5);
         existing.setHarvestedLiters(100.0);
-        RainwaterHarvest payload = new RainwaterHarvest();
-        payload.setRainfallMm(30.0);
         when(harvestRepository.findById(harvestId)).thenReturn(Optional.of(existing));
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.of(new WaterSource()));
         when(harvestRepository.save(existing)).thenReturn(existing);
 
-        RainwaterHarvest updated = service().update(harvestId, payload);
+        RainwaterHarvestResponse updated = service().update(harvestId,
+                new RainwaterHarvestRequest(null, null, 30.0, null, null, null));
 
-        assertEquals(150.0, updated.getHarvestedLiters());
+        assertEquals(150.0, updated.harvestedLiters());
     }
 
     @Test
     void createRejectsUnknownSource() {
         UUID sourceId = UUID.randomUUID();
-        RainwaterHarvest harvest = harvest(sourceId, 10.0, 20.0, 0.5);
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> service().create(harvest));
-        verify(harvestRepository, never()).save(harvest);
+        assertThrows(NotFoundException.class, () -> service().create(request(sourceId, 10.0, 20.0, 0.5)));
+        verify(harvestRepository, never()).save(any(RainwaterHarvest.class));
+    }
+
+    /** Requete cliente : identifiant et date de creation ne viennent jamais du client. */
+    private RainwaterHarvestRequest request(UUID sourceId, double area, double rainfall, double coefficient) {
+        return new RainwaterHarvestRequest(sourceId, area, rainfall, coefficient, null, null);
     }
 
     private RainwaterHarvest harvest(UUID sourceId, double area, double rainfall, double coefficient) {

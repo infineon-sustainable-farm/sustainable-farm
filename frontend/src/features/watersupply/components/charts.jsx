@@ -11,15 +11,9 @@ import {
   ReferenceArea,
   BarChart,
   Bar,
-  ComposedChart,
-  Line,
-  Cell,
   RadialBarChart,
   RadialBar,
   PolarAngleAxis,
-  ScatterChart,
-  Scatter,
-  ZAxis,
 } from 'recharts'
 import { useRef } from 'react'
 import { C, exportChartAsPng, exportRowsAsCsv } from './chartUtils'
@@ -81,6 +75,9 @@ function tickFormatter({ label, divisor }) {
 function ChartShell({ children, unit, note, exportName, exportRows, exportColumns }) {
   const shellRef = useRef(null)
   const canExport = Boolean(exportName)
+  // Le graphique est expose comme une image avec un libelle : un lecteur d'ecran annonce au moins
+  // ce qu'il represente (unite et note), au lieu d'un SVG muet.
+  const chartLabel = ['Chart', unit ? `in ${unit}` : null, note || null].filter(Boolean).join(' - ')
   return (
     <div className="ws-chart-shell">
       <div className="ws-chart-shell-top">
@@ -89,22 +86,24 @@ function ChartShell({ children, unit, note, exportName, exportRows, exportColumn
           <div className="ws-chart-toolbar">
             <button
               type="button"
+              aria-label="Export the chart as a PNG image"
               onClick={() => exportChartAsPng(shellRef.current, `${exportName}.png`)}
-              title="Exporter le graphique en image PNG"
+              title="Export the chart as a PNG image"
             >
               PNG
             </button>
             <button
               type="button"
+              aria-label="Export the chart data as CSV"
               onClick={() => exportRowsAsCsv(exportRows || [], exportColumns || [], `${exportName}.csv`)}
-              title="Exporter les données du graphique en CSV"
+              title="Export the chart data as CSV"
             >
               CSV
             </button>
           </div>
         )}
       </div>
-      <div ref={shellRef}>
+      <div ref={shellRef} role="img" aria-label={chartLabel}>
         {children}
       </div>
       {note && <p className="ws-chart-note">{note}</p>}
@@ -147,7 +146,7 @@ export function WsAreaChart({
   const legend = showLegend === undefined ? series.length > 1 || referenceLines.length > 0 : showLegend
   return (
     <ChartShell
-      unit={unitKind === 'liters' ? 'litres' : unitKind === 'mm' ? 'millimètres' : '%'}
+      unit={unitKind === 'liters' ? 'liters' : unitKind === 'mm' ? 'millimeters' : '%'}
       exportName={exportName}
       exportRows={data}
       exportColumns={columnsOf(xKey, series)}
@@ -236,7 +235,7 @@ export function WsBarChart({
   const unit = axisUnit((data || []).flatMap((row) => bars.map((b) => row[b.key])), unitKind)
   return (
     <ChartShell
-      unit={unitKind === 'liters' ? 'litres' : unitKind === 'mm' ? 'millimètres' : '%'}
+      unit={unitKind === 'liters' ? 'liters' : unitKind === 'mm' ? 'millimeters' : '%'}
       exportName={exportName}
       exportRows={data}
       exportColumns={columnsOf(xKey, bars)}
@@ -316,347 +315,8 @@ export function WsRadialGauge({ value = 0, max = 100, color = C.primary, height 
   )
 }
 
-/**
- * Aires empilées : répartition d'un volume total (par source, par zone...).
- * Le total reste lisible tout en montrant la contribution de chaque série.
- *
- * @param {Array} data
- * @param {string} xKey
- * @param {Array} series - [{ key, name, color }]
- * @param {number} [height]
- * @param {'liters'|'mm'|'percent'} [unitKind]
- */
-export function WsStackedAreaChart({ data, xKey, series = [], height = 260, unitKind = 'liters', exportName }) {
-  const unit = axisUnit((data || []).flatMap((row) => series.map((s) => row[s.key])), unitKind)
-  return (
-    <ChartShell
-      unit={unitKind === 'liters' ? 'litres' : unitKind === 'mm' ? 'millimètres' : '%'}
-      exportName={exportName}
-      exportRows={data}
-      exportColumns={columnsOf(xKey, series)}
-    >
-      <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.line} vertical={false} />
-          <XAxis dataKey={xKey} tick={axisTick} axisLine={false} tickLine={false} />
-          <YAxis
-            tick={axisTick}
-            axisLine={false}
-            tickLine={false}
-            width={48}
-            tickFormatter={tickFormatter(unit)}
-            label={{ value: unit.label, angle: 0, position: 'insideTopLeft', offset: 8, fill: C.muted, fontSize: 10 }}
-          />
-          <Tooltip contentStyle={tooltipStyle} />
-          {series.length > 1 && <Legend wrapperStyle={legendStyle} iconType="square" />}
-          {series.map((s) => (
-            <Area
-              key={s.key}
-              type="monotone"
-              dataKey={s.key}
-              name={s.name}
-              stackId="stack"
-              stroke={s.color}
-              fill={s.color}
-              fillOpacity={0.55}
-              strokeWidth={1.5}
-              dot={false}
-            />
-          ))}
-        </AreaChart>
-      </ResponsiveContainer>
-    </ChartShell>
-  )
-}
-
-/**
- * Graphique combiné : la pluie (barres, mm) face aux volumes irrigués (ligne, litres).
- * C'est la lecture qui rend visible l'économie d'eau : on voit les journées où la pluie
- * couvre le besoin. Deux axes sont nécessaires car les unités diffèrent.
- *
- * @param {Array} data
- * @param {string} xKey
- * @param {Array} bars - [{ key, name, color }] valeurs en mm.
- * @param {Array} lines - [{ key, name, color, dashed? }] valeurs en litres.
- * @param {number} [height]
- */
-export function WsComboChart({ data, xKey, bars = [], lines = [], height = 280, exportName }) {
-  const barUnit = axisUnit((data || []).flatMap((row) => bars.map((b) => row[b.key])), 'mm')
-  const lineUnit = axisUnit((data || []).flatMap((row) => lines.map((l) => row[l.key])), 'liters')
-  return (
-    <ChartShell
-      unit="rain in millimeters (bars) · volumes in liters (line)"
-      exportName={exportName}
-      exportRows={data}
-      exportColumns={columnsOf(xKey, [...bars, ...lines])}
-    >
-      <ResponsiveContainer width="100%" height={height}>
-        <ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.line} vertical={false} />
-          <XAxis dataKey={xKey} tick={axisTick} axisLine={false} tickLine={false} />
-          <YAxis
-            yAxisId="bars"
-            tick={axisTick}
-            axisLine={false}
-            tickLine={false}
-            width={42}
-            tickFormatter={tickFormatter(barUnit)}
-          />
-          <YAxis
-            yAxisId="lines"
-            orientation="right"
-            tick={axisTick}
-            axisLine={false}
-            tickLine={false}
-            width={48}
-            tickFormatter={tickFormatter(lineUnit)}
-          />
-          <Tooltip contentStyle={tooltipStyle} />
-          {(bars.length + lines.length) > 1 && <Legend wrapperStyle={legendStyle} />}
-          {bars.map((b) => (
-            <Bar key={b.key} yAxisId="bars" dataKey={b.key} name={b.name} fill={b.color} radius={[4, 4, 0, 0]} maxBarSize={26} />
-          ))}
-          {lines.map((l) => (
-            <Line
-              key={l.key}
-              yAxisId="lines"
-              type="monotone"
-              dataKey={l.key}
-              name={l.name}
-              stroke={l.color}
-              strokeWidth={2}
-              strokeDasharray={l.dashed ? '6 4' : undefined}
-              dot={false}
-            />
-          ))}
-        </ComposedChart>
-      </ResponsiveContainer>
-    </ChartShell>
-  )
-}
-
-/**
- * Bilan en cascade (waterfall) : montre comment des entrées et des sorties
- * construisent un résultat. C'est la lecture qui rend visibles les pertes,
- * car chaque poste est identifiable au lieu d'être noyé dans un total.
- *
- * @param {Array} data - [{ name, value, kind: 'in'|'out'|'total', color? }]
- * @param {number} [height]
- * @param {'liters'|'percent'} [unitKind]
- */
-export function WsWaterfallChart({ data, xKey = 'name', height = 280, unitKind = 'liters', exportName }) {
-  const rows = []
-  let running = 0
-  for (const item of data || []) {
-    const value = Number(item.value) || 0
-    if (item.kind === 'total') {
-      rows.push({ name: item.name, base: 0, delta: value, kind: 'total', fill: item.color || C.primary })
-      running = value
-      continue
-    }
-    const signed = item.kind === 'out' ? -Math.abs(value) : Math.abs(value)
-    const next = running + signed
-    rows.push({
-      name: item.name,
-      base: Math.min(running, next),
-      delta: Math.abs(signed),
-      kind: item.kind,
-      fill: item.color || (item.kind === 'out' ? C.orange : C.green),
-    })
-    running = next
-  }
-  const unit = axisUnit(rows.map((row) => row.base + row.delta), unitKind)
-  return (
-    <ChartShell
-      unit={unitKind === 'liters' ? 'litres' : '%'}
-      exportName={exportName}
-      exportRows={rows}
-      exportColumns={[{ key: 'name', label: 'poste' }, { key: 'delta', label: 'volume' }, { key: 'kind', label: 'type' }]}
-    >
-      <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={rows} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.line} vertical={false} />
-          <XAxis dataKey={xKey} tick={axisTick} axisLine={false} tickLine={false} interval={0} />
-          <YAxis
-            tick={axisTick}
-            axisLine={false}
-            tickLine={false}
-            width={48}
-            tickFormatter={tickFormatter(unit)}
-            label={{ value: unit.label, angle: 0, position: 'insideTopLeft', offset: 8, fill: C.muted, fontSize: 10 }}
-          />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(10,130,118,.05)' }} />
-          <Bar dataKey="base" stackId="wf" fill="transparent" isAnimationActive={false} />
-          <Bar dataKey="delta" stackId="wf" name="Volume" radius={[4, 4, 0, 0]} maxBarSize={40}>
-            {rows.map((row) => (
-              <Cell key={row.name} fill={row.fill} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </ChartShell>
-  )
-}
-
-/**
- * Courbe des économies cumulées : le volume d'eau économisé s'additionne dans le temps
- * et une ligne cible rappelle l'objectif. C'est la preuve chiffrée de la performance.
- *
- * @param {Array} data - [{ label, value }]
- * @param {string} dataKey
- * @param {number} [target] - objectif cumulé à afficher en pointillés.
- * @param {number} [height]
- */
-export function WsCumulativeChart({ data, xKey = 'label', dataKey = 'cumulative_liters', target = null, height = 240 }) {
-  return (
-    <WsAreaChart
-      data={data}
-      xKey={xKey}
-      height={height}
-      unitKind="liters"
-      series={[{ key: dataKey, name: "Économie cumulée", color: C.green }]}
-      referenceLines={target ? [{ value: target, label: `Objectif ${formatLiters(target)}`, color: C.orange }] : []}
-    />
-  )
-}
-
-/**
- * Mini-courbe de tendance (sparkline) pour accompagner un KPI sans occuper d'espace.
- * Sans axes ni légende : uniquement la forme de la tendance.
- *
- * @param {Array} data
- * @param {string} dataKey
- * @param {string} [color]
- * @param {number} [height]
- */
-export function WsSparkline({ data, dataKey = 'value', color = C.primary, height = 34 }) {
-  if (!data || data.length < 2) return null
-  const id = `spark-${dataKey}`
-  return (
-    <div className="ws-sparkline" style={{ height }}>
-      <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-              <stop offset="100%" stopColor={color} stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={1.6} fill={`url(#${id})`} dot={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
-
-/* Triplet RGB du teal principal, nécessaire pour composer des intensités (heatmap). */
-/**
- * Nuage de points pour comparer une consommation mesuree avec un facteur meteo
- * comme ET0, temperature ou pluie.
- */
-export function WsScatterChart({
-  data = [],
-  xKey,
-  yKey,
-  name = 'Mesures',
-  xUnit = 'mm',
-  yUnit = 'litres',
-  height = 280,
-  color = C.primary,
-  exportName,
-}) {
-  return (
-    <ChartShell
-      unit={`${yUnit} selon ${xUnit}`}
-      exportName={exportName}
-      exportRows={data}
-      exportColumns={[{ key: xKey, label: xUnit }, { key: yKey, label: yUnit }]}
-    >
-      <ResponsiveContainer width="100%" height={height}>
-        <ScatterChart margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.line} />
-          <XAxis
-            type="number"
-            dataKey={xKey}
-            name={xUnit}
-            tick={axisTick}
-            axisLine={false}
-            tickLine={false}
-            label={{ value: xUnit, position: 'insideBottomRight', offset: -2, fill: C.muted, fontSize: 10 }}
-          />
-          <YAxis
-            type="number"
-            dataKey={yKey}
-            name={yUnit}
-            tick={axisTick}
-            axisLine={false}
-            tickLine={false}
-            width={52}
-            label={{ value: yUnit, angle: -90, position: 'insideLeft', fill: C.muted, fontSize: 10 }}
-          />
-          <ZAxis range={[48, 48]} />
-          <Tooltip
-            cursor={{ strokeDasharray: '3 3' }}
-            contentStyle={tooltipStyle}
-            formatter={(value, key) => [Number(value).toLocaleString('fr-FR'), key === yKey ? yUnit : xUnit]}
-          />
-          <Scatter name={name} data={data} fill={color} />
-        </ScatterChart>
-      </ResponsiveContainer>
-    </ChartShell>
-  )
-}
 
 const primaryRgb = '10,130,118'
-
-/**
- * Jauge horizontale à seuils : la valeur est située dans des zones colorées
- * (critique / faible / normal). Un simple pourcentage ne dit pas si la valeur est
- * préoccupante ; cette jauge le rend immédiatement lisible.
- *
- * @param {number} value
- * @param {number} [max]
- * @param {Array} thresholds - [{ upTo, color, label }] zones croissantes, la dernière couvrant le max.
- * @param {string} [unit]
- * @param {string} [caption]
- */
-export function WsThresholdGauge({ value = 0, max = 100, thresholds = [], unit = '%', caption }) {
-  const safeMax = max || 100
-  const pct = Math.max(0, Math.min(100, (Number(value) / safeMax) * 100))
-  const zones = (thresholds || []).reduce((acc, zone) => {
-    const from = acc.cursor
-    const to = Math.min(safeMax, zone.upTo)
-    acc.items.push({ ...zone, from, to, width: Math.max(0, ((to - from) / safeMax) * 100) })
-    acc.cursor = to
-    return acc
-  }, { cursor: 0, items: [] }).items
-
-  return (
-    <div className="ws-threshold-gauge">
-      <div className="ws-threshold-gauge-track" role="img" aria-label={`Valeur ${Math.round(pct)}%`}>
-        {zones.map((zone) => (
-          <span key={zone.label || zone.upTo} className="ws-threshold-gauge-zone" style={{ width: `${zone.width}%`, background: zone.color }} />
-        ))}
-        <span className="ws-threshold-gauge-marker" style={{ left: `${pct}%` }} />
-      </div>
-      <div className="ws-threshold-gauge-value">
-        {Math.round(Number(value) || 0)}
-        {unit}
-        {caption && <small>{caption}</small>}
-      </div>
-      {zones.length > 0 && (
-        <ul className="ws-threshold-gauge-legend">
-          {zones.map((zone) => (
-            <li key={zone.label || zone.upTo}>
-              <span className="ws-legend-swatch" style={{ background: zone.color }} />
-              {zone.label}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
 
 /**
  * Graphique "bullet" : une valeur comparée à un objectif, dans un référentiel de zones.
@@ -682,64 +342,12 @@ export function WsBulletChart({ value = 0, target = 0, max = 100, zones = [], un
           className="ws-bullet-value"
           style={{ width: `${pct(value)}%`, background: overTarget ? 'rgb(198,40,40)' : primaryRgb ? `rgb(${primaryRgb})` : undefined }}
         />
-        <span className="ws-bullet-target" style={{ left: `${pct(target)}%` }} title={`Objectif ${formatLiters(target)}`} />
+        <span className="ws-bullet-target" style={{ left: `${pct(target)}%` }} title={`Target ${formatLiters(target)}`} />
       </div>
       <div className="ws-bullet-caption">
         <strong>{formatLiters(value)}</strong>
-        {` / objectif ${formatLiters(target)}${unit === '%' ? ' %' : ''}`}
+        {` / target ${formatLiters(target)}${unit === '%' ? ' %' : ''}`}
       </div>
-    </div>
-  )
-}
-
-/**
- * Carte de chaleur : met en évidence les zones qui consomment le plus selon les jours.
- * Un tableau dense se lit mal ; l'intensité de couleur fait ressortir les surconsommations.
- *
- * @param {Array} rows - [{ id, name }] (ex. zones)
- * @param {Array} columns - [{ id, label }] (ex. jours)
- * @param {Function} valueOf - (rowId, columnId) => number | null
- * @param {'liters'|'percent'} [unitKind]
- */
-export function WsHeatmap({ rows = [], columns = [], valueOf, unitKind = 'liters' }) {
-  const values = []
-  rows.forEach((row) => columns.forEach((col) => values.push(valueOf(row.id, col.id))))
-  const max = values.reduce((acc, v) => Math.max(acc, Number(v) || 0), 0)
-  const cellColor = (v) => {
-    const ratio = max === 0 ? 0 : (Number(v) || 0) / max
-    return `rgba(${primaryRgb},${(0.06 + ratio * 0.7).toFixed(2)})`
-  }
-  return (
-    <div className="ws-heatmap-wrap">
-      <ChartShell unit={unitKind === 'liters' ? 'litres (intensité de couleur)' : '%'}>
-        <div className="ws-heatmap-scroll">
-          <table className="ws-heatmap">
-            <thead>
-              <tr>
-                <th />
-                {columns.map((col) => (
-                  <th key={col.id}>{col.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <th scope="row">{row.name}</th>
-                  {columns.map((col) => {
-                    const v = valueOf(row.id, col.id)
-                    return (
-                      <td key={col.id} style={{ background: v ? cellColor(v) : undefined }} title={`${row.name} · ${col.label} : ${formatLiters(v)}`}>
-                        {v ? Math.round(Number(v)) : ''}
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </ChartShell>
     </div>
   )
 }

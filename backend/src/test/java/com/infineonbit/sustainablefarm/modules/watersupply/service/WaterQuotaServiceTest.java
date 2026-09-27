@@ -228,6 +228,6 @@ class WaterQuotaServiceTest {
 
     private WaterQuotaService service() {
         return new WaterQuotaService(quotaRepository, farmRepository, zoneRepository, fieldRepository,
-                consumptionRepository, alertService);
+                consumptionRepository, alertService, 0);
     }
 }

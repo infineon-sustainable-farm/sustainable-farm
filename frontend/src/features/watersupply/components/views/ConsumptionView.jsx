@@ -3,13 +3,13 @@ import { useFarms } from '../../hooks/useFarms'
 import { useWaterConsumptions, useWaterSources } from '../../hooks/useWaterData'
 import { useListControls } from '../../../../shared/hooks/useListControls'
 import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from '../../../../shared/components/Pagination'
+import { Pagination } from './Pagination'
 import { WsAreaChart } from '../charts'
 import { C } from '../chartUtils'
 import { QuotaPanel } from './QuotaPanel'
 import { downloadCsv } from '../../api/watersupplyApi'
 import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from '../../../../shared/components/EmptyState'
+import { EmptyState } from './EmptyState'
 
 function groupDailySeries(consumptions) {
   const map = new Map()

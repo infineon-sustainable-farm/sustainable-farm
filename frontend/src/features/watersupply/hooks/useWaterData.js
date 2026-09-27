@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from 'react'
 import {
   waterSourceApi,
   waterConsumptionApi,
@@ -8,88 +7,55 @@ import {
   rainwaterHarvestApi,
   dripMaintenanceApi,
 } from '../api/watersupplyApi'
+import { useModuleQuery } from './useModuleQuery'
 
-function useApiList(fetcher, dataKey) {
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  const normalize = useCallback((res) => (Array.isArray(res) ? res : res?.content ?? []), [])
-
-  const refetch = useCallback(() => {
-    setLoading(true)
-    setError(null)
-    return fetcher()
-      .then((res) => {
-        setData(normalize(res))
-        return res
-      })
-      .catch((err) => {
-        setError(err)
-        throw err
-      })
-      .finally(() => setLoading(false))
-  }, [fetcher, normalize])
-
-  useEffect(() => {
-    let cancelled = false
-    fetcher()
-      .then((res) => {
-        if (!cancelled) {
-          setData(normalize(res))
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [fetcher, normalize])
-
-  return { [dataKey]: data, loading, error, refetch }
+/**
+ * Listes du module, servies par React Query via {@link useModuleQuery}.
+ * Une reponse paginee est ramenee a son tableau `content` : les vues consomment une liste.
+ */
+function useListQuery(key, fetcher) {
+  const { data, loading, error, refetch } = useModuleQuery(['watersupply', key], fetcher)
+  const list = Array.isArray(data) ? data : data?.content ?? []
+  return { list, loading, error, refetch }
 }
 
 export function useWaterSources() {
-  const fetcher = useCallback(() => waterSourceApi.getSources(), [])
-  return useApiList(fetcher, 'sources')
+  const { list, loading, error, refetch } = useListQuery('sources', waterSourceApi.getSources)
+  return { sources: list, loading, error, refetch }
 }
 
 export function useWaterConsumptions() {
-  const fetcher = useCallback(() => waterConsumptionApi.getConsumptions(), [])
-  return useApiList(fetcher, 'consumptions')
+  const { list, loading, error, refetch } = useListQuery('consumptions', waterConsumptionApi.getConsumptions)
+  return { consumptions: list, loading, error, refetch }
 }
 
 export function useWaterQualityTests() {
-  const fetcher = useCallback(() => waterQualityApi.getTests(), [])
-  return useApiList(fetcher, 'tests')
+  const { list, loading, error, refetch } = useListQuery('quality-tests', waterQualityApi.getTests)
+  return { tests: list, loading, error, refetch }
 }
 
 export function useIrrigationSchedules() {
-  const fetcher = useCallback(() => irrigationApi.getSchedules(), [])
-  return useApiList(fetcher, 'schedules')
+  const { list, loading, error, refetch } = useListQuery('irrigation-schedules', irrigationApi.getSchedules)
+  return { schedules: list, loading, error, refetch }
 }
 
 export function useIrrigationLogs() {
-  const fetcher = useCallback(() => irrigationApi.getLogs(), [])
-  return useApiList(fetcher, 'logs')
+  const { list, loading, error, refetch } = useListQuery('irrigation-logs', irrigationApi.getLogs)
+  return { logs: list, loading, error, refetch }
 }
 
 export function useNotifications() {
-  const fetcher = useCallback(() => notificationApi.getNotifications(), [])
-  return useApiList(fetcher, 'notifications')
+  const { list, loading, error, refetch } = useListQuery('notifications', notificationApi.getNotifications)
+  return { notifications: list, loading, error, refetch }
 }
 
 export function useRainwaterHarvests() {
-  const fetcher = useCallback(() => rainwaterHarvestApi.getHarvests(), [])
-  return useApiList(fetcher, 'harvests')
+  const { list, loading, error, refetch } = useListQuery('rainwater-harvests', rainwaterHarvestApi.getHarvests)
+  return { harvests: list, loading, error, refetch }
 }
 
 export function useDripMaintenanceLogs() {
-  const fetcher = useCallback(() => dripMaintenanceApi.getLogs(), [])
-  return useApiList(fetcher, 'logs')
+  const { list, loading, error, refetch } = useListQuery('drip-maintenance-logs', dripMaintenanceApi.getLogs)
+  return { logs: list, loading, error, refetch }
 }
+

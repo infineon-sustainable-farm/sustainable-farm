@@ -63,7 +63,7 @@ class WaterServiceTest {
         UUID sourceId = UUID.randomUUID();
         WaterSource source = new WaterSource();
         source.setFarmId(UUID.randomUUID());
-        WaterConsumptionCreateRequest consumption = new WaterConsumptionCreateRequest(farmId, sourceId, 10.0, java.time.Instant.now(), null);
+        WaterConsumptionCreateRequest consumption = new WaterConsumptionCreateRequest(farmId, sourceId, 10.0, java.time.Instant.now(), null, null);
         when(farmRepository.findById(farmId)).thenReturn(Optional.of(new com.infineonbit.sustainablefarm.modules.watersupply.entity.Farm()));
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.of(source));
         WaterService service = service();
