@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import BlockFilter from "./BlockFilter";
+import HarvestsSection from "./HarvestsSection";
 import YieldForecastSection from "./YieldForecastSection";
 
 /**
  * Harvest & Maturity: the expected yield by month first, as it is what the
- * screen is for. One block filter drives the whole page.
+ * screen is for, then the recorded harvests. One block filter drives both.
  *
  * The mock-up's maturity status, estimated harvest date, variance, lot number
  * and upcoming deadlines are left out: the API records none of them.
@@ -40,6 +41,8 @@ export default function HarvestMaturityPage() {
                 <BlockFilter blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
 
                 <YieldForecastSection blockCode={selectedBlock || null} />
+
+                <HarvestsSection blockCode={selectedBlock || null} />
             </div>
         </div>
     );
