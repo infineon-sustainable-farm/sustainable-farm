@@ -1,12 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryBatch;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long> {
@@ -48,4 +51,19 @@ public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long
             ORDER BY b.startedOn ASC, b.id ASC
             """)
     List<NurseryBatch> findByOptionalFarm(@Param("farmId") Integer farmId);
+
+    /**
+     * Returns a batch and locks its row until the end of the transaction.
+     *
+     * <p>Every write to a batch starts here: a second write to the same batch
+     * waits for the first one to commit, then reads its events. Two losses or
+     * transplants sent at the same time can therefore never take more plants
+     * than the batch has. Must run inside a transaction.
+     *
+     * @param id the batch identifier
+     * @return the locked batch, or empty if no batch has this identifier
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM NurseryBatch b WHERE b.id = :id")
+    Optional<NurseryBatch> findByIdForUpdate(@Param("id") Long id);
 }

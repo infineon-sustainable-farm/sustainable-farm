@@ -4,11 +4,16 @@ import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryLossRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.StageChangeRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryOrigin;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.exception.NurseryBatchNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryBatchService;
+import com.infineonbit.sustainablefarm.modules.plants.service.NurseryEventService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +33,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,8 +49,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class NurseryBatchControllerTest {
 
     private static final String URL = "/api/plants/nursery-batches";
+    private static final String STAGE_CHANGES_URL = URL + "/1/stage-changes";
+    private static final String LOSSES_URL = URL + "/1/losses";
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
     private static final LocalDate MARCH_2 = LocalDate.of(2026, 3, 2);
+    private static final LocalDate SEPTEMBER_1 = LocalDate.of(2026, 9, 1);
+    private static final LocalDate SEPTEMBER_15 = LocalDate.of(2026, 9, 15);
     private static final LocalDate SEPTEMBER_20 = LocalDate.of(2026, 9, 20);
 
     @Autowired
@@ -52,6 +62,9 @@ public class NurseryBatchControllerTest {
 
     @MockitoBean
     private NurseryBatchService nurseryBatchService;
+
+    @MockitoBean
+    private NurseryEventService nurseryEventService;
 
     private ResultActions postBatch(String body) throws Exception {
         return mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body));
@@ -68,15 +81,25 @@ public class NurseryBatchControllerTest {
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
-    /** A 400 of the validation of a new batch, with the given field errors only. */
-    private void assertFieldErrors(ResultActions result, String... fieldsAndMessages) throws Exception {
-        assertApiError(result, 400, "Bad Request", "Validation failed", URL);
+    /** A 400 of the validation, on the given path, with the given field errors only. */
+    private static void assertValidationErrors(ResultActions result, String path, String... fieldsAndMessages)
+            throws Exception {
+        assertApiError(result, 400, "Bad Request", "Validation failed", path);
         result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(fieldsAndMessages.length / 2)));
         for (int index = 0; index < fieldsAndMessages.length; index += 2) {
             result.andExpect(jsonPath("$.fieldErrors['" + fieldsAndMessages[index] + "']")
                     .value(fieldsAndMessages[index + 1]));
         }
+    }
+
+    /** A 400 of the validation of a new batch, with the given field errors only. */
+    private void assertFieldErrors(ResultActions result, String... fieldsAndMessages) throws Exception {
+        assertValidationErrors(result, URL, fieldsAndMessages);
         verify(nurseryBatchService, never()).createBatch(any());
+    }
+
+    private ResultActions postTo(String path, String body) throws Exception {
+        return mockMvc.perform(post(path).contentType(MediaType.APPLICATION_JSON).content(body));
     }
 
     /** A batch started on March 2, with the given code, origin, supplier fields and initial count. */
@@ -259,5 +282,128 @@ public class NurseryBatchControllerTest {
         ResultActions result = mockMvc.perform(get(URL + "/999"));
         // Assert
         assertApiError(result, 404, "Not Found", "Nursery batch with ID 999 not found", URL + "/999");
+    }
+
+    @Test
+    void recordStageChange_shouldReturn201WithTheEvent() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordStageChange(eq(1L), any(StageChangeRequest.class)))
+                .thenReturn(new NurseryEventResponse(20L, 1L, "P1", null, NurseryEventType.STAGE_CHANGE, SEPTEMBER_1,
+                        NurseryStage.GRAFTED, null, null, null, null, "user_entry", NOW));
+        // Act
+        ResultActions result = postTo(STAGE_CHANGES_URL, """
+                {"stage":" grafted ","changedOn":"2026-09-01"}
+                """);
+        // Assert
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(20))
+                .andExpect(jsonPath("$.batchId").value(1))
+                .andExpect(jsonPath("$.batchCode").value("P1"))
+                .andExpect(jsonPath("$.farmId").value(nullValue()))
+                .andExpect(jsonPath("$.eventType").value("STAGE_CHANGE"))
+                .andExpect(jsonPath("$.eventDate").value("2026-09-01"))
+                .andExpect(jsonPath("$.stage").value("GRAFTED"))
+                .andExpect(jsonPath("$.quantity").value(nullValue()))
+                .andExpect(jsonPath("$.reason").value(nullValue()))
+                .andExpect(jsonPath("$.blockCode").value(nullValue()))
+                .andExpect(jsonPath("$.populationEventId").value(nullValue()))
+                .andExpect(jsonPath("$.source").value("user_entry"))
+                .andExpect(jsonPath("$.lastUpdated").value("2026-09-28T10:00:00Z"));
+        ArgumentCaptor<StageChangeRequest> captor = ArgumentCaptor.forClass(StageChangeRequest.class);
+        verify(nurseryEventService).recordStageChange(eq(1L), captor.capture());
+        assertEquals(" grafted ", captor.getValue().stage());
+    }
+
+    @Test
+    void recordStageChange_shouldReturn400ListingEveryFailingField() throws Exception {
+        // Act
+        ResultActions result = postTo(STAGE_CHANGES_URL, """
+                {"stage":"seed","changedOn":"2999-01-01"}
+                """);
+        // Assert
+        assertValidationErrors(result, STAGE_CHANGES_URL,
+                "stage", "stage must be GERMINATION, ROOTSTOCK_GROWTH, GRAFTED, HARDENING or READY_TO_TRANSPLANT",
+                "changedOn", "changedOn must be today or in the past");
+        verify(nurseryEventService, never()).recordStageChange(any(), any());
+    }
+
+    @Test
+    void recordStageChange_shouldReturn422_whenTheBatchIsAlreadyAtThatStage() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordStageChange(eq(1L), any(StageChangeRequest.class)))
+                .thenThrow(new BusinessRuleException("Batch P1 is already at stage GRAFTED"));
+        // Act
+        ResultActions result = postTo(STAGE_CHANGES_URL, """
+                {"stage":"GRAFTED","changedOn":"2026-09-10"}
+                """);
+        // Assert
+        assertApiError(result, 422, "Unprocessable Entity", "Batch P1 is already at stage GRAFTED",
+                STAGE_CHANGES_URL);
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void recordLoss_shouldReturn201WithTheEvent() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordLoss(eq(1L), any(NurseryLossRequest.class)))
+                .thenReturn(new NurseryEventResponse(21L, 1L, "P1", null, NurseryEventType.LOSS, SEPTEMBER_15, null,
+                        12, "Graft failure", null, null, "user_entry", NOW));
+        // Act
+        ResultActions result = postTo(LOSSES_URL, """
+                {"lostOn":"2026-09-15","quantity":12,"reason":"Graft failure"}
+                """);
+        // Assert
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(21))
+                .andExpect(jsonPath("$.eventType").value("LOSS"))
+                .andExpect(jsonPath("$.eventDate").value("2026-09-15"))
+                .andExpect(jsonPath("$.stage").value(nullValue()))
+                .andExpect(jsonPath("$.quantity").value(12))
+                .andExpect(jsonPath("$.reason").value("Graft failure"));
+        ArgumentCaptor<NurseryLossRequest> captor = ArgumentCaptor.forClass(NurseryLossRequest.class);
+        verify(nurseryEventService).recordLoss(eq(1L), captor.capture());
+        assertEquals(12.0, captor.getValue().quantity());
+    }
+
+    @Test
+    void recordLoss_shouldReturn400ListingEveryFailingField() throws Exception {
+        // Act: lostOn is missing, and 12.5 must be refused, not cut to 12
+        ResultActions result = postTo(LOSSES_URL, """
+                {"quantity":12.5,"reason":" "}
+                """);
+        // Assert
+        assertValidationErrors(result, LOSSES_URL,
+                "lostOn", "lostOn is required",
+                "quantity", "quantity must be a whole number, 1 or more",
+                "reason", "reason is required");
+        verify(nurseryEventService, never()).recordLoss(any(), any());
+    }
+
+    @Test
+    void recordLoss_shouldReturn422_whenThereAreNotEnoughPlants() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordLoss(eq(1L), any(NurseryLossRequest.class)))
+                .thenThrow(new BusinessRuleException("Not enough plants in batch P1: 0 left, 1 requested"));
+        // Act
+        ResultActions result = postTo(LOSSES_URL, """
+                {"lostOn":"2026-09-22","quantity":1,"reason":"Drought"}
+                """);
+        // Assert
+        assertApiError(result, 422, "Unprocessable Entity", "Not enough plants in batch P1: 0 left, 1 requested",
+                LOSSES_URL);
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void recordLoss_shouldReturn404_whenTheBatchIsUnknown() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordLoss(eq(999L), any(NurseryLossRequest.class)))
+                .thenThrow(new NurseryBatchNotFoundException(999L));
+        // Act
+        ResultActions result = postTo(URL + "/999/losses", """
+                {"lostOn":"2026-09-22","quantity":1,"reason":"Drought"}
+                """);
+        // Assert
+        assertApiError(result, 404, "Not Found", "Nursery batch with ID 999 not found", URL + "/999/losses");
     }
 }

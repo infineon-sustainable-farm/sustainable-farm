@@ -9,6 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -70,5 +71,15 @@ public class NurseryBatchRepositoryTest {
         // Act & Assert
         assertEquals(List.of(ofFarm1.getId()), ids(nurseryBatchRepository.findByOptionalFarm(1)));
         assertEquals(List.of(), ids(nurseryBatchRepository.findByOptionalFarm(3)));
+    }
+
+    @Test
+    void findByIdForUpdate_shouldReturnTheBatch_orNothingForAnUnknownIdentifier() {
+        // Arrange: the test runs in a transaction, which the lock needs
+        NurseryBatch p1 = batch(null, "P1", LocalDate.of(2026, 3, 2));
+        // Act & Assert
+        assertEquals(Optional.of(p1.getId()), nurseryBatchRepository.findByIdForUpdate(p1.getId())
+                .map(NurseryBatch::getId));
+        assertEquals(Optional.empty(), nurseryBatchRepository.findByIdForUpdate(p1.getId() + 1000));
     }
 }

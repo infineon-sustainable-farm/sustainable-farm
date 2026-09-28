@@ -1,9 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryLossRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.StageChangeRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryBatchService;
+import com.infineonbit.sustainablefarm.modules.plants.service.NurseryEventService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,14 +37,17 @@ import java.util.List;
  * <li>{@code POST /api/plants/nursery-batches} — start a batch, sown on the farm or purchased</li>
  * <li>{@code GET /api/plants/nursery-batches} — the batches with their computed counts and stage</li>
  * <li>{@code GET /api/plants/nursery-batches/{id}} — a single batch</li>
+ * <li>{@code POST /api/plants/nursery-batches/{id}/stage-changes} — record that a batch reached a stage</li>
+ * <li>{@code POST /api/plants/nursery-batches/{id}/losses} — record plants lost</li>
  * </ul>
  * <p>
  * The current number of plants, the survival rate and the current stage are
  * never stored: they are computed on every read from the recorded events.
  * Errors use the application-wide {@code ApiError} body: 400 with
  * {@code fieldErrors} for an invalid request, 404 for an unknown batch, 409
- * when the farm already has a batch with this code, 422 when the planned
- * transplant date is before the start date.
+ * when the farm already has a batch with this code, 422 when a date comes
+ * before the start of the batch or its last stage change, when a stage change
+ * is to the current stage, or when a loss exceeds the plants left.
  *
  * @since 1.0
  */
@@ -51,6 +58,7 @@ import java.util.List;
 public class NurseryBatchController {
 
    private final NurseryBatchService nurseryBatchService;
+   private final NurseryEventService nurseryEventService;
 
    @PostMapping
    @Operation(summary = "Start a nursery batch",
@@ -92,5 +100,40 @@ public class NurseryBatchController {
    public ResponseEntity<NurseryBatchResponse> getBatchById(@PathVariable Long id) {
       NurseryBatchResponse batchResponse = nurseryBatchService.getBatchById(id);
       return ResponseEntity.status(HttpStatus.OK).body(batchResponse);
+   }
+
+   @PostMapping("/{id}/stage-changes")
+   @Operation(summary = "Record a stage change of a nursery batch",
+         description = "Any stage can follow any other, so a failed graft can take the batch back to "
+               + "ROOTSTOCK_GROWTH. The change cannot predate the start of the batch nor its last stage change, the "
+               + "same day being accepted, and cannot be to the stage the batch is already at.")
+   @ApiResponses({
+         @ApiResponse(responseCode = "201", description = "The recorded stage change"),
+         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "404", description = "No batch with this ID"),
+         @ApiResponse(responseCode = "422", description = "The date predates the start or the last stage change, "
+               + "or the batch is already at this stage")
+   })
+   public ResponseEntity<NurseryEventResponse> recordStageChange(@PathVariable Long id,
+                                                                 @Valid @RequestBody StageChangeRequest stageChangeRequest) {
+      NurseryEventResponse eventResponse = nurseryEventService.recordStageChange(id, stageChangeRequest);
+      return ResponseEntity.status(HttpStatus.CREATED).body(eventResponse);
+   }
+
+   @PostMapping("/{id}/losses")
+   @Operation(summary = "Record plants of a nursery batch lost",
+         description = "Dead plants or failed grafts, with the reason. The quantity cannot exceed the plants left "
+               + "in the nursery; the check uses the count today. The loss cannot predate the start of the batch.")
+   @ApiResponses({
+         @ApiResponse(responseCode = "201", description = "The recorded loss"),
+         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "404", description = "No batch with this ID"),
+         @ApiResponse(responseCode = "422", description = "The loss predates the start of the batch, or exceeds "
+               + "the plants left")
+   })
+   public ResponseEntity<NurseryEventResponse> recordLoss(@PathVariable Long id,
+                                                          @Valid @RequestBody NurseryLossRequest lossRequest) {
+      NurseryEventResponse eventResponse = nurseryEventService.recordLoss(id, lossRequest);
+      return ResponseEntity.status(HttpStatus.CREATED).body(eventResponse);
    }
 }
