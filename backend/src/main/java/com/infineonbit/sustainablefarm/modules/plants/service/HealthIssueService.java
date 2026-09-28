@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthIssueResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthIssueReferenceRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @AllArgsConstructor
@@ -46,5 +48,22 @@ public class HealthIssueService {
                 .sorted(CATALOGUE_ORDER)
                 .map(HealthIssueService::toResponse)
                 .toList();
+    }
+
+    /**
+     * The catalogue row of a code sent by the API, compared without case or
+     * surrounding spaces: {@code " fruit_fly "} finds {@code FRUIT_FLY}.
+     *
+     * @param code the code as received, already checked by the request pattern
+     * @return the catalogue row
+     * @throws BusinessRuleException if the catalogue has no such code, answered
+     *                               with a 422: the code has the right form,
+     *                               the catalogue refuses it
+     */
+    public HealthIssueReference getIssueByCode(String code) {
+        String normalized = code.trim().toUpperCase(Locale.ROOT);
+        return healthIssueReferenceRepository.findByCode(normalized)
+                .orElseThrow(() -> new BusinessRuleException(
+                        "No health issue with code " + normalized + " in the catalogue"));
     }
 }
