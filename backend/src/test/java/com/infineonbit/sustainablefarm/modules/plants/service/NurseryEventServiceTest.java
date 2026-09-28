@@ -360,6 +360,25 @@ public class NurseryEventServiceTest {
     }
 
     @Test
+    void getAllEvents_shouldPassEveryFilter_andMapEachEvent() {
+        // Arrange
+        NurseryBatch p1 = new NurseryBatch(1L, 2, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
+                SEPTEMBER_20, "E", "user_entry", NOW);
+        PopulationEvent planting = new PopulationEvent();
+        planting.setId(7L);
+        NurseryEvent transplant = new NurseryEvent(14L, p1, NurseryEventType.TRANSPLANT, SEPTEMBER_20, null, 100,
+                null, "E", planting, "user_entry", NOW);
+        when(nurseryEventRepository.findByOptionalFilters(1L, 2, NurseryEventType.TRANSPLANT, MARCH_2, SEPTEMBER_20))
+                .thenReturn(List.of(transplant));
+        // Act
+        List<NurseryEventResponse> responses = nurseryEventService.getAllEvents(1L, 2, NurseryEventType.TRANSPLANT,
+                MARCH_2, SEPTEMBER_20);
+        // Assert: the farm and code of the batch, and the planting of the transplant
+        assertEquals(List.of(new NurseryEventResponse(14L, 1L, "P1", 2, NurseryEventType.TRANSPLANT, SEPTEMBER_20,
+                null, 100, null, "E", 7L, "user_entry", NOW)), responses);
+    }
+
+    @Test
     void recordLoss_shouldThrowNotFound_whenTheBatchIsUnknown() {
         // Arrange
         when(nurseryBatchRepository.findByIdForUpdate(999L)).thenReturn(Optional.empty());

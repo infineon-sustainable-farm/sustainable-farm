@@ -270,4 +270,28 @@ public class NurseryEventService {
         transplant.setPopulationEvent(populationEventRepository.getReferenceById(planting.id()));
         return toResponse(nurseryEventRepository.save(transplant));
     }
+
+    /**
+     * Retrieves the events matching the optional filters: the history of the
+     * nursery.
+     *
+     * <p>Every filter is independent and optional; a missing farm means every
+     * farm, as for the other lists of the module. The farm is that of the
+     * batch. Both dates are included. A filter that matches nothing, such as an
+     * unknown batch, or a {@code from} after {@code to}, returns an empty list
+     * and is never an error.
+     *
+     * @param batchId   batch identifier, or {@code null} for every batch
+     * @param farmId    farm identifier, or {@code null} for every farm
+     * @param eventType event type, or {@code null} for every type
+     * @param from      first event date, included, or {@code null}
+     * @param to        last event date, included, or {@code null}
+     * @return the matching events, ordered by date then identifier
+     */
+    public List<NurseryEventResponse> getAllEvents(Long batchId, Integer farmId, NurseryEventType eventType,
+                                                   LocalDate from, LocalDate to) {
+        return nurseryEventRepository.findByOptionalFilters(batchId, farmId, eventType, from, to).stream()
+                .map(NurseryEventService::toResponse)
+                .toList();
+    }
 }
