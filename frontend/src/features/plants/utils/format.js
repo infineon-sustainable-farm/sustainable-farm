@@ -70,16 +70,21 @@ export function formatCode(value) {
 /** Symbols of the fertilizer units, as the API writes them in its own messages. */
 const UNIT_SYMBOLS = { KG: "kg", L: "L" };
 
+/** Symbol of a fertilizer unit code, "KG" as "kg". An unknown code is shown as received. */
+export function formatUnit(unit) {
+    if (isMissing(unit)) return NO_VALUE;
+    const code = String(unit).trim();
+    return UNIT_SYMBOLS[code] ?? code;
+}
+
 /**
  * A quantity in the unit of its fertilizer: "1,000 kg", "12.5 L". Up to three
- * decimals, as the API stores them. An unknown unit code is shown as received.
+ * decimals, as the API stores them.
  */
 export function formatQuantity(value, unit) {
     if (isMissing(value)) return NO_VALUE;
     const number = Number(value).toLocaleString("en-US");
-    if (isMissing(unit)) return number;
-    const code = String(unit).trim();
-    return `${number} ${UNIT_SYMBOLS[code] ?? code}`;
+    return isMissing(unit) ? number : `${number} ${formatUnit(unit)}`;
 }
 
 /** An amount in CFA francs, already rounded to the franc by the API: "78,715 FCFA". */
