@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useAddFertilizer } from "../hooks/useAddFertilizer";
+import { useRecordFertilizerMovement } from "../hooks/useRecordFertilizerMovement";
 import AddFertilizerModal from "./AddFertilizerModal";
 import FertilizerMovementsSection from "./FertilizerMovementsSection";
 import FertilizerStockSection from "./FertilizerStockSection";
+import RecordMovementModal from "./RecordMovementModal";
 
 function AddFertilizerButton({ onClick }) {
     return (
@@ -14,6 +16,19 @@ function AddFertilizerButton({ onClick }) {
         >
             <Plus size={16} />
             Add a fertilizer
+        </button>
+    );
+}
+
+function RecordMovementButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+            <Plus size={16} />
+            Record a movement
         </button>
     );
 }
@@ -30,12 +45,14 @@ function AddFertilizerButton({ onClick }) {
  */
 export default function FertilizerInventoryPage() {
     const [isAddingFertilizer, setIsAddingFertilizer] = useState(false);
+    const [isRecordingMovement, setIsRecordingMovement] = useState(false);
 
     useEffect(() => {
         document.title = "Fertilizer Inventory — Plants";
     }, []);
 
     const addFertilizer = useAddFertilizer();
+    const recordMovement = useRecordFertilizerMovement();
 
     function openFertilizerForm() {
         addFertilizer.reset();
@@ -49,6 +66,20 @@ export default function FertilizerInventoryPage() {
 
     function submitFertilizer(fertilizer) {
         addFertilizer.mutate(fertilizer, { onSuccess: closeFertilizerForm });
+    }
+
+    function openMovementForm() {
+        recordMovement.reset();
+        setIsRecordingMovement(true);
+    }
+
+    function closeMovementForm() {
+        recordMovement.reset();
+        setIsRecordingMovement(false);
+    }
+
+    function submitMovement(movement) {
+        recordMovement.mutate(movement, { onSuccess: closeMovementForm });
     }
 
     return (
@@ -70,12 +101,13 @@ export default function FertilizerInventoryPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <AddFertilizerButton onClick={openFertilizerForm} />
+                        <RecordMovementButton onClick={openMovementForm} />
                     </div>
                 </header>
 
                 <FertilizerStockSection addAction={<AddFertilizerButton onClick={openFertilizerForm} />} />
 
-                <FertilizerMovementsSection />
+                <FertilizerMovementsSection recordAction={<RecordMovementButton onClick={openMovementForm} />} />
             </div>
 
             {isAddingFertilizer && (
@@ -84,6 +116,16 @@ export default function FertilizerInventoryPage() {
                     error={addFertilizer.error}
                     onSubmit={submitFertilizer}
                     onClose={closeFertilizerForm}
+                />
+            )}
+
+            {isRecordingMovement && (
+                <RecordMovementModal
+                    isSubmitting={recordMovement.isPending}
+                    error={recordMovement.error}
+                    onSubmit={submitMovement}
+                    onResetError={recordMovement.reset}
+                    onClose={closeMovementForm}
                 />
             )}
         </div>
