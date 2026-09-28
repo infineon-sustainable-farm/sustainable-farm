@@ -2,8 +2,11 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryLossRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.StageChangeRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryBatch;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEventType;
@@ -12,6 +15,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.exception.NurseryBatchNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryBatchRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryBatchCalculator.BatchSummary;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +35,8 @@ public class NurseryEventService {
 
     private final NurseryBatchRepository nurseryBatchRepository;
     private final NurseryEventRepository nurseryEventRepository;
+    private final PopulationEventRepository populationEventRepository;
+    private final PlantingService plantingService;
 
     /**
      * A code as the enums spell it: trimmed and upper-cased, so
@@ -205,5 +211,63 @@ public class NurseryEventService {
         loss.setQuantity(quantity);
         loss.setReason(request.reason().trim());
         return toResponse(nurseryEventRepository.save(loss));
+    }
+
+    /**
+     * Transplants plants of a batch into the orchard, in a single transaction.
+     *
+     * <ol>
+     *     <li>Refuses a date before the start of the batch, then a quantity
+     *         larger than the plants left, before anything is written. The stage
+     *         is not checked: a transplant that happened is recorded, whatever
+     *         the stage of the batch.</li>
+     *     <li>Records the planting of the variety of the batch on the block
+     *         through {@link PlantingService}, with the farm of the batch and the
+     *         date and quantity of the transplant. Its public method joins this
+     *         transaction; it creates the variety row and the calendar date of
+     *         the block as needed.</li>
+     *     <li>Stores the TRANSPLANT event, linked to the PLANTING it created.</li>
+     * </ol>
+     * A refusal of the planting service, such as the 409 of a variety already
+     * planted on the block, comes through unchanged and nothing is stored.
+     *
+     * @param batchId the batch
+     * @param request the transplant, already validated
+     * @return the recorded transplant, with the identifier of the planting
+     * @throws NurseryBatchNotFoundException if no batch has this identifier
+     * @throws BusinessRuleException         if the date is before the start, or
+     *                                       the quantity larger than the plants left
+     * @throws com.infineonbit.sustainablefarm.core.exception.ConflictException
+     *         if the variety of the batch is already planted on the block
+     */
+    @Transactional
+    public NurseryEventResponse recordTransplant(Long batchId, TransplantRequest request) {
+        return recordTransplant(batchId, request, Instant.now());
+    }
+
+    /**
+     * Same as {@link #recordTransplant(Long, TransplantRequest)}, at an explicit
+     * write time so the {@code lastUpdated} value of the transplant can be
+     * tested. The planting takes its own write time.
+     */
+    NurseryEventResponse recordTransplant(Long batchId, TransplantRequest request, Instant now) {
+        NurseryBatch batch = lockBatch(batchId);
+        requireNotBeforeStart(batch, "transplant", request.transplantedOn());
+        // A whole number of 1 or more: the request validation refused anything else.
+        int quantity = request.quantity().intValue();
+        requirePlants(batch, summarize(batch), quantity);
+
+        String blockCode = normalizeCode(request.blockCode());
+        // Never caught: a refusal of the planting service has already marked the
+        // transaction for rollback, and a caught exception would only turn into
+        // a failed commit (UnexpectedRollbackException) instead of its own answer.
+        PlantingResponse planting = plantingService.recordPlanting(new PlantingRequest(
+                batch.getFarmId(), blockCode, batch.getVarietyName(), request.transplantedOn(), quantity));
+
+        NurseryEvent transplant = newEvent(batch, NurseryEventType.TRANSPLANT, request.transplantedOn(), now);
+        transplant.setQuantity(quantity);
+        transplant.setBlockCode(blockCode);
+        transplant.setPopulationEvent(populationEventRepository.getReferenceById(planting.id()));
+        return toResponse(nurseryEventRepository.save(transplant));
     }
 }

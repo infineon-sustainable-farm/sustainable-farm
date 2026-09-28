@@ -1,17 +1,23 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryLossRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.StageChangeRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryBatch;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryOrigin;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
+import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.exception.NurseryBatchNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryBatchRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -43,12 +49,19 @@ public class NurseryEventServiceTest {
     private static final LocalDate SEPTEMBER_1 = LocalDate.of(2026, 9, 1);
     private static final LocalDate SEPTEMBER_15 = LocalDate.of(2026, 9, 15);
     private static final LocalDate SEPTEMBER_18 = LocalDate.of(2026, 9, 18);
+    private static final LocalDate SEPTEMBER_20 = LocalDate.of(2026, 9, 20);
 
     @Mock
     private NurseryBatchRepository nurseryBatchRepository;
 
     @Mock
     private NurseryEventRepository nurseryEventRepository;
+
+    @Mock
+    private PopulationEventRepository populationEventRepository;
+
+    @Mock
+    private PlantingService plantingService;
 
     @InjectMocks
     private NurseryEventService nurseryEventService;
@@ -229,6 +242,120 @@ public class NurseryEventServiceTest {
         assertEquals("The loss date 2026-03-01 is before the start date 2026-03-02 of batch P1",
                 exception.getMessage());
         verify(nurseryEventRepository, never()).findByBatchIds(any());
+        verify(nurseryEventRepository, never()).save(any());
+    }
+
+    /** The planting service records the planting as PLANTING event 7, which the transplant refers to. */
+    private PopulationEvent plantingRecordedAs7(Integer farmId, int treeCount, LocalDate plantingDate) {
+        when(plantingService.recordPlanting(any(PlantingRequest.class))).thenReturn(new PlantingResponse(7L, farmId,
+                "E", 3L, "Keitt", plantingDate, treeCount, "user_entry", NOW));
+        PopulationEvent planting = new PopulationEvent();
+        planting.setId(7L);
+        when(populationEventRepository.getReferenceById(7L)).thenReturn(planting);
+        return planting;
+    }
+
+    @Test
+    void recordTransplant_shouldPlantTheVarietyOfTheBatchOnTheBlock_andKeepThePlantingIdentifier() {
+        // Arrange
+        NurseryBatch p1 = p1InDatabase();
+        p1.setFarmId(2);
+        graftedWith138Left(p1);
+        PopulationEvent planting = plantingRecordedAs7(2, 100, SEPTEMBER_20);
+        saveAssignsId();
+        // Act
+        NurseryEventResponse response = nurseryEventService.recordTransplant(1L,
+                new TransplantRequest(SEPTEMBER_20, 100.0, " e "), NOW);
+        // Assert: the planting, with the farm and variety of the batch and the block, date and quantity sent
+        ArgumentCaptor<PlantingRequest> captor = ArgumentCaptor.forClass(PlantingRequest.class);
+        verify(plantingService).recordPlanting(captor.capture());
+        assertEquals(new PlantingRequest(2, "E", "Keitt", SEPTEMBER_20, 100), captor.getValue());
+        // Assert: the transplant, linked to that planting
+        NurseryEvent transplant = savedEvent();
+        assertSame(p1, transplant.getBatch());
+        assertEquals(NurseryEventType.TRANSPLANT, transplant.getEventType());
+        assertEquals(SEPTEMBER_20, transplant.getEventDate());
+        assertNull(transplant.getStage());
+        assertEquals(100, transplant.getQuantity());
+        assertNull(transplant.getReason());
+        assertEquals("E", transplant.getBlockCode());
+        assertSame(planting, transplant.getPopulationEvent());
+        assertEquals("user_entry", transplant.getSource());
+        assertEquals(NOW, transplant.getLastUpdated());
+        assertEquals(new NurseryEventResponse(20L, 1L, "P1", 2, NurseryEventType.TRANSPLANT, SEPTEMBER_20, null, 100,
+                null, "E", 7L, "user_entry", NOW), response);
+    }
+
+    @Test
+    void recordTransplant_shouldAcceptAnyStage() {
+        // Arrange: the batch is still at germination
+        NurseryBatch p1 = p1InDatabase();
+        when(nurseryEventRepository.findByBatchIds(List.of(1L))).thenReturn(List.of(
+                event(10, p1, NurseryEventType.STAGE_CHANGE, MARCH_2, NurseryStage.GERMINATION, null)));
+        plantingRecordedAs7(null, 10, MARCH_25);
+        saveAssignsId();
+        // Act
+        NurseryEventResponse response = nurseryEventService.recordTransplant(1L,
+                new TransplantRequest(MARCH_25, 10.0, "G"), NOW);
+        // Assert
+        assertEquals(NurseryEventType.TRANSPLANT, response.eventType());
+        assertEquals(10, response.quantity());
+    }
+
+    @Test
+    void recordTransplant_shouldAcceptEveryPlantLeft() {
+        // Arrange
+        NurseryBatch p1 = p1InDatabase();
+        graftedWith138Left(p1);
+        plantingRecordedAs7(null, 138, SEPTEMBER_20);
+        saveAssignsId();
+        // Act
+        nurseryEventService.recordTransplant(1L, new TransplantRequest(SEPTEMBER_20, 138.0, "E"), NOW);
+        // Assert
+        assertEquals(138, savedEvent().getQuantity());
+    }
+
+    @Test
+    void recordTransplant_shouldRefuseMoreThanThePlantsLeft_withoutPlanting() {
+        // Arrange
+        NurseryBatch p1 = p1InDatabase();
+        graftedWith138Left(p1);
+        // Act
+        BusinessRuleException exception = assertThrows(BusinessRuleException.class,
+                () -> nurseryEventService.recordTransplant(1L, new TransplantRequest(SEPTEMBER_20, 200.0, "E"), NOW));
+        // Assert
+        assertEquals("Not enough plants in batch P1: 138 left, 200 requested", exception.getMessage());
+        verify(plantingService, never()).recordPlanting(any());
+        verify(nurseryEventRepository, never()).save(any());
+    }
+
+    @Test
+    void recordTransplant_shouldRefuseADateBeforeTheStart_withoutPlanting() {
+        // Arrange
+        p1InDatabase();
+        // Act
+        BusinessRuleException exception = assertThrows(BusinessRuleException.class,
+                () -> nurseryEventService.recordTransplant(1L, new TransplantRequest(MARCH_1, 10.0, "E"), NOW));
+        // Assert
+        assertEquals("The transplant date 2026-03-01 is before the start date 2026-03-02 of batch P1",
+                exception.getMessage());
+        verify(plantingService, never()).recordPlanting(any());
+        verify(nurseryEventRepository, never()).save(any());
+    }
+
+    @Test
+    void recordTransplant_shouldLetTheConflictOfThePlantingServiceThrough_andStoreNoTransplant() {
+        // Arrange
+        NurseryBatch p1 = p1InDatabase();
+        graftedWith138Left(p1);
+        ConflictException conflict = new ConflictException("A planting of Keitt is already recorded on block E");
+        when(plantingService.recordPlanting(any(PlantingRequest.class))).thenThrow(conflict);
+        // Act
+        ConflictException exception = assertThrows(ConflictException.class,
+                () -> nurseryEventService.recordTransplant(1L, new TransplantRequest(SEPTEMBER_20, 38.0, "E"), NOW));
+        // Assert: the very exception of the planting service, and no transplant
+        assertSame(conflict, exception);
+        verify(populationEventRepository, never()).getReferenceById(any());
         verify(nurseryEventRepository, never()).save(any());
     }
 

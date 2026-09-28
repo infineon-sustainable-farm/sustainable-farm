@@ -6,6 +6,7 @@ import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryLossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.StageChangeRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEventType;
@@ -51,6 +52,7 @@ public class NurseryBatchControllerTest {
     private static final String URL = "/api/plants/nursery-batches";
     private static final String STAGE_CHANGES_URL = URL + "/1/stage-changes";
     private static final String LOSSES_URL = URL + "/1/losses";
+    private static final String TRANSPLANTS_URL = URL + "/1/transplants";
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
     private static final LocalDate MARCH_2 = LocalDate.of(2026, 3, 2);
     private static final LocalDate SEPTEMBER_1 = LocalDate.of(2026, 9, 1);
@@ -405,5 +407,73 @@ public class NurseryBatchControllerTest {
                 """);
         // Assert
         assertApiError(result, 404, "Not Found", "Nursery batch with ID 999 not found", URL + "/999/losses");
+    }
+
+    @Test
+    void recordTransplant_shouldReturn201WithTheEventAndItsPlanting() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordTransplant(eq(1L), any(TransplantRequest.class)))
+                .thenReturn(new NurseryEventResponse(22L, 1L, "P1", null, NurseryEventType.TRANSPLANT, SEPTEMBER_20,
+                        null, 100, null, "E", 7L, "user_entry", NOW));
+        // Act
+        ResultActions result = postTo(TRANSPLANTS_URL, """
+                {"transplantedOn":"2026-09-20","quantity":100,"blockCode":" e "}
+                """);
+        // Assert
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(22))
+                .andExpect(jsonPath("$.eventType").value("TRANSPLANT"))
+                .andExpect(jsonPath("$.eventDate").value("2026-09-20"))
+                .andExpect(jsonPath("$.quantity").value(100))
+                .andExpect(jsonPath("$.blockCode").value("E"))
+                .andExpect(jsonPath("$.populationEventId").value(7));
+        ArgumentCaptor<TransplantRequest> captor = ArgumentCaptor.forClass(TransplantRequest.class);
+        verify(nurseryEventService).recordTransplant(eq(1L), captor.capture());
+        assertEquals(" e ", captor.getValue().blockCode());
+        assertEquals(100.0, captor.getValue().quantity());
+    }
+
+    @Test
+    void recordTransplant_shouldReturn400ListingEveryFailingField() throws Exception {
+        // Act: 38.5 must be refused, not cut to 38
+        ResultActions result = postTo(TRANSPLANTS_URL, """
+                {"transplantedOn":"2999-01-01","quantity":38.5,"blockCode":"Block E"}
+                """);
+        // Assert
+        assertValidationErrors(result, TRANSPLANTS_URL,
+                "transplantedOn", "transplantedOn must be today or in the past",
+                "quantity", "quantity must be a whole number, 1 or more",
+                "blockCode", "blockCode must be a short code such as A or B2, without prefix or space");
+        verify(nurseryEventService, never()).recordTransplant(any(), any());
+    }
+
+    @Test
+    void recordTransplant_shouldReturn409_whenThePlantingIsRefused() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordTransplant(eq(1L), any(TransplantRequest.class)))
+                .thenThrow(new ConflictException("A planting of Keitt is already recorded on block E"));
+        // Act
+        ResultActions result = postTo(TRANSPLANTS_URL, """
+                {"transplantedOn":"2026-09-21","quantity":38,"blockCode":"E"}
+                """);
+        // Assert
+        assertApiError(result, 409, "Conflict", "A planting of Keitt is already recorded on block E",
+                TRANSPLANTS_URL);
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void recordTransplant_shouldReturn422_whenThereAreNotEnoughPlants() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordTransplant(eq(1L), any(TransplantRequest.class)))
+                .thenThrow(new BusinessRuleException("Not enough plants in batch P1: 138 left, 200 requested"));
+        // Act
+        ResultActions result = postTo(TRANSPLANTS_URL, """
+                {"transplantedOn":"2026-09-20","quantity":200,"blockCode":"E"}
+                """);
+        // Assert
+        assertApiError(result, 422, "Unprocessable Entity", "Not enough plants in batch P1: 138 left, 200 requested",
+                TRANSPLANTS_URL);
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
     }
 }
