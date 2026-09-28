@@ -9,9 +9,12 @@ import java.time.LocalDate;
  * API representation of a problem seen during an inspection, with its status.
  *
  * <p>The farm, the block and the date are those of the inspection.
- * {@code status} is computed on every read from the treatments and the
- * resolution of the finding, never stored. {@code resolvedOn} and
- * {@code resolutionNote} are {@code null} until the finding is resolved.
+ * {@code status}, {@code treatmentCount}, {@code lastTreatedOn} and
+ * {@code harvestAllowedFrom} are computed on every read from the treatments and
+ * the resolution of the finding, never stored. {@code harvestAllowedFrom} is
+ * the latest of the dates its treatments allow, {@code null} without a
+ * treatment. {@code resolvedOn} and {@code resolutionNote} are {@code null}
+ * until the finding is resolved.
  */
 public record HealthFindingResponse(
         Long id,
@@ -25,6 +28,9 @@ public record HealthFindingResponse(
         String otherLabel,
         String treeLabel,
         HealthFindingStatus status,
+        int treatmentCount,
+        LocalDate lastTreatedOn,
+        LocalDate harvestAllowedFrom,
         LocalDate resolvedOn,
         String resolutionNote) {
 }

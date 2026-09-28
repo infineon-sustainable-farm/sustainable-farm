@@ -14,6 +14,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReferenc
 import com.infineonbit.sustainablefarm.modules.plants.entity.InspectionMethod;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthInspectionRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.HealthTreatmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,12 +64,16 @@ public class HealthInspectionServiceTest {
     @Mock
     private HealthIssueService healthIssueService;
 
+    /** Left unstubbed, it finds no treatment, as for findings just recorded. */
+    @Mock
+    private HealthTreatmentRepository healthTreatmentRepository;
+
     private HealthInspectionService healthInspectionService;
 
     @BeforeEach
     void setUp() {
         healthInspectionService = new HealthInspectionService(healthInspectionRepository, healthFindingRepository,
-                healthIssueService, new HealthFindingService());
+                healthIssueService, new HealthFindingService(healthFindingRepository, healthTreatmentRepository));
     }
 
     /** The catalogue answers as the real service does: case and spaces ignored, 422 when missing. */
@@ -156,9 +161,10 @@ public class HealthInspectionServiceTest {
         assertEquals(new HealthInspectionResponse(1L, null, "C", SEPTEMBER_1, 48, HealthCategory.MODERATE, "Awa",
                 InspectionMethod.VISUAL, "user_entry", NOW, List.of(
                 new HealthFindingResponse(10L, 1L, null, "C", SEPTEMBER_1, "ANTHRACNOSE", "Anthracnose",
-                        HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.UNTREATED, null, null),
+                        HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.UNTREATED, 0, null, null, null, null),
                 new HealthFindingResponse(11L, 1L, null, "C", SEPTEMBER_1, "MANGO_MEALYBUG", "Mango mealybug",
-                        HealthIssueKind.PEST, null, null, HealthFindingStatus.UNTREATED, null, null))), response);
+                        HealthIssueKind.PEST, null, null, HealthFindingStatus.UNTREATED, 0, null, null, null, null))),
+                response);
     }
 
     @Test

@@ -81,7 +81,7 @@ public class HealthInspectionControllerTest {
         return new HealthInspectionResponse(1L, null, "C", SEPTEMBER_1, 48, HealthCategory.MODERATE, "Awa",
                 InspectionMethod.VISUAL, "user_entry", NOW, List.of(
                 new HealthFindingResponse(10L, 1L, null, "C", SEPTEMBER_1, "ANTHRACNOSE", "Anthracnose",
-                        HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.UNTREATED, null, null)));
+                        HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.UNTREATED, 0, null, null, null, null)));
     }
 
     @Test
