@@ -1,6 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
+import { useAddFertilizer } from "../hooks/useAddFertilizer";
+import AddFertilizerModal from "./AddFertilizerModal";
 import FertilizerMovementsSection from "./FertilizerMovementsSection";
 import FertilizerStockSection from "./FertilizerStockSection";
+
+function AddFertilizerButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+            <Plus size={16} />
+            Add a fertilizer
+        </button>
+    );
+}
 
 /**
  * Fertilizer Inventory: the current stock of each fertilizer, then the history
@@ -13,9 +29,27 @@ import FertilizerStockSection from "./FertilizerStockSection";
  * moves into the history, the only part of the page kept by block.
  */
 export default function FertilizerInventoryPage() {
+    const [isAddingFertilizer, setIsAddingFertilizer] = useState(false);
+
     useEffect(() => {
         document.title = "Fertilizer Inventory — Plants";
     }, []);
+
+    const addFertilizer = useAddFertilizer();
+
+    function openFertilizerForm() {
+        addFertilizer.reset();
+        setIsAddingFertilizer(true);
+    }
+
+    function closeFertilizerForm() {
+        addFertilizer.reset();
+        setIsAddingFertilizer(false);
+    }
+
+    function submitFertilizer(fertilizer) {
+        addFertilizer.mutate(fertilizer, { onSuccess: closeFertilizerForm });
+    }
 
     return (
         <div className="min-h-dvh bg-gray-50">
@@ -34,12 +68,24 @@ export default function FertilizerInventoryPage() {
                             Stock, alert thresholds, and the history of purchases, applications and losses.
                         </p>
                     </div>
+                    <div className="flex flex-wrap gap-2">
+                        <AddFertilizerButton onClick={openFertilizerForm} />
+                    </div>
                 </header>
 
-                <FertilizerStockSection />
+                <FertilizerStockSection addAction={<AddFertilizerButton onClick={openFertilizerForm} />} />
 
                 <FertilizerMovementsSection />
             </div>
+
+            {isAddingFertilizer && (
+                <AddFertilizerModal
+                    isSubmitting={addFertilizer.isPending}
+                    error={addFertilizer.error}
+                    onSubmit={submitFertilizer}
+                    onClose={closeFertilizerForm}
+                />
+            )}
         </div>
     );
 }
