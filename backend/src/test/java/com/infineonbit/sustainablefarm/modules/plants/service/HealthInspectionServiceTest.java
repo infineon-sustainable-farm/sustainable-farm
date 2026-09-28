@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.BlockHealthResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthInspectionResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthCategory;
@@ -268,5 +269,31 @@ public class HealthInspectionServiceTest {
         assertTrue(inspections.get(1).findings().isEmpty());
         assertEquals(HealthCategory.HEALTHY, inspections.get(1).healthCategory());
         verify(healthFindingRepository, times(1)).findByInspectionIds(any());
+    }
+
+    @Test
+    void getBlockHealth_shouldGiveTheLatestScoreAndCategoryOfEachBlock_withOneQuery() {
+        // Arrange: block C inspected twice, block D once
+        when(healthInspectionRepository.findByOptionalFilters(null, null, null, null)).thenReturn(List.of(
+                new HealthInspection(1L, null, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,
+                        "user_entry", NOW),
+                new HealthInspection(2L, null, "D", LocalDate.of(2026, 9, 2), 85, null, null, "user_entry", NOW),
+                new HealthInspection(4L, null, "C", LocalDate.of(2026, 9, 21), 72, null, null, "user_entry", NOW)));
+        // Act
+        List<BlockHealthResponse> blocks = healthInspectionService.getBlockHealth(null);
+        // Assert
+        assertEquals(List.of(
+                new BlockHealthResponse(null, "C", 4L, LocalDate.of(2026, 9, 21), 72, HealthCategory.HEALTHY),
+                new BlockHealthResponse(null, "D", 2L, LocalDate.of(2026, 9, 2), 85, HealthCategory.VERY_HEALTHY)),
+                blocks);
+        verify(healthInspectionRepository, times(1)).findByOptionalFilters(any(), any(), any(), any());
+    }
+
+    @Test
+    void getBlockHealth_shouldPassTheFarmFilter() {
+        // Arrange
+        when(healthInspectionRepository.findByOptionalFilters(1, null, null, null)).thenReturn(List.of());
+        // Act & Assert
+        assertTrue(healthInspectionService.getBlockHealth(1).isEmpty());
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -92,6 +93,26 @@ public class HealthFindingRepositoryTest {
         assertEquals(List.of(early.getId(), earlySecond.getId(), late.getId()), find(null, "C", null, null));
         assertEquals(List.of(blockD.getId(), late.getId()), find(null, null, LocalDate.of(2026, 9, 2), null));
         assertEquals(List.of(early.getId(), earlySecond.getId()), find(null, null, null, LocalDate.of(2026, 9, 1)));
+    }
+
+    @Test
+    void resolve_shouldWriteTheResolutionOnce_thenTouchNoRow() {
+        // Arrange
+        HealthIssueReference anthracnose = issue("ANTHRACNOSE", HealthIssueKind.DISEASE);
+        HealthFinding finding = finding(inspection(null, "C", LocalDate.of(2026, 9, 1)), anthracnose, "42");
+        Instant firstWrite = Instant.parse("2026-09-20T08:00:00Z");
+        // Act
+        int first = healthFindingRepository.resolve(finding.getId(), LocalDate.of(2026, 9, 20), "No new lesions",
+                firstWrite);
+        int second = healthFindingRepository.resolve(finding.getId(), LocalDate.of(2026, 9, 21), "Again",
+                Instant.parse("2026-09-21T08:00:00Z"));
+        // Assert: the first resolution stays, the second touched nothing
+        assertEquals(1, first);
+        assertEquals(0, second);
+        HealthFinding stored = healthFindingRepository.findById(finding.getId()).orElseThrow();
+        assertEquals(LocalDate.of(2026, 9, 20), stored.getResolvedOn());
+        assertEquals("No new lesions", stored.getResolutionNote());
+        assertEquals(firstWrite, stored.getLastUpdated());
     }
 
     private List<Long> find(Integer farmId, String blockCode, LocalDate from, LocalDate to) {

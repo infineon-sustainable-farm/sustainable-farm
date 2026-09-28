@@ -1,17 +1,23 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingResolutionRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFinding;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReference;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HealthFindingNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthTreatmentRepository;
 import com.infineonbit.sustainablefarm.modules.plants.service.HealthCalculator.TreatmentSummary;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -25,10 +31,11 @@ public class HealthFindingService {
     private final HealthTreatmentRepository healthTreatmentRepository;
 
     /**
-     * Turns a blank filter into no filter at all, as for the other lists of the
-     * module.
+     * An optional text as stored: trimmed, and {@code null} when it is blank.
+     * Also turns a blank list filter into no filter, as for the other lists of
+     * the module.
      */
-    private static String normalizeFilter(String value) {
+    private static String normalizeOptionalText(String value) {
         if (value == null) {
             return null;
         }
@@ -106,9 +113,72 @@ public class HealthFindingService {
     public List<HealthFindingResponse> getAllFindings(Integer farmId, String blockCode, HealthFindingStatus status,
                                                       LocalDate from, LocalDate to) {
         List<HealthFinding> findings = healthFindingRepository.findByOptionalFilters(
-                farmId, normalizeFilter(blockCode), from, to);
+                farmId, normalizeOptionalText(blockCode), from, to);
         return toResponses(findings).stream()
                 .filter(finding -> status == null || finding.status() == status)
                 .toList();
+    }
+
+    private HealthFinding findFinding(Long findingId) {
+        return healthFindingRepository.findById(findingId)
+                .orElseThrow(() -> new HealthFindingNotFoundException(findingId));
+    }
+
+    private static ConflictException alreadyResolved(HealthFinding finding) {
+        return new ConflictException("Finding " + finding.getId() + " was already resolved on "
+                + finding.getResolvedOn());
+    }
+
+    /**
+     * Resolves a finding: records the day it was seen to be settled, once.
+     *
+     * <p>The resolution cannot predate the inspection, nor the last treatment
+     * of the finding; the same day is accepted. It is written by a conditional
+     * update, so a second resolution is refused even when both are sent at the
+     * same time.
+     *
+     * @param findingId the finding
+     * @param request   the resolution, already validated
+     * @return the resolved finding, with its status
+     * @throws HealthFindingNotFoundException if no finding has this identifier
+     * @throws ConflictException              if the finding is already resolved
+     * @throws BusinessRuleException          if the resolution predates the
+     *                                        inspection or the last treatment
+     */
+    @Transactional
+    public HealthFindingResponse resolveFinding(Long findingId, FindingResolutionRequest request) {
+        return resolveFinding(findingId, request, Instant.now());
+    }
+
+    /**
+     * Same as {@link #resolveFinding(Long, FindingResolutionRequest)}, at an
+     * explicit write time so the {@code lastUpdated} value can be tested.
+     */
+    HealthFindingResponse resolveFinding(Long findingId, FindingResolutionRequest request, Instant now) {
+        HealthFinding finding = findFinding(findingId);
+        if (finding.getResolvedOn() != null) {
+            throw alreadyResolved(finding);
+        }
+        LocalDate inspectedOn = finding.getInspection().getInspectedOn();
+        if (request.resolvedOn().isBefore(inspectedOn)) {
+            throw new BusinessRuleException("The resolution date " + request.resolvedOn()
+                    + " is before the inspection date " + inspectedOn + " of finding " + findingId);
+        }
+        TreatmentSummary treatments = HealthCalculator.summarize(
+                healthTreatmentRepository.findByFindingIds(List.of(findingId)));
+        if (treatments.lastTreatedOn() != null && request.resolvedOn().isBefore(treatments.lastTreatedOn())) {
+            throw new BusinessRuleException("The resolution date " + request.resolvedOn()
+                    + " is before the last treatment date " + treatments.lastTreatedOn() + " of finding " + findingId);
+        }
+
+        int written = healthFindingRepository.resolve(findingId, request.resolvedOn(),
+                normalizeOptionalText(request.note()), now);
+        // Read again: the update cleared the persistence context.
+        HealthFinding current = findFinding(findingId);
+        if (written == 0) {
+            // Another request resolved the finding since it was read above.
+            throw alreadyResolved(current);
+        }
+        return toResponse(current, treatments);
     }
 }

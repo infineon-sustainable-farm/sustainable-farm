@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.BlockHealthResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthInspectionResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFinding;
@@ -172,6 +173,31 @@ public class HealthInspectionService {
         return inspections.stream()
                 .map(inspection -> toResponse(inspection,
                         findingsByInspection.getOrDefault(inspection.getId(), List.of())))
+                .toList();
+    }
+
+    /**
+     * Retrieves the current health of each inspected block: the score of its
+     * most recent inspection, with the date and the category.
+     *
+     * <p>A block is the (farm, block) pair, a missing farm being a farm of its
+     * own; the farm filter keeps the usual meaning, a missing farm meaning every
+     * farm. The inspections come from one query, and the most recent one of each
+     * block is picked in Java: latest date, then highest identifier.
+     *
+     * @param farmId farm identifier, or {@code null} for every farm
+     * @return one line per inspected block, by block code then farm
+     */
+    public List<BlockHealthResponse> getBlockHealth(Integer farmId) {
+        return HealthCalculator.latestByBlock(healthInspectionRepository.findByOptionalFilters(farmId, null, null, null))
+                .stream()
+                .map(inspection -> new BlockHealthResponse(
+                        inspection.getFarmId(),
+                        inspection.getBlockCode(),
+                        inspection.getId(),
+                        inspection.getInspectedOn(),
+                        inspection.getHealthScorePct(),
+                        HealthCalculator.category(inspection.getHealthScorePct())))
                 .toList();
     }
 }

@@ -1,7 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingResolutionRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
@@ -185,5 +187,95 @@ public class HealthFindingControllerTest {
         // Assert
         assertApiError(result, 400, "Bad Request", "Invalid value for parameter 'status'", URL);
         result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    private ResultActions postResolution(long findingId, String body) throws Exception {
+        return mockMvc.perform(post(URL + "/" + findingId + "/resolution")
+                .contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    @Test
+    void resolveFinding_shouldReturn201WithTheFinding() throws Exception {
+        // Arrange
+        LocalDate september20 = LocalDate.of(2026, 9, 20);
+        when(healthFindingService.resolveFinding(eq(1L), any(FindingResolutionRequest.class)))
+                .thenReturn(new HealthFindingResponse(1L, 1L, null, "C", LocalDate.of(2026, 9, 1), "ANTHRACNOSE",
+                        "Anthracnose", HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.TREATED, 1,
+                        LocalDate.of(2026, 9, 4), LocalDate.of(2026, 9, 18), september20, "No new lesions"));
+        // Act
+        ResultActions result = postResolution(1L, """
+                {"resolvedOn":"2026-09-20","note":"No new lesions"}
+                """);
+        // Assert
+        result.andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.status").value("TREATED"))
+                .andExpect(jsonPath("$.resolvedOn").value("2026-09-20"))
+                .andExpect(jsonPath("$.resolutionNote").value("No new lesions"));
+    }
+
+    @Test
+    void resolveFinding_shouldReturn409_whenAlreadyResolved() throws Exception {
+        // Arrange
+        when(healthFindingService.resolveFinding(eq(1L), any(FindingResolutionRequest.class)))
+                .thenThrow(new ConflictException("Finding 1 was already resolved on 2026-09-20"));
+        // Act
+        ResultActions result = postResolution(1L, """
+                {"resolvedOn":"2026-09-20"}
+                """);
+        // Assert
+        assertApiError(result, 409, "Conflict", "Finding 1 was already resolved on 2026-09-20",
+                URL + "/1/resolution");
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void resolveFinding_shouldReturn422_whenDatedBeforeTheLastTreatment() throws Exception {
+        // Arrange
+        when(healthFindingService.resolveFinding(eq(1L), any(FindingResolutionRequest.class)))
+                .thenThrow(new BusinessRuleException(
+                        "The resolution date 2026-09-03 is before the last treatment date 2026-09-04 of finding 1"));
+        // Act
+        ResultActions result = postResolution(1L, """
+                {"resolvedOn":"2026-09-03"}
+                """);
+        // Assert
+        assertApiError(result, 422, "Unprocessable Entity",
+                "The resolution date 2026-09-03 is before the last treatment date 2026-09-04 of finding 1",
+                URL + "/1/resolution");
+    }
+
+    @Test
+    void resolveFinding_shouldReturn404_whenTheFindingIsUnknown() throws Exception {
+        // Arrange
+        when(healthFindingService.resolveFinding(eq(999L), any(FindingResolutionRequest.class)))
+                .thenThrow(new HealthFindingNotFoundException(999L));
+        // Act
+        ResultActions result = postResolution(999L, """
+                {"resolvedOn":"2026-09-20"}
+                """);
+        // Assert
+        assertApiError(result, 404, "Not Found", "Health finding with ID 999 not found", URL + "/999/resolution");
+    }
+
+    @Test
+    void resolveFinding_shouldReturn400_whenTheDateIsMissingOrInTheFuture() throws Exception {
+        // Missing date, note too long
+        ResultActions missing = postResolution(1L, """
+                {"note":"%s"}
+                """.formatted("x".repeat(256)));
+        assertApiError(missing, 400, "Bad Request", "Validation failed", URL + "/1/resolution");
+        missing.andExpect(jsonPath("$.fieldErrors", aMapWithSize(2)))
+                .andExpect(jsonPath("$.fieldErrors.resolvedOn").value("resolvedOn is required"))
+                .andExpect(jsonPath("$.fieldErrors.note").value("note must be at most 255 characters"));
+        // Date in the future
+        ResultActions future = postResolution(1L, """
+                {"resolvedOn":"2999-01-01"}
+                """);
+        assertApiError(future, 400, "Bad Request", "Validation failed", URL + "/1/resolution");
+        future.andExpect(jsonPath("$.fieldErrors", aMapWithSize(1)))
+                .andExpect(jsonPath("$.fieldErrors.resolvedOn").value("resolvedOn must be today or in the past"));
+        verify(healthFindingService, never()).resolveFinding(any(), any());
     }
 }

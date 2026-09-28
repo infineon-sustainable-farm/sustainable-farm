@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingResolutionRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
@@ -36,13 +37,15 @@ import java.util.List;
  * <ul>
  * <li>{@code GET /api/plants/health-findings} — the findings as a flat list, with their status</li>
  * <li>{@code POST /api/plants/health-findings/{id}/treatments} — record a treatment answering a finding</li>
+ * <li>{@code POST /api/plants/health-findings/{id}/resolution} — resolve a finding, once</li>
  * </ul>
  * <p>
  * The findings are written with their inspection, through
  * {@link HealthInspectionController}. Errors use the application-wide
  * {@code ApiError} body: 400 with {@code fieldErrors} for an invalid request,
- * 404 for an unknown finding, 422 when a treatment predates the inspection or
- * its finding is resolved.
+ * 404 for an unknown finding, 409 for a second resolution, 422 when a
+ * treatment or a resolution comes too early, or a treatment comes after the
+ * resolution.
  *
  * @since 1.0
  */
@@ -92,5 +95,23 @@ public class HealthFindingController {
                                                                   @Valid @RequestBody FindingTreatmentRequest treatmentRequest) {
       HealthTreatmentResponse treatmentResponse = healthTreatmentService.recordFindingTreatment(id, treatmentRequest);
       return ResponseEntity.status(HttpStatus.CREATED).body(treatmentResponse);
+   }
+
+   @PostMapping("/{id}/resolution")
+   @Operation(summary = "Resolve a finding",
+         description = "Records the day the problem was seen to be settled, with an optional note, once. The "
+               + "date cannot predate the inspection nor the last treatment of the finding. The status becomes "
+               + "TREATED, or CLOSED_WITHOUT_TREATMENT when it was never treated.")
+   @ApiResponses({
+         @ApiResponse(responseCode = "201", description = "The resolved finding, with its status"),
+         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "404", description = "No finding with this ID"),
+         @ApiResponse(responseCode = "409", description = "The finding is already resolved"),
+         @ApiResponse(responseCode = "422", description = "The date predates the inspection or the last treatment")
+   })
+   public ResponseEntity<HealthFindingResponse> resolveFinding(@PathVariable Long id,
+                                                               @Valid @RequestBody FindingResolutionRequest resolutionRequest) {
+      HealthFindingResponse findingResponse = healthFindingService.resolveFinding(id, resolutionRequest);
+      return ResponseEntity.status(HttpStatus.CREATED).body(findingResponse);
    }
 }

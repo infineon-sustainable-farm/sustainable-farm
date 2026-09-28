@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthCategory;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus;
+import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
 import com.infineonbit.sustainablefarm.modules.plants.service.HealthCalculator.TreatmentSummary;
 import org.junit.jupiter.api.Test;
@@ -87,5 +88,38 @@ public class HealthCalculatorTest {
     @Test
     void summarize_shouldBeEmpty_whenThereIsNoTreatment() {
         assertEquals(new TreatmentSummary(0, null, null), HealthCalculator.summarize(List.of()));
+    }
+
+    private static HealthInspection inspection(long id, Integer farmId, String blockCode, LocalDate inspectedOn) {
+        return new HealthInspection(id, farmId, blockCode, inspectedOn, 60, null, null, "user_entry", null);
+    }
+
+    private static List<Long> ids(List<HealthInspection> inspections) {
+        return inspections.stream().map(HealthInspection::getId).toList();
+    }
+
+    @Test
+    void latestByBlock_shouldKeepTheLatestInspectionOfEachBlock_byDateThenId() {
+        // Arrange: block C inspected three times, twice on its latest day; block D once
+        List<HealthInspection> inspections = List.of(
+                inspection(4, null, "C", LocalDate.of(2026, 9, 21)),
+                inspection(1, null, "C", LocalDate.of(2026, 9, 1)),
+                inspection(5, null, "D", LocalDate.of(2026, 9, 2)),
+                inspection(6, null, "C", LocalDate.of(2026, 9, 21)));
+        // Act & Assert: the highest identifier breaks the tie of the same date
+        assertEquals(List.of(6L, 5L), ids(HealthCalculator.latestByBlock(inspections)));
+        assertEquals(List.of(), HealthCalculator.latestByBlock(List.of()));
+    }
+
+    @Test
+    void latestByBlock_shouldTellANullFarmFromFarm1_andSortByBlockThenFarm() {
+        // Arrange: block C with no farm and block C of farm 1 are two blocks
+        List<HealthInspection> inspections = List.of(
+                inspection(1, 1, "C", LocalDate.of(2026, 9, 1)),
+                inspection(2, null, "D", LocalDate.of(2026, 9, 2)),
+                inspection(3, null, "C", LocalDate.of(2026, 9, 3)),
+                inspection(4, 1, "C", LocalDate.of(2026, 8, 1)));
+        // Act & Assert: by block code, then farm with no farm first
+        assertEquals(List.of(3L, 1L, 2L), ids(HealthCalculator.latestByBlock(inspections)));
     }
 }

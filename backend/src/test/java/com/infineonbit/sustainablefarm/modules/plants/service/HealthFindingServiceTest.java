@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingResolutionRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFinding;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus;
@@ -9,6 +12,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReferenc
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
 import com.infineonbit.sustainablefarm.modules.plants.entity.InspectionMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HealthFindingNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthTreatmentRepository;
 import org.junit.jupiter.api.Test;
@@ -21,10 +25,13 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -118,5 +125,133 @@ public class HealthFindingServiceTest {
         // Assert: a blank block is no filter, and no treatment query is sent
         assertTrue(findings.isEmpty());
         verify(healthTreatmentRepository, never()).findByFindingIds(any());
+    }
+
+    /**
+     * The anthracnose of block C, inspected on 1 September: read once before the
+     * resolution, then once more after it, as the database would return it.
+     */
+    private void anthracnoseResolvedOn(LocalDate resolvedOn, String note, List<LocalDate> treatmentDates) {
+        HealthFinding open = finding(10L, ANTHRACNOSE, null, null);
+        HealthFinding resolved = new HealthFinding(10L, BLOCK_C, ANTHRACNOSE, null, "42", resolvedOn, note,
+                "user_entry", NOW);
+        when(healthFindingRepository.findById(10L)).thenReturn(Optional.of(open)).thenReturn(Optional.of(resolved));
+        when(healthTreatmentRepository.findByFindingIds(List.of(10L))).thenReturn(treatmentDates.stream()
+                .map(date -> treatment(open, date, 14))
+                .toList());
+    }
+
+    private static FindingResolutionRequest resolution(LocalDate resolvedOn) {
+        return new FindingResolutionRequest(resolvedOn, " No new lesions ");
+    }
+
+    @Test
+    void resolveFinding_shouldStoreTheDateAndNote_andReturnTreated() {
+        // Arrange
+        LocalDate september20 = LocalDate.of(2026, 9, 20);
+        anthracnoseResolvedOn(september20, "No new lesions", List.of(LocalDate.of(2026, 9, 4)));
+        when(healthFindingRepository.resolve(10L, september20, "No new lesions", NOW)).thenReturn(1);
+        // Act
+        HealthFindingResponse response = healthFindingService.resolveFinding(10L, resolution(september20), NOW);
+        // Assert: the trimmed note written by the conditional update, and the new status
+        verify(healthFindingRepository).resolve(10L, september20, "No new lesions", NOW);
+        assertEquals(new HealthFindingResponse(10L, 1L, null, "C", SEPTEMBER_1, "ANTHRACNOSE", "Anthracnose",
+                HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.TREATED, 1, LocalDate.of(2026, 9, 4),
+                LocalDate.of(2026, 9, 18), september20, "No new lesions"), response);
+    }
+
+    @Test
+    void resolveFinding_shouldReturnClosedWithoutTreatment_whenNeverTreated() {
+        // Arrange
+        LocalDate september10 = LocalDate.of(2026, 9, 10);
+        anthracnoseResolvedOn(september10, null, List.of());
+        when(healthFindingRepository.resolve(10L, september10, null, NOW)).thenReturn(1);
+        // Act
+        HealthFindingResponse response = healthFindingService.resolveFinding(10L,
+                new FindingResolutionRequest(september10, "  "), NOW);
+        // Assert: a blank note is no note
+        assertEquals(HealthFindingStatus.CLOSED_WITHOUT_TREATMENT, response.status());
+        assertEquals(0, response.treatmentCount());
+        assertEquals(september10, response.resolvedOn());
+    }
+
+    @Test
+    void resolveFinding_shouldThrow409_whenAlreadyResolved() {
+        // Arrange
+        when(healthFindingRepository.findById(10L)).thenReturn(Optional.of(
+                finding(10L, ANTHRACNOSE, null, LocalDate.of(2026, 9, 20))));
+        // Act
+        ConflictException exception = assertThrows(ConflictException.class,
+                () -> healthFindingService.resolveFinding(10L, resolution(LocalDate.of(2026, 9, 21)), NOW));
+        // Assert
+        assertEquals("Finding 10 was already resolved on 2026-09-20", exception.getMessage());
+        verify(healthFindingRepository, never()).resolve(anyLong(), any(), any(), any());
+    }
+
+    @Test
+    void resolveFinding_shouldThrow409_whenAnotherRequestResolvedItFirst() {
+        // Arrange: open when read, resolved by another request before the update
+        LocalDate september20 = LocalDate.of(2026, 9, 20);
+        anthracnoseResolvedOn(september20, "Resolved elsewhere", List.of());
+        when(healthFindingRepository.resolve(10L, LocalDate.of(2026, 9, 21), "No new lesions", NOW)).thenReturn(0);
+        // Act
+        ConflictException exception = assertThrows(ConflictException.class,
+                () -> healthFindingService.resolveFinding(10L, resolution(LocalDate.of(2026, 9, 21)), NOW));
+        // Assert: the same message, with the date the other request wrote
+        assertEquals("Finding 10 was already resolved on 2026-09-20", exception.getMessage());
+    }
+
+    @Test
+    void resolveFinding_shouldThrow422_whenDatedBeforeTheInspection() {
+        // Arrange
+        when(healthFindingRepository.findById(10L)).thenReturn(Optional.of(finding(10L, ANTHRACNOSE, null, null)));
+        // Act
+        BusinessRuleException exception = assertThrows(BusinessRuleException.class,
+                () -> healthFindingService.resolveFinding(10L, resolution(LocalDate.of(2026, 8, 30)), NOW));
+        // Assert
+        assertEquals("The resolution date 2026-08-30 is before the inspection date 2026-09-01 of finding 10",
+                exception.getMessage());
+        verify(healthFindingRepository, never()).resolve(anyLong(), any(), any(), any());
+    }
+
+    @Test
+    void resolveFinding_shouldThrow422_whenDatedBeforeTheLastTreatment() {
+        // Arrange: treated on 4 and 10 September
+        HealthFinding open = finding(10L, ANTHRACNOSE, null, null);
+        when(healthFindingRepository.findById(10L)).thenReturn(Optional.of(open));
+        when(healthTreatmentRepository.findByFindingIds(List.of(10L))).thenReturn(List.of(
+                treatment(open, LocalDate.of(2026, 9, 4), 14),
+                treatment(open, LocalDate.of(2026, 9, 10), 1)));
+        // Act
+        BusinessRuleException exception = assertThrows(BusinessRuleException.class,
+                () -> healthFindingService.resolveFinding(10L, resolution(LocalDate.of(2026, 9, 5)), NOW));
+        // Assert
+        assertEquals("The resolution date 2026-09-05 is before the last treatment date 2026-09-10 of finding 10",
+                exception.getMessage());
+        verify(healthFindingRepository, never()).resolve(anyLong(), any(), any(), any());
+    }
+
+    @Test
+    void resolveFinding_shouldAllowTheDayOfTheLastTreatment() {
+        // Arrange
+        LocalDate september4 = LocalDate.of(2026, 9, 4);
+        anthracnoseResolvedOn(september4, "No new lesions", List.of(september4));
+        when(healthFindingRepository.resolve(10L, september4, "No new lesions", NOW)).thenReturn(1);
+        // Act
+        HealthFindingResponse response = healthFindingService.resolveFinding(10L, resolution(september4), NOW);
+        // Assert
+        assertEquals(HealthFindingStatus.TREATED, response.status());
+        assertEquals(september4, response.resolvedOn());
+    }
+
+    @Test
+    void resolveFinding_shouldThrow404_whenTheFindingDoesNotExist() {
+        // Arrange
+        when(healthFindingRepository.findById(999L)).thenReturn(Optional.empty());
+        // Act
+        HealthFindingNotFoundException exception = assertThrows(HealthFindingNotFoundException.class,
+                () -> healthFindingService.resolveFinding(999L, resolution(LocalDate.of(2026, 9, 20)), NOW));
+        // Assert
+        assertEquals("Health finding with ID 999 not found", exception.getMessage());
     }
 }

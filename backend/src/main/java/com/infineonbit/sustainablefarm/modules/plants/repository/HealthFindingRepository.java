@@ -2,10 +2,12 @@ package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFinding;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -56,4 +58,30 @@ public interface HealthFindingRepository extends JpaRepository<HealthFinding, Lo
                                               @Param("blockCode") String blockCode,
                                               @Param("from") LocalDate from,
                                               @Param("to") LocalDate to);
+
+    /**
+     * Writes the resolution of a finding, only if it has none yet.
+     *
+     * <p>The condition sits in the update itself, so two resolutions sent at the
+     * same time cannot both be written: the database runs the updates of one row
+     * one after the other, and the second finds the resolution already there and
+     * touches no row. The persistence context is cleared afterwards, so the
+     * finding read next comes from the database.
+     *
+     * @param id         the finding
+     * @param resolvedOn the resolution date
+     * @param note       the resolution note, or {@code null}
+     * @param now        the write time, stored as {@code lastUpdated}
+     * @return 1 when the resolution was written, 0 when the finding was already resolved
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE HealthFinding f
+            SET f.resolvedOn = :resolvedOn, f.resolutionNote = :note, f.lastUpdated = :now
+            WHERE f.id = :id AND f.resolvedOn IS NULL
+            """)
+    int resolve(@Param("id") Long id,
+                @Param("resolvedOn") LocalDate resolvedOn,
+                @Param("note") String note,
+                @Param("now") Instant now);
 }

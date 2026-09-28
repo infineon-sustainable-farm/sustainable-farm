@@ -2,11 +2,14 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthCategory;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus;
+import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Health values computed on every read, with no data of their own: the
@@ -27,6 +30,19 @@ final class HealthCalculator {
 
         static final TreatmentSummary NONE = new TreatmentSummary(0, null, null);
     }
+
+    /** A block, as the (farm, block) pair: a {@code null} farm is a farm of its own. */
+    private record BlockKey(Integer farmId, String blockCode) {
+    }
+
+    /** Most recent first: the latest date, then the highest identifier among the same date. */
+    private static final Comparator<HealthInspection> RECENCY =
+            Comparator.comparing(HealthInspection::getInspectedOn).thenComparing(HealthInspection::getId);
+
+    /** Blocks by code, then by farm, a {@code null} farm first. Sorted in Java, as databases order NULL differently. */
+    private static final Comparator<HealthInspection> BLOCK_ORDER =
+            Comparator.comparing(HealthInspection::getBlockCode)
+                    .thenComparing(HealthInspection::getFarmId, Comparator.nullsFirst(Comparator.naturalOrder()));
 
     // Highest score of each category, the only place the bands are written:
     // 0-20 severe stress, 21-40 weakened, 41-60 moderate, 61-80 healthy, 81-100 very healthy.
@@ -113,5 +129,24 @@ final class HealthCalculator {
                 .max(Comparator.naturalOrder())
                 .orElseThrow();
         return new TreatmentSummary(treatments.size(), lastTreatedOn, harvestAllowedFrom);
+    }
+
+    /**
+     * The most recent inspection of each block: the latest by date, then the
+     * one with the highest identifier when two share a date. A block is the
+     * (farm, block) pair, a {@code null} farm being a farm of its own.
+     *
+     * @param inspections inspections in any order, possibly empty
+     * @return one inspection per block, by block code then farm
+     */
+    static List<HealthInspection> latestByBlock(List<HealthInspection> inspections) {
+        Map<BlockKey, HealthInspection> latest = new HashMap<>();
+        for (HealthInspection inspection : inspections) {
+            latest.merge(new BlockKey(inspection.getFarmId(), inspection.getBlockCode()), inspection,
+                    (kept, candidate) -> RECENCY.compare(candidate, kept) > 0 ? candidate : kept);
+        }
+        return latest.values().stream()
+                .sorted(BLOCK_ORDER)
+                .toList();
     }
 }
