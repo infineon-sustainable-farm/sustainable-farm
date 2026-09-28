@@ -1,0 +1,263 @@
+package com.infineonbit.sustainablefarm.modules.plants.controller;
+
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryOrigin;
+import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
+import com.infineonbit.sustainablefarm.modules.plants.exception.NurseryBatchNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.service.NurseryBatchService;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.hamcrest.Matchers.aMapWithSize;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/** The error bodies are asserted in full, as for the planting and treatment routes. */
+@WebMvcTest(NurseryBatchController.class)
+@Import(CoreExceptionHandler.class)
+public class NurseryBatchControllerTest {
+
+    private static final String URL = "/api/plants/nursery-batches";
+    private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
+    private static final LocalDate MARCH_2 = LocalDate.of(2026, 3, 2);
+    private static final LocalDate SEPTEMBER_20 = LocalDate.of(2026, 9, 20);
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private NurseryBatchService nurseryBatchService;
+
+    private ResultActions postBatch(String body) throws Exception {
+        return mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    /** Common part of every 4xx body: the application-wide ApiError envelope. */
+    private static void assertApiError(ResultActions result, int status, String error, String message, String path)
+            throws Exception {
+        result.andExpect(status().is(status))
+                .andExpect(jsonPath("$.status").value(status))
+                .andExpect(jsonPath("$.error").value(error))
+                .andExpect(jsonPath("$.message").value(message))
+                .andExpect(jsonPath("$.path").value("uri=" + path))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    /** A 400 of the validation of a new batch, with the given field errors only. */
+    private void assertFieldErrors(ResultActions result, String... fieldsAndMessages) throws Exception {
+        assertApiError(result, 400, "Bad Request", "Validation failed", URL);
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(fieldsAndMessages.length / 2)));
+        for (int index = 0; index < fieldsAndMessages.length; index += 2) {
+            result.andExpect(jsonPath("$.fieldErrors['" + fieldsAndMessages[index] + "']")
+                    .value(fieldsAndMessages[index + 1]));
+        }
+        verify(nurseryBatchService, never()).createBatch(any());
+    }
+
+    /** A batch started on March 2, with the given code, origin, supplier fields and initial count. */
+    private static String batch(String batchCode, String origin, String supplierFields, String initialCount) {
+        return """
+                {"batchCode":"%s","varietyName":"Keitt","origin":"%s",%s"startedOn":"2026-03-02",
+                 "initialCount":%s,"initialStage":"GERMINATION","plannedTransplantOn":"2026-09-20",
+                 "plannedBlockCode":"E"}
+                """.formatted(batchCode, origin, supplierFields, initialCount);
+    }
+
+    private static NurseryBatchResponse p1() {
+        return new NurseryBatchResponse(1L, null, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
+                SEPTEMBER_20, "E", NurseryStage.GERMINATION, MARCH_2, 0, 0, 150, 150, 100.0, "user_entry", NOW);
+    }
+
+    @Test
+    void createBatch_shouldReturn201WithTheComputedValues() throws Exception {
+        // Arrange
+        when(nurseryBatchService.createBatch(any(NurseryBatchRequest.class))).thenReturn(p1());
+        // Act
+        ResultActions result = postBatch(batch("P1", "IN_HOUSE", "", "150"));
+        // Assert: no Location header, the batch in the body
+        result.andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.farmId").value(nullValue()))
+                .andExpect(jsonPath("$.batchCode").value("P1"))
+                .andExpect(jsonPath("$.varietyName").value("Keitt"))
+                .andExpect(jsonPath("$.origin").value("IN_HOUSE"))
+                .andExpect(jsonPath("$.supplier").value(nullValue()))
+                .andExpect(jsonPath("$.supplierLotNumber").value(nullValue()))
+                .andExpect(jsonPath("$.startedOn").value("2026-03-02"))
+                .andExpect(jsonPath("$.initialCount").value(150))
+                .andExpect(jsonPath("$.plannedTransplantOn").value("2026-09-20"))
+                .andExpect(jsonPath("$.plannedBlockCode").value("E"))
+                .andExpect(jsonPath("$.currentStage").value("GERMINATION"))
+                .andExpect(jsonPath("$.currentStageSince").value("2026-03-02"))
+                .andExpect(jsonPath("$.lossCount").value(0))
+                .andExpect(jsonPath("$.transplantedCount").value(0))
+                .andExpect(jsonPath("$.currentCount").value(150))
+                .andExpect(jsonPath("$.survivedCount").value(150))
+                .andExpect(jsonPath("$.survivalRatePct").value(100.0))
+                .andExpect(jsonPath("$.source").value("user_entry"))
+                .andExpect(jsonPath("$.lastUpdated").value("2026-09-28T10:00:00Z"));
+    }
+
+    @Test
+    void createBatch_shouldReturn400ListingEveryFailingField() throws Exception {
+        // Act: plannedTransplantOn is missing
+        ResultActions result = postBatch("""
+                {"farmId":0,"batchCode":"P 1","varietyName":" ","origin":"gift","startedOn":"2999-01-01",
+                 "initialCount":0,"initialStage":"seed","plannedBlockCode":"Block E"}
+                """);
+        // Assert: the origin is malformed, so the supplier rule is left to it
+        assertFieldErrors(result,
+                "farmId", "farmId must be at least 1",
+                "batchCode", "batchCode must be up to 20 letters, digits or hyphens, such as P1 or KEITT-2026-01",
+                "varietyName", "varietyName is required",
+                "origin", "origin must be IN_HOUSE or PURCHASED",
+                "startedOn", "startedOn must be today or in the past",
+                "initialCount", "initialCount must be a whole number, 1 or more",
+                "initialStage", "initialStage must be GERMINATION, ROOTSTOCK_GROWTH, GRAFTED, HARDENING or "
+                        + "READY_TO_TRANSPLANT",
+                "plannedTransplantOn", "plannedTransplantOn is required",
+                "plannedBlockCode", "plannedBlockCode must be a short code such as A or B2, without prefix or space");
+    }
+
+    @Test
+    void createBatch_shouldReturn400_whenTheInitialCountIsNotAWholeNumber() throws Exception {
+        // 150.5 must be refused, not cut to 150
+        assertFieldErrors(postBatch(batch("P3", "IN_HOUSE", "", "150.5")),
+                "initialCount", "initialCount must be a whole number, 1 or more");
+    }
+
+    @Test
+    void createBatch_shouldReturn400_whenAPurchasedBatchHasNoSupplier() throws Exception {
+        assertFieldErrors(postBatch(batch("P2", "PURCHASED", "", "200")),
+                "supplier", "supplier is required when origin is PURCHASED");
+    }
+
+    @Test
+    void createBatch_shouldReturn400_whenAnInHouseBatchHasASupplierOrALotNumber() throws Exception {
+        assertFieldErrors(postBatch(batch("P1", "IN_HOUSE",
+                        "\"supplier\":\"Test nursery\",\"supplierLotNumber\":\"L-2026-07\",", "150")),
+                "supplier", "supplier must be left out unless origin is PURCHASED",
+                "supplierLotNumber", "supplierLotNumber must be left out unless origin is PURCHASED");
+    }
+
+    @Test
+    void createBatch_shouldReturn400_whenTheSupplierOrTheLotNumberIsTooLong() throws Exception {
+        String supplierFields = "\"supplier\":\"%s\",\"supplierLotNumber\":\"%s\","
+                .formatted("x".repeat(256), "x".repeat(51));
+        assertFieldErrors(postBatch(batch("P2", " purchased ", supplierFields, "200")),
+                "supplier", "supplier must be at most 255 characters",
+                "supplierLotNumber", "supplierLotNumber must be at most 50 characters");
+    }
+
+    @Test
+    void createBatch_shouldReturn400_whenTheBatchCodeIsLongerThan20Characters() throws Exception {
+        assertFieldErrors(postBatch(batch("KEITT-2026-SEPTEMBER1", "IN_HOUSE", "", "150")),
+                "batchCode", "batchCode must be up to 20 letters, digits or hyphens, such as P1 or KEITT-2026-01");
+    }
+
+    @Test
+    void createBatch_shouldAcceptCodesInAnyCaseAndABlankPlannedBlock() throws Exception {
+        // Arrange
+        when(nurseryBatchService.createBatch(any(NurseryBatchRequest.class))).thenReturn(p1());
+        // Act
+        ResultActions result = postBatch("""
+                {"batchCode":" p1 ","varietyName":"Keitt","origin":" in_house ","startedOn":"2026-03-02",
+                 "initialCount":150,"initialStage":" germination ","plannedTransplantOn":"2026-09-20",
+                 "plannedBlockCode":" "}
+                """);
+        // Assert: the values reach the service as sent; it normalizes them
+        result.andExpect(status().isCreated());
+        ArgumentCaptor<NurseryBatchRequest> captor = ArgumentCaptor.forClass(NurseryBatchRequest.class);
+        verify(nurseryBatchService).createBatch(captor.capture());
+        assertEquals(" p1 ", captor.getValue().batchCode());
+        assertEquals(" in_house ", captor.getValue().origin());
+        assertEquals(" germination ", captor.getValue().initialStage());
+        assertEquals(150.0, captor.getValue().initialCount());
+        assertEquals(" ", captor.getValue().plannedBlockCode());
+    }
+
+    @Test
+    void createBatch_shouldReturn409_whenTheCodeExists() throws Exception {
+        // Arrange
+        when(nurseryBatchService.createBatch(any(NurseryBatchRequest.class)))
+                .thenThrow(new ConflictException("A nursery batch with code P1 already exists"));
+        // Act
+        ResultActions result = postBatch(batch("p1", "IN_HOUSE", "", "150"));
+        // Assert
+        assertApiError(result, 409, "Conflict", "A nursery batch with code P1 already exists", URL);
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void createBatch_shouldReturn422_whenThePlannedDateIsBeforeTheStart() throws Exception {
+        // Arrange
+        when(nurseryBatchService.createBatch(any(NurseryBatchRequest.class)))
+                .thenThrow(new BusinessRuleException(
+                        "The planned transplant date 2026-03-01 is before the start date 2026-03-02 of batch P3"));
+        // Act
+        ResultActions result = postBatch(batch("P3", "IN_HOUSE", "", "150"));
+        // Assert
+        assertApiError(result, 422, "Unprocessable Entity",
+                "The planned transplant date 2026-03-01 is before the start date 2026-03-02 of batch P3", URL);
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    @Test
+    void getAllBatches_shouldPassTheFarmAndStageFilters() throws Exception {
+        // Arrange
+        when(nurseryBatchService.getAllBatches(1, NurseryStage.GERMINATION)).thenReturn(List.of(p1()));
+        // Act & Assert
+        mockMvc.perform(get(URL).param("farmId", "1").param("stage", "GERMINATION"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].batchCode").value("P1"));
+        verify(nurseryBatchService).getAllBatches(1, NurseryStage.GERMINATION);
+    }
+
+    @Test
+    void getAllBatches_shouldReturn400_whenTheStageIsUnknown() throws Exception {
+        // An unknown value and a lower-case one are both refused, as for the other enum filters
+        for (String stage : List.of("SEED", "hardening")) {
+            ResultActions result = mockMvc.perform(get(URL).param("stage", stage));
+            assertApiError(result, 400, "Bad Request", "Invalid value for parameter 'stage'", URL);
+            result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+        }
+        verify(nurseryBatchService, never()).getAllBatches(any(), any());
+    }
+
+    @Test
+    void getBatchById_shouldReturn404_whenTheBatchIsUnknown() throws Exception {
+        // Arrange
+        when(nurseryBatchService.getBatchById(999L)).thenThrow(new NurseryBatchNotFoundException(999L));
+        // Act
+        ResultActions result = mockMvc.perform(get(URL + "/999"));
+        // Assert
+        assertApiError(result, 404, "Not Found", "Nursery batch with ID 999 not found", URL + "/999");
+    }
+}
