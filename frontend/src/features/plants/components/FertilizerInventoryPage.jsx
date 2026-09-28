@@ -1,13 +1,16 @@
 import { useEffect } from "react";
+import FertilizerMovementsSection from "./FertilizerMovementsSection";
 import FertilizerStockSection from "./FertilizerStockSection";
 
 /**
- * Fertilizer Inventory: the current stock of each fertilizer.
+ * Fertilizer Inventory: the current stock of each fertilizer, then the history
+ * of its purchases, applications and losses.
  *
  * The mock-up's last restock date and provisional-threshold note are left
  * out: the API records no restock date, and each threshold is the one entered
  * for its fertilizer. Its stock chart is left out too: the API gives no stock
- * history, and kilograms and litres cannot share one axis.
+ * history, and kilograms and litres cannot share one axis. Its block filter
+ * moves into the history, the only part of the page kept by block.
  */
 export default function FertilizerInventoryPage() {
     useEffect(() => {
@@ -34,6 +37,8 @@ export default function FertilizerInventoryPage() {
                 </header>
 
                 <FertilizerStockSection />
+
+                <FertilizerMovementsSection />
             </div>
         </div>
     );
