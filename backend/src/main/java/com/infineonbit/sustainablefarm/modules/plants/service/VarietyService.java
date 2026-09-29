@@ -3,17 +3,22 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.VarietyResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.exception.VarietyNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class VarietyService {
 
     private final VarietyRepository varietyRepository;
+    private final PopulationEventRepository populationEventRepository;
 
     /**
      * Turns a blank filter into no filter at all.
@@ -36,18 +41,21 @@ public class VarietyService {
     /**
      * Maps an entity to its API representation.
      *
-     * <p>No value is derived or defaulted here: a NULL column stays a
+     * <p>No stored value is derived or defaulted here: a NULL column stays a
      * {@code null} component, and the client decides how to display it.
      *
-     * @param variety the entity to map
+     * @param variety          the entity to map
+     * @param currentTreeCount balance of the row's population events, or
+     *                         {@code null} if it has none
      * @return the API representation of that variety
      */
-    private static VarietyResponse toResponse(Variety variety) {
+    private static VarietyResponse toResponse(Variety variety, Integer currentTreeCount) {
         return new VarietyResponse(
                 variety.getId(),
                 variety.getFarmId(),
                 variety.getName(),
                 variety.getTreeCount(),
+                currentTreeCount,
                 variety.getRowSpacingM(),
                 variety.getTreeSpacingM(),
                 variety.getTreeDensityPerHa(),
@@ -75,7 +83,10 @@ public class VarietyService {
         List<Variety> varieties = varietyRepository.findByOptionalFilters(
                 farmId,
                 normalizeFilter(blockCode));
-        return varieties.stream().map(VarietyService::toResponse).toList();
+        Map<Long, Integer> currentTreeCounts = currentTreeCounts(varieties);
+        return varieties.stream()
+                .map(variety -> toResponse(variety, currentTreeCounts.get(variety.getId())))
+                .toList();
     }
 
     /**
@@ -88,6 +99,27 @@ public class VarietyService {
     public VarietyResponse getVarietyById(Long id) {
         Variety variety = varietyRepository.findById(id)
                 .orElseThrow(() -> new VarietyNotFoundException(id));
-        return toResponse(variety);
+        return toResponse(variety, currentTreeCounts(List.of(variety)).get(variety.getId()));
+    }
+
+    /**
+     * Current number of trees of each variety, from its population events.
+     *
+     * <p>One query for the whole list, not one per row. A variety without any
+     * event has no entry in the map, so its {@code currentTreeCount} is
+     * {@code null}.
+     *
+     * @param varieties the varieties about to be returned
+     * @return the balance of each variety that has at least one event, by variety ID
+     */
+    private Map<Long, Integer> currentTreeCounts(List<Variety> varieties) {
+        if (varieties.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> ids = varieties.stream().map(Variety::getId).toList();
+        return populationEventRepository.findTreeBalances(ids).stream()
+                .collect(Collectors.toMap(
+                        TreeBalance::getVarietyId,
+                        balance -> Math.toIntExact(balance.getBalance())));
     }
 }

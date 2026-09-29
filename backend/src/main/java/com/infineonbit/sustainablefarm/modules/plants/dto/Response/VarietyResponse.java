@@ -18,12 +18,23 @@ import java.time.Instant;
  *
  * <p>A component is {@code null} whenever the underlying data does not exist.
  * Consumers render that as an explicit "no value", never as zero.
+ *
+ * <p>Two tree counts, which can differ:
+ * <ul>
+ *     <li>{@code treeCount} — the number declared when the row was created. For a
+ *         row created by a planting, the trees of that planting.</li>
+ *     <li>{@code currentTreeCount} — the balance of the population events recorded
+ *         for the row: plantings, replacements and extensions minus deaths and
+ *         removals. Computed on every read, never stored. {@code null} when the row
+ *         has no event: the current count is then unknown, not zero.</li>
+ * </ul>
  */
 public record VarietyResponse(
         Long id,
         Integer farmId,
         String name,
         Integer treeCount,
+        Integer currentTreeCount,
         Double rowSpacingM,
         Double treeSpacingM,
         Double treeDensityPerHa,

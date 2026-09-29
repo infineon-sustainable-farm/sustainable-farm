@@ -32,4 +32,31 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
             """)
     List<Variety> findByOptionalFilters(@Param("farmId") Integer farmId,
                                         @Param("blockCode") String blockCode);
+
+    /**
+     * Returns the variety rows of one (farm, block, name) triple, oldest first.
+     *
+     * <p>Unlike {@link #findByOptionalFilters}, a {@code null} farm is a value
+     * here, not a missing filter: it matches only the rows without a farm, so a
+     * row of farm 1 is never taken for a row without a farm. This is the
+     * NULL-safe comparison {@code GrowthCalendarService} applies in memory.
+     *
+     * <p>The name comparison ignores case, so "keitt" finds "Keitt". The block
+     * must match exactly; it is stored normalized ({@code "A"}).
+     *
+     * @param farmId    farm identifier, or {@code null} for the rows without a farm
+     * @param blockCode block code as stored, for example {@code "A"}
+     * @param name      variety name, compared ignoring case
+     * @return the matching rows, oldest first, possibly empty
+     */
+    @Query("""
+            SELECT v FROM Variety v
+            WHERE ((:farmId IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
+              AND v.blockCode = :blockCode
+              AND LOWER(v.name) = LOWER(:name)
+            ORDER BY v.id ASC
+            """)
+    List<Variety> findByFarmBlockAndName(@Param("farmId") Integer farmId,
+                                         @Param("blockCode") String blockCode,
+                                         @Param("name") String name);
 }

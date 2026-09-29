@@ -37,3 +37,14 @@ export function fetchGrowthCalendar({ blockCode, farmId } = {}) {
 
     return apiClient.get(PLANTS_ENDPOINTS.GROWTH_CALENDAR, { params });
 }
+
+/**
+ * Records a planting: date, block, variety and number of trees.
+ *
+ * The values go out as entered. The API trims and upper-cases the block code
+ * (" a " becomes "A"), answers 400 with fieldErrors for an invalid value, and
+ * 409 when the variety is already planted on that block.
+ */
+export function createPlanting(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.PLANTINGS, body);
+}

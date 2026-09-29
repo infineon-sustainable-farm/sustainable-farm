@@ -29,7 +29,8 @@ import java.util.List;
  * <li>{@code GET /api/plants/varieties/{id}} — a single variety</li>
  * </ul>
  * <p>
- * Read-only: the module exposes no write operation yet.
+ * Read-only. Varieties are written by recording a planting, see
+ * {@link PlantingController}.
  *
  * @since 1.0
  */
