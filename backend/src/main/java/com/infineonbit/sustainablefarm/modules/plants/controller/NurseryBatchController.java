@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequ
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
+import com.infineonbit.sustainablefarm.modules.plants.service.ConcurrentPlantingRetry;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryBatchService;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryEventService;
 
@@ -48,7 +49,8 @@ import java.util.List;
  * Errors use the application-wide {@code ApiError} body: 400 with
  * {@code fieldErrors} for an invalid request, 404 for an unknown batch, 409
  * when the farm already has a batch with this code or when the variety of the
- * batch is already planted on the block of a transplant, 422 when a date comes
+ * batch is already planted on the block of a transplant or another planting of
+ * that block was being recorded at the same time, 422 when a date comes
  * before the start of the batch or its last stage change, when a stage change
  * is to the current stage, or when a loss or a transplant exceeds the plants
  * left.
@@ -63,6 +65,7 @@ public class NurseryBatchController {
 
    private final NurseryBatchService nurseryBatchService;
    private final NurseryEventService nurseryEventService;
+   private final ConcurrentPlantingRetry concurrentPlantingRetry;
 
    @PostMapping
    @Operation(summary = "Start a nursery batch",
@@ -152,13 +155,16 @@ public class NurseryBatchController {
          @ApiResponse(responseCode = "201", description = "The recorded transplant, with the ID of its planting"),
          @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
          @ApiResponse(responseCode = "404", description = "No batch with this ID"),
-         @ApiResponse(responseCode = "409", description = "This variety is already planted on this block"),
+         @ApiResponse(responseCode = "409", description = "This variety is already planted on this block, or another "
+               + "planting of the block was being recorded at the same time; nothing was saved"),
          @ApiResponse(responseCode = "422", description = "The transplant predates the start of the batch, or "
                + "exceeds the plants left")
    })
    public ResponseEntity<NurseryEventResponse> recordTransplant(@PathVariable Long id,
                                                                 @Valid @RequestBody TransplantRequest transplantRequest) {
-      NurseryEventResponse eventResponse = nurseryEventService.recordTransplant(id, transplantRequest);
+      // Run once more, as a whole, when its planting lost a race; see ConcurrentPlantingRetry.
+      NurseryEventResponse eventResponse = concurrentPlantingRetry.runRetryingOnce(transplantRequest.blockCode(),
+            () -> nurseryEventService.recordTransplant(id, transplantRequest));
       return ResponseEntity.status(HttpStatus.CREATED).body(eventResponse);
    }
 }

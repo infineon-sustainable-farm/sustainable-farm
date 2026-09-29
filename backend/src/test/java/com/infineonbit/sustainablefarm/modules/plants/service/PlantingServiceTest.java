@@ -58,13 +58,13 @@ public class PlantingServiceTest {
     private static Variety zalkaKeitt() {
         return new Variety(
                 1L, null, "Keitt", 200, 8.0, 8.0, null, 44000.0,
-                null, null, "A", null, "Zalka_2025", null);
+                null, null, "A", null, "Zalka_2025", null, null);
     }
 
     private static GrowthCalendar calendar(String block, LocalDate plantingDate, String precision, String source) {
         return new GrowthCalendar(
                 5L, null, block, plantingDate, precision,
-                null, null, null, source, EARLIER);
+                null, null, null, source, EARLIER, null);
     }
 
     /** Saving a new variety row gives it an identifier, as the database would. */

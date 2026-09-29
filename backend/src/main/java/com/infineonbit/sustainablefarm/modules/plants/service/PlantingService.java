@@ -40,7 +40,7 @@ public class PlantingService {
      * @param blockCode the block code as received
      * @return the block code as stored
      */
-    private static String normalizeBlockCode(String blockCode) {
+    static String normalizeBlockCode(String blockCode) {
         return blockCode.trim().toUpperCase(Locale.ROOT);
     }
 
