@@ -1,7 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -50,4 +52,26 @@ public interface GrowthCalendarRepository extends JpaRepository<GrowthCalendar, 
             """)
     List<GrowthCalendar> findByFarmAndBlock(@Param("farmId") Integer farmId,
                                             @Param("blockCode") String blockCode);
+
+    /**
+     * Same rows as {@link #findByFarmAndBlock}, each locked until the end of
+     * the transaction.
+     *
+     * <p>Reserved to the planting service: two plantings of the same block
+     * update its calendar one after the other, so the older date is never
+     * overwritten by a later one. Must run inside a transaction.
+     *
+     * @param farmId    farm identifier, or {@code null} for the rows without a farm
+     * @param blockCode block code as stored, for example {@code "A"}
+     * @return the matching rows, oldest first, locked, possibly empty
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT c FROM GrowthCalendar c
+            WHERE ((:farmId IS NULL AND c.farmId IS NULL) OR c.farmId = :farmId)
+              AND c.blockCode = :blockCode
+            ORDER BY c.id ASC
+            """)
+    List<GrowthCalendar> findByFarmAndBlockForUpdate(@Param("farmId") Integer farmId,
+                                                     @Param("blockCode") String blockCode);
 }

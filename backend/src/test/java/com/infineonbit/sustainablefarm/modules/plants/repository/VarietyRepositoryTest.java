@@ -83,4 +83,19 @@ public class VarietyRepositoryTest {
         // Assert
         assertEquals(2, found.size());
     }
+
+    @Test
+    void findByFarmBlockAndNameForUpdate_shouldMatchTheSameRowsAsTheSharedLookup() {
+        // Arrange
+        Variety noFarm = save(null, "A", "Keitt");
+        Variety farm1 = save(1, "A", "Keitt");
+        save(null, "B", "Keitt");
+        // Act: the locked lookup runs inside the transaction of the test
+        List<Variety> foundWithoutFarm = varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "kEITT");
+        List<Variety> foundForFarm1 = varietyRepository.findByFarmBlockAndNameForUpdate(1, "A", "Keitt");
+        // Assert
+        assertEquals(List.of(noFarm.getId()), ids(foundWithoutFarm));
+        assertEquals(List.of(farm1.getId()), ids(foundForFarm1));
+        assertEquals(ids(varietyRepository.findByFarmBlockAndName(null, "A", "kEITT")), ids(foundWithoutFarm));
+    }
 }

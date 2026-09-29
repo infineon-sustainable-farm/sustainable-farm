@@ -100,8 +100,8 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldCreateVarietyCalendarAndEvent_whenBlockIsNew() {
         // Arrange
-        when(varietyRepository.findByFarmBlockAndName(null, "B", "Keitt")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlock(null, "B")).thenReturn(List.of());
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "B", "Keitt")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "B")).thenReturn(List.of());
         varietySaveAssignsId(10L);
         eventSaveAssignsId(100L);
         // Act
@@ -151,10 +151,10 @@ public class PlantingServiceTest {
     void recordPlanting_shouldReuseExistingVariety_whenNameDiffersOnlyByCase() {
         // Arrange: the repository matches names ignoring case, so "keitt" finds the Zalka row
         Variety zalkaKeitt = zalkaKeitt();
-        when(varietyRepository.findByFarmBlockAndName(null, "A", "keitt")).thenReturn(List.of(zalkaKeitt));
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "keitt")).thenReturn(List.of(zalkaKeitt));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(false);
-        when(growthCalendarRepository.findByFarmAndBlock(null, "A")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
         eventSaveAssignsId(100L);
         // Act
         PlantingResponse response = plantingService.recordPlanting(
@@ -174,7 +174,7 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldThrowConflict_whenVarietyIsAlreadyPlanted() {
         // Arrange
-        when(varietyRepository.findByFarmBlockAndName(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt()));
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt()));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(true);
         // Act
@@ -191,8 +191,8 @@ public class PlantingServiceTest {
     void recordPlanting_shouldMoveCalendarDateBack_whenPlantingIsOlder() {
         // Arrange: the block is dated 2024-05-10, the new planting is older
         GrowthCalendar blockA = calendar("A", LocalDate.of(2024, 5, 10), "day known", "user_entry");
-        when(varietyRepository.findByFarmBlockAndName(null, "A", "Kent")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlock(null, "A")).thenReturn(List.of(blockA));
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(blockA));
         varietySaveAssignsId(11L);
         eventSaveAssignsId(101L);
         // Act
@@ -209,8 +209,8 @@ public class PlantingServiceTest {
     void recordPlanting_shouldLeaveCalendarUntouched_whenRecordedDateIsOlder() {
         // Arrange: the block is dated 2022-03-01, the new planting is later
         GrowthCalendar blockA = calendar("A", LocalDate.of(2022, 3, 1), "day known", "user_entry");
-        when(varietyRepository.findByFarmBlockAndName(null, "A", "Kent")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlock(null, "A")).thenReturn(List.of(blockA));
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(blockA));
         varietySaveAssignsId(11L);
         eventSaveAssignsId(101L);
         // Act
@@ -225,8 +225,8 @@ public class PlantingServiceTest {
     void recordPlanting_shouldLeaveCalendarUntouched_whenRecordedDateIsTheSame() {
         // Arrange
         GrowthCalendar blockA = calendar("A", PLANTING_DATE, "day known", "user_entry");
-        when(varietyRepository.findByFarmBlockAndName(null, "A", "Kent")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlock(null, "A")).thenReturn(List.of(blockA));
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(blockA));
         varietySaveAssignsId(11L);
         eventSaveAssignsId(101L);
         // Act
@@ -240,10 +240,10 @@ public class PlantingServiceTest {
     void recordPlanting_shouldDateCalendar_whenRecordedDateIsNull() {
         // Arrange: the Zalka calendar row has no date; precision and source follow the entered date
         GrowthCalendar zalkaBlockA = calendar("A", null, "rainy season (year unknown)", "Zalka_2025");
-        when(varietyRepository.findByFarmBlockAndName(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt()));
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt()));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(false);
-        when(growthCalendarRepository.findByFarmAndBlock(null, "A")).thenReturn(List.of(zalkaBlockA));
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(zalkaBlockA));
         eventSaveAssignsId(100L);
         // Act
         plantingService.recordPlanting(request(null, "A", "Keitt", PLANTING_DATE, 150), NOW);
@@ -258,8 +258,8 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldNormalizeBlockCodeAndVarietyName() {
         // Arrange
-        when(varietyRepository.findByFarmBlockAndName(null, "A", "Keitt")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlock(null, "A")).thenReturn(List.of());
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
         varietySaveAssignsId(10L);
         eventSaveAssignsId(100L);
         // Act
@@ -274,8 +274,8 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldKeepTheFarmOfTheRequest_whenFarmIsGiven() {
         // Arrange: farm 1 is looked up as farm 1, never as "any farm"
-        when(varietyRepository.findByFarmBlockAndName(1, "A", "Keitt")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlock(1, "A")).thenReturn(List.of());
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(1, "A", "Keitt")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(1, "A")).thenReturn(List.of());
         varietySaveAssignsId(12L);
         eventSaveAssignsId(102L);
         // Act

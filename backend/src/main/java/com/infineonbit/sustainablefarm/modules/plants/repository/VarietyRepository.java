@@ -1,7 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -59,4 +61,31 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
     List<Variety> findByFarmBlockAndName(@Param("farmId") Integer farmId,
                                          @Param("blockCode") String blockCode,
                                          @Param("name") String name);
+
+    /**
+     * Same rows as {@link #findByFarmBlockAndName}, each locked until the end
+     * of the transaction.
+     *
+     * <p>Reserved to the planting service: a second planting of an existing
+     * row waits for the first one to commit, then sees its PLANTING. The shared
+     * lookup stays without a lock, so the harvest service and the callers
+     * outside a transaction keep working as before. Must run inside a
+     * transaction.
+     *
+     * @param farmId    farm identifier, or {@code null} for the rows without a farm
+     * @param blockCode block code as stored, for example {@code "A"}
+     * @param name      variety name, compared ignoring case
+     * @return the matching rows, oldest first, locked, possibly empty
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT v FROM Variety v
+            WHERE ((:farmId IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
+              AND v.blockCode = :blockCode
+              AND LOWER(v.name) = LOWER(:name)
+            ORDER BY v.id ASC
+            """)
+    List<Variety> findByFarmBlockAndNameForUpdate(@Param("farmId") Integer farmId,
+                                                  @Param("blockCode") String blockCode,
+                                                  @Param("name") String name);
 }

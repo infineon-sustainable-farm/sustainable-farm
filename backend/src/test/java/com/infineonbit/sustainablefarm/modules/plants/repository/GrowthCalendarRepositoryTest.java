@@ -51,4 +51,18 @@ public class GrowthCalendarRepositoryTest {
         assertTrue(growthCalendarRepository.findByFarmAndBlock(2, "A").isEmpty());
         assertTrue(growthCalendarRepository.findByFarmAndBlock(null, "B").isEmpty());
     }
+
+    @Test
+    void findByFarmAndBlockForUpdate_shouldMatchTheSameRowsAsTheSharedLookup() {
+        // Arrange
+        GrowthCalendar noFarm = save(null, "A");
+        GrowthCalendar farm1 = save(1, "A");
+        // Act: the locked lookup runs inside the transaction of the test
+        List<GrowthCalendar> foundWithoutFarm = growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A");
+        List<GrowthCalendar> foundForFarm1 = growthCalendarRepository.findByFarmAndBlockForUpdate(1, "A");
+        // Assert
+        assertEquals(List.of(noFarm.getId()), ids(foundWithoutFarm));
+        assertEquals(List.of(farm1.getId()), ids(foundForFarm1));
+        assertTrue(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "B").isEmpty());
+    }
 }

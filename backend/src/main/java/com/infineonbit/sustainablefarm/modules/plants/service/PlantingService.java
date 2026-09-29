@@ -90,10 +90,13 @@ public class PlantingService {
      * <ol>
      *     <li>Finds the variety row of the (farm, block, name) triple. A NULL farm
      *         matches only the rows without a farm, and the name ignores case. An
-     *         existing row is reused as it is; a missing one is created.</li>
-     *     <li>Refuses a second planting of the same variety row.</li>
+     *         existing row is reused as it is and locked until the commit; a
+     *         missing one is created.</li>
+     *     <li>Refuses a second planting of the same variety row. The lock makes a
+     *         planting sent at the same time wait, then see this one.</li>
      *     <li>Creates the growth calendar row of the block, or moves its date back
-     *         when this planting is older than the recorded one.</li>
+     *         when this planting is older than the recorded one. An existing
+     *         calendar row is locked the same way.</li>
      *     <li>Stores the PLANTING event.</li>
      * </ol>
      *
@@ -115,7 +118,7 @@ public class PlantingService {
         String blockCode = normalizeBlockCode(request.blockCode());
         String varietyName = request.varietyName().trim();
 
-        Variety variety = varietyRepository.findByFarmBlockAndName(farmId, blockCode, varietyName)
+        Variety variety = varietyRepository.findByFarmBlockAndNameForUpdate(farmId, blockCode, varietyName)
                 .stream()
                 .findFirst()
                 .orElse(null);
@@ -152,7 +155,7 @@ public class PlantingService {
      * @param now          write time
      */
     private void recordPlantingDate(Integer farmId, String blockCode, LocalDate plantingDate, Instant now) {
-        GrowthCalendar entry = growthCalendarRepository.findByFarmAndBlock(farmId, blockCode)
+        GrowthCalendar entry = growthCalendarRepository.findByFarmAndBlockForUpdate(farmId, blockCode)
                 .stream()
                 .findFirst()
                 .orElse(null);
