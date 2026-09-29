@@ -39,7 +39,7 @@ public class SensorReading {
     @DecimalMax("100.0")
     private BigDecimal humidity;
 
-    @NotNull
+
         // Anar: sensor readings expected every hour
     @NotNull
     private LocalDateTime measuredAt;
