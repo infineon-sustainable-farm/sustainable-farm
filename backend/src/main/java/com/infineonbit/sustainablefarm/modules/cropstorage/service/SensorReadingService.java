@@ -14,6 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Business service for sensor readings: persists each measure and checks it
+ * against the thresholds of the storage zone the sensor belongs to.
+ */
 @Service
 @RequiredArgsConstructor
 public class SensorReadingService {
@@ -22,6 +26,14 @@ public class SensorReadingService {
     private final SensorRepository sensorRepository;
     private final AlertRepository alertRepository;
 
+    /**
+     * Saves a new sensor reading, then compares it with the temperature and
+     * humidity thresholds of the zone where the sensor is installed and raises
+     * an ACTIVE alert when a value is out of range.
+     *
+     * @param reading reading parsed from the request body; only its sensor id is trusted
+     * @return the saved reading with its generated id
+     */
     @Transactional
     public SensorReading create(SensorReading reading) {
         SensorReading saved = sensorReadingRepository.save(reading);
@@ -29,24 +41,39 @@ public class SensorReadingService {
         return saved;
     }
 
+    /**
+     * Returns the full reading history across all sensors, unsorted.
+     *
+     * @return every stored reading; prefer {@link #findBySensor(Long)} for one sensor
+     */
     public List<SensorReading> findAll() {
         return sensorReadingRepository.findAll();
     }
 
+    /**
+     * Returns the history of one sensor, most recent measure first.
+     *
+     * @param sensorId id of the sensor to filter on
+     * @return readings of that sensor, newest first
+     */
     public List<SensorReading> findBySensor(Long sensorId) {
         return sensorReadingRepository.findBySensorIdOrderByMeasuredAtDesc(sensorId);
     }
 
-    // Compare la mesure aux seuils de la zone du capteur et leve une alerte si depassement.
+    /**
+     * Compares one reading with the four thresholds of its zone (temperature
+     * min/max, humidity min/max) and raises one alert per crossed bound.
+     * Seed data uses the dried-mango storage range: 10 to 25 C and 20 to 60 %.
+     */
     private void checkThresholds(SensorReading reading) {
-        // On relit le capteur depuis la base : ne jamais faire confiance a l'objet recu.
+        // Reload the sensor from the database: never trust the object received.
         Sensor sensor = sensorRepository.findById(reading.getSensor().getId()).orElse(null);
         if (sensor == null || sensor.getStorageZone() == null) {
             return;
         }
         StorageZone zone = sensor.getStorageZone();
 
-        // Seuils lus en variables locales pour que les comparaisons restent lisibles.
+        // Thresholds in local variables to keep the comparisons readable.
         BigDecimal tMax = zone.getTemperatureMaxCelsius();
         BigDecimal tMin = zone.getTemperatureMinCelsius();
         BigDecimal hMax = zone.getHumidityMaxPercent();
@@ -81,6 +108,9 @@ public class SensorReadingService {
         }
     }
 
+    /**
+     * Builds and saves one HIGH / ACTIVE alert linked to the sensor and zone.
+     */
     private void raiseAlert(String type, String message, Sensor sensor, StorageZone zone) {
         Alert alert = new Alert();
         alert.setType(type);
@@ -92,8 +122,10 @@ public class SensorReadingService {
         alertRepository.save(alert);
     }
 
-    // Les seuils sortent de colonnes numeric a echelle 2 (25.00) ; on retire les zeros
-    // de queue pour que le message affiche 25 au lieu de 25.00.
+    /**
+     * Renders a numeric column value without its scale zeros, so alert
+     * messages read 25 instead of 25.00.
+     */
     private String plain(BigDecimal value) {
         return value.stripTrailingZeros().toPlainString();
     }
