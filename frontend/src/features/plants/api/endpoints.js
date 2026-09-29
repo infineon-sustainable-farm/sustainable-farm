@@ -8,4 +8,8 @@ export const PLANTS_ENDPOINTS = {
     VARIETIES: "/api/plants/varieties",
     GROWTH_CALENDAR: "/api/plants/growth-calendar",
     PLANTINGS: "/api/plants/plantings",
+    HARVESTS: "/api/plants/harvests",
+    YIELD_FORECAST: "/api/plants/yield-forecast",
+    FERTILIZERS: "/api/plants/fertilizers",
+    FERTILIZER_MOVEMENTS: "/api/plants/fertilizer-movements",
 };

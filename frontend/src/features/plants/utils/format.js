@@ -56,6 +56,49 @@ export function formatMillimeters(value) {
     return isMissing(value) ? NO_VALUE : `${Number(value).toLocaleString("en-US")} mm`;
 }
 
+/**
+ * Enum code sent by the API, in sentence case: "MINERAL" is shown as
+ * "Mineral", "ADJUSTMENT_IN" as "Adjustment in". The code itself is what goes
+ * back to the API.
+ */
+export function formatCode(value) {
+    if (isMissing(value)) return NO_VALUE;
+    const text = String(value).trim().toLowerCase().replaceAll("_", " ");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Symbols of the fertilizer units, as the API writes them in its own messages. */
+const UNIT_SYMBOLS = { KG: "kg", L: "L" };
+
+/** Symbol of a fertilizer unit code, "KG" as "kg". An unknown code is shown as received. */
+export function formatUnit(unit) {
+    if (isMissing(unit)) return NO_VALUE;
+    const code = String(unit).trim();
+    return UNIT_SYMBOLS[code] ?? code;
+}
+
+/**
+ * A quantity in the unit of its fertilizer: "1,000 kg", "12.5 L". Up to three
+ * decimals, as the API stores them.
+ */
+export function formatQuantity(value, unit) {
+    if (isMissing(value)) return NO_VALUE;
+    const number = Number(value).toLocaleString("en-US");
+    return isMissing(unit) ? number : `${number} ${formatUnit(unit)}`;
+}
+
+/** An amount in CFA francs, already rounded to the franc by the API: "78,715 FCFA". */
+export function formatXof(value) {
+    return isMissing(value) ? NO_VALUE : `${Number(value).toLocaleString("en-US")} FCFA`;
+}
+
+/** An amount in euros, already rounded to the cent by the API: "€228.67", "€120.00". */
+export function formatEur(value) {
+    return isMissing(value)
+        ? NO_VALUE
+        : Number(value).toLocaleString("en-US", { style: "currency", currency: "EUR" });
+}
+
 /** Several values are all shown, comma-separated; none is picked. */
 export function formatList(values) {
     if (!Array.isArray(values)) return NO_VALUE;
@@ -73,6 +116,31 @@ export function formatDate(value) {
     if (!match) return NO_VALUE;
     const [, year, month, day] = match;
     return `${day}/${month}/${year}`;
+}
+
+/** A "YYYY-MM" month as the first day of that month in UTC, or null if malformed. */
+function parseMonth(value) {
+    if (isMissing(value)) return null;
+    const match = /^(\d{4})-(\d{2})$/.exec(String(value).trim());
+    if (!match) return null;
+    return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
+}
+
+/**
+ * Month sent by the API as "YYYY-MM", shown as "Apr 2027", or "April 2027"
+ * with the long style. Read and formatted in UTC, so no timezone can shift it.
+ */
+export function formatMonth(value, style = "short") {
+    const date = parseMonth(value);
+    if (!date) return NO_VALUE;
+    return date.toLocaleString("en-US", { month: style, year: "numeric", timeZone: "UTC" });
+}
+
+/** Month name alone, "Apr", for a chart axis that shows the year apart. */
+export function formatMonthName(value) {
+    const date = parseMonth(value);
+    if (!date) return NO_VALUE;
+    return date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
 }
 
 /** Tree age as computed by the API: completed years and remaining months. */
