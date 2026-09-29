@@ -216,4 +216,13 @@ public class FertilizerMovementRepositoryTest {
         assertEquals(List.of("Compost", "NPK 15-15-15", "Urea"),
                 fertilizerProductRepository.findAllByOrderByNameAsc().stream().map(FertilizerProduct::getName).toList());
     }
+
+    @Test
+    void findByIdForUpdate_shouldReturnTheFertilizer_orNothingForAnUnknownId() {
+        // Arrange
+        FertilizerProduct npk = product("NPK 15-15-15");
+        // Act & Assert: the locked read runs inside the transaction of the test
+        assertEquals("NPK 15-15-15", fertilizerProductRepository.findByIdForUpdate(npk.getId()).orElseThrow().getName());
+        assertTrue(fertilizerProductRepository.findByIdForUpdate(npk.getId() + 1000).isEmpty());
+    }
 }

@@ -69,6 +69,13 @@ public class FertilizerMovementServiceTest {
         return npk;
     }
 
+    /** The fertilizer as an application or a loss reads it: locked until the commit. */
+    private FertilizerProduct npkLockedInCatalogue() {
+        FertilizerProduct npk = npk();
+        when(fertilizerProductRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(npk));
+        return npk;
+    }
+
     private void rateIs(String rate) {
         when(currencyRateRepository.findByBaseCurrencyAndQuoteCurrency("EUR", "XOF")).thenReturn(Optional.of(
                 new CurrencyRate(1L, "EUR", "XOF", new BigDecimal(rate), "BCEAO_fixed_parity_1999", NOW)));
@@ -249,10 +256,21 @@ public class FertilizerMovementServiceTest {
     }
 
     @Test
+    void recordPurchase_shouldReadTheFertilizerWithoutLockingIt() {
+        // Arrange
+        npkInCatalogue();
+        movementSaveAssignsId(5L);
+        // Act
+        fertilizerMovementService.recordPurchase(1L, new PurchaseRequest(JUNE_1, 200.0, "Supplier A", null, null), NOW);
+        // Assert: a purchase only adds to the stock, so it never waits for an application
+        verify(fertilizerProductRepository, never()).findByIdForUpdate(any());
+    }
+
+    @Test
     void recordApplication_shouldStoreTheApplication_onABlockWithoutAnyPlanting() {
         // Arrange: 300 kg bought; nothing is planted anywhere, and the service
         // reads no variety nor planting: only the fertilizer and its movements
-        FertilizerProduct npk = npkInCatalogue();
+        FertilizerProduct npk = npkLockedInCatalogue();
         npkTotalsAre(total(FertilizerMovementType.PURCHASE, "300.000"));
         movementSaveAssignsId(13L);
         // Act
@@ -282,7 +300,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void recordApplication_shouldStoreNoMethod_whenItIsBlank() {
         // Arrange
-        npkInCatalogue();
+        npkLockedInCatalogue();
         npkTotalsAre(total(FertilizerMovementType.PURCHASE, "300.000"));
         movementSaveAssignsId(14L);
         // Act
@@ -297,7 +315,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void recordApplication_shouldRefuseMoreThanTheStock_with422() {
         // Arrange: 300 kg bought, 250 kg applied, 50 kg left
-        npkInCatalogue();
+        npkLockedInCatalogue();
         npkTotalsAre(total(FertilizerMovementType.PURCHASE, "300.000"),
                 total(FertilizerMovementType.APPLICATION, "250.000"));
         // Act & Assert
@@ -310,7 +328,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void recordApplication_shouldRefuseAFertilizerNeverBought() {
         // Arrange: no movement at all
-        npkInCatalogue();
+        npkLockedInCatalogue();
         npkTotalsAre();
         // Act & Assert
         BusinessRuleException exception = assertThrows(BusinessRuleException.class,
@@ -321,7 +339,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void recordApplication_shouldAcceptTheWholeStock_whenDecimalsWouldDriftAsDoubles() {
         // Arrange: 0.3 bought and 0.1 applied leave exactly 0.2, where doubles leave 0.19999999999999998
-        npkInCatalogue();
+        npkLockedInCatalogue();
         npkTotalsAre(total(FertilizerMovementType.PURCHASE, "0.300"),
                 total(FertilizerMovementType.APPLICATION, "0.100"));
         movementSaveAssignsId(15L);
@@ -334,7 +352,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void recordApplication_shouldThrowNotFound_whenFertilizerIsUnknown() {
         // Arrange
-        when(fertilizerProductRepository.findById(999L)).thenReturn(Optional.empty());
+        when(fertilizerProductRepository.findByIdForUpdate(999L)).thenReturn(Optional.empty());
         // Act & Assert
         assertThrows(FertilizerNotFoundException.class,
                 () -> fertilizerMovementService.recordApplication(999L, application(1.0), NOW));
@@ -344,7 +362,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void recordLoss_shouldStoreTheLoss() {
         // Arrange: 50 kg left
-        npkInCatalogue();
+        npkLockedInCatalogue();
         npkTotalsAre(total(FertilizerMovementType.PURCHASE, "300.000"),
                 total(FertilizerMovementType.APPLICATION, "250.000"));
         movementSaveAssignsId(16L);
@@ -368,7 +386,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void recordLoss_shouldRefuseMoreThanTheStock_with422() {
         // Arrange: 300 bought, 250 applied, 10 lost: 40 kg left
-        npkInCatalogue();
+        npkLockedInCatalogue();
         npkTotalsAre(total(FertilizerMovementType.PURCHASE, "300.000"),
                 total(FertilizerMovementType.APPLICATION, "250.000"),
                 total(FertilizerMovementType.LOSS, "10.000"));
