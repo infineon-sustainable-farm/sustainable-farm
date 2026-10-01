@@ -192,6 +192,11 @@ public class IotTelemetryService {
             }
             liters = source.getCapacityLiters() * percent / 100.0;
         }
+        if (!Double.isFinite(liters) || liters < 0
+                || (source.getCapacityLiters() != null && liters > source.getCapacityLiters())) {
+            return new Result("level", t.sourceId(), "rejected",
+                    "Reservoir level must be between 0 and its capacity");
+        }
         source.setCurrentLevelLiters(liters);
         waterSourceRepository.save(source);
         // Regles du reservoir de pluie (module 5.3) : elles ne concernent que les sources de pluie
