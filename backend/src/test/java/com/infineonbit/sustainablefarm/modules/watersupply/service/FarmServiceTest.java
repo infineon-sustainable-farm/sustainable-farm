@@ -1,14 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.FarmCreateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Farm;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -21,27 +23,31 @@ class FarmServiceTest {
     @Mock
     private FarmRepository farmRepository;
 
+    @Mock
+    private FieldRepository fieldRepository;
+
+    @Mock
+    private FieldZoneRepository fieldZoneRepository;
+
     @Test
-    void createFarmPersistsTheRequestedDetails() {
-        FarmCreateRequest request = new FarmCreateRequest("North Farm", "Demo", "Road 1", 10.0, -4.0, 12.5);
-        when(farmRepository.save(org.mockito.ArgumentMatchers.any(Farm.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        FarmService service = new FarmService(farmRepository);
+    void createFieldRejectsUnknownFarm() {
+        UUID farmId = UUID.randomUUID();
+        FieldCreateRequest field = new FieldCreateRequest(farmId, "Field", 1.0, null, null, null);
+        when(farmRepository.findById(farmId)).thenReturn(Optional.empty());
+        FarmService service = new FarmService(farmRepository, fieldRepository, fieldZoneRepository);
 
-        var response = service.createFarm(request);
-
-        assertEquals("North Farm", response.name());
-        assertEquals("Demo", response.description());
-        assertEquals("Road 1", response.address());
-        assertEquals(12.5, response.areaHectares());
+        assertThrows(NotFoundException.class, () -> service.createField(field));
+        verify(fieldRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
-    void getFarmRejectsAnUnknownId() {
-        UUID farmId = UUID.randomUUID();
-        when(farmRepository.findById(farmId)).thenReturn(Optional.empty());
-        FarmService service = new FarmService(farmRepository);
+    void createZoneRejectsUnknownField() {
+        UUID fieldId = UUID.randomUUID();
+        ZoneCreateRequest zone = new ZoneCreateRequest(fieldId, "Zone", 1.0, null, null, null, null);
+        when(fieldRepository.findById(fieldId)).thenReturn(Optional.empty());
+        FarmService service = new FarmService(farmRepository, fieldRepository, fieldZoneRepository);
 
-        assertThrows(ResourceNotFoundException.class, () -> service.getFarm(farmId));
+        assertThrows(NotFoundException.class, () -> service.createZone(zone));
+        verify(fieldZoneRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
 }
