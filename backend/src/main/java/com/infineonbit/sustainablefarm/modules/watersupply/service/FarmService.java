@@ -7,9 +7,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.FarmCreateRequest
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FarmResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FarmUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldCreateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneUpdateRequest;
@@ -71,61 +68,6 @@ public class FarmService {
     @Transactional
     public void deleteFarm(UUID farmId) {
         farmRepository.delete(getFarmEntity(farmId));
-    }
-
-    public List<FieldResponse> findFarmFields(UUID farmId) {
-        getFarmEntity(farmId);
-        return fieldRepository.findByFarmId(farmId).stream().map(FieldResponse::from).toList();
-    }
-
-    public PageResponse<FieldResponse> findFarmFields(UUID farmId, Pageable pageable) {
-        getFarmEntity(farmId);
-        return toPageResponse(fieldRepository.findByFarmId(farmId, pageable).map(FieldResponse::from));
-    }
-
-    public List<FieldResponse> findFields() {
-        return fieldRepository.findAll().stream().map(FieldResponse::from).toList();
-    }
-
-    public PageResponse<FieldResponse> findFields(Pageable pageable) {
-        return toPageResponse(fieldRepository.findAll(pageable).map(FieldResponse::from));
-    }
-
-    @Transactional
-    public FieldResponse createField(FieldCreateRequest request) {
-        getFarmEntity(request.farmId());
-        Field field = new Field();
-        field.setFarmId(request.farmId());
-        field.setName(request.name());
-        field.setAreaHectares(request.areaHectares());
-        field.setCropType(request.cropType());
-        field.setSoilType(request.soilType());
-        field.setCoordinates(request.coordinates());
-        return FieldResponse.from(fieldRepository.save(field));
-    }
-
-    public FieldResponse getField(UUID fieldId) {
-        return FieldResponse.from(getFieldEntity(fieldId));
-    }
-
-    @Transactional
-    public FieldResponse updateField(UUID fieldId, FieldUpdateRequest request) {
-        Field field = getFieldEntity(fieldId);
-        if (request.farmId() != null && !request.farmId().equals(field.getFarmId())) {
-            getFarmEntity(request.farmId());
-            field.setFarmId(request.farmId());
-        }
-        field.setName(request.name() == null ? field.getName() : request.name());
-        field.setAreaHectares(request.areaHectares() == null ? field.getAreaHectares() : request.areaHectares());
-        field.setCropType(request.cropType());
-        field.setSoilType(request.soilType());
-        field.setCoordinates(request.coordinates());
-        return FieldResponse.from(fieldRepository.save(field));
-    }
-
-    @Transactional
-    public void deleteField(UUID fieldId) {
-        fieldRepository.delete(getFieldEntity(fieldId));
     }
 
     public List<ZoneResponse> findFieldZones(UUID fieldId) {

@@ -5,11 +5,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -18,24 +17,21 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class FarmServiceTest {
+class FieldServiceTest {
     @Mock
     private FarmRepository farmRepository;
 
     @Mock
     private FieldRepository fieldRepository;
 
-    @Mock
-    private FieldZoneRepository fieldZoneRepository;
-
     @Test
-    void createZoneRejectsUnknownField() {
-        UUID fieldId = UUID.randomUUID();
-        ZoneCreateRequest zone = new ZoneCreateRequest(fieldId, "Zone", 1.0, null, null, null, null);
-        when(fieldRepository.findById(fieldId)).thenReturn(Optional.empty());
-        FarmService service = new FarmService(farmRepository, fieldRepository, fieldZoneRepository);
+    void createFieldRejectsUnknownFarm() {
+        UUID farmId = UUID.randomUUID();
+        FieldCreateRequest request = new FieldCreateRequest(farmId, "Field", 1.0, null, null, null);
+        when(farmRepository.findById(farmId)).thenReturn(Optional.empty());
+        FieldService service = new FieldService(farmRepository, fieldRepository);
 
-        assertThrows(NotFoundException.class, () -> service.createZone(zone));
-        verify(fieldZoneRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        assertThrows(NotFoundException.class, () -> service.createField(request));
+        verify(fieldRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
 }
