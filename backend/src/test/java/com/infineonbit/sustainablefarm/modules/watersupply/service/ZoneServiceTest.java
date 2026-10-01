@@ -34,4 +34,13 @@ class ZoneServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> service.createZone(request));
         verify(fieldZoneRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
+
+    @Test
+    void getZoneRejectsAnUnknownId() {
+        UUID zoneId = UUID.randomUUID();
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        ZoneService service = new ZoneService(fieldRepository, fieldZoneRepository);
+
+        assertThrows(ResourceNotFoundException.class, () -> service.getZone(zoneId));
+    }
 }

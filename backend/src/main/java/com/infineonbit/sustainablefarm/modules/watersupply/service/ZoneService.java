@@ -44,6 +44,10 @@ public class ZoneService {
         return toPageResponse(fieldZoneRepository.findAll(pageable).map(ZoneResponse::from));
     }
 
+    public ZoneResponse getZone(UUID zoneId) {
+        return ZoneResponse.from(getZoneEntity(zoneId));
+    }
+
     @Transactional
     public ZoneResponse createZone(ZoneCreateRequest request) {
         getFieldEntity(request.fieldId());
@@ -57,6 +61,11 @@ public class ZoneService {
 
     private Field getFieldEntity(UUID fieldId) {
         return fieldRepository.findById(fieldId).orElseThrow(() -> new ResourceNotFoundException("Field not found"));
+    }
+
+    private Zone getZoneEntity(UUID zoneId) {
+        return fieldZoneRepository.findById(zoneId)
+                .orElseThrow(() -> new ResourceNotFoundException("Zone not found"));
     }
 
     private <T> PageResponse<T> toPageResponse(Page<T> page) {

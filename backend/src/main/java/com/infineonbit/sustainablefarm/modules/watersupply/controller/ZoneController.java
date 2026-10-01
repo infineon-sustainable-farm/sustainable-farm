@@ -50,6 +50,11 @@ public class ZoneController {
         return fieldId == null ? zoneService.findZones(pageable) : zoneService.findFieldZones(fieldId, pageable);
     }
 
+    @GetMapping("/zones/{zoneId}")
+    public ZoneResponse zone(@PathVariable UUID zoneId) {
+        return zoneService.getZone(zoneId);
+    }
+
     @PostMapping("/zones")
     @ResponseStatus(HttpStatus.CREATED)
     public ZoneResponse createZone(@Valid @RequestBody ZoneCreateRequest request) {
