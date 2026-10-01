@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Field;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
@@ -46,6 +47,25 @@ public class ZoneService {
 
     public ZoneResponse getZone(UUID zoneId) {
         return ZoneResponse.from(getZoneEntity(zoneId));
+    }
+
+    @Transactional
+    public ZoneResponse updateZone(UUID zoneId, ZoneUpdateRequest request) {
+        Zone zone = getZoneEntity(zoneId);
+        if (request.fieldId() != null && !request.fieldId().equals(zone.getFieldId())) {
+            getFieldEntity(request.fieldId());
+            zone.setFieldId(request.fieldId());
+        }
+        zone.setName(request.name() == null ? zone.getName() : request.name());
+        zone.setAreaHectares(request.areaHectares() == null ? zone.getAreaHectares() : request.areaHectares());
+        zone.setIrrigationMethod(request.irrigationMethod() == null
+                ? zone.getIrrigationMethod() : request.irrigationMethod());
+        return ZoneResponse.from(fieldZoneRepository.save(zone));
+    }
+
+    @Transactional
+    public void deleteZone(UUID zoneId) {
+        fieldZoneRepository.delete(getZoneEntity(zoneId));
     }
 
     @Transactional
