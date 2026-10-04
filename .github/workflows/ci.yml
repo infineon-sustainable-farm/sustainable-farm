@@ -1,17 +1,19 @@
-# Base CI: build + REAL tests (PostgreSQL, not H2) + Flyway migrations.
+# Base CI: build + REAL tests on PostgreSQL.
 #
 # Fixes findings _shared/02 and _shared/04:
-#  - backend tests now run AGAINST PostgreSQL (environment variables override
-#    the jdbc:h2 URL from application-test.properties, since Spring ranks OS
-#    env above profile files); JPQL that H2 accepts but PostgreSQL rejects
-#    (the root cause of the broken develop) now fails the PR;
-#  - if the branch ships Flyway migrations (backend/src/main/resources/
-#    db/migration), they are applied to a fresh PostgreSQL database by the
-#    "migrations" job: migrations that never ran (PR-33/#41) no longer pass.
+#  - backend tests run AGAINST PostgreSQL (environment variables override the
+#    jdbc:h2 URL from application-test.properties, since Spring ranks OS env
+#    above profile files); JPQL that H2 accepts but PostgreSQL rejects now
+#    fails the PR instead of breaking develop;
+#  - the job is split into separate steps (connectivity, compile, tests) so a
+#    red check points at the failing phase directly from the GitHub UI.
+#
+# Note: the project does not use Flyway yet. When migrations are introduced
+# (backend/src/main/resources/db/migration), add a dedicated job that applies
+# them to a fresh PostgreSQL instance.
 #
 # Required checks for branch protection (see docs/CI-AUTO-REVIEW.md):
 #   - "Backend tests (PostgreSQL)"
-#   - "Flyway migrations (PostgreSQL)"
 #   - "Frontend build"
 #   - "Quality gate (auto-review)" (workflow auto-review.yml)
 name: CI
@@ -64,58 +66,28 @@ jobs:
           java-version: '21'
           cache: maven
 
+      - name: Check PostgreSQL connectivity
+        run: |
+          for i in 1 2 3 4 5; do
+            if timeout 3 bash -c '</dev/tcp/localhost/5432' 2>/dev/null; then
+              echo "PostgreSQL is reachable on localhost:5432."
+              exit 0
+            fi
+            echo "PostgreSQL not reachable yet (attempt $i/5), retrying in 3s..."
+            sleep 3
+          done
+          echo "::error::Cannot connect to the PostgreSQL service on localhost:5432."
+          exit 1
+
+      # Separate step: if the build breaks, the GitHub UI shows this step red
+      # and the test phase is not the suspect.
+      - name: Compile backend
+        working-directory: backend
+        run: ./mvnw --batch-mode --no-transfer-progress test-compile
+
       - name: Run backend tests against PostgreSQL
         working-directory: backend
-        run: ./mvnw --batch-mode test
-
-  migrations:
-    name: Flyway migrations (PostgreSQL)
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: sustainable_farm
-          POSTGRES_USER: farm_admin
-          POSTGRES_PASSWORD: changeme
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd="pg_isready -U farm_admin"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=10
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Detect Flyway migrations
-        id: detect
-        run: |
-          if compgen -G "backend/src/main/resources/db/migration/*" > /dev/null; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # Fresh database -> every migration must apply cleanly.
-      # Fails on: non-replayable SQL (PR-33 V2), a migration depending on a
-      # missing rename, an entity referencing a column that was never created (#41).
-      - name: Apply migrations on fresh PostgreSQL
-        if: steps.detect.outputs.present == 'true'
-        run: |
-          docker run --rm --network host \
-            -v "$PWD/backend/src/main/resources/db/migration:/flyway/sql" \
-            flyway/flyway:10-alpine \
-            -url=jdbc:postgresql://localhost:5433/sustainable_farm \
-            -user=farm_admin -password=changeme -connectRetries=10 \
-            migrate
-
-      - name: Skipped (no migrations on this branch)
-        if: steps.detect.outputs.present == 'false'
-        run: echo "No db/migration folder on this branch - job skipped (success)."
+        run: ./mvnw --batch-mode --no-transfer-progress test
 
   frontend:
     name: Frontend build

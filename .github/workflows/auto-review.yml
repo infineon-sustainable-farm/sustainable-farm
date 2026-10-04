@@ -14,9 +14,9 @@
 #   - Settings -> General -> enable "Allow auto-merge"
 #   - Settings -> Branches -> protection rule on develop: require
 #     "Quality gate (auto-review)", "Backend tests (PostgreSQL)",
-#     "Flyway migrations (PostgreSQL)", "Frontend build" + "Require branches
-#     to be up to date". Do NOT require approvals for */init PRs (GitHub
-#     forbids PR authors from approving their own PRs).
+#     "Frontend build" + "Require branches to be up to date". Do NOT require
+#     approvals for */init PRs (GitHub forbids PR authors from approving
+#     their own PRs).
 name: Auto-review
 
 on:

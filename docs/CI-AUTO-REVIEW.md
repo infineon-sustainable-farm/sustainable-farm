@@ -28,6 +28,10 @@ PR (opened/push/reopen) targeting develop
                     -> merges as soon as ALL required checks are green
 ```
 
+Note: the project does not use Flyway yet. When migrations are introduced,
+add a CI job that applies them to a fresh PostgreSQL database and add it to
+the required checks above.
+
 ## Blocking guards (`scripts/ci-guards.sh`)
 
 | ID | Pattern | Review reference |
@@ -57,7 +61,6 @@ Warnings (yellow, non-blocking): unbounded `findAll()` (W1), entity without
    - Require status checks to pass:
      - `Quality gate (auto-review)`
      - `Backend tests (PostgreSQL)`
-     - `Flyway migrations (PostgreSQL)`
      - `Frontend build`
    - Require branches to be up to date before merging
    - Do **not** require approvals for `*/init` PRs (GitHub forbids PR authors
