@@ -48,12 +48,18 @@ jobs:
 
     # Overrides the H2 config from src/test/resources: tests see real
     # PostgreSQL. If a test only passes on H2, that is a bug, not flakiness.
+    # NOTE: the dialect must stay auto-detected. Forcing
+    # SPRING_JPA_DATABASE_PLATFORM=PostgreSQLDialect would also poison the
+    # @DataJpaTest slices, which Spring Boot swaps to embedded H2: Hibernate
+    # would then emit PostgreSQL-style CHECK constraints from Bean
+    # Validation (@Min, @Positive) into H2, and every slice test would fail
+    # with "Check constraint invalid". Auto-detection gives PostgreSQL to
+    # real PostgreSQL contexts and H2Dialect (no emitted checks) to slices.
     env:
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/sustainable_farm_test
       SPRING_DATASOURCE_USERNAME: farm_admin
       SPRING_DATASOURCE_PASSWORD: changeme
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
 
     steps:
       - name: Checkout code
