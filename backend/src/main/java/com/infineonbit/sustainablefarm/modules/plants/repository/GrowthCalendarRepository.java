@@ -24,8 +24,8 @@ public interface GrowthCalendarRepository extends JpaRepository<GrowthCalendar, 
      */
     @Query("""
             SELECT c FROM GrowthCalendar c
-            WHERE (:farmId IS NULL OR c.farmId = :farmId)
-              AND (:blockCode IS NULL OR c.blockCode = :blockCode)
+            WHERE (CAST(:farmId AS Integer) IS NULL OR c.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR c.blockCode = :blockCode)
             ORDER BY c.blockCode ASC, c.plantingDate ASC NULLS LAST, c.id ASC
             """)
     List<GrowthCalendar> findByOptionalFilters(@Param("farmId") Integer farmId,
@@ -44,7 +44,7 @@ public interface GrowthCalendarRepository extends JpaRepository<GrowthCalendar, 
      */
     @Query("""
             SELECT c FROM GrowthCalendar c
-            WHERE ((:farmId IS NULL AND c.farmId IS NULL) OR c.farmId = :farmId)
+            WHERE ((CAST(:farmId AS Integer) IS NULL AND c.farmId IS NULL) OR c.farmId = :farmId)
               AND c.blockCode = :blockCode
             ORDER BY c.id ASC
             """)
