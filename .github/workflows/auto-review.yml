@@ -1,22 +1,22 @@
-# Auto-review : revue automatique + merge autonome des PR */init.
+# Auto-review: automated review + autonomous merge of */init PRs.
 #
-# Comportement (cf. docs/CI-AUTO-REVIEW.md) :
-#   1. À chaque push/open sur une PR vers develop : le job "quality-gate"
-#      exécute audit-shared-files.sh (conflits, fichiers partagés, convention
-#      endpoints) + ci-guards.sh (11 familles de défauts bloquants) et publie
-#      le rapport en commentaire de la PR (mis à jour, jamais dupliqué).
-#   2. PR ROUGE : le check échoue, le rapport indique quoi corriger.
-#   3. PR VERTE **et** créée par AUTO_REVIEW_LOGIN **et** branche finissant
-#      par AUTO_REVIEW_SUFFIX ("/init") : merge squash automatique vers
-#      develop dès que tous les checks requis sont verts (gh pr merge --auto).
+# Behavior (see docs/CI-AUTO-REVIEW.md):
+#   1. On every push/open of a PR targeting develop: the "quality-gate" job
+#      runs audit-shared-files.sh (conflicts, shared files, endpoints
+#      convention) + ci-guards.sh (11 blocking defect families) and publishes
+#      the report as a PR comment (updated, never duplicated).
+#   2. RED PR: the check fails, the report states what to fix.
+#   3. GREEN PR **and** created by AUTO_REVIEW_LOGIN **and** branch ending
+#      with AUTO_REVIEW_SUFFIX ("/init"): automatic squash-merge to develop
+#      as soon as all required checks are green (gh pr merge --auto).
 #
-# Prérequis côté GitHub (une seule fois) :
-#   - Settings → General → cocher "Allow auto-merge"
-#   - Settings → Branches → règle de protection sur develop : exiger
+# One-time GitHub prerequisites:
+#   - Settings -> General -> enable "Allow auto-merge"
+#   - Settings -> Branches -> protection rule on develop: require
 #     "Quality gate (auto-review)", "Backend tests (PostgreSQL)",
 #     "Flyway migrations (PostgreSQL)", "Frontend build" + "Require branches
-#     to be up to date". NE PAS exiger d'approbation pour les PR */init
-#     (GitHub interdit à l'auteur d'approuver sa propre PR).
+#     to be up to date". Do NOT require approvals for */init PRs (GitHub
+#     forbids PR authors from approving their own PRs).
 name: Auto-review
 
 on:
@@ -24,9 +24,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [develop]
 
-# Identité autorisée au merge automatique (le login GitHub du propriétaire).
-# Le suffixe de branche est codé dans le `if` du job auto-merge (l'expression
-# if de job n'a pas accès au contexte env) : pensez à le modifier aux deux endroits.
+# Identity allowed to auto-merge (the owner's GitHub login).
+# The branch suffix is hardcoded in the auto-merge job's `if` (job-level if
+# expressions cannot access the env context): update both places when changed.
 env:
   AUTO_REVIEW_LOGIN: PANK4SS
   AUTO_REVIEW_SUFFIX: /init
@@ -47,7 +47,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Checkout (historique complet pour merge-base/merge-tree)
+      - name: Checkout (full history for merge-base/merge-tree)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -59,7 +59,7 @@ jobs:
           echo "HEAD_REF=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_ENV"
 
       # ------------------------------------------------------------------
-      # 1/2 — Audit des fichiers partagés (scripts/audit-shared-files.sh)
+      # 1/2 — Shared-files audit (scripts/audit-shared-files.sh)
       # ------------------------------------------------------------------
       - name: Shared-files audit
         id: audit
@@ -70,7 +70,7 @@ jobs:
           exit 0
 
       # ------------------------------------------------------------------
-      # 2/2 — Garde-fous statiques sur le diff (scripts/ci-guards.sh)
+      # 2/2 — Static guards on the diff (scripts/ci-guards.sh)
       # ------------------------------------------------------------------
       - name: Static guards on diff
         id: guards
@@ -86,23 +86,23 @@ jobs:
           AUDIT_RC="${{ steps.audit.outputs.rc }}"
           GUARDS_RC="${{ steps.guards.outputs.rc }}"
           if [ "$AUDIT_RC" = "1" ] || [ "$GUARDS_RC" = "1" ]; then
-            VERDICT="🔴 **PR BLOQUÉE — corrigez les points ci-dessous puis repoussez : la revue se relancera seule.**"
+            VERDICT="🔴 **PR BLOCKED — fix the points below and push again: the review will re-run automatically.**"
           else
-            VERDICT="✅ **Quality gate passée.**"
+            VERDICT="✅ **Quality gate passed.**"
           fi
 
           {
             echo "<!-- farm-quality-gate -->"
-            echo "## 🤖 Revue automatique — quality gate"
+            echo "## 🤖 Automated review — quality gate"
             echo
-            echo "Branche : \`${{ github.event.pull_request.head.ref }}\` → base : \`${{ github.base_ref }}\`"
+            echo "Branch: \`${{ github.event.pull_request.head.ref }}\` → base: \`${{ github.base_ref }}\`"
             echo
             echo "${VERDICT}"
             echo
-            cat guards-report.md 2>/dev/null || echo "_(rapport guards indisponible)_"
+            cat guards-report.md 2>/dev/null || echo "_(guards report unavailable)_"
             echo
             echo "<details>"
-            echo "<summary>📋 Audit des fichiers partagés et conflits de merge (sortie complète)</summary>"
+            echo "<summary>📋 Shared-files audit & merge conflicts (full output)</summary>"
             echo
             echo '```text'
           } > PR_REPORT.md
@@ -112,13 +112,13 @@ jobs:
             echo "</details>"
             echo
             echo "<details>"
-            echo "<summary>👁️ Points qui restent à vérification humaine (non automatisables)</summary>"
+            echo "<summary>👁️ Points that still require human review (not automatable)</summary>"
             echo
-            echo "- Sémantique métier : invariants (niveaux décrémentés, volumes réels vs planifiés), portes QC, FIFO/valorisation."
-            echo "- Concurrence : \`@Version\` / verrous pessimistes sur les compteurs (stock, eau, engrais)."
-            echo "- Idempotence des ingestions (double POST = une seule ligne) et tests associés."
-            echo "- Sémantique PUT : champs omis préservés (cf. test modèle \`updateZoneKeepsFieldsThatWereOmitted\`)."
-            echo "- Pertinence des tests : un diff \`src/main\` sans diff \`src/test\` est suspect."
+            echo "- Business semantics: invariants (levels actually decremented, real vs planned volumes), QC gates, FIFO/valuation."
+            echo "- Concurrency: \`@Version\` / pessimistic locks on counters (stock, water, fertilizer)."
+            echo "- Ingestion idempotency (double POST = single row) and the associated tests."
+            echo "- PUT semantics: omitted fields preserved (see model test \`updateZoneKeepsFieldsThatWereOmitted\`)."
+            echo "- Test relevance: a \`src/main\` diff without a \`src/test\` diff is suspicious."
             echo "</details>"
           } >> PR_REPORT.md
 
@@ -147,16 +147,16 @@ jobs:
           AUDIT_RC="${{ steps.audit.outputs.rc }}"
           GUARDS_RC="${{ steps.guards.outputs.rc }}"
           if [ "$AUDIT_RC" = "1" ] || [ "$GUARDS_RC" = "1" ]; then
-            echo "Quality gate ÉCHOUÉE (audit=$AUDIT_RC, guards=$GUARDS_RC)."
+            echo "Quality gate FAILED (audit=$AUDIT_RC, guards=$GUARDS_RC)."
             exit 1
           fi
-          echo "Quality gate PASSÉE (audit=$AUDIT_RC, guards=$GUARDS_RC)."
+          echo "Quality gate PASSED (audit=$AUDIT_RC, guards=$GUARDS_RC)."
 
   # -------------------------------------------------------------------------
-  # Merge autonome : uniquement PR */init créée par le propriétaire,
-  # gate verte, PR non draft. "gh pr merge --auto" attend ensuite que TOUS
-  # les checks requis passent avant de merger — si un seul est rouge, la PR
-  # reste rouge et rien n'est mergé.
+  # Autonomous merge: only */init PRs created by the owner, gate green,
+  # PR not a draft. "gh pr merge --auto" then waits until ALL required
+  # checks pass before merging — if any is red, the PR stays red and
+  # nothing is merged.
   # -------------------------------------------------------------------------
   auto-merge:
     name: Auto-merge (squash → develop)
@@ -178,8 +178,8 @@ jobs:
         run: |
           PR="${{ github.event.pull_request.number }}"
           if gh pr merge "$PR" --squash --auto --delete-branch; then
-            echo "Auto-merge activé : la PR sera mergée en squash dès que tous les checks requis sont verts."
+            echo "Auto-merge enabled: the PR will be squash-merged as soon as all required checks are green."
           else
-            echo "::error::Échec de l'activation de l'auto-merge. Vérifiez que 'Allow auto-merge' est activé dans Settings → General (cf. docs/CI-AUTO-REVIEW.md)."
+            echo "::error::Failed to enable auto-merge. Check that 'Allow auto-merge' is enabled in Settings → General (see docs/CI-AUTO-REVIEW.md)."
             exit 1
           fi

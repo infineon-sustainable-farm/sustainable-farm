@@ -1,17 +1,15 @@
-# CI de base : build + tests RÉELS (PostgreSQL, pas H2) + migrations Flyway.
+# Base CI: build + REAL tests (PostgreSQL, not H2) + Flyway migrations.
 #
-# Correction des constats _shared/02 et _shared/04 :
-#  - les tests backend tournent désormais CONTRE PostgreSQL (les variables
-#    d'environnement écrasent le jdbc:h2 de application-test.properties, la
-#    précédence Spring plaçant l'OS env au-dessus des fichiers de profil) ;
-#    le JPQL que H2 accepte mais PostgreSQL refuse (cause du develop cassé)
-#    fait désormais échouer la PR ;
-#  - si la branche embarque des migrations Flyway (backend/src/main/resources/
-#    db/migration), elles sont appliquées sur une base PostgreSQL vierge par
-#    le job "migrations" — les migrations qui n'ont jamais tourné (PR-33/#41)
-#    ne passeront plus.
+# Fixes findings _shared/02 and _shared/04:
+#  - backend tests now run AGAINST PostgreSQL (environment variables override
+#    the jdbc:h2 URL from application-test.properties, since Spring ranks OS
+#    env above profile files); JPQL that H2 accepts but PostgreSQL rejects
+#    (the root cause of the broken develop) now fails the PR;
+#  - if the branch ships Flyway migrations (backend/src/main/resources/
+#    db/migration), they are applied to a fresh PostgreSQL database by the
+#    "migrations" job — migrations that never ran (PR-33/#41) no longer pass.
 #
-# Jobs requis pour la protection de branche (cf. docs/CI-AUTO-REVIEW.md) :
+# Required checks for branch protection (see docs/CI-AUTO-REVIEW.md):
 #   - "Backend tests (PostgreSQL)"
 #   - "Flyway migrations (PostgreSQL)"
 #   - "Frontend build"
@@ -46,8 +44,8 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
-    # Écrase la config H2 de src/test/resources : les tests voient du vrai
-    # PostgreSQL. Si un test ne passe QUE sur H2, c'est un bug, pas un flaky.
+    # Overrides the H2 config from src/test/resources: tests see real
+    # PostgreSQL. If a test only passes on H2, that is a bug, not flakiness.
     env:
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/sustainable_farm_test
       SPRING_DATASOURCE_USERNAME: farm_admin
@@ -102,9 +100,9 @@ jobs:
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Base vierge → toutes les migrations doivent s'appliquer proprement.
-      # Échoue sur : SQL non rejouable (PR-33 V2), migration dépendante d'un
-      # renommage absent, entité qui référence une colonne jamais créée (#41).
+      # Fresh database -> every migration must apply cleanly.
+      # Fails on: non-replayable SQL (PR-33 V2), a migration depending on a
+      # missing rename, an entity referencing a column that was never created (#41).
       - name: Apply migrations on fresh PostgreSQL
         if: steps.detect.outputs.present == 'true'
         run: |
@@ -117,7 +115,7 @@ jobs:
 
       - name: Skipped (no migrations on this branch)
         if: steps.detect.outputs.present == 'false'
-        run: echo "Pas de dossier db/migration sur cette branche - job saute (succes)."
+        run: echo "No db/migration folder on this branch - job skipped (success)."
 
   frontend:
     name: Frontend build

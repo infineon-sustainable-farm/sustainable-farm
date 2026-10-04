@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
 #
-# audit-shared-files.sh : audit des fichiers partagés d'une branche avant merge.
+# audit-shared-files.sh : audit a branch's shared files before merging.
 #
-# Compare l'état des fichiers partagés (frontend app/shared, backend, infra)
-# entre une branche à reviewer et la branche d'intégration (origin/develop par
-# défaut), simule le merge pour détecter les conflits réels, et vérifie la
-# convention "endpoints module-local".
+# Compares the shared files (frontend app/shared, backend, infra) between a
+# branch under review and the integration branch (origin/develop by default),
+# simulates the merge to detect real conflicts, and enforces the
+# "module-local endpoints" convention.
 #
-# Usage :
-#   scripts/audit-shared-files.sh [branche] [ref_base] [--no-fetch] [--cross-check]
+# Usage:
+#   scripts/audit-shared-files.sh [branch] [base_ref] [--no-fetch] [--cross-check]
 #
-#   branche        Branche à auditer (défaut : branche courante). Peut être un
-#                  nom, un ref distant (origin/xxx), un tag ou un SHA.
-#   ref_base       Branche d'intégration (défaut : origin/develop).
-#   --no-fetch     Ne pas exécuter git fetch avant l'audit.
-#   --cross-check  Simule aussi les merges avec les autres branches
-#                  origin/feature/* et signale les conflits croisés.
+#   branch         Branch to audit (default: current branch). May be a
+#                  name, a remote ref (origin/xxx), a tag or a SHA.
+#   base_ref       Integration branch (default: origin/develop).
+#   --no-fetch     Skip the git fetch before auditing.
+#   --cross-check  Also simulate merges with the other origin/feature/*
+#                  branches and report cross-conflicts.
 #
-# Codes de sortie :
-#   0 = aucun conflit ni risque détecté
-#   1 = conflit de merge réel, fichier clé divergent des deux côtés, ou
-#       violation de la convention endpoints module-local
-#   2 = avertissement(s) : fichiers partagés touchés par la branche, retards,
-#       conflits croisés avec d'autres branches feature
+# Exit codes:
+#   0 = no conflict or risk detected
+#   1 = real merge conflict, key file diverged on both sides, or violation
+#       of the module-local endpoints convention
+#   2 = warning(s): shared files touched by the branch, lag, cross-conflicts
+#       with other feature branches
 #
-# Exemples :
+# Examples:
 #   scripts/audit-shared-files.sh
 #   scripts/audit-shared-files.sh feature/plants/english-identifiers
 #   scripts/audit-shared-files.sh feature/machinery/init origin/develop --no-fetch
@@ -46,16 +46,16 @@ warn()  { printf '%s%s%s\n' "$C_YEL" "$*" "$C_OFF"; }
 bad()   { printf '%s%s%s\n' "$C_RED" "$*" "$C_OFF"; }
 
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
-    echo "Erreur : exécutez le script depuis un dépôt git." >&2
+    echo "Error: run this script from a git repository." >&2
     exit 1
 }
 cd "$REPO_ROOT" || exit 1
 
 # ---------------------------------------------------------------------------
-# Fichiers clés partagés à vérifier en priorité (complétez librement).
+# Key shared files to check in priority (extend freely).
 # ---------------------------------------------------------------------------
 KEY_FILES=(
-    # Frontend : application et partagé
+    # Frontend: application and shared
     frontend/src/index.css
     frontend/src/main.jsx
     frontend/src/app/router.jsx
@@ -70,19 +70,19 @@ KEY_FILES=(
     frontend/src/shared/components/Pagination.jsx
     frontend/package.json
     frontend/vite.config.js
-    # Backend : configuration et build
+    # Backend: configuration and build
     backend/pom.xml
     backend/src/main/resources/application.properties
     backend/src/test/resources/application-test.properties
     backend/Dockerfile
-    # Infra / racine
+    # Infra / root
     docker-compose.yml
     .env.example
     .github/workflows/ci.yml
     .gitignore
 )
 
-# Fichier partagé des endpoints, cible de la convention module-local.
+# Shared endpoints file, target of the module-local convention.
 ENDPOINTS_SHARED="frontend/src/shared/api/endpoints.js"
 
 # ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ for arg in "$@"; do
             elif [ -z "$BASE_REF_ARG" ]; then
                 BASE_REF_ARG="$arg"
             else
-                echo "Argument inconnu : $arg" >&2
+                echo "Unknown argument: $arg" >&2
                 exit 1
             fi
             ;;
@@ -119,7 +119,7 @@ CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 [ -z "$BASE_REF_ARG" ] && BASE_REF_ARG="origin/develop"
 
 # ---------------------------------------------------------------------------
-# Résolution des refs
+# Ref resolution
 # ---------------------------------------------------------------------------
 resolve_ref() {
     local r="$1"
@@ -137,50 +137,50 @@ resolve_ref() {
 
 if [ "$NO_FETCH" -eq 0 ]; then
     if git remote get-url origin >/dev/null 2>&1; then
-        info "Récupération de origin (git fetch --prune)..."
+        info "Fetching origin (git fetch --prune)..."
         if ! git fetch origin --prune --quiet; then
-            warn "git fetch a échoué : audit sur les refs locales."
+            warn "git fetch failed: auditing local refs."
         fi
     else
-        warn "Pas de remote 'origin' : audit sur les refs locales."
+        warn "No 'origin' remote: auditing local refs."
     fi
 fi
 
 BRANCH_REF=$(resolve_ref "$BRANCH_ARG") || {
-    echo "Erreur : branche introuvable : $BRANCH_ARG" >&2
+    echo "Error: branch not found: $BRANCH_ARG" >&2
     exit 1
 }
 BASE_REF=$(resolve_ref "$BASE_REF_ARG") || {
-    echo "Erreur : branche de base introuvable : $BASE_REF_ARG" >&2
+    echo "Error: base branch not found: $BASE_REF_ARG" >&2
     exit 1
 }
 
 MERGE_BASE=$(git merge-base "$BASE_REF" "$BRANCH_REF" 2>/dev/null) || {
-    echo "Erreur : aucun ancêtre commun entre $BASE_REF et $BRANCH_REF." >&2
+    echo "Error: no common ancestor between $BASE_REF and $BRANCH_REF." >&2
     exit 1
 }
 
-# Module déduit du nom de branche (feature/<module>/...), utilisé par les
-# vérifications de convention et de surface partagée.
+# Module deduced from the branch name (feature/<module>/...), used by the
+# convention checks and the shared-surface check.
 MODULE=$(printf '%s' "$BRANCH_ARG" | sed -nE 's#^(feature|fix|chore|refactor|hotfix|release)/([^/]+)/.*#\2#p')
 
-title "Contexte"
-info "Branche auditée : ${C_BLD}${BRANCH_REF}${C_OFF} ($(git rev-parse --short "$BRANCH_REF"))"
-info "Base d'intégration : ${C_BLD}${BASE_REF}${C_OFF} ($(git rev-parse --short "$BASE_REF"))"
-info "Merge-base : $(git rev-parse --short "$MERGE_BASE")"
-[ -n "$MODULE" ] && info "Module déduit du nom de branche : ${C_BLD}${MODULE}${C_OFF}"
+title "Context"
+info "Audited branch: ${C_BLD}${BRANCH_REF}${C_OFF} ($(git rev-parse --short "$BRANCH_REF"))"
+info "Integration base: ${C_BLD}${BASE_REF}${C_OFF} ($(git rev-parse --short "$BASE_REF"))"
+info "Merge-base: $(git rev-parse --short "$MERGE_BASE")"
+[ -n "$MODULE" ] && info "Module deduced from branch name: ${C_BLD}${MODULE}${C_OFF}"
 if git merge-base --is-ancestor "$BASE_REF" "$BRANCH_REF"; then
-    ok "La branche contient déjà toute la base : aucun merge nécessaire."
+    ok "The branch already contains the whole base: no merge needed."
 fi
-info "Commits de la base absents de la branche : $(git rev-list --count "$MERGE_BASE..$BRANCH_REF") commit(s) branche / $(git rev-list --count "$MERGE_BASE..$BASE_REF") commit(s) base"
+info "Commits absent from the branch: $(git rev-list --count "$MERGE_BASE..$BRANCH_REF") branch commit(s) / $(git rev-list --count "$MERGE_BASE..$BASE_REF") base commit(s)"
 
 # ---------------------------------------------------------------------------
-# 1. Simulation du merge (conflits réels)
+# 1. Merge simulation (real conflicts)
 # ---------------------------------------------------------------------------
 REAL_CONFLICT=0
 CONFLICTED=""
 
-title "1. Simulation du merge $BASE_REF + $BRANCH_REF"
+title "1. Merge simulation $BASE_REF + $BRANCH_REF"
 MERGE_TREE_HELP=$(git merge-tree -h 2>&1 || true)
 case "$MERGE_TREE_HELP" in
     *--write-tree*) MERGE_TREE_SUPPORTED=1 ;;
@@ -191,12 +191,12 @@ if [ "$MERGE_TREE_SUPPORTED" -eq 1 ]; then
     MERGE_OUT=$(git merge-tree --write-tree --name-only "$BASE_REF" "$BRANCH_REF" 2>&1)
     MERGE_RC=$?
     if [ "$MERGE_RC" -eq 0 ]; then
-        ok "Aucun conflit de merge détecté."
+        ok "No merge conflict detected."
     else
         REAL_CONFLICT=1
         CONFLICTED=$(printf '%s\n' "$MERGE_OUT" | tail -n +2 | sed '/^$/,$d' \
             | grep -vE '^(Auto-merging|CONFLICT|changed in both|added in|removed in)' || true)
-        bad "Conflit(s) de merge détecté(s) :"
+        bad "Merge conflict(s) detected:"
         if [ -n "$CONFLICTED" ]; then
             printf '%s\n' "$CONFLICTED" | while IFS= read -r c; do
                 printf '  - %s\n' "$c"
@@ -204,11 +204,11 @@ if [ "$MERGE_TREE_SUPPORTED" -eq 1 ]; then
         fi
     fi
 else
-    warn "git merge-tree --write-tree non supporté (git < 2.38) : simulation ignorée."
+    warn "git merge-tree --write-tree not supported (git < 2.38): simulation skipped."
 fi
 
 # ---------------------------------------------------------------------------
-# 2. Fichiers clés
+# 2. Key files
 # ---------------------------------------------------------------------------
 exists_at() { git cat-file -e "$1:$2" 2>/dev/null; }
 changed_between() { ! git diff --quiet "$1" "$2" -- "$3" 2>/dev/null; }
@@ -216,9 +216,9 @@ changed_between() { ! git diff --quiet "$1" "$2" -- "$3" 2>/dev/null; }
 RISK=0
 WARNINGS=0
 
-title "2. Fichiers clés partagés"
+title "2. Key shared files"
 
-printf '%-56s %s\n' "FICHIER" "ÉTAT"
+printf '%-56s %s\n' "FILE" "STATUS"
 printf '%-56s %s\n' "--------------------------------------------------------" "-----------------------------"
 
 for f in "${KEY_FILES[@]}"; do
@@ -229,39 +229,39 @@ for f in "${KEY_FILES[@]}"; do
 
     state=""
     if [ "$eh" -eq 0 ] && [ "$ed" -eq 1 ] && [ "$eb" -eq 1 ]; then
-        state="${C_RED}SUPPRIMÉ PAR LA BRANCHE (existe sur develop) -> CONFLIT${C_OFF}"; RISK=1
+        state="${C_RED}DELETED BY BRANCH (exists on develop) -> CONFLICT${C_OFF}"; RISK=1
     elif [ "$eh" -eq 0 ] && [ "$ed" -eq 1 ]; then
-        state="${C_YEL}EN RETARD (ajouté sur develop, absent de la branche)"
+        state="${C_YEL}BEHIND (added on develop, missing from the branch)"
     elif [ "$eh" -eq 0 ]; then
-        state="${C_YEL}absent des deux côtés${C_OFF}"
+        state="${C_YEL}absent on both sides${C_OFF}"
     elif [ "$ed" -eq 0 ]; then
-        state="${C_YEL}AJOUT BRANCHE (nouveau, pas de conflit)"
+        state="${C_YEL}BRANCH ADDITION (new, no conflict)"
     elif ! changed_between "$MERGE_BASE" "$BRANCH_REF" "$f"; then
         if changed_between "$MERGE_BASE" "$BASE_REF" "$f"; then
-            state="${C_YEL}EN RETARD sur develop (non modifié par la branche)"
+            state="${C_YEL}BEHIND develop (unmodified by the branch)"
         else
-            state="${C_GRN}OK (identique à develop)${C_OFF}"
+            state="${C_GRN}OK (identical to develop)${C_OFF}"
         fi
     elif ! changed_between "$MERGE_BASE" "$BASE_REF" "$f"; then
-        state="${C_YEL}MODIFIÉ PAR LA BRANCHE (develop intact)${C_OFF}"; WARNINGS=$((WARNINGS + 1))
+        state="${C_YEL}MODIFIED BY BRANCH (develop untouched)${C_OFF}"; WARNINGS=$((WARNINGS + 1))
     elif changed_between "$BASE_REF" "$BRANCH_REF" "$f"; then
-        state="${C_RED}DIVERGENT DES DEUX CÔTÉS -> CONFLIT POTENTIEL${C_OFF}"; RISK=1
+        state="${C_RED}DIVERGED ON BOTH SIDES -> POTENTIAL CONFLICT${C_OFF}"; RISK=1
     else
-        state="${C_GRN}OK (aligné sur develop après adoption)${C_OFF}"
+        state="${C_GRN}OK (aligned with develop after adoption)${C_OFF}"
     fi
     printf '%-56s %b\n' "$f" "$state"
 done
 
 # ---------------------------------------------------------------------------
-# 3. Convention endpoints module-local
+# 3. Module-local endpoints convention
 # ---------------------------------------------------------------------------
-# Règle : les endpoints d'un module doivent vivre dans
-# frontend/src/features/<module>/api/endpoints.js, pas dans le fichier partagé
-# frontend/src/shared/api/endpoints.js. Deux modules qui ajoutent des clés au
-# même objet produisent un conflit de merge à chaque merge.
+# Rule: a module's endpoints must live in
+# frontend/src/features/<module>/api/endpoints.js, not in the shared file
+# frontend/src/shared/api/endpoints.js. Two modules adding keys to the same
+# object produce a merge conflict on every merge.
 CONVENTION=0
 
-title "3. Convention endpoints module-local"
+title "3. Module-local endpoints convention"
 
 mapfile -t FEATURES < <(git ls-tree --name-only "$BRANCH_REF:frontend/src/features" 2>/dev/null || true)
 
@@ -277,17 +277,17 @@ if [ "${#FEATURES[@]}" -gt 0 ] && exists_at "$BRANCH_REF" "$ENDPOINTS_SHARED"; t
         for mod in "${FEATURES[@]}"; do
             case "$value" in
                 */api/"$mod"/*)
-                    bad "  - $ENDPOINTS_SHARED : $key = \"$value\" (endpoint du module '$mod' dans le fichier partagé)"
+                    bad "  - $ENDPOINTS_SHARED : $key = \"$value\" (module '$mod' endpoint in the shared file)"
                     CONVENTION=1
                     ;;
             esac
         done
     done <<< "$SHARED_CONTENT"
 else
-    warn "Vérification impossible : $ENDPOINTS_SHARED ou le dossier features est absent de $BRANCH_REF."
+    warn "Cannot check: $ENDPOINTS_SHARED or the features folder is missing from $BRANCH_REF."
 fi
 
-# Contrôle inverse : un module qui importe encore le fichier partagé.
+# Reverse check: a module still importing the shared file.
 if [ -n "$MODULE" ]; then
     MODULES_TO_CHECK=("$MODULE")
 else
@@ -300,9 +300,9 @@ for mod in "${MODULES_TO_CHECK[@]}"; do
         [ -z "$api_file" ] && continue
         if git show "$BRANCH_REF:$api_file" 2>/dev/null | grep -q 'shared/api/endpoints'; then
             if exists_at "$BRANCH_REF" "frontend/src/features/$mod/api/endpoints.js"; then
-                bad "  - $api_file importe shared/api/endpoints alors que le fichier module-local existe"
+                bad "  - $api_file imports shared/api/endpoints while the module-local file exists"
             else
-                warn "  - $api_file importe shared/api/endpoints (créer frontend/src/features/$mod/api/endpoints.js)"
+                warn "  - $api_file imports shared/api/endpoints (create frontend/src/features/$mod/api/endpoints.js)"
             fi
             CONVENTION=1
         fi
@@ -310,19 +310,19 @@ for mod in "${MODULES_TO_CHECK[@]}"; do
 done
 
 if [ "$CONVENTION" -eq 0 ]; then
-    ok "Convention respectée : aucun endpoint de module dans $ENDPOINTS_SHARED."
+    ok "Convention respected: no module endpoint in $ENDPOINTS_SHARED."
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Surface partagée modifiée par la branche (hors module)
+# 4. Shared surface modified by the branch (outside the module)
 # ---------------------------------------------------------------------------
-title "4. Surface partagée modifiée par la branche (hors module)"
+title "4. Shared surface modified by the branch (outside the module)"
 
 if [ -n "$MODULE" ]; then
-    info "Module détecté depuis le nom de branche : ${C_BLD}${MODULE}${C_OFF}"
+    info "Module detected from branch name: ${C_BLD}${MODULE}${C_OFF}"
     mapfile -t BRANCH_FILES < <(git diff --name-only "$MERGE_BASE" "$BRANCH_REF" | grep -v "/$MODULE/" || true)
 else
-    warn "Nom de branche hors convention feature/<module>/... : listing de tous les fichiers modifiés."
+    warn "Branch name outside the feature/<module>/... convention: listing all changed files."
     mapfile -t BRANCH_FILES < <(git diff --name-only "$MERGE_BASE" "$BRANCH_REF")
 fi
 
@@ -331,7 +331,7 @@ SHARED_RISKY=()
 SHARED_OTHER=()
 for f in "${BRANCH_FILES[@]}"; do
     [ -z "$f" ] && continue
-    # Ne pas répéter les fichiers clés déjà couverts en section 2.
+    # Do not repeat key files already covered in section 2.
     for k in "${KEY_FILES[@]}"; do
         if [ "$f" = "$k" ]; then
             f=""
@@ -350,28 +350,28 @@ done
 
 MAX_LIST=15
 if [ "${#SHARED_RISKY[@]}" -gt 0 ]; then
-    bad "Fichiers partagés modifiés par la branche ET par develop :"
+    bad "Files modified by the branch AND by develop:"
     printf '  - %s\n' "${SHARED_RISKY[@]}"
 fi
 
 if [ "${#SHARED_OTHER[@]}" -gt 0 ]; then
-    warn "${#SHARED_OTHER[@]} fichier(s) partagé(s) ajouté(s)/modifié(s) par la branche (pas de conflit actuel) :"
+    warn "${#SHARED_OTHER[@]} shared file(s) added/modified by the branch (no current conflict):"
     for i in "${!SHARED_OTHER[@]}"; do
-        [ "$i" -ge "$MAX_LIST" ] && { warn "  ... et $(( ${#SHARED_OTHER[@]} - MAX_LIST )) autre(s)"; break; }
+        [ "$i" -ge "$MAX_LIST" ] && { warn "  ... and $(( ${#SHARED_OTHER[@]} - MAX_LIST )) more"; break; }
         printf '  - %s\n' "${SHARED_OTHER[$i]}"
     done
     WARNINGS=$((WARNINGS + 1))
 fi
 
 if [ "$SHARED_COUNT" -eq 0 ]; then
-    ok "Aucun fichier partagé hors module touché par la branche."
+    ok "No shared file outside the module touched by the branch."
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Cross-check avec les autres branches feature (--cross-check)
+# 5. Cross-check with the other feature branches (--cross-check)
 # ---------------------------------------------------------------------------
 if [ "$CROSS_CHECK" -eq 1 ]; then
-    title "5. Cross-check avec les autres branches feature"
+    title "5. Cross-check with the other feature branches"
     if [ "$MERGE_TREE_SUPPORTED" -eq 1 ]; then
         CROSS_BRANCHES=0
         CROSS_CONFLICTS=0
@@ -379,14 +379,14 @@ if [ "$CROSS_CHECK" -eq 1 ]; then
         while IFS= read -r other; do
             [ -z "$other" ] && continue
             [ "$other" = "$BRANCH_REF" ] && continue
-            # Éviter de tester deux refs identiques (ex. Feature/ et feature/).
+            # Avoid testing two identical refs (e.g. Feature/ and feature/).
             sha=$(git rev-parse "$other" 2>/dev/null || true)
             case " $SEEN_SHAS " in
                 *" $sha "*) continue ;;
             esac
             SEEN_SHAS="$SEEN_SHAS $sha"
-            # Ignorer les branches déjà contenues dans la base : leur contenu
-            # est déjà dans develop, le cross-check n'apporte rien.
+            # Skip branches already contained in the base: their content is
+            # already in develop, the cross-check adds nothing.
             if git merge-base --is-ancestor "$other" "$BASE_REF" 2>/dev/null; then
                 continue
             fi
@@ -397,47 +397,47 @@ if [ "$CROSS_CHECK" -eq 1 ]; then
                 files=$(printf '%s\n' "$out" | tail -n +2 | sed '/^$/,$d' \
                     | grep -vE '^(Auto-merging|CONFLICT|changed in both|added in|removed in)' \
                     | tr '\n' ',' | sed 's/,$//; s/,/, /g')
-                warn "  - ${other#origin/} : ${files:-conflit}"
+                warn "  - ${other#origin/} : ${files:-conflict}"
                 CROSS_CONFLICTS=$((CROSS_CONFLICTS + 1))
             fi
         done < <(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/[Ff]eature/**' 2>/dev/null || true)
 
         if [ "$CROSS_CONFLICTS" -eq 0 ]; then
-            ok "Aucun conflit croisé avec les $CROSS_BRANCHES branche(s) feature distante(s)."
+            ok "No cross-conflict with the $CROSS_BRANCHES remote feature branch(es)."
         else
-            warn "$CROSS_CONFLICTS conflit(s) croisé(s) sur $CROSS_BRANCHES branche(s) : le merge dans develop dépendra de l'ordre de merge."
+            warn "$CROSS_CONFLICTS cross-conflict(s) across $CROSS_BRANCHES branch(es): merging into develop will depend on merge order."
             WARNINGS=$((WARNINGS + 1))
         fi
     else
-        warn "git merge-tree --write-tree non supporté : cross-check ignoré."
+        warn "git merge-tree --write-tree not supported: cross-check skipped."
     fi
 fi
 
 # ---------------------------------------------------------------------------
-# 6. Rapport final
+# 6. Final report
 # ---------------------------------------------------------------------------
-title "6. Rapport"
+title "6. Report"
 
 if [ "$REAL_CONFLICT" -eq 1 ]; then
-    bad "VERDICT : CONFLIT(S) DE MERGE RÉEL(S) : ne pas merger en l'état."
+    bad "VERDICT: REAL MERGE CONFLICT(S): do not merge as is."
     exit 1
 fi
 
 if [ "$RISK" -eq 1 ]; then
-    bad "VERDICT : RISQUE DÉTECTÉ : vérifier les fichiers signalés avant merge."
+    bad "VERDICT: RISK DETECTED: review the flagged files before merging."
     exit 1
 fi
 
 if [ "$CONVENTION" -eq 1 ]; then
-    bad "VERDICT : CONVENTION ENDPOINTS MODULE-LOCAL NON RESPECTÉE : à corriger avant merge."
+    bad "VERDICT: MODULE-LOCAL ENDPOINTS CONVENTION VIOLATED: fix before merging."
     exit 1
 fi
 
 if [ "$WARNINGS" -gt 0 ]; then
-    warn "VERDICT : OK POUR LE MERGE, mais des fichiers partagés sont touchés."
-    warn "Le merge actuel est propre ; relancer l'audit si develop bouge encore."
+    warn "VERDICT: OK TO MERGE, but shared files are touched."
+    warn "The current merge is clean; re-run the audit if develop moves again."
     exit 2
 fi
 
-ok "VERDICT : AUCUN SOUCI - fichiers partagés intacts, merge propre."
+ok "VERDICT: ALL CLEAR - shared files intact, clean merge."
 exit 0

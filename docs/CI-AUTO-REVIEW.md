@@ -1,80 +1,81 @@
-# CI intelligente : auto-review + auto-merge des PR `*/init`
+# Smart CI: auto-review + auto-merge of `*/init` PRs
 
-Objectif : plus jamais de revue manuelle branche par branche. La CI relit
-chaque PR vers `develop`, publie un rapport, et merge seule les PR autorisées.
+Goal: no more manual branch-by-branch reviews. The CI reviews every PR to
+`develop`, publishes a report, and merges whitelisted PRs by itself.
 
 ## Pipeline
 
 ```
-PR (opened/push/reopen) vers develop
+PR (opened/push/reopen) targeting develop
 │
-├── Workflow "CI"                          (checks requis)
-│   ├── Backend tests (PostgreSQL)   ← tests sur VRAI Postgres (plus de H2 muet)
-│   ├── Flyway migrations (PostgreSQL) ← migrations appliquées sur base vierge
+├── "CI" workflow                            (required checks)
+│   ├── Backend tests (PostgreSQL)   ← tests on REAL Postgres (no more silent H2)
+│   ├── Flyway migrations (PostgreSQL) ← migrations applied to a fresh database
 │   └── Frontend build
 │
-└── Workflow "Auto-review"
-    └── Quality gate (auto-review)    (check requis, verdict du merge)
+└── "Auto-review" workflow
+    └── Quality gate (auto-review)    (required check, merge verdict)
         ├── scripts/audit-shared-files.sh --cross-check
-        │     conflits de merge réels, fichiers partagés divergents/supprimés,
-        │     convention endpoints module-local, conflits croisés entre branches
-        ├── scripts/ci-guards.sh  (sur le DIFF : la dette existante ne bloque pas)
-        └── Rapport publié en commentaire de la PR (mis à jour à chaque push)
+        │     real merge conflicts, diverged/deleted shared files,
+        │     module-local endpoints convention, cross-conflicts between branches
+        ├── scripts/ci-guards.sh  (on the DIFF: existing debt never blocks)
+        └── Report published as a PR comment (updated on every push)
             │
-            ├── 🔴 violation bloquante → check rouge, le rapport dit QUOI corriger
-            └── 🟢/🟡 passée
-                └── auto-merge (job) : si PR créée par PANK4SS ET branche */init
+            ├── 🔴 blocking violation → red check, the report says WHAT to fix
+            └── 🟢/🟡 passed
+                └── auto-merge (job): if PR created by PANK4SS AND branch */init
                     → gh pr merge --squash --auto --delete-branch
-                    → merge dès que TOUS les checks requis sont verts
+                    → merges as soon as ALL required checks are green
 ```
 
-## Garde-fous bloquants (`scripts/ci-guards.sh`)
+## Blocking guards (`scripts/ci-guards.sh`)
 
-| ID | Motif | Référence review |
-|----|-------|------------------|
-| F1 | `@CrossOrigin` ajouté | PR-26/02 |
-| F2 | URL/IP en dur (`localhost`, `10.x`, `192.168.x`) dans le code | PR-26/07, PR-42 |
-| F3 | hash/secret dans une migration Flyway | PR-33/01 |
-| F4 | comptes/données démo en migration | PR-33/01 |
-| F5 | starter supprimé ou `java.version` baissé dans `pom.xml` | PR-42/02, PR-29/04 |
-| F6 | entité JPA liée au `@RequestBody` (mass assignment) | PR-26/04, PR-27/02 |
-| F7 | `@ManyToOne` sans `LAZY` | PR-43/06 |
-| F8 | `CommandLineRunner` sans `@Profile` | PR-26/01 |
-| F9 | second `@RestControllerAdvice` sans `@Order` | PR-42/06 |
-| F10 | `@Id` sans `@GeneratedValue` (PK contrôlée par le client) | PR-43/04 |
-| F11 | secret littéral codé en dur | PR-33 |
+| ID | Pattern | Review reference |
+|----|---------|------------------|
+| F1 | `@CrossOrigin` added | PR-26 |
+| F2 | Hardcoded URL/IP (`localhost`, `10.x`, `192.168.x`) in code | PR-26, PR-42 |
+| F3 | Password hash/secret inside a Flyway migration | PR-33 |
+| F4 | Demo accounts/data in a migration | PR-33 |
+| F5 | Starter removed or `java.version` downgraded in `pom.xml` | PR-29, PR-42 |
+| F6 | JPA entity bound to `@RequestBody` (mass assignment) | PR-26, PR-27, PR-43 |
+| F7 | `@ManyToOne` without `LAZY` | PR-43 |
+| F8 | `CommandLineRunner` without `@Profile` | PR-26 |
+| F9 | Second `@RestControllerAdvice` without `@Order` | PR-42 |
+| F10 | `@Id` without `@GeneratedValue` (client-controlled PK) | PR-43 |
+| F11 | Hardcoded literal secret | PR-33 |
 
-Avertissements (jaunes, non bloquants) : `findAll()` non borné (W1), entité
-sans `@Version` (W2), exception brute → 500 (W3), `fetch()` hors couche API (W4).
+Warnings (yellow, non-blocking): unbounded `findAll()` (W1), entity without
+`@Version` (W2), raw exception → 500 (W3), `fetch()` outside the API layer (W4).
 
-## Setup GitHub (une seule fois)
+## One-time GitHub setup
 
-1. **Settings → General → Pull Requests** : cocher **Allow auto-merge** et
-   *Delete head branch* (déjà passé par le workflow via `--delete-branch`).
-2. **Settings → Branches → Branch protection rule** sur `develop` :
+1. **Settings → General → Pull Requests**: enable **Allow auto-merge** and
+   automatically delete head branches (the workflow also passes
+   `--delete-branch`).
+2. **Settings → Branches → Branch protection rule** on `develop`:
    - Require a pull request before merging
-   - Require status checks to pass :
+   - Require status checks to pass:
      - `Quality gate (auto-review)`
      - `Backend tests (PostgreSQL)`
      - `Flyway migrations (PostgreSQL)`
      - `Frontend build`
    - Require branches to be up to date before merging
-   - Ne **pas** exiger d'approbations pour les PR `*/init` (GitHub interdit à
-     l'auteur d'approuver sa propre PR — le rôle de "review" est tenu par le
-     check `Quality gate`).
-3. Modifier l'identité/suffixe autorisés : `AUTO_REVIEW_LOGIN` et le `if`
-   du job `auto-merge` dans `.github/workflows/auto-review.yml` (deux
-   endroits, le contexte `env` n'étant pas disponible dans un `if` de job).
+   - Do **not** require approvals for `*/init` PRs (GitHub forbids PR authors
+     from approving their own PRs — the "reviewer" role is played by the
+     `Quality gate` check).
+3. Changing the allowed identity/suffix: update `AUTO_REVIEW_LOGIN` and the
+   `if` of the `auto-merge` job in `.github/workflows/auto-review.yml` (two
+   places, since the `env` context is not available in a job-level `if`).
 
-## Limites assumées (revue humaine réduite, pas nulle)
+## Accepted limits (reduced human review, not zero)
 
-Le rapport de la PR rappelle en permanence les points non automatisables :
-sémantique métier (invariants, volumes réels vs planifiés, portes QC),
-pertinence des tests, idempotence d'ingestion, sémantique PUT. La CI est un
-filtre à défauts connus, pas un relecteur fonctionnel.
+The PR report permanently carries the non-automatable points: business
+semantics (invariants, real vs planned volumes, QC gates), test relevance,
+ingestion idempotency, PUT semantics. The CI is a filter on known defect
+patterns, not a functional reviewer.
 
-## Étendre les gardes
+## Extending the guards
 
-Ajouter le motif dans `scripts/ci-guards.sh` (fonction `fail`/`warn`),
-documenter dans le tableau ci-dessus. Les guards ne voient que le diff
-`merge-base..head` : un défaut préexistant sur la base n'est jamais signalé.
+Add the pattern in `scripts/ci-guards.sh` (`fail`/`warn` functions), document
+it in the table above. Guards only see the `merge-base..head` diff: a defect
+pre-existing on the base is never reported.
