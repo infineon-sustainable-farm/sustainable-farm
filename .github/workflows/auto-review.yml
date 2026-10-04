@@ -1,0 +1,185 @@
+# Auto-review : revue automatique + merge autonome des PR */init.
+#
+# Comportement (cf. docs/CI-AUTO-REVIEW.md) :
+#   1. À chaque push/open sur une PR vers develop : le job "quality-gate"
+#      exécute audit-shared-files.sh (conflits, fichiers partagés, convention
+#      endpoints) + ci-guards.sh (11 familles de défauts bloquants) et publie
+#      le rapport en commentaire de la PR (mis à jour, jamais dupliqué).
+#   2. PR ROUGE : le check échoue, le rapport indique quoi corriger.
+#   3. PR VERTE **et** créée par AUTO_REVIEW_LOGIN **et** branche finissant
+#      par AUTO_REVIEW_SUFFIX ("/init") : merge squash automatique vers
+#      develop dès que tous les checks requis sont verts (gh pr merge --auto).
+#
+# Prérequis côté GitHub (une seule fois) :
+#   - Settings → General → cocher "Allow auto-merge"
+#   - Settings → Branches → règle de protection sur develop : exiger
+#     "Quality gate (auto-review)", "Backend tests (PostgreSQL)",
+#     "Flyway migrations (PostgreSQL)", "Frontend build" + "Require branches
+#     to be up to date". NE PAS exiger d'approbation pour les PR */init
+#     (GitHub interdit à l'auteur d'approuver sa propre PR).
+name: Auto-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [develop]
+
+# Identité autorisée au merge automatique (le login GitHub du propriétaire).
+# Le suffixe de branche est codé dans le `if` du job auto-merge (l'expression
+# if de job n'a pas accès au contexte env) : pensez à le modifier aux deux endroits.
+env:
+  AUTO_REVIEW_LOGIN: PANK4SS
+  AUTO_REVIEW_SUFFIX: /init
+
+concurrency:
+  group: auto-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Quality gate (auto-review)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout (historique complet pour merge-base/merge-tree)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve refs
+        run: |
+          git fetch --prune --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+          echo "BASE_REF=origin/${{ github.base_ref }}" >> "$GITHUB_ENV"
+          echo "HEAD_REF=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_ENV"
+
+      # ------------------------------------------------------------------
+      # 1/2 — Audit des fichiers partagés (scripts/audit-shared-files.sh)
+      # ------------------------------------------------------------------
+      - name: Shared-files audit
+        id: audit
+        run: |
+          set +e
+          bash scripts/audit-shared-files.sh "$HEAD_REF" "$BASE_REF" --no-fetch --cross-check > audit.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      # ------------------------------------------------------------------
+      # 2/2 — Garde-fous statiques sur le diff (scripts/ci-guards.sh)
+      # ------------------------------------------------------------------
+      - name: Static guards on diff
+        id: guards
+        run: |
+          set +e
+          bash scripts/ci-guards.sh "$HEAD_REF" "$BASE_REF" guards-report.md > guards.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Build PR report
+        if: always()
+        run: |
+          AUDIT_RC="${{ steps.audit.outputs.rc }}"
+          GUARDS_RC="${{ steps.guards.outputs.rc }}"
+          if [ "$AUDIT_RC" = "1" ] || [ "$GUARDS_RC" = "1" ]; then
+            VERDICT="🔴 **PR BLOQUÉE — corrigez les points ci-dessous puis repoussez : la revue se relancera seule.**"
+          else
+            VERDICT="✅ **Quality gate passée.**"
+          fi
+
+          {
+            echo "<!-- farm-quality-gate -->"
+            echo "## 🤖 Revue automatique — quality gate"
+            echo
+            echo "Branche : \`${{ github.event.pull_request.head.ref }}\` → base : \`${{ github.base_ref }}\`"
+            echo
+            echo "${VERDICT}"
+            echo
+            cat guards-report.md 2>/dev/null || echo "_(rapport guards indisponible)_"
+            echo
+            echo "<details>"
+            echo "<summary>📋 Audit des fichiers partagés et conflits de merge (sortie complète)</summary>"
+            echo
+            echo '```text'
+          } > PR_REPORT.md
+          cat audit.log >> PR_REPORT.md 2>/dev/null || true
+          {
+            echo '```'
+            echo "</details>"
+            echo
+            echo "<details>"
+            echo "<summary>👁️ Points qui restent à vérification humaine (non automatisables)</summary>"
+            echo
+            echo "- Sémantique métier : invariants (niveaux décrémentés, volumes réels vs planifiés), portes QC, FIFO/valorisation."
+            echo "- Concurrence : \`@Version\` / verrous pessimistes sur les compteurs (stock, eau, engrais)."
+            echo "- Idempotence des ingestions (double POST = une seule ligne) et tests associés."
+            echo "- Sémantique PUT : champs omis préservés (cf. test modèle \`updateZoneKeepsFieldsThatWereOmitted\`)."
+            echo "- Pertinence des tests : un diff \`src/main\` sans diff \`src/test\` est suspect."
+            echo "</details>"
+          } >> PR_REPORT.md
+
+      - name: Publish report comment (create or update)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REPO="${{ github.repository }}"
+          PR="${{ github.event.pull_request.number }}"
+          CID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+                --jq '.[] | select(.body | contains("<!-- farm-quality-gate -->")) | .id' | head -n1 || true)
+          if [ -n "$CID" ]; then
+            gh api --silent -X PATCH "repos/$REPO/issues/comments/$CID" -F body=@PR_REPORT.md
+          else
+            gh api --silent -X POST "repos/$REPO/issues/$PR/comments" -F body=@PR_REPORT.md
+          fi
+
+      - name: Job summary
+        if: always()
+        run: cat PR_REPORT.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Final verdict
+        if: always()
+        run: |
+          AUDIT_RC="${{ steps.audit.outputs.rc }}"
+          GUARDS_RC="${{ steps.guards.outputs.rc }}"
+          if [ "$AUDIT_RC" = "1" ] || [ "$GUARDS_RC" = "1" ]; then
+            echo "Quality gate ÉCHOUÉE (audit=$AUDIT_RC, guards=$GUARDS_RC)."
+            exit 1
+          fi
+          echo "Quality gate PASSÉE (audit=$AUDIT_RC, guards=$GUARDS_RC)."
+
+  # -------------------------------------------------------------------------
+  # Merge autonome : uniquement PR */init créée par le propriétaire,
+  # gate verte, PR non draft. "gh pr merge --auto" attend ensuite que TOUS
+  # les checks requis passent avant de merger — si un seul est rouge, la PR
+  # reste rouge et rien n'est mergé.
+  # -------------------------------------------------------------------------
+  auto-merge:
+    name: Auto-merge (squash → develop)
+    needs: quality-gate
+    if: >-
+      needs.quality-gate.result == 'success' &&
+      !github.event.pull_request.draft &&
+      github.event.pull_request.user.login == 'PANK4SS' &&
+      endsWith(github.head_ref, '/init')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Enable auto-merge (squash, delete branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR="${{ github.event.pull_request.number }}"
+          if gh pr merge "$PR" --squash --auto --delete-branch; then
+            echo "Auto-merge activé : la PR sera mergée en squash dès que tous les checks requis sont verts."
+          else
+            echo "::error::Échec de l'activation de l'auto-merge. Vérifiez que 'Allow auto-merge' est activé dans Settings → General (cf. docs/CI-AUTO-REVIEW.md)."
+            exit 1
+          fi

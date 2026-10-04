@@ -1,19 +1,41 @@
+# CI de base : build + tests RÉELS (PostgreSQL, pas H2) + migrations Flyway.
+#
+# Correction des constats _shared/02 et _shared/04 :
+#  - les tests backend tournent désormais CONTRE PostgreSQL (les variables
+#    d'environnement écrasent le jdbc:h2 de application-test.properties, la
+#    précédence Spring plaçant l'OS env au-dessus des fichiers de profil) ;
+#    le JPQL que H2 accepte mais PostgreSQL refuse (cause du develop cassé)
+#    fait désormais échouer la PR ;
+#  - si la branche embarque des migrations Flyway (backend/src/main/resources/
+#    db/migration), elles sont appliquées sur une base PostgreSQL vierge par
+#    le job "migrations" — les migrations qui n'ont jamais tourné (PR-33/#41)
+#    ne passeront plus.
+#
+# Jobs requis pour la protection de branche (cf. docs/CI-AUTO-REVIEW.md) :
+#   - "Backend tests (PostgreSQL)"
+#   - "Flyway migrations (PostgreSQL)"
+#   - "Frontend build"
+#   - "Quality gate (auto-review)" (workflow auto-review.yml)
 name: CI
 
 on:
   pull_request:
     branches: [develop, main]
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  backend:
-    name: Backend build & tests
+  backend-tests:
+    name: Backend tests (PostgreSQL)
     runs-on: ubuntu-latest
 
     services:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_DB: sustainable_farm
+          POSTGRES_DB: sustainable_farm_test
           POSTGRES_USER: farm_admin
           POSTGRES_PASSWORD: changeme
         ports:
@@ -24,10 +46,14 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
+    # Écrase la config H2 de src/test/resources : les tests voient du vrai
+    # PostgreSQL. Si un test ne passe QUE sur H2, c'est un bug, pas un flaky.
     env:
-      POSTGRES_DB: sustainable_farm
-      POSTGRES_USER: farm_admin
-      POSTGRES_PASSWORD: changeme
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/sustainable_farm_test
+      SPRING_DATASOURCE_USERNAME: farm_admin
+      SPRING_DATASOURCE_PASSWORD: changeme
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
 
     steps:
       - name: Checkout code
@@ -38,10 +64,60 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: maven
 
-      - name: Run backend tests
+      - name: Run backend tests against PostgreSQL
         working-directory: backend
-        run: ./mvnw test
+        run: ./mvnw --batch-mode test
+
+  migrations:
+    name: Flyway migrations (PostgreSQL)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: sustainable_farm
+          POSTGRES_USER: farm_admin
+          POSTGRES_PASSWORD: changeme
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd="pg_isready -U farm_admin"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect Flyway migrations
+        id: detect
+        run: |
+          if compgen -G "backend/src/main/resources/db/migration/*" > /dev/null; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Base vierge → toutes les migrations doivent s'appliquer proprement.
+      # Échoue sur : SQL non rejouable (PR-33 V2), migration dépendante d'un
+      # renommage absent, entité qui référence une colonne jamais créée (#41).
+      - name: Apply migrations on fresh PostgreSQL
+        if: steps.detect.outputs.present == 'true'
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/backend/src/main/resources/db/migration:/flyway/sql" \
+            flyway/flyway:10-alpine \
+            -url=jdbc:postgresql://localhost:5433/sustainable_farm \
+            -user=farm_admin -password=changeme -connectRetries=10 \
+            migrate
+
+      - name: Skipped (no migrations on this branch)
+        if: steps.detect.outputs.present == 'false'
+        run: echo "Pas de dossier db/migration sur cette branche - job saute (succes)."
 
   frontend:
     name: Frontend build
