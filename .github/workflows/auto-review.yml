@@ -42,9 +42,11 @@ jobs:
   quality-gate:
     name: Quality gate (auto-review)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write
+      actions: read
 
     steps:
       - name: Checkout (full history for merge-base/merge-tree)
@@ -80,6 +82,35 @@ jobs:
           echo "rc=$?" >> "$GITHUB_OUTPUT"
           exit 0
 
+      # ------------------------------------------------------------------
+      # 3/3 — Wait for the "CI" workflow on the same commit, and collect a
+      # digest of its failing steps so the PR owner sees the actual error
+      # in the report comment, without opening raw CI logs.
+      # ------------------------------------------------------------------
+      - name: Wait for CI workflow and collect failure digest
+        id: ciresult
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ github.event.pull_request.head.sha }}"
+          REPO="${{ github.repository }}"
+          : > ci-failure.log
+          for i in $(seq 1 72); do    # up to 12 minutes
+            LINE=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=20" \
+                   --jq '[.workflow_runs[] | select(.name == "CI")][0] | "\(.status) \(.conclusion // "-") \(.id)"' 2>/dev/null || true)
+            if [ -z "$LINE" ]; then sleep 10; continue; fi
+            read -r STATUS CONCLUSION RUN_ID <<< "$LINE"
+            if [ "$STATUS" = "completed" ]; then
+              if [ "$CONCLUSION" = "failure" ] && [ -n "$RUN_ID" ]; then
+                gh run view "$RUN_ID" -R "$REPO" --log-failed 2>/dev/null | tail -n 150 > ci-failure.log || true
+              fi
+              echo "conclusion=$CONCLUSION" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "conclusion=timeout" >> "$GITHUB_OUTPUT"
+
       - name: Build PR report
         if: always()
         run: |
@@ -110,6 +141,25 @@ jobs:
           {
             echo '```'
             echo "</details>"
+            echo
+          } >> PR_REPORT.md
+          if [ -s ci-failure.log ]; then
+            {
+              echo "<details open>"
+              echo "<summary>CI failure digest (last 150 lines of the failing steps)</summary>"
+              echo
+              echo '```text'
+              cat ci-failure.log
+              echo '```'
+              echo "</details>"
+            } >> PR_REPORT.md
+          elif [ "${{ steps.ciresult.outputs.conclusion }}" = "failure" ]; then
+            {
+              echo "**CI failed but no digest could be collected.** Open the failing check to read the log."
+              echo
+            } >> PR_REPORT.md
+          fi
+          {
             echo
             echo "<details>"
             echo "<summary>Points that still require human review (not automatable)</summary>"
