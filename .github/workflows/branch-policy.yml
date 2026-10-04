@@ -1,0 +1,71 @@
+# Branch policy: only /init branches (or code-owner PRs) may target develop.
+#
+# Every contributor works on the feature/<module>/init branch assigned by the
+# code owner. Any PR from another branch is commented and closed automatically.
+#
+# Exceptions:
+#   - PRs authored by BRANCH_POLICY_OWNER (code owner: CI, hotfixes, infra)
+#   - PRs labeled 'policy-exception' (added manually by the code owner)
+#
+# English-only output, no emojis (repo CI convention).
+name: Branch policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [develop, main]
+
+concurrency:
+  group: branch-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  BRANCH_POLICY_OWNER: PANK4SS
+
+jobs:
+  enforce-init-branches:
+    name: Enforce /init branch naming
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    # Job-level if cannot read env context: the owner login is repeated here
+    # on purpose (two places to update when the owner changes).
+    if: >-
+      github.event.pull_request.user.login != 'PANK4SS' &&
+      !endsWith(github.head_ref, '/init') &&
+      !contains(github.event.pull_request.labels.*.name, 'policy-exception')
+    steps:
+      - name: Reject and close the non-conforming PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          cat > policy-message.md <<EOF
+          <!-- farm-branch-policy -->
+          ## PR rejected: branch naming policy
+
+          This pull request was automatically closed by the branch policy.
+
+          Every contributor must work on the \`feature/<module>/init\` branch assigned
+          to them by the code owner (for example \`feature/cropstorage/init\`).
+          This PR was opened from \`${BRANCH}\`, which does not follow that convention.
+
+          How to proceed:
+
+          1. Move your commits to your assigned \`/init\` branch and open the PR from it
+             (or ask the code owner to reassign the work).
+          2. If an exception is genuinely justified (shared infrastructure, urgent
+             hotfix), ask the code owner to add the \`policy-exception\` label, then
+             reopen this PR - it will be left untouched by the policy.
+
+          The branch naming keeps the review pipeline deterministic: PRs from
+          assigned \`/init\` branches get an automated review and can merge
+          autonomously once green.
+          EOF
+          gh pr comment "$PR" --body-file policy-message.md
+          gh pr close "$PR"
+          echo "PR $PR from '$BRANCH' closed by the branch policy."

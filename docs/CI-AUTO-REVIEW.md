@@ -77,6 +77,17 @@ semantics (invariants, real vs planned volumes, QC gates), test relevance,
 ingestion idempotency, PUT semantics. The CI is a filter on known defect
 patterns, not a functional reviewer.
 
+## Branch policy
+
+Only PRs from `feature/<module>/init` branches (assigned by the code owner) are
+accepted on `develop`. Any other PR is commented with the reason and closed
+automatically (`branch-policy.yml`). Two escape hatches:
+
+- PRs authored by the code owner (`BRANCH_POLICY_OWNER`) are never rejected
+  (CI, hotfixes and infrastructure live on free-form branches such as `chore/...`);
+- the `policy-exception` label, added manually by the code owner, exempts a PR
+  from the policy (reopen it after labeling).
+
 ## Extending the guards
 
 Add the pattern in `scripts/ci-guards.sh` (`fail`/`warn` functions), document
