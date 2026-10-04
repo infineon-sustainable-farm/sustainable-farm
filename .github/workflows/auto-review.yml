@@ -1,0 +1,235 @@
+# Auto-review: automated review + autonomous merge of */init PRs.
+#
+# Behavior (see docs/CI-AUTO-REVIEW.md):
+#   1. On every push/open of a PR targeting develop: the "quality-gate" job
+#      runs audit-shared-files.sh (conflicts, shared files, endpoints
+#      convention) + ci-guards.sh (11 blocking defect families) and publishes
+#      the report as a PR comment (updated, never duplicated).
+#   2. RED PR: the check fails, the report states what to fix.
+#   3. GREEN PR **and** created by AUTO_REVIEW_LOGIN **and** branch ending
+#      with AUTO_REVIEW_SUFFIX ("/init"): automatic squash-merge to develop
+#      as soon as all required checks are green (gh pr merge --auto).
+#
+# One-time GitHub prerequisites:
+#   - Settings -> General -> enable "Allow auto-merge"
+#   - Settings -> Branches -> protection rule on develop: require
+#     "Quality gate (auto-review)", "Backend tests (PostgreSQL)",
+#     "Frontend build" + "Require branches to be up to date". Do NOT require
+#     approvals for */init PRs (GitHub forbids PR authors from approving
+#     their own PRs).
+name: Auto-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [develop]
+
+# Identity allowed to auto-merge (the owner's GitHub login).
+# The branch suffix is hardcoded in the auto-merge job's `if` (job-level if
+# expressions cannot access the env context): update both places when changed.
+env:
+  AUTO_REVIEW_LOGIN: PANK4SS
+  AUTO_REVIEW_SUFFIX: /init
+
+concurrency:
+  group: auto-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Quality gate (auto-review)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Checkout (full history for merge-base/merge-tree)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve refs
+        run: |
+          git fetch --prune --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+          echo "BASE_REF=origin/${{ github.base_ref }}" >> "$GITHUB_ENV"
+          echo "HEAD_REF=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_ENV"
+
+      # ------------------------------------------------------------------
+      # 1/2 - Shared-files audit (scripts/audit-shared-files.sh)
+      # ------------------------------------------------------------------
+      - name: Shared-files audit
+        id: audit
+        run: |
+          set +e
+          bash scripts/audit-shared-files.sh "$HEAD_REF" "$BASE_REF" --no-fetch --cross-check > audit.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      # ------------------------------------------------------------------
+      # 2/2 - Static guards on the diff (scripts/ci-guards.sh)
+      # ------------------------------------------------------------------
+      - name: Static guards on diff
+        id: guards
+        run: |
+          set +e
+          bash scripts/ci-guards.sh "$HEAD_REF" "$BASE_REF" guards-report.md > guards.log 2>&1
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      # ------------------------------------------------------------------
+      # 3/3 — Wait for the "CI" workflow on the same commit, and collect a
+      # digest of its failing steps so the PR owner sees the actual error
+      # in the report comment, without opening raw CI logs.
+      # ------------------------------------------------------------------
+      - name: Wait for CI workflow and collect failure digest
+        id: ciresult
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ github.event.pull_request.head.sha }}"
+          REPO="${{ github.repository }}"
+          : > ci-failure.log
+          for i in $(seq 1 72); do    # up to 12 minutes
+            LINE=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=20" \
+                   --jq '[.workflow_runs[] | select(.name == "CI")][0] | "\(.status) \(.conclusion // "-") \(.id)"' 2>/dev/null || true)
+            if [ -z "$LINE" ]; then sleep 10; continue; fi
+            read -r STATUS CONCLUSION RUN_ID <<< "$LINE"
+            if [ "$STATUS" = "completed" ]; then
+              if [ "$CONCLUSION" = "failure" ] && [ -n "$RUN_ID" ]; then
+                gh run view "$RUN_ID" -R "$REPO" --log-failed 2>/dev/null | tail -n 150 > ci-failure.log || true
+              fi
+              echo "conclusion=$CONCLUSION" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "conclusion=timeout" >> "$GITHUB_OUTPUT"
+
+      - name: Build PR report
+        if: always()
+        run: |
+          AUDIT_RC="${{ steps.audit.outputs.rc }}"
+          GUARDS_RC="${{ steps.guards.outputs.rc }}"
+          if [ "$AUDIT_RC" = "1" ] || [ "$GUARDS_RC" = "1" ]; then
+            VERDICT="**PR BLOCKED - fix the points below and push again: the review will re-run automatically.**"
+          else
+            VERDICT="**Quality gate passed.**"
+          fi
+
+          {
+            echo "<!-- farm-quality-gate -->"
+            echo "## Automated review: quality gate"
+            echo
+            echo "Branch: \`${{ github.event.pull_request.head.ref }}\` (base: \`${{ github.base_ref }}\`)"
+            echo
+            echo "${VERDICT}"
+            echo
+            cat guards-report.md 2>/dev/null || echo "_(guards report unavailable)_"
+            echo
+            echo "<details>"
+            echo "<summary>Shared-files audit and merge conflicts (full output)</summary>"
+            echo
+            echo '```text'
+          } > PR_REPORT.md
+          cat audit.log >> PR_REPORT.md 2>/dev/null || true
+          {
+            echo '```'
+            echo "</details>"
+            echo
+          } >> PR_REPORT.md
+          if [ -s ci-failure.log ]; then
+            {
+              echo "<details open>"
+              echo "<summary>CI failure digest (last 150 lines of the failing steps)</summary>"
+              echo
+              echo '```text'
+              cat ci-failure.log
+              echo '```'
+              echo "</details>"
+            } >> PR_REPORT.md
+          elif [ "${{ steps.ciresult.outputs.conclusion }}" = "failure" ]; then
+            {
+              echo "**CI failed but no digest could be collected.** Open the failing check to read the log."
+              echo
+            } >> PR_REPORT.md
+          fi
+          {
+            echo
+            echo "<details>"
+            echo "<summary>Points that still require human review (not automatable)</summary>"
+            echo
+            echo "- Business semantics: invariants (levels actually decremented, real vs planned volumes), QC gates, FIFO/valuation."
+            echo "- Concurrency: \`@Version\` / pessimistic locks on counters (stock, water, fertilizer)."
+            echo "- Ingestion idempotency (double POST = single row) and the associated tests."
+            echo "- PUT semantics: omitted fields preserved (see model test \`updateZoneKeepsFieldsThatWereOmitted\`)."
+            echo "- Test relevance: a \`src/main\` diff without a \`src/test\` diff is suspicious."
+            echo "</details>"
+          } >> PR_REPORT.md
+
+      - name: Publish report comment (create or update)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REPO="${{ github.repository }}"
+          PR="${{ github.event.pull_request.number }}"
+          CID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+                --jq '.[] | select(.body | contains("<!-- farm-quality-gate -->")) | .id' | head -n1 || true)
+          if [ -n "$CID" ]; then
+            gh api --silent -X PATCH "repos/$REPO/issues/comments/$CID" -F body=@PR_REPORT.md
+          else
+            gh api --silent -X POST "repos/$REPO/issues/$PR/comments" -F body=@PR_REPORT.md
+          fi
+
+      - name: Job summary
+        if: always()
+        run: cat PR_REPORT.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Final verdict
+        if: always()
+        run: |
+          AUDIT_RC="${{ steps.audit.outputs.rc }}"
+          GUARDS_RC="${{ steps.guards.outputs.rc }}"
+          if [ "$AUDIT_RC" = "1" ] || [ "$GUARDS_RC" = "1" ]; then
+            echo "Quality gate FAILED (audit=$AUDIT_RC, guards=$GUARDS_RC)."
+            exit 1
+          fi
+          echo "Quality gate PASSED (audit=$AUDIT_RC, guards=$GUARDS_RC)."
+
+  # -------------------------------------------------------------------------
+  # Autonomous merge: only */init PRs created by the owner, gate green,
+  # PR not a draft. "gh pr merge --auto" then waits until ALL required
+  # checks pass before merging - if any is red, the PR stays red and
+  # nothing is merged.
+  # -------------------------------------------------------------------------
+  auto-merge:
+    name: Auto-merge (squash to develop)
+    needs: quality-gate
+    if: >-
+      needs.quality-gate.result == 'success' &&
+      !github.event.pull_request.draft &&
+      github.event.pull_request.user.login == 'PANK4SS' &&
+      endsWith(github.head_ref, '/init')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Enable auto-merge (squash, delete branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR="${{ github.event.pull_request.number }}"
+          if gh pr merge "$PR" --squash --auto --delete-branch; then
+            echo "Auto-merge enabled: the PR will be squash-merged as soon as all required checks are green."
+          else
+            echo "::error::Failed to enable auto-merge. Check that 'Allow auto-merge' is enabled in Settings > General (see docs/CI-AUTO-REVIEW.md)."
+            exit 1
+          fi

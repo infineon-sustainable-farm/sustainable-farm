@@ -26,8 +26,8 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      */
     @Query("""
             SELECT v FROM Variety v
-            WHERE (:farmId IS NULL OR v.farmId = :farmId)
-              AND (:blockCode IS NULL OR v.blockCode = :blockCode)
+            WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
             ORDER BY v.blockCode ASC, v.name ASC
             """)
     List<Variety> findByOptionalFilters(@Param("farmId") Integer farmId,
@@ -51,7 +51,7 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      */
     @Query("""
             SELECT v FROM Variety v
-            WHERE ((:farmId IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
+            WHERE ((CAST(:farmId AS Integer) IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
               AND v.blockCode = :blockCode
               AND LOWER(v.name) = LOWER(:name)
             ORDER BY v.id ASC

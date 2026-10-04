@@ -82,8 +82,8 @@ public interface PopulationEventRepository extends JpaRepository<PopulationEvent
     @Query("""
             SELECT e FROM PopulationEvent e JOIN FETCH e.variety v
             WHERE e.eventType = com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType.PLANTING
-              AND (:farmId IS NULL OR v.farmId = :farmId)
-              AND (:blockCode IS NULL OR v.blockCode = :blockCode)
+              AND (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
             ORDER BY v.blockCode ASC, v.name ASC, v.id ASC, e.eventDate ASC
             """)
     List<PopulationEvent> findPlantingsByOptionalFilters(@Param("farmId") Integer farmId,

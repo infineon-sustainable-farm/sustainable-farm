@@ -35,8 +35,8 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      */
     @Query("""
             SELECT h FROM HarvestRecord h JOIN FETCH h.variety v
-            WHERE (:farmId IS NULL OR v.farmId = :farmId)
-              AND (:blockCode IS NULL OR v.blockCode = :blockCode)
+            WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
               AND (CAST(:from AS LocalDate) IS NULL OR h.harvestDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR h.harvestDate <= :to)
             ORDER BY h.harvestDate ASC, h.id ASC
