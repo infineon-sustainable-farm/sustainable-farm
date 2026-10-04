@@ -59,7 +59,7 @@ jobs:
           echo "HEAD_REF=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_ENV"
 
       # ------------------------------------------------------------------
-      # 1/2 — Shared-files audit (scripts/audit-shared-files.sh)
+      # 1/2 - Shared-files audit (scripts/audit-shared-files.sh)
       # ------------------------------------------------------------------
       - name: Shared-files audit
         id: audit
@@ -70,7 +70,7 @@ jobs:
           exit 0
 
       # ------------------------------------------------------------------
-      # 2/2 — Static guards on the diff (scripts/ci-guards.sh)
+      # 2/2 - Static guards on the diff (scripts/ci-guards.sh)
       # ------------------------------------------------------------------
       - name: Static guards on diff
         id: guards
@@ -86,23 +86,23 @@ jobs:
           AUDIT_RC="${{ steps.audit.outputs.rc }}"
           GUARDS_RC="${{ steps.guards.outputs.rc }}"
           if [ "$AUDIT_RC" = "1" ] || [ "$GUARDS_RC" = "1" ]; then
-            VERDICT="🔴 **PR BLOCKED — fix the points below and push again: the review will re-run automatically.**"
+            VERDICT="**PR BLOCKED - fix the points below and push again: the review will re-run automatically.**"
           else
-            VERDICT="✅ **Quality gate passed.**"
+            VERDICT="**Quality gate passed.**"
           fi
 
           {
             echo "<!-- farm-quality-gate -->"
-            echo "## 🤖 Automated review — quality gate"
+            echo "## Automated review: quality gate"
             echo
-            echo "Branch: \`${{ github.event.pull_request.head.ref }}\` → base: \`${{ github.base_ref }}\`"
+            echo "Branch: \`${{ github.event.pull_request.head.ref }}\` (base: \`${{ github.base_ref }}\`)"
             echo
             echo "${VERDICT}"
             echo
             cat guards-report.md 2>/dev/null || echo "_(guards report unavailable)_"
             echo
             echo "<details>"
-            echo "<summary>📋 Shared-files audit & merge conflicts (full output)</summary>"
+            echo "<summary>Shared-files audit and merge conflicts (full output)</summary>"
             echo
             echo '```text'
           } > PR_REPORT.md
@@ -112,7 +112,7 @@ jobs:
             echo "</details>"
             echo
             echo "<details>"
-            echo "<summary>👁️ Points that still require human review (not automatable)</summary>"
+            echo "<summary>Points that still require human review (not automatable)</summary>"
             echo
             echo "- Business semantics: invariants (levels actually decremented, real vs planned volumes), QC gates, FIFO/valuation."
             echo "- Concurrency: \`@Version\` / pessimistic locks on counters (stock, water, fertilizer)."
@@ -155,11 +155,11 @@ jobs:
   # -------------------------------------------------------------------------
   # Autonomous merge: only */init PRs created by the owner, gate green,
   # PR not a draft. "gh pr merge --auto" then waits until ALL required
-  # checks pass before merging — if any is red, the PR stays red and
+  # checks pass before merging - if any is red, the PR stays red and
   # nothing is merged.
   # -------------------------------------------------------------------------
   auto-merge:
-    name: Auto-merge (squash → develop)
+    name: Auto-merge (squash to develop)
     needs: quality-gate
     if: >-
       needs.quality-gate.result == 'success' &&
@@ -180,6 +180,6 @@ jobs:
           if gh pr merge "$PR" --squash --auto --delete-branch; then
             echo "Auto-merge enabled: the PR will be squash-merged as soon as all required checks are green."
           else
-            echo "::error::Failed to enable auto-merge. Check that 'Allow auto-merge' is enabled in Settings → General (see docs/CI-AUTO-REVIEW.md)."
+            echo "::error::Failed to enable auto-merge. Check that 'Allow auto-merge' is enabled in Settings > General (see docs/CI-AUTO-REVIEW.md)."
             exit 1
           fi

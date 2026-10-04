@@ -7,7 +7,7 @@
 #    (the root cause of the broken develop) now fails the PR;
 #  - if the branch ships Flyway migrations (backend/src/main/resources/
 #    db/migration), they are applied to a fresh PostgreSQL database by the
-#    "migrations" job — migrations that never ran (PR-33/#41) no longer pass.
+#    "migrations" job: migrations that never ran (PR-33/#41) no longer pass.
 #
 # Required checks for branch protection (see docs/CI-AUTO-REVIEW.md):
 #   - "Backend tests (PostgreSQL)"

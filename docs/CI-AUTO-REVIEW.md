@@ -9,8 +9,8 @@ Goal: no more manual branch-by-branch reviews. The CI reviews every PR to
 PR (opened/push/reopen) targeting develop
 │
 ├── "CI" workflow                            (required checks)
-│   ├── Backend tests (PostgreSQL)   ← tests on REAL Postgres (no more silent H2)
-│   ├── Flyway migrations (PostgreSQL) ← migrations applied to a fresh database
+│   ├── Backend tests (PostgreSQL)   <- tests on REAL Postgres (no more silent H2)
+│   ├── Flyway migrations (PostgreSQL) <- migrations applied to a fresh database
 │   └── Frontend build
 │
 └── "Auto-review" workflow
@@ -21,11 +21,11 @@ PR (opened/push/reopen) targeting develop
         ├── scripts/ci-guards.sh  (on the DIFF: existing debt never blocks)
         └── Report published as a PR comment (updated on every push)
             │
-            ├── 🔴 blocking violation → red check, the report says WHAT to fix
-            └── 🟢/🟡 passed
+            ├── [RED] blocking violation -> red check, the report says WHAT to fix
+            └── [GREEN] or [YELLOW] passed
                 └── auto-merge (job): if PR created by PANK4SS AND branch */init
-                    → gh pr merge --squash --auto --delete-branch
-                    → merges as soon as ALL required checks are green
+                    -> gh pr merge --squash --auto --delete-branch
+                    -> merges as soon as ALL required checks are green
 ```
 
 ## Blocking guards (`scripts/ci-guards.sh`)
@@ -45,14 +45,14 @@ PR (opened/push/reopen) targeting develop
 | F11 | Hardcoded literal secret | PR-33 |
 
 Warnings (yellow, non-blocking): unbounded `findAll()` (W1), entity without
-`@Version` (W2), raw exception → 500 (W3), `fetch()` outside the API layer (W4).
+`@Version` (W2), raw exception -> 500 (W3), `fetch()` outside the API layer (W4).
 
 ## One-time GitHub setup
 
-1. **Settings → General → Pull Requests**: enable **Allow auto-merge** and
+1. **Settings -> General -> Pull Requests**: enable **Allow auto-merge** and
    automatically delete head branches (the workflow also passes
    `--delete-branch`).
-2. **Settings → Branches → Branch protection rule** on `develop`:
+2. **Settings -> Branches -> Branch protection rule** on `develop`:
    - Require a pull request before merging
    - Require status checks to pass:
      - `Quality gate (auto-review)`
@@ -61,7 +61,7 @@ Warnings (yellow, non-blocking): unbounded `findAll()` (W1), entity without
      - `Frontend build`
    - Require branches to be up to date before merging
    - Do **not** require approvals for `*/init` PRs (GitHub forbids PR authors
-     from approving their own PRs — the "reviewer" role is played by the
+     from approving their own PRs - the "reviewer" role is played by the
      `Quality gate` check).
 3. Changing the allowed identity/suffix: update `AUTO_REVIEW_LOGIN` and the
    `if` of the `auto-merge` job in `.github/workflows/auto-review.yml` (two
