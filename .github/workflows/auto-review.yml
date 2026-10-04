@@ -225,11 +225,14 @@ jobs:
       - name: Enable auto-merge (squash, delete branch)
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           PR="${{ github.event.pull_request.number }}"
-          if gh pr merge "$PR" --squash --auto --delete-branch; then
+          # -R/--repo is mandatory: this job has no checkout, gh cannot
+          # resolve the repository from a local git directory.
+          if gh pr merge "$PR" --repo "$REPO" --squash --auto --delete-branch; then
             echo "Auto-merge enabled: the PR will be squash-merged as soon as all required checks are green."
           else
-            echo "::error::Failed to enable auto-merge. Check that 'Allow auto-merge' is enabled in Settings > General (see docs/CI-AUTO-REVIEW.md)."
+            echo "::error::Failed to enable auto-merge. If the message above says auto-merge is disabled, enable 'Allow auto-merge' in Settings > General > Pull Requests (see docs/CI-AUTO-REVIEW.md)."
             exit 1
           fi
