@@ -41,6 +41,7 @@ jobs:
       - name: Reject and close the non-conforming PR
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
           BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
@@ -66,6 +67,8 @@ jobs:
           assigned \`/init\` branches get an automated review and can merge
           autonomously once green.
           EOF
-          gh pr comment "$PR" --body-file policy-message.md
-          gh pr close "$PR"
+          # -R/--repo is mandatory: this job has no checkout, gh cannot
+          # resolve the repository from a local git directory.
+          gh pr comment "$PR" --repo "$REPO" --body-file policy-message.md
+          gh pr close "$PR" --repo "$REPO"
           echo "PR $PR from '$BRANCH' closed by the branch policy."
