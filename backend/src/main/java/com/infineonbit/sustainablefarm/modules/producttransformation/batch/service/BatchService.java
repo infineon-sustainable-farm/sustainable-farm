@@ -2,7 +2,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.batch.serv
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 
 import java.time.LocalDate;
 import java.util.List;

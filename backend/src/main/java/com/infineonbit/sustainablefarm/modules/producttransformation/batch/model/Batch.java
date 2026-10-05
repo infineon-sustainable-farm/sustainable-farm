@@ -1,18 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.model;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.qccheckpoint.model.QcCheckpoint;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.compliancerecord.model.ComplianceRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.rawintake.model.RawIntake;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.washsortrecord.model.WashSortRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.dryingrun.model.DryingRun;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.packagingrecord.model.PackagingRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.qccheckpoint.model.QcCheckpoint;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.compliancerecord.model.ComplianceRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.rawintake.model.RawIntake;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.washsortrecord.model.WashSortRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.packagingrecord.model.PackagingRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.dryingrun.model.DryingRun;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord;
+import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.model.RawIntake;
+import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.model.WashSortRecord;
+import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
+import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

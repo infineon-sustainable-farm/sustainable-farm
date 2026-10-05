@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.response;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
