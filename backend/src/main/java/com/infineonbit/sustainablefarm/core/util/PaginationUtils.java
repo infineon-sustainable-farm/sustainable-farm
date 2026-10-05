@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.core.util;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.resources.dashboard.dto.response.PageResponse;
+import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.dto.response.PageResponse;
 
 import java.util.Collections;
 import java.util.List;

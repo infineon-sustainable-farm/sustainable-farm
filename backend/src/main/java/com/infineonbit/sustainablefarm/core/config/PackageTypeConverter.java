@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.core.config;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.resources.packagingrecord.model.PackagingRecord.PackageType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord.PackageType;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

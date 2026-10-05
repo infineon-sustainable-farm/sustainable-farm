@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.request;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

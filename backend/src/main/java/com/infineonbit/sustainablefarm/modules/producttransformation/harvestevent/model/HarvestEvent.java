@@ -1,5 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model;
-import com.sustainablefarm.modules.producttransformation.resources.batch.model.Batch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 
 
 import jakarta.persistence.*;

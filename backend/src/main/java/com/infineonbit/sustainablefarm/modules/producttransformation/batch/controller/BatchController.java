@@ -1,13 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.controller;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.dashboard.service.DtoMapper;
+import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service.DtoMapper;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.request.BatchCreateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.request.BatchStatusAdvanceRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.request.BatchUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.response.BatchResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

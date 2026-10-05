@@ -5,10 +5,10 @@ import com.infineonbit.sustainablefarm.core.exception.InvalidStateException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.qccheckpoint.service.QcCheckpointService;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.service.QcCheckpointService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -165,8 +165,8 @@ public class BatchServiceImpl implements BatchService {
         // Business Rule: Enforce mandatory QC checkpoints before advancing status
         // WASHING checkpoint must be completed before advancing from WASHING to DRYING
         if (batch.getCurrentStatus() == BatchStatus.WASHING) {
-            long washingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId, 
-                com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.qccheckpoint.model.QcCheckpoint.QcStage.WASHING);
+            long washingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId,
+                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage.WASHING);
             if (washingCheckpointCount == 0) {
                 throw new BusinessRuleViolationException(
                     "Cannot advance batch from WASHING: mandatory WASHING QC checkpoint not completed"
@@ -176,8 +176,8 @@ public class BatchServiceImpl implements BatchService {
         
         // Business Rule: COOLING checkpoint must be completed before advancing from DRYING to PACKAGING
         if (batch.getCurrentStatus() == BatchStatus.DRYING) {
-            long coolingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId, 
-                com.infineonbit.sustainablefarm.modules.producttransformation.batch.resources.qccheckpoint.model.QcCheckpoint.QcStage.COOLING);
+            long coolingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId,
+                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage.COOLING);
             if (coolingCheckpointCount == 0) {
                 throw new BusinessRuleViolationException(
                     "Cannot advance batch from DRYING: mandatory COOLING QC checkpoint not completed"

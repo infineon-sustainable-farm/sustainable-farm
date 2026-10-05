@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.controller;
 
-import com.sustainablefarm.modules.producttransformation.resources.dashboard.service.DtoMapper;
+import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service.DtoMapper;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.dto.request.HarvestEventCreateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.dto.response.HarvestEventResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
