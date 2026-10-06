@@ -22,9 +22,6 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(nullable = false, columnDefinition = "text")
-    private String passwordHash;
-
     private Boolean status = true;
 
     public String getFirstName() {
@@ -49,14 +46,6 @@ public class User extends BaseEntity {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
     }
 
     public Boolean getStatus() {

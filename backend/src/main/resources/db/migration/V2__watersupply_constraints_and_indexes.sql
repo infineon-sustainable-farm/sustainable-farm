@@ -1,24 +1,13 @@
 -- SWMS - Schema hardening (V2)
 -- Keeps V1 immutable while aligning production schema with the current JPA model.
 
--- Reparation (adoption Flyway sur une base existante) : les contraintes ajoutees plus bas
--- exigent que leurs parents existent. Or les plannings et alertes crees par l'application avant
--- Flyway pointent tous vers le compte technique systeme, qui n'etait insere que par V4 -- donc
--- APRES ces contraintes. Sans ce seed, la contrainte fk_irrigation_schedules_created_by
--- echouait ("insert or update on table irrigation_schedules violates foreign key constraint")
--- et l'application ne demarrait plus. V4 conserve la definition de reference : son insert est
--- idempotent (ON CONFLICT (id) DO NOTHING) et devient un no-op.
-INSERT INTO users (id, created_at, first_name, last_name, email, password_hash, status)
-VALUES (
-    '00000000-0000-0000-0000-000000000000',
-    NOW(),
-    'Systeme',
-    'IoT',
-    'systeme.iot@watersupply.local',
-    'NO_LOGIN_SYSTEM_ACCOUNT',
-    FALSE
-)
-ON CONFLICT (id) DO NOTHING;
+-- Le compte technique systeme n'est plus insere ici : une migration ne doit porter ni donnees
+-- ni comptes (PR-33). Il est cree au demarrage par SystemUserSeeder (profil "!test"), facon
+-- idempotent et sans identifiant de connexion, puisque l'authentification est deleguee au
+-- logiciel global. Comme cette migration peut tourner sur une base pre-Flyway dont les
+-- plannings et alertes pointent deja vers ce compte absent de la table users, les deux
+-- contraintes vers users sont ajoutees NOT VALID : les lignes existantes ne sont pas
+-- controlees a cet instant, les nouvelles le sont des la creation du compte au demarrage.
 
 ALTER TABLE IF EXISTS water_consumptions RENAME TO water_consumption;
 
@@ -85,7 +74,7 @@ ALTER TABLE irrigation_schedules
 
 ALTER TABLE irrigation_schedules
     ADD CONSTRAINT fk_irrigation_schedules_created_by
-    FOREIGN KEY (created_by) REFERENCES users(id);
+    FOREIGN KEY (created_by) REFERENCES users(id) NOT VALID;
 
 ALTER TABLE irrigation_logs
     ADD CONSTRAINT fk_irrigation_logs_schedule
@@ -93,7 +82,7 @@ ALTER TABLE irrigation_logs
 
 ALTER TABLE notifications
     ADD CONSTRAINT fk_notifications_user
-    FOREIGN KEY (user_id) REFERENCES users(id);
+    FOREIGN KEY (user_id) REFERENCES users(id) NOT VALID;
 
 ALTER TABLE rainwater_harvests
     ADD CONSTRAINT fk_rainwater_harvests_source

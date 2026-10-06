@@ -195,7 +195,7 @@ class WatersupplyApiIntegrationTest {
         // creation des alertes automatiques echouait avec 404 "User not found".
         org.junit.jupiter.api.Assertions.assertTrue(
                 userRepository.findById(SystemUsers.IOT_SYSTEM_USER_ID).isPresent(),
-                "Le compte technique IoT doit etre seede par les migrations Flyway");
+                "Le compte technique IoT doit etre seede par SystemUserSeeder au demarrage");
 
         MvcResult result = mockMvc.perform(post("/api/notifications")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -307,7 +307,6 @@ class WatersupplyApiIntegrationTest {
         user.setFirstName("Integration");
         user.setLastName("User");
         user.setEmail("integration-" + UUID.randomUUID() + "@example.test");
-        user.setPasswordHash("not-used-in-test");
         user.setStatus(true);
         return userRepository.save(user).getId();
         }

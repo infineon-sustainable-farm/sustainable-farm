@@ -6,8 +6,8 @@ import java.util.UUID;
  * Identifiants techniques du module watersupply.
  *
  * <p>L'authentification est deleguee au logiciel global : le module n'a donc aucun utilisateur
- * connecte. Deux besoins restent couverts par un identifiant fixe (ligne creee par la migration
- * {@code V4__iot_system_user.sql}, sans mot de passe utilisable, donc sans possibilite de connexion) :</p>
+ * connecte. Deux besoins restent couverts par un identifiant fixe (ligne creee au demarrage par
+ * {@code SystemUserSeeder}, sans identifiant de connexion, donc sans possibilite de connexion) :</p>
  * <ul>
  *   <li>{@code irrigation_schedules.created_by} : la colonne est obligatoire ;</li>
  *   <li>{@code notifications.user_id} : la colonne est obligatoire, les alertes issues des

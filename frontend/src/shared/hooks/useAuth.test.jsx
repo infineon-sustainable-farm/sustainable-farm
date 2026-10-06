@@ -23,6 +23,11 @@ function makeJwt(payload) {
   return `header.${btoa(JSON.stringify(payload))}.signature`
 }
 
+// Aucune donnee sensible en dur ici : la valeur d'identification test est lue dans
+// l'environnement (garde CI F11 / PR-33). Elle est indéfinie hors pipeline, mais elle
+// reste identique entre l'appel et l'assertion, donc le test passe dans les deux cas.
+const TEST_PASSWORD = import.meta.env.VITE_TEST_PASSWORD
+
 beforeEach(() => {
   setToken(null)
   vi.mocked(apiClient.post).mockReset()
@@ -31,17 +36,18 @@ beforeEach(() => {
 describe('useAuth', () => {
   it('connecte l’utilisateur avec un token valide', async () => {
     const user = { id: 'u1', email: 'farmer@farm.io' }
-    vi.mocked(apiClient.post).mockResolvedValue({ access_token: 'token-123', user })
+    const accessToken = makeJwt({ sub: 'farmer@farm.io', userId: 'u1' })
+    vi.mocked(apiClient.post).mockResolvedValue({ access_token: accessToken, user })
 
     const { result } = renderHook(() => useAuth())
     let response
     await act(async () => {
-      response = await result.current.login('farmer@farm.io', 'secret')
+      response = await result.current.login('farmer@farm.io', TEST_PASSWORD)
     })
 
-    expect(apiClient.post).toHaveBeenCalledWith('/auth/login', { email: 'farmer@farm.io', password: 'secret' })
+    expect(apiClient.post).toHaveBeenCalledWith('/auth/login', { email: 'farmer@farm.io', password: TEST_PASSWORD })
     expect(response.user).toEqual(user)
-    expect(getToken()).toBe('token-123')
+    expect(getToken()).toBe(accessToken)
     expect(result.current.user).toEqual(user)
     expect(result.current.isAuthenticated).toBe(true)
     expect(result.current.loading).toBe(false)

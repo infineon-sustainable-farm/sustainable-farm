@@ -1,14 +1,15 @@
--- SWMS - Donnees de demonstration controlees (V3)
+-- SWMS - Donnees de demonstration water supply
+-- Charge uniquement au demarrage sous le profil "dev" par WatersupplyDemoDataSeeder :
+-- une migration ne doit porter ni comptes ni donnees de demonstration (PR-33).
 -- Jeu minimal, relationnellement valide et idempotent pour les environnements demo/dev.
 
-INSERT INTO users (id, created_at, first_name, last_name, email, password_hash, status)
+INSERT INTO users (id, created_at, first_name, last_name, email, status)
 VALUES (
     '10000000-0000-0000-0000-000000000001',
     '2026-01-01T08:00:00Z',
     'Demo',
     'Admin',
     'demo.admin@sustainable-farm.local',
-    '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiWQd8RrSn2qHh9Vb50LRyK8T1fQ8uO',
     true
 )
 ON CONFLICT (email) DO NOTHING;

@@ -11,9 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Seeds the technical IoT account under the {@code test} profile.
  *
- * <p>In production this row comes from the Flyway migrations
- * ({@code V2}/{@code V4}). Tests run with {@code spring.flyway.enabled=false}
- * because those migrations are PostgreSQL-only SQL that H2 rejects, so the row
+ * <p>Outside tests the same row is created at startup by {@code SystemUserSeeder}
+ * (profile {@code !test}). Tests run with {@code spring.flyway.enabled=false}
+ * because the migrations are PostgreSQL-only SQL that H2 rejects, so the row
  * is created here instead. Without it, {@code notifications.user_id} and
  * {@code irrigation_schedules.created_by} have no valid target and the
  * automatic-alert tests fail with "User not found".
@@ -41,7 +41,6 @@ public class TestSystemUserSeeder implements ApplicationRunner {
         system.setFirstName("Systeme");
         system.setLastName("IoT");
         system.setEmail("systeme.iot@watersupply.local");
-        system.setPasswordHash("NO_LOGIN_SYSTEM_ACCOUNT");
         system.setStatus(false);
         userRepository.save(system);
     }
