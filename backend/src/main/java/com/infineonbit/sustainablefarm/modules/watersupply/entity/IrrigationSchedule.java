@@ -37,8 +37,8 @@ public class IrrigationSchedule extends BaseEntity {
     private String postponeReason;
 
     /**
-     * Origine du planning : {@code manual} (saisi par un utilisateur) ou {@code auto}
-     * (cree par la regle d'humidite du sol, voir IrrigationAutomationService).
+     * Origin of the schedule: {@code manual} (entered by a user) or {@code auto}
+     * (created by the soil moisture rule, see IrrigationAutomationService).
      */
     @Column(name = "trigger_source", nullable = false, length = 20)
     private String triggerSource = "manual";

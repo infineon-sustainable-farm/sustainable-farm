@@ -4,23 +4,23 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import org.springframework.stereotype.Service;
 
 /**
- * Estime le besoin hydrique theorique d'une zone culturale, reference de l'economie d'eau.
+ * Estimates the theoretical water need of a crop zone, the reference for water savings.
  *
- * <p>Reference agronomique (FAO-56) :</p>
+ * <p>Agronomic reference (FAO-56):</p>
  * <pre>
- *   besoin (L) = surface (m2) x ET0 (mm) x Kc / efficacite du systeme
+ *   need (L) = area (m2) x ET0 (mm) x Kc / system efficiency
  * </pre>
- * <p>1 mm sur 1 m2 represente 1 litre, la conversion est donc directe. L'efficacite du systeme
- * represente la part de l'eau réellement utilisée par la culture (le reste s'evapore ou ruisselle) :
- * c'est precisement la marge d'economie que le module doit rendre visible.</p>
+ * <p>1 mm over 1 m2 represents 1 litre, so the conversion is direct. The system efficiency
+ * represents the share of water actually used by the crop (the rest evaporates or runs off):
+ * this is precisely the savings margin the module must make visible.</p>
  */
 @Service
 public class WaterNeedService {
 
-    /** Coefficient cultural applique quand la zone n'en definit pas. */
+    /** Crop coefficient applied when the zone does not define one. */
     public static final double DEFAULT_CROP_COEFFICIENT = 1.0;
 
-    /** Efficacite appliquee quand le mode d'irrigation de la zone n'est pas reconnu. */
+    /** Efficiency applied when the zone's irrigation method is not recognized. */
     public static final double DEFAULT_SYSTEM_EFFICIENCY = 0.80;
 
     /** 1 hectare = 10 000 m2. */
@@ -34,8 +34,8 @@ public class WaterNeedService {
     }
 
     /**
-     * Efficacite d'application du systeme d'irrigation (0-1).
-     * Le goutte-a-goutte limite fortement l'evaporation, l'aspersion et la gravite beaucoup moins.
+     * Application efficiency of the irrigation system (0-1).
+     * Drip strongly limits evaporation, sprinkler and gravity much less so.
      */
     public double systemEfficiency(Zone zone) {
         String method = zone == null || zone.getIrrigationMethod() == null
@@ -60,7 +60,7 @@ public class WaterNeedService {
         };
     }
 
-    /** Besoin theorique en litres pour une zone sur un jour d'evapotranspiration donnee. */
+    /** Theoretical need in litres for a zone on a given evapotranspiration day. */
     public double needLiters(Zone zone, double et0Mm) {
         if (zone == null || zone.getAreaHectares() == null || et0Mm <= 0) {
             return 0d;
@@ -70,7 +70,7 @@ public class WaterNeedService {
         return (areaSquareMeters * et0Mm * cropCoefficient(zone)) / efficiency;
     }
 
-    /** Besoin theorique cumule sur une periode : somme des besoins journaliers. */
+    /** Theoretical need accumulated over a period: sum of the daily needs. */
     public double needLiters(Zone zone, Iterable<Double> dailyEt0Mm) {
         double total = 0d;
         for (Double et0 : dailyEt0Mm) {

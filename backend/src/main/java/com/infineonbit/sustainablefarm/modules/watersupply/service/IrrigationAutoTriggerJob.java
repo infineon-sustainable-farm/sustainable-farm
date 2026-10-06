@@ -8,15 +8,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Verification periodique de l'humidite du sol (module 1.4 de la specification).
+ * Periodic soil moisture check (specification module 1.4).
  *
- * <p>La tache ne fait qu'appeler {@link IrrigationAutomationService#trigger()} : la regle reste
- * au meme endroit que l'endpoint manuel {@code POST /api/irrigations/auto-trigger}, donc tester
- * l'API teste aussi la tache.</p>
+ * <p>The job only calls {@link IrrigationAutomationService#trigger()}: the rule stays in the
+ * same place as the manual endpoint {@code POST /api/irrigations/auto-trigger}, so testing
+ * the API also tests the job.</p>
  *
- * <p>Le controle peut etre desactive sans redeploiement avec
- * {@code app.irrigation.auto-trigger-enabled=false}, et la periode est reglable par
- * {@code app.irrigation.auto-trigger-interval-ms} (15 minutes par defaut).</p>
+ * <p>The check can be disabled without redeployment with
+ * {@code app.irrigation.auto-trigger-enabled=false}, and the period is configurable through
+ * {@code app.irrigation.auto-trigger-interval-ms} (15 minutes by default).</p>
  */
 @Component
 public class IrrigationAutoTriggerJob {
@@ -33,7 +33,7 @@ public class IrrigationAutoTriggerJob {
         this.enabled = enabled;
     }
 
-    /** Un echec de la tache ne doit jamais remonter : il est journalise et retentera au tour suivant. */
+    /** A job failure must never propagate: it is logged and retried on the next round. */
     @Scheduled(
             initialDelayString = "${app.irrigation.auto-trigger-initial-delay-ms:60000}",
             fixedDelayString = "${app.irrigation.auto-trigger-interval-ms:900000}")

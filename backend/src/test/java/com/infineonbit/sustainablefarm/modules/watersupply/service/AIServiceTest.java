@@ -25,8 +25,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Regles du module IA : niveau de reserve pour les recommandations, risque de secheresse
- * croisant reserve et consommation observee, et detection d'anomalies de consommation.
+ * AI module rules: reserve level for recommendations, drought risk crossing
+ * reserve and observed consumption, and consumption anomaly detection.
  */
 @ExtendWith(MockitoExtension.class)
 class AIServiceTest {
@@ -84,7 +84,7 @@ class AIServiceTest {
     @Test
     void droughtIsCriticalWhenTheReserveCoversOneDayOrLess() {
         stubReserve(1000d, 500d);
-        // 7 jours de consommation a 500 L/jour : la reserve ne couvre qu'une journee.
+        // 7 days of consumption at 500 L/day: the reserve only covers one day.
         when(waterConsumptionRepository.findAll()).thenReturn(dailyConsumptions(7, 500d));
 
         Map<String, Object> prediction = service().droughtPrediction();
@@ -142,7 +142,7 @@ class AIServiceTest {
         verify(alertService, never()).raise(anyString(), anyString(), anyString(), anyString());
     }
 
-    /** Priorite de la premiere recommandation pour une reserve donnee (capacite, niveau). */
+    /** Priority of the first recommendation for a given reserve (capacity, level). */
     private String reservePriority(double capacity, double level) {
         stubReserve(capacity, level);
         when(fieldZoneRepository.findAll()).thenReturn(List.of());
@@ -162,7 +162,7 @@ class AIServiceTest {
         return zone;
     }
 
-    /** Une mesure de consommation par jour, sur la fenetre d'analyse de 7 jours (J-0 a J-6). */
+    /** One consumption measurement per day, over the 7-day analysis window (D-0 to D-6). */
     private List<WaterConsumption> dailyConsumptions(int days, double litersPerDay) {
         return java.util.stream.IntStream.range(0, days)
                 .mapToObj(day -> consumption(litersPerDay, day))

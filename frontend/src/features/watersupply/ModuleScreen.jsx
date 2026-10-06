@@ -11,10 +11,10 @@ import { DroughtView } from './components/views/DroughtView'
 import { NotificationsView } from './components/views/NotificationsView'
 
 /**
- * Association vue du menu -> composant d'ecran.
+ * Maps a menu view -> screen component.
  *
- * Les cles correspondent aux entrees de VIEW_PATHS (paths.js), qui reste la source de
- * verite des chemins : le routeur apparie les deux par identifiant de vue.
+ * The keys match the entries of VIEW_PATHS (paths.js), which remains the single source of
+ * truth for paths: the router pairs the two by view id.
  */
 export const VIEW_COMPONENTS = {
   dashboard: DashboardView,
@@ -30,15 +30,14 @@ export const VIEW_COMPONENTS = {
 }
 
 /**
- * Les vues attendent notify / onNavigate ; la coque les fournit par le contexte de l'Outlet
- * (<Outlet context={...}> dans WaterSupplyLayout). Cet adaptateur les transmet en proprietes,
- * ce qui evite de modifier les vues et leurs tests, qui les recoivent toujours directement.
+ * The views expect notify / onNavigate; the shell provides them through the Outlet context
+ * (<Outlet context={...}> in WaterSupplyLayout). This adapter forwards them as props, which
+ * avoids changing the views and their tests, which still receive them directly.
  *
- * Il vit dans son propre fichier, et non dans routes.jsx : la regle
- * react-refresh/only-export-components n'accepte pas qu'un fichier declare un composant
- * sans l'exporter, or routes.jsx n'exporte qu'un tableau de routes (consomme par
- * app/router.jsx via import.meta.glob). Le nom interne reste "ModuleScreen", verifie
- * par routes.test.jsx.
+ * It lives in its own file, not in routes.jsx: the react-refresh/only-export-components
+ * rule does not accept a file declaring a component without exporting it, while routes.jsx
+ * only exports an array of routes (consumed by app/router.jsx through import.meta.glob).
+ * The internal name stays "ModuleScreen", asserted by routes.test.jsx.
  */
 export const withModuleUi = (View) => {
   function ModuleScreen() {

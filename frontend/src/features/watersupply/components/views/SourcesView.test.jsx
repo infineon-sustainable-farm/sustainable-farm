@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// Le module ne depend d'aucune configuration Vitest partagee : l'environnement DOM et le
-// nettoyage entre tests sont declares ici (RTL n'active son nettoyage automatique qu'avec
-// les globals, qui ne sont pas actives sur ce projet).
+// The module does not depend on any shared Vitest configuration: the DOM environment and
+// between-test cleanup are declared here (RTL only auto-cleans with the globals, which are
+// not enabled on this project).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { renderView as render } from './testRender'

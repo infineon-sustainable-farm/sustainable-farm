@@ -14,8 +14,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 /**
- * Logique metier du module IA (recommandations, secheresse, anomalies).
- * Separee du controleur pour la testabilite et la clarte.
+ * Business logic of the AI module (recommendations, drought, anomalies).
+ * Separated from the controller for testability and clarity.
  */
 @Service
 public class AIService {
@@ -86,7 +86,7 @@ public class AIService {
     public Map<String, Object> droughtPrediction() {
         double levelPercent = reservoirLevelPercent();
 
-        // 1) Suivi de consommation : moyenne quotidienne sur les 7 derniers jours.
+        // 1) Consumption tracking: daily average over the last 7 days.
         Instant since = Instant.now().minus(java.time.Duration.ofDays(7));
         List<WaterConsumption> recent = waterConsumptionRepository.findAll().stream()
                 .filter(c -> c.getConsumptionDate() != null && c.getConsumptionDate().isAfter(since))
@@ -95,7 +95,7 @@ public class AIService {
                 .mapToDouble(c -> c.getConsumptionLiters() == null ? 0 : c.getConsumptionLiters())
                 .sum() / 7.0;
 
-        // 2) Quantite d eau contenue dans les reservoirs.
+        // 2) Amount of water held in the reservoirs.
         double totalReserve = waterSourceRepository.findAll().stream()
                 .mapToDouble(s -> s.getCurrentLevelLiters() == null ? 0 : s.getCurrentLevelLiters())
                 .sum();
@@ -103,12 +103,12 @@ public class AIService {
                 .mapToDouble(s -> s.getCapacityLiters() == null ? 0 : s.getCapacityLiters())
                 .sum();
 
-        // 3) Jours de reserve restants au rythme de consommation observe.
+        // 3) Remaining reserve days at the observed consumption rate.
         Double daysRemaining = dailyAverage > 0 ? totalReserve / dailyAverage : null;
         String daysText = daysRemaining == null ? "n/a (no recent consumption)"
                 : String.format("%.1f", daysRemaining) + " days";
 
-        // 4) Risque = combinaison du niveau des reservoirs ET de la consommation observee.
+        // 4) Risk = combination of the reservoir level AND the observed consumption.
         String risk;
         String advice;
         if (levelPercent < 15 || (daysRemaining != null && daysRemaining <= 1)) {
@@ -165,7 +165,7 @@ public class AIService {
             }
         }
 
-        // Notification automatique critique si des anomalies sont detectees (P4b)
+        // Critical automatic notification when anomalies are detected (P4b)
         if (!anomalies.isEmpty()) {
             double totalSuspect = anomalies.stream()
                     .mapToDouble(a -> ((Number) a.get("amount_liters")).doubleValue())

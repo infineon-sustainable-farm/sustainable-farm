@@ -16,9 +16,9 @@ public interface IrrigationLogRepository extends JpaRepository<IrrigationLog, UU
 	Optional<IrrigationLog> findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(UUID scheduleId, String status);
 
 	/**
-	 * Cycles d'arrosage d'une zone demarres dans l'intervalle [start, end[ : la zone se lit
-	 * par le planning (irrigation_logs ne stocke que le planning). Sert a la detection de
-	 * colmatage (duree d'arrosage reelle de la zone) et a la regle « dernier arrosage > 24 h ».
+	 * Irrigation cycles of a zone started within the interval [start, end[: the zone is read
+	 * from the schedule (irrigation_logs only stores the schedule). Used for clogging detection
+	 * (actual irrigation duration of the zone) and the "last irrigation > 24 h" rule.
 	 */
 	@Query("select l from IrrigationLog l, IrrigationSchedule s "
 			+ "where l.scheduleId = s.id and s.zoneId = :zoneId "

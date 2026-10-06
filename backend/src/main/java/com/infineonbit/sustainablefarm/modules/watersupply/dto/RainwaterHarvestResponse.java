@@ -4,7 +4,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarve
 import java.time.Instant;
 import java.util.UUID;
 
-/** Vue API d'une collecte d'eau de pluie : contrat stable, independant de l'entite JPA. */
+/** API view of a rainwater harvest: stable contract, independent of the JPA entity. */
 public record RainwaterHarvestResponse(
         UUID id,
         UUID sourceId,

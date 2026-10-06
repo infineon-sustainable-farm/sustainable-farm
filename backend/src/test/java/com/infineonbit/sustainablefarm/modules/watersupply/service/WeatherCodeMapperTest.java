@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 /**
- * Correspondance des codes meteo WMO (Open-Meteo) : les plages de codes doivent rester
- * traduites comme l'attend l'interface (condition + icone), code inconnu compris.
+ * WMO weather code mapping (Open-Meteo): code ranges must stay
+ * translated as the UI expects (condition + icon), unknown code included.
  */
 class WeatherCodeMapperTest {
 

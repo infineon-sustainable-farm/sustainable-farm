@@ -2,12 +2,12 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
-// Nettoyage du DOM entre les tests (lorsque globals n'est pas actif côté RTL).
+// DOM cleanup between tests (when globals are not active on the RTL side).
 afterEach(() => {
   cleanup()
 })
 
-// localStorage simulé pour jsdom (déjà fourni, mais on garantit un état propre).
+// Simulated localStorage for jsdom (already provided, but we guarantee a clean state).
 afterEach(() => {
   localStorage.clear()
   vi.restoreAllMocks()

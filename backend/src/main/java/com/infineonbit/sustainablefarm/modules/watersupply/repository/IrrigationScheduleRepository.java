@@ -17,8 +17,8 @@ public interface IrrigationScheduleRepository extends JpaRepository<IrrigationSc
     long countByStartTimeBetween(Instant start, Instant end);
 
     /**
-     * Volume evite par les irrigations reportees sur un intervalle semi-ouvert [start, end[ :
-     * c'est l'economie obtenue en n'arrosant pas quand la pluie annoncee couvrait le besoin.
+     * Volume avoided by the postponed irrigations over a semi-open interval [start, end[:
+     * this is the savings obtained by not irrigating when the forecast rain covered the need.
      */
     @Query("select coalesce(sum(s.waterQuantityLiters), 0) from IrrigationSchedule s "
             + "where lower(s.status) = 'postponed' and s.startTime >= :start and s.startTime < :end")

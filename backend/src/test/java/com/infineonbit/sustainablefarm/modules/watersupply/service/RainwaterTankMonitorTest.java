@@ -19,8 +19,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Regles du reservoir de collecte de pluie (module 5.3) : debordement probable, utilisation
- * de l'eau de pluie en priorite, et silence sur les sources qui ne sont pas de la pluie.
+ * Rainwater harvesting tank rules (module 5.3): likely overflow, use of
+ * rainwater first, and silence on sources that are not rainwater.
  */
 @ExtendWith(MockitoExtension.class)
 class RainwaterTankMonitorTest {
@@ -51,7 +51,7 @@ class RainwaterTankMonitorTest {
 
     @Test
     void recommendsRainwaterFirstOnlyWhenTheSiteDeclaresANonIrrigationNeed() {
-        // Sans besoin non-irrigation declare, le reservoir a moitie plein ne declenche rien.
+        // Without a declared non-irrigation need, a half-full tank triggers nothing.
         assertTrue(monitor(0d).evaluate(tank(1000d, 700d)).isEmpty());
         verifyNoInteractions(alertService);
     }

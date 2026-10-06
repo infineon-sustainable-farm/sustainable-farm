@@ -8,7 +8,7 @@ import { AlertTriangle } from 'lucide-react'
  * @param {string} [props.confirmLabel] - confirm button label.
  * @param {() => void} props.onConfirm
  * @param {() => void} props.onCancel
- * @param {boolean} [props.busy] - désactive les boutons pendant l'appel API.
+ * @param {boolean} [props.busy] - disables the buttons while the API call runs.
  */
 export function ConfirmDialog({ title = 'Confirm deletion', message, confirmLabel = 'Delete', onConfirm, onCancel, busy = false }) {
   return (

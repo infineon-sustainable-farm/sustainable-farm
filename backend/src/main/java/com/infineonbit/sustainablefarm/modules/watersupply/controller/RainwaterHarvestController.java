@@ -23,12 +23,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Collecte d'eau de pluie (module 5.1).
+ * Rainwater harvesting (module 5.1).
  *
- * <p>L'API expose des DTO et non l'entite JPA : le client ne peut donc pas ecrire un identifiant
- * ou une date de creation. La liste repond soit en tableau simple (comportement historique), soit
- * en page des que {@code page} ou {@code size} est fourni — meme convention que les autres listes
- * du module.</p>
+ * <p>The API exposes DTOs and not the JPA entity: the client therefore cannot write an id
+ * or a creation date. The list responds either as a simple array (historical behavior), or
+ * as a page as soon as {@code page} or {@code size} is provided — same convention as the other
+ * lists of the module.</p>
  */
 @RestController
 @RequestMapping("/api/rainwater-harvests")

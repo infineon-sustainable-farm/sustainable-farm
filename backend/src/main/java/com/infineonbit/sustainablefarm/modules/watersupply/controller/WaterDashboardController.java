@@ -55,13 +55,13 @@ public class WaterDashboardController {
     }
 
     /**
-     * KPI "eau economisee" - metrique de valeur du module.
+     * KPI "water saved" - the module's value metric.
      *
-     * <p>La reference n'est plus la somme des plannings saisis (peu fiable) mais le
-     * <strong>besoin des cultures</strong> estime a partir de l'evapotranspiration du lieu
-     * (FAO-56) : voir {@link WaterEconomyService}. La reponse contient donc le besoin, la
-     * consommation reelle, l'eau economisee, les pertes par sur-irrigation, la pluie reutilisee
-     * et le volume evite par les reports meteo.</p>
+     * <p>The reference is no longer the sum of entered schedules (unreliable) but the
+     * <strong>crop need</strong> estimated from the location's evapotranspiration
+     * (FAO-56): see {@link WaterEconomyService}. The response therefore contains the need, the
+     * actual consumption, the water saved, the over-irrigation losses, the reused rain
+     * and the volume avoided by weather postponements.</p>
      */
     @GetMapping("/water-savings")
     public Map<String, Object> waterSavings(@RequestParam(defaultValue = "month") String period) {
@@ -69,8 +69,8 @@ public class WaterDashboardController {
     }
 
     /**
-     * Serie cumulee de l'economie d'eau (courbe de progression) : chaque point compare le besoin
-     * cumule des cultures a la consommation cumulee mesuree par les capteurs de debit.
+     * Cumulative series of water savings (progress curve): each point compares the crops'
+     * cumulative need to the cumulative consumption measured by the flow sensors.
      */
     @GetMapping("/savings-series")
     public Map<String, Object> savingsSeries(@RequestParam(defaultValue = "30") int days) {
@@ -78,8 +78,8 @@ public class WaterDashboardController {
     }
 
     /**
-     * Bilan hydrique de la periode : entrees (pluie recuperee) et sorties (eau consommee)
-     * confrontes au niveau des reservoirs, afin de rendre visibles les pertes.
+     * Water balance of the period: inputs (harvested rain) and outputs (water consumed)
+     * confronted with the reservoir levels, to make losses visible.
      */
     @GetMapping("/water-balance")
     public Map<String, Object> waterBalance(@RequestParam(defaultValue = "month") String period) {
@@ -87,8 +87,8 @@ public class WaterDashboardController {
     }
 
     /**
-     * Anomalies detectees sur les mesures de debit (fuites probables). Ce diagnostic existait deja
-     * cote service mais n'etait expose nulle part : il est desormais affiche dans l'interface.
+     * Anomalies detected on flow measurements (probable leaks). This diagnosis already existed
+     * service-side but was not exposed anywhere: it is now displayed in the UI.
      */
     @GetMapping("/leaks")
     public Map<String, Object> leaks() {
@@ -103,8 +103,8 @@ public class WaterDashboardController {
 
         double dailyConsumption = waterConsumptionRepository.sumConsumptionSince(startOfDay);
         double monthlyConsumption = waterConsumptionRepository.sumConsumptionSince(startOfMonth);
-        // L'economie d'eau se mesure par rapport au BESOIN des cultures (ET0 x Kc / efficacite du
-        // systeme), et non par rapport aux plannings saisis : voir WaterEconomyService.
+        // Water savings are measured against the crops' NEED (ET0 x Kc / system
+        // efficiency), not against the entered schedules: see WaterEconomyService.
         Map<String, Object> monthEconomy = waterEconomyService.savings("month");
         double waterSavings = number(monthEconomy.get("savings_percentage"));
         Map<String, Object> sensorAvailability = iotDeviceService.availability();
@@ -113,7 +113,7 @@ public class WaterDashboardController {
         double level = waterSourceRepository.sumCurrentLevelLiters();
         double tankLevel = capacity == 0 ? 0 : Math.round((level / capacity) * 100);
 
-        // Anomalies = alertes critiques en base (calcul par la base, sans parcours complet).
+        // Anomalies = critical alerts in the database (computed by the database, no full scan).
         long anomalyCount = notificationRepository.countByTypeIgnoreCase("critical");
 
         return Map.of(
@@ -127,7 +127,7 @@ public class WaterDashboardController {
                 "sensor_availability_percentage", sensorAvailability.get("availabilityPercentage"));
     }
 
-    /** Lecture tolerante d'une valeur numerique : le pourcentage d'economie peut etre un entier ou un decimal. */
+    /** Tolerant read of a numeric value: the savings percentage may be an integer or a decimal. */
     private static double number(Object value) {
         return value instanceof Number n ? n.doubleValue() : 0d;
     }

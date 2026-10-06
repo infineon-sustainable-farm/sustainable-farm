@@ -10,8 +10,8 @@ import {
 import { useModuleQuery } from './useModuleQuery'
 
 /**
- * Listes du module, servies par React Query via {@link useModuleQuery}.
- * Une reponse paginee est ramenee a son tableau `content` : les vues consomment une liste.
+ * Module lists, served by React Query through {@link useModuleQuery}.
+ * A paginated response is reduced to its `content` array: the views consume a list.
  */
 function useListQuery(key, fetcher) {
   const { data, loading, error, refetch } = useModuleQuery(['watersupply', key], fetcher)

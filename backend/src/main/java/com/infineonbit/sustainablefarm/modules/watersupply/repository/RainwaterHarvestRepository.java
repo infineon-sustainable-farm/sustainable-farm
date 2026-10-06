@@ -12,8 +12,8 @@ public interface RainwaterHarvestRepository extends JpaRepository<RainwaterHarve
     Page<RainwaterHarvest> findBySourceId(UUID sourceId, Pageable pageable);
 
     /**
-     * Volume d'eau de pluie recupere sur un intervalle semi-ouvert [start, end[ : calcule par la
-     * base au lieu d'un parcours complet de la table cote application.
+     * Rainwater volume recovered over a semi-open interval [start, end[: computed in the
+     * database instead of a full table scan on the application side.
      */
     @Query("select coalesce(sum(h.harvestedLiters), 0) from RainwaterHarvest h "
             + "where h.captureDate >= :start and h.captureDate < :end")

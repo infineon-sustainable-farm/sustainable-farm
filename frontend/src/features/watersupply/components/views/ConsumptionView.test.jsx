@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// Environnement DOM et nettoyage entre tests declares dans le fichier : le module n'exige
-// aucune configuration Vitest partagee (voir SourcesView.test.jsx).
+// DOM environment and between-test cleanup declared in the file: the module requires
+// no shared Vitest configuration (see SourcesView.test.jsx).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { renderView as render } from './testRender'
@@ -98,7 +98,7 @@ describe('ConsumptionView (read-only - IoT sensors)', () => {
 
     // « North Farm » also appears in the farm filter: we target the quota panel.
     await waitFor(() => expect(screen.getAllByText('North Farm').length).toBeGreaterThan(1))
-    // Le panneau des quotas charge sa propre requete : on attend son contenu.
+    // The quota panel loads its own request: we wait for its content.
     await waitFor(() => expect(screen.getByText('80% of quota reached')).toBeTruthy())
     expect(screen.getByText(/85% of quota used/)).toBeTruthy()
     expect(screen.getByTestId('bullet-chart')).toBeTruthy()

@@ -34,23 +34,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class IrrigationService {
-    /** Journalisation : nommee LOGGER car `log` designe deja l'entite IrrigationLog dans les methodes. */
+    /** Logging: named LOGGER because `log` already refers to the IrrigationLog entity in the methods. */
     private static final Logger LOGGER = LoggerFactory.getLogger(IrrigationService.class);
 
     /**
-     * Identifiant systeme utilise comme createdBy quand aucun contexte utilisateur n'est fourni
-     * (voir {@link SystemUsers} : l'authentification est prise en charge par le logiciel global).
+     * System id used as createdBy when no user context is provided
+     * (see {@link SystemUsers}: authentication is handled by the global software).
      */
     private static final UUID DEFAULT_SYSTEM_USER_ID = SystemUsers.IOT_SYSTEM_USER_ID;
 
     /**
-     * Seuil de probabilite de pluie (%) a partir duquel une irrigation planifiee est deconseillee.
-     * Valeur retenue apres validation fonctionnelle : en dessous, la pluie annoncee n'est pas
-     * suffisamment fiable pour justifier un report.
+     * Rain probability threshold (%) from which a scheduled irrigation is discouraged.
+     * Value retained after functional validation: below it, the announced rain is not
+     * reliable enough to justify a postponement.
      */
     public static final int RAIN_PROBABILITY_THRESHOLD = 60;
 
-    /** Quantite de pluie prevue (mm) a partir de laquelle le report est justifie. */
+    /** Forecast rain amount (mm) from which the postponement is justified. */
     public static final double RAIN_AMOUNT_THRESHOLD_MM = 5.0;
 
     private final IrrigationScheduleRepository scheduleRepository;
@@ -92,8 +92,8 @@ public class IrrigationService {
         schedule.setDurationMinutes(request.durationMinutes());
         schedule.setWaterQuantityLiters(request.waterQuantityLiters());
         schedule.setStatus(request.status() == null ? "scheduled" : request.status());
-        // L'authentification est gérée par le logiciel global : sans contexte utilisateur,
-        // le planning est attribué à un identifiant système fixe.
+        // Authentication is handled by the global software: without a user context,
+        // the schedule is attributed to a fixed system id.
         schedule.setCreatedBy(request.createdBy() != null ? request.createdBy() : DEFAULT_SYSTEM_USER_ID);
         return IrrigationScheduleResponse.from(scheduleRepository.save(schedule));
     }
@@ -208,15 +208,15 @@ public class IrrigationService {
     }
 
     /**
-     * Suggestions de report fondees sur la pluie prevue : c'est le premier levier d'economie d'eau.
+     * Postponement suggestions based on forecast rain: this is the first water-savings lever.
      *
-     * <p>Une irrigation planifiee est deconseillee lorsque la pluie prevue le jour du declenchement
-     * atteint {@value #RAIN_PROBABILITY_THRESHOLD}% de probabilite et
-     * {@value #RAIN_AMOUNT_THRESHOLD_MM} mm. La decision reste humaine : l'API propose, seul
-     * {@link #postpone(UUID, String)} applique le report.</p>
+     * <p>A scheduled irrigation is discouraged when the forecast rain on the trigger day
+     * reaches {@value #RAIN_PROBABILITY_THRESHOLD}% probability and
+     * {@value #RAIN_AMOUNT_THRESHOLD_MM} mm. The decision stays human: the API suggests, only
+     * {@link #postpone(UUID, String)} applies the postponement.</p>
      *
-     * <p>Si les donnees agro-meteo sont indisponibles, la reponse est renvoyee avec
-     * {@code weather_available=false} au lieu d'echouer : le planning doit rester consultable.</p>
+     * <p>If the agro-weather data is unavailable, the response is returned with
+     * {@code weather_available=false} instead of failing: the schedule must stay readable.</p>
      */
     public Map<String, Object> suggestions() {
         List<Map<String, Object>> suggestions = new ArrayList<>();
@@ -240,7 +240,7 @@ public class IrrigationService {
                 suggestions.add(suggestion(schedule, probability, rainMm));
             }
         } catch (RuntimeException ex) {
-            // Meteo indisponible : on renvoie une liste vide et un indicateur explicite.
+            // Weather unavailable: return an empty list and an explicit indicator.
             weatherAvailable = false;
         }
 

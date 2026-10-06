@@ -65,7 +65,7 @@ class RainwaterHarvestServiceTest {
         verify(harvestRepository, never()).save(any(RainwaterHarvest.class));
     }
 
-    /** Requete cliente : identifiant et date de creation ne viennent jamais du client. */
+    /** Client request: id and creation date never come from the client. */
     private RainwaterHarvestRequest request(UUID sourceId, double area, double rainfall, double coefficient) {
         return new RainwaterHarvestRequest(sourceId, area, rainfall, coefficient, null, null);
     }

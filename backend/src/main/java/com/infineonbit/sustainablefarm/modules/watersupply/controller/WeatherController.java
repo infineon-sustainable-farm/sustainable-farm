@@ -16,11 +16,12 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 /**
- * Meteo courante et previsions, exposees a l'interface.
+ * Current weather and forecasts, exposed to the UI.
  *
- * <p>Les coordonnees par defaut viennent de la configuration ({@code app.weather.latitude}
- * / {@code app.weather.longitude}) : une seule source de verite avec {@link AgroWeatherService},
- * qui evite qu'un client oublie les parametres et interroge un autre lieu que le site.</p>
+ * <p>The default coordinates come from the configuration ({@code app.weather.latitude}
+ * / {@code app.weather.longitude}): a single source of truth with {@link AgroWeatherService},
+ * which prevents a client from forgetting the parameters and querying another location than the
+ * site.</p>
  */
 @RestController
 @RequestMapping("/api/weather")
@@ -91,12 +92,12 @@ public class WeatherController {
         return forecast;
     }
 
-    /** Latitude du site quand l'appelant n'en fournit pas (configuration). */
+    /** Site latitude when the caller does not provide one (configuration). */
     private double resolveLatitude(Double latitude) {
         return latitude == null ? defaultLatitude : latitude;
     }
 
-    /** Longitude du site quand l'appelant n'en fournit pas (configuration). */
+    /** Site longitude when the caller does not provide one (configuration). */
     private double resolveLongitude(Double longitude) {
         return longitude == null ? defaultLongitude : longitude;
     }

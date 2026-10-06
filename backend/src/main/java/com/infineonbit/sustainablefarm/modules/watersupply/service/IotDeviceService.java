@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service de gestion des capteurs IoT (P7).
- * Mise à jour du registre à chaque ingestion et calcul de la disponibilité.
+ * IoT sensor management service (P7).
+ * Registry update at each ingestion and availability computation.
  */
 @Service
 public class IotDeviceService {
