@@ -31,7 +31,7 @@ class EventRepositoryTest {
     @Autowired
     private VisitorRepository visitorRepository;
 
-    private LocalDateTime start = LocalDateTime.of(2026, 10, 4, 10, 0);
+    private LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
 
     @BeforeEach
     void setUp() {
