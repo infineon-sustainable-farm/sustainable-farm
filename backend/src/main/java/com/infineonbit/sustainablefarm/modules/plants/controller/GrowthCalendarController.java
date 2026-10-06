@@ -52,7 +52,7 @@ public class GrowthCalendarController {
    public ResponseEntity<List<GrowthCalendarResponse>> getAllGrowthCalendarEntries(
          @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode) {
-      List<GrowthCalendarResponse> growthCalendarResponses = growthCalendarService.obtainAllGrowthCalendarEntries(farmId, blockCode);
+      List<GrowthCalendarResponse> growthCalendarResponses = growthCalendarService.getAllGrowthCalendarEntries(farmId, blockCode);
       return ResponseEntity.status(HttpStatus.OK).body(growthCalendarResponses);
    }
 
@@ -63,7 +63,7 @@ public class GrowthCalendarController {
          @ApiResponse(responseCode = "404", description = "No entry with this ID")
    })
    public ResponseEntity<GrowthCalendarResponse> getGrowthCalendarEntryById(@PathVariable Long id) {
-      GrowthCalendarResponse growthCalendarResponse = growthCalendarService.obtainGrowthCalendarEntryById(id);
+      GrowthCalendarResponse growthCalendarResponse = growthCalendarService.getGrowthCalendarEntryById(id);
       return ResponseEntity.status(HttpStatus.OK).body(growthCalendarResponse);
    }
 }

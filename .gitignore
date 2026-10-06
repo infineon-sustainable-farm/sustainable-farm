@@ -1,4 +1,11 @@
+# Racine : règles transverses au monorepo (les règles backend/frontend vivent
+# respectivement dans backend/.gitignore et frontend/.gitignore — structure develop).
 .env
-.vscode/
-.idea/
-node_modules/
+*.log
+
+# Artefacts d'analyse et de session (dumps temporaires a la racine)
+_*.txt
+_*.log
+
+# Outillage local de l'agent / apercu
+.freebuff/

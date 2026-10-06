@@ -33,6 +33,11 @@ Example branch name: `feature/plants/add-plant-endpoints`
 - **Self-approval does not count** — the author cannot satisfy the approval requirement with their own review.
 - **Stale approvals are dismissed** when new commits are pushed to the PR: the required approval must be given again after the latest changes.
 
+### PR Scope and Sequencing
+
+- The first PR in a schema/data change sequence must be limited to the schema and baseline data. Preserve V1–V3 unchanged; do not include business-behavior changes in this PR.
+- Follow-up PRs may introduce business behavior, but must separate it feature by feature so each PR has a focused, reviewable scope.
+
 ## Module Ownership
 
 Each module has an assigned owner, and contributors must work within their own module:

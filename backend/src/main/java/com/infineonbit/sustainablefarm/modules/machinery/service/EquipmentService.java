@@ -6,19 +6,28 @@ import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.EquipmentO
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.FuelLogRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceScheduleRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.RepairLogRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.SparePartRepository;
+import com.infineonbit.sustainablefarm.modules.machinery.repository.UsageLogRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class EquipmentService {
     private final EquipmentRepository equipmentRepository;
+    private final SparePartRepository sparePartRepository;
+    private final MaintenanceScheduleRepository maintenanceScheduleRepository;
+    private final UsageLogRepository usageLogRepository;
+    private final FuelLogRepository fuelLogRepository;
+    private final RepairLogRepository repairLogRepository;
 
     /**
      * Equipments Management Service
@@ -61,7 +70,14 @@ public class EquipmentService {
         equipment.setCategory(equipmentCreationRequest.category());
         equipment.setStage(equipmentCreationRequest.stage());
         equipment.setStatus(equipmentCreationRequest.status());
-        equipmentRepository.save(equipment);
+        try {
+            equipmentRepository.save(equipment);
+        } catch (DataIntegrityViolationException e) {
+            if (equipmentRepository.existsByName(clientSendingEquipmentName)) {
+                throw new IllegalArgumentException(clientSendingEquipmentName + " already exists.");
+            }
+            throw e;
+        }
         return new EquipmentObtainingResponse(
                 equipment.getId(),
                 equipment.getName(),
@@ -100,29 +116,42 @@ public class EquipmentService {
      * @return the complete state of the equipment after the update
      * @throws EquipmentNotFoundException if no equipment exists with this ID
      */
+    @Transactional
     public EquipmentObtainingResponse updateEquipmentStatus(Long equipmentToUpdateId , EquipmentStatusUpdateRequest equipmentStatusUpdateRequest){
         int affectedRow = equipmentRepository.updateEquipmentStatusById(equipmentToUpdateId, equipmentStatusUpdateRequest.status());
          if(affectedRow == 0){
              throw new EquipmentNotFoundException(equipmentToUpdateId);
          }
-        Optional<Equipment> jpaEquipment = equipmentRepository.findById(equipmentToUpdateId);
-        Equipment equipment = jpaEquipment.get();
+        Equipment equipment = equipmentRepository.findById(equipmentToUpdateId)
+                .orElseThrow(() -> new EquipmentNotFoundException(equipmentToUpdateId));
         return new EquipmentObtainingResponse(equipment.getId(), equipment.getName(), equipment.getCategory(), equipment.getStage(), equipment.getStatus() );
     }
 
     /**
      * Permanently deletes a piece of equipment (hard delete, not soft delete).
      *
+     * <p>Related spare parts and machinery logs are preserved: they are first
+     * detached (their {@code equipment_id} is set to null) so that deleting a
+     * piece of equipment never removes or corrupts its maintenance, usage,
+     * fuel or repair history.
+     *
      * @param id the ID of the equipment to delete
      * @throws EquipmentNotFoundException if no equipment exists with this ID
      */
     @Transactional
     public void deleteEquipment(Long id){
-        Optional<Equipment> equipment = equipmentRepository.findById(id);
-        if(equipment.isEmpty()){
+        if (!equipmentRepository.existsById(id)) {
             throw new EquipmentNotFoundException(id);
         }
-        equipmentRepository.deleteById(id);
+        sparePartRepository.detachAllFromEquipment(id);
+        maintenanceScheduleRepository.detachAllFromEquipment(id);
+        usageLogRepository.detachAllFromEquipment(id);
+        fuelLogRepository.detachAllFromEquipment(id);
+        repairLogRepository.detachAllFromEquipment(id);
+        int affectedRows = equipmentRepository.deleteEquipmentById(id);
+        if (affectedRows == 0) {
+            throw new EquipmentNotFoundException(id);
+        }
     }
 
 }

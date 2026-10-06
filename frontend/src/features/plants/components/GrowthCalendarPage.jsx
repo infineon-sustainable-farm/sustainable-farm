@@ -21,24 +21,25 @@ function MissingPlantingDateNote({ entries }) {
             <p>
                 {fromZalka
                     ? "Planting date not recorded in the reference study (Zalka 2025 gives only “beginning of the rainy season”). "
-                    : "Planting date not recorded. "}
-                Tree age and growth phase are computed from the planting date and cannot be
-                shown until it is recorded.
+                        + "Tree age and growth phase are computed from the planting date and cannot be shown until it is recorded."
+                    : "Planting date not entered yet. "
+                        + "Tree age and growth phase are computed from the planting date and appear once it is entered."}
             </p>
         </div>
     );
 }
 
 /**
- * Spells out, once, what the year bands in the Phase column mean. The wording is
- * the growth phase scale of the reference study; the bands and the phase names
- * both come from the API, and nothing here computes or decides a threshold.
+ * Spells out, once, what the year bands in the Phase column mean. The scale is
+ * the reference study's; the study puts year 5 in two phases, and the legend
+ * says how it is counted. The bands and the phase names both come from the API,
+ * and nothing here computes or decides a threshold.
  */
 function PhaseLegend() {
     return (
         <p className="px-1 text-xs text-gray-500">
-            Growth phases (Zalka 2025): 0–2 yrs establishment · 3–5 yrs gradual
-            production · 6+ yrs full production.
+            Growth phases (reference: Zalka 2025 study; year 5 counted as gradual production): 0–2 yrs
+            establishment · 3–5 yrs gradual production · 6+ yrs full production
         </p>
     );
 }
@@ -108,10 +109,17 @@ export default function GrowthCalendarPage() {
                 )}
 
                 {!isPending && !isError && entries.length === 0 && (
-                    <PlantsEmptyState
-                        title="No growth calendar records match this filter"
-                        hint="Try another block, or select “All blocks”."
-                    />
+                    selectedBlock ? (
+                        <PlantsEmptyState
+                            title="No growth calendar records match this filter"
+                            hint="Try another block, or select “All blocks”."
+                        />
+                    ) : (
+                        <PlantsEmptyState
+                            title="No planting recorded yet"
+                            hint="Record a planting from the Varieties screen."
+                        />
+                    )
                 )}
 
                 {!isPending && !isError && entries.length > 0 && (
