@@ -36,7 +36,7 @@ public interface HealthFindingRepository extends JpaRepository<HealthFinding, Lo
      * <p>Every parameter is optional, as in
      * {@link HealthInspectionRepository#findByOptionalFilters}: a missing farm
      * means every farm, both dates are included and are those of the
-     * inspection, and the dates are cast in their {@code IS NULL} test for
+     * inspection, and each parameter is cast in its {@code IS NULL} test for
      * PostgreSQL. The status is computed afterwards, so it is filtered in Java.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
@@ -48,8 +48,8 @@ public interface HealthFindingRepository extends JpaRepository<HealthFinding, Lo
      */
     @Query("""
             SELECT f FROM HealthFinding f JOIN FETCH f.inspection i JOIN FETCH f.issue
-            WHERE (:farmId IS NULL OR i.farmId = :farmId)
-              AND (:blockCode IS NULL OR i.blockCode = :blockCode)
+            WHERE (CAST(:farmId AS Integer) IS NULL OR i.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR i.blockCode = :blockCode)
               AND (CAST(:from AS LocalDate) IS NULL OR i.inspectedOn >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR i.inspectedOn <= :to)
             ORDER BY i.inspectedOn ASC, i.id ASC, f.id ASC

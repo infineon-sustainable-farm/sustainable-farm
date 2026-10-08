@@ -20,7 +20,7 @@ public interface HealthInspectionRepository extends JpaRepository<HealthInspecti
      * missing farm means every farm. Both dates are included; a {@code from}
      * after {@code to} matches nothing and is not an error.
      *
-     * <p>The dates are cast in their {@code IS NULL} test, for the same reason as
+     * <p>Each parameter is cast in its {@code IS NULL} test, for the same reason as
      * in {@link HarvestRecordRepository#findByOptionalFilters}: without it,
      * PostgreSQL cannot type the parameter as soon as a date is given.
      *
@@ -33,8 +33,8 @@ public interface HealthInspectionRepository extends JpaRepository<HealthInspecti
      */
     @Query("""
             SELECT i FROM HealthInspection i
-            WHERE (:farmId IS NULL OR i.farmId = :farmId)
-              AND (:blockCode IS NULL OR i.blockCode = :blockCode)
+            WHERE (CAST(:farmId AS Integer) IS NULL OR i.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR i.blockCode = :blockCode)
               AND (CAST(:from AS LocalDate) IS NULL OR i.inspectedOn >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR i.inspectedOn <= :to)
             ORDER BY i.inspectedOn ASC, i.id ASC

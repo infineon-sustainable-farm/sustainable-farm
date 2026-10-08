@@ -34,8 +34,8 @@ public interface HealthTreatmentRepository extends JpaRepository<HealthTreatment
      * <p>Every parameter is optional: a {@code null} parameter disables its own
      * filter, as in {@link HarvestRecordRepository#findByOptionalFilters}; a
      * missing farm means every farm. Both dates are included; a {@code from}
-     * after {@code to} matches nothing and is not an error. The dates are cast
-     * in their {@code IS NULL} test, for the same reason as in that method.
+     * after {@code to} matches nothing and is not an error. Each parameter is
+     * cast in its {@code IS NULL} test, for the same reason as in that method.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
      * @param blockCode raw block value as stored (for example {@code "C"}),
@@ -46,8 +46,8 @@ public interface HealthTreatmentRepository extends JpaRepository<HealthTreatment
      */
     @Query("""
             SELECT t FROM HealthTreatment t JOIN FETCH t.targetIssue
-            WHERE (:farmId IS NULL OR t.farmId = :farmId)
-              AND (:blockCode IS NULL OR t.blockCode = :blockCode)
+            WHERE (CAST(:farmId AS Integer) IS NULL OR t.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR t.blockCode = :blockCode)
               AND (CAST(:from AS LocalDate) IS NULL OR t.treatedOn >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR t.treatedOn <= :to)
             ORDER BY t.treatedOn ASC, t.id ASC
