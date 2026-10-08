@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Quotas mensuels d'eau par ferme ou par zone (P8).
+ * Monthly water quotas per farm or per zone (P8).
  *
- * <p>CRUD complet + suivi de consommation du mois courant avec alertes automatiques
- * {@code warning} a 80&nbsp;% et {@code critical} a 100&nbsp;% du quota.</p>
+ * <p>Full CRUD + tracking of the current month's consumption with automatic alerts
+ * {@code warning} at 80&nbsp;% and {@code critical} at 100&nbsp;% of the quota.</p>
  */
 @RestController
 @RequestMapping("/api/water/quotas")
@@ -38,7 +38,7 @@ public class WaterQuotaController {
         this.quotaService = quotaService;
     }
 
-    /** Liste des quotas, filtrable par cible (targetType=farm|zone, targetId). */
+    /** List of quotas, filterable by target (targetType=farm|zone, targetId). */
     @GetMapping
     public List<WaterQuotaResponse> quotas(
             @RequestParam(required = false) String targetType,
@@ -73,8 +73,8 @@ public class WaterQuotaController {
     }
 
     /**
-     * Suivi du mois courant : pour chaque quota, la consommation cumulee des capteurs,
-     * le pourcentage utilise et le statut (ok, warning a 80 %, exceeded a 100 %).
+     * Tracking of the current month: for each quota, the cumulative sensor consumption,
+     * the percentage used and the status (ok, warning at 80 %, exceeded at 100 %).
      */
     @GetMapping("/usage")
     public List<Map<String, Object>> usage(

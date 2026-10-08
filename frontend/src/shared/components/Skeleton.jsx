@@ -1,8 +1,8 @@
 /**
- * Squelette de chargement (skeleton) conforme au design system ws-*.
- * Utilisé pendant le chargement des listes/panneaux à la place du spinner quand possible.
- * @param {number} [rows] - nombre de lignes simulées.
- * @param {number} [height] - hauteur de chaque ligne (px).
+ * Loading skeleton conforming to the ws-* design system.
+ * Used while lists/panels load, in place of the spinner when possible.
+ * @param {number} [rows] - number of simulated rows.
+ * @param {number} [height] - height of each row (px).
  */
 export function Skeleton({ rows = 3, height = 44 }) {
   return (

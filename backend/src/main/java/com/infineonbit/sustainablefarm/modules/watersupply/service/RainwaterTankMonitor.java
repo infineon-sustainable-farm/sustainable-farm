@@ -8,27 +8,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Surveillance du reservoir alimente par la collecte de pluie (module 5.3 de la specification).
+ * Monitoring of the rainwater harvesting reservoir (specification module 5.3).
  *
- * <p>Deux situations sont signalees :</p>
+ * <p>Two situations are reported:</p>
  * <ul>
- *   <li>reservoir presque plein ({@value #OVERFLOW_RISK_PERCENT} % et plus) : le volume capte
- *       risque de deborder, donc d'etre perdu ;</li>
- *   <li>reservoir a moitie plein ({@value #USE_RAINWATER_FIRST_PERCENT} % et plus) alors que le
- *       site declare un besoin en eau non-irrigation (lavage, transformation) : il faut puiser
- *       dans l'eau de pluie, gratuite, avant l'eau pompee qui coute de l'energie.</li>
+ *   <li>reservoir almost full ({@value #OVERFLOW_RISK_PERCENT} % and above): the captured volume
+ *       risks overflowing, hence being lost;</li>
+ *   <li>reservoir half full ({@value #USE_RAINWATER_FIRST_PERCENT} % and above) while the
+ *       site declares a non-irrigation water need (washing, processing): the free rainwater
+ *       must be used before the pumped water that costs energy.</li>
  * </ul>
  *
- * <p>Les seuils sont evalues a chaque mesure de niveau envoyee par le capteur du reservoir
- * (voir IotTelemetryService) : c'est le seul moment ou la grandeur change.</p>
+ * <p>The thresholds are evaluated at every level measurement sent by the reservoir sensor
+ * (see IotTelemetryService): that is the only moment the quantity changes.</p>
  */
 @Service
 public class RainwaterTankMonitor {
 
-    /** Niveau a partir duquel un debordement est probable (voir RainwaterTankRules). */
+    /** Level from which an overflow is likely (see RainwaterTankRules). */
     public static final double OVERFLOW_RISK_PERCENT = RainwaterTankRules.OVERFLOW_RISK_PERCENT;
 
-    /** Niveau a partir duquel l'eau de pluie doit etre utilisee en priorite (voir RainwaterTankRules). */
+    /** Level from which rainwater must be used first (see RainwaterTankRules). */
     public static final double USE_RAINWATER_FIRST_PERCENT = RainwaterTankRules.USE_RAINWATER_FIRST_PERCENT;
 
     private final AlertService alertService;
@@ -41,22 +41,22 @@ public class RainwaterTankMonitor {
         this.weeklyNonIrrigationNeedLiters = weeklyNonIrrigationNeedLiters;
     }
 
-    /** Vrai si la source est un reservoir alimente par la collecte de pluie. */
+    /** True when the source is a reservoir fed by rainwater harvesting. */
     public boolean isRainwaterTank(WaterSource source) {
         return RainwaterTankRules.isRainwaterTank(source);
     }
 
-    /** Niveau du reservoir en pourcentage de sa capacite, ou null si la capacite est inconnue. */
+    /** Tank level as a percentage of its capacity, or null when the capacity is unknown. */
     public Double levelPercent(WaterSource source) {
         return RainwaterTankRules.levelPercent(source);
     }
 
     /**
-     * Evalue les regles du reservoir de pluie et leve les alertes necessaires.
+     * Evaluates the rainwater tank rules and raises the necessary alerts.
      *
-     * @return les codes des alertes effectivement levees ({@code overflow_risk},
-     *         {@code use_rainwater_first}) ; liste vide si tout est normal ou si l'alerte
-     *         existe deja (deduplication de {@link AlertService#raiseOnce}).
+     * @return the codes of the alerts actually raised ({@code overflow_risk},
+     *         {@code use_rainwater_first}); empty list when everything is normal or when the alert
+     *         already exists (deduplication of {@link AlertService#raiseOnce}).
      */
     @Transactional
     public List<String> evaluate(WaterSource source) {

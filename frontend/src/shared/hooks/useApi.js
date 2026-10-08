@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { apiClient } from '../api/client.js'
 
 /**
- * Hook générique pour appeler l'API avec gestion d'état de chargement et d'erreur.
+ * Generic hook to call the API with loading and error state management.
  * @param {string} method - GET, POST, PUT, DELETE, PATCH
  * @returns {{ loading: boolean, error: Error|null, execute: Function }}
  */

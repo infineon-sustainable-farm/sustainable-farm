@@ -12,17 +12,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Sante technique du module, consommee par le badge "Backend connecte" du dashboard.
+ * Technical health of the module, consumed by the dashboard's "Backend connected" badge.
  *
- * <p>L'endpoint verifie reellement la base de donnees (une connexion est ouverte et validee)
- * au lieu de renvoyer une reponse statique : une base coupee faisait auparavant afficher un
- * backend "connecte". Contrat conserve pour les clients existants : 200 avec {@code status=ok}
- * quand tout va bien, 503 avec {@code status=degraded} sinon.</p>
+ * <p>The endpoint really checks the database (a connection is opened and validated)
+ * instead of returning a static response: a disconnected database used to still display a
+ * "connected" backend. Contract preserved for existing clients: 200 with {@code status=ok}
+ * when everything is fine, 503 with {@code status=degraded} otherwise.</p>
  */
 @RestController
 public class MiscController {
 
-    /** Delai de validation d'une connexion a la base (secondes). */
+    /** Validation timeout for a database connection (seconds). */
     private static final int VALIDATION_TIMEOUT_SECONDS = 2;
 
     private final DataSource dataSource;

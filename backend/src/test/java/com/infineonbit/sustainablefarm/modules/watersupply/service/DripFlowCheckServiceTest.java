@@ -26,8 +26,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Detection de colmatage / fuite (module 6.2) : le diagnostic ne doit se prononcer que lorsque
- * les trois informations existent (reseau decrit, arrosage reel, mesure de debit rattachee).
+ * Clogging / leak detection (module 6.2): the diagnosis must only be pronounced when
+ * the three pieces of information exist (network described, actual irrigation, flow measurement attached).
  */
 @ExtendWith(MockitoExtension.class)
 class DripFlowCheckServiceTest {
@@ -54,7 +54,7 @@ class DripFlowCheckServiceTest {
 
         Map<String, Object> result = service().check(zoneId);
 
-        // Reseau de 200 L/h sur 2 h = 400 L attendus ; 300 L mesures = 75 %.
+        // Network of 200 L/h over 2 h = 400 L expected; 300 L measured = 75 %.
         assertEquals("possible_clogging", result.get("status"));
         assertEquals(400d, result.get("theoretical_liters"));
         assertEquals(0.75d, result.get("ratio"));
@@ -128,7 +128,7 @@ class DripFlowCheckServiceTest {
         assertThrows(NotFoundException.class, () -> service().check(zoneId));
     }
 
-    /** Zone goutte-a-goutte de 100 goutteurs a 2 L/h : 200 L/h attendus. */
+    /** Drip zone of 100 emitters at 2 L/h: 200 L/h expected. */
     private UUID stubZoneWithRating() {
         UUID zoneId = UUID.randomUUID();
         Zone zone = new Zone();

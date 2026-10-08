@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 /**
- * Demande de report d'une irrigation planifiee (action declenchee apres une suggestion meteo).
+ * Request to postpone a scheduled irrigation (action triggered after a weather suggestion).
  *
- * @param reason motif du report, trace dans l'alerte afin d'historiser l'economie d'eau realisee
+ * @param reason reason for the postponement, recorded in the alert to keep track of the water savings achieved
  */
 public record IrrigationPostponeRequest(String reason) {
 }

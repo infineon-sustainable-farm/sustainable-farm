@@ -7,8 +7,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * Reference agronomique du module (FAO-56) : besoin = surface x ET0 x Kc / efficacite du systeme.
- * C'est la formule qui sert de base au KPI « eau economisee » : elle doit rester verrouillee.
+ * Agronomic reference of the module (FAO-56): need = area x ET0 x Kc / system efficiency.
+ * This is the formula underpinning the "saved water" KPI: it must stay locked.
  */
 class WaterNeedServiceTest {
 
@@ -18,7 +18,7 @@ class WaterNeedServiceTest {
     void needIsAreaTimesEt0TimesKcDividedByEfficiency() {
         Zone zone = zone(1.0, "drip", 1.0);
 
-        // 1 ha = 10 000 m2 ; 10 000 x 5 mm x 1.0 / 0.90
+        // 1 ha = 10,000 m2; 10,000 x 5 mm x 1.0 / 0.90
         assertEquals(55_555.56d, service.needLiters(zone, 5.0), 0.01d);
     }
 
@@ -54,8 +54,8 @@ class WaterNeedServiceTest {
     void cumulativeNeedSummsTheDailyNeeds() {
         Zone zone = zone(1.0, "drip", 1.0);
 
-        // Une journee sans ET0 (null) ne compte pas : 2 jours de besoin au lieu de 3.
-        // Arrays.asList est utilise car List.of refuse les elements null.
+        // One day without ET0 (null) does not count: 2 days of need instead of 3.
+        // Arrays.asList is used because List.of rejects null elements.
         assertEquals(111_111.12d, service.needLiters(zone, java.util.Arrays.asList(5.0, null, 5.0)), 0.01d);
     }
 

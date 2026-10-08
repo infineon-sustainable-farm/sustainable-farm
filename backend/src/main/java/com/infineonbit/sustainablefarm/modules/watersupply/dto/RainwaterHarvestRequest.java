@@ -4,11 +4,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Collecte d'eau de pluie envoyee par un client (module 5.1).
+ * Rainwater harvest sent by a client (module 5.1).
  *
- * <p>Le client ne fournit ni identifiant ni date de creation : ils appartiennent au serveur.
- * Le volume est calcule par le backend ({@code surface x pluie x coefficient de ruissellement})
- * quand il n'est pas fourni.</p>
+ * <p>The client provides neither an id nor a creation date: they belong to the server.
+ * The volume is computed by the backend ({@code area x rainfall x runoff coefficient})
+ * when it is not provided.</p>
  */
 public record RainwaterHarvestRequest(
         UUID sourceId,

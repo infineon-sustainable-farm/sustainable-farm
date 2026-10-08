@@ -1,67 +1,68 @@
-# IoT - Water Supply (integration systeme reel)
+# IoT - Water Supply (real system integration)
 
-> Ce dossier contient tout ce qui concerne l integration **obligatoire** du systeme IoT :
-> analyse des fonctionnalites capteurs, contrat d ingestion, architecture ESP32 et firmware.
-> **L endpoint d ingestion est implemente et valide** : POST /api/iot/telemetry (backend watersupply).
+> This folder holds everything about the **mandatory** integration of the IoT system:
+> sensor feature analysis, ingestion contract, ESP32 architecture and firmware.
+> **The ingestion endpoint is implemented and validated**: POST /api/iot/telemetry (watersupply backend).
 
-## 1. Architecture retenue
+## 1. Retained architecture
 
 ```
-[ Capteurs terrain ]  --fils-->  [ ESP32 passerelle de zone ]  --Wi-Fi/HTTP JSON-->  [ Backend Spring ]  -->  [ PostgreSQL ]  -->  [ Frontend React ]
- niveau, debit,                                            POST /api/iot/telemetry        routage vers            historiques,
- pluie, sol, qualite                                       (objet unique ou lot)          les tables metiers     graphiques, alertes
+[ Field sensors ]  --wired-->  [ ESP32 zone gateway ]  --Wi-Fi/HTTP JSON-->  [ Spring backend ]  -->  [ PostgreSQL ]  -->  [ React frontend ]
+ level, flow,                                            POST /api/iot/telemetry        routing to            history,
+ rain, soil, quality                                    (single object or batch)      business tables     charts, alerts
 ```
 
-- **Un ESP32 par zone/site** : tous les capteurs de la zone sont cables sur ses GPIO.
-- L ESP32 lit les capteurs, horodate (ou laisse le backend horodater), envoie en JSON.
-- Une mesure illisible ne fait jamais echouer le lot : le backend repond 202 avec le statut de chaque mesure (`processed` / `rejected` / `not_routed_yet`).
-- L authentification des appareils sera assuree par le futur **logiciel global** (hors perimetre du module).
+- **One ESP32 per zone/site**: all the zone's sensors are wired to its GPIOs.
+- The ESP32 reads the sensors, timestamps them (or lets the backend timestamp), and sends JSON.
+- An unreadable measurement never fails the batch: the backend answers 202 with the status of
+  each measurement (`processed` / `rejected` / `not_routed_yet`).
+- Device authentication will be provided by the future **global software** (out of the module's scope).
 
-## 2. Analyse : quelles fonctionnalites dependent des capteurs ?
+## 2. Analysis: which features depend on the sensors?
 
-### A. Mesures capteur (ingestion automatique - l UI ne saisit PAS)
+### A. Sensor measurements (automatic ingestion - the UI does NOT type them)
 
-| # | Mesure | Capteur | Endpoint d ingestion | Impact UI | Scenarios |
+| # | Measurement | Sensor | Ingestion endpoint | UI impact | Scenarios |
 |---|---|---|---|---|---|
-| A1 | Niveau de reservoir | HC-SR04 ultrason | `level` -> `water_sources.current_level_liters` | /sources (% niveau), /pluvial (jauge), / | SC-03, SC-06 |
-| A2 | Debit / volume consomme | YF-S201 a impulsions | `flow` -> `water_consumption` | /consommation (graphique, LECTURE SEULE), / KPIs | SC-01, SC-10, SC-12 |
-| A3 | Pluviometrie | Auget basculant | `rain` -> `rainwater_harvests` (volume calcule par le backend) | /pluvial | SC-06, SC-12 |
-| A4 | Qualite de l eau | Sonde pH + turbidite + DS18B20 | `quality` -> `water_quality_tests` (+ notification auto si hors seuil) | /qualite (alertes) | SC-05 |
-| A5 | Humidite du sol | Sonde capacitive | `soil` -> `soil_moisture_readings` : alimente la regle de declenchement automatique de l irrigation | /irrigation (pilotage auto) | SC-01, SC-02 |
-| A6 | Debit goutte-a-goutte anormal | Capteur pression/debit | `clogging` -> `drip_maintenance_logs` (colmatage) | /goutte-a-goutte | SC-07 |
-| A7 | Disponibilite passerelle / alimentation | heartbeat + batterie | `gateway` -> **non supporte** : les types inconnus sont rejetes (heartbeat a ajouter cote backend) | badges Offline / Power outage (a brancher) | SC-11, SC-13 |
+| A1 | Tank level | HC-SR04 ultrasonic | `level` -> `water_sources.current_level_liters` | /sources (% level), /rainwater (gauge), / | SC-03, SC-06 |
+| A2 | Flow / consumed volume | YF-S201 pulse | `flow` -> `water_consumption` | /consumption (chart, READ-ONLY), / KPIs | SC-01, SC-10, SC-12 |
+| A3 | Rainfall | Tipping bucket | `rain` -> `rainwater_harvests` (volume computed by the backend) | /rainwater | SC-06, SC-12 |
+| A4 | Water quality | pH probe + turbidity + DS18B20 | `quality` -> `water_quality_tests` (+ automatic notification when out of range) | /quality (alerts) | SC-05 |
+| A5 | Soil moisture | Capacitive probe | `soil` -> `soil_moisture_readings`: feeds the automatic irrigation triggering rule | /irrigation (auto control) | SC-01, SC-02 |
+| A6 | Abnormal drip flow | Pressure/flow sensor | `clogging` -> `drip_maintenance_logs` (clogging) | /maintenance | SC-07 |
+| A7 | Gateway availability / power | heartbeat + battery | `gateway` -> **not supported**: unknown types are rejected (heartbeat to add on the backend side) | Offline / Power outage badges (to wire) | SC-11, SC-13 |
 
-### B. Donnees humaines (saisie manuelle legitime - pas d IoT)
+### B. Human data (legitimate manual entry - not IoT)
 
-| Donnee | Ecran |
+| Data | Screen |
 |---|---|
-| Fermes / Champs / Zones (config site) | /fermes |
-| Sources (type, capacite) | /sources |
-| Plannings d irrigation + start/stop | /irrigation |
-| Interventions de maintenance (visites) | /goutte-a-goutte |
+| Farms / Fields / Zones (site config) | /farms |
+| Sources (type, capacity) | /sources |
+| Irrigation schedules + start/stop | /irrigation |
+| Maintenance interventions (visits) | /maintenance |
 
-### C. Decision appliquee
-- La consommation est en **LECTURE SEULE** dans l UI (les volumes viennent des capteurs A2) : le CRUD manuel a ete retire.
+### C. Applied decision
+- Consumption is **READ-ONLY** in the UI (the volumes come from the A2 sensors): manual CRUD was removed.
 
-## 3. Contrat d ingestion (IMPLEMENTE ET VALIDE)
+## 3. Ingestion contract (IMPLEMENTED AND VALIDATED)
 
 ```
 POST /api/iot/telemetry
 Content-Type: application/json
 ```
 
-Objet unique **ou** tableau (lot). Champs :
+A single object **or** an array (batch). Fields:
 
-| Champ | Type | Obligatoire | Description |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| device_id | string | oui | identifiant de l ESP32 |
-| type | string | oui | level - flow - quality - rain - clogging - soil (tout autre type est rejete) |
-| source_id | uuid | selon type | source concernee (level, flow, quality, rain) |
-| zone_id | uuid | selon type | zone concernee (clogging, soil) |
-| values | object | oui | valeurs mesurees (voir exemples) |
-| timestamp | ISO-8601 | non | le backend horodate maintenant si absent |
+| device_id | string | yes | id of the ESP32 |
+| type | string | yes | level - flow - quality - rain - clogging - soil (any other type is rejected) |
+| source_id | uuid | depends on type | concerned source (level, flow, quality, rain) |
+| zone_id | uuid | depends on type | concerned zone (clogging, soil) |
+| values | object | yes | measured values (see examples) |
+| timestamp | ISO-8601 | no | the backend timestamps now when absent |
 
-Exemples reels (testes et valides sur cette base) :
+Real examples (tested and validated against this backend):
 
 ```json
 {"device_id":"esp32-a-01","type":"level","source_id":"<uuid>","values":{"level_percent":15}}
@@ -71,28 +72,28 @@ Exemples reels (testes et valides sur cette base) :
 {"device_id":"capteur-debit-01","type":"clogging","zone_id":"<uuid>","values":{"severity":"high"}}
 ```
 
-Reponse : `202 Accepted` avec le statut de chaque mesure, ex :
+Response: `202 Accepted` with the status of each measurement, e.g.:
 
 ```json
 [
-  {"type":"level","source_id":"...","status":"processed","message":"Niveau reservoir = 1500.0 L"},
-  {"type":"quality","source_id":"...","status":"processed","message":"Mesure HORS SEUIL enregistree (alerte generee)"},
+  {"type":"level","source_id":"...","status":"processed","message":"Tank level = 1500.0 L"},
+  {"type":"quality","source_id":"...","status":"processed","message":"OUT-OF-RANGE measurement saved (alert generated)"},
   {"type":"soil","zone_id":"...","status":"processed","message":"Soil moisture = 32 % (zone ...)"}
 ]
 ```
 
-Frequences prevues : niveau 1 min - debit a chaque impulsion (vidage 1 min) - pluie 1 min - qualite 15 min - sol 10 min - heartbeat 30 s.
+Planned frequencies: level 1 min - flow at every pulse (flush 1 min) - rain 1 min - quality 15 min - soil 10 min - heartbeat 30 s.
 
 ## 4. Firmware
 
-Voir `iot/firmware/` :
-- `firmware/esp32_gateway/esp32_gateway.ino` : **passerelle principale** - tous les capteurs cabled sur une seule ESP32, envoi periodique par type de mesure.
-- Dossiers `water_level`, `flow_meter`, `water_quality`, `rain_gauge`, `soil_moisture` : croquis mono-capteur (nODEs simples alternatifs).
-- Table de cablage et calibration detaillees dans `firmware/README.md`.
+See `iot/firmware/`:
+- `firmware/esp32_gateway/esp32_gateway.ino`: **main gateway** - all sensors wired onto a single ESP32, periodic send per measurement type.
+- Folders `water_level`, `flow_meter`, `water_quality`, `rain_gauge`, `soil_moisture`: single-sensor sketches (simple alternative nodes).
+- Wiring table and detailed calibration in `firmware/README.md`.
 
-## 5. Verifications effectuees (2026-09-16)
+## 5. Checks performed (2026-09-16)
 
-Lot de telemetries reel envoye au backend en marche : level, flow, quality, rain, clogging -> tous `processed` ;
-soil -> `not_routed_yet` (accepte). Effets verifies directement en SQL :
-niveau reservoir mis a jour, consommation enregistree, test qualite hors seuil (notification generee),
-recolte pluviale calculee par le backend (180 m2 x 15 mm x 0.8 = 2160 L), intervention de colmatage creee.
+A real telemetry batch sent to the running backend: level, flow, quality, rain, clogging -> all `processed`;
+soil -> `not_routed_yet` (accepted). Effects verified directly in SQL:
+tank level updated, consumption recorded, out-of-range quality test (notification generated),
+rainwater harvest computed by the backend (180 m2 x 15 mm x 0.8 = 2160 L), clogging intervention created.

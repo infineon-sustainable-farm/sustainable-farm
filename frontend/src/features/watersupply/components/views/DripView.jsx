@@ -270,7 +270,7 @@ export function DripView({ notify }) {
             <form className="ws-form-grid" onSubmit={submitLog}>
               <FormField label="Zone" required>
                 <select style={inputStyle} value={form.zoneId} onChange={updateForm('zoneId')} required>
-                  <option value="">Sélectionner</option>
+                  <option value="">Select</option>
                   {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
                 </select>
               </FormField>

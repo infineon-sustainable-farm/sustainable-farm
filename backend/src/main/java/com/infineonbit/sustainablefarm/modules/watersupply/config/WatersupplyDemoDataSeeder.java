@@ -10,17 +10,17 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
 
 /**
- * Charge le jeu de demonstration water supply au demarrage, profil {@code dev} uniquement.
+ * Loads the water supply demo dataset at startup, {@code dev} profile only.
  *
- * <p>Pourquoi ce bean existe : les migrations Flyway ne doivent porter ni comptes ni
- * donnees de demonstration (PR-33) - Flyway n'a aucun mecanisme de profil, ces valeurs
- * partiraient en production. Le script vit donc dans {@code resources/seed/} et n'est
- * execute que sous le profil {@code dev}, comme {@code DevDataSeeder} et
+ * <p>Why this bean exists: the Flyway migrations must carry neither accounts nor
+ * demo data (PR-33) - Flyway has no profile mechanism, those values would ship to
+ * production. The script therefore lives in {@code resources/seed/} and only runs under
+ * the {@code dev} profile, like {@code DevDataSeeder} and
  * {@code PlantsDataSeeder}.
  *
- * <p>Le script est idempotent (clauses {@code ON CONFLICT ... DO NOTHING}) : il peut etre
- * rejoue a chaque demarrage sans dupliquer de lignes. Il requiert PostgreSQL, comme le
- * reste des migrations du module watersupply.
+ * <p>The script is idempotent (clauses {@code ON CONFLICT ... DO NOTHING}): it can be
+ * replayed at every startup without duplicating rows. It requires PostgreSQL, like the
+ * rest of the watersupply module migrations.
  */
 @Component
 @Profile("dev")

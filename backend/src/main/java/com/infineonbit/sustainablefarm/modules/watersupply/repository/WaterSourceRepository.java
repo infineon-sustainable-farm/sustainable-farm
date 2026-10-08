@@ -10,11 +10,11 @@ import org.springframework.data.jpa.repository.Query;
 public interface WaterSourceRepository extends JpaRepository<WaterSource, UUID> {
 	Page<WaterSource> findByFarmId(UUID farmId, Pageable pageable);
 
-	/** Capacite totale des reservoirs, calculee par la base (KPI de niveau du dashboard). */
+	/** Total capacity of the reservoirs, computed in the database (dashboard level KPI). */
 	@Query("select coalesce(sum(s.capacityLiters), 0) from WaterSource s")
 	double sumCapacityLiters();
 
-	/** Niveau total actuel des reservoirs, calcule par la base (KPI de niveau du dashboard). */
+	/** Current total level of the reservoirs, computed in the database (dashboard level KPI). */
 	@Query("select coalesce(sum(s.currentLevelLiters), 0) from WaterSource s")
 	double sumCurrentLevelLiters();
 }

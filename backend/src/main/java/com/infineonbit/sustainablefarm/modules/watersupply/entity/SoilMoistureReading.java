@@ -8,8 +8,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Mesure d'humidité du sol remontée par un capteur IoT.
- * Stockée séparément pour conserver l'historique et alimenter les règles de pilotage.
+ * Soil moisture measurement reported by an IoT sensor.
+ * Stored separately to keep the history and feed the control rules.
  */
 @Entity
 @Table(name = "soil_moisture_readings")
@@ -19,7 +19,7 @@ public class SoilMoistureReading extends BaseEntity {
     @Column(name = "zone_id", nullable = false)
     private UUID zoneId;
 
-    /** Profondeur de mesure (cm). Valeur par défaut 10 cm si non précisée. */
+    /** Measurement depth (cm). Default value 10 cm when not specified. */
     @Column(name = "depth_cm")
     private Integer depthCm = 10;
 

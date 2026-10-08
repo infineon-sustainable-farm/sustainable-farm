@@ -25,17 +25,17 @@ public class Zone extends BaseEntity {
     private String irrigationMethod;
 
     /**
-     * Coefficient cultural (Kc) utilisé pour estimer le besoin hydrique théorique de la zone
-     * (besoin = surface x ET0 x Kc / efficacité du système). Null = valeur par défaut 1.0,
-     * ce qui reste plus juste qu'aucune référence du tout.
+     * Crop coefficient (Kc) used to estimate the zone's theoretical water need
+     * (need = area x ET0 x Kc / system efficiency). Null = default value 1.0,
+     * which is still more accurate than no reference at all.
      */
     @Column(name = "crop_coefficient")
     private Double cropCoefficient;
 
     /**
-     * Nombre de goutteurs de la zone et débit nominal d'un goutteur (L/h) : ils donnent le
-     * débit théorique du réseau, référence de la détection de colmatage (débit mesuré < 90 %)
-     * ou de fuite (débit mesuré > 110 %).
+     * Number of emitters of the zone and nominal flow of one emitter (L/h): they give the
+     * network's theoretical flow, the reference for clogging detection (measured flow < 90 %)
+     * or leak detection (measured flow > 110 %).
      */
     @Column(name = "emitter_count")
     private Integer emitterCount;
@@ -43,7 +43,7 @@ public class Zone extends BaseEntity {
     @Column(name = "emitter_nominal_flow_lh")
     private Double emitterNominalFlowLh;
 
-    /** Débit théorique du réseau de la zone (L/h), ou null si le réseau n'est pas décrit. */
+    /** Theoretical flow of the zone's network (L/h), or null when the network is not described. */
     public Double theoreticalFlowLitersPerHour() {
         if (emitterCount == null || emitterCount <= 0 || emitterNominalFlowLh == null || emitterNominalFlowLh <= 0) {
             return null;

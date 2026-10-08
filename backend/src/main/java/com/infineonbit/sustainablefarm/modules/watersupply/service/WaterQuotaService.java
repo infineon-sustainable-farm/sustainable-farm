@@ -23,21 +23,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Gestion des quotas mensuels d'eau par ferme ou par zone (proposition P8).
+ * Monthly water quota management per farm or per zone (proposal P8).
  *
- * <p>Un quota fixe un volume maximal autorise pour un mois donne. Le service expose le CRUD,
- * le suivi de consommation du mois courant par quota, et declenche les alertes automatiques
- * {@code warning} a 80&nbsp;% et {@code critical} a 100&nbsp;% du quota via {@link AlertService}
- * (anti-doublon integre : une alerte deja levee n'est pas repetee a chaque mesure capteur).</p>
+ * <p>A quota sets a maximum allowed volume for a given month. The service exposes the CRUD,
+ * the current-month consumption tracking per quota, and triggers the automatic
+ * {@code warning} at 80&nbsp;% and {@code critical} at 100&nbsp;% of the quota through {@link AlertService}
+ * (built-in anti-duplicate: an already raised alert is not repeated at every sensor measurement).</p>
  */
 @Service
 @Transactional(readOnly = true)
 public class WaterQuotaService {
 
-    /** Seuil d'alerte "approche du quota" (fraction du quota). */
+    /** Alert threshold "quota approaching" (fraction of the quota). */
     public static final double WARNING_THRESHOLD = 0.80;
 
-    /** Seuil d'alerte "quota atteint" (fraction du quota). */
+    /** Alert threshold "quota reached" (fraction of the quota). */
     public static final double CRITICAL_THRESHOLD = 1.00;
 
     private static final String TARGET_FARM = "farm";
@@ -50,10 +50,10 @@ public class WaterQuotaService {
     private final WaterConsumptionRepository consumptionRepository;
     private final AlertService alertService;
 
-    /** Derniere evaluation de seuil par cible : evite de recalculer a chaque impulsion de compteur. */
+    /** Last threshold evaluation per target: avoids recomputing at every meter pulse. */
     private final Map<String, Instant> lastThresholdChecks = new java.util.concurrent.ConcurrentHashMap<>();
 
-    /** Fenetre minimale entre deux evaluations de seuil pour une meme cible (secondes, 0 = desactive). */
+    /** Minimum window between two threshold evaluations for the same target (seconds, 0 = disabled). */
     private final long checkThrottleSeconds;
 
     public WaterQuotaService(WaterQuotaRepository quotaRepository,
@@ -94,9 +94,9 @@ public class WaterQuotaService {
     }
 
     /**
-     * Cree un quota. Les erreurs de cible inconnue levent une {@link NotFoundException} (404),
-     * une cible non coherente un {@link IllegalArgumentException} (400), et un doublon de mois
-     * pour la meme cible est rejete par la contrainte d'unicite (409 via le gestionnaire global).
+     * Creates a quota. Unknown target errors raise a {@link NotFoundException} (404),
+     * an inconsistent target an {@link IllegalArgumentException} (400), and a duplicate month
+     * for the same target is rejected by the uniqueness constraint (409 via the global handler).
      */
     @Transactional
     public WaterQuotaResponse createQuota(WaterQuotaCreateRequest request) {
@@ -135,28 +135,28 @@ public class WaterQuotaService {
     }
 
     /**
-     * Suivi de tous les quotas pour le mois courant : consommation cumulee (mesures capteurs),
-     * pourcentage utilise et statut d'alerte. C'est l'endpoint consomme par l'interface.
+     * Tracking of all quotas for the current month: cumulative consumption (sensor measurements),
+     * percentage used and alert status. This is the endpoint consumed by the UI.
      */
     public List<Map<String, Object>> currentUsage() {
         return buildUsage(LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1));
     }
 
     /**
-     * Suivi d'un mois arbitraire : permet de consulter l'historique d'un mois clos.
+     * Tracking of an arbitrary month: allows consulting the history of a closed month.
      */
     public List<Map<String, Object>> usageForMonth(LocalDate monthStart) {
         return buildUsage(monthStart.withDayOfMonth(1));
     }
 
     /**
-     * Verifie les seuils d'alerte pour la consommation enregistree d'une cible. Appele a chaque
-     * ingestion d'une mesure de debit (capteurs IoT) et a chaque saisie manuelle de consommation.
-     * Les alertes passent par {@link AlertService#raiseOnce} : pas de repetition toutes les minutes.
+     * Checks the alert thresholds for the recorded consumption of a target. Called at each
+     * ingestion of a flow measurement (IoT sensors) and at each manual consumption entry.
+     * Alerts go through {@link AlertService#raiseOnce}: no repetition every minute.
      */
     public void checkThresholds(UUID farmId, UUID zoneId, Instant consumptionDate) {
-        // Un compteur de debit peut envoyer plusieurs mesures par minute : recalculer le quota a
-        // chaque impulsion ne changerait rien au resultat et couterait une agregation par mesure.
+        // A flow meter can send several measurements per minute: recomputing the quota at
+        // every pulse would not change the result and would cost one aggregation per measurement.
         if (throttled(farmId, zoneId)) {
             return;
         }
@@ -171,7 +171,7 @@ public class WaterQuotaService {
         }
     }
 
-    /** Vrai si la cible a deja ete evaluee dans la fenetre de throttle (0 desactive le mecanisme). */
+    /** True if the target was already evaluated within the throttle window (0 disables the mechanism). */
     private boolean throttled(UUID farmId, UUID zoneId) {
         if (checkThrottleSeconds == 0) {
             return false;
@@ -197,7 +197,7 @@ public class WaterQuotaService {
         }
         double used = usedLiters(targetType, targetId, monthStart);
         String name = targetName(targetType, targetId);
-        String actionUrl = "/consommation";
+        String actionUrl = "/consumption";
 
         if (used >= CRITICAL_THRESHOLD * quotaLiters) {
             alertService.raiseOnce("critical", "Water quota exceeded - " + name,
@@ -242,7 +242,7 @@ public class WaterQuotaService {
         return items;
     }
 
-    /** Quota applicable : celui du mois demande s'il existe, sinon le plus recent anterieur. */
+    /** Quota that applies: the requested month's if it exists, otherwise the most recent earlier one. */
     private WaterQuota currentQuota(String targetType, UUID targetId, LocalDate monthStart) {
         return quotaRepository
                 .findFirstByTargetTypeAndTargetIdAndQuotaMonthBetweenOrderByQuotaMonthDesc(
@@ -261,10 +261,10 @@ public class WaterQuotaService {
     }
 
     /**
-     * Consommation d'une zone : les mesures capteurs portent un farm_id et un source_id mais pas
-     * de zone directe. On remonte donc de la zone a son champ, puis au farm du champ, et on
-     * repartit la consommation du farm entre les zones de ce champ (les zones partagent l'eau de
-     * la meme parcelle) : approximation documentee, a affiner avec des irrigations zonees.
+     * Consumption of a zone: sensor measurements carry a farm_id and a source_id but no
+     * direct zone. So we walk from the zone to its field, then to the field's farm, and split
+     * the farm's consumption between the zones of that field (zones share the water of the
+     * same plot): documented approximation, to be refined with zone-level irrigations.
      */
     private double zoneConsumption(Instant start, Instant end, UUID zoneId) {
         return fieldZoneRepository.findById(zoneId)

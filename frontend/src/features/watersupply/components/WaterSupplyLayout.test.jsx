@@ -7,9 +7,9 @@ import WaterSupplyLayout from './WaterSupplyLayout'
 afterEach(cleanup)
 
 /**
- * Ecran de test : il consomme le contexte fourni par la coque (notify / onNavigate),
- * exactement comme le fait l'adaptateur de routes.jsx, et sans dependre d'une vraie vue
- * (donc sans appel API).
+ * Test screen: it consumes the context provided by the shell (notify / onNavigate),
+ * exactly like the routes.jsx adapter does, and without depending on a real view
+ * (hence no API call).
  */
 function ProbeScreen() {
   const { notify, onNavigate } = useOutletContext()
@@ -37,21 +37,21 @@ function renderModule() {
 }
 
 describe('WaterSupplyLayout', () => {
-  it('injecte notify et onNavigate dans l ecran actif', () => {
+  it('injects notify and onNavigate into the active screen', () => {
     renderModule()
 
     expect(screen.getByTestId('probe-props').textContent)
       .toBe('notify:function|onNavigate:function')
   })
 
-  it('affiche le menu du module et l ecran actif', () => {
+  it('shows the module menu and the active screen', () => {
     renderModule()
 
     expect(screen.getByRole('navigation', { name: 'Water supply module' })).toBeTruthy()
     expect(screen.getByText('probe screen')).toBeTruthy()
   })
 
-  it('transmet notify aux ecrans et affiche le bandeau de confirmation', () => {
+  it('passes notify to the screens and shows the confirmation banner', () => {
     renderModule()
 
     fireEvent.click(screen.getByText('call-notify'))

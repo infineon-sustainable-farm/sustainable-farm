@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * Vue d'un quota mensuel telle qu'exposee par l'API.
+ * View of a monthly quota as exposed by the API.
  */
 public record WaterQuotaResponse(UUID id, String targetType, UUID targetId, LocalDate quotaMonth,
                                  Double quotaLiters, String label) {

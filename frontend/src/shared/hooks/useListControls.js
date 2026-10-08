@@ -9,9 +9,9 @@ const compareValues = (a, b) => {
 }
 
 /**
- * Recherche + tri + pagination côté client pour les listes du frontend.
- * @param {Array} items - données brutes (déjà filtrées métier par l'appelant).
- * @param {Array} [searchFields] - champs texte parcourus par la recherche.
+ * Client-side search + sorting + pagination for the frontend lists.
+ * @param {Array} items - raw data (already business-filtered by the caller).
+ * @param {Array} [searchFields] - text fields scanned by the search.
  * @param {{ key: string, dir: 'asc'|'desc' }} [defaultSort] - tri initial.
  * @param {number} [pageSize] - taille de page.
  * @returns {{ items: Array, query: string, setQuery: Function, sort: Object,

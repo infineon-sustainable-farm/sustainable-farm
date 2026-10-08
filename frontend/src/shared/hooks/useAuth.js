@@ -7,7 +7,7 @@ function readUserFromToken() {
 
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
-    // Expiration JWT : un token expiré est supprimé et l'utilisateur considéré déconnecté.
+    // JWT expiry: an expired token is dropped and the user considered logged out.
     if (payload.exp && payload.exp * 1000 < Date.now()) {
       setToken(null)
       return null

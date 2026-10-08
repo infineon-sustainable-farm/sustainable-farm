@@ -21,22 +21,22 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
- * Gestion globale et coherente des erreurs API.
+ * Global and consistent handling of API errors.
  *
- * <p>Attention : un handler sur {@code Exception} court-circuite la gestion par defaut de Spring.
- * Sans les handlers dedies ci-dessous, une URL inconnue (NoResourceFoundException) ou une methode
- * HTTP non supportee repondait 500 au lieu de 404 / 405.</p>
+ * <p>Warning: a handler on {@code Exception} short-circuits Spring's default handling.
+ * Without the dedicated handlers below, an unknown URL (NoResourceFoundException) or an
+ * unsupported HTTP method answered 500 instead of 404 / 405.</p>
  *
- * <p>Scoppe avec {@code basePackages} comme {@code PlantsExceptionHandler} : cet advice
- * porte un handler sur {@code Exception}, donc un advice global se battrait avec
- * {@code core.exception.CoreExceptionHandler} sur toutes les URL, y compris celles des autres
- * modules. Le contrat d'erreur (enveloppe {@code timestamp/status/code/message}) reste
- * propre au module watersupply.</p>
+ * <p>Scoped with {@code basePackages} like {@code PlantsExceptionHandler}: this advice
+ * carries a handler on {@code Exception}, so a global advice would fight with
+ * {@code core.exception.CoreExceptionHandler} on every URL, including those of the other
+ * modules. The error contract (envelope {@code timestamp/status/code/message}) stays
+ * specific to the watersupply module.</p>
  *
- * <p>{@code @Order} est explicite parce que le scoping seul ne suffit pas : les deux advises
- * restent candidats pour les controleurs watersupply, et sans ordre Spring les arbitrait
- * au hasard, en renvoyant parfois 500 via le handler generique de core. Core est en
- * {@code LOWEST_PRECEDENCE} pour rester le filet de securite des autres modules.</p>
+ * <p>{@code @Order} is explicit because scoping alone is not enough: both advises
+ * remain candidates for the watersupply controllers, and without an order Spring would
+ * arbitrate randomly, sometimes returning 500 via the generic core handler. Core is at
+ * {@code LOWEST_PRECEDENCE} to remain the safety net of the other modules.</p>
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(basePackages = "com.infineonbit.sustainablefarm.modules.watersupply")
@@ -44,20 +44,20 @@ public class WaterSupplyExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(WaterSupplyExceptionHandler.class);
 
-    /** URL inconnue ou ressource statique absente : 404, jamais 500. */
+    /** Unknown URL or missing static resource: 404, never 500. */
     @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
     public ResponseEntity<Map<String, Object>> handleNoHandler(Exception ex) {
         return build(HttpStatus.NOT_FOUND, "NOT_FOUND", "Resource not found");
     }
 
-    /** Methode HTTP non supportee sur une route existante : 405. */
+    /** Unsupported HTTP method on an existing route: 405. */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         return build(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED",
                 "Unsupported HTTP method: " + ex.getMethod());
     }
 
-    /** Content-Type non supporte : 415. */
+    /** Unsupported Content-Type: 415. */
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
         return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED_MEDIA_TYPE",
@@ -100,7 +100,7 @@ public class WaterSupplyExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        // Sans ce log, une erreur 500 etait totalement invisible en production.
+        // Without this log, a 500 error was totally invisible in production.
         log.error("Unhandled API error", ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Internal server error");
     }

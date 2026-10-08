@@ -9,7 +9,7 @@ export const C = {
 }
 
 /**
- * Formate un volume en litres avec l'unite adaptee (L, m3 au-dela de 10 000 L).
+ * Formats a volume in litres with the matching unit (L, m3 above 10,000 L).
  *
  * @param {number} liters
  * @param {number} [decimals]
@@ -20,14 +20,14 @@ export function formatLiters(liters, decimals = 0) {
   return `${value.toFixed(decimals)} L`
 }
 
-/** Formate une quantite en millimetres (pluviometrie, ET0). */
+/** Formats an amount in millimetres (rainfall, ET0). */
 export function formatMm(mm, decimals = 1) {
   return `${(Number(mm) || 0).toFixed(decimals)} mm`
 }
 
-/* ==================== Export des graphiques ==================== */
+/* ==================== Chart exports ==================== */
 
-/** Declenche le telechargement d'un Blob cote navigateur. */
+/** Triggers the browser-side download of a Blob. */
 export function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -40,9 +40,9 @@ export function downloadBlob(blob, filename) {
 }
 
 /**
- * Convertit des lignes de donnees en CSV (separateur point-virgule, BOM UTF-8).
- * Le point-virgule et le BOM sont necessaires pour qu'Excel FR affiche
- * correctement les accents et separe les colonnes sans assistant d'import.
+ * Converts data rows to CSV (semicolon separator, UTF-8 BOM).
+ * The semicolon and the BOM are required so that Excel displays
+ * accents correctly and splits columns without an import wizard.
  *
  * @param {Array<Object>} rows
  * @param {Array<{ key: string, label: string }>} columns
@@ -57,18 +57,18 @@ export function toCsv(rows, columns) {
   return `\uFEFF${[header, ...body].join('\r\n')}\r\n`
 }
 
-/** Telecharge un jeu de donnees au format CSV (export par graphique). */
+/** Downloads a dataset as CSV (per-chart export). */
 export function exportRowsAsCsv(rows, columns, filename) {
   downloadBlob(new Blob([toCsv(rows, columns)], { type: 'text/csv;charset=utf-8' }), filename)
 }
 
 /**
- * Capture le SVG rendu par Recharts et le telecharge en PNG.
- * Le fond est force en blanc : un PNG transparent se lit mal dans un rapport.
+ * Captures the SVG rendered by Recharts and downloads it as PNG.
+ * The background is forced to white: a transparent PNG reads poorly in a report.
  *
- * @param {HTMLElement} container - element contenant le SVG du graphique.
+ * @param {HTMLElement} container - element holding the chart SVG.
  * @param {string} filename
- * @returns {boolean} true si un SVG a ete exporte.
+ * @returns {boolean} true if an SVG was exported.
  */
 export function exportChartAsPng(container, filename) {
   const svg = container?.querySelector('svg')
