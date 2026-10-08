@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.SensorReading;
@@ -33,9 +35,17 @@ public class SensorReadingService {
      *
      * @param reading reading parsed from the request body; only its sensor id is trusted
      * @return the saved reading with its generated id
+     * @throws BusinessRuleException when the reading carries no sensor id
+     * @throws ResourceNotFoundException when the sensor id is unknown
      */
     @Transactional
     public SensorReading create(SensorReading reading) {
+        if (reading.getSensor() == null || reading.getSensor().getId() == null) {
+            throw new BusinessRuleException("A sensor is required");
+        }
+        sensorRepository.findById(reading.getSensor().getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Sensor not found with id " + reading.getSensor().getId()));
         SensorReading saved = sensorReadingRepository.save(reading);
         checkThresholds(saved);
         return saved;

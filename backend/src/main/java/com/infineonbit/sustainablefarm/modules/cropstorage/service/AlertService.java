@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.AlertRepository;
 import lombok.RequiredArgsConstructor;
@@ -57,11 +58,11 @@ public class AlertService {
      * @param id     id of the alert to move
      * @param status target status, typically ACKNOWLEDGED or RESOLVED
      * @return the alert with its new status
-     * @throws RuntimeException when no alert exists with this id
+     * @throws ResourceNotFoundException when no alert exists with this id
      */
     public Alert updateStatus(Long id, String status) {
         Alert alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alert not found with id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found with id " + id));
         alert.setStatus(status);
         return alertRepository.save(alert);
     }
