@@ -70,7 +70,7 @@ public interface GrowthCalendarRepository extends JpaRepository<GrowthCalendar, 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT c FROM GrowthCalendar c
-            WHERE ((:farmId IS NULL AND c.farmId IS NULL) OR c.farmId = :farmId)
+            WHERE ((CAST(:farmId AS Integer) IS NULL AND c.farmId IS NULL) OR c.farmId = :farmId)
               AND c.blockCode = :blockCode
             ORDER BY c.id ASC
             """)

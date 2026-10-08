@@ -82,7 +82,7 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT v FROM Variety v
-            WHERE ((:farmId IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
+            WHERE ((CAST(:farmId AS Integer) IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
               AND v.blockCode = :blockCode
               AND LOWER(v.name) = LOWER(:name)
             ORDER BY v.id ASC
