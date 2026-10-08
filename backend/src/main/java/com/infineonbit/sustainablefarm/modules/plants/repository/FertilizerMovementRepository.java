@@ -47,7 +47,7 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
      * so any farm or block filter leaves it out. Both dates are included; a
      * {@code from} after {@code to} matches nothing and is not an error.
      *
-     * <p>The dates are cast in their {@code IS NULL} test, for the same reason as
+     * <p>Each parameter is cast in its {@code IS NULL} test, for the same reason as
      * in {@link HarvestRecordRepository#findByOptionalFilters}: without it,
      * PostgreSQL cannot type the parameter as soon as a date is given.
      *
@@ -62,10 +62,10 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
      */
     @Query("""
             SELECT m FROM FertilizerMovement m JOIN FETCH m.product p
-            WHERE (:fertilizerId IS NULL OR p.id = :fertilizerId)
-              AND (:movementType IS NULL OR m.movementType = :movementType)
-              AND (:farmId IS NULL OR m.farmId = :farmId)
-              AND (:blockCode IS NULL OR m.blockCode = :blockCode)
+            WHERE (CAST(:fertilizerId AS Long) IS NULL OR p.id = :fertilizerId)
+              AND (CAST(:movementType AS String) IS NULL OR m.movementType = :movementType)
+              AND (CAST(:farmId AS Integer) IS NULL OR m.farmId = :farmId)
+              AND (CAST(:blockCode AS String) IS NULL OR m.blockCode = :blockCode)
               AND (CAST(:from AS LocalDate) IS NULL OR m.movementDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR m.movementDate <= :to)
             ORDER BY m.movementDate ASC, m.id ASC
