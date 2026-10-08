@@ -141,11 +141,26 @@ public class FertilizerMovementService {
     }
 
     /**
+     * Finds a fertilizer and locks its row until the end of the transaction, so
+     * the applications and losses of one fertilizer run one after the other and
+     * each one checks the stock left by the previous ones. A purchase only adds
+     * to the stock and takes no lock.
+     *
+     * @throws FertilizerNotFoundException if no fertilizer has this identifier
+     */
+    private FertilizerProduct lockProduct(Long fertilizerId) {
+        return fertilizerProductRepository.findByIdForUpdate(fertilizerId)
+                .orElseThrow(() -> new FertilizerNotFoundException(fertilizerId));
+    }
+
+    /**
      * Refuses a movement that would take more than the current stock.
      *
      * <p>The check uses the stock today, not the stock on the date of the
      * movement: a late entry dated before a purchase is accepted as long as the
-     * stock covers it now.
+     * stock covers it now. The caller has locked the fertilizer row first (see
+     * {@link #lockProduct}), so two movements sent at the same time cannot both
+     * pass.
      *
      * @param product  the fertilizer
      * @param quantity the quantity to take from its stock
@@ -245,7 +260,7 @@ public class FertilizerMovementService {
      * explicit write time so the {@code lastUpdated} value can be tested.
      */
     FertilizerMovementResponse recordApplication(Long fertilizerId, ApplicationRequest request, Instant now) {
-        FertilizerProduct product = findProduct(fertilizerId);
+        FertilizerProduct product = lockProduct(fertilizerId);
         BigDecimal quantity = toQuantity(request.quantity());
         requireStock(product, quantity);
 
@@ -277,7 +292,7 @@ public class FertilizerMovementService {
      * so the {@code lastUpdated} value can be tested.
      */
     FertilizerMovementResponse recordLoss(Long fertilizerId, LossRequest request, Instant now) {
-        FertilizerProduct product = findProduct(fertilizerId);
+        FertilizerProduct product = lockProduct(fertilizerId);
         BigDecimal quantity = toQuantity(request.quantity());
         requireStock(product, quantity);
 

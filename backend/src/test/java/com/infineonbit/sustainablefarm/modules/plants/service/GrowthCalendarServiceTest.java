@@ -41,13 +41,13 @@ public class GrowthCalendarServiceTest {
     private static GrowthCalendar zalkaBlockA() {
         return new GrowthCalendar(
                 1L, null, "A", null, "rainy season (year unknown)",
-                null, null, null, "Zalka_2025", null);
+                null, null, null, "Zalka_2025", null, null);
     }
 
     private static GrowthCalendar blockWithPlantingDate(String block, LocalDate plantingDate) {
         return new GrowthCalendar(
                 2L, null, block, plantingDate, null,
-                null, null, null, "TEST", null);
+                null, null, null, "TEST", null, null);
     }
 
     private static Variety variety(String name, String block, Integer farmId) {

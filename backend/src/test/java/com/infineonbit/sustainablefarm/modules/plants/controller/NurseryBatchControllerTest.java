@@ -13,18 +13,22 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryOrigin;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.exception.NurseryBatchNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.service.ConcurrentPlantingRetry;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryBatchService;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryEventService;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -36,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -46,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** The error bodies are asserted in full, as for the planting and treatment routes. */
 @WebMvcTest(NurseryBatchController.class)
-@Import(CoreExceptionHandler.class)
+@Import({CoreExceptionHandler.class, ConcurrentPlantingRetry.class})
 public class NurseryBatchControllerTest {
 
     private static final String URL = "/api/plants/nursery-batches";
@@ -475,5 +480,43 @@ public class NurseryBatchControllerTest {
         assertApiError(result, 422, "Unprocessable Entity", "Not enough plants in batch P1: 138 left, 200 requested",
                 TRANSPLANTS_URL);
         result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
+    }
+
+    /** A violation of a unique constraint, as the repository layer reports it. */
+    private static DataIntegrityViolationException violationOf(String constraintName) {
+        return new DataIntegrityViolationException("could not execute statement", new ConstraintViolationException(
+                "duplicate key", new SQLException("duplicate key", "23505"), constraintName));
+    }
+
+    @Test
+    void recordTransplant_shouldRunTheTransplantOnceMore_whenItsPlantingLostARace() throws Exception {
+        // Arrange: the first run loses the race on the calendar row of the block, the second one succeeds
+        when(nurseryEventService.recordTransplant(eq(1L), any(TransplantRequest.class)))
+                .thenThrow(violationOf("uk_calendrier_croissance_block_key"))
+                .thenReturn(new NurseryEventResponse(22L, 1L, "P1", null, NurseryEventType.TRANSPLANT, SEPTEMBER_20,
+                        null, 100, null, "E", 7L, "user_entry", NOW));
+        // Act
+        ResultActions result = postTo(TRANSPLANTS_URL, """
+                {"transplantedOn":"2026-09-20","quantity":100,"blockCode":"E"}
+                """);
+        // Assert: the whole transplant runs again, not only its planting
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(22));
+        verify(nurseryEventService, times(2)).recordTransplant(eq(1L), any(TransplantRequest.class));
+    }
+
+    @Test
+    void recordTransplant_shouldReturn409AndStop_whenTheSecondRunLosesARaceAgain() throws Exception {
+        // Arrange
+        when(nurseryEventService.recordTransplant(eq(1L), any(TransplantRequest.class)))
+                .thenThrow(violationOf("uk_varietes_variety_key"));
+        // Act
+        ResultActions result = postTo(TRANSPLANTS_URL, """
+                {"transplantedOn":"2026-09-20","quantity":100,"blockCode":" e "}
+                """);
+        // Assert: the same text as for a planting, and nothing saved by either run
+        assertApiError(result, 409, "Conflict", "Another planting on block E was being recorded at the same time. "
+                + "Nothing was saved: please send the request again.", TRANSPLANTS_URL);
+        verify(nurseryEventService, times(2)).recordTransplant(eq(1L), any(TransplantRequest.class));
     }
 }
