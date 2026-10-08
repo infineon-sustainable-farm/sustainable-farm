@@ -89,7 +89,9 @@ public class HealthInspectionService {
      * <ol>
      *     <li>Finds the catalogue row of every finding first. A code missing from
      *         the catalogue refuses the whole inspection with a 422, before
-     *         anything is written.</li>
+     *         anything is written. "Other" is added to the catalogue on its
+     *         first use, once every other code is found, see
+     *         {@link HealthIssueService#getIssuesByCode(List)}.</li>
      *     <li>Stores the inspection, then each finding. The block needs no
      *         recorded planting.</li>
      * </ol>
@@ -98,7 +100,7 @@ public class HealthInspectionService {
      * @param request the inspection, already validated
      * @return the recorded inspection, with its findings
      * @throws com.infineonbit.sustainablefarm.core.exception.BusinessRuleException
-     *         if an issue code is not in the catalogue
+     *         if an issue code other than {@code OTHER} is not in the catalogue
      */
     @Transactional
     public HealthInspectionResponse recordInspection(HealthInspectionRequest request) {
@@ -110,9 +112,9 @@ public class HealthInspectionService {
      * write time so the {@code lastUpdated} value can be tested.
      */
     HealthInspectionResponse recordInspection(HealthInspectionRequest request, Instant now) {
-        List<HealthIssueReference> issues = request.findings().stream()
-                .map(finding -> healthIssueService.getIssueByCode(finding.issueCode()))
-                .toList();
+        List<HealthIssueReference> issues = healthIssueService.getIssuesByCode(request.findings().stream()
+                .map(HealthFindingRequest::issueCode)
+                .toList());
 
         HealthInspection inspection = new HealthInspection();
         inspection.setFarmId(request.farmId());

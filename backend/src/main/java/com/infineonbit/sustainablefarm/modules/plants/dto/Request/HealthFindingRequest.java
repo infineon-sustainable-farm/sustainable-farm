@@ -11,8 +11,9 @@ import jakarta.validation.constraints.Pattern;
  * <p>{@code issueCode} is a code of the catalogue, in any case and with or
  * without surrounding spaces; the service trims and upper-cases it. A code with
  * the right form but missing from the catalogue is refused by the service with
- * a 422. {@code otherLabel} names the problem when the code is {@code OTHER},
- * and only then; {@link OtherLabelMatchesIssue} checks it, length included.
+ * a 422, except {@code OTHER}, which the service adds on its first use.
+ * {@code otherLabel} names the problem when the code is {@code OTHER}, and only
+ * then; {@link OtherLabelMatchesIssue} checks it, length included.
  *
  * <p>{@code treeLabel} is optional; the service trims and upper-cases it, and a
  * blank value counts as no tree.

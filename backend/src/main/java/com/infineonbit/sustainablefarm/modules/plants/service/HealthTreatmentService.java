@@ -163,11 +163,12 @@ public class HealthTreatmentService {
      *
      * <p>The block needs no recorded planting. The targeted issue is a code of
      * the catalogue, compared without case; with {@code OTHER}, its label names
-     * the problem.
+     * the problem, and "Other" is added to the catalogue on its first use.
      *
      * @param request the treatment, already validated
      * @return the recorded treatment
-     * @throws BusinessRuleException if the targeted code is not in the catalogue
+     * @throws BusinessRuleException if the targeted code is not {@code OTHER}
+     *                               and is not in the catalogue
      */
     @Transactional
     public HealthTreatmentResponse recordPreventiveTreatment(PreventiveTreatmentRequest request) {

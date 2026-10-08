@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueKind;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthIssueReferenceRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,20 +12,23 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Loads the catalogue of health issues at startup: the pests and diseases of
- * the mango documented in Burkina Faso, and "Other" for anything else.
+ * Loads a default catalogue of health issues at startup in the dev profile: the
+ * pests and diseases of the mango documented in Burkina Faso, and "Other" for
+ * anything else.
  *
- * <p>Runs in every profile, like {@link CurrencyRateLoader}: the catalogue
- * belongs to no farm, and every environment, production included, needs it to
- * record an inspection.
+ * <p>Runs in the dev profile only, like {@link CurrencyRateLoader}: no
+ * reference data is loaded in production. There, the user adds the pests and
+ * diseases with {@code POST /api/plants/health-issues}, and the service adds
+ * "Other" the first time an inspection or a treatment uses it, with the values
+ * below.
  *
  * <p>A row is inserted only when its code is missing. An existing row is never
  * overwritten, even when it differs from the default below: a row corrected in
  * the database is the one that counts. Restarting the application therefore
- * never duplicates nor resets a row. Adding an issue later means adding a
- * default here, with no migration.
+ * never duplicates nor resets a row.
  */
 @Component
+@Profile("dev")
 public class HealthIssueReferenceLoader implements CommandLineRunner {
 
     /** Default catalogue row, with its source. */

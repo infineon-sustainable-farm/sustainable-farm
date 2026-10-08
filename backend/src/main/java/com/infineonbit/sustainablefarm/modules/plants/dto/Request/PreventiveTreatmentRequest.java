@@ -22,7 +22,8 @@ import java.time.LocalDate;
  * {@link FindingTreatmentRequest}. The block has the rule of a planting and is
  * normalized the same way. {@code targetIssueCode} is a code of the catalogue,
  * in any case; one with the right form but missing from the catalogue is
- * refused by the service with a 422. {@code targetOtherLabel} names the problem
+ * refused by the service with a 422, except {@code OTHER}, which the service
+ * adds on its first use. {@code targetOtherLabel} names the problem
  * when the code is {@code OTHER}, and only then, with the rule of a finding's
  * label, so that a treatment against a problem outside the catalogue can still
  * be recorded.

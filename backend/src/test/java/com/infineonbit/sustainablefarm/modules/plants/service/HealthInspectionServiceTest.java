@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -77,18 +77,25 @@ public class HealthInspectionServiceTest {
                 healthIssueService, new HealthFindingService(healthFindingRepository, healthTreatmentRepository));
     }
 
-    /** The catalogue answers as the real service does: case and spaces ignored, 422 when missing. */
+    /**
+     * The catalogue answers as the real service does: case and spaces ignored,
+     * each code in the order sent, 422 when one is missing.
+     */
     private void catalogueHasTheUsualIssues() {
         Map<String, HealthIssueReference> catalogue = Map.of(
                 "MANGO_MEALYBUG", MEALYBUG, "ANTHRACNOSE", ANTHRACNOSE, "OTHER", OTHER);
-        when(healthIssueService.getIssueByCode(anyString())).thenAnswer(invocation -> {
-            String code = invocation.<String>getArgument(0).trim().toUpperCase(Locale.ROOT);
-            HealthIssueReference issue = catalogue.get(code);
-            if (issue == null) {
-                throw new BusinessRuleException("No health issue with code " + code + " in the catalogue");
-            }
-            return issue;
-        });
+        when(healthIssueService.getIssuesByCode(anyList())).thenAnswer(invocation ->
+                invocation.<List<String>>getArgument(0).stream()
+                        .map(sentCode -> {
+                            String code = sentCode.trim().toUpperCase(Locale.ROOT);
+                            HealthIssueReference issue = catalogue.get(code);
+                            if (issue == null) {
+                                throw new BusinessRuleException(
+                                        "No health issue with code " + code + " in the catalogue");
+                            }
+                            return issue;
+                        })
+                        .toList());
     }
 
     /**
