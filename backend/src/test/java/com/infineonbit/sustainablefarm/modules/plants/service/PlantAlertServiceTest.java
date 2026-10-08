@@ -41,7 +41,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.verify;
@@ -81,10 +80,10 @@ public class PlantAlertServiceTest {
     @Mock
     private NurseryBatchService nurseryBatchService;
 
-    /** The real forecast on the mocked repositories: the alerts follow its rule. */
+    /** The real forecast and shares on the mocked repositories: the alerts follow their rules. */
     private YieldForecastService yieldForecastService() {
-        return new YieldForecastService(
-                populationEventRepository, varietyReferenceRepository, growthPhaseYieldShareRepository);
+        return new YieldForecastService(populationEventRepository, varietyReferenceRepository,
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
     }
 
     /** The service on a clock fixed at noon UTC of a day. */
@@ -153,7 +152,7 @@ public class PlantAlertServiceTest {
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares);
     }
 
-    /** Stubs the defaults of AgronomicReferenceLoader: Keitt from May to July, shares 0, 0.5 and 1. */
+    /** Stubs the varieties of AgronomicReferenceLoader, Keitt from May to July, and share rows 0, 0.5 and 1. */
     private void defaultReference() {
         reference(List.of(
                         reference(1L, "Keitt", 5, 7, KEITT_SEASON_SOURCE),
@@ -397,19 +396,20 @@ public class PlantAlertServiceTest {
     }
 
     @Test
-    void harvestApproaching_shouldFail_likeTheForecast_whenAGrowthPhaseHasNoShare() {
-        // Arrange: the gradual production row was deleted by hand
+    void harvestApproaching_shouldUseTheDefaultShares_whenNoShareIsCorrected() {
+        // Arrange: no share row at all, as outside the dev profile
         Variety keitt = variety(1L, null, "C", "Keitt");
         planted(null, null, 40, planting(keitt, KEITT_PLANTED_ON));
-        reference(List.of(reference(1L, "Keitt", 5, 7, KEITT_SEASON_SOURCE)), List.of(
-                new GrowthPhaseYieldShare(1L, "establishment", 0.0, "orchard_literature", null),
-                new GrowthPhaseYieldShare(3L, "full production", 1.0, "by_definition", null)));
-        PlantAlertService service = serviceOn(APRIL_1);
+        reference(List.of(reference(1L, "Keitt", 5, 7, KEITT_SEASON_SOURCE)), List.of());
         // Act
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> service.getAlerts(null, null, null));
-        // Assert
-        assertEquals("No yield share for the growth phase gradual production", ex.getMessage());
+        PlantAlertResponse establishing = serviceOn(APRIL_1.minusYears(1)).getAlerts(null, null, null);
+        PlantAlertResponse gradual = serviceOn(APRIL_1).getAlerts(null, null, null);
+        // Assert: nothing at 2 years (default 0), the season at 3 years (default 0.25)
+        assertEquals(List.of(), establishing.alerts());
+        assertEquals(List.of(harvestAlert(null, "C", "Keitt",
+                        "Keitt on block C: harvest season starts on 1 May 2027, in 30 days",
+                        "2027-05-01", "2027-07-31", 30, 1L, KEITT_SEASON_SOURCE)),
+                gradual.alerts());
     }
 
     @Test

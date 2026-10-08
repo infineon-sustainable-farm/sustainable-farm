@@ -1,20 +1,17 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYieldShareResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.MonthlyTotal;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.VarietyWithoutReference;
-import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
-import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -33,8 +30,6 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class YieldForecastService {
 
-    private static final Logger log = LoggerFactory.getLogger(YieldForecastService.class);
-
     /** {@code basis} of every forecast: the recorded plantings, never a scenario. */
     static final String RECORDED_PLANTINGS_BASIS = "recorded_plantings";
 
@@ -43,7 +38,7 @@ public class YieldForecastService {
 
     private final PopulationEventRepository populationEventRepository;
     private final VarietyReferenceRepository varietyReferenceRepository;
-    private final GrowthPhaseYieldShareRepository growthPhaseYieldShareRepository;
+    private final GrowthPhaseYieldShareService growthPhaseYieldShareService;
 
     /**
      * What the forecast is computed from.
@@ -52,11 +47,11 @@ public class YieldForecastService {
      *                                  agronomic reference, in the order of the plantings
      * @param varietiesWithoutReference the planted variety rows that still have trees but whose
      *                                  name is not in the reference, in the same order
-     * @param sharesByPhase             yield share of each growth phase, by phase label
+     * @param sharesByPhase             yield share in effect of every growth phase, by phase label
      */
     record ForecastBasis(List<PlantedVariety> plantedVarieties,
                          List<VarietyWithoutReference> varietiesWithoutReference,
-                         Map<String, GrowthPhaseYieldShare> sharesByPhase) {
+                         Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
     }
 
     /**
@@ -75,9 +70,9 @@ public class YieldForecastService {
      *
      * @param age         age of the trees on that day
      * @param growthPhase growth phase for that age
-     * @param share       yield share of that phase, with its source
+     * @param share       yield share in effect of that phase, with its source
      */
-    record PhaseOfMonth(Period age, String growthPhase, GrowthPhaseYieldShare share) {
+    record PhaseOfMonth(Period age, String growthPhase, GrowthPhaseYieldShareResponse share) {
     }
 
     /**
@@ -124,8 +119,6 @@ public class YieldForecastService {
      * @param from      first month, or {@code null} for the current month
      * @param months    number of months, from 1 to 24, or {@code null} for 6
      * @return the forecast
-     * @throws IllegalStateException if the growth phase of some trees has no
-     *                               yield share in the reference
      */
     public YieldForecastResponse getYieldForecast(Integer farmId, String blockCode, YearMonth from, Integer months) {
         return getYieldForecast(farmId, blockCode, from, months, LocalDate.now());
@@ -164,8 +157,9 @@ public class YieldForecastService {
     /**
      * Reads what the forecast is computed from: the planted variety rows
      * matching the filters, each with its current number of trees and its
-     * agronomic reference, and the yield share of each growth phase. The plant
-     * alerts read it too, so that a harvest alert says what the forecast says.
+     * agronomic reference, and the yield share in effect of each growth phase.
+     * The plant alerts read it too, so that a harvest alert says what the
+     * forecast says.
      *
      * <p>A variety row with no tree left is left out: nothing to harvest. A
      * variety row whose name is not in the reference is listed apart.
@@ -180,8 +174,8 @@ public class YieldForecastService {
                 populationEventRepository.findPlantingsByOptionalFilters(farmId, normalizeFilter(blockCode)));
         Map<Long, Integer> treeCounts = currentTreeCounts(plantings);
         List<VarietyReference> references = varietyReferenceRepository.findAll();
-        Map<String, GrowthPhaseYieldShare> sharesByPhase = growthPhaseYieldShareRepository.findAll().stream()
-                .collect(Collectors.toMap(GrowthPhaseYieldShare::getGrowthPhase, share -> share));
+        Map<String, GrowthPhaseYieldShareResponse> sharesByPhase = growthPhaseYieldShareService.getAllShares().stream()
+                .collect(Collectors.toMap(GrowthPhaseYieldShareResponse::growthPhase, share -> share));
 
         List<PlantedVariety> plantedVarieties = new ArrayList<>();
         List<VarietyWithoutReference> varietiesWithoutReference = new ArrayList<>();
@@ -209,30 +203,23 @@ public class YieldForecastService {
      * follow too.
      *
      * <p>The age is taken on the first day of the month, from the planting date
-     * of the variety.
+     * of the variety. Every phase has a share, its default when the user has not
+     * corrected it, so the phase of any age finds one.
      *
      * @param month         the month
      * @param plantingDate  planting date of the trees
-     * @param sharesByPhase yield share of each growth phase, by phase label
+     * @param sharesByPhase yield share in effect of every growth phase, by phase label
      * @return the phase, or {@code null} when the trees are planted after the
      *         first day of the month
-     * @throws IllegalStateException if the growth phase has no yield share
      */
     static PhaseOfMonth phaseAtStartOf(YearMonth month, LocalDate plantingDate,
-                                       Map<String, GrowthPhaseYieldShare> sharesByPhase) {
+                                       Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
         Period age = YieldForecastCalculator.ageAtStartOf(month, plantingDate);
         if (age == null) {
             return null;
         }
         String growthPhase = GrowthPhaseCalculator.computePhase(age);
-        GrowthPhaseYieldShare phaseShare = sharesByPhase.get(growthPhase);
-        if (phaseShare == null) {
-            // The core handler answers 500 without logging: this line is the only trace.
-            log.error("No yield share for the growth phase \"{}\" in growth_phase_yield_share; "
-                    + "the yield forecast cannot be computed", growthPhase);
-            throw new IllegalStateException("No yield share for the growth phase " + growthPhase);
-        }
-        return new PhaseOfMonth(age, growthPhase, phaseShare);
+        return new PhaseOfMonth(age, growthPhase, sharesByPhase.get(growthPhase));
     }
 
     /**
@@ -241,20 +228,19 @@ public class YieldForecastService {
      * give nothing that month.
      *
      * @return the entry, or empty when the expected yield rounds to zero
-     * @throws IllegalStateException if the growth phase has no yield share
      */
     private static Optional<Entry> entry(YearMonth month, Variety variety, int treeCount, LocalDate plantingDate,
                                          VarietyReference reference,
-                                         Map<String, GrowthPhaseYieldShare> sharesByPhase) {
+                                         Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
         PhaseOfMonth phase = phaseAtStartOf(month, plantingDate, sharesByPhase);
         if (phase == null) {
             return Optional.empty();
         }
-        GrowthPhaseYieldShare phaseShare = phase.share();
+        GrowthPhaseYieldShareResponse phaseShare = phase.share();
         double monthShare = YieldForecastCalculator.monthShare(
                 month, reference.getHarvestStartMonth(), reference.getHarvestEndMonth());
         double expectedKg = YieldForecastCalculator.expectedKg(
-                treeCount, reference.getYieldPerTreeKg(), phaseShare.getYieldShare(), monthShare);
+                treeCount, reference.getYieldPerTreeKg(), phaseShare.yieldShare(), monthShare);
         if (expectedKg <= 0) {
             return Optional.empty();
         }
@@ -268,12 +254,12 @@ public class YieldForecastService {
                 phase.age().getYears(),
                 phase.growthPhase(),
                 reference.getYieldPerTreeKg(),
-                phaseShare.getYieldShare(),
+                phaseShare.yieldShare(),
                 YieldForecastCalculator.roundShare(monthShare),
                 expectedKg,
                 reference.getYieldSource(),
                 reference.getSeasonSource(),
-                phaseShare.getSource()));
+                phaseShare.source()));
     }
 
     /**
