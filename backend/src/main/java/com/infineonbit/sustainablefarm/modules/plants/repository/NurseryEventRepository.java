@@ -36,7 +36,7 @@ public interface NurseryEventRepository extends JpaRepository<NurseryEvent, Long
      * filter, as in {@link HarvestRecordRepository#findByOptionalFilters}; a
      * missing farm means every farm. The farm is that of the batch. Both dates
      * are included; a {@code from} after {@code to} matches nothing and is not
-     * an error. The dates are cast in their {@code IS NULL} test, for the same
+     * an error. Each parameter is cast in its {@code IS NULL} test, for the same
      * reason as in that method.
      *
      * @param batchId   batch identifier, or {@code null} for every batch
@@ -48,9 +48,9 @@ public interface NurseryEventRepository extends JpaRepository<NurseryEvent, Long
      */
     @Query("""
             SELECT e FROM NurseryEvent e JOIN FETCH e.batch b
-            WHERE (:batchId IS NULL OR b.id = :batchId)
-              AND (:farmId IS NULL OR b.farmId = :farmId)
-              AND (:eventType IS NULL OR e.eventType = :eventType)
+            WHERE (CAST(:batchId AS Long) IS NULL OR b.id = :batchId)
+              AND (CAST(:farmId AS Integer) IS NULL OR b.farmId = :farmId)
+              AND (CAST(:eventType AS String) IS NULL OR e.eventType = :eventType)
               AND (CAST(:from AS LocalDate) IS NULL OR e.eventDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR e.eventDate <= :to)
             ORDER BY e.eventDate ASC, e.id ASC

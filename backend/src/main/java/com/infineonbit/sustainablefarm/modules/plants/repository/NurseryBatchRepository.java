@@ -28,7 +28,7 @@ public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long
      */
     @Query("""
             SELECT b FROM NurseryBatch b
-            WHERE ((:farmId IS NULL AND b.farmId IS NULL) OR b.farmId = :farmId)
+            WHERE ((CAST(:farmId AS Integer) IS NULL AND b.farmId IS NULL) OR b.farmId = :farmId)
               AND b.batchCode = :batchCode
             ORDER BY b.id ASC
             """)
@@ -47,7 +47,7 @@ public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long
      */
     @Query("""
             SELECT b FROM NurseryBatch b
-            WHERE (:farmId IS NULL OR b.farmId = :farmId)
+            WHERE (CAST(:farmId AS Integer) IS NULL OR b.farmId = :farmId)
             ORDER BY b.startedOn ASC, b.id ASC
             """)
     List<NurseryBatch> findByOptionalFarm(@Param("farmId") Integer farmId);
