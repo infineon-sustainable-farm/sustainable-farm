@@ -18,7 +18,9 @@ import java.time.LocalDate;
  * <p>{@code totalCost} is in {@code currency}, as entered. {@code totalCostXof}
  * (rounded to the franc) and {@code totalCostEur} (rounded to the cent) are
  * computed on every read with the rate stored in {@code currency_rate}; all four
- * are {@code null} when the purchase has no cost.
+ * are {@code null} when the purchase has no cost. While no rate is recorded,
+ * only the amount in the currency of the purchase is given: {@code totalCostEur}
+ * is {@code null} for a cost in XOF, {@code totalCostXof} for a cost in EUR.
  */
 public record FertilizerMovementResponse(
         Long id,

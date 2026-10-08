@@ -48,7 +48,8 @@ public class FertilizerMovementController {
    @Operation(summary = "List fertilizer movements",
          description = "Every filter is optional and independent. Both dates are included. The farm and block "
                + "filters match applications only. A filter matching nothing, or a from date after the to date, "
-               + "returns an empty list. Costs are given in both currencies with the stored rate.")
+               + "returns an empty list. Costs are given in both currencies with the stored rate; while no rate is "
+               + "recorded, only in their own currency.")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "Matching movements by date, possibly an empty list"),
          @ApiResponse(responseCode = "400", description = "A date is not in the yyyy-MM-dd format, or an unknown "

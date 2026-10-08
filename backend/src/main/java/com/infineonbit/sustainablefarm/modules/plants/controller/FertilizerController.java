@@ -98,7 +98,8 @@ public class FertilizerController {
    @Operation(summary = "Record a purchase of a fertilizer",
          description = "Adds the quantity, in the unit of the fertilizer, to its stock. totalCost is optional; its "
                + "currency is XOF when omitted, and a currency without a cost is ignored. The response gives the "
-               + "cost in both currencies, converted with the rate stored in currency_rate.")
+               + "cost in both currencies, converted with the rate stored in currency_rate; while no rate is "
+               + "recorded, only in its own currency, and the other amount is null.")
    @ApiResponses({
          @ApiResponse(responseCode = "201", description = "The recorded purchase"),
          @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),

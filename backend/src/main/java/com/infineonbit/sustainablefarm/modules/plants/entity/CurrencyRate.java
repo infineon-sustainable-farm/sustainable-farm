@@ -19,10 +19,11 @@ import java.time.Instant;
  * Exchange rate between two currencies: one unit of the base currency is worth
  * {@code rate} units of the quote currency, for example 1 EUR = 655.957 XOF.
  *
- * <p>A reference row, sourced and editable in the database. The EUR-XOF parity
- * has been fixed since 1999, but a reform is announced: the rate is read from
- * this table on every conversion and never written in the code, except as the
- * default of {@code CurrencyRateLoader}.
+ * <p>A reference row, sourced, that the user enters and replaces through
+ * {@code PUT /api/plants/currency-rates/EUR/XOF}. The EUR-XOF parity has been
+ * fixed since 1999, but a reform is announced: the rate is read from this table
+ * on every conversion and never written in the code, except as the default
+ * that {@code CurrencyRateLoader} inserts in the dev profile.
  *
  * <p>The currency codes are plain text without a CHECK constraint, like
  * {@link FertilizerMovement#getCurrency()}: a new currency must not need a

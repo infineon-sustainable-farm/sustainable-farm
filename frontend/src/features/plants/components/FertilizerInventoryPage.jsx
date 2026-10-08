@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useAddFertilizer } from "../hooks/useAddFertilizer";
 import { useRecordFertilizerMovement } from "../hooks/useRecordFertilizerMovement";
 import AddFertilizerModal from "./AddFertilizerModal";
+import ExchangeRateSection from "./ExchangeRateSection";
 import FertilizerMovementsSection from "./FertilizerMovementsSection";
 import FertilizerStockSection from "./FertilizerStockSection";
 import RecordMovementModal from "./RecordMovementModal";
@@ -34,8 +35,9 @@ function RecordMovementButton({ onClick }) {
 }
 
 /**
- * Fertilizer Inventory: the current stock of each fertilizer, then the history
- * of its purchases, applications and losses.
+ * Fertilizer Inventory: the EUR to XOF rate that converts the purchase costs,
+ * the current stock of each fertilizer, then the history of its purchases,
+ * applications and losses.
  *
  * The mock-up's last restock date and provisional-threshold note are left
  * out: the API records no restock date, and each threshold is the one entered
@@ -104,6 +106,8 @@ export default function FertilizerInventoryPage() {
                         <RecordMovementButton onClick={openMovementForm} />
                     </div>
                 </header>
+
+                <ExchangeRateSection />
 
                 <FertilizerStockSection addAction={<AddFertilizerButton onClick={openFertilizerForm} />} />
 

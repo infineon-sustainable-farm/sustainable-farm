@@ -133,7 +133,8 @@ export function fetchFertilizerMovements({ fertilizerId, movementType, blockCode
 
 /**
  * Records a purchase of a fertilizer, in its unit. The cost is optional; the
- * API converts it between FCFA and euros with its stored rate.
+ * API converts it between FCFA and euros with its stored rate, and gives it
+ * only in its own currency while no rate is recorded.
  */
 export function createFertilizerPurchase(fertilizerId, body) {
     return apiClient.post(`${PLANTS_ENDPOINTS.FERTILIZERS}/${fertilizerId}/purchases`, body);
@@ -153,4 +154,26 @@ export function createFertilizerApplication(fertilizerId, body) {
  */
 export function createFertilizerLoss(fertilizerId, body) {
     return apiClient.post(`${PLANTS_ENDPOINTS.FERTILIZERS}/${fertilizerId}/losses`, body);
+}
+
+/**
+ * Fetches how many FCFA one euro is worth, with its source.
+ *
+ * The API answers 404 until a rate is entered. That is a normal state, not a
+ * failure, so it resolves to null; any other error is passed on.
+ */
+export function fetchEurXofRate() {
+    return apiClient.get(PLANTS_ENDPOINTS.EUR_XOF_RATE).catch((error) => {
+        if (error.status === 404) return null;
+        throw error;
+    });
+}
+
+/**
+ * Enters the EUR to XOF rate, or replaces it. The API answers 201 for the
+ * first rate, 200 for a replacement, and 400 with fieldErrors for an invalid
+ * rate.
+ */
+export function saveEurXofRate(body) {
+    return apiClient.put(PLANTS_ENDPOINTS.EUR_XOF_RATE, body);
 }

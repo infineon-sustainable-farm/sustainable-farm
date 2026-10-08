@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyRate;
 import com.infineonbit.sustainablefarm.modules.plants.repository.CurrencyRateRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,22 +13,24 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Loads the default exchange rates at startup, so the cost of a purchase can
- * be given in FCFA and in euros.
+ * Loads the default exchange rates at startup in the dev profile, so a local
+ * database gives the cost of a purchase in FCFA and in euros from the start.
  *
- * <p>Runs in every profile, like {@link AgronomicReferenceLoader} and unlike
- * {@code PlantsDataSeeder}: a rate belongs to no farm, and every environment,
- * production included, needs it to convert a cost.
+ * <p>Runs in the dev profile only, like {@code PlantsDataSeeder}: no reference
+ * data is loaded in production. There, the user enters the rate with
+ * {@code PUT /api/plants/currency-rates/EUR/XOF}; until then, each cost is
+ * given only in its own currency.
  *
  * <p>A rate is inserted only when its currency pair is missing. An existing row
  * is never overwritten, even when its value differs from the default below: a
- * rate changed in the database, after a reform for example, is the one that
- * counts. Restarting the application therefore never duplicates nor resets a rate.
+ * rate entered since, after a reform for example, is the one that counts.
+ * Restarting the application therefore never duplicates nor resets a rate.
  *
  * <p>The list below is the only place in the code where a rate appears. The
  * conversions read it from the table.
  */
 @Component
+@Profile("dev")
 public class CurrencyRateLoader implements CommandLineRunner {
 
     /** Default rate of a currency pair, with its source. */

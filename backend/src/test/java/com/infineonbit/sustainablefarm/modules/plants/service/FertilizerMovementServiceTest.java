@@ -74,6 +74,11 @@ public class FertilizerMovementServiceTest {
                 new CurrencyRate(1L, "EUR", "XOF", new BigDecimal(rate), "BCEAO_fixed_parity_1999", NOW)));
     }
 
+    /** No rate entered yet: the state of every environment but dev, until the user enters one. */
+    private void noRate() {
+        when(currencyRateRepository.findByBaseCurrencyAndQuoteCurrency("EUR", "XOF")).thenReturn(Optional.empty());
+    }
+
     /** Saving the movement gives it an identifier, as the database would. */
     private void movementSaveAssignsId(long id) {
         when(fertilizerMovementRepository.save(any(FertilizerMovement.class))).thenAnswer(invocation -> {
@@ -209,16 +214,38 @@ public class FertilizerMovementServiceTest {
     }
 
     @Test
-    void recordPurchase_shouldFail_whenACostCannotBeConvertedForLackOfRate() {
+    void recordPurchase_shouldStoreACostInXof_andLeaveItsEuroAmountEmpty_whenNoRateIsRecorded() {
         // Arrange
         npkInCatalogue();
-        when(currencyRateRepository.findByBaseCurrencyAndQuoteCurrency("EUR", "XOF")).thenReturn(Optional.empty());
-        // Act & Assert: answered with a 500, the purchase is not stored
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> fertilizerMovementService.recordPurchase(1L,
-                        new PurchaseRequest(JUNE_1, 200.0, "Supplier A", 150000.0, null), NOW));
-        assertEquals("No EUR to XOF rate in currency_rate", exception.getMessage());
-        verify(fertilizerMovementRepository, never()).save(any());
+        noRate();
+        movementSaveAssignsId(13L);
+        // Act
+        FertilizerMovementResponse response = fertilizerMovementService.recordPurchase(1L,
+                new PurchaseRequest(JUNE_1, 200.0, "Supplier A", 150000.0, null), NOW);
+        // Assert: the purchase is stored as entered; only the amount that needs the rate is missing
+        FertilizerMovement saved = savedMovement();
+        assertEquals(0, new BigDecimal("150000").compareTo(saved.getTotalCost()));
+        assertEquals("XOF", saved.getCurrency());
+        assertEquals(150000.0, response.totalCost());
+        assertEquals("XOF", response.currency());
+        assertEquals(150000L, response.totalCostXof());
+        assertNull(response.totalCostEur());
+    }
+
+    @Test
+    void recordPurchase_shouldStoreACostInEuros_andLeaveItsFcfaAmountEmpty_whenNoRateIsRecorded() {
+        // Arrange
+        npkInCatalogue();
+        noRate();
+        movementSaveAssignsId(14L);
+        // Act
+        FertilizerMovementResponse response = fertilizerMovementService.recordPurchase(1L,
+                new PurchaseRequest(JUNE_1, 100.0, "Supplier B", 120.0, "EUR"), NOW);
+        // Assert
+        assertEquals("EUR", savedMovement().getCurrency());
+        assertEquals(120.0, response.totalCost());
+        assertNull(response.totalCostXof());
+        assertEquals(120.0, response.totalCostEur());
     }
 
     @Test
@@ -373,6 +400,24 @@ public class FertilizerMovementServiceTest {
         assertNull(responses.get(2).totalCostXof());
         assertNull(responses.get(2).totalCostEur());
         verify(currencyRateRepository, times(1)).findByBaseCurrencyAndQuoteCurrency("EUR", "XOF");
+    }
+
+    @Test
+    void getAllMovements_shouldGiveEachCostInItsOwnCurrencyOnly_whenNoRateIsRecorded() {
+        // Arrange
+        noRate();
+        when(fertilizerMovementRepository.findByOptionalFilters(null, null, null, null, null, null)).thenReturn(List.of(
+                storedPurchase(1L, JUNE_1, "150000.00", "XOF"),
+                storedPurchase(2L, LocalDate.of(2026, 6, 5), "120.00", "EUR")));
+        // Act: the list is still served, with no error
+        List<FertilizerMovementResponse> responses =
+                fertilizerMovementService.getAllMovements(null, null, null, null, null, null);
+        // Assert
+        assertEquals(2, responses.size());
+        assertEquals(150000L, responses.get(0).totalCostXof());
+        assertNull(responses.get(0).totalCostEur());
+        assertNull(responses.get(1).totalCostXof());
+        assertEquals(120.0, responses.get(1).totalCostEur());
     }
 
     @Test

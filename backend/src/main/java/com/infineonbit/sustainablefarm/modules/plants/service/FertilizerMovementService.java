@@ -74,11 +74,11 @@ public class FertilizerMovementService {
     /**
      * Maps a stored movement to its API representation. The exact decimals of
      * the database are sent as JSON numbers, and a cost is given in both
-     * currencies.
+     * currencies, or only in its own one while no rate is recorded.
      *
      * @param movement the stored movement
      * @param eurToXof how many FCFA one euro is worth, or {@code null} when the
-     *                 movement has no cost
+     *                 movement has no cost or no rate is recorded
      * @return the API representation of that movement
      */
     private static FertilizerMovementResponse toResponse(FertilizerMovement movement, BigDecimal eurToXof) {
@@ -89,7 +89,8 @@ public class FertilizerMovementService {
         if (totalCost != null) {
             CurrencyCode currency = CurrencyCode.valueOf(movement.getCurrency());
             totalCostXof = CurrencyConverter.toXof(totalCost, currency, eurToXof);
-            totalCostEur = CurrencyConverter.toEur(totalCost, currency, eurToXof).doubleValue();
+            BigDecimal eur = CurrencyConverter.toEur(totalCost, currency, eurToXof);
+            totalCostEur = eur == null ? null : eur.doubleValue();
         }
         return new FertilizerMovementResponse(
                 movement.getId(),
@@ -161,21 +162,24 @@ public class FertilizerMovementService {
 
     /**
      * How many FCFA one euro is worth, read from {@code currency_rate} on every
-     * call and never cached, so a rate changed in the database counts at once.
+     * call and never cached, so a rate entered or replaced counts at once.
      *
-     * @return the EUR to XOF rate
-     * @throws IllegalStateException if the table has no EUR to XOF row, which
-     *                               the loader inserts at every startup
+     * <p>Outside the dev profile no rate exists until the user enters one, so a
+     * missing rate is not an error: each cost is then given only in its own
+     * currency, and a warning says how to enter the rate.
+     *
+     * @return the EUR to XOF rate, or {@code null} when none is recorded yet
      */
     private BigDecimal eurToXofRate() {
-        return currencyRateRepository
+        CurrencyRate rate = currencyRateRepository
                 .findByBaseCurrencyAndQuoteCurrency(CurrencyCode.EUR.name(), CurrencyCode.XOF.name())
-                .map(CurrencyRate::getRate)
-                .orElseThrow(() -> {
-                    log.error("No EUR to XOF rate in currency_rate; the costs cannot be converted. "
-                            + "Restart the application to load the default rate, or insert it.");
-                    return new IllegalStateException("No EUR to XOF rate in currency_rate");
-                });
+                .orElse(null);
+        if (rate == null) {
+            log.warn("No EUR to XOF rate recorded yet: each cost is given only in its own currency. "
+                    + "Enter the rate with PUT /api/plants/currency-rates/EUR/XOF.");
+            return null;
+        }
+        return rate.getRate();
     }
 
     /**
@@ -183,14 +187,14 @@ public class FertilizerMovementService {
      *
      * <p>A cost without a currency is in XOF, the currency of the farm; a
      * currency without a cost is not stored. The response gives the cost in
-     * both currencies, with the rate stored in {@code currency_rate}.
+     * both currencies, with the rate stored in {@code currency_rate}. While no
+     * rate is recorded, the purchase is stored all the same and its cost is
+     * given only in its own currency.
      *
      * @param fertilizerId the fertilizer bought
      * @param request      the purchase, already validated
      * @return the recorded purchase
      * @throws FertilizerNotFoundException if no fertilizer has this identifier
-     * @throws IllegalStateException       if the purchase has a cost and no rate
-     *                                     is stored
      */
     @Transactional
     public FertilizerMovementResponse recordPurchase(Long fertilizerId, PurchaseRequest request) {
@@ -289,7 +293,8 @@ public class FertilizerMovementService {
      * farm, as for the other lists of the module. Both dates are included. A
      * filter that matches nothing, or a {@code from} after {@code to}, returns
      * an empty list and is never an error. The rate is read once, and only when
-     * a listed movement has a cost.
+     * a listed movement has a cost; while no rate is recorded, each cost is
+     * given only in its own currency.
      *
      * @param fertilizerId fertilizer identifier, or {@code null} for every fertilizer
      * @param movementType movement type, or {@code null} for every type
@@ -299,7 +304,6 @@ public class FertilizerMovementService {
      * @param from         first movement date, included, or {@code null}
      * @param to           last movement date, included, or {@code null}
      * @return the matching movements, ordered by date then identifier
-     * @throws IllegalStateException if a listed movement has a cost and no rate is stored
      */
     public List<FertilizerMovementResponse> getAllMovements(Long fertilizerId, FertilizerMovementType movementType,
                                                             Integer farmId, String blockCode,

@@ -6,10 +6,20 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class CurrencyConverterTest {
 
     private static final BigDecimal PARITY = new BigDecimal("655.957");
+
+    @Test
+    void conversions_shouldGiveOnlyTheAmountInItsOwnCurrency_whenNoRateIsRecorded() {
+        // Act & Assert: without a rate, a cost in FCFA has no amount in euros, and the reverse
+        assertEquals(150000L, CurrencyConverter.toXof(new BigDecimal("150000"), CurrencyCode.XOF, null));
+        assertNull(CurrencyConverter.toEur(new BigDecimal("150000"), CurrencyCode.XOF, null));
+        assertEquals(new BigDecimal("120.00"), CurrencyConverter.toEur(new BigDecimal("120"), CurrencyCode.EUR, null));
+        assertNull(CurrencyConverter.toXof(new BigDecimal("120"), CurrencyCode.EUR, null));
+    }
 
     @Test
     void toEur_shouldDivideAnXofAmountByTheRate_roundedToTheCent() {

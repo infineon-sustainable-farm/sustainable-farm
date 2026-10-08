@@ -272,6 +272,25 @@ public class FertilizerControllerTest {
     }
 
     @Test
+    void recordPurchase_shouldReturn201WithAnEmptyFcfaAmount_whenNoRateIsRecorded() throws Exception {
+        // Arrange: the service leaves out the amount that needs the rate
+        when(fertilizerMovementService.recordPurchase(eq(1L), any(PurchaseRequest.class)))
+                .thenReturn(new FertilizerMovementResponse(11L, 1L, "NPK 15-15-15", FertilizerMovementType.PURCHASE,
+                        LocalDate.of(2026, 6, 5), 100.0, FertilizerUnit.KG, null, null, null, null, "Supplier B",
+                        120.0, "EUR", null, 120.0, null, "user_entry", NOW));
+        // Act
+        ResultActions result = postMovement(1L, "purchases", """
+                {"purchaseDate":"2026-06-05","quantity":100,"supplier":"Supplier B","totalCost":120,"currency":"EUR"}
+                """);
+        // Assert: the purchase is recorded, with its FCFA amount empty
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.totalCost").value(120.0))
+                .andExpect(jsonPath("$.currency").value("EUR"))
+                .andExpect(jsonPath("$.totalCostXof").value(nullValue()))
+                .andExpect(jsonPath("$.totalCostEur").value(120.0));
+    }
+
+    @Test
     void recordPurchase_shouldReturn400WithEveryFailingField_whenValuesAreInvalid() throws Exception {
         // Arrange
         String future = LocalDate.now().plusYears(1).toString();
