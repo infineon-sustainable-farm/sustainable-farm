@@ -10,4 +10,7 @@ export const PLANTS_ENDPOINTS = {
     PLANTINGS: "/api/plants/plantings",
     HARVESTS: "/api/plants/harvests",
     YIELD_FORECAST: "/api/plants/yield-forecast",
+    FERTILIZERS: "/api/plants/fertilizers",
+    FERTILIZER_MOVEMENTS: "/api/plants/fertilizer-movements",
+    EUR_XOF_RATE: "/api/plants/currency-rates/EUR/XOF",
 };

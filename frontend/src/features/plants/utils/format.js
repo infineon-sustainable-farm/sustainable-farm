@@ -56,6 +56,49 @@ export function formatMillimeters(value) {
     return isMissing(value) ? NO_VALUE : `${Number(value).toLocaleString("en-US")} mm`;
 }
 
+/**
+ * Enum code sent by the API, in sentence case: "MINERAL" is shown as
+ * "Mineral", "ADJUSTMENT_IN" as "Adjustment in". The code itself is what goes
+ * back to the API.
+ */
+export function formatCode(value) {
+    if (isMissing(value)) return NO_VALUE;
+    const text = String(value).trim().toLowerCase().replaceAll("_", " ");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Symbols of the fertilizer units, as the API writes them in its own messages. */
+const UNIT_SYMBOLS = { KG: "kg", L: "L" };
+
+/** Symbol of a fertilizer unit code, "KG" as "kg". An unknown code is shown as received. */
+export function formatUnit(unit) {
+    if (isMissing(unit)) return NO_VALUE;
+    const code = String(unit).trim();
+    return UNIT_SYMBOLS[code] ?? code;
+}
+
+/**
+ * A quantity in the unit of its fertilizer: "1,000 kg", "12.5 L". Up to three
+ * decimals, as the API stores them.
+ */
+export function formatQuantity(value, unit) {
+    if (isMissing(value)) return NO_VALUE;
+    const number = Number(value).toLocaleString("en-US");
+    return isMissing(unit) ? number : `${number} ${formatUnit(unit)}`;
+}
+
+/** An amount in CFA francs, already rounded to the franc by the API: "78,715 FCFA". */
+export function formatXof(value) {
+    return isMissing(value) ? NO_VALUE : `${Number(value).toLocaleString("en-US")} FCFA`;
+}
+
+/** An amount in euros, already rounded to the cent by the API: "€228.67", "€120.00". */
+export function formatEur(value) {
+    return isMissing(value)
+        ? NO_VALUE
+        : Number(value).toLocaleString("en-US", { style: "currency", currency: "EUR" });
+}
+
 /** Several values are all shown, comma-separated; none is picked. */
 export function formatList(values) {
     if (!Array.isArray(values)) return NO_VALUE;
