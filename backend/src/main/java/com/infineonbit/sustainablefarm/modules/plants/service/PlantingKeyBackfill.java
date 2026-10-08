@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReposito
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -16,8 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Fills, at startup, the natural keys of the variety and calendar rows written
- * before the keys existed, and reports the duplicates it finds.
+ * Fills, at startup in the dev profile, the natural keys of the variety and
+ * calendar rows written before the keys existed, and reports the duplicates it
+ * finds.
  *
  * <p>Each row is filled in its own transaction, with a bulk update that
  * changes no other column: {@code date_maj} keeps its value. When a row has
@@ -25,11 +27,16 @@ import java.util.List;
  * stays empty and it is logged as an error with both identifiers. Nothing is
  * ever deleted or merged; that is left to a person who knows the orchard.
  *
- * <p>It runs in every profile and never stops the startup: any failure is
- * logged and the application starts anyway. The rows left without a key are
- * still found by the planting lookups, which read the columns, not the key.
+ * <p>Runs in the dev profile only, like {@link CurrencyRateLoader}. In another
+ * profile, the rows written before the keys existed keep an empty key until
+ * they are updated, and their duplicates are not reported.
+ *
+ * <p>It never stops the startup: any failure is logged and the application
+ * starts anyway. The rows left without a key are still found by the planting
+ * lookups, which read the columns, not the key.
  */
 @Component
+@Profile("dev")
 public class PlantingKeyBackfill implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PlantingKeyBackfill.class);

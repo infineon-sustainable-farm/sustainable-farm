@@ -94,7 +94,8 @@ public class Variety {
     /**
      * Natural key of the row, written on every insert and update and never
      * exposed by the API. See {@link #keyOf}. NULL on the rows written before
-     * it existed, until the startup filling reaches them.
+     * it existed, until they are updated or, in the dev profile, the startup
+     * filling reaches them.
      *
      * <p>523 characters hold the longest farm (11), block (255) and name (255)
      * with both separators, so no row is ever cut.

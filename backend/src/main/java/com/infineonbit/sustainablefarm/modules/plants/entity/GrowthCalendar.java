@@ -84,7 +84,8 @@ public class GrowthCalendar {
     /**
      * Natural key of the row, written on every insert and update and never
      * exposed by the API. See {@link #keyOf}. NULL on the rows written before
-     * it existed, until the startup filling reaches them.
+     * it existed, until they are updated or, in the dev profile, the startup
+     * filling reaches them.
      *
      * <p>267 characters hold the longest farm (11) and block (255) with the
      * separator.
