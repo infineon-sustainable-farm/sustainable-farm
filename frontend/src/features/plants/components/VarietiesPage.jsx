@@ -56,7 +56,9 @@ export default function VarietiesPage() {
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <p className="font-heading text-xs font-bold tracking-widest text-primary uppercase">
+                        {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1.
+                            primary measured 4.498:1, just under the AA minimum of 4.5:1. */}
+                        <p className="font-heading text-xs font-bold tracking-widest text-primary-dark uppercase">
                             Task 1
                         </p>
                         <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">
@@ -90,7 +92,8 @@ export default function VarietiesPage() {
                             <p className="font-heading text-base font-bold text-gray-900">
                                 Varieties could not be loaded
                             </p>
-                            <p className="mt-1 text-sm text-gray-500">
+                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
+                            <p className="mt-1 text-sm text-gray-600">
                                 The request to the server did not succeed.
                             </p>
                         </div>

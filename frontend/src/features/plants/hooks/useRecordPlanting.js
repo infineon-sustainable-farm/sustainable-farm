@@ -4,9 +4,10 @@ import { createPlanting } from "../api/plantsApi";
 /**
  * Records a planting.
  *
- * Every varieties and growth calendar query is refreshed afterwards, whatever
- * its filter: a planting can add a variety row, change a current tree count and
- * move the planting date of a block.
+ * Every varieties, growth calendar and yield forecast query is refreshed
+ * afterwards, whatever its filter: a planting can add a variety row, change a
+ * current tree count, move the planting date of a block and add trees to the
+ * forecast.
  */
 export function useRecordPlanting() {
     const queryClient = useQueryClient();
@@ -16,6 +17,7 @@ export function useRecordPlanting() {
             Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["plants", "varieties"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "growth-calendar"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "yield-forecast"] }),
             ]),
     });
 }
