@@ -26,13 +26,13 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      * @param farmId    farm identifier, or {@code null} to ignore the farm
      * @param blockCode raw block value as stored (for example {@code "A"}),
      *                  or {@code null} to ignore the block
-     * @return the matching varieties, ordered by block then name
+     * @return the matching varieties, ordered by block, then name, then id
      */
     @Query("""
             SELECT v FROM Variety v
             WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
               AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
-            ORDER BY v.blockCode ASC, v.name ASC
+            ORDER BY v.blockCode ASC, v.name ASC, v.id ASC
             """)
     List<Variety> findByOptionalFilters(@Param("farmId") Integer farmId,
                                         @Param("blockCode") String blockCode);
