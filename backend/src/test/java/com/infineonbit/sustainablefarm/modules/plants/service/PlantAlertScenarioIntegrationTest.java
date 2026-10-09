@@ -10,6 +10,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PreventiveTrea
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.StageChangeRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.VarietyReferenceRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueKind;
@@ -17,6 +18,8 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReferenc
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertSeverity;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthIssueReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +52,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * so that no test that removes "Other" meets a finding of this one. A
  * fertilizer belongs to no farm, so only the stock alerts of this test's
  * fertilizer are read.
+ *
+ * <p>Outside the dev profile no agronomic reference is loaded at startup, so
+ * the test enters the Keitt reference of the dev loader through the service
+ * when it is missing, and removes it afterwards. The growth phases keep their
+ * default yield shares, as in production: the alerts only ask whether a share
+ * is above 0.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -115,11 +124,37 @@ class PlantAlertScenarioIntegrationTest {
     @Autowired
     private HealthIssueReferenceRepository healthIssueReferenceRepository;
 
+    @Autowired
+    private VarietyReferenceService varietyReferenceService;
+
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
+
+    /** The Keitt reference entered by this test, or {@code null} when one was already there. */
+    private Long keittReferenceOfTheTest;
+
     @BeforeEach
     void addSootyMouldIfMissing() {
         if (healthIssueReferenceRepository.findByCode(SOOTY_MOULD).isEmpty()) {
             healthIssueReferenceRepository.save(new HealthIssueReference(null, SOOTY_MOULD, "Sooty mould",
                     HealthIssueKind.DISEASE, null, null, "user_entry", NOW));
+        }
+    }
+
+    @BeforeEach
+    void addTheKeittReferenceIfMissing() {
+        boolean missing = varietyReferenceService.getAllReferences().stream()
+                .noneMatch(reference -> VarietyReferenceMatcher.matchKey(reference.varietyName()).equals("keitt"));
+        keittReferenceOfTheTest = missing
+                ? varietyReferenceService.createReference(new VarietyReferenceRequest(
+                        "Keitt", 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa")).id()
+                : null;
+    }
+
+    @AfterEach
+    void removeTheKeittReferenceOfTheTest() {
+        if (keittReferenceOfTheTest != null) {
+            varietyReferenceRepository.deleteById(keittReferenceOfTheTest);
         }
     }
 
