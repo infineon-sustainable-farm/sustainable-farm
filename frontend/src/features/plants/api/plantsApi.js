@@ -177,3 +177,46 @@ export function fetchEurXofRate() {
 export function saveEurXofRate(body) {
     return apiClient.put(PLANTS_ENDPOINTS.EUR_XOF_RATE, body);
 }
+
+/**
+ * Fetches the reference of every variety, ordered by name by the API: yield
+ * per tree and harvest months, each with its source.
+ */
+export function fetchVarietyReferences() {
+    return apiClient.get(PLANTS_ENDPOINTS.VARIETY_REFERENCES);
+}
+
+/**
+ * Enters the reference of a variety. The API answers 400 with fieldErrors for
+ * an invalid value, and 409 when a reference of the same name exists, ignoring
+ * case and accents.
+ */
+export function createVarietyReference(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.VARIETY_REFERENCES, body);
+}
+
+/**
+ * Corrects the reference of a variety. A source left out stays as it was when
+ * its value does not change, and becomes user_entry when it does. The API
+ * answers 400, 404 and 409 as for an entry.
+ */
+export function updateVarietyReference(id, body) {
+    return apiClient.put(`${PLANTS_ENDPOINTS.VARIETY_REFERENCES}/${id}`, body);
+}
+
+/**
+ * Fetches the yield share of every growth phase, the youngest first: the share
+ * in effect, its source, and the default it corrects, if any.
+ */
+export function fetchGrowthPhaseShares() {
+    return apiClient.get(PLANTS_ENDPOINTS.GROWTH_PHASE_YIELD_SHARES);
+}
+
+/**
+ * Corrects the yield share of a growth phase, named by its code
+ * ("GRADUAL_PRODUCTION"). The API answers 200, and 400 with fieldErrors for an
+ * invalid share.
+ */
+export function saveGrowthPhaseShare(code, body) {
+    return apiClient.put(`${PLANTS_ENDPOINTS.GROWTH_PHASE_YIELD_SHARES}/${code}`, body);
+}

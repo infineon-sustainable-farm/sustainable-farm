@@ -89,7 +89,8 @@ function VarietiesWithoutReferenceNote({ varieties }) {
         <div className="flex gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
             <Info size={18} className="mt-0.5 shrink-0 text-info" />
             <p>
-                {`Not in the forecast: ${listed}. No yield per tree or harvest season is known for ${subject} yet.`}
+                {`Not in the forecast: ${listed}. No reference value is entered for ${subject} yet: `
+                    + "add it under Reference values below."}
             </p>
         </div>
     );
@@ -244,8 +245,8 @@ export default function YieldForecastSection({ blockCode }) {
                     <VarietiesWithoutReferenceNote varieties={forecast.varietiesWithoutReference} />
                     <p className="px-1 text-xs text-gray-500">
                         Based on the recorded plantings only. Yield per tree, harvest season and growth-phase
-                        shares are default values still to be validated; the source of each is listed in the
-                        details below.
+                        shares come from the reference values further down this page; the source of each is
+                        listed in the details below.
                     </p>
                     <YieldForecastTable entries={forecast.entries} />
                 </>
