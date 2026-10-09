@@ -42,9 +42,10 @@ final class VarietyReferenceMatcher {
     /**
      * The reference row of a variety name.
      *
-     * <p>Two rows can share a key only after a manual edit of the table, since the
-     * loader checks the key before inserting. The row with the smallest identifier,
-     * the oldest, is then taken.
+     * <p>The loader and {@link VarietyReferenceService} check the key before
+     * writing, so two rows share a key only after a manual edit of the table, or
+     * when two names that differ only in case or accents are entered at the same
+     * instant. The row with the smallest identifier, the oldest, is then taken.
      *
      * @param varietyName the variety name, as planted
      * @param references  the whole reference

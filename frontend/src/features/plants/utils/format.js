@@ -143,6 +143,31 @@ export function formatMonthName(value) {
     return date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
 }
 
+/** Full name of a month number from 1 to 12, "May"; null for anything else. */
+export function monthName(month) {
+    const number = Number(month);
+    if (!Number.isInteger(number) || number < 1 || number > 12) return null;
+    return new Date(Date.UTC(2000, number - 1, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" });
+}
+
+/**
+ * Harvest season from its first and last month numbers: "May – July". A season
+ * over the new year reads in its own order, "November – February".
+ */
+export function formatSeason(startMonth, endMonth) {
+    const start = monthName(startMonth);
+    const end = monthName(endMonth);
+    if (!start || !end) return NO_VALUE;
+    return start === end ? start : `${start} – ${end}`;
+}
+
+/** A yield share from 0 to 1, with the up to 3 decimals the API keeps: "0.25", "1". */
+export function formatShare(value) {
+    return isMissing(value)
+        ? NO_VALUE
+        : Number(value).toLocaleString("en-US", { maximumFractionDigits: 3 });
+}
+
 /** Tree age as computed by the API: completed years and remaining months. */
 export function formatAge(years, months) {
     if (isMissing(years) || isMissing(months)) return NO_VALUE;

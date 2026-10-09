@@ -1,12 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYieldShareResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
-import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertSeverity;
@@ -120,8 +120,6 @@ public class PlantAlertService {
      * @param withinDays how many days ahead an upcoming harvest season is
      *                   announced, from 1 to 90, or {@code null} for 30
      * @return the alerts of today, CRITICAL first, then by date
-     * @throws IllegalStateException if the growth phase of some trees has no
-     *                               yield share, as for the forecast
      */
     public PlantAlertResponse getAlerts(Integer farmId, String blockCode, Integer withinDays) {
         LocalDate today = LocalDate.now(clock);
@@ -178,14 +176,14 @@ public class PlantAlertService {
      * above 0: the rule of the forecast.
      */
     private static Optional<HarvestWindow> harvestWindow(PlantedVariety planted,
-                                                         Map<String, GrowthPhaseYieldShare> sharesByPhase,
+                                                         Map<String, GrowthPhaseYieldShareResponse> sharesByPhase,
                                                          LocalDate today) {
         VarietyReference reference = planted.reference();
         return PlantAlertCalculator.harvestWindow(today, reference.getHarvestStartMonth(),
                 reference.getHarvestEndMonth(), month -> {
                     PhaseOfMonth phase = YieldForecastService.phaseAtStartOf(
                             month, planted.plantingDate(), sharesByPhase);
-                    return phase != null && phase.share().getYieldShare() > 0;
+                    return phase != null && phase.share().yieldShare() > 0;
                 });
     }
 

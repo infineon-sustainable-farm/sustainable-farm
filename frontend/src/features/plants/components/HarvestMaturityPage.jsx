@@ -5,6 +5,7 @@ import { useRecordHarvest } from "../hooks/useRecordHarvest";
 import BlockFilter from "./BlockFilter";
 import HarvestsSection from "./HarvestsSection";
 import RecordHarvestModal from "./RecordHarvestModal";
+import ReferenceValuesSection from "./ReferenceValuesSection";
 import YieldForecastSection from "./YieldForecastSection";
 
 function RecordHarvestButton({ onClick }) {
@@ -22,7 +23,9 @@ function RecordHarvestButton({ onClick }) {
 
 /**
  * Harvest & Maturity: the expected yield by month first, as it is what the
- * screen is for, then the recorded harvests. One block filter drives both.
+ * screen is for, then the reference values it is computed from, then the
+ * recorded harvests. One block filter drives the forecast and the harvests;
+ * the reference values hold for every block.
  *
  * The mock-up's maturity status, estimated harvest date, variance, lot number
  * and upcoming deadlines are left out: the API records none of them.
@@ -76,6 +79,8 @@ export default function HarvestMaturityPage() {
                 <BlockFilter blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
 
                 <YieldForecastSection blockCode={selectedBlock || null} />
+
+                <ReferenceValuesSection />
 
                 <HarvestsSection
                     blockCode={selectedBlock || null}
