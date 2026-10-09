@@ -33,7 +33,7 @@ function formatEuroMillions(tons, priceEurPerKg) {
 
   const eur = Number(tons) * 1000 * Number(priceEurPerKg);
 
-  return `EUR${(eur / 1_000_000).toFixed(1)}M`;
+  return `ââ€šÂ¬${(eur / 1_000_000).toFixed(1)}M`;
 }
 
 
@@ -503,7 +503,7 @@ console.log('Germany Demand MT:', germanyDemandT);
                 <span className="material-symbols-outlined text-[16px]">info</span>
                 <span>
                   {kpiSource.length > 0
-                    ? `Range: ${formatTons(totalLower).replace(' t', '')} - ${formatTons(totalUpper)}`
+                    ? `Range: ${formatTons(totalLower).replace(' t', '')} ââ‚¬â€œ ${formatTons(totalUpper)}`
                     : 'Awaiting forecast rows'}
                 </span>
               </div>
@@ -556,7 +556,7 @@ console.log('Germany Demand MT:', germanyDemandT);
                 <span className="material-symbols-outlined text-[16px]">trending_up</span>
                 <span>
                   {currentPriceEurPerKg != null
-                    ? `Latest price: EUR${currentPriceEurPerKg.toFixed(2)}/kg`
+                    ? `Latest price: ââ€šÂ¬${currentPriceEurPerKg.toFixed(2)}/kg`
                     : 'No pricing data loaded'}
                 </span>
               </div>
