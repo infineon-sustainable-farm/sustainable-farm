@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Service("energyAlertService")
 public class AlertService {
 
     private final AlertRepository repository;
