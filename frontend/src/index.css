@@ -1,3 +1,11 @@
+/*
+  Energy Supply Systems module — validated design tokens.
+  Copy this block into frontend/src/index.css, inside (or right after)
+  the existing @theme block, so bg-primary / text-primary / border-border
+  etc. resolve to these exact, team-approved values everywhere.
+  Source: v0 mockup tailwind.config, corrected after team feedback
+  (primary = green #4caf50, not teal — teal kept as secondary accent).
+*/
 @import "tailwindcss";
 
 @theme {
@@ -48,6 +56,57 @@
 
   --shadow-card: 0 1px 2px rgba(10, 130, 118, 0.04), 0 10px 30px -14px rgba(10, 130, 118, 0.12);
   --shadow-pop: 0 24px 60px -20px rgba(10, 130, 118, 0.35);
+
+  /* --- Energy Supply module additions (non-colliding tokens only) ---
+     bg-primary / bg-muted / bg-success / bg-warning / font-heading are
+     intentionally NOT overridden: they already exist above as shared,
+     cross-module tokens (primary = teal, not the CropCore green).
+     TODO(energysupply): coordinate with the team on whether the module
+     should adopt the shared teal primary, or whether a scoped override
+     is worth doing properly — this file is shared, so this isn't a
+     decision for one module owner alone. */
+  --color-background: #f5f7fa;
+  --color-foreground: #1a2422;
+
+  --color-card: #ffffff;
+  --color-card-foreground: #1a2422;
+
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a2422;
+
+  --color-secondary: #4caf50;
+  --color-secondary-foreground: #ffffff;
+
+  --color-muted-foreground: #5c6b68;
+
+  --color-accent-foreground: #4caf50;
+
+  --color-destructive: #c62828;
+  --color-destructive-foreground: #ffffff;
+
+  --color-warning-foreground: #ffffff;
+  --color-success-foreground: #ffffff;
+
+  --color-border: #dbe3e1;
+  --color-input: #dbe3e1;
+  --color-ring: #4caf50;
+
+  --color-chart-1: #4caf50;
+  --color-chart-2: #ef6c00;
+  --color-chart-3: #c62828;
+  --color-chart-4: #4a9d93;
+  --color-chart-5: #7fb8b1;
+
+  --color-sidebar: #4caf50;
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-primary: #4caf50;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #5cbf60;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #5cbf60;
+  --color-sidebar-ring: #ffffff;
+
+  --radius-lg: 0.5rem;
 }
 
 html,
