@@ -1,6 +1,17 @@
+# Racine : règles transverses au monorepo
+# Les règles backend/frontend vivent dans leurs propres .gitignore.
 .env
 .env.*
 !.env.example
 
+# Sauvegardes et dumps locaux
 *.dump
 *.backup
+
+# Fichiers de logs et artefacts temporaires
+*.log
+_*.txt
+_*.log
+
+# Outillage local de l'agent / aperçu
+.freebuff/

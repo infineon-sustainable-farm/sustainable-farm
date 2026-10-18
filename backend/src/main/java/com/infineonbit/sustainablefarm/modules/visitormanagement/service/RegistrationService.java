@@ -1,0 +1,55 @@
+package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
+
+import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BriefingDeliverRequest;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BriefingResponse;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationRequest;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationResponse;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.VisitorRequest;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.VisitorResponse;
+import org.springframework.data.domain.Page;
+
+import java.time.LocalDate;
+import java.util.List;
+
+/**
+ * Business logic for the visitor database and registration flow
+ * (Registration sub-module).
+ */
+public interface RegistrationService {
+
+    VisitorResponse createVisitor(VisitorRequest request);
+
+    VisitorResponse updateVisitor(Long id, VisitorRequest request);
+
+    void deleteVisitor(Long id);
+
+    VisitorResponse getVisitor(Long id);
+
+    List<VisitorResponse> listVisitors();
+
+    Page<VisitorResponse> listVisitors(int page, int size);
+
+    RegistrationResponse register(RegistrationRequest request);
+
+    RegistrationResponse approve(Long registrationId);
+
+    RegistrationResponse reject(Long registrationId);
+
+    RegistrationResponse checkIn(Long registrationId);
+
+    RegistrationResponse cancel(Long registrationId);
+
+    RegistrationResponse getRegistration(Long id);
+
+    Page<RegistrationResponse> listRegistrations(int page, int size);
+
+    List<RegistrationResponse> getRegistrationsBySlot(Long timeSlotId);
+
+    List<RegistrationResponse> getRegistrationsByDate(LocalDate date);
+
+    List<RegistrationResponse> getProspects();
+
+    BriefingResponse getBriefingForRegistration(Long registrationId);
+
+    BriefingResponse deliverBriefing(Long registrationId, BriefingDeliverRequest request);
+}
