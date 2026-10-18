@@ -10,7 +10,10 @@ import org.springframework.web.context.request.WebRequest;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice
+@RestControllerAdvice(
+    basePackages = "com.infineonbit.sustainablefarm.modules.salesmarketing",
+    name = "salesMarketingExceptionHandler"
+)
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
