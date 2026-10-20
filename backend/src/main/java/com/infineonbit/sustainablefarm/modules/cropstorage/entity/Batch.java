@@ -2,16 +2,19 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -32,6 +35,10 @@ public class Batch {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Prevent concurrent stock updates from overwriting each other; the losing update fails and can retry.
+    @Version
+    private Long version;
+
     @NotBlank
     @Column(nullable = false, unique = true)
     private String batchCode;
@@ -44,13 +51,16 @@ public class Batch {
     private String productStage;
 
     private String origin;
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
     private String mangoVariety;
 
     private LocalDate harvestDate;
+
+    // Optional Plants harvest ID (GET /api/plants/harvests) for traceability; null when the batch is not from Plants.
+    private Long harvestId;
 
     private LocalDate processingDate;
 
@@ -77,7 +87,7 @@ public class Batch {
     @NotBlank
     private String status;
 
-      @ManyToOne
+            @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "storage_zone_id")
     private StorageZone storageZone;
 
@@ -85,7 +95,11 @@ public class Batch {
 
         private LocalDate expiryDate;
 
-    private Integer customerPriority;
+    // FIFO sorts higher priorities first; 0 must sort after positive priorities on H2 and PostgreSQL.
+    @NotNull
+    @Min(0)
+    @Column(nullable = false)
+    private Integer customerPriority = 0;
 
     @PositiveOrZero
     @Column(precision = 12, scale = 2)
