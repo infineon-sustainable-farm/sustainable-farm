@@ -46,6 +46,8 @@ final class HealthCalculator {
 
     // Highest score of each category, the only place the bands are written:
     // 0-20 severe stress, 21-40 weakened, 41-60 moderate, 61-80 healthy, 81-100 very healthy.
+    // Source: Zalka 2025, Table 3 "Monitoring the health of trees and fruit"
+    // (sustainable_farm2025.xlsx, sheet Plants(Zalka)).
     private static final int SEVERE_STRESS_MAX = 20;
     private static final int WEAKENED_MAX = 40;
     private static final int MODERATE_MAX = 60;
