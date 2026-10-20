@@ -122,7 +122,14 @@ public class PlantAlertService {
      * @return the alerts of today, CRITICAL first, then by date
      */
     public PlantAlertResponse getAlerts(Integer farmId, String blockCode, Integer withinDays) {
-        LocalDate today = LocalDate.now(clock);
+        return getAlerts(farmId, blockCode, withinDays, LocalDate.now(clock));
+    }
+
+    /**
+     * Same as {@link #getAlerts(Integer, String, Integer)} on an explicit day,
+     * so that the overview reads every figure on the same day.
+     */
+    PlantAlertResponse getAlerts(Integer farmId, String blockCode, Integer withinDays, LocalDate today) {
         int window = withinDays == null ? DEFAULT_WITHIN_DAYS : withinDays;
         String block = normalizeFilter(blockCode);
 
