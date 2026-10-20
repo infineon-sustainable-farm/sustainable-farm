@@ -3,10 +3,12 @@ import { useNurseryPlannedBlocks } from "../hooks/useNurseryBatches";
 import BlockFilter from "./BlockFilter";
 import NurseryAlertsSection from "./NurseryAlertsSection";
 import NurseryBatchesSection from "./NurseryBatchesSection";
+import NurseryHistorySection from "./NurseryHistorySection";
 
 /**
  * Nursery: the batches to transplant today, then the batches with their
- * survival rate, filtered by destination block.
+ * survival rate, filtered by destination block, and last what happened to
+ * them, which the mock-up does not show.
  *
  * The filter offers the blocks the batches are planned for. The mock-up's
  * Home button is left out, as on the other screens, and its "Lot" reads
@@ -52,6 +54,8 @@ export default function NurseryPage() {
                 />
 
                 <NurseryBatchesSection blockCode={selectedBlock || null} />
+
+                <NurseryHistorySection />
             </div>
         </div>
     );
