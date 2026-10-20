@@ -105,6 +105,17 @@ final class GrowthPhaseCalculator {
     }
 
     /**
+     * First completed year of the last growth phase, which is open-ended: from
+     * that age on, the phase of the trees never changes again.
+     *
+     * @return 6, the first year of full production
+     */
+    static int lastPhaseFirstCompletedYear() {
+        Phase[] phases = Phase.values();
+        return phases[phases.length - 1].firstCompletedYear();
+    }
+
+    /**
      * Age of the trees, in completed years and remaining months.
      *
      * @param plantingDate planting date, possibly {@code null}

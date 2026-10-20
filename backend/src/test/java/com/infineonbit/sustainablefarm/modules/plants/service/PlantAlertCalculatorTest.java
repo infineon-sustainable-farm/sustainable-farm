@@ -139,6 +139,46 @@ public class PlantAlertCalculatorTest {
     }
 
     @Test
+    void firstHarvestWindow_shouldBeTheWindowOfTheAlerts_whenTheyHaveOne() {
+        // The cases above that have a window, with a search that may go on for ever
+        for (LocalDate today : List.of(LocalDate.of(2027, 4, 1), LocalDate.of(2027, 6, 15))) {
+            assertEquals(PlantAlertCalculator.harvestWindow(today, 5, 7,
+                            month -> !month.isBefore(YearMonth.of(2027, 7))),
+                    PlantAlertCalculator.firstHarvestWindow(today, 5, 7,
+                            month -> !month.isBefore(YearMonth.of(2027, 7)), season -> false));
+        }
+        assertEquals(Optional.of(window("2028-01-01", "2028-11-30")),
+                PlantAlertCalculator.firstHarvestWindow(LocalDate.of(2027, 11, 15), 1, 11,
+                        month -> !month.isBefore(YearMonth.of(2028, 1)), season -> false));
+    }
+
+    @Test
+    void firstHarvestWindow_shouldGoOnPastTheNextSeason_whenTheTreesAreTooYoung() {
+        // On 15 June 2027, trees productive from May 2029: two whole seasons give nothing
+        List<Season> tried = new ArrayList<>();
+        assertEquals(Optional.of(window("2029-05-01", "2029-07-31")),
+                PlantAlertCalculator.firstHarvestWindow(LocalDate.of(2027, 6, 15), 5, 7,
+                        month -> !month.isBefore(YearMonth.of(2029, 5)), season -> {
+                            tried.add(season);
+                            return false;
+                        }));
+        assertEquals(List.of(season("2027-05-01", "2027-07-31"), season("2028-05-01", "2028-07-31")), tried);
+    }
+
+    @Test
+    void firstHarvestWindow_shouldStop_whenNoLaterSeasonCanGiveAYield() {
+        // Nothing ever productive: the search ends on the third season, the last one to try
+        List<Season> tried = new ArrayList<>();
+        assertEquals(Optional.empty(), PlantAlertCalculator.firstHarvestWindow(LocalDate.of(2027, 8, 1), 5, 7,
+                month -> false, season -> {
+                    tried.add(season);
+                    return tried.size() == 3;
+                }));
+        assertEquals(List.of(season("2028-05-01", "2028-07-31"), season("2029-05-01", "2029-07-31"),
+                season("2030-05-01", "2030-07-31")), tried);
+    }
+
+    @Test
     void isOpenOn_shouldHoldTheFirstAndTheLastDay() {
         HarvestWindow july = window("2027-07-01", "2027-07-31");
         assertFalse(july.isOpenOn(LocalDate.of(2027, 6, 30)));
