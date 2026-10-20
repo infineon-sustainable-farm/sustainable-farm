@@ -337,3 +337,28 @@ export function fetchPlantAlerts({ blockCode, farmId, withinDays } = {}) {
 
     return apiClient.get(PLANTS_ENDPOINTS.ALERTS, { params });
 }
+
+/**
+ * Fetches the nursery batches, ordered by start date by the API. The plants
+ * left, the survival rate and the current stage of each batch come computed
+ * by the API from its recorded events; none of them is computed here.
+ */
+export function fetchNurseryBatches() {
+    return apiClient.get(PLANTS_ENDPOINTS.NURSERY_BATCHES);
+}
+
+/**
+ * Fetches the nursery events, optionally filtered, by date: stage changes,
+ * losses and transplants. Same filter rules as fetchVarieties; `eventType` is
+ * the API code ("LOSS"), and `from` and `to` are "YYYY-MM-DD" dates, both
+ * included by the API.
+ */
+export function fetchNurseryEvents({ batchId, eventType, from, to } = {}) {
+    const params = {};
+    if (batchId !== null && batchId !== undefined) params.batchId = batchId;
+    if (eventType) params.eventType = eventType;
+    if (from) params.from = from;
+    if (to) params.to = to;
+
+    return apiClient.get(PLANTS_ENDPOINTS.NURSERY_EVENTS, { params });
+}
