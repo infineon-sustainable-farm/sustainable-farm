@@ -44,8 +44,11 @@ function BlockHealthCard({ block }) {
  * The API takes no block filter for this list, so the selected block is
  * picked out of it here; nothing else is computed. A block never inspected
  * has no card.
+ *
+ * `recordAction` is the page's "Record an inspection" button, offered again
+ * when no block is inspected at all.
  */
-export default function BlockHealthSection({ blockCode }) {
+export default function BlockHealthSection({ blockCode, recordAction }) {
     const { data: blocks, isPending, isError, refetch, isFetching } = useBlockHealth();
     const shown = blockCode ? (blocks ?? []).filter((block) => block.blockCode === blockCode) : blocks;
 
@@ -94,7 +97,8 @@ export default function BlockHealthSection({ blockCode }) {
                 ) : (
                     <PlantsEmptyState
                         title="No block inspected yet"
-                        hint="Record an inspection to see the health of a block."
+                        hint="The health of a block comes from its latest inspection."
+                        action={recordAction}
                     />
                 )
             )}

@@ -1,11 +1,27 @@
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import { useInspectedBlocks } from "../hooks/useBlockHealth";
+import { useRecordInspection } from "../hooks/useRecordInspection";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import BlockFilter from "./BlockFilter";
 import BlockHealthSection from "./BlockHealthSection";
 import FindingsSection from "./FindingsSection";
 import HealthAlertsSection from "./HealthAlertsSection";
 import HealthIssuesSection from "./HealthIssuesSection";
+import RecordInspectionModal from "./RecordInspectionModal";
+
+function RecordInspectionButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+            <Plus size={16} />
+            Record an inspection
+        </button>
+    );
+}
 
 /**
  * Diseases & Alerts: the health alerts of the day, then the health of each
@@ -24,6 +40,7 @@ import HealthIssuesSection from "./HealthIssuesSection";
 export default function DiseasesAlertsPage() {
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
+    const [isRecordingInspection, setIsRecordingInspection] = useState(false);
 
     useEffect(() => {
         document.title = "Diseases & Alerts — Plants";
@@ -32,6 +49,21 @@ export default function DiseasesAlertsPage() {
     const { data: varietyBlocks } = useVarietyBlocks();
     const { data: inspectedBlocks } = useInspectedBlocks();
     const blocks = [...new Set([...(varietyBlocks ?? []), ...(inspectedBlocks ?? [])])].sort();
+    const recordInspection = useRecordInspection();
+
+    function openInspectionForm() {
+        recordInspection.reset();
+        setIsRecordingInspection(true);
+    }
+
+    function closeInspectionForm() {
+        recordInspection.reset();
+        setIsRecordingInspection(false);
+    }
+
+    function submitInspection(inspection) {
+        recordInspection.mutate(inspection, { onSuccess: closeInspectionForm });
+    }
 
     return (
         <div className="min-h-dvh bg-gray-50">
@@ -50,18 +82,36 @@ export default function DiseasesAlertsPage() {
                             Health by block, inspections, treatments and health alerts.
                         </p>
                     </div>
+                    <RecordInspectionButton onClick={openInspectionForm} />
                 </header>
 
                 <HealthAlertsSection />
 
                 <BlockFilter blocks={blocks} value={selectedBlock} onChange={setSelectedBlock} />
 
-                <BlockHealthSection blockCode={selectedBlock || null} />
+                <BlockHealthSection
+                    blockCode={selectedBlock || null}
+                    recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
+                />
 
-                <FindingsSection blockCode={selectedBlock || null} />
+                <FindingsSection
+                    blockCode={selectedBlock || null}
+                    recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
+                />
 
                 <HealthIssuesSection />
             </div>
+
+            {isRecordingInspection && (
+                <RecordInspectionModal
+                    blocks={blocks}
+                    isSubmitting={recordInspection.isPending}
+                    error={recordInspection.error}
+                    onSubmit={submitInspection}
+                    onResetError={recordInspection.reset}
+                    onClose={closeInspectionForm}
+                />
+            )}
         </div>
     );
 }
