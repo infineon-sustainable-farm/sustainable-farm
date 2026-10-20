@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Long> {
@@ -45,4 +46,21 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
                                               @Param("blockCode") String blockCode,
                                               @Param("from") LocalDate from,
                                               @Param("to") LocalDate to);
+
+    /**
+     * Returns one harvest with its variety row, in a single query.
+     *
+     * <p>The variety is a lazy association and open-in-view is disabled, so the
+     * response is built after the session of the read is closed: with a plain
+     * {@code findById}, reading the farm, block or name of the variety throws a
+     * {@code LazyInitializationException}.
+     *
+     * @param id harvest identifier
+     * @return the harvest with its variety row, or empty if no harvest has this identifier
+     */
+    @Query("""
+            SELECT h FROM HarvestRecord h JOIN FETCH h.variety
+            WHERE h.id = :id
+            """)
+    Optional<HarvestRecord> findWithVarietyById(@Param("id") Long id);
 }
