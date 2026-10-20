@@ -122,6 +122,11 @@ public class SensorReadingService {
      * Builds and saves one HIGH / ACTIVE alert linked to the sensor and zone.
      */
     private void raiseAlert(String type, String message, Sensor sensor, StorageZone zone) {
+        // One ACTIVE alert per sensor and type; re-armed only after acknowledgment or resolution.
+        if (alertRepository.existsBySensorIdAndTypeAndStatus(sensor.getId(), type, "ACTIVE")) {
+            return;
+        }
+
         Alert alert = new Alert();
         alert.setType(type);
         alert.setSeverity("HIGH");

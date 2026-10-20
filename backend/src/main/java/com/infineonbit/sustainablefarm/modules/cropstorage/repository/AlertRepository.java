@@ -8,4 +8,6 @@ import java.util.List;
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
     List<Alert> findByStatus(String status);
+
+    boolean existsBySensorIdAndTypeAndStatus(Long sensorId, String type, String status);
 }
