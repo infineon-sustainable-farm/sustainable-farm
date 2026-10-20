@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useInspectedBlocks } from "../hooks/useBlockHealth";
 import { useRecordInspection } from "../hooks/useRecordInspection";
+import { useRecordTreatment } from "../hooks/useRecordTreatment";
 import { useTreatedBlocks } from "../hooks/useTreatments";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import BlockFilter from "./BlockFilter";
@@ -10,6 +11,7 @@ import FindingsSection from "./FindingsSection";
 import HealthAlertsSection from "./HealthAlertsSection";
 import HealthIssuesSection from "./HealthIssuesSection";
 import RecordInspectionModal from "./RecordInspectionModal";
+import TreatmentModal from "./TreatmentModal";
 import TreatmentsSection from "./TreatmentsSection";
 
 function RecordInspectionButton({ onClick }) {
@@ -21,6 +23,19 @@ function RecordInspectionButton({ onClick }) {
         >
             <Plus size={16} />
             Record an inspection
+        </button>
+    );
+}
+
+function RecordPreventiveTreatmentButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+            <Plus size={16} />
+            Record a preventive treatment
         </button>
     );
 }
@@ -44,6 +59,8 @@ export default function DiseasesAlertsPage() {
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
     const [isRecordingInspection, setIsRecordingInspection] = useState(false);
+    // undefined: no dialog; null: a preventive treatment; otherwise the finding to treat.
+    const [treatedFinding, setTreatedFinding] = useState(undefined);
 
     useEffect(() => {
         document.title = "Diseases & Alerts — Plants";
@@ -54,6 +71,7 @@ export default function DiseasesAlertsPage() {
     const { data: treatedBlocks } = useTreatedBlocks();
     const blocks = [...new Set([...(varietyBlocks ?? []), ...(inspectedBlocks ?? []), ...(treatedBlocks ?? [])])].sort();
     const recordInspection = useRecordInspection();
+    const recordTreatment = useRecordTreatment();
 
     function openInspectionForm() {
         recordInspection.reset();
@@ -67,6 +85,23 @@ export default function DiseasesAlertsPage() {
 
     function submitInspection(inspection) {
         recordInspection.mutate(inspection, { onSuccess: closeInspectionForm });
+    }
+
+    function openTreatmentForm(finding) {
+        recordTreatment.reset();
+        setTreatedFinding(finding);
+    }
+
+    function closeTreatmentForm() {
+        recordTreatment.reset();
+        setTreatedFinding(undefined);
+    }
+
+    function submitTreatment(treatment) {
+        recordTreatment.mutate(
+            { findingId: treatedFinding === null ? null : treatedFinding.id, treatment },
+            { onSuccess: closeTreatmentForm },
+        );
     }
 
     return (
@@ -86,7 +121,10 @@ export default function DiseasesAlertsPage() {
                             Health by block, inspections, treatments and health alerts.
                         </p>
                     </div>
-                    <RecordInspectionButton onClick={openInspectionForm} />
+                    <div className="flex flex-wrap gap-2">
+                        <RecordPreventiveTreatmentButton onClick={() => openTreatmentForm(null)} />
+                        <RecordInspectionButton onClick={openInspectionForm} />
+                    </div>
                 </header>
 
                 <HealthAlertsSection />
@@ -101,9 +139,13 @@ export default function DiseasesAlertsPage() {
                 <FindingsSection
                     blockCode={selectedBlock || null}
                     recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
+                    onTreat={openTreatmentForm}
                 />
 
-                <TreatmentsSection blockCode={selectedBlock || null} />
+                <TreatmentsSection
+                    blockCode={selectedBlock || null}
+                    recordAction={<RecordPreventiveTreatmentButton onClick={() => openTreatmentForm(null)} />}
+                />
 
                 <HealthIssuesSection />
             </div>
@@ -116,6 +158,17 @@ export default function DiseasesAlertsPage() {
                     onSubmit={submitInspection}
                     onResetError={recordInspection.reset}
                     onClose={closeInspectionForm}
+                />
+            )}
+
+            {treatedFinding !== undefined && (
+                <TreatmentModal
+                    finding={treatedFinding}
+                    blocks={blocks}
+                    isSubmitting={recordTreatment.isPending}
+                    error={recordTreatment.error}
+                    onSubmit={submitTreatment}
+                    onClose={closeTreatmentForm}
                 />
             )}
         </div>
