@@ -179,7 +179,7 @@ public class PlantAlertServiceTest {
     private static FertilizerResponse fertilizer(long id, String name, FertilizerUnit unit, Double threshold,
                                                  double stock, boolean belowThreshold) {
         return new FertilizerResponse(id, name, FertilizerType.MINERAL, null, unit, threshold, stock,
-                belowThreshold, "user_entry", null);
+                belowThreshold, null, "user_entry", null);
     }
 
     private static HealthFindingResponse finding(long id, LocalDate inspectedOn, String issueName,

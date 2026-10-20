@@ -74,7 +74,8 @@ public class FertilizerController {
    @GetMapping
    @Operation(summary = "List the fertilizers",
          description = "Ordered by name. currentStock is computed from the recorded movements; belowThreshold is "
-               + "true when a reorder threshold exists and the stock is at or below it.")
+               + "true when a reorder threshold exists and the stock is at or below it. lastPurchaseDate is the "
+               + "date of the most recent purchase, null when none is recorded.")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "The catalogue, possibly an empty list")
    })
@@ -84,7 +85,7 @@ public class FertilizerController {
    }
 
    @GetMapping("/{id}")
-   @Operation(summary = "Get one fertilizer by ID, with its stock")
+   @Operation(summary = "Get one fertilizer by ID, with its stock and the date of its last purchase")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "The fertilizer"),
          @ApiResponse(responseCode = "404", description = "No fertilizer with this ID")

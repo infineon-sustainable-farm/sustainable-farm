@@ -88,8 +88,12 @@ public class FertilizerControllerTest {
     }
 
     private static FertilizerResponse npk(double currentStock, boolean belowThreshold) {
+        return npk(currentStock, belowThreshold, null);
+    }
+
+    private static FertilizerResponse npk(double currentStock, boolean belowThreshold, LocalDate lastPurchaseDate) {
         return new FertilizerResponse(1L, "NPK 15-15-15", FertilizerType.MINERAL, "15-15-15", FertilizerUnit.KG,
-                50.0, currentStock, belowThreshold, "user_entry", NOW);
+                50.0, currentStock, belowThreshold, lastPurchaseDate, "user_entry", NOW);
     }
 
     @Test
@@ -204,14 +208,16 @@ public class FertilizerControllerTest {
     @Test
     void getAllFertilizers_shouldReturnTheCatalogueWithStocks() throws Exception {
         // Arrange
-        when(fertilizerService.getAllFertilizers()).thenReturn(List.of(npk(300.0, false)));
+        when(fertilizerService.getAllFertilizers())
+                .thenReturn(List.of(npk(300.0, false, LocalDate.of(2027, 4, 12))));
         // Act & Assert
         mockMvc.perform(get(URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("NPK 15-15-15"))
                 .andExpect(jsonPath("$[0].currentStock").value(300.0))
-                .andExpect(jsonPath("$[0].belowThreshold").value(false));
+                .andExpect(jsonPath("$[0].belowThreshold").value(false))
+                .andExpect(jsonPath("$[0].lastPurchaseDate").value("2027-04-12"));
     }
 
     @Test
@@ -223,7 +229,8 @@ public class FertilizerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.currentStock").value(50.0))
-                .andExpect(jsonPath("$.belowThreshold").value(true));
+                .andExpect(jsonPath("$.belowThreshold").value(true))
+                .andExpect(jsonPath("$.lastPurchaseDate").value(nullValue()));
     }
 
     @Test
