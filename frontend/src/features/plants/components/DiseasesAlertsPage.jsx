@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useInspectedBlocks } from "../hooks/useBlockHealth";
 import { useRecordInspection } from "../hooks/useRecordInspection";
+import { useTreatedBlocks } from "../hooks/useTreatments";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import BlockFilter from "./BlockFilter";
 import BlockHealthSection from "./BlockHealthSection";
@@ -9,6 +10,7 @@ import FindingsSection from "./FindingsSection";
 import HealthAlertsSection from "./HealthAlertsSection";
 import HealthIssuesSection from "./HealthIssuesSection";
 import RecordInspectionModal from "./RecordInspectionModal";
+import TreatmentsSection from "./TreatmentsSection";
 
 function RecordInspectionButton({ onClick }) {
     return (
@@ -25,12 +27,13 @@ function RecordInspectionButton({ onClick }) {
 
 /**
  * Diseases & Alerts: the health alerts of the day, then the health of each
- * block from its latest inspection, then the problems found, and last the
- * catalogue of pests and diseases they are picked from.
+ * block from its latest inspection, the problems found, the treatment record,
+ * and last the catalogue of pests and diseases they are picked from.
  *
  * The health alerts sit above the block filter, as in the mock-up, and cover
- * every block. The filter offers the blocks of the recorded varieties and the
- * inspected blocks, as an inspection needs no planting.
+ * every block. The filter offers the blocks of the recorded varieties, the
+ * inspected blocks and the treated blocks, as an inspection or a preventive
+ * treatment needs no planting.
  *
  * Left out of the mock-up: the chart of alerts by treatment status, which the
  * status filter of the findings replaces, and in the alert callout the health
@@ -48,7 +51,8 @@ export default function DiseasesAlertsPage() {
 
     const { data: varietyBlocks } = useVarietyBlocks();
     const { data: inspectedBlocks } = useInspectedBlocks();
-    const blocks = [...new Set([...(varietyBlocks ?? []), ...(inspectedBlocks ?? [])])].sort();
+    const { data: treatedBlocks } = useTreatedBlocks();
+    const blocks = [...new Set([...(varietyBlocks ?? []), ...(inspectedBlocks ?? []), ...(treatedBlocks ?? [])])].sort();
     const recordInspection = useRecordInspection();
 
     function openInspectionForm() {
@@ -98,6 +102,8 @@ export default function DiseasesAlertsPage() {
                     blockCode={selectedBlock || null}
                     recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
                 />
+
+                <TreatmentsSection blockCode={selectedBlock || null} />
 
                 <HealthIssuesSection />
             </div>
