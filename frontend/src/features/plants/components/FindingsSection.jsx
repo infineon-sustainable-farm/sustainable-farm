@@ -14,10 +14,10 @@ const FINDING_STATUSES = ["UNTREATED", "IN_PROGRESS", "TREATED", "CLOSED_WITHOUT
  * listed by default, resolved findings included.
  *
  * `recordAction` is the page's "Record an inspection" button, offered again
- * when no finding is recorded at all. `onTreat` opens the treatment dialog
- * for a finding.
+ * when no finding is recorded at all. `onTreat` and `onResolve` open the
+ * treatment and resolution dialogs for a finding.
  */
-export default function FindingsSection({ blockCode, recordAction, onTreat }) {
+export default function FindingsSection({ blockCode, recordAction, onTreat, onResolve }) {
     // API code ("UNTREATED"); an empty string means "every status".
     const [status, setStatus] = useState("");
 
@@ -106,7 +106,7 @@ export default function FindingsSection({ blockCode, recordAction, onTreat }) {
             )}
 
             {!isPending && !isError && findings.length > 0 && (
-                <FindingsTable findings={findings} onTreat={onTreat} />
+                <FindingsTable findings={findings} onTreat={onTreat} onResolve={onResolve} />
             )}
         </section>
     );

@@ -1,4 +1,4 @@
-import { SprayCan } from "lucide-react";
+import { CircleCheckBig, SprayCan } from "lucide-react";
 import { formatBlock, formatDate, formatText } from "../utils/format";
 import FindingStatusBadge from "./FindingStatusBadge";
 import Value from "./Value";
@@ -32,10 +32,10 @@ function describeFinding(finding) {
 
 /**
  * The findings, one row per problem seen, in the order the API sends them. A
- * finding not resolved yet can be treated; a resolved one cannot, as the API
- * refuses it.
+ * finding not resolved yet can be treated or resolved; a resolved one can be
+ * neither, as the API refuses both.
  */
-export default function FindingsTable({ findings, onTreat }) {
+export default function FindingsTable({ findings, onTreat, onResolve }) {
     return (
         // relative: the hidden "Actions" header is absolutely positioned. Without a positioned box
         // here it would sit outside the scrolling area and widen the whole page on a phone.
@@ -89,6 +89,15 @@ export default function FindingsTable({ findings, onTreat }) {
                                         >
                                             <SprayCan size={14} />
                                             Treat
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => onResolve(finding)}
+                                            aria-label={`Resolve ${describeFinding(finding)}`}
+                                            className={ACTION_BUTTON_CLASS}
+                                        >
+                                            <CircleCheckBig size={14} />
+                                            Resolve
                                         </button>
                                     </div>
                                 )}

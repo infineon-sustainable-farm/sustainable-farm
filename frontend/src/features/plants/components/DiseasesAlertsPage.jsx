@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useInspectedBlocks } from "../hooks/useBlockHealth";
 import { useRecordInspection } from "../hooks/useRecordInspection";
 import { useRecordTreatment } from "../hooks/useRecordTreatment";
+import { useResolveFinding } from "../hooks/useResolveFinding";
 import { useTreatedBlocks } from "../hooks/useTreatments";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import BlockFilter from "./BlockFilter";
@@ -11,6 +12,7 @@ import FindingsSection from "./FindingsSection";
 import HealthAlertsSection from "./HealthAlertsSection";
 import HealthIssuesSection from "./HealthIssuesSection";
 import RecordInspectionModal from "./RecordInspectionModal";
+import ResolveFindingModal from "./ResolveFindingModal";
 import TreatmentModal from "./TreatmentModal";
 import TreatmentsSection from "./TreatmentsSection";
 
@@ -61,6 +63,7 @@ export default function DiseasesAlertsPage() {
     const [isRecordingInspection, setIsRecordingInspection] = useState(false);
     // undefined: no dialog; null: a preventive treatment; otherwise the finding to treat.
     const [treatedFinding, setTreatedFinding] = useState(undefined);
+    const [resolvedFinding, setResolvedFinding] = useState(null);
 
     useEffect(() => {
         document.title = "Diseases & Alerts — Plants";
@@ -72,6 +75,7 @@ export default function DiseasesAlertsPage() {
     const blocks = [...new Set([...(varietyBlocks ?? []), ...(inspectedBlocks ?? []), ...(treatedBlocks ?? [])])].sort();
     const recordInspection = useRecordInspection();
     const recordTreatment = useRecordTreatment();
+    const resolveFinding = useResolveFinding();
 
     function openInspectionForm() {
         recordInspection.reset();
@@ -102,6 +106,20 @@ export default function DiseasesAlertsPage() {
             { findingId: treatedFinding === null ? null : treatedFinding.id, treatment },
             { onSuccess: closeTreatmentForm },
         );
+    }
+
+    function openResolutionForm(finding) {
+        resolveFinding.reset();
+        setResolvedFinding(finding);
+    }
+
+    function closeResolutionForm() {
+        resolveFinding.reset();
+        setResolvedFinding(null);
+    }
+
+    function submitResolution(resolution) {
+        resolveFinding.mutate({ findingId: resolvedFinding.id, resolution }, { onSuccess: closeResolutionForm });
     }
 
     return (
@@ -140,6 +158,7 @@ export default function DiseasesAlertsPage() {
                     blockCode={selectedBlock || null}
                     recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
                     onTreat={openTreatmentForm}
+                    onResolve={openResolutionForm}
                 />
 
                 <TreatmentsSection
@@ -169,6 +188,16 @@ export default function DiseasesAlertsPage() {
                     error={recordTreatment.error}
                     onSubmit={submitTreatment}
                     onClose={closeTreatmentForm}
+                />
+            )}
+
+            {resolvedFinding !== null && (
+                <ResolveFindingModal
+                    finding={resolvedFinding}
+                    isSubmitting={resolveFinding.isPending}
+                    error={resolveFinding.error}
+                    onSubmit={submitResolution}
+                    onClose={closeResolutionForm}
                 />
             )}
         </div>
