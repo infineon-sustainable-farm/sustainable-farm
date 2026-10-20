@@ -50,6 +50,11 @@ public class StockMovementService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Batch not found with id " + movement.getBatch().getId()));
 
+        // The request body carries a bare-id batch shell; since Batch has
+        // @Version, Hibernate reads a null version as unsaved and refuses
+        // to link the movement. Attach the managed batch instead.
+        movement.setBatch(batch);
+        
         StorageZone toZone = null;
         if (movement.getToZone() != null && movement.getToZone().getId() != null) {
             toZone = storageZoneRepository.findById(movement.getToZone().getId())
