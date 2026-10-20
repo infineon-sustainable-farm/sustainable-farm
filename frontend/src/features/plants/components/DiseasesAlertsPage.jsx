@@ -5,10 +5,12 @@ import BlockFilter from "./BlockFilter";
 import BlockHealthSection from "./BlockHealthSection";
 import FindingsSection from "./FindingsSection";
 import HealthAlertsSection from "./HealthAlertsSection";
+import HealthIssuesSection from "./HealthIssuesSection";
 
 /**
  * Diseases & Alerts: the health alerts of the day, then the health of each
- * block from its latest inspection, then the problems found.
+ * block from its latest inspection, then the problems found, and last the
+ * catalogue of pests and diseases they are picked from.
  *
  * The health alerts sit above the block filter, as in the mock-up, and cover
  * every block. The filter offers the blocks of the recorded varieties and the
@@ -57,6 +59,8 @@ export default function DiseasesAlertsPage() {
                 <BlockHealthSection blockCode={selectedBlock || null} />
 
                 <FindingsSection blockCode={selectedBlock || null} />
+
+                <HealthIssuesSection />
             </div>
         </div>
     );
