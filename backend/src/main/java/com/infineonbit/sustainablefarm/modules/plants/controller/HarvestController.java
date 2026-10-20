@@ -16,6 +16,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,11 +33,12 @@ import java.util.List;
  * <ul>
  * <li>{@code POST /api/plants/harvests} — record a harvest of a planted variety</li>
  * <li>{@code GET /api/plants/harvests} — list of harvests, optionally filtered</li>
+ * <li>{@code GET /api/plants/harvests/{id}} — a single harvest</li>
  * </ul>
  * <p>
  * Errors use the application-wide {@code ApiError} body: 400 with
- * {@code fieldErrors} for an invalid request, 422 when the variety has no
- * planting on that block or the harvest predates it.
+ * {@code fieldErrors} for an invalid request, 404 for an unknown harvest, 422
+ * when the variety has no planting on that block or the harvest predates it.
  *
  * @since 1.0
  */
@@ -80,5 +82,16 @@ public class HarvestController {
          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
       List<HarvestResponse> harvestResponses = harvestService.getAllHarvests(farmId, blockCode, from, to);
       return ResponseEntity.status(HttpStatus.OK).body(harvestResponses);
+   }
+
+   @GetMapping("/{id}")
+   @Operation(summary = "Get one harvest by ID")
+   @ApiResponses({
+         @ApiResponse(responseCode = "200", description = "The harvest"),
+         @ApiResponse(responseCode = "404", description = "No harvest with this ID")
+   })
+   public ResponseEntity<HarvestResponse> getHarvestById(@PathVariable Long id) {
+      HarvestResponse harvestResponse = harvestService.getHarvestById(id);
+      return ResponseEntity.status(HttpStatus.OK).body(harvestResponse);
    }
 }

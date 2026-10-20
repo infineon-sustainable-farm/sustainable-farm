@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
@@ -214,5 +215,29 @@ public class HarvestServiceTest {
         // Assert
         assertEquals(List.of(new HarvestResponse(200L, 1, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
                 "user_entry", NOW)), responses);
+    }
+
+    @Test
+    void getHarvestById_shouldReturnEveryField_withTheFarmBlockAndNameOfTheVarietyRow() {
+        // Arrange
+        Variety keitt = variety(10L, 1, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(200L, keitt, LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW);
+        when(harvestRecordRepository.findWithVarietyById(200L)).thenReturn(Optional.of(harvest));
+        // Act
+        HarvestResponse response = harvestService.getHarvestById(200L);
+        // Assert
+        assertEquals(new HarvestResponse(200L, 1, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
+                "user_entry", NOW), response);
+    }
+
+    @Test
+    void getHarvestById_shouldThrowNotFound_whenTheHarvestIsUnknown() {
+        // Arrange
+        when(harvestRecordRepository.findWithVarietyById(999L)).thenReturn(Optional.empty());
+        // Act
+        HarvestNotFoundException exception = assertThrows(HarvestNotFoundException.class,
+                () -> harvestService.getHarvestById(999L));
+        // Assert
+        assertEquals("Harvest with ID 999 not found", exception.getMessage());
     }
 }

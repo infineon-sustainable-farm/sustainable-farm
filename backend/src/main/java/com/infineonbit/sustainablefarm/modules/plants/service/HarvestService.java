@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
@@ -166,5 +167,18 @@ public class HarvestService {
                 .stream()
                 .map(HarvestService::toResponse)
                 .toList();
+    }
+
+    /**
+     * Retrieves one harvest with its variety row.
+     *
+     * @param id the harvest identifier
+     * @return the harvest
+     * @throws HarvestNotFoundException if no harvest has this identifier
+     */
+    public HarvestResponse getHarvestById(Long id) {
+        HarvestRecord harvest = harvestRecordRepository.findWithVarietyById(id)
+                .orElseThrow(() -> new HarvestNotFoundException(id));
+        return toResponse(harvest);
     }
 }
