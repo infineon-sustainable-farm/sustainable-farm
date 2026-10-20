@@ -14,4 +14,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     List<Batch> findByStorageZoneId(Long storageZoneId);
 
     List<Batch> findByExpiryDateNotNullOrderByExpiryDateAsc();
+
+    // API-005 dedup: reject a second storage entry for the same PT batch id
+    boolean existsByBatchCode(String batchCode);
 }
