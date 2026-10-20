@@ -220,3 +220,77 @@ export function fetchGrowthPhaseShares() {
 export function saveGrowthPhaseShare(code, body) {
     return apiClient.put(`${PLANTS_ENDPOINTS.GROWTH_PHASE_YIELD_SHARES}/${code}`, body);
 }
+
+/**
+ * Fetches the catalogue of pests and diseases, in the order of the API: the
+ * pests, then the diseases, then "Other", each by name. Outside the dev
+ * profile it starts empty, and "Other" is listed only once an inspection or a
+ * treatment has used it.
+ */
+export function fetchHealthIssues() {
+    return apiClient.get(PLANTS_ENDPOINTS.HEALTH_ISSUES);
+}
+
+/**
+ * Adds a pest or a disease to the catalogue. The API derives its code from the
+ * name ("Powdery mildew" gives POWDERY_MILDEW), answers 400 with fieldErrors
+ * for an invalid value, and 409 when the name, ignoring case and accents, or
+ * the code is already in the catalogue.
+ */
+export function createHealthIssue(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.HEALTH_ISSUES, body);
+}
+
+/**
+ * Fetches the current health of each inspected block: the score, date and
+ * category of its latest inspection, all from the API. This route takes no
+ * block filter, and a block never inspected is not listed.
+ */
+export function fetchBlockHealth({ farmId } = {}) {
+    const params = {};
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+
+    return apiClient.get(PLANTS_ENDPOINTS.BLOCK_HEALTH, { params });
+}
+
+/**
+ * Records an inspection of a block with the problems found, possibly none. The
+ * API writes the inspection and its findings together or not at all: it
+ * answers 400 with fieldErrors, those of a finding under its index
+ * ("findings[0].otherLabel"), and 422 when an issue code is not in the
+ * catalogue.
+ */
+export function createHealthInspection(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.HEALTH_INSPECTIONS, body);
+}
+
+/**
+ * Fetches the findings, optionally filtered, by inspection date. Same filter
+ * rules as fetchVarieties; `status` is one API code ("UNTREATED"), and the
+ * block and both dates are those of the inspection. The status and the date
+ * from which harvesting is allowed come computed by the API.
+ */
+export function fetchHealthFindings({ blockCode, farmId, status, from, to } = {}) {
+    const params = {};
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+    if (status) params.status = status;
+    if (from) params.from = from;
+    if (to) params.to = to;
+
+    return apiClient.get(PLANTS_ENDPOINTS.HEALTH_FINDINGS, { params });
+}
+
+/**
+ * Fetches the plant alerts of the day, computed by the API: CRITICAL first,
+ * then by date. `withinDays` only sets how early a harvest season is
+ * announced; it is left out to keep the API's default.
+ */
+export function fetchPlantAlerts({ blockCode, farmId, withinDays } = {}) {
+    const params = {};
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+    if (withinDays !== null && withinDays !== undefined) params.withinDays = withinDays;
+
+    return apiClient.get(PLANTS_ENDPOINTS.ALERTS, { params });
+}
