@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Min;
 
 /**
  * Number of months of the yield forecast, bound from the {@code months} query
- * parameter.
+ * parameter. The yield comparison takes its months the same way.
  *
  * <p>It is a record validated with {@code @Valid}, not a constrained
  * {@code @RequestParam}. The core handler answers a failed record with a 400

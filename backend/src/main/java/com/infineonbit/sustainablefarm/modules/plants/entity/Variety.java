@@ -24,9 +24,13 @@ import java.util.Locale;
  * mapped explicitly, so the snake_case schema stays stable no matter what the
  * Java field naming strategy does.
  *
- * <p>Nullable on purpose: {@code treeDensityPerHa}, {@code actualYieldKg},
- * {@code vigor} and {@code plantOrigin} have no source data yet. They stay
- * NULL rather than being filled with a default or a derived value.
+ * <p>Nullable on purpose: {@code treeDensityPerHa}, {@code vigor} and
+ * {@code plantOrigin} have no source data yet. They stay NULL rather than
+ * being filled with a default or a derived value.
+ *
+ * <p>No yield is stored on the row. The expected and the actual yield of a
+ * variety are computed on every read, from its plantings, the agronomic
+ * reference and its harvests (see {@code YieldComparisonService}).
  *
  * <p>One row per (farm, block, name): {@code varietyKey} holds that triple and
  * carries a unique constraint, so two plantings of a new triple sent at the
@@ -66,13 +70,6 @@ public class Variety {
     /** Not available in the source study. Stays NULL until measured. */
     @Column(name = "densite_arbres_ha")
     private Double treeDensityPerHa;
-
-    @Column(name = "rendement_attendu_kg")
-    private Double expectedYieldKg;
-
-    /** Not harvested yet. Stays NULL until the harvest is recorded. */
-    @Column(name = "rendement_reel_kg")
-    private Double actualYieldKg;
 
     /** Not assessed yet. Stays NULL until an agronomist rates it. */
     @Column(name = "vigueur")

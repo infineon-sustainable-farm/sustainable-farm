@@ -59,8 +59,6 @@ public class VarietyService {
                 variety.getRowSpacingM(),
                 variety.getTreeSpacingM(),
                 variety.getTreeDensityPerHa(),
-                variety.getExpectedYieldKg(),
-                variety.getActualYieldKg(),
                 variety.getVigor(),
                 variety.getBlockCode(),
                 variety.getPlantOrigin(),
