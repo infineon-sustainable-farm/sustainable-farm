@@ -3,20 +3,21 @@ import { useInspectedBlocks } from "../hooks/useBlockHealth";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import BlockFilter from "./BlockFilter";
 import BlockHealthSection from "./BlockHealthSection";
+import FindingsSection from "./FindingsSection";
 import HealthAlertsSection from "./HealthAlertsSection";
 
 /**
  * Diseases & Alerts: the health alerts of the day, then the health of each
- * block from its latest inspection.
+ * block from its latest inspection, then the problems found.
  *
  * The health alerts sit above the block filter, as in the mock-up, and cover
  * every block. The filter offers the blocks of the recorded varieties and the
  * inspected blocks, as an inspection needs no planting.
  *
- * Left out of the mock-up: the chart of alerts by treatment status, and in the
- * alert callout the health score, the healthy target range and the View
- * Details button. An alert carries no score, the API gives no band, and there
- * is no detail view.
+ * Left out of the mock-up: the chart of alerts by treatment status, which the
+ * status filter of the findings replaces, and in the alert callout the health
+ * score, the healthy target range and the View Details button. An alert
+ * carries no score, the API gives no band, and there is no detail view.
  */
 export default function DiseasesAlertsPage() {
     // Raw stored block value ("A"); an empty string means "no filter".
@@ -54,6 +55,8 @@ export default function DiseasesAlertsPage() {
                 <BlockFilter blocks={blocks} value={selectedBlock} onChange={setSelectedBlock} />
 
                 <BlockHealthSection blockCode={selectedBlock || null} />
+
+                <FindingsSection blockCode={selectedBlock || null} />
             </div>
         </div>
     );
