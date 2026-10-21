@@ -43,15 +43,23 @@ public class YieldForecastService {
     /**
      * What the forecast is computed from.
      *
-     * @param plantedVarieties          the planted variety rows that still have trees and have an
-     *                                  agronomic reference, in the order of the plantings
-     * @param varietiesWithoutReference the planted variety rows that still have trees but whose
-     *                                  name is not in the reference, in the same order
-     * @param sharesByPhase             yield share in effect of every growth phase, by phase label
+     * @param plantedVarieties        the planted variety rows that still have trees and have an
+     *                                agronomic reference, in the order of the plantings
+     * @param plantedWithoutReference the planted variety rows that still have trees but whose
+     *                                name is not in the reference, in the same order
+     * @param sharesByPhase           yield share in effect of every growth phase, by phase label
      */
     record ForecastBasis(List<PlantedVariety> plantedVarieties,
-                         List<VarietyWithoutReference> varietiesWithoutReference,
+                         List<PlantedVariety> plantedWithoutReference,
                          Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
+
+        /** The planted variety rows without reference, as the forecast and the alerts list them. */
+        List<VarietyWithoutReference> varietiesWithoutReference() {
+            return plantedWithoutReference.stream()
+                    .map(planted -> new VarietyWithoutReference(planted.variety().getFarmId(),
+                            planted.variety().getBlockCode(), planted.variety().getName(), planted.treeCount()))
+                    .toList();
+        }
     }
 
     /**
@@ -60,9 +68,21 @@ public class YieldForecastService {
      * @param variety      the variety row
      * @param plantingDate date of its oldest PLANTING event
      * @param treeCount    its current number of trees, above 0
-     * @param reference    its agronomic reference
+     * @param reference    its agronomic reference, {@code null} for a row of
+     *                     {@link ForecastBasis#plantedWithoutReference()}
      */
     record PlantedVariety(Variety variety, LocalDate plantingDate, int treeCount, VarietyReference reference) {
+    }
+
+    /**
+     * The expected yield of a planted variety row in one month, with what it
+     * is computed from.
+     *
+     * @param phase      growth phase of the trees on the first day of the month, with its share
+     * @param monthShare share of the year's harvest picked in the month, 0 outside the season
+     * @param expectedKg expected yield, rounded to 0.1 kg, possibly 0
+     */
+    record MonthExpectation(PhaseOfMonth phase, double monthShare, double expectedKg) {
     }
 
     /**
@@ -137,8 +157,7 @@ public class YieldForecastService {
         List<Entry> entries = new ArrayList<>();
         for (PlantedVariety planted : basis.plantedVarieties()) {
             for (YearMonth month : window) {
-                entry(month, planted.variety(), planted.treeCount(), planted.plantingDate(), planted.reference(),
-                        basis.sharesByPhase()).ifPresent(entries::add);
+                entry(month, planted, basis.sharesByPhase()).ifPresent(entries::add);
             }
         }
         // A stable sort: within a month, the entries keep the block, then name, order of the plantings.
@@ -158,11 +177,12 @@ public class YieldForecastService {
      * Reads what the forecast is computed from: the planted variety rows
      * matching the filters, each with its current number of trees and its
      * agronomic reference, and the yield share in effect of each growth phase.
-     * The plant alerts read it too, so that a harvest alert says what the
-     * forecast says.
+     * The plant alerts, the yield comparison, the harvest status and the
+     * overview read it too, so that they say what the forecast says.
      *
      * <p>A variety row with no tree left is left out: nothing to harvest. A
-     * variety row whose name is not in the reference is listed apart.
+     * variety row whose name is not in the reference is listed apart, with its
+     * planting date and its trees.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
      * @param blockCode raw block value as stored (for example {@code "A"}),
@@ -178,7 +198,7 @@ public class YieldForecastService {
                 .collect(Collectors.toMap(GrowthPhaseYieldShareResponse::growthPhase, share -> share));
 
         List<PlantedVariety> plantedVarieties = new ArrayList<>();
-        List<VarietyWithoutReference> varietiesWithoutReference = new ArrayList<>();
+        List<PlantedVariety> plantedWithoutReference = new ArrayList<>();
         for (PopulationEvent planting : plantings) {
             Variety variety = planting.getVariety();
             Integer treeCount = treeCounts.get(variety.getId());
@@ -188,13 +208,12 @@ public class YieldForecastService {
             }
             Optional<VarietyReference> reference = VarietyReferenceMatcher.find(variety.getName(), references);
             if (reference.isEmpty()) {
-                varietiesWithoutReference.add(new VarietyWithoutReference(
-                        variety.getFarmId(), variety.getBlockCode(), variety.getName(), treeCount));
+                plantedWithoutReference.add(new PlantedVariety(variety, planting.getEventDate(), treeCount, null));
                 continue;
             }
             plantedVarieties.add(new PlantedVariety(variety, planting.getEventDate(), treeCount, reference.get()));
         }
-        return new ForecastBasis(plantedVarieties, varietiesWithoutReference, sharesByPhase);
+        return new ForecastBasis(plantedVarieties, plantedWithoutReference, sharesByPhase);
     }
 
     /**
@@ -223,27 +242,50 @@ public class YieldForecastService {
     }
 
     /**
-     * Expected yield of one variety row in one month, from the growth phase of
-     * its trees on the first day of the month. Trees planted after that day
-     * give nothing that month.
+     * Expected yield of a planted variety row in one month, from the growth
+     * phase of its trees on the first day of the month: the rule of the
+     * forecast, which the yield comparison follows too.
      *
-     * @return the entry, or empty when the expected yield rounds to zero
+     * @param month         the month
+     * @param planted       a planted variety row with its agronomic reference
+     * @param sharesByPhase yield share in effect of every growth phase, by phase label
+     * @return the expected yield, possibly 0, or empty when the trees are
+     *         planted after the first day of the month: they give nothing that month
      */
-    private static Optional<Entry> entry(YearMonth month, Variety variety, int treeCount, LocalDate plantingDate,
-                                         VarietyReference reference,
-                                         Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
-        PhaseOfMonth phase = phaseAtStartOf(month, plantingDate, sharesByPhase);
+    static Optional<MonthExpectation> expectationIn(YearMonth month, PlantedVariety planted,
+                                                    Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
+        PhaseOfMonth phase = phaseAtStartOf(month, planted.plantingDate(), sharesByPhase);
         if (phase == null) {
             return Optional.empty();
         }
-        GrowthPhaseYieldShareResponse phaseShare = phase.share();
+        VarietyReference reference = planted.reference();
         double monthShare = YieldForecastCalculator.monthShare(
                 month, reference.getHarvestStartMonth(), reference.getHarvestEndMonth());
         double expectedKg = YieldForecastCalculator.expectedKg(
-                treeCount, reference.getYieldPerTreeKg(), phaseShare.yieldShare(), monthShare);
-        if (expectedKg <= 0) {
+                planted.treeCount(), reference.getYieldPerTreeKg(), phase.share().yieldShare(), monthShare);
+        return Optional.of(new MonthExpectation(phase, monthShare, expectedKg));
+    }
+
+    /**
+     * The forecast entry of one variety row in one month.
+     *
+     * @return the entry, or empty when the trees give nothing that month or the
+     *         expected yield rounds to zero
+     */
+    private static Optional<Entry> entry(YearMonth month, PlantedVariety planted,
+                                         Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
+        Optional<MonthExpectation> found = expectationIn(month, planted, sharesByPhase);
+        if (found.isEmpty() || found.get().expectedKg() <= 0) {
             return Optional.empty();
         }
+        MonthExpectation expectation = found.get();
+        PhaseOfMonth phase = expectation.phase();
+        GrowthPhaseYieldShareResponse phaseShare = phase.share();
+        Variety variety = planted.variety();
+        VarietyReference reference = planted.reference();
+        int treeCount = planted.treeCount();
+        double monthShare = expectation.monthShare();
+        double expectedKg = expectation.expectedKg();
         return Optional.of(new Entry(
                 month,
                 variety.getFarmId(),

@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementT
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerProduct;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
+import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.LastPurchase;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.MovementTotal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,6 +129,50 @@ public class FertilizerMovementRepositoryTest {
         movement(urea, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "50");
         // Act & Assert
         assertTrue(fertilizerMovementRepository.findMovementTotals(List.of(npk.getId(), compost.getId())).isEmpty());
+    }
+
+    /** The last purchase dates, by fertilizer identifier. */
+    private Map<Long, LocalDate> lastPurchaseDates(Long... productIds) {
+        return fertilizerMovementRepository.findLastPurchaseDates(List.of(productIds)).stream()
+                .collect(Collectors.toMap(LastPurchase::getProductId, LastPurchase::getLastDate));
+    }
+
+    @Test
+    void findLastPurchaseDates_shouldGiveTheLatestPurchaseDateOfEachFertilizer() {
+        // Arrange: the second NPK purchase is saved last but dated before the first one
+        FertilizerProduct npk = product("NPK 15-15-15");
+        FertilizerProduct urea = product("Urea");
+        movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2027, 4, 12), "100");
+        movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2027, 3, 1), "50");
+        movement(urea, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "12.5");
+        // Act & Assert
+        assertEquals(Map.of(npk.getId(), LocalDate.of(2027, 4, 12), urea.getId(), LocalDate.of(2026, 6, 1)),
+                lastPurchaseDates(npk.getId(), urea.getId()));
+    }
+
+    @Test
+    void findLastPurchaseDates_shouldCountPurchasesOnly() {
+        // Arrange: every other type dated after the purchase
+        FertilizerProduct npk = product("NPK 15-15-15");
+        movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2027, 4, 12), "300");
+        application(npk, LocalDate.of(2027, 5, 2), 1, "A");
+        movement(npk, FertilizerMovementType.LOSS, LocalDate.of(2027, 5, 3), "10");
+        movement(npk, FertilizerMovementType.ADJUSTMENT_IN, LocalDate.of(2027, 5, 4), "5");
+        movement(npk, FertilizerMovementType.ADJUSTMENT_OUT, LocalDate.of(2027, 5, 5), "5");
+        // Act & Assert
+        assertEquals(Map.of(npk.getId(), LocalDate.of(2027, 4, 12)), lastPurchaseDates(npk.getId()));
+    }
+
+    @Test
+    void findLastPurchaseDates_shouldLeaveOutFertilizersNeverBoughtOrNotAskedFor() {
+        // Arrange: compost only applied, urea bought but not asked for
+        FertilizerProduct npk = product("NPK 15-15-15");
+        FertilizerProduct compost = product("Compost");
+        FertilizerProduct urea = product("Urea");
+        application(compost, LocalDate.of(2027, 5, 2), 1, "A");
+        movement(urea, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "50");
+        // Act & Assert
+        assertTrue(lastPurchaseDates(npk.getId(), compost.getId()).isEmpty());
     }
 
     @Test

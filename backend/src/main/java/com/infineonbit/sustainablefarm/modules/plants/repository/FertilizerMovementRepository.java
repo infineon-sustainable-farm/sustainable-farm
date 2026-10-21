@@ -39,6 +39,29 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
     List<MovementTotal> findMovementTotals(@Param("productIds") Collection<Long> productIds);
 
     /**
+     * Date of the most recent purchase of each given fertilizer.
+     *
+     * <p>The latest purchase date, not the latest entry: a purchase recorded late
+     * with an earlier date does not move it. Only PURCHASE counts; an adjustment
+     * after a count is a correction, not a restock. Computed on every read, never
+     * stored. One query serves a whole list of fertilizers.
+     *
+     * <p>A fertilizer never bought has no line in the result.
+     *
+     * @param productIds identifiers of the fertilizers, not empty
+     * @return one date per fertilizer that has at least one purchase
+     */
+    @Query("""
+            SELECT m.product.id AS productId,
+                   MAX(m.movementDate) AS lastDate
+            FROM FertilizerMovement m
+            WHERE m.product.id IN :productIds
+              AND m.movementType = com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType.PURCHASE
+            GROUP BY m.product.id
+            """)
+    List<LastPurchase> findLastPurchaseDates(@Param("productIds") Collection<Long> productIds);
+
+    /**
      * Returns the movements matching the given filters, with their fertilizer.
      *
      * <p>Every parameter is optional: a {@code null} parameter disables its own
@@ -85,5 +108,13 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
         FertilizerMovementType getMovementType();
 
         BigDecimal getTotal();
+    }
+
+    /** Date of the most recent purchase of one fertilizer, as returned by {@link #findLastPurchaseDates}. */
+    interface LastPurchase {
+
+        Long getProductId();
+
+        LocalDate getLastDate();
     }
 }

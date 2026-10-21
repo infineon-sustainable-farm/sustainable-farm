@@ -128,6 +128,35 @@ final class PlantAlertCalculator {
         return window;
     }
 
+    /**
+     * The harvest window of a variety on a day, however far ahead: the season
+     * under way, or the first season after it with a month in which the trees
+     * give a yield. It is the window of {@link #harvestWindow} whenever that
+     * one exists; when the trees are too young for the next season too, the
+     * search goes on, one season at a time.
+     *
+     * @param today      the day
+     * @param startMonth first month of the season, 1 to 12
+     * @param endMonth   last month of the season, 1 to 12
+     * @param productive whether the trees give a yield in a month, as the forecast decides it
+     * @param lastToTry  whether no later season can give a yield if this one gives none, for
+     *                   example because the trees are in their last growth phase from its first
+     *                   day; it must hold for some season, or the search does not end
+     * @return the window, which never ends before the day, or empty when no season gives a yield
+     */
+    static Optional<HarvestWindow> firstHarvestWindow(LocalDate today, int startMonth, int endMonth,
+                                                      Predicate<YearMonth> productive,
+                                                      Predicate<Season> lastToTry) {
+        Season season = currentOrNextSeason(today, startMonth, endMonth);
+        while (true) {
+            Optional<HarvestWindow> window = firstProductive(season, productive);
+            if (window.isPresent() || lastToTry.test(season)) {
+                return window;
+            }
+            season = nextYear(season);
+        }
+    }
+
     private static Optional<HarvestWindow> firstProductive(Season season, Predicate<YearMonth> productive) {
         return season.months().stream()
                 .filter(productive)

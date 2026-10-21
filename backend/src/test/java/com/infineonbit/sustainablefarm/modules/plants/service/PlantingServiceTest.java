@@ -57,8 +57,8 @@ public class PlantingServiceTest {
     /** The seeded Zalka 2025 variety row, as the dev profile loads it. */
     private static Variety zalkaKeitt() {
         return new Variety(
-                1L, null, "Keitt", 200, 8.0, 8.0, null, 44000.0,
-                null, null, "A", null, "Zalka_2025", null, null);
+                1L, null, "Keitt", 200, 8.0, 8.0, null,
+                null, "A", null, "Zalka_2025", null, null);
     }
 
     private static GrowthCalendar calendar(String block, LocalDate plantingDate, String precision, String source) {
@@ -120,8 +120,6 @@ public class PlantingServiceTest {
         assertNull(variety.getRowSpacingM());
         assertNull(variety.getTreeSpacingM());
         assertNull(variety.getTreeDensityPerHa());
-        assertNull(variety.getExpectedYieldKg());
-        assertNull(variety.getActualYieldKg());
         assertNull(variety.getVigor());
         assertNull(variety.getPlantOrigin());
         // Assert: the calendar row of the block

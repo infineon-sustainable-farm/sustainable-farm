@@ -5,7 +5,8 @@ import jakarta.validation.constraints.Min;
 
 /**
  * How many days ahead the plant alerts announce a harvest season, bound from
- * the {@code withinDays} query parameter.
+ * the {@code withinDays} query parameter. The harvest status takes it the same
+ * way: a variety is ripe that many days before its harvest window.
  *
  * <p>A record validated with {@code @Valid}, as {@link YieldForecastMonths}:
  * the core handler answers a failed record with a 400 whose
