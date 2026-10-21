@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
+  /* Shared fonts */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Shared base tokens used across all modules (machinery, plants, shared components).
-     Kept alongside the FenceLine scale below; do not remove without a team decision. */
+  /* Shared Sustainable Farm colors */
   --color-primary: #0a8276;
   --color-primary-dark: #065e55;
   --color-accent: #0fa396;
@@ -20,6 +20,7 @@
   --color-error: #c1503f;
   --color-info: #3a7ca5;
 
+  /* FenceLine palette */
   --color-primary-900: #05453f;
   --color-primary-800: #075b52;
   --color-primary-700: #086960;
@@ -46,56 +47,201 @@
   --color-sec-red: #c62828;
   --color-sec-green: #4caf50;
 
-  --shadow-card: 0 1px 2px rgba(10, 130, 118, 0.04), 0 10px 30px -14px rgba(10, 130, 118, 0.12);
+  --shadow-card: 0 1px 2px rgba(10, 130, 118, 0.04),
+    0 10px 30px -14px rgba(10, 130, 118, 0.12);
   --shadow-pop: 0 24px 60px -20px rgba(10, 130, 118, 0.35);
+
+  /* Sales & Marketing theme */
+  --color-primary-container: #0a8276;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #edfffa;
+
+  --color-primary-fixed: #93f4e5;
+  --color-primary-fixed-dim: #77d7c9;
+  --color-on-primary-fixed: #00201c;
+  --color-on-primary-fixed-variant: #005048;
+
+  --color-secondary: #9c4400;
+  --color-secondary-container: #fd7613;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #5b2500;
+
+  --color-secondary-fixed: #ffdbca;
+  --color-secondary-fixed-dim: #ffb68f;
+
+  --color-tertiary: #8e472c;
+  --color-tertiary-container: #ac5f42;
+  --color-on-tertiary: #ffffff;
+
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  --color-background: #f8f9ff;
+  --color-on-background: #0b1c30;
+
+  --color-surface: #f8f9ff;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #3e4947;
+
+  --color-surface-bright: #f8f9ff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-variant: #d3e4fe;
+
+  --color-surface-container: #e5eeff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+
+  --color-outline: #6e7a77;
+  --color-outline-variant: #bdc9c6;
+
+  --color-inverse-surface: #213145;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-inverse-primary: #77d7c9;
+
+  /* Sales & Marketing typography */
+  --font-inter: "Inter", sans-serif;
+  --font-montserrat: "Montserrat", sans-serif;
+
+  /* Shared spacing */
+  --spacing-sm: 8px;
+  --spacing-gutter: 24px;
+  --spacing-margin-desktop: 32px;
+  --spacing-margin-mobile: 16px;
+  --spacing-unit: 4px;
+  --spacing-xs: 4px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+/* Shared base styles */
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: var(--font-inter);
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 }
 
-body {
-  background-color: #f4f6f9;
-  color: #334155;
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
+/* Text selection */
 ::selection {
   background: rgba(178, 58, 104, 0.18);
 }
 
-/* --- thin scrollbars --- */
+/* Scrollbars */
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
+
 *::-webkit-scrollbar-thumb {
   background: #d6dbe4;
   border-radius: 8px;
   border: 3px solid #f4f6f9;
 }
+
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* --- svg blueprint helpers --- */
+/* Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 300,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+/* Sales & Marketing typography */
+.font-display-lg {
+  font-family: var(--font-montserrat);
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.font-headline-lg {
+  font-family: var(--font-montserrat);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+}
+
+.font-headline-md {
+  font-family: var(--font-inter);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.font-headline-sm {
+  font-family: var(--font-inter);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.font-body-lg,
+.font-body-md,
+.font-body-sm {
+  font-family: var(--font-inter);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.font-label-md {
+  font-family: var(--font-inter);
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.font-mono-label {
+  font-family: var(--font-inter);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+/* Shared SVG helpers */
 .svg-label {
   font-family: var(--font-mono);
   letter-spacing: 0.14em;
 }
+
 .svg-body {
   font-family: var(--font-sans);
 }
 
+/* FenceLine animations */
 @keyframes fence-sweep {
   to {
     stroke-dashoffset: -1920;
   }
 }
+
 .fence-sweep {
   stroke-dasharray: 110 1810;
   animation: fence-sweep 16s linear infinite;
@@ -106,12 +252,14 @@ body {
     transform: scale(0.6);
     opacity: 0.7;
   }
+
   80%,
   100% {
     transform: scale(2.4);
     opacity: 0;
   }
 }
+
 .gate-ping {
   transform-origin: center;
   transform-box: fill-box;
@@ -123,16 +271,22 @@ body {
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.35;
   }
 }
+
 .status-pulse {
   animation: status-pulse 1.8s ease-in-out infinite;
 }
 
 .bg-dotgrid {
-  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.075) 1px, transparent 1.2px);
+  background-image: radial-gradient(
+    circle,
+    rgba(15, 23, 42, 0.075) 1px,
+    transparent 1.2px
+  );
   background-size: 22px 22px;
   background-position: center;
 }
@@ -143,36 +297,24 @@ body {
     transform: translateY(-4px);
     background-color: var(--color-accent-50);
   }
+
   to {
     opacity: 1;
     transform: none;
   }
 }
+
 .row-in {
   animation: row-in 0.6s ease-out both;
 }
 
-/* ---------------------------------------------------------------------------
-   Shared motion language for the Visitor Management screens.
-
-   Four short, individual-preserving entrances, all driven by opacity and
-   transform so the compositor stays on the fast path (no layout/reflow):
-
-     page-in  – whole-screen entrance on route change (layout-level)
-     fade-up  – sections and cards: fade + very slight rise
-     fade-in  – plain fade (table containers, standalone blocks)
-     vm-row-in – table rows: fade + tiny rise, used by the .vm-table class
-
-   The --animate-* theme tokens expose them to Tailwind as normal
-   `animate-<name>` utilities; the stagger (cards, rows) is applied per item
-   with an inline animation-delay, never with a shared duration plus janky
-   scheduling. ----------------------------------------------------------------- */
-
+/* Visitor Management animations */
 @keyframes page-in {
   from {
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -184,6 +326,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -194,6 +337,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -204,6 +348,7 @@ body {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -215,6 +360,7 @@ body {
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -241,18 +387,12 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
 
-/*
- * Table container: the wrapper fades in, then the first rows are introduced
- * one after another with a light stagger. Only the first dozen rows stagger;
- * any further rows share the last delay so a large table never animates
- * slowly. Opacity-only for rows: a transform would ask some engines to paint
- * a table row off its grid.
- */
 .vm-table tbody tr {
   animation: vm-row-in 0.35s ease-out both;
 }
@@ -297,12 +437,48 @@ body {
   animation-delay: 0.4s;
 }
 
+/* Tailwind animation theme tokens */
 @theme {
   --animate-page-in: page-in 0.4s ease-out both;
   --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-fade-in: fade-in 0.45s ease-out both;
 }
 
+/* Utility compatibility */
+@layer utilities {
+  .max-w-sm {
+    max-width: 24rem;
+  }
+
+  .max-w-md {
+    max-width: 28rem;
+  }
+
+  .max-w-lg {
+    max-width: 32rem;
+  }
+
+  .max-w-xl {
+    max-width: 36rem;
+  }
+
+  .max-w-2xl {
+    max-width: 42rem;
+  }
+}
+
+/* Loading shimmer */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
