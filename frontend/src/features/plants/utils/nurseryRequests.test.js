@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { batchRequestBody, IN_HOUSE, PURCHASED } from "./nurseryRequests";
+import { batchRequestBody, eventRequestBody, IN_HOUSE, PURCHASED } from "./nurseryRequests";
 
 // A form filled in full, including fields a purchase only would send.
 const FILLED_FORM = {
@@ -60,5 +60,24 @@ describe("batchRequestBody", () => {
             "supplierLotNumber",
             "varietyName",
         ]);
+    });
+});
+
+describe("eventRequestBody", () => {
+    // An event form whose fields of every event are filled, as after switching events.
+    const EVENT_FORM = { date: "2026-10-18", stage: "GRAFTED", quantity: " 12 ", reason: "Graft failure", blockCode: "e" };
+
+    it("names the date after each event and sends that event's fields only", () => {
+        expect(eventRequestBody("STAGE_CHANGE", EVENT_FORM)).toEqual({ changedOn: "2026-10-18", stage: "GRAFTED" });
+        expect(eventRequestBody("LOSS", EVENT_FORM)).toEqual({
+            lostOn: "2026-10-18",
+            quantity: 12,
+            reason: "Graft failure",
+        });
+        expect(eventRequestBody("TRANSPLANT", EVENT_FORM)).toEqual({
+            transplantedOn: "2026-10-18",
+            quantity: 12,
+            blockCode: "e",
+        });
     });
 });

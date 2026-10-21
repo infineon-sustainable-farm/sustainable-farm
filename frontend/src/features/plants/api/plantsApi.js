@@ -358,6 +358,33 @@ export function createNurseryBatch(body) {
 }
 
 /**
+ * Records that a batch reached a stage. The API answers 422 for a date before
+ * the start of the batch or its last stage change, and for the stage the
+ * batch is already at.
+ */
+export function createNurseryStageChange(batchId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.NURSERY_BATCHES}/${batchId}/stage-changes`, body);
+}
+
+/**
+ * Records plants of a batch lost. The API answers 422 for a date before the
+ * start of the batch, and for more plants than are left.
+ */
+export function createNurseryLoss(batchId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.NURSERY_BATCHES}/${batchId}/losses`, body);
+}
+
+/**
+ * Transplants plants of a batch onto a block. In the same transaction the API
+ * records the planting of the batch's variety on that block; it answers 409
+ * when that variety is already planted there, and 422 for a date before the
+ * start of the batch or more plants than are left.
+ */
+export function createNurseryTransplant(batchId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.NURSERY_BATCHES}/${batchId}/transplants`, body);
+}
+
+/**
  * Fetches the nursery events, optionally filtered, by date: stage changes,
  * losses and transplants. Same filter rules as fetchVarieties; `eventType` is
  * the API code ("LOSS"), and `from` and `to` are "YYYY-MM-DD" dates, both

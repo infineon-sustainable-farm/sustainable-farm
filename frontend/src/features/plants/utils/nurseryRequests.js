@@ -38,3 +38,33 @@ export function batchRequestBody(values) {
     if (values.plannedBlockCode.trim()) body.plannedBlockCode = values.plannedBlockCode;
     return body;
 }
+
+/** The events a batch can record, as the API names them. */
+export const NURSERY_EVENT_TYPES = ["STAGE_CHANGE", "LOSS", "TRANSPLANT"];
+
+/** Each API route names the date after its event. */
+export const EVENT_DATE_FIELDS = {
+    STAGE_CHANGE: "changedOn",
+    LOSS: "lostOn",
+    TRANSPLANT: "transplantedOn",
+};
+
+/**
+ * Body of a stage change, a loss or a transplant, from the values of the
+ * event form: the date under the name its route gives it, and the fields of
+ * that event only, whatever the fields of another event still hold.
+ */
+export function eventRequestBody(eventType, values) {
+    const body = { [EVENT_DATE_FIELDS[eventType]]: values.date };
+    if (eventType === "STAGE_CHANGE") {
+        body.stage = values.stage;
+    } else {
+        body.quantity = Number(values.quantity.trim());
+        if (eventType === "LOSS") {
+            body.reason = values.reason;
+        } else {
+            body.blockCode = values.blockCode;
+        }
+    }
+    return body;
+}

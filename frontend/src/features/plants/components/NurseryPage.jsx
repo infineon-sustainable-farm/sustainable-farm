@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useAddNurseryBatch } from "../hooks/useAddNurseryBatch";
 import { useNurseryPlannedBlocks } from "../hooks/useNurseryBatches";
+import { useRecordNurseryEvent } from "../hooks/useRecordNurseryEvent";
 import AddNurseryBatchModal from "./AddNurseryBatchModal";
 import BlockFilter from "./BlockFilter";
 import NurseryAlertsSection from "./NurseryAlertsSection";
 import NurseryBatchesSection from "./NurseryBatchesSection";
 import NurseryHistorySection from "./NurseryHistorySection";
+import RecordNurseryEventModal from "./RecordNurseryEventModal";
 
 function AddBatchButton({ onClick }) {
     return (
@@ -17,6 +19,19 @@ function AddBatchButton({ onClick }) {
         >
             <Plus size={16} />
             Add a batch
+        </button>
+    );
+}
+
+function RecordEventButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+            <Plus size={16} />
+            Record an event
         </button>
     );
 }
@@ -34,6 +49,7 @@ export default function NurseryPage() {
     // Raw stored block value ("E"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
     const [isAddingBatch, setIsAddingBatch] = useState(false);
+    const [isRecordingEvent, setIsRecordingEvent] = useState(false);
 
     useEffect(() => {
         document.title = "Nursery — Plants";
@@ -41,6 +57,7 @@ export default function NurseryPage() {
 
     const { data: blocks, isPending: isLoadingBlocks, isError: hasBlocksError } = useNurseryPlannedBlocks();
     const addBatch = useAddNurseryBatch();
+    const recordEvent = useRecordNurseryEvent();
 
     function openBatchForm() {
         addBatch.reset();
@@ -54,6 +71,20 @@ export default function NurseryPage() {
 
     function submitBatch(batch) {
         addBatch.mutate(batch, { onSuccess: closeBatchForm });
+    }
+
+    function openEventForm() {
+        recordEvent.reset();
+        setIsRecordingEvent(true);
+    }
+
+    function closeEventForm() {
+        recordEvent.reset();
+        setIsRecordingEvent(false);
+    }
+
+    function submitEvent(nurseryEvent) {
+        recordEvent.mutate(nurseryEvent, { onSuccess: closeEventForm });
     }
 
     return (
@@ -75,6 +106,7 @@ export default function NurseryPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <AddBatchButton onClick={openBatchForm} />
+                        <RecordEventButton onClick={openEventForm} />
                     </div>
                 </header>
 
@@ -103,6 +135,16 @@ export default function NurseryPage() {
                     onSubmit={submitBatch}
                     onResetError={addBatch.reset}
                     onClose={closeBatchForm}
+                />
+            )}
+
+            {isRecordingEvent && (
+                <RecordNurseryEventModal
+                    isSubmitting={recordEvent.isPending}
+                    error={recordEvent.error}
+                    onSubmit={submitEvent}
+                    onResetError={recordEvent.reset}
+                    onClose={closeEventForm}
                 />
             )}
         </div>
