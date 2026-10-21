@@ -7,6 +7,7 @@ import BlockFilter from "./BlockFilter";
 import RecordPlantingModal from "./RecordPlantingModal";
 import VarietiesTable from "./VarietiesTable";
 import VarietyDetailModal from "./VarietyDetailModal";
+import YieldComparisonSection from "./YieldComparisonSection";
 
 function RecordPlantingButton({ onClick }) {
     return (
@@ -125,6 +126,8 @@ export default function VarietiesPage() {
                 {!isPending && !isError && varieties.length > 0 && (
                     <VarietiesTable varieties={varieties} onSelect={setSelectedVariety} />
                 )}
+
+                <YieldComparisonSection blockCode={selectedBlock || null} />
             </div>
 
             {selectedVariety && (
