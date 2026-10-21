@@ -71,7 +71,13 @@ export function createStorageEntry(entry) {
 }
 
 export function createStockMovement(movement) {
-    return apiClient.post(ENDPOINTS.STOCK_MOVEMENTS, movement);
+    const { batchId, movementType, targetZoneId, ...fields } = movement;
+    return apiClient.post(ENDPOINTS.STOCK_MOVEMENTS, {
+        ...fields,
+        type: movementType,
+        batch: { id: Number(batchId) },
+        ...(targetZoneId ? { toZone: { id: Number(targetZoneId) } } : {}),
+    });
 }
 
 export function fetchStockMovements() {
