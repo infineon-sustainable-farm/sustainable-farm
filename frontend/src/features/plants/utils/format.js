@@ -135,6 +135,18 @@ export function formatDate(value) {
     return `${day}/${month}/${year}`;
 }
 
+/**
+ * Days left before a date, as counted by the API: "in 1 day", "in 1,076 days".
+ * Null on the day itself or once it has passed, when there is nothing left to
+ * wait for.
+ */
+export function formatDaysAhead(days) {
+    if (isMissing(days)) return null;
+    const count = Number(days);
+    if (!Number.isInteger(count) || count <= 0) return null;
+    return `in ${count.toLocaleString("en-US")} ${count === 1 ? "day" : "days"}`;
+}
+
 /** A "YYYY-MM" month as the first day of that month in UTC, or null if malformed. */
 function parseMonth(value) {
     if (isMissing(value)) return null;
