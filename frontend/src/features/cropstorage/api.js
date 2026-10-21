@@ -14,7 +14,12 @@ const ENDPOINTS = {
 };
 
 export function createBatch(batch) {
-    return apiClient.post(ENDPOINTS.BATCHES, batch);
+    const { supplierId, storageZoneId, ...fields } = batch;
+    return apiClient.post(ENDPOINTS.BATCHES, {
+        ...fields,
+        ...(supplierId ? { supplier: { id: Number(supplierId) } } : {}),
+        ...(storageZoneId ? { storageZone: { id: Number(storageZoneId) } } : {}),
+    });
 }
 
 export function fetchBatches() {

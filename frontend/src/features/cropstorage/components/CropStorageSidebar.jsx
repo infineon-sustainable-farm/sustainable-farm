@@ -1,6 +1,12 @@
 import { useState } from "react";
-import { Menu, Warehouse, X } from "lucide-react";
+import { Boxes, MapPinned, Menu, Warehouse, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
+
+const NAV_ITEMS = [
+    { label: "Crop Storage", path: "/cropstorage", icon: Warehouse, end: true },
+    { label: "Zones", path: "/cropstorage/zones", icon: MapPinned },
+    { label: "Batches", path: "/cropstorage/batches", icon: Boxes },
+];
 
 const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";
 
@@ -40,12 +46,14 @@ export default function CropStorageSidebar() {
                 <div className="my-4 h-px w-full bg-white/20" />
 
                 <ul className="flex flex-col gap-1">
-                    <li>
-                        <NavLink to="/cropstorage" end className={linkStyles}>
-                            <Warehouse size={17} className="shrink-0" />
-                            Crop Storage
-                        </NavLink>
-                    </li>
+                    {NAV_ITEMS.map(({ label, path, icon: Icon, end }) => (
+                        <li key={path}>
+                            <NavLink to={path} end={end} className={linkStyles}>
+                                <Icon size={17} className="shrink-0" />
+                                {label}
+                            </NavLink>
+                        </li>
+                    ))}
                 </ul>
             </nav>
         </>
