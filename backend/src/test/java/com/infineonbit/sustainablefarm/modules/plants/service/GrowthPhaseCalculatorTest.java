@@ -94,4 +94,12 @@ public class GrowthPhaseCalculatorTest {
                         new GrowthPhase("FULL_PRODUCTION", "full production", "6+ yrs")),
                 GrowthPhaseCalculator.phases());
     }
+
+    @Test
+    void lastPhaseFirstCompletedYear_shouldBeTheFirstYearOfFullProduction() {
+        // Act & Assert: from that age on, the phase never changes
+        assertEquals(6, GrowthPhaseCalculator.lastPhaseFirstCompletedYear());
+        assertEquals("full production", GrowthPhaseCalculator.computePhase(Period.of(6, 0, 0)));
+        assertEquals("gradual production", GrowthPhaseCalculator.computePhase(Period.of(5, 11, 30)));
+    }
 }

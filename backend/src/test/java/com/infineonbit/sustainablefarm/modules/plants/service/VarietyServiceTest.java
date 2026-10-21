@@ -63,7 +63,7 @@ public class VarietyServiceTest {
     }
 
     /**
-     * The only real row of the project: Zalka 2025. The four undocumented
+     * The only real row of the project: Zalka 2025. The three undocumented
      * fields stay null here too, so the tests also pin down that the service
      * does not invent a value for them.
      */
@@ -75,8 +75,6 @@ public class VarietyServiceTest {
                 200,
                 8.0,
                 8.0,
-                null,
-                44000.0,
                 null,
                 null,
                 "A",
@@ -97,7 +95,7 @@ public class VarietyServiceTest {
         assertEquals("Keitt", varietyResponses.get(0).name());
         assertEquals("A", varietyResponses.get(0).blockCode());
         assertEquals(200, varietyResponses.get(0).treeCount());
-        assertNull(varietyResponses.get(0).actualYieldKg());
+        assertNull(varietyResponses.get(0).treeDensityPerHa());
         assertNull(varietyResponses.get(0).vigor());
     }
 
@@ -121,7 +119,7 @@ public class VarietyServiceTest {
         // Assert
         assertEquals(1L, varietyResponse.id());
         assertEquals("Keitt", varietyResponse.name());
-        assertEquals(44000.0, varietyResponse.expectedYieldKg());
+        assertEquals(8.0, varietyResponse.rowSpacingM());
         assertEquals("Zalka_2025", varietyResponse.source());
     }
 

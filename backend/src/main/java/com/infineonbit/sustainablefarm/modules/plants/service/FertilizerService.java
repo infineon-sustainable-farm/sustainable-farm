@@ -8,6 +8,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.exception.FertilizerNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.LastPurchase;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerProductRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -53,14 +56,16 @@ public class FertilizerService {
     }
 
     /**
-     * Maps a stored fertilizer and its stock to its API representation. The
-     * exact decimals of the database are sent as JSON numbers.
+     * Maps a stored fertilizer, its stock and its last purchase to its API
+     * representation. The exact decimals of the database are sent as JSON numbers.
      *
-     * @param product the stored fertilizer
-     * @param stock   its current stock, 0 when it has no movement
+     * @param product          the stored fertilizer
+     * @param stock            its current stock, 0 when it has no movement
+     * @param lastPurchaseDate date of its most recent purchase, or {@code null} when it was never bought
      * @return the API representation of that fertilizer
      */
-    private static FertilizerResponse toResponse(FertilizerProduct product, BigDecimal stock) {
+    private static FertilizerResponse toResponse(FertilizerProduct product, BigDecimal stock,
+                                                 LocalDate lastPurchaseDate) {
         BigDecimal threshold = product.getReorderThreshold();
         return new FertilizerResponse(
                 product.getId(),
@@ -71,8 +76,20 @@ public class FertilizerService {
                 threshold == null ? null : threshold.doubleValue(),
                 stock.doubleValue(),
                 FertilizerStockCalculator.belowThreshold(stock, threshold),
+                lastPurchaseDate,
                 product.getSource(),
                 product.getLastUpdated());
+    }
+
+    /**
+     * Date of the most recent purchase of each given fertilizer, from one query.
+     *
+     * @param productIds identifiers of the fertilizers, not empty
+     * @return the date by fertilizer identifier; a fertilizer never bought is absent
+     */
+    private Map<Long, LocalDate> lastPurchaseDates(List<Long> productIds) {
+        return fertilizerMovementRepository.findLastPurchaseDates(productIds).stream()
+                .collect(Collectors.toMap(LastPurchase::getProductId, LastPurchase::getLastDate));
     }
 
     /**
@@ -84,7 +101,7 @@ public class FertilizerService {
      * in SQL would depend on the database.
      *
      * @param request the fertilizer, already validated
-     * @return the created fertilizer, with a stock of 0
+     * @return the created fertilizer, with a stock of 0 and no purchase
      * @throws ConflictException if a fertilizer with the same name exists
      */
     @Transactional
@@ -116,12 +133,13 @@ public class FertilizerService {
                 : BigDecimal.valueOf(request.reorderThreshold()));
         product.setSource(USER_ENTRY_SOURCE);
         product.setLastUpdated(now);
-        return toResponse(fertilizerProductRepository.save(product), BigDecimal.ZERO);
+        return toResponse(fertilizerProductRepository.save(product), BigDecimal.ZERO, null);
     }
 
     /**
-     * Retrieves the whole catalogue, each fertilizer with its current stock.
-     * The stocks of every fertilizer come from one query.
+     * Retrieves the whole catalogue, each fertilizer with its current stock and
+     * the date of its last purchase. The stocks of every fertilizer come from
+     * one query, and the purchase dates from another.
      *
      * @return the fertilizers ordered by name, possibly empty
      */
@@ -130,16 +148,18 @@ public class FertilizerService {
         if (products.isEmpty()) {
             return List.of();
         }
+        List<Long> ids = products.stream().map(FertilizerProduct::getId).toList();
         Map<Long, BigDecimal> stocks = FertilizerStockCalculator.stocksByProduct(
-                fertilizerMovementRepository.findMovementTotals(
-                        products.stream().map(FertilizerProduct::getId).toList()));
+                fertilizerMovementRepository.findMovementTotals(ids));
+        Map<Long, LocalDate> lastPurchaseDates = lastPurchaseDates(ids);
         return products.stream()
-                .map(product -> toResponse(product, stocks.getOrDefault(product.getId(), BigDecimal.ZERO)))
+                .map(product -> toResponse(product, stocks.getOrDefault(product.getId(), BigDecimal.ZERO),
+                        lastPurchaseDates.get(product.getId())))
                 .toList();
     }
 
     /**
-     * Retrieves one fertilizer with its current stock.
+     * Retrieves one fertilizer with its current stock and the date of its last purchase.
      *
      * @param id the fertilizer identifier
      * @return the fertilizer
@@ -150,6 +170,6 @@ public class FertilizerService {
                 .orElseThrow(() -> new FertilizerNotFoundException(id));
         BigDecimal stock = FertilizerStockCalculator.stockOf(id,
                 fertilizerMovementRepository.findMovementTotals(List.of(id)));
-        return toResponse(product, stock);
+        return toResponse(product, stock, lastPurchaseDates(List.of(id)).get(id));
     }
 }

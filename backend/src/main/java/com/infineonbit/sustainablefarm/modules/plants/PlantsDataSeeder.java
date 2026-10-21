@@ -23,10 +23,12 @@ import org.springframework.stereotype.Component;
  * never duplicates rows.
  *
  * <p>The row below is the only real data available: the Zalka 2025 study.
- * The four fields it does not document (densite_arbres_ha, rendement_reel_kg,
- * vigueur, origine_plant) are left NULL on purpose and must not be filled with
- * a default, an average or a zero. The A/B/C/D blocks shown in the visual
- * mock-up are illustration only and are deliberately NOT seeded.
+ * The three fields it does not document (densite_arbres_ha, vigueur,
+ * origine_plant) are left NULL on purpose and must not be filled with a
+ * default, an average or a zero. Its yearly output of 44,000 kg is not seeded
+ * either: it is a scenario figure, which belongs to Scenario Analysis, not to
+ * the orchard. The A/B/C/D blocks shown in the visual mock-up are illustration
+ * only and are deliberately NOT seeded.
  */
 @Component
 @Profile("dev")
@@ -52,10 +54,9 @@ public class PlantsDataSeeder implements CommandLineRunner {
         keitt.setTreeCount(200);
         keitt.setRowSpacingM(8.0);
         keitt.setTreeSpacingM(8.0);
-        keitt.setExpectedYieldKg(44000.0);
         keitt.setBlockCode("A");
         keitt.setSource("Zalka_2025");
-        // treeDensityPerHa, actualYieldKg, vigor, plantOrigin and lastUpdated:
+        // treeDensityPerHa, vigor, plantOrigin and lastUpdated:
         // no source data in the study, left NULL. lastUpdated records when the variety
         // record itself was last revised, which the study does not state; seeding it
         // with the current time would date 2025 data to the day the container started.

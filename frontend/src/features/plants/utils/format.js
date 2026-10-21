@@ -99,6 +99,23 @@ export function formatEur(value) {
         : Number(value).toLocaleString("en-US", { style: "currency", currency: "EUR" });
 }
 
+/** A percentage as computed by the API, with the one decimal it keeps: "92%", "94.5%". */
+export function formatPercent(value) {
+    return isMissing(value)
+        ? NO_VALUE
+        : `${Number(value).toLocaleString("en-US", { maximumFractionDigits: 1 })}%`;
+}
+
+/** Origins of a nursery batch, in the words of the mock-up. */
+const ORIGIN_LABELS = { IN_HOUSE: "In-house production", PURCHASED: "External purchase" };
+
+/** Origin code of a nursery batch, "IN_HOUSE" as "In-house production". An unknown code is shown as received. */
+export function formatOrigin(origin) {
+    if (isMissing(origin)) return NO_VALUE;
+    const code = String(origin).trim();
+    return ORIGIN_LABELS[code] ?? code;
+}
+
 /** Several values are all shown, comma-separated; none is picked. */
 export function formatList(values) {
     if (!Array.isArray(values)) return NO_VALUE;

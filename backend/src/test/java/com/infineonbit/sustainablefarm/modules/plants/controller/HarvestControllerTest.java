@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.service.HarvestService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -56,11 +57,17 @@ public class HarvestControllerTest {
     /** Common part of every 4xx body: the application-wide ApiError envelope. */
     private static void assertApiError(ResultActions result, int status, String error, String message)
             throws Exception {
+        assertApiError(result, status, error, message, URL);
+    }
+
+    /** Same envelope, for a request to the given path, such as one harvest. */
+    private static void assertApiError(ResultActions result, int status, String error, String message, String path)
+            throws Exception {
         result.andExpect(status().is(status))
                 .andExpect(jsonPath("$.status").value(status))
                 .andExpect(jsonPath("$.error").value(error))
                 .andExpect(jsonPath("$.message").value(message))
-                .andExpect(jsonPath("$.path").value("uri=" + URL))
+                .andExpect(jsonPath("$.path").value("uri=" + path))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
@@ -208,5 +215,37 @@ public class HarvestControllerTest {
         assertApiError(result, 400, "Bad Request", "Invalid value for parameter 'from'");
         result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
         verifyNoInteractions(harvestService);
+    }
+
+    @Test
+    void getHarvestById_shouldReturn200WithTheHarvest() throws Exception {
+        // Arrange: a harvest of farm 1, so that no field is null
+        when(harvestService.getHarvestById(200L)).thenReturn(new HarvestResponse(200L, 1, "B", 10L, "Keitt",
+                LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW));
+        // Act
+        ResultActions result = mockMvc.perform(get(URL + "/200"));
+        // Assert: every field of the harvest, and no other
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$", aMapWithSize(9)))
+                .andExpect(jsonPath("$.id").value(200))
+                .andExpect(jsonPath("$.farmId").value(1))
+                .andExpect(jsonPath("$.blockCode").value("B"))
+                .andExpect(jsonPath("$.varietyId").value(10))
+                .andExpect(jsonPath("$.varietyName").value("Keitt"))
+                .andExpect(jsonPath("$.harvestDate").value("2026-06-10"))
+                .andExpect(jsonPath("$.quantityKg").value(800.0))
+                .andExpect(jsonPath("$.source").value("user_entry"))
+                .andExpect(jsonPath("$.lastUpdated").value("2026-09-24T10:00:00Z"));
+    }
+
+    @Test
+    void getHarvestById_shouldReturn404WithApiError_whenTheHarvestIsUnknown() throws Exception {
+        // Arrange
+        when(harvestService.getHarvestById(999L)).thenThrow(new HarvestNotFoundException(999L));
+        // Act
+        ResultActions result = mockMvc.perform(get(URL + "/999"));
+        // Assert
+        assertApiError(result, 404, "Not Found", "Harvest with ID 999 not found", URL + "/999");
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
     }
 }

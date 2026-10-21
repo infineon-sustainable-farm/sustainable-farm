@@ -15,4 +15,12 @@ export const PLANTS_ENDPOINTS = {
     EUR_XOF_RATE: "/api/plants/currency-rates/EUR/XOF",
     VARIETY_REFERENCES: "/api/plants/variety-references",
     GROWTH_PHASE_YIELD_SHARES: "/api/plants/growth-phase-yield-shares",
+    HEALTH_ISSUES: "/api/plants/health-issues",
+    BLOCK_HEALTH: "/api/plants/block-health",
+    HEALTH_INSPECTIONS: "/api/plants/health-inspections",
+    HEALTH_FINDINGS: "/api/plants/health-findings",
+    TREATMENTS: "/api/plants/treatments",
+    ALERTS: "/api/plants/alerts",
+    NURSERY_BATCHES: "/api/plants/nursery-batches",
+    NURSERY_EVENTS: "/api/plants/nursery-events",
 };

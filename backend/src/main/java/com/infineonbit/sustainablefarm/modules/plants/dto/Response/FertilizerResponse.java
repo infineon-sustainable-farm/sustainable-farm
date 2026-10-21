@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 /**
  * API representation of a fertilizer of the catalogue, with its stock.
@@ -13,6 +14,11 @@ import java.time.Instant;
  * fertilizer that has no movement. {@code belowThreshold} is {@code true} when a
  * {@code reorderThreshold} exists and the stock is at or below it, and
  * {@code false} otherwise, including when there is no threshold.
+ *
+ * <p>{@code lastPurchaseDate} is the purchase date of the most recent recorded
+ * purchase, also computed on every read: a purchase entered late, dated before
+ * another one, does not change it. Only purchases count, not applications,
+ * losses or adjustments. {@code null} when no purchase is recorded.
  */
 public record FertilizerResponse(
         Long id,
@@ -23,6 +29,7 @@ public record FertilizerResponse(
         Double reorderThreshold,
         Double currentStock,
         boolean belowThreshold,
+        LocalDate lastPurchaseDate,
         String source,
         Instant lastUpdated) {
 }

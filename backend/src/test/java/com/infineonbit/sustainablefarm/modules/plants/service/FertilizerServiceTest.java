@@ -9,6 +9,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.exception.FertilizerNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.LastPurchase;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.MovementTotal;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerProductRepository;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,6 +74,20 @@ public class FertilizerServiceTest {
         };
     }
 
+    private static LastPurchase lastPurchase(long productId, LocalDate date) {
+        return new LastPurchase() {
+            @Override
+            public Long getProductId() {
+                return productId;
+            }
+
+            @Override
+            public LocalDate getLastDate() {
+                return date;
+            }
+        };
+    }
+
     /** Saving the fertilizer gives it an identifier, as the database would. */
     private void productSaveAssignsId(long id) {
         when(fertilizerProductRepository.save(any(FertilizerProduct.class))).thenAnswer(invocation -> {
@@ -100,9 +116,9 @@ public class FertilizerServiceTest {
         assertEquals(0, new BigDecimal("50").compareTo(saved.getReorderThreshold()));
         assertEquals("user_entry", saved.getSource());
         assertEquals(NOW, saved.getLastUpdated());
-        // Assert: a new fertilizer has no stock, so it is at its threshold
+        // Assert: a new fertilizer has no stock, so it is at its threshold, and no purchase
         assertEquals(new FertilizerResponse(1L, "NPK 15-15-15", FertilizerType.MINERAL, "15-15-15",
-                FertilizerUnit.KG, 50.0, 0.0, true, "user_entry", NOW), response);
+                FertilizerUnit.KG, 50.0, 0.0, true, null, "user_entry", NOW), response);
         verifyNoInteractions(fertilizerMovementRepository);
     }
 
@@ -157,14 +173,18 @@ public class FertilizerServiceTest {
         when(fertilizerMovementRepository.findMovementTotals(List.of(2L, 1L))).thenReturn(List.of(
                 total(1L, FertilizerMovementType.PURCHASE, "300.000"),
                 total(1L, FertilizerMovementType.APPLICATION, "250.000")));
+        when(fertilizerMovementRepository.findLastPurchaseDates(List.of(2L, 1L))).thenReturn(List.of(
+                lastPurchase(1L, LocalDate.of(2027, 4, 12))));
         // Act
         List<FertilizerResponse> responses = fertilizerService.getAllFertilizers();
-        // Assert: the order of the repository is kept
+        // Assert: the order of the repository is kept; the compost was never bought
         assertEquals(List.of("Compost", "NPK 15-15-15"), responses.stream().map(FertilizerResponse::name).toList());
         assertEquals(0.0, responses.get(0).currentStock());
         assertFalse(responses.get(0).belowThreshold());
+        assertNull(responses.get(0).lastPurchaseDate());
         assertEquals(50.0, responses.get(1).currentStock());
         assertTrue(responses.get(1).belowThreshold());
+        assertEquals(LocalDate.of(2027, 4, 12), responses.get(1).lastPurchaseDate());
     }
 
     @Test
@@ -182,11 +202,27 @@ public class FertilizerServiceTest {
         when(fertilizerProductRepository.findById(1L)).thenReturn(Optional.of(product(1L, "NPK 15-15-15", "50")));
         when(fertilizerMovementRepository.findMovementTotals(List.of(1L))).thenReturn(List.of(
                 total(1L, FertilizerMovementType.PURCHASE, "300.000")));
+        when(fertilizerMovementRepository.findLastPurchaseDates(List.of(1L))).thenReturn(List.of(
+                lastPurchase(1L, LocalDate.of(2027, 4, 12))));
         // Act
         FertilizerResponse response = fertilizerService.getFertilizerById(1L);
         // Assert
         assertEquals(300.0, response.currentStock());
         assertFalse(response.belowThreshold());
+        assertEquals(LocalDate.of(2027, 4, 12), response.lastPurchaseDate());
+    }
+
+    @Test
+    void getFertilizerById_shouldGiveNoPurchaseDate_whenTheFertilizerWasNeverBought() {
+        // Arrange
+        when(fertilizerProductRepository.findById(2L)).thenReturn(Optional.of(product(2L, "Compost", null)));
+        when(fertilizerMovementRepository.findMovementTotals(List.of(2L))).thenReturn(List.of());
+        when(fertilizerMovementRepository.findLastPurchaseDates(List.of(2L))).thenReturn(List.of());
+        // Act
+        FertilizerResponse response = fertilizerService.getFertilizerById(2L);
+        // Assert
+        assertEquals(0.0, response.currentStock());
+        assertNull(response.lastPurchaseDate());
     }
 
     @Test
