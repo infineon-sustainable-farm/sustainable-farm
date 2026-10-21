@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Boxes, MapPinned, Menu, Truck, Warehouse, X } from "lucide-react";
+import { Bell, Boxes, MapPinned, Menu, Truck, Warehouse, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
     { label: "Zones", path: "/cropstorage/zones", icon: MapPinned },
     { label: "Batches", path: "/cropstorage/batches", icon: Boxes },
     { label: "Movements", path: "/cropstorage/movements", icon: Truck },
+    { label: "Alerts", path: "/cropstorage/alerts", icon: Bell },
 ];
 
 const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";
