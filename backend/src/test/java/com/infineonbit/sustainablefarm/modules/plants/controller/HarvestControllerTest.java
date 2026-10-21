@@ -5,17 +5,21 @@ import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
 import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.service.ConcurrentPlantingRetry;
 import com.infineonbit.sustainablefarm.modules.plants.service.HarvestService;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -38,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** The error bodies are asserted in full, as for the planting route. */
 @WebMvcTest(HarvestController.class)
-@Import(CoreExceptionHandler.class)
+@Import({CoreExceptionHandler.class, ConcurrentPlantingRetry.class})
 public class HarvestControllerTest {
 
     private static final String URL = "/api/plants/harvests";
@@ -117,6 +122,44 @@ public class HarvestControllerTest {
         // Assert: recorded, with the lot number the service gave
         result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"));
+    }
+
+    /** A violation of a unique constraint, as the repository layer reports it. */
+    private static DataIntegrityViolationException violationOf(String constraintName) {
+        return new DataIntegrityViolationException("could not execute statement", new ConstraintViolationException(
+                "duplicate key", new SQLException("duplicate key", "23505"), constraintName));
+    }
+
+    @Test
+    void recordHarvest_shouldRunTheHarvestOnceMore_whenItLostARaceOnTheLotNumber() throws Exception {
+        // Arrange: another harvest of block B took the same number; the second run takes the next one
+        when(harvestService.recordHarvest(any(HarvestRequest.class)))
+                .thenThrow(violationOf("uk_harvest_record_lot_number"))
+                .thenReturn(keittHarvest());
+        // Act
+        ResultActions result = postHarvest("""
+                {"blockCode":"B","varietyName":"Keitt","harvestDate":"2026-06-10","quantityKg":800}
+                """);
+        // Assert
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"));
+        verify(harvestService, times(2)).recordHarvest(any(HarvestRequest.class));
+    }
+
+    @Test
+    void recordHarvest_shouldReturn409AndStop_whenTheSecondRunLosesARaceAgain() throws Exception {
+        // Arrange: both runs lose, for example with three harvests or more of the block at once;
+        // the constraint is named as H2 reports it
+        when(harvestService.recordHarvest(any(HarvestRequest.class))).thenThrow(
+                violationOf("PUBLIC.UK_HARVEST_RECORD_LOT_NUMBER INDEX PUBLIC.UK_HARVEST_RECORD_LOT_NUMBER_INDEX_A"));
+        // Act
+        ResultActions result = postHarvest("""
+                {"blockCode":" b ","varietyName":"Keitt","harvestDate":"2026-06-10","quantityKg":800}
+                """);
+        // Assert: a clear 409 naming the block as stored, never a 500, and no third run
+        assertApiError(result, 409, "Conflict", "Another harvest on block B was being recorded at the same time. "
+                + "Nothing was saved: please send the request again.");
+        verify(harvestService, times(2)).recordHarvest(any(HarvestRequest.class));
     }
 
     @Test

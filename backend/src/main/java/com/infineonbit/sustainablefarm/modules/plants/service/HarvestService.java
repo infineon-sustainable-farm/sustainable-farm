@@ -159,7 +159,7 @@ public class HarvestService {
      *
      * <p>Two harvests of the block recorded at the same time can compute the
      * same number: the unique constraint on the lot number refuses the second
-     * one.
+     * one, which {@link ConcurrentPlantingRetry} runs once more.
      *
      * @param blockCode block code as stored, for example {@code "A"}
      * @param year      year of the harvest date, not of the day it is recorded

@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
+import com.infineonbit.sustainablefarm.modules.plants.service.ConcurrentPlantingRetry;
 import com.infineonbit.sustainablefarm.modules.plants.service.HarvestService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,8 +38,10 @@ import java.util.List;
  * </ul>
  * <p>
  * Errors use the application-wide {@code ApiError} body: 400 with
- * {@code fieldErrors} for an invalid request, 404 for an unknown harvest, 422
- * when the variety has no planting on that block or the harvest predates it.
+ * {@code fieldErrors} for an invalid request, 404 for an unknown harvest, 409
+ * when other harvests of the block took the next lot numbers at the same time,
+ * 422 when the variety has no planting on that block or the harvest predates
+ * it.
  *
  * @since 1.0
  */
@@ -49,6 +52,7 @@ import java.util.List;
 public class HarvestController {
 
    private final HarvestService harvestService;
+   private final ConcurrentPlantingRetry concurrentPlantingRetry;
 
    @PostMapping
    @Operation(summary = "Record a harvest",
@@ -60,11 +64,15 @@ public class HarvestController {
    @ApiResponses({
          @ApiResponse(responseCode = "201", description = "The recorded harvest, with its lot number"),
          @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "409", description = "Other harvests of the block were being recorded at the "
+               + "same time and took the next lot numbers; nothing was saved"),
          @ApiResponse(responseCode = "422", description = "No planting of this variety on this block, "
                + "or a harvest date before the planting date")
    })
    public ResponseEntity<HarvestResponse> recordHarvest(@Valid @RequestBody HarvestRequest harvestRequest) {
-      HarvestResponse harvestResponse = harvestService.recordHarvest(harvestRequest);
+      // A harvest that lost a race on its lot number is run once more; see ConcurrentPlantingRetry.
+      HarvestResponse harvestResponse = concurrentPlantingRetry.runRetryingOnce(harvestRequest.blockCode(),
+            () -> harvestService.recordHarvest(harvestRequest));
       return ResponseEntity.status(HttpStatus.CREATED).body(harvestResponse);
    }
 
