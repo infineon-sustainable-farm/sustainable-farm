@@ -337,3 +337,65 @@ export function fetchPlantAlerts({ blockCode, farmId, withinDays } = {}) {
 
     return apiClient.get(PLANTS_ENDPOINTS.ALERTS, { params });
 }
+
+/**
+ * Fetches the nursery batches, ordered by start date by the API. The plants
+ * left, the survival rate and the current stage of each batch come computed
+ * by the API from its recorded events; none of them is computed here.
+ */
+export function fetchNurseryBatches() {
+    return apiClient.get(PLANTS_ENDPOINTS.NURSERY_BATCHES);
+}
+
+/**
+ * Starts a nursery batch. The API records its initial stage as its first
+ * stage change, and answers 400 with fieldErrors for an invalid value, 409
+ * when the code is already taken, ignoring case, and 422 when the planned
+ * transplant date is before the start date.
+ */
+export function createNurseryBatch(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.NURSERY_BATCHES, body);
+}
+
+/**
+ * Records that a batch reached a stage. The API answers 422 for a date before
+ * the start of the batch or its last stage change, and for the stage the
+ * batch is already at.
+ */
+export function createNurseryStageChange(batchId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.NURSERY_BATCHES}/${batchId}/stage-changes`, body);
+}
+
+/**
+ * Records plants of a batch lost. The API answers 422 for a date before the
+ * start of the batch, and for more plants than are left.
+ */
+export function createNurseryLoss(batchId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.NURSERY_BATCHES}/${batchId}/losses`, body);
+}
+
+/**
+ * Transplants plants of a batch onto a block. In the same transaction the API
+ * records the planting of the batch's variety on that block; it answers 409
+ * when that variety is already planted there, and 422 for a date before the
+ * start of the batch or more plants than are left.
+ */
+export function createNurseryTransplant(batchId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.NURSERY_BATCHES}/${batchId}/transplants`, body);
+}
+
+/**
+ * Fetches the nursery events, optionally filtered, by date: stage changes,
+ * losses and transplants. Same filter rules as fetchVarieties; `eventType` is
+ * the API code ("LOSS"), and `from` and `to` are "YYYY-MM-DD" dates, both
+ * included by the API.
+ */
+export function fetchNurseryEvents({ batchId, eventType, from, to } = {}) {
+    const params = {};
+    if (batchId !== null && batchId !== undefined) params.batchId = batchId;
+    if (eventType) params.eventType = eventType;
+    if (from) params.from = from;
+    if (to) params.to = to;
+
+    return apiClient.get(PLANTS_ENDPOINTS.NURSERY_EVENTS, { params });
+}

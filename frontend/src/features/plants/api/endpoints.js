@@ -21,4 +21,6 @@ export const PLANTS_ENDPOINTS = {
     HEALTH_FINDINGS: "/api/plants/health-findings",
     TREATMENTS: "/api/plants/treatments",
     ALERTS: "/api/plants/alerts",
+    NURSERY_BATCHES: "/api/plants/nursery-batches",
+    NURSERY_EVENTS: "/api/plants/nursery-events",
 };
