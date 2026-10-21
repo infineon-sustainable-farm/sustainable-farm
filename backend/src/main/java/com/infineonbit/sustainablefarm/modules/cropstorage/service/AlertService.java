@@ -12,8 +12,11 @@ import java.util.List;
  * Manages the alert lifecycle for Crop Storage: manual creation, listing and
  * status transitions ACTIVE to ACKNOWLEDGED to RESOLVED. Automatic threshold
  * alerts are raised by SensorReadingService, not here.
+ * The explicit bean name "cropStorageAlertService" prevents a clash with the
+ * watersupply module, which also defines an AlertService, when both modules
+ * load together on merged builds (the CI runs on the PR to develop).
  */
-@Service
+@Service("cropStorageAlertService")
 @RequiredArgsConstructor
 public class AlertService {
 
