@@ -93,6 +93,40 @@ export function fetchYieldForecast({ blockCode, farmId, from, months } = {}) {
 }
 
 /**
+ * Fetches the actual yield against the expected yield, by variety, by block
+ * and in total, over the same whole months.
+ *
+ * `from` ("YYYY-MM") is left out when empty, so the API starts at January of
+ * its current year; the month it chose comes back in the response. Both
+ * yields, the sums and the percentages come computed by the API; none of them
+ * is computed here.
+ */
+export function fetchYieldComparison({ blockCode, farmId, from, months } = {}) {
+    const params = {};
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+    if (from) params.from = from;
+    if (months !== null && months !== undefined) params.months = months;
+
+    return apiClient.get(PLANTS_ENDPOINTS.YIELD_COMPARISON, { params });
+}
+
+/**
+ * Fetches the maturity status of the day of the planted varieties, with the
+ * harvest window, the running pre-harvest interval and the first harvest of
+ * the window, all computed by the API. `withinDays` sets how many days before
+ * its window a variety is ripe; it is left out to keep the API's default.
+ */
+export function fetchHarvestStatus({ blockCode, farmId, withinDays } = {}) {
+    const params = {};
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+    if (withinDays !== null && withinDays !== undefined) params.withinDays = withinDays;
+
+    return apiClient.get(PLANTS_ENDPOINTS.HARVEST_STATUS, { params });
+}
+
+/**
  * Fetches the fertilizer catalogue, ordered by name by the API.
  *
  * Each fertilizer comes with its current stock and whether it is at or below
