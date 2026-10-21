@@ -21,7 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * The lot numbers of the harvests, through the real service and the database:
- * the next number is read from the lots already stored.
+ * the next number is read from the lots already stored, and a harvest is found
+ * again by its lot number.
  *
  * <p>The race case sends its requests together, from separate threads released
  * at the same instant, and runs {@value #TRIALS} times on new blocks, as in
@@ -119,6 +120,19 @@ class HarvestLotNumberIntegrationTest {
         assertEquals("LOT-2026-LN2-001", noFarm.lotNumber());
         assertEquals("LOT-2026-LN2-002", farm1.lotNumber());
         assertEquals(1, farm1.farmId());
+    }
+
+    @Test
+    void getAllHarvests_shouldFindAHarvestByItsLotNumber() {
+        // Arrange: two harvests of block LN3
+        plantingService.recordPlanting(new PlantingRequest(null, "LN3", "Keitt", PLANTED_ON, 40));
+        harvest("LN3", "Keitt", HARVESTED_ON);
+        HarvestResponse second = harvest("LN3", "Keitt", HARVESTED_ON.plusDays(1));
+        // Act
+        List<HarvestResponse> found = harvestService.getAllHarvests(null, null, " lot-2026-ln3-002 ", null, null);
+        // Assert: the second harvest only, whatever the case and spaces; an unknown number finds nothing
+        assertEquals(List.of(second.id()), found.stream().map(HarvestResponse::id).toList());
+        assertEquals(List.of(), harvestService.getAllHarvests(null, null, "LOT-2026-LN3-003", null, null));
     }
 
     @Test

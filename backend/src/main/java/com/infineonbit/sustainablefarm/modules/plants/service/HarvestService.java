@@ -58,6 +58,19 @@ public class HarvestService {
     }
 
     /**
+     * Lot number filter as stored: trimmed and upper-cased, so
+     * {@code " lot-2026-a-002 "} finds {@code "LOT-2026-A-002"}. A blank value
+     * is no filter at all.
+     *
+     * @param lotNumber the filter value as received, possibly {@code null}
+     * @return the lot number to match, or {@code null} if it was null or blank
+     */
+    private static String normalizeLotNumberFilter(String lotNumber) {
+        String trimmed = normalizeFilter(lotNumber);
+        return trimmed == null ? null : trimmed.toUpperCase(Locale.ROOT);
+    }
+
+    /**
      * Maps a stored harvest to its API representation. The farm, block and name
      * are those of the variety row the harvest belongs to.
      *
@@ -178,22 +191,43 @@ public class HarvestService {
      * Retrieves the harvests matching the optional filters.
      *
      * <p>Every filter is independent and optional; a missing farm means every
-     * farm, as for the other lists of the module. Both dates are included. A
-     * filter that matches nothing, or a {@code from} after {@code to}, returns
-     * an empty list and is never an error.
+     * farm, as for the other lists of the module. The lot number is matched
+     * exactly once trimmed and upper-cased, so {@code " lot-2026-a-002 "} finds
+     * {@code "LOT-2026-A-002"}. Both dates are included. A filter that matches
+     * nothing, such as an unknown lot number, or a {@code from} after
+     * {@code to}, returns an empty list and is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
      * @param blockCode raw block value as stored (for example {@code "A"}),
      *                  or {@code null} for every block
+     * @param lotNumber lot number (for example {@code "LOT-2026-A-002"}), or
+     *                  {@code null} for every harvest
+     * @param from      first harvest date, included, or {@code null}
+     * @param to        last harvest date, included, or {@code null}
+     * @return the matching harvests, ordered by date then identifier
+     */
+    public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, String lotNumber,
+                                                LocalDate from, LocalDate to) {
+        return harvestRecordRepository.findByOptionalFilters(farmId, normalizeFilter(blockCode),
+                        normalizeLotNumberFilter(lotNumber), from, to)
+                .stream()
+                .map(HarvestService::toResponse)
+                .toList();
+    }
+
+    /**
+     * Same as {@link #getAllHarvests(Integer, String, String, LocalDate, LocalDate)}
+     * without the lot number: the harvests of a farm, block and period, as the
+     * harvest status and the yield comparison read them.
+     *
+     * @param farmId    farm identifier, or {@code null} for every farm
+     * @param blockCode raw block value as stored, or {@code null} for every block
      * @param from      first harvest date, included, or {@code null}
      * @param to        last harvest date, included, or {@code null}
      * @return the matching harvests, ordered by date then identifier
      */
     public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return harvestRecordRepository.findByOptionalFilters(farmId, normalizeFilter(blockCode), from, to)
-                .stream()
-                .map(HarvestService::toResponse)
-                .toList();
+        return getAllHarvests(farmId, blockCode, null, from, to);
     }
 
     /**

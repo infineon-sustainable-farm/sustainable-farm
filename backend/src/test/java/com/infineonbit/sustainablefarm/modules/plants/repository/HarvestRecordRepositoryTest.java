@@ -48,7 +48,11 @@ public class HarvestRecordRepositoryTest {
     }
 
     private List<Long> find(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return harvestRecordRepository.findByOptionalFilters(farmId, blockCode, from, to).stream()
+        return findLot(farmId, blockCode, null, from, to);
+    }
+
+    private List<Long> findLot(Integer farmId, String blockCode, String lotNumber, LocalDate from, LocalDate to) {
+        return harvestRecordRepository.findByOptionalFilters(farmId, blockCode, lotNumber, from, to).stream()
                 .map(HarvestRecord::getId)
                 .toList();
     }
@@ -116,6 +120,24 @@ public class HarvestRecordRepositoryTest {
         harvest(variety(null, "B", "Keitt"), LocalDate.of(2026, 6, 10), 800.0);
         // Act & Assert: an empty list, not an error
         assertTrue(find(null, null, LocalDate.of(2026, 6, 30), LocalDate.of(2026, 6, 1)).isEmpty());
+    }
+
+    @Test
+    void findByOptionalFilters_shouldMatchTheLotNumberExactly() {
+        // Arrange: lot numbers that share a beginning
+        Variety keitt = variety(null, "A", "Keitt");
+        HarvestRecord lot1 = harvest(keitt, LocalDate.of(2026, 6, 10), 800.0, "LOT-2026-A-001");
+        harvest(keitt, LocalDate.of(2026, 6, 11), 700.0, "LOT-2026-A-0010");
+        harvest(keitt, LocalDate.of(2026, 6, 12), 600.0, "LOT-2026-A-010");
+        harvest(keitt, LocalDate.of(2026, 5, 2), 100.0);
+        // Act & Assert: the one lot, never a lot that only starts or ends like it
+        assertEquals(List.of(lot1.getId()), findLot(null, null, "LOT-2026-A-001", null, null));
+        assertTrue(findLot(null, null, "LOT-2026-A-01", null, null).isEmpty());
+        assertTrue(findLot(null, null, "LOT-1999-Z-999", null, null).isEmpty());
+        // Act & Assert: combined with the other filters
+        assertEquals(List.of(lot1.getId()), findLot(null, "A", "LOT-2026-A-001", LocalDate.of(2026, 6, 10), null));
+        assertTrue(findLot(null, "B", "LOT-2026-A-001", null, null).isEmpty());
+        assertTrue(findLot(1, null, "LOT-2026-A-001", null, null).isEmpty());
     }
 
     @Test

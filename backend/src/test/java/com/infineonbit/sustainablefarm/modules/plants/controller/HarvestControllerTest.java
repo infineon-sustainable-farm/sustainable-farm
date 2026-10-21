@@ -240,7 +240,7 @@ public class HarvestControllerTest {
     @Test
     void getAllHarvests_shouldPassEveryFilter() throws Exception {
         // Arrange
-        when(harvestService.getAllHarvests(1, "B", LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)))
+        when(harvestService.getAllHarvests(1, "B", null, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)))
                 .thenReturn(List.of(keittHarvest()));
         // Act
         ResultActions result = mockMvc.perform(get(URL)
@@ -257,9 +257,32 @@ public class HarvestControllerTest {
     }
 
     @Test
+    void getAllHarvests_shouldPassTheLotNumberAsSent() throws Exception {
+        // Arrange: the service trims and upper-cases it
+        when(harvestService.getAllHarvests(null, null, " lot-2026-b-001 ", null, null))
+                .thenReturn(List.of(keittHarvest()));
+        // Act
+        ResultActions result = mockMvc.perform(get(URL).param("lotNumber", " lot-2026-b-001 "));
+        // Assert
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].lotNumber").value("LOT-2026-B-001"));
+    }
+
+    @Test
+    void getAllHarvests_shouldReturnAnEmptyList_forAnUnknownLotNumber() throws Exception {
+        // Arrange
+        when(harvestService.getAllHarvests(null, null, "LOT-1999-Z-999", null, null)).thenReturn(List.of());
+        // Act & Assert: a filter matching nothing, not a 404
+        mockMvc.perform(get(URL).param("lotNumber", "LOT-1999-Z-999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
     void getAllHarvests_shouldPassNulls_whenNoFilterIsGiven() throws Exception {
         // Arrange
-        when(harvestService.getAllHarvests(null, null, null, null)).thenReturn(List.of());
+        when(harvestService.getAllHarvests(null, null, null, null, null)).thenReturn(List.of());
         // Act & Assert
         mockMvc.perform(get(URL))
                 .andExpect(status().isOk())

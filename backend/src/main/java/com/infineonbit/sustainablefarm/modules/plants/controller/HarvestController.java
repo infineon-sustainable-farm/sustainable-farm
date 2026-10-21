@@ -33,7 +33,7 @@ import java.util.List;
  * Available Endpoints :
  * <ul>
  * <li>{@code POST /api/plants/harvests} — record a harvest of a planted variety</li>
- * <li>{@code GET /api/plants/harvests} — list of harvests, optionally filtered</li>
+ * <li>{@code GET /api/plants/harvests} — list of harvests, optionally filtered, for example by lot number</li>
  * <li>{@code GET /api/plants/harvests/{id}} — a single harvest</li>
  * </ul>
  * <p>
@@ -78,8 +78,9 @@ public class HarvestController {
 
    @GetMapping
    @Operation(summary = "List harvests",
-         description = "Every filter is optional and independent. Both dates are included. A filter matching "
-               + "nothing, or a from date after the to date, returns an empty list.")
+         description = "Every filter is optional and independent. The lot number is matched exactly, ignoring "
+               + "surrounding spaces and case. Both dates are included. A filter matching nothing, such as an "
+               + "unknown lot number, or a from date after the to date, returns an empty list.")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "Matching harvests by date, possibly an empty list"),
          @ApiResponse(responseCode = "400", description = "A date is not in the yyyy-MM-dd format")
@@ -87,11 +88,13 @@ public class HarvestController {
    public ResponseEntity<List<HarvestResponse>> getAllHarvests(
          @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode,
+         @Parameter(description = "Lot number, for example \"LOT-2026-A-002\"; \" lot-2026-a-002 \" finds it too")
+         @RequestParam(name = "lotNumber", required = false) String lotNumber,
          @Parameter(description = "First harvest date, included, as yyyy-MM-dd") @RequestParam(name = "from", required = false)
          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
          @Parameter(description = "Last harvest date, included, as yyyy-MM-dd") @RequestParam(name = "to", required = false)
          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-      List<HarvestResponse> harvestResponses = harvestService.getAllHarvests(farmId, blockCode, from, to);
+      List<HarvestResponse> harvestResponses = harvestService.getAllHarvests(farmId, blockCode, lotNumber, from, to);
       return ResponseEntity.status(HttpStatus.OK).body(harvestResponses);
    }
 

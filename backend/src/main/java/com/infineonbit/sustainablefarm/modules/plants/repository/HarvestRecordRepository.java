@@ -30,6 +30,8 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      * @param farmId    farm identifier, or {@code null} to ignore the farm
      * @param blockCode raw block value as stored (for example {@code "A"}),
      *                  or {@code null} to ignore the block
+     * @param lotNumber lot number as stored (for example {@code "LOT-2026-A-002"}),
+     *                  matched exactly, or {@code null} to ignore the lot number
      * @param from      first harvest date, included, or {@code null} for no lower bound
      * @param to        last harvest date, included, or {@code null} for no upper bound
      * @return the matching harvests, ordered by date then identifier
@@ -38,12 +40,14 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
             SELECT h FROM HarvestRecord h JOIN FETCH h.variety v
             WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
               AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
+              AND (CAST(:lotNumber AS String) IS NULL OR h.lotNumber = :lotNumber)
               AND (CAST(:from AS LocalDate) IS NULL OR h.harvestDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR h.harvestDate <= :to)
             ORDER BY h.harvestDate ASC, h.id ASC
             """)
     List<HarvestRecord> findByOptionalFilters(@Param("farmId") Integer farmId,
                                               @Param("blockCode") String blockCode,
+                                              @Param("lotNumber") String lotNumber,
                                               @Param("from") LocalDate from,
                                               @Param("to") LocalDate to);
 

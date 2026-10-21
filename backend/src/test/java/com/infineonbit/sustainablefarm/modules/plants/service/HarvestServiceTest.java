@@ -249,19 +249,54 @@ public class HarvestServiceTest {
     }
 
     @Test
-    void getAllHarvests_shouldPassFiltersAndTurnABlankBlockIntoNoFilter() {
+    void getAllHarvests_shouldPassFiltersAndTurnABlankBlockOrLotNumberIntoNoFilter() {
         // Arrange
         Variety keitt = variety(10L, 1, "B", "Keitt");
         HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
                 "user_entry", NOW);
         LocalDate from = LocalDate.of(2026, 6, 1);
         LocalDate to = LocalDate.of(2026, 6, 30);
-        when(harvestRecordRepository.findByOptionalFilters(1, null, from, to)).thenReturn(List.of(harvest));
+        when(harvestRecordRepository.findByOptionalFilters(1, null, null, from, to)).thenReturn(List.of(harvest));
         // Act
-        List<HarvestResponse> responses = harvestService.getAllHarvests(1, "  ", from, to);
+        List<HarvestResponse> responses = harvestService.getAllHarvests(1, "  ", " ", from, to);
         // Assert
         assertEquals(List.of(new HarvestResponse(200L, "LOT-2026-B-001", 1, "B", 10L, "Keitt",
                 LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW)), responses);
+    }
+
+    @Test
+    void getAllHarvests_shouldTrimAndUpperCaseTheLotNumber() {
+        // Arrange
+        Variety keitt = variety(10L, 1, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
+                "user_entry", NOW);
+        when(harvestRecordRepository.findByOptionalFilters(null, null, "LOT-2026-B-001", null, null))
+                .thenReturn(List.of(harvest));
+        // Act
+        List<HarvestResponse> responses = harvestService.getAllHarvests(null, null, " lot-2026-b-001 ", null, null);
+        // Assert: the lot number as stored is looked up, as an exact value
+        assertEquals(List.of(200L), responses.stream().map(HarvestResponse::id).toList());
+    }
+
+    @Test
+    void getAllHarvests_shouldReturnAnEmptyList_forAnUnknownLotNumber() {
+        // Arrange: no harvest holds this number
+        when(harvestRecordRepository.findByOptionalFilters(null, null, "LOT-1999-Z-999", null, null))
+                .thenReturn(List.of());
+        // Act & Assert: an empty list, not an error
+        assertEquals(List.of(), harvestService.getAllHarvests(null, null, "LOT-1999-Z-999", null, null));
+    }
+
+    @Test
+    void getAllHarvests_withoutLotNumber_shouldReadEveryLotOfTheFarmBlockAndPeriod() {
+        // Arrange: the form the harvest status and the yield comparison use
+        LocalDate from = LocalDate.of(2026, 6, 1);
+        LocalDate to = LocalDate.of(2026, 6, 30);
+        when(harvestRecordRepository.findByOptionalFilters(1, "B", null, from, to)).thenReturn(List.of());
+        // Act
+        harvestService.getAllHarvests(1, "B", from, to);
+        // Assert: no lot number filter
+        verify(harvestRecordRepository).findByOptionalFilters(1, "B", null, from, to);
     }
 
     @Test
