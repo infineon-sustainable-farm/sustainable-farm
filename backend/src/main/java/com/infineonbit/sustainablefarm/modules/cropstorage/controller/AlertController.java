@@ -17,9 +17,12 @@ import java.util.List;
 /**
  * REST endpoints of the alert board: full listing, listing by status, manual
  * creation, and the two operator actions acknowledge and resolve.
+ * Module-scoped path and bean name: Sales & Marketing also exposes an
+ * AlertController on /api/alerts, so merged runs keep both only if this
+ * module stays under /api/crop-storage/.
  */
-@RestController
-@RequestMapping("/api/alerts")
+@RestController("cropStorageAlertController")
+@RequestMapping("/api/crop-storage/alerts")
 @RequiredArgsConstructor
 public class AlertController {
 
@@ -48,8 +51,8 @@ public class AlertController {
     }
 
     /**
-     * Returns the alerts in one status; GET /api/alerts/status/ACTIVE feeds
-     * the Active Alerts panel of the dashboard.
+     * Returns the alerts in one status; GET /api/crop-storage/alerts/status/ACTIVE
+     * feeds the Active Alerts panel of the dashboard.
      *
      * @param status ACTIVE, ACKNOWLEDGED or RESOLVED
      * @return alerts in that status
