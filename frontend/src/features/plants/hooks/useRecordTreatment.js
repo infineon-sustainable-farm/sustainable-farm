@@ -5,9 +5,10 @@ import { createFindingTreatment, createPreventiveTreatment } from "../api/plants
  * Records a treatment answering the finding `findingId`, or a preventive
  * treatment when `findingId` is null.
  *
- * The treatment record, every findings list and the plant alerts are refreshed
- * afterwards, whatever their filter: a treatment changes the status and the
- * harvest date of its finding, and can start a pre-harvest interval. The
+ * The treatment record, every findings list, the plant alerts and the harvest
+ * status are refreshed afterwards, whatever their filter: a treatment changes
+ * the status and the harvest date of its finding, and can start a pre-harvest
+ * interval, which holds a variety ready for harvest back to ripe. The
  * catalogue is refreshed too, as the API adds "Other" the first time a
  * preventive treatment uses it.
  */
@@ -21,6 +22,7 @@ export function useRecordTreatment() {
                 queryClient.invalidateQueries({ queryKey: ["plants", "treatments"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "health-findings"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "alerts"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "harvest-status"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "health-issues"] }),
             ]),
     });
