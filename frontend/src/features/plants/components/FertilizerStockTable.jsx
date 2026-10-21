@@ -1,8 +1,10 @@
-import { formatCode, formatQuantity, formatText } from "../utils/format";
+import { formatCode, formatDate, formatQuantity, formatText } from "../utils/format";
 import StockStatusBadge from "./StockStatusBadge";
+import Value from "./Value";
 
 // The unit sits in each cell rather than in the header: a catalogue can mix
-// kilograms and litres.
+// kilograms and litres. "Last restock" is the date of the latest purchase, as
+// the API picks it, last as in the mock-up.
 const COLUMNS = [
     "Fertilizer",
     "Type",
@@ -10,6 +12,7 @@ const COLUMNS = [
     "Stock",
     "Alert threshold",
     "Status",
+    "Last restock",
 ];
 
 /** The catalogue with the stock of each fertilizer, in the order the API sends it. */
@@ -50,6 +53,9 @@ export default function FertilizerStockTable({ fertilizers }) {
                             </td>
                             <td className="px-4 py-3">
                                 <StockStatusBadge belowThreshold={fertilizer.belowThreshold} />
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">
+                                <Value>{formatDate(fertilizer.lastPurchaseDate)}</Value>
                             </td>
                         </tr>
                     ))}
