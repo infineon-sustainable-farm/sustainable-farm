@@ -376,7 +376,7 @@ export default function ForecastingPage() {
       setApiError(
         getErrorMessage(
           err,
-          'Error connecting to http://localhost:8080/api'
+          'Unable to connect to the backend API.'
         )
       );
 

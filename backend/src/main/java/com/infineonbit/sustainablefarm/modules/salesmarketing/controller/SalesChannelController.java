@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.SalesChannel;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.SalesChannelService;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.SalesChannelRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import java.util.List;
 public class SalesChannelController {
 
     private final SalesChannelService service;
+    private final SalesMarketingRequestMapper requestMapper;
 
-    public SalesChannelController(SalesChannelService service) {
+    public SalesChannelController(SalesChannelService service, SalesMarketingRequestMapper requestMapper) {
         this.service = service;
+        this.requestMapper = requestMapper;
     }
 
     @GetMapping
@@ -30,13 +34,13 @@ public class SalesChannelController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public SalesChannel create(@Valid @RequestBody SalesChannel item) {
-        return service.create(item);
+    public SalesChannel create(@Valid @RequestBody SalesChannelRequest request) {
+        return service.create(requestMapper.toEntity(request, SalesChannel.class));
     }
 
     @PutMapping("/{id}")
-    public SalesChannel update(@PathVariable Integer id, @Valid @RequestBody SalesChannel item) {
-        return service.update(id, item);
+    public SalesChannel update(@PathVariable Integer id, @Valid @RequestBody SalesChannelRequest request) {
+        return service.update(id, requestMapper.toEntity(request, SalesChannel.class));
     }
 
     @DeleteMapping("/{id}")

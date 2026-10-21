@@ -206,7 +206,7 @@ export default function PricingPage() {
       setApiError(
         getErrorMessage(
           err,
-          'Error connecting to Spring Boot backend API at http://localhost:8080/api'
+          'Unable to connect to the backend API.'
         )
       );
     } finally {

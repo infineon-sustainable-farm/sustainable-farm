@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.PricingHistory;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.PricingHistoryService;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.PricingHistoryRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import java.util.List;
 public class PricingHistoryController {
 
     private final PricingHistoryService service;
+    private final SalesMarketingRequestMapper requestMapper;
 
-    public PricingHistoryController(PricingHistoryService service) {
+    public PricingHistoryController(PricingHistoryService service, SalesMarketingRequestMapper requestMapper) {
         this.service = service;
+        this.requestMapper = requestMapper;
     }
 
     @GetMapping
@@ -30,15 +34,15 @@ public class PricingHistoryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PricingHistory create(@Valid @RequestBody PricingHistory item) {
-        return service.create(item);
+    public PricingHistory create(@Valid @RequestBody PricingHistoryRequest request) {
+        return service.create(requestMapper.toEntity(request, PricingHistory.class));
     }
 
     @PutMapping("/{id}")
     public PricingHistory update(
             @PathVariable Integer id,
-            @Valid @RequestBody PricingHistory item) {
-        return service.update(id, item);
+            @Valid @RequestBody PricingHistoryRequest request) {
+        return service.update(id, requestMapper.toEntity(request, PricingHistory.class));
     }
 
     @DeleteMapping("/{id}")

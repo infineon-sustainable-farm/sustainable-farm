@@ -2,9 +2,11 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.common;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.Ordered;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.HashMap;
@@ -14,6 +16,7 @@ import java.util.Map;
     basePackages = "com.infineonbit.sustainablefarm.modules.salesmarketing",
     name = "salesMarketingExceptionHandler"
 )
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)

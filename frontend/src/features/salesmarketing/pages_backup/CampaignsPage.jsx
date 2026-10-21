@@ -103,7 +103,7 @@ export default function CampaignsPage() {
       }
       if (failures.length > 0) setApiError(`Partial load — ${failures.join(' · ')}`);
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Error connecting to Spring Boot backend API at http://localhost:8080/api'));
+      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
       setCampaigns([]);
       setMetrics([]);
     } finally {

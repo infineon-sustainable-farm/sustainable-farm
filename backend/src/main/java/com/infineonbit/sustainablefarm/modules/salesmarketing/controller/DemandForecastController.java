@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.DemandForecast;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.DemandForecastService;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.DemandForecastRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import java.util.List;
 public class DemandForecastController {
 
     private final DemandForecastService service;
+    private final SalesMarketingRequestMapper requestMapper;
 
-    public DemandForecastController(DemandForecastService service) {
+    public DemandForecastController(DemandForecastService service, SalesMarketingRequestMapper requestMapper) {
         this.service = service;
+        this.requestMapper = requestMapper;
     }
 
     @GetMapping
@@ -30,15 +34,15 @@ public class DemandForecastController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DemandForecast create(@Valid @RequestBody DemandForecast item) {
-        return service.create(item);
+    public DemandForecast create(@Valid @RequestBody DemandForecastRequest request) {
+        return service.create(requestMapper.toEntity(request, DemandForecast.class));
     }
 
     @PutMapping("/{id}")
     public DemandForecast update(
             @PathVariable Integer id,
-            @Valid @RequestBody DemandForecast item) {
-        return service.update(id, item);
+            @Valid @RequestBody DemandForecastRequest request) {
+        return service.update(id, requestMapper.toEntity(request, DemandForecast.class));
     }
 
     @DeleteMapping("/{id}")

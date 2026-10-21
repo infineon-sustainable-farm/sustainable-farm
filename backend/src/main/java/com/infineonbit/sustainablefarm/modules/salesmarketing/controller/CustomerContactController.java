@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.CustomerContact;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.CustomerContactService;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.CustomerContactRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import java.util.List;
 public class CustomerContactController {
 
     private final CustomerContactService service;
+    private final SalesMarketingRequestMapper requestMapper;
 
-    public CustomerContactController(CustomerContactService service) {
+    public CustomerContactController(CustomerContactService service, SalesMarketingRequestMapper requestMapper) {
         this.service = service;
+        this.requestMapper = requestMapper;
     }
 
     @GetMapping
@@ -30,13 +34,13 @@ public class CustomerContactController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CustomerContact create(@Valid @RequestBody CustomerContact item) {
-        return service.create(item);
+    public CustomerContact create(@Valid @RequestBody CustomerContactRequest request) {
+        return service.create(requestMapper.toEntity(request, CustomerContact.class));
     }
 
     @PutMapping("/{id}")
-    public CustomerContact update(@PathVariable Integer id, @Valid @RequestBody CustomerContact item) {
-        return service.update(id, item);
+    public CustomerContact update(@PathVariable Integer id, @Valid @RequestBody CustomerContactRequest request) {
+        return service.update(id, requestMapper.toEntity(request, CustomerContact.class));
     }
 
     @DeleteMapping("/{id}")

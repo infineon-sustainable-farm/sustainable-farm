@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.OrderItem;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.OrderItemService;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.OrderItemRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import java.util.List;
 public class OrderItemController {
 
     private final OrderItemService service;
+    private final SalesMarketingRequestMapper requestMapper;
 
-    public OrderItemController(OrderItemService service) {
+    public OrderItemController(OrderItemService service, SalesMarketingRequestMapper requestMapper) {
         this.service = service;
+        this.requestMapper = requestMapper;
     }
 
     @GetMapping
@@ -30,13 +34,13 @@ public class OrderItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderItem create(@Valid @RequestBody OrderItem item) {
-        return service.create(item);
+    public OrderItem create(@Valid @RequestBody OrderItemRequest request) {
+        return service.create(requestMapper.toEntity(request, OrderItem.class));
     }
 
     @PutMapping("/{id}")
-    public OrderItem update(@PathVariable Integer id, @Valid @RequestBody OrderItem item) {
-        return service.update(id, item);
+    public OrderItem update(@PathVariable Integer id, @Valid @RequestBody OrderItemRequest request) {
+        return service.update(id, requestMapper.toEntity(request, OrderItem.class));
     }
 
     @DeleteMapping("/{id}")

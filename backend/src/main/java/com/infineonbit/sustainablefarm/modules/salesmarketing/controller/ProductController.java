@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Product;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.ProductService;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.ProductRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService service;
+    private final SalesMarketingRequestMapper requestMapper;
 
-    public ProductController(ProductService service) {
+    public ProductController(ProductService service, SalesMarketingRequestMapper requestMapper) {
         this.service = service;
+        this.requestMapper = requestMapper;
     }
 
     @GetMapping
@@ -30,13 +34,13 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Product create(@Valid @RequestBody Product item) {
-        return service.create(item);
+    public Product create(@Valid @RequestBody ProductRequest request) {
+        return service.create(requestMapper.toEntity(request, Product.class));
     }
 
     @PutMapping("/{id}")
-    public Product update(@PathVariable Integer id, @Valid @RequestBody Product item) {
-        return service.update(id, item);
+    public Product update(@PathVariable Integer id, @Valid @RequestBody ProductRequest request) {
+        return service.update(id, requestMapper.toEntity(request, Product.class));
     }
 
     @DeleteMapping("/{id}")

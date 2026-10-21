@@ -271,7 +271,7 @@ export default function DemandReportsPage() {
         );
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Error connecting to http://localhost:8080/api'));
+      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
       setReports([]);
       setReportFiles([]);
     } finally {

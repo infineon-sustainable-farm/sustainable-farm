@@ -194,14 +194,14 @@ const [orders, setOrders] = useState([]);
 
       if (failures.length > 0 && channelRes.status === 'rejected') {
         setApiError(
-          'Backend REST API at http://localhost:8080/api is offline or unreachable. Channel data is unavailable. ' +
+          'The backend API is offline or unreachable. Channel data is unavailable. ' +
             failures.join(' · ')
         );
       } else if (failures.length > 0) {
         setApiError(`Partial load — ${failures.join(' · ')}`);
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Error connecting to Spring Boot backend API at http://localhost:8080/api'));
+      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
       setChannels([]);
       setTargets([]);
     } finally {

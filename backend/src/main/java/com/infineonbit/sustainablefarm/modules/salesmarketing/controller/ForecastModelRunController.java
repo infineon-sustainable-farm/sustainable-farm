@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.ForecastModelRun;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.ForecastModelRunService;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.ForecastModelRunRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +15,11 @@ import java.util.List;
 public class ForecastModelRunController {
 
     private final ForecastModelRunService service;
+    private final SalesMarketingRequestMapper requestMapper;
 
-    public ForecastModelRunController(ForecastModelRunService service) {
+    public ForecastModelRunController(ForecastModelRunService service, SalesMarketingRequestMapper requestMapper) {
         this.service = service;
+        this.requestMapper = requestMapper;
     }
 
     @GetMapping
@@ -30,15 +34,15 @@ public class ForecastModelRunController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ForecastModelRun create(@Valid @RequestBody ForecastModelRun item) {
-        return service.create(item);
+    public ForecastModelRun create(@Valid @RequestBody ForecastModelRunRequest request) {
+        return service.create(requestMapper.toEntity(request, ForecastModelRun.class));
     }
 
     @PutMapping("/{id}")
     public ForecastModelRun update(
             @PathVariable Integer id,
-            @Valid @RequestBody ForecastModelRun item) {
-        return service.update(id, item);
+            @Valid @RequestBody ForecastModelRunRequest request) {
+        return service.update(id, requestMapper.toEntity(request, ForecastModelRun.class));
     }
 
     @DeleteMapping("/{id}")

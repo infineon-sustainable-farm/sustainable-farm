@@ -146,7 +146,7 @@ export default function DemandAlertsPage() {
         setApiError(failures.join(' · '));
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Error connecting to http://localhost:8080/api'));
+      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
       setAlerts([]);
     } finally {
       setLoading(false);
