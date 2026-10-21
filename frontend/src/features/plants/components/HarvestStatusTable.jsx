@@ -4,8 +4,8 @@ import Value from "./Value";
 
 // The mock-up's columns that the API gives: "Est. Harvest" is the harvest
 // window, "Actual Harvest" the first harvest in it. The running pre-harvest
-// interval and the sources are added; Variance, Quantity and Lot No. are not
-// computed by the API.
+// interval and the sources are added; Variance and Quantity are not computed
+// by the API, and each picking has its own Lot No., in the recorded harvests.
 const COLUMNS = [
     "Block",
     "Variety",
