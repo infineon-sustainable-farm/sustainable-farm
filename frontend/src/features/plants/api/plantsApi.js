@@ -348,6 +348,16 @@ export function fetchNurseryBatches() {
 }
 
 /**
+ * Starts a nursery batch. The API records its initial stage as its first
+ * stage change, and answers 400 with fieldErrors for an invalid value, 409
+ * when the code is already taken, ignoring case, and 422 when the planned
+ * transplant date is before the start date.
+ */
+export function createNurseryBatch(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.NURSERY_BATCHES, body);
+}
+
+/**
  * Fetches the nursery events, optionally filtered, by date: stage changes,
  * losses and transplants. Same filter rules as fetchVarieties; `eventType` is
  * the API code ("LOSS"), and `from` and `to` are "YYYY-MM-DD" dates, both

@@ -1,9 +1,25 @@
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
+import { useAddNurseryBatch } from "../hooks/useAddNurseryBatch";
 import { useNurseryPlannedBlocks } from "../hooks/useNurseryBatches";
+import AddNurseryBatchModal from "./AddNurseryBatchModal";
 import BlockFilter from "./BlockFilter";
 import NurseryAlertsSection from "./NurseryAlertsSection";
 import NurseryBatchesSection from "./NurseryBatchesSection";
 import NurseryHistorySection from "./NurseryHistorySection";
+
+function AddBatchButton({ onClick }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+            <Plus size={16} />
+            Add a batch
+        </button>
+    );
+}
 
 /**
  * Nursery: the batches to transplant today, then the batches with their
@@ -17,12 +33,28 @@ import NurseryHistorySection from "./NurseryHistorySection";
 export default function NurseryPage() {
     // Raw stored block value ("E"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
+    const [isAddingBatch, setIsAddingBatch] = useState(false);
 
     useEffect(() => {
         document.title = "Nursery — Plants";
     }, []);
 
     const { data: blocks, isPending: isLoadingBlocks, isError: hasBlocksError } = useNurseryPlannedBlocks();
+    const addBatch = useAddNurseryBatch();
+
+    function openBatchForm() {
+        addBatch.reset();
+        setIsAddingBatch(true);
+    }
+
+    function closeBatchForm() {
+        addBatch.reset();
+        setIsAddingBatch(false);
+    }
+
+    function submitBatch(batch) {
+        addBatch.mutate(batch, { onSuccess: closeBatchForm });
+    }
 
     return (
         <div className="min-h-dvh bg-gray-50">
@@ -41,6 +73,9 @@ export default function NurseryPage() {
                             Seedling batches before transplanting to their destination block.
                         </p>
                     </div>
+                    <div className="flex flex-wrap gap-2">
+                        <AddBatchButton onClick={openBatchForm} />
+                    </div>
                 </header>
 
                 <NurseryAlertsSection />
@@ -53,10 +88,23 @@ export default function NurseryPage() {
                     disabled={isLoadingBlocks || hasBlocksError}
                 />
 
-                <NurseryBatchesSection blockCode={selectedBlock || null} />
+                <NurseryBatchesSection
+                    blockCode={selectedBlock || null}
+                    addAction={<AddBatchButton onClick={openBatchForm} />}
+                />
 
                 <NurseryHistorySection />
             </div>
+
+            {isAddingBatch && (
+                <AddNurseryBatchModal
+                    isSubmitting={addBatch.isPending}
+                    error={addBatch.error}
+                    onSubmit={submitBatch}
+                    onResetError={addBatch.reset}
+                    onClose={closeBatchForm}
+                />
+            )}
         </div>
     );
 }
