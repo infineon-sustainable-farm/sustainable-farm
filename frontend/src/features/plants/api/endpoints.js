@@ -19,5 +19,6 @@ export const PLANTS_ENDPOINTS = {
     BLOCK_HEALTH: "/api/plants/block-health",
     HEALTH_INSPECTIONS: "/api/plants/health-inspections",
     HEALTH_FINDINGS: "/api/plants/health-findings",
+    TREATMENTS: "/api/plants/treatments",
     ALERTS: "/api/plants/alerts",
 };

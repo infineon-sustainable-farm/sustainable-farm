@@ -282,6 +282,49 @@ export function fetchHealthFindings({ blockCode, farmId, status, from, to } = {}
 }
 
 /**
+ * Records a treatment answering a finding. The farm, the block and the problem
+ * targeted are copied from the finding by the API, which answers 400 with
+ * fieldErrors, 404 for an unknown finding, and 422 when the treatment predates
+ * the inspection or the finding is resolved.
+ */
+export function createFindingTreatment(findingId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.HEALTH_FINDINGS}/${findingId}/treatments`, body);
+}
+
+/**
+ * Resolves a finding, once. The API answers 400 with fieldErrors, 404 for an
+ * unknown finding, 409 when it is already resolved, and 422 when the date
+ * predates the inspection or the last treatment.
+ */
+export function resolveHealthFinding(findingId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.HEALTH_FINDINGS}/${findingId}/resolution`, body);
+}
+
+/**
+ * Records a preventive treatment, answering no finding. The API answers 400
+ * with fieldErrors and 422 when the problem targeted is not in the catalogue.
+ */
+export function createPreventiveTreatment(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.TREATMENTS, body);
+}
+
+/**
+ * Fetches the treatment record, optionally filtered, by treatment date: the
+ * treatments answering a finding and the preventive ones together. Same filter
+ * rules as fetchVarieties. The date from which harvesting is allowed comes
+ * computed by the API.
+ */
+export function fetchTreatments({ blockCode, farmId, from, to } = {}) {
+    const params = {};
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+    if (from) params.from = from;
+    if (to) params.to = to;
+
+    return apiClient.get(PLANTS_ENDPOINTS.TREATMENTS, { params });
+}
+
+/**
  * Fetches the plant alerts of the day, computed by the API: CRITICAL first,
  * then by date. `withinDays` only sets how early a harvest season is
  * announced; it is left out to keep the API's default.
