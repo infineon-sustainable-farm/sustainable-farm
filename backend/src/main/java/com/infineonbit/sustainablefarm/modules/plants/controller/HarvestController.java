@@ -53,9 +53,12 @@ public class HarvestController {
    @PostMapping
    @Operation(summary = "Record a harvest",
          description = "The variety must have a recorded planting on the block, and the harvest cannot predate it. "
-               + "Several harvests on the same day are allowed, one per picking.")
+               + "Several harvests on the same day are allowed, one per picking. Each harvest gets a lot number, "
+               + "LOT-<year of the harvest date>-<block>-<sequence>, for example LOT-2026-A-002: the sequence "
+               + "follows the order in which the harvests of the block and year are recorded. The server gives "
+               + "the lot number; a lotNumber sent in the request is ignored.")
    @ApiResponses({
-         @ApiResponse(responseCode = "201", description = "The recorded harvest"),
+         @ApiResponse(responseCode = "201", description = "The recorded harvest, with its lot number"),
          @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
          @ApiResponse(responseCode = "422", description = "No planting of this variety on this block, "
                + "or a harvest date before the planting date")

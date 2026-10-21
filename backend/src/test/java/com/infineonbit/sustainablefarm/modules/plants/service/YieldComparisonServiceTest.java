@@ -113,7 +113,7 @@ public class YieldComparisonServiceTest {
     }
 
     private static HarvestResponse harvest(long id, Variety variety, LocalDate harvestDate, double quantityKg) {
-        return new HarvestResponse(id, variety.getFarmId(), variety.getBlockCode(), variety.getId(),
+        return new HarvestResponse(id, null, variety.getFarmId(), variety.getBlockCode(), variety.getId(),
                 variety.getName(), harvestDate, quantityKg, "user_entry", null);
     }
 

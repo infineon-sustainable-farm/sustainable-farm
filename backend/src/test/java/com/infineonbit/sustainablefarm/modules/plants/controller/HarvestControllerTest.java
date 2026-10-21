@@ -72,7 +72,7 @@ public class HarvestControllerTest {
     }
 
     private static HarvestResponse keittHarvest() {
-        return new HarvestResponse(200L, null, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
+        return new HarvestResponse(200L, "LOT-2026-B-001", null, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
                 "user_entry", NOW);
     }
 
@@ -88,6 +88,7 @@ public class HarvestControllerTest {
         result.andExpect(status().isCreated())
                 .andExpect(header().doesNotExist("Location"))
                 .andExpect(jsonPath("$.id").value(200))
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"))
                 .andExpect(jsonPath("$.farmId").value(nullValue()))
                 .andExpect(jsonPath("$.blockCode").value("B"))
                 .andExpect(jsonPath("$.varietyId").value(10))
@@ -102,6 +103,20 @@ public class HarvestControllerTest {
         assertNull(captor.getValue().farmId());
         assertEquals(" b ", captor.getValue().blockCode());
         assertEquals(800.0, captor.getValue().quantityKg());
+    }
+
+    @Test
+    void recordHarvest_shouldIgnoreALotNumberSentWithTheRequest() throws Exception {
+        // Arrange: the lot number is given by the server, never taken from the client
+        when(harvestService.recordHarvest(any(HarvestRequest.class))).thenReturn(keittHarvest());
+        // Act
+        ResultActions result = postHarvest("""
+                {"blockCode":"B","varietyName":"Keitt","harvestDate":"2026-06-10","quantityKg":800,
+                 "lotNumber":"LOT-1999-Z-999"}
+                """);
+        // Assert: recorded, with the lot number the service gave
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"));
     }
 
     @Test
@@ -194,6 +209,7 @@ public class HarvestControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(200))
+                .andExpect(jsonPath("$[0].lotNumber").value("LOT-2026-B-001"))
                 .andExpect(jsonPath("$[0].harvestDate").value("2026-06-10"));
     }
 
@@ -220,14 +236,15 @@ public class HarvestControllerTest {
     @Test
     void getHarvestById_shouldReturn200WithTheHarvest() throws Exception {
         // Arrange: a harvest of farm 1, so that no field is null
-        when(harvestService.getHarvestById(200L)).thenReturn(new HarvestResponse(200L, 1, "B", 10L, "Keitt",
-                LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW));
+        when(harvestService.getHarvestById(200L)).thenReturn(new HarvestResponse(200L, "LOT-2026-B-001", 1, "B",
+                10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW));
         // Act
         ResultActions result = mockMvc.perform(get(URL + "/200"));
         // Assert: every field of the harvest, and no other
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$", aMapWithSize(9)))
+                .andExpect(jsonPath("$", aMapWithSize(10)))
                 .andExpect(jsonPath("$.id").value(200))
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"))
                 .andExpect(jsonPath("$.farmId").value(1))
                 .andExpect(jsonPath("$.blockCode").value("B"))
                 .andExpect(jsonPath("$.varietyId").value(10))

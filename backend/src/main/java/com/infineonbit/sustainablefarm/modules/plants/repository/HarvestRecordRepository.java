@@ -63,4 +63,17 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
             WHERE h.id = :id
             """)
     Optional<HarvestRecord> findWithVarietyById(@Param("id") Long id);
+
+    /**
+     * Returns the lot numbers that begin with the given prefix: those already
+     * given to a block for a year (see {@link HarvestRecord#lotPrefixOf}).
+     *
+     * <p>The prefix holds no LIKE wildcard: it is made of {@code "LOT-"}, a
+     * year, hyphens and a block code of letters and digits.
+     *
+     * @param prefix beginning of the lot numbers, for example {@code "LOT-2026-A-"}
+     * @return the matching lot numbers, in no particular order
+     */
+    @Query("SELECT h.lotNumber FROM HarvestRecord h WHERE h.lotNumber LIKE CONCAT(:prefix, '%')")
+    List<String> findLotNumbersStartingWith(@Param("prefix") String prefix);
 }

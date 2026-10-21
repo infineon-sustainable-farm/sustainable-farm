@@ -68,6 +68,7 @@ public class HarvestService {
         Variety variety = harvest.getVariety();
         return new HarvestResponse(
                 harvest.getId(),
+                harvest.getLotNumber(),
                 variety.getFarmId(),
                 variety.getBlockCode(),
                 variety.getId(),
@@ -99,8 +100,9 @@ public class HarvestService {
      *         and the name ignores case but not accents.</li>
      *     <li>Refuses a harvest of a variety with no recorded planting.</li>
      *     <li>Refuses a harvest dated before the planting of that variety.</li>
-     *     <li>Stores the harvest. Several harvests on the same day are allowed,
-     *         one per picking.</li>
+     *     <li>Stores the harvest with the next lot number of its block for the
+     *         year of the harvest date. Several harvests on the same day are
+     *         allowed, one per picking, each with its own lot.</li>
      * </ol>
      *
      * @param request the harvest, already validated
@@ -139,12 +141,37 @@ public class HarvestService {
         }
 
         HarvestRecord harvest = new HarvestRecord();
+        harvest.setLotNumber(nextLotNumber(variety.getBlockCode(), request.harvestDate().getYear()));
         harvest.setVariety(variety);
         harvest.setHarvestDate(request.harvestDate());
         harvest.setQuantityKg(request.quantityKg());
         harvest.setSource(USER_ENTRY_SOURCE);
         harvest.setLastUpdated(now);
         return toResponse(harvestRecordRepository.save(harvest));
+    }
+
+    /**
+     * Lot number of the next harvest of a block for a year: one more than the
+     * highest sequence already given to that block and year, or 1 for the
+     * first one. The highest, not the count, so a missing number never leads
+     * to a duplicate. The sequence follows the order in which the harvests are
+     * recorded, not their dates.
+     *
+     * <p>Two harvests of the block recorded at the same time can compute the
+     * same number: the unique constraint on the lot number refuses the second
+     * one.
+     *
+     * @param blockCode block code as stored, for example {@code "A"}
+     * @param year      year of the harvest date, not of the day it is recorded
+     * @return the lot number, for example {@code "LOT-2026-A-003"}
+     */
+    String nextLotNumber(String blockCode, int year) {
+        String prefix = HarvestRecord.lotPrefixOf(year, blockCode);
+        int highest = harvestRecordRepository.findLotNumbersStartingWith(prefix).stream()
+                .mapToInt(lotNumber -> Integer.parseInt(lotNumber.substring(prefix.length())))
+                .max()
+                .orElse(0);
+        return HarvestRecord.lotNumberOf(year, blockCode, highest + 1);
     }
 
     /**
