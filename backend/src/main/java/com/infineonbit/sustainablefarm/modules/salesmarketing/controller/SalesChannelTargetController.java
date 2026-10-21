@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/sales-channel-targets")
-@CrossOrigin(origins = "http://localhost:3000")
 public class SalesChannelTargetController {
 
     private final SalesChannelTargetService service;

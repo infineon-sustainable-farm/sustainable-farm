@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/product-batches")
-@CrossOrigin(origins = "http://localhost:3000")
 public class ProductBatchController {
 
     private final ProductBatchService service;

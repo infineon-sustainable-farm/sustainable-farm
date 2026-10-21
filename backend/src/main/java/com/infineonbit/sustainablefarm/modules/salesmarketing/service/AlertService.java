@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.common.ResourceNotFoundException;
-
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.AlertRequest;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.AlertRepository;
 import org.springframework.stereotype.Service;
@@ -11,47 +11,58 @@ import java.util.List;
 @Service("salesMarketingAlertService")
 public class AlertService {
 
-    private final AlertRepository repository;
 
-    public AlertService(AlertRepository repository) {
-        this.repository = repository;
-    }
+private final AlertRepository repository;
 
-    public List<Alert> getAll() {
-        return repository.findAll();
-    }
+public AlertService(AlertRepository repository) {
+    this.repository = repository;
+}
 
-    public Alert getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Alert not found with id: " + id));
-    }
+public List<Alert> getAll() {
+    return repository.findAll();
+}
 
-    public Alert create(Alert item) {
-        return repository.save(item);
-    }
+public Alert getById(Integer id) {
+    return repository.findById(id)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException("Alert not found with id: " + id));
+}
 
-    /**
-     * Copies every editable field from updatedData onto the existing
-     * row, then saves it. The id and created_at are left untouched.
-     */
-    public Alert update(Integer id, Alert updatedData) {
-        Alert existing = getById(id);
+public Alert create(AlertRequest request) {
+    Alert item = new Alert();
+    item.setAlertCode(request.alertCode());
+    item.setAlertType(request.alertType());
+    item.setSeverity(request.severity());
+    item.setMessage(request.message());
+    item.setRegion(request.region());
+    item.setOrigin(request.origin());
+    item.setRelatedTable(request.relatedTable());
+    item.setRelatedId(request.relatedId());
+    item.setStatus(request.status());
+    item.setResolvedAt(request.resolvedAt());
 
-        existing.setAlertCode(updatedData.getAlertCode());
-        existing.setAlertType(updatedData.getAlertType());
-        existing.setSeverity(updatedData.getSeverity());
-        existing.setMessage(updatedData.getMessage());
-        existing.setRegion(updatedData.getRegion());
-        existing.setOrigin(updatedData.getOrigin());
-        existing.setRelatedTable(updatedData.getRelatedTable());
-        existing.setRelatedId(updatedData.getRelatedId());
-        existing.setStatus(updatedData.getStatus());
-        existing.setResolvedAt(updatedData.getResolvedAt());
+    return repository.save(item);
+}
 
-        return repository.save(existing);
-    }
+public Alert update(Integer id, AlertRequest request) {
+    Alert existing = getById(id);
 
-    public void delete(Integer id) {
-        repository.deleteById(id);
-    }
+    existing.setAlertCode(request.alertCode());
+    existing.setAlertType(request.alertType());
+    existing.setSeverity(request.severity());
+    existing.setMessage(request.message());
+    existing.setRegion(request.region());
+    existing.setOrigin(request.origin());
+    existing.setRelatedTable(request.relatedTable());
+    existing.setRelatedId(request.relatedId());
+    existing.setStatus(request.status());
+    existing.setResolvedAt(request.resolvedAt());
+
+    return repository.save(existing);
+}
+
+public void delete(Integer id) {
+    repository.deleteById(id);
+}
+
 }

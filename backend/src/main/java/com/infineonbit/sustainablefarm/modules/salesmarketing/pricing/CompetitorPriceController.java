@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/competitor-prices")
-@CrossOrigin(origins = "http://localhost:3000")
 public class CompetitorPriceController {
 
     private final CompetitorPriceService service;

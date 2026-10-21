@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/demand-reports")
-@CrossOrigin(origins = "http://localhost:3000")
 public class DemandReportController {
 
     private final DemandReportService service;

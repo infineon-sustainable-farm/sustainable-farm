@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/forecast-model-runs")
-@CrossOrigin(origins = "http://localhost:3000")
 public class ForecastModelRunController {
 
     private final ForecastModelRunService service;

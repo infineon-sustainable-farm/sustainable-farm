@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/report-files")
-@CrossOrigin(origins = "http://localhost:3000")
 public class ReportFileController {
 
     private final ReportFileService service;

@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.common.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.CustomerRequest;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Customer;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.CustomerRepository;
@@ -31,26 +32,39 @@ public class CustomerService {
         return customerRepository.findByStatus(status);
     }
 
-    public Customer createCustomer(Customer customer) {
-        customer.setCreatedAt(LocalDateTime.now());
-        customer.setUpdatedAt(LocalDateTime.now());
-        return customerRepository.save(customer);
-    }
+    public Customer createCustomer(CustomerRequest request) {
+    Customer customer = new Customer();
+    customer.setCompanyName(request.companyName());
+    customer.setCustomerCode(request.customerCode());
+    customer.setCustomerType(request.customerType());
+    customer.setCountry(request.country());
+    customer.setRegion(request.region());
+    customer.setCity(request.city());
+    customer.setStatus(request.status());
+    customer.setPaymentTerms(request.paymentTerms());
 
-    public Customer updateCustomer(Integer id, Customer updatedData) {
-        Customer existing = getCustomerById(id);
+    LocalDateTime now = LocalDateTime.now();
+    customer.setCreatedAt(now);
+    customer.setUpdatedAt(now);
 
-        existing.setCompanyName(updatedData.getCompanyName());
-        existing.setCustomerType(updatedData.getCustomerType());
-        existing.setCountry(updatedData.getCountry());
-        existing.setRegion(updatedData.getRegion());
-        existing.setCity(updatedData.getCity());
-        existing.setStatus(updatedData.getStatus());
-        existing.setPaymentTerms(updatedData.getPaymentTerms());
-        existing.setUpdatedAt(LocalDateTime.now());
+    return customerRepository.save(customer);
+}
 
-        return customerRepository.save(existing);
-    }
+   public Customer updateCustomer(Integer id, CustomerRequest request) {
+    Customer existing = getCustomerById(id);
+
+    existing.setCompanyName(request.companyName());
+    existing.setCustomerCode(request.customerCode());
+    existing.setCustomerType(request.customerType());
+    existing.setCountry(request.country());
+    existing.setRegion(request.region());
+    existing.setCity(request.city());
+    existing.setStatus(request.status());
+    existing.setPaymentTerms(request.paymentTerms());
+    existing.setUpdatedAt(LocalDateTime.now());
+
+    return customerRepository.save(existing);
+}
 
     public void deleteCustomer(Integer id) {
         customerRepository.deleteById(id);

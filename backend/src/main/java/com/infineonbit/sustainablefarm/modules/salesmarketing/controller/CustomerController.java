@@ -1,16 +1,18 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Customer;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.CustomerRequest;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/customers")
-@CrossOrigin(origins = "http://localhost:3000")
+
 public class CustomerController {
 
     private final CustomerService customerService;
@@ -38,18 +40,18 @@ public class CustomerController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Customer createCustomer(
-            @Valid @RequestBody Customer customer) {
+        @Valid @RequestBody CustomerRequest request) {
 
-        return customerService.createCustomer(customer);
-    }
+    return customerService.createCustomer(request);
+}
 
     @PutMapping("/{id}")
-    public Customer updateCustomer(
-            @PathVariable Integer id,
-            @Valid @RequestBody Customer customer) {
+   public Customer updateCustomer(
+        @PathVariable Integer id,
+        @Valid @RequestBody CustomerRequest request) {
 
-        return customerService.updateCustomer(id, customer);
-    }
+    return customerService.updateCustomer(id, request);
+}
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

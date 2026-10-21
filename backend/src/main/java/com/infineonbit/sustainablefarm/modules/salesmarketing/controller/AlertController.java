@@ -1,5 +1,7 @@
+
 package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.AlertRequest;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.service.AlertService;
 import jakarta.validation.Valid;
@@ -10,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/alerts")
-@CrossOrigin(origins = "http://localhost:3000")
 public class AlertController {
 
     private final AlertService service;
@@ -31,13 +32,16 @@ public class AlertController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Alert create(@Valid @RequestBody Alert item) {
-        return service.create(item);
+    public Alert create(@Valid @RequestBody AlertRequest request) {
+        return service.create(request);
     }
 
     @PutMapping("/{id}")
-    public Alert update(@PathVariable Integer id, @Valid @RequestBody Alert item) {
-        return service.update(id, item);
+    public Alert update(
+            @PathVariable Integer id,
+            @Valid @RequestBody AlertRequest request
+    ) {
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")

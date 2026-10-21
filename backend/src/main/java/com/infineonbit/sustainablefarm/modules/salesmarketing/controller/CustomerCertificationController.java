@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/customers/{customerId}/certifications")
-@CrossOrigin(origins = "http://localhost:3000")
 public class CustomerCertificationController {
 
     private final CustomerCertificationRepository repository;

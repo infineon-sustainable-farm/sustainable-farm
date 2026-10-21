@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/campaigns")
-@CrossOrigin(origins = "http://localhost:3000")
 public class CampaignController {
 
     private final CampaignService service;

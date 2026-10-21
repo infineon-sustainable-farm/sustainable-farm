@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/pricing-history")
-@CrossOrigin(origins = "http://localhost:3000")
 public class PricingHistoryController {
 
     private final PricingHistoryService service;
