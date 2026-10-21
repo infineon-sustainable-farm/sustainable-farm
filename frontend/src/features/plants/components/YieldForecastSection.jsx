@@ -2,22 +2,13 @@ import { useState } from "react";
 import { Info, Loader2, TriangleAlert } from "lucide-react";
 import { useYieldForecast } from "../hooks/useYieldForecast";
 import { formatBlock, formatKilograms, formatMonth, formatNumber, formatText } from "../utils/format";
+import MonthPeriodControls from "./MonthPeriodControls";
 import PlantsEmptyState from "./PlantsEmptyState";
 import YieldForecastChart from "./YieldForecastChart";
 import YieldForecastTable from "./YieldForecastTable";
 
-const MONTHS_OPTIONS = [6, 12, 18, 24];
 const DEFAULT_MONTHS = 12;
 
-/**
- * The API's month format. Browsers without a month picker turn the field into
- * plain text, so the value is checked before it is ever sent.
- */
-const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-const LABEL_CLASS = "text-xs font-semibold text-gray-500";
-const CONTROL_CLASS =
-    "rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none";
 const TH_CLASS =
     "border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase";
 
@@ -97,66 +88,11 @@ function VarietiesWithoutReferenceNote({ varieties }) {
 }
 
 /**
- * Period of the forecast. Until a month is picked, the API chooses its current
- * month and the "From" field shows the month it answered with.
- */
-function ForecastControls({ from, fromError, onFromChange, months, onMonthsChange }) {
-    return (
-        <div className="flex flex-wrap items-start gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
-            <div>
-                <div className="flex items-center gap-3">
-                    <label id="yield-forecast-from-label" htmlFor="yield-forecast-from" className={LABEL_CLASS}>
-                        From
-                    </label>
-                    <input
-                        id="yield-forecast-from"
-                        type="month"
-                        value={from}
-                        onChange={(event) => onFromChange(event.target.value)}
-                        aria-labelledby="yield-forecast-title yield-forecast-from-label"
-                        className={CONTROL_CLASS}
-                        {...(fromError
-                            ? { "aria-invalid": true, "aria-describedby": "yield-forecast-from-error" }
-                            : {})}
-                    />
-                </div>
-                {fromError && (
-                    <p id="yield-forecast-from-error" className="mt-1 text-xs text-error">
-                        {fromError}
-                    </p>
-                )}
-            </div>
-
-            <div className="flex items-center gap-3">
-                <label id="yield-forecast-months-label" htmlFor="yield-forecast-months" className={LABEL_CLASS}>
-                    Months
-                </label>
-                <select
-                    id="yield-forecast-months"
-                    value={months}
-                    onChange={(event) => onMonthsChange(Number(event.target.value))}
-                    aria-labelledby="yield-forecast-title yield-forecast-months-label"
-                    className={CONTROL_CLASS}
-                >
-                    {MONTHS_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                            {option}
-                        </option>
-                    ))}
-                </select>
-            </div>
-        </div>
-    );
-}
-
-/**
  * Expected yield by month for the selected block: a column chart with the
  * period total, the same values as a table, and the forecast line by line
  * with its sources.
  */
 export default function YieldForecastSection({ blockCode }) {
-    // What the "From" field holds; null until the user changes it.
-    const [fromInput, setFromInput] = useState(null);
     // Month sent to the API; null lets the API start at its current month.
     const [from, setFrom] = useState(null);
     const [months, setMonths] = useState(DEFAULT_MONTHS);
@@ -167,14 +103,6 @@ export default function YieldForecastSection({ blockCode }) {
         months,
     });
 
-    const fromError = fromInput === null || MONTH_PATTERN.test(fromInput) ? null : "Use the format YYYY-MM.";
-
-    function changeFrom(value) {
-        setFromInput(value);
-        // An invalid month is never sent: the forecast shown stays the last valid one.
-        if (MONTH_PATTERN.test(value)) setFrom(value);
-    }
-
     const isEmpty = !isPending && !isError && forecast.monthlyTotals.every((month) => month.expectedKg === 0);
     const totalKg = !isPending && !isError ? periodTotal(forecast.monthlyTotals) : null;
 
@@ -184,10 +112,11 @@ export default function YieldForecastSection({ blockCode }) {
                 Expected yield by month
             </h3>
 
-            <ForecastControls
-                from={fromInput ?? forecast?.from ?? ""}
-                fromError={fromError}
-                onFromChange={changeFrom}
+            <MonthPeriodControls
+                idPrefix="yield-forecast"
+                titleId="yield-forecast-title"
+                answeredFrom={forecast?.from}
+                onFromChange={setFrom}
                 months={months}
                 onMonthsChange={setMonths}
             />

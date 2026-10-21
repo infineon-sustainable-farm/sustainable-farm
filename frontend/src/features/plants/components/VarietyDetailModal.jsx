@@ -5,7 +5,6 @@ import Value from "./Value";
 import {
     formatBlock,
     formatDensity,
-    formatKilograms,
     formatMeters,
     formatNumber,
     formatSpacing,
@@ -69,12 +68,6 @@ export default function VarietyDetailModal({ variety, onClose }) {
                 <Field label="Tree density">{formatDensity(variety.treeDensityPerHa)}</Field>
                 <Field label="Vigor">
                     <VigorBadge value={variety.vigor} />
-                </Field>
-                <Field label="Expected yield">
-                    {formatKilograms(variety.expectedYieldKg)}
-                </Field>
-                <Field label="Actual yield">
-                    {formatKilograms(variety.actualYieldKg)}
                 </Field>
                 <Field label="Plant origin">{formatText(variety.plantOrigin)}</Field>
                 <Field label="Farm ID">{formatNumber(variety.farmId)}</Field>

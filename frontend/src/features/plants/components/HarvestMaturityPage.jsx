@@ -3,9 +3,11 @@ import { Plus } from "lucide-react";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { useRecordHarvest } from "../hooks/useRecordHarvest";
 import BlockFilter from "./BlockFilter";
+import HarvestStatusSection from "./HarvestStatusSection";
 import HarvestsSection from "./HarvestsSection";
 import RecordHarvestModal from "./RecordHarvestModal";
 import ReferenceValuesSection from "./ReferenceValuesSection";
+import UpcomingDeadlinesSection from "./UpcomingDeadlinesSection";
 import YieldForecastSection from "./YieldForecastSection";
 
 function RecordHarvestButton({ onClick }) {
@@ -22,13 +24,14 @@ function RecordHarvestButton({ onClick }) {
 }
 
 /**
- * Harvest & Maturity: the expected yield by month first, as it is what the
- * screen is for, then the reference values it is computed from, then the
- * recorded harvests. One block filter drives the forecast and the harvests;
- * the reference values hold for every block.
+ * Harvest & Maturity: the maturity status of the day and the upcoming
+ * deadlines first, as in the mock-up, then the expected yield by month, the
+ * reference values they are computed from, and the recorded harvests. One
+ * block filter drives the status, the deadlines, the forecast and the
+ * harvests; the reference values hold for every block.
  *
- * The mock-up's maturity status, estimated harvest date, variance, lot number
- * and upcoming deadlines are left out: the API records none of them.
+ * The mock-up's variance, harvested quantity and lot number are left out: the
+ * API computes or records none of them.
  */
 export default function HarvestMaturityPage() {
     // Raw stored block value ("A"); an empty string means "no filter".
@@ -70,13 +73,17 @@ export default function HarvestMaturityPage() {
                             Harvest &amp; Maturity
                         </h2>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Recorded harvests and expected yield by month, by block.
+                            Maturity status, harvest deadlines, expected yield and recorded harvests, by block.
                         </p>
                     </div>
                     <RecordHarvestButton onClick={openHarvestForm} />
                 </header>
 
                 <BlockFilter blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
+
+                <HarvestStatusSection blockCode={selectedBlock || null} />
+
+                <UpcomingDeadlinesSection blockCode={selectedBlock || null} />
 
                 <YieldForecastSection blockCode={selectedBlock || null} />
 
