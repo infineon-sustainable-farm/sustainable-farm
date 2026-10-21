@@ -174,11 +174,14 @@ public class HarvestService {
      * same number: the unique constraint on the lot number refuses the second
      * one, which {@link ConcurrentPlantingRetry} runs once more.
      *
+     * <p>Public for {@link HarvestLotNumberBackfill}, which numbers the earlier
+     * harvests the same way. It opens no transaction of its own.
+     *
      * @param blockCode block code as stored, for example {@code "A"}
      * @param year      year of the harvest date, not of the day it is recorded
      * @return the lot number, for example {@code "LOT-2026-A-003"}
      */
-    String nextLotNumber(String blockCode, int year) {
+    public String nextLotNumber(String blockCode, int year) {
         String prefix = HarvestRecord.lotPrefixOf(year, blockCode);
         int highest = harvestRecordRepository.findLotNumbersStartingWith(prefix).stream()
                 .mapToInt(lotNumber -> Integer.parseInt(lotNumber.substring(prefix.length())))

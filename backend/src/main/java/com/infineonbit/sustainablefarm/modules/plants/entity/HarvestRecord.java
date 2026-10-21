@@ -52,7 +52,8 @@ public class HarvestRecord {
     /**
      * Lot number given when the harvest is recorded, for example
      * {@code "LOT-2026-A-002"}: see {@link #lotNumberOf}. It is unique and
-     * never changes. NULL on the harvests recorded before lot numbers existed.
+     * never changes. NULL on the harvests recorded before lot numbers existed,
+     * until, in the dev profile, the startup filling reaches them.
      *
      * <p>30 characters hold the longest block code of a harvest (10) and any
      * sequence.

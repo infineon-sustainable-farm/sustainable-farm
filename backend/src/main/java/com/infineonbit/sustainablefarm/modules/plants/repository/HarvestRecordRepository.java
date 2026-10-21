@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -80,4 +81,32 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      */
     @Query("SELECT h.lotNumber FROM HarvestRecord h WHERE h.lotNumber LIKE CONCAT(:prefix, '%')")
     List<String> findLotNumbersStartingWith(@Param("prefix") String prefix);
+
+    /**
+     * Returns the harvests without a lot number, oldest first, with their
+     * variety row: the harvests recorded before lot numbers existed, for the
+     * startup filling.
+     *
+     * @return the harvests whose {@code lot_number} is NULL, by identifier
+     */
+    @Query("""
+            SELECT h FROM HarvestRecord h JOIN FETCH h.variety
+            WHERE h.lotNumber IS NULL
+            ORDER BY h.id ASC
+            """)
+    List<HarvestRecord> findWithoutLotNumberOldestFirst();
+
+    /**
+     * Writes the lot number of one harvest that has none yet.
+     *
+     * <p>A bulk update: it changes no other column, {@code last_updated}
+     * included. Must run inside a transaction.
+     *
+     * @param id        the harvest
+     * @param lotNumber its lot number
+     * @return the number of rows updated: 1, or 0 if the harvest already has a lot number
+     */
+    @Modifying
+    @Query("UPDATE HarvestRecord h SET h.lotNumber = :lotNumber WHERE h.id = :id AND h.lotNumber IS NULL")
+    int fillLotNumber(@Param("id") Long id, @Param("lotNumber") String lotNumber);
 }

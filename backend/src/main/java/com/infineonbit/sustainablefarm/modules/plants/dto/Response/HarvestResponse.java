@@ -11,7 +11,8 @@ import java.time.LocalDate;
  * recorded (PL-05-05), for example "LOT-2026-A-002": the second lot given to
  * block A for a harvest of 2026, counted in the order the harvests were
  * recorded. It is unique and never changes; it is null for a harvest recorded
- * before lot numbers existed.
+ * before lot numbers existed, unless the startup filling of the dev profile
+ * numbered it.
  *
  * <p>{@code farmId}, {@code blockCode}, {@code varietyId} and
  * {@code varietyName} describe the variety row the harvest belongs to, as
