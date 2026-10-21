@@ -1,19 +1,17 @@
 import VigorBadge from "./VigorBadge";
 import {
     formatBlock,
-    formatKilograms,
     formatNumber,
     formatSpacing,
     formatText,
 } from "../utils/format";
 
+// The expected and actual yields are compared over a period, under this table.
 const COLUMNS = [
     "Variety",
     "Block",
     "Trees",
     "Spacing",
-    "Expected Yield",
-    "Actual Yield",
     "Vigor",
 ];
 
@@ -62,12 +60,6 @@ export default function VarietiesTable({ varieties, onSelect }) {
                                     variety.rowSpacingM,
                                     variety.treeSpacingM,
                                 )}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatKilograms(variety.expectedYieldKg)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatKilograms(variety.actualYieldKg)}
                             </td>
                             <td className="px-4 py-3">
                                 <VigorBadge value={variety.vigor} />

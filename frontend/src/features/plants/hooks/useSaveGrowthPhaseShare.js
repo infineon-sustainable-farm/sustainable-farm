@@ -4,8 +4,10 @@ import { saveGrowthPhaseShare } from "../api/plantsApi";
 /**
  * Corrects the yield share of the growth phase `code`.
  *
- * The shares and every forecast are refreshed afterwards: the API reads the
- * shares on every forecast, so the expected yields change with them.
+ * The shares, every forecast and yield comparison, the harvest status and the
+ * plant alerts are refreshed afterwards: the API reads the shares on every one
+ * of them, so the expected yields change with them, and a share that becomes
+ * 0 or leaves 0 moves the first month of a harvest window.
  */
 export function useSaveGrowthPhaseShare() {
     const queryClient = useQueryClient();
@@ -15,6 +17,9 @@ export function useSaveGrowthPhaseShare() {
             Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["plants", "growth-phase-yield-shares"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "yield-forecast"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "yield-comparison"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "harvest-status"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "alerts"] }),
             ]),
     });
 }
