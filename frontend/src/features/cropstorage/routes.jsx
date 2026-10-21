@@ -4,6 +4,7 @@ import ZonesPage from "./components/ZonesPage";
 import BatchesPage from "./components/BatchesPage";
 import MovementsPage from "./components/MovementsPage";
 import AlertsPage from "./components/AlertsPage";
+import QualityLossPage from "./components/QualityLossPage";
 
 export default [
   {
@@ -15,6 +16,7 @@ export default [
       { path: "batches", element: <BatchesPage /> },
       { path: "movements", element: <MovementsPage /> },
       { path: "alerts", element: <AlertsPage /> },
+      { path: "quality", element: <QualityLossPage /> },
     ],
   },
 ];

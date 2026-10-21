@@ -1,23 +1,34 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Warehouse } from "lucide-react";
+import {
+    Archive,
+    Banknote,
+    Bell,
+    Droplets,
+    Package,
+    Scale,
+    Thermometer,
+    Weight,
+} from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import {
     fetchAlertsByStatus,
     fetchBatches,
     fetchBatchSummary,
+    fetchSensorReadings,
+    fetchSensors,
     fetchStorageZones,
 } from "../api";
+import { KpiCard, StorageGauge, TemperatureSparkline } from "./DashboardVisuals";
 
-const numberFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 2,
-});
+const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
 
 function formatNumber(value) {
-    return numberFormat.format(Number(value ?? 0));
+    return value == null || value === "" ? "—" : numberFormat.format(Number(value));
 }
 
 function zoneKey(zone) {
-    const key = zone?.id ?? zone?.zoneCode;
+    const key = zone?.id ?? zone?.zoneCode ?? zone?.zone_code;
     return key == null ? null : String(key);
 }
 
@@ -25,117 +36,121 @@ function batchZoneKey(batch) {
     const key =
         batch.storageZone?.id ??
         batch.storageZoneId ??
+        batch.storage_zone_id ??
         batch.storageZone?.zoneCode ??
+        batch.storage_zone?.zoneCode ??
         batch.zoneCode;
     return key == null ? null : String(key);
 }
 
-function getZoneQuantities(zones, batches) {
+function sensorId(sensor) {
+    const id = sensor?.id ?? sensor?.sensorId ?? sensor?.sensor_id;
+    return id == null ? null : String(id);
+}
+
+function readingSensorId(reading) {
+    const id = sensorId(reading.sensor ?? reading.sensorRef) ??
+        reading.sensorId ??
+        reading.sensor_id;
+    return id == null ? null : String(id);
+}
+
+function readingDate(reading) {
+    return reading.measuredAt ?? reading.measured_at ?? null;
+}
+
+function deriveDashboardData(
+    summary,
+    activeAlerts = [],
+    batches = [],
+    zones = [],
+    sensors = [],
+    readings = [],
+) {
+    const safeActiveAlerts = Array.isArray(activeAlerts) ? activeAlerts : [];
+    const safeBatches = Array.isArray(batches) ? batches : [];
+    const safeZones = Array.isArray(zones) ? zones : [];
+    const safeSensors = Array.isArray(sensors) ? sensors : [];
+    const safeReadings = Array.isArray(readings) ? readings : [];
+
     const quantities = new Map();
-    for (const batch of batches) {
+    for (const batch of safeBatches) {
         const key = batchZoneKey(batch);
         if (key === null) continue;
-        quantities.set(key, (quantities.get(key) ?? 0) + Number(batch.currentQuantityKg ?? 0));
-    }
-    return zones.map((zone) => ({
-        ...zone,
-        currentQuantityKg: quantities.get(zoneKey(zone)) ?? 0,
-    }));
-}
-
-function KpiCard({ label, value, unit, secondary }) {
-    return (
-        <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">{label}</p>
-            <p className="font-heading mt-2 text-2xl font-bold text-gray-900">
-                {formatNumber(value)}
-                {unit && <span className="ml-1 text-sm font-medium text-gray-500">{unit}</span>}
-            </p>
-            {secondary && (
-                <p className="mt-2 text-xs text-gray-500">
-                    {formatNumber(secondary.eur)} EUR <span className="mx-1">·</span>{" "}
-                    {formatNumber(secondary.usd)} USD
-                </p>
-            )}
-        </article>
-    );
-}
-
-function StorageZoneCapacity({ zones }) {
-    if (zones.length === 0) {
-        return (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
-                <Warehouse size={26} className="mx-auto text-gray-400" aria-hidden="true" />
-                <p className="mt-3 font-medium text-gray-700">No storage zones configured</p>
-                <p className="mt-1 text-sm text-gray-500">
-                    Storage capacity will appear here when zones are added.
-                </p>
-            </div>
-        );
+        const quantity = Number(batch.currentQuantityKg ?? batch.current_quantity_kg ?? 0);
+        quantities.set(key, (quantities.get(key) ?? 0) + quantity);
     }
 
-    return (
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <div className="mb-5">
-                <h2 className="font-heading text-lg font-semibold text-gray-900">
-                    Storage zone capacity
-                </h2>
-                <p className="mt-1 text-sm text-gray-500">
-                    Current batch stock compared with each zone&apos;s capacity.
-                </p>
-            </div>
+    const zoneKeys = new Set(safeZones.map(zoneKey).filter(Boolean));
+    const zoneSensors = safeSensors.filter((sensor) => {
+        const key =
+            sensor.storageZone?.id ??
+            sensor.storageZoneId ??
+            sensor.storage_zone_id ??
+            sensor.storageZone?.zoneCode ??
+            sensor.storage_zone?.zoneCode;
+        return key != null && zoneKeys.has(String(key));
+    });
+    const zoneSensorIds = new Set(zoneSensors.map(sensorId).filter(Boolean));
+    const latestBySensor = new Map();
+    for (const reading of safeReadings) {
+        const id = readingSensorId(reading);
+        if (!id || !zoneSensorIds.has(id)) continue;
+        const current = latestBySensor.get(id);
+        if (!current || new Date(readingDate(reading)) > new Date(readingDate(current))) {
+            latestBySensor.set(id, reading);
+        }
+    }
 
-            <div className="flex flex-col gap-5">
-                {zones.map((zone) => {
-                    const capacity = Number(zone.capacityKg ?? 0);
-                    const current = zone.currentQuantityKg;
-                    const percentage = capacity > 0 ? (current / capacity) * 100 : 0;
-                    const barWidth = Math.min(percentage, 100);
-                    const overCapacity = percentage > 100;
+    const latestReadings = [...latestBySensor.values()];
+    const average = (field) => {
+        const values = latestReadings
+            .map((reading) => reading[field])
+            .filter((value) => value != null)
+            .map(Number);
+        return values.length
+            ? values.reduce((total, value) => total + value, 0) / values.length
+            : null;
+    };
 
-                    return (
-                        <section
-                            key={zone.id ?? zone.zoneCode}
-                            aria-label={`${zone.name || zone.zoneCode} capacity`}
-                        >
-                            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                                <p className="font-medium text-gray-800">
-                                    {zone.name || zone.zoneCode}
-                                    {zone.name && zone.zoneCode && (
-                                        <span className="ml-2 text-xs font-normal text-gray-500">
-                                            {zone.zoneCode}
-                                        </span>
-                                    )}
-                                </p>
-                                <p className={`text-sm ${overCapacity ? "font-semibold text-error" : "text-gray-600"}`}>
-                                    {formatNumber(current)} / {formatNumber(capacity)} kg
-                                    <span className="ml-2 text-xs">
-                                        ({formatNumber(percentage)}%)
-                                    </span>
-                                </p>
-                            </div>
-                            <div
-                                className="h-3 overflow-hidden rounded-full bg-gray-100"
-                                role="progressbar"
-                                aria-label={`${zone.name || zone.zoneCode} capacity used`}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                                aria-valuenow={Math.min(percentage, 100)}
-                                aria-valuetext={`${formatNumber(current)} of ${formatNumber(capacity)} kg, ${formatNumber(percentage)} percent`}
-                            >
-                                <div
-                                    className={`h-full rounded-full transition-[width] ${
-                                        overCapacity ? "bg-error" : "bg-primary"
-                                    }`}
-                                    style={{ width: `${barWidth}%` }}
-                                />
-                            </div>
-                        </section>
-                    );
-                })}
-            </div>
-        </div>
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    const temperatureTrend = safeReadings
+        .filter((reading) => {
+            const id = readingSensorId(reading);
+            const measuredAt = readingDate(reading);
+            return (
+                id &&
+                zoneSensorIds.has(id) &&
+                reading.temperature != null &&
+                measuredAt &&
+                new Date(measuredAt).getTime() >= cutoff
+            );
+        })
+        .sort((a, b) => new Date(readingDate(a)) - new Date(readingDate(b)));
+
+    const capacityKg = safeZones.reduce(
+        (total, zone) => total + Number(zone.capacityKg ?? zone.capacity_kg ?? 0),
+        0,
     );
+    const usedKg = safeZones.reduce(
+        (total, zone) => total + (quantities.get(zoneKey(zone)) ?? 0),
+        0,
+    );
+    const overallUsagePercent = capacityKg > 0 ? (usedKg / capacityKg) * 100 : 0;
+
+    return {
+        summary: summary ?? {},
+        activeAlertCount: safeActiveAlerts.length,
+        batches: safeBatches,
+        zones: safeZones.map((zone) => ({
+            ...zone,
+            currentQuantityKg: quantities.get(zoneKey(zone)) ?? 0,
+        })),
+        overallUsagePercent,
+        averageTemperature: average("temperature"),
+        averageHumidity: average("humidity"),
+        temperatureTrend: Array.isArray(temperatureTrend) ? temperatureTrend : [],
+    };
 }
 
 export default function CropStoragePage() {
@@ -143,47 +158,123 @@ export default function CropStoragePage() {
         document.title = "Crop Storage";
     }, []);
 
-    const {
-        data,
-        isPending,
-        isError,
-        refetch,
-        isFetching,
-    } = useQuery({
+    const { data, isPending, isError, refetch, isFetching } = useQuery({
         queryKey: ["cropstorage", "dashboard"],
         queryFn: async () => {
-            const [summary, activeAlerts, batches, zones] = await Promise.all([
+            const [summary, activeAlerts, batches, zones, sensors, readings] = await Promise.all([
                 fetchBatchSummary(),
                 fetchAlertsByStatus("ACTIVE"),
                 fetchBatches(),
                 fetchStorageZones(),
+                fetchSensors(),
+                fetchSensorReadings(),
             ]);
-            return {
-                summary,
-                activeAlertCount: activeAlerts.length,
-                batches,
-                zones: getZoneQuantities(zones, batches),
-            };
+            return deriveDashboardData(summary, activeAlerts, batches, zones, sensors, readings);
         },
     });
 
+    const summary = data?.summary ?? {};
+    const cards = [
+        {
+            label: "Current stock",
+            value: formatNumber(summary.totalKg),
+            unit: "kg",
+            icon: Package,
+            badge: "bg-primary-50 text-primary-700",
+            caption: "Across all batches",
+            captionStyle: "text-primary-700",
+        },
+        {
+            label: "Stock weight",
+            value: formatNumber(summary.totalTonnes),
+            unit: "tonnes",
+            icon: Weight,
+            badge: "bg-primary-50 text-primary-700",
+            caption: `${formatNumber(summary.totalLb)} lb total`,
+            captionStyle: "text-muted",
+        },
+        {
+            label: "Stock volume",
+            value: formatNumber(summary.totalM3),
+            unit: "m³",
+            icon: Archive,
+            badge: "bg-accent-50 text-accent-700",
+            caption: `${formatNumber(data?.overallUsagePercent)}% of capacity`,
+            captionStyle: "text-success",
+        },
+        {
+            label: "Inventory value",
+            value: formatNumber(summary.totalValueFcfa),
+            unit: "FCFA",
+            icon: Banknote,
+            badge: "bg-accent-50 text-accent-700",
+            caption: `${formatNumber(summary.totalValueEur)} EUR · ${formatNumber(summary.totalValueUsd)} USD`,
+            captionStyle: "text-muted",
+        },
+        {
+            label: "Active alerts",
+            value: formatNumber(data?.activeAlertCount),
+            unit: "alerts",
+            icon: Bell,
+            badge: data?.activeAlertCount
+                ? "bg-error/5 text-error"
+                : "bg-success/5 text-success",
+            caption: data?.activeAlertCount ? "Requires attention" : "No active alerts",
+            captionStyle: data?.activeAlertCount ? "text-error" : "text-success",
+        },
+        {
+            label: "Avg Temperature",
+            value: formatNumber(data?.averageTemperature),
+            unit: data?.averageTemperature == null ? "" : "°C",
+            icon: Thermometer,
+            badge: "bg-accent-50 text-accent-700",
+            caption: "Target: 15–20 °C",
+            captionStyle: "text-muted",
+        },
+        {
+            label: "Avg Humidity",
+            value: formatNumber(data?.averageHumidity),
+            unit: data?.averageHumidity == null ? "" : "%",
+            icon: Droplets,
+            badge: "bg-primary-50 text-primary-700",
+            caption: "Latest readings in storage zones",
+            captionStyle: "text-muted",
+        },
+        {
+            label: "Recovery Rate",
+            value: summary.recoveryRate ?? summary.recoveryRatePercent,
+            formatValue: true,
+            unit:
+                summary.recoveryRate == null && summary.recoveryRatePercent == null
+                    ? ""
+                    : "%",
+            icon: Scale,
+            badge: "bg-success/5 text-success",
+            caption:
+                summary.recoveryRate == null && summary.recoveryRatePercent == null
+                    ? "Not reported by summary API"
+                    : "Batch recovery",
+            captionStyle: "text-muted",
+        },
+    ];
+
     return (
-        <div className="min-h-dvh bg-gray-50">
+        <div className="min-h-dvh bg-navy-50">
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
                 <header>
                     <p className="font-heading text-xs font-bold tracking-widest text-primary uppercase">
                         Crop Storage
                     </p>
-                    <h1 className="font-heading mt-1 text-3xl font-bold text-gray-900">
+                    <h1 className="font-heading mt-1 text-3xl font-bold text-ink">
                         Crop Storage Dashboard
                     </h1>
-                    <p className="mt-2 max-w-xl text-sm text-gray-500">
-                        Inventory overview, active alerts, and storage capacity.
+                    <p className="mt-2 max-w-xl text-sm text-muted">
+                        Inventory overview, alerts, and storage conditions.
                     </p>
                 </header>
 
                 {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
+                    <div className="flex items-center justify-center gap-3 rounded-xl border border-line bg-white px-6 py-16 text-sm text-muted">
                         <Loader2 size={18} className="animate-spin" />
                         Loading storage dashboard…
                     </div>
@@ -193,10 +284,10 @@ export default function CropStoragePage() {
                     <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                         <AlertTriangle size={28} className="text-error" />
                         <div>
-                            <p className="font-heading text-base font-bold text-gray-900">
+                            <p className="font-heading text-base font-bold text-ink">
                                 Crop Storage dashboard could not be loaded
                             </p>
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-muted">
                                 One or more requests to the server did not succeed.
                             </p>
                         </div>
@@ -204,7 +295,7 @@ export default function CropStoragePage() {
                             type="button"
                             onClick={() => refetch()}
                             disabled={isFetching}
-                            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60"
                         >
                             {isFetching ? "Retrying…" : "Retry"}
                         </button>
@@ -214,31 +305,48 @@ export default function CropStoragePage() {
                 {!isPending && !isError && (
                     <>
                         <section aria-label="Inventory key performance indicators">
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                <KpiCard label="Current stock" value={data.summary.totalKg} unit="kg" />
-                                <KpiCard label="Stock weight" value={data.summary.totalTonnes} unit="tonnes" />
-                                <KpiCard label="Stock weight" value={data.summary.totalLb} unit="lb" />
-                                <KpiCard label="Stock volume" value={data.summary.totalM3} unit="m³" />
-                                <KpiCard
-                                    label="Inventory value"
-                                    value={data.summary.totalValueFcfa}
-                                    unit="FCFA"
-                                    secondary={{
-                                        eur: data.summary.totalValueEur,
-                                        usd: data.summary.totalValueUsd,
-                                    }}
-                                />
-                                <KpiCard label="Active alerts" value={data.activeAlertCount} />
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                {cards.map((card) => (
+                                    <KpiCard
+                                        key={card.label}
+                                        {...card}
+                                        value={
+                                            card.formatValue
+                                                ? formatNumber(card.value)
+                                                : card.value
+                                        }
+                                    />
+                                ))}
                             </div>
                         </section>
 
+                        <section className="grid gap-4 lg:grid-cols-2">
+                            <StorageGauge
+                                percentage={data.overallUsagePercent}
+                                usedKg={(data.zones ?? []).reduce(
+                                    (total, zone) => total + zone.currentQuantityKg,
+                                    0,
+                                )}
+                                capacityKg={data.zones.reduce(
+                                    (total, zone) =>
+                                        total + Number(zone.capacityKg ?? zone.capacity_kg ?? 0),
+                                    0,
+                                )}
+                                zones={data.zones}
+                            />
+                            <TemperatureSparkline readings={data.temperatureTrend} />
+                        </section>
+
+                        {data.zones.length === 0 && (
+                            <div className="rounded-xl border border-dashed border-line bg-white px-6 py-8 text-center text-sm text-muted">
+                                No storage zones are configured yet.
+                            </div>
+                        )}
                         {data.batches.length === 0 && (
-                            <div className="rounded-xl border border-dashed border-gray-300 bg-white px-5 py-4 text-sm text-gray-600">
+                            <div className="rounded-xl border border-dashed border-line bg-white px-5 py-4 text-sm text-muted">
                                 No batches are recorded in inventory yet.
                             </div>
                         )}
-
-                        <StorageZoneCapacity zones={data.zones} />
                     </>
                 )}
             </div>
