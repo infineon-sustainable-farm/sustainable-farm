@@ -16,7 +16,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final List<String> allowedOrigins;
 
-    public WebConfig(@Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
+    public WebConfig(@Value("${app.cors.allowed-origins:http://localhost:5173}") List<String> allowedOrigins) {
         this.allowedOrigins = allowedOrigins;
     }
 

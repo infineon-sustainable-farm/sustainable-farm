@@ -1,0 +1,52 @@
+.page-container { padding: 0; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.75rem; font-weight: 600; color: #333; }
+
+.search-filter-section {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.table-responsive { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { background: #f5f5f5; padding: 1rem; border-bottom: 1px solid #e0e0e0; font-size: 0.875rem; font-weight: 600; color: #333; text-align: left; }
+.data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e0e0e0; font-size: 0.875rem; color: #333; }
+.data-table tr:last-child td { border-bottom: none; }
+.empty-row { text-align: center; color: #666; padding: 2rem; }
+.row-actions { display: flex; gap: 0.5rem; }
+.action-link { color: #4CAF50; text-decoration: none; font-weight: 500; }
+.action-link:hover { text-decoration: underline; }
+
+/* Mini Workflow Indicator */
+.mini-workflow {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.workflow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  transition: all 0.2s ease;
+}
+
+.workflow-dot.completed {
+  background: #4CAF50;
+}
+
+.workflow-dot.current {
+  background: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.workflow-dot.pending {
+  background: #ccc;
+}
+
+.mini-workflow.unknown {
+  color: #ff9800;
+  font-weight: 600;
+}

@@ -1,0 +1,33 @@
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  background: var(--fail-bg);
+  border: 1px solid var(--fail);
+  border-radius: var(--radius-lg);
+}
+
+.error-state p {
+  color: var(--fail);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.retry-button {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background: var(--surface-2);
+}
