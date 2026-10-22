@@ -2,12 +2,16 @@ import {
   Boxes,
   Bug,
   CalendarDays,
+  CalendarX,
   ClipboardList,
   FlaskConical,
   Fuel,
   Home,
   LayoutDashboard,
   Leaf,
+  Package,
+  Sprout,
+  Users,
   Wrench,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
@@ -29,6 +33,10 @@ const NAV_ITEMS = [
   { id: 'maintenance', label: 'Maintenance', section: 'Water planning', icon: Wrench },
   { id: 'quality', label: 'Water quality', section: 'Water planning', icon: FlaskConical },
   { id: 'drought', label: 'Drought alerts', section: 'Water planning', icon: Bug },
+  { id: 'outages', label: 'Planned outages', section: 'Water planning', icon: CalendarX },
+  { id: 'plants', label: 'Plants blocks', section: 'Integrations', icon: Sprout },
+  { id: 'lots', label: 'Processing lots', section: 'Integrations', icon: Package },
+  { id: 'visitors', label: 'Visitors', section: 'Integrations', icon: Users },
   { id: 'notifications', label: 'Notifications', section: 'Operations', icon: ClipboardList },
 ]
 

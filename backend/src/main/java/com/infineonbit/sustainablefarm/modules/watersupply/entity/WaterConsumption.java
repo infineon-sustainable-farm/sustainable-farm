@@ -35,6 +35,12 @@ public class WaterConsumption extends BaseEntity {
      */
     private UUID zoneId;
 
+    @Column(name = "lot_id", length = 128)
+    private String lotId;
+
+    @Column(name = "activity", length = 32)
+    private String activity;
+
     public UUID getFarmId() {
         return farmId;
     }
@@ -81,5 +87,21 @@ public class WaterConsumption extends BaseEntity {
 
     public void setZoneId(UUID zoneId) {
         this.zoneId = zoneId;
+    }
+
+    public String getLotId() {
+        return lotId;
+    }
+
+    public void setLotId(String lotId) {
+        this.lotId = lotId;
+    }
+
+    public String getActivity() {
+        return activity;
+    }
+
+    public void setActivity(String activity) {
+        this.activity = activity;
     }
 }

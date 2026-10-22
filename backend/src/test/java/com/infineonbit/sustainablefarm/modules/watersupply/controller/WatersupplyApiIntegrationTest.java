@@ -258,6 +258,91 @@ class WatersupplyApiIntegrationTest {
         }
         }
 
+        @Test
+        @Transactional
+        void zoneBlockMappingCrudExposesResolverData() throws Exception {
+        String farmId = createFarm("Block Mapping Farm");
+        String fieldId = createField(farmId, "Block Mapping Field");
+        String zoneId = createZone(fieldId, "Block Mapping Zone");
+
+        MvcResult created = mockMvc.perform(post("/api/water/zone-block-mappings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"zoneId":"%s","blockCode":"a","farmId":"%s"}
+                    """.formatted(zoneId, farmId)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.zoneId").value(zoneId))
+            .andExpect(jsonPath("$.blockCode").value("A"))
+            .andExpect(jsonPath("$.farmId").value(farmId))
+            .andReturn();
+        String mappingId = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
+
+        mockMvc.perform(get("/api/water/zone-block-mappings")
+                .param("farmId", farmId)
+                .param("blockCode", "A"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value(mappingId));
+
+        mockMvc.perform(get("/api/water/zone-block-mappings/{mappingId}", mappingId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.zoneId").value(zoneId));
+
+        mockMvc.perform(put("/api/water/zone-block-mappings/{mappingId}", mappingId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"blockCode":"B"}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.blockCode").value("B"));
+
+        mockMvc.perform(delete("/api/water/zone-block-mappings/{mappingId}", mappingId))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/water/zone-block-mappings/{mappingId}", mappingId))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+        }
+
+        @Test
+        @Transactional
+        void zoneBlockMappingRejectsInvalidReferencesAndDuplicates() throws Exception {
+        String farmId = createFarm("Invalid Mapping Farm");
+        String fieldId = createField(farmId, "Invalid Mapping Field");
+        String zoneId = createZone(fieldId, "Invalid Mapping Zone");
+        String otherFarmId = createFarm("Other Mapping Farm");
+
+        mockMvc.perform(post("/api/water/zone-block-mappings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"zoneId":"%s","blockCode":"C","farmId":"%s"}
+                    """.formatted(zoneId, otherFarmId)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+
+        mockMvc.perform(post("/api/water/zone-block-mappings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"zoneId":"00000000-0000-0000-0000-000000000000","blockCode":"C","farmId":"%s"}
+                    """.formatted(farmId)))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+
+        mockMvc.perform(post("/api/water/zone-block-mappings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"zoneId":"%s","blockCode":"C","farmId":"%s"}
+                    """.formatted(zoneId, farmId)))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/water/zone-block-mappings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"zoneId":"%s","blockCode":"C","farmId":"%s"}
+                    """.formatted(zoneId, farmId)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("DATA_CONSTRAINT_VIOLATION"));
+        }
+
         private String createSource(String farmId, String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/water/sources")
                 .contentType(MediaType.APPLICATION_JSON)

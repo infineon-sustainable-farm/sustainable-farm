@@ -121,23 +121,20 @@ class WaterQuotaServiceTest {
     }
 
     @Test
-    void usageForZoneResolvesFieldFarmAndSplitsBetweenZones() {
-        UUID farmId = UUID.randomUUID();
-        UUID fieldId = UUID.randomUUID();
+    void usageForZoneUsesConsumptionMeasuredOnTheZone() {
         UUID zoneId = UUID.randomUUID();
 
         when(quotaRepository.findAll()).thenReturn(List.of(zoneQuota(zoneId, 1000d)));
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(zone(fieldId, "Zone Goutte A")));
-        when(fieldRepository.findById(fieldId)).thenReturn(Optional.of(field(farmId)));
-        when(fieldZoneRepository.findByFieldId(fieldId))
-                .thenReturn(List.of(zone(fieldId, "Zone Goutte A"), zone(fieldId, "Zone Nord")));
-        when(consumptionRepository.sumConsumptionByFarmIdBetween(any(), any(), eq(farmId))).thenReturn(500d);
+        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(zone(UUID.randomUUID(), "Zone Goutte A")));
+        when(consumptionRepository.sumConsumptionByZoneIdBetween(any(), any(), eq(zoneId))).thenReturn(250d);
 
         List<Map<String, Object>> usage = service().currentUsage();
 
-        // 500 L consommes sur le farm, repartis sur les 2 zones du champ => 250 L pour la zone.
+        // Consumption now carries its zone: no more split of the farm volume between zones.
         assertEquals("ok", usage.get(0).get("status"));
         assertEquals(25L, usage.get(0).get("usage_percentage"));
+        assertEquals("Zone Goutte A", usage.get(0).get("target_name"));
+        verify(consumptionRepository, never()).sumConsumptionByFarmIdBetween(any(), any(), any());
     }
 
     @Test

@@ -9,5 +9,7 @@ public record WaterConsumptionUpdateRequest(
         Double consumptionLiters,
         Instant consumptionDate,
         UUID irrigationId,
-        UUID zoneId) {
+        UUID zoneId,
+        String lotId,
+        String activity) {
 }
