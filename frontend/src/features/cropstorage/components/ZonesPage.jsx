@@ -23,9 +23,7 @@ export default function ZonesPage() {
 
     const createMutation = useMutation({
         mutationFn: createStorageZone,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["cropstorage"] });
-        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cropstorage"] }),
     });
 
     const fieldErrors =
@@ -79,6 +77,7 @@ export default function ZonesPage() {
                     isSubmitting={createMutation.isPending}
                     fieldErrors={fieldErrors}
                     submitError={submitError}
+                    success={createMutation.isSuccess}
                     onSubmit={(zone) => createMutation.mutate(zone)}
                     onClearError={() => createMutation.reset()}
                 />

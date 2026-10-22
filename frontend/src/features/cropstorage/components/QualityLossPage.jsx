@@ -10,8 +10,7 @@ import {
 } from "../api";
 import QualityCheckForm from "./QualityCheckForm";
 import LossRecordForm from "./LossRecordForm";
-
-const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+import { formatMoney, formatNumber, formatQuantity } from "../utils/formatters";
 
 function batchId(record) {
     const id = record.batch?.id ?? record.batchId ?? record.batch_id;
@@ -34,39 +33,39 @@ function QualityChecksTable({ checks }) {
     return (
         <div className="overflow-x-auto rounded-xl border border-line bg-white">
             <table className="min-w-full divide-y divide-line text-left text-sm">
-                <thead className="bg-navy-50 text-xs tracking-wide text-muted uppercase">
+                <thead className="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase">
                     <tr>
-                        <th className="px-3 py-2.5 font-semibold">Batch</th>
-                        <th className="px-3 py-2.5 font-semibold">Checked at</th>
-                        <th className="px-3 py-2.5 font-semibold">Moisture</th>
-                        <th className="px-3 py-2.5 font-semibold">Grade</th>
-                        <th className="px-3 py-2.5 font-semibold">Result</th>
-                        <th className="px-3 py-2.5 font-semibold">Inspector</th>
-                        <th className="px-3 py-2.5 font-semibold">Notes</th>
+                        <th className="px-4 py-3 font-semibold">Batch</th>
+                        <th className="px-4 py-3 font-semibold">Checked at</th>
+                        <th className="px-4 py-3 font-semibold">Moisture</th>
+                        <th className="px-4 py-3 font-semibold">Grade</th>
+                        <th className="px-4 py-3 font-semibold">Result</th>
+                        <th className="px-4 py-3 font-semibold">Inspector</th>
+                        <th className="px-4 py-3 font-semibold">Notes</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                     {checks.map((check) => (
                         <tr key={check.id}>
-                            <td className="whitespace-nowrap px-3 py-2.5 font-medium text-ink">
+                            <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">
                                 {batchCode(check)}
                             </td>
-                            <td className="whitespace-nowrap px-3 py-2.5 text-muted">
+                            <td className="whitespace-nowrap px-4 py-3 text-muted">
                                 {check.checkedAt ?? check.checked_at ?? "—"}
                             </td>
-                            <td className="px-3 py-2.5 text-muted">
+                            <td className="px-4 py-3 text-muted">
                                 {check.moisturePercent == null && check.moisture_percent == null
                                     ? "—"
-                                    : `${numberFormat.format(check.moisturePercent ?? check.moisture_percent)}%`}
+                                    : `${formatNumber(check.moisturePercent ?? check.moisture_percent)}%`}
                             </td>
-                            <td className="px-3 py-2.5 text-muted">
+                            <td className="px-4 py-3 text-muted">
                                 {check.qualityGrade ?? check.quality_grade ?? "—"}
                             </td>
-                            <td className="px-3 py-2.5 text-muted">
+                            <td className="px-4 py-3 text-muted">
                                 {check.passed ? "Passed" : "Failed"}
                             </td>
-                            <td className="px-3 py-2.5 text-muted">{check.inspector ?? "—"}</td>
-                            <td className="max-w-56 truncate px-3 py-2.5 text-muted">
+                            <td className="px-4 py-3 text-muted">{check.inspector ?? "—"}</td>
+                            <td className="max-w-56 truncate px-4 py-3 text-muted">
                                 {check.notes ?? "—"}
                             </td>
                         </tr>
@@ -81,32 +80,30 @@ function LossRecordsTable({ losses }) {
     return (
         <div className="overflow-x-auto rounded-xl border border-line bg-white">
             <table className="min-w-full divide-y divide-line text-left text-sm">
-                <thead className="bg-navy-50 text-xs tracking-wide text-muted uppercase">
+                <thead className="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase">
                     <tr>
-                        <th className="px-3 py-2.5 font-semibold">Batch</th>
-                        <th className="px-3 py-2.5 font-semibold">Recorded at</th>
-                        <th className="px-3 py-2.5 text-right font-semibold">Quantity (kg)</th>
-                        <th className="px-3 py-2.5 font-semibold">Cause</th>
-                        <th className="px-3 py-2.5 text-right font-semibold">Value (FCFA)</th>
+                        <th className="px-4 py-3 font-semibold">Batch</th>
+                        <th className="px-4 py-3 font-semibold">Recorded at</th>
+                        <th className="px-4 py-3 text-right font-semibold">Quantity</th>
+                        <th className="px-4 py-3 font-semibold">Cause</th>
+                        <th className="px-4 py-3 text-right font-semibold">Value</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                     {losses.map((loss) => (
                         <tr key={loss.id}>
-                            <td className="whitespace-nowrap px-3 py-2.5 font-medium text-ink">
+                            <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">
                                 {batchCode(loss)}
                             </td>
-                            <td className="whitespace-nowrap px-3 py-2.5 text-muted">
+                            <td className="whitespace-nowrap px-4 py-3 text-muted">
                                 {loss.recordedAt ?? loss.recorded_at ?? "—"}
                             </td>
-                            <td className="px-3 py-2.5 text-right text-muted">
-                                {numberFormat.format(loss.quantityKg ?? loss.quantity_kg ?? 0)}
+                            <td className="px-4 py-3 text-right text-muted">
+                                {formatQuantity(loss.quantityKg ?? loss.quantity_kg ?? 0)}
                             </td>
-                            <td className="px-3 py-2.5 text-muted">{loss.cause ?? "—"}</td>
-                            <td className="px-3 py-2.5 text-right text-muted">
-                                {loss.valueFcfa == null && loss.value_fcfa == null
-                                    ? "—"
-                                    : numberFormat.format(loss.valueFcfa ?? loss.value_fcfa)}
+                            <td className="px-4 py-3 text-muted">{loss.cause ?? "—"}</td>
+                            <td className="px-4 py-3 text-right text-muted">
+                                {formatMoney(loss.valueFcfa ?? loss.value_fcfa)}
                             </td>
                         </tr>
                     ))}
@@ -119,7 +116,7 @@ function LossRecordsTable({ losses }) {
 function QueryFeedback({ query, label }) {
     if (query.isPending) {
         return (
-            <div className="flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-5 text-sm text-muted">
+            <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-6 py-10 text-sm text-muted">
                 <Loader2 size={16} className="animate-spin" />
                 Loading {label}…
             </div>
@@ -127,7 +124,7 @@ function QueryFeedback({ query, label }) {
     }
     if (query.isError) {
         return (
-            <p role="alert" className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">
+            <p role="alert" className="rounded-xl border border-error/30 bg-error/5 px-4 py-4 text-sm text-error">
                 {label} could not be loaded: {query.error.message}
             </p>
         );
@@ -170,14 +167,14 @@ export default function QualityLossPage() {
     );
 
     return (
-        <div className="min-h-dvh bg-navy-50">
+        <div className="min-h-dvh bg-gray-50">
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
                 <header>
                     <p className="font-heading text-xs font-bold tracking-widest text-primary uppercase">
                         Crop Storage
                     </p>
-                    <h1 className="font-heading mt-1 text-3xl font-bold text-ink">Quality &amp; Losses</h1>
-                    <p className="mt-2 text-sm text-muted">
+                    <h1 className="font-heading mt-1 text-3xl font-bold text-gray-900">Quality &amp; Losses</h1>
+                    <p className="mt-2 text-sm text-gray-500">
                         Track inspection results and recorded inventory losses.
                     </p>
                 </header>
@@ -185,9 +182,15 @@ export default function QualityLossPage() {
                 <section className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
                         <ClipboardCheck size={18} className="text-primary" aria-hidden="true" />
-                        <h2 className="font-heading text-lg font-semibold text-ink">Quality checks</h2>
+                        <h2 className="font-heading text-lg font-semibold text-gray-900">Quality checks</h2>
                     </div>
                     <div className="max-w-xs">
+                        <QueryFeedback query={batchesQuery} label="Batches" />
+                        {!batchesQuery.isPending && !batchesQuery.isError && batchesQuery.data.length === 0 && (
+                            <p className="mb-3 rounded-xl border border-dashed border-line bg-white px-5 py-6 text-sm text-muted">
+                                No batches yet. Create a batch before recording a quality check.
+                            </p>
+                        )}
                         <label
                             htmlFor="quality-batch-filter"
                             className="mb-1.5 block text-xs tracking-wide text-primary uppercase"
@@ -213,8 +216,8 @@ export default function QualityLossPage() {
                         checks.length ? (
                             <QualityChecksTable checks={checks} />
                         ) : (
-                            <p className="rounded-lg border border-dashed border-line bg-white px-4 py-6 text-center text-sm text-muted">
-                                No quality checks match this batch filter.
+                            <p className="rounded-xl border border-dashed border-line bg-white px-6 py-10 text-center text-sm text-muted">
+                                No quality checks match this filter. Add a check below or choose another batch.
                             </p>
                         )
                     )}
@@ -230,14 +233,14 @@ export default function QualityLossPage() {
                 </section>
 
                 <section className="flex flex-col gap-4">
-                    <h2 className="font-heading text-lg font-semibold text-ink">Loss records</h2>
+                    <h2 className="font-heading text-lg font-semibold text-gray-900">Loss records</h2>
                     <QueryFeedback query={lossesQuery} label="Loss records" />
                     {!lossesQuery.isPending && !lossesQuery.isError && (
                         lossesQuery.data.length ? (
                             <LossRecordsTable losses={lossesQuery.data} />
                         ) : (
-                            <p className="rounded-lg border border-dashed border-line bg-white px-4 py-6 text-center text-sm text-muted">
-                                No loss records yet.
+                            <p className="rounded-xl border border-dashed border-line bg-white px-6 py-10 text-center text-sm text-muted">
+                                No loss records yet. Add a record below to track inventory losses.
                             </p>
                         )
                     )}
@@ -250,11 +253,6 @@ export default function QualityLossPage() {
                         onSubmit={(payload) => lossMutation.mutate(payload)}
                         onClearFeedback={() => lossMutation.reset()}
                     />
-                    {batchesQuery.isError && (
-                        <p role="alert" className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">
-                            Batches could not be loaded: {batchesQuery.error.message}
-                        </p>
-                    )}
                 </section>
             </div>
         </div>

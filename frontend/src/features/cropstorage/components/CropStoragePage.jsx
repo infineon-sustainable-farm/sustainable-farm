@@ -20,12 +20,7 @@ import {
     fetchStorageZones,
 } from "../api";
 import { KpiCard, StorageGauge, TemperatureSparkline } from "./DashboardVisuals";
-
-const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
-
-function formatNumber(value) {
-    return value == null || value === "" ? "—" : numberFormat.format(Number(value));
-}
+import { formatMoney, formatNumber, formatQuantity } from "../utils/formatters";
 
 function zoneKey(zone) {
     const key = zone?.id ?? zone?.zoneCode ?? zone?.zone_code;
@@ -158,7 +153,7 @@ export default function CropStoragePage() {
         document.title = "Crop Storage";
     }, []);
 
-    const { data, isPending, isError, refetch, isFetching } = useQuery({
+    const { data, isPending, isError, refetch, isFetching, error } = useQuery({
         queryKey: ["cropstorage", "dashboard"],
         queryFn: async () => {
             const [summary, activeAlerts, batches, zones, sensors, readings] = await Promise.all([
@@ -177,8 +172,7 @@ export default function CropStoragePage() {
     const cards = [
         {
             label: "Current stock",
-            value: formatNumber(summary.totalKg),
-            unit: "kg",
+            value: formatQuantity(summary.totalKg),
             icon: Package,
             badge: "bg-primary-50 text-primary-700",
             caption: "Across all batches",
@@ -186,11 +180,12 @@ export default function CropStoragePage() {
         },
         {
             label: "Stock weight",
-            value: formatNumber(summary.totalTonnes),
-            unit: "tonnes",
+            value: formatQuantity(
+                summary.totalTonnes == null ? null : Number(summary.totalTonnes) * 1000,
+            ),
             icon: Weight,
             badge: "bg-primary-50 text-primary-700",
-            caption: `${formatNumber(summary.totalLb)} lb total`,
+            caption: "Reported in kilograms",
             captionStyle: "text-muted",
         },
         {
@@ -204,11 +199,10 @@ export default function CropStoragePage() {
         },
         {
             label: "Inventory value",
-            value: formatNumber(summary.totalValueFcfa),
-            unit: "FCFA",
+            value: formatMoney(summary.totalValueFcfa),
             icon: Banknote,
             badge: "bg-accent-50 text-accent-700",
-            caption: `${formatNumber(summary.totalValueEur)} EUR · ${formatNumber(summary.totalValueUsd)} USD`,
+            caption: "Total inventory value",
             captionStyle: "text-muted",
         },
         {
@@ -287,9 +281,7 @@ export default function CropStoragePage() {
                             <p className="font-heading text-base font-bold text-ink">
                                 Crop Storage dashboard could not be loaded
                             </p>
-                            <p className="mt-1 text-sm text-muted">
-                                One or more requests to the server did not succeed.
-                            </p>
+                            <p className="mt-1 text-sm text-muted">{error.message}</p>
                         </div>
                         <button
                             type="button"
@@ -339,12 +331,12 @@ export default function CropStoragePage() {
 
                         {data.zones.length === 0 && (
                             <div className="rounded-xl border border-dashed border-line bg-white px-6 py-8 text-center text-sm text-muted">
-                                No storage zones are configured yet.
+                                No storage zones are configured yet. Create a zone to track capacity.
                             </div>
                         )}
                         {data.batches.length === 0 && (
                             <div className="rounded-xl border border-dashed border-line bg-white px-5 py-4 text-sm text-muted">
-                                No batches are recorded in inventory yet.
+                                No batches are recorded yet. Create a batch to start tracking inventory.
                             </div>
                         )}
                     </>

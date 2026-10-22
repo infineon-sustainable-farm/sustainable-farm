@@ -26,7 +26,7 @@ export default function AlertsPage() {
     const actionMutation = useMutation({
         mutationFn: ({ id, action }) =>
             action === "acknowledge" ? acknowledgeAlert(id) : resolveAlert(id),
-        onSuccess: () =>
+        onSuccess: async () =>
             queryClient.invalidateQueries({ queryKey: ["cropstorage", "alerts"] }),
     });
 
@@ -84,6 +84,14 @@ export default function AlertsPage() {
                         </button>
                     </div>
                 )}
+                {actionMutation.isSuccess && (
+                    <p
+                        role="status"
+                        className="rounded-xl border border-success/30 bg-success/5 p-4 text-sm text-success"
+                    >
+                        Alert {actionMutation.variables.action === "resolve" ? "resolved" : "acknowledged"}.
+                    </p>
+                )}
 
                 {alertsQuery.isPending && (
                     <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-12 text-sm text-gray-500">
@@ -110,8 +118,8 @@ export default function AlertsPage() {
                 {!alertsQuery.isPending && !alertsQuery.isError && visibleAlerts.length === 0 && (
                     <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-600">
                         {statusFilter === "ALL"
-                            ? "No alerts recorded yet."
-                            : `No ${statusFilter.toLowerCase()} alerts.`}
+                            ? "No alerts recorded yet. Alerts will appear when a storage condition needs attention."
+                            : `No ${statusFilter.toLowerCase()} alerts. Try another status filter.`}
                     </div>
                 )}
                 {!alertsQuery.isPending && !alertsQuery.isError && visibleAlerts.length > 0 && (

@@ -1,4 +1,4 @@
-const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+import { formatNumber, formatQuantity } from "../utils/formatters";
 
 export default function StorageZonesTable({ zones }) {
     return (
@@ -9,7 +9,7 @@ export default function StorageZonesTable({ zones }) {
                         <th className="px-4 py-3 font-semibold">Code</th>
                         <th className="px-4 py-3 font-semibold">Name</th>
                         <th className="px-4 py-3 font-semibold">Type</th>
-                        <th className="px-4 py-3 text-right font-semibold">Capacity (kg)</th>
+                        <th className="px-4 py-3 text-right font-semibold">Capacity</th>
                         <th className="px-4 py-3 text-right font-semibold">Capacity (m³)</th>
                         <th className="px-4 py-3 font-semibold">Used</th>
                     </tr>
@@ -27,10 +27,10 @@ export default function StorageZonesTable({ zones }) {
                                     {zone.type ?? zone.zoneType ?? "—"}
                                 </td>
                                 <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
-                                    {numberFormat.format(zone.capacityKg)}
+                                    {formatQuantity(zone.capacityKg)}
                                 </td>
                                 <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
-                                    {numberFormat.format(zone.capacityM3)}
+                                    {formatNumber(zone.capacityM3)} m³
                                 </td>
                                 <td className="min-w-40 px-4 py-3">
                                     <div className="flex items-center gap-3">
@@ -41,7 +41,7 @@ export default function StorageZonesTable({ zones }) {
                                             aria-valuemin={0}
                                             aria-valuemax={100}
                                             aria-valuenow={Math.min(percent, 100)}
-                                            aria-valuetext={`${numberFormat.format(percent)}% used`}
+                                            aria-valuetext={`${formatNumber(percent)}% used`}
                                         >
                                             <div
                                                 className={`h-full rounded-full ${
@@ -51,7 +51,7 @@ export default function StorageZonesTable({ zones }) {
                                             />
                                         </div>
                                         <span className="w-14 text-right tabular-nums text-gray-600">
-                                            {numberFormat.format(percent)}%
+                                            {formatNumber(percent)}%
                                         </span>
                                     </div>
                                 </td>

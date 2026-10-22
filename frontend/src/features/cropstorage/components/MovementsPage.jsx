@@ -138,7 +138,7 @@ export default function MovementsPage() {
                                     <MovementsTable movements={historyQuery.data} />
                                 ) : (
                                     <p className="rounded-xl border border-dashed border-gray-300 bg-white px-5 py-8 text-center text-sm text-gray-600">
-                                        No movements recorded for this batch yet.
+                                        No movements recorded for this batch yet. Register one below to build its history.
                                     </p>
                                 )
                             )}
@@ -146,9 +146,20 @@ export default function MovementsPage() {
                     )}
                 </section>
 
+                {zonesQuery.isPending && (
+                    <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-6 text-sm text-gray-500">
+                        <Loader2 size={18} className="animate-spin" />
+                        Loading storage zones…
+                    </div>
+                )}
                 {zonesQuery.isError && (
                     <p role="alert" className="rounded-xl border border-error/30 bg-error/5 p-4 text-sm text-error">
                         Storage zones could not be loaded: {zonesQuery.error.message}
+                    </p>
+                )}
+                {!zonesQuery.isPending && !zonesQuery.isError && zonesQuery.data.length === 0 && (
+                    <p className="rounded-xl border border-dashed border-gray-300 bg-white px-5 py-6 text-sm text-gray-600">
+                        No storage zones available. Create a zone before moving stock into storage.
                     </p>
                 )}
                 <MovementForm

@@ -1,10 +1,5 @@
 import { Activity, Gauge, PackageCheck } from "lucide-react";
-
-const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
-
-function formatNumber(value) {
-    return value == null || value === "" ? "—" : numberFormat.format(Number(value));
-}
+import { formatNumber, formatQuantity } from "../utils/formatters";
 
 export function KpiCard({ label, value, unit, icon: Icon, badge, caption, captionStyle }) {
     return (
@@ -73,7 +68,7 @@ export function StorageGauge({ percentage = 0, usedKg = 0, capacityKg = 0, zones
                                 {formatNumber(percentage)}%
                             </p>
                             <p className="text-xs text-muted">
-                                {formatNumber(usedKg)} / {formatNumber(capacityKg)} kg
+                                {formatQuantity(usedKg)} / {formatQuantity(capacityKg)}
                             </p>
                         </div>
                     </div>
@@ -142,7 +137,7 @@ export function TemperatureSparkline({ readings = [] }) {
             </div>
             {(safeReadings?.length ?? 0) === 0 ? (
                 <p className="mt-5 rounded-lg bg-navy-50 px-4 py-8 text-center text-sm text-muted">
-                    No temperature readings recorded in the last 24 hours.
+                    No temperature readings in the last 24 hours. Readings will appear when sensors report.
                 </p>
             ) : (
                 <>

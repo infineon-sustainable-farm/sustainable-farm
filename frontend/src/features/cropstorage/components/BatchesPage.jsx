@@ -31,9 +31,7 @@ export default function BatchesPage() {
 
     const createMutation = useMutation({
         mutationFn: createBatch,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["cropstorage"] });
-        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cropstorage"] }),
     });
 
     const fieldErrors =
@@ -89,6 +87,7 @@ export default function BatchesPage() {
                     isSubmitting={createMutation.isPending}
                     fieldErrors={fieldErrors}
                     submitError={submitError}
+                    success={createMutation.isSuccess}
                     onSubmit={(batch) => createMutation.mutate(batch)}
                     onClearError={() => createMutation.reset()}
                 />

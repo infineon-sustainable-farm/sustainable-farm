@@ -1,4 +1,4 @@
-const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+import { formatQuantity } from "../utils/formatters";
 
 export default function BatchesTable({ batches }) {
     return (
@@ -10,7 +10,7 @@ export default function BatchesTable({ batches }) {
                         <th className="px-4 py-3 font-semibold">Product</th>
                         <th className="px-4 py-3 font-semibold">Stage</th>
                         <th className="px-4 py-3 font-semibold">Status</th>
-                        <th className="px-4 py-3 text-right font-semibold">Current stock (kg)</th>
+                        <th className="px-4 py-3 text-right font-semibold">Current stock</th>
                         <th className="px-4 py-3 font-semibold">Storage zone</th>
                         <th className="px-4 py-3 font-semibold">Expiry</th>
                     </tr>
@@ -29,7 +29,7 @@ export default function BatchesTable({ batches }) {
                             </td>
                             <td className="px-4 py-3 text-gray-700">{batch.status ?? "—"}</td>
                             <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
-                                {numberFormat.format(
+                                {formatQuantity(
                                     Number(batch.currentQuantityKg ?? batch.current_quantity_kg ?? 0),
                                 )}
                             </td>

@@ -88,6 +88,7 @@ export default function BatchForm({
     isSubmitting,
     fieldErrors,
     submitError,
+    success,
     onSubmit,
     onClearError,
 }) {
@@ -150,6 +151,11 @@ export default function BatchForm({
             {submitError && (
                 <p role="alert" className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
                     {submitError}
+                </p>
+            )}
+            {success && (
+                <p role="status" className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
+                    Batch created successfully.
                 </p>
             )}
             <button

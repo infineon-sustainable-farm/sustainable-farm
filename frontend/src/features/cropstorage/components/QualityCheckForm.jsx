@@ -61,10 +61,10 @@ export default function QualityCheckForm({
     return (
         <form
             onSubmit={handleSubmit}
-            className="rounded-xl border border-line bg-white p-4"
+            className="rounded-xl border border-line bg-white p-5"
         >
-            <h3 className="font-heading font-semibold text-ink">Add quality check</h3>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <h3 className="font-heading text-lg font-semibold text-gray-900">Add quality check</h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <CropStorageField
                     id="quality-batch"
                     label="Batch"
@@ -131,19 +131,19 @@ export default function QualityCheckForm({
                 </div>
             </div>
             {submitError && (
-                <p role="alert" className="mt-3 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
+                <p role="alert" className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
                     {submitError}
                 </p>
             )}
             {success && (
-                <p role="status" className="mt-3 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
+                <p role="status" className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
                     Quality check created.
                 </p>
             )}
             <button
                 type="submit"
                 disabled={isSubmitting || batches.length === 0}
-                className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-60"
+                className="mt-4 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
             >
                 {isSubmitting ? "Saving…" : "Add quality check"}
             </button>

@@ -17,7 +17,7 @@ const FIELD_DEFINITIONS = [
     { name: "description", label: "Description" },
 ];
 
-export default function ZoneForm({ isSubmitting, fieldErrors, submitError, onSubmit, onClearError }) {
+export default function ZoneForm({ isSubmitting, fieldErrors, submitError, success, onSubmit, onClearError }) {
     const [values, setValues] = useState(INITIAL_VALUES);
 
     function update(name, value) {
@@ -58,6 +58,11 @@ export default function ZoneForm({ isSubmitting, fieldErrors, submitError, onSub
             {submitError && (
                 <p role="alert" className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
                     {submitError}
+                </p>
+            )}
+            {success && (
+                <p role="status" className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
+                    Storage zone created successfully.
                 </p>
             )}
             <button
