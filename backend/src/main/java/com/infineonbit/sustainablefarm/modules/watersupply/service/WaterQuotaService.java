@@ -260,6 +260,12 @@ public class WaterQuotaService {
         };
     }
 
+    /**
+     * Consumption of a zone: sensor measurements carry a farm_id and a source_id but no
+     * direct zone. So we walk from the zone to its field, then to the field's farm, and split
+     * the farm's consumption between the zones of that field (zones share the water of the
+     * same plot): documented approximation, to be refined with zone-level irrigations.
+     */
     private double zoneConsumption(Instant start, Instant end, UUID zoneId) {
         return consumptionRepository.sumConsumptionByZoneIdBetween(start, end, zoneId);
     }

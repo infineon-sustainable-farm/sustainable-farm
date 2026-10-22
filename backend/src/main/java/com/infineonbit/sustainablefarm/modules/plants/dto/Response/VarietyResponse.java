@@ -28,6 +28,10 @@ import java.time.Instant;
  *         removals. Computed on every read, never stored. {@code null} when the row
  *         has no event: the current count is then unknown, not zero.</li>
  * </ul>
+ *
+ * <p>No yield is given here: the expected and the actual yield of a variety
+ * depend on a period, and {@code GET /api/plants/yield-comparison} computes
+ * both over the same months.
  */
 public record VarietyResponse(
         Long id,
@@ -38,8 +42,6 @@ public record VarietyResponse(
         Double rowSpacingM,
         Double treeSpacingM,
         Double treeDensityPerHa,
-        Double expectedYieldKg,
-        Double actualYieldKg,
         String vigor,
         String blockCode,
         String plantOrigin,

@@ -1,9 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.MonthlyTotal;
@@ -17,12 +13,11 @@ import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYiel
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -30,7 +25,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.never;
@@ -52,8 +46,14 @@ public class YieldForecastServiceTest {
     @Mock
     private GrowthPhaseYieldShareRepository growthPhaseYieldShareRepository;
 
-    @InjectMocks
     private YieldForecastService yieldForecastService;
+
+    /** The real shares on the mocked repository: a row is a correction, a missing row its default. */
+    @BeforeEach
+    void setUp() {
+        yieldForecastService = new YieldForecastService(populationEventRepository, varietyReferenceRepository,
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
+    }
 
     private static Variety variety(long id, Integer farmId, String blockCode, String name) {
         Variety variety = new Variety();
@@ -255,30 +255,20 @@ public class YieldForecastServiceTest {
     }
 
     @Test
-    void getYieldForecast_shouldLogAndThrow_whenAPhaseHasNoShare() {
-        // Arrange: the gradual production row was deleted by hand
+    void getYieldForecast_shouldUseTheDefaultShare_ofAPhaseWithoutCorrection() {
+        // Arrange: the other two phases are corrected, gradual production is not
         Variety keitt = variety(1L, null, "B", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2023, 9, 24), 150)), 150);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(List.of(
                 new GrowthPhaseYieldShare(1L, "establishment", 0.0, "orchard_literature", null),
                 new GrowthPhaseYieldShare(3L, "full production", 1.0, "by_definition", null)));
-        Logger logger = (Logger) LoggerFactory.getLogger(YieldForecastService.class);
-        ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        appender.start();
-        logger.addAppender(appender);
-        try {
-            // Act
-            IllegalStateException ex = assertThrows(IllegalStateException.class,
-                    () -> yieldForecastService.getYieldForecast(null, null, JANUARY_2027, 12, TODAY));
-            // Assert: an error line naming the phase, since the core handler logs nothing
-            assertEquals("No yield share for the growth phase gradual production", ex.getMessage());
-            assertEquals(1, appender.list.size());
-            ILoggingEvent event = appender.list.get(0);
-            assertEquals(Level.ERROR, event.getLevel());
-            assertTrue(event.getFormattedMessage().contains("\"gradual production\""), event.getFormattedMessage());
-        } finally {
-            logger.detachAppender(appender);
-        }
+        // Act
+        YieldForecastResponse forecast = yieldForecastService.getYieldForecast(null, null, JANUARY_2027, 12, TODAY);
+        // Assert: 150 × 220 × 0.25 / 3 each month of the season, with the source of the default
+        assertEquals(List.of(2750.0, 2750.0, 2750.0), forecast.entries().stream().map(Entry::expectedKg).toList());
+        assertEquals(new Entry(YearMonth.of(2027, 5), null, "B", 1L, "Keitt", 150, 3, "gradual production",
+                        220.0, 0.25, 0.3333, 2750.0, "Zalka_2025", "varietal_guide_west_africa", "Bally_2002"),
+                forecast.entries().get(0));
     }
 }

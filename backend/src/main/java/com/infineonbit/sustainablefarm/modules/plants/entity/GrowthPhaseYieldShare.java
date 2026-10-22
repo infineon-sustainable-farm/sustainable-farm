@@ -19,9 +19,12 @@ import java.time.Instant;
  * Share of the full-production yield that a tree gives in one growth phase.
  *
  * <p>Part of the agronomic reference, like {@link VarietyReference}: attached
- * to no farm, sourced, and changeable in the database. {@code growthPhase} holds
- * the exact labels computed from the tree age ("establishment", "gradual
- * production", "full production").
+ * to no farm, and sourced. {@code growthPhase} holds the exact labels computed
+ * from the tree age ("establishment", "gradual production", "full production").
+ *
+ * <p>A row is a correction: every phase has a default share in code, and a
+ * row replaces it. A phase without a row keeps its default, so the table may
+ * be empty.
  */
 @Entity
 @Table(name = "growth_phase_yield_share",

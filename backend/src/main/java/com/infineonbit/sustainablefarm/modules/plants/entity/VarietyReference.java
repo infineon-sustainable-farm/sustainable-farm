@@ -20,8 +20,9 @@ import java.time.Instant;
  * production, and when the variety is harvested.
  *
  * <p>A catalogue row, attached to no farm and no block: it says what a variety
- * is worth in general, not what an orchard holds. Each value carries its source
- * and can be changed in the database; the yield forecast reads it on every
+ * is worth in general, not what an orchard holds. Each value carries its source,
+ * and the user enters and corrects it through
+ * {@code /api/plants/variety-references}; the yield forecast reads it on every
  * request and keeps no copy of it in code.
  *
  * <p>The table and its columns follow the naming of the other modules: English
