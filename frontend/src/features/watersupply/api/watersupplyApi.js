@@ -46,6 +46,8 @@ export const waterSourceApi = {
   getSource: (sourceId) => apiClient.get(`/api/water/sources/${sourceId}`),
   updateSource: (sourceId, payload) => apiClient.put(`/api/water/sources/${sourceId}`, payload),
   deleteSource: (sourceId) => apiClient.delete(`/api/water/sources/${sourceId}`),
+  // Every sensor reading and manual level change, oldest first (the source only keeps the last one).
+  getLevelHistory: (sourceId) => apiClient.get(`/api/water/sources/${sourceId}/level-history`),
 }
 
 // --- Water Consumption ---
@@ -186,6 +188,52 @@ export async function downloadCsv(kind, period = 'month') {
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
+}
+
+// --- Inter-module integrations (contracts: docs/integrations/) ---
+// Query strings are built by axios from `params`: undefined values are dropped, so optional
+// filters can be passed as-is.
+
+// Plants blocks <-> Water Supply zones.
+export const zoneBlockMappingApi = {
+  getMappings: (params) => apiClient.get('/api/water/zone-block-mappings', { params }),
+  createMapping: (mapping) => apiClient.post('/api/water/zone-block-mappings', mapping),
+  updateMapping: (mappingId, payload) => apiClient.put(`/api/water/zone-block-mappings/${mappingId}`, payload),
+  deleteMapping: (mappingId) => apiClient.delete(`/api/water/zone-block-mappings/${mappingId}`),
+}
+
+export const plantsIntegrationApi = {
+  // from / to: days (yyyy-MM-dd), both included.
+  getRainfall: (blockCode, from, to) => apiClient.get('/api/water/plants/rainfall', { params: { blockCode, from, to } }),
+  getIrrigationNeed: (request) => apiClient.post('/api/water/plants/irrigation-need', request),
+}
+
+// Planned water unavailability (outage / maintenance) on a farm, a source or a zone.
+export const outageApi = {
+  getOutages: (params) => apiClient.get('/api/water/outages', { params }),
+  createOutage: (outage) => apiClient.post('/api/water/outages', outage),
+  updateOutage: (outageId, payload) => apiClient.put(`/api/water/outages/${outageId}`, payload),
+  deleteOutage: (outageId) => apiClient.delete(`/api/water/outages/${outageId}`),
+}
+
+// What Visitor Management reads, previewed by the water team.
+export const visitorApi = {
+  getSummary: (params) => apiClient.get('/api/water/visitor/summary', { params }),
+  getSafetyBriefing: () => apiClient.get('/api/water/visitor/safety-briefing'),
+  publishSafetyBriefing: (briefing) => apiClient.patch('/api/water/visitor/safety-briefing', briefing),
+}
+
+export const productTransformationApi = {
+  getConsumptionByLot: (lotId) => apiClient.get('/api/water/consumption/by-lot', { params: { lotId } }),
+  getQualityCompliance: (lotId) => apiClient.get('/api/water/quality/compliance', { params: { lotId } }),
+  attachLotUsage: (request) => apiClient.post('/api/water/lot-usage', request),
+  forecastAvailability: (request) => apiClient.post('/api/water/product-transformation/availability-forecast', request),
+}
+
+// Outbound valve commands: 503 VALVE_GATEWAY_UNAVAILABLE until a device gateway is configured.
+export const iotCommandApi = {
+  sendCommand: (deviceId, command) => apiClient.post(`/api/iot/devices/${encodeURIComponent(deviceId)}/commands`, command),
+  getCommands: (deviceId) => apiClient.get(`/api/iot/devices/${encodeURIComponent(deviceId)}/commands`),
 }
 
 // --- Health ---

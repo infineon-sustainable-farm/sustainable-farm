@@ -1,4 +1,4 @@
-import { useKpis, useAlerts, useActivities, useRecommendations, useDroughtPrediction, useWeather, useHealthCheck } from '../../hooks/useDashboard'
+import { useKpis, useAlerts, useActivities, useRecommendations, useDroughtPrediction, useWeather, useHealthCheck, useWaterBalance } from '../../hooks/useDashboard'
 import { Spinner } from '../../../../shared/components/Spinner'
 import { EmptyState } from './EmptyState'
 
@@ -152,6 +152,8 @@ export function DashboardView({ onNavigate, notify }) {
                 </div>
               )}
 
+              <WaterBalancePanel />
+
               {alertsLoading ? (
                 <Spinner label="Alerts…" />
               ) : alerts && alerts.length > 0 ? (
@@ -185,6 +187,7 @@ export function DashboardView({ onNavigate, notify }) {
                     <button className="ws-action-btn" onClick={() => onNavigate('irrigation')}>Manage irrigation</button>
                     <button className="ws-action-btn secondary" onClick={() => onNavigate('consumption')}>View consumption</button>
                     <button className="ws-action-btn secondary" onClick={() => onNavigate('quality')}>View water quality</button>
+                    <button className="ws-action-btn secondary" onClick={() => onNavigate('outages')}>Plan an outage</button>
                     <button className="ws-action-btn warning" onClick={() => notify('See the Drought view for the plan.')}>Drought plan</button>
                     <button className="ws-action-btn secondary" onClick={() => notify('Demo: report prepared.')}>Prepared carry-over plan</button>
                   </div>
@@ -197,6 +200,50 @@ export function DashboardView({ onNavigate, notify }) {
         <EmptyState title="No data" description="Add data to visualize the dashboard." />
       )}
     </>
+  )
+}
+
+/**
+ * Water balance of the month and what the tanks will hold once the irrigations scheduled for the
+ * next 7 days have run (demand_forecast_liters / available_after_forecast_liters).
+ */
+function WaterBalancePanel() {
+  const { data: balance, loading, error } = useWaterBalance('month')
+  if (loading || error || !balance) return null
+  const available = balance.available_after_forecast_liters ?? 0
+  return (
+    <div className="ws-panel">
+      <div className="ws-panel-header">
+        <h2>Water balance</h2>
+        <span className={`ws-tag ${balance.balance_status === 'deficit' ? 'red' : balance.balance_status === 'unknown' ? 'primary' : 'green'}`}>
+          {balance.balance_status === 'deficit' ? 'Deficit' : balance.balance_status === 'unknown' ? 'No tank capacity' : 'Balanced'}
+        </span>
+      </div>
+      <div className="ws-panel-body ws-summary-list">
+        <div className="ws-summary-item">
+          <span className="ws-summary-dot green" />
+          <div className="ws-summary-title">Rain harvested this month<small>{balance.rainwater_in_liters ?? 0} L</small></div>
+        </div>
+        <div className="ws-summary-item">
+          <span className="ws-summary-dot orange" />
+          <div className="ws-summary-title">Irrigation this month<small>{balance.irrigation_out_liters ?? 0} L</small></div>
+        </div>
+        <div className="ws-summary-item">
+          <span className="ws-summary-dot green" />
+          <div className="ws-summary-title">
+            In the tanks now
+            <small>{balance.reserve_level_liters ?? 0} L of {balance.reserve_capacity_liters ?? 0} L ({balance.reserve_level_percentage ?? 0}%)</small>
+          </div>
+        </div>
+        <div className="ws-summary-item">
+          <span className={`ws-summary-dot ${available < 0 ? 'red' : 'orange'}`} />
+          <div className="ws-summary-title">
+            After the next 7 days of scheduled irrigation
+            <small>{balance.demand_forecast_liters ?? 0} L planned, {available} L left</small>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

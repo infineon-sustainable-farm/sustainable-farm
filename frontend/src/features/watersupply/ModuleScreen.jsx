@@ -9,6 +9,10 @@ import { DripView } from './components/views/DripView'
 import { QualityView } from './components/views/QualityView'
 import { DroughtView } from './components/views/DroughtView'
 import { NotificationsView } from './components/views/NotificationsView'
+import { OutagesView } from './components/views/OutagesView'
+import { PlantsBlocksView } from './components/views/PlantsBlocksView'
+import { LotsView } from './components/views/LotsView'
+import { VisitorsView } from './components/views/VisitorsView'
 
 /**
  * Maps a menu view -> screen component.
@@ -26,6 +30,10 @@ export const VIEW_COMPONENTS = {
   maintenance: DripView,
   quality: QualityView,
   drought: DroughtView,
+  outages: OutagesView,
+  plants: PlantsBlocksView,
+  lots: LotsView,
+  visitors: VisitorsView,
   notifications: NotificationsView,
 }
 

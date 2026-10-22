@@ -21,6 +21,10 @@ export const VIEW_PATHS = {
   maintenance: 'maintenance',
   quality: 'quality',
   drought: 'drought',
+  outages: 'outages',
+  plants: 'plants-blocks',
+  lots: 'lots',
+  visitors: 'visitors',
   notifications: 'notifications',
 }
 

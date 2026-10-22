@@ -126,6 +126,19 @@ describe('ConsumptionView (read-only - IoT sensors)', () => {
     expect(screen.getByText(/over by 140 L/)).toBeTruthy()
   })
 
+  it('shows the Plants block and the processing lot of each measurement', async () => {
+    waterConsumptionApi.getConsumptions.mockResolvedValue([
+      { ...CONSUMPTIONS[0], blockCode: 'A', multipleBlockCodes: false, lotId: 'LOT-7', activity: 'WASHING' },
+      { id: 'c3', farmId: 'farm-1', sourceId: 'src-1', consumptionLiters: 40, consumptionDate: '2026-09-03T08:00:00Z', blockCode: null, multipleBlockCodes: true },
+    ])
+
+    render(<ConsumptionView {...props} />)
+
+    await waitFor(() => expect(screen.getByText('LOT-7 · Washing')).toBeTruthy())
+    expect(screen.getByText('A')).toBeTruthy()
+    expect(screen.getByText('Several')).toBeTruthy()
+  })
+
   it('filters by farm', async () => {
     waterConsumptionApi.getConsumptions.mockResolvedValue([
       ...CONSUMPTIONS,
