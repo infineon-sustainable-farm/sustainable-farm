@@ -203,6 +203,7 @@ public class IotTelemetryService {
         }
         source.setCurrentLevelLiters(liters);
         waterSourceRepository.save(source);
+        waterService.recordLevel(source, liters, t.timestamp());
         // Rainwater tank rules (module 5.3): they only concern rain sources
         // and must never fail the ingestion of a valid measurement.
         String alerts = "";
@@ -231,7 +232,8 @@ public class IotTelemetryService {
         try {
             waterQuotaService.checkThresholds(source.getFarmId(), t.zoneId(), measuredAt);
         } catch (RuntimeException ignored) {
-            // The measurement is recorded even if the quota evaluation fails.
+            LOGGER.warn("Quota alert evaluation failed for telemetry flow source={} zone={}",
+                    source.getId(), t.zoneId(), ignored);
         }
         return new Result("flow", t.sourceId(), "processed", "Consumption recorded: " + liters + " L");
     }

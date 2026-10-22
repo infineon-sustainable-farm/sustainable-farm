@@ -39,6 +39,11 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>The same method serves the manual endpoint {@code POST /api/irrigations/auto-trigger} and the
  * scheduled job ({@link IrrigationAutoTriggerJob}): behavior is therefore identical regardless of
  * the origin, and each excluded zone is justified in the response.</p>
+ *
+ * <p>Integration rules on top of the moisture rule: a zone under a planned water unavailability is
+ * skipped, a zone whose farm gauges measured at least {@code app.water.irrigation.recent-rain-skip-threshold-mm}
+ * over the last {@code recent-rain-window-hours} is skipped, and the volume is multiplied by the Plants
+ * growth phase factor of the zone's block (1.0 when unknown, see {@link PlantsIntegrationService}).</p>
  */
 @Service
 @Transactional(readOnly = true)

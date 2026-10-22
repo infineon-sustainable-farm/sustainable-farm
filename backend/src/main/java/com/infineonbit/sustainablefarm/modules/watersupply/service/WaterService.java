@@ -265,7 +265,7 @@ public class WaterService {
             waterQuotaService.checkThresholds(
                     consumption.getFarmId(), consumption.getZoneId(), consumption.getConsumptionDate());
         } catch (RuntimeException ex) {
-            // Logged silently: consumption tracking does not depend on alerts.
+            LOGGER.warn("Quota alert evaluation failed after consumption {}", consumption.getId(), ex);
         }
     }
 
