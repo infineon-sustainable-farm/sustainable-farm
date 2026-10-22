@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,7 +24,8 @@ import java.util.Map;
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
-@RestControllerAdvice
+@Component("prodTransGlobalExceptionHandler")
+@RestControllerAdvice(basePackages = "com.infineonbit.sustainablefarm.modules.producttransformation")
 public class GlobalExceptionHandler {
 
     /**

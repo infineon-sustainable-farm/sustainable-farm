@@ -43,6 +43,11 @@ public class HarvestEvent {
     @Column(name = "harvest_id", length = 50)
     private String harvestId;
 
+    // Reference to Plants harvest ID for cross-module integration
+    // Allows Product Transformation to reference Plants harvest data without duplication
+    @Column(name = "plants_harvest_id")
+    private Long plantsHarvestId;
+
     @Column(name = "batch_id", nullable = false, unique = true, length = 50)
     private String batchId;
 

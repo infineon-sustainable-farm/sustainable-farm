@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
-@Service
+@Service("prodTransDashboardService")
 @RequiredArgsConstructor
 @Slf4j
 public class DashboardService {

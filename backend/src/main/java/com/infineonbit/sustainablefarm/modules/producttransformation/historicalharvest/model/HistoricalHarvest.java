@@ -34,15 +34,15 @@ import java.math.BigDecimal;
 public class HistoricalHarvest {
 
     @Id
-    @Column(name = "year", nullable = false)
+    @Column(name = "\"year\"", nullable = false)
     private Integer year;
 
     @Id
-    @Column(name = "month", nullable = false)
+    @Column(name = "\"month\"", nullable = false)
     private Integer month;
 
     @Id
-    @Column(name = "week", nullable = false)
+    @Column(name = "\"week\"", nullable = false)
     private Integer week;
 
     @Id

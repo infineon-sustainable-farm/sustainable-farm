@@ -23,8 +23,8 @@ import java.util.List;
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
-@RestController
-@RequestMapping("/api/dashboard")
+@RestController("prodTransDashboardController")
+@RequestMapping({"/api/product-transformation/dashboard", "/api/producttransformation/dashboard"})
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Dashboard", description = "Dashboard KPI endpoints for Product Transformation")

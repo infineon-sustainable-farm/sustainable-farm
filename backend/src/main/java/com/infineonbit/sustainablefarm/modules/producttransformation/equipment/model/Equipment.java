@@ -19,7 +19,7 @@ import java.math.BigDecimal;
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
-@Entity
+@Entity(name = "ProdTransEquipment")
 @Table(name = "equipment")
 @Getter
 @Setter
