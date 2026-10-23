@@ -7,8 +7,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * Creation d'un quota mensuel d'eau pour une ferme ou une zone.
- * Le mois est conventionnellement represente par le premier jour du mois (YYYY-MM-01).
+ * Creation of a monthly water quota for a farm or a zone.
+ * The month is conventionally represented by the first day of the month (YYYY-MM-01).
  */
 public record WaterQuotaCreateRequest(
         @NotBlank String targetType,

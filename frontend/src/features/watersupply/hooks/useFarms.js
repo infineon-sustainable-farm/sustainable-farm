@@ -2,9 +2,9 @@ import { farmApi, fieldApi, zoneApi } from '../api/watersupplyApi'
 import { useModuleQuery } from './useModuleQuery'
 
 /**
- * Fermes, champs et zones : memes hooks qu'auparavant (contrat `{ donnee, loading, error }`),
- * servis par React Query. Les listes dependant d'un identifiant ne sont chargees que lorsque
- * cet identifiant est fourni (`enabled`).
+ * Farms, fields and zones: same hooks as before (contract `{ data, loading, error }`),
+ * served by React Query. Lists depending on an id are only loaded when that id is
+ * provided (`enabled`).
  */
 export function useFarms() {
   const { data, loading, error, refetch } = useModuleQuery(['watersupply', 'farms'], farmApi.getFarms)

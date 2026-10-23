@@ -4,7 +4,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanc
 import java.time.Instant;
 import java.util.UUID;
 
-/** Vue API d'une intervention de maintenance : contrat stable, independant de l'entite JPA. */
+/** API view of a maintenance intervention: stable contract, independent of the JPA entity. */
 public record DripMaintenanceLogResponse(
         UUID id,
         UUID zoneId,

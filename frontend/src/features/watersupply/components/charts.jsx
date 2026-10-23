@@ -36,8 +36,8 @@ const legendStyle = {
 }
 
 /**
- * Formate un volume en litres avec l'unité adaptée (L, m³ au-delà de 10 000 L).
- * Les graphiques doivent toujours porter une unité lisible pour être exploitables.
+ * Formats a volume in litres with the matching unit (L, m³ above 10,000 L).
+ * Charts must always carry a readable unit to be usable.
  * @param {number} liters
  * @param {number} [decimals]
  */
@@ -47,8 +47,8 @@ function formatLiters(liters, decimals = 0) {
   return `${value.toFixed(decimals)} L`
 }
 
-/** Formate une quantité en millimètres (pluviométrie, ET0). */
-/** Suffixe d'unité compact pour les axes (évite les libellés longs). */
+/** Formats an amount in millimetres (rainfall, ET0). */
+/** Compact unit suffix for axes (avoids long labels). */
 function axisUnit(values, kind = 'liters') {
   const max = values.reduce((acc, v) => Math.max(acc, Math.abs(Number(v) || 0)), 0)
   if (kind === 'liters') return max >= 10000 ? { label: 'm³', divisor: 1000 } : { label: 'L', divisor: 1 }
@@ -56,7 +56,7 @@ function axisUnit(values, kind = 'liters') {
   return { label: '', divisor: 1 }
 }
 
-/** Formate une valeur d'axe selon l'unité retenue. */
+/** Formats an axis value according to the selected unit. */
 function tickFormatter({ label, divisor }) {
   return (value) => {
     const scaled = (Number(value) || 0) / divisor
@@ -65,18 +65,18 @@ function tickFormatter({ label, divisor }) {
 }
 
 /**
- * Enveloppe commune : titre d'unité, note d'état vide, et export PNG / CSV du graphique.
- * L'export est optionnel : il n'apparaît que si un nom de fichier est fourni.
+ * Common shell: unit header, empty-state note, and PNG / CSV chart export.
+ * The export is optional: it only appears when a file name is provided.
  *
- * @param {string} [exportName] - nom du fichier exporté (sans extension) ; absent = pas d'export.
- * @param {Array<Object>} [exportRows] - données brutes à exporter en CSV.
- * @param {Array<{ key: string, label: string }>} [exportColumns] - colonnes du CSV.
+ * @param {string} [exportName] - exported file name (without extension); omitted = no export.
+ * @param {Array<Object>} [exportRows] - raw rows to export as CSV.
+ * @param {Array<{ key: string, label: string }>} [exportColumns] - CSV columns.
  */
 function ChartShell({ children, unit, note, exportName, exportRows, exportColumns }) {
   const shellRef = useRef(null)
   const canExport = Boolean(exportName)
-  // Le graphique est expose comme une image avec un libelle : un lecteur d'ecran annonce au moins
-  // ce qu'il represente (unite et note), au lieu d'un SVG muet.
+  // The chart is exposed as an image with a label: a screen reader announces at least
+  // what it represents (unit and note), instead of a silent SVG.
   const chartLabel = ['Chart', unit ? `in ${unit}` : null, note || null].filter(Boolean).join(' - ')
   return (
     <div className="ws-chart-shell">
@@ -111,24 +111,24 @@ function ChartShell({ children, unit, note, exportName, exportRows, exportColumn
   )
 }
 
-/** Colonnes CSV dérivées des séries du graphique (abscisse + séries nommées). */
+/** CSV columns derived from the chart series (x axis + named series). */
 function columnsOf(xKey, series = []) {
   return [{ key: xKey, label: xKey }, ...series.map((s) => ({ key: s.key, label: s.name || s.key }))]
 }
 
 /**
- * Graphique en aires (données de séries temporelles / volumes).
+ * Area chart (time-series / volume data).
  *
- * Lisibilité : une unité est toujours affichée, la légende n'apparaît qu'à partir de
- * deux séries, et une série de référence (pointillés) permet de comparer le mesuré au besoin.
+ * Readability: a unit is always displayed, the legend only shows from two series,
+ * and a reference series (dashed) lets measured values be compared against need.
  *
- * @param {Array} data - lignes du graphique.
- * @param {string} xKey - clé axe X.
+ * @param {Array} data - chart rows.
+ * @param {string} xKey - X axis key.
  * @param {Array} series - [{ key, name, color, dashed?, fillArea? }]
  * @param {number} [height]
- * @param {'liters'|'mm'|'percent'} [unitKind] - unité des valeurs.
- * @param {Array} [referenceLines] - [{ value, label, color }] lignes horizontales de comparaison.
- * @param {Object} [band] - { from, to, color, label } bande de tolérance / objectif.
+ * @param {'liters'|'mm'|'percent'} [unitKind] - unit of the values.
+ * @param {Array} [referenceLines] - [{ value, label, color }] horizontal comparison lines.
+ * @param {Object} [band] - { from, to, color, label } tolerance / target band.
  * @param {boolean} [showLegend]
  */
 export function WsAreaChart({
@@ -213,8 +213,8 @@ export function WsAreaChart({
 }
 
 /**
- * Graphique en barres (comparaison / répartition), avec support des barres empilées
- * et d'une ligne de référence (seuil d'alerte, quota).
+ * Bar chart (comparison / breakdown), with support for stacked bars
+ * and a reference line (alert threshold, quota).
  *
  * @param {Array} data - [{name, ...}]
  * @param {string} xKey
@@ -280,8 +280,8 @@ export function WsBarChart({
 }
 
 /**
- * Jauge radiale 0-100 (réservoir, volume, %, etc.).
- * @param {number} value - valeur entre 0 et max.
+ * Radial 0-100 gauge (tank, volume, %, etc.).
+ * @param {number} value - value between 0 and max.
  * @param {number} [max]
  * @param {string} [color]
  */
@@ -319,13 +319,13 @@ export function WsRadialGauge({ value = 0, max = 100, color = C.primary, height 
 const primaryRgb = '10,130,118'
 
 /**
- * Graphique "bullet" : une valeur comparée à un objectif, dans un référentiel de zones.
- * Utilisé pour les quotas de consommation (objectif mensuel vs réel).
+ * "Bullet" chart: a value compared to a target, on a zoned scale.
+ * Used for consumption quotas (monthly target vs actual).
  *
  * @param {number} value
  * @param {number} target
  * @param {number} max
- * @param {Array} [zones] - [{ upTo, color }] zones de fond.
+ * @param {Array} [zones] - [{ upTo, color }] background zones.
  * @param {string} [unit]
  */
 export function WsBulletChart({ value = 0, target = 0, max = 100, zones = [], unit = 'L' }) {

@@ -66,8 +66,8 @@ public class WaterController {
     }
 
     /**
-     * Niveau temps reel d'une source (module 5.2 de la specification) : capacite, niveau courant,
-     * pourcentage et statut, et l'indication « reservoir de collecte de pluie » pour les regles 5.3.
+     * Real-time level of a source (specification module 5.2): capacity, current level,
+     * percentage and status, and the "rainwater harvesting reservoir" indication for the 5.3 rules.
      */
     @Operation(summary = "Real-time level of a water source (percentage, status, rainwater tank flag)")
     @GetMapping("/sources/{sourceId}/level")
@@ -76,8 +76,8 @@ public class WaterController {
     }
 
     /**
-     * Diagnostic de debit d'une zone (module 6.2) : compare le volume mesure par le compteur au
-     * volume attendu du reseau goutte-a-goutte sur la duree d'arrosage de la fenetre observee.
+     * Flow diagnosis of a zone (module 6.2): compares the volume measured by the meter to the
+     * volume expected from the drip network over the irrigation duration of the observed window.
      */
     @Operation(summary = "Drip flow check of a zone: measured volume versus network rating (clogging or leak)")
     @GetMapping("/zones/{zoneId}/flow-check")
@@ -138,9 +138,9 @@ public class WaterController {
     }
 
     /**
-     * Cree un test qualite et genere automatiquement une Notification de type
-     * "warning" si un parametre sort des plages cibles (pH hors [6.0, 7.5],
-     * turbidite > 5 NTU.
+     * Creates a quality test and automatically generates a Notification of type
+     * "warning" if a parameter is out of the target ranges (pH outside [6.0, 7.5],
+     * turbidity > 5 NTU).
      */
     @PostMapping("/quality")
     @ResponseStatus(HttpStatus.CREATED)

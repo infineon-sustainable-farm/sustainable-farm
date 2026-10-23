@@ -17,30 +17,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Detection du colmatage et des fuites d'un reseau goutte-a-goutte (module 6.2 de la specification).
+ * Clogging and leak detection for a drip network (specification module 6.2).
  *
- * <p>Principe : le debit theorique d'une zone est connu par son reseau
- * ({@code debit = nombre de goutteurs x debit nominal}), donc le volume attendu sur une duree
- * d'arrosage l'est aussi. Le compteur de debit mesure le volume reellement distribue. Un volume
- * mesure nettement inferieur au volume attendu signe un colmatage (l'eau n'arrive plus aux
- * plantes), nettement superieur une fuite (l'eau part ailleurs).</p>
+ * <p>Principle: the theoretical flow rate of a zone is known from its network
+ * ({@code flow = number of emitters x nominal flow}), so the expected volume over an irrigation
+ * duration is known too. The flow meter measures the volume actually delivered. A measured volume
+ * well below the expected volume indicates clogging (water no longer reaches the
+ * plants), well above indicates a leak (water goes elsewhere).</p>
  *
- * <p>Le calcul ne se prononce que si les trois informations existent : reseau decrit sur la zone,
- * arrosage effectif dans la fenetre observee, mesure de debit rattachee a la zone. Sinon la
- * reponse porte un statut explicite ({@code network_not_described}, {@code no_irrigation},
- * {@code no_measurement}) : un diagnostic sans donnee vaut mieux qu'une fausse alerte.</p>
+ * <p>The calculation only produces a verdict when the three pieces of information exist: network
+ * described on the zone, effective irrigation within the observed window, flow measurement attached
+ * to the zone. Otherwise the response carries an explicit status ({@code network_not_described},
+ * {@code no_irrigation}, {@code no_measurement}): a diagnosis without data beats a false alert.</p>
  */
 @Service
 @Transactional(readOnly = true)
 public class DripFlowCheckService {
 
-    /** Fenetre d'observation du debit reel (heures). */
+    /** Observation window for the actual flow (hours). */
     public static final int OBSERVATION_HOURS = 24;
 
-    /** Sous 90 % du volume attendu, le colmatage est probable. */
+    /** Below 90 % of the expected volume, clogging is likely. */
     public static final double LOW_FLOW_RATIO = 0.90d;
 
-    /** Au dessus de 110 %, une fuite est probable. */
+    /** Above 110 %, a leak is likely. */
     public static final double HIGH_FLOW_RATIO = 1.10d;
 
     private final FieldZoneRepository fieldZoneRepository;
@@ -60,9 +60,9 @@ public class DripFlowCheckService {
     }
 
     /**
-     * Diagnostic de debit d'une zone sur la derniere fenetre d'observation.
+     * Flow diagnosis for a zone over the last observation window.
      *
-     * @throws NotFoundException si la zone n'existe pas
+     * @throws NotFoundException if the zone does not exist
      */
     @Transactional
     public Map<String, Object> check(UUID zoneId) {
@@ -122,7 +122,7 @@ public class DripFlowCheckService {
         return "ok";
     }
 
-    /** Duree d'arrosage cumulee des cycles demarres dans la fenetre (un cycle en cours compte jusqu'a maintenant). */
+    /** Cumulated irrigation duration of the cycles started within the window (a running cycle counts until now). */
     private double runningHours(List<IrrigationLog> cycles, Instant now) {
         double hours = 0d;
         for (IrrigationLog cycle : cycles) {

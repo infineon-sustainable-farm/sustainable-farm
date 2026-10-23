@@ -3,21 +3,21 @@ package com.infineonbit.sustainablefarm.modules.watersupply.config;
 import java.util.UUID;
 
 /**
- * Identifiants techniques du module watersupply.
+ * Technical identities of the watersupply module.
  *
- * <p>L'authentification est deleguee au logiciel global : le module n'a donc aucun utilisateur
- * connecte. Deux besoins restent couverts par un identifiant fixe (ligne creee au demarrage par
- * {@code SystemUserSeeder}, sans identifiant de connexion, donc sans possibilite de connexion) :</p>
+ * <p>Authentication is delegated to the global software: the module therefore has no logged-in
+ * user. Two needs are still covered by a fixed id (row created at startup by
+ * {@code SystemUserSeeder}, with no login credentials, hence no way to log in):</p>
  * <ul>
- *   <li>{@code irrigation_schedules.created_by} : la colonne est obligatoire ;</li>
- *   <li>{@code notifications.user_id} : la colonne est obligatoire, les alertes issues des
- *       capteurs IoT (fuite, qualite hors seuil, report pour cause de pluie) doivent avoir
- *       un destinataire, reaffectable ensuite par la plateforme globale.</li>
+ *   <li>{@code irrigation_schedules.created_by}: the column is mandatory;</li>
+ *   <li>{@code notifications.user_id}: the column is mandatory, alerts coming from the
+ *       IoT sensors (leak, out-of-range quality, rain postponement) must have a
+ *       recipient, which the global platform can reassign afterwards.</li>
  * </ul>
  */
 public final class SystemUsers {
 
-    /** Compte technique "systeme IoT" - jamais utilise pour se connecter. */
+    /** Technical "IoT system" account - never used to log in. */
     public static final UUID IOT_SYSTEM_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     private SystemUsers() {

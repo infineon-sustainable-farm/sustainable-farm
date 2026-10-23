@@ -21,19 +21,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Mesure de l'économie d'eau du domaine : c'est la métrique de valeur du module.
+ * Measurement of the farm's water savings: this is the module's value metric.
  *
- * <p>Principe agronomique (FAO-56) : la référence n'est pas le planning saisi à la main mais le
- * <strong>besoin des cultures</strong>, calculé à partir de l'évapotranspiration réelle du lieu
- * (ET0, récupérée par {@link AgroWeatherService}) :
- * {@code besoin = surface x ET0 x Kc / efficacité du système} (voir {@link WaterNeedService}).</p>
+ * <p>Agronomic principle (FAO-56): the reference is not the hand-entered schedule but the
+ * <strong>crops' water need</strong>, computed from the site's actual evapotranspiration
+ * (ET0, fetched by {@link AgroWeatherService}):
+ * {@code need = area x ET0 x Kc / system efficiency} (see {@link WaterNeedService}).</p>
  *
- * <p>L'écart entre ce besoin et la consommation réellement mesurée par les capteurs de débit
- * représente l'eau économisée (ou perdue). Le service expose aussi :</p>
+ * <p>The gap between that need and the consumption actually measured by the flow sensors
+ * represents the water saved (or lost). The service also exposes:</p>
  * <ul>
- *   <li>la série cumulée de l'économie (progression dans le temps) ;</li>
- *   <li>le bilan hydrique entrées / sorties, qui rend visibles les pertes ;</li>
- *   <li>la part de pluie réutilisée et le volume évité par les reports météo.</li>
+ *   <li>the cumulative savings series (progress over time);</li>
+ *   <li>the in / out water balance, which makes losses visible;</li>
+ *   <li>the share of reused rainwater and the volume avoided by weather postponements.</li>
  * </ul>
  */
 @Service
@@ -65,7 +65,7 @@ public class WaterEconomyService {
         this.agroWeatherService = agroWeatherService;
     }
 
-    /** Début de la période demandée (day, week, month). */
+    /** Start of the requested period (day, week, month). */
     public LocalDate periodStartDate(String period) {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         return switch (period == null ? "month" : period.toLowerCase()) {
@@ -77,8 +77,8 @@ public class WaterEconomyService {
     }
 
     /**
-     * ET0 moyenne de la période, ou valeur de repli si la météo est momentanément indisponible :
-     * un tableau de bord ne doit jamais échouer à cause d'un service externe.
+     * Average ET0 of the period, or a fallback value when the weather service is temporarily
+     * unavailable: a dashboard must never fail because of an external service.
      */
     public double averageEt0(LocalDate from, LocalDate to) {
         try {
@@ -88,14 +88,14 @@ public class WaterEconomyService {
         }
     }
 
-    /** Besoin hydrique quotidien de l'ensemble des zones pour une ET0 donnée. */
+    /** Daily water need of all zones for a given ET0. */
     public double dailyNeedLiters(double et0Mm) {
         return fieldZoneRepository.findAll().stream()
                 .mapToDouble(zone -> waterNeedService.needLiters(zone, et0Mm))
                 .sum();
     }
 
-    /** Détail par zone du besoin théorique : surface, Kc, efficacité et méthode d'irrigation. */
+    /** Per-zone detail of the theoretical need: area, Kc, efficiency and irrigation method. */
     public List<Map<String, Object>> needBreakdown(double et0Mm) {
         List<Map<String, Object>> breakdown = new ArrayList<>();
         for (Zone zone : fieldZoneRepository.findAll()) {
@@ -114,12 +114,12 @@ public class WaterEconomyService {
     }
 
     /**
-     * Bilan d'économie d'eau de la période : besoin théorique des cultures confronté à la
-     * consommation réellement mesurée par les capteurs de débit.
+     * Water savings balance of the period: the crops' theoretical need set against the
+     * consumption actually measured by the flow sensors.
      *
-     * <p>C'est la mesure de valeur du module. Un solde positif signifie que la consommation est
-     * restée sous le besoin des cultures (eau économisée) ; un solde négatif signale une
-     * sur-irrigation (eau perdue, à corriger en priorité).</p>
+     * <p>This is the module's value measure. A positive balance means consumption stayed
+     * under the crops' need (water saved); a negative balance flags over-irrigation
+     * (water lost, to be fixed first).</p>
      */
     public Map<String, Object> savings(String period) {
         LocalDate from = periodStartDate(period);
@@ -156,8 +156,8 @@ public class WaterEconomyService {
     }
 
     /**
-     * Série cumulée de l'économie d'eau, jour par jour : c'est la courbe qui montre la progression
-     * dans le temps (litres économisés depuis le début de la fenêtre).
+     * Cumulative water savings series, day by day: this is the curve showing the
+     * progress over time (liters saved since the start of the window).
      */
     public Map<String, Object> savingsSeries(int days) {
         int window = Math.min(60, Math.max(1, days));
@@ -206,8 +206,9 @@ public class WaterEconomyService {
     }
 
     /**
-     * Bilan hydrique : entrées (pluie récupérée) et sorties (eau consommée), comparés au niveau des
-     * réservoirs. Il rend visible l'eau qui n'arrive ni à la culture ni au stock, donc les pertes.
+     * Water balance: inputs (recovered rain) and outputs (consumed water), compared with the
+     * reservoir levels. It makes visible the water that reaches neither the crop nor the stock,
+     * hence the losses.
      */
     public Map<String, Object> waterBalance(String period) {
         LocalDate from = periodStartDate(period);
@@ -240,7 +241,7 @@ public class WaterEconomyService {
         return response;
     }
 
-    /** Volume d'eau de pluie récupéré sur un intervalle de dates (entrée du bilan), calculé en base. */
+    /** Volume of rainwater recovered over a date interval (balance input), computed in the database. */
     private double harvestedBetween(LocalDate from, LocalDate to) {
         Instant startInstant = from.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant endInstant = to.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
@@ -248,8 +249,8 @@ public class WaterEconomyService {
     }
 
     /**
-     * Volume évité grâce aux irrigations reportées : c'est l'économie obtenue en n'arrosant pas
-     * quand la pluie annoncée couvrait le besoin de la culture.
+     * Volume avoided thanks to postponed irrigations: this is the saving made by not watering
+     * when the announced rain covered the crop's need.
      */
     public double postponedLitersBetween(LocalDate from, LocalDate to) {
         Instant startInstant = from.atStartOfDay().toInstant(ZoneOffset.UTC);

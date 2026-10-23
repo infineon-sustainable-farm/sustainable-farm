@@ -4,19 +4,19 @@ import { VIEW_PATHS } from './paths'
 import { VIEW_COMPONENTS, withModuleUi } from './ModuleScreen'
 
 /**
- * Routes du module watersupply.
+ * Routes of the watersupply module.
  *
- * Le module est monte sous /watersupply, comme machinery (/machinery) et plants (/plants) :
- * chaque module porte son propre menu et ses propres ecrans, et l'application les decouvre
- * automatiquement (frontend/src/app/router.jsx lit tous les features/<module>/routes.jsx).
+ * The module is mounted under /watersupply, like machinery (/machinery) and plants (/plants):
+ * each module carries its own menu and its own screens, and the application discovers them
+ * automatically (frontend/src/app/router.jsx reads every features/<module>/routes.jsx).
  *
- * Les enfants sont derives de VIEW_PATHS : le menu et le routeur partagent donc la meme
- * source de verite et ne peuvent plus se desynchroniser.
+ * The children are derived from VIEW_PATHS: the menu and the router therefore share the
+ * same source of truth and can no longer go out of sync.
  *
- * Ce fichier ne declare que du routage. Les composants et l'adaptateur d'interface sont
- * dans ModuleScreen.jsx : la regle react-refresh/only-export-components exige qu'un fichier
- * n'exporte que des composants, et celui-ci n'exporte qu'un tableau de routes. Le nom du
- * fichier et l'export par defaut sont imposes par la decouverte de app/router.jsx.
+ * This file only declares routing. The components and the UI adapter live in
+ * ModuleScreen.jsx: the react-refresh/only-export-components rule requires a file to
+ * export only components, and this one exports a route array. The file name and the
+ * default export are imposed by the discovery in app/router.jsx.
  */
 const viewRoutes = Object.entries(VIEW_PATHS).map(([viewId, relativePath]) => {
   const Screen = withModuleUi(VIEW_COMPONENTS[viewId])

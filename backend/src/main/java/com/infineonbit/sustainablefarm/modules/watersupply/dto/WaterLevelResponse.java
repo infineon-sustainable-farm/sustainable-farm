@@ -4,11 +4,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Niveau d'une source d'eau, lu en temps reel pour l'interface et les autres modules
- * (module 5.2 de la specification : « reservoir level in real time »).
+ * Level of a water source, read in real time for the interface and the other modules
+ * (module 5.2 of the specification: "reservoir level in real time").
  *
- * <p>La valeur provient de la derniere mesure envoyee par le capteur de niveau ; {@code readAt}
- * est l'instant de la lecture, {@code status} resume la situation par rapport a la capacite.</p>
+ * <p>The value comes from the last measurement sent by the level sensor; {@code readAt}
+ * is the reading instant, {@code status} summarizes the situation against capacity.</p>
  */
 public record WaterLevelResponse(
         UUID sourceId,

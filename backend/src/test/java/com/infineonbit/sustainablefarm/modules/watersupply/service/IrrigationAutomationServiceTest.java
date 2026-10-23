@@ -25,9 +25,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Pilotage automatique par l'humidite du sol (module 1.4) : la regle ne doit creer un planning
- * que lorsque le sol est reellement sec, qu'aucun arrosage n'est en cours et que le dernier
- * arrosage est assez ancien — et expliquer chaque zone ecartee.
+ * Automatic control by soil moisture (module 1.4): the rule must only create a schedule
+ * when the soil is actually dry, no irrigation is running and the last
+ * irrigation is old enough — and must explain every excluded zone.
  */
 @ExtendWith(MockitoExtension.class)
 class IrrigationAutomationServiceTest {
@@ -121,7 +121,7 @@ class IrrigationAutomationServiceTest {
     void reportsZonesWithoutSoilSensor() {
         Zone zone = stubSingleZone();
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
-        // Le repository renvoie null quand aucune mesure n'existe pour la zone (pas de capteur).
+        // The repository returns null when no measurement exists for the zone (no sensor).
         when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.getId()), any())).thenReturn(null);
 
         Map<String, Object> report = service().trigger();
@@ -131,7 +131,7 @@ class IrrigationAutomationServiceTest {
 
     @Test
     void seasonalThresholdFollowsTheSpecification() {
-        // Saison des pluies, transition, saison seche fraiche, saison seche chaude.
+        // Rainy season, transition, cool dry season, hot dry season.
         assertEquals(40d, IrrigationAutomationService.seasonalThresholdPercent(Month.AUGUST));
         assertEquals(45d, IrrigationAutomationService.seasonalThresholdPercent(Month.MAY));
         assertEquals(50d, IrrigationAutomationService.seasonalThresholdPercent(Month.DECEMBER));
@@ -148,7 +148,7 @@ class IrrigationAutomationServiceTest {
         return zone;
     }
 
-    /** Verifie qu'aucun planning n'a ete cree et renvoie le motif de la premiere zone ecartee. */
+    /** Checks that no schedule was created and returns the reason of the first excluded zone. */
     private String firstSkipReason(Map<String, Object> report) {
         List<?> skipped = (List<?>) report.get("skipped");
         assertTrue(skipped.size() >= 1);

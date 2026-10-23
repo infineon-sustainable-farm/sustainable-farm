@@ -191,16 +191,16 @@ class WatersupplyApiIntegrationTest {
 
         @Test
         void systemUserIsSeededSoAutomaticNotificationsCanBeCreated() throws Exception {
-        // Le compte technique IoT est cree par les migrations Flyway (V2/V4). Sans ce seed, la
-        // creation des alertes automatiques echouait avec 404 "User not found".
+        // The IoT technical account is created by the Flyway migrations (V2/V4). Without this seed,
+        // creating automatic alerts failed with 404 "User not found".
         org.junit.jupiter.api.Assertions.assertTrue(
                 userRepository.findById(SystemUsers.IOT_SYSTEM_USER_ID).isPresent(),
-                "Le compte technique IoT doit etre seede par SystemUserSeeder au demarrage");
+                "The IoT technical account must be seeded by SystemUserSeeder at startup");
 
         MvcResult result = mockMvc.perform(post("/api/notifications")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"userId":"%s","title":"Alerte capteur","message":"Test integration","type":"warning"}
+                    {"userId":"%s","title":"Sensor alert","message":"Integration test","type":"warning"}
                     """.formatted(SystemUsers.IOT_SYSTEM_USER_ID)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.userId").value(SystemUsers.IOT_SYSTEM_USER_ID.toString()))
@@ -213,7 +213,7 @@ class WatersupplyApiIntegrationTest {
 
         @Test
         void unknownUrlReturnsNotFoundInsteadOfInternalError() throws Exception {
-        mockMvc.perform(get("/api/route-qui-nexiste-pas"))
+        mockMvc.perform(get("/api/route-that-does-not-exist"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("NOT_FOUND"));
         }
@@ -237,8 +237,8 @@ class WatersupplyApiIntegrationTest {
 
         @Test
         void invalidTelemetryDoesNotBreakFollowingItemsInBatch() throws Exception {
-        // Pas de @Transactional ici : chaque item est ingere dans sa propre transaction, donc il
-        // faut que la source existe reellement (commit) avant l'ingestion.
+        // No @Transactional here: each item is ingested in its own transaction, so the
+        // source must really exist (commit) before the ingestion.
         String farmId = createFarm("Telemetry Batch Farm");
         String sourceId = createSource(farmId, "Telemetry Batch Tank");
         try {

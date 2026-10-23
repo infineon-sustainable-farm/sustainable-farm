@@ -18,9 +18,9 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins(allowedOrigins.toArray(String[]::new))
-                // PATCH est indispensable : l'API l'utilise (marquage des notifications comme lues).
-                // Sans lui, tout appel direct depuis une autre origine (VITE_API_URL, outils externes)
-                // echouait au preflight, alors que le proxy same-origin du dev et de nginx le masquait.
+                // PATCH is essential: the API uses it (marking notifications as read).
+                // Without it, any direct call from another origin (VITE_API_URL, external tools)
+                // failed the preflight, while the dev same-origin proxy and nginx hid it.
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);

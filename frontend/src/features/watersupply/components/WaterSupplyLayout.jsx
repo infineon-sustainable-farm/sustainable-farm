@@ -4,19 +4,20 @@ import '../watersupply.css'
 import WaterSupplySidebar from './WaterSupplySidebar'
 import { viewUrl } from '../paths'
 
-/** Duree d'affichage du bandeau de confirmation (ms). */
+/** How long the confirmation banner stays on screen (ms). */
 const TOAST_DURATION_MS = 2400
 
 /**
- * Coque du module watersupply : menu a gauche, ecran actif a droite, notifications en bas.
+ * Shell of the watersupply module: menu on the left, active screen on the right,
+ * notifications at the bottom.
  *
- * Meme structure que MachineryLayout / PlantsLayout (sidebar + contenu), sauf que les ecrans
- * s'affichent via <Outlet /> : les URL sont donc reelles (/watersupply, /watersupply/farms, ...)
- * et non plus un etat interne au composant.
+ * Same structure as MachineryLayout / PlantsLayout (sidebar + content), except that screens
+ * render through <Outlet />: so the URLs are real (/watersupply, /watersupply/farms, ...)
+ * and no longer internal component state.
  *
- * Les vues attendent deux proprietes (`notify` pour le bandeau de confirmation, `onNavigate`
- * pour les raccourcis du dashboard) : elles sont fournies par le contexte de l'Outlet et
- * transmises par l'adaptateur de routes.jsx. Les vues et leurs tests restent donc inchanges.
+ * The views expect two props (`notify` for the confirmation banner, `onNavigate`
+ * for the dashboard shortcuts): they are provided by the Outlet context and
+ * passed by the routes.jsx adapter. The views and their tests therefore stay unchanged.
  */
 export default function WaterSupplyLayout() {
   const navigate = useNavigate()
@@ -26,8 +27,8 @@ export default function WaterSupplyLayout() {
   const goToView = useCallback((viewId) => navigate(viewUrl(viewId)), [navigate])
   const moduleUi = useMemo(() => ({ notify, onNavigate: goToView }), [notify, goToView])
 
-  // Le bandeau disparait tout seul ; le nettoyage evite de laisser un minuteur derriere soi
-  // quand l'utilisateur quitte le module ou declenche une nouvelle confirmation.
+  // The banner fades away on its own; the cleanup avoids leaving a timer behind
+  // when the user leaves the module or triggers a new confirmation.
   useEffect(() => {
     if (!toast) return undefined
     const timer = setTimeout(() => setToast(null), TOAST_DURATION_MS)
@@ -40,7 +41,7 @@ export default function WaterSupplyLayout() {
 
       <main className="ws-main">
         <div className="ws-view active">
-          {/* L'ecran actif vient de l'URL (voir routes.jsx), qui lui transmet le contexte du module. */}
+          {/* The active screen comes from the URL (see routes.jsx), which passes it the module context. */}
           <Outlet context={moduleUi} />
         </div>
       </main>

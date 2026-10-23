@@ -1,13 +1,13 @@
 /**
- * Etat vide du module watersupply : titre + explication, habille par le design system du
- * module (classes ws-*).
+ * Empty state of the watersupply module: title + explanation, styled by the module's
+ * design system (ws-* classes).
  *
- * Pourquoi un composant interne : les vues affichent ici un titre ET une explication, alors
- * que le composant partage (frontend/src/shared/components/EmptyState.jsx) expose un message
- * unique en classes Tailwind. Les deux usages coexistent donc, sans que le module modifie
- * un fichier partage.
+ * Why an internal component: the views show here a title AND an explanation, whereas
+ * the shared component (frontend/src/shared/components/EmptyState.jsx) exposes a single
+ * message styled with Tailwind classes. Both usages therefore coexist, without the module
+ * modifying a shared file.
  *
- * Nom conserve (`EmptyState`) pour que seuls les chemins d'import changent dans les vues.
+ * Name kept (`EmptyState`) so that only the import paths change in the views.
  */
 export function EmptyState({ title, description }) {
   return (

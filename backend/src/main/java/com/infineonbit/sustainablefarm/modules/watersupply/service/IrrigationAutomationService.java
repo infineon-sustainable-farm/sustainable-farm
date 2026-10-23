@@ -22,30 +22,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Pilotage automatique de l'irrigation par l'humidite du sol (module 1.4 de la specification :
- * le « water saving planning »).
+ * Automatic irrigation control driven by soil moisture (specification module 1.4:
+ * the "water saving planning").
  *
- * <p>Regle appliquee a chaque zone : si la derniere mesure d'humidite du sol descend sous le
- * seuil de la saison en cours ET qu'aucun arrosage n'est en cours ou prevu ET que le dernier
- * arrosage remonte a plus de {@value #MIN_HOURS_BETWEEN_IRRIGATIONS} heures, alors un planning
- * est cree automatiquement ({@code trigger_source = auto}) avec le volume issu du besoin
- * agronomique de la zone (ET0 x Kc / efficacite, voir {@link WaterNeedService}).</p>
+ * <p>Rule applied to each zone: if the last soil moisture measurement drops below the
+ * threshold of the current season AND no irrigation is running or planned AND the last
+ * irrigation was more than {@value #MIN_HOURS_BETWEEN_IRRIGATIONS} hours ago, then a schedule
+ * is created automatically ({@code trigger_source = auto}) with the volume derived from the zone's
+ * agronomic need (ET0 x Kc / efficiency, see {@link WaterNeedService}).</p>
  *
- * <p>La meme methode sert a l'endpoint manuel {@code POST /api/irrigations/auto-trigger} et a la
- * tache planifiee ({@link IrrigationAutoTriggerJob}) : le comportement est donc identique quelle
- * que soit l'origine, et chaque zone ecartee est justifiee dans la reponse.</p>
+ * <p>The same method serves the manual endpoint {@code POST /api/irrigations/auto-trigger} and the
+ * scheduled job ({@link IrrigationAutoTriggerJob}): behavior is therefore identical regardless of
+ * the origin, and each excluded zone is justified in the response.</p>
  */
 @Service
 @Transactional(readOnly = true)
 public class IrrigationAutomationService {
 
-    /** Delai minimal entre deux arrosages d'une meme zone (heures). */
+    /** Minimum delay between two irrigations of the same zone (hours). */
     public static final int MIN_HOURS_BETWEEN_IRRIGATIONS = 24;
 
-    /** Duree par defaut d'un arrosage automatique (minutes), le volume etant calcule a part. */
+    /** Default duration of an automatic irrigation (minutes), the volume being computed separately. */
     public static final int DEFAULT_DURATION_MINUTES = 30;
 
-    /** Origine enregistree sur les plannings crees par cette regle. */
+    /** Origin recorded on the schedules created by this rule. */
     public static final String TRIGGER_SOURCE_AUTO = "auto";
 
     private final FieldZoneRepository fieldZoneRepository;
@@ -74,20 +74,20 @@ public class IrrigationAutomationService {
     }
 
     /**
-     * Seuil d'humidite du sol (%) sous lequel un arrosage devient necessaire, par saison.
-     * Valeurs reprises du travail de specification 2026 : plus la saison est seche et chaude,
-     * plus le sol doit etre maintenu humide.
+     * Soil moisture threshold (%) below which an irrigation becomes necessary, per season.
+     * Values taken from the 2026 specification work: the drier and hotter the season,
+     * the more the soil must be kept moist.
      */
     public static double seasonalThresholdPercent(Month month) {
         return switch (month) {
-            case JUNE, JULY, AUGUST, SEPTEMBER -> 40d;      // saison des pluies
+            case JUNE, JULY, AUGUST, SEPTEMBER -> 40d;      // rainy season
             case APRIL, MAY, OCTOBER -> 45d;                // transition
-            case NOVEMBER, DECEMBER, JANUARY -> 50d;        // saison seche fraiche
-            case FEBRUARY, MARCH -> 55d;                    // saison seche chaude
+            case NOVEMBER, DECEMBER, JANUARY -> 50d;        // cool dry season
+            case FEBRUARY, MARCH -> 55d;                    // hot dry season
         };
     }
 
-    /** Nom lisible de la saison, repris dans la reponse de l'API. */
+    /** Readable name of the season, reused in the API response. */
     public static String seasonLabel(Month month) {
         return switch (month) {
             case JUNE, JULY, AUGUST, SEPTEMBER -> "rainy";
@@ -99,10 +99,10 @@ public class IrrigationAutomationService {
 
 
     /**
-     * Applique la regle d'humidite a toutes les zones et cree les plannings necessaires.
+     * Applies the moisture rule to all zones and creates the necessary schedules.
      *
-     * @return un rapport lisible : seuil saisonnier applique, ET0 du jour, plannings crees et
-     *         zones ecartees avec leur motif (une zone sans capteur de sol ne peut pas etre pilotee)
+     * @return a readable report: seasonal threshold applied, day's ET0, schedules created and
+     *         excluded zones with their reason (a zone without a soil sensor cannot be driven)
      */
     @Transactional
     public Map<String, Object> trigger() {

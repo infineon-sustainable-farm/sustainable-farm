@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 
 /**
- * Mise a jour partielle d'un quota : seuls les champs fournis sont modifies.
+ * Partial update of a quota: only the provided fields are modified.
  */
 public record WaterQuotaUpdateRequest(
         LocalDate quotaMonth,

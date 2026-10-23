@@ -735,7 +735,7 @@
 
 .ws-toast.show { opacity: 1; transform: translateY(0); }
 
-/* ============ RECHERCHE & PAGINATION ============ */
+/* ============ SEARCH & PAGINATION ============ */
 .ws-search {
   display: flex;
   align-items: center;
@@ -791,9 +791,9 @@
 .ws-pagination-nav button:disabled { opacity: .4; cursor: default; }
 .ws-pagination-nav button:not(:disabled):hover { border-color: var(--ws-primary); color: var(--ws-primary-dark); }
 
-/* ============ ACCESSIBILITE ============ */
-/* Un anneau de focus visible partout : la navigation clavier est un chemin de premiere classe,
-   et currentColor garantit le contraste sur fond clair comme sur la barre laterale sombre. */
+/* ============ ACCESSIBILITY ============ */
+/* A visible focus ring everywhere: keyboard navigation is a first-class path,
+   and currentColor guarantees contrast on light backgrounds as well as on the dark sidebar. */
 .ws-app a:focus-visible,
 .ws-app button:focus-visible,
 .ws-app select:focus-visible,
@@ -803,7 +803,7 @@
   outline-offset: 2px;
 }
 
-/* ============ ETAT VIDE (aucune donnee, erreur, recherche sans resultat) ============ */
+/* ============ EMPTY STATE (no data, error, search without result) ============ */
 .ws-empty {
   padding: 26px 18px;
   border: 1px dashed var(--ws-line);
@@ -828,7 +828,7 @@
   color: var(--ws-muted);
 }
 
-/* ============ EXPORT GRAPHIQUE & QUOTAS ============ */
+/* ============ CHART EXPORT & QUOTAS ============ */
 .ws-chart-shell { display: flex; flex-direction: column; gap: 6px; }
 
 .ws-chart-shell-top {
@@ -941,8 +941,8 @@
   .ws-search { min-width: 0; width: 100%; }
   .ws-filters { flex-wrap: wrap; }
   .ws-filters select { max-width: 100%; }
-  /* Les tableaux gardent leurs colonnes lisibles : ils defilent horizontalement au lieu de
-     s'ecraser, et la barre d'outils du graphique peut passer a la ligne. */
+  /* Tables keep their columns readable: they scroll horizontally instead of
+     collapsing, and the chart toolbar can wrap onto the next line. */
   .ws-panel-body { overflow-x: auto; }
   .ws-table { min-width: 560px; }
   .ws-chart-shell-top { flex-wrap: wrap; gap: 6px; }

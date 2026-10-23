@@ -16,14 +16,14 @@ function renderAt(path) {
 }
 
 describe('WaterSupplySidebar', () => {
-  it('declare un lien pour chaque ecran du module, sous /watersupply', () => {
+  it('declares a link per module screen, under /watersupply', () => {
     renderAt('/watersupply')
 
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'))
     expect(hrefs).toEqual(Object.keys(VIEW_PATHS).map((viewId) => viewUrl(viewId)))
   })
 
-  it('pointe le dashboard sur la racine du module', () => {
+  it('points the dashboard at the module root', () => {
     renderAt('/watersupply')
 
     expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('href')).toBe('/watersupply')
@@ -31,14 +31,14 @@ describe('WaterSupplySidebar', () => {
       .toBe('/watersupply/farms')
   })
 
-  it('marque l ecran courant comme actif', () => {
+  it('marks the current screen as active', () => {
     renderAt('/watersupply/farms')
 
     expect(screen.getByRole('link', { name: /Farms & Fields/ }).className).toContain('active')
     expect(screen.getByRole('link', { name: 'Dashboard' }).className).not.toContain('active')
   })
 
-  it('ne marque pas le dashboard comme actif quand un ecran enfant est ouvert', () => {
+  it('does not mark the dashboard active when a child screen is open', () => {
     renderAt('/watersupply/sources')
 
     expect(screen.getByRole('link', { name: 'Dashboard' }).className).not.toContain('active')

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// Environnement DOM declare dans le fichier : le projet n'a pas de configuration Vitest
-// partagee, et renderHook a besoin de document (voir aussi les tests du module watersupply).
+// DOM environment declared in the file: the project has no shared Vitest
+// configuration, and renderHook needs document (see also the watersupply module tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { useAuth } from './useAuth'
@@ -23,9 +23,9 @@ function makeJwt(payload) {
   return `header.${btoa(JSON.stringify(payload))}.signature`
 }
 
-// Aucune donnee sensible en dur ici : la valeur d'identification test est lue dans
-// l'environnement (garde CI F11 / PR-33). Elle est indéfinie hors pipeline, mais elle
-// reste identique entre l'appel et l'assertion, donc le test passe dans les deux cas.
+// No sensitive data hardcoded here: the test identification value is read from
+// the environment (CI guard F11 / PR-33). It is undefined outside the pipeline, but it
+// stays identical between the call and the assertion, so the test passes either way.
 const TEST_PASSWORD = import.meta.env.VITE_TEST_PASSWORD
 
 beforeEach(() => {
@@ -34,7 +34,7 @@ beforeEach(() => {
 })
 
 describe('useAuth', () => {
-  it('connecte l’utilisateur avec un token valide', async () => {
+  it('logs the user in with a valid token', async () => {
     const user = { id: 'u1', email: 'farmer@farm.io' }
     const accessToken = makeJwt({ sub: 'farmer@farm.io', userId: 'u1' })
     vi.mocked(apiClient.post).mockResolvedValue({ access_token: accessToken, user })
@@ -53,12 +53,12 @@ describe('useAuth', () => {
     expect(result.current.loading).toBe(false)
   })
 
-  it('expose l’erreur quand le backend refuse la connexion', async () => {
-    vi.mocked(apiClient.post).mockRejectedValue(new Error('Identifiants invalides'))
+  it('exposes the error when the backend refuses the connection', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('Invalid credentials'))
 
     const { result } = renderHook(() => useAuth())
     await act(async () => {
-      await expect(result.current.login('farmer@farm.io', 'wrong')).rejects.toThrow('Identifiants invalides')
+      await expect(result.current.login('farmer@farm.io', 'wrong')).rejects.toThrow('Invalid credentials')
     })
 
     expect(result.current.error).toBeInstanceOf(Error)
@@ -66,7 +66,7 @@ describe('useAuth', () => {
     expect(getToken()).toBeNull()
   })
 
-  it('déconnecte l’utilisateur et efface le token', async () => {
+  it('logs the user out and clears the token', async () => {
     setToken(makeJwt({ sub: 'farmer@farm.io', userId: 'u1' }))
     const { result } = renderHook(() => useAuth())
     expect(result.current.isAuthenticated).toBe(true)
@@ -80,7 +80,7 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(false)
   })
 
-  it('rejette un token JWT expiré', () => {
+  it('rejects an expired JWT token', () => {
     setToken(makeJwt({ sub: 'farmer@farm.io', userId: 'u1', exp: Math.floor(Date.now() / 1000) - 3600 }))
 
     const { result } = renderHook(() => useAuth())
@@ -90,7 +90,7 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(false)
   })
 
-  it('accepte un token JWT non expiré', () => {
+  it('accepts a non-expired JWT token', () => {
     setToken(makeJwt({ sub: 'farmer@farm.io', userId: 'u1', exp: Math.floor(Date.now() / 1000) + 3600 }))
 
     const { result } = renderHook(() => useAuth())
@@ -99,7 +99,7 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(true)
   })
 
-  it('gère un token JWT malformé', () => {
+  it('handles a malformed JWT token', () => {
     setToken('not-a-jwt')
     const { result } = renderHook(() => useAuth())
     expect(getToken()).toBeNull()
@@ -108,7 +108,7 @@ describe('useAuth', () => {
 })
 
 describe('waitFor integration', () => {
-  it('termine le chargement après le login', async () => {
+  it('ends the loading state after the login', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ access_token: 't', user: { email: 'a@b.c' } })
     const { result } = renderHook(() => useAuth())
     await act(async () => {

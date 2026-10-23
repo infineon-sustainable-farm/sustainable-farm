@@ -3,19 +3,19 @@ import routes from './routes'
 import { VIEW_PATHS, WATERSUPPLY_BASE } from './paths'
 
 /**
- * Le branchement du module dans l'application est verifie ici : c'est exactement ce qui
- * manquait (routes.jsx vide), le module etait donc absent du bundle de production.
+ * The wiring of the module into the application is asserted here: this is exactly what
+ * was missing (an empty routes.jsx), so the module was absent from the production bundle.
  */
-describe('routes du module watersupply', () => {
+describe('watersupply module routes', () => {
   const [moduleRoute] = routes
 
-  it('monte le module sous /watersupply, comme machinery et plants', () => {
+  it('mounts the module under /watersupply, like machinery and plants', () => {
     expect(routes).toHaveLength(1)
     expect(WATERSUPPLY_BASE).toBe('/watersupply')
     expect(moduleRoute.path).toBe('watersupply')
   })
 
-  it('declare un ecran par entree du menu, avec une seule route par defaut', () => {
+  it('declares one screen per menu entry, with a single default route', () => {
     const declared = moduleRoute.children.filter((child) => child.path !== '*')
     const indexRoutes = declared.filter((child) => child.index === true)
     const paths = declared
@@ -31,9 +31,9 @@ describe('routes du module watersupply', () => {
     expect(paths).toEqual(menuPaths)
   })
 
-  it('encapsule chaque ecran pour lui transmettre notify et onNavigate', () => {
-    // Les vues attendent ces deux proprietes : elles viennent du contexte de l'Outlet du
-    // module, transmis par l'adaptateur (voir withModuleUi dans routes.jsx).
+  it('wraps every screen to pass it notify and onNavigate', () => {
+    // The views expect these two props: they come from the module's Outlet context,
+    // passed by the adapter (see withModuleUi in routes.jsx).
     const declared = moduleRoute.children.filter((child) => child.path !== '*')
 
     declared.forEach((child) => {
@@ -42,7 +42,7 @@ describe('routes du module watersupply', () => {
     })
   })
 
-  it('affiche un ecran "introuvable" sur une URL inconnue, sans redirection silencieuse', () => {
+  it('shows a "not found" screen on an unknown URL, without silent redirection', () => {
     const catchAll = moduleRoute.children.at(-1)
 
     expect(catchAll.path).toBe('*')

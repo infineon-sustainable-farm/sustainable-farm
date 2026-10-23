@@ -32,16 +32,16 @@ public class DripMaintenanceService {
         this.fieldZoneRepository = fieldZoneRepository;
     }
 
-    /** Taches recurrentes du goutte-a-goutte et leur periodicite. */
+    /** Recurring drip tasks and their periodicity. */
     private static final List<PreventiveTask> PREVENTIVE_TASKS = List.of(
             new PreventiveTask("inspection", 7, "weekly"),
             new PreventiveTask("filter_cleaning", 14, "biweekly"),
             new PreventiveTask("flush", 30, "monthly"));
 
-    /** Delai (jours) en dessous duquel une tache est annoncee comme bientot due. */
+    /** Delay (days) below which a task is announced as soon due. */
     private static final long DUE_SOON_DAYS = 2;
 
-    /** Tache preventive : type enregistre dans l'historique, periodicite et libelle de frequence. */
+    /** Preventive task: type stored in the history, periodicity and frequency label. */
     public record PreventiveTask(String type, int intervalDays, String frequency) {
     }
 
@@ -49,7 +49,7 @@ public class DripMaintenanceService {
         return logRepository.findAll().stream().map(DripMaintenanceLogResponse::from).toList();
     }
 
-    /** Liste paginee, avec filtre optionnel par zone : meme contrat que les autres listes du module. */
+    /** Paginated list, with optional zone filter: same contract as the other module lists. */
     public PageResponse<DripMaintenanceLogResponse> findAll(Pageable pageable, UUID zoneId) {
         Page<DripMaintenanceLog> page = zoneId == null
                 ? logRepository.findAll(pageable)
@@ -61,7 +61,7 @@ public class DripMaintenanceService {
     @Transactional
     public DripMaintenanceLogResponse create(DripMaintenanceLogRequest request) {
         if (request.zoneId() == null) {
-            // Champ obligatoire manquant : 400 (mauvais contrat) et non 404 (zone inconnue).
+            // Required field missing: 400 (bad payload) and not 404 (unknown zone).
             throw new IllegalArgumentException("Zone is required");
         }
         DripMaintenanceLog log = new DripMaintenanceLog();
@@ -112,7 +112,7 @@ public class DripMaintenanceService {
                 .orElseThrow(() -> new NotFoundException("DripMaintenanceLog"));
     }
 
-    /** Une intervention doit porter une date et un type : le schema les declare obligatoires. */
+    /** An intervention must carry a date and a type: the schema declares them required. */
     private void requireMaintenanceInfo(java.time.Instant maintenanceDate, String maintenanceType) {
         if (maintenanceDate == null) {
             throw new IllegalArgumentException("Maintenance date is required");
@@ -123,12 +123,12 @@ public class DripMaintenanceService {
     }
 
     /**
-     * Calendrier de maintenance preventive (module 6.3 de la specification).
+     * Preventive maintenance calendar (specification module 6.3).
      *
-     * <p>Chaque tache recurrente est due par zone a partir de la derniere intervention
-     * enregistree pour ce type : inspection hebdomadaire, nettoyage de filtre bimensuel,
-     * flush mensuel. Le calendrier n'est donc plus une liste figee mais une echeance par zone,
-     * avec le retard eventuel — c'est ce qui permet d'agir avant la perte d'eau.</p>
+     * <p>Each recurring task is due per zone based on the last intervention recorded for that
+     * type: weekly inspection, biweekly filter cleaning, monthly flush. The calendar is therefore
+     * no longer a fixed list but a deadline per zone, with any delay — this is what allows acting
+     * before water loss.</p>
      */
     public List<Map<String, Object>> schedule() {
         List<DripMaintenanceLog> logs = logRepository.findAll();
@@ -142,7 +142,7 @@ public class DripMaintenanceService {
         return calendar;
     }
 
-    /** Derniere intervention d'un type donne pour une zone, ou null si elle n'a jamais eu lieu. */
+    /** Last intervention of a given type for a zone, or null if it never happened. */
     private LocalDate lastDone(List<DripMaintenanceLog> logs, UUID zoneId, String taskType) {
         LocalDate last = null;
         for (DripMaintenanceLog log : logs) {
@@ -158,7 +158,7 @@ public class DripMaintenanceService {
         return last;
     }
 
-    /** Tolere les libelles saisis a la main (« filter cleaning », « inspection »...). */
+    /** Tolerates manually typed labels ("filter cleaning", "inspection"...). */
     private boolean matchesTask(String maintenanceType, String taskType) {
         String value = maintenanceType == null ? ""
                 : maintenanceType.trim().toLowerCase().replace(' ', '_').replace('-', '_');

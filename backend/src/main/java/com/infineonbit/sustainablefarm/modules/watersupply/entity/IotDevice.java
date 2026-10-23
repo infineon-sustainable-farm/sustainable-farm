@@ -8,9 +8,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Registre d'un capteur IoT connecté au module (niveau, débit, qualité, pluie, sol, colmatage).
- * Mis à jour à chaque ingestion de télémétrie : last_seen, battery et rssi sont recalculés.
- * L'indicateur de disponibilité backend (P7) se base sur ce registre.
+ * Registry of an IoT sensor connected to the module (level, flow, quality, rain, soil, clogging).
+ * Updated at each telemetry ingestion: last_seen, battery and rssi are recomputed.
+ * The backend availability indicator (P7) relies on this registry.
  */
 @Entity
 @Table(name = "iot_devices")

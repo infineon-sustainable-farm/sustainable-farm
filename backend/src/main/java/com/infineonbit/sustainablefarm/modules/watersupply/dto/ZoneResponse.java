@@ -5,8 +5,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Vue API d'une zone. Les champs de reseau (goutteurs) permettent au client de savoir si la
- * detection de colmatage est exploitable, et {@code theoreticalFlowLh} evite de refaire le calcul.
+ * API view of a zone. The network fields (emitters) let the client know whether
+ * clogging detection is usable, and {@code theoreticalFlowLh} avoids recomputing the calculation.
  */
 public record ZoneResponse(UUID id, UUID fieldId, String name, Double areaHectares,
                            String irrigationMethod, Double cropCoefficient, Integer emitterCount,

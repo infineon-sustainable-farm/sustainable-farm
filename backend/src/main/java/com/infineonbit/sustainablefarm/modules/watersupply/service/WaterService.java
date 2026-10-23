@@ -88,11 +88,11 @@ public class WaterService {
     }
 
     /**
-     * Niveau d'une source, lu en temps reel (module 5.2 de la specification).
+     * Level of a source, read in real time (specification module 5.2).
      *
-     * <p>La valeur affichee est la derniere mesure envoyee par le capteur de niveau du reservoir ;
-     * le pourcentage et le statut sont calcules ici pour que l'interface et les autres modules
-     * n'aient pas a connaitre les seuils.</p>
+     * <p>The displayed value is the last measurement sent by the reservoir level sensor;
+     * the percentage and status are computed here so that the UI and the other modules
+     * do not need to know the thresholds.</p>
      */
     public WaterLevelResponse sourceLevel(UUID sourceId) {
         WaterSource source = getSourceEntity(sourceId);
@@ -185,16 +185,16 @@ public class WaterService {
     }
 
     /**
-     * Alertes de quota (80 % warning, 100 % critical) evaluees apres chaque mesure de
-     * consommation. Les exceptions d'alerte ne remontent jamais : une consommation valide
-     * doit toujours etre enregistree meme si la notification echoue.
+     * Quota alerts (80 % warning, 100 % critical) evaluated after each consumption
+     * measurement. Alert exceptions never propagate: a valid consumption must always be
+     * recorded even if the notification fails.
      */
     private void checkQuotaThresholds(WaterConsumption consumption) {
         try {
             waterQuotaService.checkThresholds(
                     consumption.getFarmId(), null, consumption.getConsumptionDate());
         } catch (RuntimeException ex) {
-            // Journalise silencieusement : le suivi de consommation ne depend pas des alertes.
+            // Logged silently: consumption tracking does not depend on alerts.
         }
     }
 

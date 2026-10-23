@@ -1,9 +1,9 @@
--- 1. Table de suivi des capteurs IoT (P7) : device_id garanti unique, last_seen mis à jour à chaque
---    ingestion, battery et rssi conservés au passage. L'indicateur sensor_availability se base sur
---    ce registre désormais (fin du placeholder statique).
+-- 1. IoT sensor tracking table (P7): device_id guaranteed unique, last_seen updated on each
+--    ingestion, battery and rssi kept along the way. The sensor_availability indicator relies on
+--    this registry from now on (end of the static placeholder).
 --
--- 2. Table d'historique d'humidité du sol (P3) : chaque mesure de sol est stockée ici pour l'alimenter
---    les règles de pilotage (report automatique, alerte stress hydrique, graphique sparkline).
+-- 2. Soil moisture history table (P3): each soil measurement is stored here to feed
+--    the control rules (automatic postpone, water stress alert, sparkline chart).
 
 CREATE TABLE IF NOT EXISTS iot_devices (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),

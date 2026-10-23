@@ -10,12 +10,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 	Page<Notification> findByUserId(UUID userId, Pageable pageable);
 
-	/** Nombre d'alertes d'un type donne (KPI « anomalies » du dashboard), calcule par la base. */
+	/** Number of alerts of a given type (dashboard "anomalies" KPI), computed in the database. */
 	long countByTypeIgnoreCase(String type);
 
 	/**
-	 * Vrai si la meme alerte est deja ouverte et recente : c'est la deduplication des alertes
-	 * repetitives des capteurs, verifiee en base plutot que par un parcours complet cote application.
+	 * True when the same alert is already open and recent: this is the deduplication of the
+	 * repetitive sensor alerts, checked in the database rather than by a full application-side scan.
 	 */
 	boolean existsByTitleAndReadIsFalseAndCreatedAtAfter(String title, Instant threshold);
 }

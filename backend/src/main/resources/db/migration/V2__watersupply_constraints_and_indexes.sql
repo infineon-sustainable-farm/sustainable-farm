@@ -1,20 +1,20 @@
 -- SWMS - Schema hardening (V2)
 -- Keeps V1 immutable while aligning production schema with the current JPA model.
 
--- Le compte technique systeme n'est plus insere ici : une migration ne doit porter ni donnees
--- ni comptes (PR-33). Il est cree au demarrage par SystemUserSeeder (profil "!test"), facon
--- idempotent et sans identifiant de connexion, puisque l'authentification est deleguee au
--- logiciel global. Comme cette migration peut tourner sur une base pre-Flyway dont les
--- plannings et alertes pointent deja vers ce compte absent de la table users, les deux
--- contraintes vers users sont ajoutees NOT VALID : les lignes existantes ne sont pas
--- controlees a cet instant, les nouvelles le sont des la creation du compte au demarrage.
+-- The technical system account is no longer inserted here: a migration must carry neither data
+-- nor accounts (PR-33). It is created at startup by SystemUserSeeder (profile "!test"),
+-- idempotently and without login credentials, since authentication is delegated to the
+-- global software. As this migration may run on a pre-Flyway database whose
+-- schedules and alerts already point to that account missing from the users table, both
+-- constraints toward users are added NOT VALID: existing rows are not
+-- checked at this point, new ones are checked as soon as the account is created at startup.
 
 ALTER TABLE IF EXISTS water_consumptions RENAME TO water_consumption;
 
--- Les renommages ci-dessous ne concernent qu'un schema V1 historique (task_type / log_date /
--- technician). Une base creee par Hibernate porte deja les noms finaux : sans ce garde-fou,
--- l'ALTER TABLE ... RENAME COLUMN echouait avec "column task_type does not exist" et bloquait
--- tout le demarrage de l'application.
+-- The renames below only concern a historical V1 schema (task_type / log_date /
+-- technician). A database created by Hibernate already carries the final names: without this guard,
+-- the ALTER TABLE ... RENAME COLUMN would fail with "column task_type does not exist" and block
+-- the whole application startup.
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.columns

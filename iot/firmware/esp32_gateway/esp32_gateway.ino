@@ -1,19 +1,19 @@
 // ============================================================
-// ESP32 PASSERELLE CAPTEURS - Water Supply (Sustainable Farm)
+// ESP32 SENSOR GATEWAY - Water Supply (Sustainable Farm)
 // -----------------------------------------------------------
-// Tous les capteurs sont cables sur CET ESP32 (passerelle de zone).
-// L ESP32 lit chaque capteur et envoie la telemetrie en JSON vers :
-//   POST /api/iot/telemetry   (contrat : iot/README.md section 3)
+// All the sensors are wired onto THIS ESP32 (zone gateway).
+// The ESP32 reads each sensor and sends the telemetry in JSON to:
+//   POST /api/iot/telemetry   (contract: iot/README.md section 3)
 //
-// Cablage des capteurs (ESP32 DevKit V1 - 3.3V) :
-//   Capteur niveau reservoir   HC-SR04 ultrason      TRIG=GPIO5  ECHO=GPIO18
-//   Capteur debit (YF-S201)    impulsions            GPIO27 (signal)
-//   Pluviometre a auget        contact sec           GPIO26 (signal)
-//   Sonde humidite sol         capacitive v1.2       GPIO32 (ADC1)
-//   Sonde pH                   analogique            GPIO34 (ADC1)
-//   Sonde turbidite            analogique            GPIO35 (ADC1)
-//   Sonde temperature          DS18B20 (OneWire)     GPIO4
-//   Relais electrovanne        module relais         GPIO25 (optionnel, futur actuation)
+// Sensor wiring (ESP32 DevKit V1 - 3.3V):
+//   Tank level sensor     HC-SR04 ultrasonic      TRIG=GPIO5  ECHO=GPIO18
+//   Flow sensor (YF-S201) pulses                  GPIO27 (signal)
+//   Tipping rain gauge    dry contact             GPIO26 (signal)
+//   Soil moisture probe    capacitive v1.2        GPIO32 (ADC1)
+//   pH probe               analog                 GPIO34 (ADC1)
+//   Turbidity probe        analog                 GPIO35 (ADC1)
+//   Temperature probe      DS18B20 (OneWire)      GPIO4
+//   Solenoid valve relay   relay module           GPIO25 (optional, future actuation)
 // ============================================================
 
 #include <WiFi.h>
@@ -23,15 +23,15 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-// ---------- Configuration reseau / API ----------
+// ---------- Network / API configuration ----------
 const char* WIFI_SSID = "MON_RESEAU";
 const char* WIFI_PASS = "MOT_DE_PASSE";
 const char* API_URL   = "http://192.168.1.50:8080/api/iot/telemetry";
 const char* DEVICE_ID = "esp32-gateway-zone-a-01";
 
-// ---------- Ids de configuration (reprises des ecrans / API) ----------
-const char* SOURCE_ID = "UUID_DE_LA_SOURCE";   // source ecoutee (ex. citerne)
-const char* ZONE_ID   = "UUID_DE_LA_ZONE";     // zone goutte-a-goutte
+// ---------- Configuration ids (taken from the screens / API) ----------
+const char* SOURCE_ID = "UUID_DE_LA_SOURCE";   // monitored source (e.g. cistern)
+const char* ZONE_ID   = "UUID_DE_LA_ZONE";     // drip zone
 
 // ---------- Cablage ----------
 #define TRIG_PIN       5
@@ -47,22 +47,22 @@ const char* ZONE_ID   = "UUID_DE_LA_ZONE";     // zone goutte-a-goutte
 // ---------- Calibration ----------
 const float TANK_HEIGHT_CM  = 150.0;
 const float TANK_CAPACITY_L = 50000.0;
-const float LITERS_PER_PULSE = 1.0 / 7.5;   // YF-S201 : 7.5 impulsions = 1 L/min
-const float MM_PER_TIP      = 0.279;        // auget basculant
-const int   SOIL_DRY        = 3200;         // sonde a l air
-const int   SOIL_WET        = 1400;         // sonde dans l eau
+const float LITERS_PER_PULSE = 1.0 / 7.5;   // YF-S201: 7.5 pulses = 1 L/min
+const float MM_PER_TIP      = 0.279;        // tipping bucket
+const int   SOIL_DRY        = 3200;         // probe in air
+const int   SOIL_WET        = 1400;         // probe in water
 
-// ---------- Etats ----------
+// ---------- State ----------
 NewPing sonar(TRIG_PIN, ECHO_PIN);
 OneWire oneWire(ONEWIRE_PIN);
 DallasTemperature tempSensor(&oneWire);
 volatile unsigned long flowPulses = 0;
 volatile unsigned long rainTips  = 0;
 unsigned long lastLevelMs = 0, lastQualityMs = 0, lastRainMs = 0, lastSoilMs = 0;
-const unsigned long LEVEL_MS   = 60000;    // niveau : 1 min
-const unsigned long QUALITY_MS = 900000;   // qualite : 15 min
-const unsigned long RAIN_MS    = 60000;    // pluie : 1 min
-const unsigned long SOIL_MS    = 600000;   // sol : 10 min
+const unsigned long LEVEL_MS   = 60000;    // level: 1 min
+const unsigned long QUALITY_MS = 900000;   // quality: 15 min
+const unsigned long RAIN_MS    = 60000;    // rain: 1 min
+const unsigned long SOIL_MS    = 600000;   // soil: 10 min
 
 void IRAM_ATTR onFlowPulse() { flowPulses++; }
 void IRAM_ATTR onRainTip()   { rainTips++;  }
@@ -73,13 +73,13 @@ void connectWiFi() {
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    if (millis() - start > 30000) return;  // SC-11 : offline -> buffer local (a implementer)
+    if (millis() - start > 30000) return;  // SC-11: offline -> local buffer (to implement)
   }
 }
 
 void postTelemetry(const char* type, const char* sourceId, const char* zoneId, JsonObject values) {
   if (WiFi.status() != WL_CONNECTED) {
-    // SC-11 / SC-13 : stocker la mesure en local (SPIFFS) et renvoyer au retour du reseau.
+    // SC-11 / SC-13: store the measurement locally (SPIFFS) and resend when the network is back.
     return;
   }
   HTTPClient http;
@@ -92,7 +92,7 @@ void postTelemetry(const char* type, const char* sourceId, const char* zoneId, J
   if (zoneId)   doc["zone_id"]   = zoneId;
   JsonObject v = doc["values"].to<JsonObject>();
   for (JsonPair kv : values) { v[kv.key()] = kv.value(); }
-  doc["timestamp"] = "" ;  // le backend horodate si absent
+  doc["timestamp"] = "" ;  // the backend timestamps when absent
   String body;
   serializeJson(doc, body);
   int code = http.POST(body);
@@ -139,8 +139,8 @@ void readSoilAndQuality() {
   vs["soil_moisture_percent"] = soilPct;
   postTelemetry("soil", NULL, ZONE_ID, vs);
 
-  float ph  = (analogRead(PH_PIN) * 3.3 / 4095.0) * 3.5;          // calibrer (solutions 4/7/10)
-  float ntu = map(analogRead(TURBIDITY_PIN), 0, 4095, 300, 0);    // calibrer
+  float ph  = (analogRead(PH_PIN) * 3.3 / 4095.0) * 3.5;          // calibrate (4/7/10 solutions)
+  float ntu = map(analogRead(TURBIDITY_PIN), 0, 4095, 300, 0);    // calibrate
   JsonDocument vq;
   vq["ph"] = ph;
   vq["turbidity_ntu"] = ntu;
@@ -153,7 +153,7 @@ void setup() {
   pinMode(FLOW_PIN, INPUT_PULLUP);
   pinMode(RAIN_PIN, INPUT_PULLUP);
   pinMode(VALVE_PIN, OUTPUT);
-  digitalWrite(VALVE_PIN, LOW);  // vanne fermee par defaut (SC-13 : defaut passif securise)
+  digitalWrite(VALVE_PIN, LOW);  // valve closed by default (SC-13: passive fail-safe)
   attachInterrupt(digitalPinToInterrupt(FLOW_PIN), onFlowPulse, FALLING);
   attachInterrupt(digitalPinToInterrupt(RAIN_PIN), onRainTip, FALLING);
   tempSensor.begin();
@@ -166,6 +166,6 @@ void loop() {
   if (now - lastRainMs   >= RAIN_MS)    { lastRainMs   = now; readRain(); }
   if (now - lastSoilMs   >= SOIL_MS)    { lastSoilMs   = now; readSoilAndQuality(); }
   if (now - lastQualityMs >= QUALITY_MS) { lastQualityMs = now; readSoilAndQuality(); }
-  readFlow();  // le debit est vide a chaque tour de boucle
+  readFlow();  // flow is drained on every loop turn
   delay(1000);
 }

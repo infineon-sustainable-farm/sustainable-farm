@@ -58,7 +58,7 @@ class DripMaintenanceServiceTest {
     @Test
     void calendarIsOverdueWhenTheLastInspectionIsTooOld() {
         Zone zone = stubZone();
-        // Inspection faite il y a 10 jours pour une periodicite de 7 jours : 3 jours de retard.
+        // Inspection done 10 days ago for a 7-day periodicity: 3 days of delay.
         when(logRepository.findAll()).thenReturn(List.of(intervention(zone.getId(), "inspection", 10)));
 
         Map<String, Object> entry = entryFor(service().schedule(), "inspection");
@@ -77,10 +77,10 @@ class DripMaintenanceServiceTest {
         Map<String, Object> flush = entryFor(service().schedule(), "flush");
         Map<String, Object> filter = entryFor(service().schedule(), "filter_cleaning");
 
-        // Le libelle « filter cleaning » saisi a la main est reconnu comme le nettoyage de filtre.
+        // The manually typed "filter cleaning" label is recognized as filter cleaning.
         assertEquals(13L, filter.get("days_remaining"));
         assertEquals("planned", filter.get("status"));
-        // Le flush n'a jamais ete fait : il est du aujourd'hui.
+        // The flush was never done: it is due today.
         assertEquals("never_done", flush.get("status"));
         assertEquals(LocalDate.now(ZoneOffset.UTC).toString(), flush.get("next_due"));
     }
@@ -108,7 +108,7 @@ class DripMaintenanceServiceTest {
         return log;
     }
 
-    /** Debut de journee UTC, il y a {@code daysAgo} jours : dates deterministes pour le test. */
+    /** Start of a UTC day, {@code daysAgo} days ago: deterministic dates for the test. */
     private Instant dateDaysAgo(int daysAgo) {
         return LocalDate.now(ZoneOffset.UTC).minusDays(daysAgo).atStartOfDay(ZoneOffset.UTC).toInstant();
     }

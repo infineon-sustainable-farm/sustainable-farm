@@ -1,10 +1,10 @@
 /**
- * Pagination du module watersupply, pilotee par les valeurs de useListControls
- * (page, pageCount, total) et habillee par les classes ws-pagination du module.
+ * Pagination of the watersupply module, driven by the values of useListControls
+ * (page, pageCount, total) and styled with the module's ws-pagination classes.
  *
- * Le composant partage de l'application (shared/components/Pagination.jsx) attend une autre
- * API (totalPages / onPageChange) : le module garde donc la sienne, sans modifier le partage.
- * Elle ne s'affiche pas tant que la liste tient sur une seule page.
+ * The application's shared component (shared/components/Pagination.jsx) expects a different
+ * API (totalPages / onPageChange): the module therefore keeps its own, without touching the
+ * shared one. It renders nothing as long as the list fits on a single page.
  */
 export function Pagination({ page, pageCount, onPage, total = 0, unit = 'item' }) {
   if (!pageCount || pageCount <= 1) {

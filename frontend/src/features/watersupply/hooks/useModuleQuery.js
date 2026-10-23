@@ -1,17 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 
 /**
- * Enveloppe locale de React Query pour les donnees du module.
+ * React Query wrapper for the module data.
  *
- * Pourquoi : chaque vue appelait auparavant son propre `useEffect` + `useState` de chargement,
- * avec la meme logique recopiee une dizaine de fois. React Query est deja la bibliotheque de
- * donnees du projet (machinery, plants) : elle apporte la deduplication des requetes
- * simultanees, la mise en cache par cle et le rafraichissement, sans reinventer un etat local.
+ * Why: every view used to run its own `useEffect` + `useState` loading block,
+ * with the same logic copied a dozen times. React Query is already the project's
+ * data library (machinery, plants): it brings request deduplication, keyed caching
+ * and background refresh, without reinventing a local state.
  *
- * Le contrat expose aux vues reste volontairement celui d'avant — `{ data, loading, error,
- * refetch }` — afin de ne pas modifier les vues ni leurs tests. Les donnees sont considerees
- * comme fraiches (`staleTime: 0`) et les echecs ne sont pas reessayes automatiquement :
- * un ecran de supervision doit afficher l'erreur, pas masquer une panne de backend.
+ * The contract exposed to the views deliberately stays the same as before —
+ * `{ data, loading, error, refetch }` — so that neither the views nor their tests
+ * change. Data is considered fresh (`staleTime: 0`) and failures are not retried
+ * automatically: a supervision screen must show the error, not hide a backend outage.
  */
 export function useModuleQuery(queryKey, queryFn, { enabled = true } = {}) {
   const { data, isPending, error, refetch } = useQuery({
@@ -25,8 +25,8 @@ export function useModuleQuery(queryKey, queryFn, { enabled = true } = {}) {
 
   return {
     data: data ?? null,
-    // Une requete desactivee (identifiant absent) n'est pas « en chargement » : comportement
-    // identique aux hooks precedents, qui laissaient `loading` a false dans ce cas.
+    // A disabled request (missing identifier) is not "pending": same behaviour as
+    // the previous hooks, which left `loading` at false in that case.
     loading: enabled ? isPending : false,
     error: error ?? null,
     refetch,

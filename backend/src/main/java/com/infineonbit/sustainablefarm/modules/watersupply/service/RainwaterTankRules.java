@@ -3,37 +3,37 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 
 /**
- * Regles pures du reservoir de collecte de pluie (module 5.3 de la specification), sans effet
- * de bord : elles sont utilisables par le service d'alerte ({@link RainwaterTankMonitor}) comme
- * par la lecture du niveau ({@code GET /api/water/sources/{id}/level}).
+ * Pure rules of the rainwater harvesting reservoir (specification module 5.3), without side
+ * effects: usable by the alert service ({@link RainwaterTankMonitor}) as well as by the level
+ * reading ({@code GET /api/water/sources/{id}/level}).
  */
 public final class RainwaterTankRules {
 
-    /** Valeur de {@code water_sources.type} designant une source de collecte de pluie. */
+    /** Value of {@code water_sources.type} designating a rainwater harvesting source. */
     public static final String RAINWATER_SOURCE_TYPE = "rain";
 
-    /** Niveau a partir duquel un debordement est probable. */
+    /** Level from which an overflow is likely. */
     public static final double OVERFLOW_RISK_PERCENT = 95d;
 
-    /** Niveau a partir duquel l'eau de pluie doit etre utilisee en priorite. */
+    /** Level from which rainwater must be used first. */
     public static final double USE_RAINWATER_FIRST_PERCENT = 50d;
 
-    /** Niveau sous lequel un reservoir est considere comme critique (specification 2.2). */
+    /** Level below which a reservoir is considered critical (specification 2.2). */
     public static final double CRITICAL_LEVEL_PERCENT = 20d;
 
-    /** Niveau au dela duquel un reservoir est considere comme plein. */
+    /** Level above which a reservoir is considered full. */
     public static final double FULL_LEVEL_PERCENT = 90d;
 
     private RainwaterTankRules() {
     }
 
-    /** Vrai si la source est un reservoir alimente par la collecte de pluie. */
+    /** True when the source is a reservoir fed by rainwater harvesting. */
     public static boolean isRainwaterTank(WaterSource source) {
         return source != null && source.getType() != null
                 && RAINWATER_SOURCE_TYPE.equalsIgnoreCase(source.getType().trim());
     }
 
-    /** Niveau du reservoir en pourcentage de sa capacite, ou null si la capacite est inconnue. */
+    /** Tank level as a percentage of its capacity, or null when the capacity is unknown. */
     public static Double levelPercent(WaterSource source) {
         if (source == null || source.getCapacityLiters() == null || source.getCapacityLiters() <= 0
                 || source.getCurrentLevelLiters() == null) {
@@ -43,8 +43,8 @@ public final class RainwaterTankRules {
     }
 
     /**
-     * Qualification lisible d'un niveau : {@code unknown}, {@code critical}, {@code moderate},
-     * {@code comfortable} ou {@code full}.
+     * Human-readable qualification of a level: {@code unknown}, {@code critical}, {@code moderate},
+     * {@code comfortable} or {@code full}.
      */
     public static String classify(Double levelPercent) {
         if (levelPercent == null) {

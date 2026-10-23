@@ -2,12 +2,12 @@ import { dashboardApi, aiApi, weatherApi, healthApi, irrigationApi } from '../ap
 import { useModuleQuery } from './useModuleQuery'
 
 /**
- * Donnees du tableau de bord, servies par React Query via {@link useModuleQuery} : les onze
- * hooks ci-dessous ne portent plus chacun leur `useEffect` + `useState`, la logique de
- * chargement n'existe qu'a un seul endroit.
+ * Dashboard data, served by React Query through {@link useModuleQuery}: the eleven
+ * hooks below no longer each carry their own `useEffect` + `useState`, the loading
+ * logic exists in exactly one place.
  *
- * Le contrat rendu aux vues reste celui d'avant : `{ data, loading, error }` (et `refetch`
- * la ou une vue rafraichit apres une action).
+ * The contract returned to the views is unchanged: `{ data, loading, error }` (plus
+ * `refetch` where a view refreshes after an action).
  */
 
 export function useKpis() {
@@ -39,8 +39,8 @@ export function useDroughtPrediction() {
 }
 
 /**
- * Meteo courante. Les coordonnees sont optionnelles : sans elles, le backend applique celles
- * du site (voir app.weather.*), ce qui evite d'interroger un autre lieu par erreur.
+ * Current weather. Coordinates are optional: without them the backend applies the
+ * site ones (see app.weather.*), which avoids querying another location by mistake.
  */
 export function useWeather(latitude, longitude) {
   const { data, loading, error } = useModuleQuery(
@@ -51,15 +51,15 @@ export function useWeather(latitude, longitude) {
 }
 
 /**
- * Sante du backend. Le contrat reste `{ healthy, loading }` : un backend injoignable n'est pas
- * une erreur a afficher mais l'indicateur « Backend deconnecte » du dashboard.
+ * Backend health. The contract stays `{ healthy, loading }`: an unreachable backend
+ * is not an error to display but the dashboard's "Backend disconnected" indicator.
  */
 export function useHealthCheck() {
   const { data, loading, error } = useModuleQuery(['watersupply', 'health'], healthApi.check)
   return { healthy: !loading && !error && Boolean(data), loading }
 }
 
-/** Serie cumulee de l'economie d'eau (fenetre de 1 a 60 jours). */
+/** Cumulative water-savings series (1 to 60 day window). */
 export function useSavingsSeries(days = 30) {
   const { data, loading, error } = useModuleQuery(
     ['watersupply', 'savings-series', days],
@@ -68,7 +68,7 @@ export function useSavingsSeries(days = 30) {
   return { data, loading, error }
 }
 
-/** Bilan hydrique : entrees (pluie recuperee) contre sorties (eau consommee). */
+/** Water balance: inputs (harvested rain) against outputs (consumed water). */
 export function useWaterBalance(period = 'month') {
   const { data, loading, error } = useModuleQuery(
     ['watersupply', 'water-balance', period],
@@ -77,13 +77,13 @@ export function useWaterBalance(period = 'month') {
   return { data, loading, error }
 }
 
-/** Anomalies de debit (fuites probables), calculees cote backend. */
+/** Flow anomalies (probable leaks), computed backend side. */
 export function useLeaks() {
   const { data, loading, error } = useModuleQuery(['watersupply', 'leaks'], dashboardApi.getLeaks)
   return { data, loading, error }
 }
 
-/** Suggestions de report d'irrigation fondees sur la pluie prevue : le backend propose, l'utilisateur decide. */
+/** Irrigation postponement suggestions based on expected rain: the backend proposes, the user decides. */
 export function useIrrigationSuggestions() {
   const { data, loading, error } = useModuleQuery(
     ['watersupply', 'irrigation-suggestions'],

@@ -2,6 +2,9 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Tree age, growth phase and the phase's year band, computed from the planting date.
@@ -74,7 +77,42 @@ final class GrowthPhaseCalculator {
         }
     }
 
+    /**
+     * A growth phase as the agronomic reference lists it.
+     *
+     * @param code      the label in upper case, one underscore between words:
+     *                  {@code "GRADUAL_PRODUCTION"}
+     * @param label     the label that {@link #computePhase(Period)} returns:
+     *                  {@code "gradual production"}
+     * @param yearsBand its band of completed years: {@code "3–5 yrs"}
+     */
+    record GrowthPhase(String code, String label, String yearsBand) {
+    }
+
     private GrowthPhaseCalculator() {
+    }
+
+    /**
+     * Every growth phase, the youngest first.
+     *
+     * @return establishment, gradual production and full production
+     */
+    static List<GrowthPhase> phases() {
+        return Arrays.stream(Phase.values())
+                .map(phase -> new GrowthPhase(phase.label.toUpperCase(Locale.ROOT).replace(' ', '_'),
+                        phase.label, phase.yearsBand()))
+                .toList();
+    }
+
+    /**
+     * First completed year of the last growth phase, which is open-ended: from
+     * that age on, the phase of the trees never changes again.
+     *
+     * @return 6, the first year of full production
+     */
+    static int lastPhaseFirstCompletedYear() {
+        Phase[] phases = Phase.values();
+        return phases[phases.length - 1].firstCompletedYear();
     }
 
     /**

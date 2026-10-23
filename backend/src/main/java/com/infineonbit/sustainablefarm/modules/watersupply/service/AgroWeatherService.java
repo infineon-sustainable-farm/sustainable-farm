@@ -15,29 +15,30 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 /**
- * Données agro-météorologiques nécessaires au pilotage de l'économie d'eau : évapotranspiration
- * de référence (ET0) pour estimer le besoin des cultures, et pluie prévue (quantité + probabilité)
- * pour décider de reporter une irrigation.
+ * Agro-weather data needed to drive water savings: reference evapotranspiration
+ * (ET0) to estimate the crops' need, and forecast rain (amount + probability)
+ * to decide whether to postpone an irrigation.
  *
- * <p>Les jours passés sont demandés en plus des jours à venir ({@code past_days}) : c'est ce qui
- * permet de comparer la consommation réelle au besoin théorique sur la période écoulée.</p>
+ * <p>Past days are requested in addition to the upcoming ones ({@code past_days}): this is
+ * what allows comparing actual consumption with the theoretical need over the elapsed
+ * period.</p>
  *
- * <p>Les réponses sont mises en cache {@value #CACHE_DURATION_MINUTES} minutes afin qu'un affichage
- * de dashboard ne déclenche pas un appel externe par requête.</p>
+ * <p>Responses are cached for {@value #CACHE_DURATION_MINUTES} minutes so that rendering a
+ * dashboard does not trigger an external call per request.</p>
  */
 @Service
 public class AgroWeatherService {
 
-    /** Durée de validité du cache local des données agro-météo. */
+    /** Lifetime of the local agro-weather data cache. */
     public static final int CACHE_DURATION_MINUTES = 30;
 
-    /** Valeur d'ET0 utilisée quand la météo n'est pas joignable (climat tropical humide). */
+    /** ET0 value used when the weather service is unreachable (humid tropical climate). */
     public static final double FALLBACK_ET0_MM = 4.0;
 
-    /** Nombre de jours passés récupérés (comparaison réel / besoin théorique). */
+    /** Number of past days fetched (actual vs theoretical need comparison). */
     private static final int PAST_DAYS = 7;
 
-    /** Nombre de jours à venir récupérés (suggestions de report). */
+    /** Number of upcoming days fetched (postponement suggestions). */
     private static final int FORECAST_DAYS = 7;
 
     private static final String FORECAST_URI = "/v1/forecast?latitude={lat}&longitude={lon}"
@@ -60,11 +61,11 @@ public class AgroWeatherService {
         this.longitude = longitude;
     }
 
-    /** Une journée agro-météorologique. */
+    /** One agro-weather day. */
     public record DailyAgro(LocalDate date, Double et0Mm, Double rainMm, Double rainProbability) {
     }
 
-    /** Saison agro-météorologique complète (jours passés + jours à venir). */
+    /** Full agro-weather window (past days + upcoming days). */
     public List<DailyAgro> daily() {
         Instant now = Instant.now();
         List<DailyAgro> current = cache;
@@ -77,15 +78,15 @@ public class AgroWeatherService {
         return fresh;
     }
 
-    /** Données agro-météo d'une date précise (vide si hors de la fenêtre récupérée). */
+    /** Agro-weather data of a precise date (empty when outside the fetched window). */
     public Optional<DailyAgro> forDate(LocalDate date) {
         return daily().stream().filter(day -> date.equals(day.date())).findFirst();
     }
 
     /**
-     * ET0 moyenne des {@code days} derniers jours (aujourd'hui inclus).
-     * Retourne la moyenne des valeurs disponibles, ou une valeur par défaut si l'API est
-     * momentanément indisponible : l'estimation du besoin ne doit pas casser le dashboard.
+     * Average ET0 over the last {@code days} days (today included).
+     * Returns the average of the available values, or a default value when the API is
+     * temporarily unavailable: the need estimation must not break the dashboard.
      */
     public double averageEt0PastDays(int days) {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
@@ -93,7 +94,7 @@ public class AgroWeatherService {
         return et0Between(from, today);
     }
 
-    /** ET0 moyenne sur un intervalle de dates (valeur par défaut si aucune donnée disponible). */
+    /** Average ET0 over a date interval (default value when no data is available). */
     public double et0Between(LocalDate from, LocalDate to) {
         return daily().stream()
                 .filter(day -> !day.date().isBefore(from) && !day.date().isAfter(to))
@@ -104,7 +105,7 @@ public class AgroWeatherService {
                 .orElse(FALLBACK_ET0_MM);
     }
 
-    /** ET0 de chaque jour récupéré, dans l'ordre chronologique (série d'économie d'eau). */
+    /** ET0 of each fetched day, in chronological order (water savings series). */
     public List<Double> et0Series() {
         List<Double> series = new ArrayList<>();
         for (DailyAgro day : daily()) {
@@ -124,8 +125,8 @@ public class AgroWeatherService {
     }
 
     /**
-     * Lecture de la reponse Open-Meteo (separation entree/sortie : le reseau d'un cote, la
-     * lecture des champs de l'autre, ce qui rend la lecture testable sans appeler l'API).
+     * Open-Meteo response parsing (separation of concerns: the network on one side, the
+     * field reading on the other, which makes the parsing testable without calling the API).
      */
     List<DailyAgro> parse(Map<?, ?> data) {
         if (data == null || !(data.get("daily") instanceof Map<?, ?> daily)) {

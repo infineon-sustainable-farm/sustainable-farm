@@ -115,7 +115,7 @@ public class FarmService {
         }
         zone.setName(request.name() == null ? zone.getName() : request.name());
         zone.setAreaHectares(request.areaHectares() == null ? zone.getAreaHectares() : request.areaHectares());
-        // Un champ absent ne doit pas effacer la valeur existante (meme regle que les autres champs).
+        // An absent field must not erase the existing value (same rule as the other fields).
         zone.setIrrigationMethod(request.irrigationMethod() == null ? zone.getIrrigationMethod() : request.irrigationMethod());
         zone.setCropCoefficient(request.cropCoefficient() == null ? zone.getCropCoefficient() : request.cropCoefficient());
         zone.setEmitterCount(request.emitterCount() == null ? zone.getEmitterCount() : request.emitterCount());

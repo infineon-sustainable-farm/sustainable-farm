@@ -4,11 +4,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Active la planification Spring dans le module.
+ * Enables Spring scheduling in the module.
  *
- * <p>Un seul besoin aujourd'hui : la verification periodique de l'humidite du sol qui declenche
- * une irrigation quand la culture en a besoin (voir IrrigationAutoTriggerJob). Le drapeau
- * {@code app.irrigation.auto-trigger-enabled} permet de la desactiver sans redeployer de code.</p>
+ * <p>One need today: the periodic soil moisture check that triggers an irrigation when the
+ * crop needs it (see IrrigationAutoTriggerJob). The flag
+ * {@code app.irrigation.auto-trigger-enabled} allows disabling it without redeploying code.</p>
  */
 @Configuration
 @EnableScheduling

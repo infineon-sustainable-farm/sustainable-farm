@@ -1,41 +1,41 @@
-# Firmware ESP32 - Water Supply
+# ESP32 Firmware - Water Supply
 
-Les capteurs sont **cables sur les GPIO de l ESP32**. Deux options :
+The sensors are **wired onto the ESP32 GPIOs**. Two options:
 
-## Option recommandee : passerelle unique
-`esp32_gateway/esp32_gateway.ino` - une seule ESP32 par zone lit tous les capteurs
-(niveau, debit, pluie, sol, pH/turbidite/temperature) et envoie la telemetrie
-vers POST /api/iot/telemetry. La table de cablage est en tete du croquis :
+## Recommended option: single gateway
+`esp32_gateway/esp32_gateway.ino` - a single ESP32 per zone reads all the sensors
+(level, flow, rain, soil, pH/turbidity/temperature) and sends the telemetry
+to POST /api/iot/telemetry. The wiring table is at the top of the sketch:
 
-| Capteur | Modele | GPIO ESP32 |
+| Sensor | Model | ESP32 GPIO |
 |---|---|---|
-| Niveau reservoir (ultrason) | HC-SR04 | TRIG=5, ECHO=18 |
-| Debit (impulsions) | YF-S201 | 27 |
-| Pluviometre (auget) | RG-11 type | 26 |
-| Humidite du sol (capacitive) | v1.2 | 32 (ADC1) |
-| pH | sonde analogique | 34 (ADC1) |
-| Turbidite | TS-300B | 35 (ADC1) |
+| Tank level (ultrasonic) | HC-SR04 | TRIG=5, ECHO=18 |
+| Flow (pulses) | YF-S201 | 27 |
+| Rain gauge (tipping) | RG-11 type | 26 |
+| Soil moisture (capacitive) | v1.2 | 32 (ADC1) |
+| pH | analog probe | 34 (ADC1) |
+| Turbidity | TS-300B | 35 (ADC1) |
 | Temperature | DS18B20 (OneWire) | 4 |
-| Relais electrovanne (futur) | module relais | 25 |
+| Solenoid valve relay (future) | relay module | 25 |
 
-## Alternative : un ESP32 par capteur
-Les dossiers water_level, flow_meter, water_quality, rain_gauge, soil_moisture
-contiennent des croquis mono-capteur simples (noeuds independants).
+## Alternative: one ESP32 per sensor
+The folders water_level, flow_meter, water_quality, rain_gauge, soil_moisture
+contain simple single-sensor sketches (independent nodes).
 
-## Configuration (dans chaque croquis)
-- WIFI_SSID / WIFI_PASS : reseau du site
-- API_URL : http://<host-backend>:8080/api/iot/telemetry
-- DEVICE_ID : identifiant unique de l appareil
-- SOURCE_ID / ZONE_ID : ids visibles dans les ecrans Sources / Fermes & Champs
+## Configuration (in each sketch)
+- WIFI_SSID / WIFI_PASS: site network
+- API_URL: http://<backend-host>:8080/api/iot/telemetry
+- DEVICE_ID: unique id of the device
+- SOURCE_ID / ZONE_ID: ids visible in the Sources / Farms & Fields screens
 
-## Calibration (a faire sur site)
-- water_level : TANK_HEIGHT_CM / TANK_CAPACITY_L + offset ultrason
-- flow_meter : LITERS_PER_PULSE selon la fiche (7.5 impulsions/s = 1 L/min pour YF-S201)
-- water_quality : pH avec solutions tampon 4/7/10 ; NTU avec echantillons connus
-- rain_gauge : MM_PER_TIP selon le modele d auget
-- soil_moisture : SOIL_DRY / SOIL_WET (air / eau)
+## Calibration (to do on site)
+- water_level: TANK_HEIGHT_CM / TANK_CAPACITY_L + ultrasonic offset
+- flow_meter: LITERS_PER_PULSE according to the datasheet (7.5 pulses/s = 1 L/min for YF-S201)
+- water_quality: pH with 4/7/10 buffer solutions; NTU with known samples
+- rain_gauge: MM_PER_TIP according to the tipping bucket model
+- soil_moisture: SOIL_DRY / SOIL_WET (air / water)
 
 ## Notes SC-11 / SC-13
-En cas d echec HTTP (offline / coupure) : stocker les mesures en local
-(SPIFFS/Preferences) et les renvoyer au retour du reseau - a implementer
-dans postTelemetry (marque dans le croquis passerelle).
+On HTTP failure (offline / outage): store the measurements locally
+(SPIFFS/Preferences) and resend them when the network is back - to implement
+in postTelemetry (flagged in the gateway sketch).

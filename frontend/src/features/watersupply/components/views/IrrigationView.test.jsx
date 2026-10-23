@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// Environnement DOM et nettoyage entre tests declares dans le fichier : le module n'exige
-// aucune configuration Vitest partagee (voir SourcesView.test.jsx).
+// DOM environment and between-test cleanup declared in the file: the module requires
+// no shared Vitest configuration (see SourcesView.test.jsx).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { renderView as render } from './testRender'
@@ -59,8 +59,8 @@ describe('IrrigationView', () => {
     render(<IrrigationView {...props} />)
 
     await waitFor(() => expect(screen.getByText('Zone A')).toBeTruthy())
-    // Chaque requete du module arrive dans son propre rendu (React Query) : on attend celle du
-    // planning avant d'affirmer sur son contenu, au lieu d'un rendu synchrone fragile.
+    // Each module request arrives in its own render (React Query): we wait for the
+    // schedule request before asserting on its content, instead of a fragile synchronous render.
     await waitFor(() => expect(screen.getByText(/45 min/)).toBeTruthy())
 
     // Journal: the completed cycle is listed with its actual volume.

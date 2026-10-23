@@ -1,4 +1,4 @@
-/** Style réutilisable pour les champs de saisie du formulaire (design system ws-*). */
+/** Reusable style for the form input fields (ws-* design system). */
 export const inputStyle = {
   width: '100%',
   padding: '10px 12px',

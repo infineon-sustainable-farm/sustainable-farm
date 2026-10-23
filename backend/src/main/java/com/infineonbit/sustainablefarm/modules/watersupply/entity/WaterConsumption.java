@@ -29,9 +29,9 @@ public class WaterConsumption extends BaseEntity {
     private UUID irrigationId;
 
     /**
-     * Zone concernee par la mesure, quand le compteur de debit est installe sur une zone
-     * precise : c'est ce lien qui permet de comparer le volume reellement mesure au volume
-     * theorique du reseau goutte-a-goutte (detection de colmatage / fuite).
+     * Zone concerned by the measurement, when the flow meter is installed on a
+     * specific zone: this link allows comparing the actually measured volume to the theoretical
+     * volume of the drip network (clogging / leak detection).
      */
     private UUID zoneId;
 

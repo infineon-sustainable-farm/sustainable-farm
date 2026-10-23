@@ -4,9 +4,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Intervention de maintenance du goutte-a-goutte envoyee par un client (module 6.1).
+ * Drip maintenance intervention sent by a client (module 6.1).
  *
- * <p>Le client ne fournit ni identifiant ni date de creation : ils appartiennent au serveur.</p>
+ * <p>The client provides neither an id nor a creation date: they belong to the server.</p>
  */
 public record DripMaintenanceLogRequest(
         UUID zoneId,

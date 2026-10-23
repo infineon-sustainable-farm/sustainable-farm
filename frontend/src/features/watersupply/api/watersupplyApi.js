@@ -1,14 +1,14 @@
 import { apiClient } from '../../../shared/api/client.js'
 
 /**
- * API client pour le module watersupply - wrapper typé autour de apiClient.
- * Toutes les routes correspondent aux endpoints du backend Spring Boot.
+ * API client for the watersupply module - typed wrapper around apiClient.
+ * Every route matches a Spring Boot backend endpoint.
  */
 
 // --- Auth ---
-// Aucun client d'authentification dans ce module : le backend n'expose aucun endpoint /api/auth
-// (verifie cote serveur) et la connexion sera fournie par la plateforme globale. Un bloc authApi
-// existait ici et appelait des routes inexistantes, ce qui laissait croire que c'etait branche.
+// No authentication client in this module: the backend exposes no /api/auth endpoint
+// (checked server side) and login will be provided by the global platform. An authApi
+// block used to live here and called routes that did not exist, which made it look wired.
 
 // --- Farms ---
 export const farmApi = {
@@ -64,7 +64,7 @@ export const waterQuotaApi = {
   getQuota: (quotaId) => apiClient.get(`/api/water/quotas/${quotaId}`),
   updateQuota: (quotaId, payload) => apiClient.put(`/api/water/quotas/${quotaId}`, payload),
   deleteQuota: (quotaId) => apiClient.delete(`/api/water/quotas/${quotaId}`),
-  // Suivi du mois courant (ou d'un mois passe) : consommation cumulee + statut par quota.
+  // Current month tracking (or a past month): cumulative usage + status per quota.
   getUsage: (month) => apiClient.get(`/api/water/quotas/usage${month ? `?month=${month}` : ''}`),
 }
 
@@ -90,7 +90,7 @@ export const irrigationApi = {
   deleteLog: (logId) => apiClient.delete(`/api/irrigation-logs/${logId}`),
   startIrrigation: (scheduleId) => apiClient.post(`/api/irrigations/${scheduleId}/start`),
   stopIrrigation: (scheduleId) => apiClient.post(`/api/irrigations/${scheduleId}/stop`),
-  // Report pour cause de pluie : proposition fondee sur la meteo, la decision reste humaine.
+  // Postpone because of rain: suggestion based on the weather, the decision stays human.
   getSuggestions: () => apiClient.get('/api/irrigation/suggestions'),
   postpone: (scheduleId, reason) => apiClient.post(`/api/irrigations/${scheduleId}/postpone`, { reason }),
 }
@@ -129,11 +129,11 @@ export const dripMaintenanceApi = {
 export const dashboardApi = {
   getKpis: () => apiClient.get('/api/dashboard/kpis'),
   getWaterSavings: (period = 'month') => apiClient.get(`/api/dashboard/water-savings?period=${period}`),
-  // Economie d'eau vue dans le temps : besoin cumule des cultures vs consommation cumulee.
+  // Water savings over time: cumulative crop need vs cumulative consumption.
   getSavingsSeries: (days = 30) => apiClient.get(`/api/dashboard/savings-series?days=${days}`),
-  // Bilan hydrique : entrees (pluie recuperee) vs sorties (eau consommee) et niveau des reservoirs.
+  // Water balance: inputs (harvested rain) vs outputs (consumed water) and tank levels.
   getWaterBalance: (period = 'month') => apiClient.get(`/api/dashboard/water-balance?period=${period}`),
-  // Anomalies de debit = fuites probables (diagnostic deja calcule cote backend).
+  // Flow anomalies = probable leaks (diagnostic already computed backend side).
   getLeaks: () => apiClient.get('/api/dashboard/leaks'),
   getActivities: () => apiClient.get('/api/dashboard/activities'),
   getAlerts: () => apiClient.get('/api/dashboard/alerts'),
@@ -147,9 +147,9 @@ export const aiApi = {
 }
 
 // --- Weather ---
-// Les coordonnees par defaut viennent du backend (app.weather.latitude / app.weather.longitude,
-// site de Banfora) : le front n'en envoie que si un ecran en fournit explicitement. Un affichage
-// sans parametres ne peut donc plus interroger par erreur la meteo d'un autre lieu.
+// Default coordinates come from the backend (app.weather.latitude / app.weather.longitude,
+// Banfora site): the front only sends them when a screen provides them explicitly. A screen
+// without parameters can therefore no longer query another location's weather by mistake.
 function withCoordinates(path, latitude, longitude) {
   if (latitude == null || longitude == null) return path
   return `${path}?latitude=${latitude}&longitude=${longitude}`
@@ -169,13 +169,13 @@ export const reportApi = {
   getQualityReport: () => apiClient.get('/api/reports/quality'),
 }
 
-// --- Exports CSV (P10) ---
-// Telechargement direct de fichiers : passe par une URL native (fetch + blob) car l'apiClient
-// parse le JSON. Aucun en-tete d'authentification : le module n'en a pas (voir la section Auth).
+// --- CSV exports (P10) ---
+// Direct file download: goes through a native URL (fetch + blob) because apiClient
+// parses JSON. No authentication header: the module has none (see the Auth section).
 export async function downloadCsv(kind, period = 'month') {
   const response = await fetch(`/api/reports/${kind}/csv?period=${encodeURIComponent(period)}`)
   if (!response.ok) {
-    throw new Error(`Export impossible (HTTP ${response.status})`)
+    throw new Error(`Export failed (HTTP ${response.status})`)
   }
   const blob = await response.blob()
   const url = URL.createObjectURL(blob)

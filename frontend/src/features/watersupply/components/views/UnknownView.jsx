@@ -1,8 +1,8 @@
 import { EmptyState } from './EmptyState'
 
 /**
- * Route inconnue a l'interieur du module (/watersupply/xxx) : on informe au lieu de
- * rediriger silencieusement vers le dashboard, ce qui masquait les URL mal saisies.
+ * Unknown route inside the module (/watersupply/xxx): we tell the user instead of
+ * silently redirecting to the dashboard, which used to hide mistyped URLs.
  */
 export function UnknownView() {
   return (

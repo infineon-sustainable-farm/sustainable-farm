@@ -34,7 +34,7 @@ public class RainwaterHarvestService {
         return harvestRepository.findAll().stream().map(RainwaterHarvestResponse::from).toList();
     }
 
-    /** Liste paginee, avec filtre optionnel par source : meme contrat que les autres listes du module. */
+    /** Paginated list, with optional source filter: same contract as the other module lists. */
     public PageResponse<RainwaterHarvestResponse> findAll(Pageable pageable, UUID sourceId) {
         Page<RainwaterHarvest> page = sourceId == null
                 ? harvestRepository.findAll(pageable)
@@ -86,7 +86,7 @@ public class RainwaterHarvestService {
                 .orElseThrow(() -> new NotFoundException("RainwaterHarvest"));
     }
 
-    /** Volume recupere sur la periode demandee, calcule par la base (aucun parcours complet cote application). */
+    /** Volume harvested over the requested period, computed by the database (no full scan application-side). */
     public Map<String, Object> coverage(String period) {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         Instant start = periodStart(period, today).atStartOfDay(ZoneOffset.UTC).toInstant();

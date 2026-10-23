@@ -28,20 +28,20 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Routage des telemetries capteurs IoT vers les tables metiers du module.
- * Une mesure inconnue ou une valeur manquante n'interrompt jamais le lot :
- * chaque item repond individuellement (processed / rejected / not_routed_yet).
+ * Routing of IoT sensor telemetry to the module's business tables.
+ * An unknown measurement or a missing value never interrupts the batch:
+ * each item responds individually (processed / rejected / not_routed_yet).
  */
 @Service
 public class IotTelemetryService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IotTelemetryService.class);
 
-    /** Record d'entree : une mesure d'un appareil. */
+    /** Input record: a measurement from a device. */
     public record Telemetry(String deviceId, String type, UUID sourceId, UUID zoneId,
                             Map<String, Object> values, Instant timestamp) {}
 
-    /** Resultat individuel du routage. */
+    /** Individual result of the routing. */
     public record Result(String type, UUID sourceId, String status, String message) {}
 
     private final WaterSourceRepository waterSourceRepository;
@@ -95,7 +95,7 @@ public class IotTelemetryService {
         return new Telemetry(deviceId, type, sourceId, zoneId, values, timestamp);
     }
 
-    /** Telemetry synthetique pour signaler une erreur de parsing sans faire echouer le lot. */
+    /** Synthetic telemetry to report a parsing error without failing the batch. */
     public Telemetry errorTelemetry(Exception e) {
         Map<String, Object> values = new java.util.LinkedHashMap<>();
         values.put("error", e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -103,9 +103,9 @@ public class IotTelemetryService {
     }
 
     /**
-     * Ingestion d'un lot. Chaque mesure est traitee dans SA PROPRE transaction : une mesure
-     * invalide ne peut donc plus marquer la transaction du lot en rollback-only, ce qui
-     * provoquait un 500 (UnexpectedRollbackException) au commit au lieu d'un simple rejet.
+     * Batch ingestion. Each measurement is processed in ITS OWN transaction: an invalid
+     * measurement therefore can no longer mark the batch transaction rollback-only, which
+     * caused a 500 (UnexpectedRollbackException) at commit instead of a simple rejection.
      */
     public List<Result> ingest(List<Telemetry> batch) {
         List<Result> results = new ArrayList<>();
@@ -116,18 +116,18 @@ public class IotTelemetryService {
     }
 
     private Result ingestOne(Telemetry t) {
-        // Une mesure illisible (JSON invalide) porte le motif du parseur : on le remonte tel quel.
+        // An unreadable measurement (invalid JSON) carries the parser's reason: we pass it on as-is.
         Object parseError = t.values() == null ? null : t.values().get("error");
         if (parseError != null) {
             return rejected(t, String.valueOf(parseError));
         }
-        // Sans identifiant de capteur, aucune ecriture n'a de sens : on rejette avant toute requete.
+        // Without a sensor id, no write makes sense: rejected before any query.
         if (t.deviceId() == null || t.deviceId().isBlank()) {
             return rejected(t, "Missing 'device_id' field");
         }
         try {
             return itemTransaction.execute(status -> {
-                // Enregistrement du capteur (P7) : last_seen mis à jour à chaque ingestion
+                // Sensor registry (P7): last_seen updated at each ingestion
                 iotDeviceService.recordTelemetry(t.deviceId(), t.type(), t.timestamp(),
                         batteryFromValues(t.values()), rssiFromValues(t.values()));
                 return route(t);
@@ -138,8 +138,8 @@ public class IotTelemetryService {
     }
 
     private Result rejected(Telemetry t, String message) {
-        // Une mesure rejetee est journalisee : c'est le seul endroit ou une passerelle mal
-        // configuree (identifiant absent, valeur hors plage) devient visible en exploitation.
+        // A rejected measurement is logged: this is the only place where a badly
+        // configured gateway (missing id, out-of-range value) becomes visible in operations.
         LOGGER.warn("Telemetry rejected [{}] device={} source={} zone={}: {}",
                 t.type(), t.deviceId(), t.sourceId(), t.zoneId(), message);
         return new Result(t.type() == null ? "?" : t.type(), t.sourceId(), "rejected", message);
@@ -199,8 +199,8 @@ public class IotTelemetryService {
         }
         source.setCurrentLevelLiters(liters);
         waterSourceRepository.save(source);
-        // Regles du reservoir de pluie (module 5.3) : elles ne concernent que les sources de pluie
-        // et ne doivent jamais faire echouer l'ingestion d'une mesure valide.
+        // Rainwater tank rules (module 5.3): they only concern rain sources
+        // and must never fail the ingestion of a valid measurement.
         String alerts = "";
         try {
             List<String> raised = rainwaterTankMonitor.evaluate(source);
@@ -222,11 +222,11 @@ public class IotTelemetryService {
         java.time.Instant measuredAt = t.timestamp() == null ? Instant.now() : t.timestamp();
         waterService.createConsumption(new WaterConsumptionCreateRequest(
                 source.getFarmId(), source.getId(), liters, measuredAt, null, t.zoneId()));
-        // Alerte quota (80 % / 100 %) : l'ingestion capteur est le chemin principal des mesures.
+        // Quota alert (80 % / 100 %): sensor ingestion is the main path of measurements.
         try {
             waterQuotaService.checkThresholds(source.getFarmId(), t.zoneId(), measuredAt);
         } catch (RuntimeException ignored) {
-            // La mesure est enregistree meme si l'evaluation de quota echoue.
+            // The measurement is recorded even if the quota evaluation fails.
         }
         return new Result("flow", t.sourceId(), "processed", "Consumption recorded: " + liters + " L");
     }

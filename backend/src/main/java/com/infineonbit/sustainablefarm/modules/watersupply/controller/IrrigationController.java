@@ -74,13 +74,13 @@ public class IrrigationController {
     }
 
     /**
-     * Suggestions de report : liste les irrigations planifiees qui peuvent etre evitees
-     * parce que la pluie prevue couvrira le besoin (premier levier d'economie d'eau).
+     * Postpone suggestions: lists the planned irrigations that can be avoided
+     * because the forecast rain will cover the need (the first water-saving lever).
      */
     /**
-     * Applique tout de suite la regle d'humidite du sol (module 1.4) et renvoie le rapport :
-     * plannings crees par zone et zones ecartees avec leur motif. La meme methode est appelee
-     * periodiquement par la tache planifiee du module.
+     * Applies the soil moisture rule right away (module 1.4) and returns the report:
+     * schedules created per zone and excluded zones with their reason. The same method is called
+     * periodically by the module's scheduled job.
      */
     @Operation(summary = "Apply the soil-moisture rule now (the scheduled job calls the same code)")
     @PostMapping("/irrigations/auto-trigger")
@@ -94,7 +94,7 @@ public class IrrigationController {
     }
 
     /**
-     * Reporte une irrigation planifiee suite a une suggestion (la decision reste humaine).
+     * Postpones a planned irrigation following a suggestion (the decision stays human).
      */
     @PostMapping("/irrigations/{scheduleId}/postpone")
     public IrrigationScheduleResponse postpone(
@@ -113,8 +113,8 @@ public class IrrigationController {
     }
 
     /**
-     * Création d'un log d'irrigation dédié (Tâche 4.3). Permet de saisir un log
-     * manuellement sans passer par start/stop implicites.
+     * Dedicated irrigation log creation (Task 4.3). Allows entering a log
+     * manually without going through implicit start/stop.
      */
     @PostMapping("/irrigation-logs")
     @ResponseStatus(HttpStatus.CREATED)

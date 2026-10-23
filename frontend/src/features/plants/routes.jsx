@@ -1,6 +1,10 @@
 import PlantsLayout from "./components/PlantsLayout";
 import VarietiesPage from "./components/VarietiesPage";
 import GrowthCalendarPage from "./components/GrowthCalendarPage";
+import HarvestMaturityPage from "./components/HarvestMaturityPage";
+import FertilizerInventoryPage from "./components/FertilizerInventoryPage";
+import DiseasesAlertsPage from "./components/DiseasesAlertsPage";
+import NurseryPage from "./components/NurseryPage";
 
 export default [
   {
@@ -9,6 +13,10 @@ export default [
     children: [
       { index: true, element: <VarietiesPage /> },
       { path: "growth-calendar", element: <GrowthCalendarPage /> },
+      { path: "fertilizer-inventory", element: <FertilizerInventoryPage /> },
+      { path: "diseases-alerts", element: <DiseasesAlertsPage /> },
+      { path: "harvest-maturity", element: <HarvestMaturityPage /> },
+      { path: "nursery", element: <NurseryPage /> },
     ],
   },
 ];

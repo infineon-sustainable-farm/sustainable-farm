@@ -9,22 +9,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Cree le compte technique IoT au demarrage de l'application.
+ * Creates the technical IoT account at application startup.
  *
- * <p>Pourquoi ce bean existe : {@code irrigation_schedules.created_by} est obligatoire et
- * {@code notifications.user_id} pointe vers {@code users(id)}. Le module watersupply n'a
- * aucun endpoint d'authentification - elle est deleguee au logiciel global - donc ce compte
- * n'a aucun identifiant de connexion et ne peut pas etre utilise pour se connecter.
+ * <p>Why this bean exists: {@code irrigation_schedules.created_by} is mandatory and
+ * {@code notifications.user_id} points to {@code users(id)}. The watersupply module has
+ * no authentication endpoint - it is delegated to the global software - so this account
+ * has no login credentials and cannot be used to log in.
  *
- * <p>Ce n'est pas une donnee de demonstration : la ligne est requise en production, d'ou le
- * profil {@code !test} (et non {@code dev}). Les migrations Flyway ne portent que le schema
- * (PR-33) : les deux contraintes V2 vers {@code users} sont ajoutees {@code NOT VALID}
- * precisement parce que cette ligne n'existe pas encore au moment ou Flyway s'execute.
+ * <p>This is not demo data: the row is required in production, hence the
+ * {@code !test} profile (not {@code dev}). The Flyway migrations only carry the schema
+ * (PR-33): the two V2 constraints toward {@code users} are added {@code NOT VALID}
+ * precisely because this row does not exist yet when Flyway runs.
  *
- * <p>Sous le profil {@code test}, c'est {@code TestSystemUserSeeder} qui fournit la meme
- * ligne : les tests desactivent Flyway et travaillent sur H2.
+ * <p>Under the {@code test} profile, it is {@code TestSystemUserSeeder} that provides the
+ * same row: the tests disable Flyway and work on H2.
  *
- * <p>Execution idempotente : la ligne est creee une seule fois.
+ * <p>Idempotent execution: the row is created only once.
  */
 @Component
 @Profile("!test")

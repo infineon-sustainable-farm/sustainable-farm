@@ -16,23 +16,23 @@ public interface WaterConsumptionRepository extends JpaRepository<WaterConsumpti
     @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w where w.consumptionDate >= :start")
     double sumConsumptionSince(Instant start);
 
-    /** Consommation cumulée sur un intervalle semi-ouvert [start, end[ (séries jour par jour). */
+    /** Cumulated consumption over a semi-open interval [start, end[ (day-by-day series). */
     @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w "
             + "where w.consumptionDate >= :start and w.consumptionDate < :end")
     double sumConsumptionBetween(Instant start, Instant end);
 
     /**
-     * Consommation cumulée d'une ferme sur un intervalle semi-ouvert [start, end[ :
-     * support du suivi des quotas mensuels par ferme (P8).
+     * Cumulated consumption of a farm over a semi-open interval [start, end[:
+     * supports the monthly per-farm quota tracking (P8).
      */
     @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w "
             + "where w.consumptionDate >= :start and w.consumptionDate < :end and w.farmId = :farmId")
     double sumConsumptionByFarmIdBetween(Instant start, Instant end, UUID farmId);
 
     /**
-     * Volume mesure sur une zone pendant un intervalle semi-ouvert [start, end[ : c'est le
-     * « debit reel » de la detection de colmatage (voir DripFlowCheckService), compare au
-     * volume theorique du reseau goutte-a-goutte sur la meme duree d'arrosage.
+     * Volume measured on a zone over a semi-open interval [start, end[: this is the
+     * "actual flow" of the clogging detection (see DripFlowCheckService), compared to the
+     * theoretical volume of the drip network over the same watering duration.
      */
     @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w "
             + "where w.zoneId = :zoneId and w.consumptionDate >= :start and w.consumptionDate < :end")

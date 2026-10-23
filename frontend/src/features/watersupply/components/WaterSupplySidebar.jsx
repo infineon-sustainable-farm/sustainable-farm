@@ -14,10 +14,10 @@ import { NavLink } from 'react-router-dom'
 import { viewUrl } from '../paths'
 
 /**
- * Menu du module, dans l'ordre des sections de l'interface.
- * Les icones viennent de lucide-react (deja utilise par les modules machinery et plants)
- * au lieu des SVG inline, et les entrees sont de vrais liens : l'etat actif est fourni par
- * le routeur, les URL sont partageables et la navigation est accessible au clavier.
+ * Module menu, in the order of the interface sections.
+ * The icons come from lucide-react (already used by the machinery and plants modules)
+ * instead of inline SVGs, and the entries are real links: the active state is provided by
+ * the router, URLs are shareable and navigation is keyboard accessible.
  */
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', section: null, icon: LayoutDashboard },
@@ -32,7 +32,7 @@ const NAV_ITEMS = [
   { id: 'notifications', label: 'Notifications', section: 'Operations', icon: ClipboardList },
 ]
 
-/** Classe du lien : la classe `active` attendue par watersupply.css est posee explicitement. */
+/** Link class: the `active` class expected by watersupply.css is applied explicitly. */
 const linkClassName = ({ isActive }) => (isActive ? 'ws-nav-item active' : 'ws-nav-item')
 
 export default function WaterSupplySidebar() {

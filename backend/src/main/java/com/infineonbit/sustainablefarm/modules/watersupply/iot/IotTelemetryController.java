@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Point d entree des capteurs IoT - integration systeme reel. Voir IotTelemetryService pour le routage. */
+/** Entry point for IoT sensors - real system integration. See IotTelemetryService for the routing. */
 @RestController
 @RequestMapping("/api/iot")
 public class IotTelemetryController {
@@ -20,7 +20,7 @@ public class IotTelemetryController {
         this.telemetryService = telemetryService;
     }
 
-    /** Accepte un objet unique ou un lot de mesures. Reponse 202 avec le statut de chaque mesure. */
+    /** Accepts a single object or a batch of measurements. Response 202 with the status of each measurement. */
     @PostMapping("/telemetry")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public List<IotTelemetryService.Result> ingest(@RequestBody Object body) {
@@ -35,7 +35,7 @@ public class IotTelemetryController {
         return telemetryService.ingest(batch);
     }
 
-    /** Une mesure illisible ne fait jamais echouer le lot : elle est rejetee avec le motif. */
+    /** An unreadable measurement never fails the batch: it is rejected with the reason. */
     private IotTelemetryService.Telemetry parseSafe(Object item) {
         try {
             return telemetryService.parse(item);

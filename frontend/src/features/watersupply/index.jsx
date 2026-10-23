@@ -1,7 +1,7 @@
 /**
- * Point d'entree du module watersupply.
- * Ce fichier reste limite aux composants pour conserver Fast Refresh : les chemins du module
- * sont exportes par ./paths et s'importent directement depuis la.
+ * Entry point of the watersupply module.
+ * This file stays limited to components to preserve Fast Refresh: the module paths are
+ * exported by ./paths and imported straight from there.
  */
 export { default as WaterSupplyLayout } from './components/WaterSupplyLayout'
 export { default as WaterSupplySidebar } from './components/WaterSupplySidebar'

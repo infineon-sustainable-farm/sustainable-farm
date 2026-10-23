@@ -21,8 +21,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 /**
- * Donnees agro-meteo : lecture de la reponse Open-Meteo, moyenne ET0 avec valeur de repli,
- * serie d'ET0 et remontee d'erreur quand l'API exterieure est indisponible.
+ * Agro-weather data: reading the Open-Meteo response, ET0 average with fallback value,
+ * ET0 series and error propagation when the external API is unavailable.
  */
 class AgroWeatherServiceTest {
 
@@ -50,7 +50,7 @@ class AgroWeatherServiceTest {
         assertThrows(ExternalServiceException.class, () -> service().parse(Map.of()));
         assertThrows(ExternalServiceException.class, () -> service().parse(null));
 
-        // Une journee sans valeur reste lisible : le champ absent devient null, pas une erreur.
+        // A day without a value stays readable: the missing field becomes null, not an error.
         Map<String, Object> shortDaily = new LinkedHashMap<>();
         shortDaily.put("time", List.of("2026-09-01", "2026-09-02"));
         shortDaily.put("et0_fao_evapotranspiration", List.of(4.5));
@@ -105,7 +105,7 @@ class AgroWeatherServiceTest {
         assertThrows(ExternalServiceException.class, service::daily);
     }
 
-    /** Service dont la serie quotidienne est fournie : la lecture reseau n'est pas testee ici. */
+    /** Service with a provided daily series: network reading is not tested here. */
     private AgroWeatherService withSeries(AgroWeatherService.DailyAgro... days) {
         AgroWeatherService service = spy(service());
         doReturn(new ArrayList<>(List.of(days))).when(service).daily();

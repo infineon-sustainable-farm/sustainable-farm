@@ -12,19 +12,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Emission des alertes automatiques du module (qualite hors seuil, fuite probable,
- * irrigation reportee pour cause de pluie, maintenance a planifier).
+ * Emitting the module's automatic alerts (out-of-range quality, probable leak,
+ * irrigation postponed because of rain, maintenance to schedule).
  *
- * <p>Ces alertes ne proviennent d'aucun utilisateur connecte : elles sont rattachees au compte
- * technique {@link SystemUsers#IOT_SYSTEM_USER_ID}, puisqu'elles doivent etre visibles dans le
- * centre de notifications en attendant que la plateforme globale les reassigne.</p>
+ * <p>These alerts do not come from any logged-in user: they are attached to the technical
+ * account {@link SystemUsers#IOT_SYSTEM_USER_ID}, since they must be visible in the
+ * notification center until the global platform reassigns them.</p>
  */
 @Service
 public class AlertService {
 
     private static final Logger log = LoggerFactory.getLogger(AlertService.class);
 
-    /** Fenetre anti-doublon : une meme alerte n'est pas repetee deux fois dans cet intervalle. */
+    /** Anti-duplicate window: the same alert is not repeated twice within this interval. */
     private static final Duration DEDUPLICATION_WINDOW = Duration.ofHours(12);
 
     private final NotificationRepository notificationRepository;
@@ -34,12 +34,12 @@ public class AlertService {
     }
 
     /**
-     * Cree une alerte (notification) destinee au compte technique du module.
+     * Creates an alert (notification) aimed at the module's technical account.
      *
-     * @param type     niveau/type d'alerte : info, warning, critical
-     * @param title    titre court
-     * @param message  message detaille affiche dans le centre de notifications
-     * @param actionUrl route de l'application a ouvrir pour traiter l'alerte (nullable)
+     * @param type     alert level/type: info, warning, critical
+     * @param title    short title
+     * @param message  detailed message displayed in the notification center
+     * @param actionUrl application route to open to handle the alert (nullable)
      */
     @Transactional
     public Notification raise(String type, String title, String message, String actionUrl) {
@@ -51,23 +51,23 @@ public class AlertService {
         notification.setRead(false);
         notification.setActionUrl(actionUrl);
         Notification saved = notificationRepository.save(notification);
-        // Trace d'exploitation : sans elle, une alerte automatique ne laissait aucune trace
-        // dans les journaux alors que c'est souvent la seule manifestation visible d'un incident.
+        // Operational trace: without it, an automatic alert left no trace
+        // in the logs, while it is often the only visible sign of an incident.
         log.info("Alert raised [{}] {} (action: {})", type, title, actionUrl);
         return saved;
     }
 
     /**
-     * Variante anti-doublon utilisee pour les mesures repetitives des capteurs (une consommation
-     * anormale toutes les minutes ne doit pas generer une alerte par mesure).
+     * Anti-duplicate variant used for repetitive sensor measurements (an abnormal
+     * consumption every minute must not generate an alert per measurement).
      *
-     * @return l'alerte creee, ou un {@link Optional#empty()} si une alerte active identique existe deja
+     * @return the created alert, or an {@link Optional#empty()} when an identical active alert already exists
      */
     @Transactional
     public Optional<Notification> raiseOnce(String type, String title, String message, String actionUrl) {
         Instant threshold = Instant.now().minus(DEDUPLICATION_WINDOW);
-        // Verification en base (titre + alerte encore ouverte + fenetre recente) : plus de parcours
-        // complet de la table a chaque mesure de capteur, et le classement reste deterministe.
+        // Check in the database (title + alert still open + recent window): no more full
+        // table scan at every sensor measurement, and the ranking stays deterministic.
         boolean alreadyRaised = notificationRepository
                 .existsByTitleAndReadIsFalseAndCreatedAtAfter(title, threshold);
         if (alreadyRaised) {
