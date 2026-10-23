@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /** Feeds the "Alerts & Notifications" tab of the Energy App. */
-@RestController
+@RestController("energyAlertController")
 @RequestMapping("/api/energy/alerts")
 public class AlertController {
 
