@@ -13,8 +13,9 @@ import com.infineonbit.sustainablefarm.modules.energysupply.repository.Consumpti
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.GeneratorEventRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
+import org.springframework.context.annotation.Profile;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -29,6 +30,7 @@ import java.time.LocalDate;
  * Runs only if the energy_component table is empty, so it is safe to
  * restart the app without duplicating rows.
  */
+@Profile("dev")
 @Component
 public class EnergySupplyDataSeeder implements CommandLineRunner {
 

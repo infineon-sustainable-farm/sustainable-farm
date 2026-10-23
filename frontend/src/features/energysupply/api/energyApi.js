@@ -1,72 +1,39 @@
-const BASE_URL = "http://localhost:8080/api/energy";
+import { apiClient } from "../../../shared/api/client";
 
-async function getJson(url, options) {
-  const res = await fetch(url, options);
-  if (!res.ok) {
-    throw new Error(`Request failed: ${res.status} ${res.statusText}`);
-  }
-  return res.json();
-}
+const BASE = "/api/energy";
 
 // Dashboard
-export function getDashboardSummary() {
-  return getJson(`${BASE_URL}/dashboard/summary`);
-}
+export const getDashboardSummary = () => apiClient.get(`${BASE}/dashboard/summary`);
 
 // Components (used for the "System Status Overview" table)
-export function getComponents() {
-  return getJson(`${BASE_URL}/components`);
-}
+export const getComponents = () => apiClient.get(`${BASE}/components`);
 
 // Solar & Generation
-export function getSolarLast7Days() {
-  return getJson(`${BASE_URL}/solar/last-7-days`);
-}
-export function getAllSolarLogs() {
-  return getJson(`${BASE_URL}/solar`);
-}
+export const getSolarLast7Days = () => apiClient.get(`${BASE}/solar/last-7-days`);
+export const getAllSolarLogs = () => apiClient.get(`${BASE}/solar`);
 
 // Consumption
-export function getConsumptionToday() {
-  return getJson(`${BASE_URL}/consumption/today`);
-}
-export function getAllConsumption() {
-  return getJson(`${BASE_URL}/consumption`);
-}
-export function getConsumptionByCategory(category) {
-  return getJson(`${BASE_URL}/consumption/breakdown/${category}`);
-}
+export const getConsumptionToday = () => apiClient.get(`${BASE}/consumption/today`);
+export const getAllConsumption = () => apiClient.get(`${BASE}/consumption`);
+export const getConsumptionByCategory = (category) =>
+  apiClient.get(`${BASE}/consumption/breakdown/${category}`);
 
 // Generator
-export function getGeneratorEvents() {
-  return getJson(`${BASE_URL}/generator/events`);
-}
-export function createGeneratorEvent(event) {
-  return getJson(`${BASE_URL}/generator/events`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(event),
-  });
-}
+export const getGeneratorEvents = () => apiClient.get(`${BASE}/generator/events`);
+export const createGeneratorEvent = (event) =>
+  apiClient.post(`${BASE}/generator/events`, event);
 
 // Carbon
-export function getCarbonMetrics() {
-  return getJson(`${BASE_URL}/carbon`);
-}
+export const getCarbonMetrics = () => apiClient.get(`${BASE}/carbon`);
 
 // Alerts
-export function getAllAlerts() {
-  return getJson(`${BASE_URL}/alerts`);
-}
-export function getOpenAlerts() {
-  return getJson(`${BASE_URL}/alerts/open`);
-}
+export const getAllAlerts = () => apiClient.get(`${BASE}/alerts`);
+export const getOpenAlerts = () => apiClient.get(`${BASE}/alerts/open`);
 
 // What-If simulation
-export function simulateWhatIf({ additionalPanels, additionalBatteryKwh, productionScaleKgPerDay }) {
-  return getJson(`${BASE_URL}/whatif/simulate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ additionalPanels, additionalBatteryKwh, productionScaleKgPerDay }),
+export const simulateWhatIf = ({ additionalPanels, additionalBatteryKwh, productionScaleKgPerDay }) =>
+  apiClient.post(`${BASE}/whatif/simulate`, {
+    additionalPanels,
+    additionalBatteryKwh,
+    productionScaleKgPerDay,
   });
-}

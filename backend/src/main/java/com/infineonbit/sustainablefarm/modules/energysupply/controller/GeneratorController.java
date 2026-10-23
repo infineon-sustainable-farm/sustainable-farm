@@ -1,19 +1,19 @@
-package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 
+
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.GeneratorEventRequest;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.GeneratorEvent;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.GeneratorEventService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
 /** Feeds the "Generator Backup Management" tab of the Energy App. */
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 @RestController
 @RequestMapping("/api/energy/generator")
 public class GeneratorController {
@@ -31,7 +31,13 @@ public class GeneratorController {
     }
 
     @PostMapping("/events")
-    public GeneratorEvent createEvent(@RequestBody GeneratorEvent event) {
+    public GeneratorEvent createEvent(@Valid @RequestBody GeneratorEventRequest request) {
+        GeneratorEvent event = new GeneratorEvent();
+        event.setDate(request.date());
+        event.setDurationHours(request.durationHours());
+        event.setFuelLiters(request.fuelLiters());
+        event.setCostEur(request.costEur());
+        event.setTriggerReason(request.triggerReason());
         return service.save(event);
     }
 }
