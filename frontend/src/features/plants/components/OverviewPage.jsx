@@ -3,13 +3,17 @@ import { usePlantsOverview } from "../hooks/usePlantsOverview";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { formatDate } from "../utils/format";
 import BlockFilter from "./BlockFilter";
+import BlockYieldChart from "./BlockYieldChart";
+import MaturityStatusDonut from "./MaturityStatusDonut";
 import OverviewAlertsSection from "./OverviewAlertsSection";
 import OverviewKpiCards from "./OverviewKpiCards";
 
 /**
  * Overview, the home of the module: the figures of the day for the selected
- * block, then every alert of the day, the most urgent first. Every figure
- * comes from the API; nothing is counted or summed here.
+ * block, then every alert of the day, the most urgent first, then the
+ * mock-up's charts. Every figure comes from the API; nothing is counted or
+ * summed here, and the charts only lay the figures out. The block filter
+ * drives the figures, the alerts, the yield and the maturity status.
  *
  * The mock-up's title names the farm, its variety and its area, which would
  * hard-code farm data into the interface: the page says "Overview", as its
@@ -46,6 +50,11 @@ export default function OverviewPage() {
                 <OverviewKpiCards query={overviewQuery} />
 
                 <OverviewAlertsSection blockCode={selectedBlock || null} />
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <BlockYieldChart blockCode={selectedBlock || null} />
+                    <MaturityStatusDonut query={overviewQuery} />
+                </div>
             </div>
         </div>
     );
