@@ -127,6 +127,17 @@ export function fetchHarvestStatus({ blockCode, farmId, withinDays } = {}) {
 }
 
 /**
+ * Records a maturity observation made in the field: date, block, variety,
+ * status and method, with the measured value and the observer when given.
+ *
+ * The API answers 400 with fieldErrors for an invalid value, and 422 when the
+ * variety has no planting on that block or the observation predates it.
+ */
+export function createMaturityObservation(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.MATURITY_OBSERVATIONS, body);
+}
+
+/**
  * Fetches the fertilizer catalogue, ordered by name by the API.
  *
  * Each fertilizer comes with its current stock and whether it is at or below
