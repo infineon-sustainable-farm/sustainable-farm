@@ -6,11 +6,15 @@ import java.util.UUID;
 
 public record IrrigationScheduleResponse(UUID id, UUID zoneId, Instant startTime, Integer durationMinutes,
                                          Double waterQuantityLiters, String status, UUID createdBy, Instant createdAt,
-                                         String postponeReason) {
+                                         String postponeReason, String blockCode, Boolean multipleBlockCodes) {
     public static IrrigationScheduleResponse from(IrrigationSchedule schedule) {
+        return from(schedule, null, false);
+    }
+
+    public static IrrigationScheduleResponse from(IrrigationSchedule schedule, String blockCode, boolean multipleBlockCodes) {
         return new IrrigationScheduleResponse(
             schedule.getId(), schedule.getZoneId(), schedule.getStartTime(),
             schedule.getDurationMinutes(), schedule.getWaterQuantityLiters(), schedule.getStatus(),
-            schedule.getCreatedBy(), schedule.getCreatedAt(), schedule.getPostponeReason());
+            schedule.getCreatedBy(), schedule.getCreatedAt(), schedule.getPostponeReason(), blockCode, multipleBlockCodes);
     }
 }

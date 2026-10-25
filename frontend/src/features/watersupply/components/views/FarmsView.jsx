@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { LocateFixed, Plus, Pencil, Trash2 } from 'lucide-react'
 import { farmApi, fieldApi, zoneApi } from '../../api/watersupplyApi'
+import { coordinatesError, mapUrl, useGeolocation } from '../../hooks/useGeolocation'
 import { DataTable } from '../../../../shared/components/DataTable'
 import { SearchInput } from '../../../../shared/components/SearchInput'
 import { FormField } from '../../../../shared/components/FormField'
@@ -55,9 +56,35 @@ const btnDanger = {
   background: 'var(--ws-red-tint, #fbeaea)',
 }
 
+/** Field coordinates are stored as text by the API: "lat, lng". */
+function formatFieldCoordinates(latitude, longitude) {
+  return `${latitude}, ${longitude}`
+}
+
+function parseFieldCoordinates(text) {
+  const match = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(text || '')
+  return match ? { latitude: match[1], longitude: match[2] } : null
+}
+
+/** Position cell of the tables: coordinates with a link to check them on a map. */
+function LocationCell({ latitude, longitude }) {
+  if (latitude == null || longitude == null || latitude === '' || longitude === '') return '—'
+  return (
+    <a href={mapUrl(latitude, longitude)} target="_blank" rel="noopener noreferrer" title="Open on OpenStreetMap">
+      {Number(latitude).toFixed(4)}, {Number(longitude).toFixed(4)}
+    </a>
+  )
+}
+
+const EMPTY_FARM_FORM = { name: '', address: '', areaHectares: '', description: '', latitude: '', longitude: '' }
+
 /**
  * CRUD view for Farms / Fields / Zones (Task 4.1).
  * Uses the reusable design-system components.
+ *
+ * Location: when a farm or a field is created, its position is taken from the device's
+ * geolocation (the person is expected to be on site) and can be corrected by hand. TO BE
+ * REVIEWED: first version, see useGeolocation.
  */
 export function FarmsView({ notify }) {
   const [farms, setFarms] = useState([])
@@ -69,12 +96,14 @@ export function FarmsView({ notify }) {
 
   const [showFarmForm, setShowFarmForm] = useState(false)
   const [editingFarm, setEditingFarm] = useState(null)
-  const [farmForm, setFarmForm] = useState({ name: '', address: '', areaHectares: '', description: '' })
+  const [farmForm, setFarmForm] = useState(EMPTY_FARM_FORM)
+  const [formError, setFormError] = useState(null)
+  const geo = useGeolocation()
   const [deleteTarget, setDeleteTarget] = useState(null) // {kind, id, title}
   const [busy, setBusy] = useState(false)
 
   const [showFieldForm, setShowFieldForm] = useState(false)
-  const [fieldForm, setFieldForm] = useState({ farmId: '', name: '', areaHectares: '', cropType: '', soilType: '' })
+  const [fieldForm, setFieldForm] = useState({ farmId: '', name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '' })
   const [showZoneForm, setShowZoneForm] = useState(false)
   const [zoneForm, setZoneForm] = useState({ fieldId: '', name: '', areaHectares: '', irrigationMethod: '' })
   const [query, setQuery] = useState('')
@@ -101,6 +130,7 @@ const farmColumns = [
     { key: 'address', label: 'Address' },
     { key: 'areaHectares', label: 'Area (ha)', sortable: true, render: (r) => `${r.areaHectares ?? 0} ha` },
     { key: 'description', label: 'Description', render: (r) => r.description || '—' },
+    { key: 'latitude', label: 'Location', render: (r) => <LocationCell latitude={r.latitude} longitude={r.longitude} /> },
   ]
 
   const filteredFields = selectedFarm ? fields.filter((f) => f.farmId === selectedFarm) : fields
@@ -117,25 +147,67 @@ const farmColumns = [
   const visibleFields = useMemo(() => filteredFields.filter(matchesQuery), [filteredFields, matchesQuery])
   const visibleZones = useMemo(() => zones.filter(matchesQuery), [zones, matchesQuery])
 
+  /** Fills the position from the device, unless the user already typed one meanwhile. */
+  const locateFarm = () => geo.locate().then((position) => {
+    if (!position) return
+    setFarmForm((current) => (current.latitude === '' && current.longitude === ''
+      ? { ...current, latitude: String(position.latitude), longitude: String(position.longitude) }
+      : current))
+  })
+
+  const locateField = () => geo.locate().then((position) => {
+    if (!position) return
+    setFieldForm((current) => (current.coordinates === ''
+      ? { ...current, coordinates: formatFieldCoordinates(position.latitude, position.longitude) }
+      : current))
+  })
+
   const openFarmForm = (farm) => {
+    setFormError(null)
     if (farm) {
       setEditingFarm(farm)
-      setFarmForm({ name: farm.name || '', address: farm.address || '', areaHectares: farm.areaHectares ?? '', description: farm.description || '' })
+      setFarmForm({
+        name: farm.name || '',
+        address: farm.address || '',
+        areaHectares: farm.areaHectares ?? '',
+        description: farm.description || '',
+        latitude: farm.latitude ?? '',
+        longitude: farm.longitude ?? '',
+      })
+      setShowFarmForm(true)
     } else {
       setEditingFarm(null)
-      setFarmForm({ name: '', address: '', areaHectares: '', description: '' })
+      setFarmForm(EMPTY_FARM_FORM)
+      setShowFarmForm(true)
+      // A new farm is created on site: its position is requested right away.
+      locateFarm()
     }
-    setShowFarmForm(true)
+  }
+
+  const openFieldForm = () => {
+    setFormError(null)
+    setFieldForm((current) => ({ ...current, coordinates: '' }))
+    setShowFieldForm(true)
+    locateField()
   }
 
   const saveFarm = (e) => {
     e.preventDefault()
+    const invalid = coordinatesError(String(farmForm.latitude), String(farmForm.longitude))
+    if (invalid) {
+      setFormError(invalid)
+      return
+    }
+    setFormError(null)
     setBusy(true)
+    // The API replaces the position on every update: it is always sent, otherwise an edit erases it.
     const payload = {
       name: farmForm.name,
       address: farmForm.address || null,
       areaHectares: farmForm.areaHectares === '' ? null : Number(farmForm.areaHectares),
       description: farmForm.description || null,
+      latitude: farmForm.latitude === '' ? null : Number(farmForm.latitude),
+      longitude: farmForm.longitude === '' ? null : Number(farmForm.longitude),
     }
     const req = editingFarm ? farmApi.updateFarm(editingFarm.id, payload) : farmApi.createFarm(payload)
     req
@@ -150,6 +222,14 @@ const farmColumns = [
 
   const saveField = (e) => {
     e.preventDefault()
+    const coordinates = fieldForm.coordinates.trim()
+    const parsed = parseFieldCoordinates(coordinates)
+    const invalid = coordinates && (parsed ? coordinatesError(parsed.latitude, parsed.longitude) : 'Write the location as "latitude, longitude".')
+    if (invalid) {
+      setFormError(invalid)
+      return
+    }
+    setFormError(null)
     setBusy(true)
     const payload = {
       farmId: fieldForm.farmId,
@@ -157,13 +237,14 @@ const farmColumns = [
       areaHectares: fieldForm.areaHectares === '' ? 0 : Number(fieldForm.areaHectares),
       cropType: fieldForm.cropType || null,
       soilType: fieldForm.soilType || null,
+      coordinates: parsed ? formatFieldCoordinates(Number(parsed.latitude), Number(parsed.longitude)) : null,
     }
     fieldApi
       .createField(payload)
       .then(() => {
         notify('Field created')
         setShowFieldForm(false)
-        setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '' }))
+        setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '' }))
         loadAll()
       })
       .catch((err) => setError(err.message || 'Save error'))
@@ -266,7 +347,7 @@ return (
           <div style={panelBox}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h2 style={sectionLabel}>{selectedFarm ? 'Fields (filtered)' : 'Fields'}</h2>
-              <button style={btn('primary')} onClick={() => setShowFieldForm(true)}>
+              <button style={btn('primary')} onClick={openFieldForm}>
                 <Plus size={15} /> New field
               </button>
             </div>
@@ -279,6 +360,14 @@ return (
                   { key: 'cropType', label: 'Crop', render: (r) => r.cropType || '—' },
                   { key: 'soilType', label: 'Soil', render: (r) => r.soilType || '—' },
                   { key: 'areaHectares', label: 'Area (ha)', render: (r) => `${r.areaHectares ?? 0} ha` },
+                  {
+                    key: 'coordinates',
+                    label: 'Location',
+                    render: (r) => {
+                      const position = parseFieldCoordinates(r.coordinates)
+                      return position ? <LocationCell {...position} /> : (r.coordinates || '—')
+                    },
+                  },
                 ]}
                 rows={visibleFields}
                 keyField="id"
@@ -327,6 +416,12 @@ return (
           onCancel={() => setShowFarmForm(false)}
           onSave={saveFarm}
           busy={busy}
+          geo={geo}
+          onLocate={() => {
+            setFarmForm((current) => ({ ...current, latitude: '', longitude: '' }))
+            locateFarm()
+          }}
+          formError={formError}
         />
       )}
 
@@ -341,6 +436,12 @@ return (
           onCancel={() => setShowFieldForm(false)}
           onSave={saveField}
           busy={busy}
+          geo={geo}
+          onLocate={() => {
+            setFieldForm((current) => ({ ...current, coordinates: '' }))
+            locateField()
+          }}
+          formError={formError}
         />
       )}
 
@@ -371,11 +472,12 @@ return (
   )
 }
 /* ===== Farm form ===== */
-function FarmFormModal({ editing, form, setForm, onCancel, onSave, busy }) {
+function FarmFormModal({ editing, form, setForm, onCancel, onSave, busy, geo, onLocate, formError }) {
   const field = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }))
   return (
     <ModalShell onCancel={onCancel}>
       <h3 style={modalTitle}>{editing ? 'Edit farm' : 'New farm'}</h3>
+      {formError && <div className="ws-inline-error">{formError}</div>}
       <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <FormField label="Name" required>
           <input style={inputStyle} value={form.name} onChange={field('name')} required />
@@ -386,6 +488,15 @@ function FarmFormModal({ editing, form, setForm, onCancel, onSave, busy }) {
         <FormField label="Area (ha)">
           <input style={inputStyle} type="number" step="0.01" value={form.areaHectares} onChange={field('areaHectares')} />
         </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <FormField label="Latitude">
+            <input style={inputStyle} type="number" step="any" min="-90" max="90" value={form.latitude} onChange={field('latitude')} />
+          </FormField>
+          <FormField label="Longitude">
+            <input style={inputStyle} type="number" step="any" min="-180" max="180" value={form.longitude} onChange={field('longitude')} />
+          </FormField>
+        </div>
+        <LocateHint geo={geo} onLocate={onLocate} />
         <FormField label="Description">
           <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} value={form.description} onChange={field('description')} />
         </FormField>
@@ -400,7 +511,7 @@ function FarmFormModal({ editing, form, setForm, onCancel, onSave, busy }) {
 }
 
 /* ===== Field / Zone form ===== */
-function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave, busy }) {
+function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave, busy, geo, onLocate, formError }) {
   const isZone = 'fieldId' in form
   const parentKey = isZone ? 'fieldId' : 'farmId'
   const parents = isZone ? fields : farms
@@ -408,6 +519,7 @@ function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave,
   return (
     <ModalShell onCancel={onCancel}>
       <h3 style={modalTitle}>{title}</h3>
+      {formError && <div className="ws-inline-error">{formError}</div>}
       <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <FormField label={isZone ? 'Parent field' : 'Parent farm'} required>
           <select style={inputStyle} value={form[parentKey]} onChange={field(parentKey)} required>
@@ -438,12 +550,36 @@ function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave,
         <FormField label="Area (ha)" required>
           <input style={inputStyle} type="number" step="0.01" value={form.areaHectares} onChange={field('areaHectares')} required />
         </FormField>
+        {!isZone && (
+          <>
+            <FormField label="Location (latitude, longitude)">
+              <input style={inputStyle} value={form.coordinates} onChange={field('coordinates')} placeholder="10.633100, -4.761200" />
+            </FormField>
+            <LocateHint geo={geo} onLocate={onLocate} />
+          </>
+        )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
           <button type="button" style={btn('ghost')} onClick={onCancel}>Cancel</button>
           <button type="submit" style={btn('primary')} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
         </div>
       </form>
     </ModalShell>
+  )
+}
+
+/** Geolocation state under the coordinates: locating, accuracy obtained, or why it failed. */
+function LocateHint({ geo, onLocate }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--ws-muted, #6b7a78)' }}>
+      <button type="button" style={btn('ghost')} onClick={onLocate} disabled={geo.locating}>
+        <LocateFixed size={14} /> {geo.locating ? 'Locating…' : 'Use my position'}
+      </button>
+      {geo.error ? (
+        <span style={{ color: 'var(--ws-red, #c62828)' }}>{geo.error}</span>
+      ) : geo.accuracy != null ? (
+        <span>Position of this device, accurate to about {geo.accuracy} m: correct it if you are not on site.</span>
+      ) : null}
+    </div>
   )
 }
 

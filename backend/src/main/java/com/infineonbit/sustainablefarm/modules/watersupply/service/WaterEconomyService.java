@@ -225,6 +225,8 @@ public class WaterEconomyService {
                 .mapToDouble(source -> source.getCurrentLevelLiters() == null ? 0 : source.getCurrentLevelLiters())
                 .sum();
         double unbalanced = Math.max(0, irrigationOut - rainwaterIn);
+        double demandForecast = scheduleRepository.sumPlannedDemandBetween(Instant.now(), Instant.now().plus(7, ChronoUnit.DAYS));
+        double availableAfterForecast = currentLevel - demandForecast;
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("period", period);
@@ -236,6 +238,8 @@ public class WaterEconomyService {
         response.put("reserve_level_percentage",
                 capacity <= 0 ? 0 : Math.round((currentLevel / capacity) * 100));
         response.put("unbalanced_liters", Math.round(unbalanced));
+        response.put("demand_forecast_liters", Math.round(demandForecast));
+        response.put("available_after_forecast_liters", Math.round(availableAfterForecast));
         response.put("balance_status", capacity <= 0 ? "unknown"
                 : (currentLevel / capacity) >= 0.30 ? "equilibre" : "deficit");
         return response;

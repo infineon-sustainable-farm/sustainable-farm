@@ -15,6 +15,8 @@ public interface IrrigationLogRepository extends JpaRepository<IrrigationLog, UU
 
 	Optional<IrrigationLog> findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(UUID scheduleId, String status);
 
+    Optional<IrrigationLog> findFirstByScheduleIdOrderByActualStartTimeDesc(UUID scheduleId);
+
 	/**
 	 * Irrigation cycles of a zone started within the interval [start, end[: the zone is read
 	 * from the schedule (irrigation_logs only stores the schedule). Used for clogging detection
