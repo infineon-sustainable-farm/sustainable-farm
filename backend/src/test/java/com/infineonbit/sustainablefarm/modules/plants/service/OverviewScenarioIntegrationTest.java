@@ -82,6 +82,9 @@ class OverviewScenarioIntegrationTest {
     private HarvestService harvestService;
 
     @Autowired
+    private MaturityObservationService maturityObservationService;
+
+    @Autowired
     private HealthTreatmentService healthTreatmentService;
 
     @Autowired
@@ -146,7 +149,8 @@ class OverviewScenarioIntegrationTest {
     }
 
     private HarvestStatusService statusOn(LocalDate day) {
-        return new HarvestStatusService(yieldForecastService, healthTreatmentService, harvestService, noonOf(day));
+        return new HarvestStatusService(yieldForecastService, healthTreatmentService, harvestService,
+                maturityObservationService, noonOf(day));
     }
 
     private PlantsOverviewService overviewOn(LocalDate day) {
@@ -210,17 +214,18 @@ class OverviewScenarioIntegrationTest {
         assertEquals(List.of(new NotCompared(FARM, "C", brooksC, "Brooks", 30, 120.0, 1, "NO_REFERENCE")),
                 comparison.notCompared());
 
-        // 3. Harvest status: A ripe while the interval runs, B in 686 days, no status for Brooks
+        // 3. Harvest status: A ripe while the interval runs, B in 686 days, no status for Brooks; nothing is
+        // observed, so the estimate holds
         HarvestStatusResponse status = statusOn(JUNE_15).getHarvestStatus(FARM, null, null);
         assertEquals(List.of(
-                new VarietyHarvestStatus(FARM, "A", keittA, "Keitt", 40, MaturityStatus.RIPE,
-                        LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45, JUNE_24, treatment,
-                        LocalDate.of(2027, 5, 20), KEITT_SEASON_SOURCE, "Bally_2002"),
-                new VarietyHarvestStatus(FARM, "B", keittB, "Keitt", 100, MaturityStatus.IMMATURE,
-                        LocalDate.of(2029, 5, 1), LocalDate.of(2029, 7, 31), 686, null, null, null,
-                        KEITT_SEASON_SOURCE, "Bally_2002"),
+                new VarietyHarvestStatus(FARM, "A", keittA, "Keitt", 40, MaturityStatus.RIPE, "estimate",
+                        MaturityStatus.RIPE, null, LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45, JUNE_24,
+                        treatment, LocalDate.of(2027, 5, 20), KEITT_SEASON_SOURCE, "Bally_2002"),
+                new VarietyHarvestStatus(FARM, "B", keittB, "Keitt", 100, MaturityStatus.IMMATURE, "estimate",
+                        MaturityStatus.IMMATURE, null, LocalDate.of(2029, 5, 1), LocalDate.of(2029, 7, 31), 686,
+                        null, null, null, KEITT_SEASON_SOURCE, "Bally_2002"),
                 new VarietyHarvestStatus(FARM, "C", brooksC, "Brooks", 30, null, null, null, null, null, null,
-                        null, null, null)), status.varieties());
+                        null, null, null, null, null, null)), status.varieties());
 
         // 4. Overview: 170 trees, 100 in growth stage, none ready, the 2 alerts of farm 7, and the trees of
         // the harvest status by maturity status

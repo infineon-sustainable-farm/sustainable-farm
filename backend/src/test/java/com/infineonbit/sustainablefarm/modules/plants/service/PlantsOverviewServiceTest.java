@@ -110,8 +110,10 @@ public class PlantsOverviewServiceTest {
                 new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa", null)));
     }
 
+    /** A line whose status holds as given, from the estimate; the overview reads no other field. */
     private static VarietyHarvestStatus status(long varietyId, int trees, MaturityStatus maturityStatus) {
         return new VarietyHarvestStatus(FARM, "A", varietyId, "Keitt", trees, maturityStatus,
+                maturityStatus == null ? null : "estimate", maturityStatus, null,
                 null, null, null, null, null, null, null, null);
     }
 
