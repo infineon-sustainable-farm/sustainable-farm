@@ -15,12 +15,13 @@ import { NavLink } from "react-router-dom";
 
 /*
  * The eight entries of the approved mock-up, in its order and with its wording.
- * Only the six screens that exist carry a path; the two others are listed to
- * show the module's plan and are deliberately inert — see the rendering below.
+ * Only the seven screens that exist carry a path; the last one is listed to
+ * show the module's plan and is deliberately inert — see the rendering below.
+ * The Overview is the home of the module, at /plants itself.
  */
 const NAV_ITEMS = [
-    { label: "Overview", icon: Home },
-    { label: "Varieties", icon: Sprout, path: "/plants" },
+    { label: "Overview", icon: Home, path: "/plants" },
+    { label: "Varieties", icon: Sprout, path: "/plants/varieties" },
     { label: "Growth Calendar", icon: CalendarDays, path: "/plants/growth-calendar" },
     { label: "Fertilizer Inventory", icon: FlaskConical, path: "/plants/fertilizer-inventory" },
     { label: "Diseases & Alerts", icon: Bug, path: "/plants/diseases-alerts" },
