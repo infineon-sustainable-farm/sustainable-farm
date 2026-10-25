@@ -3,11 +3,13 @@ import { usePlantsOverview } from "../hooks/usePlantsOverview";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { formatDate } from "../utils/format";
 import BlockFilter from "./BlockFilter";
+import OverviewAlertsSection from "./OverviewAlertsSection";
 import OverviewKpiCards from "./OverviewKpiCards";
 
 /**
  * Overview, the home of the module: the figures of the day for the selected
- * block. Every figure comes from the API; nothing is counted or summed here.
+ * block, then every alert of the day, the most urgent first. Every figure
+ * comes from the API; nothing is counted or summed here.
  *
  * The mock-up's title names the farm, its variety and its area, which would
  * hard-code farm data into the interface: the page says "Overview", as its
@@ -42,6 +44,8 @@ export default function OverviewPage() {
                 <BlockFilter blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
 
                 <OverviewKpiCards query={overviewQuery} />
+
+                <OverviewAlertsSection blockCode={selectedBlock || null} />
             </div>
         </div>
     );
