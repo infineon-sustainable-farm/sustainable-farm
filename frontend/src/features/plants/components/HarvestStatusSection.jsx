@@ -10,9 +10,10 @@ import RecordMaturityObservationModal from "./RecordMaturityObservationModal";
 
 /**
  * The maturity status of the day of the planted varieties of the selected
- * block, as the API computes it from the harvest window of each variety and
- * the pre-harvest intervals of its block. The rules are stated with the day
- * and the look-ahead the API used; nothing of the status is computed here.
+ * block, as the API gives it: the estimate, computed from the harvest window
+ * of each variety and the pre-harvest intervals of its block, and the field
+ * observation that takes precedence over it. The rules are stated with the
+ * day and the look-ahead the API used; nothing of the status is computed here.
  *
  * The section also records the maturity seen in the field: its dialog lives
  * here, beside the statuses it changes, and focus goes back to its button
@@ -48,12 +49,19 @@ export default function HarvestStatusSection({ blockCode }) {
                         Maturity status
                     </h3>
                     {data && (
-                        <p className="mt-1 max-w-3xl text-sm text-gray-600">
-                            {`As of ${formatDate(data.today)}. Ready for harvest: the harvest window is open and no `
-                                + "pre-harvest interval runs on the block. Ripe: the window opens within "
-                                + `${data.withinDays} days, or it is open while an interval runs. Immature: the window `
-                                + "opens later."}
-                        </p>
+                        <>
+                            <p className="mt-1 max-w-3xl text-sm text-gray-600">
+                                {`As of ${formatDate(data.today)}. Estimated — Ready for harvest: the harvest window `
+                                    + "is open and no pre-harvest interval runs on the block. Ripe: the window opens "
+                                    + `within ${data.withinDays} days, or it is open while an interval runs. Immature: `
+                                    + "the window opens later."}
+                            </p>
+                            <p className="mt-1 max-w-3xl text-sm text-gray-600">
+                                Observed: the latest field observation of the season under way. It takes precedence
+                                over the estimate until the last day of that season. A running pre-harvest interval
+                                holds Ready for harvest back to Ripe, observed or estimated.
+                            </p>
+                        </>
                     )}
                 </div>
                 <button
