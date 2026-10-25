@@ -11,6 +11,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatus
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse.MaturityShare;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.BlockComparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.Comparison;
@@ -221,7 +222,8 @@ class OverviewScenarioIntegrationTest {
                 new VarietyHarvestStatus(FARM, "C", brooksC, "Brooks", 30, null, null, null, null, null, null,
                         null, null, null)), status.varieties());
 
-        // 4. Overview: 170 trees, 100 in growth stage, none ready, the 2 alerts of farm 7
+        // 4. Overview: 170 trees, 100 in growth stage, none ready, the 2 alerts of farm 7, and the trees of
+        // the harvest status by maturity status
         List<PlantAlert> alerts = alertsOn(JUNE_15).getAlerts(FARM, null, null).alerts();
         assertEquals(List.of("CRITICAL PRE_HARVEST_INTERVAL A", "WARNING HARVEST_APPROACHING A"),
                 alerts.stream()
@@ -235,12 +237,23 @@ class OverviewScenarioIntegrationTest {
                 .filter(alert -> alert.severity() == PlantAlertSeverity.CRITICAL)
                 .count();
         assertEquals(new PlantsOverviewResponse(JUNE_15, 170, 100, 0, 2 + stockAlertsOfOtherTests.size(),
-                1 + criticalStockAlerts), overviewOn(JUNE_15).getOverview(FARM, null));
+                1 + criticalStockAlerts, List.of(
+                        new MaturityShare(MaturityStatus.IMMATURE, 100, 58.8),
+                        new MaturityShare(MaturityStatus.RIPE, 40, 23.5),
+                        new MaturityShare(MaturityStatus.READY_FOR_HARVEST, 0, 0.0),
+                        new MaturityShare(null, 30, 17.6))),
+                overviewOn(JUNE_15).getOverview(FARM, null));
 
         // On 24 June 2027 the interval is over: A is ready, as it would be without the treatment
         VarietyHarvestStatus keittAOnJune24 = statusOn(JUNE_24).getHarvestStatus(FARM, "A", null).varieties().get(0);
         assertEquals(MaturityStatus.READY_FOR_HARVEST, keittAOnJune24.maturityStatus());
         assertNull(keittAOnJune24.harvestAllowedFrom());
-        assertEquals(40, overviewOn(JUNE_24).getOverview(FARM, null).readyForHarvest());
+        PlantsOverviewResponse overviewOnJune24 = overviewOn(JUNE_24).getOverview(FARM, null);
+        assertEquals(40, overviewOnJune24.readyForHarvest());
+        assertEquals(List.of(
+                new MaturityShare(MaturityStatus.IMMATURE, 100, 58.8),
+                new MaturityShare(MaturityStatus.RIPE, 0, 0.0),
+                new MaturityShare(MaturityStatus.READY_FOR_HARVEST, 40, 23.5),
+                new MaturityShare(null, 30, 17.6)), overviewOnJune24.maturity());
     }
 }
