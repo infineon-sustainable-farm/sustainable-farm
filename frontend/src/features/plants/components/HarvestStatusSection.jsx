@@ -1,32 +1,70 @@
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useRef, useState } from "react";
+import { Loader2, Plus, TriangleAlert } from "lucide-react";
 import { useHarvestStatus } from "../hooks/useHarvestStatus";
+import { useRecordMaturityObservation } from "../hooks/useRecordMaturityObservation";
+import { useVarietyBlocks } from "../hooks/useVarieties";
 import { formatDate } from "../utils/format";
 import HarvestStatusTable from "./HarvestStatusTable";
 import PlantsEmptyState from "./PlantsEmptyState";
+import RecordMaturityObservationModal from "./RecordMaturityObservationModal";
 
 /**
  * The maturity status of the day of the planted varieties of the selected
  * block, as the API computes it from the harvest window of each variety and
  * the pre-harvest intervals of its block. The rules are stated with the day
  * and the look-ahead the API used; nothing of the status is computed here.
+ *
+ * The section also records the maturity seen in the field: its dialog lives
+ * here, beside the statuses it changes, and focus goes back to its button
+ * when the dialog closes.
  */
 export default function HarvestStatusSection({ blockCode }) {
     const { data, isPending, isError, refetch, isFetching } = useHarvestStatus({ blockCode });
+    const { data: blocks } = useVarietyBlocks();
+    const recordObservation = useRecordMaturityObservation();
+    const [isRecordingObservation, setIsRecordingObservation] = useState(false);
+    const recordButtonRef = useRef(null);
+
+    function openObservationForm() {
+        recordObservation.reset();
+        setIsRecordingObservation(true);
+    }
+
+    function closeObservationForm() {
+        recordObservation.reset();
+        setIsRecordingObservation(false);
+        recordButtonRef.current?.focus();
+    }
+
+    function submitObservation(observation) {
+        recordObservation.mutate(observation, { onSuccess: closeObservationForm });
+    }
 
     return (
         <section aria-labelledby="maturity-status-title" className="flex flex-col gap-4">
-            <div>
-                <h3 id="maturity-status-title" className="font-heading text-base font-bold text-gray-900">
-                    Maturity status
-                </h3>
-                {data && (
-                    <p className="mt-1 max-w-3xl text-sm text-gray-600">
-                        {`As of ${formatDate(data.today)}. Ready for harvest: the harvest window is open and no `
-                            + "pre-harvest interval runs on the block. Ripe: the window opens within "
-                            + `${data.withinDays} days, or it is open while an interval runs. Immature: the window `
-                            + "opens later."}
-                    </p>
-                )}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 id="maturity-status-title" className="font-heading text-base font-bold text-gray-900">
+                        Maturity status
+                    </h3>
+                    {data && (
+                        <p className="mt-1 max-w-3xl text-sm text-gray-600">
+                            {`As of ${formatDate(data.today)}. Ready for harvest: the harvest window is open and no `
+                                + "pre-harvest interval runs on the block. Ripe: the window opens within "
+                                + `${data.withinDays} days, or it is open while an interval runs. Immature: the window `
+                                + "opens later."}
+                        </p>
+                    )}
+                </div>
+                <button
+                    ref={recordButtonRef}
+                    type="button"
+                    onClick={openObservationForm}
+                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                    <Plus size={16} />
+                    Record an observation
+                </button>
             </div>
 
             {isPending && (
@@ -82,6 +120,16 @@ export default function HarvestStatusSection({ blockCode }) {
                         window; earlier pickings are listed under Recorded harvests. A dash means no value.
                     </p>
                 </>
+            )}
+
+            {isRecordingObservation && (
+                <RecordMaturityObservationModal
+                    blocks={blocks ?? []}
+                    isSubmitting={recordObservation.isPending}
+                    error={recordObservation.error}
+                    onSubmit={submitObservation}
+                    onClose={closeObservationForm}
+                />
             )}
         </section>
     );
