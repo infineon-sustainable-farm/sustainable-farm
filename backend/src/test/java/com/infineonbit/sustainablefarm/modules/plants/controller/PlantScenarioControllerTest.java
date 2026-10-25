@@ -1,11 +1,21 @@
 package com.infineonbit.sustainablefarm.modules.plants.controller;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantScenarioRequest;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ScenarioVariantParams;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYieldShareResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantScenarioResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Amount;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.BenefitLine;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Change;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Projection;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Year;
 import com.infineonbit.sustainablefarm.modules.plants.exception.PlantScenarioNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantScenarioService;
+import com.infineonbit.sustainablefarm.modules.plants.service.ScenarioAnalysisService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +75,9 @@ public class PlantScenarioControllerTest {
     @MockitoBean
     private PlantScenarioService plantScenarioService;
 
+    @MockitoBean
+    private ScenarioAnalysisService scenarioAnalysisService;
+
     private ResultActions postScenario(String body) throws Exception {
         return mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body));
     }
@@ -97,7 +110,24 @@ public class PlantScenarioControllerTest {
         for (int i = 0; i < fieldsAndMessages.length; i += 2) {
             result.andExpect(jsonPath("$.fieldErrors." + fieldsAndMessages[i]).value(fieldsAndMessages[i + 1]));
         }
-        verifyNoInteractions(plantScenarioService);
+        verifyNoInteractions(plantScenarioService, scenarioAnalysisService);
+    }
+
+    private static ScenarioAnalysisResponse analysis() {
+        Amount revenue = new Amount(26183704L, 39916.80);
+        Year firstYear = new Year(1, 0, "establishment", 0.0, 0.0, 0.0, new Amount(0L, 0.0),
+                new Amount(4399504L, 6707.0), new Amount(-4399504L, -6707.0), new Amount(-116904001L, -178219.0));
+        Projection baseline = new Projection(200, 220.0, null, 44000.0, null, 44000.0, revenue,
+                new Amount(4399504L, 6707.0), new Amount(21784201L, 33209.8), new Amount(112504497L, 171512.0),
+                19.4, 5.2, null, List.of(firstYear));
+        Change change = new Change(0, 4400.0, 4400.0, new Amount(2618370L, 3991.68), new Amount(0L, 0.0), 2.3,
+                List.of(new BenefitLine("YIELD_PER_TREE", 4400.0, 0.9072, new Amount(2618370L, 3991.68))),
+                new Amount(2618370L, 3991.68), new Amount(0L, 0.0), null);
+        return new ScenarioAnalysisResponse(1L, "Zalka 2025", "scenario", "EUR", 655.957, 1,
+                List.of("lossRate"),
+                List.of(new GrowthPhaseYieldShareResponse("ESTABLISHMENT", "establishment", "0–2 yrs", 0.0,
+                        "orchard_literature", false, 0.0, "orchard_literature", null)),
+                baseline, baseline, change);
     }
 
     @Test
@@ -274,5 +304,89 @@ public class PlantScenarioControllerTest {
         assertApiError(putScenario("abc", ZALKA_BODY), 400, "Bad Request", "Invalid value for parameter 'id'",
                 URL + "/abc");
         verify(plantScenarioService, never()).updateScenario(anyLong(), any());
+    }
+
+    @Test
+    void getAnalysis_shouldReturn200_andPassTheVariantAsSent() throws Exception {
+        // Arrange
+        when(scenarioAnalysisService.getAnalysis(eq(1L), any(ScenarioVariantParams.class))).thenReturn(analysis());
+        // Act
+        ResultActions result = mockMvc.perform(get(URL + "/1/analysis")
+                .param("treeCountChange", "-20").param("yieldPerTreeChangePct", "10")
+                .param("lossRate", "0.1").param("additionalInvestment", "5000").param("horizonYears", "12"));
+        // Assert: the amounts in both currencies, and nothing sent as zero
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.basis").value("scenario"))
+                .andExpect(jsonPath("$.eurToXofRate").value(655.957))
+                .andExpect(jsonPath("$.missingInputs[0]").value("lossRate"))
+                .andExpect(jsonPath("$.phaseShares[0].source").value("orchard_literature"))
+                .andExpect(jsonPath("$.baseline.revenue.eur").value(39916.8))
+                .andExpect(jsonPath("$.baseline.revenue.xof").value(26183704))
+                .andExpect(jsonPath("$.baseline.lossKg").value(nullValue()))
+                .andExpect(jsonPath("$.baseline.paybackYear").value(nullValue()))
+                .andExpect(jsonPath("$.baseline.years[0].cumulativeNetBenefit.eur").value(-178219.0))
+                .andExpect(jsonPath("$.change.benefitLines[0].type").value("YIELD_PER_TREE"))
+                .andExpect(jsonPath("$.change.annualBenefit.eur").value(3991.68))
+                .andExpect(jsonPath("$.change.additionalInvestmentPaybackYears").value(nullValue()));
+        verify(scenarioAnalysisService).getAnalysis(1L, new ScenarioVariantParams(-20, 10.0, 0.1, 5000.0, 12));
+    }
+
+    @Test
+    void getAnalysis_shouldPassNoVariant_whenNoParameterIsSent() throws Exception {
+        // Arrange
+        when(scenarioAnalysisService.getAnalysis(eq(1L), any(ScenarioVariantParams.class))).thenReturn(analysis());
+        // Act
+        mockMvc.perform(get(URL + "/1/analysis")).andExpect(status().isOk());
+        // Assert
+        verify(scenarioAnalysisService).getAnalysis(1L, new ScenarioVariantParams(null, null, null, null, null));
+    }
+
+    @Test
+    void getAnalysis_shouldReturn400_whenAParameterIsOutOfBounds() throws Exception {
+        // Act & Assert
+        assertRefused(mockMvc.perform(get(URL + "/1/analysis")
+                        .param("treeCountChange", "1000001").param("yieldPerTreeChangePct", "-100")
+                        .param("lossRate", "1.001").param("additionalInvestment", "-1").param("horizonYears", "31")),
+                URL + "/1/analysis",
+                "treeCountChange", "treeCountChange must be between -1000000 and 1000000",
+                "yieldPerTreeChangePct",
+                "yieldPerTreeChangePct must be above -100 and at most 1000, with at most 1 decimal",
+                "lossRate", "lossRate must be between 0 and 1, with at most 3 decimals",
+                "additionalInvestment", "additionalInvestment must be 0 or more, with at most 2 decimals",
+                "horizonYears", "horizonYears must be between 1 and 30");
+    }
+
+    @Test
+    void getAnalysis_shouldReturn400_whenAParameterHasTooManyDecimals_orTheHorizonIsZero() throws Exception {
+        // Act & Assert
+        assertRefused(mockMvc.perform(get(URL + "/1/analysis")
+                        .param("yieldPerTreeChangePct", "10.25").param("additionalInvestment", "0.001")
+                        .param("horizonYears", "0")),
+                URL + "/1/analysis",
+                "yieldPerTreeChangePct",
+                "yieldPerTreeChangePct must be above -100 and at most 1000, with at most 1 decimal",
+                "additionalInvestment", "additionalInvestment must be 0 or more, with at most 2 decimals",
+                "horizonYears", "horizonYears must be between 1 and 30");
+    }
+
+    @Test
+    void getAnalysis_shouldReturn422WithApiError_forAVariantTheScenarioCannotTake() throws Exception {
+        // Arrange
+        when(scenarioAnalysisService.getAnalysis(eq(1L), any(ScenarioVariantParams.class))).thenThrow(
+                new BusinessRuleException("The scenario has 200 trees, so treeCountChange must be -199 or more"));
+        // Act & Assert
+        assertApiError(mockMvc.perform(get(URL + "/1/analysis").param("treeCountChange", "-200")), 422,
+                "Unprocessable Entity", "The scenario has 200 trees, so treeCountChange must be -199 or more",
+                URL + "/1/analysis");
+    }
+
+    @Test
+    void getAnalysis_shouldReturn404WithApiError_forAnUnknownId() throws Exception {
+        // Arrange
+        when(scenarioAnalysisService.getAnalysis(eq(99L), any(ScenarioVariantParams.class)))
+                .thenThrow(new PlantScenarioNotFoundException(99L));
+        // Act & Assert
+        assertApiError(mockMvc.perform(get(URL + "/99/analysis")), 404, "Not Found",
+                "Scenario with ID 99 not found", URL + "/99/analysis");
     }
 }
