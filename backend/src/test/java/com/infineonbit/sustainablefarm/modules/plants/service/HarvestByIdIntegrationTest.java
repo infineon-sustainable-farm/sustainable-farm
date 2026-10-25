@@ -50,6 +50,7 @@ class HarvestByIdIntegrationTest {
         HarvestResponse response = harvestService.getHarvestById(harvestId);
         // Assert
         assertEquals(harvestId, response.id());
+        assertEquals("LOT-2026-HR1-001", response.lotNumber());
         assertNull(response.farmId());
         assertEquals("HR1", response.blockCode());
         assertEquals(varietyId, response.varietyId());

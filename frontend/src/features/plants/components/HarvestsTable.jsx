@@ -1,12 +1,14 @@
 import { formatBlock, formatDate, formatNumber, formatText } from "../utils/format";
 
 // The mock-up's columns that the API records, in its order ("Actual Harvest" is
-// the harvest date), with Source last.
+// the harvest date), with Source last. A harvest recorded before lot numbers
+// existed has none and shows "—".
 const COLUMNS = [
     "Block",
     "Variety",
     "Harvest Date",
     "Quantity (kg)",
+    "Lot No.",
     "Source",
 ];
 
@@ -42,6 +44,9 @@ export default function HarvestsTable({ harvests }) {
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatNumber(harvest.quantityKg)}
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">
+                                {formatText(harvest.lotNumber)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(harvest.source)}

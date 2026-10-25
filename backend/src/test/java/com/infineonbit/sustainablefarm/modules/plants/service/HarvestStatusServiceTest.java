@@ -136,7 +136,7 @@ public class HarvestStatusServiceTest {
     }
 
     private static HarvestResponse harvest(long id, Variety variety, LocalDate harvestDate) {
-        return new HarvestResponse(id, FARM, variety.getBlockCode(), variety.getId(), variety.getName(),
+        return new HarvestResponse(id, null, FARM, variety.getBlockCode(), variety.getId(), variety.getName(),
                 harvestDate, 100.0, "user_entry", null);
     }
 
