@@ -14,10 +14,9 @@ import {
 import { NavLink } from "react-router-dom";
 
 /*
- * The eight entries of the approved mock-up, in its order and with its wording.
- * Only the seven screens that exist carry a path; the last one is listed to
- * show the module's plan and is deliberately inert — see the rendering below.
- * The Overview is the home of the module, at /plants itself.
+ * The eight entries of the approved mock-up, in its order and with its wording,
+ * each leading to its screen. The Overview is the home of the module, at
+ * /plants itself.
  */
 const NAV_ITEMS = [
     { label: "Overview", icon: Home, path: "/plants" },
@@ -27,7 +26,7 @@ const NAV_ITEMS = [
     { label: "Diseases & Alerts", icon: Bug, path: "/plants/diseases-alerts" },
     { label: "Harvest & Maturity", icon: Apple, path: "/plants/harvest-maturity" },
     { label: "Nursery", icon: Leaf, path: "/plants/nursery" },
-    { label: "Scenario Analysis", icon: TrendingUp },
+    { label: "Scenario Analysis", icon: TrendingUp, path: "/plants/scenario-analysis" },
 ];
 
 const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";
@@ -43,24 +42,6 @@ const linkStyles = ({ isActive }) =>
     `${ITEM_BASE} font-medium text-white hover:bg-white/10 ${
         isActive ? "bg-black/20 font-semibold shadow-[inset_3px_0_0_#fff]" : ""
     }`;
-
-/**
- * An entry whose screen does not exist yet. Rendered as plain text, so it is not
- * focusable and not clickable at all, and marked aria-disabled with a note for
- * screen readers — the greying alone would say nothing to them.
- */
-function PlannedItem({ label, icon: Icon }) {
-    return (
-        <span
-            aria-disabled="true"
-            className={`${ITEM_BASE} cursor-not-allowed font-normal text-white/70`}
-        >
-            <Icon size={17} className="shrink-0" />
-            {label}
-            <span className="sr-only"> (planned, not available yet)</span>
-        </span>
-    );
-}
 
 /**
  * Module shell navigation, following the Machinery sidebar: same width, same
@@ -105,14 +86,10 @@ export default function PlantsSidebar() {
                 <ul className="flex flex-col gap-1">
                     {NAV_ITEMS.map(({ label, icon: Icon, path }) => (
                         <li key={label}>
-                            {path ? (
-                                <NavLink to={path} end={path === "/plants"} className={linkStyles}>
-                                    <Icon size={17} className="shrink-0" />
-                                    {label}
-                                </NavLink>
-                            ) : (
-                                <PlannedItem label={label} icon={Icon} />
-                            )}
+                            <NavLink to={path} end={path === "/plants"} className={linkStyles}>
+                                <Icon size={17} className="shrink-0" />
+                                {label}
+                            </NavLink>
                         </li>
                     ))}
                 </ul>
