@@ -6,6 +6,7 @@ import { useScenarioAnalysis } from "../hooks/useScenarioAnalysis";
 import { useScenarios } from "../hooks/useScenarios";
 import { analysisParams, readScenarioView, scenarioViewSearch } from "../utils/scenarioRequests";
 import AnnualBenefitTable from "./AnnualBenefitTable";
+import CashFlowByYearTable from "./CashFlowByYearTable";
 import PlantsEmptyState from "./PlantsEmptyState";
 import ScenarioAssumptionsTable from "./ScenarioAssumptionsTable";
 import ScenarioBaselineSection from "./ScenarioBaselineSection";
@@ -222,6 +223,12 @@ export default function ScenarioAnalysisPage() {
                         />
 
                         <AnnualBenefitTable scenario={scenario} levers={levers} />
+
+                        <CashFlowByYearTable
+                            query={baseline}
+                            horizonYears={view.horizonYears}
+                            onHorizonChange={(years) => changeView({ horizonYears: years })}
+                        />
                     </>
                 )}
             </div>
