@@ -5,10 +5,12 @@ import { useSaveScenario } from "../hooks/useSaveScenario";
 import { useScenarioAnalysis } from "../hooks/useScenarioAnalysis";
 import { useScenarios } from "../hooks/useScenarios";
 import { analysisParams, readScenarioView, scenarioViewSearch } from "../utils/scenarioRequests";
+import AnnualBenefitTable from "./AnnualBenefitTable";
 import PlantsEmptyState from "./PlantsEmptyState";
 import ScenarioAssumptionsTable from "./ScenarioAssumptionsTable";
 import ScenarioBaselineSection from "./ScenarioBaselineSection";
 import ScenarioFormModal from "./ScenarioFormModal";
+import ScenarioLeverCards from "./ScenarioLeverCards";
 import ScenarioYieldChart from "./ScenarioYieldChart";
 import YieldIncreaseSimulator from "./YieldIncreaseSimulator";
 
@@ -91,6 +93,7 @@ export default function ScenarioAnalysisPage() {
         ? list[0] ?? null
         : list.find((candidate) => candidate.id === view.scenarioId) ?? null;
     const isUnknown = scenarios.isSuccess && view.scenarioId !== null && scenario === null;
+    const levers = { trees: view.trees, yieldPct: view.yieldPct, loss: view.loss };
 
     const baseline = useScenarioAnalysis(scenario?.id ?? null, analysisParams({ horizonYears: view.horizonYears }), {
         keepPrevious: true,
@@ -211,6 +214,14 @@ export default function ScenarioAnalysisPage() {
                         />
 
                         <ScenarioYieldChart scenario={scenario} />
+
+                        <ScenarioLeverCards
+                            scenario={scenario}
+                            levers={levers}
+                            onChange={(key, text) => changeView({ [key]: text })}
+                        />
+
+                        <AnnualBenefitTable scenario={scenario} levers={levers} />
                     </>
                 )}
             </div>
