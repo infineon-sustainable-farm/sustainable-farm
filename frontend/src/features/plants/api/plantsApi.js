@@ -384,6 +384,20 @@ export function fetchPlantAlerts({ blockCode, farmId, withinDays } = {}) {
 }
 
 /**
+ * Fetches the figures of the dashboard of the day, computed by the API: the
+ * trees, those in growth stage and ready for harvest, the alerts, and the
+ * trees by maturity status with their shares. Same filter rules as
+ * fetchVarieties; none of the figures is computed here.
+ */
+export function fetchPlantsOverview({ blockCode, farmId } = {}) {
+    const params = {};
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+
+    return apiClient.get(PLANTS_ENDPOINTS.OVERVIEW, { params });
+}
+
+/**
  * Fetches the nursery batches, ordered by start date by the API. The plants
  * left, the survival rate and the current stage of each batch come computed
  * by the API from its recorded events; none of them is computed here.

@@ -13,8 +13,13 @@ const RECORDERS = {
     TRANSPLANT: createNurseryTransplant,
 };
 
-// What every event changes: its batch, the history and the batch's alert.
-const NURSERY_QUERY_KEYS = [["plants", "nursery-batches"], ["plants", "nursery-events"], ["plants", "alerts"]];
+// What every event changes: its batch, the history, the batch's alert, and so the overview.
+const NURSERY_QUERY_KEYS = [
+    ["plants", "nursery-batches"],
+    ["plants", "nursery-events"],
+    ["plants", "alerts"],
+    ["plants", "overview"],
+];
 
 // A transplant is also a planting: its batch, the history, and what a planting changes, alerts included.
 const TRANSPLANT_QUERY_KEYS = [["plants", "nursery-batches"], ["plants", "nursery-events"], ...PLANTING_QUERY_KEYS];
@@ -23,11 +28,11 @@ const TRANSPLANT_QUERY_KEYS = [["plants", "nursery-batches"], ["plants", "nurser
  * Records a stage change, a loss or a transplant of a nursery batch, given as
  * `{ eventType, batchId, body }`.
  *
- * The batches, every history list and the plant alerts are refreshed
- * afterwards, whatever their filter: an event changes the stage or the plants
- * left of its batch, and so its alert. A transplant is also a planting, as the
- * API records the batch's variety on the block in the same transaction: every
- * query a planting refreshes is refreshed too.
+ * The batches, every history list, the plant alerts and the overview are
+ * refreshed afterwards, whatever their filter: an event changes the stage or
+ * the plants left of its batch, and so its alert. A transplant is also a
+ * planting, as the API records the batch's variety on the block in the same
+ * transaction: every query a planting refreshes is refreshed too.
  */
 export function useRecordNurseryEvent() {
     const queryClient = useQueryClient();
