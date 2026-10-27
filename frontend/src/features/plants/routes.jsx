@@ -6,6 +6,7 @@ import HarvestMaturityPage from "./components/HarvestMaturityPage";
 import FertilizerInventoryPage from "./components/FertilizerInventoryPage";
 import DiseasesAlertsPage from "./components/DiseasesAlertsPage";
 import NurseryPage from "./components/NurseryPage";
+import ScenarioAnalysisPage from "./components/ScenarioAnalysisPage";
 
 export default [
   {
@@ -19,6 +20,7 @@ export default [
       { path: "diseases-alerts", element: <DiseasesAlertsPage /> },
       { path: "harvest-maturity", element: <HarvestMaturityPage /> },
       { path: "nursery", element: <NurseryPage /> },
+      { path: "scenario-analysis", element: <ScenarioAnalysisPage /> },
     ],
   },
 ];
