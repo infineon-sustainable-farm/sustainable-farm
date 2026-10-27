@@ -9,6 +9,8 @@ import PlantsEmptyState from "./PlantsEmptyState";
 import ScenarioAssumptionsTable from "./ScenarioAssumptionsTable";
 import ScenarioBaselineSection from "./ScenarioBaselineSection";
 import ScenarioFormModal from "./ScenarioFormModal";
+import ScenarioYieldChart from "./ScenarioYieldChart";
+import YieldIncreaseSimulator from "./YieldIncreaseSimulator";
 
 function LoadingBox({ label }) {
     return (
@@ -199,6 +201,16 @@ export default function ScenarioAnalysisPage() {
                             scenario={scenario}
                             phaseShares={baseline.data?.analysis.phaseShares ?? null}
                         />
+
+                        <YieldIncreaseSimulator
+                            scenario={scenario}
+                            yieldIncrease={view.yieldIncrease}
+                            onYieldIncreaseChange={(value) => changeView({ yieldIncrease: value })}
+                            investmentText={view.investment}
+                            onInvestmentChange={(text) => changeView({ investment: text })}
+                        />
+
+                        <ScenarioYieldChart scenario={scenario} />
                     </>
                 )}
             </div>
