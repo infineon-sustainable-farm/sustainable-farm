@@ -27,4 +27,5 @@ export const PLANTS_ENDPOINTS = {
     NURSERY_BATCHES: "/api/plants/nursery-batches",
     NURSERY_EVENTS: "/api/plants/nursery-events",
     OVERVIEW: "/api/plants/overview",
+    SCENARIOS: "/api/plants/scenarios",
 };

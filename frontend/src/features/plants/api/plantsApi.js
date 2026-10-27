@@ -458,3 +458,44 @@ export function fetchNurseryEvents({ batchId, eventType, from, to } = {}) {
 
     return apiClient.get(PLANTS_ENDPOINTS.NURSERY_EVENTS, { params });
 }
+
+/**
+ * Fetches the planting scenarios, ordered by name by the API: the assumptions
+ * of each plan as entered, each with its source. No result is stored, so none
+ * comes with them: see fetchScenarioAnalysis.
+ */
+export function fetchScenarios() {
+    return apiClient.get(PLANTS_ENDPOINTS.SCENARIOS);
+}
+
+/**
+ * Enters a scenario. The API answers 400 with fieldErrors for an invalid
+ * value, and 409 when a scenario of the same name exists, ignoring case and
+ * accents.
+ */
+export function createScenario(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.SCENARIOS, body);
+}
+
+/**
+ * Corrects a scenario: every value is replaced, and an optional value left
+ * out is removed. A source left out stays as it was when its value does not
+ * change, and becomes user_entry when it does. The API answers 400, 404 and
+ * 409 as for an entry.
+ */
+export function updateScenario(id, body) {
+    return apiClient.put(`${PLANTS_ENDPOINTS.SCENARIOS}/${id}`, body);
+}
+
+/**
+ * Fetches what a scenario gives, and what a variant of it changes, computed by
+ * the API on every request: a year in full production, the plan year by year,
+ * and the annual benefit of the variant by cause. `params` holds the variant
+ * (treeCountChange, yieldPerTreeChangePct, lossRate, additionalInvestment) and
+ * horizonYears; a parameter left out keeps the API's default. The API answers
+ * 400 with fieldErrors for a parameter out of bounds, 404 for an unknown
+ * scenario, and 422 for a variant the scenario cannot take.
+ */
+export function fetchScenarioAnalysis(id, params = {}) {
+    return apiClient.get(`${PLANTS_ENDPOINTS.SCENARIOS}/${id}/analysis`, { params });
+}
