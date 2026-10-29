@@ -1,4 +1,4 @@
-
+package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.GeneratorEventRequest;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.GeneratorEvent;

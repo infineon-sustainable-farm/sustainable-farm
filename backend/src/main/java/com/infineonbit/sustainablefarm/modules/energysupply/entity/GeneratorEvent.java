@@ -9,13 +9,11 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -41,4 +39,28 @@ public class GeneratorEvent {
 
     @Column(name = "cost_eur", precision = 10, scale = 2)
     private BigDecimal costEur;
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public void setTriggerReason(String triggerReason) {
+        this.triggerReason = triggerReason;
+    }
+
+    public void setDurationHours(BigDecimal durationHours) {
+        this.durationHours = durationHours;
+    }
+
+    public void setFuelLiters(BigDecimal fuelLiters) {
+        this.fuelLiters = fuelLiters;
+    }
+
+    public void setCostEur(BigDecimal costEur) {
+        this.costEur = costEur;
+    }
 }

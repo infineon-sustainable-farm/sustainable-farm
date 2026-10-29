@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface AlertRepository extends JpaRepository<Alert, String> {
+public interface EnergyAlertRepository extends JpaRepository<Alert, String> {
 
     List<Alert> findByStatus(AlertStatus status);
 }

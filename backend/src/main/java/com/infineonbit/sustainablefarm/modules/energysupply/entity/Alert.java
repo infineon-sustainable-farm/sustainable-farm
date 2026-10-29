@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
+@Entity(name = "EnergyAlert")
 @Table(name = "alert")
 public class Alert {
 

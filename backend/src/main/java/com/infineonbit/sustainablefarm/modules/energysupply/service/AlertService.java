@@ -2,7 +2,7 @@ package com.infineonbit.sustainablefarm.modules.energysupply.service;
 
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertStatus;
-import com.infineonbit.sustainablefarm.modules.energysupply.repository.AlertRepository;
+import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyAlertRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +12,10 @@ import java.util.Optional;
 @Service("energyAlertService")
 public class AlertService {
 
-    private final AlertRepository repository;
+    private final EnergyAlertRepository repository;
 
     @Autowired
-    public AlertService(AlertRepository repository) {
+    public AlertService(EnergyAlertRepository repository) {
         this.repository = repository;
     }
 
