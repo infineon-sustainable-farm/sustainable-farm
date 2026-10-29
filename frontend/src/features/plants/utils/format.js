@@ -56,6 +56,66 @@ export function formatMillimeters(value) {
     return isMissing(value) ? NO_VALUE : `${Number(value).toLocaleString("en-US")} mm`;
 }
 
+/**
+ * Enum code sent by the API, in sentence case: "MINERAL" is shown as
+ * "Mineral", "ADJUSTMENT_IN" as "Adjustment in". The code itself is what goes
+ * back to the API.
+ */
+export function formatCode(value) {
+    if (isMissing(value)) return NO_VALUE;
+    const text = String(value).trim().toLowerCase().replaceAll("_", " ");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Symbols of the fertilizer units, as the API writes them in its own messages. */
+const UNIT_SYMBOLS = { KG: "kg", L: "L" };
+
+/** Symbol of a fertilizer unit code, "KG" as "kg". An unknown code is shown as received. */
+export function formatUnit(unit) {
+    if (isMissing(unit)) return NO_VALUE;
+    const code = String(unit).trim();
+    return UNIT_SYMBOLS[code] ?? code;
+}
+
+/**
+ * A quantity in the unit of its fertilizer: "1,000 kg", "12.5 L". Up to three
+ * decimals, as the API stores them.
+ */
+export function formatQuantity(value, unit) {
+    if (isMissing(value)) return NO_VALUE;
+    const number = Number(value).toLocaleString("en-US");
+    return isMissing(unit) ? number : `${number} ${formatUnit(unit)}`;
+}
+
+/** An amount in CFA francs, already rounded to the franc by the API: "78,715 FCFA". */
+export function formatXof(value) {
+    return isMissing(value) ? NO_VALUE : `${Number(value).toLocaleString("en-US")} FCFA`;
+}
+
+/** An amount in euros, already rounded to the cent by the API: "€228.67", "€120.00". */
+export function formatEur(value) {
+    return isMissing(value)
+        ? NO_VALUE
+        : Number(value).toLocaleString("en-US", { style: "currency", currency: "EUR" });
+}
+
+/** A percentage as computed by the API, with the one decimal it keeps: "92%", "94.5%". */
+export function formatPercent(value) {
+    return isMissing(value)
+        ? NO_VALUE
+        : `${Number(value).toLocaleString("en-US", { maximumFractionDigits: 1 })}%`;
+}
+
+/** Origins of a nursery batch, in the words of the mock-up. */
+const ORIGIN_LABELS = { IN_HOUSE: "In-house production", PURCHASED: "External purchase" };
+
+/** Origin code of a nursery batch, "IN_HOUSE" as "In-house production". An unknown code is shown as received. */
+export function formatOrigin(origin) {
+    if (isMissing(origin)) return NO_VALUE;
+    const code = String(origin).trim();
+    return ORIGIN_LABELS[code] ?? code;
+}
+
 /** Several values are all shown, comma-separated; none is picked. */
 export function formatList(values) {
     if (!Array.isArray(values)) return NO_VALUE;
@@ -73,6 +133,68 @@ export function formatDate(value) {
     if (!match) return NO_VALUE;
     const [, year, month, day] = match;
     return `${day}/${month}/${year}`;
+}
+
+/**
+ * Days left before a date, as counted by the API: "in 1 day", "in 1,076 days".
+ * Null on the day itself or once it has passed, when there is nothing left to
+ * wait for.
+ */
+export function formatDaysAhead(days) {
+    if (isMissing(days)) return null;
+    const count = Number(days);
+    if (!Number.isInteger(count) || count <= 0) return null;
+    return `in ${count.toLocaleString("en-US")} ${count === 1 ? "day" : "days"}`;
+}
+
+/** A "YYYY-MM" month as the first day of that month in UTC, or null if malformed. */
+function parseMonth(value) {
+    if (isMissing(value)) return null;
+    const match = /^(\d{4})-(\d{2})$/.exec(String(value).trim());
+    if (!match) return null;
+    return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
+}
+
+/**
+ * Month sent by the API as "YYYY-MM", shown as "Apr 2027", or "April 2027"
+ * with the long style. Read and formatted in UTC, so no timezone can shift it.
+ */
+export function formatMonth(value, style = "short") {
+    const date = parseMonth(value);
+    if (!date) return NO_VALUE;
+    return date.toLocaleString("en-US", { month: style, year: "numeric", timeZone: "UTC" });
+}
+
+/** Month name alone, "Apr", for a chart axis that shows the year apart. */
+export function formatMonthName(value) {
+    const date = parseMonth(value);
+    if (!date) return NO_VALUE;
+    return date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+}
+
+/** Full name of a month number from 1 to 12, "May"; null for anything else. */
+export function monthName(month) {
+    const number = Number(month);
+    if (!Number.isInteger(number) || number < 1 || number > 12) return null;
+    return new Date(Date.UTC(2000, number - 1, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" });
+}
+
+/**
+ * Harvest season from its first and last month numbers: "May – July". A season
+ * over the new year reads in its own order, "November – February".
+ */
+export function formatSeason(startMonth, endMonth) {
+    const start = monthName(startMonth);
+    const end = monthName(endMonth);
+    if (!start || !end) return NO_VALUE;
+    return start === end ? start : `${start} – ${end}`;
+}
+
+/** A yield share from 0 to 1, with the up to 3 decimals the API keeps: "0.25", "1". */
+export function formatShare(value) {
+    return isMissing(value)
+        ? NO_VALUE
+        : Number(value).toLocaleString("en-US", { maximumFractionDigits: 3 });
 }
 
 /** Tree age as computed by the API: completed years and remaining months. */

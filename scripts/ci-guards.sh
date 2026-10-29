@@ -177,7 +177,7 @@ for f in "${BACKJAVA[@]:-}"; do
         printf '%s' "$content" | grep -q 'LAZY' && continue
         n="${line%%:*}"
         fail "F7 **\`@ManyToOne\` without \`fetch = LAZY\`** - \`$f:$n\` - EAGER by default = systematic N+1. Add \`fetch = FetchType.LAZY\`."
-    done < <(added_lines "$f" | grep '@ManyToOne' || true)
+    done < <(added_lines "$f" | grep -E '^[0-9]+:[[:space:]]*@ManyToOne([[:space:]]|\()' || true)
 done
 
 # ---------------------------------------------------------------------------
@@ -212,7 +212,9 @@ for f in "${NEWENT[@]:-}"; do
     [ -z "$f" ] && continue
     content=$(show_head "$f")
     printf '%s' "$content" | grep -q '@Entity' || continue
-    if printf '%s' "$content" | grep -q '@Id' && ! printf '%s' "$content" | grep -q '@GeneratedValue'; then
+    if printf '%s' "$content" | grep -q '@Id' \
+       && ! printf '%s' "$content" | grep -q '@GeneratedValue' \
+       && ! printf '%s' "$content" | grep -qE '@(IdClass|EmbeddedId)'; then
         fail "F10 **PK without \`@GeneratedValue\`** - \`$f\` - a POST with an existing \`id\` overwrites the record (see PR-43)."
     fi
     if ! printf '%s' "$content" | grep -q '@Version' \

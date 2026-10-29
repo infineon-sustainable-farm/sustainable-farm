@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -103,9 +105,12 @@ public class HarvestServiceTest {
         assertEquals(800.0, harvest.getQuantityKg());
         assertEquals("user_entry", harvest.getSource());
         assertEquals(NOW, harvest.getLastUpdated());
+        // Assert: the first lot of block B for 2026, read from the lots already given
+        assertEquals("LOT-2026-B-001", harvest.getLotNumber());
+        verify(harvestRecordRepository).findLotNumbersStartingWith("LOT-2026-B-");
         // Assert: the response describes the variety row
-        assertEquals(new HarvestResponse(200L, null, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
-                "user_entry", NOW), response);
+        assertEquals(new HarvestResponse(200L, "LOT-2026-B-001", null, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10),
+                800.0, "user_entry", NOW), response);
     }
 
     @Test
@@ -119,9 +124,51 @@ public class HarvestServiceTest {
         // Act
         HarvestResponse response = harvestService.recordHarvest(
                 request(null, " b ", " keitt ", LocalDate.of(2026, 6, 10), 800.0), NOW);
-        // Assert: the stored spelling comes back
+        // Assert: the stored spelling comes back, and the lot number uses it
         assertEquals("B", response.blockCode());
         assertEquals("Keitt", response.varietyName());
+        assertEquals("LOT-2026-B-001", response.lotNumber());
+    }
+
+    @Test
+    void recordHarvest_shouldGiveOneMoreThanTheHighestNumberOfTheBlockAndYear() {
+        // Arrange: lots 001 and 003 of block B for 2026, 002 missing
+        keittPlantedOnB();
+        harvestSaveAssignsId(200L);
+        when(harvestRecordRepository.findLotNumbersStartingWith("LOT-2026-B-"))
+                .thenReturn(List.of("LOT-2026-B-003", "LOT-2026-B-001"));
+        // Act
+        HarvestResponse response = harvestService.recordHarvest(
+                request(null, "B", "Keitt", LocalDate.of(2026, 6, 10), 800.0), NOW);
+        // Assert: after the highest, never a number already given
+        assertEquals("LOT-2026-B-004", response.lotNumber());
+    }
+
+    @Test
+    void recordHarvest_shouldNumberByTheYearOfTheHarvestDate_notOfTheDayItIsRecorded() {
+        // Arrange: a picking of 31 December 2025, recorded in September 2026
+        keittPlantedOnB();
+        harvestSaveAssignsId(200L);
+        when(harvestRecordRepository.findLotNumbersStartingWith("LOT-2025-B-")).thenReturn(List.of("LOT-2025-B-007"));
+        // Act
+        HarvestResponse response = harvestService.recordHarvest(
+                request(null, "B", "Keitt", LocalDate.of(2025, 12, 31), 300.0), NOW);
+        // Assert: a lot of 2025, after the last one of that year
+        assertEquals("LOT-2025-B-008", response.lotNumber());
+        verify(harvestRecordRepository, never()).findLotNumbersStartingWith("LOT-2026-B-");
+    }
+
+    @Test
+    void recordHarvest_shouldWriteAtLeastThreeDigits_andGoOnPast999() {
+        // Arrange
+        keittPlantedOnB();
+        harvestSaveAssignsId(200L);
+        when(harvestRecordRepository.findLotNumbersStartingWith("LOT-2026-B-")).thenReturn(List.of("LOT-2026-B-999"));
+        // Act
+        HarvestResponse response = harvestService.recordHarvest(
+                request(null, "B", "Keitt", LocalDate.of(2026, 6, 10), 800.0), NOW);
+        // Assert: the sequence grows a digit instead of wrapping around
+        assertEquals("LOT-2026-B-1000", response.lotNumber());
     }
 
     @Test
@@ -202,17 +249,89 @@ public class HarvestServiceTest {
     }
 
     @Test
-    void getAllHarvests_shouldPassFiltersAndTurnABlankBlockIntoNoFilter() {
+    void getAllHarvests_shouldPassFiltersAndTurnABlankBlockOrLotNumberIntoNoFilter() {
         // Arrange
         Variety keitt = variety(10L, 1, "B", "Keitt");
-        HarvestRecord harvest = new HarvestRecord(200L, keitt, LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW);
+        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
+                "user_entry", NOW);
         LocalDate from = LocalDate.of(2026, 6, 1);
         LocalDate to = LocalDate.of(2026, 6, 30);
-        when(harvestRecordRepository.findByOptionalFilters(1, null, from, to)).thenReturn(List.of(harvest));
+        when(harvestRecordRepository.findByOptionalFilters(1, null, null, from, to)).thenReturn(List.of(harvest));
         // Act
-        List<HarvestResponse> responses = harvestService.getAllHarvests(1, "  ", from, to);
+        List<HarvestResponse> responses = harvestService.getAllHarvests(1, "  ", " ", from, to);
         // Assert
-        assertEquals(List.of(new HarvestResponse(200L, 1, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
-                "user_entry", NOW)), responses);
+        assertEquals(List.of(new HarvestResponse(200L, "LOT-2026-B-001", 1, "B", 10L, "Keitt",
+                LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW)), responses);
+    }
+
+    @Test
+    void getAllHarvests_shouldTrimAndUpperCaseTheLotNumber() {
+        // Arrange
+        Variety keitt = variety(10L, 1, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
+                "user_entry", NOW);
+        when(harvestRecordRepository.findByOptionalFilters(null, null, "LOT-2026-B-001", null, null))
+                .thenReturn(List.of(harvest));
+        // Act
+        List<HarvestResponse> responses = harvestService.getAllHarvests(null, null, " lot-2026-b-001 ", null, null);
+        // Assert: the lot number as stored is looked up, as an exact value
+        assertEquals(List.of(200L), responses.stream().map(HarvestResponse::id).toList());
+    }
+
+    @Test
+    void getAllHarvests_shouldReturnAnEmptyList_forAnUnknownLotNumber() {
+        // Arrange: no harvest holds this number
+        when(harvestRecordRepository.findByOptionalFilters(null, null, "LOT-1999-Z-999", null, null))
+                .thenReturn(List.of());
+        // Act & Assert: an empty list, not an error
+        assertEquals(List.of(), harvestService.getAllHarvests(null, null, "LOT-1999-Z-999", null, null));
+    }
+
+    @Test
+    void getAllHarvests_withoutLotNumber_shouldReadEveryLotOfTheFarmBlockAndPeriod() {
+        // Arrange: the form the harvest status and the yield comparison use
+        LocalDate from = LocalDate.of(2026, 6, 1);
+        LocalDate to = LocalDate.of(2026, 6, 30);
+        when(harvestRecordRepository.findByOptionalFilters(1, "B", null, from, to)).thenReturn(List.of());
+        // Act
+        harvestService.getAllHarvests(1, "B", from, to);
+        // Assert: no lot number filter
+        verify(harvestRecordRepository).findByOptionalFilters(1, "B", null, from, to);
+    }
+
+    @Test
+    void getHarvestById_shouldReturnEveryField_withTheFarmBlockAndNameOfTheVarietyRow() {
+        // Arrange
+        Variety keitt = variety(10L, 1, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
+                "user_entry", NOW);
+        when(harvestRecordRepository.findWithVarietyById(200L)).thenReturn(Optional.of(harvest));
+        // Act
+        HarvestResponse response = harvestService.getHarvestById(200L);
+        // Assert
+        assertEquals(new HarvestResponse(200L, "LOT-2026-B-001", 1, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10),
+                800.0, "user_entry", NOW), response);
+    }
+
+    @Test
+    void getHarvestById_shouldGiveNoLotNumber_forAHarvestRecordedBeforeLotNumbers() {
+        // Arrange: a row written before the lot number existed
+        Variety keitt = variety(10L, 1, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(150L, null, keitt, LocalDate.of(2026, 5, 2), 300.0,
+                "user_entry", NOW);
+        when(harvestRecordRepository.findWithVarietyById(150L)).thenReturn(Optional.of(harvest));
+        // Act & Assert: null, never a number made up on the way out
+        assertNull(harvestService.getHarvestById(150L).lotNumber());
+    }
+
+    @Test
+    void getHarvestById_shouldThrowNotFound_whenTheHarvestIsUnknown() {
+        // Arrange
+        when(harvestRecordRepository.findWithVarietyById(999L)).thenReturn(Optional.empty());
+        // Act
+        HarvestNotFoundException exception = assertThrows(HarvestNotFoundException.class,
+                () -> harvestService.getHarvestById(999L));
+        // Assert
+        assertEquals("Harvest with ID 999 not found", exception.getMessage());
     }
 }

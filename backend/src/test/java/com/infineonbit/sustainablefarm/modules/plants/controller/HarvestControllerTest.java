@@ -4,17 +4,22 @@ import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.service.ConcurrentPlantingRetry;
 import com.infineonbit.sustainablefarm.modules.plants.service.HarvestService;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -37,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** The error bodies are asserted in full, as for the planting route. */
 @WebMvcTest(HarvestController.class)
-@Import(CoreExceptionHandler.class)
+@Import({CoreExceptionHandler.class, ConcurrentPlantingRetry.class})
 public class HarvestControllerTest {
 
     private static final String URL = "/api/plants/harvests";
@@ -56,16 +62,22 @@ public class HarvestControllerTest {
     /** Common part of every 4xx body: the application-wide ApiError envelope. */
     private static void assertApiError(ResultActions result, int status, String error, String message)
             throws Exception {
+        assertApiError(result, status, error, message, URL);
+    }
+
+    /** Same envelope, for a request to the given path, such as one harvest. */
+    private static void assertApiError(ResultActions result, int status, String error, String message, String path)
+            throws Exception {
         result.andExpect(status().is(status))
                 .andExpect(jsonPath("$.status").value(status))
                 .andExpect(jsonPath("$.error").value(error))
                 .andExpect(jsonPath("$.message").value(message))
-                .andExpect(jsonPath("$.path").value("uri=" + URL))
+                .andExpect(jsonPath("$.path").value("uri=" + path))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
     private static HarvestResponse keittHarvest() {
-        return new HarvestResponse(200L, null, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
+        return new HarvestResponse(200L, "LOT-2026-B-001", null, "B", 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0,
                 "user_entry", NOW);
     }
 
@@ -81,6 +93,7 @@ public class HarvestControllerTest {
         result.andExpect(status().isCreated())
                 .andExpect(header().doesNotExist("Location"))
                 .andExpect(jsonPath("$.id").value(200))
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"))
                 .andExpect(jsonPath("$.farmId").value(nullValue()))
                 .andExpect(jsonPath("$.blockCode").value("B"))
                 .andExpect(jsonPath("$.varietyId").value(10))
@@ -95,6 +108,58 @@ public class HarvestControllerTest {
         assertNull(captor.getValue().farmId());
         assertEquals(" b ", captor.getValue().blockCode());
         assertEquals(800.0, captor.getValue().quantityKg());
+    }
+
+    @Test
+    void recordHarvest_shouldIgnoreALotNumberSentWithTheRequest() throws Exception {
+        // Arrange: the lot number is given by the server, never taken from the client
+        when(harvestService.recordHarvest(any(HarvestRequest.class))).thenReturn(keittHarvest());
+        // Act
+        ResultActions result = postHarvest("""
+                {"blockCode":"B","varietyName":"Keitt","harvestDate":"2026-06-10","quantityKg":800,
+                 "lotNumber":"LOT-1999-Z-999"}
+                """);
+        // Assert: recorded, with the lot number the service gave
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"));
+    }
+
+    /** A violation of a unique constraint, as the repository layer reports it. */
+    private static DataIntegrityViolationException violationOf(String constraintName) {
+        return new DataIntegrityViolationException("could not execute statement", new ConstraintViolationException(
+                "duplicate key", new SQLException("duplicate key", "23505"), constraintName));
+    }
+
+    @Test
+    void recordHarvest_shouldRunTheHarvestOnceMore_whenItLostARaceOnTheLotNumber() throws Exception {
+        // Arrange: another harvest of block B took the same number; the second run takes the next one
+        when(harvestService.recordHarvest(any(HarvestRequest.class)))
+                .thenThrow(violationOf("uk_harvest_record_lot_number"))
+                .thenReturn(keittHarvest());
+        // Act
+        ResultActions result = postHarvest("""
+                {"blockCode":"B","varietyName":"Keitt","harvestDate":"2026-06-10","quantityKg":800}
+                """);
+        // Assert
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"));
+        verify(harvestService, times(2)).recordHarvest(any(HarvestRequest.class));
+    }
+
+    @Test
+    void recordHarvest_shouldReturn409AndStop_whenTheSecondRunLosesARaceAgain() throws Exception {
+        // Arrange: both runs lose, for example with three harvests or more of the block at once;
+        // the constraint is named as H2 reports it
+        when(harvestService.recordHarvest(any(HarvestRequest.class))).thenThrow(
+                violationOf("PUBLIC.UK_HARVEST_RECORD_LOT_NUMBER INDEX PUBLIC.UK_HARVEST_RECORD_LOT_NUMBER_INDEX_A"));
+        // Act
+        ResultActions result = postHarvest("""
+                {"blockCode":" b ","varietyName":"Keitt","harvestDate":"2026-06-10","quantityKg":800}
+                """);
+        // Assert: a clear 409 naming the block as stored, never a 500, and no third run
+        assertApiError(result, 409, "Conflict", "Another harvest on block B was being recorded at the same time. "
+                + "Nothing was saved: please send the request again.");
+        verify(harvestService, times(2)).recordHarvest(any(HarvestRequest.class));
     }
 
     @Test
@@ -175,7 +240,7 @@ public class HarvestControllerTest {
     @Test
     void getAllHarvests_shouldPassEveryFilter() throws Exception {
         // Arrange
-        when(harvestService.getAllHarvests(1, "B", LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)))
+        when(harvestService.getAllHarvests(1, "B", null, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)))
                 .thenReturn(List.of(keittHarvest()));
         // Act
         ResultActions result = mockMvc.perform(get(URL)
@@ -187,13 +252,37 @@ public class HarvestControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(200))
+                .andExpect(jsonPath("$[0].lotNumber").value("LOT-2026-B-001"))
                 .andExpect(jsonPath("$[0].harvestDate").value("2026-06-10"));
+    }
+
+    @Test
+    void getAllHarvests_shouldPassTheLotNumberAsSent() throws Exception {
+        // Arrange: the service trims and upper-cases it
+        when(harvestService.getAllHarvests(null, null, " lot-2026-b-001 ", null, null))
+                .thenReturn(List.of(keittHarvest()));
+        // Act
+        ResultActions result = mockMvc.perform(get(URL).param("lotNumber", " lot-2026-b-001 "));
+        // Assert
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].lotNumber").value("LOT-2026-B-001"));
+    }
+
+    @Test
+    void getAllHarvests_shouldReturnAnEmptyList_forAnUnknownLotNumber() throws Exception {
+        // Arrange
+        when(harvestService.getAllHarvests(null, null, "LOT-1999-Z-999", null, null)).thenReturn(List.of());
+        // Act & Assert: a filter matching nothing, not a 404
+        mockMvc.perform(get(URL).param("lotNumber", "LOT-1999-Z-999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
     void getAllHarvests_shouldPassNulls_whenNoFilterIsGiven() throws Exception {
         // Arrange
-        when(harvestService.getAllHarvests(null, null, null, null)).thenReturn(List.of());
+        when(harvestService.getAllHarvests(null, null, null, null, null)).thenReturn(List.of());
         // Act & Assert
         mockMvc.perform(get(URL))
                 .andExpect(status().isOk())
@@ -208,5 +297,38 @@ public class HarvestControllerTest {
         assertApiError(result, 400, "Bad Request", "Invalid value for parameter 'from'");
         result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
         verifyNoInteractions(harvestService);
+    }
+
+    @Test
+    void getHarvestById_shouldReturn200WithTheHarvest() throws Exception {
+        // Arrange: a harvest of farm 1, so that no field is null
+        when(harvestService.getHarvestById(200L)).thenReturn(new HarvestResponse(200L, "LOT-2026-B-001", 1, "B",
+                10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW));
+        // Act
+        ResultActions result = mockMvc.perform(get(URL + "/200"));
+        // Assert: every field of the harvest, and no other
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$", aMapWithSize(10)))
+                .andExpect(jsonPath("$.id").value(200))
+                .andExpect(jsonPath("$.lotNumber").value("LOT-2026-B-001"))
+                .andExpect(jsonPath("$.farmId").value(1))
+                .andExpect(jsonPath("$.blockCode").value("B"))
+                .andExpect(jsonPath("$.varietyId").value(10))
+                .andExpect(jsonPath("$.varietyName").value("Keitt"))
+                .andExpect(jsonPath("$.harvestDate").value("2026-06-10"))
+                .andExpect(jsonPath("$.quantityKg").value(800.0))
+                .andExpect(jsonPath("$.source").value("user_entry"))
+                .andExpect(jsonPath("$.lastUpdated").value("2026-09-24T10:00:00Z"));
+    }
+
+    @Test
+    void getHarvestById_shouldReturn404WithApiError_whenTheHarvestIsUnknown() throws Exception {
+        // Arrange
+        when(harvestService.getHarvestById(999L)).thenThrow(new HarvestNotFoundException(999L));
+        // Act
+        ResultActions result = mockMvc.perform(get(URL + "/999"));
+        // Assert
+        assertApiError(result, 404, "Not Found", "Harvest with ID 999 not found", URL + "/999");
+        result.andExpect(jsonPath("$.fieldErrors").value(nullValue()));
     }
 }

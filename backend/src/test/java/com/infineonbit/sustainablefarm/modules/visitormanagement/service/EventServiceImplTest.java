@@ -48,8 +48,10 @@ class EventServiceImplTest {
     private EventServiceImpl service;
 
     private Long eventId = 1L;
-    private LocalDateTime start = LocalDateTime.of(2026, 10, 4, 10, 0);
-    private LocalDateTime end = LocalDateTime.of(2026, 10, 4, 16, 0);
+    // Dates relatives au jour d'exécution : une date codée en dur passerait à l'horizon
+    // et ferait échouer les scénarios « événement à venir » (publication, inscription).
+    private LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    private LocalDateTime end = start.withHour(16);
 
     @BeforeEach
     void setUp() {

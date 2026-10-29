@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
@@ -57,6 +58,19 @@ public class HarvestService {
     }
 
     /**
+     * Lot number filter as stored: trimmed and upper-cased, so
+     * {@code " lot-2026-a-002 "} finds {@code "LOT-2026-A-002"}. A blank value
+     * is no filter at all.
+     *
+     * @param lotNumber the filter value as received, possibly {@code null}
+     * @return the lot number to match, or {@code null} if it was null or blank
+     */
+    private static String normalizeLotNumberFilter(String lotNumber) {
+        String trimmed = normalizeFilter(lotNumber);
+        return trimmed == null ? null : trimmed.toUpperCase(Locale.ROOT);
+    }
+
+    /**
      * Maps a stored harvest to its API representation. The farm, block and name
      * are those of the variety row the harvest belongs to.
      *
@@ -67,6 +81,7 @@ public class HarvestService {
         Variety variety = harvest.getVariety();
         return new HarvestResponse(
                 harvest.getId(),
+                harvest.getLotNumber(),
                 variety.getFarmId(),
                 variety.getBlockCode(),
                 variety.getId(),
@@ -98,8 +113,9 @@ public class HarvestService {
      *         and the name ignores case but not accents.</li>
      *     <li>Refuses a harvest of a variety with no recorded planting.</li>
      *     <li>Refuses a harvest dated before the planting of that variety.</li>
-     *     <li>Stores the harvest. Several harvests on the same day are allowed,
-     *         one per picking.</li>
+     *     <li>Stores the harvest with the next lot number of its block for the
+     *         year of the harvest date. Several harvests on the same day are
+     *         allowed, one per picking, each with its own lot.</li>
      * </ol>
      *
      * @param request the harvest, already validated
@@ -138,6 +154,7 @@ public class HarvestService {
         }
 
         HarvestRecord harvest = new HarvestRecord();
+        harvest.setLotNumber(nextLotNumber(variety.getBlockCode(), request.harvestDate().getYear()));
         harvest.setVariety(variety);
         harvest.setHarvestDate(request.harvestDate());
         harvest.setQuantityKg(request.quantityKg());
@@ -147,24 +164,85 @@ public class HarvestService {
     }
 
     /**
+     * Lot number of the next harvest of a block for a year: one more than the
+     * highest sequence already given to that block and year, or 1 for the
+     * first one. The highest, not the count, so a missing number never leads
+     * to a duplicate. The sequence follows the order in which the harvests are
+     * recorded, not their dates.
+     *
+     * <p>Two harvests of the block recorded at the same time can compute the
+     * same number: the unique constraint on the lot number refuses the second
+     * one, which {@link ConcurrentPlantingRetry} runs once more.
+     *
+     * <p>Public for {@link HarvestLotNumberBackfill}, which numbers the earlier
+     * harvests the same way. It opens no transaction of its own.
+     *
+     * @param blockCode block code as stored, for example {@code "A"}
+     * @param year      year of the harvest date, not of the day it is recorded
+     * @return the lot number, for example {@code "LOT-2026-A-003"}
+     */
+    public String nextLotNumber(String blockCode, int year) {
+        String prefix = HarvestRecord.lotPrefixOf(year, blockCode);
+        int highest = harvestRecordRepository.findLotNumbersStartingWith(prefix).stream()
+                .mapToInt(lotNumber -> Integer.parseInt(lotNumber.substring(prefix.length())))
+                .max()
+                .orElse(0);
+        return HarvestRecord.lotNumberOf(year, blockCode, highest + 1);
+    }
+
+    /**
      * Retrieves the harvests matching the optional filters.
      *
      * <p>Every filter is independent and optional; a missing farm means every
-     * farm, as for the other lists of the module. Both dates are included. A
-     * filter that matches nothing, or a {@code from} after {@code to}, returns
-     * an empty list and is never an error.
+     * farm, as for the other lists of the module. The lot number is matched
+     * exactly once trimmed and upper-cased, so {@code " lot-2026-a-002 "} finds
+     * {@code "LOT-2026-A-002"}. Both dates are included. A filter that matches
+     * nothing, such as an unknown lot number, or a {@code from} after
+     * {@code to}, returns an empty list and is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
      * @param blockCode raw block value as stored (for example {@code "A"}),
      *                  or {@code null} for every block
+     * @param lotNumber lot number (for example {@code "LOT-2026-A-002"}), or
+     *                  {@code null} for every harvest
+     * @param from      first harvest date, included, or {@code null}
+     * @param to        last harvest date, included, or {@code null}
+     * @return the matching harvests, ordered by date then identifier
+     */
+    public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, String lotNumber,
+                                                LocalDate from, LocalDate to) {
+        return harvestRecordRepository.findByOptionalFilters(farmId, normalizeFilter(blockCode),
+                        normalizeLotNumberFilter(lotNumber), from, to)
+                .stream()
+                .map(HarvestService::toResponse)
+                .toList();
+    }
+
+    /**
+     * Same as {@link #getAllHarvests(Integer, String, String, LocalDate, LocalDate)}
+     * without the lot number: the harvests of a farm, block and period, as the
+     * harvest status and the yield comparison read them.
+     *
+     * @param farmId    farm identifier, or {@code null} for every farm
+     * @param blockCode raw block value as stored, or {@code null} for every block
      * @param from      first harvest date, included, or {@code null}
      * @param to        last harvest date, included, or {@code null}
      * @return the matching harvests, ordered by date then identifier
      */
     public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return harvestRecordRepository.findByOptionalFilters(farmId, normalizeFilter(blockCode), from, to)
-                .stream()
-                .map(HarvestService::toResponse)
-                .toList();
+        return getAllHarvests(farmId, blockCode, null, from, to);
+    }
+
+    /**
+     * Retrieves one harvest with its variety row.
+     *
+     * @param id the harvest identifier
+     * @return the harvest
+     * @throws HarvestNotFoundException if no harvest has this identifier
+     */
+    public HarvestResponse getHarvestById(Long id) {
+        HarvestRecord harvest = harvestRecordRepository.findWithVarietyById(id)
+                .orElseThrow(() -> new HarvestNotFoundException(id));
+        return toResponse(harvest);
     }
 }

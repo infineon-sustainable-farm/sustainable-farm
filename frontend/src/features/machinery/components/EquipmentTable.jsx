@@ -15,8 +15,12 @@ function EquipmentTable({ equipments, onEditStatus, onDelete }) {
         </tr>
       </thead>
       <tbody>
-        {equipments.map((equipment) => (
-          <tr key={equipment.id} className="border-b border-gray-100">
+        {equipments.map((equipment, index) => (
+          <tr
+            key={equipment.id}
+            className="border-b border-gray-100 animate-fade-up-sm"
+            style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+          >
             <td className="py-2 font-medium">{equipment.name}</td>
             <td className="py-2">{formatEnumLabel(equipment.category)}</td>
             <td className="py-2">{formatEnumLabel(equipment.stage)}</td>
