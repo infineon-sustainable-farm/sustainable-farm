@@ -18,6 +18,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.VisitorEventReque
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSafetyBriefing;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterVisitorEvent;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterVisitorStop;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.ExternalServiceException;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
@@ -26,6 +27,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSafet
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterVisitorEventRepository;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,6 +68,9 @@ class VisitorIntegrationServiceTest {
 
     @Mock
     private WaterUnavailabilityService unavailabilityService;
+
+    @Mock
+    private WaterVisitorStopService stopService;
 
     @Mock
     private AlertService alertService;
@@ -120,7 +125,7 @@ class VisitorIntegrationServiceTest {
         when(visitorEventRepository.save(existing)).thenReturn(existing);
 
         Map<String, Object> response = service().visitorEvent(new VisitorEventRequest(
-                " VIS-1 ", "School A", Instant.parse("2026-10-20T09:00:00Z"), List.of()));
+                " VIS-1 ", "School A", Instant.parse("2026-10-20T09:00:00Z"), List.of(), null));
 
         assertEquals(false, response.get("created"));
         assertEquals(existing.getId(), response.get("eventId"));
@@ -136,13 +141,101 @@ class VisitorIntegrationServiceTest {
         when(visitorEventRepository.save(any(WaterVisitorEvent.class))).thenAnswer(call -> call.getArgument(0));
         when(unavailabilityService.isZoneUnavailable(zoneId, expectedAt)).thenReturn(true);
 
-        Map<String, Object> response = service().visitorEvent(new VisitorEventRequest("VIS-2", null, expectedAt, List.of(zoneId, zoneId)));
+        Map<String, Object> response = service().visitorEvent(new VisitorEventRequest("VIS-2", null, expectedAt, List.of(zoneId, zoneId), null));
 
         assertEquals(true, response.get("conflict"));
         assertEquals(List.of(zoneId), response.get("conflictingZones"));
         assertEquals(true, response.get("created"));
         verify(alertService).raiseOnce(eq("warning"), eq("Visitor group expected during water unavailability - VIS-2"),
                 anyString(), anyString());
+    }
+
+    @Test
+    void stopsAreResolvedByNameAndTheOthersAreIgnored() {
+        UUID zoneId = UUID.randomUUID();
+        Instant expectedAt = Instant.parse("2026-10-20T09:00:00Z");
+        when(stopService.resolve("Smart drip irrigation")).thenReturn(Optional.of(stop("Smart drip irrigation", zoneId, null)));
+        when(stopService.resolve("Solar plant & tracking")).thenReturn(Optional.empty());
+        when(visitorEventRepository.findByVisitId("1842")).thenReturn(Optional.empty());
+        when(visitorEventRepository.save(any(WaterVisitorEvent.class))).thenAnswer(call -> call.getArgument(0));
+
+        Map<String, Object> response = service().visitorEvent(new VisitorEventRequest("1842", "School A", expectedAt, null,
+                List.of(" Smart drip irrigation ", "Solar plant & tracking")));
+
+        assertEquals(List.of(zoneId), response.get("zones"));
+        assertEquals(List.of("Smart drip irrigation"), response.get("stops"));
+        assertEquals(List.of("Solar plant & tracking"), response.get("ignoredStops"));
+        assertEquals(false, response.get("conflict"));
+    }
+
+    @Test
+    void aStopWhoseTankIsUnavailableIsAConflict() {
+        UUID sourceId = UUID.randomUUID();
+        Instant expectedAt = Instant.parse("2026-10-20T09:00:00Z");
+        when(stopService.resolve("Rain tank")).thenReturn(Optional.of(stop("Rain tank", null, sourceId)));
+        when(unavailabilityService.isSourceUnavailable(sourceId, expectedAt)).thenReturn(true);
+        when(visitorEventRepository.findByVisitId("1843")).thenReturn(Optional.empty());
+        when(visitorEventRepository.save(any(WaterVisitorEvent.class))).thenAnswer(call -> call.getArgument(0));
+
+        Map<String, Object> response = service().visitorEvent(new VisitorEventRequest("1843", null, expectedAt, null, List.of("Rain tank")));
+
+        assertEquals(true, response.get("conflict"));
+        assertEquals(List.of("Rain tank"), response.get("conflictingStops"));
+        verify(alertService).raiseOnce(eq("warning"), eq("Visitor group expected during water unavailability - 1843"),
+                anyString(), anyString());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theVisitTotalCoversTheTimeSlotAndTheWindowOnlyGivesTheFlowRate() {
+        UUID zoneId = UUID.randomUUID();
+        Instant now = Instant.now();
+        when(zoneRepository.existsById(zoneId)).thenReturn(true);
+        // First query: the last 15 minutes; second one: the visit session.
+        when(consumptionRepository.findAll(any(Specification.class)))
+                .thenReturn(List.of(consumption(30.0, now.minus(5, ChronoUnit.MINUTES))))
+                .thenReturn(List.of(consumption(90.0, now.minus(40, ChronoUnit.MINUTES)), consumption(30.0, now.minus(5, ChronoUnit.MINUTES))));
+        Instant from = now.minus(1, ChronoUnit.HOURS);
+
+        Map<String, Object> live = service().liveConsumption(null, zoneId, null, null, from, from.plus(2, ChronoUnit.HOURS));
+
+        assertEquals(2.0, live.get("flowRateLitersPerMinute"));
+        Map<?, ?> session = (Map<?, ?>) live.get("session");
+        assertEquals(120.0, session.get("liters"));
+        assertEquals(true, session.get("inProgress"));
+    }
+
+    @Test
+    void aSessionEndingBeforeItStartsOrLongerThanADayIsRefused() {
+        Instant from = Instant.now().minus(1, ChronoUnit.HOURS);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service().liveConsumption(null, null, null, null, from, from.minusSeconds(60)));
+        assertThrows(IllegalArgumentException.class,
+                () -> service().liveConsumption(null, null, null, null, from, from.plus(2, ChronoUnit.DAYS)));
+    }
+
+    @Test
+    void theSummaryOfAStopShowsItsZoneAndTank() {
+        UUID zoneId = UUID.randomUUID();
+        UUID sourceId = UUID.randomUUID();
+        when(stopService.resolve("smart drip irrigation")).thenReturn(Optional.of(stop("Smart drip irrigation", zoneId, sourceId)));
+        when(sourceRepository.existsById(sourceId)).thenReturn(true);
+        when(zoneRepository.existsById(zoneId)).thenReturn(true);
+        when(irrigationService.irrigationStatus(zoneId)).thenReturn(Map.of("active", true));
+
+        Map<String, Object> summary = service().summary(null, null, "smart drip irrigation", null, null);
+
+        assertEquals("Smart drip irrigation", summary.get("stop"));
+        assertEquals(Map.of("active", true), summary.get("irrigationStatus"));
+        verify(waterService).sourceLevel(sourceId);
+    }
+
+    @Test
+    void aStopTheWaterTeamDidNotMapIsNotFound() {
+        when(stopService.resolve("Solar plant & tracking")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> service().summary(null, null, "Solar plant & tracking", null, null));
     }
 
     @Test
@@ -189,6 +282,15 @@ class VisitorIntegrationServiceTest {
                 new SafetyBriefingRequest(null, null, null, null, null, 0, null)));
     }
 
+    private static WaterVisitorStop stop(String name, UUID zoneId, UUID sourceId) {
+        WaterVisitorStop stop = new WaterVisitorStop();
+        stop.setId(UUID.randomUUID());
+        stop.setStopName(name);
+        stop.setZoneId(zoneId);
+        stop.setSourceId(sourceId);
+        return stop;
+    }
+
     private static WaterConsumption consumption(double liters, Instant at) {
         WaterConsumption consumption = new WaterConsumption();
         consumption.setConsumptionLiters(liters);
@@ -199,6 +301,6 @@ class VisitorIntegrationServiceTest {
     private VisitorIntegrationService service() {
         return new VisitorIntegrationService(visitorEventRepository, safetyRepository, consumptionRepository,
                 sourceRepository, zoneRepository, waterService, irrigationService, economyService,
-                unavailabilityService, alertService, WaterIntegrationProperties.defaults());
+                unavailabilityService, stopService, alertService, WaterIntegrationProperties.defaults());
     }
 }

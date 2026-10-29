@@ -32,6 +32,7 @@ const LOT = {
 const COMPLIANCE = {
   lotId: 'LOT-1', from: '2026-10-13T08:00:00Z', to: '2026-10-13T10:00:00Z', sourceIds: ['src-1'],
   status: 'compliant', compliant: true, rule: { phMin: 6, phMax: 7.5, turbidityMaxNtu: 5 }, tests: [{}],
+  validityDays: 7, sources: [{ sourceId: 'src-1', status: 'compliant', testCount: 1 }],
 }
 
 beforeEach(() => {
@@ -59,15 +60,22 @@ describe('LotsView', () => {
     expect(screen.getByText('Washing: 150 L')).toBeTruthy()
     await waitFor(() => expect(screen.getByText('Compliant')).toBeTruthy())
     expect(screen.getAllByText('Washing tank').length).toBeGreaterThan(0)
+    expect(screen.getByText('Washing tank: Compliant')).toBeTruthy()
+    expect(screen.getByText(/the 7 days before the lot/)).toBeTruthy()
   })
 
   it('never presents a lot without quality test as compliant', async () => {
-    productTransformationApi.getQualityCompliance.mockResolvedValue({ ...COMPLIANCE, status: 'no_test', compliant: false, tests: [] })
+    productTransformationApi.getQualityCompliance.mockResolvedValue({
+      ...COMPLIANCE, status: 'no_test', compliant: false, tests: [{}],
+      sources: [{ sourceId: 'src-1', status: 'compliant' }, { sourceId: 'src-2', status: 'no_test' }],
+    })
     render(<LotsView {...props} />)
 
     lookUp('LOT-1')
 
-    await waitFor(() => expect(screen.getByText('No test in the window')).toBeTruthy())
+    // One source of the lot was never tested: the lot cannot be compliant.
+    await waitFor(() => expect(screen.getAllByText('No test in the window').length).toBeGreaterThan(0))
+    expect(screen.getByText(/Source src-2: No test in the window/)).toBeTruthy()
     expect(screen.getByText(/cannot be declared compliant/)).toBeTruthy()
   })
 

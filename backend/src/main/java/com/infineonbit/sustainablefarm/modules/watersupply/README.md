@@ -10,7 +10,7 @@ share the same structure and the same conventions.
 | Part | Location |
 |---|---|
 | REST API, services, entities | `backend/src/main/java/com/infineonbit/sustainablefarm/modules/watersupply/` |
-| Database schema (migrations V1 -> V12) | `backend/src/main/resources/db/migration/` |
+| Database schema (migrations V1 -> V13) | `backend/src/main/resources/db/migration/` |
 | Interface (views, hooks, API client) | `frontend/src/features/watersupply/` |
 | Sensors and ESP32 firmware | `iot/` |
 
@@ -53,13 +53,22 @@ The source of the needs is the [integration audit](../../../../../../../../../do
 | 6.1 | Record and dispatch valve commands | IoT | done, gateway not configured (503) |
 | 7.1 | Run Java 21 suite and finalize documentation | Water Supply | done |
 
+Answers of the teams (2026-10-29), applied:
+
+| ID | Change | Module | Status |
+|---|---|---|---|
+| 8.1 | Block codes follow the Plants rule (1 to 10 letters or digits); a block belongs to only one zone (V13) | Plants | done |
+| 8.2 | Visitor Management stops mapped by name to zones and tanks; visits identified by registration id | Visitor Management | done |
+| 8.3 | Visit counter totals the time slot; the 15-minute window gives the flow rate | Visitor Management | done |
+| 8.4 | Quality tests valid 7 days (configurable); one valid test per source used by a lot | Product Transformation | done (validity to confirm) |
+
 ### Endpoints added
 
 | Area | Endpoints |
 |---|---|
 | Zone to block (Plants) | `GET|POST /api/water/zone-block-mappings`, `GET|PUT|DELETE /api/water/zone-block-mappings/{id}`; `blockCode` filter on `GET /api/irrigations` and `GET /api/water/consumption` |
 | Plants | `GET /api/water/plants/rainfall`, `POST /api/water/plants/irrigation-need` |
-| Visitor Management | `GET /api/water/visitor/irrigation-status`, `/visitor/live-consumption`, `/visitor/summary`, `GET|PATCH /api/water/visitor/safety-briefing`, `POST /api/water/visitor-events` |
+| Visitor Management | `GET /api/water/visitor/irrigation-status`, `/visitor/live-consumption`, `/visitor/summary` (by `stop`, with `sessionFrom`/`sessionTo`), `GET|POST|PUT|DELETE /api/water/visitor/stops`, `GET|PATCH /api/water/visitor/safety-briefing`, `POST /api/water/visitor-events` |
 | Planned unavailability | `GET|POST /api/water/outages`, `GET|PUT|DELETE /api/water/outages/{id}` |
 | Product Transformation | `lotId`/`activity` on consumption, `POST /api/water/lot-usage`, `GET /api/water/consumption/by-lot`, `GET /api/water/quality/compliance`, `POST /api/water/product-transformation/availability-forecast` |
 | Internal | `GET /api/water/sources/{id}/level-history`; `demand_forecast_liters` / `available_after_forecast_liters` in `GET /api/dashboard/water-balance` |
@@ -166,6 +175,7 @@ This is a first version, **to be reviewed soon**:
 | `app.rainwater.weekly-nonirrigation-need-liters` | 0 | Declared non-irrigation need: without it the "rain first" recommendation stays silent |
 | `app.cors.allowed-origins` | localhost:5173 | Allowed origins (PATCH included) |
 | `app.water.quality.ph-min` / `ph-max` / `turbidity-max-ntu` | 6.0 / 7.5 / 5.0 | Quality alert and lot compliance thresholds |
+| `app.water.quality.test-validity-days` | 7 | Days a quality test stays valid before a lot (provisional) |
 | `app.water.rain.default-catchment-area-m2` / `default-runoff-coefficient` | 180 / 0.8 | Used when `rain` telemetry omits them |
 | `app.water.irrigation.recent-rain-skip-threshold-mm` / `recent-rain-window-hours` | 5.0 / 24 | Automatic irrigation skips a zone whose farm gauges measured this much rain |
 | `app.water.visitor.live-window-minutes` / `safety-default-max-capacity` | 15 / 10 | Visitor live counter window, default briefing capacity |
@@ -218,8 +228,8 @@ React Query client (`components/views/testRender.jsx`).
 - **Authentication**: out of the module's scope (no `/api/auth` endpoint), it will come from the
   global platform. Automatic alerts are attached to a technical account
   (`SystemUsers.IOT_SYSTEM_USER_ID`, with no usable password).
-- **Migration numbers**: `V11` (zone/block mapping) and `V12` (integrations) belong to watersupply;
-  the next free number is `V13`.
+- **Migration numbers**: `V11` (zone/block mapping), `V12` (integrations) and `V13` (answers of the
+  teams) belong to watersupply; the next free number is `V14`.
 - **Fresh PostgreSQL startup**: V1-V12 apply, but `ddl-auto=validate` then fails on tables of other
   modules that have no migration (list in `docs/integrations/README.md`).
 - **Farm and field location**: first version from the device geolocation, to be reviewed (see

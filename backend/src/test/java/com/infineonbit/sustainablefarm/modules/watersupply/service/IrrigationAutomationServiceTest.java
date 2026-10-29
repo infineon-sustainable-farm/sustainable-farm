@@ -186,7 +186,7 @@ class IrrigationAutomationServiceTest {
                 .thenReturn(List.of(new PlantsGrowthPort.BlockGrowth("A", "full production", 7)));
 
         Map<String, Object> report = service(new WaterIntegrationProperties(6.0, 7.5, 5.0, 180.0, 0.8, 15, 10,
-                5.0, 24, 2.0, 0.5, 1.0, 500.0, 30, 15, 1.0, 1.0, 1.2)).trigger();
+                5.0, 24, 2.0, 0.5, 1.0, 500.0, 30, 15, 1.0, 1.0, 1.2, 7)).trigger();
 
         Map<?, ?> created = (Map<?, ?>) ((List<?>) report.get("created")).get(0);
         assertEquals(1200d, created.get("planned_liters"));

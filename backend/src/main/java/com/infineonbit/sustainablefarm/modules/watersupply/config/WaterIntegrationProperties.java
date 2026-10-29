@@ -32,6 +32,8 @@ public class WaterIntegrationProperties {
     public final double plantsEstablishmentFactor;
     public final double plantsGradualProductionFactor;
     public final double plantsFullProductionFactor;
+    /** Days a quality test stays valid before a lot (provisional, to be agreed with Product Transformation). */
+    public final int qualityTestValidityDays;
 
     public WaterIntegrationProperties(
             @Value("${app.water.quality.ph-min:6.0}") double qualityPhMin,
@@ -51,7 +53,8 @@ public class WaterIntegrationProperties {
             @Value("${app.water.iot.offline-threshold-minutes:15}") int iotOfflineThresholdMinutes,
             @Value("${app.water.plants.phase-factor.establishment:1.0}") double plantsEstablishmentFactor,
             @Value("${app.water.plants.phase-factor.gradual-production:1.0}") double plantsGradualProductionFactor,
-            @Value("${app.water.plants.phase-factor.full-production:1.0}") double plantsFullProductionFactor) {
+            @Value("${app.water.plants.phase-factor.full-production:1.0}") double plantsFullProductionFactor,
+            @Value("${app.water.quality.test-validity-days:7}") int qualityTestValidityDays) {
         this.qualityPhMin = qualityPhMin;
         this.qualityPhMax = qualityPhMax;
         this.qualityTurbidityMaxNtu = qualityTurbidityMaxNtu;
@@ -70,11 +73,12 @@ public class WaterIntegrationProperties {
         this.plantsEstablishmentFactor = plantsEstablishmentFactor;
         this.plantsGradualProductionFactor = plantsGradualProductionFactor;
         this.plantsFullProductionFactor = plantsFullProductionFactor;
+        this.qualityTestValidityDays = qualityTestValidityDays;
     }
 
     /** Same values as the property defaults, for unit tests that do not start Spring. */
     public static WaterIntegrationProperties defaults() {
         return new WaterIntegrationProperties(6.0, 7.5, 5.0, 180.0, 0.8, 15, 10,
-                5.0, 24, 2.0, 0.5, 1.0, 500.0, 30, 15, 1.0, 1.0, 1.0);
+                5.0, 24, 2.0, 0.5, 1.0, 500.0, 30, 15, 1.0, 1.0, 1.0, 7);
     }
 }

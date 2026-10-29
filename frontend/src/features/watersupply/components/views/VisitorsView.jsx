@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { visitorApi } from '../../api/watersupplyApi'
 import { useZones } from '../../hooks/useFarms'
 import { useWaterSources } from '../../hooks/useWaterData'
-import { useSafetyBriefing, useVisitorSummary } from '../../hooks/useIntegrations'
+import { useSafetyBriefing, useVisitorStops, useVisitorSummary } from '../../hooks/useIntegrations'
 import { Spinner } from '../../../../shared/components/Spinner'
 import { FormField } from '../../../../shared/components/FormField'
 import { inputStyle } from '../../../../shared/components/formStyles'
 import { EmptyState } from './EmptyState'
 import { DemoValvePanel } from './DemoValvePanel'
+import { VisitorStopsPanel } from './VisitorStopsPanel'
 import { formatInstant } from './datetime'
 
 /** One entry per line in the form; the API takes lists. */
@@ -18,7 +19,8 @@ const fromLines = (text) => text.split('\n').map((line) => line.trim()).filter(B
  * Visitors: what the water team publishes for Visitor Management and what it shows.
  *
  * The visitor screens themselves belong to Visitor Management: here the water team writes the
- * safety briefing, previews the data a visitor screen receives, and drives the demonstration valve.
+ * water part of the safety briefing, maps the tour stops that pass by water facilities, previews
+ * the data a visitor screen receives, and drives the demonstration valve.
  */
 export function VisitorsView({ notify }) {
   return (
@@ -31,7 +33,10 @@ export function VisitorsView({ notify }) {
       </div>
 
       <div className="ws-layout-2">
-        <SafetyBriefingPanel notify={notify} />
+        <div className="ws-stack">
+          <SafetyBriefingPanel notify={notify} />
+          <VisitorStopsPanel notify={notify} />
+        </div>
         <div className="ws-stack">
           <VisitorPreviewPanel />
           <DemoValvePanel notify={notify} />
@@ -118,6 +123,9 @@ function SafetyBriefingPanel({ notify }) {
               <FormField label="Text read to the group">
                 <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={draft.text} onChange={updateDraft('text')} />
               </FormField>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--ws-muted)' }}>
+                Allowed and forbidden areas must match the access rules defined by Site Security.
+              </p>
               <FormField label="Allowed areas (one per line)">
                 <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={draft.allowedZones} onChange={updateDraft('allowedZones')} />
               </FormField>
@@ -153,6 +161,10 @@ function SafetyBriefingPanel({ notify }) {
             {briefing.publishedAt && (
               <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>Published {formatInstant(briefing.publishedAt)}. Earlier versions are kept.</p>
             )}
+            <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
+              Water Supply writes and validates the water content; the access areas follow the rules set by
+              Site Security; Visitor Management adds this text to its own briefing and collects the signature.
+            </p>
             <div className="ws-form-actions">
               <button className="ws-action-btn" onClick={startEditing}>Publish a new version</button>
             </div>
@@ -179,9 +191,11 @@ function BriefingList({ title, items, tone }) {
 function VisitorPreviewPanel() {
   const { sources } = useWaterSources()
   const { zones } = useZones()
+  const { stops } = useVisitorStops()
+  const [stop, setStop] = useState('')
   const [sourceId, setSourceId] = useState('')
   const [zoneId, setZoneId] = useState('')
-  const { summary, loading, error } = useVisitorSummary(sourceId, zoneId)
+  const { summary, loading, error } = useVisitorSummary(sourceId, zoneId, stop)
 
   const level = summary?.sourceLevel
   const irrigation = summary?.irrigationStatus
@@ -194,11 +208,15 @@ function VisitorPreviewPanel() {
         <h2>Visitor screen preview</h2>
       </div>
       <div className="ws-filters">
-        <select value={sourceId} onChange={(event) => setSourceId(event.target.value)} aria-label="Tank shown">
+        <select value={stop} onChange={(event) => setStop(event.target.value)} aria-label="Visit stop">
+          <option value="">Any stop</option>
+          {stops.map((item) => <option key={item.id} value={item.stopName}>{item.stopName}</option>)}
+        </select>
+        <select value={sourceId} onChange={(event) => setSourceId(event.target.value)} aria-label="Tank shown" disabled={Boolean(stop)}>
           <option value="">No tank</option>
           {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
         </select>
-        <select value={zoneId} onChange={(event) => setZoneId(event.target.value)} aria-label="Zone shown">
+        <select value={zoneId} onChange={(event) => setZoneId(event.target.value)} aria-label="Zone shown" disabled={Boolean(stop)}>
           <option value="">Whole site</option>
           {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
         </select>
@@ -220,8 +238,8 @@ function VisitorPreviewPanel() {
                 <small>Water saved this month</small>
               </div>
               <div className="ws-row-detail">
-                <strong>{live?.liters ?? 0} L</strong>
-                <small>Used in the last {live?.windowMinutes ?? 15} min</small>
+                <strong>{live?.flowRateLitersPerMinute ?? 0} L/min</strong>
+                <small>Flow over the last {live?.windowMinutes ?? 15} min</small>
               </div>
             </div>
             {irrigation && (
@@ -237,6 +255,10 @@ function VisitorPreviewPanel() {
                 {outages.length} planned outage(s) in force{zoneId || sourceId ? ' here' : ''}: visitors will be told water is unavailable.
               </div>
             )}
+            <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
+              During a visit, Visitor Management also sends its time slot: the total shown to the group is the
+              water used since the slot started.
+            </p>
             {summary.waterSavingsPercentage == null && (
               <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>Savings are unavailable while the weather service is down.</p>
             )}

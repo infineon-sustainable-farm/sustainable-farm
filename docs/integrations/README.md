@@ -2,12 +2,14 @@
 
 Water Supply now exposes data and actions that other modules asked for in the
 [integration audit](../watersupply-integration-audit.md). This folder has one page per consuming
-team. Each page covers what is ready, how to call it, and what we need from you.
+team. Each page covers what is ready, how to call it, the decisions recorded with that team and
+what is still open. The pages were updated on 2026-10-29 with the answers of Plants, Visitor
+Management and Product Transformation.
 
 | Team | Page | What you get |
 |---|---|---|
 | Plants | [watersupply-for-plants.md](watersupply-for-plants.md) | Irrigation and consumption per `blockCode`, rain gauge rainfall per block, irrigation need per block |
-| Visitor Management | [watersupply-for-visitor-management.md](watersupply-for-visitor-management.md) | Tank level, savings, irrigation status, live counter, planned outages, visit notifications, safety briefing |
+| Visitor Management | [watersupply-for-visitor-management.md](watersupply-for-visitor-management.md) | Tank level, savings, irrigation status, visit counter, planned outages, visit notifications, safety briefing, all by stop name |
 | Product Transformation | [watersupply-for-product-transformation.md](watersupply-for-product-transformation.md) | Water per lot and activity, washing water quality per lot, availability forecast and buffer alert |
 | IoT / Site Security | [watersupply-for-iot-and-site-security.md](watersupply-for-iot-and-site-security.md) | Valve command journal and safety rules; the gateway and permissions are yours to decide |
 
@@ -48,26 +50,28 @@ reads the Plants growth calendar (see the Plants page).
 
 ## Database migrations
 
-`V11__zone_block_mapping.sql` and `V12__watersupply_integration.sql` belong to Water Supply. The
-next free number is **V13**. Please announce your number before you open a pull request, because the
-migration folder is shared.
+`V11__zone_block_mapping.sql`, `V12__watersupply_integration.sql` and
+`V13__watersupply_integration_feedback.sql` belong to Water Supply. The next free number is **V14**.
+Please announce your number before you open a pull request, because the migration folder is shared.
 
 ## Known platform issue (all module owners)
 
-On a fresh PostgreSQL database, migrations V1 to V12 apply cleanly, but the application then stops
-at startup with `Schema validation: missing table [agri_activity]`. Production runs
+On a fresh PostgreSQL database, migrations V1 to V13 apply cleanly, but the application then stops
+at startup with `Schema validation: missing table [...]`. Production runs
 `spring.jpa.hibernate.ddl-auto=validate`, and several entities have no Flyway migration. The tests
 do not catch this because they let Hibernate create the schema.
 
-The tables without a migration on 2026-10-22 were:
+The tables without a migration on 2026-10-29 were (the list grows with every module merged):
 
 | Module | Tables |
 |---|---|
 | Visitor Management | `agri_activity`, `booking`, `briefing`, `event`, `feedback`, `registration`, `staff`, `survey_send`, `time_slot`, `tour_stop`, `visitor`, `workshop` |
 | Site Security | `site_security_gates`, `site_security_logs`, `site_security_users`, `site_security_zones`, `zone_entity_requirements` |
-| Plants | `calendrier_croissance`, `growth_phase_yield_share`, `harvest_record`, `population_event`, `variety_reference` |
+| Plants | `calendrier_croissance`, `currency_rate`, `fertilizer_movement`, `fertilizer_product`, `growth_phase_yield_share`, `harvest_record`, `health_finding`, `health_inspection`, `health_issue_reference`, `health_treatment`, `nursery_batch`, `nursery_event`, `population_event`, `variety_reference` |
 | Machinery | `fuel_log`, `maintenance_schedule`, `operator_assignment`, `repair_log`, `spare_part`, `usage_log` |
+| Sales & Marketing | `alerts`, `campaign_metrics`, `campaigns`, `certifications`, `competitor_prices`, `customer_certifications`, `customer_contacts`, `customers`, `demand_forecasts`, `demand_reports`, `forecast_model_runs`, `order_items`, `orders`, `pricing_history`, `pricing_recommendations`, `product_batches`, `products`, `report_files`, `sales_channel_targets`, `sales_channels`, `shipment_events`, `shipments` |
 
 Each owner needs to add a migration for their tables. Once those migrations exist, the Water Supply
-schema passes `validate` on PostgreSQL (checked by booting with `validate` after the missing tables
-were created).
+schema passes `validate` on PostgreSQL (checked on 2026-10-29 by booting with `validate` after the
+missing tables were created). Until then, for local development only, the backend starts with
+`SPRING_JPA_HIBERNATE_DDL_AUTO=update`, which creates the missing tables after the migrations.

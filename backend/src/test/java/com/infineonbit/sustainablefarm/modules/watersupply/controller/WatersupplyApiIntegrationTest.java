@@ -340,7 +340,7 @@ class WatersupplyApiIntegrationTest {
                     {"zoneId":"%s","blockCode":"C","farmId":"%s"}
                     """.formatted(zoneId, farmId)))
             .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.code").value("DATA_CONSTRAINT_VIOLATION"));
+            .andExpect(jsonPath("$.code").value("CONFLICT"));
         }
 
         private String createSource(String farmId, String name) throws Exception {

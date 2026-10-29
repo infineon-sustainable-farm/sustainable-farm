@@ -5,6 +5,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.BlockIrrigationNe
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.LotUsageRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.SafetyBriefingRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.VisitorEventRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.VisitorStopRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.VisitorStopResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.IrrigationService;
@@ -12,6 +14,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.service.PlantsIntegra
 import com.infineonbit.sustainablefarm.modules.watersupply.service.ProductTransformationIntegrationService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.VisitorIntegrationService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterUnavailabilityService;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterVisitorStopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -48,15 +51,17 @@ public class WaterIntegrationController {
     private final ProductTransformationIntegrationService ptService;
     private final IrrigationService irrigationService;
     private final WaterUnavailabilityService unavailabilityService;
+    private final WaterVisitorStopService stopService;
 
     public WaterIntegrationController(PlantsIntegrationService plantsService, VisitorIntegrationService visitorService,
                                       ProductTransformationIntegrationService ptService, IrrigationService irrigationService,
-                                      WaterUnavailabilityService unavailabilityService) {
+                                      WaterUnavailabilityService unavailabilityService, WaterVisitorStopService stopService) {
         this.plantsService = plantsService;
         this.visitorService = visitorService;
         this.ptService = ptService;
         this.irrigationService = irrigationService;
         this.unavailabilityService = unavailabilityService;
+        this.stopService = stopService;
     }
 
     // --- Plants ---------------------------------------------------------------------------------
@@ -85,18 +90,47 @@ public class WaterIntegrationController {
     }
 
     @GetMapping("/visitor/live-consumption")
-    @Operation(summary = "Volume measured over the last minutes, for a source, a zone or the whole site")
+    @Operation(summary = "Volume of the visit session (time slot) and instantaneous flow, for a stop, a source, a zone or the site")
     public Map<String, Object> liveConsumption(@RequestParam(required = false) UUID sourceId,
                                                @RequestParam(required = false) UUID zoneId,
-                                               @RequestParam(required = false) Integer windowMinutes) {
-        return visitorService.liveConsumption(sourceId, zoneId, windowMinutes);
+                                               @RequestParam(required = false) String stop,
+                                               @RequestParam(required = false) Integer windowMinutes,
+                                               @RequestParam(required = false) Instant sessionFrom,
+                                               @RequestParam(required = false) Instant sessionTo) {
+        return visitorService.liveConsumption(sourceId, zoneId, stop, windowMinutes, sessionFrom, sessionTo);
     }
 
     @GetMapping("/visitor/summary")
     @Operation(summary = "Level, savings, irrigation status, live consumption and unavailability in one call")
     public Map<String, Object> visitorSummary(@RequestParam(required = false) UUID sourceId,
-                                              @RequestParam(required = false) UUID zoneId) {
-        return visitorService.summary(sourceId, zoneId);
+                                              @RequestParam(required = false) UUID zoneId,
+                                              @RequestParam(required = false) String stop,
+                                              @RequestParam(required = false) Instant sessionFrom,
+                                              @RequestParam(required = false) Instant sessionTo) {
+        return visitorService.summary(sourceId, zoneId, stop, sessionFrom, sessionTo);
+    }
+
+    @GetMapping("/visitor/stops")
+    @Operation(summary = "Visitor Management tour stops mapped to water zones and sources")
+    public List<VisitorStopResponse> visitorStops() {
+        return stopService.findAll();
+    }
+
+    @PostMapping("/visitor/stops")
+    @ResponseStatus(HttpStatus.CREATED)
+    public VisitorStopResponse createVisitorStop(@Valid @RequestBody VisitorStopRequest request) {
+        return stopService.create(request);
+    }
+
+    @PutMapping("/visitor/stops/{stopId}")
+    public VisitorStopResponse updateVisitorStop(@PathVariable UUID stopId, @Valid @RequestBody VisitorStopRequest request) {
+        return stopService.update(stopId, request);
+    }
+
+    @DeleteMapping("/visitor/stops/{stopId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteVisitorStop(@PathVariable UUID stopId) {
+        stopService.delete(stopId);
     }
 
     @PostMapping("/visitor-events")

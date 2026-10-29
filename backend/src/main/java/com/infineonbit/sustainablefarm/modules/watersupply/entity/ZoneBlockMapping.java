@@ -9,8 +9,10 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 @Entity
+/** A zone may cover several blocks; a block belongs to only one zone of its farm (Plants rule, V13). */
 @Table(name = "zone_block_mapping", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_zone_block_mapping_zone_block", columnNames = {"zone_id", "block_code"})
+        @UniqueConstraint(name = "uk_zone_block_mapping_zone_block", columnNames = {"zone_id", "block_code"}),
+        @UniqueConstraint(name = "uk_zone_block_mapping_farm_block", columnNames = {"farm_id", "block_code"})
 })
 public class ZoneBlockMapping extends BaseEntity {
     @NotNull

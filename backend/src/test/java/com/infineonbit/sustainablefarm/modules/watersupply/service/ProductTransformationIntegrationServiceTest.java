@@ -117,7 +117,7 @@ class ProductTransformationIntegrationServiceTest {
         WaterConsumption last = consumption(sourceId, 10.0, "LOT-1");
         last.setConsumptionDate(END);
         when(consumptionRepository.findByLotIdOrderByConsumptionDateAsc("LOT-1")).thenReturn(List.of(first, last));
-        when(qualityRepository.findBySourcesBetween(List.of(sourceId), START, END))
+        when(qualityRepository.findBySourcesBetween(List.of(sourceId), START.minus(7, ChronoUnit.DAYS), END))
                 .thenReturn(List.of(test(sourceId, 7.0, 1.0), test(sourceId, 8.2, 1.0)));
 
         Map<String, Object> response = service().qualityCompliance("LOT-1", null, null);
@@ -129,13 +129,61 @@ class ProductTransformationIntegrationServiceTest {
 
     @Test
     void complianceWithoutAnyTestIsNotACompliance() {
-        when(qualityRepository.findBetween(START, END)).thenReturn(List.of());
+        when(qualityRepository.findBetween(START.minus(7, ChronoUnit.DAYS), END)).thenReturn(List.of());
 
         Map<String, Object> response = service().qualityCompliance(null, START, END);
 
         assertEquals("no_test", response.get("status"));
         assertEquals(false, response.get("compliant"));
         assertNull(response.get("lotId"));
+    }
+
+    @Test
+    void aTestMadeShortlyBeforeTheLotStillCounts() {
+        UUID sourceId = UUID.randomUUID();
+        stubLotWindow("LOT-1", sourceId);
+        when(qualityRepository.findBySourcesBetween(List.of(sourceId), START.minus(7, ChronoUnit.DAYS), END))
+                .thenReturn(List.of(test(sourceId, 7.0, 1.0, START.minus(3, ChronoUnit.HOURS))));
+
+        Map<String, Object> response = service().qualityCompliance("LOT-1", null, null);
+
+        assertEquals("compliant", response.get("status"));
+        assertEquals(7, response.get("validityDays"));
+    }
+
+    @Test
+    void onlyTheLastTestBeforeTheLotIsDecisive() {
+        UUID sourceId = UUID.randomUUID();
+        stubLotWindow("LOT-1", sourceId);
+        // Failed two days before, fixed and passed the day before: the water was compliant at the start.
+        when(qualityRepository.findBySourcesBetween(List.of(sourceId), START.minus(7, ChronoUnit.DAYS), END)).thenReturn(List.of(
+                test(sourceId, 8.4, 1.0, START.minus(2, ChronoUnit.DAYS)),
+                test(sourceId, 7.0, 1.0, START.minus(1, ChronoUnit.DAYS))));
+
+        Map<String, Object> response = service().qualityCompliance("LOT-1", null, null);
+
+        assertEquals("compliant", response.get("status"));
+        assertEquals(1, ((List<?>) response.get("tests")).size());
+    }
+
+    @Test
+    void everySourceUsedByTheLotNeedsItsOwnTest() {
+        UUID tested = UUID.randomUUID();
+        UUID untested = UUID.randomUUID();
+        WaterConsumption first = consumption(tested, 10.0, "LOT-1");
+        WaterConsumption last = consumption(untested, 10.0, "LOT-1");
+        last.setConsumptionDate(END);
+        when(consumptionRepository.findByLotIdOrderByConsumptionDateAsc("LOT-1")).thenReturn(List.of(first, last));
+        when(qualityRepository.findBySourcesBetween(List.of(tested, untested), START.minus(7, ChronoUnit.DAYS), END))
+                .thenReturn(List.of(test(tested, 7.0, 1.0)));
+
+        Map<String, Object> response = service().qualityCompliance("LOT-1", null, null);
+
+        // A change of source needs a test of the new source, whatever the time elapsed.
+        assertEquals("no_test", response.get("status"));
+        List<?> sources = (List<?>) response.get("sources");
+        assertEquals("compliant", ((Map<?, ?>) sources.get(0)).get("status"));
+        assertEquals("no_test", ((Map<?, ?>) sources.get(1)).get("status"));
     }
 
     @Test
@@ -201,12 +249,24 @@ class ProductTransformationIntegrationServiceTest {
     }
 
     private static WaterQualityTest test(UUID sourceId, double ph, double turbidity) {
+        return test(sourceId, ph, turbidity, START);
+    }
+
+    private static WaterQualityTest test(UUID sourceId, double ph, double turbidity, Instant at) {
         WaterQualityTest test = new WaterQualityTest();
         test.setSourceId(sourceId);
         test.setPh(ph);
         test.setTurbidityNtu(turbidity);
-        test.setTestDate(START);
+        test.setTestDate(at);
         return test;
+    }
+
+    /** A lot consumed from START to END on one source. */
+    private void stubLotWindow(String lotId, UUID sourceId) {
+        WaterConsumption first = consumption(sourceId, 10.0, lotId);
+        WaterConsumption last = consumption(sourceId, 10.0, lotId);
+        last.setConsumptionDate(END);
+        when(consumptionRepository.findByLotIdOrderByConsumptionDateAsc(lotId)).thenReturn(List.of(first, last));
     }
 
     private static WaterSource source(double level) {

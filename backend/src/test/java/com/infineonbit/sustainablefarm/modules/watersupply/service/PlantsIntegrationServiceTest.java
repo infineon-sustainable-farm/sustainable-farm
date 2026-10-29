@@ -174,7 +174,7 @@ class PlantsIntegrationServiceTest {
 
     private static WaterIntegrationProperties factors(double establishment, double gradual, double full) {
         return new WaterIntegrationProperties(6.0, 7.5, 5.0, 180.0, 0.8, 15, 10, 5.0, 24, 2.0, 0.5, 1.0, 500.0,
-                30, 15, establishment, gradual, full);
+                30, 15, establishment, gradual, full, 7);
     }
 
     private PlantsIntegrationService service() {

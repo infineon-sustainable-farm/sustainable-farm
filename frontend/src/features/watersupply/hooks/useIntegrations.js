@@ -59,13 +59,24 @@ export function useSafetyBriefing() {
   return { briefing: data, loading, error, refetch }
 }
 
-/** What a visitor screen shows for a source and/or a zone (both optional). */
-export function useVisitorSummary(sourceId, zoneId) {
+/**
+ * What a visitor screen shows for a Visitor Management stop, or for a source and/or a zone
+ * (all optional). A stop name wins: the backend resolves it to the zone and tank it shows.
+ */
+export function useVisitorSummary(sourceId, zoneId, stop) {
   const { data, loading, error, refetch } = useModuleQuery(
-    ['watersupply', 'visitor-summary', sourceId || 'all', zoneId || 'all'],
-    () => visitorApi.getSummary({ sourceId: sourceId || undefined, zoneId: zoneId || undefined }),
+    ['watersupply', 'visitor-summary', stop || 'no-stop', sourceId || 'all', zoneId || 'all'],
+    () => visitorApi.getSummary(stop
+      ? { stop }
+      : { sourceId: sourceId || undefined, zoneId: zoneId || undefined }),
   )
   return { summary: data, loading, error, refetch }
+}
+
+/** Visitor Management stops mapped to water zones and tanks. */
+export function useVisitorStops() {
+  const { data, loading, error, refetch } = useModuleQuery(['watersupply', 'visitor-stops'], visitorApi.getStops)
+  return { stops: asList(data), loading, error, refetch }
 }
 
 export function useLevelHistory(sourceId) {

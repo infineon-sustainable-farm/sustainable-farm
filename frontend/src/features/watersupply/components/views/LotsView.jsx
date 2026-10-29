@@ -155,11 +155,25 @@ export function LotsView({ notify }) {
                   </p>
                 )}
                 {compliance && (
-                  <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
-                    {compliance.tests.length} test(s) of the lot's sources between {formatInstant(compliance.from)} and {formatInstant(compliance.to)} ·
-                    pH {compliance.rule.phMin}–{compliance.rule.phMax}, turbidity ≤ {compliance.rule.turbidityMaxNtu} NTU.
-                    {compliance.status === 'no_test' && ' Without a test, the water of this lot cannot be declared compliant.'}
-                  </p>
+                  <>
+                    {/* Each source used by the lot needs its own valid test: one verdict per source. */}
+                    <div className="ws-switcher" style={{ margin: '6px 0' }}>
+                      {(compliance.sources || []).map((source) => {
+                        const meta = COMPLIANCE_META[source.status]
+                        return (
+                          <span key={source.sourceId} className={`ws-tag ${meta?.cls || 'primary'}`}>
+                            {sourceName(source.sourceId)}: {meta?.text || source.status}
+                          </span>
+                        )
+                      })}
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
+                      {compliance.tests.length} decisive test(s): for each source, the last test of the {compliance.validityDays} days
+                      before the lot and the tests made during it ({formatInstant(compliance.from)} → {formatInstant(compliance.to)}) ·
+                      pH {compliance.rule.phMin}–{compliance.rule.phMax}, turbidity ≤ {compliance.rule.turbidityMaxNtu} NTU.
+                      {compliance.status === 'no_test' && ' A source without a valid test: the water of this lot cannot be declared compliant.'}
+                    </p>
+                  </>
                 )}
                 {lot.items.length === 0 ? (
                   <EmptyState title="No consumption for this lot" description="Attribute a metering window to this lot with the form on the right." />

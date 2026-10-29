@@ -415,6 +415,118 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(status().isNotFound());
     }
 
+    // --- Answers of the teams (2026-10-29) -------------------------------------------------------
+
+    @Test
+    void aBlockBelongsToOneZoneAndFollowsThePlantsCodeRule() throws Exception {
+        String farmId = createFarm("Plants Rule Farm");
+        String fieldId = createField(farmId);
+        String zoneA = createZone(fieldId, "Zone A", 1.0);
+        String zoneB = createZone(fieldId, "Zone B", 1.0);
+        String block = uniqueBlock();
+        mapZone(zoneA, block, farmId);
+
+        // A zone may cover several blocks...
+        mapZone(zoneA, uniqueBlock(), farmId);
+        // ...but a block belongs to only one zone.
+        mockMvc.perform(post("/api/water/zone-block-mappings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"zoneId\":\"%s\",\"blockCode\":\"%s\",\"farmId\":\"%s\"}".formatted(zoneB, block, farmId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("another zone")));
+        mockMvc.perform(post("/api/water/zone-block-mappings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"zoneId\":\"%s\",\"blockCode\":\"Block A\",\"farmId\":\"%s\"}".formatted(zoneB, farmId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+    }
+
+    @Test
+    void visitorManagementSpeaksInRegistrationIdsAndStopNames() throws Exception {
+        String farmId = createFarm("Stops Farm");
+        String zoneId = createZone(createField(farmId), "Drip demo zone", 1.0);
+        String sourceId = createSource(farmId, "Demo tank");
+        String stopName = "Smart drip irrigation " + UUID.randomUUID().toString().substring(0, 6);
+        mockMvc.perform(post("/api/water/visitor/stops").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"stopName\":\"%s\",\"zoneId\":\"%s\",\"sourceId\":\"%s\"}".formatted(stopName, zoneId, sourceId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.stopName").value(stopName));
+        mockMvc.perform(post("/api/water/visitor/stops").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"stopName\":\"%s\",\"zoneId\":\"%s\"}".formatted(stopName.toUpperCase(), zoneId)))
+                .andExpect(status().isConflict());
+
+        // The registration id is a Long on their side: a JSON number is accepted.
+        long registrationId = Math.abs(UUID.randomUUID().getMostSignificantBits() % 1_000_000);
+        mockMvc.perform(post("/api/water/visitor-events").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"visitId":%d,"groupName":"School B","expectedAt":"%s","stops":["%s","Solar plant & tracking"]}
+                                """.formatted(registrationId, Instant.now().plus(1, ChronoUnit.DAYS), stopName.toLowerCase())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.visitId").value(String.valueOf(registrationId)))
+                .andExpect(jsonPath("$.stops[0]").value(stopName))
+                .andExpect(jsonPath("$.ignoredStops[0]").value("Solar plant & tracking"))
+                .andExpect(jsonPath("$.zones[0]").value(zoneId));
+
+        mockMvc.perform(get("/api/water/visitor/summary").param("stop", stopName))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stop").value(stopName))
+                .andExpect(jsonPath("$.sourceLevel.sourceId").value(sourceId))
+                .andExpect(jsonPath("$.irrigationStatus.zoneId").value(zoneId));
+        mockMvc.perform(get("/api/water/visitor/summary").param("stop", "Solar plant & tracking"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void theLiveCounterTotalsTheVisitTimeSlot() throws Exception {
+        String farmId = createFarm("Session Farm");
+        String zoneId = createZone(createField(farmId), "Session zone", 1.0);
+        String sourceId = createSource(farmId, "Session tank");
+        Instant now = Instant.now();
+        createConsumption(farmId, sourceId, zoneId, 90.0, now.minus(40, ChronoUnit.MINUTES), null, null);
+        createConsumption(farmId, sourceId, zoneId, 30.0, now.minus(5, ChronoUnit.MINUTES), null, null);
+        createConsumption(farmId, sourceId, zoneId, 500.0, now.minus(3, ChronoUnit.HOURS), null, null);
+
+        mockMvc.perform(get("/api/water/visitor/live-consumption").param("zoneId", zoneId)
+                        .param("sessionFrom", now.minus(1, ChronoUnit.HOURS).toString())
+                        .param("sessionTo", now.plus(1, ChronoUnit.HOURS).toString()))
+                .andExpect(status().isOk())
+                // Total of the visit: what was measured since the slot started (not the 3-hour-old 500 L).
+                .andExpect(jsonPath("$.session.liters").value(120.0))
+                .andExpect(jsonPath("$.session.inProgress").value(true))
+                // The 15-minute window only gives the instantaneous flow: 30 L / 15 min.
+                .andExpect(jsonPath("$.liters").value(30.0))
+                .andExpect(jsonPath("$.flowRateLitersPerMinute").value(2.0));
+        mockMvc.perform(get("/api/water/visitor/live-consumption").param("zoneId", zoneId)
+                        .param("sessionFrom", now.toString()).param("sessionTo", now.minus(1, ChronoUnit.HOURS).toString()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aQualityTestStaysValidForTheConfiguredPeriodAndEachSourceNeedsOne() throws Exception {
+        String farmId = createFarm("Validity Farm");
+        String washTank = createSource(farmId, "Washing tank");
+        String backupTank = createSource(farmId, "Backup tank");
+        String lotId = "LOT-" + UUID.randomUUID();
+        Instant start = Instant.now().minus(2, ChronoUnit.HOURS);
+        createConsumption(farmId, washTank, null, 100.0, start, lotId, "WASHING");
+        createConsumption(farmId, backupTank, null, 50.0, start.plus(30, ChronoUnit.MINUTES), lotId, "WASHING");
+        // Tested the day before: still valid (7 days by default).
+        createQualityTest(washTank, 7.0, start.minus(1, ChronoUnit.DAYS));
+        // The backup tank was tested 10 days ago: no longer valid.
+        createQualityTest(backupTank, 7.0, start.minus(10, ChronoUnit.DAYS));
+
+        mockMvc.perform(get("/api/water/quality/compliance").param("lotId", lotId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.validityDays").value(7))
+                .andExpect(jsonPath("$.status").value("no_test"))
+                .andExpect(jsonPath("$.sources", hasSize(2)));
+
+        // A test of the second source makes the lot compliant: each source needs its own.
+        createQualityTest(backupTank, 7.2, start.minus(2, ChronoUnit.HOURS));
+        mockMvc.perform(get("/api/water/quality/compliance").param("lotId", lotId))
+                .andExpect(jsonPath("$.status").value("compliant"))
+                .andExpect(jsonPath("$.tests", hasSize(2)));
+    }
+
     // --- Helpers --------------------------------------------------------------------------------
 
     private MockHttpServletRequestBuilder command(String deviceId, String body) {
