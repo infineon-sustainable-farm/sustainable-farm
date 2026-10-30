@@ -15,7 +15,6 @@ import com.infineonbit.sustainablefarm.modules.energysupply.repository.Generator
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.springframework.context.annotation.Profile;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
