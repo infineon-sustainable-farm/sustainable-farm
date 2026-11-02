@@ -59,7 +59,8 @@ export default function GrowthCalendarPage() {
 
     return (
         <div className="min-h-dvh bg-gray-50">
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
+            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header>
                     {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1.
                         primary measured 4.498:1, just under the AA minimum of 4.5:1. */}
