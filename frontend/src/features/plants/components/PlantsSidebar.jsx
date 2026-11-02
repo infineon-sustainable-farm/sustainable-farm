@@ -84,9 +84,16 @@ export default function PlantsSidebar() {
                 <div className="my-4 h-px w-full bg-white/20" />
 
                 <ul className="flex flex-col gap-1">
+                    {/* Following a link closes the menu on a phone, the current screen's link included;
+                        above md the bar is always shown and closing changes nothing. */}
                     {NAV_ITEMS.map(({ label, icon: Icon, path }) => (
                         <li key={label}>
-                            <NavLink to={path} end={path === "/plants"} className={linkStyles}>
+                            <NavLink
+                                to={path}
+                                end={path === "/plants"}
+                                className={linkStyles}
+                                onClick={() => setIsOpen(false)}
+                            >
                                 <Icon size={17} className="shrink-0" />
                                 {label}
                             </NavLink>

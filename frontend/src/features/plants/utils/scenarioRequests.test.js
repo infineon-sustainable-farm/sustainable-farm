@@ -5,6 +5,7 @@ import {
     benefitLineLabel,
     EMPTY_SCENARIO_FORM,
     formatAmount,
+    formatAmountFigure,
     formatMass,
     formatOtherAmount,
     formatReturn,
@@ -234,6 +235,16 @@ describe("the figures of an analysis", () => {
         expect(formatAmount(revenue, "XOF")).toBe("26,183,704 FCFA");
         expect(formatOtherAmount({ xof: 3600000, eur: null }, "XOF")).toBeNull();
         expect(formatAmount(null, "EUR")).toBe("—");
+    });
+
+    it("are written without their unit for a column whose header names it", () => {
+        expect(formatAmountFigure(revenue, "XOF")).toBe("26,183,704");
+        expect(formatAmountFigure(revenue, "EUR")).toBe("39,916.80");
+        expect(formatAmountFigure({ xof: -3137750, eur: -4783.48 }, "XOF")).toBe("−3,137,750");
+        expect(formatAmountFigure({ xof: -3137750, eur: -4783.48 }, "EUR")).toBe("−4,783.48");
+        expect(formatAmountFigure({ xof: 0, eur: 0 }, "EUR")).toBe("0.00");
+        expect(formatAmountFigure({ xof: 3600000, eur: null }, "EUR")).toBe("—");
+        expect(formatAmountFigure(null, "XOF")).toBe("—");
     });
 
     it("take a minus sign when negative, and a plus sign as well for a change", () => {

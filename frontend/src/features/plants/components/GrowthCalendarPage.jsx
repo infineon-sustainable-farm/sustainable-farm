@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Info, Loader2, TriangleAlert } from "lucide-react";
+import { Link } from "react-router-dom";
 import PlantsEmptyState from "./PlantsEmptyState";
 import { useGrowthCalendar, useGrowthCalendarBlocks } from "../hooks/useGrowthCalendar";
 import BlockFilter from "./BlockFilter";
@@ -30,16 +31,27 @@ function MissingPlantingDateNote({ entries }) {
 }
 
 /**
- * Spells out, once, what the year bands in the Phase column mean. The scale is
- * the reference study's; the study puts year 5 in two phases, and the legend
- * says how it is counted. The bands and the phase names both come from the API,
- * and nothing here computes or decides a threshold.
+ * Says what comes from where. The age bands of the phases are the reference
+ * study's, in every profile; the study puts year 5 in two phases and stops at
+ * year 7, and the legend says how both are read. The share of the full yield
+ * of each phase has sources of its own, shown with it on Harvest & Maturity.
+ * The bands and the phase names both come from the API, and nothing here
+ * computes or decides a threshold.
  */
 function PhaseLegend() {
     return (
         <p className="px-1 text-xs text-gray-500">
-            Growth phases (reference: Zalka 2025 study; year 5 counted as gradual production): 0–2 yrs
-            establishment · 3–5 yrs gradual production · 6+ yrs full production
+            Age bands of the growth phases, from the Zalka 2025 study: 0–2 yrs establishment · 3–5 yrs gradual
+            production · 6+ yrs full production. The study gives “years 5 to 7” for full production: year 5 is
+            counted as gradual production, and full production continues after year 7. The share of the full yield
+            in each phase, with its source, is under Reference values on{" "}
+            <Link
+                to="/plants/harvest-maturity"
+                className="font-semibold text-primary-dark underline underline-offset-2 hover:no-underline"
+            >
+                Harvest &amp; Maturity
+            </Link>
+            .
         </p>
     );
 }
@@ -59,7 +71,8 @@ export default function GrowthCalendarPage() {
 
     return (
         <div className="min-h-dvh bg-gray-50">
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
+            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header>
                     {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1.
                         primary measured 4.498:1, just under the AA minimum of 4.5:1. */}

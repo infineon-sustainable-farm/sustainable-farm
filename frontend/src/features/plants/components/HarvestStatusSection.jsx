@@ -57,9 +57,11 @@ export default function HarvestStatusSection({ blockCode }) {
                                     + "the window opens later."}
                             </p>
                             <p className="mt-1 max-w-3xl text-sm text-gray-600">
-                                Observed: the latest field observation of the season under way. It takes precedence
-                                over the estimate until the last day of that season. A running pre-harvest interval
-                                holds Ready for harvest back to Ripe, observed or estimated.
+                                Observed: the latest field observation of the season under way. An observation made
+                                between two seasons counts for the next one. It takes precedence over the estimate
+                                until the last day of that season, given as “Counts until” under the observation. A
+                                running pre-harvest interval holds Ready for harvest back to Ripe, observed or
+                                estimated.
                             </p>
                         </>
                     )}

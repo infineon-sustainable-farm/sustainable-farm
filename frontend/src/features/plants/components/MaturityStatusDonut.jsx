@@ -135,7 +135,8 @@ export default function MaturityStatusDonut({ query }) {
                     </div>
                     <p className="text-xs text-gray-500">
                         Immature counts every tree whose harvest window is not near, young or not, so it differs from
-                        In Growth Stage.
+                        In Growth Stage. A field observation made between two seasons counts for the next one, until
+                        the end of that season.
                     </p>
                 </>
             )}

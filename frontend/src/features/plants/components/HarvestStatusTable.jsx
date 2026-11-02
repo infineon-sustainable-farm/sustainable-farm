@@ -104,7 +104,7 @@ export default function HarvestStatusTable({ statuses }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase"
                             >
                                 {column}
                             </th>

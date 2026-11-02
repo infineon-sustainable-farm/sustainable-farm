@@ -205,16 +205,17 @@ export function formatAge(years, months) {
 }
 
 /**
- * Year band of the growth phase, as computed and named by the API — "0–2 yrs".
+ * Growth phase as computed and named by the API, with its year band:
+ * "Full production · 6+ yrs".
  *
- * The band is what the column shows, like the mock-up. The phase name arrives in
- * the same response and is spelled out once, in the legend under the table. No
- * threshold is known here: this only picks which of the two given strings to
- * show, and falls back to the phase name if the API sent no band.
+ * The name is the API's, only capitalised, and the band is the API's too: no
+ * threshold is known here. Either part is shown alone when the API sent only
+ * that one, and a dash when it sent neither.
  */
 export function formatPhaseBand(phase, yearsBand) {
-    if (!isMissing(yearsBand)) return String(yearsBand).trim();
-    if (isMissing(phase)) return NO_VALUE;
-    const text = String(phase).trim();
-    return text.charAt(0).toUpperCase() + text.slice(1);
+    const name = isMissing(phase) ? "" : String(phase).trim();
+    const band = isMissing(yearsBand) ? "" : String(yearsBand).trim();
+    const label = name.charAt(0).toUpperCase() + name.slice(1);
+    if (label && band) return `${label} · ${band}`;
+    return label || band || NO_VALUE;
 }

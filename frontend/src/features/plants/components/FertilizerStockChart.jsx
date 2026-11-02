@@ -25,7 +25,8 @@ function groupsByUnit(fertilizers) {
  * a mark at its alert threshold, both on the scale of the largest stock or
  * threshold of the unit. The stock, the threshold and the "Low stock" badge
  * are the API's, written out under each bar; only the heights are laid out
- * here.
+ * here. Nothing is written above a bar: when the threshold is the largest
+ * value its mark sits at the top, where a figure would read as its label.
  *
  * Bars in primary, #0a8276 on the white card -> 4.70:1. The threshold mark is
  * the mock-up's ink, #16241f, rather than its orange line: 16.08:1 on the card
@@ -58,16 +59,15 @@ function UnitChart({ unit, fertilizers }) {
                     {fertilizers.map((fertilizer) => (
                         <li key={fertilizer.id} className="flex w-28 shrink-0 flex-col items-center gap-1 text-center">
                             <span className="text-xs font-semibold break-words text-gray-900">{fertilizer.name}</span>
+                            <span className="text-xs font-semibold text-gray-900">
+                                {`Stock ${formatQuantity(fertilizer.currentStock, fertilizer.unit)}`}
+                            </span>
                             <span className="text-xs text-gray-600">
                                 {fertilizer.reorderThreshold === null
                                     ? "No threshold"
                                     : `Threshold ${formatQuantity(fertilizer.reorderThreshold, fertilizer.unit)}`}
                             </span>
                             <StockStatusBadge belowThreshold={fertilizer.belowThreshold} />
-                            <span className="order-first text-xs font-semibold text-gray-900">
-                                {formatQuantity(fertilizer.currentStock, fertilizer.unit)}
-                                <span className="sr-only"> in stock</span>
-                            </span>
                             <div
                                 aria-hidden="true"
                                 className="relative order-first w-10 border-b border-gray-300"
