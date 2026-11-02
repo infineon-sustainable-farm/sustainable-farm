@@ -1,23 +1,32 @@
 import { Loader2, TriangleAlert } from "lucide-react";
-import { formatCode, formatShare } from "../utils/format";
-import { formatAmount, formatMass, MAX_HORIZON_YEARS } from "../utils/scenarioRequests";
+import { formatCode, formatNumber, formatShare } from "../utils/format";
+import { currencyUnit, formatAmountFigure, MAX_HORIZON_YEARS } from "../utils/scenarioRequests";
 
-// Narrower cells than the other tables, and headers that may wrap: the ten columns then fit a desktop screen.
+/*
+ * Narrower cells than the other tables, headers that may wrap, and the units
+ * in the headers rather than in every cell: the ten columns then fit a desktop
+ * screen, Cumulative included.
+ */
 const TH_CLASS =
     "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase";
 const TD_CLASS = "px-3 py-3 text-gray-700";
-const COLUMNS = [
-    "Year",
-    "Age",
-    "Growth phase",
-    "Yield share",
-    "Harvest",
-    "Sellable",
-    "Revenue",
-    "Operating cost",
-    "Net benefit",
-    "Cumulative",
-];
+
+function columns(currency) {
+    const unit = currencyUnit(currency);
+    return [
+        "Year",
+        "Age",
+        "Growth phase",
+        "Yield share",
+        "Harvest (kg)",
+        "Sellable (kg)",
+        `Revenue (${unit})`,
+        `Operating cost (${unit})`,
+        `Net benefit (${unit})`,
+        `Cumulative (${unit})`,
+    ];
+}
+
 const HORIZONS = Array.from({ length: MAX_HORIZON_YEARS }, (_, index) => index + 1);
 
 /** What the payback of the plan is, as the API found it within the years shown. */
@@ -35,7 +44,7 @@ function YearsTable({ analysis }) {
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
-                        {COLUMNS.map((column) => (
+                        {columns(currency).map((column) => (
                             <th key={column} scope="col" className={TH_CLASS}>
                                 {column}
                             </th>
@@ -61,13 +70,13 @@ function YearsTable({ analysis }) {
                                 <td className={TD_CLASS}>{`${year.ageYears} ${year.ageYears === 1 ? "yr" : "yrs"}`}</td>
                                 <td className={TD_CLASS}>{formatCode(year.growthPhase)}</td>
                                 <td className={TD_CLASS}>{formatShare(year.yieldShare)}</td>
-                                <td className={TD_CLASS}>{formatMass(year.harvestKg)}</td>
-                                <td className={TD_CLASS}>{formatMass(year.sellableKg)}</td>
-                                <td className={TD_CLASS}>{formatAmount(year.revenue, currency)}</td>
-                                <td className={TD_CLASS}>{formatAmount(year.operatingCost, currency)}</td>
-                                <td className={TD_CLASS}>{formatAmount(year.netBenefit, currency)}</td>
+                                <td className={TD_CLASS}>{formatNumber(year.harvestKg)}</td>
+                                <td className={TD_CLASS}>{formatNumber(year.sellableKg)}</td>
+                                <td className={TD_CLASS}>{formatAmountFigure(year.revenue, currency)}</td>
+                                <td className={TD_CLASS}>{formatAmountFigure(year.operatingCost, currency)}</td>
+                                <td className={TD_CLASS}>{formatAmountFigure(year.netBenefit, currency)}</td>
                                 <td className="px-3 py-3 font-semibold text-gray-800">
-                                    {formatAmount(year.cumulativeNetBenefit, currency)}
+                                    {formatAmountFigure(year.cumulativeNetBenefit, currency)}
                                 </td>
                             </tr>
                         );
