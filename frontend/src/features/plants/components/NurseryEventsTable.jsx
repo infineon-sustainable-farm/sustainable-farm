@@ -37,7 +37,7 @@ export default function NurseryEventsTable({ events }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatDate(event.eventDate)}
                             </td>
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(event.batchCode)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

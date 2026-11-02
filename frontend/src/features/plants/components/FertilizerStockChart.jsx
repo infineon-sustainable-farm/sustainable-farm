@@ -43,7 +43,7 @@ function UnitChart({ unit, fertilizers }) {
 
     return (
         <div className="flex flex-col gap-3">
-            <h4 className="text-sm font-semibold text-gray-900">{`Stock in ${symbol}`}</h4>
+            <h3 className="text-sm font-semibold text-gray-900">{`Stock in ${symbol}`}</h3>
             <div aria-hidden="true" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
                 <span className="flex items-center gap-1.5">
                     <span className="size-2.5 rounded-sm bg-primary" />

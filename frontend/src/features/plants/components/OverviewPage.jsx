@@ -39,7 +39,7 @@ export default function OverviewPage() {
             {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header>
-                    <h2 className="font-heading text-3xl font-bold text-gray-900">Overview</h2>
+                    <h1 className="font-heading text-2xl font-bold text-gray-900">Overview</h1>
                     <p className="mt-2 max-w-xl text-sm text-gray-500">
                         Trees, alerts, yield, maturity, nursery and fertilizer stock at a glance.
                     </p>

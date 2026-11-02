@@ -56,7 +56,7 @@ export default function FindingsTable({ findings, onTreat, onResolve }) {
                 <tbody>
                     {findings.map((finding) => (
                         <tr key={finding.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-3 py-3 font-medium text-gray-800">
+                            <td className="px-3 py-3 font-semibold text-gray-800">
                                 {formatBlock(finding.blockCode)}
                             </td>
                             <td className="px-3 py-3 text-gray-700">

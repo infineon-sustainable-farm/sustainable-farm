@@ -58,14 +58,13 @@ export default function VarietiesPage() {
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1.
-                            primary measured 4.498:1, just under the AA minimum of 4.5:1. */}
-                        <p className="font-heading text-xs font-bold tracking-widest text-primary-dark uppercase">
+                        {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                        <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                             Task 1
                         </p>
-                        <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">
+                        <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">
                             Varieties
-                        </h2>
+                        </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
                             Trees, spacing, and expected vs actual yield by variety and block.
                         </p>
@@ -91,7 +90,7 @@ export default function VarietiesPage() {
                     <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                         <TriangleAlert size={28} className="text-error" />
                         <div>
-                            <p className="font-heading text-base font-bold text-gray-900">
+                            <p className="font-heading text-lg font-bold text-gray-900">
                                 Varieties could not be loaded
                             </p>
                             {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}

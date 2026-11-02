@@ -17,9 +17,9 @@ export default function OverviewCard({ titleId, title, caption, query, loadingTe
             className={`flex min-w-0 flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 ${className}`}
         >
             <div>
-                <h3 id={titleId} className="font-heading text-base font-bold text-gray-900">
+                <h2 id={titleId} className="font-heading text-lg font-bold text-gray-900">
                     {title}
-                </h3>
+                </h2>
                 {caption && <p className="mt-1 text-sm text-gray-600">{caption}</p>}
             </div>
 

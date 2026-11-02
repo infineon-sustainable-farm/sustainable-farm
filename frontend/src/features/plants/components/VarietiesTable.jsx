@@ -46,7 +46,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                             }}
                             className="cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                         >
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(variety.name)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

@@ -59,7 +59,7 @@ function YearsTable({ analysis }) {
                                 key={year.year}
                                 className={`border-b border-gray-100 last:border-b-0 ${isPayback ? "bg-[#e5f7ef]" : ""}`}
                             >
-                                <th scope="row" className="px-3 py-3 text-left font-medium text-gray-800">
+                                <th scope="row" className="px-3 py-3 text-left font-semibold text-gray-800">
                                     {year.year}
                                     {isPayback && (
                                         <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[#257e55]">
@@ -101,9 +101,9 @@ export default function CashFlowByYearTable({ query, horizonYears, onHorizonChan
         <section aria-labelledby="cash-flow-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h3 id="cash-flow-title" className="font-heading text-base font-bold text-gray-900">
+                    <h2 id="cash-flow-title" className="font-heading text-lg font-bold text-gray-900">
                         Cash Flow by Year
-                    </h3>
+                    </h2>
                     {data && !isError && (
                         <p className="mt-1 text-sm font-semibold text-gray-800">
                             {paybackText(data.analysis.baseline, data.analysis.horizonYears)}

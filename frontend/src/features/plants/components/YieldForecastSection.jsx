@@ -108,9 +108,9 @@ export default function YieldForecastSection({ blockCode }) {
 
     return (
         <section aria-labelledby="yield-forecast-title" className="flex flex-col gap-4">
-            <h3 id="yield-forecast-title" className="font-heading text-base font-bold text-gray-900">
+            <h2 id="yield-forecast-title" className="font-heading text-lg font-bold text-gray-900">
                 Expected yield by month
-            </h3>
+            </h2>
 
             <MonthPeriodControls
                 idPrefix="yield-forecast"
@@ -132,7 +132,7 @@ export default function YieldForecastSection({ blockCode }) {
                 <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-base font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-gray-900">
                             Yield forecast could not be loaded
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}

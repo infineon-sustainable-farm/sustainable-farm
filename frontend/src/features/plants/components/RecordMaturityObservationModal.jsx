@@ -175,12 +175,12 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
     return (
         <PlantsModal labelledBy="record-observation-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h3
+                <h2
                     id="record-observation-title"
-                    className="font-heading text-xl font-bold text-gray-900"
+                    className="font-heading text-lg font-bold text-gray-900"
                 >
                     Record a maturity observation
-                </h3>
+                </h2>
                 <button
                     type="button"
                     onClick={onClose}

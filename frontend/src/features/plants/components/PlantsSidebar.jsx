@@ -39,7 +39,7 @@ const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";
  * --color-primary token; no new hue is introduced.
  */
 const linkStyles = ({ isActive }) =>
-    `${ITEM_BASE} font-medium text-white hover:bg-white/10 ${
+    `${ITEM_BASE} font-normal text-white hover:bg-white/10 ${
         isActive ? "bg-black/20 font-semibold shadow-[inset_3px_0_0_#fff]" : ""
     }`;
 

@@ -45,9 +45,9 @@ export default function HarvestStatusSection({ blockCode }) {
         <section aria-labelledby="maturity-status-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h3 id="maturity-status-title" className="font-heading text-base font-bold text-gray-900">
+                    <h2 id="maturity-status-title" className="font-heading text-lg font-bold text-gray-900">
                         Maturity status
-                    </h3>
+                    </h2>
                     {data && (
                         <>
                             <p className="mt-1 max-w-3xl text-sm text-gray-600">
@@ -88,7 +88,7 @@ export default function HarvestStatusSection({ blockCode }) {
                 <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-base font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-gray-900">
                             Maturity status could not be loaded
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}

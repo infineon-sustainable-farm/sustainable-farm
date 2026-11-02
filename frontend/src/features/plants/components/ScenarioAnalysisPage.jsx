@@ -134,11 +134,11 @@ export default function ScenarioAnalysisPage() {
             {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
             <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header>
-                    {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1. */}
-                    <p className="font-heading text-xs font-bold tracking-widest text-primary-dark uppercase">
+                    {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                    <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                         Strategic Planning
                     </p>
-                    <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">Scenario Analysis</h2>
+                    <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">Scenario Analysis</h1>
                     <p className="mt-2 max-w-xl text-sm text-gray-500">
                         {"Cost-benefit analysis if Plants' mango output increases, to support a go/no-go decision."}
                     </p>

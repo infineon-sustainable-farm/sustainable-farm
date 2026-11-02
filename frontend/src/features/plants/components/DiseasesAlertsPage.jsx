@@ -128,14 +128,13 @@ export default function DiseasesAlertsPage() {
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1.
-                            primary measured 4.498:1, just under the AA minimum of 4.5:1. */}
-                        <p className="font-heading text-xs font-bold tracking-widest text-primary-dark uppercase">
+                        {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                        <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                             Task 4
                         </p>
-                        <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">
+                        <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">
                             Diseases &amp; Alerts
-                        </h2>
+                        </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
                             Health by block, inspections, treatments and health alerts.
                         </p>

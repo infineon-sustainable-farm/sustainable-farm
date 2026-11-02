@@ -106,9 +106,9 @@ export default function ResolveFindingModal({ finding, isSubmitting, error, onSu
     return (
         <PlantsModal labelledBy="resolve-finding-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h3 id="resolve-finding-title" className="font-heading text-xl font-bold text-gray-900">
+                <h2 id="resolve-finding-title" className="font-heading text-lg font-bold text-gray-900">
                     Resolve a finding
-                </h3>
+                </h2>
                 <button
                     type="button"
                     onClick={onClose}

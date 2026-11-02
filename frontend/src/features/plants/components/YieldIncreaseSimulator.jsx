@@ -129,9 +129,9 @@ export default function YieldIncreaseSimulator({ scenario, yieldIncrease, onYiel
 
     return (
         <section aria-labelledby="yield-simulator-title" className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5">
-            <h3 id="yield-simulator-title" className="font-heading text-base font-bold text-gray-900">
+            <h2 id="yield-simulator-title" className="font-heading text-lg font-bold text-gray-900">
                 Yield Increase Simulator
-            </h3>
+            </h2>
 
             <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-3 text-sm font-semibold text-gray-800">

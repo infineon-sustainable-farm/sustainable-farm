@@ -31,7 +31,7 @@ export default function PlantAlertItem({ alert, title, dateLabel }) {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <p className="text-sm font-bold text-gray-900">{title}</p>
                     <span
-                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-white uppercase ${style.pill}`}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide text-white uppercase ${style.pill}`}
                     >
                         {formatCode(alert.severity)}
                     </span>

@@ -31,9 +31,9 @@ export default function UpcomingDeadlinesSection({ blockCode }) {
     return (
         <section aria-labelledby="upcoming-deadlines-title" className="flex flex-col gap-3">
             <div>
-                <h3 id="upcoming-deadlines-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="upcoming-deadlines-title" className="font-heading text-lg font-bold text-gray-900">
                     Upcoming deadlines
-                </h3>
+                </h2>
                 {data && (
                     <p className="mt-1 text-sm text-gray-600">
                         {`As of ${formatDate(data.today)}: harvest seasons in progress or opening within `
