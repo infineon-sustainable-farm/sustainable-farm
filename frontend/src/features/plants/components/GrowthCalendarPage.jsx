@@ -82,7 +82,7 @@ export default function GrowthCalendarPage() {
                         Planting Calendar &amp; Growth Stages
                     </h1>
                     <p className="mt-2 max-w-xl text-sm text-gray-500">
-                        Age is auto-calculated from planting date, never entered manually.
+                        Tree age and growth stage, from the planting date.
                     </p>
                 </header>
 

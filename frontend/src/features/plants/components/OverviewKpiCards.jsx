@@ -23,7 +23,7 @@ const FIGURES = [
 function FigureCard({ figure, overview }) {
     const Icon = figure.icon;
     return (
-        <li className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4">
+        <li className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-6">
             <div className={`flex size-11 shrink-0 items-center justify-center rounded-lg ${TONES[figure.tone]}`}>
                 <Icon size={22} aria-hidden="true" />
             </div>
@@ -41,14 +41,14 @@ function FigureCard({ figure, overview }) {
 /**
  * The four figures of the day, as the API computes them for the selected
  * block; none of them is computed or added up here. They do not add up to the
- * total, and the note under them says why.
+ * total; the note under them says which trees are counted.
  */
 export default function OverviewKpiCards({ query }) {
     const { data: overview, isPending, isError, refetch, isFetching } = query;
 
     if (isPending) {
         return (
-            <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
+            <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500">
                 <Loader2 size={18} className="animate-spin" />
                 Loading the figures of the day…
             </div>
@@ -57,13 +57,13 @@ export default function OverviewKpiCards({ query }) {
 
     if (isError) {
         return (
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 p-6">
                 <div className="flex items-start gap-3">
                     <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                     <div>
-                        <p className="text-sm font-bold text-gray-900">The figures of the day could not be loaded</p>
+                        <p className="text-sm font-bold text-gray-900">Today's figures are unavailable.</p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
-                        <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
+                        <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
                     </div>
                 </div>
                 <button
@@ -80,14 +80,13 @@ export default function OverviewKpiCards({ query }) {
 
     return (
         <section aria-label="Figures of the day" className="flex flex-col gap-2">
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {FIGURES.map((figure) => (
                     <FigureCard key={figure.field} figure={figure} overview={overview} />
                 ))}
             </ul>
             <p className="px-1 text-xs text-gray-500">
-                Trees in the field; the nursery is not counted. A tree in production outside its harvest window is
-                in neither In Growth Stage nor Ready for Harvest.
+                Field trees only; nursery plants are not counted.
             </p>
         </section>
     );

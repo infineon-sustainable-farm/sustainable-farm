@@ -140,7 +140,7 @@ export default function ScenarioAnalysisPage() {
                     </p>
                     <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">Scenario Analysis</h1>
                     <p className="mt-2 max-w-xl text-sm text-gray-500">
-                        {"Cost-benefit analysis if Plants' mango output increases, to support a go/no-go decision."}
+                        Costs and benefits of growing mango output.
                     </p>
                 </header>
 

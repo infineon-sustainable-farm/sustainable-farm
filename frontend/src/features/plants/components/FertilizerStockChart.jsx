@@ -105,10 +105,10 @@ export default function FertilizerStockChart() {
         <OverviewCard
             titleId="overview-fertilizer-title"
             title="Fertilizer Stock vs Alert Threshold"
-            caption="Every block: a fertilizer belongs to no block. One chart per unit, so kg and L never share a scale."
+            caption="Stock for the whole farm, by unit."
             query={query}
             loadingText="Loading the fertilizer stock…"
-            errorText="The fertilizer stock could not be loaded"
+            errorText="Fertilizer stock is unavailable."
         >
             {fertilizers && fertilizers.length === 0 && (
                 <p className="text-sm text-gray-700">No fertilizer in the catalogue yet.</p>

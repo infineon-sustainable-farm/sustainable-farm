@@ -136,7 +136,7 @@ export default function DiseasesAlertsPage() {
                             Diseases &amp; Alerts
                         </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Health by block, inspections, treatments and health alerts.
+                            Block health, findings and treatments.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

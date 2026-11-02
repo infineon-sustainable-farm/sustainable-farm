@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { useHarvests } from "../hooks/useHarvests";
+import { formatDate } from "../utils/format";
 import HarvestsTable from "./HarvestsTable";
 import PlantsEmptyState from "./PlantsEmptyState";
 
@@ -11,21 +12,32 @@ const CONTROL_CLASS =
 /**
  * One date filter of the list. Its accessible name joins the section title and
  * its own label, so "From" here is told apart from the forecast's "From".
+ * The chosen date is written out under the field in letters, as the browser
+ * shows its own day/month order.
  */
 function DateFilter({ id, label, value, onChange }) {
     return (
-        <div className="flex items-center gap-3">
-            <label id={`${id}-label`} htmlFor={id} className={LABEL_CLASS}>
+        <div className="flex items-start gap-3">
+            <label id={`${id}-label`} htmlFor={id} className={`pt-2 ${LABEL_CLASS}`}>
                 {label}
             </label>
-            <input
-                id={id}
-                type="date"
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                aria-labelledby={`recorded-harvests-title ${id}-label`}
-                className={CONTROL_CLASS}
-            />
+            <div className="flex flex-col gap-1">
+                <input
+                    id={id}
+                    type="date"
+                    value={value}
+                    onChange={(event) => onChange(event.target.value)}
+                    aria-labelledby={`recorded-harvests-title ${id}-label`}
+                    aria-describedby={value ? `${id}-chosen` : undefined}
+                    className={CONTROL_CLASS}
+                />
+                {/* gray-600: #4a5565 on white -> 7.56:1. */}
+                {value && (
+                    <p id={`${id}-chosen`} className="text-xs text-gray-600">
+                        {formatDate(value)}
+                    </p>
+                )}
+            </div>
         </div>
     );
 }
@@ -55,28 +67,28 @@ export default function HarvestsSection({ blockCode, recordAction }) {
                 Recorded harvests
             </h2>
 
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white p-6">
                 <DateFilter id="recorded-harvests-from" label="From" value={from} onChange={setFrom} />
                 <DateFilter id="recorded-harvests-to" label="To" value={to} onChange={setTo} />
             </div>
 
             {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
+                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-12 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Loading harvests…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
+                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-12 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
                         <p className="font-heading text-lg font-bold text-gray-900">
-                            Harvests could not be loaded
+                            Harvests are unavailable.
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
                         <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
+                            Check your connection, then try again.
                         </p>
                     </div>
                     <button

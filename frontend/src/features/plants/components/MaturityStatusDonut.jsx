@@ -82,11 +82,12 @@ export default function MaturityStatusDonut({ query }) {
     return (
         <OverviewCard
             titleId="overview-maturity-title"
+            className="lg:row-span-2 lg:grid lg:grid-rows-subgrid"
             title="Harvest Maturity Status"
-            caption="The maturity status of today, as on Harvest & Maturity."
+            caption="Trees by maturity today."
             query={query}
             loadingText="Loading the maturity status…"
-            errorText="The maturity status could not be loaded"
+            errorText="Maturity is unavailable."
         >
             {overview && overview.totalPlants === 0 && (
                 <p className="text-sm text-gray-700">No planted tree to show.</p>
