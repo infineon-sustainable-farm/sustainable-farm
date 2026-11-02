@@ -23,11 +23,12 @@ export default function NurserySurvivalChart() {
     return (
         <OverviewCard
             titleId="overview-nursery-title"
+            className="lg:row-span-2 lg:grid lg:grid-rows-subgrid"
             title="Nursery Survival Rate by Batch"
-            caption="Every block: the block filter does not apply here."
+            caption="All nursery batches."
             query={query}
             loadingText="Loading the nursery batches…"
-            errorText="The nursery batches could not be loaded"
+            errorText="Nursery batches are unavailable."
         >
             {batches && batches.length === 0 && <p className="text-sm text-gray-700">No nursery batch yet.</p>}
 

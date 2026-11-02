@@ -67,7 +67,7 @@ export default function BlockYieldChart({ blockCode }) {
     const query = useYieldComparison({ blockCode });
     const comparison = query.data;
     const caption = comparison
-        ? `${countOf(comparison.months, "month")} from ${formatMonth(comparison.from, "long")}: the recorded harvests against the yield the forecast expects.`
+        ? `Expected and harvested over ${countOf(comparison.months, "month")} from ${formatMonth(comparison.from)}.`
         : null;
     // The common scale of the bars: the largest yield written on the card.
     const largestKg = comparison
@@ -77,11 +77,12 @@ export default function BlockYieldChart({ blockCode }) {
     return (
         <OverviewCard
             titleId="overview-yield-title"
+            className="lg:row-span-2 lg:grid lg:grid-rows-subgrid"
             title="Expected vs Actual Yield by Block"
             caption={caption}
             query={query}
             loadingText="Loading the yield by block…"
-            errorText="The yield by block could not be loaded"
+            errorText="Yield is unavailable."
         >
             {comparison && comparison.blocks.length === 0 && (
                 <p className="text-sm text-gray-700">No planted variety with a reference value over this period.</p>

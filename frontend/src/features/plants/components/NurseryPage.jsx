@@ -101,7 +101,7 @@ export default function NurseryPage() {
                             Nursery
                         </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Seedling batches before transplanting to their destination block.
+                            Seedling batches until they are transplanted.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

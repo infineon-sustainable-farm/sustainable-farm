@@ -98,7 +98,7 @@ export default function FertilizerInventoryPage() {
                             Fertilizer Inventory
                         </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Stock, alert thresholds, and the history of purchases, applications and losses.
+                            Stock, purchases, applications and losses.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

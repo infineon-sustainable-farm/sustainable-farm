@@ -66,7 +66,7 @@ export default function VarietiesPage() {
                             Varieties
                         </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Trees, spacing, and expected vs actual yield by variety and block.
+                            Trees and yield by variety and block.
                         </p>
                     </div>
                     <RecordPlantingButton onClick={openPlantingForm} />

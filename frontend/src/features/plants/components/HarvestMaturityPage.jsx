@@ -98,7 +98,7 @@ export default function HarvestMaturityPage() {
                             Harvest &amp; Maturity
                         </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Maturity status, harvest deadlines, expected yield and recorded harvests, by block.
+                            Maturity, harvest dates and yield, by block.
                         </p>
                         {/* Always in the page, empty until a harvest is recorded, so the message is announced. */}
                         <div role="status">

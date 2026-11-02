@@ -4,10 +4,15 @@
  *
  * `label` says which block is filtered: "Block / Plot:" unless a screen filters
  * on another one, such as the destination of a nursery batch.
+ *
+ * In its own card by default; `bare` drops the card, for a filter placed on the
+ * title row of a screen. Its gray-500 label stays above AA either way: #6a7282
+ * -> 4.84:1 on white, 4.63:1 on the gray-50 page.
  */
-export default function BlockFilter({ blocks, value, onChange, disabled, label = "Block / Plot:" }) {
+export default function BlockFilter({ blocks, value, onChange, disabled, label = "Block / Plot:", bare = false }) {
+    const frame = bare ? "" : "rounded-xl border border-gray-200 bg-white p-6";
     return (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <div className={`flex flex-wrap items-center gap-3 ${frame}`}>
             <label
                 htmlFor="plants-block-filter"
                 className="text-xs font-semibold text-gray-500"
