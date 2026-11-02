@@ -48,6 +48,15 @@ function Legend() {
 }
 
 /**
+ * The line of a block without harvest, from the API's expected yield alone:
+ * none expected over the period (young trees), or none recorded yet.
+ * "Awaiting" would promise a harvest the forecast does not expect.
+ */
+function noHarvestText(expectedKg) {
+    return expectedKg === 0 ? "No harvest expected over this period" : "Actual: no harvest recorded yet";
+}
+
+/**
  * The mock-up's "Expected vs Actual Yield by Block": the block lines of the
  * yield comparison, in the API's order, over the API's default period, the
  * calendar year. Each block has its expected bar and, once a harvest is
@@ -93,7 +102,7 @@ export default function BlockYieldChart({ blockCode }) {
                                         barClass={EXPECTED_BAR}
                                     />
                                     {block.actualKg === null ? (
-                                        <p className="text-xs text-gray-600">Actual: awaiting harvest</p>
+                                        <p className="text-xs text-gray-600">{noHarvestText(block.expectedKg)}</p>
                                     ) : (
                                         <YieldBar
                                             label="Actual"
