@@ -33,7 +33,7 @@ export default function HarvestsTable({ harvests }) {
                 <tbody>
                     {harvests.map((harvest) => (
                         <tr key={harvest.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatBlock(harvest.blockCode)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

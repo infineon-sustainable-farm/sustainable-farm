@@ -28,7 +28,7 @@ function BlockHealthCard({ block }) {
     return (
         <li className={`rounded-xl border border-t-4 border-gray-200 bg-white px-4 py-4 text-center ${tone.border}`}>
             <p className="text-sm font-semibold text-gray-600">{formatBlock(block.blockCode)}</p>
-            <p className={`font-heading mt-1 text-3xl font-bold ${tone.score}`}>{`${block.healthScorePct}%`}</p>
+            <p className={`font-heading mt-1 text-2xl font-bold ${tone.score}`}>{`${block.healthScorePct}%`}</p>
             <div className="mt-2">
                 <HealthCategoryBadge category={block.healthCategory} />
             </div>
@@ -54,9 +54,9 @@ export default function BlockHealthSection({ blockCode, recordAction }) {
 
     return (
         <section aria-labelledby="block-health-title" className="flex flex-col gap-4">
-            <h3 id="block-health-title" className="font-heading text-base font-bold text-gray-900">
+            <h2 id="block-health-title" className="font-heading text-lg font-bold text-gray-900">
                 Health by block
-            </h3>
+            </h2>
 
             {isPending && (
                 <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
@@ -69,7 +69,7 @@ export default function BlockHealthSection({ blockCode, recordAction }) {
                 <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-base font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-gray-900">
                             The health of the blocks could not be loaded
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}

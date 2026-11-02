@@ -10,7 +10,8 @@ export default function PlantsLayout() {
     return (
         <div className="flex h-dvh">
             <PlantsSidebar />
-            <main className="h-dvh min-w-0 flex-1 overflow-y-auto">
+            {/* tabular-nums is inherited: every figure of the module, chart labels included, lines up in columns. */}
+            <main className="h-dvh min-w-0 flex-1 overflow-y-auto tabular-nums">
                 <Outlet />
             </main>
         </div>

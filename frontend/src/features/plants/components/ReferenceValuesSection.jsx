@@ -73,7 +73,7 @@ function VarietyReferencesTable({ references, onEdit }) {
                 <tbody>
                     {references.map((reference) => (
                         <tr key={reference.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(reference.varietyName)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
@@ -360,9 +360,9 @@ export default function ReferenceValuesSection() {
     return (
         <section aria-labelledby="reference-values-title" className="flex flex-col gap-4">
             <div>
-                <h3 id="reference-values-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="reference-values-title" className="font-heading text-lg font-bold text-gray-900">
                     Reference values
-                </h3>
+                </h2>
                 <p className="mt-1 max-w-2xl text-sm text-gray-600">
                     The forecast and the plant alerts compute from these values, for every farm and block. Each
                     value shows its source; a correction counts at once.
@@ -370,7 +370,7 @@ export default function ReferenceValuesSection() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h4 className={SUBTITLE_CLASS}>Varieties</h4>
+                <h3 className={SUBTITLE_CLASS}>Varieties</h3>
                 <button
                     type="button"
                     onClick={() => openReferenceForm(null)}
@@ -402,7 +402,7 @@ export default function ReferenceValuesSection() {
                 <VarietyReferencesTable references={references.data} onEdit={openReferenceForm} />
             )}
 
-            <h4 className={SUBTITLE_CLASS}>Yield share by growth phase</h4>
+            <h3 className={SUBTITLE_CLASS}>Yield share by growth phase</h3>
 
             {shares.isPending && <LoadingBox label="Loading the yield shares…" />}
 

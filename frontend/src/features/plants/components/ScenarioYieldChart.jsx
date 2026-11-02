@@ -7,7 +7,7 @@ import OverviewCard from "./OverviewCard";
  * Geometry in CSS pixels, as in the yield forecast chart: drawn at its real
  * size, so the labels keep their font size on a phone.
  */
-const FONT_SIZE = 11;
+const FONT_SIZE = 12;
 const MIN_SLOT_WIDTH = 72;
 const MAX_BAR_WIDTH = 48;
 const CORNER_RADIUS = 4;

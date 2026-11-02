@@ -50,7 +50,7 @@ export default function TreatmentsTable({ treatments }) {
                     {treatments.map((treatment) => (
                         <tr key={treatment.id} className="border-b border-gray-100 last:border-b-0">
                             <td className="px-4 py-3 text-gray-700">{formatDate(treatment.treatedOn)}</td>
-                            <td className="px-4 py-3 font-medium text-gray-800">{formatBlock(treatment.blockCode)}</td>
+                            <td className="px-4 py-3 font-semibold text-gray-800">{formatBlock(treatment.blockCode)}</td>
                             {/* "Other" is named by the label typed with it, as in the findings. */}
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(treatment.targetOtherLabel ?? treatment.targetIssueName)}

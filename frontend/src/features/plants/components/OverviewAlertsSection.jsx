@@ -38,9 +38,9 @@ export default function OverviewAlertsSection({ blockCode }) {
     return (
         <section aria-labelledby="overview-alerts-title" className="flex flex-col gap-3">
             <div>
-                <h3 id="overview-alerts-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="overview-alerts-title" className="font-heading text-lg font-bold text-gray-900">
                     Alerts
-                </h3>
+                </h2>
                 <p className="mt-1 text-sm text-gray-600">{scopeSentence(blockCode, data)}</p>
             </div>
 

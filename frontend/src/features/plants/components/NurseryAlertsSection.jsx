@@ -18,9 +18,9 @@ export default function NurseryAlertsSection() {
     return (
         <section aria-labelledby="transplant-alerts-title" className="flex flex-col gap-3">
             <div>
-                <h3 id="transplant-alerts-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="transplant-alerts-title" className="font-heading text-lg font-bold text-gray-900">
                     Transplant alerts
-                </h3>
+                </h2>
                 <p className="mt-1 text-sm text-gray-600">
                     {data
                         ? `Every block, as of ${formatDate(data.today)}. The destination block filter does not apply here.`
