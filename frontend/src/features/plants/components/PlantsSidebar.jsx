@@ -29,19 +29,21 @@ const NAV_ITEMS = [
     { label: "Scenario Analysis", icon: TrendingUp, path: "/plants/scenario-analysis" },
 ];
 
-const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";
+// 32 px entries with 16 px icons, the one icon size of the module shell.
+const ITEM_BASE =
+    "flex h-8 items-center gap-2 rounded-md px-3 text-sm text-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white";
+const ICON_SIZE = 16;
 
 /**
- * Active entry: a dark overlay plus the mock-up's inset left marker. The mock-up
- * lightens the row instead, which pushes its background towards its own white
- * label — 3.64:1, under the AA minimum. Darkening raises the label to 6.66:1 and
- * detaches the row from the bar. Colours stay white and black over the existing
- * --color-primary token; no new hue is introduced.
+ * Active entry: a light dark tint, the mock-up's left marker in 2 px and a
+ * semibold label, rather than a solid block. Every state keeps white text at
+ * AA or more: #0a8276 bar -> 4.70:1; hover and active, black at 10% over it
+ * (#09756a) -> 5.58:1. Lightening the row instead, as the mock-up does, gave
+ * 3.64:1. Colours stay white and black over the existing --color-primary
+ * token; no new hue is introduced.
  */
 const linkStyles = ({ isActive }) =>
-    `${ITEM_BASE} font-normal text-white hover:bg-white/10 ${
-        isActive ? "bg-black/20 font-semibold shadow-[inset_3px_0_0_#fff]" : ""
-    }`;
+    `${ITEM_BASE} hover:bg-black/10 ${isActive ? "bg-black/10 font-semibold shadow-[inset_2px_0_0_#fff]" : "font-normal"}`;
 
 /**
  * Module shell navigation, following the Machinery sidebar: same width, same
@@ -68,14 +70,14 @@ export default function PlantsSidebar() {
 
             <nav
                 aria-label="Plants module"
-                className={`fixed top-0 left-0 z-40 flex h-dvh w-60 min-w-60 flex-col bg-primary px-4 py-5
+                className={`fixed top-0 left-0 z-40 flex h-dvh w-60 min-w-60 flex-col bg-primary px-4 py-4
                     transition-transform duration-300 md:static md:translate-x-0
                     ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
-                <div className="flex flex-col items-center gap-2 px-2">
-                    {/* The application's logo, served from public/ as machinery serves it.
-                        Empty alt: the module name follows immediately, in text. */}
-                    <img src="/logo.webp" alt="" width="150" />
+                <div className="flex flex-col items-center gap-1 px-2">
+                    {/* The application's logo, served from public/ as machinery serves it, at
+                        Machinery's 80 px. Empty alt: the module name follows immediately, in text. */}
+                    <img src="/logo.webp" alt="" width="80" height="80" />
                     <p className="font-heading text-center text-xs font-bold tracking-widest text-white uppercase">
                         Plants
                     </p>
@@ -94,7 +96,7 @@ export default function PlantsSidebar() {
                                 className={linkStyles}
                                 onClick={() => setIsOpen(false)}
                             >
-                                <Icon size={17} className="shrink-0" />
+                                <Icon size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
                                 {label}
                             </NavLink>
                         </li>
