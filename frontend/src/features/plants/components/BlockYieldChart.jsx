@@ -2,11 +2,13 @@ import { Link } from "react-router-dom";
 import { useYieldComparison } from "../hooks/useYieldComparison";
 import { formatBlock, formatKilograms, formatMonth, formatNumber } from "../utils/format";
 import OverviewCard from "./OverviewCard";
+import { CARD_CAPTION, CARD_LINK } from "./overviewStyles";
 
 /*
  * Expected in the mock-up's orange, darkened so a bar keeps 3:1 on the white
  * card: #a87a1e -> 3.84:1 (#d9a441 gave 2.25:1). Actual in primary, #0a8276 ->
- * 4.70:1. Each bar also writes what it is and its value, so the colours are
+ * 4.70:1. Each bar sits on a light track, #eef2f1, so that 0 kg reads as an
+ * empty bar, and each row writes what it is and its value, so the colours are
  * never the only cue.
  */
 const EXPECTED_BAR = "bg-[#a87a1e]";
@@ -18,30 +20,34 @@ function countOf(count, word) {
 
 /**
  * One bar on the card's common scale: as long as its yield against the largest
- * yield written on the card. A yield above 0 always shows a sliver.
+ * yield written on the card. A yield above 0 always shows a sliver. Its word,
+ * its track and its value share one row; the values line up on the right.
  */
 function YieldBar({ label, kg, largestKg, barClass }) {
     const width = largestKg > 0 ? `${(kg / largestKg) * 100}%` : "0%";
     return (
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-            <div aria-hidden="true" className="h-3">
-                <div className={`h-3 rounded-full ${barClass} ${kg > 0 ? "min-w-0.5" : ""}`} style={{ width }} />
+        <div className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2">
+            <span className="text-xs text-gray-600">{label}</span>
+            <div aria-hidden="true" className="h-2.5 rounded-full bg-[#eef2f1]">
+                <div className={`h-2.5 rounded-full ${barClass} ${kg > 0 ? "min-w-1" : ""}`} style={{ width }} />
             </div>
-            <span className="text-xs whitespace-nowrap text-gray-700">{`${label} ${formatKilograms(kg)}`}</span>
+            <span className="text-right text-xs font-semibold whitespace-nowrap text-gray-900">
+                {formatKilograms(kg)}
+            </span>
         </div>
     );
 }
 
 function Legend() {
     return (
-        <div aria-hidden="true" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+        <div aria-hidden="true" className={`flex flex-wrap gap-x-4 gap-y-1 ${CARD_CAPTION}`}>
             <span className="flex items-center gap-1.5">
-                <span className={`size-2.5 rounded-full ${EXPECTED_BAR}`} />
-                Expected yield
+                <span className={`h-2.5 w-4 rounded-full ${EXPECTED_BAR}`} />
+                Expected
             </span>
             <span className="flex items-center gap-1.5">
-                <span className={`size-2.5 rounded-full ${ACTUAL_BAR}`} />
-                Actual yield
+                <span className={`h-2.5 w-4 rounded-full ${ACTUAL_BAR}`} />
+                Actual
             </span>
         </div>
     );
@@ -53,7 +59,7 @@ function Legend() {
  * "Awaiting" would promise a harvest the forecast does not expect.
  */
 function noHarvestText(expectedKg) {
-    return expectedKg === 0 ? "No harvest expected over this period" : "Actual: no harvest recorded yet";
+    return expectedKg === 0 ? "No harvest expected over this period" : "No harvest recorded yet";
 }
 
 /**
@@ -91,28 +97,29 @@ export default function BlockYieldChart({ blockCode }) {
             {comparison && comparison.blocks.length > 0 && (
                 <>
                     <Legend />
-                    <ul className="flex flex-col gap-4">
+                    <ul className="flex flex-col gap-3">
                         {comparison.blocks.map((block) => (
-                            <li key={`${block.farmId}-${block.blockCode}`}>
+                            <li key={`${block.farmId}-${block.blockCode}`} className="flex flex-col gap-1">
                                 <p className="text-sm font-semibold text-gray-900">{formatBlock(block.blockCode)}</p>
-                                <div className="mt-1.5 flex flex-col gap-1.5">
+                                <YieldBar
+                                    label="Expected"
+                                    kg={block.expectedKg}
+                                    largestKg={largestKg}
+                                    barClass={EXPECTED_BAR}
+                                />
+                                {block.actualKg === null ? (
+                                    <p className="grid grid-cols-[4rem_minmax(0,1fr)] gap-2 text-xs text-gray-600">
+                                        <span>Actual</span>
+                                        <span>{noHarvestText(block.expectedKg)}</span>
+                                    </p>
+                                ) : (
                                     <YieldBar
-                                        label="Expected"
-                                        kg={block.expectedKg}
+                                        label="Actual"
+                                        kg={block.actualKg}
                                         largestKg={largestKg}
-                                        barClass={EXPECTED_BAR}
+                                        barClass={ACTUAL_BAR}
                                     />
-                                    {block.actualKg === null ? (
-                                        <p className="text-xs text-gray-600">{noHarvestText(block.expectedKg)}</p>
-                                    ) : (
-                                        <YieldBar
-                                            label="Actual"
-                                            kg={block.actualKg}
-                                            largestKg={largestKg}
-                                            barClass={ACTUAL_BAR}
-                                        />
-                                    )}
-                                </div>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -120,15 +127,10 @@ export default function BlockYieldChart({ blockCode }) {
             )}
 
             {comparison && comparison.notCompared.length > 0 && (
-                <p className="text-xs text-gray-500">
-                    Planted varieties without a reference value are not compared.
-                </p>
+                <p className={CARD_CAPTION}>Planted varieties without a reference value are not compared.</p>
             )}
 
-            <Link
-                to="/plants/harvest-maturity"
-                className="text-sm font-semibold text-primary-dark underline underline-offset-2 hover:no-underline"
-            >
+            <Link to="/plants/harvest-maturity" className={`mt-auto self-start ${CARD_LINK}`}>
                 See Harvest &amp; Maturity
             </Link>
         </OverviewCard>

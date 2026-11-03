@@ -1,4 +1,5 @@
 import { Loader2, TriangleAlert } from "lucide-react";
+import { CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON } from "./overviewStyles";
 
 /**
  * Frame of one chart of the Overview: its title and caption, then its loading
@@ -15,41 +16,32 @@ export default function OverviewCard({ titleId, title, caption, query, loadingTe
     const { isPending, isError, refetch, isFetching } = query;
 
     return (
-        <section
-            aria-labelledby={titleId}
-            className={`flex min-w-0 flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 ${className}`}
-        >
+        <section aria-labelledby={titleId} className={`flex min-w-0 flex-col gap-4 ${CARD} ${className}`}>
             <div>
-                <h2 id={titleId} className="font-heading text-lg font-bold text-gray-900">
+                <h2 id={titleId} className={CARD_TITLE}>
                     {title}
                 </h2>
-                {caption && <p className="mt-1 text-sm text-gray-600">{caption}</p>}
+                {caption && <p className={`mt-1 ${CARD_CAPTION}`}>{caption}</p>}
             </div>
 
             <div className="flex min-w-0 flex-col gap-4">
                 {isPending && (
-                    <div className="flex items-center gap-3 py-6 text-sm text-gray-500">
-                        <Loader2 size={18} className="animate-spin" />
+                    <div className="flex items-center gap-2 py-4 text-sm text-gray-500">
+                        <Loader2 size={ICON_SIZE} className="animate-spin" />
                         {loadingText}
                     </div>
                 )}
 
                 {isError && (
-                    <div className="flex flex-col items-start gap-3 rounded-lg border border-error/30 bg-error/5 px-4 py-4">
-                        <div className="flex items-start gap-3">
-                            <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
+                    <div className={ERROR_BOX}>
+                        <div className="flex items-start gap-2">
+                            <TriangleAlert size={ICON_SIZE} className="mt-0.5 shrink-0 text-error" />
                             <div>
                                 <p className="text-sm font-bold text-gray-900">{errorText}</p>
-                                {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
                                 <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                        >
+                        <button type="button" onClick={() => refetch()} disabled={isFetching} className={PRIMARY_BUTTON}>
                             {isFetching ? "Retrying…" : "Retry"}
                         </button>
                     </div>
