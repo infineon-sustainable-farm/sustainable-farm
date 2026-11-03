@@ -1,9 +1,8 @@
 import { useFertilizers } from "../hooks/useFertilizers";
 import { formatQuantity, formatUnit } from "../utils/format";
 import OverviewCard from "./OverviewCard";
+import { CARD_CAPTION } from "./overviewStyles";
 import StockStatusBadge from "./StockStatusBadge";
-
-const TRACK_HEIGHT = 160; // px
 
 // kg first, then L, then a unit the API adds later, in the order the API sends them.
 const UNIT_ORDER = ["KG", "L"];
@@ -21,17 +20,18 @@ function groupsByUnit(fertilizers) {
 }
 
 /**
- * The fertilizers of one unit: a bar per fertilizer as tall as its stock, and
- * a mark at its alert threshold, both on the scale of the largest stock or
- * threshold of the unit. The stock, the threshold and the "Low stock" badge
- * are the API's, written out under each bar; only the heights are laid out
- * here. Nothing is written above a bar: when the threshold is the largest
- * value its mark sits at the top, where a figure would read as its label.
+ * The fertilizers of one unit, one row each: its name, a bar as long as its
+ * stock with a mark at its alert threshold, both on the scale of the largest
+ * stock or threshold of the unit, then the stock and threshold written out and
+ * the API's "Low stock" badge. Only the lengths are laid out here. From sm up
+ * the four parts share one line; below, the bar and the figures go under the
+ * name.
  *
- * Bars in primary, #0a8276 on the white card -> 4.70:1. The threshold mark is
- * the mock-up's ink, #16241f, rather than its orange line: 16.08:1 on the card
- * and 3.42:1 across a bar (the orange gave 2.25:1 and 1.22:1). A mark per bar,
- * since a line from one fertilizer to the next would join unrelated products.
+ * Bars in primary, #0a8276 on the white card -> 4.70:1, on a light track
+ * #eef2f1. The threshold mark is the mock-up's ink, #16241f, rather than its
+ * orange line: 16.08:1 on the card and 3.42:1 across a bar (the orange gave
+ * 2.25:1 and 1.22:1). A mark per bar, since a line from one fertilizer to the
+ * next would join unrelated products.
  */
 function UnitChart({ unit, fertilizers }) {
     const symbol = formatUnit(unit);
@@ -39,55 +39,56 @@ function UnitChart({ unit, fertilizers }) {
         0,
         ...fertilizers.flatMap((fertilizer) => [fertilizer.currentStock, fertilizer.reorderThreshold ?? 0]),
     );
-    const heightOf = (quantity) => (largest > 0 ? `${(Math.max(quantity, 0) / largest) * 100}%` : "0%");
+    const shareOf = (quantity) => (largest > 0 ? `${(Math.max(quantity, 0) / largest) * 100}%` : "0%");
 
     return (
-        <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-semibold text-gray-900">{`Stock in ${symbol}`}</h3>
-            <div aria-hidden="true" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-                <span className="flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-sm bg-primary" />
-                    {`Current stock (${symbol})`}
-                </span>
-                <span className="flex items-center gap-1.5">
-                    <span className="h-0.5 w-4 bg-[#16241f]" />
-                    {`Alert threshold (${symbol})`}
-                </span>
+        <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <h3 className="text-sm font-semibold text-gray-900">{`Stock in ${symbol}`}</h3>
+                <div aria-hidden="true" className={`flex flex-wrap gap-x-4 gap-y-1 ${CARD_CAPTION}`}>
+                    <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-4 rounded-full bg-primary" />
+                        Current stock
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <span className="h-3 w-0.5 bg-[#16241f]" />
+                        Alert threshold
+                    </span>
+                </div>
             </div>
-            <div className="relative overflow-x-auto">
-                <ul className="flex min-w-max items-end gap-4 pt-2 pb-1">
-                    {fertilizers.map((fertilizer) => (
-                        <li key={fertilizer.id} className="flex w-28 shrink-0 flex-col items-center gap-1 text-center">
-                            <span className="text-xs font-semibold break-words text-gray-900">{fertilizer.name}</span>
-                            <span className="text-xs font-semibold text-gray-900">
+            <ul className="flex flex-col divide-y divide-gray-200">
+                {fertilizers.map((fertilizer) => (
+                    <li
+                        key={fertilizer.id}
+                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 py-2 sm:grid-cols-[12rem_minmax(0,1fr)_14rem_5.5rem]"
+                    >
+                        <span className="text-sm font-semibold break-words text-gray-900">{fertilizer.name}</span>
+                        <span className="justify-self-end sm:order-last">
+                            <StockStatusBadge belowThreshold={fertilizer.belowThreshold} />
+                        </span>
+                        <div aria-hidden="true" className="relative col-span-2 h-2.5 rounded-full bg-[#eef2f1] sm:col-span-1">
+                            <div
+                                className={`h-2.5 rounded-full bg-primary ${fertilizer.currentStock > 0 ? "min-w-1" : ""}`}
+                                style={{ width: shareOf(fertilizer.currentStock) }}
+                            />
+                            {fertilizer.reorderThreshold !== null && (
+                                <div
+                                    className="absolute -top-1 h-4.5 w-0.5 -translate-x-1/2 bg-[#16241f]"
+                                    style={{ left: shareOf(fertilizer.reorderThreshold) }}
+                                />
+                            )}
+                        </div>
+                        <p className={`col-span-2 sm:col-span-1 ${CARD_CAPTION}`}>
+                            <span className="font-semibold text-gray-900">
                                 {`Stock ${formatQuantity(fertilizer.currentStock, fertilizer.unit)}`}
                             </span>
-                            <span className="text-xs text-gray-600">
-                                {fertilizer.reorderThreshold === null
-                                    ? "No threshold"
-                                    : `Threshold ${formatQuantity(fertilizer.reorderThreshold, fertilizer.unit)}`}
-                            </span>
-                            <StockStatusBadge belowThreshold={fertilizer.belowThreshold} />
-                            <div
-                                aria-hidden="true"
-                                className="relative order-first w-10 border-b border-gray-300"
-                                style={{ height: TRACK_HEIGHT }}
-                            >
-                                <div
-                                    className="absolute inset-x-0 bottom-0 rounded-t-md bg-primary"
-                                    style={{ height: heightOf(fertilizer.currentStock) }}
-                                />
-                                {fertilizer.reorderThreshold !== null && (
-                                    <div
-                                        className="absolute -inset-x-2 h-0.5 translate-y-1/2 bg-[#16241f]"
-                                        style={{ bottom: heightOf(fertilizer.reorderThreshold) }}
-                                    />
-                                )}
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+                            {fertilizer.reorderThreshold === null
+                                ? " · No threshold"
+                                : ` · Threshold ${formatQuantity(fertilizer.reorderThreshold, fertilizer.unit)}`}
+                        </p>
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }

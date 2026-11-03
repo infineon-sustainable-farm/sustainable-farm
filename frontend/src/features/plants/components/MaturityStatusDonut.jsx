@@ -1,5 +1,7 @@
 import { formatCode, formatNumber, formatPercent } from "../utils/format";
+import { MATURITY_MEANINGS } from "../utils/overviewLabels";
 import OverviewCard from "./OverviewCard";
+import { CARD_CAPTION } from "./overviewStyles";
 
 /*
  * One hue per status, each at 3:1 or more on the white card: immature
@@ -16,9 +18,9 @@ const SEGMENTS = {
 const NO_REFERENCE = { label: "No reference", colour: "#3a7ca5" };
 const OTHER_COLOUR = "#4a5565";
 
-const SIZE = 160;
-const RADIUS = 62;
-const STROKE = 22;
+const SIZE = 112;
+const RADIUS = 44;
+const STROKE = 16;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 // White space left between two arcs, so that neighbouring hues stay apart.
 const GAP = 2;
@@ -29,7 +31,7 @@ function segmentOf(entry) {
 }
 
 function treesOf(count) {
-    return `${formatNumber(count)} ${Number(count) === 1 ? "tree" : "trees"}`;
+    return Number(count) === 1 ? "tree" : "trees";
 }
 
 /**
@@ -73,8 +75,11 @@ function Ring({ entries }) {
 /**
  * The mock-up's "Harvest Maturity Status": the trees of each maturity status
  * of the day, and those whose variety has no reference value, with the shares
- * the API computes. Every entry is listed, with no tree if need be. The
- * mock-up's "Harvested" has no status yet: the entries follow the API.
+ * the API computes. Every entry is listed beside the ring, with no tree if
+ * need be. Under them, what each status means, in the words of the server's
+ * definitions: Ripe holds the trees whose harvest is near or on hold, so it
+ * can count trees while Ready for Harvest counts none. The mock-up's
+ * "Harvested" has no status yet: the entries follow the API.
  */
 export default function MaturityStatusDonut({ query }) {
     const overview = query.data;
@@ -95,27 +100,22 @@ export default function MaturityStatusDonut({ query }) {
 
             {overview && overview.totalPlants > 0 && (
                 <>
-                    <div className="flex flex-col items-center gap-5 sm:flex-row lg:flex-col">
+                    <div className="flex items-center gap-4">
                         <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
                             <Ring entries={overview.maturity} />
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="font-heading text-2xl font-bold text-gray-900">
+                                <span className="font-heading text-lg font-bold text-gray-900">
                                     {formatNumber(overview.totalPlants)}
                                 </span>
-                                <span className="text-xs text-gray-600">
-                                    {Number(overview.totalPlants) === 1 ? "tree" : "trees"}
-                                </span>
+                                <span className="text-xs text-gray-600">{treesOf(overview.totalPlants)}</span>
                             </div>
                         </div>
-                        <ul className="flex w-full flex-col gap-2">
+                        <ul className="flex min-w-0 flex-1 flex-col gap-2">
                             {overview.maturity.map((entry) => {
                                 const segment = segmentOf(entry);
                                 return (
-                                    <li
-                                        key={entry.maturityStatus ?? "NO_REFERENCE"}
-                                        className="flex items-center justify-between gap-3 text-sm"
-                                    >
-                                        <span className="flex items-center gap-2 text-gray-700">
+                                    <li key={entry.maturityStatus ?? "NO_REFERENCE"} className="min-w-0">
+                                        <span className="flex items-center gap-2 text-sm text-gray-900">
                                             <span
                                                 aria-hidden="true"
                                                 className="size-2.5 shrink-0 rounded-full"
@@ -123,22 +123,25 @@ export default function MaturityStatusDonut({ query }) {
                                             />
                                             {segment.label}
                                         </span>
-                                        <span className="text-right whitespace-nowrap">
+                                        <span className="block pl-4.5 text-xs text-gray-600">
                                             <span className="font-semibold text-gray-900">
-                                                {formatPercent(entry.sharePct)}
+                                                {formatNumber(entry.treeCount)}
                                             </span>
-                                            <span className="text-gray-600">{` · ${treesOf(entry.treeCount)}`}</span>
+                                            {` ${treesOf(entry.treeCount)} · ${formatPercent(entry.sharePct)}`}
                                         </span>
                                     </li>
                                 );
                             })}
                         </ul>
                     </div>
-                    <p className="text-xs text-gray-500">
-                        Immature counts every tree whose harvest window is not near, young or not, so it differs from
-                        In Growth Stage. A field observation made between two seasons counts for the next one, until
-                        the end of that season.
-                    </p>
+                    <ul className={`flex flex-col gap-1 ${CARD_CAPTION}`}>
+                        {Object.entries(MATURITY_MEANINGS).map(([status, meaning]) => (
+                            <li key={status}>
+                                <span className="font-semibold text-gray-700">{`${SEGMENTS[status].label}: `}</span>
+                                {meaning}.
+                            </li>
+                        ))}
+                    </ul>
                 </>
             )}
         </OverviewCard>
