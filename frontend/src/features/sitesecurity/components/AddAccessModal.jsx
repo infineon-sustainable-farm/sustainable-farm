@@ -10,15 +10,6 @@ const TYPES = [
     { type: "Service", icon: Wrench, hint: "Contractors & teams" },
     { type: "Security", icon: ShieldCheck, hint: "Full oversight" },
 ];
-function initialsOf(name) {
-    return (name
-        .trim()
-        .split(/\s+/)
-        .map((w) => w[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase() || "?");
-}
 export default function AddAccessModal({ open, onClose, onAdd, }) {
     const [name, setName] = useState("");
     const [type, setType] = useState("Staff");
@@ -35,15 +26,11 @@ export default function AddAccessModal({ open, onClose, onAdd, }) {
             return;
         const date = new Date(validUntil + "T00:00:00");
         onAdd({
-            id: `u-${Date.now()}`,
             name: name.trim(),
             role: "Credential holder — added in prototype",
             type,
             level,
             validUntil: date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-            status: type === "Visitor" ? "Active" : "Authorized",
-            initials: initialsOf(name),
-            lastActive: "Not yet on site",
         });
         reset();
         onClose();

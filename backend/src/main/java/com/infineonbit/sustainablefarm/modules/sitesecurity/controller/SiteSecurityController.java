@@ -1,9 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityAccessInterceptor;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.service.SiteSecurityService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,12 @@ import org.springframework.web.bind.annotation.*;
 public class SiteSecurityController {
 
     private final SiteSecurityService siteSecurityService;
+
+    @GetMapping("/session")
+    public ResponseEntity<SessionDto> getSession(
+            @RequestAttribute(SiteSecurityAccessInterceptor.ROLE_ATTRIBUTE) SiteSecurityRole role) {
+        return ResponseEntity.ok(new SessionDto(role.name().toLowerCase(Locale.ROOT)));
+    }
 
     @GetMapping("/overview")
     public ResponseEntity<OverviewResponseDto> getOverview() {

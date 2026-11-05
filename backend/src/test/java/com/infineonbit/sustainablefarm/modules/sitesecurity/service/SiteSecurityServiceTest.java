@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.CreateUserRequestDto;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.GateDto;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.LogEntryDto;
@@ -23,8 +25,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,7 +71,7 @@ public class SiteSecurityServiceTest {
     void createCredential_shouldCreate_whenRequestIsValid() {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
-        when(userRepository.save(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UserDto result = siteSecurityService.createCredential(validRequest());
 
@@ -78,7 +82,7 @@ public class SiteSecurityServiceTest {
         assertNotNull(result.getId());
 
         ArgumentCaptor<CredentialUserEntity> captor = ArgumentCaptor.forClass(CredentialUserEntity.class);
-        verify(userRepository).save(captor.capture());
+        verify(userRepository).saveAndFlush(captor.capture());
         assertEquals("John Doe", captor.getValue().getName());
     }
 
@@ -86,11 +90,67 @@ public class SiteSecurityServiceTest {
     void createCredential_shouldThrow_whenNameAlreadyExists() {
         when(userRepository.existsByName("John Doe")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> siteSecurityService.createCredential(validRequest()));
 
         assertEquals("A credential for 'John Doe' already exists.", ex.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void createCredential_shouldReportConflict_whenConcurrentDuplicateHitsTheConstraint() {
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("restricted")).thenReturn(true);
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class)))
+                .thenThrow(new DataIntegrityViolationException("uk_site_security_users_name"));
+
+        ConflictException ex = assertThrows(ConflictException.class,
+                () -> siteSecurityService.createCredential(validRequest()));
+
+        assertEquals("A credential for 'John Doe' already exists.", ex.getMessage());
+    }
+
+    @Test
+    void createCredential_shouldGenerateADifferentIdForEachCredential() {
+        when(userRepository.existsByName(any())).thenReturn(false);
+        when(zoneRepository.existsById("restricted")).thenReturn(true);
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String first = siteSecurityService.createCredential(validRequest()).getId();
+        String second = siteSecurityService.createCredential(validRequest()).getId();
+
+        assertNotEquals(first, second);
+    }
+
+    @Test
+    void createCredential_shouldRejectVisitorAboveControlledZone() {
+        CreateUserRequestDto req = validRequest().toBuilder().type("Visitor").build();
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("restricted")).thenReturn(true);
+
+        assertThrows(BusinessRuleException.class, () -> siteSecurityService.createCredential(req));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void createCredential_shouldRejectPermanentVisitor_whateverTheCase() {
+        CreateUserRequestDto req = validRequest().toBuilder()
+                .type("Visitor").level("open").validUntil("permanent").build();
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("open")).thenReturn(true);
+
+        assertThrows(BusinessRuleException.class, () -> siteSecurityService.createCredential(req));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void createCredential_shouldAcceptDatedVisitorInControlledZone() {
+        CreateUserRequestDto req = validRequest().toBuilder().type("Visitor").level("controlled").build();
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("controlled")).thenReturn(true);
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertEquals("controlled", siteSecurityService.createCredential(req).getLevel());
     }
 
     @Test
@@ -102,7 +162,7 @@ public class SiteSecurityServiceTest {
                 () -> siteSecurityService.createCredential(validRequest()));
 
         assertTrue(ex.getMessage().contains("Unknown access level 'restricted'"));
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -115,18 +175,6 @@ public class SiteSecurityServiceTest {
                 () -> siteSecurityService.createCredential(req));
 
         assertTrue(ex.getMessage().contains("Invalid credential type 'Superuser'"));
-    }
-
-    @Test
-    void createCredential_shouldThrow_whenStatusIsNotAllowed() {
-        CreateUserRequestDto req = validRequest().toBuilder().status("GodMode").build();
-        when(userRepository.existsByName("John Doe")).thenReturn(false);
-        when(zoneRepository.existsById("restricted")).thenReturn(true);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(req));
-
-        assertTrue(ex.getMessage().contains("Invalid status 'GodMode'"));
     }
 
     @Test
@@ -158,7 +206,7 @@ public class SiteSecurityServiceTest {
         CreateUserRequestDto req = validRequest().toBuilder().validUntil("Permanent").build();
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
-        when(userRepository.save(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UserDto result = siteSecurityService.createCredential(req);
 

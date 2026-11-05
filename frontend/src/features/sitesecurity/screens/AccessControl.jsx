@@ -10,7 +10,7 @@ const TYPE_ICON = {
     Service: Wrench,
     Security: ShieldCheck,
 };
-export default function AccessControl() {
+export default function AccessControl({ canManage = false }) {
     const { users, freshId, addCredential, error } = useCredentials();
     const [open, setOpen] = useState(false);
     const addUser = (u) => {
@@ -19,10 +19,10 @@ export default function AccessControl() {
         });
     };
     return (<div className="space-y-5">
-      <ScreenHeader kicker="02 · Credentials" title="Access Control" subtitle="Who is allowed where — and until when" actions={<button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-700 font-sans">
+      <ScreenHeader kicker="02 · Credentials" title="Access Control" subtitle="Who is allowed where — and until when" actions={canManage && (<button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-700 font-sans">
             <Plus className="size-4" strokeWidth={2.5}/>
             Add Access
-          </button>}/>
+          </button>)}/>
 
       {error && (<div role="alert" className="rounded-xl border border-sec-red/30 bg-sec-red/5 px-4 py-3 font-sans text-[13px] text-sec-red">
         {error}
@@ -93,6 +93,6 @@ export default function AccessControl() {
         </table>
       </Card>
 
-      <AddAccessModal open={open} onClose={() => setOpen(false)} onAdd={addUser}/>
+      {canManage && <AddAccessModal open={open} onClose={() => setOpen(false)} onAdd={addUser}/>}
     </div>);
 }

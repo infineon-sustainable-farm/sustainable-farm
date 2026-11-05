@@ -1,16 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import AccessGate from "./AccessGate";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import Dashboard from "../screens/Dashboard";
 import AccessControl from "../screens/AccessControl";
 import ZonesScreen from "../screens/ZonesScreen";
 import AccessLogScreen from "../screens/AccessLogScreen";
+import { endSession, getSessionRole, setSessionEndedHandler } from "../api/sitesecurityAuth";
 export default function App() {
+    const [role, setRole] = useState(getSessionRole);
     const [screen, setScreen] = useState("dashboard");
     const [selectedZone, setSelectedZone] = useState("restricted");
     const [logFilter, setLogFilter] = useState("all");
     const [logSeed, setLogSeed] = useState(0);
+    useEffect(() => {
+        setSessionEndedHandler(() => setRole(null));
+        return () => setSessionEndedHandler(null);
+    }, []);
     const openZones = (zone) => {
         if (zone)
             setSelectedZone(zone);
@@ -23,15 +30,18 @@ export default function App() {
         }
         setScreen("log");
     };
+    if (!role) {
+        return <AccessGate onAuthenticated={setRole}/>;
+    }
     return (<div className="min-h-screen">
       <Sidebar screen={screen} onNavigate={setScreen}/>
       <div className="pl-[240px]">
-        <TopBar screen={screen}/>
+        <TopBar screen={screen} onLock={endSession}/>
         <main className="mx-auto max-w-[1360px] px-8 pb-14 pt-7">
           <AnimatePresence mode="wait">
             <motion.div key={screen} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}>
               {screen === "dashboard" && <Dashboard onOpenZones={openZones} onOpenLog={openLog}/>}
-              {screen === "access" && <AccessControl />}
+              {screen === "access" && <AccessControl canManage={role === "admin"}/>}
               {screen === "zones" && (<ZonesScreen selected={selectedZone} onSelect={setSelectedZone} onOpenLog={() => openLog("all")}/>)}
               {screen === "log" && <AccessLogScreen key={`${logFilter}-${logSeed}`} initialFilter={logFilter}/>}
             </motion.div>

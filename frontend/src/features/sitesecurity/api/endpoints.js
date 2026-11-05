@@ -5,6 +5,7 @@
  * shared file untouched, so merging develop stays clean.
  */
 export const SITESECURITY_ENDPOINTS = {
+  SESSION: "/api/v1/sitesecurity/session",
   OVERVIEW: "/api/v1/sitesecurity/overview",
   ZONES: "/api/v1/sitesecurity/zones",
   CREDENTIALS: "/api/v1/sitesecurity/credentials",

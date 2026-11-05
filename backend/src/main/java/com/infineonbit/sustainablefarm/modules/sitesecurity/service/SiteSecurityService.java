@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.GateEntity;
@@ -14,8 +16,10 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,13 +63,16 @@ public class SiteSecurityService {
     }
 
     private static final Set<String> ALLOWED_TYPES = Set.of("Staff", "Service", "Security", "Visitor");
-    private static final Set<String> ALLOWED_STATUSES = Set.of("Active", "Authorized", "Suspended", "Expired");
+    private static final Set<String> VISITOR_ALLOWED_LEVELS = Set.of("open", "controlled");
+    private static final String VISITOR_TYPE = "Visitor";
+    private static final String PERMANENT = "Permanent";
+    private static final String INITIAL_STATUS = "Active";
 
     @Transactional
     public UserDto createCredential(CreateUserRequestDto req) {
         String name = req.getName().trim();
         if (userRepository.existsByName(name)) {
-            throw new IllegalArgumentException("A credential for '" + name + "' already exists.");
+            throw duplicateCredential(name);
         }
         if (!zoneRepository.existsById(req.getLevel())) {
             throw new IllegalArgumentException("Unknown access level '" + req.getLevel()
@@ -75,27 +82,43 @@ public class SiteSecurityService {
             throw new IllegalArgumentException("Invalid credential type '" + req.getType()
                     + "'. Allowed values: " + String.join(", ", ALLOWED_TYPES) + ".");
         }
-        if (req.getStatus() != null && !ALLOWED_STATUSES.contains(req.getStatus())) {
-            throw new IllegalArgumentException("Invalid status '" + req.getStatus()
-                    + "'. Allowed values: " + String.join(", ", ALLOWED_STATUSES) + ".");
-        }
         validateValidUntil(req.getValidUntil());
+        validateVisitorRules(req);
 
-        String id = "u-" + System.currentTimeMillis();
         CredentialUserEntity entity = CredentialUserEntity.builder()
-                .id(id)
+                .id(UUID.randomUUID().toString())
                 .name(name)
                 .role(req.getRole())
                 .type(req.getType())
                 .level(req.getLevel())
                 .validUntil(req.getValidUntil())
-                .status(req.getStatus() != null ? req.getStatus() : "Active")
-                .initials(req.getInitials() != null ? req.getInitials() : initialsOf(name))
+                .status(INITIAL_STATUS)
+                .initials(initialsOf(name))
                 .lastActive("Just now")
                 .build();
 
-        CredentialUserEntity saved = userRepository.save(entity);
-        return mapUserToDto(saved);
+        try {
+            // Flush here so a concurrent duplicate fails inside this method, as a 409.
+            return mapUserToDto(userRepository.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException e) {
+            throw duplicateCredential(name);
+        }
+    }
+
+    private ConflictException duplicateCredential(String name) {
+        return new ConflictException("A credential for '" + name + "' already exists.");
+    }
+
+    private void validateVisitorRules(CreateUserRequestDto req) {
+        if (!VISITOR_TYPE.equals(req.getType())) {
+            return;
+        }
+        if (!VISITOR_ALLOWED_LEVELS.contains(req.getLevel())) {
+            throw new BusinessRuleException("A visitor credential is limited to the open and controlled zones.");
+        }
+        if (PERMANENT.equalsIgnoreCase(req.getValidUntil())) {
+            throw new BusinessRuleException("A visitor credential must have an end date.");
+        }
     }
 
     public List<LogEntryDto> getAccessLogs(String filter) {
@@ -179,7 +202,7 @@ public class SiteSecurityService {
     }
 
     private void validateValidUntil(String validUntil) {
-        if ("Permanent".equalsIgnoreCase(validUntil)) {
+        if (PERMANENT.equalsIgnoreCase(validUntil)) {
             return;
         }
         LocalDate parsed;

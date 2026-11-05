@@ -96,9 +96,13 @@ public class SiteSecurityDtos {
 
         @NotBlank(message = "validUntil is required")
         private String validUntil;
+    }
 
-        private String status;
-        private String initials;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SessionDto {
+        private String role;
     }
 
     @Data
