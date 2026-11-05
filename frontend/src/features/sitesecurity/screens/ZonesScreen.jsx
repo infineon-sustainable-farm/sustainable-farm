@@ -11,15 +11,28 @@ const ZONE_ICON = {
     critical: ShieldAlert,
 };
 export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
-    const { selectedZone: zone, error } = useZones(selected);
+    const { selectedZone: zone, isLoading, error } = useZones(selected);
+    if (isLoading) {
+        return (<div className="space-y-5">
+        <ScreenHeader kicker="03 · Site Model" title="Perimeter & Zones" subtitle="How the farm is divided — and who may cross each line"/>
+        <Card className="flex min-h-64 items-center justify-center">
+          <p className="font-sans text-[13px] text-slate-400">Loading zones...</p>
+        </Card>
+      </div>);
+    }
+    if (error) {
+        return (<div className="space-y-5">
+        <ScreenHeader kicker="03 · Site Model" title="Perimeter & Zones" subtitle="How the farm is divided — and who may cross each line"/>
+        <div role="alert" className="rounded-xl border border-sec-red/30 bg-sec-red/5 px-4 py-3 font-sans text-[13px] text-sec-red">
+          Zones are unavailable: {error}
+        </div>
+      </div>);
+    }
     if (!zone) {
         return (<div className="space-y-5">
         <ScreenHeader kicker="03 · Site Model" title="Perimeter & Zones" subtitle="How the farm is divided — and who may cross each line"/>
-      {error && (<div role="alert" className="rounded-xl border border-sec-red/30 bg-sec-red/5 px-4 py-3 font-sans text-[13px] text-sec-red">
-        {error}
-      </div>)}
         <Card className="flex min-h-64 items-center justify-center">
-          <p className="font-sans text-[13px] text-slate-400">Loading zones...</p>
+          <p className="font-sans text-[13px] text-slate-400">No zones have been configured.</p>
         </Card>
       </div>);
     }

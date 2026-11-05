@@ -13,7 +13,7 @@ const FILTERS = [
     { id: "service", label: "Service" },
 ];
 export default function AccessLogScreen({ initialFilter = "all" }) {
-    const { filter, setFilter, logs: rows, allLogs, counts, error } = useAccessLogs(initialFilter);
+    const { filter, setFilter, logs: rows, allLogs, counts, isLoading, error } = useAccessLogs(initialFilter);
     const [selected, setSelected] = useState(null);
     return (<div className="space-y-5">
       <ScreenHeader kicker="04 · Audit trail" title="Access Log" subtitle="Every entry, exit and refusal — in order" actions={<span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-slate-400">
@@ -90,7 +90,7 @@ export default function AccessLogScreen({ initialFilter = "all" }) {
                   </td>
                 </tr>);
         })}
-            {rows.length === 0 && (<tr>
+            {!isLoading && !error && rows.length === 0 && (<tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-[13px] text-slate-400">
                   No events match this filter.
                 </td>

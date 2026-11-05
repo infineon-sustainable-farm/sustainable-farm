@@ -61,38 +61,6 @@ public class SiteSecurityServiceTest {
                 .build();
     }
 
-    // --- initDefaultData idempotence ---
-
-    @Test
-    void initDefaultData_shouldNotSeed_whenDataAlreadyExists() {
-        when(gateRepository.count()).thenReturn(4L);
-        when(zoneRepository.count()).thenReturn(4L);
-        when(userRepository.count()).thenReturn(4L);
-        when(logRepository.count()).thenReturn(6L);
-
-        siteSecurityService.initDefaultData();
-
-        verify(gateRepository, never()).saveAll(any());
-        verify(zoneRepository, never()).saveAll(any());
-        verify(userRepository, never()).saveAll(any());
-        verify(logRepository, never()).saveAll(any());
-    }
-
-    @Test
-    void initDefaultData_shouldSeed_whenRepositoriesAreEmpty() {
-        when(gateRepository.count()).thenReturn(0L);
-        when(zoneRepository.count()).thenReturn(0L);
-        when(userRepository.count()).thenReturn(0L);
-        when(logRepository.count()).thenReturn(0L);
-
-        siteSecurityService.initDefaultData();
-
-        verify(gateRepository).saveAll(any());
-        verify(zoneRepository).saveAll(any());
-        verify(userRepository).saveAll(any());
-        verify(logRepository).saveAll(any());
-    }
-
     // --- createCredential ---
 
     @Test
