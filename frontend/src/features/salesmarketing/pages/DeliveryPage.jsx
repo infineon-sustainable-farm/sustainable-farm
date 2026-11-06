@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 const MAP_IMAGE =
@@ -98,19 +98,13 @@ export default function DeliveryPage() {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  useEffect(() => {
-    fetchDeliveryData();
-  }, []);
-
-  const fetchDeliveryData = async () => {
-    setLoading(true);
-    setApiError(null);
-
+  const fetchDeliveryData = useCallback(async () => {
     try {
       const [shipRes, eventRes] = await Promise.allSettled([
         api.getShipments(),
         api.getShipmentEvents(),
       ]);
+      setApiError(null);
 
       const failures = [];
 
@@ -135,14 +129,18 @@ export default function DeliveryPage() {
         setApiError(failures.join(' · '));
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load delivery data. Please try again.'));
       setShipments([]);
       setEvents([]);
       setSelectedId(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchDeliveryData);
+  }, [fetchDeliveryData]);
 
   const sourceShipments = shipments;
   const sourceEvents = events;
@@ -161,14 +159,11 @@ export default function DeliveryPage() {
     return matchesQuery && matchesStatus;
   });
 
-  useEffect(() => {
-    if (filtered.length === 0) return;
-    if (!filtered.some((s) => s.shipmentId === selectedId)) {
-      setSelectedId(filtered[0].shipmentId);
-    }
-  }, [filtered, selectedId]);
-
-  const selected = filtered.find((s) => s.shipmentId === selectedId) || sourceShipments[0] || null;
+  const selected =
+    filtered.find((s) => s.shipmentId === selectedId) ||
+    filtered[0] ||
+    sourceShipments[0] ||
+    null;
 
   const handleDownloadManifest = () => {
     if (!selected) return;
