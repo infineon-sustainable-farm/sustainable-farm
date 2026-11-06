@@ -1,8 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -103,6 +105,46 @@ public class SiteSecurityDtos {
         @Pattern(regexp = "(?i:permanent)|\\d{4}-\\d{2}-\\d{2}",
                 message = "validUntil must be an ISO date (yyyy-MM-dd) or Permanent")
         private String validUntil;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class OperatorDto {
+        private String id;
+        private String email;
+        private String role;
+        private boolean active;
+        private String createdBy;
+        private Instant createdAt;
+        private String disabledBy;
+        private Instant disabledAt;
+        private Instant lastLoginAt;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CreateOperatorRequestDto {
+        @NotBlank(message = "Email is required")
+        @Email(message = "Email must be a valid address")
+        @Size(max = 254, message = "Email must not exceed 254 characters")
+        private String email;
+
+        @NotBlank(message = "Role is required")
+        @Pattern(regexp = "admin|read", message = "Role must be admin or read")
+        private String role;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChangeOperatorRoleRequestDto {
+        @NotBlank(message = "Role is required")
+        @Pattern(regexp = "admin|read", message = "Role must be admin or read")
+        private String role;
     }
 
     @Data

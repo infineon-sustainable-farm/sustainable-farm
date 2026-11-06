@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsUtils;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
@@ -60,7 +61,7 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
             writeError(response, HttpStatus.UNAUTHORIZED, "A valid access token is required.");
             return false;
         }
-        if (role != SiteSecurityRole.ADMIN && !READ_METHODS.contains(request.getMethod())) {
+        if (role != SiteSecurityRole.ADMIN && requiresAdmin(request, handler)) {
             log.warn("Site Security access denied (admin role required): {} {}",
                     request.getMethod(), request.getRequestURI());
             writeError(response, HttpStatus.FORBIDDEN, "This action requires the admin role.");
@@ -69,6 +70,13 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
 
         request.setAttribute(ROLE_ATTRIBUTE, role);
         return true;
+    }
+
+    /** Decided from the matched controller, because a URL can be encoded in several ways. */
+    private static boolean requiresAdmin(HttpServletRequest request, Object handler) {
+        return !READ_METHODS.contains(request.getMethod())
+                || (handler instanceof HandlerMethod method
+                        && method.getBeanType().isAnnotationPresent(AdminOnly.class));
     }
 
     private SiteSecurityRole resolveRole(String authorization) {
