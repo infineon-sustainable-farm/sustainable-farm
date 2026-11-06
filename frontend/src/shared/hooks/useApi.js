@@ -1,31 +1,117 @@
-import { useCallback, useState } from 'react'
-import { apiClient } from '../api/client.js'
+/**
+ * Shared React hooks for API data fetching
+ *
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import { apiClient } from '../api/apiClient';
 
 /**
- * Generic hook to call the API with loading and error state management.
- * @param {string} method - GET, POST, PUT, DELETE, PATCH
- * @returns {{ loading: boolean, error: Error|null, execute: Function }}
+ * Custom hook for fetching data from API
  */
-export function useApi(method) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+export const useApi = (endpoint, options = {}) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const execute = useCallback(
-    async (path, body = null) => {
-      setLoading(true)
-      setError(null)
-      try {
-        const result = await apiClient[method.toLowerCase()](path, body)
-        return result
-      } catch (err) {
-        setError(err)
-        throw err
-      } finally {
-        setLoading(false)
-      }
-    },
-    [method],
-  )
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await apiClient.get(endpoint, options);
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [endpoint, options]);
 
-  return { loading, error, execute }
-}
+  useEffect(() => {
+    if (endpoint) {
+      fetchData();
+    }
+  }, [endpoint, fetchData]);
+
+  return { data, loading, error, refetch: fetchData };
+};
+
+/**
+ * Custom hook for POST requests
+ */
+export const useApiPost = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const postData = useCallback(async (endpoint, payload, options = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await apiClient.post(endpoint, payload, options);
+      setData(result);
+      return result;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { postData, loading, error, data };
+};
+
+/**
+ * Custom hook for PUT requests
+ */
+export const useApiPut = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const putData = useCallback(async (endpoint, payload, options = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await apiClient.put(endpoint, payload, options);
+      setData(result);
+      return result;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { putData, loading, error, data };
+};
+
+/**
+ * Custom hook for DELETE requests
+ */
+export const useApiDelete = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const deleteData = useCallback(async (endpoint, options = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await apiClient.delete(endpoint, options);
+      setData(result);
+      return result;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { deleteData, loading, error, data };
+};
