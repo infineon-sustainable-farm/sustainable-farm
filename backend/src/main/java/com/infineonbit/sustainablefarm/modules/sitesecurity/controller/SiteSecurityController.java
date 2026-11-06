@@ -37,8 +37,9 @@ public class SiteSecurityController {
     }
 
     @GetMapping("/credentials")
-    public ResponseEntity<List<UserDto>> getCredentials() {
-        return ResponseEntity.ok(siteSecurityService.getCredentials());
+    public ResponseEntity<List<UserDto>> getCredentials(
+            @RequestAttribute(SiteSecurityAccessInterceptor.ROLE_ATTRIBUTE) SiteSecurityRole role) {
+        return ResponseEntity.ok(siteSecurityService.getCredentials(role));
     }
 
     @PostMapping("/credentials")

@@ -76,7 +76,7 @@ class SiteSecurityApiIntegrationTest {
     }
 
     private String json(String type, String level, String validUntil) {
-        return "{\"name\":\"Some One\",\"role\":\"Tester\",\"type\":\"" + type
+        return "{\"name\":\"Some One\",\"email\":\"some.one@example.test\",\"role\":\"Tester\",\"type\":\"" + type
                 + "\",\"level\":\"" + level + "\",\"validUntil\":\"" + validUntil + "\"}";
     }
 

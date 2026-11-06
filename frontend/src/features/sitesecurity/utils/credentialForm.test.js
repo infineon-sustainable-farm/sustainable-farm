@@ -4,8 +4,12 @@ import {
     buildCredentialPayload,
     canRevoke,
     defaultValidUntil,
+    emailStatusLabel,
+    hasPendingEmail,
     isCredentialFormComplete,
+    isValidEmail,
     levelForType,
+    mergeCredentials,
     toIsoDate,
 } from "./credentialForm";
 
@@ -57,7 +61,7 @@ describe("visitor rules", () => {
 });
 
 describe("credential form", () => {
-    const form = { name: "Ada", role: "Engineer", validUntil: "2027-01-01" };
+    const form = { name: "Ada", email: "ada@example.com", role: "Engineer", validUntil: "2027-01-01" };
 
     it("is complete with a name, a role and a date", () => {
         expect(isCredentialFormComplete(form)).toBe(true);
@@ -74,6 +78,7 @@ describe("credential form", () => {
     it("sends only what the API accepts, with an ISO date", () => {
         const payload = buildCredentialPayload({
             name: "  Ada Byron ",
+            email: " ada@example.com ",
             role: " Engineer ",
             type: "Staff",
             level: "open",
@@ -83,6 +88,7 @@ describe("credential form", () => {
 
         expect(payload).toEqual({
             name: "Ada Byron",
+            email: "ada@example.com",
             role: "Engineer",
             type: "Staff",
             level: "open",
@@ -99,5 +105,53 @@ describe("canRevoke", () => {
 
     it.each([["Revoked"], ["Expired"]])("has nothing to revoke when %s", (status) => {
         expect(canRevoke({ status })).toBe(false);
+    });
+});
+
+describe("credential email", () => {
+    const complete = { name: "Ada", email: "ada@example.com", role: "Guide", validUntil: "2030-01-01" };
+
+    it.each([["ada@example.com"], [" ada@example.com "]])("accepts %j", (email) => {
+        expect(isValidEmail(email)).toBe(true);
+    });
+
+    it.each([[""], ["ada"], ["ada@"], ["@example.com"], ["a b@example.com"], ["a@b@c"]])("rejects %j", (email) => {
+        expect(isValidEmail(email)).toBe(false);
+    });
+
+    it("requires a valid email to complete the form", () => {
+        expect(isCredentialFormComplete(complete)).toBe(true);
+        expect(isCredentialFormComplete({ ...complete, email: "" })).toBe(false);
+        expect(isCredentialFormComplete({ ...complete, email: "nope" })).toBe(false);
+    });
+
+    it("sends the trimmed email", () => {
+        const payload = buildCredentialPayload({ ...complete, email: " ada@example.com ", type: "Staff", level: "open" });
+        expect(payload.email).toBe("ada@example.com");
+    });
+
+    it("detects an email still being sent", () => {
+        expect(hasPendingEmail([{ notificationStatus: "sent" }, { notificationStatus: "pending" }])).toBe(true);
+        expect(hasPendingEmail([{ notificationStatus: "failed" }, { notificationStatus: null }])).toBe(false);
+    });
+
+    it("updates rows without changing their order or dropping a new one", () => {
+        const current = [{ id: "new", notificationStatus: "pending" }, { id: "old", notificationStatus: null }];
+        const latest = [{ id: "old", notificationStatus: null }];
+        expect(mergeCredentials(current, latest)).toEqual(current);
+
+        const updated = mergeCredentials(current, [{ id: "new", notificationStatus: "failed" }]);
+        expect(updated.map((user) => user.id)).toEqual(["new", "old"]);
+        expect(updated[0].notificationStatus).toBe("failed");
+    });
+
+    it("names the email the status is about", () => {
+        expect(emailStatusLabel({ status: "Active", notificationStatus: "failed" })).toBe("Access email not sent");
+        expect(emailStatusLabel({ status: "Revoked", notificationStatus: "sent" })).toBe("Revocation email sent");
+        expect(emailStatusLabel({ status: "Active", notificationStatus: "pending" })).toBe("Access email sending...");
+    });
+
+    it("shows nothing for a credential without email", () => {
+        expect(emailStatusLabel({ status: "Active", notificationStatus: null })).toBeNull();
     });
 });

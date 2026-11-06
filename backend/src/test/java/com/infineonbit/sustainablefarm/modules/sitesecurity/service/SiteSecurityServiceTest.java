@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.CreateUserRequestDto;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.GateDto;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.LogEntryDto;
@@ -25,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 
@@ -54,12 +56,16 @@ public class SiteSecurityServiceTest {
     @Mock
     private LogEntryRepository logRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private SiteSecurityService siteSecurityService;
 
     private CreateUserRequestDto validRequest() {
         return CreateUserRequestDto.builder()
                 .name("John Doe")
+                .email("john.doe@example.test")
                 .role("Technician")
                 .type("Staff")
                 .level("restricted")
@@ -285,7 +291,7 @@ public class SiteSecurityServiceTest {
                 .initials("AD").lastActive("Just now").build();
         when(userRepository.findAll()).thenReturn(Arrays.asList(user));
 
-        List<UserDto> result = siteSecurityService.getCredentials();
+        List<UserDto> result = siteSecurityService.getCredentials(SiteSecurityRole.ADMIN);
 
         assertEquals(1, result.size());
         assertEquals("Amina Diallo", result.get(0).getName());

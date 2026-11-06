@@ -3,7 +3,7 @@ import { HardHat, Plus, ShieldCheck, UserRound, Wrench } from "lucide-react";
 import AddAccessModal from "../components/AddAccessModal";
 import { Avatar, Card, LevelChip, ScreenHeader, SecurityLadder, SensitivityMeter, StatusChip, } from "../components/ui";
 import { cn } from "../utils/cn";
-import { canRevoke } from "../utils/credentialForm";
+import { canRevoke, emailStatusLabel } from "../utils/credentialForm";
 import { useCredentials } from "../hooks/useCredentials";
 const TYPE_ICON = {
     Staff: HardHat,
@@ -45,6 +45,7 @@ export default function AccessControl({ canManage = false }) {
     const [confirmingId, setConfirmingId] = useState(null);
     const headingRef = useRef(null);
     const columnCount = canManage ? 7 : 6;
+    const failedEmails = canManage ? users.filter((u) => u.notificationStatus === "failed").length : 0;
     const confirmRevoke = async (id) => {
         await revokeCredential(id);
         setConfirmingId(null);
@@ -59,6 +60,10 @@ export default function AccessControl({ canManage = false }) {
 
       {error && (<div role="alert" className="rounded-xl border border-sec-red/30 bg-sec-red/5 px-4 py-3 font-sans text-[13px] text-sec-red">
         {error}
+      </div>)}
+
+      {failedEmails > 0 && (<div role="status" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 font-sans text-[13px] text-amber-900">
+        The access changes were saved, but {failedEmails === 1 ? "1 email" : `${failedEmails} emails`} could not be sent.
       </div>)}
 
       <SecurityLadder />
@@ -97,6 +102,7 @@ export default function AccessControl({ canManage = false }) {
                       <div className="min-w-0">
                         <p className="truncate text-[13px] font-semibold text-navy-900 font-sans">{u.name}</p>
                         <p className="truncate text-[12px] text-slate-600 font-sans">{u.role}</p>
+                        {canManage && u.email && <p className="truncate text-[12px] text-slate-600 font-sans">{u.email}</p>}
                       </div>
                     </div>
                   </td>
@@ -120,6 +126,9 @@ export default function AccessControl({ canManage = false }) {
                   </td>
                   <td className="px-6 py-3.5 text-right">
                     <StatusChip status={u.status} size="sm"/>
+                    {canManage && emailStatusLabel(u) && (<p className={cn("mt-1 text-[11px] font-sans", u.notificationStatus === "failed" ? "font-semibold text-rose-700" : "text-slate-600")}>
+                        {emailStatusLabel(u)}
+                      </p>)}
                   </td>
                   {canManage && (<td className="px-6 py-3.5 text-right">
                       <RevokeAction user={u} isConfirming={confirmingId === u.id} onAsk={() => setConfirmingId(u.id)} onConfirm={() => confirmRevoke(u.id)} onCancel={() => setConfirmingId(null)}/>

@@ -4,7 +4,7 @@ import { HardHat, KeyRound, ShieldCheck, UserRound, Wrench, X } from "lucide-rea
 import { cn } from "../utils/cn";
 import { Eyebrow, SensitivityMeter } from "./ui";
 import { LEVEL_META, LEVEL_ORDER } from "../api/sitesecurityTypes";
-import { allowedLevels, buildCredentialPayload, defaultValidUntil, isCredentialFormComplete, levelForType, toIsoDate, } from "../utils/credentialForm";
+import { allowedLevels, buildCredentialPayload, defaultValidUntil, isCredentialFormComplete, isValidEmail, levelForType, toIsoDate, } from "../utils/credentialForm";
 import { useDialogFocus } from "../hooks/useDialogFocus";
 const TYPES = [
     { type: "Staff", icon: HardHat, hint: "Daily operations" },
@@ -22,6 +22,7 @@ function errorProps(id, message) {
 export default function AddAccessModal({ open, onClose, onAdd, }) {
     const dialogRef = useRef(null);
     const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [role, setRole] = useState("");
     const [type, setType] = useState("Staff");
     const [level, setLevel] = useState("controlled");
@@ -29,10 +30,12 @@ export default function AddAccessModal({ open, onClose, onAdd, }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
-    const form = { name, role, type, level, validUntil };
+    const form = { name, email, role, type, level, validUntil };
+    const emailError = fieldErrors.email ?? (email.trim() && !isValidEmail(email) ? "Enter a valid email address." : null);
     const permittedLevels = allowedLevels(type);
     const reset = () => {
         setName("");
+        setEmail("");
         setRole("");
         setType("Staff");
         setLevel("controlled");
@@ -92,6 +95,13 @@ export default function AddAccessModal({ open, onClose, onAdd, }) {
                   <label htmlFor="credential-name" className="mb-1.5 block text-[12px] font-semibold text-slate-600">Name</label>
                   <input id="credential-name" data-autofocus required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Alex Fourie" className={INPUT_CLASS} {...errorProps("credential-name-error", fieldErrors.name)}/>
                   <FieldError id="credential-name-error" message={fieldErrors.name}/>
+                </div>
+
+                {/* email */}
+                <div>
+                  <label htmlFor="credential-email" className="mb-1.5 block text-[12px] font-semibold text-slate-600">Email</label>
+                  <input id="credential-email" type="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. alex.fourie@example.com" className={INPUT_CLASS} {...errorProps("credential-email-error", emailError)}/>
+                  <FieldError id="credential-email-error" message={emailError}/>
                 </div>
 
                 {/* role */}

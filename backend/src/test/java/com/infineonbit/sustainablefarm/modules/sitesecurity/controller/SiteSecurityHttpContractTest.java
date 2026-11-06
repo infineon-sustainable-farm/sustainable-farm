@@ -116,6 +116,7 @@ class SiteSecurityHttpContractTest {
         create("{}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors.name").value("Name is required"))
+                .andExpect(jsonPath("$.fieldErrors.email").value("Email is required"))
                 .andExpect(jsonPath("$.fieldErrors.role").value("Role is required"))
                 .andExpect(jsonPath("$.fieldErrors.type").exists())
                 .andExpect(jsonPath("$.fieldErrors.level").exists())

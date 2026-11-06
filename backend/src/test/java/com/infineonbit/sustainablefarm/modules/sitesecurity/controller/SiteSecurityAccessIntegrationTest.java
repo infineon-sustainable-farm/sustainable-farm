@@ -63,7 +63,7 @@ class SiteSecurityAccessIntegrationTest {
     }
 
     private String json(String name, String type, String level, String validUntil) {
-        return "{\"name\":\"" + name + "\",\"role\":\"Tester\",\"type\":\"" + type
+        return "{\"name\":\"" + name + "\",\"email\":\"tester@example.test\",\"role\":\"Tester\",\"type\":\"" + type
                 + "\",\"level\":\"" + level + "\",\"validUntil\":\"" + validUntil + "\"}";
     }
 
@@ -145,7 +145,7 @@ class SiteSecurityAccessIntegrationTest {
 
     @Test
     void clientCannotChooseStatusOrInitials() throws Exception {
-        String body = "{\"name\":\"Ada Byron\",\"role\":\"Tester\",\"type\":\"Staff\",\"level\":\"open\","
+        String body = "{\"name\":\"Ada Byron\",\"email\":\"ada@example.test\",\"role\":\"Tester\",\"type\":\"Staff\",\"level\":\"open\","
                 + "\"validUntil\":\"Permanent\",\"status\":\"Expired\",\"initials\":\"" + "A".repeat(300) + "\"}";
 
         create(ADMIN_TOKEN, body)

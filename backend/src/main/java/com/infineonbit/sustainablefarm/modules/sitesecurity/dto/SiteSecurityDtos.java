@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 public class SiteSecurityDtos {
 
@@ -77,6 +78,10 @@ public class SiteSecurityDtos {
         private String status;
         private String initials;
         private String lastActive;
+        /** Only filled for the admin role. */
+        @ToString.Exclude
+        private String email;
+        private String notificationStatus;
     }
 
     @Data
@@ -87,6 +92,12 @@ public class SiteSecurityDtos {
         @NotBlank(message = "Name is required")
         @Size(max = 100, message = "Name must not exceed 100 characters")
         private String name;
+
+        @NotBlank(message = "Email is required")
+        @Email(message = "Email must be a valid address")
+        @Size(max = 254, message = "Email must not exceed 254 characters")
+        @ToString.Exclude
+        private String email;
 
         @NotBlank(message = "Role is required")
         @Size(max = 100, message = "Role must not exceed 100 characters")

@@ -3,7 +3,9 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialNotificationStatus;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.GateEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.LogEntryEntity;
@@ -16,12 +18,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -52,6 +56,7 @@ public class SiteSecurityService {
     private final ZoneRepository zoneRepository;
     private final CredentialUserRepository userRepository;
     private final LogEntryRepository logRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OverviewResponseDto getOverview() {
         List<GateEntity> gates = gateRepository.findAll();
@@ -83,10 +88,14 @@ public class SiteSecurityService {
                 .collect(Collectors.toList());
     }
 
-    public List<UserDto> getCredentials() {
-        return userRepository.findAll().stream()
+    public List<UserDto> getCredentials(SiteSecurityRole role) {
+        List<UserDto> credentials = userRepository.findAll().stream()
                 .map(this::mapUserToDto)
                 .collect(Collectors.toList());
+        if (role != SiteSecurityRole.ADMIN) {
+            credentials.forEach(credential -> credential.setEmail(null));
+        }
+        return credentials;
     }
 
     @Transactional
@@ -105,6 +114,8 @@ public class SiteSecurityService {
         CredentialUserEntity entity = CredentialUserEntity.builder()
                 .id(UUID.randomUUID().toString())
                 .name(name)
+                .email(OperatorService.normalizeEmail(req.getEmail()))
+                .notificationStatus(CredentialNotificationStatus.PENDING)
                 .role(req.getRole().trim())
                 .type(req.getType())
                 .level(req.getLevel())
@@ -116,7 +127,10 @@ public class SiteSecurityService {
 
         try {
             // Flush here so a concurrent duplicate fails inside this method, as a 409.
-            return mapUserToDto(userRepository.saveAndFlush(entity));
+            CredentialUserEntity saved = userRepository.saveAndFlush(entity);
+            eventPublisher.publishEvent(new CredentialNotificationEvent(
+                    saved.getId(), CredentialNotificationEvent.Type.GRANTED));
+            return mapUserToDto(saved);
         } catch (DataIntegrityViolationException e) {
             throw duplicateCredential(name);
         }
@@ -129,6 +143,11 @@ public class SiteSecurityService {
                 .orElseThrow(() -> new ResourceNotFoundException("No credential with id '" + id + "'."));
         if (!REVOKED_STATUS.equals(credential.getStatus())) {
             credential.setStatus(REVOKED_STATUS);
+            if (credential.getEmail() != null) {
+                credential.setNotificationStatus(CredentialNotificationStatus.PENDING);
+                eventPublisher.publishEvent(new CredentialNotificationEvent(
+                        credential.getId(), CredentialNotificationEvent.Type.REVOKED));
+            }
             userRepository.save(credential);
             log.info("Site Security credential revoked: {}", credential.getId());
         }
@@ -253,6 +272,9 @@ public class SiteSecurityService {
                 .status(effectiveStatus(e))
                 .initials(e.getInitials())
                 .lastActive(e.getLastActive())
+                .email(e.getEmail())
+                .notificationStatus(e.getNotificationStatus() == null
+                        ? null : e.getNotificationStatus().name().toLowerCase(Locale.ROOT))
                 .build();
     }
 
