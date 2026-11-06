@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronRight, DoorOpen, IdCard, Lock, ShieldAlert } from "lucide-react";
 import { cn } from "../utils/cn";
-import { LEVEL_META, LEVEL_ORDER } from "../api/sitesecurityTypes";
+import { LEVEL_ORDER, levelMeta } from "../api/sitesecurityTypes";
 /* ------------------------------ primitives ----------------------------- */
 export function Card({ className, children, }) {
     return (<div className={cn("rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(16,27,46,0.04),0_10px_30px_-14px_rgba(16,27,46,0.12)]", className)}>
@@ -26,7 +26,7 @@ export function ScreenHeader({ kicker, title, subtitle, actions, }) {
     </div>);
 }
 export function LevelChip({ level, size = "md" }) {
-    const meta = LEVEL_META[level];
+    const meta = levelMeta(level);
     return (<span className={cn("inline-flex items-center gap-1.5 rounded-full border font-sans font-medium", meta.chip, size === "sm" ? "px-2 py-0.5 text-[12px]" : "px-2.5 py-1 text-[12px]")}>
       <span className={cn("size-1.5 rounded-full", meta.dot)}/>
       {meta.label}
@@ -45,6 +45,7 @@ const STATUS_TONE = {
     Locked: "bg-amber-50 text-amber-700 border-amber-200",
     "Locked Down": "bg-amber-50 text-amber-700 border-amber-200",
     Denied: "bg-rose-50 text-rose-700 border-rose-200",
+    Revoked: "bg-rose-50 text-rose-700 border-rose-200",
     Offline: "bg-rose-50 text-rose-700 border-rose-200",
     Expired: "bg-slate-100 text-slate-500 border-slate-200",
     Unknown: "bg-slate-100 text-slate-500 border-slate-200",
@@ -62,6 +63,7 @@ const STATUS_DOT = {
     Locked: "bg-amber-500",
     "Locked Down": "bg-amber-500",
     Denied: "bg-rose-500",
+    Revoked: "bg-rose-500",
     Offline: "bg-rose-500",
     Expired: "bg-slate-400",
     Unknown: "bg-slate-400",
@@ -73,7 +75,7 @@ export function StatusChip({ status, size = "md" }) {
     </span>);
 }
 export function SensitivityMeter({ level }) {
-    const meta = LEVEL_META[level];
+    const meta = levelMeta(level);
     return (<span className="inline-flex items-center gap-[3px]" title={`Verification strength ${meta.meter}/4`}>
       {LEVEL_ORDER.map((_, i) => (<span key={i} className="h-[8px] w-[7px] rounded-[2px]" style={{
                 backgroundColor: i < meta.meter ? meta.solid : "#E5E9F0",
@@ -82,7 +84,7 @@ export function SensitivityMeter({ level }) {
     </span>);
 }
 export function Avatar({ initials, level }) {
-    const tone = level ? LEVEL_META[level].avatar : "bg-slate-100 text-slate-500";
+    const tone = level ? levelMeta(level).avatar : "bg-slate-100 text-slate-500";
     return (<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-wide font-sans", tone)}>
       {initials}
     </span>);
@@ -124,7 +126,7 @@ export function SecurityLadder() {
       </div>
       <div className="flex flex-1 flex-wrap items-center gap-x-1 gap-y-3">
         {LADDER.map((step, i) => {
-            const meta = LEVEL_META[step.level];
+            const meta = levelMeta(step.level);
             const Icon = step.icon;
             return (<div key={step.level} className="flex items-center">
               {i > 0 && <ChevronRight className="mx-1.5 size-4 text-slate-300" strokeWidth={2.5}/>}

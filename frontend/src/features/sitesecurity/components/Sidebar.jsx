@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, CheckCircle2, LayoutGrid, KeyRound, Map, ScrollText, Settings, X, } from "lucide-react";
+import { Activity, LayoutGrid, KeyRound, Map, ScrollText, Settings, X, } from "lucide-react";
 import { cn } from "../utils/cn";
 import { Eyebrow } from "./ui";
 import { SCREEN_LABEL } from "../api/sitesecurityTypes";
@@ -10,13 +10,7 @@ const NAV = [
     { id: "zones", icon: Map },
     { id: "log", icon: ScrollText },
 ];
-const HEALTH = [
-    { label: "Fence loop continuity", value: "OK" },
-    { label: "Gate controllers", value: "4 / 4 online" },
-    { label: "Perimeter sensors", value: "96 / 96 OK" },
-    { label: "Last sync", value: "2 min ago" },
-];
-export default function Sidebar({ screen, onNavigate, }) {
+export default function Sidebar({ screen, onNavigate, role, }) {
     const [showHealth, setShowHealth] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [hints, setHints] = useState(true);
@@ -48,10 +42,7 @@ export default function Sidebar({ screen, onNavigate, }) {
                     : "text-white/80 hover:bg-white/10 hover:text-white")}>
                 <Icon className={cn("size-[18px]", active ? "text-white" : "text-white/70 group-hover:text-white")} strokeWidth={2}/>
                 <span className="font-sans">{SCREEN_LABEL[item.id]}</span>
-                {item.id === "log" && (<span className={cn("ml-auto rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold", active ? "bg-[#ef6c00] text-white" : "bg-white/20 text-white")}>
-                    1
-                  </span>)}
-                {active && item.id !== "log" && (<span className="ml-auto size-1.5 rounded-full bg-[#ef6c00]"/>)}
+                {active && (<span className="ml-auto size-1.5 rounded-full bg-[#ef6c00]"/>)}
               </button>);
         })}
         </nav>
@@ -62,29 +53,19 @@ export default function Sidebar({ screen, onNavigate, }) {
           <div className="relative">
             <button onClick={() => setShowHealth((v) => !v)} className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-normal transition-colors", showHealth ? "bg-white/20 text-white" : "text-white/80 hover:bg-white/10 hover:text-white")}>
               <span className="relative flex size-[18px] items-center justify-center">
-                <Activity className="size-[18px] text-[#4caf50]" strokeWidth={2}/>
+                <Activity className="size-[18px] text-white/70" strokeWidth={2}/>
               </span>
               <span className="font-sans">System Status</span>
-              <span className="ml-auto flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-wider text-emerald-200">
-                <span className="size-1.5 rounded-full bg-[#4caf50] status-pulse"/>
-                Nominal
+              <span className="ml-auto font-mono text-[10px] font-medium uppercase tracking-wider text-white/70">
+                No sensors
               </span>
             </button>
 
             <AnimatePresence>
               {showHealth && (<motion.div initial={{ opacity: 0, y: 10, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.97 }} transition={{ duration: 0.18 }} className="absolute bottom-full left-0 z-50 mb-2 w-[220px] rounded-2xl border border-slate-200 bg-white p-4 text-navy-900 shadow-[0_24px_60px_-20px_rgba(10,17,31,0.35)]">
-                  <Eyebrow className="mb-3 text-slate-400">Site health — simulated</Eyebrow>
-                  <div className="space-y-2.5">
-                    {HEALTH.map((row) => (<div key={row.label} className="flex items-center justify-between text-[12px]">
-                        <span className="text-slate-500">{row.label}</span>
-                        <span className="inline-flex items-center gap-1.5 font-medium text-navy-900">
-                          <CheckCircle2 className="size-3.5 text-[#4caf50]" strokeWidth={2.4}/>
-                          {row.value}
-                        </span>
-                      </div>))}
-                  </div>
-                  <p className="mt-3 border-t border-slate-100 pt-2.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-slate-400">
-                    No backend connected — mock telemetry
+                  <Eyebrow className="mb-2 text-slate-400">Site health</Eyebrow>
+                  <p className="text-[12px] leading-relaxed text-slate-500">
+                    No fence sensors or gate controllers are connected, so their state is unknown.
                   </p>
                 </motion.div>)}
             </AnimatePresence>
@@ -96,11 +77,8 @@ export default function Sidebar({ screen, onNavigate, }) {
           </button>
 
           <div className="mt-4 flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2.5">
-            <span className="flex size-8 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#0a8276]">
-              FM
-            </span>
             <span className="min-w-0">
-              <span className="block truncate text-[13px] font-medium text-white">Farm Manager</span>
+              <span className="block truncate text-[13px] font-medium text-white">{role === "admin" ? "Admin access" : "Read-only access"}</span>
               <span className="block truncate text-[10.5px] text-white/70">Willow Ridge Farm</span>
             </span>
           </div>
@@ -136,8 +114,8 @@ export default function Sidebar({ screen, onNavigate, }) {
                   </button>
                 </label>
                 <p className="rounded-xl bg-slate-50 px-4 py-3 text-[12px] leading-relaxed text-slate-500">
-                  This is a presentation mock-up. Configuration, authentication and real
-                  integrations are intentionally out of scope.
+                  This is a prototype. Configuration and real sensor integrations are
+                  intentionally out of scope.
                 </p>
               </div>
             </motion.div>

@@ -3,11 +3,10 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.config;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.GateEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.LogEntryEntity;
-import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.ZoneEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.CredentialUserRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.GateRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.LogEntryRepository;
-import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.ZoneRepository;
+import java.time.LocalDate;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class SiteSecurityDataSeeder implements CommandLineRunner {
 
     private final GateRepository gateRepository;
-    private final ZoneRepository zoneRepository;
     private final CredentialUserRepository userRepository;
     private final LogEntryRepository logRepository;
 
@@ -37,21 +35,12 @@ public class SiteSecurityDataSeeder implements CommandLineRunner {
             ));
         }
 
-        if (zoneRepository.count() == 0) {
-            zoneRepository.saveAll(Arrays.asList(
-                ZoneEntity.builder().id("open").name("Open Zone").tagline("Visitor-facing areas").authorizedUsers(24).entryPoints(2).status("Open Access").description("Public access areas including farm shop, main drive, and visitor center.").requirements(Arrays.asList("No clearance needed", "Visitor check-in recommended")).build(),
-                ZoneEntity.builder().id("controlled").name("Controlled Zone").tagline("Operational farm grounds").authorizedUsers(14).entryPoints(3).status("Monitored").description("Active farming zones including barns, storage sheds, and equipment yards.").requirements(Arrays.asList("Staff or escorted visitor pass", "Safety briefing completed")).build(),
-                ZoneEntity.builder().id("restricted").name("Restricted Zone").tagline("Processing & chemical storage").authorizedUsers(6).entryPoints(1).status("Protected").description("High-value equipment, product transformation, and hazardous chemical stores.").requirements(Arrays.asList("Level 3 badge clearance", "Dual-custody access protocol")).build(),
-                ZoneEntity.builder().id("critical").name("Critical Zone").tagline("Server, power & water control").authorizedUsers(2).entryPoints(1).status("Locked Down").description("Infrastructure backbone: primary power distribution, main water valves, and security control room.").requirements(Arrays.asList("Level 4 clearance + biometric", "Security escort required", "Continuous audit logging")).build()
-            ));
-        }
-
         if (userRepository.count() == 0) {
             userRepository.saveAll(Arrays.asList(
                 CredentialUserEntity.builder().id("u1").name("Dr. Elena Rostova").role("Chief Agonomist").type("Staff").level("restricted").validUntil("Permanent").status("Active").initials("ER").lastActive("10 min ago").build(),
                 CredentialUserEntity.builder().id("u2").name("Marcus Vance").role("Facilities Tech").type("Service").level("controlled").validUntil("2026-12-31").status("Active").initials("MV").lastActive("1 hour ago").build(),
                 CredentialUserEntity.builder().id("u3").name("Amina Diallo").role("Security Lead").type("Security").level("critical").validUntil("Permanent").status("Active").initials("AD").lastActive("Just now").build(),
-                CredentialUserEntity.builder().id("u4").name("Lucas Meyer").role("Harvest Contractor").type("Visitor").level("open").validUntil("Today, 18:00").status("Authorized").initials("LM").lastActive("3 hours ago").build()
+                CredentialUserEntity.builder().id("u4").name("Lucas Meyer").role("Harvest Contractor").type("Visitor").level("open").validUntil(LocalDate.now().toString()).status("Authorized").initials("LM").lastActive("3 hours ago").build()
             ));
         }
 

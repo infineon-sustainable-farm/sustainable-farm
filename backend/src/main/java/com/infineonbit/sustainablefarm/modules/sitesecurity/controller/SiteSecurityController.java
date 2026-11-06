@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityAccessInterceptor;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.service.LogFilter;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.service.SiteSecurityService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -46,8 +47,13 @@ public class SiteSecurityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PostMapping("/credentials/{id}/revoke")
+    public ResponseEntity<UserDto> revokeCredential(@PathVariable String id) {
+        return ResponseEntity.ok(siteSecurityService.revokeCredential(id));
+    }
+
     @GetMapping("/logs")
-    public ResponseEntity<List<LogEntryDto>> getAccessLogs(@RequestParam(required = false, defaultValue = "all") String filter) {
+    public ResponseEntity<List<LogEntryDto>> getAccessLogs(@RequestParam(required = false, defaultValue = "all") LogFilter filter) {
         return ResponseEntity.ok(siteSecurityService.getAccessLogs(filter));
     }
 }

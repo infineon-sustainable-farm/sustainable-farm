@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createCredentialApi, fetchCredentials } from "../api/sitesecurityApi";
+import { createCredentialApi, fetchCredentials, revokeCredentialApi } from "../api/sitesecurityApi";
 
 export function useCredentials() {
     const [users, setUsers] = useState([]);
@@ -27,17 +27,23 @@ export function useCredentials() {
         };
     }, []);
 
+    /* Rejects on failure: the form that called it shows the error and keeps its input. */
     const addCredential = async (u) => {
+        const created = await createCredentialApi(u);
+        setUsers((prev) => [created, ...prev]);
+        setFreshId(created.id);
+        setError(null);
+    };
+
+    const revokeCredential = async (id) => {
         try {
-            const created = await createCredentialApi(u);
-            setUsers((prev) => [created, ...prev]);
-            setFreshId(created.id);
+            const revoked = await revokeCredentialApi(id);
+            setUsers((prev) => prev.map((u) => (u.id === revoked.id ? revoked : u)));
             setError(null);
         } catch (err) {
             setError(err.message);
-            throw err;
         }
     };
 
-    return { users, freshId, addCredential, isLoading, error };
+    return { users, freshId, addCredential, revokeCredential, isLoading, error };
 }

@@ -1,10 +1,12 @@
-import { AlertTriangle, ArrowUpRight, ChevronsRight, DoorOpen, HardHat, Layers3, ShieldAlert, ShieldCheck, Truck, UserRound, UserRoundCheck, } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, ChevronsRight, DoorOpen, HardHat, Layers3, ShieldAlert, ShieldCheck, TriangleAlert, Truck, UserRound, UserRoundCheck, } from "lucide-react";
 import { cn } from "../utils/cn";
 import PerimeterMap from "../components/PerimeterMap";
 import { Card, Eyebrow, ScreenHeader, StatusChip } from "../components/ui";
-import { LEVEL_META } from "../api/sitesecurityTypes";
+import { LEVEL_META, levelMeta } from "../api/sitesecurityTypes";
 import { useSecurityOverview } from "../hooks/useSecurityOverview";
 import { useAccessLogs } from "../hooks/useAccessLogs";
+import { recentEvents } from "../utils/accessLogs";
+import { buildStatCards } from "../utils/dashboardStats";
 const MODEL_STEPS = [
     "Define the perimeter",
     "Divide into zones",
@@ -13,33 +15,36 @@ const MODEL_STEPS = [
     "Monitor activity",
     "Record denials",
 ];
-const STATS = [
-    { label: "Active Access Points", value: "4", icon: DoorOpen, tint: "bg-navy-50 text-navy-900", sub: "All responding · sweep 10:30", dot: "bg-emerald-500", pulse: false },
-    { label: "Controlled Zones", value: "3", icon: Layers3, tint: "bg-blue-50 text-blue-700", sub: "Of 4 zones defined", dot: "bg-blue-500", pulse: false },
-    { label: "Active Visitors", value: "2", icon: UserRoundCheck, tint: "bg-emerald-50 text-emerald-700", sub: "On site now", dot: "bg-emerald-500", pulse: false },
-    { label: "Alerts", value: "1", icon: AlertTriangle, tint: "bg-rose-50 text-rose-600", sub: "Unresolved denial — 10:27", dot: "bg-rose-500", pulse: true, alert: true },
-];
-const FEED_IDS = ["l2", "l3", "l5", "l6"];
+const STAT_STYLE = {
+    points: { icon: DoorOpen, tint: "bg-navy-50 text-navy-900", dot: "bg-emerald-500" },
+    zones: { icon: Layers3, tint: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
+    visitors: { icon: UserRoundCheck, tint: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+    denied: { icon: AlertTriangle, tint: "bg-rose-50 text-rose-600", dot: "bg-rose-500" },
+};
 const FEED_ICON = {
     Staff: HardHat,
     Visitor: UserRound,
     Service: Truck,
+    Security: ShieldCheck,
     Unknown: ShieldAlert,
 };
 const FEED_TINT = {
     Staff: "bg-blue-50 text-blue-600",
     Visitor: "bg-slate-100 text-slate-500",
     Service: "bg-amber-50 text-amber-600",
+    Security: "bg-emerald-50 text-emerald-600",
     Unknown: "bg-rose-50 text-rose-600",
 };
 export default function Dashboard({ onOpenZones, onOpenLog, }) {
-    const { gates, error } = useSecurityOverview();
-    const { allLogs } = useAccessLogs();
-    const feed = FEED_IDS.map((id) => allLogs.find((l) => l.id === id)).filter(Boolean).sort((a, b) => a.time.localeCompare(b.time));
+    const { gates, stats, isLoading: isLoadingOverview, error: overviewError } = useSecurityOverview();
+    const { allLogs, isLoading: isLoadingLogs, error: logsError } = useAccessLogs();
+    const error = overviewError ?? logsError;
+    const feed = recentEvents(allLogs);
+    const cards = buildStatCards(stats, gates.length);
     return (<div className="space-y-5">
-      <ScreenHeader kicker="01 · Overview" title="Security Overview" subtitle="Farm perimeter & access control" actions={<span className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-emerald-700 lg:flex">
-            <span className="size-1.5 rounded-full bg-emerald-500 status-pulse"/>
-            Perimeter armed
+      <ScreenHeader kicker="01 · Overview" title="Security Overview" subtitle="Farm perimeter & access control" actions={<span className="hidden items-center gap-2 rounded-full border border-dashed border-amber-300 bg-amber-50 px-3.5 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700 lg:inline-flex">
+            <TriangleAlert className="size-3.5"/>
+            No live sensors connected
           </span>}/>
 
       {error && (<div role="alert" className="rounded-xl border border-sec-red/30 bg-sec-red/5 px-4 py-3 font-sans text-[13px] text-sec-red">
@@ -61,11 +66,12 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
 
       {/* summary cards */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        {STATS.map((s) => {
-            const Icon = s.icon;
-            return (<button key={s.label} onClick={() => s.alert ? onOpenLog("denied") : undefined} className={cn("rounded-2xl border bg-white p-5 text-left shadow-[0_1px_2px_rgba(16,27,46,0.04),0_10px_30px_-14px_rgba(16,27,46,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(16,27,46,0.05),0_16px_36px_-14px_rgba(16,27,46,0.18)]", s.alert ? "border-rose-200/80" : "border-slate-200/80")}>
+        {cards.map((s) => {
+            const style = STAT_STYLE[s.id];
+            const Icon = style.icon;
+            return (<button key={s.id} data-stat={s.id} onClick={() => s.alert ? onOpenLog("denied") : undefined} className={cn("rounded-2xl border bg-white p-5 text-left shadow-[0_1px_2px_rgba(16,27,46,0.04),0_10px_30px_-14px_rgba(16,27,46,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(16,27,46,0.05),0_16px_36px_-14px_rgba(16,27,46,0.18)]", s.alert ? "border-rose-200/80" : "border-slate-200/80")}>
               <div className="flex items-start justify-between">
-                <span className={cn("flex size-10 items-center justify-center rounded-xl", s.tint)}>
+                <span className={cn("flex size-10 items-center justify-center rounded-xl", style.tint)}>
                   <Icon className="size-[18px]" strokeWidth={2.2}/>
                 </span>
                 {s.alert && <ArrowUpRight className="size-4 text-rose-500"/>}
@@ -75,7 +81,7 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
               </p>
               <p className="mt-1.5 text-[13px] font-medium text-slate-500 font-sans">{s.label}</p>
               <p className="mt-2.5 flex items-center gap-1.5 text-[12px] text-slate-400 font-sans">
-                <span className={cn("size-1.5 rounded-full", s.dot, s.pulse && "status-pulse")}/>
+                <span className={cn("size-1.5 rounded-full", style.dot, s.alert && "status-pulse")}/>
                 {s.sub}
               </p>
             </button>);
@@ -118,11 +124,14 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
               <Eyebrow>Access points</Eyebrow>
             </div>
             <div className="flex-1 divide-y divide-slate-100 px-5">
+              {gates.length === 0 && (<p className="py-6 text-center text-[12.5px] text-slate-400">
+                  {isLoadingOverview ? "Loading access points..." : !error && "No access points are defined."}
+                </p>)}
               {gates.map((g) => (<div key={g.id} className="flex items-center gap-3 py-3.5">
                   <span className="flex size-8 items-center justify-center rounded-lg border" style={{
-                backgroundColor: LEVEL_META[g.zone].fill,
-                borderColor: `${LEVEL_META[g.zone].solid}30`,
-                color: LEVEL_META[g.zone].solid,
+                backgroundColor: levelMeta(g.zone).fill,
+                borderColor: `${levelMeta(g.zone).solid}30`,
+                color: levelMeta(g.zone).solid,
             }}>
                     <DoorOpen className="size-3.5" strokeWidth={2.2}/>
                   </span>
@@ -134,21 +143,9 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
                 </div>))}
             </div>
             <div className="px-5 pb-5 pt-1">
-              <div className="rounded-xl bg-slate-50 px-4 py-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-[11px] font-semibold text-navy-900">
-                    <ShieldCheck className="size-3.5 text-emerald-600"/>
-                    Perimeter integrity
-                  </span>
-                  <span className="font-mono text-[11px] font-semibold text-emerald-600">100%</span>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200/70">
-                  <div className="h-full w-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"/>
-                </div>
-                <p className="mt-2 font-mono text-[9.5px] uppercase tracking-[0.14em] text-slate-400">
-                  96/96 sensors · checked 10:30
-                </p>
-              </div>
+              <p className="rounded-xl bg-slate-50 px-4 py-3.5 text-[11.5px] leading-relaxed text-slate-500">
+                Perimeter integrity is unknown: no fence sensors are connected.
+              </p>
             </div>
           </div>
         </div>
@@ -164,6 +161,9 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
           </button>
         </div>
         <div className="divide-y divide-slate-100 px-6">
+          {feed.length === 0 && (<p className="py-8 text-center text-[13px] text-slate-400">
+              {isLoadingLogs ? "Loading recent activity..." : !error && "No access events have been recorded."}
+            </p>)}
           {feed.map((e) => {
             const Icon = FEED_ICON[e.type] ?? UserRound;
             return (<button key={e.id} onClick={() => onOpenLog()} className="flex w-full items-center gap-4 py-3.5 text-left transition-colors hover:bg-slate-50/50">

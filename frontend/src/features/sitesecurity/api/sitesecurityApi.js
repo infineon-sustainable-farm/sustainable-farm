@@ -27,12 +27,13 @@ export function fetchCredentials() {
 }
 
 export function createCredentialApi(credential) {
+    return apiClient.post(ENDPOINTS.CREDENTIALS, credential, withAuth()).catch(endSessionIfUnauthorized);
+}
+
+export function revokeCredentialApi(id) {
     return apiClient
-        .post(ENDPOINTS.CREDENTIALS, credential, withAuth())
-        .catch(endSessionIfUnauthorized)
-        .catch((err) => {
-            throw new Error(err.message || "Failed to create credential. Please try again.");
-        });
+        .post(`${ENDPOINTS.CREDENTIALS}/${encodeURIComponent(id)}/revoke`, null, withAuth())
+        .catch(endSessionIfUnauthorized);
 }
 
 export function fetchAccessLogs(filter) {

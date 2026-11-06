@@ -3,6 +3,7 @@ import { HardHat, Plus, ShieldCheck, UserRound, Wrench } from "lucide-react";
 import AddAccessModal from "../components/AddAccessModal";
 import { Avatar, Card, LevelChip, ScreenHeader, SecurityLadder, SensitivityMeter, StatusChip, } from "../components/ui";
 import { cn } from "../utils/cn";
+import { canRevoke } from "../utils/credentialForm";
 import { useCredentials } from "../hooks/useCredentials";
 const TYPE_ICON = {
     Staff: HardHat,
@@ -10,13 +11,31 @@ const TYPE_ICON = {
     Service: Wrench,
     Security: ShieldCheck,
 };
+function RevokeAction({ user, isConfirming, onAsk, onConfirm, onCancel }) {
+    if (!canRevoke(user))
+        return null;
+    if (!isConfirming) {
+        return (<button onClick={onAsk} className="rounded-lg border border-slate-200 px-2.5 py-1 text-[12px] font-semibold text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 font-sans">
+        Revoke
+      </button>);
+    }
+    return (<span className="inline-flex items-center gap-1.5">
+      <button onClick={onConfirm} className="rounded-lg bg-rose-600 px-2.5 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-rose-700 font-sans">
+        Confirm
+      </button>
+      <button onClick={onCancel} className="rounded-lg border border-slate-200 px-2.5 py-1 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 font-sans">
+        Keep
+      </button>
+    </span>);
+}
 export default function AccessControl({ canManage = false }) {
-    const { users, freshId, addCredential, error } = useCredentials();
+    const { users, freshId, addCredential, revokeCredential, isLoading, error } = useCredentials();
     const [open, setOpen] = useState(false);
-    const addUser = (u) => {
-        addCredential(u).catch(() => {
-            // error state is exposed by the hook and rendered below
-        });
+    const [confirmingId, setConfirmingId] = useState(null);
+    const columnCount = canManage ? 7 : 6;
+    const confirmRevoke = async (id) => {
+        await revokeCredential(id);
+        setConfirmingId(null);
     };
     return (<div className="space-y-5">
       <ScreenHeader kicker="02 · Credentials" title="Access Control" subtitle="Who is allowed where — and until when" actions={canManage && (<button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-700 font-sans">
@@ -51,11 +70,12 @@ export default function AccessControl({ canManage = false }) {
               <th className="hidden px-4 py-3 font-medium xl:table-cell">Valid Until</th>
               <th className="hidden px-4 py-3 font-medium lg:table-cell">Last Activity</th>
               <th className="px-6 py-3 text-right font-medium">Status</th>
+              {canManage && <th className="px-6 py-3 text-right font-medium">Action</th>}
             </tr>
           </thead>
           <tbody>
             {users.map((u) => {
-            const TypeIcon = TYPE_ICON[u.type];
+            const TypeIcon = TYPE_ICON[u.type] ?? UserRound;
             return (<tr key={u.id} className={cn("border-t border-slate-100 transition-colors hover:bg-slate-50/70", u.id === freshId && "row-in")}>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
@@ -87,12 +107,20 @@ export default function AccessControl({ canManage = false }) {
                   <td className="px-6 py-3.5 text-right">
                     <StatusChip status={u.status} size="sm"/>
                   </td>
+                  {canManage && (<td className="px-6 py-3.5 text-right">
+                      <RevokeAction user={u} isConfirming={confirmingId === u.id} onAsk={() => setConfirmingId(u.id)} onConfirm={() => confirmRevoke(u.id)} onCancel={() => setConfirmingId(null)}/>
+                    </td>)}
                 </tr>);
         })}
+            {users.length === 0 && (<tr>
+                <td colSpan={columnCount} className="px-6 py-12 text-center text-[13px] text-slate-400">
+                  {isLoading ? "Loading credentials..." : !error && "No credentials have been granted yet."}
+                </td>
+              </tr>)}
           </tbody>
         </table>
       </Card>
 
-      {canManage && <AddAccessModal open={open} onClose={() => setOpen(false)} onAdd={addUser}/>}
+      {canManage && <AddAccessModal open={open} onClose={() => setOpen(false)} onAdd={addCredential}/>}
     </div>);
 }

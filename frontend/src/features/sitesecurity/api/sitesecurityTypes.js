@@ -6,6 +6,20 @@ export const SCREEN_LABEL = {
 };
 
 export const LEVEL_ORDER = ["open", "controlled", "restricted", "critical"];
+const UNKNOWN_LEVEL = {
+    label: "Unknown",
+    solid: "#64748B",
+    chip: "bg-slate-50 text-slate-600 border-slate-200",
+    dot: "bg-slate-400",
+    avatar: "bg-slate-100 text-slate-600",
+    meter: 0,
+    fill: "#F7F9FB",
+    stroke: "#94A3B8",
+};
+/* A value the frontend does not know must not break a whole screen. */
+export function levelMeta(level) {
+    return LEVEL_META[level] ?? UNKNOWN_LEVEL;
+}
 export const LEVEL_META = {
     open: {
         label: "Open",

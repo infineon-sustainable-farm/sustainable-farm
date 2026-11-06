@@ -3,6 +3,7 @@ import { ChevronRight, LogIn, LogOut } from "lucide-react";
 import LogDrawer from "../components/LogDrawer";
 import { Avatar, Card, FilterPill, LevelChip, ScreenHeader, StatusChip } from "../components/ui";
 import { cn } from "../utils/cn";
+import { filterByZone } from "../utils/accessLogs";
 import { useAccessLogs } from "../hooks/useAccessLogs";
 const FILTERS = [
     { id: "all", label: "All" },
@@ -12,9 +13,11 @@ const FILTERS = [
     { id: "staff", label: "Staff" },
     { id: "service", label: "Service" },
 ];
-export default function AccessLogScreen({ initialFilter = "all" }) {
-    const { filter, setFilter, logs: rows, allLogs, counts, isLoading, error } = useAccessLogs(initialFilter);
+export default function AccessLogScreen({ initialFilter = "all", initialZone = null }) {
+    const { filter, setFilter, logs, allLogs, counts, isLoading, error } = useAccessLogs(initialFilter);
+    const [zone, setZone] = useState(initialZone);
     const [selected, setSelected] = useState(null);
+    const rows = filterByZone(logs, zone);
     return (<div className="space-y-5">
       <ScreenHeader kicker="04 · Audit trail" title="Access Log" subtitle="Every entry, exit and refusal — in order" actions={<span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-slate-400">
             Recording simulated — prototype data
@@ -28,6 +31,12 @@ export default function AccessLogScreen({ initialFilter = "all" }) {
         {FILTERS.map((f) => (<FilterPill key={f.id} active={filter === f.id} onClick={() => setFilter(f.id)} count={counts[f.id]}>
             {f.label}
           </FilterPill>))}
+        {zone && (<span className="inline-flex items-center gap-2">
+            <LevelChip level={zone} size="sm"/>
+            <button onClick={() => setZone(null)} className="text-[12px] font-semibold text-slate-500 underline-offset-2 hover:text-navy-900 hover:underline font-sans">
+              Show all zones
+            </button>
+          </span>)}
         <span className="ml-auto font-mono text-[10.5px] text-slate-400">
           {rows.length} of {allLogs.length} events
         </span>
@@ -90,6 +99,11 @@ export default function AccessLogScreen({ initialFilter = "all" }) {
                   </td>
                 </tr>);
         })}
+            {isLoading && rows.length === 0 && (<tr>
+                <td colSpan={7} className="px-6 py-12 text-center text-[13px] text-slate-400">
+                  Loading events...
+                </td>
+              </tr>)}
             {!isLoading && !error && rows.length === 0 && (<tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-[13px] text-slate-400">
                   No events match this filter.

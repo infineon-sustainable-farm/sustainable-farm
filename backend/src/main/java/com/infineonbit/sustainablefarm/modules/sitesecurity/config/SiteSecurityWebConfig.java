@@ -1,7 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.config;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.service.LogFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -15,5 +17,10 @@ public class SiteSecurityWebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(accessInterceptor).addPathPatterns("/api/v1/sitesecurity/**");
+    }
+
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        registry.addConverter(String.class, LogFilter.class, LogFilter::fromParam);
     }
 }

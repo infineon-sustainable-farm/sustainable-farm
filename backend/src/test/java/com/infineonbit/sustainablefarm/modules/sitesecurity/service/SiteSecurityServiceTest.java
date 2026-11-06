@@ -26,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -158,23 +160,11 @@ public class SiteSecurityServiceTest {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(false);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
                 () -> siteSecurityService.createCredential(validRequest()));
 
         assertTrue(ex.getMessage().contains("Unknown access level 'restricted'"));
         verify(userRepository, never()).saveAndFlush(any());
-    }
-
-    @Test
-    void createCredential_shouldThrow_whenTypeIsNotAllowed() {
-        CreateUserRequestDto req = validRequest().toBuilder().type("Superuser").build();
-        when(userRepository.existsByName("John Doe")).thenReturn(false);
-        when(zoneRepository.existsById("restricted")).thenReturn(true);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(req));
-
-        assertTrue(ex.getMessage().contains("Invalid credential type 'Superuser'"));
     }
 
     @Test
@@ -183,7 +173,7 @@ public class SiteSecurityServiceTest {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
                 () -> siteSecurityService.createCredential(req));
 
         assertTrue(ex.getMessage().contains("in the past"));
@@ -195,7 +185,7 @@ public class SiteSecurityServiceTest {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
                 () -> siteSecurityService.createCredential(req));
 
         assertTrue(ex.getMessage().contains("Invalid validUntil"));
@@ -217,24 +207,24 @@ public class SiteSecurityServiceTest {
 
     @Test
     void getAccessLogs_shouldReturnAll_whenFilterIsAll() {
-        when(logRepository.findAll()).thenReturn(Arrays.asList(logEntry("l1", "Approved", "Staff")));
-        List<LogEntryDto> result = siteSecurityService.getAccessLogs("all");
+        when(logRepository.findAll(any(Sort.class))).thenReturn(Arrays.asList(logEntry("l1", "Approved", "Staff")));
+        List<LogEntryDto> result = siteSecurityService.getAccessLogs(LogFilter.ALL);
         assertEquals(1, result.size());
         assertEquals("l1", result.get(0).getId());
     }
 
     @Test
     void getAccessLogs_shouldFilterByStatus() {
-        when(logRepository.findByStatus("Denied")).thenReturn(Arrays.asList(logEntry("l2", "Denied", "Visitor")));
-        List<LogEntryDto> result = siteSecurityService.getAccessLogs("denied");
+        when(logRepository.findByStatus(eq("Denied"), any(Sort.class))).thenReturn(Arrays.asList(logEntry("l2", "Denied", "Visitor")));
+        List<LogEntryDto> result = siteSecurityService.getAccessLogs(LogFilter.DENIED);
         assertEquals(1, result.size());
         assertEquals("Denied", result.get(0).getStatus());
     }
 
     @Test
     void getAccessLogs_shouldFilterByType() {
-        when(logRepository.findByType("Visitor")).thenReturn(Arrays.asList(logEntry("l3", "Approved", "Visitor")));
-        List<LogEntryDto> result = siteSecurityService.getAccessLogs("visitors");
+        when(logRepository.findByType(eq("Visitor"), any(Sort.class))).thenReturn(Arrays.asList(logEntry("l3", "Approved", "Visitor")));
+        List<LogEntryDto> result = siteSecurityService.getAccessLogs(LogFilter.VISITORS);
         assertEquals(1, result.size());
         assertEquals("Visitor", result.get(0).getType());
     }
@@ -245,7 +235,7 @@ public class SiteSecurityServiceTest {
     void getZones_shouldMapEntitiesToDtos() {
         ZoneEntity zone = ZoneEntity.builder()
                 .id("critical").name("Critical Zone").tagline("Infrastructure")
-                .authorizedUsers(2).entryPoints(1).status("Locked Down")
+                .status("Locked Down")
                 .description("desc").requirements(Arrays.asList("Level 4 clearance"))
                 .build();
         when(zoneRepository.findAll()).thenReturn(Arrays.asList(zone));
@@ -256,7 +246,7 @@ public class SiteSecurityServiceTest {
         ZoneDto dto = result.get(0);
         assertEquals("critical", dto.getId());
         assertEquals("Critical Zone", dto.getName());
-        assertEquals(2, dto.getAuthorizedUsers());
+        assertEquals(0, dto.getAuthorizedUsers());
         assertEquals(1, dto.getRequirements().size());
     }
 

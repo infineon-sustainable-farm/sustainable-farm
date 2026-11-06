@@ -1,8 +1,8 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowUpRight, CheckCircle2, DoorOpen, Layers3, Lock, ShieldAlert, TriangleAlert } from "lucide-react";
 import PerimeterMap from "../components/PerimeterMap";
 import { Card, Eyebrow, LevelChip, ScreenHeader, SensitivityMeter, StatusChip } from "../components/ui";
-import { LEVEL_META } from "../api/sitesecurityTypes";
+import { LEVEL_META, levelMeta } from "../api/sitesecurityTypes";
 import { useZones } from "../hooks/useZones";
 const ZONE_ICON = {
     open: DoorOpen,
@@ -36,8 +36,8 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
         </Card>
       </div>);
     }
-    const meta = LEVEL_META[zone.id];
-    const Icon = ZONE_ICON[zone.id];
+    const meta = levelMeta(zone.id);
+    const Icon = ZONE_ICON[zone.id] ?? DoorOpen;
     return (<div className="space-y-5">
       <ScreenHeader kicker="03 · Site Model" title="Perimeter & Zones" subtitle="How the farm is divided — and who may cross each line" actions={<span className="inline-flex items-center gap-2 rounded-full border border-dashed border-amber-300 bg-amber-50 px-3.5 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">
             <TriangleAlert className="size-3.5"/>
@@ -101,8 +101,7 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
             <Eyebrow>Selected zone</Eyebrow>
             <span className="size-2 rounded-full" style={{ backgroundColor: meta.solid }}/>
           </div>
-          <AnimatePresence mode="wait">
-            <motion.div key={zone.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }} className="px-6 py-5">
+            <motion.div key={zone.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }} className="px-6 py-5">
               <div className="flex items-start gap-3.5">
                 <span className="flex size-11 items-center justify-center rounded-xl border" style={{ backgroundColor: meta.fill, borderColor: `${meta.solid}35`, color: meta.solid }}>
                   <Icon className="size-5" strokeWidth={2.1}/>
@@ -152,12 +151,11 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
                 </ul>
               </div>
 
-              <button onClick={onOpenLog} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-700 font-sans shadow-sm">
+              <button onClick={() => onOpenLog(zone.id)} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-700 font-sans shadow-sm">
                 View zone activity
                 <ArrowUpRight className="size-4"/>
               </button>
             </motion.div>
-          </AnimatePresence>
         </Card>
       </div>
     </div>);

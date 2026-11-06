@@ -13,7 +13,7 @@ const TONE = {
         bar: "bg-rose-50 border-rose-200",
         icon: AlertTriangle,
         title: "Access denied",
-        sub: "Recorded and escalated for review",
+        sub: "Recorded in the access log",
     },
     Pending: {
         bar: "bg-amber-50 border-amber-200",
@@ -27,6 +27,12 @@ const ICON_TONE = {
     Denied: "text-rose-600",
     Pending: "text-amber-600",
 };
+const UNKNOWN_TONE = {
+    bar: "bg-slate-50 border-slate-200",
+    icon: Clock,
+    title: "Access event",
+    sub: "Recorded in the access log",
+};
 function Row({ label, children }) {
     return (<div className="flex items-start justify-between gap-6 py-3">
       <span className="pt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-slate-400">{label}</span>
@@ -34,6 +40,8 @@ function Row({ label, children }) {
     </div>);
 }
 export default function LogDrawer({ entry, onClose, }) {
+    const tone = TONE[entry?.status] ?? UNKNOWN_TONE;
+    const ToneIcon = tone.icon;
     return (<AnimatePresence>
       {entry && (<>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-navy-950/30 backdrop-blur-[2px]" onClick={onClose}/>
@@ -49,14 +57,11 @@ export default function LogDrawer({ entry, onClose, }) {
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5">
-              <div className={cn("flex items-center gap-3 rounded-xl border px-4 py-3.5", TONE[entry.status].bar)}>
-                {(() => {
-                const Icon = TONE[entry.status].icon;
-                return <Icon className={cn("size-5", ICON_TONE[entry.status])} strokeWidth={2.2}/>;
-            })()}
+              <div className={cn("flex items-center gap-3 rounded-xl border px-4 py-3.5", tone.bar)}>
+                <ToneIcon className={cn("size-5", ICON_TONE[entry.status] ?? "text-slate-500")} strokeWidth={2.2}/>
                 <div>
-                  <p className="text-[13.5px] font-semibold text-navy-900">{TONE[entry.status].title}</p>
-                  <p className="text-[11.5px] text-slate-500">{TONE[entry.status].sub}</p>
+                  <p className="text-[13.5px] font-semibold text-navy-900">{tone.title}</p>
+                  <p className="text-[11.5px] text-slate-500">{tone.sub}</p>
                 </div>
                 <span className="ml-auto">
                   <StatusChip status={entry.status} size="sm"/>
@@ -104,10 +109,7 @@ export default function LogDrawer({ entry, onClose, }) {
             </div>
 
             <div className="flex items-center gap-2.5 border-t border-slate-100 px-6 py-4">
-              <button onClick={onClose} className="flex-1 rounded-xl bg-navy-900 px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-navy-800">
-                Mark as reviewed
-              </button>
-              <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:bg-slate-50">
+              <button onClick={onClose} className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:bg-slate-50">
                 Close
               </button>
             </div>

@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,7 @@ public class SiteSecurityDtos {
     public static class OverviewStatsDto {
         private int activePoints;
         private int controlledZones;
+        private int totalZones;
         private int visitors;
         private int alerts;
     }
@@ -89,12 +91,17 @@ public class SiteSecurityDtos {
         private String role;
 
         @NotBlank(message = "Type is required")
+        @Pattern(regexp = "Staff|Service|Security|Visitor",
+                message = "Type must be one of Staff, Service, Security or Visitor")
         private String type;
 
         @NotBlank(message = "Level is required")
+        @Size(max = 50, message = "Level must not exceed 50 characters")
         private String level;
 
         @NotBlank(message = "validUntil is required")
+        @Pattern(regexp = "(?i:permanent)|\\d{4}-\\d{2}-\\d{2}",
+                message = "validUntil must be an ISO date (yyyy-MM-dd) or Permanent")
         private String validUntil;
     }
 

@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, Lock, MapPin } from "lucide-react";
+import { ChevronRight, Lock, MapPin } from "lucide-react";
 import { LiveClock } from "./ui";
 import { SCREEN_LABEL } from "../api/sitesecurityTypes";
 export default function TopBar({ screen, onLock }) {
@@ -14,16 +14,9 @@ export default function TopBar({ screen, onLock }) {
           Willow Ridge Farm
         </span>
         <LiveClock />
-        <button className="relative rounded-full border border-slate-200 bg-white p-2 text-slate-400 transition-colors hover:text-navy-900">
-          <Bell className="size-4"/>
-          <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent-500 ring-2 ring-white"/>
-        </button>
         <button type="button" onClick={onLock} aria-label="Lock session" title="Lock session" className="rounded-full border border-slate-200 bg-white p-2 text-slate-400 transition-colors hover:text-navy-900">
           <Lock className="size-4"/>
         </button>
-        <span className="flex size-8 items-center justify-center rounded-full bg-navy-900 text-[10px] font-semibold text-white">
-          FM
-        </span>
       </div>
     </header>);
 }
