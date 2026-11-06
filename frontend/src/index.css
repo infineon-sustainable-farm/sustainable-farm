@@ -4,21 +4,53 @@
   /* Shared fonts */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* Shared Sustainable Farm colors */
-  --color-primary: #0a8276;
+  --color-primary: #4caf50;
   --color-primary-dark: #065e55;
-  --color-accent: #0fa396;
+  --color-accent: #e3efed;
   --color-ink: #0f2a26;
-  --color-muted: #5a6b7a;
+  --color-muted: #eef2f1;
   --color-line: #cdefe9;
 
-  --color-success: #2e9e6b;
-  --color-warning: #d9a441;
+  --color-success: #4caf50;
+  --color-warning: #ef6c00;
   --color-error: #c1503f;
   --color-info: #3a7ca5;
+
+  /* Shared semantic tokens used by the Energy Supply screens */
+  --color-background: #f5f7fa;
+  --color-foreground: #1a2422;
+  --color-card: #ffffff;
+  --color-card-foreground: #1a2422;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a2422;
+  --color-primary-foreground: #ffffff;
+  --color-secondary-foreground: #ffffff;
+  --color-muted-foreground: #5c6b68;
+  --color-accent-foreground: #4caf50;
+  --color-destructive: #c62828;
+  --color-destructive-foreground: #ffffff;
+  --color-warning-foreground: #ffffff;
+  --color-success-foreground: #ffffff;
+  --color-border: #dbe3e1;
+  --color-input: #dbe3e1;
+  --color-ring: #4caf50;
+  --color-chart-1: #4caf50;
+  --color-chart-2: #ef6c00;
+  --color-chart-3: #c62828;
+  --color-chart-4: #4a9d93;
+  --color-chart-5: #7fb8b1;
+  --color-sidebar: #4caf50;
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-primary: #4caf50;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #5cbf60;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #5cbf60;
+  --color-sidebar-ring: #ffffff;
 
   /* FenceLine palette */
   --color-primary-900: #05453f;
@@ -61,7 +93,7 @@
   --color-on-primary-fixed: #00201c;
   --color-on-primary-fixed-variant: #005048;
 
-  --color-secondary: #9c4400;
+  --color-secondary: #0a8276;
   --color-secondary-container: #fd7613;
   --color-on-secondary: #ffffff;
   --color-on-secondary-container: #5b2500;
@@ -77,8 +109,7 @@
   --color-on-error: #ffffff;
   --color-on-error-container: #93000a;
 
-  --color-background: #f8f9ff;
-  --color-on-background: #0b1c30;
+  --color-on-background: #1a2422;
 
   --color-surface: #f8f9ff;
   --color-on-surface: #0b1c30;
