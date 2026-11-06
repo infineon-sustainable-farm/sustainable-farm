@@ -16,7 +16,7 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
         return (<div className="space-y-5">
         <ScreenHeader kicker="03 · Site Model" title="Perimeter & Zones" subtitle="How the farm is divided — and who may cross each line"/>
         <Card className="flex min-h-64 items-center justify-center">
-          <p className="font-sans text-[13px] text-slate-400">Loading zones...</p>
+          <p className="font-sans text-[13px] text-slate-600">Loading zones...</p>
         </Card>
       </div>);
     }
@@ -32,7 +32,7 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
         return (<div className="space-y-5">
         <ScreenHeader kicker="03 · Site Model" title="Perimeter & Zones" subtitle="How the farm is divided — and who may cross each line"/>
         <Card className="flex min-h-64 items-center justify-center">
-          <p className="font-sans text-[13px] text-slate-400">No zones have been configured.</p>
+          <p className="font-sans text-[13px] text-slate-600">No zones have been configured.</p>
         </Card>
       </div>);
     }
@@ -51,12 +51,12 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
               <div>
                 <h2 className="font-display text-[17px] font-semibold text-navy-900">Site Diagram</h2>
-                <p className="mt-0.5 text-[12px] text-slate-400 font-sans">
+                <p className="mt-0.5 text-[12px] text-slate-600 font-sans">
                   Conceptual ring model — deeper rings require stronger verification
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                {["open", "controlled", "restricted", "critical"].map((l) => (<span key={l} className="flex items-center gap-1.5 font-sans text-[12px] font-medium text-slate-500">
+                {["open", "controlled", "restricted", "critical"].map((l) => (<span key={l} className="flex items-center gap-1.5 font-sans text-[12px] font-medium text-slate-600">
                     <span className="size-2 rounded-sm" style={{ backgroundColor: LEVEL_META[l].solid }}/>
                     {LEVEL_META[l].label}
                   </span>))}
@@ -68,15 +68,15 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-100 px-6 py-3">
-              <span className="flex items-center gap-2 font-sans text-[12px] text-slate-400">
+              <span className="flex items-center gap-2 font-sans text-[12px] text-slate-600">
                 <span className="h-1 w-8 rounded-full bg-navy-900 [mask-image:radial-gradient(circle,black_50%,transparent_51%)] [mask-size:4px_4px]"/>
                 Fence line
               </span>
-              <span className="flex items-center gap-2 font-sans text-[12px] text-slate-400">
+              <span className="flex items-center gap-2 font-sans text-[12px] text-slate-600">
                 <span className="inline-block size-3 rounded-[4px] border border-navy-900 bg-white"/>
                 Access point
               </span>
-              <span className="flex items-center gap-2 font-sans text-[12px] text-slate-400">
+              <span className="flex items-center gap-2 font-sans text-[12px] text-slate-600">
                 <span className="inline-block size-3 rounded-[4px] [background:repeating-linear-gradient(45deg,#ef6c00_0_2px,transparent_2px_5px)] opacity-60"/>
                 Heightened control
               </span>
@@ -89,7 +89,7 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
             <p className="font-sans text-[12px] font-semibold uppercase tracking-wider text-amber-800">
               Preliminary concept — to be validated on site
             </p>
-            <p className="ml-auto hidden text-[12px] text-amber-700/80 lg:block font-sans">
+            <p className="ml-auto hidden text-[12px] text-amber-800 lg:block font-sans">
               Layout, zone geometry and gate positions require physical survey before implementation.
             </p>
           </div>
@@ -110,7 +110,7 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
                   <h3 className="font-display text-[20px] font-semibold leading-tight text-navy-900">
                     {zone.name}
                   </h3>
-                  <p className="mt-0.5 text-[12px] text-slate-400 font-sans">{zone.tagline}</p>
+                  <p className="mt-0.5 text-[12px] text-slate-600 font-sans">{zone.tagline}</p>
                 </div>
               </div>
 
@@ -119,25 +119,25 @@ export default function ZonesScreen({ selected, onSelect, onOpenLog, }) {
                 <SensitivityMeter level={zone.id}/>
               </div>
 
-              <p className="mt-4 text-[13px] leading-relaxed text-slate-500 font-sans">{zone.description}</p>
+              <p className="mt-4 text-[13px] leading-relaxed text-slate-600 font-sans">{zone.description}</p>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <div className="rounded-xl bg-slate-50 px-4 py-3">
                   <p className="font-display text-[28px] font-bold text-navy-900">{zone.authorizedUsers}</p>
-                  <p className="mt-0.5 font-sans text-[12px] font-medium uppercase tracking-wider text-slate-400">
+                  <p className="mt-0.5 font-sans text-[12px] font-medium uppercase tracking-wider text-slate-600">
                     Authorized users
                   </p>
                 </div>
                 <div className="rounded-xl bg-slate-50 px-4 py-3">
                   <p className="font-display text-[28px] font-bold text-navy-900">{zone.entryPoints}</p>
-                  <p className="mt-0.5 font-sans text-[12px] font-medium uppercase tracking-wider text-slate-400">
+                  <p className="mt-0.5 font-sans text-[12px] font-medium uppercase tracking-wider text-slate-600">
                     Entry points
                   </p>
                 </div>
               </div>
 
               <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                <span className="font-sans text-[12px] font-medium uppercase tracking-wider text-slate-400">Status</span>
+                <span className="font-sans text-[12px] font-medium uppercase tracking-wider text-slate-600">Status</span>
                 <StatusChip status={zone.status} size="sm"/>
               </div>
 

@@ -1,4 +1,4 @@
-export const RECENT_EVENT_COUNT = 4;
+const RECENT_EVENT_COUNT = 4;
 
 export function countLogs(logs) {
     const byStatus = (status) => logs.filter((e) => e.status === status).length;

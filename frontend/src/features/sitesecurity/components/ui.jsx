@@ -9,18 +9,18 @@ export function Card({ className, children, }) {
     </div>);
 }
 export function Eyebrow({ children, className }) {
-    return (<p className={cn("font-sans text-[12px] font-medium uppercase tracking-wider text-slate-400", className)}>
+    return (<p className={cn("font-sans text-[12px] font-medium uppercase tracking-wider text-slate-600", className)}>
       {children}
     </p>);
 }
 export function ScreenHeader({ kicker, title, subtitle, actions, }) {
     return (<div className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <Eyebrow className="mb-1.5 text-primary-600 font-semibold">{kicker}</Eyebrow>
+        <Eyebrow className="mb-1.5 text-primary-700 font-semibold">{kicker}</Eyebrow>
         <h1 className="font-display text-[24px] font-semibold leading-tight tracking-tight text-navy-900">
           {title}
         </h1>
-        <p className="mt-1 text-[14px] text-slate-500 font-sans">{subtitle}</p>
+        <p className="mt-1 text-[14px] text-slate-600 font-sans">{subtitle}</p>
       </div>
       {actions && <div className="flex items-center gap-3">{actions}</div>}
     </div>);
@@ -47,8 +47,8 @@ const STATUS_TONE = {
     Denied: "bg-rose-50 text-rose-700 border-rose-200",
     Revoked: "bg-rose-50 text-rose-700 border-rose-200",
     Offline: "bg-rose-50 text-rose-700 border-rose-200",
-    Expired: "bg-slate-100 text-slate-500 border-slate-200",
-    Unknown: "bg-slate-100 text-slate-500 border-slate-200",
+    Expired: "bg-slate-100 text-slate-600 border-slate-200",
+    Unknown: "bg-slate-100 text-slate-600 border-slate-200",
 };
 const STATUS_DOT = {
     Approved: "bg-emerald-500",
@@ -76,7 +76,7 @@ export function StatusChip({ status, size = "md" }) {
 }
 export function SensitivityMeter({ level }) {
     const meta = levelMeta(level);
-    return (<span className="inline-flex items-center gap-[3px]" title={`Verification strength ${meta.meter}/4`}>
+    return (<span role="img" aria-label={`Verification strength ${meta.meter} of 4`} className="inline-flex items-center gap-[3px]" title={`Verification strength ${meta.meter}/4`}>
       {LEVEL_ORDER.map((_, i) => (<span key={i} className="h-[8px] w-[7px] rounded-[2px]" style={{
                 backgroundColor: i < meta.meter ? meta.solid : "#E5E9F0",
                 opacity: i < meta.meter ? 0.55 + 0.45 * ((i + 1) / 4) : 1,
@@ -84,17 +84,17 @@ export function SensitivityMeter({ level }) {
     </span>);
 }
 export function Avatar({ initials, level }) {
-    const tone = level ? levelMeta(level).avatar : "bg-slate-100 text-slate-500";
+    const tone = level ? levelMeta(level).avatar : "bg-slate-100 text-slate-600";
     return (<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-wide font-sans", tone)}>
       {initials}
     </span>);
 }
 export function FilterPill({ active, onClick, children, count, }) {
-    return (<button onClick={onClick} className={cn("inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-medium font-sans transition-all duration-200", active
+    return (<button type="button" aria-pressed={active} onClick={onClick} className={cn("inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-medium font-sans transition-all duration-200", active
             ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-            : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-navy-900")}>
+            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-navy-900")}>
       {children}
-      {typeof count === "number" && (<span className={cn("rounded-full px-1.5 py-px font-mono text-[11px]", active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>
+      {typeof count === "number" && (<span className={cn("rounded-full px-1.5 py-px font-mono text-[11px]", active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600")}>
           {count}
         </span>)}
     </button>);
@@ -105,7 +105,7 @@ export function LiveClock() {
         const t = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(t);
     }, []);
-    return (<span className="font-mono text-[11.5px] tabular-nums text-slate-500">
+    return (<span className="font-mono text-[11.5px] tabular-nums text-slate-600">
       {now.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" })}
       <span className="mx-1.5 text-slate-300">·</span>
       {now.toLocaleTimeString("en-GB", { hour12: false })}
@@ -122,7 +122,7 @@ export function SecurityLadder() {
     return (<Card className="flex flex-wrap items-center gap-y-3 px-5 py-4">
       <div className="mr-2 min-w-[150px]">
         <Eyebrow>Access level model</Eyebrow>
-        <p className="mt-0.5 text-[12px] text-slate-500">Deeper zones demand stronger proof</p>
+        <p className="mt-0.5 text-[12px] text-slate-600">Deeper zones demand stronger proof</p>
       </div>
       <div className="flex flex-1 flex-wrap items-center gap-x-1 gap-y-3">
         {LADDER.map((step, i) => {
@@ -139,13 +139,13 @@ export function SecurityLadder() {
                     {meta.label}
                     <SensitivityMeter level={step.level}/>
                   </span>
-                  <span className="block text-[11px] text-slate-400">{step.caption}</span>
+                  <span className="block text-[11px] text-slate-600">{step.caption}</span>
                 </span>
               </div>
             </div>);
         })}
       </div>
-      <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400 lg:block">
+      <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.18em] text-slate-600 lg:block">
         Verification strength →
       </span>
     </Card>);

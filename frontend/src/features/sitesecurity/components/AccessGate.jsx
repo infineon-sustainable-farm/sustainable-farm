@@ -24,11 +24,11 @@ export default function AccessGate({ onAuthenticated }) {
         }
     };
 
-    return (<div className="flex min-h-screen items-center justify-center bg-[#f4f6f9] p-6">
+    return (<main className="flex min-h-screen items-center justify-center bg-[#f4f6f9] p-6">
       <Card className="w-full max-w-[420px] p-6">
-        <Eyebrow className="mb-1 text-primary-600">Fenceline Security</Eyebrow>
+        <Eyebrow className="mb-1 text-primary-700">Fenceline Security</Eyebrow>
         <h1 className="font-display text-[20px] font-semibold text-navy-900">Restricted access</h1>
-        <p className="mt-1 text-[13px] text-slate-500 font-sans">
+        <p className="mt-1 text-[13px] text-slate-600 font-sans">
           Enter your access token. It is kept for this page only and is asked again after a reload.
         </p>
 
@@ -50,5 +50,5 @@ export default function AccessGate({ onAuthenticated }) {
           </button>
         </form>
       </Card>
-    </div>);
+    </main>);
 }

@@ -30,7 +30,7 @@ const FEED_ICON = {
 };
 const FEED_TINT = {
     Staff: "bg-blue-50 text-blue-600",
-    Visitor: "bg-slate-100 text-slate-500",
+    Visitor: "bg-slate-100 text-slate-600",
     Service: "bg-amber-50 text-amber-600",
     Security: "bg-emerald-50 text-emerald-600",
     Unknown: "bg-rose-50 text-rose-600",
@@ -56,7 +56,7 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
         {MODEL_STEPS.map((step, i) => (<div key={step} className="flex items-center">
             {i > 0 && <ChevronsRight className="mx-2 size-3.5 text-slate-300" strokeWidth={2.4}/>}
             <span className="flex items-center gap-2">
-              <span className="font-mono text-[11px] font-semibold text-primary-600">
+              <span className="font-mono text-[11px] font-semibold text-primary-700">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <span className="text-[13px] font-medium text-navy-900 font-sans">{step}</span>
@@ -69,7 +69,11 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
         {cards.map((s) => {
             const style = STAT_STYLE[s.id];
             const Icon = style.icon;
-            return (<button key={s.id} data-stat={s.id} onClick={() => s.alert ? onOpenLog("denied") : undefined} className={cn("rounded-2xl border bg-white p-5 text-left shadow-[0_1px_2px_rgba(16,27,46,0.04),0_10px_30px_-14px_rgba(16,27,46,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(16,27,46,0.05),0_16px_36px_-14px_rgba(16,27,46,0.18)]", s.alert ? "border-rose-200/80" : "border-slate-200/80")}>
+            const StatCard = s.alert ? "button" : "div";
+            const action = s.alert ? { type: "button", onClick: () => onOpenLog("denied") } : {};
+            return (<StatCard key={s.id} data-stat={s.id} {...action} className={cn("rounded-2xl border bg-white p-5 text-left shadow-[0_1px_2px_rgba(16,27,46,0.04),0_10px_30px_-14px_rgba(16,27,46,0.12)]", s.alert
+                    ? "border-rose-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(16,27,46,0.05),0_16px_36px_-14px_rgba(16,27,46,0.18)]"
+                    : "border-slate-200/80")}>
               <div className="flex items-start justify-between">
                 <span className={cn("flex size-10 items-center justify-center rounded-xl", style.tint)}>
                   <Icon className="size-[18px]" strokeWidth={2.2}/>
@@ -79,12 +83,12 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
               <p className="mt-4 font-display text-[30px] font-bold leading-none tracking-tight text-navy-900">
                 {s.value}
               </p>
-              <p className="mt-1.5 text-[13px] font-medium text-slate-500 font-sans">{s.label}</p>
-              <p className="mt-2.5 flex items-center gap-1.5 text-[12px] text-slate-400 font-sans">
+              <p className="mt-1.5 text-[13px] font-medium text-slate-600 font-sans">{s.label}</p>
+              <p className="mt-2.5 flex items-center gap-1.5 text-[12px] text-slate-600 font-sans">
                 <span className={cn("size-1.5 rounded-full", style.dot, s.alert && "status-pulse")}/>
                 {s.sub}
               </p>
-            </button>);
+            </StatCard>);
         })}
       </div>
 
@@ -93,18 +97,18 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h2 className="font-display text-[17px] font-semibold text-navy-900">Perimeter Status</h2>
-            <p className="mt-0.5 text-[12px] text-slate-400 font-sans">
+            <p className="mt-0.5 text-[12px] text-slate-600 font-sans">
               Conceptual layout — not a geographic map
             </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden items-center gap-3 md:flex">
-              {["open", "controlled", "restricted", "critical"].map((l) => (<span key={l} className="flex items-center gap-1.5 font-sans text-[12px] font-medium text-slate-500">
+              {["open", "controlled", "restricted", "critical"].map((l) => (<span key={l} className="flex items-center gap-1.5 font-sans text-[12px] font-medium text-slate-600">
                   <span className="size-2 rounded-sm" style={{ backgroundColor: LEVEL_META[l].solid }}/>
                   {LEVEL_META[l].label}
                 </span>))}
             </div>
-            <button onClick={() => onOpenZones()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3.5 py-1.5 text-[13px] font-semibold text-navy-900 transition-all hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 font-sans">
+            <button onClick={() => onOpenZones()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3.5 py-1.5 text-[13px] font-semibold text-navy-900 transition-all hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 font-sans">
               Perimeter & Zones
               <ArrowUpRight className="size-3.5"/>
             </button>
@@ -114,7 +118,7 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
         <div className="grid lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="bg-dotgrid p-4">
             <PerimeterMap compact selected={null} onSelect={(zone) => onOpenZones(zone)}/>
-            <p className="-mt-1 pb-1 text-center font-mono text-[9.5px] uppercase tracking-[0.16em] text-slate-400">
+            <p className="-mt-1 pb-1 text-center font-mono text-[9.5px] uppercase tracking-[0.16em] text-slate-600">
               Select a zone to open detail view
             </p>
           </div>
@@ -124,7 +128,7 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
               <Eyebrow>Access points</Eyebrow>
             </div>
             <div className="flex-1 divide-y divide-slate-100 px-5">
-              {gates.length === 0 && (<p className="py-6 text-center text-[12.5px] text-slate-400">
+              {gates.length === 0 && (<p className="py-6 text-center text-[12.5px] text-slate-600">
                   {isLoadingOverview ? "Loading access points..." : !error && "No access points are defined."}
                 </p>)}
               {gates.map((g) => (<div key={g.id} className="flex items-center gap-3 py-3.5">
@@ -137,13 +141,13 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12.5px] font-semibold text-navy-900">{g.name}</p>
-                    <p className="truncate text-[10.5px] text-slate-400">{g.detail}</p>
+                    <p className="truncate text-[10.5px] text-slate-600">{g.detail}</p>
                   </div>
                   <StatusChip status={g.status} size="sm"/>
                 </div>))}
             </div>
             <div className="px-5 pb-5 pt-1">
-              <p className="rounded-xl bg-slate-50 px-4 py-3.5 text-[11.5px] leading-relaxed text-slate-500">
+              <p className="rounded-xl bg-slate-50 px-4 py-3.5 text-[11.5px] leading-relaxed text-slate-600">
                 Perimeter integrity is unknown: no fence sensors are connected.
               </p>
             </div>
@@ -161,7 +165,7 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
           </button>
         </div>
         <div className="divide-y divide-slate-100 px-6">
-          {feed.length === 0 && (<p className="py-8 text-center text-[13px] text-slate-400">
+          {feed.length === 0 && (<p className="py-8 text-center text-[13px] text-slate-600">
               {isLoadingLogs ? "Loading recent activity..." : !error && "No access events have been recorded."}
             </p>)}
           {feed.map((e) => {
@@ -180,7 +184,7 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
                   {e.zoneName}
                 </p>
                 <StatusChip status={e.status} size="sm"/>
-                <span className="w-12 text-right font-mono text-[11.5px] font-medium text-slate-400">
+                <span className="w-12 text-right font-mono text-[11.5px] font-medium text-slate-600">
                   {e.time}
                 </span>
               </button>);

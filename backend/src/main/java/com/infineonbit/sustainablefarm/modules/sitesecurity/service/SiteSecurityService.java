@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SiteSecurityService {
 
     private static final Logger log = LoggerFactory.getLogger(SiteSecurityService.class);
@@ -236,7 +237,8 @@ public class SiteSecurityService {
                 .entryPoints((int) gates.stream().filter(gate -> e.getId().equals(gate.getZone())).count())
                 .status(e.getStatus())
                 .description(e.getDescription())
-                .requirements(e.getRequirements() != null ? e.getRequirements() : new ArrayList<>())
+                // Copied here: this lazy collection cannot be read once the transaction ends.
+                .requirements(e.getRequirements() != null ? new ArrayList<>(e.getRequirements()) : new ArrayList<>())
                 .build();
     }
 

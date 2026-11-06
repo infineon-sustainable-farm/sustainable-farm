@@ -19,7 +19,7 @@ export default function AccessLogScreen({ initialFilter = "all", initialZone = n
     const [selected, setSelected] = useState(null);
     const rows = filterByZone(logs, zone);
     return (<div className="space-y-5">
-      <ScreenHeader kicker="04 · Audit trail" title="Access Log" subtitle="Every entry, exit and refusal — in order" actions={<span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-slate-400">
+      <ScreenHeader kicker="04 · Audit trail" title="Access Log" subtitle="Every entry, exit and refusal — in order" actions={<span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-slate-600">
             Recording simulated — prototype data
           </span>}/>
 
@@ -33,11 +33,11 @@ export default function AccessLogScreen({ initialFilter = "all", initialZone = n
           </FilterPill>))}
         {zone && (<span className="inline-flex items-center gap-2">
             <LevelChip level={zone} size="sm"/>
-            <button onClick={() => setZone(null)} className="text-[12px] font-semibold text-slate-500 underline-offset-2 hover:text-navy-900 hover:underline font-sans">
+            <button type="button" onClick={() => setZone(null)} className="text-[12px] font-semibold text-slate-600 underline-offset-2 hover:text-navy-900 hover:underline font-sans">
               Show all zones
             </button>
           </span>)}
-        <span className="ml-auto font-mono text-[10.5px] text-slate-400">
+        <span className="ml-auto font-mono text-[10.5px] text-slate-600">
           {rows.length} of {allLogs.length} events
         </span>
       </div>
@@ -45,14 +45,14 @@ export default function AccessLogScreen({ initialFilter = "all", initialZone = n
       <Card className="overflow-hidden">
         <table className="w-full font-sans text-[13px]">
           <thead>
-            <tr className="text-left font-sans text-[12px] font-medium uppercase tracking-wider text-slate-400">
-              <th className="px-6 py-3 font-medium">Time</th>
-              <th className="px-4 py-3 font-medium">User</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">Zone</th>
-              <th className="px-4 py-3 font-medium">Action</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="w-12 px-4 py-3"/>
+            <tr className="text-left font-sans text-[12px] font-medium uppercase tracking-wider text-slate-600">
+              <th scope="col" className="px-6 py-3 font-medium">Time</th>
+              <th scope="col" className="px-4 py-3 font-medium">User</th>
+              <th scope="col" className="px-4 py-3 font-medium">Type</th>
+              <th scope="col" className="px-4 py-3 font-medium">Zone</th>
+              <th scope="col" className="px-4 py-3 font-medium">Action</th>
+              <th scope="col" className="px-4 py-3 font-medium">Status</th>
+              <th scope="col" className="w-12 px-4 py-3"><span className="sr-only">Details</span></th>
             </tr>
           </thead>
           <tbody>
@@ -69,13 +69,13 @@ export default function AccessLogScreen({ initialFilter = "all", initialZone = n
                       <Avatar initials={e.initials} level={e.type === "Unknown" ? undefined : e.zone}/>
                       <div className="min-w-0">
                         <p className="truncate text-[13px] font-semibold text-navy-900 font-sans">{e.user}</p>
-                        <p className="font-mono text-[11px] text-slate-400">{e.ref}</p>
+                        <p className="font-mono text-[11px] text-slate-600">{e.ref}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3.5">
                     <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[12px] font-medium font-sans", e.type === "Unknown"
-                    ? "border-slate-200 bg-slate-100 text-slate-500"
+                    ? "border-slate-200 bg-slate-100 text-slate-600"
                     : "border-slate-200 bg-white text-slate-600")}>
                       {e.type}
                     </span>
@@ -87,7 +87,7 @@ export default function AccessLogScreen({ initialFilter = "all", initialZone = n
                   </td>
                   <td className="px-4 py-3.5">
                     <span className="inline-flex items-center gap-1.5 text-[13px] font-normal text-slate-600 font-sans">
-                      <ActionIcon className={cn("size-3.5", e.action === "Entry" ? "text-slate-400" : "text-slate-300")}/>
+                      <ActionIcon className={cn("size-3.5", e.action === "Entry" ? "text-slate-600" : "text-slate-300")}/>
                       {e.action}
                     </span>
                   </td>
@@ -95,17 +95,22 @@ export default function AccessLogScreen({ initialFilter = "all", initialZone = n
                     <StatusChip status={e.status} size="sm"/>
                   </td>
                   <td className="px-4 py-3.5">
-                    <ChevronRight className="size-4 text-slate-300"/>
+                    <button type="button" aria-label={`Open event ${e.ref}`} onClick={(click) => {
+                    click.stopPropagation();
+                    setSelected(e);
+                }} className="rounded-lg p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-navy-900">
+                      <ChevronRight className="size-4"/>
+                    </button>
                   </td>
                 </tr>);
         })}
             {isLoading && rows.length === 0 && (<tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-[13px] text-slate-400">
+                <td colSpan={7} className="px-6 py-12 text-center text-[13px] text-slate-600">
                   Loading events...
                 </td>
               </tr>)}
             {!isLoading && !error && rows.length === 0 && (<tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-[13px] text-slate-400">
+                <td colSpan={7} className="px-6 py-12 text-center text-[13px] text-slate-600">
                   No events match this filter.
                 </td>
               </tr>)}
