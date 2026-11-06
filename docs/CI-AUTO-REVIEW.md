@@ -94,3 +94,22 @@ automatically (`branch-policy.yml`). Two escape hatches:
 Add the pattern in `scripts/ci-guards.sh` (`fail`/`warn` functions), document
 it in the table above. Guards only see the `merge-base..head` diff: a defect
 pre-existing on the base is never reported.
+
+## Reports in the admin's name
+
+The `Auto-review` and `Module ownership` workflows publish their reports with the
+`OWNER_REVIEW_TOKEN` repository secret when it exists, so the comments appear
+under the admin's account instead of `github-actions[bot]`.
+
+1. On the admin account: Settings, Developer settings, Personal access tokens,
+   Fine-grained tokens, Generate new token.
+2. Repository access: only `infineon-sustainable-farm/sustainable-farm`.
+   Permission: Pull requests, Read and write. Pick an expiry date and note it.
+3. In the repository: Settings, Secrets and variables, Actions, New repository
+   secret, name `OWNER_REVIEW_TOKEN`, value: the token.
+
+Both workflows use `pull_request_target`: the workflow and the scripts always
+come from the base branch, and the PR code is only fetched and compared with
+git, never executed. Values written by the PR author (branch name, title) are
+passed through environment variables, never inlined in a script. Keep these two
+rules in any change to these workflows, otherwise the token can leak.

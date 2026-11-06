@@ -13,6 +13,11 @@
 # One-time GitHub prerequisites:
 #   - Settings -> Branches -> protection rules on develop and main -> require
 #     the "Module ownership" status check.
+#   - Optional, to publish the report under the admin's account instead of
+#     github-actions[bot]: create a fine-grained token of the admin account
+#     (this repository only, "Pull requests: Read and write") and store it as
+#     the repository secret OWNER_REVIEW_TOKEN. Without it, github.token is used.
+#     The secret is safe here: pull_request_target never runs the PR's code.
 #
 # English-only output, no emojis (repo CI convention).
 name: Module ownership
@@ -69,7 +74,7 @@ jobs:
       - name: Publish report on the PR (updated, never duplicated)
         if: always() && steps.guard.outputs.exit_code != ''
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.OWNER_REVIEW_TOKEN || github.token }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
           CODE: ${{ steps.guard.outputs.exit_code }}
