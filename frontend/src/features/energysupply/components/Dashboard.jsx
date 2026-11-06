@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CloudSun, Gauge, Zap, Leaf } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { getDashboardSummary, getComponents, getSolarLast7Days } from "../api/energyApi";
+import { formatEnergyLabel } from "../utils/formatEnergyLabel";
 
 function ScoreCard({ label, value, unit, icon: Icon }) {
   return (
@@ -33,11 +34,17 @@ export default function Dashboard() {
       .then(([summaryData, componentsData, solarLogs]) => {
         setSummary(summaryData);
         setComponents(componentsData);
+        const totalsByDay = new Map();
+        solarLogs.forEach((log) => {
+          totalsByDay.set(
+            log.date,
+            (totalsByDay.get(log.date) ?? 0) + Number(log.kwhProduced ?? 0)
+          );
+        });
         setWeekly(
-          solarLogs.map((log) => ({
-            day: log.date,
-            solar: Number(log.kwhProduced ?? 0),
-          }))
+          [...totalsByDay]
+            .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+            .map(([day, solar]) => ({ day, solar }))
         );
       })
       .catch((err) => setError(err.message));
@@ -65,7 +72,7 @@ export default function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <ScoreCard label="Total PV Capacity" value={summary.totalPvCapacityKwp ?? 0} unit="kWp" icon={CloudSun} />
         <ScoreCard label="Daily Consumption" value={summary.currentDailyConsumptionKwh ?? 0} unit="kWh/day" icon={Gauge} />
-        <ScoreCard label="Generator Status" value={summary.generatorStatus ?? "N/A"} unit="" icon={Zap} />
+        <ScoreCard label="Generator Status" value={formatEnergyLabel(summary.generatorStatus)} unit="" icon={Zap} />
         <ScoreCard label="CO₂ Avoided (Month)" value={summary.co2AvoidedThisMonthKg ?? 0} unit="kg" icon={Leaf} />
       </div>
 
@@ -85,7 +92,7 @@ export default function Dashboard() {
                   <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="solar" fill="#4caf50" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="solar" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -118,14 +125,14 @@ export default function Dashboard() {
                   <tr key={c.componentId} className="hover:bg-muted/40">
                     <td className="border-b border-border px-5 py-3">
                       <div className="font-semibold">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">{c.category}</div>
+                      <div className="text-xs text-muted-foreground">{formatEnergyLabel(c.category)}</div>
                     </td>
                     <td className="border-b border-border px-5 py-3 text-sm">
                       {c.capacityValue ?? "-"}
                     </td>
                     <td className="border-b border-border px-5 py-3">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                        {c.status}
+                        {formatEnergyLabel(c.status)}
                       </span>
                     </td>
                   </tr>

@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.repository;
 
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.SolarGenerationLog;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,5 +11,10 @@ import java.util.List;
 @Repository
 public interface SolarGenerationLogRepository extends JpaRepository<SolarGenerationLog, String> {
 
-    List<SolarGenerationLog> findByDateBetween(LocalDate start, LocalDate end);
+    @Override
+    @EntityGraph(attributePaths = "component")
+    List<SolarGenerationLog> findAll();
+
+    @EntityGraph(attributePaths = "component")
+    List<SolarGenerationLog> findByDateBetweenOrderByDateAsc(LocalDate start, LocalDate end);
 }

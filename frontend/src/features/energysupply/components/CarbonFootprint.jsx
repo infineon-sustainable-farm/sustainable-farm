@@ -40,11 +40,12 @@ export default function CarbonFootprint() {
     .filter((m) => m.period.startsWith(currentYear))
     .reduce((s, m) => s + (m.co2AvoidedKg || 0), 0);
 
-  let cumulative = 0;
-  const chartData = metrics.map((m) => {
-    cumulative += m.co2AvoidedKg || 0;
-    return { period: m.period, cumulativeKg: cumulative };
-  });
+  const chartData = metrics.map((metric, index) => ({
+    period: metric.period,
+    cumulativeKg: metrics
+      .slice(0, index + 1)
+      .reduce((total, item) => total + (item.co2AvoidedKg || 0), 0),
+  }));
 
   return (
     <section>
@@ -76,7 +77,7 @@ export default function CarbonFootprint() {
                   <XAxis dataKey="period" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => [`${v} kg`, "Cumulative CO₂"]} />
-                  <Line type="monotone" dataKey="cumulativeKg" stroke="#4caf50" strokeWidth={2.5} dot={{ r: 3.5, fill: "#4caf50" }} />
+                  <Line type="monotone" dataKey="cumulativeKg" stroke="var(--color-primary)" strokeWidth={2.5} dot={{ r: 3.5, fill: "var(--color-primary)" }} />
                 </LineChart>
               </ResponsiveContainer>
             )}

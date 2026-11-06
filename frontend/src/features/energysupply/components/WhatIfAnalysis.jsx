@@ -43,17 +43,40 @@ export default function WhatIfAnalysis() {
   const [inputs, setInputs] = useState(DEFAULTS);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const timeout = setTimeout(() => {
+      setLoading(true);
+      setError(null);
       simulateWhatIf(inputs)
-        .then(setResult)
-        .catch((err) => setError(err.message));
+        .then((data) => {
+          if (!cancelled) setResult(data);
+        })
+        .catch((err) => {
+          if (!cancelled) setError(err.message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
     }, 300); // debounce so we don't fire a request on every pixel of slider drag
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [inputs]);
 
-  const setField = (field) => (value) => setInputs((prev) => ({ ...prev, [field]: value }));
+  const setField = (field) => (value) => {
+    setResult(null);
+    setError(null);
+    setInputs((prev) => ({ ...prev, [field]: value }));
+  };
+  const resetScenario = () => {
+    setResult(null);
+    setError(null);
+    setInputs({ ...DEFAULTS });
+  };
 
   const chartData = result
     ? [
@@ -78,7 +101,7 @@ export default function WhatIfAnalysis() {
         <div className="rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary lg:col-span-2">
           <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
             <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Scenario Inputs</h2>
-            <button onClick={() => setInputs(DEFAULTS)} className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10">
+            <button onClick={resetScenario} className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10">
               <RotateCcw className="size-3.5" />Reset
             </button>
           </div>
@@ -93,8 +116,10 @@ export default function WhatIfAnalysis() {
           <div className="border-b border-border px-5 py-3.5">
             <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Projected Outcome</h2>
           </div>
-          {!result ? (
+          {loading || (!result && !error) ? (
             <p className="p-5 text-sm text-muted-foreground">Calculating...</p>
+          ) : !result ? (
+            <p className="p-5 text-sm text-destructive">No scenario result is available.</p>
           ) : (
             <div className="p-5">
               <Row label="New System Capacity" value={`${result.newSystemCapacityKwp?.toFixed(1)} kWp`} />
@@ -118,7 +143,7 @@ export default function WhatIfAnalysis() {
                 <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#4caf50" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

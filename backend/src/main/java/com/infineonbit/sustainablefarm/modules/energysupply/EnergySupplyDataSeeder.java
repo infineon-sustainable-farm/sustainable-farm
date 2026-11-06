@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.energysupply;
 
+import com.infineonbit.sustainablefarm.modules.energysupply.entity.Alert;
+import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertSeverity;
+import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertStatus;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.CarbonMetric;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentCategory;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentStatus;
@@ -8,15 +11,21 @@ import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergyCompone
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergySource;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.GeneratorEvent;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.LoadCategory;
+import com.infineonbit.sustainablefarm.modules.energysupply.entity.SolarGenerationLog;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.CarbonMetricRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.ConsumptionLogRepository;
+import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyAlertRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.GeneratorEventRepository;
+import com.infineonbit.sustainablefarm.modules.energysupply.repository.SolarGenerationLogRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Loads the "Base scenario" dummy figures from the Energy Supply Systems
@@ -26,38 +35,57 @@ import java.time.LocalDate;
  * TODO (Aida): replace the placeholder numbers below with the exact
  * figures from the "TEAM SUMMARY — Energy System" sheet once confirmed
  * (PV capacity in kWp, battery kWh, unit costs in EUR).
- * Runs only if the energy_component table is empty, so it is safe to
- * restart the app without duplicating rows.
+ * Seeds each empty table independently, so it is safe to restart the app
+ * and can also fill in demo data missing from a partially seeded database.
  */
 @Profile("dev")
 @Component
 public class EnergySupplyDataSeeder implements CommandLineRunner {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EnergySupplyDataSeeder.class);
+
     private final EnergyComponentRepository componentRepository;
     private final ConsumptionLogRepository consumptionLogRepository;
     private final CarbonMetricRepository carbonMetricRepository;
     private final GeneratorEventRepository generatorEventRepository;
+    private final SolarGenerationLogRepository solarGenerationLogRepository;
+    private final EnergyAlertRepository energyAlertRepository;
 
     public EnergySupplyDataSeeder(EnergyComponentRepository componentRepository,
                                    ConsumptionLogRepository consumptionLogRepository,
                                    CarbonMetricRepository carbonMetricRepository,
-                                   GeneratorEventRepository generatorEventRepository) {
+                                   GeneratorEventRepository generatorEventRepository,
+                                   SolarGenerationLogRepository solarGenerationLogRepository,
+                                   EnergyAlertRepository energyAlertRepository) {
         this.componentRepository = componentRepository;
         this.consumptionLogRepository = consumptionLogRepository;
         this.carbonMetricRepository = carbonMetricRepository;
         this.generatorEventRepository = generatorEventRepository;
+        this.solarGenerationLogRepository = solarGenerationLogRepository;
+        this.energyAlertRepository = energyAlertRepository;
     }
 
     @Override
     public void run(String... args) {
-        if (componentRepository.count() > 0) {
-            return; // already seeded, do nothing
+        if (componentRepository.count() == 0) {
+            seedComponents();
         }
 
-        seedComponents();
-        seedTodayConsumption();
-        seedThisMonthCarbon();
-        seedOneGeneratorEvent();
+        if (consumptionLogRepository.count() == 0) {
+            seedTodayConsumption();
+        }
+        if (carbonMetricRepository.count() == 0) {
+            seedThisMonthCarbon();
+        }
+        if (generatorEventRepository.count() == 0) {
+            seedOneGeneratorEvent();
+        }
+        if (solarGenerationLogRepository.count() == 0) {
+            seedSolarHistory();
+        }
+        if (energyAlertRepository.count() == 0) {
+            seedAlerts();
+        }
     }
 
     private void seedComponents() {
@@ -148,11 +176,67 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
 
     private void seedOneGeneratorEvent() {
         GeneratorEvent event = new GeneratorEvent();
-        event.setDate(LocalDate.now().minusDays(2));
+        event.setDate(LocalDate.now());
         event.setTriggerReason("Battery state of charge below 20%");
         event.setDurationHours(new BigDecimal("2.5"));
         event.setFuelLiters(new BigDecimal("4.0"));
         event.setCostEur(new BigDecimal("6.80"));
         generatorEventRepository.save(event);
+    }
+
+    private void seedSolarHistory() {
+        EnergyComponent pv = findDemoComponent("ENG-001", ComponentCategory.PV_ARRAY);
+        if (pv == null) {
+            LOGGER.warn("Skipping Energy Supply solar demo data: no PV array component is configured");
+            return;
+        }
+        String[] production = {"38.40", "41.10", "36.80", "44.60", "43.20", "39.70", "45.30"};
+        String[] efficiency = {"78.00", "81.00", "74.00", "86.00", "84.00", "79.00", "88.00"};
+
+        for (int day = 0; day < production.length; day++) {
+            SolarGenerationLog log = new SolarGenerationLog();
+            log.setComponent(pv);
+            log.setDate(LocalDate.now().minusDays(production.length - day - 1));
+            log.setKwhProduced(new BigDecimal(production[day]));
+            log.setEfficiencyPct(new BigDecimal(efficiency[day]));
+            solarGenerationLogRepository.save(log);
+        }
+    }
+
+    private void seedAlerts() {
+        EnergyComponent battery = findDemoComponent("ENG-002", ComponentCategory.BATTERY);
+        if (battery == null) {
+            LOGGER.warn("Skipping Energy Supply alert demo data: no battery component is configured");
+            return;
+        }
+
+        Alert openAlert = new Alert();
+        openAlert.setComponent(battery);
+        openAlert.setSeverity(AlertSeverity.WARNING);
+        openAlert.setMessage("Battery charge is below the recommended reserve. Monitor overnight consumption.");
+        openAlert.setTimestamp(LocalDateTime.now().minusHours(1));
+        openAlert.setStatus(AlertStatus.OPEN);
+        energyAlertRepository.save(openAlert);
+
+        Alert resolvedAlert = new Alert();
+        resolvedAlert.setSeverity(AlertSeverity.INFO);
+        resolvedAlert.setMessage("Routine inverter inspection completed.");
+        resolvedAlert.setTimestamp(LocalDateTime.now().minusDays(1));
+        resolvedAlert.setStatus(AlertStatus.RESOLVED);
+        EnergyComponent inverter = findDemoComponent("ENG-003", ComponentCategory.INVERTER);
+        if (inverter != null) {
+            resolvedAlert.setComponent(inverter);
+            energyAlertRepository.save(resolvedAlert);
+        } else {
+            LOGGER.warn("Skipping resolved Energy Supply demo alert: no inverter component is configured");
+        }
+    }
+
+    private EnergyComponent findDemoComponent(String componentId, ComponentCategory category) {
+        return componentRepository.findById(componentId).orElseGet(() ->
+                componentRepository.findAll().stream()
+                        .filter(component -> component.getCategory() == category)
+                        .findFirst()
+                        .orElse(null));
     }
 }

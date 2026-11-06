@@ -1,41 +1,41 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.service;
 
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyAlertResponse;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertStatus;
+import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyAlertRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service("energyAlertService")
+@Transactional(readOnly = true)
 public class AlertService {
 
     private final EnergyAlertRepository repository;
 
-    @Autowired
     public AlertService(EnergyAlertRepository repository) {
         this.repository = repository;
     }
 
-    public List<Alert> findAll() {
-        return repository.findAll();
+    public List<EnergyAlertResponse> findAll() {
+        return repository.findAll().stream().map(EnergyAlertResponse::from).toList();
     }
 
-    public List<Alert> findOpen() {
-        return repository.findByStatus(AlertStatus.OPEN);
+    public List<EnergyAlertResponse> findOpen() {
+        return repository.findByStatus(AlertStatus.OPEN).stream().map(EnergyAlertResponse::from).toList();
     }
 
-    public Optional<Alert> findById(String alertId) {
-        return repository.findById(alertId);
-    }
-
-    public Alert save(Alert alert) {
-        return repository.save(alert);
-    }
-
-    public void deleteById(String alertId) {
-        repository.deleteById(alertId);
+    @Transactional
+    public EnergyAlertResponse updateStatus(String alertId, AlertStatus status) {
+        Alert alert = repository.findById(alertId)
+                .orElseThrow(() -> new EnergySupplyNotFoundException("Energy alert", alertId));
+        if (alert.getStatus() == AlertStatus.RESOLVED && status == AlertStatus.OPEN) {
+            throw new IllegalArgumentException("Resolved alerts cannot be reopened");
+        }
+        alert.setStatus(status);
+        return EnergyAlertResponse.from(repository.save(alert));
     }
 }

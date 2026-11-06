@@ -15,4 +15,6 @@ public class DashboardSummaryDto {
     private BigDecimal currentDailyConsumptionKwh;
     private String generatorStatus;
     private BigDecimal co2AvoidedThisMonthKg;
+    private BigDecimal runtimeHoursThisMonth;
+    private BigDecimal fuelLitersThisMonth;
 }

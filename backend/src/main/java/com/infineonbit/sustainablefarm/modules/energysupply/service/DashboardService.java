@@ -8,6 +8,7 @@ import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergyCompone
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.CarbonMetricRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.ConsumptionLogRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
+import com.infineonbit.sustainablefarm.modules.energysupply.repository.GeneratorEventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +22,17 @@ public class DashboardService {
     private final EnergyComponentRepository componentRepository;
     private final ConsumptionLogRepository consumptionLogRepository;
     private final CarbonMetricRepository carbonMetricRepository;
+    private final GeneratorEventRepository generatorEventRepository;
 
     @Autowired
     public DashboardService(EnergyComponentRepository componentRepository,
                              ConsumptionLogRepository consumptionLogRepository,
-                             CarbonMetricRepository carbonMetricRepository) {
+                             CarbonMetricRepository carbonMetricRepository,
+                             GeneratorEventRepository generatorEventRepository) {
         this.componentRepository = componentRepository;
         this.consumptionLogRepository = consumptionLogRepository;
         this.carbonMetricRepository = carbonMetricRepository;
+        this.generatorEventRepository = generatorEventRepository;
     }
 
     public DashboardSummaryDto getSummary() {
@@ -52,12 +56,26 @@ public class DashboardService {
                 .map(c -> c.getStatus() != null ? c.getStatus().name() : "UNKNOWN")
                 .orElse("NOT_CONFIGURED");
 
+        LocalDate today = LocalDate.now();
         BigDecimal co2ThisMonth = carbonMetricRepository.findAll().stream()
-                .filter(m -> m.getPeriod() != null && m.getPeriod().getMonth() == LocalDate.now().getMonth())
+                .filter(m -> m.getPeriod() != null
+                        && m.getPeriod().getMonth() == today.getMonth()
+                        && m.getPeriod().getYear() == today.getYear())
                 .map(CarbonMetric::getCo2AvoidedKg)
                 .filter(v -> v != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return new DashboardSummaryDto(totalPvCapacity, todayConsumption, generatorStatus, co2ThisMonth);
+        LocalDate startOfMonth = today.withDayOfMonth(1);
+        LocalDate startOfNextMonth = startOfMonth.plusMonths(1);
+        GeneratorEventRepository.GeneratorEventMonthlyTotals generatorTotals =
+                generatorEventRepository.sumMonthlyTotals(startOfMonth, startOfNextMonth);
+
+        return new DashboardSummaryDto(
+                totalPvCapacity,
+                todayConsumption,
+                generatorStatus,
+                co2ThisMonth,
+                generatorTotals.getDurationHours(),
+                generatorTotals.getFuelLiters());
     }
 }

@@ -8,21 +8,32 @@ import {
   SlidersHorizontal,
   AlertTriangle,
   Menu,
+  Settings,
 } from "lucide-react";
 import Dashboard from "./Dashboard";
+import EnergyComponents from "./EnergyComponents";
+import SolarGeneration from "./SolarGeneration";
+import ConsumptionTracking from "./ConsumptionTracking";
+import GeneratorBackup from "./GeneratorBackup";
+import CarbonFootprint from "./CarbonFootprint";
+import WhatIfAnalysis from "./WhatIfAnalysis";
+import AlertsNotifications from "./AlertsNotifications";
+import "../theme/theme-additions.css";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "components", label: "Components", icon: Settings },
   { key: "solar", label: "Solar & Generation", icon: Sun },
   { key: "consumption", label: "Consumption Tracking", icon: Gauge },
   { key: "generator", label: "Generator Backup", icon: Fuel },
   { key: "carbon", label: "Carbon Footprint", icon: Leaf },
   { key: "scenario", label: "What-If Analysis", icon: SlidersHorizontal },
-  { key: "alerts", label: "Alerts & Notifications", icon: AlertTriangle, badge: 4 },
+  { key: "alerts", label: "Alerts & Notifications", icon: AlertTriangle },
 ];
 
 const TITLES = {
   dashboard: "System Overview",
+  components: "Energy Components",
   solar: "Solar & Generation Monitoring",
   consumption: "Energy Consumption Tracking",
   generator: "Generator Backup Management",
@@ -30,15 +41,6 @@ const TITLES = {
   scenario: "What-If Scenario Analysis",
   alerts: "Alerts & Notifications",
 };
-
-// Placeholder shown until each tab's component is built.
-function ComingSoon({ label }) {
-  return (
-    <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
-      {label} — coming soon
-    </div>
-  );
-}
 
 export default function EnergyApp() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -48,13 +50,27 @@ export default function EnergyApp() {
     switch (activeTab) {
       case "dashboard":
         return <Dashboard />;
+      case "components":
+        return <EnergyComponents />;
+      case "solar":
+        return <SolarGeneration />;
+      case "consumption":
+        return <ConsumptionTracking />;
+      case "generator":
+        return <GeneratorBackup />;
+      case "carbon":
+        return <CarbonFootprint />;
+      case "scenario":
+        return <WhatIfAnalysis />;
+      case "alerts":
+        return <AlertsNotifications />;
       default:
-        return <ComingSoon label={TITLES[activeTab]} />;
+        return <Dashboard />;
     }
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="energy-supply-theme flex min-h-screen bg-background text-foreground">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <button
@@ -72,7 +88,7 @@ export default function EnergyApp() {
       >
         <div className="flex flex-col items-center gap-2 border-b border-sidebar-border px-5 py-5 text-center">
           <div className="flex size-[100px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
-            <img src="/logo-bg-white.png" alt="Farm logo" className="h-auto max-h-[80px] w-auto max-w-[80px] object-contain" />
+            <img src="/logo.webp" alt="Farm logo" className="h-auto max-h-[80px] w-auto max-w-[80px] object-contain" />
           </div>
           <div className="min-w-0">
             <p className="font-heading text-sm font-bold uppercase tracking-[0.05em] text-white">CropCore</p>
@@ -85,7 +101,7 @@ export default function EnergyApp() {
             Navigation
           </p>
           <ul className="grid gap-1">
-            {NAV_ITEMS.map(({ key, label, icon: Icon, badge }) => {
+            {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
               const active = activeTab === key;
               return (
                 <li key={key}>
@@ -102,15 +118,6 @@ export default function EnergyApp() {
                   >
                     <Icon size={18} className="shrink-0" />
                     <span className="flex-1 truncate">{label}</span>
-                    {badge && (
-                      <span
-                        className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[12px] font-bold ${
-                          active ? "bg-white/25 text-white" : "bg-destructive text-destructive-foreground"
-                        }`}
-                      >
-                        {badge}
-                      </span>
-                    )}
                   </button>
                 </li>
               );
@@ -120,8 +127,7 @@ export default function EnergyApp() {
 
         <div className="border-t border-sidebar-border px-5 py-4">
           <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
-            <span className="size-2 rounded-full bg-white" />
-            System online · Burkina Faso
+            Site location · Banfora, Burkina Faso
           </div>
         </div>
       </aside>
@@ -160,4 +166,3 @@ export default function EnergyApp() {
     </div>
   );
 }
-
