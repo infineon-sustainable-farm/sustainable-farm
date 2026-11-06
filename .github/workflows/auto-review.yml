@@ -22,6 +22,10 @@
 # the BASE branch (develop). The PR branch is only fetched and compared with
 # git, its code is never executed, so a PR cannot change the checks it is
 # judged by, and the OWNER_REVIEW_TOKEN secret cannot leak through it.
+#
+# Reports in the admin's name: store a fine-grained token of the admin account
+# (this repository only, "Pull requests: Read and write") as the repository
+# secret OWNER_REVIEW_TOKEN. Without it, reports are posted by github-actions.
 name: Auto-review
 
 on:
@@ -187,7 +191,7 @@ jobs:
       - name: Publish report comment (create or update)
         if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.OWNER_REVIEW_TOKEN || github.token }}
         run: |
           REPO="${{ github.repository }}"
           PR="${{ github.event.pull_request.number }}"
