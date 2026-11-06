@@ -47,6 +47,7 @@ the required checks above.
 | F9 | Second `@RestControllerAdvice` without `@Order` | PR-42 |
 | F10 | `@Id` without `@GeneratedValue` (client-controlled PK) | PR-43 |
 | F11 | Hardcoded literal secret | PR-33 |
+| F12 | Mock data in application code: mock/fixture/fake files, imports or identifiers, faker/msw/miragejs/json-server, Mockito outside `src/test` (comments and design "mock-ups" are ignored; demo data goes in a `dev` seeder) | Sitesecurity fixtures, PR-67 |
 
 Warnings (yellow, non-blocking): unbounded `findAll()` (W1), entity without
 `@Version` (W2), raw exception -> 500 (W3), `fetch()` outside the API layer (W4).
