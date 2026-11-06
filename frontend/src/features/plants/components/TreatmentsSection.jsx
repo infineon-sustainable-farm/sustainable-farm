@@ -17,31 +17,31 @@ export default function TreatmentsSection({ blockCode, recordAction }) {
     return (
         <section aria-labelledby="treatment-record-title" className="flex flex-col gap-4">
             <div>
-                <h3 id="treatment-record-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="treatment-record-title" className="font-heading text-lg font-bold text-gray-900">
                     Treatment record
-                </h3>
+                </h2>
                 <p className="mt-1 max-w-2xl text-sm text-gray-600">
-                    Every plant protection treatment, for a finding or preventive, with its pre-harvest interval.
+                    Every treatment, with the date harvest is allowed again.
                 </p>
             </div>
 
             {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
+                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-12 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Loading treatments…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
+                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-12 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-base font-bold text-gray-900">
-                            Treatments could not be loaded
+                        <p className="font-heading text-lg font-bold text-gray-900">
+                            Treatments are unavailable.
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
                         <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
+                            Check your connection, then try again.
                         </p>
                     </div>
                     <button

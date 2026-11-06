@@ -14,52 +14,36 @@ import {
 import { NavLink } from "react-router-dom";
 
 /*
- * The eight entries of the approved mock-up, in its order and with its wording.
- * Only the six screens that exist carry a path; the two others are listed to
- * show the module's plan and are deliberately inert — see the rendering below.
+ * The eight entries of the approved mock-up, in its order and with its wording,
+ * each leading to its screen. The Overview is the home of the module, at
+ * /plants itself.
  */
 const NAV_ITEMS = [
-    { label: "Overview", icon: Home },
-    { label: "Varieties", icon: Sprout, path: "/plants" },
+    { label: "Overview", icon: Home, path: "/plants" },
+    { label: "Varieties", icon: Sprout, path: "/plants/varieties" },
     { label: "Growth Calendar", icon: CalendarDays, path: "/plants/growth-calendar" },
     { label: "Fertilizer Inventory", icon: FlaskConical, path: "/plants/fertilizer-inventory" },
     { label: "Diseases & Alerts", icon: Bug, path: "/plants/diseases-alerts" },
     { label: "Harvest & Maturity", icon: Apple, path: "/plants/harvest-maturity" },
     { label: "Nursery", icon: Leaf, path: "/plants/nursery" },
-    { label: "Scenario Analysis", icon: TrendingUp },
+    { label: "Scenario Analysis", icon: TrendingUp, path: "/plants/scenario-analysis" },
 ];
 
-const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";
+// 32 px entries with 16 px icons, the one icon size of the module shell.
+const ITEM_BASE =
+    "flex h-8 items-center gap-2 rounded-md px-3 text-sm text-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white";
+const ICON_SIZE = 16;
 
 /**
- * Active entry: a dark overlay plus the mock-up's inset left marker. The mock-up
- * lightens the row instead, which pushes its background towards its own white
- * label — 3.64:1, under the AA minimum. Darkening raises the label to 6.66:1 and
- * detaches the row from the bar. Colours stay white and black over the existing
- * --color-primary token; no new hue is introduced.
+ * Active entry: a light dark tint, the mock-up's left marker in 2 px and a
+ * semibold label, rather than a solid block. Every state keeps white text at
+ * AA or more: #0a8276 bar -> 4.70:1; hover and active, black at 10% over it
+ * (#09756a) -> 5.58:1. Lightening the row instead, as the mock-up does, gave
+ * 3.64:1. Colours stay white and black over the existing --color-primary
+ * token; no new hue is introduced.
  */
 const linkStyles = ({ isActive }) =>
-    `${ITEM_BASE} font-medium text-white hover:bg-white/10 ${
-        isActive ? "bg-black/20 font-semibold shadow-[inset_3px_0_0_#fff]" : ""
-    }`;
-
-/**
- * An entry whose screen does not exist yet. Rendered as plain text, so it is not
- * focusable and not clickable at all, and marked aria-disabled with a note for
- * screen readers — the greying alone would say nothing to them.
- */
-function PlannedItem({ label, icon: Icon }) {
-    return (
-        <span
-            aria-disabled="true"
-            className={`${ITEM_BASE} cursor-not-allowed font-normal text-white/70`}
-        >
-            <Icon size={17} className="shrink-0" />
-            {label}
-            <span className="sr-only"> (planned, not available yet)</span>
-        </span>
-    );
-}
+    `${ITEM_BASE} hover:bg-black/10 ${isActive ? "bg-black/10 font-semibold shadow-[inset_2px_0_0_#fff]" : "font-normal"}`;
 
 /**
  * Module shell navigation, following the Machinery sidebar: same width, same
@@ -86,14 +70,14 @@ export default function PlantsSidebar() {
 
             <nav
                 aria-label="Plants module"
-                className={`fixed top-0 left-0 z-40 flex h-dvh w-60 min-w-60 flex-col bg-primary px-4 py-5
+                className={`fixed top-0 left-0 z-40 flex h-dvh w-60 min-w-60 flex-col bg-primary px-4 py-4
                     transition-transform duration-300 md:static md:translate-x-0
                     ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
-                <div className="flex flex-col items-center gap-2 px-2">
-                    {/* The application's logo, served from public/ as machinery serves it.
-                        Empty alt: the module name follows immediately, in text. */}
-                    <img src="/logo.webp" alt="" width="150" />
+                <div className="flex flex-col items-center gap-1 px-2">
+                    {/* The application's logo, served from public/ as machinery serves it, at
+                        Machinery's 80 px. Empty alt: the module name follows immediately, in text. */}
+                    <img src="/logo.webp" alt="" width="80" height="80" />
                     <p className="font-heading text-center text-xs font-bold tracking-widest text-white uppercase">
                         Plants
                     </p>
@@ -102,16 +86,19 @@ export default function PlantsSidebar() {
                 <div className="my-4 h-px w-full bg-white/20" />
 
                 <ul className="flex flex-col gap-1">
+                    {/* Following a link closes the menu on a phone, the current screen's link included;
+                        above md the bar is always shown and closing changes nothing. */}
                     {NAV_ITEMS.map(({ label, icon: Icon, path }) => (
                         <li key={label}>
-                            {path ? (
-                                <NavLink to={path} end={path === "/plants"} className={linkStyles}>
-                                    <Icon size={17} className="shrink-0" />
-                                    {label}
-                                </NavLink>
-                            ) : (
-                                <PlannedItem label={label} icon={Icon} />
-                            )}
+                            <NavLink
+                                to={path}
+                                end={path === "/plants"}
+                                className={linkStyles}
+                                onClick={() => setIsOpen(false)}
+                            >
+                                <Icon size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
+                                {label}
+                            </NavLink>
                         </li>
                     ))}
                 </ul>

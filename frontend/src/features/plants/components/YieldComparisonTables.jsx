@@ -29,7 +29,7 @@ function BlockTable({ blocks }) {
                 <tbody>
                     {blocks.map((block) => (
                         <tr key={`${block.farmId}-${block.blockCode}`} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-2.5 font-medium text-gray-800">{formatBlock(block.blockCode)}</td>
+                            <td className="px-4 py-2.5 font-semibold text-gray-800">{formatBlock(block.blockCode)}</td>
                             <td className="px-4 py-2.5 text-gray-700">{formatKilograms(block.expectedKg)}</td>
                             <td className="px-4 py-2.5 text-gray-700">{formatKilograms(block.actualKg)}</td>
                             <td className="px-4 py-2.5 text-gray-700">{formatPercent(block.achievedPct)}</td>
@@ -66,7 +66,7 @@ function ComputationDetails({ lines }) {
                     <tbody>
                         {lines.map((line) => (
                             <tr key={line.varietyId} className="border-b border-gray-100 align-top last:border-b-0">
-                                <td className="px-4 py-2.5 font-medium text-gray-800">{formatText(line.varietyName)}</td>
+                                <td className="px-4 py-2.5 font-semibold text-gray-800">{formatText(line.varietyName)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">{formatBlock(line.blockCode)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">{formatKilograms(line.yieldPerTreeKg)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">

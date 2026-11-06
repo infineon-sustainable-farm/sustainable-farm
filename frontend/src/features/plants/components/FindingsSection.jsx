@@ -29,9 +29,9 @@ export default function FindingsSection({ blockCode, recordAction, onTreat, onRe
 
     return (
         <section aria-labelledby="findings-title" className="flex flex-col gap-4">
-            <h3 id="findings-title" className="font-heading text-base font-bold text-gray-900">
+            <h2 id="findings-title" className="font-heading text-lg font-bold text-gray-900">
                 Findings
-            </h3>
+            </h2>
 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
                 <div className="flex max-w-full min-w-0 items-center gap-3">
@@ -71,7 +71,7 @@ export default function FindingsSection({ blockCode, recordAction, onTreat, onRe
                 <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-base font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-gray-900">
                             Findings could not be loaded
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}

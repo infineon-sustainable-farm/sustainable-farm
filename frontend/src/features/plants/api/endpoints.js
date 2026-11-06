@@ -12,6 +12,7 @@ export const PLANTS_ENDPOINTS = {
     YIELD_FORECAST: "/api/plants/yield-forecast",
     YIELD_COMPARISON: "/api/plants/yield-comparison",
     HARVEST_STATUS: "/api/plants/harvest-status",
+    MATURITY_OBSERVATIONS: "/api/plants/maturity-observations",
     FERTILIZERS: "/api/plants/fertilizers",
     FERTILIZER_MOVEMENTS: "/api/plants/fertilizer-movements",
     EUR_XOF_RATE: "/api/plants/currency-rates/EUR/XOF",
@@ -25,4 +26,6 @@ export const PLANTS_ENDPOINTS = {
     ALERTS: "/api/plants/alerts",
     NURSERY_BATCHES: "/api/plants/nursery-batches",
     NURSERY_EVENTS: "/api/plants/nursery-events",
+    OVERVIEW: "/api/plants/overview",
+    SCENARIOS: "/api/plants/scenarios",
 };

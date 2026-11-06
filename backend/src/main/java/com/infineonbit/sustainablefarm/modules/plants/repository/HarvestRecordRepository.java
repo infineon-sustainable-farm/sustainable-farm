@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,6 +31,8 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      * @param farmId    farm identifier, or {@code null} to ignore the farm
      * @param blockCode raw block value as stored (for example {@code "A"}),
      *                  or {@code null} to ignore the block
+     * @param lotNumber lot number as stored (for example {@code "LOT-2026-A-002"}),
+     *                  matched exactly, or {@code null} to ignore the lot number
      * @param from      first harvest date, included, or {@code null} for no lower bound
      * @param to        last harvest date, included, or {@code null} for no upper bound
      * @return the matching harvests, ordered by date then identifier
@@ -38,12 +41,14 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
             SELECT h FROM HarvestRecord h JOIN FETCH h.variety v
             WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
               AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
+              AND (CAST(:lotNumber AS String) IS NULL OR h.lotNumber = :lotNumber)
               AND (CAST(:from AS LocalDate) IS NULL OR h.harvestDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR h.harvestDate <= :to)
             ORDER BY h.harvestDate ASC, h.id ASC
             """)
     List<HarvestRecord> findByOptionalFilters(@Param("farmId") Integer farmId,
                                               @Param("blockCode") String blockCode,
+                                              @Param("lotNumber") String lotNumber,
                                               @Param("from") LocalDate from,
                                               @Param("to") LocalDate to);
 
@@ -63,4 +68,45 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
             WHERE h.id = :id
             """)
     Optional<HarvestRecord> findWithVarietyById(@Param("id") Long id);
+
+    /**
+     * Returns the lot numbers that begin with the given prefix: those already
+     * given to a block for a year (see {@link HarvestRecord#lotPrefixOf}).
+     *
+     * <p>The prefix holds no LIKE wildcard: it is made of {@code "LOT-"}, a
+     * year, hyphens and a block code of letters and digits.
+     *
+     * @param prefix beginning of the lot numbers, for example {@code "LOT-2026-A-"}
+     * @return the matching lot numbers, in no particular order
+     */
+    @Query("SELECT h.lotNumber FROM HarvestRecord h WHERE h.lotNumber LIKE CONCAT(:prefix, '%')")
+    List<String> findLotNumbersStartingWith(@Param("prefix") String prefix);
+
+    /**
+     * Returns the harvests without a lot number, oldest first, with their
+     * variety row: the harvests recorded before lot numbers existed, for the
+     * startup filling.
+     *
+     * @return the harvests whose {@code lot_number} is NULL, by identifier
+     */
+    @Query("""
+            SELECT h FROM HarvestRecord h JOIN FETCH h.variety
+            WHERE h.lotNumber IS NULL
+            ORDER BY h.id ASC
+            """)
+    List<HarvestRecord> findWithoutLotNumberOldestFirst();
+
+    /**
+     * Writes the lot number of one harvest that has none yet.
+     *
+     * <p>A bulk update: it changes no other column, {@code last_updated}
+     * included. Must run inside a transaction.
+     *
+     * @param id        the harvest
+     * @param lotNumber its lot number
+     * @return the number of rows updated: 1, or 0 if the harvest already has a lot number
+     */
+    @Modifying
+    @Query("UPDATE HarvestRecord h SET h.lotNumber = :lotNumber WHERE h.id = :id AND h.lotNumber IS NULL")
+    int fillLotNumber(@Param("id") Long id, @Param("lotNumber") String lotNumber);
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { useFertilizers } from "../hooks/useFertilizers";
 import { useVarietyBlocks } from "../hooks/useVarieties";
-import { formatCode, formatQuantity, formatUnit } from "../utils/format";
+import { formatCode, formatDate, formatQuantity, formatUnit } from "../utils/format";
 import PlantsModal from "./PlantsModal";
 
 const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
@@ -251,12 +251,12 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
     return (
         <PlantsModal labelledBy="record-movement-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h3
+                <h2
                     id="record-movement-title"
-                    className="font-heading text-xl font-bold text-gray-900"
+                    className="font-heading text-lg font-bold text-gray-900"
                 >
                     Record a movement
-                </h3>
+                </h2>
                 <button
                     type="button"
                     onClick={onClose}
@@ -324,7 +324,13 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
                         </select>
                     </FormField>
 
-                    <FormField id="movement-date" label="Date" error={fieldError("date")}>
+                    {/* The chosen date in letters, as the browser shows its own day/month order. */}
+                    <FormField
+                        id="movement-date"
+                        label="Date"
+                        error={fieldError("date")}
+                        note={values.date ? formatDate(values.date) : null}
+                    >
                         <input
                             id="movement-date"
                             type="date"
@@ -332,7 +338,7 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
                             value={values.date}
                             onChange={(event) => setValue("date", event.target.value)}
                             className={INPUT_CLASS}
-                            {...fieldProps("date", "movement-date")}
+                            {...fieldProps("date", "movement-date", values.date)}
                         />
                     </FormField>
 

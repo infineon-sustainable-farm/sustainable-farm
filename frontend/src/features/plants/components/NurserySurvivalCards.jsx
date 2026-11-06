@@ -20,9 +20,9 @@ function cardTitle(batch) {
 export default function NurserySurvivalCards({ batches }) {
     return (
         <div className="flex flex-col gap-3">
-            <h4 id="survival-rate-title" className="font-heading text-sm font-bold text-gray-900">
+            <h3 id="survival-rate-title" className="font-heading text-sm font-bold text-gray-900">
                 Survival rate by batch
-            </h4>
+            </h3>
             <ul aria-labelledby="survival-rate-title" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {batches.map((batch) => (
                     <li key={batch.id} className="rounded-xl border border-gray-200 bg-white px-4 py-4">
@@ -31,7 +31,7 @@ export default function NurserySurvivalCards({ batches }) {
                             <span className="text-sm text-gray-600">
                                 {`${formatNumber(batch.survivedCount)} of ${formatNumber(batch.initialCount)} survived`}
                             </span>
-                            <span className="text-base font-bold text-gray-900">
+                            <span className="text-lg font-bold text-gray-900">
                                 {formatPercent(batch.survivalRatePct)}
                             </span>
                         </div>

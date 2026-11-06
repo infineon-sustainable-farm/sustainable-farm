@@ -15,10 +15,12 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Global and consistent handling of API errors.
@@ -78,7 +80,8 @@ public class WaterSupplyExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class})
     public ResponseEntity<Map<String, Object>> handleMalformedRequest(Exception ex) {
         return build(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "Request body or parameter is invalid");
     }
@@ -91,6 +94,17 @@ public class WaterSupplyExceptionHandler {
     @ExceptionHandler(ExternalServiceException.class)
     public ResponseEntity<Map<String, Object>> handleExternalService(ExternalServiceException ex) {
         return build(HttpStatus.BAD_GATEWAY, "EXTERNAL_SERVICE_ERROR", ex.getMessage());
+    }
+
+    @ExceptionHandler(ValveGatewayUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleValveGateway(ValveGatewayUnavailableException ex) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "VALVE_GATEWAY_UNAVAILABLE", ex.getMessage());
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        return build(status, status.name(), ex.getReason() == null ? status.getReasonPhrase() : ex.getReason());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

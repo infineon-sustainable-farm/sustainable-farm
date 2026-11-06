@@ -9,8 +9,8 @@
  */
 export default function PlantsEmptyState({ title, hint, action }) {
     return (
-        <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
-            <p className="font-heading text-base font-bold text-gray-900">{title}</p>
+        <div className="rounded-xl border border-gray-200 bg-white px-6 py-12 text-center">
+            <p className="font-heading text-lg font-bold text-gray-900">{title}</p>
             {hint && <p className="mt-1 text-sm text-gray-500">{hint}</p>}
             {action && <div className="mt-4 flex justify-center">{action}</div>}
         </div>

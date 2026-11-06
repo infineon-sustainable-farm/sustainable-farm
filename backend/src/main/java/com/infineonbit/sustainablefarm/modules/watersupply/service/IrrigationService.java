@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,29 +59,48 @@ public class IrrigationService {
     private final FieldZoneRepository fieldZoneRepository;
     private final AgroWeatherService agroWeatherService;
     private final AlertService alertService;
+    private final ZoneBlockResolver zoneBlockResolver;
 
     public IrrigationService(
             IrrigationScheduleRepository scheduleRepository,
             IrrigationLogRepository logRepository,
             FieldZoneRepository fieldZoneRepository,
             AgroWeatherService agroWeatherService,
-            AlertService alertService) {
+            AlertService alertService,
+            ZoneBlockResolver zoneBlockResolver) {
         this.scheduleRepository = scheduleRepository;
         this.logRepository = logRepository;
         this.fieldZoneRepository = fieldZoneRepository;
         this.agroWeatherService = agroWeatherService;
         this.alertService = alertService;
+        this.zoneBlockResolver = zoneBlockResolver;
     }
 
     public List<IrrigationScheduleResponse> findSchedules() {
-        return scheduleRepository.findAll().stream().map(IrrigationScheduleResponse::from).toList();
+        return scheduleResponses(scheduleRepository.findAll());
     }
 
     public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, UUID zoneId) {
-        Page<IrrigationSchedule> page = zoneId == null
-                ? scheduleRepository.findAll(pageable)
-                : scheduleRepository.findByZoneId(zoneId, pageable);
-        return toPageResponse(page.map(IrrigationScheduleResponse::from));
+        return findSchedules(pageable, zoneId, null, null);
+    }
+
+    /**
+     * Paginated schedules, optionally restricted to a zone and/or to the zones of a Plants block
+     * ({@code farmId} narrows the block lookup when the same code exists on several farms).
+     */
+    public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, UUID zoneId, UUID farmId, String blockCode) {
+        Page<IrrigationSchedule> page;
+        if (blockCode == null || blockCode.isBlank()) {
+            page = zoneId == null ? scheduleRepository.findAll(pageable) : scheduleRepository.findByZoneId(zoneId, pageable);
+        } else {
+            List<UUID> blockZones = zoneBlockResolver.zoneIdsForBlock(farmId, blockCode);
+            if (zoneId != null) {
+                blockZones = blockZones.contains(zoneId) ? List.of(zoneId) : List.of();
+            }
+            page = blockZones.isEmpty() ? Page.empty(pageable) : scheduleRepository.findByZoneIdIn(blockZones, pageable);
+        }
+        return new PageResponse<>(scheduleResponses(page.getContent()), page.getNumber(), page.getSize(),
+                page.getTotalElements(), page.getTotalPages());
     }
 
     @Transactional
@@ -95,11 +115,11 @@ public class IrrigationService {
         // Authentication is handled by the global software: without a user context,
         // the schedule is attributed to a fixed system id.
         schedule.setCreatedBy(request.createdBy() != null ? request.createdBy() : DEFAULT_SYSTEM_USER_ID);
-        return IrrigationScheduleResponse.from(scheduleRepository.save(schedule));
+        return scheduleResponse(scheduleRepository.save(schedule));
     }
 
     public IrrigationScheduleResponse getSchedule(UUID scheduleId) {
-        return IrrigationScheduleResponse.from(getScheduleEntity(scheduleId));
+        return scheduleResponse(getScheduleEntity(scheduleId));
     }
 
     @Transactional
@@ -114,7 +134,7 @@ public class IrrigationService {
         schedule.setWaterQuantityLiters(request.waterQuantityLiters() == null ? schedule.getWaterQuantityLiters() : request.waterQuantityLiters());
         schedule.setStatus(request.status() == null ? schedule.getStatus() : request.status());
         schedule.setCreatedBy(request.createdBy() == null ? schedule.getCreatedBy() : request.createdBy());
-        return IrrigationScheduleResponse.from(scheduleRepository.save(schedule));
+        return scheduleResponse(scheduleRepository.save(schedule));
     }
 
     @Transactional
@@ -290,7 +310,7 @@ public class IrrigationService {
         if (reason != null && !reason.isBlank()) {
             schedule.setPostponeReason(reason);
         }
-        IrrigationScheduleResponse response = IrrigationScheduleResponse.from(scheduleRepository.save(schedule));
+        IrrigationScheduleResponse response = scheduleResponse(scheduleRepository.save(schedule));
 
         double planned = schedule.getWaterQuantityLiters() == null ? 0d : schedule.getWaterQuantityLiters();
         alertService.raise("info", "Irrigation postponed - water saved",
@@ -326,5 +346,48 @@ public class IrrigationService {
     private <T> PageResponse<T> toPageResponse(Page<T> page) {
         return new PageResponse<>(page.getContent(), page.getNumber(), page.getSize(),
                 page.getTotalElements(), page.getTotalPages());
+    }
+
+    /**
+     * Irrigation status of a zone for Visitor Management (V3): {@code active} is true while a schedule
+     * is {@code running}; otherwise the most recent schedule is reported. {@code lastActivationAt} is
+     * the actual start of its last log, or the planned start when it never ran.
+     */
+    public Map<String, Object> irrigationStatus(UUID zoneId) {
+        requireZone(zoneId);
+        List<IrrigationSchedule> running = scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running");
+        IrrigationSchedule active = running.stream()
+                .sorted(Comparator.comparing(IrrigationSchedule::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                .findFirst().orElse(null);
+        IrrigationSchedule last = active != null ? active : scheduleRepository.findByZoneId(zoneId).stream()
+                .sorted(Comparator.comparing(IrrigationSchedule::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                .findFirst().orElse(null);
+        Instant lastActivation = last == null ? null : logRepository.findFirstByScheduleIdOrderByActualStartTimeDesc(last.getId())
+                .map(IrrigationLog::getActualStartTime).orElse(last.getStartTime());
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("active", active != null);
+        response.put("zoneId", zoneId);
+        response.put("scheduleId", last == null ? null : last.getId());
+        response.put("status", active == null ? (last == null ? "none" : last.getStatus()) : active.getStatus());
+        response.put("lastActivationAt", lastActivation);
+        response.put("plannedLiters", last == null ? null : last.getWaterQuantityLiters());
+        return response;
+    }
+
+    private IrrigationScheduleResponse scheduleResponse(IrrigationSchedule schedule) {
+        return scheduleResponse(schedule, zoneBlockResolver.blockCodesForZone(schedule.getZoneId()));
+    }
+
+    /** Batch variant: one mapping lookup for the whole page instead of one per schedule. */
+    private List<IrrigationScheduleResponse> scheduleResponses(List<IrrigationSchedule> schedules) {
+        Map<UUID, List<String>> blocks = zoneBlockResolver.blockCodesForZones(
+                schedules.stream().map(IrrigationSchedule::getZoneId).toList());
+        return schedules.stream()
+                .map(s -> scheduleResponse(s, s.getZoneId() == null ? List.of() : blocks.getOrDefault(s.getZoneId(), List.of())))
+                .toList();
+    }
+
+    private static IrrigationScheduleResponse scheduleResponse(IrrigationSchedule schedule, List<String> blocks) {
+        return IrrigationScheduleResponse.from(schedule, blocks.size() == 1 ? blocks.get(0) : null, blocks.size() > 1);
     }
 }

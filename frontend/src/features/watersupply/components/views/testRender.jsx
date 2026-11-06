@@ -10,6 +10,17 @@ import { render } from '@testing-library/react'
  *
  * Tests import this function under the name `render`: `import { renderView as render }`.
  */
+/**
+ * Control (input / select / textarea) of the FormField whose label starts with `label`.
+ * FormField renders its label next to the control without `htmlFor`, so testing-library's
+ * getByLabelText cannot find it.
+ */
+export function controlByLabel(container, label) {
+  const labelElement = [...container.querySelectorAll('label')].find((element) => element.textContent.trim().startsWith(label))
+  if (!labelElement) throw new Error(`No field labelled "${label}"`)
+  return labelElement.parentElement.querySelector('input, select, textarea')
+}
+
 export function renderView(ui) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 0, gcTime: 0 } },

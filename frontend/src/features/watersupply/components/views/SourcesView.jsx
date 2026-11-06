@@ -11,6 +11,7 @@ import { EmptyState } from './EmptyState'
 import { FormField } from '../../../../shared/components/FormField'
 import { inputStyle } from '../../../../shared/components/formStyles'
 import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
+import { LevelHistoryPanel } from './LevelHistoryPanel'
 
 const SOURCE_TYPES = ['borehole', 'rain', 'river', 'well', 'municipal']
 
@@ -25,6 +26,7 @@ export function SourcesView({ notify }) {
   const [form, setForm] = useState({ farmId: '', name: '', type: 'borehole', capacityLiters: '', currentLevelLiters: '' })
   const [editingId, setEditingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [historyTarget, setHistoryTarget] = useState(null)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
 
@@ -171,6 +173,7 @@ export function SourcesView({ notify }) {
                           <span className={`ws-tag ${pct >= 90 ? 'orange' : pct > 0 ? 'green' : 'red'}`}>{item.currentLevelLiters ?? 0} L ({pct}%)</span>
                         </td>
                         <td className="ws-table-actions">
+                          <button className="ws-chip" onClick={() => setHistoryTarget(item)}>History</button>
                           <button className="ws-chip" onClick={() => editSource(item)}>Edit</button>
                           <button className="ws-icon-btn danger" title="Delete" onClick={() => setDeleteTarget(item)}>
                             <Trash2 size={14} />
@@ -218,6 +221,7 @@ export function SourcesView({ notify }) {
           </div>
         </div>
       </div>
+      {historyTarget && <LevelHistoryPanel source={historyTarget} onClose={() => setHistoryTarget(null)} />}
       {deleteTarget && (
         <ConfirmDialog
           title={`Delete ${deleteTarget.name || 'the source'}`}

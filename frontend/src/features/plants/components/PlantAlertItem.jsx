@@ -16,7 +16,9 @@ const NEUTRAL = { box: "border-gray-200 bg-white", icon: "text-gray-600", pill: 
 /**
  * One plant alert, as a list item: its kind and severity, the API's message as
  * it is, and its date. `title` names the kind of alert and `dateLabel` says
- * what its date is; each screen words them for the types it shows.
+ * what its date is; each screen words them for the types it shows. A type
+ * whose alerts have no date, such as a stock alert, gets no `dateLabel` and so
+ * no date line.
  */
 export default function PlantAlertItem({ alert, title, dateLabel }) {
     const style = SEVERITY_STYLES[alert.severity] ?? NEUTRAL;
@@ -29,13 +31,13 @@ export default function PlantAlertItem({ alert, title, dateLabel }) {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <p className="text-sm font-bold text-gray-900">{title}</p>
                     <span
-                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-white uppercase ${style.pill}`}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide text-white uppercase ${style.pill}`}
                     >
                         {formatCode(alert.severity)}
                     </span>
                 </div>
                 <p className="mt-1 text-sm break-words text-gray-800">{alert.message}</p>
-                <p className="mt-1 text-xs text-gray-600">{`${dateLabel} ${formatDate(alert.date)}`}</p>
+                {dateLabel && <p className="mt-1 text-xs text-gray-600">{`${dateLabel} ${formatDate(alert.date)}`}</p>}
             </div>
         </li>
     );

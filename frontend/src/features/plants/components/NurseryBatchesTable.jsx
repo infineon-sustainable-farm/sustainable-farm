@@ -72,7 +72,7 @@ export default function NurseryBatchesTable({ batches }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase"
                             >
                                 {column}
                             </th>
@@ -82,7 +82,7 @@ export default function NurseryBatchesTable({ batches }) {
                 <tbody>
                     {batches.map((batch) => (
                         <tr key={batch.id} className="border-b border-gray-100 align-top last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(batch.batchCode)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

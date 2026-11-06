@@ -71,6 +71,18 @@ describe('IrrigationView', () => {
     expect(screen.queryByText('900 L planned')).toBeNull()
   })
 
+  it('shows the Plants block watered by the zone of a schedule', async () => {
+    irrigationApi.getSchedules.mockResolvedValue([
+      { ...SCHEDULES[0], blockCode: 'A', multipleBlockCodes: false },
+      { ...SCHEDULES[1], id: 'sch-9', blockCode: null, multipleBlockCodes: true },
+    ])
+
+    render(<IrrigationView {...props} />)
+
+    await waitFor(() => expect(screen.getByText(/· Block A/)).toBeTruthy())
+    expect(screen.getByText(/· Several blocks/)).toBeTruthy()
+  })
+
   it('displays an empty state when there is no data', async () => {
     irrigationApi.getSchedules.mockResolvedValue([])
     irrigationApi.getLogs.mockResolvedValue([])

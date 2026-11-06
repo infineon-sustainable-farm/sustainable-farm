@@ -20,9 +20,9 @@ export default function YieldComparisonCards({ lines }) {
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {lines.map((line) => (
                 <li key={line.varietyId} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-                    <h4 className="text-sm font-semibold text-gray-900">
+                    <h3 className="text-sm font-semibold text-gray-900">
                         {`${formatText(line.varietyName)} (${formatBlock(line.blockCode)})`}
-                    </h4>
+                    </h3>
                     <div className="mt-2 flex items-baseline justify-between gap-3 text-sm">
                         <span className="text-gray-600">
                             {line.actualKg === null

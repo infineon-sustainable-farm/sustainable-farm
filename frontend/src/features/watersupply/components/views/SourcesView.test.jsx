@@ -16,7 +16,12 @@ vi.mock('../../api/watersupplyApi', () => ({
     createSource: vi.fn(),
     updateSource: vi.fn(),
     deleteSource: vi.fn(),
+    getLevelHistory: vi.fn(),
   },
+}))
+
+vi.mock('../charts', () => ({
+  WsAreaChart: ({ data }) => <div data-testid="level-chart">{data.map((point) => point.liters).join(',')}</div>,
 }))
 
 vi.mock('../../hooks/useFarms', () => ({
@@ -85,6 +90,22 @@ describe('SourcesView', () => {
       }),
     )
     await waitFor(() => expect(waterSourceApi.getSources).toHaveBeenCalledTimes(2))
+  })
+
+  it('loads the level history of a source only when asked', async () => {
+    waterSourceApi.getLevelHistory.mockResolvedValue([
+      { id: 'h1', sourceId: 'src-1', levelLiters: 2500, measuredAt: '2026-10-01T08:00:00Z' },
+      { id: 'h2', sourceId: 'src-1', levelLiters: 1800, measuredAt: '2026-10-02T08:00:00Z' },
+    ])
+    render(<SourcesView {...props} />)
+    await screen.findByText('Main borehole')
+    expect(waterSourceApi.getLevelHistory).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByText('History'))
+
+    await waitFor(() => expect(screen.getByTestId('level-chart').textContent).toBe('2500,1800'))
+    expect(waterSourceApi.getLevelHistory).toHaveBeenCalledWith('src-1')
+    expect(screen.getByText('Level history - Main borehole')).toBeTruthy()
   })
 
   it('deletes a source after confirmation', async () => {
