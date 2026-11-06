@@ -46,7 +46,7 @@ public class StockMovementService {
         if (movement.getBatch() == null || movement.getBatch().getId() == null) {
             throw new BusinessRuleException("A batch is required");
         }
-        Batch batch = batchRepository.findById(movement.getBatch().getId())
+        Batch batch = batchRepository.findWithRelationshipsById(movement.getBatch().getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Batch not found with id " + movement.getBatch().getId()));
 
@@ -56,10 +56,23 @@ public class StockMovementService {
         movement.setBatch(batch);
         
         StorageZone toZone = null;
-        if (movement.getToZone() != null && movement.getToZone().getId() != null) {
+        if (movement.getToZone() != null) {
+            if (movement.getToZone().getId() == null) {
+                throw new BusinessRuleException("A destination zone reference requires an id");
+            }
             toZone = storageZoneRepository.findById(movement.getToZone().getId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Zone not found with id " + movement.getToZone().getId()));
+            movement.setToZone(toZone);
+        }
+        if (movement.getFromZone() != null) {
+            if (movement.getFromZone().getId() == null) {
+                throw new BusinessRuleException("A source zone reference requires an id");
+            }
+            StorageZone fromZone = storageZoneRepository.findById(movement.getFromZone().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Zone not found with id " + movement.getFromZone().getId()));
+            movement.setFromZone(fromZone);
         }
 
         BigDecimal quantity = movement.getQuantityKg();

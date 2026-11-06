@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StorageZoneCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.StorageZoneService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,8 @@ public class StorageZoneController {
     private final StorageZoneService storageZoneService;
 
     @PostMapping
-    public StorageZone create(@Valid @RequestBody StorageZone zone) {
-        return storageZoneService.create(zone);
+    public StorageZone create(@Valid @RequestBody StorageZoneCreateRequest request) {
+        return storageZoneService.create(request.toEntity());
     }
 
     @GetMapping

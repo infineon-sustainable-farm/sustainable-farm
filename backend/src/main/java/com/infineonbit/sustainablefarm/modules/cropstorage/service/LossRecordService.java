@@ -23,7 +23,7 @@ public class LossRecordService {
      */
     public LossRecord create(LossRecord record) {
         if (record.getBatch() != null && record.getBatch().getId() != null) {
-            record.setBatch(batchRepository.findById(record.getBatch().getId())
+            record.setBatch(batchRepository.findWithRelationshipsById(record.getBatch().getId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Batch not found with id " + record.getBatch().getId())));
         }

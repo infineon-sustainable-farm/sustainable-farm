@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.LossRecord;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.LossRecordCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.LossRecordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,8 @@ public class LossRecordController {
     private final LossRecordService lossRecordService;
 
     @PostMapping
-    public LossRecord create(@Valid @RequestBody LossRecord record) {
-        return lossRecordService.create(record);
+    public LossRecord create(@Valid @RequestBody LossRecordCreateRequest request) {
+        return lossRecordService.create(request.toEntity());
     }
 
     @GetMapping

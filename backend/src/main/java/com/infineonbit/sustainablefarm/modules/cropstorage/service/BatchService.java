@@ -1,7 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +39,8 @@ public class BatchService {
     private static final BigDecimal KG_PER_LB = new BigDecimal("0.453592");
 
     private final BatchRepository batchRepository;
+    private final SupplierRepository supplierRepository;
+    private final StorageZoneRepository storageZoneRepository;
 
     /**
      * Saves a new batch exactly as received; the batch code follows the team
@@ -42,7 +50,26 @@ public class BatchService {
      * @return the saved batch with its generated id
      */
     public Batch create(Batch batch) {
+        if (batch.getSupplier() != null) {
+            Long supplierId = requireId(batch.getSupplier().getId(), "supplier");
+            Supplier supplier = supplierRepository.findById(supplierId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id " + supplierId));
+            batch.setSupplier(supplier);
+        }
+        if (batch.getStorageZone() != null) {
+            Long zoneId = requireId(batch.getStorageZone().getId(), "zone");
+            StorageZone zone = storageZoneRepository.findById(zoneId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Zone not found with id " + zoneId));
+            batch.setStorageZone(zone);
+        }
         return batchRepository.save(batch);
+    }
+
+    private Long requireId(Long id, String reference) {
+        if (id == null) {
+            throw new BusinessRuleException("A " + reference + " reference requires an id");
+        }
+        return id;
     }
 
     /**

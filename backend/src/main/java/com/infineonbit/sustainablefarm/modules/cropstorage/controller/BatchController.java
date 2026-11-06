@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.BatchCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.BatchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +28,12 @@ public class BatchController {
     /**
      * Creates one batch; see BatchService for the batch code convention.
      *
-     * @param batch batch fields from the request body
+     * @param request validated batch fields from the request body
      * @return the saved batch
      */
     @PostMapping
-    public Batch create(@Valid @RequestBody Batch batch) {
-        return batchService.create(batch);
+    public Batch create(@Valid @RequestBody BatchCreateRequest request) {
+        return batchService.create(request.toEntity());
     }
 
     /**

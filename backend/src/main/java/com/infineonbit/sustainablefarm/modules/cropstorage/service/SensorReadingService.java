@@ -43,9 +43,10 @@ public class SensorReadingService {
         if (reading.getSensor() == null || reading.getSensor().getId() == null) {
             throw new BusinessRuleException("A sensor is required");
         }
-        sensorRepository.findById(reading.getSensor().getId())
+        Sensor sensor = sensorRepository.findWithStorageZoneById(reading.getSensor().getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Sensor not found with id " + reading.getSensor().getId()));
+        reading.setSensor(sensor);
         SensorReading saved = sensorReadingRepository.save(reading);
         checkThresholds(saved);
         return saved;
@@ -76,8 +77,7 @@ public class SensorReadingService {
      * Seed data uses the dried-mango storage range: 10 to 25 C and 20 to 60 %.
      */
     private void checkThresholds(SensorReading reading) {
-        // Reload the sensor from the database: never trust the object received.
-        Sensor sensor = sensorRepository.findById(reading.getSensor().getId()).orElse(null);
+        Sensor sensor = reading.getSensor();
         if (sensor == null || sensor.getStorageZone() == null) {
             return;
         }

@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.AlertCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.AlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +33,12 @@ public class AlertController {
      * Creates a manual alert; threshold-crossing alerts are created
      * automatically by the sensor reading flow instead.
      *
-     * @param alert alert fields as described in AlertService
+     * @param request validated alert fields
      * @return the saved alert
      */
     @PostMapping
-    public Alert create(@Valid @RequestBody Alert alert) {
-        return alertService.create(alert);
+    public Alert create(@Valid @RequestBody AlertCreateRequest request) {
+        return alertService.create(request.toEntity());
     }
 
     /**

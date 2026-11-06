@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.SensorCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.SensorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,8 @@ public class SensorController {
     private final SensorService sensorService;
 
     @PostMapping
-    public Sensor create(@Valid @RequestBody Sensor sensor) {
-        return sensorService.create(sensor);
+    public Sensor create(@Valid @RequestBody SensorCreateRequest request) {
+        return sensorService.create(request.toEntity());
     }
 
     @GetMapping

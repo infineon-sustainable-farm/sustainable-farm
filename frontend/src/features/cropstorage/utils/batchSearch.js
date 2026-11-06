@@ -20,24 +20,32 @@ export function findMatchingBatches(batches, search) {
     const query = search.trim().toLowerCase();
     if (!query) return batches;
 
-    const exactIdMatches = batches.filter((batch) =>
-        [getBatchDisplayId(batch), batch.id, batch.batchCode, batch.batch_code]
-            .filter((value) => value != null)
-            .some((value) => String(value).trim().toLowerCase() === query),
-    );
-    if (exactIdMatches.length > 0) return exactIdMatches;
+    return batches
+        .map((batch, index) => {
+            const searchableText = [
+                getBatchDisplayId(batch),
+                batch.id,
+                batch.batchCode,
+                batch.batch_code,
+                getBatchProductLabel(batch),
+            ]
+                .filter((value) => value != null)
+                .join(" ")
+                .toLowerCase();
+            if (!searchableText.includes(query)) return null;
 
-    return batches.filter((batch) => {
-        const searchableText = [
-            getBatchDisplayId(batch),
-            batch.id,
-            batch.batchCode,
-            batch.batch_code,
-            getBatchProductLabel(batch),
-        ]
-            .filter((value) => value != null)
-            .join(" ")
-            .toLowerCase();
-        return searchableText.includes(query);
-    });
+            const exactIdMatch = [
+                getBatchDisplayId(batch),
+                batch.id,
+                batch.batchCode,
+                batch.batch_code,
+            ]
+                .filter((value) => value != null)
+                .some((value) => String(value).trim().toLowerCase() === query);
+
+            return { batch, index, exactIdMatch };
+        })
+        .filter(Boolean)
+        .sort((a, b) => Number(b.exactIdMatch) - Number(a.exactIdMatch) || a.index - b.index)
+        .map(({ batch }) => batch);
 }

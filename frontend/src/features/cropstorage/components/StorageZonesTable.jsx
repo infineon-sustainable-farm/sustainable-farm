@@ -1,4 +1,4 @@
-import { formatNumber, formatQuantity } from "../utils/formatters";
+import { formatNumber, formatPercentage, formatQuantity } from "../utils/formatters";
 
 export default function StorageZonesTable({ zones }) {
     return (
@@ -17,6 +17,13 @@ export default function StorageZonesTable({ zones }) {
                 <tbody className="divide-y divide-gray-100">
                     {zones.map((zone) => {
                         const percent = zone.usedPercent;
+                        const hasPercent = Number.isFinite(percent);
+                        const color =
+                            percent < 70
+                                ? "#16a34a"
+                                : percent <= 90
+                                  ? "#f59e0b"
+                                  : "#ef4444";
                         return (
                             <tr key={zone.id ?? zone.zoneCode ?? zone.code}>
                                 <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
@@ -40,18 +47,23 @@ export default function StorageZonesTable({ zones }) {
                                             aria-label={`${zone.zoneCode ?? zone.code ?? zone.name} capacity used`}
                                             aria-valuemin={0}
                                             aria-valuemax={100}
-                                            aria-valuenow={Math.min(percent, 100)}
-                                            aria-valuetext={`${formatNumber(percent)}% used`}
+                                            aria-valuenow={hasPercent ? Math.min(percent, 100) : undefined}
+                                            aria-valuetext={
+                                                hasPercent ? `${formatPercentage(percent)}% used` : "Usage unavailable"
+                                            }
                                         >
                                             <div
                                                 className={`h-full rounded-full ${
-                                                    percent > 100 ? "bg-error" : "bg-primary"
+                                                    hasPercent ? "" : "bg-gray-300"
                                                 }`}
-                                                style={{ width: `${Math.min(percent, 100)}%` }}
+                                                style={{
+                                                    width: `${hasPercent ? Math.min(percent, 100) : 0}%`,
+                                                    ...(hasPercent ? { background: color } : {}),
+                                                }}
                                             />
                                         </div>
                                         <span className="w-14 text-right tabular-nums text-gray-600">
-                                            {formatNumber(percent)}%
+                                            {hasPercent ? `${formatPercentage(percent)}%` : "—"}
                                         </span>
                                     </div>
                                 </td>

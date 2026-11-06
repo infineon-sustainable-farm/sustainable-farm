@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.SensorReading;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.SensorReadingCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.SensorReadingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +29,12 @@ public class SensorReadingController {
      * Records one measure; an automatic alert may be raised as a side effect
      * when a zone threshold is crossed (see SensorReadingService).
      *
-     * @param reading measure to save; the nested sensor id must exist
+     * @param request measure to save; the nested sensor id must exist
      * @return the saved reading
      */
     @PostMapping
-    public SensorReading create(@Valid @RequestBody SensorReading reading) {
-        return sensorReadingService.create(reading);
+    public SensorReading create(@Valid @RequestBody SensorReadingCreateRequest request) {
+        return sensorReadingService.create(request.toEntity());
     }
 
     /**

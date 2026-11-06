@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.QualityCheck;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.QualityCheckCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.QualityCheckService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,8 @@ public class QualityCheckController {
     private final QualityCheckService qualityCheckService;
 
     @PostMapping
-    public QualityCheck create(@Valid @RequestBody QualityCheck check) {
-        return qualityCheckService.create(check);
+    public QualityCheck create(@Valid @RequestBody QualityCheckCreateRequest request) {
+        return qualityCheckService.create(request.toEntity());
     }
 
     @GetMapping

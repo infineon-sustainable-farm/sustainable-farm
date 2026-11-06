@@ -1,10 +1,18 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.AlertRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SensorRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +29,9 @@ import java.util.List;
 public class AlertService {
 
     private final AlertRepository alertRepository;
+    private final SensorRepository sensorRepository;
+    private final StorageZoneRepository storageZoneRepository;
+    private final BatchRepository batchRepository;
 
     /**
      * Saves a manually created alert, for issues an operator observes and the
@@ -30,8 +41,36 @@ public class AlertService {
      *              and optional links to sensor, zone or batch
      * @return the saved alert with its generated id
      */
+    @Transactional
     public Alert create(Alert alert) {
-        return alertRepository.save(alert);
+        if (alert.getSensor() != null) {
+            alert.setSensor(sensorRepository.findWithStorageZoneById(
+                            requireId(alert.getSensor().getId(), "sensor"))
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Sensor not found with id " + alert.getSensor().getId())));
+        }
+        if (alert.getStorageZone() != null) {
+            alert.setStorageZone(storageZoneRepository.findById(requireId(alert.getStorageZone().getId(), "zone"))
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Zone not found with id " + alert.getStorageZone().getId())));
+        }
+        if (alert.getBatch() != null) {
+            alert.setBatch(batchRepository.findWithRelationshipsById(
+                            requireId(alert.getBatch().getId(), "batch"))
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Batch not found with id " + alert.getBatch().getId())));
+        }
+        Alert saved = alertRepository.save(alert);
+        return alertRepository.findWithRelationshipsById(saved.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Alert not found with id " + saved.getId()));
+    }
+
+    private Long requireId(Long id, String reference) {
+        if (id == null) {
+            throw new BusinessRuleException("A " + reference + " reference requires an id");
+        }
+        return id;
     }
 
     /**
@@ -63,8 +102,9 @@ public class AlertService {
      * @return the alert with its new status
      * @throws ResourceNotFoundException when no alert exists with this id
      */
+    @Transactional
     public Alert updateStatus(Long id, String status) {
-        Alert alert = alertRepository.findById(id)
+        Alert alert = alertRepository.findWithRelationshipsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alert not found with id " + id));
         alert.setStatus(status);
         return alertRepository.save(alert);

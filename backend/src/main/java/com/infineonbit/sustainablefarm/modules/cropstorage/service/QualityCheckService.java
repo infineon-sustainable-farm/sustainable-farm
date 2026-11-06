@@ -23,7 +23,7 @@ public class QualityCheckService {
      */
     public QualityCheck create(QualityCheck check) {
         if (check.getBatch() != null && check.getBatch().getId() != null) {
-            check.setBatch(batchRepository.findById(check.getBatch().getId())
+            check.setBatch(batchRepository.findWithRelationshipsById(check.getBatch().getId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Batch not found with id " + check.getBatch().getId())));
         }

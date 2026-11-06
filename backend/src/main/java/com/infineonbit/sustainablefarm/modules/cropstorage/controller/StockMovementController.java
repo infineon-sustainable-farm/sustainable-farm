@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StockMovementCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.StockMovementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,8 @@ public class StockMovementController {
     private final StockMovementService stockMovementService;
 
     @PostMapping
-    public StockMovement create(@Valid @RequestBody StockMovement movement) {
-        return stockMovementService.create(movement);
+    public StockMovement create(@Valid @RequestBody StockMovementCreateRequest request) {
+        return stockMovementService.create(request.toEntity());
     }
 
     @GetMapping

@@ -56,11 +56,11 @@ beforeEach(() => {
 
 describe("Crop Storage overview batch search", () => {
     it("matches the displayed ID and product labels across loaded batches", () => {
-        expect(findMatchingBatches(batches, "  mng-2026-003 ")).toEqual([batches[5]]);
+        expect(findMatchingBatches(batches, "  mng-2026-003 ")).toEqual([batches[5], batches[6]]);
         expect(findMatchingBatches(batches, "b-prio-00")).toEqual(batches.slice(0, 5));
         expect(findMatchingBatches(batches, " kEnT ")).toEqual([batches[0], batches[5]]);
         expect(findMatchingBatches(batches, "not-a-batch")).toEqual([]);
-        expect(findMatchingBatches(batches, "MNG-2026-003")).toEqual([batches[5]]);
+        expect(findMatchingBatches(batches, "MNG-2026-003")).toEqual([batches[5], batches[6]]);
     });
 
     it("suggests and filters an exact batch ID beyond the initial five rows", async () => {
@@ -72,7 +72,8 @@ describe("Crop Storage overview batch search", () => {
 
         const listbox = screen.getByRole("listbox");
         expect(within(listbox).getByText("MNG-2026-003")).toBeTruthy();
-        await user.click(within(listbox).getByRole("option"));
+        expect(within(listbox).getByText("MNG-2026-003-A")).toBeTruthy();
+        await user.click(within(listbox).getAllByRole("option")[0]);
 
         expect(input.value).toBe("MNG-2026-003");
         const table = screen.getByRole("table");
@@ -119,5 +120,18 @@ describe("Crop Storage overview batch search", () => {
         await user.clear(input);
         expect(screen.queryByRole("listbox")).toBeNull();
         expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(6);
+    });
+
+    it("closes suggestions when focus leaves the search input with Tab", async () => {
+        const user = userEvent.setup();
+        renderDashboard();
+        const input = screen.getByRole("combobox", { name: "Filter stored batches" });
+
+        await user.type(input, "MNG-2026-003");
+        expect(screen.getByRole("listbox")).toBeTruthy();
+
+        await user.tab();
+
+        expect(screen.queryByRole("listbox")).toBeNull();
     });
 });

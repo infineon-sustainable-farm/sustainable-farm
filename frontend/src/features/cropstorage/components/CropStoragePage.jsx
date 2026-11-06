@@ -35,6 +35,7 @@ import {
     getBatchProductLabel,
 } from "../utils/batchSearch";
 import { formatMoney, formatNumber, formatQuantity } from "../utils/formatters";
+import { getOverallUsagePercent, withZoneUsage } from "../utils/storageZones";
 
 const PAGE_LINKS = {
     stock: "batches",
@@ -90,14 +91,6 @@ function deriveDashboardData(
     const safeZones = Array.isArray(zones) ? zones : [];
     const safeSensors = Array.isArray(sensors) ? sensors : [];
     const safeReadings = Array.isArray(readings) ? readings : [];
-
-    const quantities = new Map();
-    for (const batch of safeBatches) {
-        const key = batchZoneKey(batch);
-        if (key === null) continue;
-        const quantity = Number(batch.currentQuantityKg ?? batch.current_quantity_kg ?? 0);
-        quantities.set(key, (quantities.get(key) ?? 0) + quantity);
-    }
 
     const zoneKeys = new Set(safeZones.map(zoneKey).filter(Boolean));
     const zoneSensors = safeSensors.filter((sensor) => {
@@ -159,25 +152,15 @@ function deriveDashboardData(
         })
         .sort((a, b) => new Date(readingDate(a)) - new Date(readingDate(b)));
 
-    const capacityKg = safeZones.reduce(
-        (total, zone) => total + Number(zone.capacityKg ?? zone.capacity_kg ?? 0),
-        0,
-    );
-    const usedKg = safeZones.reduce(
-        (total, zone) => total + (quantities.get(zoneKey(zone)) ?? 0),
-        0,
-    );
-    const overallUsagePercent = capacityKg > 0 ? (usedKg / capacityKg) * 100 : null;
+    const zonesWithUsage = withZoneUsage(safeZones, safeBatches);
+    const overallUsagePercent = getOverallUsagePercent(zonesWithUsage);
 
     return {
         summary: summary ?? {},
         activeAlertCount: safeActiveAlerts.length,
         activeAlerts: safeActiveAlerts,
         batches: safeBatches,
-        zones: safeZones.map((zone) => ({
-            ...zone,
-            currentQuantityKg: quantities.get(zoneKey(zone)) ?? 0,
-        })),
+        zones: zonesWithUsage,
         overallUsagePercent,
         averageTemperature: average("temperature"),
         averageHumidity: average("humidity"),
@@ -193,6 +176,7 @@ export default function CropStoragePage() {
     const [batchSearch, setBatchSearch] = useState("");
     const [suggestionsOpen, setSuggestionsOpen] = useState(false);
     const [activeSuggestion, setActiveSuggestion] = useState(-1);
+    const batchSearchRef = useRef(null);
     const batchesTableRef = useRef(null);
 
     useEffect(() => {
@@ -403,7 +387,18 @@ export default function CropStoragePage() {
                         <p className="text-sm text-gray-500">Farm Sustainable Management System</p>
                     </div>
                     <div className="flex w-full flex-wrap items-center gap-4 sm:w-auto">
-                        <div className="relative w-full sm:w-64">
+                        <div
+                            ref={batchSearchRef}
+                            className="relative w-full sm:w-64"
+                            onBlur={() => {
+                                window.setTimeout(() => {
+                                    if (!batchSearchRef.current?.contains(document.activeElement)) {
+                                        setSuggestionsOpen(false);
+                                        setActiveSuggestion(-1);
+                                    }
+                                }, 0);
+                            }}
+                        >
                             <input
                                 type="search"
                                 value={batchSearch}
@@ -543,15 +538,14 @@ export default function CropStoragePage() {
                         >
                             <StorageGauge
                                 percentage={data.overallUsagePercent}
-                                usedKg={(data.zones ?? []).reduce(
-                                    (total, zone) => total + zone.currentQuantityKg,
-                                    0,
-                                )}
-                                capacityKg={data.zones.reduce(
-                                    (total, zone) =>
-                                        total + Number(zone.capacityKg ?? zone.capacity_kg ?? 0),
-                                    0,
-                                )}
+                                usedKg={(data.zones ?? []).every((zone) => zone.usedKg != null)
+                                    ? data.zones.reduce((total, zone) => total + zone.usedKg, 0)
+                                    : null}
+                                capacityKg={(data.zones ?? []).every(
+                                    (zone) => zone.capacityKg != null && zone.capacityKg > 0,
+                                )
+                                    ? data.zones.reduce((total, zone) => total + zone.capacityKg, 0)
+                                    : null}
                                 zones={data.zones}
                             />
                             <TrendChart

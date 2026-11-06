@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Droplets, Gauge, Thermometer, Radio } from "lucide-react";
-import { formatNumber, formatQuantity } from "../utils/formatters";
+import { formatNumber, formatPercentage, formatQuantity } from "../utils/formatters";
 import {
     findMatchingBatches,
     getBatchDisplayId,
@@ -43,9 +43,23 @@ function getCapacityColor(percent) {
     return "#ef4444";
 }
 
-export function StorageGauge({ percentage = 0, usedKg = 0, capacityKg = 0, zones = [] }) {
-    const rawPercentage = Number(percentage);
-    const hasPercentage = Number.isFinite(rawPercentage) && rawPercentage >= 0;
+function getNonNegativeNumber(value) {
+    if (value == null || (typeof value === "string" && value.trim() === "")) return null;
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+export function StorageGauge({ percentage, usedKg, capacityKg, zones = [] }) {
+    const rawPercentage =
+        percentage == null || (typeof percentage === "string" && percentage.trim() === "")
+            ? Number.NaN
+            : Number(percentage);
+    const numericUsed = getNonNegativeNumber(usedKg);
+    const numericCapacity = getNonNegativeNumber(capacityKg);
+    const hasUsed = numericUsed != null;
+    const hasCapacity = numericCapacity != null && numericCapacity > 0;
+    const hasPercentage =
+        Number.isFinite(rawPercentage) && rawPercentage >= 0 && hasUsed && hasCapacity;
     const displayPercentage = hasPercentage ? rawPercentage : null;
     const clampedPercentage = displayPercentage == null ? 0 : Math.min(Math.max(displayPercentage, 0), 100);
     const [shown, setShown] = useState(0);
@@ -55,13 +69,11 @@ export function StorageGauge({ percentage = 0, usedKg = 0, capacityKg = 0, zones
         return () => cancelAnimationFrame(id);
     }, [clampedPercentage]);
 
-    const arcColor = getCapacityColor(displayPercentage == null ? 0 : displayPercentage);
-    const numericUsed = Number(usedKg ?? 0);
-    const numericCapacity = Number(capacityKg ?? 0);
-    const hasCapacity = Number.isFinite(numericCapacity) && numericCapacity > 0;
-    const percentageText = displayPercentage == null ? "—" : `${formatNumber(clampedPercentage)}%`;
-    const capacityText = hasCapacity
-        ? `${formatQuantity(numericUsed)} / ${formatQuantity(numericCapacity)}`
+    const arcColor = getCapacityColor(displayPercentage);
+    const percentageText =
+        displayPercentage == null ? "—" : `${formatPercentage(displayPercentage)}%`;
+    const capacityText = hasUsed || hasCapacity
+        ? `${hasUsed ? formatQuantity(numericUsed) : "—"} / ${hasCapacity ? formatQuantity(numericCapacity) : "—"}`
         : "Capacity data unavailable";
 
     return (
@@ -80,7 +92,7 @@ export function StorageGauge({ percentage = 0, usedKg = 0, capacityKg = 0, zones
                         <svg
                             viewBox="0 0 220 130"
                             role="img"
-                            aria-label={displayPercentage == null ? "Overall storage usage unavailable" : `Overall storage usage ${formatNumber(clampedPercentage)} percent`}
+                            aria-label={displayPercentage == null ? "Overall storage usage unavailable" : `Overall storage usage ${formatPercentage(displayPercentage)} percent`}
                             className="block h-40 w-full"
                         >
                             <path
@@ -114,10 +126,18 @@ export function StorageGauge({ percentage = 0, usedKg = 0, capacityKg = 0, zones
                     </div>
                     <div className="mt-3 flex flex-col gap-3">
                         {zones.map((zone) => {
-                            const capacity = Number(zone.capacityKg ?? zone.capacity_kg ?? 0);
-                            const used = Number(zone.currentQuantityKg ?? 0);
-                            const zonePercent = capacity > 0 ? (used / capacity) * 100 : null;
-                            const zoneDisplay = zonePercent == null ? 0 : Math.min(Math.max(zonePercent, 0), 100);
+                            const rawCapacity = zone.capacityKg ?? zone.capacity_kg;
+                            const rawUsed = zone.usedKg ?? zone.currentQuantityKg;
+                            const capacity = getNonNegativeNumber(rawCapacity);
+                            const used = getNonNegativeNumber(rawUsed);
+                            const zonePercent =
+                                capacity != null &&
+                                capacity > 0 &&
+                                used != null
+                                    ? (used / capacity) * 100
+                                    : null;
+                            const boundedZonePercent =
+                                zonePercent == null ? 0 : Math.min(zonePercent, 100);
                             const zoneColor = getCapacityColor(zonePercent);
                             return (
                                 <div key={zone.id ?? zone.zoneCode} className="flex items-center gap-3">
@@ -131,18 +151,23 @@ export function StorageGauge({ percentage = 0, usedKg = 0, capacityKg = 0, zones
                                         aria-label={`${zone.name ?? zone.zoneCode} capacity`}
                                         aria-valuemin={0}
                                         aria-valuemax={100}
-                                        aria-valuenow={zonePercent == null ? 0 : Math.min(zonePercent, 100)}
+                                        aria-valuenow={zonePercent == null ? undefined : boundedZonePercent}
+                                        aria-valuetext={
+                                            zonePercent == null
+                                                ? "Usage unavailable"
+                                                : `${formatPercentage(zonePercent)}% used`
+                                        }
                                     >
                                         <div
                                             className="h-full rounded-full"
                                             style={{
-                                                width: `${zonePercent == null ? 0 : Math.min(zonePercent, 100)}%`,
+                                                width: `${boundedZonePercent}%`,
                                                 background: zoneColor,
                                             }}
                                         />
                                     </div>
                                     <span className="w-12 text-right text-xs tabular-nums text-gray-500">
-                                        {zonePercent == null ? "—" : `${formatNumber(zoneDisplay)}%`}
+                                        {zonePercent == null ? "—" : `${formatPercentage(zonePercent)}%`}
                                     </span>
                                 </div>
                             );

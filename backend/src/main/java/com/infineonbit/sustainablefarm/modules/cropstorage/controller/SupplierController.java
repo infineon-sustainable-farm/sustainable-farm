@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.SupplierCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.SupplierService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,8 @@ public class SupplierController {
     private final SupplierService supplierService;
 
     @PostMapping
-    public Supplier create(@Valid @RequestBody Supplier supplier) {
-        return supplierService.create(supplier);
+    public Supplier create(@Valid @RequestBody SupplierCreateRequest request) {
+        return supplierService.create(request.toEntity());
     }
 
     @GetMapping
