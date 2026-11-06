@@ -1,0 +1,77 @@
+import { formatNumber, formatPercentage, formatQuantity } from "../utils/formatters";
+
+export default function StorageZonesTable({ zones }) {
+    return (
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
+                <thead className="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase">
+                    <tr>
+                        <th className="px-4 py-3 font-semibold">Code</th>
+                        <th className="px-4 py-3 font-semibold">Name</th>
+                        <th className="px-4 py-3 font-semibold">Type</th>
+                        <th className="px-4 py-3 text-right font-semibold">Capacity</th>
+                        <th className="px-4 py-3 text-right font-semibold">Capacity (m³)</th>
+                        <th className="px-4 py-3 font-semibold">Used</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                    {zones.map((zone) => {
+                        const percent = zone.usedPercent;
+                        const hasPercent = Number.isFinite(percent);
+                        const color =
+                            percent < 70
+                                ? "#16a34a"
+                                : percent <= 90
+                                  ? "#f59e0b"
+                                  : "#ef4444";
+                        return (
+                            <tr key={zone.id ?? zone.zoneCode ?? zone.code}>
+                                <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
+                                    {zone.zoneCode ?? zone.code ?? "—"}
+                                </td>
+                                <td className="px-4 py-3 text-gray-700">{zone.name || "—"}</td>
+                                <td className="px-4 py-3 text-gray-700">
+                                    {zone.type ?? zone.zoneType ?? "—"}
+                                </td>
+                                <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
+                                    {formatQuantity(zone.capacityKg)}
+                                </td>
+                                <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
+                                    {formatNumber(zone.capacityM3)} m³
+                                </td>
+                                <td className="min-w-40 px-4 py-3">
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className="h-2.5 min-w-20 flex-1 overflow-hidden rounded-full bg-gray-100"
+                                            role="progressbar"
+                                            aria-label={`${zone.zoneCode ?? zone.code ?? zone.name} capacity used`}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                            aria-valuenow={hasPercent ? Math.min(percent, 100) : undefined}
+                                            aria-valuetext={
+                                                hasPercent ? `${formatPercentage(percent)}% used` : "Usage unavailable"
+                                            }
+                                        >
+                                            <div
+                                                className={`h-full rounded-full ${
+                                                    hasPercent ? "" : "bg-gray-300"
+                                                }`}
+                                                style={{
+                                                    width: `${hasPercent ? Math.min(percent, 100) : 0}%`,
+                                                    ...(hasPercent ? { background: color } : {}),
+                                                }}
+                                            />
+                                        </div>
+                                        <span className="w-14 text-right tabular-nums text-gray-600">
+                                            {hasPercent ? `${formatPercentage(percent)}%` : "—"}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+}
