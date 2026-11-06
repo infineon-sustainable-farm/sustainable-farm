@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 const FILTERS = [
@@ -215,10 +215,6 @@ export default function DemandReportsPage() {
   const [deletingReport, setDeletingReport] = useState(false);
 
   useEffect(() => {
-    fetchReportsData();
-  }, []);
-
-  useEffect(() => {
     const handleClickOutside = () => setOpenMenuReportId(null);
     if (openMenuReportId != null) {
       window.addEventListener('click', handleClickOutside);
@@ -238,14 +234,13 @@ export default function DemandReportsPage() {
     window.setTimeout(() => setActionError(null), 6000);
   };
 
-  const fetchReportsData = async () => {
-    setLoading(true);
-    setApiError(null);
+  const fetchReportsData = useCallback(async () => {
     try {
       const [reportsRes, filesRes] = await Promise.allSettled([
         api.getDemandReports(),
         api.getReportFiles(),
       ]);
+      setApiError(null);
 
       const failures = [];
 
@@ -266,18 +261,22 @@ export default function DemandReportsPage() {
       if (failures.length > 0) {
         setApiError(
           reportsRes.status === 'rejected'
-            ? getErrorMessage(reportsRes.reason, 'Unable to load /api/demand-reports. Retry when the backend is available.')
+            ? getErrorMessage(reportsRes.reason, 'Unable to load reports. Please try again.')
             : `Partial load — ${failures.join(' · ')}`
         );
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load reports. Please try again.'));
       setReports([]);
       setReportFiles([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchReportsData);
+  }, [fetchReportsData]);
 
   const filteredReports = reports.filter((report) => {
     if (selectedFilter !== 'all' && resolveCategory(report.reportType) !== selectedFilter) {
@@ -825,11 +824,7 @@ export default function DemandReportsPage() {
               {editingReportId != null ? `Edit Report #${editingReportId}` : 'New Custom Report'}
             </h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              {editingReportId != null ? (
-                <>Updates via <code className="text-primary">PUT /api/demand-reports/{editingReportId}</code></>
-              ) : (
-                <>Creates via <code className="text-primary">POST /api/demand-reports</code></>
-              )}
+              Enter the report details below.
             </p>
             <form onSubmit={handleSaveReport} className="flex flex-col gap-md">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
@@ -1019,8 +1014,7 @@ export default function DemandReportsPage() {
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Delete report?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This calls <code className="text-primary">DELETE /api/demand-reports/{pendingDeleteReport.reportId}</code> for{' '}
-              <strong>{resolveTitle(pendingDeleteReport)}</strong>. This cannot be undone.
+              Are you sure you want to delete <strong>{resolveTitle(pendingDeleteReport)}</strong>? This action cannot be undone.
             </p>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg line-clamp-3">
               {resolveSummary(pendingDeleteReport)}

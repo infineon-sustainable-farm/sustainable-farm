@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 function seasonFromValue(v) {
@@ -80,10 +80,6 @@ export default function PricingPage() {
   const [stock, setStock] = useState(1000);
   const [demand, setDemand] = useState(50);
 
-  useEffect(() => {
-    fetchPricingData();
-  }, []);
-
   const flashSuccess = (message) => {
     setActionSuccess(message);
     setActionError(null);
@@ -95,10 +91,7 @@ export default function PricingPage() {
     setActionSuccess(null);
   };
 
-  const fetchPricingData = async () => {
-    setLoading(true);
-    setApiError(null);
-
+  const fetchPricingData = useCallback(async () => {
     try {
       const [histRes, compRes, recoRes, productRes] = await Promise.allSettled([
         api.getPricingHistory(),
@@ -106,6 +99,7 @@ export default function PricingPage() {
         api.getPricingRecommendations(),
         api.getProducts(),
       ]);
+      setApiError(null);
 
       const failures = [];
 
@@ -206,13 +200,17 @@ export default function PricingPage() {
       setApiError(
         getErrorMessage(
           err,
-          'Unable to connect to the backend API.'
+          'Unable to load pricing data. Please try again.'
         )
       );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchPricingData);
+  }, [fetchPricingData]);
 
   // --------------------------------------------------
   // Current product / latest pricing
@@ -373,13 +371,6 @@ export default function PricingPage() {
 
   const trendMin = trend?.min ?? 5.7;
   const trendMax = trend?.max ?? 6.0;
-
-  const trendPadding = Math.max(
-    (trendMax - trendMin) * 0.2,
-    0.05
-  );
-
-
 
 const axisBottom = trendMin;
 const axisTop = trendMax;

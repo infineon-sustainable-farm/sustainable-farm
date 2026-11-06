@@ -17,7 +17,7 @@ export default function Header() {
         </button>
         <div className="flex items-center gap-md pl-md border-l border-outline-variant">
           <div className="text-right hidden sm:block">
-            <p className="font-label-md text-label-md text-on-surface font-semibold">Alex Rivera</p>
+            <p className="font-label-md text-label-md text-on-surface font-semibold">Mariata NIKIEMA</p>
             <p className="text-[11px] text-on-surface-variant">Module Lead</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md">

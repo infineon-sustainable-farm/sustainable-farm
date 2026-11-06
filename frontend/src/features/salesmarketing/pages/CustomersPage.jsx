@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 const MAP_IMAGE =
@@ -123,10 +123,6 @@ export default function CustomersPage() {
   const [deletingContact, setDeletingContact] = useState(false);
 
   useEffect(() => {
-    fetchCustomersData();
-  }, [statusFilter]);
-
-  useEffect(() => {
     const handleClickOutside = () => setOpenMenuCustomerId(null);
     if (openMenuCustomerId != null) {
       window.addEventListener('click', handleClickOutside);
@@ -140,15 +136,13 @@ export default function CustomersPage() {
     window.setTimeout(() => setActionSuccess(null), 4000);
   };
 
-  const flashError = (msg) => {
+  const flashError = useCallback((msg) => {
     setActionError(msg);
     setActionSuccess(null);
     window.setTimeout(() => setActionError(null), 6000);
-  };
+  }, []);
 
-  const fetchCustomersData = async () => {
-    setLoading(true);
-    setApiError(null);
+  const fetchCustomersData = useCallback(async () => {
     try {
       const [customerRes, orderRes, contactRes, certRes] = await Promise.allSettled([
   statusFilter === 'all' ? api.getCustomers() : api.getCustomers(statusFilter),
@@ -156,15 +150,16 @@ export default function CustomersPage() {
   api.getCustomerContacts(),
   api.getCertifications(),
 ]);
+      setApiError(null);
 
       const failures = [];
 
       if (customerRes.status === 'fulfilled') {
         const list = Array.isArray(customerRes.value.data) ? customerRes.value.data : [];
         setCustomers(list);
-        if (list.length > 0 && selectedId == null) {
-          setSelectedId(list[0].customerId);
-        }
+        setSelectedId((current) =>
+          current == null && list.length > 0 ? list[0].customerId : current
+        );
       } else {
         setCustomers([]);
         failures.push(`Customers: ${getErrorMessage(customerRes.reason)}`);
@@ -191,22 +186,26 @@ export default function CustomersPage() {
 
       if (failures.length > 0 && customerRes.status === 'rejected') {
         setApiError(
-          'The backend API is offline or unreachable. Customer data is unavailable. ' +
+          'Customer data could not be loaded. Please try again. ' +
             failures.join(' - ')
         );
       } else if (failures.length > 0) {
         setApiError(`Partial load - ${failures.join(" - ")}`);
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load customer data. Please try again.'));
       setCustomers([]);
       setContacts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
-  const fetchCustomerCertifications = async (customerId) => {
+  useEffect(() => {
+    void Promise.resolve().then(fetchCustomersData);
+  }, [fetchCustomersData]);
+
+  const fetchCustomerCertifications = useCallback(async (customerId) => {
     try {
       const res = await api.getCustomerCertifications(customerId);
       setCustomerCerts((prev) => ({ ...prev, [customerId]: Array.isArray(res.data) ? res.data : [] }));
@@ -214,13 +213,7 @@ export default function CustomersPage() {
       setCustomerCerts((prev) => ({ ...prev, [customerId]: [] }));
       flashError(getErrorMessage(err, 'Failed to load customer certifications'));
     }
-  };
-
-  useEffect(() => {
-    if (selectedId != null && !customerCerts[selectedId] && customers.length > 0) {
-      fetchCustomerCertifications(selectedId);
-    }
-  }, [selectedId, customers.length]);
+  }, [flashError]);
 
   const displayCustomers = customers;
 
@@ -251,44 +244,54 @@ export default function CustomersPage() {
   });
   const CUSTOMER_PAGE_SIZE = 8;
   const customerPageCount = Math.max(1, Math.ceil(sortedCustomers.length / CUSTOMER_PAGE_SIZE));
+  const currentCustomerPage = Math.min(customerPage, customerPageCount);
   const visibleCustomers = sortedCustomers.slice(
-    (customerPage - 1) * CUSTOMER_PAGE_SIZE,
-    customerPage * CUSTOMER_PAGE_SIZE
+    (currentCustomerPage - 1) * CUSTOMER_PAGE_SIZE,
+    currentCustomerPage * CUSTOMER_PAGE_SIZE
   );
 
-  useEffect(() => {
-    setCustomerPage(1);
-  }, [searchQuery, statusFilter]);
+  const effectiveSelectedId = filteredCustomers.some((c) => c.customerId === selectedId)
+    ? selectedId
+    : filteredCustomers[0]?.customerId ?? null;
 
   useEffect(() => {
-    if (customerPage > customerPageCount) setCustomerPage(customerPageCount);
-  }, [customerPage, customerPageCount]);
+    if (
+      effectiveSelectedId == null ||
+      customerCerts[effectiveSelectedId] ||
+      customers.length === 0
+    ) {
+      return undefined;
+    }
 
-  useEffect(() => {
-    if (filteredCustomers.length === 0) {
-      setSelectedId(null);
-      return;
-    }
-    const stillVisible = filteredCustomers.some((c) => c.customerId === selectedId);
-    if (!stillVisible) {
-      setSelectedId(filteredCustomers[0].customerId);
-    }
-  }, [filteredCustomers, selectedId]);
+    let active = true;
+    api.getCustomerCertifications(effectiveSelectedId)
+      .then((res) => {
+        if (!active) return;
+        setCustomerCerts((prev) => ({
+          ...prev,
+          [effectiveSelectedId]: Array.isArray(res.data) ? res.data : [],
+        }));
+      })
+      .catch((err) => {
+        if (!active) return;
+        setCustomerCerts((prev) => ({ ...prev, [effectiveSelectedId]: [] }));
+        flashError(getErrorMessage(err, 'Failed to load customer certifications'));
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [effectiveSelectedId, customerCerts, customers.length, flashError]);
 
   const selectedCustomer =
-    filteredCustomers.find((c) => c.customerId === selectedId) ||
-    displayCustomers.find((c) => c.customerId === selectedId) ||
+    filteredCustomers.find((c) => c.customerId === effectiveSelectedId) ||
+    displayCustomers.find((c) => c.customerId === effectiveSelectedId) ||
     null;
 
   const selectedContacts = selectedCustomer
     ? contacts.filter((c) => c.customerId === selectedCustomer.customerId)
     : [];
-  const selectedContact = selectedContacts.find((c) => c.isPrimary) || selectedContacts[0] || null;
-
-  const selectedCustomerCerts = (selectedId && customerCerts[selectedId]) || [];
-  const matchedCertNames = certifications.filter((cert) =>
-    selectedCustomerCerts.some((cc) => cc.certificationId === cert.certificationId)
-  );
+  const selectedCustomerCerts = (effectiveSelectedId && customerCerts[effectiveSelectedId]) || [];
   const currentYear = new Date().getFullYear();
 
 const orderVolumeByCustomer = orders.reduce((acc, order) => {
@@ -408,11 +411,11 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
   };
 
   const openCreateContact = () => {
-    if (selectedId == null) {
+    if (effectiveSelectedId == null) {
       flashError('Please select a customer first.');
       return;
     }
-    setContactForm(emptyContactForm(selectedId));
+    setContactForm(emptyContactForm(effectiveSelectedId));
     setEditingContactId(null);
     setShowContactModal(true);
     setActionError(null);
@@ -479,17 +482,17 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
   };
 
   const toggleCertification = async (certId) => {
-    if (!selectedId) return;
+    if (!effectiveSelectedId) return;
     const alreadyLinked = selectedCustomerCerts.some((cc) => cc.certificationId === certId);
     try {
       if (alreadyLinked) {
-        await api.unlinkCustomerCertification(selectedId, certId);
+        await api.unlinkCustomerCertification(effectiveSelectedId, certId);
         flashSuccess('Certification unlinked.');
       } else {
-        await api.linkCustomerCertification(selectedId, certId);
+        await api.linkCustomerCertification(effectiveSelectedId, certId);
         flashSuccess('Certification linked.');
       }
-      await fetchCustomerCertifications(selectedId);
+      await fetchCustomerCertifications(effectiveSelectedId);
     } catch (err) {
       flashError(getErrorMessage(err, 'Failed to update certification'));
     }
@@ -512,12 +515,19 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
               placeholder="Search by name, ID or region..."
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCustomerPage(1);
+              }}
             />
           </div>
           <select
             value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCustomerPage(1);
+                setLoading(true);
+              }}
             className="h-12 px-lg bg-surface-container-low text-on-surface font-label-md rounded-lg shadow-sm border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="all">All Statuses</option>
@@ -707,7 +717,7 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
             ) : (
               visibleCustomers.map((customer) => {
                 const isInactive = normalizeStatus(customer.status) === 'inactive';
-                const isSelected = customer.customerId === selectedId;
+                const isSelected = customer.customerId === effectiveSelectedId;
                 return (
                   <div
                     key={customer.customerId}
@@ -859,20 +869,20 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
             <div className="flex items-center gap-sm">
               <button
                 type="button"
-                onClick={() => setCustomerPage((page) => Math.max(1, page - 1))}
+                onClick={() => setCustomerPage(Math.max(1, currentCustomerPage - 1))}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
-                disabled={customerPage === 1}
+                disabled={currentCustomerPage === 1}
                 title="Previous customer page"
               >
                 <span className="material-symbols-outlined text-[20px]">chevron_left</span>
               </button>
               <span className="font-mono-label text-mono-label text-on-surface-variant">
-                {customerPage} / {customerPageCount}
+                {currentCustomerPage} / {customerPageCount}
               </span>
               <button
                 type="button"
-                onClick={() => setCustomerPage((page) => Math.min(customerPageCount, page + 1))}
-                disabled={customerPage === customerPageCount}
+                onClick={() => setCustomerPage(Math.min(customerPageCount, currentCustomerPage + 1))}
+                disabled={currentCustomerPage === customerPageCount}
                 title="Next customer page"
                 className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
               >
@@ -1106,11 +1116,7 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
               {editingCustomerId != null ? `Edit Customer #${editingCustomerId}` : 'Add New Customer'}
             </h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              {editingCustomerId != null ? (
-                <>Updates via <code className="text-primary">PUT /api/customers/{editingCustomerId}</code></>
-              ) : (
-                <>Creates via <code className="text-primary">POST /api/customers</code></>
-              )}
+              Enter the customer details below.
             </p>
             <form onSubmit={handleSaveCustomer} className="flex flex-col gap-md">
               <div>
@@ -1279,11 +1285,7 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
               {editingContactId != null ? 'Edit Contact' : 'Add Contact'}
             </h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              {editingContactId != null ? (
-                <>Updates via <code className="text-primary">PUT /api/customer-contacts/{editingContactId}</code></>
-              ) : (
-                <>Creates via <code className="text-primary">POST /api/customer-contacts</code></>
-              )}
+              Enter the contact details below.
             </p>
             <form onSubmit={handleSaveContact} className="flex flex-col gap-md">
               <div>
@@ -1384,8 +1386,7 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Delete customer?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This calls <code className="text-primary">DELETE /api/customers/{pendingDeleteCustomer.customerId}</code> for{' '}
-              <strong>{pendingDeleteCustomer.companyName}</strong>. This cannot be undone.
+              Are you sure you want to delete <strong>{pendingDeleteCustomer.companyName}</strong>? This action cannot be undone.
             </p>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg line-clamp-3">
               {[pendingDeleteCustomer.city, pendingDeleteCustomer.region, pendingDeleteCustomer.country]
@@ -1419,8 +1420,7 @@ const orderVolumeByCustomer = orders.reduce((acc, order) => {
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Delete contact?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This calls <code className="text-primary">DELETE /api/customer-contacts/{pendingDeleteContact.contactId}</code> for{' '}
-              <strong>{pendingDeleteContact.fullName}</strong>. This cannot be undone.
+              Are you sure you want to delete <strong>{pendingDeleteContact.fullName}</strong>? This action cannot be undone.
             </p>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
               {pendingDeleteContact.email || pendingDeleteContact.role || 'No additional details'}
