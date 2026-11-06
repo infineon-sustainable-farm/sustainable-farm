@@ -24,6 +24,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s
@@ -40,8 +42,25 @@ services:
       APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
       SITESECURITY_READ_TOKEN: ${SITESECURITY_READ_TOKEN:-}
       SITESECURITY_ADMIN_TOKEN: ${SITESECURITY_ADMIN_TOKEN:-}
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-mailpit}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-mailpit}
+      MAIL_FROM: ${MAIL_FROM:-visits@sustainable-farm.local}
     ports:
       - "8080:8080"
+
+  # Test mail server: it keeps every email and delivers none of them.
+  # Inbox: http://localhost:8025. Both ports stay on this machine because the
+  # inbox has no login and will show sign-in codes.
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    container_name: sustainable-farm-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
 
   frontend:
     build: ./frontend
