@@ -3,7 +3,7 @@
 # Behavior (see docs/CI-AUTO-REVIEW.md):
 #   1. On every push/open of a PR targeting develop: the "quality-gate" job
 #      runs audit-shared-files.sh (conflicts, shared files, endpoints
-#      convention) + ci-guards.sh (11 blocking defect families) and publishes
+#      convention) + ci-guards.sh (12 blocking defect families) and publishes
 #      the report as a PR comment (updated, never duplicated).
 #   2. RED PR: the check fails, the report states what to fix.
 #   3. GREEN PR **and** created by AUTO_REVIEW_LOGIN **and** branch ending
