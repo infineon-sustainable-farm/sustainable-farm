@@ -4,8 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,8 @@ import java.time.LocalDate;
 public class EnergyComponent {
 
     @Id
+    @GeneratedValue(generator = "energy-component-id")
+    @GenericGenerator(name = "energy-component-id", type = EnergyComponentIdGenerator.class)
     @Column(name = "component_id", length = 20)
     private String componentId;
 

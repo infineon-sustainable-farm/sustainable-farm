@@ -5,8 +5,11 @@ import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyComponentR
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergyComponent;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
+import jakarta.persistence.EntityManager;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -15,9 +18,11 @@ import java.util.List;
 public class EnergyComponentService {
 
     private final EnergyComponentRepository energyComponentRepository;
+    private final EntityManager entityManager;
 
-    public EnergyComponentService(EnergyComponentRepository energyComponentRepository) {
+    public EnergyComponentService(EnergyComponentRepository energyComponentRepository, EntityManager entityManager) {
         this.energyComponentRepository = energyComponentRepository;
+        this.entityManager = entityManager;
     }
 
     public List<EnergyComponentResponse> findAll() {
@@ -33,7 +38,13 @@ public class EnergyComponentService {
         EnergyComponent component = new EnergyComponent();
         component.setComponentId(request.componentId());
         applyRequest(component, request);
-        return EnergyComponentResponse.from(energyComponentRepository.save(component));
+        if (energyComponentRepository.existsById(component.getComponentId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Energy component already exists: " + component.getComponentId());
+        }
+        entityManager.persist(component);
+        entityManager.flush();
+        return EnergyComponentResponse.from(component);
     }
 
     @Transactional
