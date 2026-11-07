@@ -24,6 +24,10 @@ import java.util.stream.Collectors;
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
+// Explicit bean name: Machinery also ships an EquipmentController, and two
+// @RestController classes with the same simple name make the Spring context
+// fail (ConflictingBeanDefinitionException).
+@RestController("prodTransEquipmentController")
 @RequestMapping("/api/equipment")
 @Tag(name = "Equipment Management", description = "APIs for managing equipment and machinery")
 public class EquipmentController {

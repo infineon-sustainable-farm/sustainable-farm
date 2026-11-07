@@ -25,6 +25,8 @@ import java.util.List;
  * @version 1.0.0
  */
 @Transactional
+// Explicit bean name: Machinery also ships an EquipmentService implementation.
+@Service("prodTransEquipmentService")
 public class EquipmentServiceImpl implements EquipmentService {
 
     private final EquipmentRepository equipmentRepository;
