@@ -1,6 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorSessionRepository;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions.signedIn;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -28,29 +34,40 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:sitesecurity-contract;DB_CLOSE_DELAY=-1",
-        "spring.jpa.open-in-view=false",
-        "SITESECURITY_READ_TOKEN=" + SiteSecurityHttpContractTest.READ_TOKEN,
-        "SITESECURITY_ADMIN_TOKEN=" + SiteSecurityHttpContractTest.ADMIN_TOKEN
+        "spring.jpa.open-in-view=false"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles({"test", "dev"})
 class SiteSecurityHttpContractTest {
 
-    static final String READ_TOKEN = "read-token-for-contract-0123456789abcdef";
-    static final String ADMIN_TOKEN = "admin-token-for-contract-0123456789abcdef";
 
     private static final String BASE = "/api/v1/sitesecurity";
 
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private OperatorRepository sessionOperators;
+
+    @Autowired
+    private OperatorSessionRepository sessions;
+
+    private String readSession;
+    private String adminSession;
+
+    @BeforeEach
+    void openSessions() {
+        readSession = TestSessions.open(sessionOperators, sessions, "session-reader@example.test", SiteSecurityRole.READ);
+        adminSession = TestSessions.open(sessionOperators, sessions, "session-admin@example.test", SiteSecurityRole.ADMIN);
+    }
+
     private ResultActions read(String path) throws Exception {
-        return mvc.perform(get(BASE + path).header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN));
+        return mvc.perform(get(BASE + path).with(signedIn(readSession)));
     }
 
     private ResultActions create(String body) throws Exception {
         return mvc.perform(post(BASE + "/credentials")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .with(signedIn(adminSession))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
@@ -95,7 +112,7 @@ class SiteSecurityHttpContractTest {
 
     @Test
     void readToken_shouldNotUseAnyWriteMethod() throws Exception {
-        mvc.perform(delete(BASE + "/credentials/u1").header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN))
+        mvc.perform(delete(BASE + "/credentials/u1").with(signedIn(readSession)))
                 .andExpect(status().isForbidden());
     }
 

@@ -1,14 +1,18 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.config;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.service.SessionService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,31 +23,34 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Transitional, module-local access control for the Site Security API, until
- * the project adopts a shared authentication layer. It proves which role is
- * calling, not which person. It fails closed: a missing or too short token
- * configuration matches no request, so the API stays locked.
- * Any method that is not a read requires ADMIN, so new write endpoints are
- * protected by default.
+ * Access control for the Site Security API. An operator is known by the session
+ * cookie set at sign-in; the gate scanner by SITESECURITY_GATE_TOKEN, which only
+ * opens the endpoints marked {@link GateScanner}. The operator's role is read
+ * again on every request. Any method that is not a read requires ADMIN, so new
+ * write endpoints are protected by default. It fails closed.
  */
 @Component
 public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
 
     public static final String ROLE_ATTRIBUTE = "siteSecurityRole";
+    public static final String PRINCIPAL_ATTRIBUTE = "siteSecurityPrincipal";
 
     private static final Logger log = LoggerFactory.getLogger(SiteSecurityAccessInterceptor.class);
     private static final int MIN_TOKEN_LENGTH = 32;
     private static final String BEARER_PREFIX = "Bearer ";
     private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
-    private final byte[] readTokenDigest;
-    private final byte[] adminTokenDigest;
+    private final ObjectProvider<SessionService> sessionService;
+    private final byte[] gateTokenDigest;
 
-    public SiteSecurityAccessInterceptor(
-            @Value("${SITESECURITY_READ_TOKEN:}") String readToken,
-            @Value("${SITESECURITY_ADMIN_TOKEN:}") String adminToken) {
-        this.readTokenDigest = configuredDigest("SITESECURITY_READ_TOKEN", readToken);
-        this.adminTokenDigest = configuredDigest("SITESECURITY_ADMIN_TOKEN", adminToken);
+    /**
+     * The session service is looked up on use: test slices of other modules load
+     * this interceptor without the Site Security services, and must still start.
+     */
+    public SiteSecurityAccessInterceptor(ObjectProvider<SessionService> sessionService,
+            @Value("${SITESECURITY_GATE_TOKEN:}") String gateToken) {
+        this.sessionService = sessionService;
+        this.gateTokenDigest = configuredDigest(gateToken);
     }
 
     @Override
@@ -53,55 +60,79 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        SiteSecurityRole role = resolveRole(request.getHeader(HttpHeaders.AUTHORIZATION));
-        if (role == null) {
-            log.warn("Site Security access denied (no valid token): {} {}",
+        Optional<SiteSecurityPrincipal> caller = resolve(request);
+        if (caller.isEmpty()) {
+            log.warn("Site Security access denied (not signed in): {} {}",
                     request.getMethod(), request.getRequestURI());
-            response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
-            writeError(response, HttpStatus.UNAUTHORIZED, "A valid access token is required.");
+            writeError(response, HttpStatus.UNAUTHORIZED, "Sign in to use Site Security.");
             return false;
         }
-        if (role != SiteSecurityRole.ADMIN && requiresAdmin(request, handler)) {
-            log.warn("Site Security access denied (admin role required): {} {}",
-                    request.getMethod(), request.getRequestURI());
-            writeError(response, HttpStatus.FORBIDDEN, "This action requires the admin role.");
+        SiteSecurityPrincipal principal = caller.get();
+        if (!isAllowed(principal.role(), request, handler)) {
+            log.warn("Site Security access denied ({} role): {} {}",
+                    principal.role(), request.getMethod(), request.getRequestURI());
+            writeError(response, HttpStatus.FORBIDDEN, principal.role() == SiteSecurityRole.GATE
+                    ? "The gate token cannot be used here."
+                    : "This action requires the admin role.");
             return false;
         }
 
-        request.setAttribute(ROLE_ATTRIBUTE, role);
+        request.setAttribute(ROLE_ATTRIBUTE, principal.role());
+        request.setAttribute(PRINCIPAL_ATTRIBUTE, principal);
         return true;
     }
 
-    /** Decided from the matched controller, because a URL can be encoded in several ways. */
-    private static boolean requiresAdmin(HttpServletRequest request, Object handler) {
-        return !READ_METHODS.contains(request.getMethod())
-                || (handler instanceof HandlerMethod method
-                        && method.getBeanType().isAnnotationPresent(AdminOnly.class));
+    /** The session cookie wins: a browser never sends the gate token. */
+    private Optional<SiteSecurityPrincipal> resolve(HttpServletRequest request) {
+        String session = sessionCookie(request);
+        if (session != null) {
+            SessionService sessions = sessionService.getIfAvailable();
+            return sessions == null ? Optional.empty() : sessions.resolve(session);
+        }
+        if (isGateToken(request.getHeader(HttpHeaders.AUTHORIZATION))) {
+            return Optional.of(SiteSecurityPrincipal.gateScanner());
+        }
+        return Optional.empty();
     }
 
-    private SiteSecurityRole resolveRole(String authorization) {
-        if (authorization == null
-                || !authorization.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+    /** Decided from the matched controller, because a URL can be encoded in several ways. */
+    private static boolean isAllowed(SiteSecurityRole role, HttpServletRequest request, Object handler) {
+        HandlerMethod method = handler instanceof HandlerMethod found ? found : null;
+        if (role == SiteSecurityRole.GATE) {
+            return method != null && (method.hasMethodAnnotation(GateScanner.class)
+                    || method.getBeanType().isAnnotationPresent(GateScanner.class));
+        }
+        boolean adminOnly = !READ_METHODS.contains(request.getMethod())
+                || (method != null && method.getBeanType().isAnnotationPresent(AdminOnly.class));
+        return role == SiteSecurityRole.ADMIN || !adminOnly;
+    }
+
+    static String sessionCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
             return null;
         }
-        byte[] presented = sha256(authorization.substring(BEARER_PREFIX.length()).trim());
-        // Both comparisons always run, so timing does not reveal which token matched.
-        boolean admin = matches(adminTokenDigest, presented);
-        boolean read = matches(readTokenDigest, presented);
-        if (admin) {
-            return SiteSecurityRole.ADMIN;
+        for (Cookie cookie : cookies) {
+            if (SessionService.COOKIE_NAME.equals(cookie.getName()) && !cookie.getValue().isBlank()) {
+                return cookie.getValue();
+            }
         }
-        return read ? SiteSecurityRole.READ : null;
+        return null;
     }
 
-    private static boolean matches(byte[] expected, byte[] presented) {
-        return expected != null && MessageDigest.isEqual(expected, presented);
+    private boolean isGateToken(String authorization) {
+        if (gateTokenDigest == null || authorization == null
+                || !authorization.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+            return false;
+        }
+        byte[] presented = sha256(authorization.substring(BEARER_PREFIX.length()).trim());
+        return MessageDigest.isEqual(gateTokenDigest, presented);
     }
 
-    private static byte[] configuredDigest(String variable, String token) {
+    private static byte[] configuredDigest(String token) {
         if (token == null || token.trim().length() < MIN_TOKEN_LENGTH) {
-            log.warn("{} is missing or shorter than {} characters: this role is disabled.",
-                    variable, MIN_TOKEN_LENGTH);
+            log.info("SITESECURITY_GATE_TOKEN is missing or shorter than {} characters: the gate scanner is disabled.",
+                    MIN_TOKEN_LENGTH);
             return null;
         }
         return sha256(token.trim());
@@ -115,12 +146,11 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
         }
     }
 
-    private static void writeError(HttpServletResponse response, HttpStatus status, String message)
-            throws IOException {
+    static void writeError(HttpServletResponse response, HttpStatus status, String message) throws IOException {
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        // The message is a constant from this class, so it needs no JSON escaping.
+        // The message is a constant from this package, so it needs no JSON escaping.
         response.getWriter().write("{\"status\":" + status.value()
                 + ",\"error\":\"" + status.getReasonPhrase()
                 + "\",\"message\":\"" + message + "\"}");

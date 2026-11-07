@@ -1,9 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
 import com.infineonbit.sustainablefarm.core.notification.NotificationService;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialNotificationStatus;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.CredentialUserRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorSessionRepository;
 import java.time.Duration;
 import java.time.LocalDate;
 import org.awaitility.Awaitility;
@@ -24,6 +28,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions.signedIn;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,17 +49,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:sitesecurity-email;DB_CLOSE_DELAY=-1",
-        "SITESECURITY_READ_TOKEN=" + SiteSecurityCredentialEmailIntegrationTest.READ_TOKEN,
-        "SITESECURITY_ADMIN_TOKEN=" + SiteSecurityCredentialEmailIntegrationTest.ADMIN_TOKEN
+        "spring.datasource.url=jdbc:h2:mem:sitesecurity-email;DB_CLOSE_DELAY=-1"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @ExtendWith(OutputCaptureExtension.class)
 class SiteSecurityCredentialEmailIntegrationTest {
 
-    static final String READ_TOKEN = "read-token-for-email-tests-0123456789abcd";
-    static final String ADMIN_TOKEN = "admin-token-for-email-tests-0123456789abc";
 
     private static final String CREDENTIALS = "/api/v1/sitesecurity/credentials";
     private static final String EMAIL = "holder@example.test";
@@ -62,6 +63,21 @@ class SiteSecurityCredentialEmailIntegrationTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private OperatorRepository sessionOperators;
+
+    @Autowired
+    private OperatorSessionRepository sessions;
+
+    private String readSession;
+    private String adminSession;
+
+    @BeforeEach
+    void openSessions() {
+        readSession = TestSessions.open(sessionOperators, sessions, "session-reader@example.test", SiteSecurityRole.READ);
+        adminSession = TestSessions.open(sessionOperators, sessions, "session-admin@example.test", SiteSecurityRole.ADMIN);
+    }
 
     @Autowired
     private CredentialUserRepository credentials;
@@ -84,14 +100,14 @@ class SiteSecurityCredentialEmailIntegrationTest {
 
     private ResultActions create(String body) throws Exception {
         return mvc.perform(post(CREDENTIALS)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .with(signedIn(adminSession))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
 
     private ResultActions revoke(String id) throws Exception {
         return mvc.perform(post(CREDENTIALS + "/" + id + "/revoke")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN));
+                .with(signedIn(adminSession)));
     }
 
     private CredentialUserEntity created(String name) throws Exception {
@@ -219,11 +235,11 @@ class SiteSecurityCredentialEmailIntegrationTest {
         CredentialUserEntity credential = created("Private Holder");
         awaitStatus(credential.getId(), CredentialNotificationStatus.SENT);
 
-        mvc.perform(get(CREDENTIALS).header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
+        mvc.perform(get(CREDENTIALS).with(signedIn(adminSession)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].email").value(EMAIL));
 
-        String asReader = mvc.perform(get(CREDENTIALS).header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN))
+        String asReader = mvc.perform(get(CREDENTIALS).with(signedIn(readSession)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].email", nullValue()))
                 .andReturn().getResponse().getContentAsString();

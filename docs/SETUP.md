@@ -36,6 +36,11 @@ A local JDK and Node.js are **not** required: both the backend (Maven/Temurin 21
    | `POSTGRES_PASSWORD` | `changeme` | PostgreSQL password (change this) |
    | `POSTGRES_PORT` | `5432` | Host port published for PostgreSQL |
    | `SITESECURITY_BOOTSTRAP_ADMIN_EMAIL` | empty | Email of the first Site Security admin, created at startup if it does not exist |
+   | `SITESECURITY_OTP_SECRET` | empty | Key used to hash Site Security sign-in codes (at least 32 characters); without it, nobody can sign in |
+   | `SITESECURITY_GATE_TOKEN` | empty | Token of the gate scanner (at least 32 characters); empty disables the scanner |
+   | `SITESECURITY_COOKIE_SECURE` | `true` | Set to `false` only when the app is opened over plain HTTP from another machine |
+
+   Site Security operators sign in with their email and a 6-digit code sent by email (read it in Mailpit at http://localhost:8025). Open the app at one of the addresses listed in `APP_CORS_ORIGINS`: changes are refused from any other origin.
 
    Email settings are optional: by default, Docker Compose sends every email to Mailpit. To use a real SMTP relay, set the `MAIL_*` variables described in `.env.example`.
 

@@ -1,7 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.ZoneEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.CredentialUserRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorSessionRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.ZoneRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,31 +26,42 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions.signedIn;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:sitesecurity-access;DB_CLOSE_DELAY=-1",
-        "SITESECURITY_READ_TOKEN=" + SiteSecurityAccessIntegrationTest.READ_TOKEN,
-        "SITESECURITY_ADMIN_TOKEN=" + SiteSecurityAccessIntegrationTest.ADMIN_TOKEN
+        "spring.datasource.url=jdbc:h2:mem:sitesecurity-access;DB_CLOSE_DELAY=-1"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SiteSecurityAccessIntegrationTest {
 
-    static final String READ_TOKEN = "read-token-for-tests-0123456789abcdef";
-    static final String ADMIN_TOKEN = "admin-token-for-tests-0123456789abcdef";
 
     private static final String BASE = "/api/v1/sitesecurity";
     private static final int CONCURRENT_REQUESTS = 16;
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private OperatorRepository sessionOperators;
+
+    @Autowired
+    private OperatorSessionRepository sessions;
+
+    private String readSession;
+    private String adminSession;
+
+    @BeforeEach
+    void openSessions() {
+        readSession = TestSessions.open(sessionOperators, sessions, "session-reader@example.test", SiteSecurityRole.READ);
+        adminSession = TestSessions.open(sessionOperators, sessions, "session-admin@example.test", SiteSecurityRole.ADMIN);
+    }
 
     @Autowired
     private CredentialUserRepository credentials;
@@ -67,9 +82,9 @@ class SiteSecurityAccessIntegrationTest {
                 + "\",\"level\":\"" + level + "\",\"validUntil\":\"" + validUntil + "\"}";
     }
 
-    private ResultActions create(String token, String body) throws Exception {
+    private ResultActions create(String session, String body) throws Exception {
         return mvc.perform(post(BASE + "/credentials")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .with(signedIn(session))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
@@ -85,27 +100,30 @@ class SiteSecurityAccessIntegrationTest {
         for (String path : List.of("/session", "/overview", "/zones", "/credentials", "/logs")) {
             mvc.perform(get(BASE + path))
                     .andExpect(status().isUnauthorized())
-                    .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
-                    .andExpect(jsonPath("$.message").value("A valid access token is required."));
+                    .andExpect(jsonPath("$.message").value("Sign in to use Site Security."));
         }
         mvc.perform(post(BASE + "/credentials").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.ORIGIN, TestSessions.APP_ORIGIN)
                         .content(json("Anon", "Staff", "critical", "Permanent")))
                 .andExpect(status().isUnauthorized());
         assertEquals(0, credentials.count());
     }
 
     @Test
-    void wrongToken_shouldBeRejected() throws Exception {
+    void unknownSessionOrToken_shouldBeRejected() throws Exception {
         mvc.perform(get(BASE + "/logs").header(HttpHeaders.AUTHORIZATION, "Bearer wrong"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get(BASE + "/logs").with(signedIn("not-a-session")))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void session_shouldReportTheRoleOfTheToken() throws Exception {
-        mvc.perform(get(BASE + "/session").header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN))
+    void session_shouldReportTheRoleAndEmailOfTheOperator() throws Exception {
+        mvc.perform(get(BASE + "/session").with(signedIn(readSession)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.role").value("read"));
-        mvc.perform(get(BASE + "/session").header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
+                .andExpect(jsonPath("$.role").value("read"))
+                .andExpect(jsonPath("$.email").value("session-reader@example.test"));
+        mvc.perform(get(BASE + "/session").with(signedIn(adminSession)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.role").value("admin"));
     }
@@ -124,10 +142,10 @@ class SiteSecurityAccessIntegrationTest {
     @Test
     void readToken_shouldReadButNotCreate() throws Exception {
         for (String path : List.of("/overview", "/zones", "/credentials", "/logs")) {
-            mvc.perform(get(BASE + path).header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN))
+            mvc.perform(get(BASE + path).with(signedIn(readSession)))
                     .andExpect(status().isOk());
         }
-        create(READ_TOKEN, json("Reader", "Staff", "open", futureDate()))
+        create(readSession, json("Reader", "Staff", "open", futureDate()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("This action requires the admin role."));
         assertEquals(0, credentials.count());
@@ -135,7 +153,7 @@ class SiteSecurityAccessIntegrationTest {
 
     @Test
     void adminToken_shouldGrantCriticalAndPermanentAccess() throws Exception {
-        create(ADMIN_TOKEN, json("Head of Security", "Security", "critical", "Permanent"))
+        create(adminSession, json("Head of Security", "Security", "critical", "Permanent"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.level").value("critical"))
                 .andExpect(jsonPath("$.validUntil").value("Permanent"));
@@ -148,7 +166,7 @@ class SiteSecurityAccessIntegrationTest {
         String body = "{\"name\":\"Ada Byron\",\"email\":\"ada@example.test\",\"role\":\"Tester\",\"type\":\"Staff\",\"level\":\"open\","
                 + "\"validUntil\":\"Permanent\",\"status\":\"Expired\",\"initials\":\"" + "A".repeat(300) + "\"}";
 
-        create(ADMIN_TOKEN, body)
+        create(adminSession, body)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("Active"))
                 .andExpect(jsonPath("$.initials").value("AB"));
@@ -156,13 +174,13 @@ class SiteSecurityAccessIntegrationTest {
 
     @Test
     void visitor_shouldBeLimitedToDatedOpenOrControlledAccess() throws Exception {
-        create(ADMIN_TOKEN, json("V1", "Visitor", "critical", futureDate()))
+        create(adminSession, json("V1", "Visitor", "critical", futureDate()))
                 .andExpect(status().isUnprocessableContent());
-        create(ADMIN_TOKEN, json("V2", "Visitor", "restricted", futureDate()))
+        create(adminSession, json("V2", "Visitor", "restricted", futureDate()))
                 .andExpect(status().isUnprocessableContent());
-        create(ADMIN_TOKEN, json("V3", "Visitor", "open", "Permanent"))
+        create(adminSession, json("V3", "Visitor", "open", "Permanent"))
                 .andExpect(status().isUnprocessableContent());
-        create(ADMIN_TOKEN, json("V4", "Visitor", "controlled", futureDate()))
+        create(adminSession, json("V4", "Visitor", "controlled", futureDate()))
                 .andExpect(status().isCreated());
         assertEquals(1, credentials.count());
     }
@@ -171,9 +189,9 @@ class SiteSecurityAccessIntegrationTest {
 
     @Test
     void duplicateName_shouldReturnConflict() throws Exception {
-        create(ADMIN_TOKEN, json("Same Name", "Staff", "open", "Permanent")).andExpect(status().isCreated());
+        create(adminSession, json("Same Name", "Staff", "open", "Permanent")).andExpect(status().isCreated());
 
-        create(ADMIN_TOKEN, json("Same Name", "Staff", "open", "Permanent"))
+        create(adminSession, json("Same Name", "Staff", "open", "Permanent"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("A credential for 'Same Name' already exists."));
     }
@@ -203,7 +221,7 @@ class SiteSecurityAccessIntegrationTest {
             String body = bodyFor.apply(i);
             results.add(executor.submit(() -> {
                 start.await();
-                return create(ADMIN_TOKEN, body).andReturn().getResponse().getStatus();
+                return create(adminSession, body).andReturn().getResponse().getStatus();
             }));
         }
         start.countDown();

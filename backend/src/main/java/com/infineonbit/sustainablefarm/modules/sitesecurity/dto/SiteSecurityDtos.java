@@ -1,11 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -197,6 +199,11 @@ public class SiteSecurityDtos {
     @AllArgsConstructor
     public static class SessionDto {
         private String role;
+        private String email;
+
+        public static SessionDto of(SiteSecurityPrincipal principal) {
+            return new SessionDto(principal.role().name().toLowerCase(Locale.ROOT), principal.email());
+        }
     }
 
     @Data

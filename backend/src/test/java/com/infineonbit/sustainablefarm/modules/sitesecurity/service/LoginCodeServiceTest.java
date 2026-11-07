@@ -16,7 +16,7 @@ import org.springframework.mock.env.MockEnvironment;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -75,7 +75,7 @@ class LoginCodeServiceTest {
 
     @Test
     void verifyCode_shouldRefuseEverything_withoutASecret() {
-        assertFalse(service("", true).verifyCode(EMAIL, "123456"));
+        assertTrue(service("", true).verifyCode(EMAIL, "123456").isEmpty());
 
         verifyNoInteractions(loginCodes);
     }

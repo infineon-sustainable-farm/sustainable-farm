@@ -1,6 +1,7 @@
 /*
- * The access token lives in this module's memory only: never in the bundle or
- * in browser storage. Reloading the page therefore asks for it again.
+ * The session itself lives in an HttpOnly cookie that this code cannot read:
+ * the browser sends it with every Site Security request. This module only
+ * remembers who is signed in, to choose what the screens show.
  */
 let session = null;
 let onSessionEnded = null;
@@ -9,8 +10,12 @@ export function getSessionRole() {
     return session?.role ?? null;
 }
 
-export function startSession(token, role) {
-    session = { token, role };
+export function getSessionEmail() {
+    return session?.email ?? null;
+}
+
+export function startSession(role, email = null) {
+    session = { role, email };
 }
 
 export function endSession() {
@@ -20,11 +25,6 @@ export function endSession() {
 
 export function setSessionEndedHandler(handler) {
     onSessionEnded = handler;
-}
-
-export function withAuth(config = {}) {
-    if (!session) return config;
-    return { ...config, headers: { ...config.headers, Authorization: `Bearer ${session.token}` } };
 }
 
 export function endSessionIfUnauthorized(err) {

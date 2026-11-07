@@ -1,11 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.GateEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.LogEntryEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.CredentialUserRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.GateRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.LogEntryRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorSessionRepository;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +22,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions.signedIn;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,21 +32,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** Runs without the dev profile, as in production: only the reference zones exist at startup. */
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:sitesecurity-api;DB_CLOSE_DELAY=-1",
-        "SITESECURITY_READ_TOKEN=" + SiteSecurityApiIntegrationTest.READ_TOKEN,
-        "SITESECURITY_ADMIN_TOKEN=" + SiteSecurityApiIntegrationTest.ADMIN_TOKEN
+        "spring.datasource.url=jdbc:h2:mem:sitesecurity-api;DB_CLOSE_DELAY=-1"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SiteSecurityApiIntegrationTest {
 
-    static final String READ_TOKEN = "read-token-for-api-tests-0123456789abcdef";
-    static final String ADMIN_TOKEN = "admin-token-for-api-tests-0123456789abcdef";
 
     private static final String BASE = "/api/v1/sitesecurity";
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private OperatorRepository sessionOperators;
+
+    @Autowired
+    private OperatorSessionRepository sessions;
+
+    private String readSession;
+    private String adminSession;
+
+    @BeforeEach
+    void openSessions() {
+        readSession = TestSessions.open(sessionOperators, sessions, "session-reader@example.test", SiteSecurityRole.READ);
+        adminSession = TestSessions.open(sessionOperators, sessions, "session-admin@example.test", SiteSecurityRole.ADMIN);
+    }
 
     @Autowired
     private CredentialUserRepository credentials;
@@ -60,19 +76,19 @@ class SiteSecurityApiIntegrationTest {
     }
 
     private ResultActions read(String path) throws Exception {
-        return mvc.perform(get(BASE + path).header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN));
+        return mvc.perform(get(BASE + path).with(signedIn(readSession)));
     }
 
     private ResultActions create(String body) throws Exception {
         return mvc.perform(post(BASE + "/credentials")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .with(signedIn(adminSession))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
 
-    private ResultActions revoke(String token, String id) throws Exception {
+    private ResultActions revoke(String session, String id) throws Exception {
         return mvc.perform(post(BASE + "/credentials/" + id + "/revoke")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token));
+                .with(signedIn(session)));
     }
 
     private String json(String type, String level, String validUntil) {
@@ -237,8 +253,9 @@ class SiteSecurityApiIntegrationTest {
     void revoke_shouldRequireTheAdminRole() throws Exception {
         credential("c1", "Staff", "open", "Permanent", "Active");
 
-        revoke(READ_TOKEN, "c1").andExpect(status().isForbidden());
-        mvc.perform(post(BASE + "/credentials/c1/revoke")).andExpect(status().isUnauthorized());
+        revoke(readSession, "c1").andExpect(status().isForbidden());
+        mvc.perform(post(BASE + "/credentials/c1/revoke").header(HttpHeaders.ORIGIN, TestSessions.APP_ORIGIN))
+                .andExpect(status().isUnauthorized());
 
         read("/credentials").andExpect(jsonPath("$[0].status").value("Active"));
     }
@@ -247,8 +264,8 @@ class SiteSecurityApiIntegrationTest {
     void revoke_shouldBeFinalAndIdempotent() throws Exception {
         credential("c1", "Staff", "critical", "Permanent", "Active");
 
-        revoke(ADMIN_TOKEN, "c1").andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Revoked"));
-        revoke(ADMIN_TOKEN, "c1").andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Revoked"));
+        revoke(adminSession, "c1").andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Revoked"));
+        revoke(adminSession, "c1").andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Revoked"));
 
         read("/credentials").andExpect(jsonPath("$[0].status").value("Revoked"));
         read("/zones").andExpect(jsonPath("$[?(@.id=='critical')].authorizedUsers", contains(0)));
@@ -256,6 +273,6 @@ class SiteSecurityApiIntegrationTest {
 
     @Test
     void revoke_shouldReturn404ForAnUnknownCredential() throws Exception {
-        revoke(ADMIN_TOKEN, "missing").andExpect(status().isNotFound());
+        revoke(adminSession, "missing").andExpect(status().isNotFound());
     }
 }

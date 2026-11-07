@@ -14,7 +14,7 @@ export default function TopBar({ screen, onLock }) {
           Willow Ridge Farm
         </span>
         <LiveClock />
-        <button type="button" onClick={onLock} aria-label="Lock session" title="Lock session" className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:text-navy-900">
+        <button type="button" onClick={onLock} aria-label="Sign out" title="Sign out" className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:text-navy-900">
           <Lock className="size-4"/>
         </button>
       </div>

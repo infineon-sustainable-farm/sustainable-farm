@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityAccessInterceptor;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.service.LogFilter;
@@ -22,8 +23,8 @@ public class SiteSecurityController {
 
     @GetMapping("/session")
     public ResponseEntity<SessionDto> getSession(
-            @RequestAttribute(SiteSecurityAccessInterceptor.ROLE_ATTRIBUTE) SiteSecurityRole role) {
-        return ResponseEntity.ok(new SessionDto(role.name().toLowerCase(Locale.ROOT)));
+            @RequestAttribute(SiteSecurityAccessInterceptor.PRINCIPAL_ATTRIBUTE) SiteSecurityPrincipal principal) {
+        return ResponseEntity.ok(SessionDto.of(principal));
     }
 
     @GetMapping("/overview")

@@ -92,11 +92,14 @@ public class LoginCodeService {
         }
     }
 
-    /** Every failure gives the same result: the caller never learns which check failed. */
+    /**
+     * Returns the id of the operator the code belongs to, or nothing. Every failure
+     * gives the same result: the caller never learns which check failed.
+     */
     @Transactional
-    public boolean verifyCode(String email, String code) {
+    public Optional<String> verifyCode(String email, String code) {
         if (hmacKey == null) {
-            return false;
+            return Optional.empty();
         }
         List<LoginCodeEntity> candidates = loginCodeRepository
                 .lockUnusedByActiveOperatorEmail(OperatorService.normalizeEmail(email));
@@ -106,16 +109,17 @@ public class LoginCodeService {
                 .filter(candidate -> candidate.getAttempts() < MAX_ATTEMPTS)
                 .findFirst();
         if (usable.isEmpty()) {
-            return false;
+            return Optional.empty();
         }
         LoginCodeEntity loginCode = usable.get();
         loginCode.setAttempts(loginCode.getAttempts() + 1);
         boolean matches = MessageDigest.isEqual(
                 bytes(hash(loginCode.getId(), code)), bytes(loginCode.getCodeHash()));
-        if (matches) {
-            loginCode.setConsumedAt(now);
+        if (!matches) {
+            return Optional.empty();
         }
-        return matches;
+        loginCode.setConsumedAt(now);
+        return Optional.of(loginCode.getOperatorId());
     }
 
     private IssuedCode issueCode(String email) {

@@ -8,6 +8,7 @@ import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.OperatorDto;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.OperatorEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorSessionRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +28,7 @@ public class OperatorService {
     private static final Sort BY_EMAIL = Sort.by("email");
 
     private final OperatorRepository operatorRepository;
+    private final OperatorSessionRepository sessionRepository;
 
     public static String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
@@ -70,7 +72,10 @@ public class OperatorService {
         return toDto(operatorRepository.save(operator));
     }
 
-    /** Idempotent: disabling an operator who is already disabled changes nothing. */
+    /**
+     * Idempotent: disabling an operator who is already disabled changes nothing.
+     * Their open sessions end at once.
+     */
     @Transactional
     public OperatorDto disableOperator(String id, String actor) {
         List<OperatorEntity> activeAdmins = operatorRepository.lockActiveByRole(SiteSecurityRole.ADMIN);
@@ -82,6 +87,7 @@ public class OperatorService {
         operator.setActive(false);
         operator.setDisabledBy(actor);
         operator.setDisabledAt(Instant.now());
+        sessionRepository.revokeAllForOperator(operator.getId(), Instant.now());
         return toDto(operatorRepository.save(operator));
     }
 

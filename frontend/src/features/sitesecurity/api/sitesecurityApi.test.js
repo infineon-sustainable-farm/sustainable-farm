@@ -6,17 +6,20 @@ import {
     fetchCredentials,
     fetchSecurityOverview,
     fetchZones,
-    openSession,
+    requestSignInCode,
+    restoreSession,
     revokeCredentialApi,
+    signOut,
+    verifySignInCode,
 } from "./sitesecurityApi";
 import { SITESECURITY_ENDPOINTS } from "./endpoints";
-import { endSession, getSessionRole, setSessionEndedHandler, startSession } from "./sitesecurityAuth";
+import { endSession, getSessionEmail, getSessionRole, setSessionEndedHandler, startSession } from "./sitesecurityAuth";
 
 vi.mock("../../../shared/api/client", () => ({
     apiClient: { get: vi.fn(), post: vi.fn() },
 }));
 
-const BEARER = { Authorization: "Bearer the-token" };
+const WITH_COOKIE = { withCredentials: true };
 
 describe("sitesecurityApi", () => {
     beforeEach(() => {
@@ -25,12 +28,12 @@ describe("sitesecurityApi", () => {
         apiClient.post.mockResolvedValue({});
         setSessionEndedHandler(null);
         endSession();
-        startSession("the-token", "admin");
+        startSession("admin", "admin@example.test");
     });
 
     it("has a real URL for every endpoint", () => {
         for (const url of Object.values(SITESECURITY_ENDPOINTS)) {
-            expect(url).toMatch(/^\/api\/v1\/sitesecurity\/[a-z]+$/);
+            expect(url).toMatch(/^\/api\/v1\/sitesecurity\/[a-z]+(\/[a-z-]+)?$/);
         }
     });
 
@@ -38,29 +41,25 @@ describe("sitesecurityApi", () => {
         ["overview", fetchSecurityOverview, "/api/v1/sitesecurity/overview"],
         ["zones", fetchZones, "/api/v1/sitesecurity/zones"],
         ["credentials", fetchCredentials, "/api/v1/sitesecurity/credentials"],
-    ])("reads %s with the token", async (_name, call, url) => {
+    ])("reads %s with the session cookie and no token", async (_name, call, url) => {
         await call();
 
-        expect(apiClient.get).toHaveBeenCalledWith(url, { headers: BEARER });
+        expect(apiClient.get).toHaveBeenCalledWith(url, WITH_COOKIE);
     });
 
-    it("sends the log filter with the token", async () => {
+    it("sends the log filter", async () => {
         await fetchAccessLogs("denied");
 
         expect(apiClient.get).toHaveBeenCalledWith("/api/v1/sitesecurity/logs", {
             params: { filter: "denied" },
-            headers: BEARER,
+            withCredentials: true,
         });
     });
 
-    it("creates a credential with the token", async () => {
+    it("creates a credential", async () => {
         await createCredentialApi({ name: "Ada" });
 
-        expect(apiClient.post).toHaveBeenCalledWith(
-            "/api/v1/sitesecurity/credentials",
-            { name: "Ada" },
-            { headers: BEARER },
-        );
+        expect(apiClient.post).toHaveBeenCalledWith("/api/v1/sitesecurity/credentials", { name: "Ada" }, WITH_COOKIE);
     });
 
     it("escapes the id when revoking a credential", async () => {
@@ -69,7 +68,7 @@ describe("sitesecurityApi", () => {
         expect(apiClient.post).toHaveBeenCalledWith(
             "/api/v1/sitesecurity/credentials/a%2Fb%20c/revoke",
             null,
-            { headers: BEARER },
+            WITH_COOKIE,
         );
     });
 
@@ -83,23 +82,68 @@ describe("sitesecurityApi", () => {
         await expect(createCredentialApi({})).rejects.toBe(failure);
     });
 
-    it("opens a session only when the server accepts the token", async () => {
+    it("asks for a sign-in code without opening a session", async () => {
         endSession();
-        apiClient.get.mockResolvedValue({ role: "read" });
 
-        await expect(openSession("new-token")).resolves.toBe("read");
+        await requestSignInCode("op@example.test");
 
-        expect(apiClient.get).toHaveBeenCalledWith("/api/v1/sitesecurity/session", {
-            headers: { Authorization: "Bearer new-token" },
-        });
-        expect(getSessionRole()).toBe("read");
+        expect(apiClient.post).toHaveBeenCalledWith(
+            "/api/v1/sitesecurity/auth/request-code",
+            { email: "op@example.test" },
+            WITH_COOKIE,
+        );
+        expect(getSessionRole()).toBeNull();
     });
 
-    it("does not open a session when the token is refused", async () => {
+    it("opens a session when the server accepts the code", async () => {
         endSession();
-        apiClient.get.mockRejectedValue(Object.assign(new Error("no"), { status: 401 }));
+        apiClient.post.mockResolvedValue({ role: "read", email: "op@example.test" });
 
-        await expect(openSession("bad-token")).rejects.toThrow("no");
+        await expect(verifySignInCode("op@example.test", "123456")).resolves.toBe("read");
+
+        expect(apiClient.post).toHaveBeenCalledWith(
+            "/api/v1/sitesecurity/auth/verify",
+            { email: "op@example.test", code: "123456" },
+            WITH_COOKIE,
+        );
+        expect(getSessionRole()).toBe("read");
+        expect(getSessionEmail()).toBe("op@example.test");
+    });
+
+    it("does not open a session when the code is refused", async () => {
+        endSession();
+        apiClient.post.mockRejectedValue(Object.assign(new Error("no"), { status: 401 }));
+
+        await expect(verifySignInCode("op@example.test", "000000")).rejects.toThrow("no");
+
+        expect(getSessionRole()).toBeNull();
+    });
+
+    it("restores a session that is still open", async () => {
+        endSession();
+        apiClient.get.mockResolvedValue({ role: "admin", email: "admin@example.test" });
+
+        await expect(restoreSession()).resolves.toBe("admin");
+
+        expect(apiClient.get).toHaveBeenCalledWith("/api/v1/sitesecurity/session", WITH_COOKIE);
+        expect(getSessionRole()).toBe("admin");
+    });
+
+    it("signs out on the server and locks the screen", async () => {
+        const ended = vi.fn();
+        setSessionEndedHandler(ended);
+
+        await signOut();
+
+        expect(apiClient.post).toHaveBeenCalledWith("/api/v1/sitesecurity/auth/logout", null, WITH_COOKIE);
+        expect(ended).toHaveBeenCalledOnce();
+        expect(getSessionRole()).toBeNull();
+    });
+
+    it("locks the screen even when the server cannot be reached", async () => {
+        apiClient.post.mockRejectedValue(new Error("offline"));
+
+        await expect(signOut()).rejects.toThrow("offline");
 
         expect(getSessionRole()).toBeNull();
     });

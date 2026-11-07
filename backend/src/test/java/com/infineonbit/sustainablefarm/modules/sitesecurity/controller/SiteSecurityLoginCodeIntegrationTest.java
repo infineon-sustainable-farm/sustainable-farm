@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
 import com.infineonbit.sustainablefarm.core.notification.NotificationService;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.LoginCodeEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.OperatorEntity;
@@ -22,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -50,9 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:sitesecurity-otp;DB_CLOSE_DELAY=-1",
         "app.mail.enabled=true",
-        "SITESECURITY_OTP_SECRET=otp-secret-for-integration-tests-0123456789",
-        "SITESECURITY_READ_TOKEN=read-token-for-otp-tests-0123456789abcdef",
-        "SITESECURITY_ADMIN_TOKEN=admin-token-for-otp-tests-0123456789abcde"
+        "SITESECURITY_OTP_SECRET=otp-secret-for-integration-tests-0123456789"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -101,12 +101,14 @@ class SiteSecurityLoginCodeIntegrationTest {
 
     private ResultActions request(String email) throws Exception {
         return mvc.perform(post(AUTH + "/request-code")
+                .header(HttpHeaders.ORIGIN, TestSessions.APP_ORIGIN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"email\":\"" + email + "\"}"));
     }
 
     private ResultActions verifyCode(String email, String code) throws Exception {
         return mvc.perform(post(AUTH + "/verify")
+                .header(HttpHeaders.ORIGIN, TestSessions.APP_ORIGIN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"email\":\"" + email + "\",\"code\":\"" + code + "\"}"));
     }

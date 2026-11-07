@@ -12,13 +12,21 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class SiteSecurityWebConfig implements WebMvcConfigurer {
 
+    private static final String API = "/api/v1/sitesecurity/**";
+
+    private final SiteSecurityOriginInterceptor originInterceptor;
     private final SiteSecurityAccessInterceptor accessInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // The origin check also covers sign-in and sign-out.
+        registry.addInterceptor(originInterceptor).addPathPatterns(API).order(0);
         registry.addInterceptor(accessInterceptor)
-                .addPathPatterns("/api/v1/sitesecurity/**")
-                .excludePathPatterns("/api/v1/sitesecurity/auth/request-code", "/api/v1/sitesecurity/auth/verify");
+                .addPathPatterns(API)
+                .excludePathPatterns("/api/v1/sitesecurity/auth/request-code",
+                        "/api/v1/sitesecurity/auth/verify",
+                        "/api/v1/sitesecurity/auth/logout")
+                .order(1);
     }
 
     @Override

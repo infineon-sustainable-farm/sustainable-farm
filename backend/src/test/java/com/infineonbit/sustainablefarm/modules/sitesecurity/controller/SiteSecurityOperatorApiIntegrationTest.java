@@ -1,8 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.OperatorEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorSessionRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
@@ -17,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static com.infineonbit.sustainablefarm.modules.sitesecurity.TestSessions.signedIn;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -30,17 +33,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:sitesecurity-operators;DB_CLOSE_DELAY=-1",
-        "SITESECURITY_READ_TOKEN=" + SiteSecurityOperatorApiIntegrationTest.READ_TOKEN,
-        "SITESECURITY_ADMIN_TOKEN=" + SiteSecurityOperatorApiIntegrationTest.ADMIN_TOKEN
+        "spring.datasource.url=jdbc:h2:mem:sitesecurity-operators;DB_CLOSE_DELAY=-1"
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SiteSecurityOperatorApiIntegrationTest {
 
-    static final String READ_TOKEN = "read-token-for-operator-tests-0123456789";
-    static final String ADMIN_TOKEN = "admin-token-for-operator-tests-0123456789";
-
+    /** The signed-in admin is an operator too, so it counts as an active admin. */
+    private static final String CALLER = "session-admin@example.test";
+    private static final String READER = "session-reader@example.test";
     private static final String OPERATORS = "/api/v1/sitesecurity/operators";
 
     @Autowired
@@ -49,9 +50,26 @@ class SiteSecurityOperatorApiIntegrationTest {
     @Autowired
     private OperatorRepository operators;
 
+    @Autowired
+    private OperatorSessionRepository sessions;
+
+    private String readSession;
+    private String adminSession;
+
     @BeforeEach
     void resetData() {
+        sessions.deleteAll();
         operators.deleteAll();
+        readSession = TestSessions.open(operators, sessions, READER, SiteSecurityRole.READ);
+        adminSession = TestSessions.open(operators, sessions, CALLER, SiteSecurityRole.ADMIN);
+    }
+
+    private OperatorEntity caller() {
+        return operators.findAll().stream().filter(o -> o.getEmail().equals(CALLER)).findFirst().orElseThrow();
+    }
+
+    private OperatorEntity reader() {
+        return operators.findAll().stream().filter(o -> o.getEmail().equals(READER)).findFirst().orElseThrow();
     }
 
     private OperatorEntity existing(String email, SiteSecurityRole role, boolean active) {
@@ -67,19 +85,19 @@ class SiteSecurityOperatorApiIntegrationTest {
 
     private ResultActions add(String body) throws Exception {
         return mvc.perform(post(OPERATORS)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .with(signedIn(adminSession))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
 
     private ResultActions action(String id, String name) throws Exception {
         return mvc.perform(post(OPERATORS + "/" + id + "/" + name)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN));
+                .with(signedIn(adminSession)));
     }
 
     private ResultActions changeRole(String id, String role) throws Exception {
         return mvc.perform(put(OPERATORS + "/" + id + "/role")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .with(signedIn(adminSession))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"role\":\"" + role + "\"}"));
     }
@@ -91,36 +109,37 @@ class SiteSecurityOperatorApiIntegrationTest {
 
     @Test
     void operators_shouldBeHiddenFromTheReadRole_evenForReads() throws Exception {
-        mvc.perform(get(OPERATORS).header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN))
+        mvc.perform(get(OPERATORS).with(signedIn(readSession)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void operators_shouldStayHiddenFromTheReadRole_whenThePathIsEncoded() throws Exception {
         mvc.perform(get(URI.create("/api/v1/sitesecurity/%6Fperators"))
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN))
+                        .with(signedIn(readSession)))
                 .andExpect(status().isForbidden());
     }
+
 
     @Test
     void add_shouldRefuseTheReadRole() throws Exception {
         mvc.perform(post(OPERATORS)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + READ_TOKEN)
+                        .with(signedIn(readSession))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"new@example.test\",\"role\":\"read\"}"))
                 .andExpect(status().isForbidden());
 
-        assertEquals(0, operators.count());
+        assertEquals(2, operators.count());
     }
 
     @Test
-    void add_shouldStoreANormalizedActiveOperator() throws Exception {
+    void add_shouldStoreANormalizedActiveOperator_andRecordWhoAddedIt() throws Exception {
         add("{\"email\":\"New.Operator@Example.TEST\",\"role\":\"read\"}")
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("new.operator@example.test"))
                 .andExpect(jsonPath("$.role").value("read"))
                 .andExpect(jsonPath("$.active").value(true))
-                .andExpect(jsonPath("$.createdBy").value("admin-token"))
+                .andExpect(jsonPath("$.createdBy").value(CALLER))
                 .andExpect(jsonPath("$.createdAt", notNullValue()));
     }
 
@@ -130,7 +149,7 @@ class SiteSecurityOperatorApiIntegrationTest {
 
         add("{\"email\":\"TAKEN@example.test\",\"role\":\"admin\"}").andExpect(status().isConflict());
 
-        assertEquals(1, operators.count());
+        assertEquals(3, operators.count());
     }
 
     @Test
@@ -148,21 +167,20 @@ class SiteSecurityOperatorApiIntegrationTest {
         existing("zoe@example.test", SiteSecurityRole.READ, true);
         existing("amal@example.test", SiteSecurityRole.ADMIN, true);
 
-        mvc.perform(get(OPERATORS).header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
+        mvc.perform(get(OPERATORS).with(signedIn(adminSession)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].email", contains("amal@example.test", "zoe@example.test")));
+                .andExpect(jsonPath("$", hasSize(4)))
+                .andExpect(jsonPath("$[*].email", contains("amal@example.test", CALLER, READER, "zoe@example.test")));
     }
 
     @Test
     void disable_shouldRecordWhoAndWhen_thenEnableShouldClearIt() throws Exception {
-        existing("admin@example.test", SiteSecurityRole.ADMIN, true);
         OperatorEntity operator = existing("reader@example.test", SiteSecurityRole.READ, true);
 
         action(operator.getId(), "disable")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false))
-                .andExpect(jsonPath("$.disabledBy").value("admin-token"))
+                .andExpect(jsonPath("$.disabledBy").value(CALLER))
                 .andExpect(jsonPath("$.disabledAt", notNullValue()));
 
         action(operator.getId(), "enable")
@@ -174,7 +192,6 @@ class SiteSecurityOperatorApiIntegrationTest {
 
     @Test
     void disable_shouldKeepTheFirstRecord_whenCalledTwice() throws Exception {
-        existing("admin@example.test", SiteSecurityRole.ADMIN, true);
         OperatorEntity operator = existing("reader@example.test", SiteSecurityRole.READ, true);
 
         action(operator.getId(), "disable").andExpect(status().isOk());
@@ -186,48 +203,77 @@ class SiteSecurityOperatorApiIntegrationTest {
     }
 
     @Test
-    void lastActiveAdmin_shouldNotBeDisabled() throws Exception {
-        OperatorEntity admin = existing("admin@example.test", SiteSecurityRole.ADMIN, true);
+    void disable_shouldEndTheOperatorsSessionsAtOnce() throws Exception {
+        mvc.perform(get("/api/v1/sitesecurity/session").with(signedIn(readSession))).andExpect(status().isOk());
 
-        action(admin.getId(), "disable").andExpect(status().isUnprocessableContent());
+        action(reader().getId(), "disable").andExpect(status().isOk());
 
-        assertTrue(operators.findById(admin.getId()).orElseThrow().isActive());
+        mvc.perform(get("/api/v1/sitesecurity/session").with(signedIn(readSession)))
+                .andExpect(status().isUnauthorized());
+        assertEquals(0, sessions.countByOperatorIdAndRevokedAtIsNullAndExpiresAtAfter(reader().getId(), Instant.now()));
+
+        // Enabling the operator again does not reopen the old session: they sign in again.
+        action(reader().getId(), "enable").andExpect(status().isOk());
+        mvc.perform(get("/api/v1/sitesecurity/session").with(signedIn(readSession)))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void lastActiveAdmin_shouldNotBeDemoted() throws Exception {
-        OperatorEntity admin = existing("admin@example.test", SiteSecurityRole.ADMIN, true);
+    void roleChange_shouldApplyToTheNextRequest_withoutSigningInAgain() throws Exception {
+        mvc.perform(get(OPERATORS).with(signedIn(readSession))).andExpect(status().isForbidden());
 
-        changeRole(admin.getId(), "read").andExpect(status().isUnprocessableContent());
+        changeRole(reader().getId(), "admin").andExpect(status().isOk());
+        mvc.perform(get(OPERATORS).with(signedIn(readSession))).andExpect(status().isOk());
 
-        assertEquals(SiteSecurityRole.ADMIN, operators.findById(admin.getId()).orElseThrow().getRole());
+        changeRole(reader().getId(), "read").andExpect(status().isOk());
+        mvc.perform(get(OPERATORS).with(signedIn(readSession))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void lastActiveAdmin_shouldNotDisableThemselves() throws Exception {
+        action(caller().getId(), "disable").andExpect(status().isUnprocessableContent());
+
+        assertTrue(caller().isActive());
+    }
+
+    @Test
+    void lastActiveAdmin_shouldNotDemoteThemselves() throws Exception {
+        changeRole(caller().getId(), "read").andExpect(status().isUnprocessableContent());
+
+        assertEquals(SiteSecurityRole.ADMIN, caller().getRole());
     }
 
     @Test
     void aDisabledAdmin_shouldNotCountAsTheRemainingAdmin() throws Exception {
-        OperatorEntity admin = existing("admin@example.test", SiteSecurityRole.ADMIN, true);
         existing("former@example.test", SiteSecurityRole.ADMIN, false);
 
-        action(admin.getId(), "disable").andExpect(status().isUnprocessableContent());
+        action(caller().getId(), "disable").andExpect(status().isUnprocessableContent());
     }
 
     @Test
     void anAdmin_shouldBeDisabledOrDemoted_whenAnotherActiveAdminRemains() throws Exception {
         OperatorEntity first = existing("first@example.test", SiteSecurityRole.ADMIN, true);
         OperatorEntity second = existing("second@example.test", SiteSecurityRole.ADMIN, true);
-        OperatorEntity third = existing("third@example.test", SiteSecurityRole.ADMIN, true);
 
         action(first.getId(), "disable").andExpect(status().isOk());
         changeRole(second.getId(), "read")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.role").value("read"));
 
-        changeRole(third.getId(), "read").andExpect(status().isUnprocessableContent());
+        changeRole(caller().getId(), "read").andExpect(status().isUnprocessableContent());
+    }
+
+    @Test
+    void anAdmin_shouldDisableThemselves_whenAnotherActiveAdminRemains() throws Exception {
+        existing("other-admin@example.test", SiteSecurityRole.ADMIN, true);
+
+        action(caller().getId(), "disable").andExpect(status().isOk());
+
+        mvc.perform(get(OPERATORS).with(signedIn(adminSession))).andExpect(status().isUnauthorized());
     }
 
     @Test
     void aDisabledAdmin_shouldBeDemoted_evenWhenOneActiveAdminRemains() throws Exception {
-        existing("admin@example.test", SiteSecurityRole.ADMIN, true);
         OperatorEntity former = existing("former@example.test", SiteSecurityRole.ADMIN, false);
 
         changeRole(former.getId(), "read").andExpect(status().isOk());
@@ -247,6 +293,7 @@ class SiteSecurityOperatorApiIntegrationTest {
         OperatorEntity operator = existing("reader@example.test", SiteSecurityRole.READ, true);
 
         changeRole(operator.getId(), "root").andExpect(status().isBadRequest());
+        changeRole(operator.getId(), "gate").andExpect(status().isBadRequest());
     }
 
     @Test
