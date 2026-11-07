@@ -42,7 +42,7 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 -- 2) Equipements (2 actifs, 1 en maintenance -> utilisation = 67 %)
 -- ---------------------------------------------------------------------------
-INSERT INTO equipment (equipment_id, capacity_kg_per_hour, created_at,
+INSERT INTO pt_equipment (equipment_id, capacity_kg_per_hour, created_at,
                        energy_consumption_kwh_per_kg, equipment_name, equipment_type,
                        last_maintenance_date, location, maintenance_status, updated_at)
 VALUES
