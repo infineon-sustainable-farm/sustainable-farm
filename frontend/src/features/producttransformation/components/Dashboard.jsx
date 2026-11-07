@@ -19,7 +19,7 @@
  * @version 1.1.0
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   AreaChart,
   Area,
@@ -79,6 +79,16 @@ const KpiCard = ({ title, value, icon: Icon, color, hint }) => (
   </div>
 );
 
+const loadDashboard = () =>
+  Promise.allSettled([
+    dashboardApi.getDashboardStats(),
+    dashboardApi.getHarvestTrendData(),
+    dashboardApi.getProductionOutputData(),
+    dashboardApi.getEnergyBreakdownData(),
+    dashboardApi.getEquipmentUtilizationData(),
+    dashboardApi.getQualityTrendData(),
+  ]);
+
 const Dashboard = () => {
   const [kpis, setKpis] = useState(null);
   const [charts, setCharts] = useState({
@@ -91,19 +101,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-
-    const results = await Promise.allSettled([
-      dashboardApi.getDashboardStats(),
-      dashboardApi.getHarvestTrendData(),
-      dashboardApi.getProductionOutputData(),
-      dashboardApi.getEnergyBreakdownData(),
-      dashboardApi.getEquipmentUtilizationData(),
-      dashboardApi.getQualityTrendData(),
-    ]);
-
+  const applyResults = useCallback((results) => {
     const [kpiResult, harvestTrend, productionOutput, energyBreakdown, equipmentUtilization, qualityTrend] =
       results;
 
@@ -125,11 +123,23 @@ const Dashboard = () => {
     });
 
     setLoading(false);
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    applyResults(await loadDashboard());
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    let active = true;
+    loadDashboard().then((results) => {
+      if (active) applyResults(results);
+    });
+    return () => {
+      active = false;
+    };
+  }, [applyResults]);
 
   if (loading) {
     return (
