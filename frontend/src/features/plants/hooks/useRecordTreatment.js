@@ -9,6 +9,7 @@ import { createFindingTreatment, createPreventiveTreatment } from "../api/plants
  * status are refreshed afterwards, whatever their filter: a treatment changes
  * the status and the harvest date of its finding, and can start a pre-harvest
  * interval, which holds a variety ready for harvest back to ripe. The
+ * overview counts both the alerts and the trees ready for harvest. The
  * catalogue is refreshed too, as the API adds "Other" the first time a
  * preventive treatment uses it.
  */
@@ -23,6 +24,7 @@ export function useRecordTreatment() {
                 queryClient.invalidateQueries({ queryKey: ["plants", "health-findings"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "alerts"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "harvest-status"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "overview"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "health-issues"] }),
             ]),
     });

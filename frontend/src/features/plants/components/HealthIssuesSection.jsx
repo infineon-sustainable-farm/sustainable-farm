@@ -42,7 +42,7 @@ function HealthIssuesTable({ issues }) {
                 <tbody>
                     {issues.map((issue) => (
                         <tr key={issue.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">{formatText(issue.name)}</td>
+                            <td className="px-4 py-3 font-semibold text-gray-800">{formatText(issue.name)}</td>
                             <td className="px-4 py-3 text-gray-700">{formatCode(issue.kind)}</td>
                             <td className="px-4 py-3 text-gray-700">{formatText(issue.code)}</td>
                             <td className="px-4 py-3 text-gray-700 italic">{formatText(issue.scientificName)}</td>
@@ -88,9 +88,9 @@ export default function HealthIssuesSection() {
         <section aria-labelledby="health-issues-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h3 id="health-issues-title" className="font-heading text-base font-bold text-gray-900">
+                    <h2 id="health-issues-title" className="font-heading text-lg font-bold text-gray-900">
                         Pests and diseases
-                    </h3>
+                    </h2>
                     <p className="mt-1 max-w-2xl text-sm text-gray-600">
                         The problems an inspection can report, for every block. “Other” covers a problem outside
                         this list; it is listed here once an inspection has used it.

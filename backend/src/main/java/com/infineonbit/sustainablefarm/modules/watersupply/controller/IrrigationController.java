@@ -46,9 +46,11 @@ public class IrrigationController {
     public Object irrigations(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID zoneId) {
-        if (page == null && size == null && zoneId == null) return irrigationService.findSchedules();
-        return irrigationService.findSchedules(pageRequest(page, size), zoneId);
+            @RequestParam(required = false) UUID zoneId,
+            @RequestParam(required = false) UUID farmId,
+            @RequestParam(required = false) String blockCode) {
+        if (page == null && size == null && zoneId == null && farmId == null && blockCode == null) return irrigationService.findSchedules();
+        return irrigationService.findSchedules(pageRequest(page, size), zoneId, farmId, blockCode);
     }
 
     @PostMapping("/irrigations")

@@ -14,9 +14,10 @@ const STATUS_STYLES = {
 };
 
 /**
- * Maturity status of a planted variety, as computed by the API from its
- * harvest window and the pre-harvest intervals of its block
- * ("READY_FOR_HARVEST"), shown in sentence case ("Ready for harvest").
+ * Maturity status of a planted variety, as estimated by the API from its
+ * harvest window and the pre-harvest intervals of its block, or as seen in
+ * the field ("READY_FOR_HARVEST"), shown in sentence case ("Ready for
+ * harvest"). Both take the same hues, so the two columns read alike.
  */
 export default function MaturityStatusBadge({ status }) {
     const label = formatCode(status);

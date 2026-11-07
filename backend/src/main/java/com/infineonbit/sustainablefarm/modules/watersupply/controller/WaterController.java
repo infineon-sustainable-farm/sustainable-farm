@@ -9,6 +9,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityUpdat
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelHistoryResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.DripFlowCheckService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterService;
@@ -18,6 +19,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.time.Instant;
 import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -75,6 +77,14 @@ public class WaterController {
         return waterService.sourceLevel(sourceId);
     }
 
+    /** Level readings of a source over [from, to] (default: everything up to now), oldest first. */
+    @GetMapping("/sources/{sourceId}/level-history")
+    public List<WaterLevelHistoryResponse> sourceLevelHistory(@PathVariable UUID sourceId,
+                                                              @RequestParam(required = false) Instant from,
+                                                              @RequestParam(required = false) Instant to) {
+        return waterService.sourceLevelHistory(sourceId, from, to);
+    }
+
     /**
      * Flow diagnosis of a zone (module 6.2): compares the volume measured by the meter to the
      * volume expected from the drip network over the irrigation duration of the observed window.
@@ -101,9 +111,13 @@ public class WaterController {
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
             @RequestParam(required = false) UUID farmId,
-            @RequestParam(required = false) UUID sourceId) {
-        if (page == null && size == null && farmId == null && sourceId == null) return waterService.findConsumptions();
-        return waterService.findConsumptions(pageRequest(page, size), farmId, sourceId);
+            @RequestParam(required = false) UUID sourceId,
+            @RequestParam(required = false) UUID zoneId,
+            @RequestParam(required = false) String lotId,
+            @RequestParam(required = false) String blockCode) {
+        if (page == null && size == null && farmId == null && sourceId == null && zoneId == null
+                && lotId == null && blockCode == null) return waterService.findConsumptions();
+        return waterService.findConsumptions(pageRequest(page, size), farmId, sourceId, zoneId, lotId, blockCode);
     }
 
     @PostMapping("/consumption")
