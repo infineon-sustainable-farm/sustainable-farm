@@ -161,6 +161,40 @@ public class SiteSecurityDtos {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class RequestLoginCodeDto {
+        @NotBlank(message = "Email is required")
+        @Email(message = "Email must be a valid address")
+        @Size(max = 254, message = "Email must not exceed 254 characters")
+        @ToString.Exclude
+        private String email;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VerifyLoginCodeDto {
+        @NotBlank(message = "Email is required")
+        @Email(message = "Email must be a valid address")
+        @Size(max = 254, message = "Email must not exceed 254 characters")
+        @ToString.Exclude
+        private String email;
+
+        @NotBlank(message = "Code is required")
+        @Pattern(regexp = "\\d{6}", message = "Code must be 6 digits")
+        @ToString.Exclude
+        private String code;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AuthMessageDto {
+        private String message;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SessionDto {
         private String role;
     }

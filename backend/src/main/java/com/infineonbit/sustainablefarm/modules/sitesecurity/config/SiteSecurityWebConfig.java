@@ -16,7 +16,9 @@ public class SiteSecurityWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(accessInterceptor).addPathPatterns("/api/v1/sitesecurity/**");
+        registry.addInterceptor(accessInterceptor)
+                .addPathPatterns("/api/v1/sitesecurity/**")
+                .excludePathPatterns("/api/v1/sitesecurity/auth/request-code", "/api/v1/sitesecurity/auth/verify");
     }
 
     @Override
