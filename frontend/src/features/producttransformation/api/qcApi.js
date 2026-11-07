@@ -43,11 +43,6 @@ export const qcApi = {
   getQcCheckpointsByBatch: (batchId) => apiClient.get(`/api/qc-checkpoints/batch/${batchId}`),
 
   /**
-   * Get QC checkpoints by stage
-   */
-  getQcCheckpointsByStage: (stage) => apiClient.get(`/api/qc-checkpoints/stage/${stage}`),
-
-  /**
    * Get QC checkpoints by inspector
    */
   getQcCheckpointsByInspector: (inspectorId) => apiClient.get(`/api/qc-checkpoints/inspector/${inspectorId}`),
