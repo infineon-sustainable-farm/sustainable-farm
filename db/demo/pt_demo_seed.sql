@@ -8,10 +8,12 @@
 -- Objectif : rendre le dashboard PT lisible (KPI + 5 graphiques) sur une base
 -- dont les tables PT existent mais sont vides.
 --
--- PREREQUIS (non execute par ce script) :
---   La colonne harvest_event.plants_harvest_id est mappee par l'entite
---   HarvestEvent mais absente de la base de dev. Pour demarrer le backend avec
---   la validation Hibernate active, il faut d'abord :
+-- PREREQUIS :
+--   Les tables PT doivent exister. Depuis V14__producttransformation_schema.sql
+--   (migration Flyway possedee par le module) elles sont creees automatiquement,
+--   y compris harvest_event.plants_harvest_id.
+--
+--   Sur une base construite AVANT cette migration, appliquer d'abord :
 --
 --       ALTER TABLE harvest_event ADD COLUMN plants_harvest_id bigint;
 --
@@ -128,13 +130,83 @@ VALUES
      (CURRENT_DATE - 3) + time '08:15', now(), 45.25, 1380.00, 'LOT-DEMO-003', 'EQ-DEMO-02', 'OP-DEMO-02')
 ON CONFLICT DO NOTHING;
 
+-- ---------------------------------------------------------------------------
+-- 8) Receptions (une par lot, alimente l'ecran de reception)
+-- ---------------------------------------------------------------------------
+INSERT INTO raw_intake (intake_id, created_at, intake_date, intake_operator,
+                        received_grade, received_quantity_kg, received_variety,
+                        source_block, source_farm, updated_at, batch_id)
+VALUES
+    ('RI-DEMO-001', now(), CURRENT_DATE - 1, 'Moussa DEMO (Lavage)', 'A', 520.00, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-001'),
+    ('RI-DEMO-002', now(), CURRENT_DATE - 2, 'Moussa DEMO (Lavage)', 'A', 480.50, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-002'),
+    ('RI-DEMO-003', now(), CURRENT_DATE - 3, 'Moussa DEMO (Lavage)', 'B', 610.25, 'AMÉLIE',  'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-003'),
+    ('RI-DEMO-004', now(), CURRENT_DATE - 5, 'Moussa DEMO (Lavage)', 'A', 395.00, 'KENT',    'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-004'),
+    ('RI-DEMO-005', now(), CURRENT_DATE - 6, 'Moussa DEMO (Lavage)', 'A', 275.75, 'TOMMY',   'BLOC-C', 'FERME-DEMO', now(), 'LOT-DEMO-005')
+ON CONFLICT DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- 9) Conditionnement (1 lot export-ready, 1 lot en attente)
+-- ---------------------------------------------------------------------------
+INSERT INTO packaging_record (record_id, created_at, export_ready, lot_code,
+                              package_quantity_kg, package_type, packaging_date,
+                              updated_at, batch_id, equipment_id, operator_id)
+VALUES
+    ('PKG-DEMO-001', now(), TRUE,  'LOT-DEMO-003-PKG', 565.00, '2KG_BAG', CURRENT_DATE - 3, now(), 'LOT-DEMO-003', 'EQ-DEMO-03', 'OP-DEMO-02'),
+    ('PKG-DEMO-002', now(), FALSE, 'LOT-DEMO-004-PKG', 360.00, 'BULK',    CURRENT_DATE - 5, now(), 'LOT-DEMO-004', 'EQ-DEMO-03', 'OP-DEMO-02')
+ON CONFLICT DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- 10) Conformite (HACCP / export UE / tracabilite)
+-- ---------------------------------------------------------------------------
+INSERT INTO compliance_record (record_id, audit_date, compliance_type, created_at,
+                               evidence, next_audit_date, requirement, result,
+                               updated_at, auditor_id, batch_id)
+VALUES
+    ('CR-DEMO-001', CURRENT_DATE - 5, 'HACCP',        now(), 'Plan HACCP 2026', CURRENT_DATE + 85,  'Maitrise des points critiques', 'COMPLIANT',     now(), 'OP-DEMO-01', 'LOT-DEMO-004'),
+    ('CR-DEMO-002', CURRENT_DATE - 6, 'EU_EXPORT',    now(), 'Certificat phytosanitaire', CURRENT_DATE + 55, 'Exigences export UE', 'COMPLIANT',     now(), 'OP-DEMO-01', 'LOT-DEMO-005'),
+    ('CR-DEMO-003', CURRENT_DATE - 3, 'TRACEABILITY', now(), NULL, NULL, 'Tracabilite amont/aval', 'PENDING', now(), 'OP-DEMO-01', 'LOT-DEMO-003')
+ON CONFLICT DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- 11) Historique de recolte (12 derniers mois, serie du graphique annuel)
+-- ---------------------------------------------------------------------------
+INSERT INTO historical_harvest (mango_variety, month, week, year, created_at,
+                                harvest_quantity_kg, quality_grade_a_pct,
+                                quality_grade_b_pct, quality_grade_c_pct,
+                                rainfall_mm, temperature_avg_c,
+                                updated_at, weather_condition)
+SELECT
+    'KEITT',
+    EXTRACT(MONTH FROM month_start)::int,
+    EXTRACT(WEEK  FROM month_start)::int,
+    EXTRACT(YEAR  FROM month_start)::int,
+    now(),
+    ROUND((1800 + (EXTRACT(MONTH FROM month_start)::int * 95))::numeric, 2),
+    ROUND((68 + (EXTRACT(MONTH FROM month_start)::int % 5) * 2.5)::numeric, 2),
+    ROUND((22 - (EXTRACT(MONTH FROM month_start)::int % 4) * 1.5)::numeric, 2),
+    ROUND((10 - (EXTRACT(MONTH FROM month_start)::int % 3))::numeric, 2),
+    ROUND((40 + (EXTRACT(MONTH FROM month_start)::int * 9))::numeric, 2),
+    ROUND((24.5 + (EXTRACT(MONTH FROM month_start)::int % 4) * 0.8)::numeric, 2),
+    now(),
+    'DEMO'
+FROM generate_series(
+    date_trunc('month', CURRENT_DATE) - interval '11 months',
+    date_trunc('month', CURRENT_DATE),
+    interval '1 month'
+) AS month_start
+ON CONFLICT DO NOTHING;
+
 COMMIT;
 
 -- ---------------------------------------------------------------------------
 -- Verification attendue apres execution (information seulement) :
 --   harvest_event   : 5 lignes
 --   batch           : 5 lots (3 actifs)
+--   raw_intake      : 5 receptions
 --   qc_checkpoint   : 6 controles (4 PASS)
 --   drying_run      : 3 sechages
 --   wash_sort_record: 2 lavages
+--   packaging_record: 2 conditionnements (1 export-ready)
+--   compliance_record: 3 enregistrements (2 conformes, 1 en attente)
+--   historical_harvest: 12 mois
 -- ---------------------------------------------------------------------------
