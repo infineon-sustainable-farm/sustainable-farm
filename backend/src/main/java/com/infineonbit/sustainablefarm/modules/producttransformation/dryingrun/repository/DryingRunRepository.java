@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for DryingRun entity
@@ -22,21 +24,25 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
     /**
      * Find drying runs by batch
      */
+    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
     List<DryingRun> findByBatchBatchId(String batchId);
 
     /**
      * Find drying runs by date range
      */
+    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
     List<DryingRun> findByStartTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     /**
      * Find drying runs by equipment
      */
+    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
     List<DryingRun> findByEquipmentEquipmentId(String equipmentId);
 
     /**
      * Find drying runs by operator
      */
+    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
     List<DryingRun> findByOperatorOperatorId(String operatorId);
 
     /**
@@ -46,6 +52,17 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
     List<DryingRun> findByBatchAndDateRange(@Param("batchId") String batchId,
                                           @Param("startDate") LocalDateTime startDate,
                                           @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Read endpoints map the entity to a DTO outside the transaction (open-in-view
+     * is disabled), and DryingRunResponse computes energy per kg from the batch
+     * quantity: the associations must be fetched with the entity.
+     */
+    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
+    List<DryingRun> findAll();
+
+    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
+    Optional<DryingRun> findById(String runId);
 
     /**
      * Find drying runs with moisture content within target range
