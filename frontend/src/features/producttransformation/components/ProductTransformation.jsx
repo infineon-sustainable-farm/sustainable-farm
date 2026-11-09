@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import Dashboard from './Dashboard';
 import BatchList from './BatchList';
+import QcCheckpointList from './QcCheckpointList';
 import { LayoutDashboard, Package, CheckCircle, FileText, Settings } from 'lucide-react';
 
 const ProductTransformation = () => {
@@ -29,7 +30,7 @@ const ProductTransformation = () => {
       case 'batches':
         return <BatchList />;
       case 'qc':
-        return <div className="p-6"><h1 className="text-2xl font-bold text-gray-900">Quality Control</h1><p className="text-gray-600 mt-2">QC module coming soon...</p></div>;
+        return <QcCheckpointList />;
       case 'compliance':
         return <div className="p-6"><h1 className="text-2xl font-bold text-gray-900">Compliance</h1><p className="text-gray-600 mt-2">Compliance module coming soon...</p></div>;
       case 'settings':
