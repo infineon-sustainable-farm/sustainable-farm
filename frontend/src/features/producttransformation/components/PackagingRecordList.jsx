@@ -412,7 +412,7 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -477,43 +477,48 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {onOpenCompliance && (
+                    <div className="inline-flex items-center gap-1">
+                      {onOpenCompliance && (
+                        <button
+                          type="button"
+                          aria-label="Compliance"
+                          title="Open compliance records for this batch"
+                          onClick={() => onOpenCompliance(record.batchId)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+                        >
+                          <Link2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {!record.exportReady && (
+                        <button
+                          type="button"
+                          aria-label="Mark ready"
+                          title="Mark as export ready"
+                          onClick={() => handleMarkExportReady(record)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-green-700 hover:bg-green-50 hover:text-green-800"
+                        >
+                          <PackageCheck className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => onOpenCompliance(record.batchId)}
-                        className="text-gray-600 hover:text-gray-800 inline-flex items-center gap-1 mr-3"
-                        title="Open compliance records for this batch"
+                        aria-label="Edit"
+                        title="Edit"
+                        onClick={() => openEdit(record)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-primary hover:bg-primary/10 hover:text-primary/80"
                       >
-                        <Link2 className="w-4 h-4" />
-                        Compliance
+                        <Pencil className="w-4 h-4" />
                       </button>
-                    )}
-                    {!record.exportReady && (
                       <button
                         type="button"
-                        onClick={() => handleMarkExportReady(record)}
-                        className="text-green-700 hover:text-green-800 inline-flex items-center gap-1 mr-3"
+                        aria-label="Delete"
+                        title="Delete"
+                        onClick={() => setDeleteTarget(record)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 hover:bg-red-50 hover:text-red-700"
                       >
-                        <PackageCheck className="w-4 h-4" />
-                        Mark ready
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => openEdit(record)}
-                      className="text-primary hover:text-primary/80 inline-flex items-center gap-1 mr-3"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(record)}
-                      className="text-red-600 hover:text-red-700 inline-flex items-center gap-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
+                    </div>
                   </td>
                 </tr>
               ))}
