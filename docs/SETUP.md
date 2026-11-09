@@ -35,7 +35,6 @@ A local JDK and Node.js are **not** required: both the backend (Maven/Temurin 21
    | `POSTGRES_USER` | `farm_admin` | PostgreSQL user |
    | `POSTGRES_PASSWORD` | `changeme` | PostgreSQL password (change this) |
    | `POSTGRES_PORT` | `5432` | Host port published for PostgreSQL |
-   | `SPRING_PROFILES_ACTIVE` | `dev` | Enables demo seed data; override for a non-demo deployment |
 
 3. Build and start all services:
 
@@ -44,8 +43,6 @@ A local JDK and Node.js are **not** required: both the backend (Maven/Temurin 21
    ```
 
    This builds the backend and frontend images and pulls `postgres:17-alpine`. The backend waits for the PostgreSQL health check (`pg_isready`) to pass before starting; the frontend starts after the backend.
-
-   The default `dev` profile seeds sample data for Energy Supply and other supported modules when their tables are empty. Open the Energy Supply demo at http://localhost:3000/energy-supply.
 
 ## Verifying the Services
 
@@ -61,7 +58,7 @@ All three containers should be `running` (or `Up`), and `sustainable-farm-db` sh
 |---|---|---|---|
 | Frontend | `sustainable-farm-frontend` | http://localhost:3000 | Page loads showing the project logo and the heading "Sustainable Farm Platform" |
 | Backend health | `sustainable-farm-backend` | http://localhost:8080/actuator/health | Returns JSON with `"status":"UP"` (Spring Boot Actuator default; no exposure overrides exist in `application.properties`) |
-| Swagger UI | `sustainable-farm-backend` | http://localhost:8080/swagger-ui/index.html | Swagger UI loads (springdoc default path; `/swagger-ui.html` also redirects there) |
+| Swagger UI | `sustainable-farm-backend` | http://localhost:8080/swagger-ui/index.html | Swagger UI loads (springdoc default path; `/swagger-ui.html` also redirects there). Note: no API controllers exist yet, so the UI will be empty |
 | PostgreSQL | `sustainable-farm-db` | `localhost:${POSTGRES_PORT}` (5432 by default) | Container reports `healthy`; or run manually: `docker exec sustainable-farm-db pg_isready -U farm_admin -d sustainable_farm` |
 
 To inspect logs of a service:
