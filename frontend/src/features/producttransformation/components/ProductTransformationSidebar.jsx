@@ -13,18 +13,29 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   CheckCircle,
+  Cog,
   FileText,
+  Flame,
   LayoutDashboard,
   Menu,
   Package,
   PackageCheck,
   Settings,
+  Truck,
+  Waves,
   X,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/product-transformation' },
+  { label: 'Raw Intake', icon: Truck, path: '/product-transformation/raw-intake' },
   { label: 'Batches', icon: Package, path: '/product-transformation/batches' },
+  {
+    label: 'Washing & Sorting',
+    icon: Waves,
+    path: '/product-transformation/washing-sorting',
+  },
+  { label: 'Drying', icon: Flame, path: '/product-transformation/drying' },
   {
     label: 'Quality Control',
     icon: CheckCircle,
@@ -32,6 +43,7 @@ const NAV_ITEMS = [
   },
   { label: 'Compliance', icon: FileText, path: '/product-transformation/compliance' },
   { label: 'Packaging', icon: PackageCheck, path: '/product-transformation/packaging' },
+  { label: 'Equipment', icon: Cog, path: '/product-transformation/equipment' },
   { label: 'Settings', icon: Settings, path: '/product-transformation/settings' },
 ];
 

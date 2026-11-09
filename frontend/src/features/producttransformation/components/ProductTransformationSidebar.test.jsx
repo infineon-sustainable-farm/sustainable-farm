@@ -16,7 +16,7 @@ const renderSidebar = (initialPath = '/product-transformation') =>
   );
 
 describe('ProductTransformationSidebar', () => {
-  it('renders the six module entries with their real routes', () => {
+  it('renders the ten module entries with their real routes', () => {
     renderSidebar();
 
     const nav = screen.getByRole('navigation', { name: 'Product Transformation module' });
@@ -24,18 +24,26 @@ describe('ProductTransformationSidebar', () => {
 
     expect(links.map((link) => link.textContent.trim())).toEqual([
       'Dashboard',
+      'Raw Intake',
       'Batches',
+      'Washing & Sorting',
+      'Drying',
       'Quality Control',
       'Compliance',
       'Packaging',
+      'Equipment',
       'Settings',
     ]);
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/product-transformation',
+      '/product-transformation/raw-intake',
       '/product-transformation/batches',
+      '/product-transformation/washing-sorting',
+      '/product-transformation/drying',
       '/product-transformation/quality-control',
       '/product-transformation/compliance',
       '/product-transformation/packaging',
+      '/product-transformation/equipment',
       '/product-transformation/settings',
     ]);
   });
