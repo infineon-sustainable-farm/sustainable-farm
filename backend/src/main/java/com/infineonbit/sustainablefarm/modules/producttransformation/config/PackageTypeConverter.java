@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.core.config;
+package com.infineonbit.sustainablefarm.modules.producttransformation.config;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord.PackageType;
 import jakarta.persistence.AttributeConverter;

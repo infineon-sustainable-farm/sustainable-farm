@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.impl;
 
-import com.infineonbit.sustainablefarm.core.exception.BusinessRuleViolationException;
+import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.model.RawIntake;

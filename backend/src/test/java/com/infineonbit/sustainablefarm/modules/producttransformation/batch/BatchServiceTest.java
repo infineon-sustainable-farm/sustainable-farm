@@ -17,8 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.infineonbit.sustainablefarm.core.exception.BusinessRuleViolationException;
-import com.infineonbit.sustainablefarm.core.exception.InvalidStateException;
+import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
+import com.infineonbit.sustainablefarm.modules.producttransformation.exception.InvalidStateException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;

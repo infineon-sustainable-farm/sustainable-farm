@@ -15,7 +15,7 @@
 -- re-run (or an already-populated database) does not abort the migration.
 --
 -- Table ownership: Machinery owns `equipment`; Product Transformation owns
--- `pt_equipment`. See docs/PT-SCHEMA-OWNERSHIP.md.
+-- `pt_equipment`. See backend/src/main/resources/producttransformation/PT-SCHEMA-OWNERSHIP.md.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -323,7 +323,7 @@ END $$;
 
 -- On an environment built before this migration, the old PT entity created the
 -- table `equipment` with PT columns. Renaming it is a deliberate manual step
--- (docs/PT-SCHEMA-OWNERSHIP.md), because `equipment` is Machinery's table name.
+-- (backend/src/main/resources/producttransformation/PT-SCHEMA-OWNERSHIP.md), because `equipment` is Machinery's table name.
 -- Until that rename happens, the legacy foreign keys still point at `equipment`:
 -- the three equipment FKs below are therefore only created when `equipment` is
 -- the Machinery table (no `equipment_id` column).

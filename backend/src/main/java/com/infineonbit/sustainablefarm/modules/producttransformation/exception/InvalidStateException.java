@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.core.exception;
+package com.infineonbit.sustainablefarm.modules.producttransformation.exception;
 
 /**
  * Exception thrown when an invalid state transition is attempted

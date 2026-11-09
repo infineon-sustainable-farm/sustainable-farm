@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -31,6 +32,8 @@ import java.math.BigDecimal;
 public class Equipment {
 
     @Id
+    @GeneratedValue(generator = "assigned")
+    @GenericGenerator(name = "assigned", strategy = "assigned")
     @Column(name = "equipment_id", length = 50)
     private String equipmentId;
 

@@ -1,9 +1,12 @@
-package com.infineonbit.sustainablefarm.core.exception;
+package com.infineonbit.sustainablefarm.modules.producttransformation.exception;
 
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -25,6 +28,7 @@ import java.util.Map;
  * @version 1.0.0
  */
 @Component("prodTransGlobalExceptionHandler")
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(basePackages = "com.infineonbit.sustainablefarm.modules.producttransformation")
 public class GlobalExceptionHandler {
 

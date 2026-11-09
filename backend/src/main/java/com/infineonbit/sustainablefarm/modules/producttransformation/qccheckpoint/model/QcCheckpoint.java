@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.operator.mo
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -34,6 +35,8 @@ import java.time.LocalDateTime;
 public class QcCheckpoint {
 
     @Id
+    @GeneratedValue(generator = "assigned")
+    @GenericGenerator(name = "assigned", strategy = "assigned")
     @Column(name = "checkpoint_id", length = 50)
     private String checkpointId;
 

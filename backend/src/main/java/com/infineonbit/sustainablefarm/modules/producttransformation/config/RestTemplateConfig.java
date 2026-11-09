@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.core.config;
+package com.infineonbit.sustainablefarm.modules.producttransformation.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.core.exception;
+package com.infineonbit.sustainablefarm.modules.producttransformation.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

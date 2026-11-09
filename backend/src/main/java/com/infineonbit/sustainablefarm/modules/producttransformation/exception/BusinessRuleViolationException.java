@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.core.exception;
+package com.infineonbit.sustainablefarm.modules.producttransformation.exception;
 
 /**
  * Exception thrown when a business rule is violated

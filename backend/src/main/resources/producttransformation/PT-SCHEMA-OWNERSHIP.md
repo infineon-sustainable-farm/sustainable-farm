@@ -36,7 +36,7 @@ were red for this reason.
 
 - `modules/producttransformation/equipment/model/Equipment.java`:
   `@Table(name = "pt_equipment")`.
-- `db/demo/pt_demo_seed.sql`: inserts into `pt_equipment`.
+- `backend/src/main/resources/seed/producttransformation-demo-seed.sql`: inserts into `pt_equipment`.
 - No Machinery entity, table, migration or business logic was modified.
 - Foreign keys are unaffected: `drying_run.equipment_id` and
   `wash_sort_record.equipment_id` are plain columns referencing

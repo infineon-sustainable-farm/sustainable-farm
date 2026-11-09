@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.core.exception;
+package com.infineonbit.sustainablefarm.modules.producttransformation.exception;
 
 /**
  * Exception thrown when attempting to create a duplicate resource

@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.harvesteven
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import jakarta.persistence.Convert;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -38,6 +39,8 @@ import java.math.BigDecimal;
 public class PackagingRecord {
 
     @Id
+    @GeneratedValue(generator = "assigned")
+    @GenericGenerator(name = "assigned", strategy = "assigned")
     @Column(name = "record_id", length = 50)
     private String recordId;
 
@@ -47,7 +50,7 @@ public class PackagingRecord {
     @EqualsAndHashCode.Exclude
     private Batch batch;
 
-    @Convert(converter = com.infineonbit.sustainablefarm.core.config.PackageTypeConverter.class)
+    @Convert(converter = com.infineonbit.sustainablefarm.modules.producttransformation.config.PackageTypeConverter.class)
     @Column(name = "package_type", nullable = false, length = 20)
     private PackageType packageType;
 

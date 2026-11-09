@@ -22,7 +22,7 @@
 --
 -- UTILISATION (a executer uniquement sur une base de demonstration) :
 --   docker exec -i sustainable-farm-db \
---     psql -U postgres -d sustainable_farm < db/demo/pt_demo_seed.sql
+--     psql -U postgres -d sustainable_farm < backend/src/main/resources/seed/producttransformation-demo-seed.sql
 --
 -- Les dates sont relatives a CURRENT_DATE : le jeu de donnees tombe toujours
 -- dans la periode par defaut du dashboard (7 derniers jours).

@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.operator.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -31,6 +32,8 @@ import java.time.LocalDate;
 public class Operator {
 
     @Id
+    @GeneratedValue(generator = "assigned")
+    @GenericGenerator(name = "assigned", strategy = "assigned")
     @Column(name = "operator_id", length = 50)
     private String operatorId;
 

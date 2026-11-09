@@ -45,7 +45,7 @@ import { formatNumber, formatWeight, formatPercentage } from '../utils/format';
 const CHART_COLORS = ['#0a8276', '#ffc658', '#4caf50', '#1e88e5', '#8e24aa', '#c62828'];
 
 // Build-time flag. When enabled, the dashboard says out loud that it displays a
-// synthetic data set (db/demo/pt_demo_seed.sql) instead of real Plants harvests.
+// synthetic data set (backend/src/main/resources/seed/producttransformation-demo-seed.sql) instead of real Plants harvests.
 const DEMO_DATA_ENABLED = import.meta.env.VITE_DEMO_DATA === 'true';
 
 const hasRows = (rows) => Array.isArray(rows) && rows.length > 0;
@@ -249,7 +249,7 @@ const Dashboard = () => {
       {DEMO_DATA_ENABLED ? (
         <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 mb-6 text-sm">
           Demo dataset: synthetic Product Transformation records (LOT-DEMO batches), not real Plants
-          harvests. See db/demo/pt_demo_seed.sql.
+          harvests. See backend/src/main/resources/seed/producttransformation-demo-seed.sql.
         </div>
       ) : null}
 

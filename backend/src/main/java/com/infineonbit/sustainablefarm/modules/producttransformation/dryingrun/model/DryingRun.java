@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.harvesteven
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -37,6 +38,8 @@ import java.math.BigDecimal;
 public class DryingRun {
 
     @Id
+    @GeneratedValue(generator = "assigned")
+    @GenericGenerator(name = "assigned", strategy = "assigned")
     @Column(name = "run_id", length = 50)
     private String runId;
 
