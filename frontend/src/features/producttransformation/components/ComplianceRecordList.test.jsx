@@ -85,6 +85,14 @@ describe('ComplianceRecordList', () => {
     expect(operatorApi.getOperatorsByRole).toHaveBeenCalledWith('AUDITOR');
   });
 
+  it('opens pre-filtered when initialBatchId is provided', async () => {
+    render(<ComplianceRecordList initialBatchId="B-001" />);
+
+    expect(await screen.findByText('CR-1')).toBeTruthy();
+    expect(screen.queryByText('CR-2')).toBeNull();
+    expect(screen.getByLabelText('Filter by batch').value).toBe('B-001');
+  });
+
   it('filters by compliance type', async () => {
     render(<ComplianceRecordList />);
     await screen.findByText('CR-1');

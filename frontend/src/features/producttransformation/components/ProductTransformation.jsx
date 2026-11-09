@@ -11,18 +11,32 @@ import Dashboard from './Dashboard';
 import BatchList from './BatchList';
 import QcCheckpointList from './QcCheckpointList';
 import ComplianceRecordList from './ComplianceRecordList';
-import { LayoutDashboard, Package, CheckCircle, FileText, Settings } from 'lucide-react';
+import PackagingRecordList from './PackagingRecordList';
+import { LayoutDashboard, Package, CheckCircle, FileText, PackageCheck, Settings } from 'lucide-react';
 
 const ProductTransformation = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [complianceBatchId, setComplianceBatchId] = useState('');
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'batches', label: 'Batches', icon: Package },
     { id: 'qc', label: 'Quality Control', icon: CheckCircle },
     { id: 'compliance', label: 'Compliance', icon: FileText },
+    { id: 'packaging', label: 'Packaging', icon: PackageCheck },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  const selectTab = (tabId) => {
+    // A manual navigation resets the batch link coming from Packaging.
+    setComplianceBatchId('');
+    setActiveTab(tabId);
+  };
+
+  const handleOpenCompliance = (batchId) => {
+    setComplianceBatchId(batchId || '');
+    setActiveTab('compliance');
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -33,7 +47,9 @@ const ProductTransformation = () => {
       case 'qc':
         return <QcCheckpointList />;
       case 'compliance':
-        return <ComplianceRecordList />;
+        return <ComplianceRecordList initialBatchId={complianceBatchId} />;
+      case 'packaging':
+        return <PackagingRecordList onOpenCompliance={handleOpenCompliance} />;
       case 'settings':
         return <div className="p-6"><h1 className="text-2xl font-bold text-gray-900">Settings</h1><p className="text-gray-600 mt-2">Settings module coming soon...</p></div>;
       default:
@@ -55,7 +71,7 @@ const ProductTransformation = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => selectTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
                   activeTab === tab.id
                     ? 'bg-primary text-white'

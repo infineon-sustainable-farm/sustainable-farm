@@ -6,6 +6,9 @@
  * Business rule enforced by the backend: the auditor must have the AUDITOR
  * role, which is why the selector only lists those operators.
  *
+ * `initialBatchId` lets another screen (Packaging) open this list already
+ * filtered to one batch.
+ *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
@@ -84,14 +87,17 @@ const escapeCsv = (value) => {
   return `"${text.replace(/"/g, '""')}"`;
 };
 
-const ComplianceRecordList = () => {
+const ComplianceRecordList = ({ initialBatchId = '' }) => {
   const [records, setRecords] = useState([]);
   const [batches, setBatches] = useState([]);
   const [auditors, setAuditors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [filters, setFilters] = useState(() => ({
+    ...EMPTY_FILTERS,
+    batchId: initialBatchId || 'all',
+  }));
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
