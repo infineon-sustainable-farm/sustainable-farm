@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 const CHANNEL_PRESETS = [
@@ -137,10 +137,6 @@ const [orders, setOrders] = useState([]);
   const [deletingTarget, setDeletingTarget] = useState(false);
 
   useEffect(() => {
-    fetchChannelsData();
-  }, []);
-
-  useEffect(() => {
     const handleClickOutside = () => setOpenMenuChannelId(null);
     if (openMenuChannelId != null) {
       window.addEventListener('click', handleClickOutside);
@@ -160,15 +156,14 @@ const [orders, setOrders] = useState([]);
     window.setTimeout(() => setActionError(null), 6000);
   };
 
-  const fetchChannelsData = async () => {
-    setLoading(true);
-    setApiError(null);
+  const fetchChannelsData = useCallback(async () => {
     try {
       const [channelRes, targetRes, orderRes] = await Promise.allSettled([
   api.getSalesChannels(),
   api.getSalesChannelTargets(),
   api.getOrders(),
 ]);
+      setApiError(null);
 
       const failures = [];
 
@@ -194,20 +189,24 @@ const [orders, setOrders] = useState([]);
 
       if (failures.length > 0 && channelRes.status === 'rejected') {
         setApiError(
-          'The backend API is offline or unreachable. Channel data is unavailable. ' +
+          'Sales channel data could not be loaded. Please try again. ' +
             failures.join(' · ')
         );
       } else if (failures.length > 0) {
         setApiError(`Partial load — ${failures.join(' · ')}`);
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load sales channel data. Please try again.'));
       setChannels([]);
       setTargets([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchChannelsData);
+  }, [fetchChannelsData]);
 
   const displayChannels = channels.map((ch, i) => enrichChannel(ch, i, targets));
   const currentYear = new Date().getFullYear();
@@ -778,11 +777,7 @@ const actualRevenueByChannel = orders.reduce((acc, order) => {
               {editingChannelId != null ? `Edit Sales Channel #${editingChannelId}` : 'New Sales Channel'}
             </h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              {editingChannelId != null ? (
-                <>Updates via <code className="text-primary">PUT /api/sales-channels/{editingChannelId}</code></>
-              ) : (
-                <>Creates via <code className="text-primary">POST /api/sales-channels</code></>
-              )}
+              Enter the sales channel details below.
             </p>
             <form onSubmit={handleSaveChannel} className="flex flex-col gap-md">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
@@ -849,11 +844,7 @@ const actualRevenueByChannel = orders.reduce((acc, order) => {
               {editingTargetId != null ? `Edit Target #${editingTargetId}` : 'New Sales Target'}
             </h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              {editingTargetId != null ? (
-                <>Updates via <code className="text-primary">PUT /api/sales-channel-targets/{editingTargetId}</code></>
-              ) : (
-                <>Creates via <code className="text-primary">POST /api/sales-channel-targets</code></>
-              )}
+              Enter the sales target details below.
             </p>
             <form onSubmit={handleSaveTarget} className="flex flex-col gap-md">
               <div>
@@ -955,8 +946,7 @@ const actualRevenueByChannel = orders.reduce((acc, order) => {
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Delete channel?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This calls <code className="text-primary">DELETE /api/sales-channels/{pendingDeleteChannel.channelId}</code> for{' '}
-              <strong>{pendingDeleteChannel.name}</strong>. This cannot be undone.
+              Are you sure you want to delete <strong>{pendingDeleteChannel.name}</strong>? This action cannot be undone.
             </p>
             <div className="flex gap-md">
               <button
@@ -985,9 +975,8 @@ const actualRevenueByChannel = orders.reduce((acc, order) => {
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Delete target?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This calls <code className="text-primary">DELETE /api/sales-channel-targets/{pendingDeleteTarget.targetId}</code> —{' '}
-              {pendingDeleteTarget.periodStart} — {pendingDeleteTarget.periodEnd} ({formatRevenue(pendingDeleteTarget.revenueTargetEur)}).
-              This cannot be undone.
+              Are you sure you want to delete this sales target for {pendingDeleteTarget.periodStart} — {pendingDeleteTarget.periodEnd}
+              ({formatRevenue(pendingDeleteTarget.revenueTargetEur)})? This action cannot be undone.
             </p>
             <div className="flex gap-md">
               <button

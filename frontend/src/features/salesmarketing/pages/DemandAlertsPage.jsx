@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 function getErrorMessage(err, fallback = 'Request failed') {
@@ -87,10 +87,6 @@ export default function DemandAlertsPage() {
   const [deleting, setDeleting] = useState(false);
   const [resolvingId, setResolvingId] = useState(null);
 
-  useEffect(() => {
-    fetchAlertsData();
-  }, []);
-
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
@@ -102,29 +98,28 @@ export default function DemandAlertsPage() {
     setActionSuccess(null);
   };
 
-  const fetchAlertsData = async () => {
-    setLoading(true);
-    setApiError(null);
+  const fetchAlertsData = useCallback(async () => {
     try {
       const [alertRes, forecastRes, pricingRes] = await Promise.allSettled([
   api.getAlerts(),
   api.getDemandForecasts(),
   api.getPricingHistory(),
 ]);
+      setApiError(null);
       const failures = [];
 
       if (alertRes.status === 'fulfilled') {
         setAlerts(Array.isArray(alertRes.value.data) ? alertRes.value.data : []);
       } else {
         setAlerts([]);
-        failures.push(`Alerts: ${getErrorMessage(alertRes.reason, 'Failed to load /api/alerts')}`);
+        failures.push(`Alerts: ${getErrorMessage(alertRes.reason, 'Unable to load alerts')}`);
       }
 
       if (forecastRes.status === 'fulfilled') {
         setForecasts(Array.isArray(forecastRes.value.data) ? forecastRes.value.data : []);
       } else {
         setForecasts([]);
-        failures.push(`Forecasts: ${getErrorMessage(forecastRes.reason, 'Failed to load /api/demand-forecasts')}`);
+        failures.push(`Forecasts: ${getErrorMessage(forecastRes.reason, 'Unable to load forecasts')}`);
       }
       if (pricingRes.status === 'fulfilled') {
   setPricingHistory(
@@ -137,7 +132,7 @@ export default function DemandAlertsPage() {
   failures.push(
     `Pricing History: ${getErrorMessage(
       pricingRes.reason,
-      'Failed to load /api/pricing-history'
+      'Unable to load pricing history'
     )}`
   );
 }
@@ -146,12 +141,16 @@ export default function DemandAlertsPage() {
         setApiError(failures.join(' · '));
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load alert data. Please try again.'));
       setAlerts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchAlertsData);
+  }, [fetchAlertsData]);
 
   // ---- Derived KPIs from forecasts ----
   const baseForecasts = forecasts.filter((f) => {
@@ -263,7 +262,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
         id: a.alertId,
         text: resolved
           ? `Alert ${a.alertCode || a.alertId} resolved${a.region ? ` (${a.region})` : ''}.`
-          : `Alert ${a.alertCode || a.alertId} flagged: ${(a.message || '').slice(0, 80)}${(a.message || '').length > 80 ? 'ââ‚¬Â¦' : ''}`,
+          : `Alert ${a.alertCode || a.alertId} flagged: ${(a.message || '').slice(0, 80)}${(a.message || '').length > 80 ? '…' : ''}`,
         when: formatRelativeTime(a.resolvedAt || a.createdAt),
         primary: !resolved,
       };
@@ -458,7 +457,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
       {loading ? (
         <div className="p-xxl bg-surface-container-lowest rounded-xl text-center shadow-sm border border-outline-variant/20 mb-xxl">
           <span className="material-symbols-outlined text-[40px] text-primary animate-spin">sync</span>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-md">Loading alerts from APIââ‚¬Â¦</p>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-md">Loading alerts…</p>
         </div>
       ) : (
         <>
@@ -482,7 +481,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
                   <span className="material-symbols-outlined text-[16px] mr-1">notifications</span>
                   {activeAlerts.length} active
                 </span>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">from /api/alerts</span>
+                <span className="font-body-sm text-body-sm text-on-surface-variant">current alerts</span>
               </div>
             </div>
 
@@ -514,7 +513,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
                   <p className="font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Revenue Potential</p>
                   <h3 className="font-display-lg text-display-lg text-on-surface">
                     {revenuePotentialEur > 0
-  ? `ââ€šÂ¬${Math.round(revenuePotentialEur).toLocaleString('en-US')}`
+  ? `€${Math.round(revenuePotentialEur).toLocaleString('en-US')}`
   : '—'}
                   </h3>
                 </div>
@@ -639,7 +638,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
                     <p className="font-headline-sm text-headline-sm text-on-surface">No matching alerts</p>
                     <p className="font-body-sm text-body-sm text-on-surface-variant">
                       {alerts.length === 0
-                        ? 'No rows returned from /api/alerts.'
+                        ? 'No alerts are available.'
                         : 'All supply chain anomaly signals are clear for this filter.'}
                     </p>
                   </div>
@@ -703,7 +702,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
                                 onClick={() => handleResolve(alertItem)}
                                 className="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm flex-1 sm:flex-none text-center disabled:opacity-60"
                               >
-                                {resolvingId === alertItem.alertId ? 'Resolvingââ‚¬Â¦' : style.buttonText}
+                                {resolvingId === alertItem.alertId ? 'Resolving…' : style.buttonText}
                               </button>
                             )}
                             <button
@@ -911,7 +910,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
                   disabled={saving}
                   className="flex-1 h-11 rounded-xl bg-primary text-on-primary font-label-md text-label-md disabled:opacity-60"
                 >
-                  {saving ? 'Savingââ‚¬Â¦' : editingAlert ? 'Update' : 'Create'}
+                  {saving ? 'Saving…' : editingAlert ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>
@@ -925,9 +924,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Dismiss alert?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This permanently deletes via{' '}
-              <code className="text-primary">DELETE /api/alerts/{pendingDelete.alertId}</code> (
-              {pendingDelete.alertCode || `#${pendingDelete.alertId}`}).
+              Are you sure you want to dismiss alert {pendingDelete.alertCode || `#${pendingDelete.alertId}`}? This action cannot be undone.
             </p>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg line-clamp-3">
               {pendingDelete.message}
@@ -946,7 +943,7 @@ const revenuePotentialEur = kpiSource.reduce((total, forecast) => {
                 onClick={confirmDelete}
                 className="flex-1 h-11 rounded-xl bg-error text-on-error font-label-md text-label-md disabled:opacity-60"
               >
-                {deleting ? 'Deletingââ‚¬Â¦' : 'Delete'}
+                {deleting ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </div>
