@@ -2,7 +2,9 @@ package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.FieldObservation;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
+import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.service.HarvestStatusService;
 import org.junit.jupiter.api.Test;
@@ -61,12 +63,27 @@ public class HarvestStatusControllerTest {
 
     private static HarvestStatusResponse statuses() {
         return new HarvestStatusResponse(LocalDate.of(2027, 6, 15), 30, List.of(
-                new VarietyHarvestStatus(7, "A", 1L, "Keitt", 40, MaturityStatus.RIPE,
-                        LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45,
+                new VarietyHarvestStatus(7, "A", 1L, "Keitt", 40, MaturityStatus.RIPE, "estimate",
+                        MaturityStatus.RIPE, null, LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45,
                         LocalDate.of(2027, 6, 24), 21L, LocalDate.of(2027, 5, 20),
                         "varietal_guide_west_africa", "Bally_2002"),
-                new VarietyHarvestStatus(7, "C", 3L, "Brooks", 30, null, null, null, null, null, null, null,
-                        null, null)));
+                new VarietyHarvestStatus(7, "C", 3L, "Brooks", 30, null, null, null, null, null, null, null, null,
+                        null, null, null, null)));
+    }
+
+    /** Keitt on A observed ripe while its window is open, and Brooks observed without reference. */
+    private static HarvestStatusResponse observedStatuses() {
+        return new HarvestStatusResponse(LocalDate.of(2027, 6, 15), 30, List.of(
+                new VarietyHarvestStatus(7, "A", 1L, "Keitt", 40, MaturityStatus.RIPE, "field_observation",
+                        MaturityStatus.READY_FOR_HARVEST,
+                        new FieldObservation(30L, LocalDate.of(2027, 6, 12), MaturityStatus.RIPE, MaturityMethod.BRIX,
+                                11.5, "°Bx", "Awa", "user_entry", LocalDate.of(2027, 7, 31)),
+                        LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45, null, null, null,
+                        "varietal_guide_west_africa", "Bally_2002"),
+                new VarietyHarvestStatus(7, "C", 3L, "Brooks", 30, null, null, null,
+                        new FieldObservation(31L, LocalDate.of(2027, 6, 1), MaturityStatus.RIPE, MaturityMethod.VISUAL,
+                                null, null, null, "user_entry", null),
+                        null, null, null, null, null, null, null, null)));
     }
 
     @Test
@@ -89,6 +106,9 @@ public class HarvestStatusControllerTest {
                 .andExpect(jsonPath("$.varieties[0].varietyName").value("Keitt"))
                 .andExpect(jsonPath("$.varieties[0].treeCount").value(40))
                 .andExpect(jsonPath("$.varieties[0].maturityStatus").value("RIPE"))
+                .andExpect(jsonPath("$.varieties[0].statusSource").value("estimate"))
+                .andExpect(jsonPath("$.varieties[0].estimatedStatus").value("RIPE"))
+                .andExpect(jsonPath("$.varieties[0].observation").value(nullValue()))
                 .andExpect(jsonPath("$.varieties[0].estimatedHarvestDate").value("2027-05-01"))
                 .andExpect(jsonPath("$.varieties[0].seasonEnd").value("2027-07-31"))
                 .andExpect(jsonPath("$.varieties[0].daysFromToday").value(-45))
@@ -99,9 +119,42 @@ public class HarvestStatusControllerTest {
                 .andExpect(jsonPath("$.varieties[0].phaseShareSource").value("Bally_2002"))
                 .andExpect(jsonPath("$.varieties[1].varietyName").value("Brooks"))
                 .andExpect(jsonPath("$.varieties[1].maturityStatus").value(nullValue()))
+                .andExpect(jsonPath("$.varieties[1].statusSource").value(nullValue()))
+                .andExpect(jsonPath("$.varieties[1].estimatedStatus").value(nullValue()))
                 .andExpect(jsonPath("$.varieties[1].estimatedHarvestDate").value(nullValue()))
                 .andExpect(jsonPath("$.varieties[1].harvestAllowedFrom").value(nullValue()))
                 .andExpect(jsonPath("$.varieties[1].firstHarvestDate").value(nullValue()));
+    }
+
+    @Test
+    void getHarvestStatus_shouldShowTheEstimateAndTheObservationSideBySide() throws Exception {
+        // Arrange
+        when(harvestStatusService.getHarvestStatus(null, null, null)).thenReturn(observedStatuses());
+        // Act
+        ResultActions result = mockMvc.perform(get(URL));
+        // Assert: the status that holds, its source, the estimate and every field of the observation
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.varieties[0]", aMapWithSize(17)))
+                .andExpect(jsonPath("$.varieties[0].maturityStatus").value("RIPE"))
+                .andExpect(jsonPath("$.varieties[0].statusSource").value("field_observation"))
+                .andExpect(jsonPath("$.varieties[0].estimatedStatus").value("READY_FOR_HARVEST"))
+                .andExpect(jsonPath("$.varieties[0].observation", aMapWithSize(9)))
+                .andExpect(jsonPath("$.varieties[0].observation.id").value(30))
+                .andExpect(jsonPath("$.varieties[0].observation.observedOn").value("2027-06-12"))
+                .andExpect(jsonPath("$.varieties[0].observation.maturityStatus").value("RIPE"))
+                .andExpect(jsonPath("$.varieties[0].observation.method").value("BRIX"))
+                .andExpect(jsonPath("$.varieties[0].observation.measuredValue").value(11.5))
+                .andExpect(jsonPath("$.varieties[0].observation.measuredUnit").value("°Bx"))
+                .andExpect(jsonPath("$.varieties[0].observation.observer").value("Awa"))
+                .andExpect(jsonPath("$.varieties[0].observation.source").value("user_entry"))
+                .andExpect(jsonPath("$.varieties[0].observation.countsUntil").value("2027-07-31"))
+                .andExpect(jsonPath("$.varieties[0].estimatedHarvestDate").value("2027-05-01"))
+                // Without reference: shown, not counted
+                .andExpect(jsonPath("$.varieties[1].maturityStatus").value(nullValue()))
+                .andExpect(jsonPath("$.varieties[1].statusSource").value(nullValue()))
+                .andExpect(jsonPath("$.varieties[1].observation.maturityStatus").value("RIPE"))
+                .andExpect(jsonPath("$.varieties[1].observation.measuredValue").value(nullValue()))
+                .andExpect(jsonPath("$.varieties[1].observation.countsUntil").value(nullValue()));
     }
 
     @Test

@@ -59,7 +59,7 @@ export default function FertilizerMovementsTable({ movements }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase"
                             >
                                 {column}
                             </th>
@@ -69,7 +69,7 @@ export default function FertilizerMovementsTable({ movements }) {
                 <tbody>
                     {movements.map((movement) => (
                         <tr key={movement.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatDate(movement.movementDate)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

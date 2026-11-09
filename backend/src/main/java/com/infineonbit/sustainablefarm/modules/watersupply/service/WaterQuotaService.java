@@ -260,24 +260,8 @@ public class WaterQuotaService {
         };
     }
 
-    /**
-     * Consumption of a zone: sensor measurements carry a farm_id and a source_id but no
-     * direct zone. So we walk from the zone to its field, then to the field's farm, and split
-     * the farm's consumption between the zones of that field (zones share the water of the
-     * same plot): documented approximation, to be refined with zone-level irrigations.
-     */
     private double zoneConsumption(Instant start, Instant end, UUID zoneId) {
-        return fieldZoneRepository.findById(zoneId)
-                .flatMap(zone -> fieldRepository.findById(zone.getFieldId())
-                        .map(field -> consumptionRepository
-                                .sumConsumptionByFarmIdBetween(start, end, field.getFarmId())
-                                / zoneCount(zone.getFieldId())))
-                .orElse(0d);
-    }
-
-    private long zoneCount(UUID fieldId) {
-        long count = fieldZoneRepository.findByFieldId(fieldId).size();
-        return count == 0 ? 1 : count;
+        return consumptionRepository.sumConsumptionByZoneIdBetween(start, end, zoneId);
     }
 
     private String targetName(String targetType, UUID targetId) {

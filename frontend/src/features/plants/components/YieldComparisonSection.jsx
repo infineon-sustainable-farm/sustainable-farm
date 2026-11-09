@@ -88,9 +88,9 @@ export default function YieldComparisonSection({ blockCode }) {
     return (
         <section aria-labelledby="yield-comparison-title" className="flex flex-col gap-4">
             <div>
-                <h3 id="yield-comparison-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="yield-comparison-title" className="font-heading text-lg font-bold text-gray-900">
                     Expected vs actual yield
-                </h3>
+                </h2>
                 <p className="mt-1 max-w-3xl text-sm text-gray-600">
                     The harvests recorded over the period, against the yield the forecast expects for the same
                     months.
@@ -117,7 +117,7 @@ export default function YieldComparisonSection({ blockCode }) {
                 <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-base font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-gray-900">
                             Yield comparison could not be loaded
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}

@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestR
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.SoilMoistureReading;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
@@ -52,6 +53,7 @@ public class IotTelemetryService {
     private final IotDeviceService iotDeviceService;
     private final WaterQuotaService waterQuotaService;
     private final RainwaterTankMonitor rainwaterTankMonitor;
+    private final WaterIntegrationProperties properties;
     private final TransactionTemplate itemTransaction;
 
     public IotTelemetryService(WaterSourceRepository waterSourceRepository,
@@ -62,6 +64,7 @@ public class IotTelemetryService {
                                IotDeviceService iotDeviceService,
                                WaterQuotaService waterQuotaService,
                                RainwaterTankMonitor rainwaterTankMonitor,
+                               WaterIntegrationProperties properties,
                                PlatformTransactionManager transactionManager) {
         this.waterSourceRepository = waterSourceRepository;
         this.waterService = waterService;
@@ -71,6 +74,7 @@ public class IotTelemetryService {
         this.iotDeviceService = iotDeviceService;
         this.waterQuotaService = waterQuotaService;
         this.rainwaterTankMonitor = rainwaterTankMonitor;
+        this.properties = properties;
         TransactionTemplate perItem = new TransactionTemplate(transactionManager);
         perItem.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.itemTransaction = perItem;
@@ -199,6 +203,7 @@ public class IotTelemetryService {
         }
         source.setCurrentLevelLiters(liters);
         waterSourceRepository.save(source);
+        waterService.recordLevel(source, liters, t.timestamp());
         // Rainwater tank rules (module 5.3): they only concern rain sources
         // and must never fail the ingestion of a valid measurement.
         String alerts = "";
@@ -209,6 +214,7 @@ public class IotTelemetryService {
             }
         } catch (RuntimeException ex) {
             alerts = "";
+            LOGGER.warn("Rainwater tank alert evaluation failed for source {}", source.getId(), ex);
         }
         return new Result("level", t.sourceId(), "processed", "Reservoir level = " + liters + " L" + alerts);
     }
@@ -226,7 +232,8 @@ public class IotTelemetryService {
         try {
             waterQuotaService.checkThresholds(source.getFarmId(), t.zoneId(), measuredAt);
         } catch (RuntimeException ignored) {
-            // The measurement is recorded even if the quota evaluation fails.
+            LOGGER.warn("Quota alert evaluation failed for telemetry flow source={} zone={}",
+                    source.getId(), t.zoneId(), ignored);
         }
         return new Result("flow", t.sourceId(), "processed", "Consumption recorded: " + liters + " L");
     }
@@ -245,7 +252,8 @@ public class IotTelemetryService {
                 doubleValue(t, "conductivity_us_cm"),
                 doubleValue(t, "salinity_ppt"),
                 t.timestamp() == null ? Instant.now() : t.timestamp()));
-        boolean outOfRange = (ph != null && (ph < 6.0 || ph > 7.5)) || (ntu != null && ntu > 5.0);
+        boolean outOfRange = (ph != null && (ph < properties.qualityPhMin || ph > properties.qualityPhMax))
+                || (ntu != null && ntu > properties.qualityTurbidityMaxNtu);
         return new Result("quality", t.sourceId(), "processed",
                 outOfRange ? "Out-of-range reading recorded (alert generated)" : "Compliant reading recorded");
     }
@@ -283,9 +291,9 @@ public class IotTelemetryService {
         Double runoff = doubleValue(t, "runoff_coefficient");
         RainwaterHarvestResponse saved = rainwaterHarvestService.create(new RainwaterHarvestRequest(
                 requireSource(t.sourceId()).getId(),
-                area == null ? 180.0 : area,
+                area == null ? properties.rainDefaultCatchmentAreaM2 : area,
                 mm,
-                runoff == null ? 0.8 : runoff,
+                runoff == null ? properties.rainDefaultRunoffCoefficient : runoff,
                 null,
                 t.timestamp() == null ? Instant.now() : t.timestamp()));
         return new Result("rain", t.sourceId(), "processed",

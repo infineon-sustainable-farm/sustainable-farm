@@ -3,7 +3,7 @@
 # Behavior (see docs/CI-AUTO-REVIEW.md):
 #   1. On every push/open of a PR targeting develop: the "quality-gate" job
 #      runs audit-shared-files.sh (conflicts, shared files, endpoints
-#      convention) + ci-guards.sh (11 blocking defect families) and publishes
+#      convention) + ci-guards.sh (12 blocking defect families) and publishes
 #      the report as a PR comment (updated, never duplicated).
 #   2. RED PR: the check fails, the report states what to fix.
 #   3. GREEN PR **and** created by AUTO_REVIEW_LOGIN **and** branch ending
@@ -17,10 +17,19 @@
 #     "Frontend build" + "Require branches to be up to date". Do NOT require
 #     approvals for */init PRs (GitHub forbids PR authors from approving
 #     their own PRs).
+#
+# Security: pull_request_target runs this workflow and the audit scripts from
+# the BASE branch (develop). The PR branch is only fetched and compared with
+# git, its code is never executed, so a PR cannot change the checks it is
+# judged by, and the OWNER_REVIEW_TOKEN secret cannot leak through it.
+#
+# Reports in the admin's name: store a fine-grained token of the admin account
+# (this repository only, "Pull requests: Read and write") as the repository
+# secret OWNER_REVIEW_TOKEN. Without it, reports are posted by github-actions.
 name: Auto-review
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [develop]
 
@@ -49,16 +58,23 @@ jobs:
       actions: read
 
     steps:
-      - name: Checkout (full history for merge-base/merge-tree)
+      - name: Checkout base branch (trusted scripts, full history)
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
+      # Branch names come from the PR author: they go through environment
+      # variables, never straight into the script (shell injection).
       - name: Resolve refs
+        env:
+          PR_BASE: ${{ github.base_ref }}
+          PR_HEAD: ${{ github.event.pull_request.head.ref }}
         run: |
           git fetch --prune --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
-          echo "BASE_REF=origin/${{ github.base_ref }}" >> "$GITHUB_ENV"
-          echo "HEAD_REF=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_ENV"
+          echo "BASE_REF=origin/$PR_BASE" >> "$GITHUB_ENV"
+          echo "HEAD_REF=$PR_HEAD" >> "$GITHUB_ENV"
 
       # ------------------------------------------------------------------
       # 1/2 - Shared-files audit (scripts/audit-shared-files.sh)
@@ -95,7 +111,7 @@ jobs:
           SHA="${{ github.event.pull_request.head.sha }}"
           REPO="${{ github.repository }}"
           : > ci-failure.log
-          for i in $(seq 1 72); do    # up to 12 minutes
+          for _ in $(seq 1 72); do    # up to 12 minutes
             LINE=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=20" \
                    --jq '[.workflow_runs[] | select(.name == "CI")][0] | "\(.status) \(.conclusion // "-") \(.id)"' 2>/dev/null || true)
             if [ -z "$LINE" ]; then sleep 10; continue; fi
@@ -126,7 +142,7 @@ jobs:
             echo "<!-- farm-quality-gate -->"
             echo "## Automated review: quality gate"
             echo
-            echo "Branch: \`${{ github.event.pull_request.head.ref }}\` (base: \`${{ github.base_ref }}\`)"
+            echo "Branch: \`$HEAD_REF\` (base: \`$BASE_REF\`)"
             echo
             echo "${VERDICT}"
             echo
@@ -175,7 +191,7 @@ jobs:
       - name: Publish report comment (create or update)
         if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.OWNER_REVIEW_TOKEN || github.token }}
         run: |
           REPO="${{ github.repository }}"
           PR="${{ github.event.pull_request.number }}"

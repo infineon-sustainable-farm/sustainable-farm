@@ -92,9 +92,9 @@ export default function ExchangeRateSection() {
 
     return (
         <section aria-labelledby="exchange-rate-title" className="flex flex-col gap-4">
-            <h3 id="exchange-rate-title" className="font-heading text-base font-bold text-gray-900">
+            <h2 id="exchange-rate-title" className="font-heading text-lg font-bold text-gray-900">
                 Exchange rate
-            </h3>
+            </h2>
 
             {isPending && (
                 <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">

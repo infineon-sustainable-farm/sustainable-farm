@@ -184,7 +184,12 @@ export function IrrigationView({ notify }) {
                   <div className="ws-row" key={s.id}>
                     <div className="ws-row-title">
                       {zoneName(s.zoneId)}
-                      <small>{(s.startTime || '').replace('T', ' ').slice(0, 16)}</small>
+                      <small>
+                        {(s.startTime || '').replace('T', ' ').slice(0, 16)}
+                        {/* Plants block watered by the zone (only when the zone maps to a single block). */}
+                        {s.blockCode && ` · Block ${s.blockCode}`}
+                        {s.multipleBlockCodes && ' · Several blocks'}
+                      </small>
                     </div>
                     <div className="ws-row-detail">
                       {s.durationMinutes ?? 0} min<small>{s.waterQuantityLiters ?? 0} L planned</small>

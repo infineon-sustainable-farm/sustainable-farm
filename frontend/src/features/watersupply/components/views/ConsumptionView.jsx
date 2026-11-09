@@ -10,6 +10,7 @@ import { QuotaPanel } from './QuotaPanel'
 import { downloadCsv } from '../../api/watersupplyApi'
 import { Spinner } from '../../../../shared/components/Spinner'
 import { EmptyState } from './EmptyState'
+import { activityLabel } from './lotActivities'
 
 function groupDailySeries(consumptions) {
   const map = new Map()
@@ -53,7 +54,7 @@ export function ConsumptionView({ notify }) {
 
   // Search + sort + pagination for the table (the chart stays on the filtered data).
   const tableList = useListControls(filteredConsumptions, {
-    searchFields: ['consumptionDate', 'createdAt'],
+    searchFields: ['consumptionDate', 'createdAt', 'lotId', 'blockCode'],
     defaultSort: { key: 'consumptionDate', dir: 'desc' },
   })
 
@@ -155,7 +156,7 @@ export function ConsumptionView({ notify }) {
               <option value="">All sources</option>
               {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
             </select>
-            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Search by date…" />
+            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Search by date, lot or block…" />
           </div>
           <div className="ws-panel-body">
             {loading ? (
@@ -170,6 +171,8 @@ export function ConsumptionView({ notify }) {
                       Date {tableList.sort && tableList.sort.key === 'consumptionDate' ? (tableList.sort.dir === 'asc' ? '↑' : '↓') : ''}
                     </th>
                     <th>Volume</th>
+                    <th>Plants block</th>
+                    <th>Lot</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -177,6 +180,9 @@ export function ConsumptionView({ notify }) {
                     <tr key={item.id}>
                       <td>{(item.consumptionDate || item.createdAt || '').slice(0, 10)}</td>
                       <td><strong>{item.consumptionLiters ?? 0} L</strong></td>
+                      {/* A zone over several blocks cannot attribute its volume to one of them. */}
+                      <td>{item.blockCode || (item.multipleBlockCodes ? 'Several' : '—')}</td>
+                      <td>{item.lotId ? `${item.lotId} · ${activityLabel(item.activity)}` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,0 +1,138 @@
+import { Link } from "react-router-dom";
+import { useYieldComparison } from "../hooks/useYieldComparison";
+import { formatBlock, formatKilograms, formatMonth, formatNumber } from "../utils/format";
+import OverviewCard from "./OverviewCard";
+import { CARD_CAPTION, CARD_LINK } from "./overviewStyles";
+
+/*
+ * Expected in the mock-up's orange, darkened so a bar keeps 3:1 on the white
+ * card: #a87a1e -> 3.84:1 (#d9a441 gave 2.25:1). Actual in primary, #0a8276 ->
+ * 4.70:1. Each bar sits on a light track, #eef2f1, so that 0 kg reads as an
+ * empty bar, and each row writes what it is and its value, so the colours are
+ * never the only cue.
+ */
+const EXPECTED_BAR = "bg-[#a87a1e]";
+const ACTUAL_BAR = "bg-primary";
+
+function countOf(count, word) {
+    return `${formatNumber(count)} ${Number(count) === 1 ? word : `${word}s`}`;
+}
+
+/**
+ * One bar on the card's common scale: as long as its yield against the largest
+ * yield written on the card. A yield above 0 always shows a sliver. Its word,
+ * its track and its value share one row; the values line up on the right.
+ */
+function YieldBar({ label, kg, largestKg, barClass }) {
+    const width = largestKg > 0 ? `${(kg / largestKg) * 100}%` : "0%";
+    return (
+        <div className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2">
+            <span className="text-xs text-gray-600">{label}</span>
+            <div aria-hidden="true" className="h-2.5 rounded-full bg-[#eef2f1]">
+                <div className={`h-2.5 rounded-full ${barClass} ${kg > 0 ? "min-w-1" : ""}`} style={{ width }} />
+            </div>
+            <span className="text-right text-xs font-semibold whitespace-nowrap text-gray-900">
+                {formatKilograms(kg)}
+            </span>
+        </div>
+    );
+}
+
+function Legend() {
+    return (
+        <div aria-hidden="true" className={`flex flex-wrap gap-x-4 gap-y-1 ${CARD_CAPTION}`}>
+            <span className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-4 rounded-full ${EXPECTED_BAR}`} />
+                Expected
+            </span>
+            <span className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-4 rounded-full ${ACTUAL_BAR}`} />
+                Actual
+            </span>
+        </div>
+    );
+}
+
+/**
+ * The line of a block without harvest, from the API's expected yield alone:
+ * none expected over the period (young trees), or none recorded yet.
+ * "Awaiting" would promise a harvest the forecast does not expect.
+ */
+function noHarvestText(expectedKg) {
+    return expectedKg === 0 ? "No harvest expected over this period" : "No harvest recorded yet";
+}
+
+/**
+ * The mock-up's "Expected vs Actual Yield by Block": the block lines of the
+ * yield comparison, in the API's order, over the API's default period, the
+ * calendar year. Each block has its expected bar and, once a harvest is
+ * recorded, its actual one; both are written out in full. Every figure is
+ * the API's, and only the length of the bars is laid out here.
+ */
+export default function BlockYieldChart({ blockCode }) {
+    const query = useYieldComparison({ blockCode });
+    const comparison = query.data;
+    const caption = comparison
+        ? `Expected and harvested over ${countOf(comparison.months, "month")} from ${formatMonth(comparison.from)}.`
+        : null;
+    // The common scale of the bars: the largest yield written on the card.
+    const largestKg = comparison
+        ? Math.max(0, ...comparison.blocks.flatMap((block) => [block.expectedKg, block.actualKg ?? 0]))
+        : 0;
+
+    return (
+        <OverviewCard
+            titleId="overview-yield-title"
+            className="lg:row-span-2 lg:grid lg:grid-rows-subgrid"
+            title="Expected vs Actual Yield by Block"
+            caption={caption}
+            query={query}
+            loadingText="Loading the yield by block…"
+            errorText="Yield is unavailable."
+        >
+            {comparison && comparison.blocks.length === 0 && (
+                <p className="text-sm text-gray-700">No planted variety with a reference value over this period.</p>
+            )}
+
+            {comparison && comparison.blocks.length > 0 && (
+                <>
+                    <Legend />
+                    <ul className="flex flex-col gap-3">
+                        {comparison.blocks.map((block) => (
+                            <li key={`${block.farmId}-${block.blockCode}`} className="flex flex-col gap-1">
+                                <p className="text-sm font-semibold text-gray-900">{formatBlock(block.blockCode)}</p>
+                                <YieldBar
+                                    label="Expected"
+                                    kg={block.expectedKg}
+                                    largestKg={largestKg}
+                                    barClass={EXPECTED_BAR}
+                                />
+                                {block.actualKg === null ? (
+                                    <p className="grid grid-cols-[4rem_minmax(0,1fr)] gap-2 text-xs text-gray-600">
+                                        <span>Actual</span>
+                                        <span>{noHarvestText(block.expectedKg)}</span>
+                                    </p>
+                                ) : (
+                                    <YieldBar
+                                        label="Actual"
+                                        kg={block.actualKg}
+                                        largestKg={largestKg}
+                                        barClass={ACTUAL_BAR}
+                                    />
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
+
+            {comparison && comparison.notCompared.length > 0 && (
+                <p className={CARD_CAPTION}>Planted varieties without a reference value are not compared.</p>
+            )}
+
+            <Link to="/plants/harvest-maturity" className={`mt-auto self-start ${CARD_LINK}`}>
+                See Harvest &amp; Maturity
+            </Link>
+        </OverviewCard>
+    );
+}

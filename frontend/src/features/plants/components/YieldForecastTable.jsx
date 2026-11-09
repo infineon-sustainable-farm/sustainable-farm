@@ -44,7 +44,7 @@ export default function YieldForecastTable({ entries }) {
                             key={`${entry.month}-${entry.varietyId}`}
                             className="border-b border-gray-100 last:border-b-0"
                         >
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatMonth(entry.month)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useVarieties } from "../hooks/useVarieties";
-import { formatBlock } from "../utils/format";
+import { formatBlock, formatDate } from "../utils/format";
 import PlantsModal from "./PlantsModal";
 
 const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
@@ -77,7 +77,10 @@ export default function RecordHarvestModal({ blocks, isSubmitting, error, onSubm
     const formError = error && !serverFieldErrors ? error.message : null;
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
     const describedBy = (field, id) =>
-        [fieldError(field) ? `${id}-error` : null, field === "varietyName" && varietyNote ? `${id}-note` : null]
+        [
+            fieldError(field) ? `${id}-error` : null,
+            (field === "varietyName" && varietyNote) || (field === "harvestDate" && harvestDate) ? `${id}-note` : null,
+        ]
             .filter(Boolean)
             .join(" ") || undefined;
     const fieldProps = (field, id) => ({
@@ -122,12 +125,12 @@ export default function RecordHarvestModal({ blocks, isSubmitting, error, onSubm
     return (
         <PlantsModal labelledBy="record-harvest-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h3
+                <h2
                     id="record-harvest-title"
-                    className="font-heading text-xl font-bold text-gray-900"
+                    className="font-heading text-lg font-bold text-gray-900"
                 >
                     Record a harvest
-                </h3>
+                </h2>
                 <button
                     type="button"
                     onClick={onClose}
@@ -151,7 +154,13 @@ export default function RecordHarvestModal({ blocks, isSubmitting, error, onSubm
                 )}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="harvest-date" label="Harvest date" error={fieldError("harvestDate")}>
+                    {/* The chosen date in letters, as the browser shows its own day/month order. */}
+                    <FormField
+                        id="harvest-date"
+                        label="Harvest date"
+                        error={fieldError("harvestDate")}
+                        note={harvestDate ? formatDate(harvestDate) : null}
+                    >
                         <input
                             id="harvest-date"
                             type="date"

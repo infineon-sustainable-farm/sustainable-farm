@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { CircleCheck, Plus } from "lucide-react";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { useRecordHarvest } from "../hooks/useRecordHarvest";
 import BlockFilter from "./BlockFilter";
@@ -23,6 +23,22 @@ function RecordHarvestButton({ onClick }) {
     );
 }
 
+/** Confirmation of the harvest just recorded, with the lot number to write on its crates. */
+function RecordedHarvestMessage({ harvest }) {
+    return (
+        <p className="mt-4 inline-flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+            <CircleCheck size={18} aria-hidden="true" className="shrink-0 text-success" />
+            {harvest.lotNumber ? (
+                <span>
+                    Harvest recorded — lot <span className="font-semibold text-gray-900">{harvest.lotNumber}</span>
+                </span>
+            ) : (
+                "Harvest recorded"
+            )}
+        </p>
+    );
+}
+
 /**
  * Harvest & Maturity: the maturity status of the day and the upcoming
  * deadlines first, as in the mock-up, then the expected yield by month, the
@@ -30,13 +46,16 @@ function RecordHarvestButton({ onClick }) {
  * block filter drives the status, the deadlines, the forecast and the
  * harvests; the reference values hold for every block.
  *
- * The mock-up's variance, harvested quantity and lot number are left out: the
- * API computes or records none of them.
+ * Each recorded harvest has its own lot number, shown in the recorded
+ * harvests and announced as soon as the harvest is recorded. The mock-up's
+ * variance and harvested quantity are left out: the API computes neither.
  */
 export default function HarvestMaturityPage() {
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
     const [isRecordingHarvest, setIsRecordingHarvest] = useState(false);
+    // The harvest just recorded, until the form is opened again.
+    const [recordedHarvest, setRecordedHarvest] = useState(null);
 
     useEffect(() => {
         document.title = "Harvest & Maturity — Plants";
@@ -47,6 +66,7 @@ export default function HarvestMaturityPage() {
 
     function openHarvestForm() {
         recordHarvest.reset();
+        setRecordedHarvest(null);
         setIsRecordingHarvest(true);
     }
 
@@ -56,25 +76,34 @@ export default function HarvestMaturityPage() {
     }
 
     function submitHarvest(harvest) {
-        recordHarvest.mutate(harvest, { onSuccess: closeHarvestForm });
+        recordHarvest.mutate(harvest, {
+            onSuccess: (recorded) => {
+                setRecordedHarvest(recorded);
+                closeHarvestForm();
+            },
+        });
     }
 
     return (
         <div className="min-h-dvh bg-gray-50">
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
+            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        {/* primary-dark, not primary: #065e55 on the gray-50 page -> 7.33:1.
-                            primary measured 4.498:1, just under the AA minimum of 4.5:1. */}
-                        <p className="font-heading text-xs font-bold tracking-widest text-primary-dark uppercase">
+                        {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                        <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                             Task 5
                         </p>
-                        <h2 className="font-heading mt-1 text-3xl font-bold text-gray-900">
+                        <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">
                             Harvest &amp; Maturity
-                        </h2>
+                        </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Maturity status, harvest deadlines, expected yield and recorded harvests, by block.
+                            Maturity, harvest dates and yield, by block.
                         </p>
+                        {/* Always in the page, empty until a harvest is recorded, so the message is announced. */}
+                        <div role="status">
+                            {recordedHarvest && <RecordedHarvestMessage harvest={recordedHarvest} />}
+                        </div>
                     </div>
                     <RecordHarvestButton onClick={openHarvestForm} />
                 </header>

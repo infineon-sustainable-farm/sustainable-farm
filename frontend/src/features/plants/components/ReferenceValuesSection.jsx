@@ -22,7 +22,7 @@ const SHARE_ERROR = "Share must be between 0 and 1, with at most 3 decimals.";
 
 function LoadingBox({ label }) {
     return (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500">
             <Loader2 size={18} className="animate-spin" />
             {label}
         </div>
@@ -31,13 +31,13 @@ function LoadingBox({ label }) {
 
 function ErrorBox({ title, onRetry, isRetrying }) {
     return (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 p-6">
             <div className="flex items-start gap-3">
                 <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                 <div>
                     <p className="text-sm font-bold text-gray-900">{title}</p>
                     {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
-                    <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
+                    <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
                 </div>
             </div>
             <button
@@ -73,7 +73,7 @@ function VarietyReferencesTable({ references, onEdit }) {
                 <tbody>
                     {references.map((reference) => (
                         <tr key={reference.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(reference.varietyName)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
@@ -189,7 +189,7 @@ function GrowthPhaseShareItem({ share, isEditing, saveShare, onEdit, onClose }) 
     }
 
     return (
-        <li className="px-5 py-4">
+        <li className="px-6 py-4">
             {!isEditing && (
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -360,17 +360,16 @@ export default function ReferenceValuesSection() {
     return (
         <section aria-labelledby="reference-values-title" className="flex flex-col gap-4">
             <div>
-                <h3 id="reference-values-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="reference-values-title" className="font-heading text-lg font-bold text-gray-900">
                     Reference values
-                </h3>
+                </h2>
                 <p className="mt-1 max-w-2xl text-sm text-gray-600">
-                    The forecast and the plant alerts compute from these values, for every farm and block. Each
-                    value shows its source; a correction counts at once.
+                    Values used for forecasts and alerts. Changes apply at once.
                 </p>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h4 className={SUBTITLE_CLASS}>Varieties</h4>
+                <h3 className={SUBTITLE_CLASS}>Varieties</h3>
                 <button
                     type="button"
                     onClick={() => openReferenceForm(null)}
@@ -385,7 +384,7 @@ export default function ReferenceValuesSection() {
 
             {references.isError && (
                 <ErrorBox
-                    title="The reference values could not be loaded"
+                    title="Reference values are unavailable."
                     onRetry={() => references.refetch()}
                     isRetrying={references.isFetching}
                 />
@@ -394,7 +393,7 @@ export default function ReferenceValuesSection() {
             {!references.isPending && !references.isError && references.data.length === 0 && (
                 <PlantsEmptyState
                     title="No reference values yet"
-                    hint="Add a variety with its yield per tree and harvest months. Until then, the forecast lists its plantings apart."
+                    hint="Add yield and harvest months for a variety."
                 />
             )}
 
@@ -402,13 +401,13 @@ export default function ReferenceValuesSection() {
                 <VarietyReferencesTable references={references.data} onEdit={openReferenceForm} />
             )}
 
-            <h4 className={SUBTITLE_CLASS}>Yield share by growth phase</h4>
+            <h3 className={SUBTITLE_CLASS}>Yield share by growth phase</h3>
 
             {shares.isPending && <LoadingBox label="Loading the yield shares…" />}
 
             {shares.isError && (
                 <ErrorBox
-                    title="The yield shares could not be loaded"
+                    title="Reference values are unavailable."
                     onRetry={() => shares.refetch()}
                     isRetrying={shares.isFetching}
                 />

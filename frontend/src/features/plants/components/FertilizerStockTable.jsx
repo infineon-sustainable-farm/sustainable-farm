@@ -36,7 +36,7 @@ export default function FertilizerStockTable({ fertilizers }) {
                 <tbody>
                     {fertilizers.map((fertilizer) => (
                         <tr key={fertilizer.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(fertilizer.name)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

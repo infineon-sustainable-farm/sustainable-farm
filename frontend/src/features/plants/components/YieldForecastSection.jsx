@@ -77,7 +77,7 @@ function VarietiesWithoutReferenceNote({ varieties }) {
     const subject = varieties.length === 1 ? "this variety" : "these varieties";
 
     return (
-        <div className="flex gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
+        <div className="flex gap-3 rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
             <Info size={18} className="mt-0.5 shrink-0 text-info" />
             <p>
                 {`Not in the forecast: ${listed}. No reference value is entered for ${subject} yet: `
@@ -108,9 +108,9 @@ export default function YieldForecastSection({ blockCode }) {
 
     return (
         <section aria-labelledby="yield-forecast-title" className="flex flex-col gap-4">
-            <h3 id="yield-forecast-title" className="font-heading text-base font-bold text-gray-900">
+            <h2 id="yield-forecast-title" className="font-heading text-lg font-bold text-gray-900">
                 Expected yield by month
-            </h3>
+            </h2>
 
             <MonthPeriodControls
                 idPrefix="yield-forecast"
@@ -122,22 +122,22 @@ export default function YieldForecastSection({ blockCode }) {
             />
 
             {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
+                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-12 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Loading yield forecast…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
+                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-12 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-base font-bold text-gray-900">
-                            Yield forecast could not be loaded
+                        <p className="font-heading text-lg font-bold text-gray-900">
+                            The forecast is unavailable.
                         </p>
                         {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
                         <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
+                            Check your connection, then try again.
                         </p>
                     </div>
                     <button
@@ -163,7 +163,7 @@ export default function YieldForecastSection({ blockCode }) {
 
             {!isPending && !isError && !isEmpty && (
                 <>
-                    <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6">
+                    <div className="rounded-xl border border-gray-200 bg-white p-6">
                         <p className="mb-4 text-sm text-gray-600">
                             Total over the period:{" "}
                             <span className="font-semibold text-gray-900">{formatKilograms(totalKg)}</span>
@@ -173,9 +173,7 @@ export default function YieldForecastSection({ blockCode }) {
                     <MonthlyTotalsTable monthlyTotals={forecast.monthlyTotals} totalKg={totalKg} />
                     <VarietiesWithoutReferenceNote varieties={forecast.varietiesWithoutReference} />
                     <p className="px-1 text-xs text-gray-500">
-                        Based on the recorded plantings only. Yield per tree, harvest season and growth-phase
-                        shares come from the reference values further down this page; the source of each is
-                        listed in the details below.
+                        Based on recorded plantings and the reference values below.
                     </p>
                     <YieldForecastTable entries={forecast.entries} />
                 </>
