@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/api';
 
@@ -123,10 +123,6 @@ export default function DashboardPage() {
   const [customers, setCustomers] = useState([]);
 const [orders, setOrders] = useState([]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
@@ -138,9 +134,7 @@ const [orders, setOrders] = useState([]);
     setActionSuccess(null);
   };
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    setApiError(null);
+  const fetchDashboardData = useCallback(async () => {
     try {
       const [
   forecastRes,
@@ -159,6 +153,7 @@ const [orders, setOrders] = useState([]);
   api.getCustomers(),
   api.getOrders(),
 ]);
+      setApiError(null);
 
       const failures = [];
 
@@ -221,19 +216,23 @@ if (orderRes.status === 'fulfilled') {
 }
 
       if (failures.length === 5) {
-        setApiError(failures.join(' · ') || 'Unable to reach the Sales & Marketing API.');
+        setApiError(failures.join(' · ') || 'Unable to load Sales & Marketing data.');
       } else if (failures.length > 0) {
         setApiError(`Partial load — ${failures.join(' · ')}`);
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load dashboard data. Please try again.'));
       setForecasts([]);
       setAlerts([]);
       setProductBatches([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchDashboardData);
+  }, [fetchDashboardData]);
 
   // ---- Derived KPIs from real forecast rows ----
   const baseForecasts = forecasts.filter((f) => {
@@ -484,7 +483,7 @@ console.log('Germany Demand MT:', germanyDemandT);
       {loading ? (
         <div className="p-xxl bg-surface-container-lowest rounded-xl shadow-sm text-center border border-outline-variant/20">
           <span className="material-symbols-outlined text-[40px] text-primary animate-spin">sync</span>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-md">Loading dashboard from APIââ‚¬Â¦</p>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-md">Loading dashboard…</p>
         </div>
       ) : (
         <>
@@ -572,7 +571,7 @@ console.log('Germany Demand MT:', germanyDemandT);
                     <h3 className="font-headline-md text-headline-md text-on-surface">Demand Forecast vs. Historical</h3>
                     <p className="font-body-sm text-body-sm text-on-surface-variant mt-xs">
                       {forecasts.length > 0
-                        ? `${forecasts.length} forecast row(s) from /api/demand-forecasts`
+                        ? `${forecasts.length} forecast row(s)`
                         : '90-day projection based on current harvest yields'}
                     </p>
                   </div>
@@ -691,7 +690,7 @@ console.log('Germany Demand MT:', germanyDemandT);
                 <div className="overflow-x-auto flex-1">
                   {productBatches.length === 0 ? (
                     <p className="font-body-sm text-body-sm text-on-surface-variant py-md">
-                      No product batches returned from /api/product-batches.
+                      No product batches are available.
                     </p>
                   ) : (
                     <table className="w-full text-left border-collapse">
@@ -726,7 +725,7 @@ console.log('Germany Demand MT:', germanyDemandT);
                 </h3>
                 <div className="flex flex-col gap-md">
                   {displayAlerts.length === 0 ? (
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">No alerts from /api/alerts.</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">No alerts to display.</p>
                   ) : (
                     displayAlerts.slice(0, 5).map((alert) => (
                       <div
@@ -859,7 +858,7 @@ console.log('Germany Demand MT:', germanyDemandT);
                 </select>
                 {products.length === 0 && (
                   <p className="font-body-sm text-body-sm text-secondary mt-xs">
-                    No products loaded — ensure /api/products has data (productId is required).
+                    No products are available. Add a product before creating a forecast.
                   </p>
                 )}
               </div>
@@ -971,8 +970,8 @@ console.log('Germany Demand MT:', germanyDemandT);
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Delete alert?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This calls <code className="text-primary">DELETE /api/alerts/{pendingDeleteAlert.alertId}</code> for{' '}
-              <strong>{pendingDeleteAlert.alertCode || `#${pendingDeleteAlert.alertId}`}</strong>. This cannot be undone.
+              Are you sure you want to delete alert{' '}
+              <strong>{pendingDeleteAlert.alertCode || `#${pendingDeleteAlert.alertId}`}</strong>? This action cannot be undone.
             </p>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg line-clamp-3">
               {pendingDeleteAlert.message}
