@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
     if (data.validationErrors && typeof data.validationErrors === 'object') {
@@ -109,22 +109,22 @@ export default function DemandAlertsPage() {
       const failures = [];
 
       if (alertRes.status === 'fulfilled') {
-        setAlerts(Array.isArray(alertRes.value.data) ? alertRes.value.data : []);
+        setAlerts(Array.isArray(alertRes.value) ? alertRes.value : []);
       } else {
         setAlerts([]);
         failures.push(`Alerts: ${getErrorMessage(alertRes.reason, 'Unable to load alerts')}`);
       }
 
       if (forecastRes.status === 'fulfilled') {
-        setForecasts(Array.isArray(forecastRes.value.data) ? forecastRes.value.data : []);
+        setForecasts(Array.isArray(forecastRes.value) ? forecastRes.value : []);
       } else {
         setForecasts([]);
         failures.push(`Forecasts: ${getErrorMessage(forecastRes.reason, 'Unable to load forecasts')}`);
       }
       if (pricingRes.status === 'fulfilled') {
   setPricingHistory(
-    Array.isArray(pricingRes.value.data)
-      ? pricingRes.value.data
+    Array.isArray(pricingRes.value)
+      ? pricingRes.value
       : []
   );
 } else {

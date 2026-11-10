@@ -43,8 +43,8 @@ function statusMeta(status) {
 }
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   return data.message || fallback;
 }
@@ -89,7 +89,7 @@ export default function CampaignsPage() {
 
       // An empty array is a valid response: it means no campaigns have been created yet.
       if (campaignRes.status === 'fulfilled') {
-        setCampaigns(Array.isArray(campaignRes.value.data) ? campaignRes.value.data : []);
+        setCampaigns(Array.isArray(campaignRes.value) ? campaignRes.value : []);
       } else {
         setCampaigns([]);
         setApiError(
@@ -100,7 +100,7 @@ export default function CampaignsPage() {
       // Metrics are optional for the page. If unavailable, keep the chart in its
       // normal empty state instead of presenting an empty campaign list as an API error.
       if (metricRes.status === 'fulfilled') {
-        setMetrics(Array.isArray(metricRes.value.data) ? metricRes.value.data : []);
+        setMetrics(Array.isArray(metricRes.value) ? metricRes.value : []);
       } else {
         setMetrics([]);
       }
