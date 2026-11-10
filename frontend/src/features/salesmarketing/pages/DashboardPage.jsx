@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/api';
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
     if (data.validationErrors && typeof data.validationErrors === 'object') {
@@ -158,28 +158,28 @@ const [orders, setOrders] = useState([]);
       const failures = [];
 
       if (forecastRes.status === 'fulfilled') {
-        setForecasts(Array.isArray(forecastRes.value.data) ? forecastRes.value.data : []);
+        setForecasts(Array.isArray(forecastRes.value) ? forecastRes.value : []);
       } else {
         setForecasts([]);
         failures.push(`Forecasts: ${getErrorMessage(forecastRes.reason)}`);
       }
 
       if (alertRes.status === 'fulfilled') {
-        setAlerts(Array.isArray(alertRes.value.data) ? alertRes.value.data : []);
+        setAlerts(Array.isArray(alertRes.value) ? alertRes.value : []);
       } else {
         setAlerts([]);
         failures.push(`Alerts: ${getErrorMessage(alertRes.reason)}`);
       }
 
       if (batchRes.status === 'fulfilled') {
-        setProductBatches(Array.isArray(batchRes.value.data) ? batchRes.value.data : []);
+        setProductBatches(Array.isArray(batchRes.value) ? batchRes.value : []);
       } else {
         setProductBatches([]);
         failures.push(`Batches: ${getErrorMessage(batchRes.reason)}`);
       }
 
       if (productRes.status === 'fulfilled') {
-        setProducts(Array.isArray(productRes.value.data) ? productRes.value.data : []);
+        setProducts(Array.isArray(productRes.value) ? productRes.value : []);
       } else {
         setProducts([]);
         failures.push(`Products: ${getErrorMessage(productRes.reason)}`);
@@ -187,7 +187,7 @@ const [orders, setOrders] = useState([]);
 
       if (pricingRes.status === 'fulfilled') {
         setPricingHistory(
-          Array.isArray(pricingRes.value.data) ? pricingRes.value.data : []
+          Array.isArray(pricingRes.value) ? pricingRes.value : []
         );
       } else {
         setPricingHistory([]);
@@ -195,8 +195,8 @@ const [orders, setOrders] = useState([]);
       }
       if (customerRes.status === 'fulfilled') {
   setCustomers(
-    Array.isArray(customerRes.value.data)
-      ? customerRes.value.data
+    Array.isArray(customerRes.value)
+      ? customerRes.value
       : []
   );
 } else {
@@ -206,8 +206,8 @@ const [orders, setOrders] = useState([]);
 
 if (orderRes.status === 'fulfilled') {
   setOrders(
-    Array.isArray(orderRes.value.data)
-      ? orderRes.value.data
+    Array.isArray(orderRes.value)
+      ? orderRes.value
       : []
   );
 } else {

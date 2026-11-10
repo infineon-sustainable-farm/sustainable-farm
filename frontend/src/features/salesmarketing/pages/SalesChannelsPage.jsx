@@ -41,8 +41,8 @@ const CHANNEL_PRESETS = [
 ];
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
     if (data.validationErrors && typeof data.validationErrors === 'object') {
@@ -168,20 +168,20 @@ const [orders, setOrders] = useState([]);
       const failures = [];
 
       if (channelRes.status === 'fulfilled') {
-        setChannels(Array.isArray(channelRes.value.data) ? channelRes.value.data : []);
+        setChannels(Array.isArray(channelRes.value) ? channelRes.value : []);
       } else {
         setChannels([]);
         failures.push(`Channels: ${getErrorMessage(channelRes.reason)}`);
       }
 
       if (targetRes.status === 'fulfilled') {
-        setTargets(Array.isArray(targetRes.value.data) ? targetRes.value.data : []);
+        setTargets(Array.isArray(targetRes.value) ? targetRes.value : []);
       } else {
         setTargets([]);
         failures.push(`Targets: ${getErrorMessage(targetRes.reason)}`);
       }
       if (orderRes.status === 'fulfilled') {
-  setOrders(Array.isArray(orderRes.value.data) ? orderRes.value.data : []);
+  setOrders(Array.isArray(orderRes.value) ? orderRes.value : []);
 } else {
   setOrders([]);
   failures.push(`Orders: ${getErrorMessage(orderRes.reason)}`);

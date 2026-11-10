@@ -9,8 +9,8 @@ const STATUS_OPTIONS = ['active', 'inactive', 'prospect'];
 const PAYMENT_TERMS = ['Net 15', 'Net 30', 'Net 45', 'Net 60', 'Due on Receipt', 'Advance Payment'];
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
     if (data.validationErrors && typeof data.validationErrors === 'object') {
@@ -155,7 +155,7 @@ export default function CustomersPage() {
       const failures = [];
 
       if (customerRes.status === 'fulfilled') {
-        const list = Array.isArray(customerRes.value.data) ? customerRes.value.data : [];
+        const list = Array.isArray(customerRes.value) ? customerRes.value : [];
         setCustomers(list);
         setSelectedId((current) =>
           current == null && list.length > 0 ? list[0].customerId : current
@@ -164,21 +164,21 @@ export default function CustomersPage() {
         setCustomers([]);
         failures.push(`Customers: ${getErrorMessage(customerRes.reason)}`);
       }if (orderRes.status === 'fulfilled') {
-  setOrders(Array.isArray(orderRes.value.data) ? orderRes.value.data : []);
+  setOrders(Array.isArray(orderRes.value) ? orderRes.value : []);
 } else {
   setOrders([]);
   failures.push(`Orders: ${getErrorMessage(orderRes.reason)}`);
 }
 
       if (contactRes.status === 'fulfilled') {
-        setContacts(Array.isArray(contactRes.value.data) ? contactRes.value.data : []);
+        setContacts(Array.isArray(contactRes.value) ? contactRes.value : []);
       } else {
         setContacts([]);
         failures.push(`Contacts: ${getErrorMessage(contactRes.reason)}`);
       }
 
       if (certRes.status === 'fulfilled') {
-        setCertifications(Array.isArray(certRes.value.data) ? certRes.value.data : []);
+        setCertifications(Array.isArray(certRes.value) ? certRes.value : []);
       } else {
         setCertifications([]);
         failures.push(`Certifications: ${getErrorMessage(certRes.reason)}`);
