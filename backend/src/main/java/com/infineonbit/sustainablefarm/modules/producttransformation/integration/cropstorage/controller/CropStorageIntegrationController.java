@@ -45,10 +45,13 @@ public class CropStorageIntegrationController {
     }
 
     @PostMapping("/entries/check-capacity")
-    @Operation(summary = "Check storage capacity", description = "Checks if storage capacity is available for the specified entry")
+    @Operation(summary = "Check storage capacity",
+            description = "Checks whether Crop Storage has capacity for the entry. Never creates a storage entry. "
+                    + "Answers 503 while Crop Storage exposes no dedicated capacity endpoint.")
     public ResponseEntity<Boolean> checkStorageCapacity(
             @Valid @RequestBody CropStorageEntryRequest request) {
-        boolean hasCapacity = cropStorageIntegrationService.checkStorageCapacity(request);
-        return ResponseEntity.ok(hasCapacity);
+        return cropStorageIntegrationService.checkStorageCapacity(request)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build());
     }
 }
