@@ -14,8 +14,8 @@ function demandLabel(v) {
 }
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) return data.message;
   return fallback;
@@ -106,8 +106,8 @@ export default function PricingPage() {
       // -----------------------------
       // Pricing history
       // -----------------------------
-      if (histRes.status === 'fulfilled' && Array.isArray(histRes.value.data)) {
-        const sorted = [...histRes.value.data].sort(
+      if (histRes.status === 'fulfilled' && Array.isArray(histRes.value)) {
+        const sorted = [...histRes.value].sort(
           (a, b) => new Date(a.priceDate) - new Date(b.priceDate)
         );
 
@@ -145,8 +145,8 @@ export default function PricingPage() {
       // -----------------------------
       // Competitors
       // -----------------------------
-      if (compRes.status === 'fulfilled' && Array.isArray(compRes.value.data)) {
-        setCompetitors(compRes.value.data);
+      if (compRes.status === 'fulfilled' && Array.isArray(compRes.value)) {
+        setCompetitors(compRes.value);
       } else {
         setCompetitors([]);
 
@@ -160,10 +160,10 @@ export default function PricingPage() {
       // -----------------------------
       // Recommendations
       // -----------------------------
-      if (recoRes.status === 'fulfilled' && Array.isArray(recoRes.value.data)) {
+      if (recoRes.status === 'fulfilled' && Array.isArray(recoRes.value)) {
         setRecommendation(
-          recoRes.value.data.length > 0
-            ? recoRes.value.data[recoRes.value.data.length - 1]
+          recoRes.value.length > 0
+            ? recoRes.value[recoRes.value.length - 1]
             : null
         );
       } else {
@@ -181,8 +181,8 @@ export default function PricingPage() {
       // -----------------------------
       if (productRes.status === 'fulfilled') {
         setProducts(
-          Array.isArray(productRes.value.data)
-            ? productRes.value.data
+          Array.isArray(productRes.value)
+            ? productRes.value
             : []
         );
       } else {
