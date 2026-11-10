@@ -6,8 +6,7 @@
  * @version 1.0.0
  */
 
-import { useState } from 'react';
-import { useApi } from '../../../shared/hooks/useApi';
+import { useCallback, useEffect, useState } from 'react';
 import { batchApi } from '../api/batchApi';
 import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
@@ -16,25 +15,48 @@ import { Plus, Filter, ArrowRight, Package } from 'lucide-react';
 
 const BatchList = () => {
   const [filter, setFilter] = useState('all');
-  const { data: batches, loading, error, refetch } = useApi('/api/batches');
+  const [batches, setBatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await batchApi.getAllBatches();
+      setBatches(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(load, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [load]);
 
   const handleAdvanceStatus = async (batchId) => {
+    setActionError('');
     try {
       await batchApi.advanceBatchStatus(batchId);
-      refetch();
+      await load();
     } catch (err) {
       console.error('Failed to advance status:', err);
-      alert('Failed to advance batch status. Please check QC requirements.');
+      setActionError('Failed to advance batch status. Please check QC requirements.');
     }
   };
 
-  const filteredBatches = batches?.filter((batch) => {
+  const filteredBatches = batches.filter((batch) => {
     if (filter === 'all') return true;
     return batch.currentStatus === filter;
-  }) || [];
+  });
 
   if (loading) return <LoadingState message="Loading batches..." />;
-  if (error) return <ErrorState message={error} onRetry={refetch} />;
+  if (error)
+    return <ErrorState message={error?.message || 'Failed to load batches'} onRetry={load} />;
 
   return (
     <div className="p-6">
@@ -45,6 +67,15 @@ const BatchList = () => {
           New Batch
         </button>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">

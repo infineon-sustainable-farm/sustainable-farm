@@ -194,6 +194,15 @@ describe('QcCheckpointList', () => {
     await waitFor(() => expect(qcApi.getAllQcCheckpoints).toHaveBeenCalledTimes(2));
   });
 
+  it('shows the empty state when there are no QC checkpoints', async () => {
+    qcApi.getAllQcCheckpoints.mockResolvedValueOnce([]);
+
+    render(<QcCheckpointList />);
+
+    expect(await screen.findByText('No QC checkpoints found')).toBeTruthy();
+    expect(screen.queryByRole('table')).toBeNull();
+  });
+
   it('shows an error state and retries the load', async () => {
     qcApi.getAllQcCheckpoints.mockRejectedValueOnce(new Error('Network down'));
 

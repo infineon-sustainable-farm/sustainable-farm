@@ -277,6 +277,17 @@ describe('DryingRunList', () => {
     await waitFor(() => expect(dryingApi.getAllDryingRuns).toHaveBeenCalledTimes(2));
   });
 
+  it('renders a 403 from the API as an error state instead of crashing', async () => {
+    dryingApi.getAllDryingRuns.mockRejectedValueOnce(
+      Object.assign(new Error('Forbidden'), { status: 403 }),
+    );
+
+    render(<DryingRunList />);
+
+    expect(await screen.findByText('Forbidden')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Try again/i })).toBeTruthy();
+  });
+
   it('shows an error state and retries the load', async () => {
     dryingApi.getAllDryingRuns.mockRejectedValueOnce(new Error('Network down'));
 
