@@ -183,7 +183,7 @@ class AgronomicReferenceIntegrationTest {
         Long id = varietyReferenceService.createReference(
                 new VarietyReferenceRequest(SENSATION, 220.0, null, 5, 7, null)).id();
         assertEquals(List.of(
-                        "2027-05 733.3 kg, share 0.25 Bally_2002, yield user_entry",
+                        "2027-05 733.4 kg, share 0.25 Bally_2002, yield user_entry",
                         "2027-06 733.3 kg, share 0.25 Bally_2002, yield user_entry",
                         "2027-07 733.3 kg, share 0.25 Bally_2002, yield user_entry"),
                 forecastEntries2027());

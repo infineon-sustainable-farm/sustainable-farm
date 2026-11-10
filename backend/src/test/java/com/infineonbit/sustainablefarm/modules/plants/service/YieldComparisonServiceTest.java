@@ -139,17 +139,17 @@ public class YieldComparisonServiceTest {
                 harvest(12L, keittA, LocalDate.of(2027, 6, 10), 250.5));
         // Act
         YieldComparisonResponse comparison = service().getYieldComparison(FARM, null, null, null);
-        // Assert: three months of 40 × 220 × 0.25 / 3 = 733.3 kg, added up as rounded
+        // Assert: the season of 40 × 220 × 0.25 = 2200 kg, spread as 733.4 + 733.3 + 733.3 kg
         assertEquals(YearMonth.of(2027, 1), comparison.from());
         assertEquals(12, comparison.months());
         assertEquals("recorded_plantings", comparison.basis());
         assertEquals(List.of(
-                keitt(keittA, 40, 2199.9, 550.5, 2, 25.0, List.of(GRADUAL)),
+                keitt(keittA, 40, 2200.0, 550.5, 2, 25.0, List.of(GRADUAL)),
                 keitt(keittB, 100, 0.0, null, 0, null, List.of(ESTABLISHMENT))), comparison.varieties());
         assertEquals(List.of(
-                new BlockComparison(FARM, "A", 2199.9, 550.5, 25.0),
+                new BlockComparison(FARM, "A", 2200.0, 550.5, 25.0),
                 new BlockComparison(FARM, "B", 0.0, null, null)), comparison.blocks());
-        assertEquals(new Comparison(2199.9, 550.5, 25.0), comparison.total());
+        assertEquals(new Comparison(2200.0, 550.5, 25.0), comparison.total());
         assertEquals(List.of(), comparison.notCompared());
     }
 
@@ -206,6 +206,21 @@ public class YieldComparisonServiceTest {
     }
 
     @Test
+    void getYieldComparison_shouldExpectTheExactSeason_inFullProduction() {
+        // Arrange: 40 Keitt in full production, 7,500 kg harvested
+        Variety keittA = planted(1L, "A", "Keitt", LocalDate.of(2019, 9, 15), 40);
+        stubPlantings();
+        harvestsOf2027(harvest(11L, keittA, LocalDate.of(2027, 6, 10), 7500.0));
+        // Act
+        YieldComparisonResponse comparison = service().getYieldComparison(FARM, null, null, null);
+        // Assert: 40 × 220 = 8,800.0 kg, the sum of 2,933.4 + 2,933.3 + 2,933.3, not 8,799.9
+        PhaseShare full = new PhaseShare("full production", 1.0, "by_definition");
+        assertEquals(List.of(keitt(keittA, 40, 8800.0, 7500.0, 1, 85.2, List.of(full))), comparison.varieties());
+        assertEquals(List.of(new BlockComparison(FARM, "A", 8800.0, 7500.0, 85.2)), comparison.blocks());
+        assertEquals(new Comparison(8800.0, 7500.0, 85.2), comparison.total());
+    }
+
+    @Test
     void getYieldComparison_shouldAddUpTheVarietiesOfABlock() {
         // Arrange: Keitt and Kent on block A, both in gradual production
         Variety keitt = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
@@ -218,8 +233,8 @@ public class YieldComparisonServiceTest {
         assertEquals(List.of(1L, 4L), comparison.varieties().stream().map(VarietyComparison::varietyId).toList());
         assertEquals(new VarietyComparison(FARM, "A", kent.getId(), "Kent", 30, 1500.0, 1000.0, 1, 66.7,
                 200.0, "Zalka_2025", "FAO_mango_burkina", List.of(GRADUAL)), comparison.varieties().get(1));
-        assertEquals(List.of(new BlockComparison(FARM, "A", 3699.9, 1000.0, 27.0)), comparison.blocks());
-        assertEquals(new Comparison(3699.9, 1000.0, 27.0), comparison.total());
+        assertEquals(List.of(new BlockComparison(FARM, "A", 3700.0, 1000.0, 27.0)), comparison.blocks());
+        assertEquals(new Comparison(3700.0, 1000.0, 27.0), comparison.total());
         assertEquals(keitt.getId(), comparison.varieties().get(0).varietyId());
     }
 
@@ -236,7 +251,7 @@ public class YieldComparisonServiceTest {
         // Assert: their harvests count nowhere else
         assertEquals(List.of(keitt.getId()),
                 comparison.varieties().stream().map(VarietyComparison::varietyId).toList());
-        assertEquals(new Comparison(2199.9, null, null), comparison.total());
+        assertEquals(new Comparison(2200.0, null, null), comparison.total());
         assertEquals(List.of(
                 new NotCompared(FARM, "C", 3L, "Brooks", 30, 120.0, 1, "NO_REFERENCE"),
                 new NotCompared(FARM, "D", 5L, "Palmer", 10, null, 0, "NO_REFERENCE")), comparison.notCompared());

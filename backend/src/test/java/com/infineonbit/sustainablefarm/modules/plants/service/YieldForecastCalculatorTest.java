@@ -2,14 +2,17 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.YearMonth;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class YieldForecastCalculatorTest {
@@ -98,15 +101,69 @@ public class YieldForecastCalculatorTest {
         assertEquals(0.0, YieldForecastCalculator.monthShare(YearMonth.of(2027, 3), 11, 2));
     }
 
+    /** Decimals with one digit after the point, as the spread returns them. */
+    private static List<BigDecimal> kg(String... values) {
+        return Arrays.stream(values).map(BigDecimal::new).toList();
+    }
+
     @Test
-    void expectedKg_shouldMultiplyTheFactors_withTheExactMonthShare() {
-        // Act & Assert: Keitt, 150 × 220 × 0.5 / 3; with 0.3333 it would be 5499.5
-        assertEquals(5500.0, YieldForecastCalculator.expectedKg(150, 220.0, 0.5, 1.0 / 3));
-        // Kent, 40 × 200 × 1 / 2
-        assertEquals(4000.0, YieldForecastCalculator.expectedKg(40, 200.0, 1.0, 0.5));
-        // Establishment, and out of season
-        assertEquals(0.0, YieldForecastCalculator.expectedKg(20, 160.0, 0.0, 1.0 / 3));
-        assertEquals(0.0, YieldForecastCalculator.expectedKg(150, 220.0, 0.5, 0.0));
+    void yearlyKg_shouldMultiplyTheFactors_exactly() {
+        // Act & Assert: Keitt, 40 × 220 × 0.25, with no binary noise
+        assertEquals(0, new BigDecimal("2200").compareTo(YieldForecastCalculator.yearlyKg(40, 220.0, 0.25)));
+        assertEquals(0, new BigDecimal("8800").compareTo(YieldForecastCalculator.yearlyKg(40, 220.0, 1.0)));
+        // Establishment
+        assertEquals(0, BigDecimal.ZERO.compareTo(YieldForecastCalculator.yearlyKg(20, 160.0, 0.0)));
+    }
+
+    @Test
+    void seasonOf_shouldListTheWholeSeason_whateverTheMonth() {
+        // Act & Assert: May to July 2027, from any of its months
+        List<YearMonth> mayToJuly = List.of(YearMonth.of(2027, 5), YearMonth.of(2027, 6), YearMonth.of(2027, 7));
+        assertEquals(mayToJuly, YieldForecastCalculator.seasonOf(YearMonth.of(2027, 5), 5, 7));
+        assertEquals(mayToJuly, YieldForecastCalculator.seasonOf(YearMonth.of(2027, 7), 5, 7));
+        // November to February: January 2027 is in the season that starts in November 2026
+        List<YearMonth> novemberToFebruary = List.of(YearMonth.of(2026, 11), YearMonth.of(2026, 12),
+                YearMonth.of(2027, 1), YearMonth.of(2027, 2));
+        assertEquals(novemberToFebruary, YieldForecastCalculator.seasonOf(YearMonth.of(2027, 1), 11, 2));
+        assertEquals(novemberToFebruary, YieldForecastCalculator.seasonOf(YearMonth.of(2026, 12), 11, 2));
+        // A month out of the season has none
+        assertThrows(IllegalArgumentException.class,
+                () -> YieldForecastCalculator.seasonOf(YearMonth.of(2027, 3), 11, 2));
+    }
+
+    @Test
+    void spreadOverSeason_shouldGiveTheMissingTenthToTheFirstMonth_onEqualRemainders() {
+        // Act: 8,800 kg over three months, 2,933.333… each
+        List<BigDecimal> months = YieldForecastCalculator.spreadOverSeason(kg("8800", "8800", "8800"));
+        // Assert: the total is 8,800.0, not 3 × 2,933.3 = 8,799.9
+        assertEquals(kg("2933.4", "2933.3", "2933.3"), months);
+        assertEquals(new BigDecimal("8800.0"), months.stream().reduce(BigDecimal.ZERO, BigDecimal::add));
+        // And 40 × 220 × 0.25 = 2,200 kg
+        assertEquals(kg("733.4", "733.3", "733.3"), YieldForecastCalculator.spreadOverSeason(kg("2200", "2200", "2200")));
+    }
+
+    @Test
+    void spreadOverSeason_shouldGiveTheMissingTenthsToTheLargestRemainders() {
+        // Act: a phase change in the season; exact months 733.333…, 2,933.333…, 2,933.333…
+        // Total 6,600.0; truncated 733.3 + 2,933.3 + 2,933.3 = 6,599.9; equal remainders: the earliest gets it
+        assertEquals(kg("733.4", "2933.3", "2933.3"),
+                YieldForecastCalculator.spreadOverSeason(kg("2200", "8800", "8800")));
+        // Exact months 0.2666…, 0.2666…, 0.1666…: total 0.7; truncated 0.2 + 0.2 + 0.1 = 0.5;
+        // the three remainders are 0.0666…: the first two months get a tenth each
+        assertEquals(kg("0.3", "0.3", "0.1"), YieldForecastCalculator.spreadOverSeason(kg("0.8", "0.8", "0.5")));
+        // Exact months 0.06, 0.09, 0.05: total 0.2; truncated 0; the largest remainders, 2nd then 1st, get a tenth
+        assertEquals(kg("0.1", "0.1", "0.0"), YieldForecastCalculator.spreadOverSeason(kg("0.18", "0.27", "0.15")));
+    }
+
+    @Test
+    void spreadOverSeason_shouldKeepARoundSeason_andAnEmptyOne() {
+        // Act & Assert: 150 × 220 × 0.5 / 3 = 5,500 each, nothing to add
+        assertEquals(kg("5500.0", "5500.0", "5500.0"),
+                YieldForecastCalculator.spreadOverSeason(kg("16500", "16500", "16500")));
+        // Trees planted during the season, then in establishment: nothing at all
+        assertEquals(kg("0.0", "0.0", "0.0", "0.0"), YieldForecastCalculator.spreadOverSeason(kg("0", "0", "0", "0")));
+        // Trees planted after the first month: that month gives nothing, the others share the season
+        assertEquals(kg("0.0", "2933.4", "2933.3"), YieldForecastCalculator.spreadOverSeason(kg("0", "8800", "8800")));
     }
 
     @Test
