@@ -13,8 +13,8 @@ const STATUS_OPTIONS = ['ready', 'processing', 'scheduled', 'failed'];
 const SCHEDULE_FREQUENCIES = ['Daily', 'Weekly', 'Monthly', 'Quarterly'];
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
     if (data.validationErrors && typeof data.validationErrors === 'object') {
@@ -245,14 +245,14 @@ export default function DemandReportsPage() {
       const failures = [];
 
       if (reportsRes.status === 'fulfilled') {
-        setReports(Array.isArray(reportsRes.value.data) ? reportsRes.value.data : []);
+        setReports(Array.isArray(reportsRes.value) ? reportsRes.value : []);
       } else {
         setReports([]);
         failures.push(`Reports: ${getErrorMessage(reportsRes.reason)}`);
       }
 
       if (filesRes.status === 'fulfilled') {
-        setReportFiles(Array.isArray(filesRes.value.data) ? filesRes.value.data : []);
+        setReportFiles(Array.isArray(filesRes.value) ? filesRes.value : []);
       } else {
         setReportFiles([]);
         failures.push(`Files: ${getErrorMessage(filesRes.reason)}`);
