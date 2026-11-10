@@ -55,6 +55,13 @@ public interface WashSortRecordRepository extends JpaRepository<WashSortRecord, 
                                          @Param("endDate") LocalDateTime endDate);
 
     /**
+     * Aggregate input quantity by date range (SQL-side aggregation); returns 0 for empty periods.
+     */
+    @Query("SELECT COALESCE(SUM(w.inputQuantityKg), 0) FROM WashSortRecord w WHERE w.startTime BETWEEN :startDate AND :endDate")
+    java.math.BigDecimal getTotalInputQuantityByDateRange(@Param("startDate") LocalDateTime startDate,
+                                                          @Param("endDate") LocalDateTime endDate);
+
+    /**
      * Get average yield percentage by batch
      */
     @Query("SELECT AVG((w.outputQuantityKg / w.inputQuantityKg) * 100) FROM WashSortRecord w WHERE w.batch.batchId = :batchId")

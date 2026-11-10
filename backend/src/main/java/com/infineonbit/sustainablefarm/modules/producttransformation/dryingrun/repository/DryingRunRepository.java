@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -82,6 +83,33 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
      */
     @Query("SELECT d FROM DryingRun d WHERE d.endMoisturePct > 18")
     List<DryingRun> findAboveMaximumMoisture();
+
+    /**
+     * Aggregate energy consumption for a period (SQL-side aggregation).
+     * Returns 0 for empty periods instead of null.
+     */
+    @Query("SELECT COALESCE(SUM(d.energyUsageKwh), 0) FROM DryingRun d WHERE d.startTime BETWEEN :startDate AND :endDate")
+    BigDecimal getTotalEnergyUsageByDateRangeOrDefault(@Param("startDate") LocalDateTime startDate,
+                                                       @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count drying runs by date range (for KPI counts)
+     */
+    long countByStartTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Aggregate total energy usage across all runs (SQL-side aggregation).
+     */
+    @Query("SELECT COALESCE(SUM(d.energyUsageKwh), 0) FROM DryingRun d")
+    BigDecimal getTotalEnergyUsage();
+
+    /**
+     * Aggregate production output proxy for a period (duration * target temperature sum).
+     * Used by the kWh/kg energy KPI.
+     */
+    @Query("SELECT COALESCE(SUM(d.durationHours * d.targetTemperatureC), 0) FROM DryingRun d WHERE d.startTime BETWEEN :startDate AND :endDate")
+    BigDecimal getTotalOutputProxyByDateRange(@Param("startDate") LocalDateTime startDate,
+                                              @Param("endDate") LocalDateTime endDate);
 
     /**
      * Get total energy usage by date range

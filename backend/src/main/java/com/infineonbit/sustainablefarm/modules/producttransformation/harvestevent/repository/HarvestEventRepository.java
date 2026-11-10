@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -74,6 +75,20 @@ public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Stri
      */
     @Query("SELECT SUM(h.harvestQuantityKg) FROM HarvestEvent h WHERE h.mangoVariety = :variety")
     Double getTotalHarvestQuantityByVariety(@Param("variety") MangoVariety variety);
+
+    /**
+     * Aggregate harvest totals for date range filtering (SQL-side aggregation).
+     * Using COALESCE(...) 0 ensures the query returns 0 instead of null
+     * when no rows match, and skips SQL NULL values inside SUM().
+     */
+    @Query("SELECT COALESCE(SUM(h.harvestQuantityKg), 0) FROM HarvestEvent h WHERE h.harvestDate BETWEEN :start AND :end")
+    BigDecimal getTotalHarvestQuantityByHarvestDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    /**
+     * Count harvest events by date range without loading the rows
+     */
+    @Query("SELECT COUNT(h) FROM HarvestEvent h WHERE h.harvestDate BETWEEN :start AND :end")
+    long countByHarvestDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
     /**
      * Get harvest events by team

@@ -23,18 +23,6 @@ export const dashboardApi = {
   getDashboardStats: async () => {
     return await apiClient.get('/api/product-transformation/dashboard/kpis');
   },
-  getBatchStatusDistribution: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/active-batches');
-  },
-  getHarvestQuantityKPI: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/harvest-quantity');
-  },
-  getProcessingEfficiencyKPI: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/energy-consumption');
-  },
-  getQcPassRateKPI: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/quality-pass-rate');
-  },
   getHarvestTrendData: async (startDate, endDate) => {
     return await apiClient.get(
       withQuery('/api/product-transformation/dashboard/charts/harvest-trend', startDate, endDate)

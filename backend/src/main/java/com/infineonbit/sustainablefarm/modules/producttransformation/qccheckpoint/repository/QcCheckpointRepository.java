@@ -43,6 +43,20 @@ public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Stri
     List<QcCheckpoint> findByInspectorOperatorId(String inspectorId);
 
     /**
+     * Aggregate QC checkpoints by checkpoint_time range (SQL-side aggregation).
+     * Used for pass rate KPIs without loading checkpoint rows.
+     */
+    @Query("SELECT COUNT(q) FROM QcCheckpoint q WHERE q.checkpointTime BETWEEN :start AND :end")
+    long countByCheckpointTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    /**
+     * Count QC checkpoints by checkpoint_time range and result
+     */
+    @Query("SELECT COUNT(q) FROM QcCheckpoint q WHERE q.checkpointTime BETWEEN :start AND :end AND q.result = :result")
+    long countByCheckpointTimeBetweenAndResult(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
+                                               @Param("result") QcResult result);
+
+    /**
      * Find QC checkpoints by date range
      */
     List<QcCheckpoint> findByCheckpointTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
