@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { X } from "lucide-react";
+import { plantingBody, spacingErrors, VIGOR_OPTIONS } from "../utils/plantingRequests";
 import PlantsModal from "./PlantsModal";
 
 const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
 const INPUT_CLASS =
     "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
 const ERROR_CLASS = "mt-1 text-xs text-error";
+const NOTE_CLASS = "mt-1 text-xs text-gray-600";
 
 /** Same rule as the API: a short code such as "A" or "B2"; spaces around it are removed. */
 const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
@@ -18,7 +20,7 @@ function todayAsIsoDate() {
     return `${now.getFullYear()}-${month}-${day}`;
 }
 
-function FormField({ id, label, error, children }) {
+function FormField({ id, label, error, note, children }) {
     return (
         <div>
             <label htmlFor={id} className={LABEL_CLASS}>
@@ -30,13 +32,19 @@ function FormField({ id, label, error, children }) {
                     {error}
                 </p>
             )}
+            {note && (
+                <p id={`${id}-note`} className={NOTE_CLASS}>
+                    {note}
+                </p>
+            )}
         </div>
     );
 }
 
 /**
  * Form of a dated planting: the orchard is entered block by block, one planting
- * at a time.
+ * at a time. The spacings and the vigor are optional and go on the variety row;
+ * on a row that already has them, the values entered replace them.
  *
  * The checks mirror the API rules, so most mistakes are caught before sending.
  * What the API still refuses is shown the same way:
@@ -49,6 +57,9 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
     const [blockCode, setBlockCode] = useState("");
     const [varietyName, setVarietyName] = useState("");
     const [treeCount, setTreeCount] = useState("");
+    const [rowSpacing, setRowSpacing] = useState("");
+    const [treeSpacing, setTreeSpacing] = useState("");
+    const [vigor, setVigor] = useState("");
     const [fieldErrors, setFieldErrors] = useState({});
     const [today] = useState(todayAsIsoDate);
 
@@ -59,6 +70,11 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
         fieldError(field)
             ? { "aria-invalid": true, "aria-describedby": `${id}-error` }
             : {};
+    // The optional fields have a note, described along with an error.
+    const optionalProps = (field, id) =>
+        fieldError(field)
+            ? { "aria-invalid": true, "aria-describedby": `${id}-error ${id}-note` }
+            : { "aria-describedby": `${id}-note` };
 
     function validate() {
         const errors = {};
@@ -81,7 +97,7 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
         if (treeCount === "" || !Number.isInteger(count) || count < 1) {
             errors.treeCount = "Number of trees must be a whole number of at least 1.";
         }
-        return errors;
+        return { ...errors, ...spacingErrors({ rowSpacing, treeSpacing }) };
     }
 
     function handleSubmit(event) {
@@ -89,7 +105,7 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
         const errors = validate();
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
-        onSubmit({ plantingDate, blockCode, varietyName, treeCount: Number(treeCount) });
+        onSubmit(plantingBody({ plantingDate, blockCode, varietyName, treeCount, rowSpacing, treeSpacing, vigor }));
     }
 
     return (
@@ -173,6 +189,56 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
                             className={INPUT_CLASS}
                             {...errorProps("treeCount", "planting-tree-count")}
                         />
+                    </FormField>
+
+                    <FormField id="planting-row-spacing" label="Inter-row spacing (m)"
+                        error={fieldError("rowSpacingM")} note="Optional.">
+                        <input
+                            id="planting-row-spacing"
+                            type="number"
+                            min="0.1"
+                            max="30"
+                            step="0.1"
+                            inputMode="decimal"
+                            value={rowSpacing}
+                            onChange={(event) => setRowSpacing(event.target.value)}
+                            placeholder="e.g. 8"
+                            className={`${INPUT_CLASS} placeholder:text-gray-500`}
+                            {...optionalProps("rowSpacingM", "planting-row-spacing")}
+                        />
+                    </FormField>
+
+                    <FormField id="planting-tree-spacing" label="Intra-row spacing (m)"
+                        error={fieldError("treeSpacingM")} note="Optional.">
+                        <input
+                            id="planting-tree-spacing"
+                            type="number"
+                            min="0.1"
+                            max="30"
+                            step="0.1"
+                            inputMode="decimal"
+                            value={treeSpacing}
+                            onChange={(event) => setTreeSpacing(event.target.value)}
+                            placeholder="e.g. 8"
+                            className={`${INPUT_CLASS} placeholder:text-gray-500`}
+                            {...optionalProps("treeSpacingM", "planting-tree-spacing")}
+                        />
+                    </FormField>
+
+                    <FormField id="planting-vigor" label="Vigor" error={fieldError("vigor")} note="Optional.">
+                        <select
+                            id="planting-vigor"
+                            value={vigor}
+                            onChange={(event) => setVigor(event.target.value)}
+                            className={INPUT_CLASS}
+                            {...optionalProps("vigor", "planting-vigor")}
+                        >
+                            {VIGOR_OPTIONS.map((option) => (
+                                <option key={option.code} value={option.code}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
                     </FormField>
                 </div>
 

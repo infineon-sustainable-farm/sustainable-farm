@@ -14,6 +14,7 @@ import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenc
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.YearMonth;
@@ -80,7 +81,9 @@ public class YieldForecastService {
      *
      * @param phase      growth phase of the trees on the first day of the month, with its share
      * @param monthShare share of the year's harvest picked in the month, 0 outside the season
-     * @param expectedKg expected yield, rounded to 0.1 kg, possibly 0
+     * @param expectedKg expected yield, to 0.1 kg, possibly 0: its share of the season's
+     *                   yield, the months of the season being rounded together by largest
+     *                   remainder, so the value does not depend on the months asked for
      */
     record MonthExpectation(PhaseOfMonth phase, double monthShare, double expectedKg) {
     }
@@ -259,11 +262,34 @@ public class YieldForecastService {
             return Optional.empty();
         }
         VarietyReference reference = planted.reference();
-        double monthShare = YieldForecastCalculator.monthShare(
-                month, reference.getHarvestStartMonth(), reference.getHarvestEndMonth());
-        double expectedKg = YieldForecastCalculator.expectedKg(
-                planted.treeCount(), reference.getYieldPerTreeKg(), phase.share().yieldShare(), monthShare);
-        return Optional.of(new MonthExpectation(phase, monthShare, expectedKg));
+        int startMonth = reference.getHarvestStartMonth();
+        int endMonth = reference.getHarvestEndMonth();
+        double monthShare = YieldForecastCalculator.monthShare(month, startMonth, endMonth);
+        if (monthShare == 0) {
+            return Optional.of(new MonthExpectation(phase, monthShare, 0.0));
+        }
+        List<YearMonth> season = YieldForecastCalculator.seasonOf(month, startMonth, endMonth);
+        List<BigDecimal> yearlyKgByMonth = season.stream()
+                .map(seasonMonth -> yearlyKgIn(seasonMonth, planted, sharesByPhase))
+                .toList();
+        BigDecimal expectedKg = YieldForecastCalculator.spreadOverSeason(yearlyKgByMonth)
+                .get(season.indexOf(month));
+        return Optional.of(new MonthExpectation(phase, monthShare, expectedKg.doubleValue()));
+    }
+
+    /**
+     * Yearly yield of a planted variety row in the growth phase of its trees on
+     * the first day of a month, exact.
+     *
+     * @return the yield, or 0 when the trees are planted after the first day of the month
+     */
+    private static BigDecimal yearlyKgIn(YearMonth month, PlantedVariety planted,
+                                         Map<String, GrowthPhaseYieldShareResponse> sharesByPhase) {
+        PhaseOfMonth phase = phaseAtStartOf(month, planted.plantingDate(), sharesByPhase);
+        return phase == null
+                ? BigDecimal.ZERO
+                : YieldForecastCalculator.yearlyKg(
+                        planted.treeCount(), planted.reference().getYieldPerTreeKg(), phase.share().yieldShare());
     }
 
     /**
