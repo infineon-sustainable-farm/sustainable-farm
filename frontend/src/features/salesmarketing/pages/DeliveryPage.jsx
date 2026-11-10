@@ -5,8 +5,8 @@ const MAP_IMAGE =
   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBIm-zErSziwUiSSJzhvrKgcrj-IuZDfCZDbfSqbQlcrHwsnfJ7L0Z0wkyOcxg6ImSv_Y8emrvLdoTY8GlsnffE1E9sGLd0GAPYlbtFbPAqkyOJ0uneLb0yk5bSveVBNCYxQmkp18mnvtX48wrd5g8urh2nDoDops0PXBsMRNgeTzdMkesfMfOOXeNFy1LE7ayoz9DPfmYE1u6p9p2Xq0cNqxz_PlbtH4nTKslKW4FMdSDLAPNcOZMw')";
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   return data.message || fallback;
 }
@@ -109,7 +109,7 @@ export default function DeliveryPage() {
       const failures = [];
 
       if (shipRes.status === 'fulfilled') {
-        const nextShipments = Array.isArray(shipRes.value.data) ? shipRes.value.data : [];
+        const nextShipments = Array.isArray(shipRes.value) ? shipRes.value : [];
         setShipments(nextShipments);
         setSelectedId(nextShipments.length > 0 ? nextShipments[0].shipmentId : null);
       } else {
@@ -119,7 +119,7 @@ export default function DeliveryPage() {
       }
 
       if (eventRes.status === 'fulfilled') {
-        setEvents(Array.isArray(eventRes.value.data) ? eventRes.value.data : []);
+        setEvents(Array.isArray(eventRes.value) ? eventRes.value : []);
       } else {
         setEvents([]);
         failures.push(`Shipment events: ${getErrorMessage(eventRes.reason, 'Unable to load shipment events.')}`);
