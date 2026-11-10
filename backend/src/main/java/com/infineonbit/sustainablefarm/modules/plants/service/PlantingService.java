@@ -48,9 +48,9 @@ public class PlantingService {
      * New variety row for a (farm, block, name) triple planted for the first time.
      *
      * <p>{@code treeCount} is the number declared when the row is created, that
-     * is the trees of this planting. Spacing, density, yields, vigor and plant
-     * origin are not entered with a planting: they stay NULL rather than being
-     * guessed.
+     * is the trees of this planting. The spacings and the vigor are those of the
+     * planting, when given; density, yields and plant origin are not entered
+     * with a planting: they stay NULL rather than being guessed.
      */
     private static Variety newVariety(Integer farmId, String blockCode, String name, Integer treeCount, Instant now) {
         Variety variety = new Variety();
@@ -61,6 +61,30 @@ public class PlantingService {
         variety.setSource(USER_ENTRY_SOURCE);
         variety.setLastUpdated(now);
         return variety;
+    }
+
+    /**
+     * Writes the spacings and the vigor of a planting on its variety row. A
+     * value left out changes nothing, so an existing row keeps its own; a value
+     * given replaces it. The vigor is trimmed and upper-cased ({@code " good "}
+     * becomes {@code "GOOD"}).
+     *
+     * @param variety the variety row of the planting
+     * @param request the planting, already validated: both spacings or none
+     * @return {@code true} if a value was written
+     */
+    private static boolean applySpacingAndVigor(Variety variety, PlantingRequest request) {
+        boolean written = false;
+        if (request.rowSpacingM() != null) {
+            variety.setRowSpacingM(request.rowSpacingM().doubleValue());
+            variety.setTreeSpacingM(request.treeSpacingM().doubleValue());
+            written = true;
+        }
+        if (request.vigor() != null) {
+            variety.setVigor(request.vigor().trim().toUpperCase(Locale.ROOT));
+            written = true;
+        }
+        return written;
     }
 
     /**
@@ -90,8 +114,9 @@ public class PlantingService {
      * <ol>
      *     <li>Finds the variety row of the (farm, block, name) triple. A NULL farm
      *         matches only the rows without a farm, and the name ignores case. An
-     *         existing row is reused as it is and locked until the commit; a
-     *         missing one is created.</li>
+     *         existing row is reused and locked until the commit; a missing one
+     *         is created. The spacings and the vigor given are written on the
+     *         row, and replace those of an existing row.</li>
      *     <li>Refuses a second planting of the same variety row. The lock makes a
      *         planting sent at the same time wait, then see this one.</li>
      *     <li>Creates the growth calendar row of the block, or moves its date back
@@ -123,10 +148,15 @@ public class PlantingService {
                 .findFirst()
                 .orElse(null);
         if (variety == null) {
-            variety = varietyRepository.save(newVariety(farmId, blockCode, varietyName, request.treeCount(), now));
+            Variety created = newVariety(farmId, blockCode, varietyName, request.treeCount(), now);
+            applySpacingAndVigor(created, request);
+            variety = varietyRepository.save(created);
         } else if (populationEventRepository.existsByVarietyIdAndEventType(variety.getId(), PopulationEventType.PLANTING)) {
             throw new ConflictException("A planting of " + variety.getName()
                     + " is already recorded on block " + variety.getBlockCode());
+        } else if (applySpacingAndVigor(variety, request)) {
+            variety.setLastUpdated(now);
+            variety = varietyRepository.save(variety);
         }
 
         recordPlantingDate(farmId, blockCode, request.plantingDate(), now);

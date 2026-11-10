@@ -47,7 +47,8 @@ public class PlantingController {
    @Operation(summary = "Record a planting",
          description = "Creates the variety row of the block if it does not exist yet, and moves the block's "
                + "calendar date back when this planting is the oldest. The current number of trees is then "
-               + "computed from the recorded events.")
+               + "computed from the recorded events. The optional spacings (both or none) and vigor are written on the "
+               + "variety row, replacing those of an existing row.")
    @ApiResponses({
          @ApiResponse(responseCode = "201", description = "The recorded planting"),
          @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
