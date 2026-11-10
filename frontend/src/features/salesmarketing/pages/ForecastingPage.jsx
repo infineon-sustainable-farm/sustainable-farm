@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api/api';
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
     if (data.validationErrors && typeof data.validationErrors === 'object') {
@@ -230,8 +230,8 @@ export default function ForecastingPage() {
 
       if (forecastRes.status === 'fulfilled') {
         setForecasts(
-          Array.isArray(forecastRes.value.data)
-            ? forecastRes.value.data
+          Array.isArray(forecastRes.value)
+            ? forecastRes.value
             : []
         );
       } else {
@@ -245,8 +245,8 @@ export default function ForecastingPage() {
       }
 
       if (modelRunRes.status === 'fulfilled') {
-        const runs = Array.isArray(modelRunRes.value.data)
-          ? modelRunRes.value.data
+        const runs = Array.isArray(modelRunRes.value)
+          ? modelRunRes.value
           : [];
 
         setModelRuns(runs);
@@ -304,9 +304,9 @@ export default function ForecastingPage() {
 
       if (productRes.status === 'fulfilled') {
         const list = Array.isArray(
-          productRes.value.data
+          productRes.value
         )
-          ? productRes.value.data
+          ? productRes.value
           : [];
 
         setProducts(list);
@@ -329,8 +329,8 @@ export default function ForecastingPage() {
       // Orders
       if (orderRes.status === 'fulfilled') {
         setOrders(
-          Array.isArray(orderRes.value.data)
-            ? orderRes.value.data
+          Array.isArray(orderRes.value)
+            ? orderRes.value
             : []
         );
       } else {
@@ -346,8 +346,8 @@ export default function ForecastingPage() {
       // Order items
       if (orderItemRes.status === 'fulfilled') {
         setOrderItems(
-          Array.isArray(orderItemRes.value.data)
-            ? orderItemRes.value.data
+          Array.isArray(orderItemRes.value)
+            ? orderItemRes.value
             : []
         );
       } else {
