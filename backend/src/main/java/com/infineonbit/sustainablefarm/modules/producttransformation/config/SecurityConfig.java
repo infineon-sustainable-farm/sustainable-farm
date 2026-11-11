@@ -17,19 +17,41 @@ import org.springframework.security.web.SecurityFilterChain;
  * <p>The module has no authentication infrastructure yet (no JWT, no OAuth2, no
  * login form). Gating {@code /api/**} by role without any way to obtain a role
  * makes every endpoint answer 403, which bricked the dev UI during the Day 13
- * visual validation. The two chains below keep the production posture (routes
- * closed) while allowing the local/dev demo stack (profile {@code dev}) to work
- * until the authentication workstream lands.
+ * visual validation. The profile-specific chains below keep the production
+ * posture (routes closed) while allowing the local/dev demo stack (profile
+ * {@code dev}) and the test suite (profile {@code test}) to work until the
+ * authentication workstream lands.
+ *
+ * <p>The {@code test} chain is not cosmetic: since {@code spring-boot-starter-security}
+ * is on the classpath, leaving the class out of the test context would let Spring
+ * Boot's default chain lock every endpoint, and the 1384-test suite (whose HTTP
+ * integration tests rely on the test profile) would answer 401/403.
  *
  * <p>SEC-1 remains partially open: this class is a gate, not an authentication
  * mechanism. See self-Docs/DAY13_SECURITY_PERFORMANCE_FIXES.md.
  */
 @Configuration
 @EnableWebSecurity
-@Profile("!test")
 public class SecurityConfig {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+
+    /**
+     * Test profile: the suite exercises controllers through MockMvc without any
+     * authentication infrastructure, and several modules assert exact status
+     * codes (201, 404, 405, 503). Open, but only for the test profile.
+     */
+    @Bean
+    @Profile("test")
+    public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        return http.build();
+    }
 
     /**
      * Dev profile: the audit/demo stack runs unauthenticated today.
@@ -57,7 +79,7 @@ public class SecurityConfig {
      * this is deliberately fail-closed until SEC-1 is completed.
      */
     @Bean
-    @Profile("!dev")
+    @Profile("!dev & !test")
     public SecurityFilterChain securedFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
