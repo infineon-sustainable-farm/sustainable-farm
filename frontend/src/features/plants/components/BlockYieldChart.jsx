@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useYieldComparison } from "../hooks/useYieldComparison";
 import { formatBlock, formatKilograms, formatMonth, formatNumber } from "../utils/format";
 import OverviewCard from "./OverviewCard";
-import { CARD_CAPTION, CARD_LINK } from "./overviewStyles";
+import { CARD_CAPTION, CARD_LINK } from "./plantsStyles";
 
 /*
  * Expected in the mock-up's orange, darkened so a bar keeps 3:1 on the white
@@ -31,7 +31,7 @@ function YieldBar({ label, kg, largestKg, barClass }) {
             <div aria-hidden="true" className="h-2.5 rounded-full bg-[#eef2f1]">
                 <div className={`h-2.5 rounded-full ${barClass} ${kg > 0 ? "min-w-1" : ""}`} style={{ width }} />
             </div>
-            <span className="text-right text-xs font-semibold whitespace-nowrap text-gray-900">
+            <span className="text-right text-xs font-semibold whitespace-nowrap text-on-background">
                 {formatKilograms(kg)}
             </span>
         </div>
@@ -100,7 +100,7 @@ export default function BlockYieldChart({ blockCode }) {
                     <ul className="flex flex-col gap-3">
                         {comparison.blocks.map((block) => (
                             <li key={`${block.farmId}-${block.blockCode}`} className="flex flex-col gap-1">
-                                <p className="text-sm font-semibold text-gray-900">{formatBlock(block.blockCode)}</p>
+                                <p className="text-sm font-semibold text-on-background">{formatBlock(block.blockCode)}</p>
                                 <YieldBar
                                     label="Expected"
                                     kg={block.expectedKg}

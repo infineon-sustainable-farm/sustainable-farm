@@ -1,5 +1,5 @@
-import { Loader2, TriangleAlert } from "lucide-react";
-import { CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON } from "./overviewStyles";
+import { TriangleAlert } from "lucide-react";
+import { CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON, SKELETON } from "./plantsStyles";
 
 /**
  * Frame of one chart of the Overview: its title and caption, then its loading
@@ -7,7 +7,8 @@ import { CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON } 
  * request, so one failing request leaves the other charts in place.
  *
  * `query` is the TanStack Query result the chart reads; `children` is only
- * rendered once its data is there.
+ * rendered once its data is there. While it loads, gray blocks hold the place
+ * of the content, and `loadingText` is said to screen readers.
  *
  * The card has exactly two children, its header and its body, so that a row
  * of cards can align their headers through grid subgrid (see OverviewPage).
@@ -26,9 +27,12 @@ export default function OverviewCard({ titleId, title, caption, query, loadingTe
 
             <div className="flex min-w-0 flex-col gap-4">
                 {isPending && (
-                    <div className="flex items-center gap-2 py-4 text-sm text-gray-500">
-                        <Loader2 size={ICON_SIZE} className="animate-spin" />
-                        {loadingText}
+                    <div role="status" className="flex flex-col gap-3">
+                        <span className="sr-only">{loadingText}</span>
+                        <div aria-hidden="true" className={`h-4 w-1/3 ${SKELETON}`} />
+                        <div aria-hidden="true" className={`h-2.5 w-full ${SKELETON}`} />
+                        <div aria-hidden="true" className={`h-4 w-2/3 ${SKELETON}`} />
+                        <div aria-hidden="true" className={`h-2.5 w-4/5 ${SKELETON}`} />
                     </div>
                 )}
 
@@ -37,7 +41,7 @@ export default function OverviewCard({ titleId, title, caption, query, loadingTe
                         <div className="flex items-start gap-2">
                             <TriangleAlert size={ICON_SIZE} className="mt-0.5 shrink-0 text-error" />
                             <div>
-                                <p className="text-sm font-bold text-gray-900">{errorText}</p>
+                                <p className="text-sm font-bold text-on-background">{errorText}</p>
                                 <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
                             </div>
                         </div>

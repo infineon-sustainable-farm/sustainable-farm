@@ -1,3 +1,5 @@
+import { FIELD_INPUT, FIELD_LABEL, SECTION_CARD } from "./plantsStyles";
+
 /**
  * Block filter. Option values are the raw stored values ("A"); only the label
  * carries the "Block " prefix, so the API always receives the raw value.
@@ -7,16 +9,13 @@
  *
  * In its own card by default; `bare` drops the card, for a filter placed on the
  * title row of a screen. Its gray-500 label stays above AA either way: #6a7282
- * -> 4.84:1 on white, 4.63:1 on the gray-50 page.
+ * -> 4.84:1 on white, 4.60:1 on the page. At the keyboard the select shows the
+ * 2 px primary ring of every field of the module.
  */
 export default function BlockFilter({ blocks, value, onChange, disabled, label = "Block / Plot:", bare = false }) {
-    const frame = bare ? "" : "rounded-xl border border-gray-200 bg-white p-6";
     return (
-        <div className={`flex flex-wrap items-center gap-3 ${frame}`}>
-            <label
-                htmlFor="plants-block-filter"
-                className="text-xs font-semibold text-gray-500"
-            >
+        <div className={`flex flex-wrap items-center gap-3 ${bare ? "" : SECTION_CARD}`}>
+            <label htmlFor="plants-block-filter" className={FIELD_LABEL}>
                 {label}
             </label>
             <select
@@ -24,7 +23,7 @@ export default function BlockFilter({ blocks, value, onChange, disabled, label =
                 value={value}
                 disabled={disabled}
                 onChange={(event) => onChange(event.target.value)}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:text-gray-400"
+                className={FIELD_INPUT}
             >
                 <option value="">All blocks</option>
                 {blocks.map((block) => (
