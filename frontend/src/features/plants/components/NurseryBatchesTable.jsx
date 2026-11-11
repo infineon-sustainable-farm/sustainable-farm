@@ -9,6 +9,7 @@ import {
 } from "../utils/format";
 import NurseryStageBadge from "./NurseryStageBadge";
 import Value from "./Value";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // The mock-up's columns, with "Batch" for its "Lot", as the API's messages say,
 // and the plants still in the nursery where it showed the starting count.
@@ -64,7 +65,7 @@ function OriginCell({ batch }) {
  */
 export default function NurseryBatchesTable({ batches }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -72,7 +73,7 @@ export default function NurseryBatchesTable({ batches }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase"
+                                className={`${TABLE_HEAD} align-bottom whitespace-normal`}
                             >
                                 {column}
                             </th>
