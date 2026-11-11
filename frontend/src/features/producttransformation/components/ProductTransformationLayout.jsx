@@ -16,7 +16,7 @@ export default function ProductTransformationLayout() {
   return (
     <div className="flex h-dvh">
       <ProductTransformationSidebar />
-      <main className="h-dvh min-w-0 flex-1 overflow-y-auto">
+      <main className="h-dvh min-w-0 flex-1 overflow-y-auto pt-16 md:pt-0">
         <Outlet />
       </main>
     </div>

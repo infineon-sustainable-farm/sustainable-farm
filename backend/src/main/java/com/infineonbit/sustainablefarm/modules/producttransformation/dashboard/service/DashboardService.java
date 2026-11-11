@@ -15,7 +15,6 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
-import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.model.WashSortRecord;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
@@ -75,9 +74,10 @@ public class DashboardService {
         response.setQualityPassRate(calculateQualityPassRate(startDate, endDate).getPassRate());
         
         // Resource KPIs
+        EnergyConsumptionKPI energyKPI = calculateEnergyConsumption(startDate, endDate);
         response.setWaterConsumption(calculateWaterConsumption(startDate, endDate));
-        response.setEnergyConsumption(calculateEnergyConsumption(startDate, endDate).getAverageConsumption());
-        response.setSolarEnergyShare(calculateEnergyConsumption(startDate, endDate).getSolarShare());
+        response.setEnergyConsumption(energyKPI.getAverageConsumption());
+        response.setSolarEnergyShare(energyKPI.getSolarShare());
         response.setEquipmentUtilization(calculateEquipmentUtilization().getUtilizationRate());
         
         // Quality KPIs
@@ -99,29 +99,28 @@ public class DashboardService {
      */
     public HarvestQuantityKPI calculateHarvestQuantity(LocalDate startDate, LocalDate endDate) {
         log.debug("Calculating harvest quantity for period: {} to {}", startDate, endDate);
-        
-        List<HarvestEvent> harvestEvents = harvestEventRepository.findByHarvestDateBetween(startDate, endDate);
-        
-        BigDecimal totalQuantity = harvestEvents.stream()
-            .map(HarvestEvent::getHarvestQuantityKg)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
+        BigDecimal totalQuantity = harvestEventRepository.getTotalHarvestQuantityByHarvestDateBetween(startDate, endDate);
+        if (totalQuantity == null) {
+            totalQuantity = BigDecimal.ZERO;
+        }
+        long harvestEventCount = harvestEventRepository.countByHarvestDateBetween(startDate, endDate);
+
         // Calculate change vs previous period (simplified)
         BigDecimal changePercentage = calculateChangePercentage(
-            totalQuantity, 
+            totalQuantity,
             calculatePreviousPeriodQuantity(startDate, endDate)
         );
-        
+
         String trend = determineTrend(changePercentage);
-        
+
         return HarvestQuantityKPI.builder()
             .totalQuantity(totalQuantity)
             .changePercentage(changePercentage)
             .trend(trend)
             .startDate(startDate)
             .endDate(endDate)
-            .harvestEventCount(harvestEvents.size())
+            .harvestEventCount(Math.toIntExact(harvestEventCount))
             .build();
     }
     
@@ -133,29 +132,29 @@ public class DashboardService {
     public ActiveBatchesKPI calculateActiveBatches() {
         log.debug("Calculating active batches");
         
-        List<Batch> allBatches = batchRepository.findAll();
-        List<Batch> activeBatches = allBatches.stream()
-            .filter(batch -> batch.getCurrentStatus() == Batch.BatchStatus.DRYING || 
-                           batch.getCurrentStatus() == Batch.BatchStatus.WASHING ||
-                           batch.getCurrentStatus() == Batch.BatchStatus.PACKAGING)
-            .collect(Collectors.toList());
-        
-        BigDecimal activePercentage = allBatches.isEmpty() 
-            ? BigDecimal.ZERO 
-            : new BigDecimal(activeBatches.size())
-                .divide(new BigDecimal(allBatches.size()), 2, RoundingMode.HALF_UP)
+        List<Batch.BatchStatus> activeStatuses = List.of(Batch.BatchStatus.DRYING, Batch.BatchStatus.WASHING, Batch.BatchStatus.PACKAGING);
+        long totalBatchCount = batchRepository.count();
+        long activeBatchCount = batchRepository.countByCurrentStatusIn(activeStatuses);
+
+        // Keep only the active rows for the summary list (top 10, bounded in SQL;
+        // the KPI counts themselves are aggregate queries above)
+        List<Batch> activeBatches = batchRepository.findTop10ByCurrentStatusIn(activeStatuses);
+
+        BigDecimal activePercentage = totalBatchCount == 0
+            ? BigDecimal.ZERO
+            : new BigDecimal(activeBatchCount)
+                .divide(new BigDecimal(totalBatchCount), 2, RoundingMode.HALF_UP)
                 .multiply(new BigDecimal("100"));
-        
-        String status = determineActiveBatchStatus(activeBatches.size());
-        
+
+        String status = determineActiveBatchStatus((int) activeBatchCount);
+
         List<ActiveBatchesKPI.BatchSummary> batchSummaries = activeBatches.stream()
-            .limit(10) // Limit to first 10 for performance
             .map(this::mapToBatchSummary)
             .collect(Collectors.toList());
-        
+
         return ActiveBatchesKPI.builder()
-            .activeBatchCount(activeBatches.size())
-            .totalBatchCount(allBatches.size())
+            .activeBatchCount((int) activeBatchCount)
+            .totalBatchCount((int) totalBatchCount)
             .activePercentage(activePercentage)
             .status(status)
             .asOfDate(LocalDate.now())
@@ -170,22 +169,17 @@ public class DashboardService {
      */
     public QualityPassRateKPI calculateQualityPassRate(LocalDate startDate, LocalDate endDate) {
         log.debug("Calculating quality pass rate for period: {} to {}", startDate, endDate);
-        
-        List<QcCheckpoint> checkpoints = qcCheckpointRepository.findByCheckpointDateBetween(startDate, endDate);
-        
-        int totalCheckpoints = checkpoints.size();
-        int passedCheckpoints = (int) checkpoints.stream()
-            .filter(cp -> cp.getResult() == QcCheckpoint.QcResult.PASS)
-            .count();
-        int failedCheckpoints = (int) checkpoints.stream()
-            .filter(cp -> cp.getResult() == QcCheckpoint.QcResult.FAIL)
-            .count();
-        int reworkCheckpoints = (int) checkpoints.stream()
-            .filter(cp -> cp.getResult() == QcCheckpoint.QcResult.REWORK)
-            .count();
-        
-        BigDecimal passRate = totalCheckpoints == 0 
-            ? BigDecimal.ZERO 
+
+        LocalDateTime from = startDate.atStartOfDay();
+        LocalDateTime to = endDate.atTime(23, 59, 59);
+
+        long totalCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetween(from, to);
+        long passedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.PASS);
+        long failedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.FAIL);
+        long reworkCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.REWORK);
+
+        BigDecimal passRate = totalCheckpoints == 0
+            ? BigDecimal.ZERO
             : new BigDecimal(passedCheckpoints)
                 .divide(new BigDecimal(totalCheckpoints), 2, RoundingMode.HALF_UP)
                 .multiply(new BigDecimal("100"));
@@ -195,10 +189,10 @@ public class DashboardService {
         
         return QualityPassRateKPI.builder()
             .passRate(passRate)
-            .totalCheckpoints(totalCheckpoints)
-            .passedCheckpoints(passedCheckpoints)
-            .failedCheckpoints(failedCheckpoints)
-            .reworkCheckpoints(reworkCheckpoints)
+            .totalCheckpoints(Math.toIntExact(totalCheckpoints))
+            .passedCheckpoints(Math.toIntExact(passedCheckpoints))
+            .failedCheckpoints(Math.toIntExact(failedCheckpoints))
+            .reworkCheckpoints(Math.toIntExact(reworkCheckpoints))
             .targetStatus(targetStatus)
             .targetPercentage(targetPercentage)
             .startDate(startDate)
@@ -214,19 +208,18 @@ public class DashboardService {
     public EnergyConsumptionKPI calculateEnergyConsumption(LocalDate startDate, LocalDate endDate) {
         log.debug("Calculating energy consumption for period: {} to {}", startDate, endDate);
         
-        List<DryingRun> dryingRuns = dryingRunRepository.findByStartTimeBetween(startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
-        
-        BigDecimal totalEnergy = dryingRuns.stream()
-            .map(DryingRun::getEnergyUsageKwh)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        // Dried quantity needs to be calculated from batch quantity or similar
-        // For now, we'll use duration * target as a proxy
-        BigDecimal totalDriedQuantity = dryingRuns.stream()
-            .filter(run -> run.getDurationHours() != null && run.getTargetTemperatureC() != null)
-            .map(run -> run.getDurationHours().multiply(run.getTargetTemperatureC()))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalEnergy = dryingRunRepository.getTotalEnergyUsageByDateRangeOrDefault(
+            startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        if (totalEnergy == null) {
+            totalEnergy = BigDecimal.ZERO;
+        }
+
+        // Dried quantity proxy: duration * target temperature (SQL-side aggregation)
+        BigDecimal totalDriedQuantity = dryingRunRepository.getTotalOutputProxyByDateRange(
+            startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        if (totalDriedQuantity == null) {
+            totalDriedQuantity = BigDecimal.ZERO;
+        }
         
         BigDecimal averageConsumption = totalDriedQuantity.compareTo(BigDecimal.ZERO) == 0 
             ? BigDecimal.ZERO 
@@ -250,7 +243,7 @@ public class DashboardService {
             .targetConsumption(targetConsumption)
             .startDate(startDate)
             .endDate(endDate)
-            .dryingRunCount(dryingRuns.size())
+            .dryingRunCount(Math.toIntExact(dryingRunRepository.countByStartTimeBetween(startDate.atStartOfDay(), endDate.atTime(23, 59, 59))))
             .build();
     }
     
@@ -375,11 +368,7 @@ public class DashboardService {
     public List<EnergyBreakdownData> getEnergyBreakdownChartData() {
         log.debug("Calculating energy breakdown chart data");
         
-        List<DryingRun> dryingRuns = dryingRunRepository.findAll();
-        BigDecimal totalEnergy = dryingRuns.stream()
-            .map(DryingRun::getEnergyUsageKwh)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalEnergy = dryingRunRepository.getTotalEnergyUsage();
         
         BigDecimal gridConsumption = totalEnergy;
         BigDecimal solarConsumption = BigDecimal.ZERO;
@@ -474,14 +463,11 @@ public class DashboardService {
      * Calculation: SUM(energy_usage_kwh) / target (proxy for dried quantity)
      */
     private BigDecimal calculateProductionOutput(LocalDate startDate, LocalDate endDate) {
-        List<DryingRun> dryingRuns = dryingRunRepository.findByStartTimeBetween(startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
-        
+        BigDecimal energy = dryingRunRepository.getTotalEnergyUsageByDateRangeOrDefault(
+            startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
         // Using energy usage as a proxy for production output
         // In production, this would use actual dried quantity from the batch
-        return dryingRuns.stream()
-            .map(DryingRun::getEnergyUsageKwh)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return energy == null ? BigDecimal.ZERO : energy.setScale(2, RoundingMode.HALF_UP);
     }
     
     /**
@@ -490,20 +476,17 @@ public class DashboardService {
      * Calculation: SUM(water_consumption) / SUM(input_quantity) = L/kg
      */
     private BigDecimal calculateWaterConsumption(LocalDate startDate, LocalDate endDate) {
-        List<WashSortRecord> washSortRecords = washSortRecordRepository.findByStartTimeBetween(startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
-        
-        BigDecimal totalWater = washSortRecords.stream()
-            .map(WashSortRecord::getWaterUsageLiters)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        BigDecimal totalInput = washSortRecords.stream()
-            .map(WashSortRecord::getInputQuantityKg)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        return totalInput.compareTo(BigDecimal.ZERO) == 0 
-            ? BigDecimal.ZERO 
+        Double water = washSortRecordRepository.getTotalWaterUsageByDateRange(startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        BigDecimal totalWater = water == null ? BigDecimal.ZERO : new BigDecimal(water.toString()).setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal totalInput = washSortRecordRepository.getTotalInputQuantityByDateRange(
+            startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        if (totalInput == null) {
+            totalInput = BigDecimal.ZERO;
+        }
+
+        return totalInput.compareTo(BigDecimal.ZERO) == 0
+            ? BigDecimal.ZERO
             : totalWater.divide(totalInput, 2, RoundingMode.HALF_UP);
     }
     
@@ -513,13 +496,11 @@ public class DashboardService {
      * Calculation: SUM(grade_a_quantity) / SUM(quantity) * 100
      */
     private BigDecimal calculateGradeAPercentage(LocalDate startDate, LocalDate endDate) {
-        List<HarvestEvent> harvestEvents = harvestEventRepository.findByHarvestDateBetween(startDate, endDate);
-        
-        BigDecimal totalQuantity = harvestEvents.stream()
-            .map(HarvestEvent::getHarvestQuantityKg)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+        BigDecimal totalQuantity = harvestEventRepository.getTotalHarvestQuantityByHarvestDateBetween(startDate, endDate);
+        if (totalQuantity == null) {
+            totalQuantity = BigDecimal.ZERO;
+        }
+
         // Grade A quantity is not directly stored in HarvestEvent
         // For now, we'll calculate it as 75% of total (simplified)
         BigDecimal totalGradeA = totalQuantity.multiply(new BigDecimal("0.75"));
@@ -546,12 +527,9 @@ public class DashboardService {
      */
     private BigDecimal calculateTotalEnergyToday() {
         LocalDate today = LocalDate.now();
-        List<DryingRun> dryingRuns = dryingRunRepository.findByStartTimeBetween(today.atStartOfDay(), today.atTime(23, 59, 59));
-        
-        return dryingRuns.stream()
-            .map(DryingRun::getEnergyUsageKwh)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal todaysEnergy = dryingRunRepository.getTotalEnergyUsageByDateRangeOrDefault(
+            today.atStartOfDay(), today.atTime(23, 59, 59));
+        return todaysEnergy == null ? BigDecimal.ZERO : todaysEnergy.setScale(2, RoundingMode.HALF_UP);
     }
     
     /**
@@ -560,17 +538,18 @@ public class DashboardService {
      * Calculation: (Output Quantity / Input Quantity) * 100
      */
     private BigDecimal calculateProductionEfficiency(LocalDate startDate, LocalDate endDate) {
-        BigDecimal totalInput = washSortRecordRepository.findByStartTimeBetween(startDate.atStartOfDay(), endDate.atTime(23, 59, 59))
-            .stream()
-            .map(WashSortRecord::getInputQuantityKg)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+        BigDecimal totalInput = washSortRecordRepository.getTotalInputQuantityByDateRange(
+            startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        if (totalInput == null) {
+            totalInput = BigDecimal.ZERO;
+        }
+
         // Using energy usage as proxy for output (simplified)
-        BigDecimal totalOutput = dryingRunRepository.findByStartTimeBetween(startDate.atStartOfDay(), endDate.atTime(23, 59, 59))
-            .stream()
-            .map(DryingRun::getEnergyUsageKwh)
-            .filter(java.util.Objects::nonNull)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalOutput = dryingRunRepository.getTotalEnergyUsageByDateRangeOrDefault(
+            startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        if (totalOutput == null) {
+            totalOutput = BigDecimal.ZERO;
+        }
         
         return totalInput.compareTo(BigDecimal.ZERO) == 0 
             ? BigDecimal.ZERO 

@@ -3,7 +3,6 @@
  * API client for dashboard statistics and metrics
  *
  * STATUS (J3): All endpoints implemented and mapped to Product Transformation backend routes.
- * See api-client.ts dashboardApis for concrete URL mapping.
  * Do NOT redirect to Visitor Management (different module, different data).
  */
 
@@ -22,18 +21,6 @@ const withQuery = (endpoint, startDate, endDate) => {
 export const dashboardApi = {
   getDashboardStats: async () => {
     return await apiClient.get('/api/product-transformation/dashboard/kpis');
-  },
-  getBatchStatusDistribution: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/active-batches');
-  },
-  getHarvestQuantityKPI: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/harvest-quantity');
-  },
-  getProcessingEfficiencyKPI: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/energy-consumption');
-  },
-  getQcPassRateKPI: async () => {
-    return await apiClient.get('/api/product-transformation/dashboard/kpi/quality-pass-rate');
   },
   getHarvestTrendData: async (startDate, endDate) => {
     return await apiClient.get(

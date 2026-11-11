@@ -4,11 +4,11 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.integration
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.cropstorage.dto.CropStorageEntryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
+
+import java.util.Optional;
 
 /**
  * Crop Storage Integration Service
@@ -45,7 +45,6 @@ public class CropStorageIntegrationService {
      *
      * @param request Storage entry request
      * @return Storage entry response with generated batch_code
-     * @throws HttpClientErrorException if capacity overflow (409)
      */
     public CropStorageEntryResponse createStorageEntry(CropStorageEntryRequest request) {
         String url = cropStorageApiBaseUrl + cropStorageApiEndpoint;
@@ -58,24 +57,19 @@ public class CropStorageIntegrationService {
     }
 
     /**
-     * Check if storage entry creation would succeed (capacity check)
-     * This is a preliminary check before actual entry creation
+     * Check whether Crop Storage would accept the entry.
      *
-     * @param request Storage entry request
-     * @return true if capacity available, false otherwise
+     * <p>A capacity check must not write: creating the entry to probe capacity persisted a
+     * real storage entry on every call, which is not idempotent and pollutes Crop Storage.
+     * Crop Storage has not published a dedicated capacity endpoint yet, so this method
+     * never calls {@link #createStorageEntry(CropStorageEntryRequest)} and reports the
+     * gap instead of guessing: an empty result means "capacity unknown", and the caller
+     * answers 503 until the contract exists.
+     *
+     * @param request storage entry request, kept for the future dedicated endpoint
+     * @return empty while Crop Storage exposes no capacity endpoint
      */
-    public boolean checkStorageCapacity(CropStorageEntryRequest request) {
-        try {
-            // Try to create entry to check capacity
-            // Note: This is a provisional approach. Crop Storage may provide a dedicated capacity check endpoint.
-            createStorageEntry(request);
-            return true;
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.CONFLICT) {
-                // 409 Conflict - capacity overflow
-                return false;
-            }
-            throw e;
-        }
+    public Optional<Boolean> checkStorageCapacity(CropStorageEntryRequest request) {
+        return Optional.empty();
     }
 }

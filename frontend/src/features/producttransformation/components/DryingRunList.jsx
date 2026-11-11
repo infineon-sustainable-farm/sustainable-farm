@@ -428,7 +428,7 @@ const DryingRunList = () => {
                       <div>{formatDateTime(run.startTime)}</div>
                       <div className="text-xs text-gray-500">to {formatDateTime(run.endTime)}</div>
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-3 py-4 text-sm text-gray-600">
                       <div className="text-gray-900">{equipmentLabel}</div>
                       <div className="text-xs text-gray-500">{operatorLabel}</div>
                     </td>
