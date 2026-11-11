@@ -96,4 +96,11 @@ public interface BatchRepository extends JpaRepository<Batch, String> {
      */
     @Query("SELECT COUNT(b) FROM Batch b WHERE b.currentStatus IN :statuses")
     long countByCurrentStatusIn(@Param("statuses") Collection<BatchStatus> statuses);
+
+    /**
+     * First 10 active batches (dashboard summary list).
+     * Bounded in SQL: the previous code filtered {@code findAll()} in memory, so the
+     * database still returned the whole table just to keep ten rows (quality-gate W1).
+     */
+    List<Batch> findTop10ByCurrentStatusIn(@Param("statuses") Collection<BatchStatus> statuses);
 }

@@ -136,12 +136,9 @@ public class DashboardService {
         long totalBatchCount = batchRepository.count();
         long activeBatchCount = batchRepository.countByCurrentStatusIn(activeStatuses);
 
-        // Keep only the active rows for the summary list (top 10 for performance;
+        // Keep only the active rows for the summary list (top 10, bounded in SQL;
         // the KPI counts themselves are aggregate queries above)
-        List<Batch> activeBatches = batchRepository.findAll().stream()
-            .filter(batch -> activeStatuses.contains(batch.getCurrentStatus()))
-            .limit(10) // Limit list transferred for performance
-            .collect(Collectors.toList());
+        List<Batch> activeBatches = batchRepository.findTop10ByCurrentStatusIn(activeStatuses);
 
         BigDecimal activePercentage = totalBatchCount == 0
             ? BigDecimal.ZERO
