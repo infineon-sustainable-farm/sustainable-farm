@@ -3,7 +3,6 @@
  * API client for dashboard statistics and metrics
  *
  * STATUS (J3): All endpoints implemented and mapped to Product Transformation backend routes.
- * See api-client.ts dashboardApis for concrete URL mapping.
  * Do NOT redirect to Visitor Management (different module, different data).
  */
 
