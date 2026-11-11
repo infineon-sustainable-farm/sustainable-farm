@@ -4,6 +4,7 @@ import { useHealthFindings } from "../hooks/useHealthFindings";
 import { formatCode } from "../utils/format";
 import FindingsTable from "./FindingsTable";
 import PlantsEmptyState from "./PlantsEmptyState";
+import { FIELD_INPUT, PRIMARY_BUTTON } from "./plantsStyles";
 
 // The statuses the API computes, in the order a finding goes through them.
 const FINDING_STATUSES = ["UNTREATED", "IN_PROGRESS", "TREATED", "CLOSED_WITHOUT_TREATMENT"];
@@ -29,11 +30,11 @@ export default function FindingsSection({ blockCode, recordAction, onTreat, onRe
 
     return (
         <section aria-labelledby="findings-title" className="flex flex-col gap-4">
-            <h2 id="findings-title" className="font-heading text-lg font-bold text-gray-900">
+            <h2 id="findings-title" className="font-heading text-lg font-bold text-on-background">
                 Findings
             </h2>
 
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
                 <div className="flex max-w-full min-w-0 items-center gap-3">
                     {/* Its accessible name joins the section title and its own label. */}
                     <label
@@ -48,7 +49,7 @@ export default function FindingsSection({ blockCode, recordAction, onTreat, onRe
                         value={status}
                         onChange={(event) => setStatus(event.target.value)}
                         aria-labelledby="findings-title findings-status-label"
-                        className="min-w-0 max-w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none"
+                        className={`min-w-0 max-w-full ${FIELD_INPUT}`}
                     >
                         <option value="">All statuses</option>
                         {FINDING_STATUSES.map((code) => (
@@ -61,20 +62,20 @@ export default function FindingsSection({ blockCode, recordAction, onTreat, onRe
             </div>
 
             {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
+                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-16 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Loading findings…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
+                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-lg font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-on-background">
                             Findings could not be loaded
                         </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
+                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
                         <p className="mt-1 text-sm text-gray-600">
                             The request to the server did not succeed.
                         </p>
@@ -83,7 +84,7 @@ export default function FindingsSection({ blockCode, recordAction, onTreat, onRe
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>
