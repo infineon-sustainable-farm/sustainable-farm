@@ -8,6 +8,7 @@ import {
     formatXof,
     NO_VALUE,
 } from "../utils/format";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // The mock-up's application history, widened to purchases and losses, with
 // Source last as in the other lists of the module.
@@ -51,7 +52,7 @@ function movementDetails(movement) {
  */
 export default function FertilizerMovementsTable({ movements }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -59,7 +60,7 @@ export default function FertilizerMovementsTable({ movements }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase"
+                                className={`${TABLE_HEAD} align-bottom whitespace-normal`}
                             >
                                 {column}
                             </th>
