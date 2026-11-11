@@ -5,6 +5,7 @@ import PlantsEmptyState from "./PlantsEmptyState";
 import { useGrowthCalendar, useGrowthCalendarBlocks } from "../hooks/useGrowthCalendar";
 import BlockFilter from "./BlockFilter";
 import GrowthCalendarTable from "./GrowthCalendarTable";
+import { PAGE, PRIMARY_BUTTON } from "./plantsStyles";
 
 /**
  * Explains, next to the table, why age and phase show a dash. Only rendered
@@ -17,7 +18,7 @@ function MissingPlantingDateNote({ entries }) {
     const fromZalka = undated.some((entry) => entry.source === "Zalka_2025");
 
     return (
-        <div className="flex gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
+        <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3 text-sm text-gray-600">
             <Info size={18} className="mt-0.5 shrink-0 text-info" />
             <p>
                 {fromZalka
@@ -70,15 +71,15 @@ export default function GrowthCalendarPage() {
     const { data: blocks } = useGrowthCalendarBlocks();
 
     return (
-        <div className="min-h-dvh bg-gray-50">
+        <div className={PAGE}>
             {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header>
-                    {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                    {/* A gray 12 px overline: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
                     <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                         Task 2
                     </p>
-                    <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">
+                    <h1 className="font-heading mt-1 text-2xl font-bold text-on-background">
                         Planting Calendar &amp; Growth Stages
                     </h1>
                     <p className="mt-2 max-w-xl text-sm text-gray-500">
@@ -94,20 +95,20 @@ export default function GrowthCalendarPage() {
                 />
 
                 {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
+                    <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-16 text-sm text-gray-500">
                         <Loader2 size={18} className="animate-spin" />
                         Loading growth calendar…
                     </div>
                 )}
 
                 {isError && (
-                    <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
+                    <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
                         <TriangleAlert size={28} className="text-error" />
                         <div>
-                            <p className="font-heading text-lg font-bold text-gray-900">
+                            <p className="font-heading text-lg font-bold text-on-background">
                                 Growth calendar could not be loaded
                             </p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
+                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
                             <p className="mt-1 text-sm text-gray-600">
                                 The request to the server did not succeed.
                             </p>
@@ -116,7 +117,7 @@ export default function GrowthCalendarPage() {
                             type="button"
                             onClick={() => refetch()}
                             disabled={isFetching}
-                            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                            className={PRIMARY_BUTTON}
                         >
                             {isFetching ? "Retrying…" : "Retry"}
                         </button>

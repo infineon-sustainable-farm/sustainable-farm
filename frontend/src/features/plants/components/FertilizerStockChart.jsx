@@ -1,7 +1,7 @@
 import { useFertilizers } from "../hooks/useFertilizers";
 import { formatQuantity, formatUnit } from "../utils/format";
 import OverviewCard from "./OverviewCard";
-import { CARD_CAPTION } from "./overviewStyles";
+import { CARD_CAPTION } from "./plantsStyles";
 import StockStatusBadge from "./StockStatusBadge";
 
 // kg first, then L, then a unit the API adds later, in the order the API sends them.
@@ -44,7 +44,7 @@ function UnitChart({ unit, fertilizers }) {
     return (
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <h3 className="text-sm font-semibold text-gray-900">{`Stock in ${symbol}`}</h3>
+                <h3 className="text-sm font-semibold text-on-background">{`Stock in ${symbol}`}</h3>
                 <div aria-hidden="true" className={`flex flex-wrap gap-x-4 gap-y-1 ${CARD_CAPTION}`}>
                     <span className="flex items-center gap-1.5">
                         <span className="h-2.5 w-4 rounded-full bg-primary" />
@@ -62,7 +62,7 @@ function UnitChart({ unit, fertilizers }) {
                         key={fertilizer.id}
                         className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 py-2 sm:grid-cols-[12rem_minmax(0,1fr)_14rem_5.5rem]"
                     >
-                        <span className="text-sm font-semibold break-words text-gray-900">{fertilizer.name}</span>
+                        <span className="text-sm font-semibold break-words text-on-background">{fertilizer.name}</span>
                         <span className="justify-self-end sm:order-last">
                             <StockStatusBadge belowThreshold={fertilizer.belowThreshold} />
                         </span>
@@ -79,7 +79,7 @@ function UnitChart({ unit, fertilizers }) {
                             )}
                         </div>
                         <p className={`col-span-2 sm:col-span-1 ${CARD_CAPTION}`}>
-                            <span className="font-semibold text-gray-900">
+                            <span className="font-semibold text-on-background">
                                 {`Stock ${formatQuantity(fertilizer.currentStock, fertilizer.unit)}`}
                             </span>
                             {fertilizer.reorderThreshold === null

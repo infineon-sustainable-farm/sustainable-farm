@@ -29,10 +29,10 @@ const NAV_ITEMS = [
     { label: "Scenario Analysis", icon: TrendingUp, path: "/plants/scenario-analysis" },
 ];
 
-// 32 px entries with 16 px icons, the one icon size of the module shell.
+// 36 px entries with 18 px icons.
 const ITEM_BASE =
-    "flex h-8 items-center gap-2 rounded-md px-3 text-sm text-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white";
-const ICON_SIZE = 16;
+    "flex h-9 items-center gap-2 rounded-md px-3 text-sm text-white focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white";
+const ICON_SIZE = 18;
 
 /**
  * Active entry: a light dark tint, the mock-up's left marker in 2 px and a
@@ -46,8 +46,8 @@ const linkStyles = ({ isActive }) =>
     `${ITEM_BASE} hover:bg-black/10 ${isActive ? "bg-black/10 font-semibold shadow-[inset_2px_0_0_#fff]" : "font-normal"}`;
 
 /**
- * Module shell navigation, following the Machinery sidebar: same width, same
- * off-canvas behaviour under md, same lucide icons.
+ * Module shell navigation: a 240 px bar, off-canvas under md behind a menu
+ * button, with lucide icons.
  *
  * Three things of the mock-up are left out on purpose: the Logout button (there
  * is no authentication), the "Online · Banfora" status and the farm name under
@@ -75,8 +75,8 @@ export default function PlantsSidebar() {
                     ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
                 <div className="flex flex-col items-center gap-1 px-2">
-                    {/* The application's logo, served from public/ as machinery serves it, at
-                        Machinery's 80 px. Empty alt: the module name follows immediately, in text. */}
+                    {/* The application's logo, served from public/, at 80 px. Empty alt: the
+                        module name follows immediately, in text. */}
                     <img src="/logo.webp" alt="" width="80" height="80" />
                     <p className="font-heading text-center text-xs font-bold tracking-widest text-white uppercase">
                         Plants

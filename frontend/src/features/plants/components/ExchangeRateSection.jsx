@@ -3,6 +3,7 @@ import { Loader2, Pencil, TriangleAlert } from "lucide-react";
 import { useEurXofRate } from "../hooks/useEurXofRate";
 import { useSaveEurXofRate } from "../hooks/useSaveEurXofRate";
 import { formatTimestamp } from "../utils/format";
+import { FIELD_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
 /** Same rule as the API: above 0 and below 1,000,000, with at most 6 decimals. */
 const RATE_PATTERN = /^\d{1,6}(\.\d{1,6})?$/;
@@ -92,24 +93,24 @@ export default function ExchangeRateSection() {
 
     return (
         <section aria-labelledby="exchange-rate-title" className="flex flex-col gap-4">
-            <h2 id="exchange-rate-title" className="font-heading text-lg font-bold text-gray-900">
+            <h2 id="exchange-rate-title" className="font-heading text-lg font-bold text-on-background">
                 Exchange rate
             </h2>
 
             {isPending && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Loading the exchange rate…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 px-5 py-4">
                     <div className="flex items-start gap-3">
                         <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                         <div>
-                            <p className="text-sm font-bold text-gray-900">The exchange rate could not be loaded</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
+                            <p className="text-sm font-bold text-on-background">The exchange rate could not be loaded</p>
+                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
                             <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
                         </div>
                     </div>
@@ -117,7 +118,7 @@ export default function ExchangeRateSection() {
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>
@@ -125,12 +126,12 @@ export default function ExchangeRateSection() {
             )}
 
             {!isPending && !isError && (
-                <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4">
                     {!isEditing && (
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             {rate ? (
                                 <div>
-                                    <p className="text-lg font-semibold text-gray-900">
+                                    <p className="text-lg font-semibold text-on-background">
                                         1 € = {formatRate(rate.rate)} FCFA
                                     </p>
                                     <p className="mt-0.5 text-xs text-gray-600">
@@ -139,7 +140,7 @@ export default function ExchangeRateSection() {
                                 </div>
                             ) : (
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-900">No exchange rate recorded yet</p>
+                                    <p className="text-sm font-semibold text-on-background">No exchange rate recorded yet</p>
                                     <p className="mt-0.5 text-xs text-gray-600">
                                         Until one is entered, each cost is shown only in the currency it was paid in.
                                     </p>
@@ -150,7 +151,7 @@ export default function ExchangeRateSection() {
                                 type="button"
                                 onClick={openForm}
                                 aria-label="Edit the exchange rate"
-                                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                                className={SECONDARY_BUTTON}
                             >
                                 <Pencil size={16} />
                                 Edit
@@ -187,7 +188,7 @@ export default function ExchangeRateSection() {
                                     aria-describedby={["eur-xof-rate-unit", fieldError ? "eur-xof-rate-error" : null]
                                         .filter(Boolean)
                                         .join(" ")}
-                                    className="w-36 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none"
+                                    className={`w-36 ${FIELD_INPUT}`}
                                 />
                                 <span id="eur-xof-rate-unit" className="text-sm font-semibold text-gray-700">
                                     FCFA
@@ -196,14 +197,14 @@ export default function ExchangeRateSection() {
                                     <button
                                         type="submit"
                                         disabled={saveRate.isPending}
-                                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                                        className={PRIMARY_BUTTON}
                                     >
                                         {saveRate.isPending ? "Saving…" : "Save"}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={closeForm}
-                                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                                        className={SECONDARY_BUTTON}
                                     >
                                         Cancel
                                     </button>
