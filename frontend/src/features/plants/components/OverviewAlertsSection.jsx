@@ -1,10 +1,10 @@
-import { CircleCheck, Loader2, TriangleAlert } from "lucide-react";
+import { CircleCheck, TriangleAlert } from "lucide-react";
 import { useHealthFindings } from "../hooks/useHealthFindings";
 import { useNurseryBatches } from "../hooks/useNurseryBatches";
 import { usePlantAlerts } from "../hooks/usePlantAlerts";
 import { formatBlock } from "../utils/format";
 import OverviewAlertRow from "./OverviewAlertRow";
-import { ALERT_COLUMNS, CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON } from "./overviewStyles";
+import { ALERT_COLUMNS, CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON, SKELETON } from "./plantsStyles";
 
 /** What the list covers; the day is the one under the page title. */
 function scopeSentence(blockCode) {
@@ -42,9 +42,12 @@ export default function OverviewAlertsSection({ blockCode }) {
             </div>
 
             {isPending && (
-                <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
-                    <Loader2 size={ICON_SIZE} className="animate-spin" />
-                    Loading alerts…
+                // Gray blocks in the place of the first rows; the sentence is for screen readers.
+                <div role="status" className="flex flex-col gap-3 py-2">
+                    <span className="sr-only">Loading alerts…</span>
+                    <div aria-hidden="true" className={`h-4 w-full ${SKELETON}`} />
+                    <div aria-hidden="true" className={`h-4 w-5/6 ${SKELETON}`} />
+                    <div aria-hidden="true" className={`h-4 w-2/3 ${SKELETON}`} />
                 </div>
             )}
 
@@ -53,7 +56,7 @@ export default function OverviewAlertsSection({ blockCode }) {
                     <div className="flex items-start gap-2">
                         <TriangleAlert size={ICON_SIZE} className="mt-0.5 shrink-0 text-error" />
                         <div>
-                            <p className="text-sm font-bold text-gray-900">Alerts are unavailable.</p>
+                            <p className="text-sm font-bold text-on-background">Alerts are unavailable.</p>
                             <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
                         </div>
                     </div>

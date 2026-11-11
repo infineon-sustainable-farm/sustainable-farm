@@ -1,7 +1,7 @@
 import { formatCode, formatNumber, formatPercent } from "../utils/format";
 import { MATURITY_MEANINGS } from "../utils/overviewLabels";
 import OverviewCard from "./OverviewCard";
-import { CARD_CAPTION } from "./overviewStyles";
+import { CARD_CAPTION } from "./plantsStyles";
 
 /*
  * One hue per status, each at 3:1 or more on the white card: immature
@@ -104,7 +104,7 @@ export default function MaturityStatusDonut({ query }) {
                         <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
                             <Ring entries={overview.maturity} />
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="font-heading text-lg font-bold text-gray-900">
+                                <span className="font-heading text-lg font-bold text-on-background">
                                     {formatNumber(overview.totalPlants)}
                                 </span>
                                 <span className="text-xs text-gray-600">{treesOf(overview.totalPlants)}</span>
@@ -115,7 +115,7 @@ export default function MaturityStatusDonut({ query }) {
                                 const segment = segmentOf(entry);
                                 return (
                                     <li key={entry.maturityStatus ?? "NO_REFERENCE"} className="min-w-0">
-                                        <span className="flex items-center gap-2 text-sm text-gray-900">
+                                        <span className="flex items-center gap-2 text-sm text-on-background">
                                             <span
                                                 aria-hidden="true"
                                                 className="size-2.5 shrink-0 rounded-full"
@@ -124,7 +124,7 @@ export default function MaturityStatusDonut({ query }) {
                                             {segment.label}
                                         </span>
                                         <span className="block pl-4.5 text-xs text-gray-600">
-                                            <span className="font-semibold text-gray-900">
+                                            <span className="font-semibold text-on-background">
                                                 {formatNumber(entry.treeCount)}
                                             </span>
                                             {` ${treesOf(entry.treeCount)} · ${formatPercent(entry.sharePct)}`}

@@ -1,7 +1,7 @@
 import { useNurseryBatches } from "../hooks/useNurseryBatches";
 import { formatBlock, formatNumber, formatPercent } from "../utils/format";
 import OverviewCard from "./OverviewCard";
-import { CARD_CAPTION } from "./overviewStyles";
+import { CARD_CAPTION } from "./plantsStyles";
 
 function plantsOf(count) {
     return Number(count) === 1 ? "plant" : "plants";
@@ -39,7 +39,7 @@ export default function NurserySurvivalChart() {
                 <ul className="flex flex-col gap-3">
                     {batches.map((batch) => (
                         <li key={batch.id} className="flex flex-col gap-1">
-                            <p className="text-sm break-words text-gray-900">
+                            <p className="text-sm break-words text-on-background">
                                 <span className="font-semibold">{`Batch ${batch.batchCode}`}</span>
                                 {batch.plannedBlockCode && (
                                     <span className="text-xs text-gray-600">{` · to ${formatBlock(batch.plannedBlockCode)}`}</span>
@@ -52,7 +52,7 @@ export default function NurserySurvivalChart() {
                                 />
                             </div>
                             <p className={CARD_CAPTION}>
-                                <span className="font-semibold text-gray-900">
+                                <span className="font-semibold text-on-background">
                                     {`${formatNumber(batch.survivedCount)} of ${formatNumber(batch.initialCount)}`}
                                 </span>
                                 {` ${plantsOf(batch.initialCount)} survived (${formatPercent(batch.survivalRatePct)})`}

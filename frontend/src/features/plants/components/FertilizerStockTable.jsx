@@ -1,6 +1,7 @@
 import { formatCode, formatDate, formatQuantity, formatText } from "../utils/format";
 import StockStatusBadge from "./StockStatusBadge";
 import Value from "./Value";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // The unit sits in each cell rather than in the header: a catalogue can mix
 // kilograms and litres. "Last restock" is the date of the latest purchase, as
@@ -18,7 +19,7 @@ const COLUMNS = [
 /** The catalogue with the stock of each fertilizer, in the order the API sends it. */
 export default function FertilizerStockTable({ fertilizers }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -26,7 +27,7 @@ export default function FertilizerStockTable({ fertilizers }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className={TABLE_HEAD}
                             >
                                 {column}
                             </th>

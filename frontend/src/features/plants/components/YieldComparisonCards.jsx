@@ -19,8 +19,8 @@ export default function YieldComparisonCards({ lines }) {
     return (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {lines.map((line) => (
-                <li key={line.varietyId} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-                    <h3 className="text-sm font-semibold text-gray-900">
+                <li key={line.varietyId} className="rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
+                    <h3 className="text-sm font-semibold text-on-background">
                         {`${formatText(line.varietyName)} (${formatBlock(line.blockCode)})`}
                     </h3>
                     <div className="mt-2 flex items-baseline justify-between gap-3 text-sm">
@@ -29,7 +29,7 @@ export default function YieldComparisonCards({ lines }) {
                                 ? `No harvest recorded · ${formatKilograms(line.expectedKg)} expected`
                                 : `${formatNumber(line.actualKg)} of ${formatKilograms(line.expectedKg)}`}
                         </span>
-                        <span className="font-bold text-gray-900">
+                        <span className="font-bold text-on-background">
                             <Value>{formatPercent(line.achievedPct)}</Value>
                         </span>
                     </div>

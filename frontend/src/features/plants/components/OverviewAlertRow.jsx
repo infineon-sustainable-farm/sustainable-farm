@@ -2,7 +2,7 @@ import { OctagonAlert, TriangleAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatCode, formatDate } from "../utils/format";
 import { alertPlace, alertTypeLabel, formatRelativeDays } from "../utils/overviewLabels";
-import { ALERT_COLUMNS, CARD_LINK, ICON_SIZE } from "./overviewStyles";
+import { ALERT_COLUMNS, CARD_LINK, ICON_SIZE } from "./plantsStyles";
 
 /*
  * Priority as the API's severity, an icon and a word, in the darkened hues of
@@ -45,11 +45,11 @@ export default function OverviewAlertRow({ alert, batchCode, treeLabel }) {
             </span>
 
             <div className="col-span-3 row-start-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 lg:contents">
-                <span className="text-sm font-semibold text-gray-900">{place}</span>
-                <span className="text-sm text-gray-900">{type.issue}</span>
+                <span className="text-sm font-semibold text-on-background">{place}</span>
+                <span className="text-sm text-on-background">{type.issue}</span>
             </div>
 
-            <p className="text-sm text-gray-900">
+            <p className="text-sm text-on-background">
                 {alert.date ? formatDate(alert.date) : (type.undated ?? <span className="text-gray-600">No date</span>)}
                 {relative && <span className="text-xs text-gray-600">{` · ${relative}`}</span>}
             </p>

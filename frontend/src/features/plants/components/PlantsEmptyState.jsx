@@ -1,3 +1,5 @@
+import { CARD_FRAME } from "./plantsStyles";
+
 /**
  * Empty state of the module's screens: a title, and a hint or an action on
  * what to do next.
@@ -9,8 +11,9 @@
  */
 export default function PlantsEmptyState({ title, hint, action }) {
     return (
-        <div className="rounded-xl border border-gray-200 bg-white px-6 py-12 text-center">
-            <p className="font-heading text-lg font-bold text-gray-900">{title}</p>
+        <div className={`px-6 py-12 text-center ${CARD_FRAME}`}>
+            <p className="font-heading text-lg font-bold text-on-background">{title}</p>
+            {/* gray-500 #6a7282 on white -> 4.84:1. */}
             {hint && <p className="mt-1 text-sm text-gray-500">{hint}</p>}
             {action && <div className="mt-4 flex justify-center">{action}</div>}
         </div>
