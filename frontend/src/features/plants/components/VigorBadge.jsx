@@ -1,4 +1,4 @@
-import { formatText, NO_VALUE } from "../utils/format";
+import { formatCode, NO_VALUE } from "../utils/format";
 import Value from "./Value";
 
 /*
@@ -24,8 +24,12 @@ const VIGOR_STYLES = {
     low: "border-error bg-[#f7e9e7] text-[#9a3f32]",
 };
 
+/**
+ * Vigor of a variety row. The API codes read in sentence case ("GOOD" as
+ * "Good"); a rating written otherwise is still shown, never dropped.
+ */
 export default function VigorBadge({ value }) {
-    const label = formatText(value);
+    const label = formatCode(value);
     if (label === NO_VALUE) {
         // Same dash, same colour as every other missing value in the module.
         return <Value>{NO_VALUE}</Value>;

@@ -18,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -125,6 +126,53 @@ public class PlantingControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.varietyName").value("varietyName is required"))
                 .andExpect(jsonPath("$.fieldErrors.plantingDate").value("plantingDate must be today or in the past"))
                 .andExpect(jsonPath("$.fieldErrors.treeCount").value("treeCount must be at least 1"));
+        verify(plantingService, never()).recordPlanting(any());
+    }
+
+    @Test
+    void recordPlanting_shouldPassTheSpacingsAndTheVigor_toTheService() throws Exception {
+        // Arrange
+        when(plantingService.recordPlanting(any(PlantingRequest.class))).thenReturn(new PlantingResponse(
+                100L, null, "A", 10L, "Keitt", LocalDate.of(2023, 9, 24), 150, "user_entry",
+                Instant.parse("2026-09-24T10:00:00Z")));
+        // Act
+        ResultActions result = postPlanting("""
+                {"blockCode":"A","varietyName":"Keitt","plantingDate":"2023-09-24","treeCount":150,
+                 "rowSpacingM":8,"treeSpacingM":7.5,"vigor":" good "}
+                """);
+        // Assert: the vigor reaches the service as sent, which normalizes it
+        result.andExpect(status().isCreated());
+        ArgumentCaptor<PlantingRequest> captor = ArgumentCaptor.forClass(PlantingRequest.class);
+        verify(plantingService).recordPlanting(captor.capture());
+        assertEquals(0, new BigDecimal("8").compareTo(captor.getValue().rowSpacingM()));
+        assertEquals(0, new BigDecimal("7.5").compareTo(captor.getValue().treeSpacingM()));
+        assertEquals(" good ", captor.getValue().vigor());
+    }
+
+    @Test
+    void recordPlanting_shouldReturn400OnTheFailingField_whenASpacingOrTheVigorIsInvalid() throws Exception {
+        String spacingRow = "rowSpacingM must be above 0 and at most 30 m, with at most 1 decimal";
+        // Each case: the extra fields, the field reported, its message
+        String[][] cases = {
+                {"\"rowSpacingM\":0,\"treeSpacingM\":8", "rowSpacingM", spacingRow},
+                {"\"rowSpacingM\":31,\"treeSpacingM\":8", "rowSpacingM", spacingRow},
+                {"\"rowSpacingM\":8.25,\"treeSpacingM\":8", "rowSpacingM", spacingRow},
+                {"\"rowSpacingM\":8,\"treeSpacingM\":-1", "treeSpacingM",
+                        "treeSpacingM must be above 0 and at most 30 m, with at most 1 decimal"},
+                {"\"rowSpacingM\":8", "treeSpacingM", "treeSpacingM is required when rowSpacingM is given"},
+                {"\"treeSpacingM\":8", "rowSpacingM", "rowSpacingM is required when treeSpacingM is given"},
+                {"\"vigor\":\"excellent\"", "vigor", "vigor must be GOOD, AVERAGE or POOR"},
+                {"\"vigor\":\"\"", "vigor", "vigor must be GOOD, AVERAGE or POOR"}};
+        for (String[] invalid : cases) {
+            // Act
+            ResultActions result = postPlanting("""
+                    {"blockCode":"A","varietyName":"Keitt","plantingDate":"2023-09-24","treeCount":150,%s}
+                    """.formatted(invalid[0]));
+            // Assert
+            assertApiError(result, 400, "Bad Request", "Validation failed");
+            result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(1)))
+                    .andExpect(jsonPath("$.fieldErrors." + invalid[1]).value(invalid[2]));
+        }
         verify(plantingService, never()).recordPlanting(any());
     }
 
