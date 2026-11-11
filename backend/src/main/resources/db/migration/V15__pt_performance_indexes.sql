@@ -1,6 +1,11 @@
 -- Product Transformation performance fix (B3): indexes on the columns the
 -- dashboard and the repositories actually filter on.
 --
+-- Version note: numbered V15 because on the integration branch (init, merged
+-- with develop/PR #83) V11..V14 are already taken (zone mapping, water supply,
+-- sales & marketing, PT schema). It was authored as V11 on init-clean, where
+-- the migration set stopped at V10.
+--
 -- Before this migration the PT tables had only PRIMARY KEY and UNIQUE indexes,
 -- so every date-range / status filter made a full table scan.
 --

@@ -352,7 +352,7 @@ const RawIntakeList = () => {
                 ].map((label) => (
                   <th
                     key={label}
-                    className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                    className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
                       label === 'Actions' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -364,33 +364,33 @@ const RawIntakeList = () => {
             <tbody className="divide-y divide-gray-200">
               {filteredIntakes.map((intake) => (
                 <tr key={intake.intakeId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{intake.intakeId}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {intake.batchId}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatIsoDate(intake.intakeDate)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {intake.sourceFarm} / {intake.sourceBlock}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatWeight(intake.receivedQuantityKg)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {intake.receivedVariety ? formatEnumLabel(intake.receivedVariety) : 'N/A'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-700">
                       Grade {intake.receivedGrade || 'N/A'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {intake.intakeOperator || 'N/A'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="inline-flex items-center gap-1">
                       <button
                         type="button"

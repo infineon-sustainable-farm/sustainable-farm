@@ -265,7 +265,7 @@ const Dashboard = () => {
         <ChartCard title="Harvest Quantity Trend" subtitle="From Plants harvest events (kg)">
           {hasRows(charts.harvestTrend) ? (
             <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={charts.harvestTrend}>
+              <AreaChart data={charts.harvestTrend} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
@@ -289,7 +289,7 @@ const Dashboard = () => {
         <ChartCard title="Production Output" subtitle="Output per week">
           {hasRows(charts.productionOutput) ? (
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={charts.productionOutput}>
+              <BarChart data={charts.productionOutput} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="period" />
                 <YAxis />
@@ -306,7 +306,7 @@ const Dashboard = () => {
         <ChartCard title="Quality Pass Rate Trend" subtitle="QC checkpoints (%)">
           {hasRows(charts.qualityTrend) ? (
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={charts.qualityTrend}>
+              <LineChart data={charts.qualityTrend} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis domain={[0, 100]} />

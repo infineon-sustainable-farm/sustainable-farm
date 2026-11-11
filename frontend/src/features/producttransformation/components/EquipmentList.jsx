@@ -364,7 +364,7 @@ const EquipmentList = () => {
                 ].map((label) => (
                   <th
                     key={label}
-                    className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                    className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
                       label === 'Actions' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -376,25 +376,25 @@ const EquipmentList = () => {
             <tbody className="divide-y divide-gray-200">
               {filteredEquipment.map((item) => (
                 <tr key={item.equipmentId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{item.equipmentId}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {item.equipmentName}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {equipmentTypeLabel(item.equipmentType)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatNumber(item.capacityKgPerHour, 1)} kg/h
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatNumber(item.energyConsumptionKwhPerKg, 2)} kWh/kg
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {item.location || 'N/A'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         STATUS_BADGES[item.maintenanceStatus] || 'bg-gray-100 text-gray-700'
@@ -403,10 +403,10 @@ const EquipmentList = () => {
                       {formatEnumLabel(item.maintenanceStatus || 'UNKNOWN')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatIsoDate(item.lastMaintenanceDate)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="inline-flex items-center gap-1">
                       <button
                         type="button"
