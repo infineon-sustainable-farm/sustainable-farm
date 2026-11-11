@@ -4,13 +4,13 @@
  * the label reaches WCAG AA (4.5:1) on its own background. The tokens
  * themselves are too light for text: --color-warning is 2.25:1 on white.
  *   success  #227a52 on #e5f7ef -> 4.75:1
- *   warning  #8e661c on #f8efde -> 4.52:1
+ *   warning  #8a631b on #f8efde -> 4.74:1
  *   error    #9a3f32 on #f7e9e7 -> 5.67:1
  *   neutral  gray-700 #364153 on gray-100 #f3f4f6 -> 9.36:1
  */
 const TONES = {
     success: "bg-[#e5f7ef] text-[#227a52]",
-    warning: "bg-[#f8efde] text-[#8e661c]",
+    warning: "bg-[#f8efde] text-[#8a631b]",
     error: "bg-[#f7e9e7] text-[#9a3f32]",
     neutral: "bg-gray-100 text-gray-700",
 };
