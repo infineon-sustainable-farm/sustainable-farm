@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -65,4 +66,24 @@ public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
      */
     @Query("SELECT COUNT(r) FROM RawIntake r WHERE r.receivedGrade = :grade")
     long countByReceivedGrade(@Param("grade") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade);
+
+    /**
+     * Total quantity received over a date range, all grades combined.
+     * Used as the denominator of the Grade A share on the dashboard.
+     */
+    @Query("SELECT SUM(r.receivedQuantityKg) FROM RawIntake r " +
+           "WHERE r.intakeDate BETWEEN :startDate AND :endDate")
+    BigDecimal getTotalReceivedQuantityByDateRange(@Param("startDate") LocalDate startDate,
+                                                   @Param("endDate") LocalDate endDate);
+
+    /**
+     * Total quantity received for one quality grade over a date range.
+     * Used as the numerator of the Grade A share on the dashboard.
+     */
+    @Query("SELECT SUM(r.receivedQuantityKg) FROM RawIntake r " +
+           "WHERE r.receivedGrade = :grade AND r.intakeDate BETWEEN :startDate AND :endDate")
+    BigDecimal getTotalReceivedQuantityByGradeAndDateRange(
+            @Param("grade") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
 }
