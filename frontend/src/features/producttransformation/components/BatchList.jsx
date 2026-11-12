@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { batchApi } from '../api/batchApi';
 import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
@@ -27,6 +28,7 @@ const emptyForm = () => ({
 });
 
 const BatchList = () => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,9 +214,22 @@ const BatchList = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredBatches.map((batch) => (
-                <tr key={batch.batchId} className="hover:bg-gray-50">
+                <tr
+                  key={batch.batchId}
+                  onClick={() =>
+                    navigate(`/product-transformation/batches/${batch.batchId}`)
+                  }
+                  className="cursor-pointer hover:bg-gray-50"
+                  title="Open traceability timeline"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{batch.batchId}</div>
+                    <Link
+                      to={`/product-transformation/batches/${batch.batchId}`}
+                      onClick={(event) => event.stopPropagation()}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      {batch.batchId}
+                    </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{formatDate(batch.harvestDate)}</div>
@@ -238,7 +253,11 @@ const BatchList = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {batch.currentStatus !== 'SHIPPED' && batch.currentStatus !== 'REJECTED' && (
                       <button
-                        onClick={() => handleAdvanceStatus(batch.batchId)}
+                        onClick={(event) => {
+                          // The row itself opens the timeline: keep Advance local.
+                          event.stopPropagation();
+                          handleAdvanceStatus(batch.batchId);
+                        }}
                         className="text-primary hover:text-primary/80 flex items-center gap-1 ml-auto"
                       >
                         Advance <ArrowRight className="w-4 h-4" />

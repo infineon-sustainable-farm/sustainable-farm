@@ -2,6 +2,7 @@ import ProductTransformationLayout from './components/ProductTransformationLayou
 import Dashboard from './components/Dashboard';
 import RawIntakeList from './components/RawIntakeList';
 import BatchList from './components/BatchList';
+import BatchDetail from './components/BatchDetail';
 import WashSortRecordList from './components/WashSortRecordList';
 import DryingRunList from './components/DryingRunList';
 import QcCheckpointList from './components/QcCheckpointList';
@@ -30,6 +31,7 @@ export default [
       { index: true, element: <Dashboard /> },
       { path: 'raw-intake', element: <RawIntakeList /> },
       { path: 'batches', element: <BatchList /> },
+      { path: 'batches/:batchId', element: <BatchDetail /> },
       { path: 'washing-sorting', element: <WashSortRecordList /> },
       { path: 'drying', element: <DryingRunList /> },
       { path: 'quality-control', element: <QcCheckpointList /> },
