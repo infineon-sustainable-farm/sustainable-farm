@@ -10,6 +10,7 @@ vi.mock('../api/batchApi', () => ({
   batchApi: {
     getAllBatches: vi.fn(),
     advanceBatchStatus: vi.fn(),
+    createBatch: vi.fn(),
   },
 }));
 
@@ -40,6 +41,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   batchApi.getAllBatches.mockResolvedValue(BATCHES.map((batch) => ({ ...batch })));
   batchApi.advanceBatchStatus.mockResolvedValue({});
+  batchApi.createBatch.mockResolvedValue({});
 });
 
 describe('BatchList', () => {
@@ -131,5 +133,86 @@ describe('BatchList', () => {
 
     expect(await screen.findByText('Unauthorized')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Try again/i })).toBeTruthy();
+  });
+
+  it('opens the New Batch form and closes it with Cancel', async () => {
+    render(<BatchList />);
+    await screen.findByText('B-001');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Batch/i }));
+
+    expect(screen.getByRole('dialog', { name: /New batch/i })).toBeTruthy();
+    expect(screen.getByLabelText('Batch ID')).toBeTruthy();
+    expect(screen.getByLabelText('Harvest date')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(batchApi.createBatch).not.toHaveBeenCalled();
+  });
+
+  it('creates a batch from the form and reloads the list', async () => {
+    render(<BatchList />);
+    await screen.findByText('B-001');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Batch/i }));
+
+    fireEvent.change(screen.getByLabelText('Batch ID'), { target: { value: ' B-003 ' } });
+    fireEvent.change(screen.getByLabelText('Harvest date'), { target: { value: '2026-11-12' } });
+    fireEvent.change(screen.getByLabelText('Mango variety'), { target: { value: 'KENT' } });
+    fireEvent.change(screen.getByLabelText('Harvest quantity (kg)'), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText('Farm ID'), { target: { value: 'FARM-3' } });
+    fireEvent.change(screen.getByLabelText('Block ID'), { target: { value: 'BLOCK-3' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    await waitFor(() =>
+      expect(batchApi.createBatch).toHaveBeenCalledWith({
+        batchId: 'B-003',
+        harvestDate: '2026-11-12',
+        mangoVariety: 'KENT',
+        harvestQuantityKg: 100,
+        farmId: 'FARM-3',
+        blockId: 'BLOCK-3',
+      }),
+    );
+    await waitFor(() => expect(batchApi.getAllBatches).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('blocks the submission when the harvest quantity is missing', async () => {
+    render(<BatchList />);
+    await screen.findByText('B-001');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Batch/i }));
+    fireEvent.change(screen.getByLabelText('Batch ID'), { target: { value: 'B-004' } });
+    fireEvent.change(screen.getByLabelText('Farm ID'), { target: { value: 'FARM-3' } });
+    fireEvent.change(screen.getByLabelText('Block ID'), { target: { value: 'BLOCK-3' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(await screen.findByText('Harvest quantity must be greater than 0')).toBeTruthy();
+    expect(batchApi.createBatch).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a duplicate batch id returned by the API', async () => {
+    batchApi.createBatch.mockRejectedValueOnce(
+      new Error('Batch already exists: B-001'),
+    );
+
+    render(<BatchList />);
+    await screen.findByText('B-001');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Batch/i }));
+    fireEvent.change(screen.getByLabelText('Batch ID'), { target: { value: 'B-001' } });
+    fireEvent.change(screen.getByLabelText('Harvest date'), { target: { value: '2026-11-12' } });
+    fireEvent.change(screen.getByLabelText('Harvest quantity (kg)'), { target: { value: '50' } });
+    fireEvent.change(screen.getByLabelText('Farm ID'), { target: { value: 'FARM-1' } });
+    fireEvent.change(screen.getByLabelText('Block ID'), { target: { value: 'BLOCK-1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(await screen.findByText('Batch already exists: B-001')).toBeTruthy();
+    expect(screen.getByRole('dialog')).toBeTruthy();
   });
 });
