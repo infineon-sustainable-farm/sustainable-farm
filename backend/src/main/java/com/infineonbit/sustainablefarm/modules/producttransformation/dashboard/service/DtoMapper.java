@@ -355,6 +355,8 @@ public class DtoMapper {
         event.setHarvestSupervisor(request.getHarvestSupervisor());
         event.setWeatherConditions(request.getWeatherConditions());
         event.setStorageLocation(request.getStorageLocation());
+        event.setLotNumber(request.getLotNumber());
+        event.setPlantsHarvestId(request.getPlantsHarvestId());
         return event;
     }
 
@@ -374,6 +376,8 @@ public class DtoMapper {
                 .harvestSupervisor(entity.getHarvestSupervisor())
                 .weatherConditions(entity.getWeatherConditions())
                 .storageLocation(entity.getStorageLocation())
+                .lotNumber(entity.getLotNumber())
+                .plantsHarvestId(entity.getPlantsHarvestId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

@@ -60,4 +60,16 @@ public class HarvestEventCreateRequest {
     private String weatherConditions;
 
     private String storageLocation;
+
+    /**
+     * Plants lot number this harvest belongs to (for example {@code LOT-2026-A-001}).
+     * Optional: a harvest created outside an import may not have one yet.
+     */
+    private String lotNumber;
+
+    /**
+     * Identifier of the Plants harvest this event comes from, when it was imported.
+     * Kept so the event can be traced back to the farm harvest it was created from.
+     */
+    private Long plantsHarvestId;
 }
