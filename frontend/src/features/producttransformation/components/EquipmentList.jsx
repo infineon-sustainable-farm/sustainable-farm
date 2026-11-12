@@ -15,7 +15,7 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
-import { formatNumber } from '../utils/format';
+import { formatIsoDate, formatNumber } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Plus, Filter, Pencil, Trash2, Search } from 'lucide-react';
 
@@ -45,18 +45,6 @@ const STATUS_BADGES = {
   ACTIVE: 'bg-green-100 text-green-800',
   MAINTENANCE: 'bg-yellow-100 text-yellow-800',
   RETIRED: 'bg-gray-100 text-gray-700',
-};
-
-/** Date-only values (YYYY-MM-DD) must not shift across time zones. */
-const formatIsoDate = (value) => {
-  if (!value) return 'N/A';
-  const [year, month, day] = String(value).slice(0, 10).split('-');
-  if (!year || !month || !day) return String(value);
-  return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 };
 
 const EMPTY_FILTERS = {

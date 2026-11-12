@@ -6,6 +6,21 @@
  */
 
 /**
+ * Format a date-only value (YYYY-MM-DD) without shifting across time zones.
+ * `new Date("2026-01-15")` is parsed as UTC and can display the previous day.
+ */
+export const formatIsoDate = (value) => {
+  if (!value) return 'N/A';
+  const [year, month, day] = String(value).slice(0, 10).split('-');
+  if (!year || !month || !day) return String(value);
+  return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+/**
  * Format date to readable string
  */
 export const formatDate = (date) => {
