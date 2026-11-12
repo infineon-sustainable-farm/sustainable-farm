@@ -21,6 +21,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repos
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.repository.DryingRunRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.repository.QcCheckpointRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.repository.RawIntakeRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.repository.WashSortRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,7 @@ public class DashboardService {
     private final DryingRunRepository dryingRunRepository;
     private final EquipmentRepository equipmentRepository;
     private final WashSortRecordRepository washSortRecordRepository;
+    private final RawIntakeRepository rawIntakeRepository;
     
     /**
      * Get comprehensive dashboard KPIs
@@ -492,22 +494,29 @@ public class DashboardService {
     
     /**
      * Calculate Grade A Percentage
-     * Data Source: harvest_event table
-     * Calculation: SUM(grade_a_quantity) / SUM(quantity) * 100
+     * Data Source: raw_intake table (received grade, recorded at reception)
+     * Calculation: SUM(qty where grade = A) / SUM(qty all grades) * 100
+     *
+     * <p>The previous implementation returned a constant 75 %. It is now derived
+     * from the actual reception grades: if the quantity received as grade A
+     * changes, the KPI changes with it.
      */
     private BigDecimal calculateGradeAPercentage(LocalDate startDate, LocalDate endDate) {
-        BigDecimal totalQuantity = harvestEventRepository.getTotalHarvestQuantityByHarvestDateBetween(startDate, endDate);
-        if (totalQuantity == null) {
-            totalQuantity = BigDecimal.ZERO;
+        BigDecimal totalQuantity = rawIntakeRepository.getTotalReceivedQuantityByDateRange(startDate, endDate);
+        if (totalQuantity == null || totalQuantity.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
         }
 
-        // Grade A quantity is not directly stored in HarvestEvent
-        // For now, we'll calculate it as 75% of total (simplified)
-        BigDecimal totalGradeA = totalQuantity.multiply(new BigDecimal("0.75"));
-        
-        return totalQuantity.compareTo(BigDecimal.ZERO) == 0 
-            ? BigDecimal.ZERO 
-            : totalGradeA.divide(totalQuantity, 2, RoundingMode.HALF_UP).multiply(new BigDecimal("100"));
+        BigDecimal gradeAQuantity = rawIntakeRepository.getTotalReceivedQuantityByGradeAndDateRange(
+            HarvestEvent.QualityGrade.A, startDate, endDate);
+        if (gradeAQuantity == null) {
+            gradeAQuantity = BigDecimal.ZERO;
+        }
+
+        return gradeAQuantity
+            .divide(totalQuantity, 4, RoundingMode.HALF_UP)
+            .multiply(new BigDecimal("100"))
+            .setScale(2, RoundingMode.HALF_UP);
     }
     
     /**
