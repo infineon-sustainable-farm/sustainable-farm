@@ -84,8 +84,10 @@ public class DryingRunServiceImpl implements DryingRunService {
                 );
             }
         }
-        
-        return dryingRunRepository.save(dryingRun);
+
+        DryingRun saved = dryingRunRepository.save(dryingRun);
+        initializeAssociations(saved);
+        return saved;
     }
 
     @Override
@@ -104,7 +106,34 @@ public class DryingRunServiceImpl implements DryingRunService {
         existingDryingRun.setEquipment(dryingRun.getEquipment());
         existingDryingRun.setOperator(dryingRun.getOperator());
         
-        return dryingRunRepository.save(existingDryingRun);
+        DryingRun saved = dryingRunRepository.save(existingDryingRun);
+        initializeAssociations(saved);
+        return saved;
+    }
+
+    /**
+     * Force the lazy associations of a drying run into the persistence context
+     * before the transaction closes.
+     *
+     * <p>The run id is assigned by the caller, so {@code save()} performs a JPA
+     * merge and the returned instance carries lazy proxies for {@code batch},
+     * {@code equipment} and {@code operator}. The controller maps the response
+     * afterwards, outside this transaction, and that mapping reads the batch
+     * harvest quantity to compute the energy efficiency. Without this
+     * initialisation Hibernate throws {@code LazyInitializationException} after
+     * the row is already committed, so the client receives a 500 for an
+     * operation that actually succeeded.
+     */
+    private void initializeAssociations(DryingRun run) {
+        if (run.getBatch() != null) {
+            org.hibernate.Hibernate.initialize(run.getBatch());
+        }
+        if (run.getEquipment() != null) {
+            org.hibernate.Hibernate.initialize(run.getEquipment());
+        }
+        if (run.getOperator() != null) {
+            org.hibernate.Hibernate.initialize(run.getOperator());
+        }
     }
 
     @Override

@@ -100,7 +100,7 @@ public class BatchController {
     @Operation(summary = "Advance batch status", description = "Advances batch status to next stage following business rules")
     public ResponseEntity<BatchResponse> advanceBatchStatus(
             @Parameter(description = "Batch ID") @PathVariable String batchId,
-            @Valid @RequestBody BatchStatusAdvanceRequest request) {
+            @Valid @RequestBody(required = false) BatchStatusAdvanceRequest request) {
         Batch batch = batchService.advanceBatchStatus(batchId);
         BatchResponse response = dtoMapper.toResponse(batch);
         return ResponseEntity.ok(response);

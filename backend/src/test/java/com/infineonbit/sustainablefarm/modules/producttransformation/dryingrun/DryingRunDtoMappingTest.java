@@ -149,4 +149,44 @@ class DryingRunDtoMappingTest {
         assertThat(response.getEnergyEfficiencyKwhPerKg()).isCloseTo(0.2368,
                 org.assertj.core.data.Offset.offset(0.0001));
     }
+
+    @Test
+    @DisplayName("POST /api/drying-runs: createBatch returns a run whose batch is initialised")
+    void createDryingRunReturnsInitialisedAssociations() {
+        String createdRunId = "DR-DRY-DTO-002";
+        dryingRunRepository.deleteById(createdRunId);
+
+        Batch batch = batchRepository.findById(BATCH_ID).orElseThrow();
+        Equipment equipment = equipmentRepository.findById(EQUIPMENT_ID).orElseThrow();
+        Operator operator = operatorRepository.findById(OPERATOR_ID).orElseThrow();
+
+        DryingRun run = new DryingRun();
+        run.setRunId(createdRunId);
+        run.setBatch(batch);
+        run.setEquipment(equipment);
+        run.setOperator(operator);
+        run.setDurationHours(new BigDecimal("10.00"));
+        run.setTargetTemperatureC(new BigDecimal("55.00"));
+        run.setActualTemperatureC(new BigDecimal("54.00"));
+        run.setStartMoisturePct(new BigDecimal("80.00"));
+        run.setEndMoisturePct(new BigDecimal("14.00"));
+        run.setEnergyUsageKwh(new BigDecimal("100.00"));
+        run.setStartTime(LocalDateTime.now().minusHours(10));
+        run.setEndTime(LocalDateTime.now());
+
+        DryingRun created = dryingRunService.createDryingRun(run);
+
+        // save() merges the detached run, so without an explicit initialisation
+        // the returned instance holds a lazy Batch proxy. The controller maps
+        // the response after the transaction, which used to throw a
+        // LazyInitializationException *after* the insert was committed (HTTP 500
+        // for a run that had in fact been created).
+        assertThat(org.hibernate.Hibernate.isInitialized(created.getBatch())).isTrue();
+
+        DryingRunResponse response = dtoMapper.toResponse(created);
+        assertThat(response.getBatchId()).isEqualTo(BATCH_ID);
+        // 100.00 kWh / 500 kg
+        assertThat(response.getEnergyEfficiencyKwhPerKg()).isCloseTo(0.2000,
+                org.assertj.core.data.Offset.offset(0.0001));
+    }
 }
