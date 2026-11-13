@@ -2,6 +2,7 @@ import { CircleCheckBig, SprayCan } from "lucide-react";
 import { formatBlock, formatDate, formatText } from "../utils/format";
 import FindingStatusBadge from "./FindingStatusBadge";
 import Value from "./Value";
+import { TABLE_CARD } from "./plantsStyles";
 
 // The mock-up's columns that the API records ("Tree ID" is the tree label,
 // "Treatment" the status), then the harvest and resolution dates. The mock-up's
@@ -20,7 +21,7 @@ const COLUMNS = [
 // in the other tables, and the row buttons are compact: the actions then fit
 // beside the seven columns on a 1280 px screen instead of scrolling away.
 const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase";
+    "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold whitespace-normal text-gray-500";
 const ACTION_BUTTON_CLASS =
     "inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50";
 
@@ -39,7 +40,7 @@ export default function FindingsTable({ findings, onTreat, onResolve }) {
     return (
         // relative: the hidden "Actions" header is absolutely positioned. Without a positioned box
         // here it would sit outside the scrolling area and widen the whole page on a phone.
-        <div className="relative overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={`relative ${TABLE_CARD}`}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>

@@ -2,6 +2,7 @@ import { Loader2, TriangleAlert } from "lucide-react";
 import { useTreatments } from "../hooks/useTreatments";
 import PlantsEmptyState from "./PlantsEmptyState";
 import TreatmentsTable from "./TreatmentsTable";
+import { PRIMARY_BUTTON } from "./plantsStyles";
 
 /**
  * The treatment record of the selected block: the treatments answering a
@@ -17,7 +18,7 @@ export default function TreatmentsSection({ blockCode, recordAction }) {
     return (
         <section aria-labelledby="treatment-record-title" className="flex flex-col gap-4">
             <div>
-                <h2 id="treatment-record-title" className="font-heading text-lg font-bold text-gray-900">
+                <h2 id="treatment-record-title" className="font-heading text-lg font-bold text-on-background">
                     Treatment record
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm text-gray-600">
@@ -26,20 +27,20 @@ export default function TreatmentsSection({ blockCode, recordAction }) {
             </div>
 
             {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-12 text-sm text-gray-500">
+                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-12 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Loading treatments…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-12 text-center">
+                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-12 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-lg font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-on-background">
                             Treatments are unavailable.
                         </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
+                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
                         <p className="mt-1 text-sm text-gray-600">
                             Check your connection, then try again.
                         </p>
@@ -48,7 +49,7 @@ export default function TreatmentsSection({ blockCode, recordAction }) {
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>
