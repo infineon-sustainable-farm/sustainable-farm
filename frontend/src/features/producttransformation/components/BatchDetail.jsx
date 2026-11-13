@@ -28,6 +28,8 @@ import { formatWeight, getStatusColor } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { STATUS_CHAIN, buildSteps } from '../utils/batchTimeline';
 
+import { CARD, PAGE_TITLE, SECTION_CARD } from '../styles/ptStyles';
+
 // `/api/raw-intakes/batch/{id}` answers 404 when the batch has no reception yet,
 // while the other five modules answer with an empty array. A missing reception is
 // a legitimate timeline state, not a failure; anything else still surfaces.
@@ -135,13 +137,13 @@ const BatchDetail = () => {
     <div className="p-6">
       {backLink}
 
-      <header className="mt-4 rounded-lg bg-white p-6 shadow-sm">
+      <header className={`mt-4 ${SECTION_CARD}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+            <p className="text-xs font-semibold text-gray-500">
               Traceability timeline
             </p>
-            <h1 className="text-2xl font-bold text-gray-900">{batch?.batchId || batchId}</h1>
+            <h1 className={PAGE_TITLE}>{batch?.batchId || batchId}</h1>
             <p className="mt-1 text-sm text-gray-600">
               {[batch?.mangoVariety, formatWeight(batch?.harvestQuantityKg), batch?.farmId, batch?.blockId]
                 .filter(Boolean)
@@ -197,9 +199,9 @@ const BatchDetail = () => {
                 }`}
                 aria-hidden="true"
               />
-              <section className="rounded-lg bg-white p-4 shadow-sm">
+              <section className={CARD}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <h2 className="flex items-center gap-2 font-heading text-sm font-semibold text-gray-900">
                     <Icon
                       size={16}
                       aria-hidden="true"

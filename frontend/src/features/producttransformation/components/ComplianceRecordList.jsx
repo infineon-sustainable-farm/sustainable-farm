@@ -26,6 +26,8 @@ import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Plus, Filter, Eye, Pencil, Trash2, Download } from 'lucide-react';
 
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
+
 const COMPLIANCE_TYPES = ['HACCP', 'FOOD_SAFETY', 'EU_EXPORT', 'HYGIENE', 'TRACEABILITY'];
 const COMPLIANCE_RESULTS = ['COMPLIANT', 'NON_COMPLIANT', 'PENDING'];
 
@@ -316,7 +318,7 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Compliance</h1>
+          <h1 className={PAGE_TITLE}>Compliance</h1>
           <p className="text-sm text-gray-600 mt-1">
             Track HACCP, food-safety and export compliance records per batch.
           </p>
@@ -326,7 +328,7 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
             type="button"
             onClick={handleExport}
             disabled={filteredRecords.length === 0}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-60"
+            className={SECONDARY_BUTTON}
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -334,7 +336,7 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
           <button
             type="button"
             onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            className={PRIMARY_BUTTON}
           >
             <Plus className="w-4 h-4" />
             New Compliance Record
@@ -352,20 +354,20 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500">
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filters</span>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Batch
             <select
               aria-label="Filter by batch"
               value={filters.batchId}
               onChange={updateFilter('batchId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All batches</option>
               {batches.map((batch) => (
@@ -376,13 +378,13 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Type
             <select
               aria-label="Filter by type"
               value={filters.complianceType}
               onChange={updateFilter('complianceType')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All types</option>
               {COMPLIANCE_TYPES.map((type) => (
@@ -393,13 +395,13 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Result
             <select
               aria-label="Filter by result"
               value={filters.result}
               onChange={updateFilter('result')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All results</option>
               {COMPLIANCE_RESULTS.map((result) => (
@@ -410,13 +412,13 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Auditor
             <select
               aria-label="Filter by auditor"
               value={filters.auditorId}
               onChange={updateFilter('auditorId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All auditors</option>
               {auditors.map((operator) => (
@@ -427,14 +429,14 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Audit Date
             <input
               type="date"
               aria-label="Filter by audit date"
               value={filters.date}
               onChange={updateFilter('date')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             />
           </label>
 
@@ -455,7 +457,7 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
 
       {/* Table */}
       {filteredRecords.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className={CARD_FRAME}>
           <EmptyState
             message={records.length === 0 ? 'No compliance records found' : 'No records match the filters'}
             actionLabel={records.length === 0 ? 'New Compliance Record' : undefined}
@@ -463,9 +465,9 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 {[
                   'Record',
@@ -480,9 +482,7 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
                 ].map((label) => (
                   <th
                     key={label}
-                    className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                      label === 'Actions' ? 'text-right' : 'text-left'
-                    }`}
+                    className={`${TABLE_HEAD_BASE} ${label === 'Actions' ? 'text-right' : 'text-left'}`}
                   >
                     {label}
                   </th>
@@ -492,16 +492,16 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
             <tbody className="divide-y divide-gray-200">
               {filteredRecords.map((record) => (
                 <tr key={record.recordId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{record.recordId}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {record.batchId}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {typeLabel(record.complianceType)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getComplianceColor(
                         record.result,
@@ -510,16 +510,16 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
                       {resultLabel(record.result)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatIsoDate(record.auditDate)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {record.nextAuditDate ? formatIsoDate(record.nextAuditDate) : '—'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {auditorName(record.auditorId)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     {record.auditOverdue ? (
                       <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
                         Overdue
@@ -528,7 +528,7 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
                       <span className="text-xs text-gray-500">Current</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       type="button"
                       onClick={() => setDetail(record)}
@@ -571,12 +571,12 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
           onClick={() => setDetail(null)}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{detail.recordId}</h2>
+                <h2 className="font-heading text-xl font-bold text-on-background">{detail.recordId}</h2>
                 <p className="text-sm text-gray-600">
                   Batch {detail.batchId} · {typeLabel(detail.complianceType)}
                 </p>
@@ -613,7 +613,7 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
               <button
                 type="button"
                 onClick={() => setDetail(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className={SECONDARY_BUTTON}
               >
                 Close
               </button>
@@ -632,10 +632,10 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
           onClick={closeForm}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Compliance Record' : 'New Compliance Record'}
             </h2>
 
@@ -650,24 +650,24 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Record ID
                   <input
                     type="text"
                     value={form.recordId}
                     onChange={updateForm('recordId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Batch
                   <select
                     value={form.batchId}
                     onChange={updateForm('batchId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   >
                     <option value="">Select a batch</option>
                     {batches.map((batch) => (
@@ -680,12 +680,12 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Compliance Type
                   <select
                     value={form.complianceType}
                     onChange={updateForm('complianceType')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {COMPLIANCE_TYPES.map((type) => (
                       <option key={type} value={type}>
@@ -695,12 +695,12 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Result
                   <select
                     value={form.result}
                     onChange={updateForm('result')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {COMPLIANCE_RESULTS.map((result) => (
                       <option key={result} value={result}>
@@ -711,54 +711,54 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
                 </label>
               </div>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Requirement
                 <textarea
                   value={form.requirement}
                   onChange={updateForm('requirement')}
                   rows={3}
-                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  className={FIELD_INPUT}
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Evidence
                 <textarea
                   value={form.evidence}
                   onChange={updateForm('evidence')}
                   rows={2}
-                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  className={FIELD_INPUT}
                 />
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Audit Date
                   <input
                     type="date"
                     value={form.auditDate}
                     onChange={updateForm('auditDate')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Next Audit Date
                   <input
                     type="date"
                     value={form.nextAuditDate}
                     onChange={updateForm('nextAuditDate')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Auditor
                 <select
                   value={form.auditorId}
                   onChange={updateForm('auditorId')}
-                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  className={FIELD_INPUT}
                 >
                   <option value="">No auditor</option>
                   {auditors.map((operator) => (
@@ -774,14 +774,14 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className={SECONDARY_BUTTON}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-60"
+                  className={PRIMARY_BUTTON}
                 >
                   {saving ? 'Saving...' : editing ? 'Save' : 'Create'}
                 </button>

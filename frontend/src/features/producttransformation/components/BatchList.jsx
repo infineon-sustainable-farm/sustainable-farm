@@ -14,6 +14,8 @@ import ErrorState from '../../../shared/components/ErrorState';
 import { formatDate, formatWeight, getStatusColor } from '../utils/format';
 import { Plus, Filter, ArrowRight, Package } from 'lucide-react';
 
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD } from '../styles/ptStyles';
+
 const MANGO_VARIETIES = ['KEITT', 'KENT', 'TOMMY', 'AMÉLIE', 'OTHER'];
 
 const todayIsoDate = () => new Date().toISOString().slice(0, 10);
@@ -136,10 +138,10 @@ const BatchList = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Batch Management</h1>
+        <h1 className={PAGE_TITLE}>Batch Management</h1>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          className={PRIMARY_BUTTON}
         >
           <Plus className="w-4 h-4" />
           New Batch
@@ -156,13 +158,13 @@ const BatchList = () => {
       )}
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex items-center gap-4">
           <Filter className="w-5 h-5 text-gray-500" />
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            className={FILTER_INPUT}
           >
             <option value="all">All Statuses</option>
             <option value="CREATED">Created</option>
@@ -180,34 +182,34 @@ const BatchList = () => {
 
       {/* Batches Table */}
       {filteredBatches.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+        <div className={`${CARD_FRAME} p-12 text-center`}>
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">No batches found</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={TABLE_HEAD}>
                   Batch ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={TABLE_HEAD}>
                   Harvest Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={TABLE_HEAD}>
                   Variety
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={TABLE_HEAD}>
                   Quantity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={TABLE_HEAD}>
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={TABLE_HEAD}>
                   Location
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className={`${TABLE_HEAD} text-right`}>
                   Actions
                 </th>
               </tr>
@@ -222,7 +224,7 @@ const BatchList = () => {
                   className="cursor-pointer hover:bg-gray-50"
                   title="Open traceability timeline"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <Link
                       to={`/product-transformation/batches/${batch.batchId}`}
                       onClick={(event) => event.stopPropagation()}
@@ -231,26 +233,26 @@ const BatchList = () => {
                       {batch.batchId}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{formatDate(batch.harvestDate)}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{batch.mangoVariety}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{formatWeight(batch.harvestQuantityKg)}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(batch.currentStatus)}`}>
                       {batch.currentStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">
                       {batch.farmId} / {batch.blockId}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {batch.currentStatus !== 'SHIPPED' && batch.currentStatus !== 'REJECTED' && (
                       <button
                         onClick={(event) => {
@@ -279,10 +281,10 @@ const BatchList = () => {
           onClick={closeForm}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">New Batch</h2>
+            <h2 className="font-heading text-xl font-bold text-on-background mb-4">New Batch</h2>
 
             {formError && (
               <div
@@ -295,35 +297,35 @@ const BatchList = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Batch ID
                   <input
                     type="text"
                     value={form.batchId}
                     onChange={updateForm('batchId')}
                     placeholder="LOT-DEMO-006"
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Harvest date
                   <input
                     type="date"
                     value={form.harvestDate}
                     onChange={updateForm('harvestDate')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Mango variety
                   <select
                     value={form.mangoVariety}
                     onChange={updateForm('mangoVariety')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {MANGO_VARIETIES.map((variety) => (
                       <option key={variety} value={variety}>
@@ -333,7 +335,7 @@ const BatchList = () => {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Harvest quantity (kg)
                   <input
                     type="number"
@@ -342,31 +344,31 @@ const BatchList = () => {
                     value={form.harvestQuantityKg}
                     onChange={updateForm('harvestQuantityKg')}
                     placeholder="520.00"
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Farm ID
                   <input
                     type="text"
                     value={form.farmId}
                     onChange={updateForm('farmId')}
                     placeholder="FERME-DEMO"
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Block ID
                   <input
                     type="text"
                     value={form.blockId}
                     onChange={updateForm('blockId')}
                     placeholder="BLOC-A"
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
@@ -376,14 +378,14 @@ const BatchList = () => {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-60"
+                  className={SECONDARY_BUTTON}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-60"
+                  className={PRIMARY_BUTTON}
                 >
                   {saving ? 'Saving...' : 'Create'}
                 </button>

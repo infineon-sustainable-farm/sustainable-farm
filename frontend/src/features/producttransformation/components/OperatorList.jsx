@@ -20,6 +20,8 @@ import { formatIsoDate } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Filter, Search } from 'lucide-react';
 
+import { CARD_FRAME, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, SEARCH_INPUT, SECTION_CARD, TABLE_CARD, TABLE_HEAD } from '../styles/ptStyles';
+
 const EMPTY_FILTERS = {
   role: 'all',
   status: 'all',
@@ -91,27 +93,27 @@ const OperatorList = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Operators</h1>
+        <h1 className={PAGE_TITLE}>Operators</h1>
         <p className="text-sm text-gray-600 mt-1">
           Process operators referenced by drying, quality control, compliance and packaging.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500">
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filters</span>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Role
             <select
               aria-label="Filter by role"
               value={filters.role}
               onChange={updateFilter('role')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All roles</option>
               {roles.map((role) => (
@@ -122,13 +124,13 @@ const OperatorList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Status
             <select
               aria-label="Filter by status"
               value={filters.status}
               onChange={updateFilter('status')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All statuses</option>
               <option value="ACTIVE">Active</option>
@@ -136,7 +138,7 @@ const OperatorList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Search
             <div className="relative">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -146,7 +148,7 @@ const OperatorList = () => {
                 placeholder="ID, name or certification"
                 value={filters.search}
                 onChange={updateFilter('search')}
-                className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className={SEARCH_INPUT}
               />
             </div>
           </label>
@@ -159,7 +161,7 @@ const OperatorList = () => {
 
       {/* Table */}
       {filteredOperators.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className={CARD_FRAME}>
           <EmptyState
             message={
               operators.length === 0
@@ -169,15 +171,15 @@ const OperatorList = () => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 {['Operator', 'Name', 'Role', 'Certifications', 'Status', 'Hire date'].map(
                   (label) => (
                     <th
                       key={label}
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className={TABLE_HEAD}
                     >
                       {label}
                     </th>

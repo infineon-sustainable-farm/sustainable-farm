@@ -19,6 +19,8 @@ import { formatIsoDate, formatNumber } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Plus, Filter, Pencil, Trash2, Search } from 'lucide-react';
 
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SEARCH_INPUT, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
+
 const EQUIPMENT_TYPES = [
   'WASHING',
   'DRYING',
@@ -238,7 +240,7 @@ const EquipmentList = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Equipment</h1>
+          <h1 className={PAGE_TITLE}>Equipment</h1>
           <p className="text-sm text-gray-600 mt-1">
             Product Transformation equipment: capacity, energy use and maintenance status.
           </p>
@@ -246,7 +248,7 @@ const EquipmentList = () => {
         <button
           type="button"
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          className={PRIMARY_BUTTON}
         >
           <Plus className="w-4 h-4" />
           New Equipment
@@ -263,20 +265,20 @@ const EquipmentList = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500">
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filters</span>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Type
             <select
               aria-label="Filter by type"
               value={filters.type}
               onChange={updateFilter('type')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All types</option>
               {EQUIPMENT_TYPES.map((type) => (
@@ -287,13 +289,13 @@ const EquipmentList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Status
             <select
               aria-label="Filter by status"
               value={filters.status}
               onChange={updateFilter('status')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All statuses</option>
               {MAINTENANCE_STATUSES.map((status) => (
@@ -304,7 +306,7 @@ const EquipmentList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Search
             <div className="relative">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -314,7 +316,7 @@ const EquipmentList = () => {
                 placeholder="ID, name or location"
                 value={filters.search}
                 onChange={updateFilter('search')}
-                className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className={SEARCH_INPUT}
               />
             </div>
           </label>
@@ -327,7 +329,7 @@ const EquipmentList = () => {
 
       {/* Table */}
       {filteredEquipment.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className={CARD_FRAME}>
           <EmptyState
             message={equipment.length === 0 ? 'No equipment found' : 'No equipment matches the filters'}
             actionLabel={equipment.length === 0 ? 'New Equipment' : undefined}
@@ -335,9 +337,9 @@ const EquipmentList = () => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 {[
                   'Equipment',
@@ -352,9 +354,7 @@ const EquipmentList = () => {
                 ].map((label) => (
                   <th
                     key={label}
-                    className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                      label === 'Actions' ? 'text-right' : 'text-left'
-                    }`}
+                    className={`${TABLE_HEAD_BASE} ${label === 'Actions' ? 'text-right' : 'text-left'}`}
                   >
                     {label}
                   </th>
@@ -433,10 +433,10 @@ const EquipmentList = () => {
           onClick={closeForm}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Equipment' : 'New Equipment'}
             </h2>
 
@@ -451,35 +451,35 @@ const EquipmentList = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Equipment ID
                   <input
                     type="text"
                     value={form.equipmentId}
                     onChange={updateForm('equipmentId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Name
                   <input
                     type="text"
                     value={form.equipmentName}
                     onChange={updateForm('equipmentName')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Type
                   <select
                     value={form.equipmentType}
                     onChange={updateForm('equipmentType')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {EQUIPMENT_TYPES.map((type) => (
                       <option key={type} value={type}>
@@ -489,12 +489,12 @@ const EquipmentList = () => {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Maintenance Status
                   <select
                     value={form.maintenanceStatus}
                     onChange={updateForm('maintenanceStatus')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {MAINTENANCE_STATUSES.map((status) => (
                       <option key={status} value={status}>
@@ -506,7 +506,7 @@ const EquipmentList = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Capacity (kg/h)
                   <input
                     type="number"
@@ -514,11 +514,11 @@ const EquipmentList = () => {
                     step="0.01"
                     value={form.capacityKgPerHour}
                     onChange={updateForm('capacityKgPerHour')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Energy (kWh/kg)
                   <input
                     type="number"
@@ -526,29 +526,29 @@ const EquipmentList = () => {
                     step="0.01"
                     value={form.energyConsumptionKwhPerKg}
                     onChange={updateForm('energyConsumptionKwhPerKg')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Location
                   <input
                     type="text"
                     value={form.location}
                     onChange={updateForm('location')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Last Maintenance
                   <input
                     type="date"
                     value={form.lastMaintenanceDate}
                     onChange={updateForm('lastMaintenanceDate')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
@@ -558,14 +558,14 @@ const EquipmentList = () => {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className={SECONDARY_BUTTON}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-60"
+                  className={PRIMARY_BUTTON}
                 >
                   {saving ? 'Saving...' : editing ? 'Save' : 'Create'}
                 </button>

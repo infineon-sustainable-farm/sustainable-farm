@@ -23,6 +23,8 @@ import { formatNumber, formatDateTime } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Plus, Filter, Pencil, Trash2 } from 'lucide-react';
 
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
+
 const DRYER_TYPES = ['DRYING', 'SOLAR_DRYER', 'TUNNEL_DRYER', 'TESTA_DRYER'];
 const MIN_END_MOISTURE = 6;
 const MAX_END_MOISTURE = 18;
@@ -270,7 +272,7 @@ const DryingRunList = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Drying</h1>
+          <h1 className={PAGE_TITLE}>Drying</h1>
           <p className="text-sm text-gray-600 mt-1">
             Track drying durations, temperatures, moisture loss and energy usage.
           </p>
@@ -278,7 +280,7 @@ const DryingRunList = () => {
         <button
           type="button"
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          className={PRIMARY_BUTTON}
         >
           <Plus className="w-4 h-4" />
           New Drying Run
@@ -295,20 +297,20 @@ const DryingRunList = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500">
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filters</span>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Batch
             <select
               aria-label="Filter by batch"
               value={filters.batchId}
               onChange={updateFilter('batchId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All batches</option>
               {batches.map((batch) => (
@@ -319,13 +321,13 @@ const DryingRunList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Equipment
             <select
               aria-label="Filter by equipment"
               value={filters.equipmentId}
               onChange={updateFilter('equipmentId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All equipment</option>
               {dryers.map((item) => (
@@ -336,14 +338,14 @@ const DryingRunList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Start Date
             <input
               type="date"
               aria-label="Filter by start date"
               value={filters.date}
               onChange={updateFilter('date')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             />
           </label>
 
@@ -355,7 +357,7 @@ const DryingRunList = () => {
 
       {/* Table */}
       {filteredRuns.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className={CARD_FRAME}>
           <EmptyState
             message={runs.length === 0 ? 'No drying runs found' : 'No runs match the filters'}
             actionLabel={runs.length === 0 ? 'New Drying Run' : undefined}
@@ -363,9 +365,9 @@ const DryingRunList = () => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 {[
                   'Run',
@@ -380,9 +382,7 @@ const DryingRunList = () => {
                 ].map((label) => (
                   <th
                     key={label}
-                    className={`px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                      label === 'Actions' ? 'text-right' : 'text-left'
-                    }`}
+                    className={`${TABLE_HEAD_BASE} ${label === 'Actions' ? 'text-right' : 'text-left'}`}
                   >
                     {label}
                   </th>
@@ -472,10 +472,10 @@ const DryingRunList = () => {
           onClick={closeForm}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Drying Run' : 'New Drying Run'}
             </h2>
 
@@ -490,24 +490,24 @@ const DryingRunList = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Run ID
                   <input
                     type="text"
                     value={form.runId}
                     onChange={updateForm('runId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Batch
                   <select
                     value={form.batchId}
                     onChange={updateForm('batchId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   >
                     <option value="">Select a batch</option>
                     {batches.map((batch) => (
@@ -520,7 +520,7 @@ const DryingRunList = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Duration (h)
                   <input
                     type="number"
@@ -528,35 +528,35 @@ const DryingRunList = () => {
                     step="0.01"
                     value={form.durationHours}
                     onChange={updateForm('durationHours')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Target Temp (°C)
                   <input
                     type="number"
                     step="0.1"
                     value={form.targetTemperatureC}
                     onChange={updateForm('targetTemperatureC')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Actual Temp (°C)
                   <input
                     type="number"
                     step="0.1"
                     value={form.actualTemperatureC}
                     onChange={updateForm('actualTemperatureC')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Start Moisture (%)
                   <input
                     type="number"
@@ -564,11 +564,11 @@ const DryingRunList = () => {
                     step="0.01"
                     value={form.startMoisturePct}
                     onChange={updateForm('startMoisturePct')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   End Moisture (%)
                   <input
                     type="number"
@@ -577,11 +577,11 @@ const DryingRunList = () => {
                     step="0.01"
                     value={form.endMoisturePct}
                     onChange={updateForm('endMoisturePct')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Energy (kWh)
                   <input
                     type="number"
@@ -589,40 +589,40 @@ const DryingRunList = () => {
                     step="0.01"
                     value={form.energyUsageKwh}
                     onChange={updateForm('energyUsageKwh')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Start Time
                   <input
                     type="datetime-local"
                     value={form.startTime}
                     onChange={updateForm('startTime')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   End Time
                   <input
                     type="datetime-local"
                     value={form.endTime}
                     onChange={updateForm('endTime')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Equipment
                   <select
                     value={form.equipmentId}
                     onChange={updateForm('equipmentId')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     <option value="">No equipment</option>
                     {dryers.map((item) => (
@@ -633,12 +633,12 @@ const DryingRunList = () => {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Operator
                   <select
                     value={form.operatorId}
                     onChange={updateForm('operatorId')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     <option value="">No operator</option>
                     {dryerOperators.map((operator) => (
@@ -655,14 +655,14 @@ const DryingRunList = () => {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className={SECONDARY_BUTTON}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-60"
+                  className={PRIMARY_BUTTON}
                 >
                   {saving ? 'Saving...' : editing ? 'Save' : 'Create'}
                 </button>
