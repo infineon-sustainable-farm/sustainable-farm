@@ -3,8 +3,13 @@
 // extra Vitest configuration (same approach as the Water Supply view tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import { dashboardApi } from '../api/dashboardApi';
+import { rawIntakeApi } from '../api/rawIntakeApi';
+import { batchApi } from '../api/batchApi';
+import { washSortApi } from '../api/washSortApi';
+import { dryingApi } from '../api/dryingApi';
 
 vi.mock('../api/dashboardApi', () => ({
   dashboardApi: {
@@ -17,6 +22,22 @@ vi.mock('../api/dashboardApi', () => ({
   },
 }));
 
+vi.mock('../api/rawIntakeApi', () => ({
+  rawIntakeApi: { getAllRawIntakes: vi.fn() },
+}));
+
+vi.mock('../api/batchApi', () => ({
+  batchApi: { getAllBatches: vi.fn() },
+}));
+
+vi.mock('../api/washSortApi', () => ({
+  washSortApi: { getAllWashSortRecords: vi.fn() },
+}));
+
+vi.mock('../api/dryingApi', () => ({
+  dryingApi: { getAllDryingRuns: vi.fn() },
+}));
+
 // Recharts needs a real layout engine; the dashboard assertions only need to prove
 // which chart or empty state is mounted, so the chart primitives are stubbed.
 vi.mock('recharts', () => {
@@ -26,9 +47,10 @@ vi.mock('recharts', () => {
     AreaChart: Container,
     Area: Empty,
     BarChart: Container,
-    Bar: Empty,
+    Bar: Container,
     LineChart: Container,
     Line: Empty,
+    ComposedChart: Container,
     PieChart: Container,
     Pie: Container,
     Cell: Empty,
@@ -37,6 +59,7 @@ vi.mock('recharts', () => {
     CartesianGrid: Empty,
     Tooltip: Empty,
     Legend: Empty,
+    ReferenceLine: Empty,
     ResponsiveContainer: Container,
   };
 });
@@ -67,6 +90,19 @@ const CHARTS = {
   quality: [{ date: '2026-11-03', passRate: 92.5 }],
 };
 
+const RECORDS = {
+  intakes: [
+    { intakeId: 'I-1', batchId: 'B-001', receivedGrade: 'A', receivedQuantityKg: 120 },
+    { intakeId: 'I-2', batchId: 'B-002', receivedGrade: 'B', receivedQuantityKg: 80 },
+  ],
+  batches: [
+    { batchId: 'B-001', currentStatus: 'WASHING' },
+    { batchId: 'B-002', currentStatus: 'DRYING' },
+  ],
+  wash: [{ batchId: 'B-001', inputQuantityKg: 120, outputQuantityKg: 100, yieldPercentage: 83.3 }],
+  drying: [{ batchId: 'B-001', durationHours: 10, energyUsageKwh: 30 }],
+};
+
 const mockCharts = () => {
   dashboardApi.getHarvestTrendData.mockResolvedValue(CHARTS.harvest);
   dashboardApi.getProductionOutputData.mockResolvedValue(CHARTS.production);
@@ -75,15 +111,30 @@ const mockCharts = () => {
   dashboardApi.getQualityTrendData.mockResolvedValue(CHARTS.quality);
 };
 
+const mockRecords = () => {
+  rawIntakeApi.getAllRawIntakes.mockResolvedValue(RECORDS.intakes);
+  batchApi.getAllBatches.mockResolvedValue(RECORDS.batches);
+  washSortApi.getAllWashSortRecords.mockResolvedValue(RECORDS.wash);
+  dryingApi.getAllDryingRuns.mockResolvedValue(RECORDS.drying);
+};
+
+const renderDashboard = () =>
+  render(
+    <MemoryRouter>
+      <Dashboard />
+    </MemoryRouter>,
+  );
+
 beforeEach(() => {
   vi.clearAllMocks();
   dashboardApi.getDashboardStats.mockResolvedValue({ ...KPIS });
   mockCharts();
+  mockRecords();
 });
 
 describe('Dashboard', () => {
   it('renders the KPIs and the reporting period', async () => {
-    render(<Dashboard />);
+    renderDashboard();
 
     expect(await screen.findByText('520.00 kg')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
@@ -100,7 +151,7 @@ describe('Dashboard', () => {
   });
 
   it('renders the chart cards when data is available', async () => {
-    render(<Dashboard />);
+    renderDashboard();
 
     expect(await screen.findByText('Harvest Quantity Trend')).toBeTruthy();
     expect(screen.getAllByText('Production Output').length).toBeGreaterThanOrEqual(2);
@@ -114,6 +165,18 @@ describe('Dashboard', () => {
     expect(screen.queryByText('No energy breakdown data available.')).toBeNull();
   });
 
+  it('derives the grade, batch and processing charts from existing records', async () => {
+    renderDashboard();
+
+    expect(await screen.findByText('Grade Distribution')).toBeTruthy();
+    expect(screen.getByText('Batch Processing Status')).toBeTruthy();
+    expect(screen.getByText('Processing Performance')).toBeTruthy();
+    expect(screen.getByText(/2 batches in the pipeline/)).toBeTruthy();
+    expect(screen.queryByText('No grade distribution data for this period.')).toBeNull();
+    expect(screen.queryByText('No batch status data for this period.')).toBeNull();
+    expect(screen.queryByText('No processing performance data for this period.')).toBeNull();
+  });
+
   it('renders every chart empty state when the API returns no rows', async () => {
     dashboardApi.getDashboardStats.mockResolvedValue({});
     dashboardApi.getHarvestTrendData.mockResolvedValue([]);
@@ -121,14 +184,21 @@ describe('Dashboard', () => {
     dashboardApi.getEnergyBreakdownData.mockRejectedValueOnce(new Error('chart down'));
     dashboardApi.getEquipmentUtilizationData.mockResolvedValue([]);
     dashboardApi.getQualityTrendData.mockResolvedValue([]);
+    rawIntakeApi.getAllRawIntakes.mockResolvedValue([]);
+    batchApi.getAllBatches.mockResolvedValue([]);
+    washSortApi.getAllWashSortRecords.mockResolvedValue([]);
+    dryingApi.getAllDryingRuns.mockResolvedValue([]);
 
-    render(<Dashboard />);
+    renderDashboard();
 
     expect(await screen.findByText('No harvest trend data for this period.')).toBeTruthy();
     expect(screen.getByText('No production output data for this period.')).toBeTruthy();
     expect(screen.getByText('No quality trend data for this period.')).toBeTruthy();
     expect(screen.getByText('No equipment data available.')).toBeTruthy();
     expect(screen.getByText('No energy breakdown data available.')).toBeTruthy();
+    expect(screen.getByText('No grade distribution data for this period.')).toBeTruthy();
+    expect(screen.getByText('No batch status data for this period.')).toBeTruthy();
+    expect(screen.getByText('No processing performance data for this period.')).toBeTruthy();
     // A failed chart does not blank the page or trigger the KPI error state.
     expect(screen.queryByText('Retry')).toBeNull();
     expect(screen.getByText('0')).toBeTruthy();
@@ -137,7 +207,7 @@ describe('Dashboard', () => {
   it('shows an error state when the KPI call fails and retries it', async () => {
     dashboardApi.getDashboardStats.mockRejectedValueOnce(new Error('KPI down'));
 
-    render(<Dashboard />);
+    renderDashboard();
 
     expect(
       await screen.findByText('Failed to load dashboard KPIs. Please try again later.'),
@@ -156,7 +226,7 @@ describe('Dashboard', () => {
       Object.assign(new Error('Forbidden'), { status: 403 }),
     );
 
-    render(<Dashboard />);
+    renderDashboard();
 
     expect(await screen.findByText(/Failed to load dashboard KPIs/)).toBeTruthy();
   });

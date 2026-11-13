@@ -1,83 +1,59 @@
 /**
- * Product Transformation - Dashboard Component
- * Displays key metrics and statistics for Product Transformation.
+ * Product Transformation - Dashboard.
  *
- * Data contract (backend /api/product-transformation/dashboard):
- *  - /kpis                : { harvestQuantity, activeBatches, productionOutput, qualityPassRate,
- *                            waterConsumption, energyConsumption, solarEnergyShare, equipmentUtilization,
- *                            gradeAPercentage, qualityTargetStatus, totalEnergyToday, productionEfficiency,
- *                            startDate, endDate, period, generatedAt }
- *  - /charts/harvest-trend      : [{ date, quantity }]
- *  - /charts/production-output  : [{ period, output }]
- *  - /charts/energy-breakdown   : [{ name, value }]
- *  - /charts/equipment-utilization : [{ equipment, utilization }]
- *  - /charts/quality-trend      : [{ date, passRate }]
+ * The module's home: the figures of the period, then the charts that explain
+ * them. Every chart reads an existing API. Two of the charts are derived on the
+ * client from records the line already writes:
  *
- * Harvest KPIs are fed by the Plants harvest events mirrored in Product Transformation.
+ *  - Grade Distribution   <- /api/raw-intakes (receivedGrade, receivedQuantityKg)
+ *  - Batch Processing     <- /api/batches    (currentStatus)
+ *  - Processing Performance <- /api/wash-sort-records + /api/drying-runs
+ *
+ * No endpoint is invented and no business metric is made up. When the demo
+ * build flag is on and a dataset is empty, the chart falls back to the
+ * synthetic set in `data/dashboardDemoData.js` and says "Demo data" on the card.
  *
  * @author Abdoul Ben Fatao SANON
- * @version 1.1.0
+ * @version 2.0.0
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import { Package, TrendingUp, CheckCircle, Zap, Droplets, Factory } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CheckCircle, Droplets, Factory, Package, TrendingUp, Zap } from 'lucide-react';
 
 import { dashboardApi } from '../api/dashboardApi';
-import { formatNumber, formatWeight, formatPercentage } from '../utils/format';
+import { rawIntakeApi } from '../api/rawIntakeApi';
+import { batchApi } from '../api/batchApi';
+import { washSortApi } from '../api/washSortApi';
+import { dryingApi } from '../api/dryingApi';
+import { formatNumber, formatPercentage, formatWeight } from '../utils/format';
+import {
+  aggregateBatchStatus,
+  aggregateGradeDistribution,
+  aggregateProcessingPerformance,
+  normalizeQualityTrend,
+  totalBatches,
+} from '../utils/dashboardMetrics';
+import {
+  DEMO_BATCH_STATUS,
+  DEMO_GRADE_DISTRIBUTION,
+  DEMO_PROCESSING_PERFORMANCE,
+  DEMO_QUALITY_TREND,
+} from '../data/dashboardDemoData';
 
-const CHART_COLORS = ['#0a8276', '#ffc658', '#4caf50', '#1e88e5', '#8e24aa', '#c62828'];
+import PTKpiCard from './PTKpiCard';
+import HarvestTrendChart from './charts/HarvestTrendChart';
+import ProductionOutputChart from './charts/ProductionOutputChart';
+import GradeDistributionChart from './charts/GradeDistributionChart';
+import BatchProcessingChart from './charts/BatchProcessingChart';
+import QualityTrendChart from './charts/QualityTrendChart';
+import EquipmentUtilizationChart from './charts/EquipmentUtilizationChart';
+import ProcessingPerformanceChart from './charts/ProcessingPerformanceChart';
+import EnergyBreakdownChart from './charts/EnergyBreakdownChart';
+import { PAGE_SUBTITLE, PAGE_TITLE, SKELETON } from '../styles/ptStyles';
 
-// Build-time flag. When enabled, the dashboard says out loud that it displays a
-// synthetic data set (backend/src/main/resources/seed/producttransformation-demo-seed.sql) instead of real Plants harvests.
+// Build-time flag. When enabled, an empty dataset falls back to the synthetic
+// demo set and the affected card says "Demo data".
 const DEMO_DATA_ENABLED = import.meta.env.VITE_DEMO_DATA === 'true';
-
-const hasRows = (rows) => Array.isArray(rows) && rows.length > 0;
-
-const ChartCard = ({ title, subtitle, children }) => (
-  <div className="bg-white rounded-lg shadow p-6">
-    <h3 className="font-medium text-gray-500 mb-1">{title}</h3>
-    {subtitle ? <p className="text-xs text-gray-400 mb-4">{subtitle}</p> : <div className="mb-4" />}
-    {children}
-  </div>
-);
-
-const EmptyChart = ({ message }) => (
-  <div className="h-64 flex items-center justify-center text-gray-400 text-sm">
-    {message}
-  </div>
-);
-
-const KpiCard = ({ title, value, icon: Icon, color, hint }) => (
-  <div className="bg-white rounded-lg shadow p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <h3 className="font-medium text-gray-500 mb-2">{title}</h3>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        {hint ? <p className="text-xs text-gray-400 mt-1">{hint}</p> : null}
-      </div>
-      <div className={`${color} p-3 rounded-lg`}>
-        <Icon className="w-6 h-6 text-white" />
-      </div>
-    </div>
-  </div>
-);
 
 const loadDashboard = () =>
   Promise.allSettled([
@@ -87,23 +63,61 @@ const loadDashboard = () =>
     dashboardApi.getEnergyBreakdownData(),
     dashboardApi.getEquipmentUtilizationData(),
     dashboardApi.getQualityTrendData(),
+    rawIntakeApi.getAllRawIntakes(),
+    batchApi.getAllBatches(),
+    washSortApi.getAllWashSortRecords(),
+    dryingApi.getAllDryingRuns(),
   ]);
+
+const EMPTY_CHARTS = {
+  harvestTrend: [],
+  productionOutput: [],
+  energyBreakdown: [],
+  equipmentUtilization: [],
+  qualityTrend: [],
+  gradeDistribution: [],
+  batchStatus: [],
+  processingPerformance: [],
+};
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-6">
+      <h1 className={PAGE_TITLE}>Product Transformation Dashboard</h1>
+      <p className={`${PAGE_SUBTITLE} mb-6`}>Loading the latest figures…</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => (
+          <div key={index} className={`h-36 ${SKELETON}`} />
+        ))}
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+        {[0, 1, 2, 3].map((index) => (
+          <div key={index} className={`h-80 ${SKELETON}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const Dashboard = () => {
   const [kpis, setKpis] = useState(null);
-  const [charts, setCharts] = useState({
-    harvestTrend: [],
-    productionOutput: [],
-    energyBreakdown: [],
-    equipmentUtilization: [],
-    qualityTrend: [],
-  });
+  const [charts, setCharts] = useState(EMPTY_CHARTS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const applyResults = useCallback((results) => {
-    const [kpiResult, harvestTrend, productionOutput, energyBreakdown, equipmentUtilization, qualityTrend] =
-      results;
+    const [
+      kpiResult,
+      harvestTrend,
+      productionOutput,
+      energyBreakdown,
+      equipmentUtilization,
+      qualityTrend,
+      rawIntakes,
+      batches,
+      washRecords,
+      dryingRuns,
+    ] = results;
 
     if (kpiResult.status === 'fulfilled') {
       setKpis(kpiResult.value);
@@ -112,14 +126,21 @@ const Dashboard = () => {
       setError('Failed to load dashboard KPIs. Please try again later.');
     }
 
-    const valueOrEmpty = (result) => (result.status === 'fulfilled' && Array.isArray(result.value) ? result.value : []);
+    const valueOrEmpty = (result) =>
+      result.status === 'fulfilled' && Array.isArray(result.value) ? result.value : [];
 
     setCharts({
       harvestTrend: valueOrEmpty(harvestTrend),
       productionOutput: valueOrEmpty(productionOutput),
       energyBreakdown: valueOrEmpty(energyBreakdown),
       equipmentUtilization: valueOrEmpty(equipmentUtilization),
-      qualityTrend: valueOrEmpty(qualityTrend),
+      qualityTrend: normalizeQualityTrend(valueOrEmpty(qualityTrend)),
+      gradeDistribution: aggregateGradeDistribution(valueOrEmpty(rawIntakes)),
+      batchStatus: aggregateBatchStatus(valueOrEmpty(batches)),
+      processingPerformance: aggregateProcessingPerformance(
+        valueOrEmpty(washRecords),
+        valueOrEmpty(dryingRuns),
+      ),
     });
 
     setLoading(false);
@@ -141,30 +162,37 @@ const Dashboard = () => {
     };
   }, [applyResults]);
 
-  if (loading) {
-    return (
-      <div className="p-6">
-        <h1 className="font-heading text-2xl font-bold mb-4">Product Transformation Dashboard</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((_, i) => (
-            <div key={i} className="bg-white p-6 rounded-lg shadow animate-pulse h-28">
-              <div className="h-full bg-gray-200 rounded" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const demo = useMemo(
+    () => ({
+      gradeDistribution: DEMO_DATA_ENABLED && charts.gradeDistribution.length === 0,
+      batchStatus: DEMO_DATA_ENABLED && totalBatches(charts.batchStatus) === 0,
+      processingPerformance: DEMO_DATA_ENABLED && charts.processingPerformance.length === 0,
+      qualityTrend: DEMO_DATA_ENABLED && charts.qualityTrend.length === 0,
+    }),
+    [charts],
+  );
+
+  const gradeDistribution = demo.gradeDistribution
+    ? DEMO_GRADE_DISTRIBUTION
+    : charts.gradeDistribution;
+  const batchStatus = demo.batchStatus ? DEMO_BATCH_STATUS : charts.batchStatus;
+  const processingPerformance = demo.processingPerformance
+    ? DEMO_PROCESSING_PERFORMANCE
+    : charts.processingPerformance;
+  const qualityTrend = demo.qualityTrend ? DEMO_QUALITY_TREND : charts.qualityTrend;
+
+  if (loading) return <DashboardSkeleton />;
 
   if (error) {
     return (
       <div className="p-6">
-        <h1 className="font-heading text-2xl font-bold mb-4">Product Transformation Dashboard</h1>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-red-600 mb-4">{error}</p>
+        <h1 className={PAGE_TITLE}>Product Transformation Dashboard</h1>
+        <div className="mt-4 rounded-2xl border border-red-200 bg-white p-6 shadow-card">
+          <p className="mb-4 text-sm text-red-700">{error}</p>
           <button
+            type="button"
             onClick={fetchData}
-            className="px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90"
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             Retry
           </button>
@@ -175,68 +203,76 @@ const Dashboard = () => {
 
   const kpiCards = [
     {
-      title: 'Harvest Quantity',
+      to: '/product-transformation/raw-intake',
+      label: 'Harvest Quantity',
       value: formatWeight(kpis?.harvestQuantity),
       icon: Package,
-      color: 'bg-orange-500',
+      tone: 'orange',
       hint: 'Plants harvest events',
     },
     {
-      title: 'Active Batches',
+      to: '/product-transformation/batches',
+      label: 'Active Batches',
       value: kpis?.activeBatches ?? 0,
       icon: TrendingUp,
-      color: 'bg-green-500',
+      tone: 'success',
     },
     {
-      title: 'Production Output',
+      to: '/product-transformation/batches',
+      label: 'Production Output',
       value: formatNumber(kpis?.productionOutput),
       icon: Factory,
-      color: 'bg-blue-500',
+      tone: 'info',
     },
     {
-      title: 'Quality Pass Rate',
+      to: '/product-transformation/quality-control',
+      label: 'Quality Pass Rate',
       value: formatPercentage(kpis?.qualityPassRate),
       icon: CheckCircle,
-      color: 'bg-emerald-500',
+      tone: 'success',
       hint: `Target: ${kpis?.qualityTargetStatus ?? 'n/a'}`,
     },
     {
-      title: 'Equipment Utilization',
+      to: '/product-transformation/equipment',
+      label: 'Equipment Utilization',
       value: formatPercentage(kpis?.equipmentUtilization),
       icon: Factory,
-      color: 'bg-indigo-500',
+      tone: 'purple',
     },
     {
-      title: 'Energy Consumption',
+      to: '/product-transformation/drying',
+      label: 'Energy Consumption',
       value: `${formatNumber(kpis?.energyConsumption)} kWh/kg`,
       icon: Zap,
-      color: 'bg-yellow-500',
+      tone: 'warning',
     },
     {
-      title: 'Grade A Share',
+      to: '/product-transformation/raw-intake',
+      label: 'Grade A Share',
       value: formatPercentage(kpis?.gradeAPercentage),
       icon: CheckCircle,
-      color: 'bg-purple-500',
+      tone: 'primary',
     },
     {
-      title: 'Water Consumption',
+      to: '/product-transformation/washing-sorting',
+      label: 'Water Consumption',
       value: `${formatNumber(kpis?.waterConsumption)} L/kg`,
       icon: Droplets,
-      color: 'bg-cyan-500',
+      tone: 'info',
     },
   ];
 
   return (
     <div className="p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="font-heading text-2xl font-bold">Product Transformation Dashboard</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className={PAGE_TITLE}>Product Transformation Dashboard</h1>
+          <p className={PAGE_SUBTITLE}>
             Period: {kpis?.period ?? 'n/a'} ({kpis?.startDate ?? '?'} → {kpis?.endDate ?? '?'})
           </p>
         </div>
         <span
-          className={`px-3 py-1 rounded-full text-sm font-medium ${
+          className={`rounded-full px-3 py-1 text-sm font-medium ${
             DEMO_DATA_ENABLED ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'
           }`}
         >
@@ -247,128 +283,39 @@ const Dashboard = () => {
       </div>
 
       {DEMO_DATA_ENABLED ? (
-        <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 mb-6 text-sm">
-          Demo dataset: synthetic Product Transformation records (LOT-DEMO batches), not real Plants
-          harvests. See backend/src/main/resources/seed/producttransformation-demo-seed.sql.
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Demo mode is on: charts with no records fall back to a synthetic set (LOT-DEMO). Real API
+          data is always used when present. The mock set lives in
+          frontend/src/features/producttransformation/data/dashboardDemoData.js.
         </div>
       ) : null}
 
-      {/* KPI grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {kpiCards.map((card) => (
-          <KpiCard key={card.title} {...card} />
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {kpiCards.map((card, index) => (
+          <PTKpiCard key={card.label} {...card} delay={index * 60} />
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Harvest Quantity Trend" subtitle="From Plants harvest events (kg)">
-          {hasRows(charts.harvestTrend) ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={charts.harvestTrend} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="quantity"
-                  name="Harvest quantity (kg)"
-                  stroke="#0a8276"
-                  fill="#0a8276"
-                  fillOpacity={0.2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyChart message="No harvest trend data for this period." />
-          )}
-        </ChartCard>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <HarvestTrendChart data={charts.harvestTrend} />
+        <ProductionOutputChart data={charts.productionOutput} />
 
-        <ChartCard title="Production Output" subtitle="Output per week">
-          {hasRows(charts.productionOutput) ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={charts.productionOutput} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="output" name="Production output" fill="#4caf50" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyChart message="No production output data for this period." />
-          )}
-        </ChartCard>
+        <div className="xl:col-span-2">
+          <GradeDistributionChart data={gradeDistribution} demo={demo.gradeDistribution} />
+        </div>
 
-        <ChartCard title="Quality Pass Rate Trend" subtitle="QC checkpoints (%)">
-          {hasRows(charts.qualityTrend) ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={charts.qualityTrend} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="passRate"
-                  name="Pass rate (%)"
-                  stroke="#ff7300"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyChart message="No quality trend data for this period." />
-          )}
-        </ChartCard>
+        <BatchProcessingChart data={batchStatus} demo={demo.batchStatus} />
+        <QualityTrendChart data={qualityTrend} demo={demo.qualityTrend} />
 
-        <ChartCard title="Equipment Utilization" subtitle="Per equipment (%)">
-          {hasRows(charts.equipmentUtilization) ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={charts.equipmentUtilization} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" domain={[0, 100]} />
-                <YAxis dataKey="equipment" type="category" width={120} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="utilization" name="Utilization (%)" fill="#1e88e5" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyChart message="No equipment data available." />
-          )}
-        </ChartCard>
+        <div className="xl:col-span-2">
+          <ProcessingPerformanceChart
+            data={processingPerformance}
+            demo={demo.processingPerformance}
+          />
+        </div>
 
-        <ChartCard title="Energy Consumption Breakdown" subtitle="Grid vs solar vs generator">
-          {hasRows(charts.energyBreakdown) ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={charts.energyBreakdown}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {charts.energyBreakdown.map((entry, index) => (
-                    <Cell key={`cell-${entry.name}-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyChart message="No energy breakdown data available." />
-          )}
-        </ChartCard>
+        <EquipmentUtilizationChart data={charts.equipmentUtilization} />
+        <EnergyBreakdownChart data={charts.energyBreakdown} />
       </div>
     </div>
   );
