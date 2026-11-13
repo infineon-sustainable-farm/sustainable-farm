@@ -19,11 +19,13 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { formatWeight, formatNumber } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Plus, Filter, Pencil, Trash2, Link2, PackageCheck, Sparkles } from 'lucide-react';
 
+import PTListHeader from './PTListHeader';
 import { CARD, CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
 
 const PACKAGE_TYPES = ['ONE_KG_BAG', 'TWO_KG_BAG', 'BULK'];
@@ -199,6 +201,13 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
     setFormError('');
   };
 
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
   const updateForm = (key) => (event) => {
     const value = key === 'exportReady' ? event.target.checked : event.target.value;
     setForm((current) => ({ ...current, [key]: value }));
@@ -282,28 +291,30 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
     }
   };
 
+  const header = (
+    <PTListHeader
+      title="Packaging"
+      subtitle="Track lot codes, packaged quantities and export readiness per batch."
+    >
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New Packaging Record
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading packaging records..." />;
   if (error)
-    return <ErrorState message={error?.message || 'Failed to load packaging records'} onRetry={load} />;
+    return (
+      <div className="p-6">
+        {header}
+        <ErrorState message={error?.message || 'Failed to load packaging records'} onRetry={load} />
+      </div>
+    );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className={PAGE_TITLE}>Packaging</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Track lot codes, packaged quantities and export readiness per batch.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className={PRIMARY_BUTTON}
-        >
-          <Plus className="w-4 h-4" />
-          New Packaging Record
-        </button>
-      </div>
+      {header}
 
       {actionError && (
         <div
@@ -532,15 +543,16 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={editing ? 'Edit packaging record' : 'New packaging record'}
+          aria-labelledby={titleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={panelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="font-heading text-xl font-bold text-on-background mb-4">
+            <h2 id={titleId} className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Packaging Record' : 'New Packaging Record'}
             </h2>
 

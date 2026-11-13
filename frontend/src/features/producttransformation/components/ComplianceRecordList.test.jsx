@@ -220,7 +220,7 @@ describe('ComplianceRecordList', () => {
     const row = screen.getByText('CR-1').closest('tr');
     fireEvent.click(within(row).getByRole('button', { name: 'View' }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Compliance record details' });
+    const dialog = screen.getByRole('dialog', { name: /Compliance record details/ });
     expect(within(dialog).getByText('HACCP plan in place')).toBeTruthy();
     expect(within(dialog).getByText('Plan v2')).toBeTruthy();
     expect(within(dialog).getByText('Awa Diop')).toBeTruthy();
@@ -248,6 +248,7 @@ describe('ComplianceRecordList', () => {
     render(<ComplianceRecordList />);
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Compliance' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

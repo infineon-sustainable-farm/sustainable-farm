@@ -136,12 +136,12 @@ describe('Dashboard', () => {
   it('renders the KPIs and the reporting period', async () => {
     renderDashboard();
 
-    expect(await screen.findByText('520.00 kg')).toBeTruthy();
+    expect(await screen.findByText('520 kg')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
-    expect(screen.getByText('118.50')).toBeTruthy();
-    expect(screen.getByText('92.50%')).toBeTruthy();
+    expect(screen.getByText('118.5')).toBeTruthy();
+    expect(screen.getByText('92.5%')).toBeTruthy();
     expect(screen.getByText('0.85 kWh/kg')).toBeTruthy();
-    expect(screen.getByText('75.00%')).toBeTruthy();
+    expect(screen.getByText('75%')).toBeTruthy();
     expect(screen.getByText('1.25 L/kg')).toBeTruthy();
     expect(screen.getByText(/Target: ON_TARGET/)).toBeTruthy();
     expect(
@@ -215,7 +215,7 @@ describe('Dashboard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    expect(await screen.findByText('520.00 kg')).toBeTruthy();
+    expect(await screen.findByText('520 kg')).toBeTruthy();
     await waitFor(() =>
       expect(dashboardApi.getDashboardStats).toHaveBeenCalledTimes(2),
     );

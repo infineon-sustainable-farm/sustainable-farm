@@ -21,12 +21,14 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { getComplianceColor } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Plus, Filter, Eye, Pencil, Trash2, Download } from 'lucide-react';
 
-import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
 
 const COMPLIANCE_TYPES = ['HACCP', 'FOOD_SAFETY', 'EU_EXPORT', 'HYGIENE', 'TRACEABILITY'];
 const COMPLIANCE_RESULTS = ['COMPLIANT', 'NON_COMPLIANT', 'PENDING'];
@@ -195,6 +197,26 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
     setFormError('');
   };
 
+  const {
+    titleId: formTitleId,
+    panelRef: formPanelRef,
+    handleBackdropClick: formHandleBackdropClick,
+  } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
+  const {
+    titleId: detailTitleId,
+    panelRef: detailPanelRef,
+    handleBackdropClick: detailHandleBackdropClick,
+  } = useAccessibleDialog({
+    onClose: () => setDetail(null),
+    open: Boolean(detail),
+  });
+
   const updateForm = (key) => (event) => {
     setForm((current) => ({ ...current, [key]: event.target.value }));
   };
@@ -308,41 +330,42 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
     document.body.removeChild(link);
   };
 
+  const header = (
+    <PTListHeader
+      title="Compliance"
+      subtitle="Track HACCP, food-safety and export compliance records per batch."
+    >
+      <button
+        type="button"
+        onClick={handleExport}
+        disabled={filteredRecords.length === 0}
+        className={SECONDARY_BUTTON}
+      >
+        <Download className="w-4 h-4" />
+        Export CSV
+      </button>
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New Compliance Record
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading compliance records..." />;
   if (error)
     return (
-      <ErrorState message={error?.message || 'Failed to load compliance records'} onRetry={load} />
+      <div className="p-6">
+        {header}
+        <ErrorState
+          message={error?.message || 'Failed to load compliance records'}
+          onRetry={load}
+        />
+      </div>
     );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className={PAGE_TITLE}>Compliance</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Track HACCP, food-safety and export compliance records per batch.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={filteredRecords.length === 0}
-            className={SECONDARY_BUTTON}
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-          <button
-            type="button"
-            onClick={openCreate}
-            className={PRIMARY_BUTTON}
-          >
-            <Plus className="w-4 h-4" />
-            New Compliance Record
-          </button>
-        </div>
-      </div>
+      {header}
 
       {actionError && (
         <div
@@ -566,17 +589,24 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Compliance record details"
+          aria-labelledby={detailTitleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setDetail(null)}
+          onClick={detailHandleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={detailPanelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-2xl max-h-[90vh] overflow-y-auto outline-none"
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="font-heading text-xl font-bold text-on-background">{detail.recordId}</h2>
+                <h2
+                  id={detailTitleId}
+                  className="font-heading text-xl font-bold text-on-background"
+                >
+                  <span className="sr-only">Compliance record details: </span>
+                  {detail.recordId}
+                </h2>
                 <p className="text-sm text-gray-600">
                   Batch {detail.batchId} · {typeLabel(detail.complianceType)}
                 </p>
@@ -627,15 +657,16 @@ const ComplianceRecordList = ({ initialBatchId = '' }) => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={editing ? 'Edit compliance record' : 'New compliance record'}
+          aria-labelledby={formTitleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={formHandleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={formPanelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="font-heading text-xl font-bold text-on-background mb-4">
+            <h2 id={formTitleId} className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Compliance Record' : 'New Compliance Record'}
             </h2>
 

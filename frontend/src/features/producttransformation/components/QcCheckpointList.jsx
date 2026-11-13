@@ -18,11 +18,13 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { formatDateTime, getQcResultColor } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Plus, Filter, Pencil, Trash2 } from 'lucide-react';
 
-import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
 
 const QC_STAGES = ['INTAKE', 'WASHING', 'DRYING', 'COOLING', 'PACKAGING', 'FINAL'];
 const QC_RESULTS = ['PENDING', 'PASS', 'FAIL', 'REWORK'];
@@ -173,6 +175,13 @@ const QcCheckpointList = () => {
     setFormError('');
   };
 
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
   const updateForm = (key) => (event) => {
     setForm((current) => ({ ...current, [key]: event.target.value }));
   };
@@ -245,27 +254,30 @@ const QcCheckpointList = () => {
     }
   };
 
+  const header = (
+    <PTListHeader
+      title="Quality Control"
+      subtitle="Record and track QC checkpoints for each batch and stage."
+    >
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New QC Checkpoint
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading QC checkpoints..." />;
-  if (error) return <ErrorState message={error?.message || 'Failed to load QC checkpoints'} onRetry={load} />;
+  if (error)
+    return (
+      <div className="p-6">
+        {header}
+        <ErrorState message={error?.message || 'Failed to load QC checkpoints'} onRetry={load} />
+      </div>
+    );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className={PAGE_TITLE}>Quality Control</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Record and track QC checkpoints for each batch and stage.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className={PRIMARY_BUTTON}
-        >
-          <Plus className="w-4 h-4" />
-          New QC Checkpoint
-        </button>
-      </div>
+      {header}
 
       {actionError && (
         <div role="alert" className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -451,15 +463,16 @@ const QcCheckpointList = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={editing ? 'Edit QC checkpoint' : 'New QC checkpoint'}
+          aria-labelledby={titleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={panelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="font-heading text-xl font-bold text-on-background mb-4">
+            <h2 id={titleId} className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit QC Checkpoint' : 'New QC Checkpoint'}
             </h2>
 

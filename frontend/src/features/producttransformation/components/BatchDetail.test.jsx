@@ -166,10 +166,10 @@ describe('BatchDetail', () => {
 
     expect(screen.getByText('Grade B')).toBeTruthy();
     expect(screen.getByText('Moussa DEMO (Lavage)')).toBeTruthy();
-    expect(screen.getByText('565.00 kg · 92.59 % yield')).toBeTruthy();
-    expect(screen.getByText('1380.00 L')).toBeTruthy();
-    expect(screen.getByText('80.00 % → 13.00 %')).toBeTruthy();
-    expect(screen.getByText('54.80 °C (target 55.00 °C)')).toBeTruthy();
+    expect(screen.getByText('565 kg · 92.59 % yield')).toBeTruthy();
+    expect(screen.getByText('1,380 L')).toBeTruthy();
+    expect(screen.getByText('80 % → 13 %')).toBeTruthy();
+    expect(screen.getByText('54.8 °C (target 55 °C)')).toBeTruthy();
     expect(screen.getByText('REWORK · 5 defect(s)')).toBeTruthy();
     expect(screen.getByText('Two Kg Bag')).toBeTruthy();
     expect(screen.getByText('LOT-DEMO-003-PKG')).toBeTruthy();

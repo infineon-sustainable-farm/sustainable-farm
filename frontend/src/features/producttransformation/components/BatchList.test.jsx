@@ -76,8 +76,8 @@ describe('BatchList', () => {
     expect(within(table).getByText('B-001')).toBeTruthy();
     expect(within(table).getByText('B-002')).toBeTruthy();
     expect(within(table).getByText('KEITT')).toBeTruthy();
-    expect(within(table).getByText('520.00 kg')).toBeTruthy();
-    expect(within(table).getByText('480.50 kg')).toBeTruthy();
+    expect(within(table).getByText('520 kg')).toBeTruthy();
+    expect(within(table).getByText('480.5 kg')).toBeTruthy();
     expect(within(table).getByText('WASHING')).toBeTruthy();
     expect(within(table).getByText('FARM-1 / BLOCK-1')).toBeTruthy();
   });
@@ -143,6 +143,7 @@ describe('BatchList', () => {
     renderList();
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Batch Management' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

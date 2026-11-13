@@ -54,7 +54,7 @@ describe('OperatorList', () => {
     const table = await screen.findByRole('table');
     expect(within(table).getByText('OP-DEMO-01')).toBeTruthy();
     expect(within(table).getByText('Awa DEMO (QC)')).toBeTruthy();
-    expect(within(table).getByText('Qc Inspector')).toBeTruthy();
+    expect(within(table).getByText('QC Inspector')).toBeTruthy();
     expect(within(table).getByText('HACCP')).toBeTruthy();
     // Two operators are ACTIVE, one INACTIVE: each renders its own badge.
     expect(within(table).getAllByText('Active')).toHaveLength(2);
@@ -141,6 +141,7 @@ describe('OperatorList', () => {
     render(<OperatorList />);
 
     expect(await screen.findByText('Service unavailable')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Operators' })).toBeTruthy();
 
     operatorApi.getAllOperators.mockResolvedValue(OPERATORS.map((item) => ({ ...item })));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));

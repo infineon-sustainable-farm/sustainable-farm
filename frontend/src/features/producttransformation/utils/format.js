@@ -49,11 +49,21 @@ export const formatDateTime = (date) => {
 };
 
 /**
- * Format number with decimal places
+ * Format a number the way the Plants module does: `en-US` grouping and no
+ * forced trailing zeros.
+ *
+ * `decimals` is a ceiling, not a fixed width, so a whole quantity stays
+ * "12,500" and 480.5 stays "480.5" while 8,420.25 keeps both of its meaningful
+ * decimals. Display only: CSV exports keep the raw numeric values.
  */
 export const formatNumber = (num, decimals = 2) => {
-  if (num === null || num === undefined) return 'N/A';
-  return Number(num).toFixed(decimals);
+  if (num === null || num === undefined || num === '') return 'N/A';
+  const value = Number(num);
+  if (!Number.isFinite(value)) return 'N/A';
+  return value.toLocaleString('en-US', {
+    maximumFractionDigits: decimals,
+    minimumFractionDigits: 0,
+  });
 };
 
 /**

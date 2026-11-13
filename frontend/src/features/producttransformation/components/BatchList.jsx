@@ -11,10 +11,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { batchApi } from '../api/batchApi';
 import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { formatDate, formatWeight, getStatusColor } from '../utils/format';
 import { Plus, Filter, ArrowRight, Package } from 'lucide-react';
 
-import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD } from '../styles/ptStyles';
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD } from '../styles/ptStyles';
 
 const MANGO_VARIETIES = ['KEITT', 'KENT', 'TOMMY', 'AMÉLIE', 'OTHER'];
 
@@ -83,6 +85,13 @@ const BatchList = () => {
     setFormError('');
   };
 
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
   const updateForm = (key) => (event) =>
     setForm((current) => ({ ...current, [key]: event.target.value }));
 
@@ -131,22 +140,27 @@ const BatchList = () => {
     return batch.currentStatus === filter;
   });
 
+  const header = (
+    <PTListHeader title="Batch Management">
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New Batch
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading batches..." />;
   if (error)
-    return <ErrorState message={error?.message || 'Failed to load batches'} onRetry={load} />;
+    return (
+      <div className="p-6">
+        {header}
+        <ErrorState message={error?.message || 'Failed to load batches'} onRetry={load} />
+      </div>
+    );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className={PAGE_TITLE}>Batch Management</h1>
-        <button
-          onClick={openCreate}
-          className={PRIMARY_BUTTON}
-        >
-          <Plus className="w-4 h-4" />
-          New Batch
-        </button>
-      </div>
+      {header}
 
       {actionError && (
         <div
@@ -276,15 +290,16 @@ const BatchList = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="New batch"
+          aria-labelledby={titleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={panelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="font-heading text-xl font-bold text-on-background mb-4">New Batch</h2>
+            <h2 id={titleId} className="font-heading text-xl font-bold text-on-background mb-4">New Batch</h2>
 
             {formError && (
               <div

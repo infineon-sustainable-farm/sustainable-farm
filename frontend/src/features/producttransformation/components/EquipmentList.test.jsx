@@ -66,7 +66,7 @@ describe('EquipmentList', () => {
     expect(within(table).getByText('EQ-1')).toBeTruthy();
     expect(within(table).getByText('Solar dryer 1')).toBeTruthy();
     expect(within(table).getByText('Solar dryer')).toBeTruthy();
-    expect(within(table).getByText('120.0 kg/h')).toBeTruthy();
+    expect(within(table).getByText('120 kg/h')).toBeTruthy();
     expect(within(table).getByText('0.85 kWh/kg')).toBeTruthy();
     expect(within(table).getAllByText('Active')).toHaveLength(2);
     expect(within(table).getByText('Maintenance')).toBeTruthy();
@@ -226,6 +226,7 @@ describe('EquipmentList', () => {
     render(<EquipmentList />);
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Equipment' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

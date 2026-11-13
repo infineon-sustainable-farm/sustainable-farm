@@ -19,11 +19,13 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { formatNumber, formatDateTime } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Plus, Filter, Pencil, Trash2 } from 'lucide-react';
 
-import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
 
 const DRYER_TYPES = ['DRYING', 'SOLAR_DRYER', 'TUNNEL_DRYER', 'TESTA_DRYER'];
 const MIN_END_MOISTURE = 6;
@@ -170,6 +172,13 @@ const DryingRunList = () => {
     setFormError('');
   };
 
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
   const updateForm = (key) => (event) => {
     setForm((current) => ({ ...current, [key]: event.target.value }));
   };
@@ -264,28 +273,30 @@ const DryingRunList = () => {
     }
   };
 
+  const header = (
+    <PTListHeader
+      title="Drying"
+      subtitle="Track drying durations, temperatures, moisture loss and energy usage."
+    >
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New Drying Run
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading drying runs..." />;
   if (error)
-    return <ErrorState message={error?.message || 'Failed to load drying runs'} onRetry={load} />;
+    return (
+      <div className="p-6">
+        {header}
+        <ErrorState message={error?.message || 'Failed to load drying runs'} onRetry={load} />
+      </div>
+    );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className={PAGE_TITLE}>Drying</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Track drying durations, temperatures, moisture loss and energy usage.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className={PRIMARY_BUTTON}
-        >
-          <Plus className="w-4 h-4" />
-          New Drying Run
-        </button>
-      </div>
+      {header}
 
       {actionError && (
         <div
@@ -467,15 +478,16 @@ const DryingRunList = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={editing ? 'Edit drying run' : 'New drying run'}
+          aria-labelledby={titleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={panelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="font-heading text-xl font-bold text-on-background mb-4">
+            <h2 id={titleId} className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Drying Run' : 'New Drying Run'}
             </h2>
 

@@ -20,7 +20,8 @@ import { formatIsoDate } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Filter, Search } from 'lucide-react';
 
-import { CARD_FRAME, FIELD_LABEL, FILTER_INPUT, PAGE_TITLE, SEARCH_INPUT, SECTION_CARD, TABLE_CARD, TABLE_HEAD } from '../styles/ptStyles';
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_LABEL, FILTER_INPUT, SEARCH_INPUT, SECTION_CARD, TABLE_CARD, TABLE_HEAD } from '../styles/ptStyles';
 
 const EMPTY_FILTERS = {
   role: 'all',
@@ -86,18 +87,25 @@ const OperatorList = () => {
     setFilters((current) => ({ ...current, [key]: event.target.value }));
   };
 
+  const header = (
+    <PTListHeader
+      title="Operators"
+      subtitle="Process operators referenced by drying, quality control, compliance and packaging."
+    />
+  );
+
   if (loading) return <LoadingState message="Loading operators..." />;
   if (error)
-    return <ErrorState message={error?.message || 'Failed to load operators'} onRetry={load} />;
+    return (
+      <div className="p-6">
+        {header}
+        <ErrorState message={error?.message || 'Failed to load operators'} onRetry={load} />
+      </div>
+    );
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className={PAGE_TITLE}>Operators</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Process operators referenced by drying, quality control, compliance and packaging.
-        </p>
-      </div>
+      {header}
 
       {/* Filters */}
       <div className={`${SECTION_CARD} mb-6`}>
