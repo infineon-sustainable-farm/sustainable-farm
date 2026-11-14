@@ -4,6 +4,7 @@ import { useNurseryBatches } from "../hooks/useNurseryBatches";
 import { usePlantAlerts } from "../hooks/usePlantAlerts";
 import { formatBlock } from "../utils/format";
 import OverviewAlertRow from "./OverviewAlertRow";
+import PlantAlertGroups from "./PlantAlertGroups";
 import { ALERT_COLUMNS, CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON, SKELETON } from "./plantsStyles";
 
 /** What the list covers; the day is the one under the page title. */
@@ -20,7 +21,8 @@ function byId(items, pick) {
  * Every plant alert of the day for the selected block, as the API computes and
  * orders them, one row each: harvest seasons, pre-harvest intervals, low
  * stocks, open health problems and batches to transplant. All of them are
- * listed; the Active Alerts figure above counts the same ones.
+ * listed, in two groups, "Act now" then "Plan ahead"; the Active Alerts figure
+ * above counts the same ones.
  *
  * The batch code and the tree come from the nursery batches (already read by
  * the survival chart) and the health findings; while either is missing, the
@@ -74,7 +76,7 @@ export default function OverviewAlertsSection({ blockCode }) {
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
-                <div>
+                <div className="flex flex-col gap-3">
                     {/* Column names for the eye from lg up; each row reads in full on its own. */}
                     <div
                         aria-hidden="true"
@@ -86,16 +88,19 @@ export default function OverviewAlertsSection({ blockCode }) {
                         <span>When</span>
                         <span />
                     </div>
-                    <ul className="flex flex-col divide-y divide-gray-200">
-                        {data.alerts.map((alert) => (
+                    <PlantAlertGroups
+                        alerts={data.alerts}
+                        idPrefix="overview-alerts"
+                        listClassName="flex flex-col divide-y divide-gray-200"
+                        renderAlert={(alert) => (
                             <OverviewAlertRow
                                 key={`${alert.type}-${alert.varietyId}-${alert.treatmentId}-${alert.findingId}-${alert.fertilizerId}-${alert.batchId}`}
                                 alert={alert}
                                 batchCode={alert.batchId == null ? null : batchCodes.get(alert.batchId)}
                                 treeLabel={alert.findingId == null ? null : treeLabels.get(alert.findingId)}
                             />
-                        ))}
-                    </ul>
+                        )}
+                    />
                 </div>
             )}
         </section>

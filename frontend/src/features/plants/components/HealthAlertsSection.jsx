@@ -2,6 +2,7 @@ import { CircleCheck, Loader2, TriangleAlert } from "lucide-react";
 import { useHealthAlerts } from "../hooks/useHealthAlerts";
 import { formatCode } from "../utils/format";
 import PlantAlertItem from "./PlantAlertItem";
+import PlantAlertGroups from "./PlantAlertGroups";
 import { PRIMARY_BUTTON } from "./plantsStyles";
 
 // What the date of each alert type is.
@@ -74,11 +75,14 @@ export default function HealthAlertsSection() {
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
-                <ul className="flex flex-col gap-3">
-                    {data.alerts.map((alert) => (
+                <PlantAlertGroups
+                    alerts={data.alerts}
+                    idPrefix="health-alerts"
+                    listClassName="flex flex-col gap-3"
+                    renderAlert={(alert) => (
                         <HealthAlert key={`${alert.type}-${alert.findingId}-${alert.treatmentId}`} alert={alert} />
-                    ))}
-                </ul>
+                    )}
+                />
             )}
         </section>
     );
