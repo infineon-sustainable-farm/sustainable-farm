@@ -1,0 +1,99 @@
+# Module ownership: each contributor only changes their own module.
+#
+# Runs scripts/module-ownership-guard.sh with the owners listed in
+# .github/module-owners.conf. Admins may change anything; any other author
+# must work from feature/<module>/init and stay inside that module's folders.
+# New root folders, docs, scripts, CI, shared code and build files are
+# reserved to admins.
+#
+# Security: pull_request_target runs the workflow, the script and the owners
+# file from the BASE branch, so a PR cannot weaken the rule by editing them.
+# The PR code is only fetched and diffed with git, it is never executed.
+#
+# One-time GitHub prerequisites:
+#   - Settings -> Branches -> protection rules on develop and main -> require
+#     the "Module ownership" status check.
+#   - Optional, to publish the report under the admin's account instead of
+#     github-actions[bot]: create a fine-grained token of the admin account
+#     (this repository only, "Pull requests: Read and write") and store it as
+#     the repository secret OWNER_REVIEW_TOKEN. Without it, github.token is used.
+#     The secret is safe here: pull_request_target never runs the PR's code.
+#
+# English-only output, no emojis (repo CI convention).
+name: Module ownership
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+    branches: [develop, main]
+
+concurrency:
+  group: module-ownership-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  module-ownership:
+    name: Module ownership
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout base branch (trusted script and owners file)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fetch PR head (diffed only, never executed)
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          REPO_URL: https://github.com/${{ github.repository }}.git
+        run: git fetch --no-tags "$REPO_URL" "+refs/pull/${PR}/head:refs/remotes/pr/head"
+
+      - name: Run module ownership guard
+        id: guard
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set +e
+          bash scripts/module-ownership-guard.sh "$AUTHOR" "$HEAD_BRANCH" refs/remotes/pr/head "$BASE_SHA" ownership-report.md
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          cat ownership-report.md >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Publish report on the PR (updated, never duplicated)
+        if: always() && steps.guard.outputs.exit_code != ''
+        env:
+          GH_TOKEN: ${{ secrets.OWNER_REVIEW_TOKEN || github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          CODE: ${{ steps.guard.outputs.exit_code }}
+        run: |
+          marker='<!-- farm-module-ownership -->'
+          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)
+          if [ "$CODE" = "0" ] && [ -z "$existing" ]; then
+            echo "Allowed and no previous report: nothing to publish."
+            exit 0
+          fi
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" -F body=@ownership-report.md > /dev/null
+          else
+            gh pr comment "$PR" --repo "$REPO" --body-file ownership-report.md
+          fi
+
+      - name: Fail on violation
+        if: steps.guard.outputs.exit_code != '0'
+        run: |
+          echo "::error::This PR changes files outside the author's module (see the report on the PR)."
+          exit 1

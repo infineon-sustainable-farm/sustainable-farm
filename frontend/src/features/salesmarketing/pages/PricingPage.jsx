@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 function seasonFromValue(v) {
@@ -14,8 +14,8 @@ function demandLabel(v) {
 }
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) return data.message;
   return fallback;
@@ -80,10 +80,6 @@ export default function PricingPage() {
   const [stock, setStock] = useState(1000);
   const [demand, setDemand] = useState(50);
 
-  useEffect(() => {
-    fetchPricingData();
-  }, []);
-
   const flashSuccess = (message) => {
     setActionSuccess(message);
     setActionError(null);
@@ -95,10 +91,7 @@ export default function PricingPage() {
     setActionSuccess(null);
   };
 
-  const fetchPricingData = async () => {
-    setLoading(true);
-    setApiError(null);
-
+  const fetchPricingData = useCallback(async () => {
     try {
       const [histRes, compRes, recoRes, productRes] = await Promise.allSettled([
         api.getPricingHistory(),
@@ -106,14 +99,15 @@ export default function PricingPage() {
         api.getPricingRecommendations(),
         api.getProducts(),
       ]);
+      setApiError(null);
 
       const failures = [];
 
       // -----------------------------
       // Pricing history
       // -----------------------------
-      if (histRes.status === 'fulfilled' && Array.isArray(histRes.value.data)) {
-        const sorted = [...histRes.value.data].sort(
+      if (histRes.status === 'fulfilled' && Array.isArray(histRes.value)) {
+        const sorted = [...histRes.value].sort(
           (a, b) => new Date(a.priceDate) - new Date(b.priceDate)
         );
 
@@ -151,8 +145,8 @@ export default function PricingPage() {
       // -----------------------------
       // Competitors
       // -----------------------------
-      if (compRes.status === 'fulfilled' && Array.isArray(compRes.value.data)) {
-        setCompetitors(compRes.value.data);
+      if (compRes.status === 'fulfilled' && Array.isArray(compRes.value)) {
+        setCompetitors(compRes.value);
       } else {
         setCompetitors([]);
 
@@ -166,10 +160,10 @@ export default function PricingPage() {
       // -----------------------------
       // Recommendations
       // -----------------------------
-      if (recoRes.status === 'fulfilled' && Array.isArray(recoRes.value.data)) {
+      if (recoRes.status === 'fulfilled' && Array.isArray(recoRes.value)) {
         setRecommendation(
-          recoRes.value.data.length > 0
-            ? recoRes.value.data[recoRes.value.data.length - 1]
+          recoRes.value.length > 0
+            ? recoRes.value[recoRes.value.length - 1]
             : null
         );
       } else {
@@ -187,8 +181,8 @@ export default function PricingPage() {
       // -----------------------------
       if (productRes.status === 'fulfilled') {
         setProducts(
-          Array.isArray(productRes.value.data)
-            ? productRes.value.data
+          Array.isArray(productRes.value)
+            ? productRes.value
             : []
         );
       } else {
@@ -206,13 +200,17 @@ export default function PricingPage() {
       setApiError(
         getErrorMessage(
           err,
-          'Unable to connect to the backend API.'
+          'Unable to load pricing data. Please try again.'
         )
       );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchPricingData);
+  }, [fetchPricingData]);
 
   // --------------------------------------------------
   // Current product / latest pricing
@@ -373,13 +371,6 @@ export default function PricingPage() {
 
   const trendMin = trend?.min ?? 5.7;
   const trendMax = trend?.max ?? 6.0;
-
-  const trendPadding = Math.max(
-    (trendMax - trendMin) * 0.2,
-    0.05
-  );
-
-
 
 const axisBottom = trendMin;
 const axisTop = trendMax;

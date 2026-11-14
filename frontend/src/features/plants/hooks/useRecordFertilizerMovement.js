@@ -16,9 +16,10 @@ const RECORDERS = {
  * Records a purchase, an application or a loss of a fertilizer, given as
  * `{ movementType, fertilizerId, body }`.
  *
- * The catalogue and every movement list are refreshed afterwards, whatever
- * their filter: a movement changes the stock of its fertilizer and adds a
- * line to the history. The API writes nothing else.
+ * The catalogue, every movement list, the plant alerts and the overview are
+ * refreshed afterwards, whatever their filter: a movement changes the stock of
+ * its fertilizer and adds a line to the history, and a stock at or below its
+ * alert threshold is a stock alert, counted by the overview.
  */
 export function useRecordFertilizerMovement() {
     const queryClient = useQueryClient();
@@ -28,6 +29,8 @@ export function useRecordFertilizerMovement() {
             Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["plants", "fertilizers"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "fertilizer-movements"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "alerts"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "overview"] }),
             ]),
     });
 }

@@ -39,7 +39,9 @@ export function fetchGrowthCalendar({ blockCode, farmId } = {}) {
 }
 
 /**
- * Records a planting: date, block, variety and number of trees.
+ * Records a planting: date, block, variety and number of trees, and optionally
+ * the two spacings in metres (rowSpacingM and treeSpacingM, both or none) and
+ * the vigor (GOOD, AVERAGE or POOR).
  *
  * The values go out as entered. The API trims and upper-cases the block code
  * (" a " becomes "A"), answers 400 with fieldErrors for an invalid value, and
@@ -124,6 +126,17 @@ export function fetchHarvestStatus({ blockCode, farmId, withinDays } = {}) {
     if (withinDays !== null && withinDays !== undefined) params.withinDays = withinDays;
 
     return apiClient.get(PLANTS_ENDPOINTS.HARVEST_STATUS, { params });
+}
+
+/**
+ * Records a maturity observation made in the field: date, block, variety,
+ * status and method, with the measured value and the observer when given.
+ *
+ * The API answers 400 with fieldErrors for an invalid value, and 422 when the
+ * variety has no planting on that block or the observation predates it.
+ */
+export function createMaturityObservation(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.MATURITY_OBSERVATIONS, body);
 }
 
 /**
@@ -373,6 +386,20 @@ export function fetchPlantAlerts({ blockCode, farmId, withinDays } = {}) {
 }
 
 /**
+ * Fetches the figures of the dashboard of the day, computed by the API: the
+ * trees, those in growth stage and ready for harvest, the alerts, and the
+ * trees by maturity status with their shares. Same filter rules as
+ * fetchVarieties; none of the figures is computed here.
+ */
+export function fetchPlantsOverview({ blockCode, farmId } = {}) {
+    const params = {};
+    if (blockCode) params.blockCode = blockCode;
+    if (farmId !== null && farmId !== undefined) params.farmId = farmId;
+
+    return apiClient.get(PLANTS_ENDPOINTS.OVERVIEW, { params });
+}
+
+/**
  * Fetches the nursery batches, ordered by start date by the API. The plants
  * left, the survival rate and the current stage of each batch come computed
  * by the API from its recorded events; none of them is computed here.
@@ -432,4 +459,45 @@ export function fetchNurseryEvents({ batchId, eventType, from, to } = {}) {
     if (to) params.to = to;
 
     return apiClient.get(PLANTS_ENDPOINTS.NURSERY_EVENTS, { params });
+}
+
+/**
+ * Fetches the planting scenarios, ordered by name by the API: the assumptions
+ * of each plan as entered, each with its source. No result is stored, so none
+ * comes with them: see fetchScenarioAnalysis.
+ */
+export function fetchScenarios() {
+    return apiClient.get(PLANTS_ENDPOINTS.SCENARIOS);
+}
+
+/**
+ * Enters a scenario. The API answers 400 with fieldErrors for an invalid
+ * value, and 409 when a scenario of the same name exists, ignoring case and
+ * accents.
+ */
+export function createScenario(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.SCENARIOS, body);
+}
+
+/**
+ * Corrects a scenario: every value is replaced, and an optional value left
+ * out is removed. A source left out stays as it was when its value does not
+ * change, and becomes user_entry when it does. The API answers 400, 404 and
+ * 409 as for an entry.
+ */
+export function updateScenario(id, body) {
+    return apiClient.put(`${PLANTS_ENDPOINTS.SCENARIOS}/${id}`, body);
+}
+
+/**
+ * Fetches what a scenario gives, and what a variant of it changes, computed by
+ * the API on every request: a year in full production, the plan year by year,
+ * and the annual benefit of the variant by cause. `params` holds the variant
+ * (treeCountChange, yieldPerTreeChangePct, lossRate, additionalInvestment) and
+ * horizonYears; a parameter left out keeps the API's default. The API answers
+ * 400 with fieldErrors for a parameter out of bounds, 404 for an unknown
+ * scenario, and 422 for a variant the scenario cannot take.
+ */
+export function fetchScenarioAnalysis(id, params = {}) {
+    return apiClient.get(`${PLANTS_ENDPOINTS.SCENARIOS}/${id}/analysis`, { params });
 }

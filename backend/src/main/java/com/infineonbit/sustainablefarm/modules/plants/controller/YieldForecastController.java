@@ -47,7 +47,10 @@ public class YieldForecastController {
    @Operation(summary = "Forecast the expected yield by month",
          description = "Only varieties with a recorded planting count. For each month: trees × yield per tree × "
                + "share of the growth phase on the first day of the month × share of the month in the harvest "
-               + "season. Varieties absent from the agronomic reference are listed in varietiesWithoutReference.")
+               + "season, to 0.1 kg. The months of a season are rounded together, by largest remainder (ties to the "
+               + "earliest month), so that a whole season adds up to its exact yield rounded to 0.1 kg and a month "
+               + "has the same value whatever the months asked for. Varieties absent from the agronomic reference "
+               + "are listed in varietiesWithoutReference.")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "The forecast; every month has a total, zeros included"),
          @ApiResponse(responseCode = "400", description = "months outside 1 to 24, or from not in the yyyy-MM format")

@@ -2,12 +2,15 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.FieldObservation;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.HarvestWindow;
+import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.Season;
 import com.infineonbit.sustainablefarm.modules.plants.service.YieldForecastService.ForecastBasis;
 import com.infineonbit.sustainablefarm.modules.plants.service.YieldForecastService.PhaseOfMonth;
 import com.infineonbit.sustainablefarm.modules.plants.service.YieldForecastService.PlantedVariety;
@@ -29,16 +32,29 @@ import java.util.Optional;
  * The maturity status and the estimated harvest date of the planted varieties
  * (PL-05-01 and PL-05-02).
  *
- * <p>Both are computed on every read with the rules of the plant alerts: the
+ * <p>Both are estimated on every read with the rules of the plant alerts: the
  * harvest window of a variety, from its first month in which the trees give a
  * yield as in the forecast, and the pre-harvest intervals of the treatments
  * of its block. A variety is ready for harvest when its window is open and no
  * pre-harvest interval runs on its block, ripe when the window opens within
  * the look-ahead of the alerts or while an interval still runs, and immature
- * otherwise. Nothing is stored and nothing is blocked.
+ * otherwise.
+ *
+ * <p>A maturity observation made in the field takes precedence over the
+ * estimated status for the season under way on the day it was made, or the
+ * next one when none was, until the last day of that season; the latest one
+ * of the season counts. A running pre-harvest interval still holds an observed
+ * READY_FOR_HARVEST back to RIPE. The estimated harvest date does not move.
+ * No status is stored and nothing is blocked.
  */
 @Service
 public class HarvestStatusService {
+
+    /** {@code statusSource} of a status that is the estimate. */
+    static final String ESTIMATE_SOURCE = "estimate";
+
+    /** {@code statusSource} of a status that is the one of a field observation. */
+    static final String FIELD_OBSERVATION_SOURCE = "field_observation";
 
     /** Order of the lines: farm (none first), block, variety name, then variety row, sorted in Java. */
     private static final Comparator<PlantedVariety> ORDER = Comparator
@@ -53,18 +69,26 @@ public class HarvestStatusService {
             .comparing(HealthTreatmentResponse::harvestAllowedFrom)
             .thenComparing(HealthTreatmentResponse::id);
 
+    /** The latest observation: by date, then the one recorded last. */
+    private static final Comparator<MaturityObservationResponse> LATEST_OBSERVATION = Comparator
+            .comparing(MaturityObservationResponse::observedOn)
+            .thenComparing(MaturityObservationResponse::id);
+
     private final YieldForecastService yieldForecastService;
     private final HealthTreatmentService healthTreatmentService;
     private final HarvestService harvestService;
+    private final MaturityObservationService maturityObservationService;
     private final Clock clock;
 
     public HarvestStatusService(YieldForecastService yieldForecastService,
                                 HealthTreatmentService healthTreatmentService,
                                 HarvestService harvestService,
+                                MaturityObservationService maturityObservationService,
                                 @Qualifier("plantsClock") Clock clock) {
         this.yieldForecastService = yieldForecastService;
         this.healthTreatmentService = healthTreatmentService;
         this.harvestService = harvestService;
+        this.maturityObservationService = maturityObservationService;
         this.clock = clock;
     }
 
@@ -115,6 +139,8 @@ public class HarvestStatusService {
         ForecastBasis basis = yieldForecastService.basis(farmId, block);
         Map<BlockKey, HealthTreatmentResponse> intervals =
                 runningIntervals(healthTreatmentService.getAllTreatments(farmId, block, null, today), today);
+        Map<Long, List<MaturityObservationResponse>> observations = observationsByVariety(
+                maturityObservationService.getAllObservations(farmId, block, null, today), today);
 
         Map<Long, HarvestWindow> windows = new HashMap<>();
         for (PlantedVariety planted : basis.plantedVarieties()) {
@@ -130,10 +156,12 @@ public class HarvestStatusService {
                     Variety variety = planted.variety();
                     HealthTreatmentResponse interval = intervals.get(
                             new BlockKey(variety.getFarmId(), variety.getBlockCode()));
+                    List<MaturityObservationResponse> ofTheRow =
+                            observations.getOrDefault(variety.getId(), List.of());
                     return planted.reference() == null
-                            ? withoutReference(planted, interval)
+                            ? withoutReference(planted, interval, ofTheRow)
                             : status(planted, windows.get(variety.getId()), interval,
-                                    firstHarvests.get(variety.getId()), basis, today, window);
+                                    firstHarvests.get(variety.getId()), ofTheRow, basis, today, window);
                 })
                 .toList();
         return new HarvestStatusResponse(today, window, varieties);
@@ -180,6 +208,23 @@ public class HarvestStatusService {
     }
 
     /**
+     * The observations made up to today, by variety row, each list from the
+     * earliest to the latest. One made after the day, as when the overview
+     * reads an earlier day, does not exist yet.
+     */
+    private static Map<Long, List<MaturityObservationResponse>> observationsByVariety(
+            List<MaturityObservationResponse> observations, LocalDate today) {
+        Map<Long, List<MaturityObservationResponse>> byVariety = new HashMap<>();
+        for (MaturityObservationResponse observation : observations) {
+            if (!observation.observedOn().isAfter(today)) {
+                byVariety.computeIfAbsent(observation.varietyId(), id -> new ArrayList<>()).add(observation);
+            }
+        }
+        byVariety.values().forEach(list -> list.sort(LATEST_OBSERVATION));
+        return byVariety;
+    }
+
+    /**
      * The date of the first harvest of each variety row in its open harvest
      * window, from one read of the harvests since the earliest open window.
      * A window still to come holds no harvest.
@@ -205,7 +250,7 @@ public class HarvestStatusService {
     }
 
     /**
-     * The maturity status of a variety on a day.
+     * The estimated maturity status of a variety on a day.
      *
      * @param window          its harvest window, or {@code null} when the trees never give a yield
      * @param today           the day
@@ -226,34 +271,96 @@ public class HarvestStatusService {
                 : MaturityStatus.IMMATURE;
     }
 
+    /**
+     * The observation that counts on a day: the latest one made for the season
+     * under way, or the next one when none is. An observation is made for the
+     * season under way on its own day, or for the next one when none was, so
+     * one made between two seasons counts for the coming one.
+     *
+     * @param observations the observations of the variety row up to the day, earliest first
+     * @param season       the season under way on the day, or the next one
+     * @param reference    the agronomic reference that gives the seasons
+     * @return the observation, or {@code null} when none counts
+     */
+    private static MaturityObservationResponse countingObservation(List<MaturityObservationResponse> observations,
+                                                                   Season season, VarietyReference reference) {
+        MaturityObservationResponse counting = null;
+        for (MaturityObservationResponse observation : observations) {
+            Season ofTheObservation = PlantAlertCalculator.currentOrNextSeason(observation.observedOn(),
+                    reference.getHarvestStartMonth(), reference.getHarvestEndMonth());
+            if (ofTheObservation.equals(season)) {
+                counting = observation;
+            }
+        }
+        return counting;
+    }
+
+    private static FieldObservation fieldObservation(MaturityObservationResponse observation, LocalDate countsUntil) {
+        return new FieldObservation(
+                observation.id(),
+                observation.observedOn(),
+                observation.maturityStatus(),
+                observation.method(),
+                observation.measuredValue(),
+                observation.measuredUnit(),
+                observation.observer(),
+                observation.source(),
+                countsUntil);
+    }
+
     private static VarietyHarvestStatus status(PlantedVariety planted, HarvestWindow window,
                                                HealthTreatmentResponse interval, LocalDate firstHarvestDate,
+                                               List<MaturityObservationResponse> observations,
                                                ForecastBasis basis, LocalDate today, int withinDays) {
         Variety variety = planted.variety();
+        VarietyReference reference = planted.reference();
         String phaseShareSource = window == null
                 ? null
                 : YieldForecastService.phaseAtStartOf(YearMonth.from(window.start()), planted.plantingDate(),
                         basis.sharesByPhase()).share().source();
+        MaturityStatus estimatedStatus = maturityStatus(window, today, withinDays, interval != null);
+
+        Season season = PlantAlertCalculator.currentOrNextSeason(today, reference.getHarvestStartMonth(),
+                reference.getHarvestEndMonth());
+        MaturityObservationResponse counting = countingObservation(observations, season, reference);
+        MaturityStatus maturityStatus = estimatedStatus;
+        String statusSource = ESTIMATE_SOURCE;
+        if (counting != null) {
+            // Ready for harvest means harvestable today: a running interval holds an observed READY back too.
+            maturityStatus = counting.maturityStatus() == MaturityStatus.READY_FOR_HARVEST && interval != null
+                    ? MaturityStatus.RIPE
+                    : counting.maturityStatus();
+            statusSource = FIELD_OBSERVATION_SOURCE;
+        }
         return new VarietyHarvestStatus(
                 variety.getFarmId(),
                 variety.getBlockCode(),
                 variety.getId(),
                 variety.getName(),
                 planted.treeCount(),
-                maturityStatus(window, today, withinDays, interval != null),
+                maturityStatus,
+                statusSource,
+                estimatedStatus,
+                counting == null ? null : fieldObservation(counting, season.end()),
                 window == null ? null : window.start(),
                 window == null ? null : window.end(),
                 window == null ? null : PlantAlertCalculator.daysFromToday(today, window.start()),
                 interval == null ? null : interval.harvestAllowedFrom(),
                 interval == null ? null : interval.id(),
                 firstHarvestDate,
-                planted.reference().getSeasonSource(),
+                reference.getSeasonSource(),
                 phaseShareSource);
     }
 
-    /** A planted variety without agronomic reference: no season, hence no status; the interval still shows. */
-    private static VarietyHarvestStatus withoutReference(PlantedVariety planted, HealthTreatmentResponse interval) {
+    /**
+     * A planted variety without agronomic reference: no season, hence no
+     * status, estimated or observed. Its latest observation is shown, without
+     * counting; the interval still shows.
+     */
+    private static VarietyHarvestStatus withoutReference(PlantedVariety planted, HealthTreatmentResponse interval,
+                                                         List<MaturityObservationResponse> observations) {
         Variety variety = planted.variety();
+        MaturityObservationResponse latest = observations.isEmpty() ? null : observations.getLast();
         return new VarietyHarvestStatus(
                 variety.getFarmId(),
                 variety.getBlockCode(),
@@ -261,6 +368,9 @@ public class HarvestStatusService {
                 variety.getName(),
                 planted.treeCount(),
                 null,
+                null,
+                null,
+                latest == null ? null : fieldObservation(latest, null),
                 null,
                 null,
                 null,

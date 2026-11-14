@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 const CAMPAIGN_IMAGES = [
@@ -43,8 +43,8 @@ function statusMeta(status) {
 }
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   return data.message || fallback;
 }
@@ -79,22 +79,17 @@ export default function CampaignsPage() {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchCampaigns();
-  }, []);
-
-  const fetchCampaigns = async () => {
-    setLoading(true);
-    setApiError(null);
+  const fetchCampaigns = useCallback(async () => {
     try {
       const [campaignRes, metricRes] = await Promise.allSettled([
         api.getCampaigns(),
         api.getCampaignMetrics(),
       ]);
+      setApiError(null);
 
       // An empty array is a valid response: it means no campaigns have been created yet.
       if (campaignRes.status === 'fulfilled') {
-        setCampaigns(Array.isArray(campaignRes.value.data) ? campaignRes.value.data : []);
+        setCampaigns(Array.isArray(campaignRes.value) ? campaignRes.value : []);
       } else {
         setCampaigns([]);
         setApiError(
@@ -105,18 +100,22 @@ export default function CampaignsPage() {
       // Metrics are optional for the page. If unavailable, keep the chart in its
       // normal empty state instead of presenting an empty campaign list as an API error.
       if (metricRes.status === 'fulfilled') {
-        setMetrics(Array.isArray(metricRes.value.data) ? metricRes.value.data : []);
+        setMetrics(Array.isArray(metricRes.value) ? metricRes.value : []);
       } else {
         setMetrics([]);
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load campaign data. Please try again.'));
       setCampaigns([]);
       setMetrics([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchCampaigns);
+  }, [fetchCampaigns]);
 
   const activeCampaign = campaigns.find((c) => normalizeStatus(c.status) === 'active') || campaigns[0];
   const activeMetrics = activeCampaign
@@ -484,8 +483,7 @@ export default function CampaignsPage() {
           <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-xl">
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-sm">Delete campaign?</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              This calls <code className="text-primary">DELETE /api/campaigns/{pendingDelete.campaignId}</code> for{' '}
-              <strong>{pendingDelete.name}</strong>. This cannot be undone.
+              Are you sure you want to delete <strong>{pendingDelete.name}</strong>? This action cannot be undone.
             </p>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
                 {formatDateRange(pendingDelete.startDate, pendingDelete.endDate)} - {pendingDelete.status || 'draft'}

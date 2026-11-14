@@ -9,7 +9,8 @@ import java.util.List;
  *
  * <p>The expected yield of a month is that of the yield forecast for the same
  * month: trees × yield per tree × share of the growth phase × share of the
- * month in the harvest season, rounded to 0.1 kg. The actual yield is the sum
+ * month in the harvest season, to 0.1 kg, the months of a season being rounded
+ * together by largest remainder. The actual yield is the sum
  * of the harvests dated in the months, rounded to 0.1 kg. {@code basis} names
  * the data layer of the expected yield, always {@code "recorded_plantings"}.
  *

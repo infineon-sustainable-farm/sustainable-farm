@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>
  * Available Endpoints :
  * <ul>
- * <li>{@code GET /api/plants/overview} — total plants, plants in growth stage, plants ready for harvest and active
- * alerts, today</li>
+ * <li>{@code GET /api/plants/overview} — total plants, plants in growth stage, plants ready for harvest, active
+ * alerts and the trees by maturity status, today</li>
  * </ul>
  * <p>
  * Read-only. Each figure sums up a list of the module with its rules, on every request; nothing of them is stored.
@@ -43,7 +43,11 @@ public class PlantsOverviewController {
          description = "totalPlants: trees of the planted varieties, without the nursery. inGrowthStage: trees in "
                + "establishment (0 to 2 completed years) today. readyForHarvest: trees whose maturity status in "
                + "GET /api/plants/harvest-status is READY_FOR_HARVEST. activeAlerts: the alerts of GET "
-               + "/api/plants/alerts with its default look-ahead, criticalAlerts the CRITICAL ones among them.")
+               + "/api/plants/alerts with its default look-ahead, criticalAlerts the CRITICAL ones among them. "
+               + "maturity: the trees of each maturityStatus of GET /api/plants/harvest-status, in the order "
+               + "IMMATURE, RIPE, READY_FOR_HARVEST, then the trees without agronomic reference (maturityStatus "
+               + "null). Every entry is sent, with 0 trees if no variety has its status; sharePct is treeCount × "
+               + "100 / totalPlants, rounded half up to one decimal, and null when totalPlants is 0.")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "The figures, zeros when nothing is planted"),
          @ApiResponse(responseCode = "400", description = "A non-numeric farm identifier")

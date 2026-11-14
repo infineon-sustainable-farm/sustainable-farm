@@ -1,8 +1,8 @@
 import { formatBlock, formatKilograms, formatPercent, formatShare, formatText, NO_VALUE } from "../utils/format";
 import Value from "./Value";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
-const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase";
+const TH_CLASS = TABLE_HEAD;
 
 /** The growth phases of the trees in the harvest months, each with its share and the source of that share. */
 function formatPhases(phases) {
@@ -15,9 +15,9 @@ function formatPhases(phases) {
 /** The lines added up by block, as the API sends them. */
 function BlockTable({ blocks }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <caption className="px-4 py-3 text-left text-sm font-semibold text-gray-900">By block</caption>
+                <caption className="px-4 py-3 text-left text-sm font-semibold text-on-background">By block</caption>
                 <thead>
                     <tr>
                         <th scope="col" className={TH_CLASS}>Block</th>
@@ -29,7 +29,7 @@ function BlockTable({ blocks }) {
                 <tbody>
                     {blocks.map((block) => (
                         <tr key={`${block.farmId}-${block.blockCode}`} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-2.5 font-medium text-gray-800">{formatBlock(block.blockCode)}</td>
+                            <td className="px-4 py-2.5 font-semibold text-gray-800">{formatBlock(block.blockCode)}</td>
                             <td className="px-4 py-2.5 text-gray-700">{formatKilograms(block.expectedKg)}</td>
                             <td className="px-4 py-2.5 text-gray-700">{formatKilograms(block.actualKg)}</td>
                             <td className="px-4 py-2.5 text-gray-700">{formatPercent(block.achievedPct)}</td>
@@ -48,7 +48,7 @@ function BlockTable({ blocks }) {
  */
 function ComputationDetails({ lines }) {
     return (
-        <details className="rounded-xl border border-gray-200 bg-white">
+        <details className="rounded-2xl border border-gray-200 bg-white shadow-card">
             <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700">
                 How the expected yield is computed
             </summary>
@@ -66,7 +66,7 @@ function ComputationDetails({ lines }) {
                     <tbody>
                         {lines.map((line) => (
                             <tr key={line.varietyId} className="border-b border-gray-100 align-top last:border-b-0">
-                                <td className="px-4 py-2.5 font-medium text-gray-800">{formatText(line.varietyName)}</td>
+                                <td className="px-4 py-2.5 font-semibold text-gray-800">{formatText(line.varietyName)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">{formatBlock(line.blockCode)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">{formatKilograms(line.yieldPerTreeKg)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">

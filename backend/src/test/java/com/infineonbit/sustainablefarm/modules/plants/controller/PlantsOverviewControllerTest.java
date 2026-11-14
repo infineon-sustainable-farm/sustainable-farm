@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.plants.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse.MaturityShare;
+import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantsOverviewService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.verify;
@@ -47,7 +50,11 @@ public class PlantsOverviewControllerTest {
     void getOverview_shouldReturnTheFiguresOfTheDay() throws Exception {
         // Arrange
         when(plantsOverviewService.getOverview(7, "A"))
-                .thenReturn(new PlantsOverviewResponse(LocalDate.of(2027, 6, 15), 170, 100, 40, 3, 1));
+                .thenReturn(new PlantsOverviewResponse(LocalDate.of(2027, 6, 15), 170, 100, 40, 3, 1, List.of(
+                        new MaturityShare(MaturityStatus.IMMATURE, 100, 58.8),
+                        new MaturityShare(MaturityStatus.RIPE, 0, 0.0),
+                        new MaturityShare(MaturityStatus.READY_FOR_HARVEST, 40, 23.5),
+                        new MaturityShare(null, 30, 17.6))));
         // Act & Assert
         mockMvc.perform(get(URL).param("farmId", "7").param("blockCode", "A"))
                 .andExpect(status().isOk())
@@ -56,16 +63,32 @@ public class PlantsOverviewControllerTest {
                 .andExpect(jsonPath("$.inGrowthStage").value(100))
                 .andExpect(jsonPath("$.readyForHarvest").value(40))
                 .andExpect(jsonPath("$.activeAlerts").value(3))
-                .andExpect(jsonPath("$.criticalAlerts").value(1));
+                .andExpect(jsonPath("$.criticalAlerts").value(1))
+                .andExpect(jsonPath("$.maturity.length()").value(4))
+                .andExpect(jsonPath("$.maturity[0].maturityStatus").value("IMMATURE"))
+                .andExpect(jsonPath("$.maturity[0].treeCount").value(100))
+                .andExpect(jsonPath("$.maturity[0].sharePct").value(58.8))
+                .andExpect(jsonPath("$.maturity[1].sharePct").value(0.0))
+                .andExpect(jsonPath("$.maturity[2].maturityStatus").value("READY_FOR_HARVEST"))
+                .andExpect(jsonPath("$.maturity[3].maturityStatus").value(nullValue()))
+                .andExpect(jsonPath("$.maturity[3].treeCount").value(30))
+                .andExpect(jsonPath("$.maturity[3].sharePct").value(17.6));
     }
 
     @Test
     void getOverview_shouldPassNulls_whenNoParameterIsGiven() throws Exception {
         // Arrange
         when(plantsOverviewService.getOverview(null, null))
-                .thenReturn(new PlantsOverviewResponse(LocalDate.of(2027, 6, 15), 0, 0, 0, 0, 0));
-        // Act & Assert
-        mockMvc.perform(get(URL)).andExpect(status().isOk());
+                .thenReturn(new PlantsOverviewResponse(LocalDate.of(2027, 6, 15), 0, 0, 0, 0, 0, List.of(
+                        new MaturityShare(MaturityStatus.IMMATURE, 0, null),
+                        new MaturityShare(MaturityStatus.RIPE, 0, null),
+                        new MaturityShare(MaturityStatus.READY_FOR_HARVEST, 0, null),
+                        new MaturityShare(null, 0, null))));
+        // Act & Assert: with no tree, the shares are sent as null
+        mockMvc.perform(get(URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.maturity[0].treeCount").value(0))
+                .andExpect(jsonPath("$.maturity[0].sharePct").value(nullValue()));
         verify(plantsOverviewService).getOverview(null, null);
     }
 

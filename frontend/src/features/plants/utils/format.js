@@ -39,17 +39,24 @@ export function formatBlock(value) {
     return isMissing(value) ? NO_VALUE : `Block ${String(value).trim()}`;
 }
 
+/**
+ * Month names written by the module itself rather than by Intl, so a date
+ * reads the same whatever the browser language: Intl's "en-GB" writes
+ * September "Sept" on recent engines, and other locales translate it.
+ */
+const MONTHS_LONG = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+];
+const MONTHS_SHORT = MONTHS_LONG.map((name) => name.slice(0, 3));
+
+/** Instant sent by the API, in the browser's time zone: "6 Nov 2026, 14:05". */
 export function formatTimestamp(value) {
     if (isMissing(value)) return NO_VALUE;
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return NO_VALUE;
-    return date.toLocaleString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    const time = [date.getHours(), date.getMinutes()].map((part) => String(part).padStart(2, "0")).join(":");
+    return `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}, ${time}`;
 }
 
 export function formatMillimeters(value) {
@@ -124,15 +131,18 @@ export function formatList(values) {
 }
 
 /**
- * Calendar date sent by the API as "YYYY-MM-DD", shown as DD/MM/YYYY.
- * Parsed from the string, not through Date, so no timezone can shift the day.
+ * Calendar date sent by the API, or chosen in a date field, as "YYYY-MM-DD",
+ * shown as "6 Nov 2026": the month in letters leaves no doubt between day and
+ * month. Parsed from the string, not through Date, so no timezone can shift
+ * the day.
  */
 export function formatDate(value) {
     if (isMissing(value)) return NO_VALUE;
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value).trim());
     if (!match) return NO_VALUE;
-    const [, year, month, day] = match;
-    return `${day}/${month}/${year}`;
+    const [, year, month, day] = match.map(Number);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return NO_VALUE;
+    return `${day} ${MONTHS_SHORT[month - 1]} ${year}`;
 }
 
 /**
@@ -147,36 +157,38 @@ export function formatDaysAhead(days) {
     return `in ${count.toLocaleString("en-US")} ${count === 1 ? "day" : "days"}`;
 }
 
-/** A "YYYY-MM" month as the first day of that month in UTC, or null if malformed. */
+/** A "YYYY-MM" month as its year and its month index from 0, or null if malformed. */
 function parseMonth(value) {
     if (isMissing(value)) return null;
     const match = /^(\d{4})-(\d{2})$/.exec(String(value).trim());
     if (!match) return null;
-    return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
+    const month = Number(match[2]);
+    if (month < 1 || month > 12) return null;
+    return { year: Number(match[1]), index: month - 1 };
 }
 
 /**
  * Month sent by the API as "YYYY-MM", shown as "Apr 2027", or "April 2027"
- * with the long style. Read and formatted in UTC, so no timezone can shift it.
+ * with the long style.
  */
 export function formatMonth(value, style = "short") {
-    const date = parseMonth(value);
-    if (!date) return NO_VALUE;
-    return date.toLocaleString("en-US", { month: style, year: "numeric", timeZone: "UTC" });
+    const month = parseMonth(value);
+    if (!month) return NO_VALUE;
+    return `${(style === "long" ? MONTHS_LONG : MONTHS_SHORT)[month.index]} ${month.year}`;
 }
 
 /** Month name alone, "Apr", for a chart axis that shows the year apart. */
 export function formatMonthName(value) {
-    const date = parseMonth(value);
-    if (!date) return NO_VALUE;
-    return date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+    const month = parseMonth(value);
+    if (!month) return NO_VALUE;
+    return MONTHS_SHORT[month.index];
 }
 
 /** Full name of a month number from 1 to 12, "May"; null for anything else. */
 export function monthName(month) {
     const number = Number(month);
     if (!Number.isInteger(number) || number < 1 || number > 12) return null;
-    return new Date(Date.UTC(2000, number - 1, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" });
+    return MONTHS_LONG[number - 1];
 }
 
 /**
@@ -205,16 +217,17 @@ export function formatAge(years, months) {
 }
 
 /**
- * Year band of the growth phase, as computed and named by the API — "0–2 yrs".
+ * Growth phase as computed and named by the API, with its year band:
+ * "Full production · 6+ yrs".
  *
- * The band is what the column shows, like the mock-up. The phase name arrives in
- * the same response and is spelled out once, in the legend under the table. No
- * threshold is known here: this only picks which of the two given strings to
- * show, and falls back to the phase name if the API sent no band.
+ * The name is the API's, only capitalised, and the band is the API's too: no
+ * threshold is known here. Either part is shown alone when the API sent only
+ * that one, and a dash when it sent neither.
  */
 export function formatPhaseBand(phase, yearsBand) {
-    if (!isMissing(yearsBand)) return String(yearsBand).trim();
-    if (isMissing(phase)) return NO_VALUE;
-    const text = String(phase).trim();
-    return text.charAt(0).toUpperCase() + text.slice(1);
+    const name = isMissing(phase) ? "" : String(phase).trim();
+    const band = isMissing(yearsBand) ? "" : String(yearsBand).trim();
+    const label = name.charAt(0).toUpperCase() + name.slice(1);
+    if (label && band) return `${label} · ${band}`;
+    return label || band || NO_VALUE;
 }

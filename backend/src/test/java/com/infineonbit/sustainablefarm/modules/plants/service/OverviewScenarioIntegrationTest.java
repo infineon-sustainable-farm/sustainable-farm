@@ -11,6 +11,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatus
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse.MaturityShare;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.BlockComparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.Comparison;
@@ -81,6 +82,9 @@ class OverviewScenarioIntegrationTest {
     private HarvestService harvestService;
 
     @Autowired
+    private MaturityObservationService maturityObservationService;
+
+    @Autowired
     private HealthTreatmentService healthTreatmentService;
 
     @Autowired
@@ -145,7 +149,8 @@ class OverviewScenarioIntegrationTest {
     }
 
     private HarvestStatusService statusOn(LocalDate day) {
-        return new HarvestStatusService(yieldForecastService, healthTreatmentService, harvestService, noonOf(day));
+        return new HarvestStatusService(yieldForecastService, healthTreatmentService, harvestService,
+                maturityObservationService, noonOf(day));
     }
 
     private PlantsOverviewService overviewOn(LocalDate day) {
@@ -192,36 +197,38 @@ class OverviewScenarioIntegrationTest {
         assertEquals(190.0, fertilizerService.getFertilizerById(npk).currentStock());
         assertNull(fertilizerService.getFertilizerById(manure).lastPurchaseDate());
 
-        // 2. Yield comparison over 2027: 3 × 733.3 kg expected on A, nothing on B, Brooks apart
+        // 2. Yield comparison over 2027: 733.4 + 733.3 + 733.3 kg expected on A, nothing on B, Brooks apart
         YieldComparisonResponse comparison = new YieldComparisonService(yieldForecastService, harvestService,
                 noonOf(JUNE_15)).getYieldComparison(FARM, null, null, null);
         assertEquals(YearMonth.of(2027, 1), comparison.from());
         assertEquals(12, comparison.months());
         assertEquals(List.of(
-                new VarietyComparison(FARM, "A", keittA, "Keitt", 40, 2199.9, 550.5, 2, 25.0, 220.0, "Zalka_2025",
+                new VarietyComparison(FARM, "A", keittA, "Keitt", 40, 2200.0, 550.5, 2, 25.0, 220.0, "Zalka_2025",
                         KEITT_SEASON_SOURCE, List.of(new PhaseShare("gradual production", 0.25, "Bally_2002"))),
                 new VarietyComparison(FARM, "B", keittB, "Keitt", 100, 0.0, null, 0, null, 220.0, "Zalka_2025",
                         KEITT_SEASON_SOURCE, List.of(new PhaseShare("establishment", 0.0, "orchard_literature")))),
                 comparison.varieties());
-        assertEquals(List.of(new BlockComparison(FARM, "A", 2199.9, 550.5, 25.0),
+        assertEquals(List.of(new BlockComparison(FARM, "A", 2200.0, 550.5, 25.0),
                 new BlockComparison(FARM, "B", 0.0, null, null)), comparison.blocks());
-        assertEquals(new Comparison(2199.9, 550.5, 25.0), comparison.total());
+        assertEquals(new Comparison(2200.0, 550.5, 25.0), comparison.total());
         assertEquals(List.of(new NotCompared(FARM, "C", brooksC, "Brooks", 30, 120.0, 1, "NO_REFERENCE")),
                 comparison.notCompared());
 
-        // 3. Harvest status: A ripe while the interval runs, B in 686 days, no status for Brooks
+        // 3. Harvest status: A ripe while the interval runs, B in 686 days, no status for Brooks; nothing is
+        // observed, so the estimate holds
         HarvestStatusResponse status = statusOn(JUNE_15).getHarvestStatus(FARM, null, null);
         assertEquals(List.of(
-                new VarietyHarvestStatus(FARM, "A", keittA, "Keitt", 40, MaturityStatus.RIPE,
-                        LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45, JUNE_24, treatment,
-                        LocalDate.of(2027, 5, 20), KEITT_SEASON_SOURCE, "Bally_2002"),
-                new VarietyHarvestStatus(FARM, "B", keittB, "Keitt", 100, MaturityStatus.IMMATURE,
-                        LocalDate.of(2029, 5, 1), LocalDate.of(2029, 7, 31), 686, null, null, null,
-                        KEITT_SEASON_SOURCE, "Bally_2002"),
+                new VarietyHarvestStatus(FARM, "A", keittA, "Keitt", 40, MaturityStatus.RIPE, "estimate",
+                        MaturityStatus.RIPE, null, LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45, JUNE_24,
+                        treatment, LocalDate.of(2027, 5, 20), KEITT_SEASON_SOURCE, "Bally_2002"),
+                new VarietyHarvestStatus(FARM, "B", keittB, "Keitt", 100, MaturityStatus.IMMATURE, "estimate",
+                        MaturityStatus.IMMATURE, null, LocalDate.of(2029, 5, 1), LocalDate.of(2029, 7, 31), 686,
+                        null, null, null, KEITT_SEASON_SOURCE, "Bally_2002"),
                 new VarietyHarvestStatus(FARM, "C", brooksC, "Brooks", 30, null, null, null, null, null, null,
-                        null, null, null)), status.varieties());
+                        null, null, null, null, null, null)), status.varieties());
 
-        // 4. Overview: 170 trees, 100 in growth stage, none ready, the 2 alerts of farm 7
+        // 4. Overview: 170 trees, 100 in growth stage, none ready, the 2 alerts of farm 7, and the trees of
+        // the harvest status by maturity status
         List<PlantAlert> alerts = alertsOn(JUNE_15).getAlerts(FARM, null, null).alerts();
         assertEquals(List.of("CRITICAL PRE_HARVEST_INTERVAL A", "WARNING HARVEST_APPROACHING A"),
                 alerts.stream()
@@ -235,12 +242,23 @@ class OverviewScenarioIntegrationTest {
                 .filter(alert -> alert.severity() == PlantAlertSeverity.CRITICAL)
                 .count();
         assertEquals(new PlantsOverviewResponse(JUNE_15, 170, 100, 0, 2 + stockAlertsOfOtherTests.size(),
-                1 + criticalStockAlerts), overviewOn(JUNE_15).getOverview(FARM, null));
+                1 + criticalStockAlerts, List.of(
+                        new MaturityShare(MaturityStatus.IMMATURE, 100, 58.8),
+                        new MaturityShare(MaturityStatus.RIPE, 40, 23.5),
+                        new MaturityShare(MaturityStatus.READY_FOR_HARVEST, 0, 0.0),
+                        new MaturityShare(null, 30, 17.6))),
+                overviewOn(JUNE_15).getOverview(FARM, null));
 
         // On 24 June 2027 the interval is over: A is ready, as it would be without the treatment
         VarietyHarvestStatus keittAOnJune24 = statusOn(JUNE_24).getHarvestStatus(FARM, "A", null).varieties().get(0);
         assertEquals(MaturityStatus.READY_FOR_HARVEST, keittAOnJune24.maturityStatus());
         assertNull(keittAOnJune24.harvestAllowedFrom());
-        assertEquals(40, overviewOn(JUNE_24).getOverview(FARM, null).readyForHarvest());
+        PlantsOverviewResponse overviewOnJune24 = overviewOn(JUNE_24).getOverview(FARM, null);
+        assertEquals(40, overviewOnJune24.readyForHarvest());
+        assertEquals(List.of(
+                new MaturityShare(MaturityStatus.IMMATURE, 100, 58.8),
+                new MaturityShare(MaturityStatus.RIPE, 0, 0.0),
+                new MaturityShare(MaturityStatus.READY_FOR_HARVEST, 40, 23.5),
+                new MaturityShare(null, 30, 17.6)), overviewOnJune24.maturity());
     }
 }

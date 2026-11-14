@@ -6,8 +6,7 @@ import java.time.Instant;
  * API representation of a variety.
  *
  * <p>The component names are English camelCase, like every other module of the
- * project (machinery, visitor management). They are the JSON contract other
- * modules consume.
+ * project. They are the JSON contract read by other modules.
  *
  * <p>The physical table keeps its snake_case French column names
  * ({@code nombre_arbres}, {@code bloc_parcelle}, ...): the mapping lives in the

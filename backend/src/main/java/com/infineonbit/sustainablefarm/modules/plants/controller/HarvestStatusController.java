@@ -30,8 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
  * variety</li>
  * </ul>
  * <p>
- * Read-only. The statuses are computed on every request with the rules of the plant alerts; nothing of them is
- * stored, and they block nothing.
+ * Read-only. The statuses are estimated on every request with the rules of the plant alerts, and a field
+ * observation of the season under way takes precedence; no status is stored, and none blocks anything.
  *
  * @since 1.0
  */
@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/plants/harvest-status")
 @AllArgsConstructor
 @Tag(name = "Plants — Harvest status", description = "Maturity status and estimated harvest date of the planted "
-      + "varieties, computed on every request")
+      + "varieties, computed on every request from the estimate and the field observations")
 public class HarvestStatusController {
 
    private final HarvestStatusService harvestStatusService;
@@ -49,8 +49,12 @@ public class HarvestStatusController {
          description = "The harvest window of a variety starts on the first month of its season in which the "
                + "trees give a yield, as in the yield forecast and the alerts. READY_FOR_HARVEST: the window is "
                + "open and no pre-harvest interval runs on the block; RIPE: the window opens within withinDays "
-               + "days, or is open while a pre-harvest interval runs; IMMATURE otherwise. A variety absent from "
-               + "the agronomic reference has no status.")
+               + "days, or is open while a pre-harvest interval runs; IMMATURE otherwise. That estimate is "
+               + "estimatedStatus. A field observation counts for the season under way on its day, or the next "
+               + "one, until the last day of that season, and the latest one that counts gives maturityStatus, "
+               + "with statusSource field_observation; READY_FOR_HARVEST is still held back to RIPE while a "
+               + "pre-harvest interval runs. A variety absent from the agronomic reference has no status, and "
+               + "its latest observation is shown without counting.")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "The status of every planted variety, possibly none"),
          @ApiResponse(responseCode = "400", description = "withinDays outside 1 to 90, or a non-numeric parameter")

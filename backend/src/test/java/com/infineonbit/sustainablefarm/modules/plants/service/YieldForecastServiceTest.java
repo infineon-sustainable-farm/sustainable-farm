@@ -271,4 +271,68 @@ public class YieldForecastServiceTest {
                         220.0, 0.25, 0.3333, 2750.0, "Zalka_2025", "varietal_guide_west_africa", "Bally_2002"),
                 forecast.entries().get(0));
     }
+
+    /** The expected yields of the entries, in order. */
+    private static List<Double> entryKg(YieldForecastResponse forecast) {
+        return forecast.entries().stream().map(Entry::expectedKg).toList();
+    }
+
+    @Test
+    void getYieldForecast_shouldAddUpTheSeasonToItsExactTotal_byLargestRemainder() {
+        // Arrange: 40 Keitt in full production, 8,800 kg a year over May to July
+        Variety keitt = variety(1L, 7, "A", "Keitt");
+        plantings(null, null, List.of(planting(keitt, LocalDate.of(2019, 9, 15), 40)), 40);
+        when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
+        when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.25, 1.0));
+        // Act
+        YieldForecastResponse forecast = yieldForecastService.getYieldForecast(null, null, JANUARY_2027, 12, TODAY);
+        // Assert: 2,933.4 + 2,933.3 + 2,933.3 = 8,800.0, not 3 × 2,933.3 = 8,799.9; the tenth goes to May
+        assertEquals(List.of(2933.4, 2933.3, 2933.3), entryKg(forecast));
+        assertEquals(8800.0, forecast.monthlyTotals().stream().mapToDouble(MonthlyTotal::expectedKg).sum());
+    }
+
+    @Test
+    void getYieldForecast_shouldGiveAMonthTheSameValue_whenTheWindowCutsTheSeason() {
+        // Arrange: the same 40 Keitt
+        Variety keitt = variety(1L, 7, "A", "Keitt");
+        plantings(null, null, List.of(planting(keitt, LocalDate.of(2019, 9, 15), 40)), 40);
+        when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
+        when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.25, 1.0));
+        // Act: June and July only
+        YieldForecastResponse forecast = yieldForecastService.getYieldForecast(
+                null, null, YearMonth.of(2027, 6), 2, TODAY);
+        // Assert: the values of the whole season, May still holds its tenth
+        assertEquals(List.of(2933.3, 2933.3), entryKg(forecast));
+    }
+
+    @Test
+    void getYieldForecast_shouldSpreadASeasonOverTheNewYear_fromItsFirstMonth() {
+        // Arrange: 1 tree of 100.3 kg in full production, November to February: 25.075 kg a month
+        Variety winter = variety(9L, null, "W", "Winter");
+        plantings(null, null, List.of(planting(winter, LocalDate.of(2015, 1, 1), 1)), 1);
+        when(varietyReferenceRepository.findAll())
+                .thenReturn(List.of(reference(9L, "Winter", 100.3, 11, 2, "test_source")));
+        when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.5, 1.0));
+        // Act: January and February 2027, the end of the season that starts in November 2026
+        YieldForecastResponse forecast = yieldForecastService.getYieldForecast(
+                null, null, JANUARY_2027, 2, TODAY);
+        // Assert: the season is 25.1 + 25.1 + 25.1 + 25.0 = 100.3; February is the 4th month, without a tenth
+        assertEquals(List.of(25.1, 25.0), entryKg(forecast));
+    }
+
+    @Test
+    void getYieldForecast_shouldGiveTheTenthToTheLargestRemainder_whenThePhaseChangesInTheSeason() {
+        // Arrange: 40 Keitt planted on 15/05/2024: 2 years on 01/05/2027, 3 years on 01/06/2027
+        Variety keitt = variety(1L, 7, "A", "Keitt");
+        plantings(null, null, List.of(planting(keitt, LocalDate.of(2024, 5, 15), 40)), 40);
+        when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
+        when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.5, 1.0));
+        // Act
+        YieldForecastResponse forecast = yieldForecastService.getYieldForecast(null, null, JANUARY_2027, 12, TODAY);
+        // Assert: 0, 1,466.666…, 1,466.666…: the season is 2,933.3; June, the first of the equal
+        // remainders, gets the tenth; May is in establishment and has no entry
+        assertEquals(List.of(1466.7, 1466.6), entryKg(forecast));
+        assertEquals(List.of(YearMonth.of(2027, 6), YearMonth.of(2027, 7)),
+                forecast.entries().stream().map(Entry::month).toList());
+    }
 }
