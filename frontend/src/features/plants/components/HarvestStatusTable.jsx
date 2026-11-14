@@ -2,22 +2,21 @@ import { formatBlock, formatCode, formatDate, formatDaysAhead, formatText, NO_VA
 import { formatObservationMethod } from "../utils/maturityObservations";
 import MaturityStatusBadge from "./MaturityStatusBadge";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { CELL_NOTE, TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // The mock-up's columns that the API gives: "Est. Harvest" is the harvest
 // window, "Actual Harvest" the first harvest in it, and "Maturity" is shown
 // twice, as estimated and as observed in the field. The running pre-harvest
-// interval and the sources are added; Variance and Quantity are not computed
-// by the API, and each picking has its own Lot No., in the recorded harvests.
+// interval is added; Variance and Quantity are not computed by the API, and
+// each picking has its own Lot No., in the recorded harvests. The variety sits
+// under its block, and each source in small gray under the value it explains.
 const COLUMNS = [
     "Block",
-    "Variety",
     "Estimated",
     "Observed",
     "Harvest window",
     "Harvest allowed from",
     "First harvest",
-    "Sources",
 ];
 
 /**
@@ -66,6 +65,7 @@ function Observed({ status }) {
                     ? "Not counted: no reference value"
                     : `Counts until ${formatDate(observation.countsUntil)}`}
             </span>
+            <span className={CELL_NOTE}>{`Source: ${formatText(observation.source)}`}</span>
             {isHeldBack && (
                 <span className="block text-xs font-semibold text-gray-700">
                     {`Held at ${formatCode(status.maturityStatus)}: pre-harvest interval`}
@@ -75,23 +75,19 @@ function Observed({ status }) {
     );
 }
 
-/** Source of the harvest season, of the yield share that opens the window, and of the observation. */
-function Sources({ status }) {
-    const lines = [];
-    if (status.seasonSource !== null || status.phaseShareSource !== null) {
-        lines.push(`Season: ${formatText(status.seasonSource)}`, `Share: ${formatText(status.phaseShareSource)}`);
+/** The estimate, with the sources of the harvest season and of the yield share that opens the window. */
+function Estimated({ status }) {
+    // Without a reference there is no season, hence no estimate: said, not dashed.
+    if (status.estimatedStatus === null) {
+        return <span className="text-gray-600">No reference value</span>;
     }
-    if (status.observation) {
-        lines.push(`Observation: ${formatText(status.observation.source)}`);
-    }
-    if (lines.length === 0) {
-        return <Value>{NO_VALUE}</Value>;
-    }
-    return lines.map((line) => (
-        <span key={line} className="block">
-            {line}
-        </span>
-    ));
+    return (
+        <>
+            <MaturityStatusBadge status={status.estimatedStatus} />
+            <span className={`mt-1 ${CELL_NOTE}`}>{`Season: ${formatText(status.seasonSource)}`}</span>
+            <span className={CELL_NOTE}>{`Share: ${formatText(status.phaseShareSource)}`}</span>
+        </>
+    );
 }
 
 /** The maturity status of each planted variety, in the order the API sends it. */
@@ -115,13 +111,12 @@ export default function HarvestStatusTable({ statuses }) {
                 <tbody>
                     {statuses.map((status) => (
                         <tr key={status.varietyId} className="border-b border-gray-100 align-top last:border-b-0">
-                            <td className="px-4 py-3 font-semibold text-gray-800">{formatBlock(status.blockCode)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatText(status.varietyName)}</td>
+                            <td className="px-4 py-3 font-semibold text-gray-800">
+                                {formatBlock(status.blockCode)}
+                                <span className={`font-normal ${CELL_NOTE}`}>{formatText(status.varietyName)}</span>
+                            </td>
                             <td className="px-4 py-3">
-                                {/* Without a reference there is no season, hence no estimate: said, not dashed. */}
-                                {status.estimatedStatus === null
-                                    ? <span className="text-gray-600">No reference value</span>
-                                    : <MaturityStatusBadge status={status.estimatedStatus} />}
+                                <Estimated status={status} />
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 <Observed status={status} />
@@ -134,9 +129,6 @@ export default function HarvestStatusTable({ statuses }) {
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 <Value>{formatDate(status.firstHarvestDate)}</Value>
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                <Sources status={status} />
                             </td>
                         </tr>
                     ))}
