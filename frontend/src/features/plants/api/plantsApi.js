@@ -39,6 +39,15 @@ export function fetchGrowthCalendar({ blockCode, farmId } = {}) {
 }
 
 /**
+ * Reads the rain measured for a block over [from, to], both "YYYY-MM-DD" days
+ * included. The route belongs to another module: it answers 404 for a block
+ * linked to no rain gauge, and otherwise `rainfallMm` with `gaugeCount`.
+ */
+export function fetchBlockRainfall({ blockCode, from, to }) {
+    return apiClient.get(PLANTS_ENDPOINTS.BLOCK_RAINFALL, { params: { blockCode, from, to } });
+}
+
+/**
  * Records a planting: date, block, variety and number of trees, and optionally
  * the two spacings in metres (rowSpacingM and treeSpacingM, both or none) and
  * the vigor (GOOD, AVERAGE or POOR).

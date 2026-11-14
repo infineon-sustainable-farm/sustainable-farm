@@ -28,4 +28,6 @@ export const PLANTS_ENDPOINTS = {
     NURSERY_EVENTS: "/api/plants/nursery-events",
     OVERVIEW: "/api/plants/overview",
     SCENARIOS: "/api/plants/scenarios",
+    // The only route read from another module: the rain measured for a block.
+    BLOCK_RAINFALL: "/api/water/plants/rainfall",
 };
