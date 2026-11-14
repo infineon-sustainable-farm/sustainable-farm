@@ -14,10 +14,11 @@ import ScenarioFormModal from "./ScenarioFormModal";
 import ScenarioLeverCards from "./ScenarioLeverCards";
 import ScenarioYieldChart from "./ScenarioYieldChart";
 import YieldIncreaseSimulator from "./YieldIncreaseSimulator";
+import { PAGE, PRIMARY_BUTTON } from "./plantsStyles";
 
 function LoadingBox({ label }) {
     return (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
+        <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-500">
             <Loader2 size={18} className="animate-spin" />
             {label}
         </div>
@@ -26,12 +27,12 @@ function LoadingBox({ label }) {
 
 function ErrorBox({ title, message, action }) {
     return (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 px-5 py-4">
             <div className="flex items-start gap-3">
                 <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                 <div>
-                    <p className="text-sm font-bold text-gray-900">{title}</p>
-                    {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
+                    <p className="text-sm font-bold text-on-background">{title}</p>
+                    {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
                     <p className="mt-0.5 text-sm text-gray-600">{message}</p>
                 </div>
             </div>
@@ -46,7 +47,7 @@ function ActionButton({ onClick, disabled, children }) {
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+            className={PRIMARY_BUTTON}
         >
             {children}
         </button>
@@ -130,15 +131,15 @@ export default function ScenarioAnalysisPage() {
     }
 
     return (
-        <div className="min-h-dvh bg-gray-50">
+        <div className={PAGE}>
             {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
             <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header>
-                    {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                    {/* A gray 12 px overline: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
                     <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                         Strategic Planning
                     </p>
-                    <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">Scenario Analysis</h1>
+                    <h1 className="font-heading mt-1 text-2xl font-bold text-on-background">Scenario Analysis</h1>
                     <p className="mt-2 max-w-xl text-sm text-gray-500">
                         Costs and benefits of growing mango output.
                     </p>
@@ -167,7 +168,7 @@ export default function ScenarioAnalysisPage() {
                                 ref={enterButtonRef}
                                 type="button"
                                 onClick={() => openForm(null, "enter")}
-                                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                                className={PRIMARY_BUTTON}
                             >
                                 <Plus size={16} />
                                 Enter baseline

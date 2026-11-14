@@ -1,6 +1,7 @@
 import { Loader2, TriangleAlert } from "lucide-react";
 import { formatCode, formatNumber, formatShare } from "../utils/format";
 import { currencyUnit, formatAmountFigure, MAX_HORIZON_YEARS } from "../utils/scenarioRequests";
+import { FIELD_INPUT, PRIMARY_BUTTON, TABLE_CARD } from "./plantsStyles";
 
 /*
  * Narrower cells than the other tables, headers that may wrap, and the units
@@ -8,7 +9,7 @@ import { currencyUnit, formatAmountFigure, MAX_HORIZON_YEARS } from "../utils/sc
  * screen, Cumulative included.
  */
 const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase";
+    "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left align-bottom text-xs font-semibold whitespace-normal text-gray-500";
 const TD_CLASS = "px-3 py-3 text-gray-700";
 
 function columns(currency) {
@@ -40,7 +41,7 @@ function YearsTable({ analysis }) {
     const { baseline, currency } = analysis;
     return (
         // relative: keeps the scrolling inside the card on a phone, as in the other tables of the module.
-        <div className="relative overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={`relative ${TABLE_CARD}`}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -62,7 +63,7 @@ function YearsTable({ analysis }) {
                                 <th scope="row" className="px-3 py-3 text-left font-semibold text-gray-800">
                                     {year.year}
                                     {isPayback && (
-                                        <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[#257e55]">
+                                        <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[#227a52]">
                                             Payback
                                         </span>
                                     )}
@@ -101,7 +102,7 @@ export default function CashFlowByYearTable({ query, horizonYears, onHorizonChan
         <section aria-labelledby="cash-flow-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 id="cash-flow-title" className="font-heading text-lg font-bold text-gray-900">
+                    <h2 id="cash-flow-title" className="font-heading text-lg font-bold text-on-background">
                         Cash Flow by Year
                     </h2>
                     {data && !isError && (
@@ -118,7 +119,7 @@ export default function CashFlowByYearTable({ query, horizonYears, onHorizonChan
                         id="cash-flow-years"
                         value={horizonYears}
                         onChange={(event) => onHorizonChange(Number(event.target.value))}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none"
+                        className={FIELD_INPUT}
                     >
                         {HORIZONS.map((years) => (
                             <option key={years} value={years}>
@@ -130,19 +131,19 @@ export default function CashFlowByYearTable({ query, horizonYears, onHorizonChan
             </div>
 
             {isPending && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Computing the years…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 px-5 py-4">
                     <div className="flex items-start gap-3">
                         <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                         <div>
-                            <p className="text-sm font-bold text-gray-900">The years could not be computed</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
+                            <p className="text-sm font-bold text-on-background">The years could not be computed</p>
+                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
                             <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
                         </div>
                     </div>
@@ -150,7 +151,7 @@ export default function CashFlowByYearTable({ query, horizonYears, onHorizonChan
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>

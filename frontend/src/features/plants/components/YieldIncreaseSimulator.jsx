@@ -14,11 +14,11 @@ import {
     MAX_YIELD_INCREASE,
     parseAdditionalInvestment,
 } from "../utils/scenarioRequests";
+import { FIELD_INPUT, PRIMARY_BUTTON, SECTION_CARD } from "./plantsStyles";
 
-const CARD_LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
+const CARD_LABEL_CLASS = "text-xs font-semibold text-gray-500";
 const NOTE_CLASS = "text-xs text-gray-600";
-const INPUT_CLASS =
-    "mt-1 w-full max-w-56 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
+const INPUT_CLASS = `mt-1 w-full max-w-56 ${FIELD_INPUT}`;
 
 /*
  * A gain in the module's green and a loss in its red, both darkened for text
@@ -47,9 +47,9 @@ function resultsLabel(params, currency) {
     return `Results for ${increase}, ${investment}`;
 }
 
-function ResultCard({ label, value, valueTone = "text-gray-900", change, changeTone, notes = [] }) {
+function ResultCard({ label, value, valueTone = "text-on-background", change, changeTone, notes = [] }) {
     return (
-        <li className="flex min-w-0 flex-col gap-1 rounded-xl border border-gray-200 bg-white px-4 py-4">
+        <li className="flex min-w-0 flex-col gap-1 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-4">
             <p className={CARD_LABEL_CLASS}>{label}</p>
             <p className={`font-heading text-lg font-bold break-words ${valueTone}`}>{value}</p>
             {change && <p className={`text-sm font-semibold ${changeTone}`}>{change}</p>}
@@ -128,8 +128,8 @@ export default function YieldIncreaseSimulator({ scenario, yieldIncrease, onYiel
     const label = increaseLabel(yieldIncrease);
 
     return (
-        <section aria-labelledby="yield-simulator-title" className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5">
-            <h2 id="yield-simulator-title" className="font-heading text-lg font-bold text-gray-900">
+        <section aria-labelledby="yield-simulator-title" className={`flex flex-col gap-4 ${SECTION_CARD}`}>
+            <h2 id="yield-simulator-title" className="font-heading text-lg font-bold text-on-background">
                 Yield Increase Simulator
             </h2>
 
@@ -190,8 +190,8 @@ export default function YieldIncreaseSimulator({ scenario, yieldIncrease, onYiel
                     <div className="flex items-start gap-3">
                         <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                         <div>
-                            <p className="text-sm font-bold text-gray-900">The variant could not be computed</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
+                            <p className="text-sm font-bold text-on-background">The variant could not be computed</p>
+                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
                             <p className="mt-0.5 text-sm text-gray-600">{error.message || "The request to the server did not succeed."}</p>
                         </div>
                     </div>
@@ -199,7 +199,7 @@ export default function YieldIncreaseSimulator({ scenario, yieldIncrease, onYiel
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>

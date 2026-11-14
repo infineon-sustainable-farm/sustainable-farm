@@ -20,9 +20,9 @@ import {
     parseTreeCountChange,
     parseYieldChangePct,
 } from "../utils/scenarioRequests";
+import { PRIMARY_BUTTON, TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
-const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase";
+const TH_CLASS = TABLE_HEAD;
 
 /** A gain in green, a loss in red, both darkened for text on white; the sign says it too. */
 function toneOf(amount, currency) {
@@ -66,7 +66,7 @@ function assumptionItems(scenario, levers) {
 function BenefitTable({ analysis }) {
     const { change, currency } = analysis;
     return (
-        <div className="relative overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={`relative ${TABLE_CARD}`}>
             <table className="w-full border-collapse text-sm">
                 <thead>
                     <tr>
@@ -93,7 +93,7 @@ function BenefitTable({ analysis }) {
                         </tr>
                     ))}
                     <tr className="bg-gray-50">
-                        <th scope="row" className="px-4 py-3 text-left font-bold tracking-wide text-gray-900">
+                        <th scope="row" className="px-4 py-3 text-left font-bold tracking-wide text-on-background">
                             TOTAL ANNUAL BENEFIT
                         </th>
                         <td className={`px-4 py-3 font-bold whitespace-nowrap ${toneOf(change.annualBenefit, currency)}`}>
@@ -142,7 +142,7 @@ export default function AnnualBenefitTable({ scenario, levers }) {
     return (
         <section aria-labelledby="annual-benefit-title" className="flex flex-col gap-4">
             <div>
-                <h2 id="annual-benefit-title" className="font-heading text-lg font-bold text-gray-900">
+                <h2 id="annual-benefit-title" className="font-heading text-lg font-bold text-on-background">
                     Annual Benefit
                 </h2>
                 <p className="mt-1 max-w-3xl text-sm text-gray-600">
@@ -153,25 +153,25 @@ export default function AnnualBenefitTable({ scenario, levers }) {
             </div>
 
             {!hasLever && (
-                <p className="rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-600">
+                <p className="rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-600">
                     Enter at least one lever above to see the annual benefit of the levers together.
                 </p>
             )}
 
             {hasLever && !data && !isError && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Computing the annual benefit…
                 </div>
             )}
 
             {hasLever && isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 px-5 py-4">
                     <div className="flex items-start gap-3">
                         <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                         <div>
-                            <p className="text-sm font-bold text-gray-900">The annual benefit could not be computed</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
+                            <p className="text-sm font-bold text-on-background">The annual benefit could not be computed</p>
+                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
                             <p className="mt-0.5 text-sm text-gray-600">{error.message || "The request to the server did not succeed."}</p>
                         </div>
                     </div>
@@ -179,7 +179,7 @@ export default function AnnualBenefitTable({ scenario, levers }) {
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>
@@ -189,7 +189,7 @@ export default function AnnualBenefitTable({ scenario, levers }) {
             {hasLever && analysis && !isError && (
                 <>
                     {analysis.change.annualBenefit === null ? (
-                        <p className="rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-600">
+                        <p className="rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-600">
                             Enter a price per kg in the baseline to compute the annual benefit.
                         </p>
                     ) : (
@@ -203,8 +203,8 @@ export default function AnnualBenefitTable({ scenario, levers }) {
                     )}
 
                     <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-                            <dt className="text-xs font-semibold tracking-wide text-gray-500 uppercase">Additional investment</dt>
+                        <div className="rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
+                            <dt className="text-xs font-semibold text-gray-500">Additional investment</dt>
                             <dd className="mt-1 text-sm font-semibold text-gray-800">
                                 {formatAmount(analysis.change.additionalInvestment, currency)}
                                 {formatOtherAmount(analysis.change.additionalInvestment, currency)
@@ -216,8 +216,8 @@ export default function AnnualBenefitTable({ scenario, levers }) {
                                 </dd>
                             )}
                         </div>
-                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-                            <dt className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                        <div className="rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
+                            <dt className="text-xs font-semibold text-gray-500">
                                 Payback of the additional investment
                             </dt>
                             <dd className="mt-1 text-sm font-semibold text-gray-800">
@@ -226,8 +226,8 @@ export default function AnnualBenefitTable({ scenario, levers }) {
                         </div>
                     </dl>
 
-                    <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
-                        <h3 className="font-heading text-sm font-bold text-gray-900">Assumptions</h3>
+                    <div className="rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4">
+                        <h3 className="font-heading text-sm font-bold text-on-background">Assumptions</h3>
                         <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-gray-700">
                             {assumptionItems(scenario, values).map((item) => (
                                 <li key={item}>{item}</li>
