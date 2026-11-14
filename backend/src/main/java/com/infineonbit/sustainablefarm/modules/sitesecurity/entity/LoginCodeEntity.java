@@ -37,7 +37,7 @@ public class LoginCodeEntity {
     @Column(nullable = false)
     private int attempts;
 
-    /** Set when the code is used or replaced by a newer one. */
+    /** Set when the code is used, or closed once expired or blocked so that a newer one can be issued. */
     private Instant consumedAt;
 
     @Column(nullable = false)

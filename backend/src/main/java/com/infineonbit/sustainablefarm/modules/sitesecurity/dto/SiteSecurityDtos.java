@@ -123,46 +123,6 @@ public class SiteSecurityDtos {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    @Builder
-    public static class OperatorDto {
-        private String id;
-        private String email;
-        private String role;
-        private boolean active;
-        private String createdBy;
-        private Instant createdAt;
-        private String disabledBy;
-        private Instant disabledAt;
-        private Instant lastLoginAt;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class CreateOperatorRequestDto {
-        @NotBlank(message = "Email is required")
-        @Email(message = "Email must be a valid address")
-        @Size(max = 254, message = "Email must not exceed 254 characters")
-        private String email;
-
-        @NotBlank(message = "Role is required")
-        @Pattern(regexp = "admin|read", message = "Role must be admin or read")
-        private String role;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ChangeOperatorRoleRequestDto {
-        @NotBlank(message = "Role is required")
-        @Pattern(regexp = "admin|read", message = "Role must be admin or read")
-        private String role;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class RequestLoginCodeDto {
         @NotBlank(message = "Email is required")
         @Email(message = "Email must be a valid address")
@@ -182,7 +142,7 @@ public class SiteSecurityDtos {
         private String email;
 
         @NotBlank(message = "Code is required")
-        @Pattern(regexp = "\\d{6}", message = "Code must be 6 digits")
+        @Pattern(regexp = "\\d{6}|\\d{10}", message = "Code must be 6 or 10 digits")
         @ToString.Exclude
         private String code;
     }
@@ -200,9 +160,21 @@ public class SiteSecurityDtos {
     public static class SessionDto {
         private String role;
         private String email;
+        private String fullName;
+        private List<String> permissions;
+        private boolean passwordSet;
+        private boolean codeSignInRetired;
 
         public static SessionDto of(SiteSecurityPrincipal principal) {
-            return new SessionDto(principal.role().name().toLowerCase(Locale.ROOT), principal.email());
+            return of(principal, false);
+        }
+
+        public static SessionDto of(SiteSecurityPrincipal principal, boolean codeSignInRetired) {
+            return new SessionDto(principal.role().name().toLowerCase(Locale.ROOT), principal.email(),
+                    principal.fullName(),
+                    principal.isAdmin() ? List.of()
+                            : principal.permissions().stream().map(p -> p.toLowerCase(Locale.ROOT)).sorted().toList(),
+                    principal.passwordSet(), codeSignInRetired);
         }
     }
 

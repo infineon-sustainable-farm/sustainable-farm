@@ -49,6 +49,8 @@ const STATUS_TONE = {
     Offline: "bg-rose-50 text-rose-700 border-rose-200",
     Expired: "bg-slate-100 text-slate-600 border-slate-200",
     Unknown: "bg-slate-100 text-slate-600 border-slate-200",
+    "Activation started (link opened)": "bg-blue-50 text-blue-700 border-blue-200",
+    Disabled: "bg-slate-100 text-slate-600 border-slate-200",
 };
 const STATUS_DOT = {
     Approved: "bg-emerald-500",
@@ -67,6 +69,8 @@ const STATUS_DOT = {
     Offline: "bg-rose-500",
     Expired: "bg-slate-400",
     Unknown: "bg-slate-400",
+    "Activation started (link opened)": "bg-blue-500",
+    Disabled: "bg-slate-400",
 };
 export function StatusChip({ status, size = "md" }) {
     return (<span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-sans font-medium", STATUS_TONE[status] ?? "bg-slate-100 text-slate-600 border-slate-200", size === "sm" ? "px-2.5 py-0.5 text-[12px]" : "px-3 py-1 text-[12px]")}>

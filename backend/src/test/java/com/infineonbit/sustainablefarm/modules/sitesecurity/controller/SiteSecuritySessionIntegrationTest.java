@@ -313,7 +313,7 @@ class SiteSecuritySessionIntegrationTest {
 
     @Test
     void gateToken_shouldNotOpenTheOperatorApi() throws Exception {
-        for (String path : List.of("/session", "/overview", "/zones", "/credentials", "/logs", "/operators")) {
+        for (String path : List.of("/session", "/overview", "/zones", "/credentials", "/logs", "/users")) {
             mvc.perform(get(BASE + path).header(HttpHeaders.AUTHORIZATION, "Bearer " + GATE_TOKEN))
                     .andExpect(status().isForbidden())
                     .andExpect(jsonPath("$.message").value("The gate token cannot be used here."));

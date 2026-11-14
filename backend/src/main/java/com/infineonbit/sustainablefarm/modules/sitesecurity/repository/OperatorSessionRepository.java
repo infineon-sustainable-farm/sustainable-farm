@@ -25,6 +25,12 @@ public interface OperatorSessionRepository extends JpaRepository<OperatorSession
             + " where s.operatorId = :operatorId and s.revokedAt is null")
     int revokeAllForOperator(@Param("operatorId") String operatorId, @Param("now") Instant now);
 
+    @Modifying
+    @Query("update OperatorSessionEntity s set s.revokedAt = :now where s.operatorId = :operatorId"
+            + " and s.revokedAt is null and s.tokenHash <> :keepHash")
+    int revokeOthersForOperator(@Param("operatorId") String operatorId, @Param("keepHash") String keepHash,
+            @Param("now") Instant now);
+
     /** Removes the sessions of an operator that can no longer be used. */
     @Modifying
     @Query("delete from OperatorSessionEntity s where s.operatorId = :operatorId"

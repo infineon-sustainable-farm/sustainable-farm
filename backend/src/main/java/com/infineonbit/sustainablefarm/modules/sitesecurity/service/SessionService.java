@@ -1,8 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.AccountValues.AccountRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.OperatorEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.OperatorSessionEntity;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.SiteSecurityAuditAction;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorSessionRepository;
 import java.nio.charset.StandardCharsets;
@@ -23,9 +26,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Operator sessions. The browser keeps a random value in an HttpOnly cookie,
- * the database keeps only its hash. A session lasts 8 hours from sign-in and is
- * checked against the operator's row on every request.
+ * Account sessions. The browser keeps a random value in an HttpOnly cookie, the
+ * database keeps only its hash. A session lasts 8 hours from sign-in (less if
+ * the account's validity ends sooner) and is checked against the account on
+ * every request: status, validity, role, permissions and zones.
  */
 @Service
 public class SessionService {
@@ -40,14 +44,19 @@ public class SessionService {
     private final OperatorRepository operatorRepository;
     private final OperatorSessionRepository sessionRepository;
     private final LoginCodeService loginCodeService;
+    private final CodeSignInSettings codeSignInSettings;
+    private final SiteSecurityAuditService audit;
     private final boolean secureCookie;
     private final SecureRandom random = new SecureRandom();
 
     public SessionService(OperatorRepository operatorRepository, OperatorSessionRepository sessionRepository,
-            LoginCodeService loginCodeService, @Value("${SITESECURITY_COOKIE_SECURE:true}") boolean secureCookie) {
+            LoginCodeService loginCodeService, CodeSignInSettings codeSignInSettings, SiteSecurityAuditService audit,
+            @Value("${SITESECURITY_COOKIE_SECURE:true}") boolean secureCookie) {
         this.operatorRepository = operatorRepository;
         this.sessionRepository = sessionRepository;
         this.loginCodeService = loginCodeService;
+        this.codeSignInSettings = codeSignInSettings;
+        this.audit = audit;
         this.secureCookie = secureCookie;
         if (!secureCookie) {
             log.warn("SITESECURITY_COOKIE_SECURE is false: the session cookie can travel over plain HTTP.");
@@ -55,39 +64,87 @@ public class SessionService {
     }
 
     /** A new session and the cookie value that opens it. The value is never stored. */
-    public record SignIn(String token, SiteSecurityPrincipal principal) {
+    public record SignIn(String token, SiteSecurityPrincipal principal, Instant expiresAt) {
         @Override
         public String toString() {
             return "SignIn[principal=" + principal + "]";
         }
     }
 
-    /** Checks the code and, when it is right, opens a session in the same transaction. */
+    /**
+     * Legacy email-code sign-in (migration stages 0 to 2): only for an active
+     * account that has no password yet, and only until the method is retired.
+     */
     @Transactional
-    public Optional<SignIn> signIn(String email, String code) {
-        Optional<OperatorEntity> operator = loginCodeService.verifyCode(email, code)
-                .flatMap(operatorRepository::findById)
-                .filter(OperatorEntity::isActive);
-        if (operator.isEmpty()) {
+    public Optional<SignIn> signInWithCode(String email, String code, String presentedToken) {
+        if (codeSignInSettings.isRetired()) {
             return Optional.empty();
         }
-        OperatorEntity signedIn = operator.get();
         Instant now = Instant.now();
-        sessionRepository.deleteFinished(signedIn.getId(), now);
+        Optional<OperatorEntity> account = loginCodeService.verifyCode(email, code)
+                .flatMap(operatorRepository::findById)
+                .filter(found -> found.usableAt(now))
+                .filter(found -> !found.hasPassword());
+        return account.map(found -> openSession(found, presentedToken, Method.EMAIL_CODE));
+    }
+
+    /** Kept for callers and tests of the code sign-in. */
+    @Transactional
+    public Optional<SignIn> signIn(String email, String code) {
+        return signInWithCode(email, code, null);
+    }
+
+    /** How the account proved who it is. */
+    public enum Method {
+        PASSWORD("password"), EMAIL_CODE("email code"), ACCOUNT_LINK("activation link");
+
+        final String label;
+
+        Method(String label) {
+            this.label = label;
+        }
+    }
+
+    /**
+     * Opens a session for an account that has just proved who it is. Any session
+     * the browser already carries is closed first (no session fixation).
+     */
+    @Transactional
+    public SignIn openSession(OperatorEntity account, String presentedToken, Method method) {
+        Instant now = Instant.now();
+        if (presentedToken != null && !presentedToken.isBlank()) {
+            sessionRepository.revokeByTokenHash(hash(presentedToken), now);
+        }
+        sessionRepository.deleteFinished(account.getId(), now);
+        Instant expiresAt = now.plus(SESSION_DURATION);
+        Instant validityEnd = account.validityEnd();
+        if (validityEnd != null && validityEnd.isBefore(expiresAt)) {
+            expiresAt = validityEnd;
+        }
         String token = newToken();
         sessionRepository.save(OperatorSessionEntity.builder()
                 .id(UUID.randomUUID().toString())
-                .operatorId(signedIn.getId())
+                .operatorId(account.getId())
                 .tokenHash(hash(token))
                 .createdAt(now)
-                .expiresAt(now.plus(SESSION_DURATION))
+                .expiresAt(expiresAt)
                 .build());
-        signedIn.setLastLoginAt(now);
-        log.info("Operator {} signed in", signedIn.getId());
-        return Optional.of(new SignIn(token, principalOf(signedIn)));
+        account.setLastLoginAt(now);
+        if (method == Method.PASSWORD) {
+            // Only a real password sign-in counts toward the stage 3 condition; finishing a link does not.
+            account.setLastPasswordLoginAt(now);
+        }
+        if (account.getFirstLoginAt() == null) {
+            account.setFirstLoginAt(now);
+            audit.recordSelf(account.getId(), SiteSecurityAuditAction.ACCOUNT_FIRST_SIGN_IN,
+                    method.label);
+        }
+        operatorRepository.save(account);
+        log.info("Account {} signed in ({})", account.getId(), method.label);
+        return new SignIn(token, principalOf(account), expiresAt);
     }
 
-    /** The caller behind a cookie value, if the session is still open and the operator still active. */
+    /** The caller behind a cookie value, if the session is open and the account still usable. */
     @Transactional(readOnly = true)
     public Optional<SiteSecurityPrincipal> resolve(String token) {
         if (token == null || token.isBlank()) {
@@ -98,8 +155,14 @@ public class SessionService {
                 .filter(session -> session.getRevokedAt() == null)
                 .filter(session -> session.getExpiresAt().isAfter(now))
                 .flatMap(session -> operatorRepository.findById(session.getOperatorId()))
-                .filter(OperatorEntity::isActive)
+                .filter(account -> account.usableAt(now))
                 .map(SessionService::principalOf);
+    }
+
+    /** The account behind a cookie value (for account self-service), if usable. */
+    @Transactional(readOnly = true)
+    public Optional<String> accountIdOf(String token) {
+        return resolve(token).map(SiteSecurityPrincipal::operatorId);
     }
 
     @Transactional
@@ -110,17 +173,30 @@ public class SessionService {
         }
     }
 
-    /** Ends every open session of an operator, for example when the operator is disabled. */
+    /** Ends every open session of an account (disable, password reset). */
     @Transactional
     public void revokeAll(String operatorId) {
         int revoked = sessionRepository.revokeAllForOperator(operatorId, Instant.now());
         if (revoked > 0) {
-            log.info("Closed {} session(s) of operator {}", revoked, operatorId);
+            log.info("Closed {} session(s) of account {}", revoked, operatorId);
         }
     }
 
-    public ResponseCookie sessionCookie(String token) {
-        return cookie(token, SESSION_DURATION);
+    /** Ends every other session of the account (password change): the current one stays open. */
+    @Transactional
+    public void revokeOthers(String operatorId, String keepToken) {
+        if (keepToken == null || keepToken.isBlank()) {
+            revokeAll(operatorId);
+            return;
+        }
+        sessionRepository.revokeOthersForOperator(operatorId, hash(keepToken), Instant.now());
+    }
+
+    public ResponseCookie sessionCookie(SignIn signIn) {
+        long millis = Duration.between(Instant.now(), signIn.expiresAt()).toMillis();
+        // Whole seconds, rounded up, so that a fresh 8-hour session announces exactly 28800 s.
+        long seconds = millis <= 0 ? 0 : (millis + 999) / 1000;
+        return cookie(signIn.token(), Duration.ofSeconds(Math.min(seconds, SESSION_DURATION.toSeconds())));
     }
 
     public ResponseCookie clearedCookie() {
@@ -137,8 +213,10 @@ public class SessionService {
                 .build();
     }
 
-    private static SiteSecurityPrincipal principalOf(OperatorEntity operator) {
-        return new SiteSecurityPrincipal(operator.getId(), operator.getEmail(), operator.getRole());
+    public static SiteSecurityPrincipal principalOf(OperatorEntity account) {
+        SiteSecurityRole role = account.effectiveRole() == AccountRole.ADMIN ? SiteSecurityRole.ADMIN : SiteSecurityRole.USER;
+        return new SiteSecurityPrincipal(account.getId(), account.getEmail(), role,
+                account.effectivePermissions(), account.effectiveZoneIds(), account.getFullName(), account.hasPassword());
     }
 
     private String newToken() {
@@ -147,7 +225,7 @@ public class SessionService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    /** SHA-256 of a cookie value, as stored in the database. */
+    /** SHA-256 of a cookie or link value, as stored in the database. */
     public static String hash(String token) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.config;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.AccountValues;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.OperatorEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.service.OperatorService;
@@ -52,14 +53,19 @@ public class SiteSecurityBootstrapAdminSeeder implements CommandLineRunner {
         if (operatorRepository.existsByEmail(email)) {
             return;
         }
-        operatorRepository.save(OperatorEntity.builder()
+        // Active, without a password: it signs in with an email code (stage 0) and then sets
+        // its password in-session with a fresh code (stage 1).
+        OperatorEntity admin = OperatorEntity.builder()
                 .id(UUID.randomUUID().toString())
                 .email(email)
                 .role(SiteSecurityRole.ADMIN)
                 .active(true)
                 .createdBy(BOOTSTRAP_ACTOR)
                 .createdAt(Instant.now())
-                .build());
+                .build();
+        admin.applyRole(AccountValues.AccountRole.ADMIN);
+        admin.applyStatus(AccountValues.AccountStatus.ACTIVE);
+        operatorRepository.save(admin);
         log.info("Site Security first admin created.");
     }
 }

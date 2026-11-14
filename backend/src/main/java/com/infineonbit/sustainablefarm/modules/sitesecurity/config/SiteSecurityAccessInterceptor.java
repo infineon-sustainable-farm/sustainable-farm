@@ -68,12 +68,12 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
             return false;
         }
         SiteSecurityPrincipal principal = caller.get();
-        if (!isAllowed(principal.role(), request, handler)) {
+        if (!isAllowed(principal, request, handler)) {
             log.warn("Site Security access denied ({} role): {} {}",
                     principal.role(), request.getMethod(), request.getRequestURI());
             writeError(response, HttpStatus.FORBIDDEN, principal.role() == SiteSecurityRole.GATE
                     ? "The gate token cannot be used here."
-                    : "This action requires the admin role.");
+                    : "This action requires the admin role or a permission you do not have.");
             return false;
         }
 
@@ -95,16 +95,30 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
         return Optional.empty();
     }
 
-    /** Decided from the matched controller, because a URL can be encoded in several ways. */
-    private static boolean isAllowed(SiteSecurityRole role, HttpServletRequest request, Object handler) {
+    /**
+     * Decided from the matched controller, because a URL can be encoded in several ways.
+     * Admins may call everything. Users are denied by default: only endpoints marked
+     * {@link AnyAccount}, or {@link UserPermission} with a permission the user holds
+     * (reads only), are open to them; {@link AdminOnly} classes never are.
+     */
+    static boolean isAllowed(SiteSecurityPrincipal principal, HttpServletRequest request, Object handler) {
         HandlerMethod method = handler instanceof HandlerMethod found ? found : null;
+        SiteSecurityRole role = principal.role();
         if (role == SiteSecurityRole.GATE) {
             return method != null && (method.hasMethodAnnotation(GateScanner.class)
                     || method.getBeanType().isAnnotationPresent(GateScanner.class));
         }
-        boolean adminOnly = !READ_METHODS.contains(request.getMethod())
-                || (method != null && method.getBeanType().isAnnotationPresent(AdminOnly.class));
-        return role == SiteSecurityRole.ADMIN || !adminOnly;
+        if (role == SiteSecurityRole.ADMIN) {
+            return true;
+        }
+        if (method == null || method.getBeanType().isAnnotationPresent(AdminOnly.class)) {
+            return false;
+        }
+        if (method.hasMethodAnnotation(AnyAccount.class) || method.getBeanType().isAnnotationPresent(AnyAccount.class)) {
+            return true;
+        }
+        UserPermission permission = method.getMethodAnnotation(UserPermission.class);
+        return permission != null && READ_METHODS.contains(request.getMethod()) && principal.can(permission.value());
     }
 
     static String sessionCookie(HttpServletRequest request) {

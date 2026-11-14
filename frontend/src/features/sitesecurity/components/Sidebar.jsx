@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, LayoutGrid, KeyRound, Map, ScrollText, } from "lucide-react";
+import { Activity, LayoutGrid, KeyRound, Map, ScrollText, Users, } from "lucide-react";
 import { cn } from "../utils/cn";
 import { Eyebrow } from "./ui";
 import { SCREEN_LABEL } from "../api/sitesecurityTypes";
+import { accessLabel } from "../utils/accessRights";
 const NAV = [
     { id: "dashboard", icon: LayoutGrid },
     { id: "access", icon: KeyRound },
     { id: "zones", icon: Map },
     { id: "log", icon: ScrollText },
+    { id: "users", icon: Users },
 ];
-export default function Sidebar({ screen, onNavigate, role, }) {
+/* `screens` lists what this account may open; the rest stays out of the menu. */
+export default function Sidebar({ screen, onNavigate, session, screens, }) {
     const [showHealth, setShowHealth] = useState(false);
     const closeHealthOnEscape = (event) => {
         if (event.key === "Escape")
@@ -35,7 +38,7 @@ export default function Sidebar({ screen, onNavigate, role, }) {
         {/* primary nav */}
         <nav aria-label="Site Security" className="flex-1 space-y-1.5 px-3 pt-5">
           <Eyebrow className="px-2 pb-2 text-white">Operations</Eyebrow>
-          {NAV.map((item) => {
+          {NAV.filter((item) => screens.includes(item.id)).map((item) => {
             const active = screen === item.id;
             const Icon = item.icon;
             return (<button key={item.id} type="button" aria-current={active ? "page" : undefined} onClick={() => onNavigate(item.id)} className={cn("group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-normal transition-all duration-200", active
@@ -72,8 +75,8 @@ export default function Sidebar({ screen, onNavigate, role, }) {
 
           <div className="mt-4 flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5">
             <span className="min-w-0">
-              <span className="block truncate text-[13px] font-medium text-white">{role === "admin" ? "Admin access" : "Read-only access"}</span>
-              <span className="block truncate text-[10.5px] text-white">Willow Ridge Farm</span>
+              <span className="block truncate text-[13px] font-medium text-white">{accessLabel(session)}</span>
+              <span className="block truncate text-[10.5px] text-white">{session?.fullName || session?.email || "Willow Ridge Farm"}</span>
             </span>
           </div>
           <p className="pb-2 pt-3 text-center font-mono text-[9px] uppercase tracking-[0.18em] text-white">

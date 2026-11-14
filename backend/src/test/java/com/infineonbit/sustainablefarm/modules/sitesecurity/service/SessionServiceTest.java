@@ -10,9 +10,9 @@ class SessionServiceTest {
 
     @Test
     void cookie_shouldBeSecureByDefault_andPlainOnlyWhenAskedFor() {
-        assertTrue(new SessionService(null, null, null, true).sessionCookie("v").isSecure());
+        assertTrue(new SessionService(null, null, null, null, null, true).sessionCookie(new SessionService.SignIn("v", null, java.time.Instant.now().plusSeconds(60))).isSecure());
 
-        var plain = new SessionService(null, null, null, false).sessionCookie("v");
+        var plain = new SessionService(null, null, null, null, null, false).sessionCookie(new SessionService.SignIn("v", null, java.time.Instant.now().plusSeconds(60)));
         assertFalse(plain.isSecure());
         assertTrue(plain.isHttpOnly());
         assertEquals("Strict", plain.getSameSite());
@@ -20,7 +20,7 @@ class SessionServiceTest {
 
     @Test
     void resolve_shouldIgnoreAMissingCookie() {
-        SessionService service = new SessionService(null, null, null, true);
+        SessionService service = new SessionService(null, null, null, null, null, true);
 
         assertTrue(service.resolve(null).isEmpty());
         assertTrue(service.resolve(" ").isEmpty());

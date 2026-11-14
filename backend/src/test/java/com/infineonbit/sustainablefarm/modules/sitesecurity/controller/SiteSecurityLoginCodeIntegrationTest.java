@@ -10,8 +10,12 @@ import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorR
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,8 +83,17 @@ class SiteSecurityLoginCodeIntegrationTest {
 
     private OperatorEntity operator;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.beans.factory.annotation.Qualifier(com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityExecutors.PUBLIC_REQUESTS)
+    private org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor publicRequests;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.beans.factory.annotation.Qualifier(com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityExecutors.ACCOUNT_EMAILS)
+    private org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor accountEmails;
+
     @BeforeEach
     void resetData() {
+        com.infineonbit.sustainablefarm.modules.sitesecurity.TestAsync.drain(publicRequests, accountEmails);
         reset(notifications);
         when(notifications.send(anyString(), anyString(), anyString())).thenReturn(true);
         loginCodes.deleteAll();
@@ -138,6 +151,27 @@ class SiteSecurityLoginCodeIntegrationTest {
         loginCodes.save(code);
     }
 
+    /** Moves the code six minutes into the past and makes it expire, as if its 5 minutes were over. */
+    private void expireCode(LoginCodeEntity code) {
+        code.setCreatedAt(Instant.now().minus(Duration.ofMinutes(6)));
+        code.setExpiresAt(Instant.now().minusSeconds(1));
+        loginCodes.save(code);
+    }
+
+    /**
+     * Requests run in the background: waits until this many of them have decided
+     * not to send a new code, so that the assertions after it prove something.
+     */
+    private void awaitIgnoredRequests(CapturedOutput output, int count) throws InterruptedException {
+        String marker = "A sign-in code is still valid for operator " + operator.getId();
+        long deadline = System.currentTimeMillis() + WAIT_MS;
+        while (output.getAll().split(Pattern.quote(marker), -1).length - 1 < count) {
+            assertTrue(System.currentTimeMillis() < deadline, "only "
+                    + (output.getAll().split(Pattern.quote(marker), -1).length - 1) + " of " + count + " requests ended");
+            Thread.sleep(20);
+        }
+    }
+
     private void assertNoEmailSent() {
         verify(notifications, after(QUIET_MS).never()).send(anyString(), anyString(), anyString());
     }
@@ -148,7 +182,7 @@ class SiteSecurityLoginCodeIntegrationTest {
         verifyCode("nobody@example.test", "123456").andExpect(status().isUnauthorized());
 
         mvc.perform(get("/api/v1/sitesecurity/zones")).andExpect(status().isUnauthorized());
-        mvc.perform(get("/api/v1/sitesecurity/operators")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/sitesecurity/users")).andExpect(status().isUnauthorized());
         mvc.perform(get(URI.create(AUTH + "/verify/../zones"))).andExpect(status().isUnauthorized());
     }
 
@@ -208,7 +242,7 @@ class SiteSecurityLoginCodeIntegrationTest {
     void sameCode_shouldNotGiveTheSameHashTwice() throws Exception {
         requestAndReadCode();
         String firstHash = onlyCode().getCodeHash();
-        ageCode(onlyCode(), Duration.ofMinutes(2));
+        expireCode(onlyCode());
         requestAndReadCode();
 
         assertTrue(loginCodes.findAll().stream().map(LoginCodeEntity::getCodeHash).distinct().count() == 2);
@@ -304,14 +338,102 @@ class SiteSecurityLoginCodeIntegrationTest {
     }
 
     @Test
-    void newCode_shouldReplaceThePreviousOne() throws Exception {
-        String first = requestAndReadCode();
+    void request_whileTheCodeIsStillUsable_shouldNeitherReplaceItNorSendAnother(CapturedOutput output) throws Exception {
+        String code = requestAndReadCode();
         ageCode(onlyCode(), Duration.ofMinutes(2));
+        clearInvocations(notifications);
+
+        request(EMAIL).andExpect(status().isAccepted());
+
+        awaitIgnoredRequests(output, 1);
+        assertNoEmailSent();
+        assertEquals(1, loginCodes.count());
+        verifyCode(EMAIL, code).andExpect(status().isOk());
+    }
+
+    @Test
+    void repeatedRequests_byAnyoneWhoKnowsTheEmail_shouldNotUseUpTheHourlyLimit(CapturedOutput output) throws Exception {
+        String code = requestAndReadCode();
+        clearInvocations(notifications);
+        for (int request = 0; request < 10; request++) {
+            // Past the one-minute delay each time: only the still-valid code holds the request back.
+            ageCode(onlyCode(), Duration.ofMinutes(2));
+            request(EMAIL).andExpect(status().isAccepted());
+            awaitIgnoredRequests(output, request + 1);
+        }
+        assertNoEmailSent();
+        assertEquals(1, loginCodes.count());
+        verifyCode(EMAIL, code).andExpect(status().isOk());
+
+        // The hour still allows new codes: only one was issued.
+        expireCode(onlyCode());
+        requestAndReadCode();
+        assertEquals(2, loginCodes.count());
+    }
+
+    @Test
+    void concurrentRequests_whileTheCodeIsStillUsable_shouldKeepItAndSendNothing(CapturedOutput output) throws Exception {
+        String code = requestAndReadCode();
+        ageCode(onlyCode(), Duration.ofMinutes(2));
+        clearInvocations(notifications);
+
+        requestInParallel(12);
+
+        awaitIgnoredRequests(output, 12);
+        assertNoEmailSent();
+        assertEquals(1, loginCodes.count());
+        verifyCode(EMAIL, code).andExpect(status().isOk());
+    }
+
+    @Test
+    void concurrentRequests_withNoCodeYet_shouldIssueExactlyOneCode(CapturedOutput output) throws Exception {
+        requestInParallel(12);
+
+        // One request issues the code; the 11 others, queued on the operator's row lock, see it and stop.
+        verify(notifications, timeout(WAIT_MS)).send(eq(EMAIL), anyString(), anyString());
+        awaitIgnoredRequests(output, 11);
+        verify(notifications, after(QUIET_MS).times(1)).send(anyString(), anyString(), anyString());
+        assertEquals(1, loginCodes.count());
+    }
+
+    private void requestInParallel(int count) throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(count);
+        try {
+            List<Future<Integer>> answers = new ArrayList<>();
+            for (int i = 0; i < count; i++) {
+                answers.add(pool.submit(() -> request(EMAIL).andReturn().getResponse().getStatus()));
+            }
+            for (Future<Integer> answer : answers) {
+                assertEquals(202, answer.get());
+            }
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Test
+    void newCode_shouldReplaceThePreviousOne_onceItHasExpired() throws Exception {
+        String first = requestAndReadCode();
+        expireCode(onlyCode());
         String second = requestAndReadCode();
 
+        assertEquals(2, loginCodes.count());
         if (!first.equals(second)) {
             verifyCode(EMAIL, first).andExpect(status().isUnauthorized());
         }
+        verifyCode(EMAIL, second).andExpect(status().isOk());
+    }
+
+    @Test
+    void newCode_shouldBeSent_onceThePreviousOneIsBlockedByWrongAttempts() throws Exception {
+        String first = requestAndReadCode();
+        for (int attempt = 0; attempt < 5; attempt++) {
+            verifyCode(EMAIL, wrongCode(first)).andExpect(status().isUnauthorized());
+        }
+        ageCode(onlyCode(), Duration.ofMinutes(2));
+
+        String second = requestAndReadCode();
+
         verifyCode(EMAIL, second).andExpect(status().isOk());
     }
 
@@ -388,5 +510,6 @@ class SiteSecurityLoginCodeIntegrationTest {
         assertFalse(output.getAll().contains(EMAIL));
         assertFalse(output.getAll().contains(code));
         assertNotEquals(-1, output.getAll().indexOf("Sign-in code"));
+        assertTrue(output.getAll().contains("Wrong sign-in code for operator " + operator.getId() + " (attempt 1 of 5)"));
     }
 }

@@ -3,12 +3,14 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialNotificationStatus;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.GateEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.LogEntryEntity;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.SiteSecurityAuditAction;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.ZoneEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.CredentialUserRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.GateRepository;
@@ -57,10 +59,26 @@ public class SiteSecurityService {
     private final CredentialUserRepository userRepository;
     private final LogEntryRepository logRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final SiteSecurityAuditService audit;
+
+    /** The whole site, as an admin sees it. */
+    private static final SiteSecurityPrincipal WHOLE_SITE =
+            new SiteSecurityPrincipal(null, null, SiteSecurityRole.ADMIN);
 
     public OverviewResponseDto getOverview() {
-        List<GateEntity> gates = gateRepository.findAll();
-        List<ZoneEntity> zones = zoneRepository.findAll();
+        return getOverview(WHOLE_SITE);
+    }
+
+    /** Admins see the whole site; a user only the gates, zones, credentials and denials of their zones. */
+    public OverviewResponseDto getOverview(SiteSecurityPrincipal viewer) {
+        List<GateEntity> gates = gateRepository.findAll().stream()
+                .filter(gate -> viewer.seesZone(gate.getZone())).toList();
+        List<ZoneEntity> zones = zoneRepository.findAll().stream()
+                .filter(zone -> viewer.seesZone(zone.getId())).toList();
+        long alerts = viewer.seesAllZones()
+                ? logRepository.countByStatus(DENIED_STATUS)
+                : logRepository.findByStatus(DENIED_STATUS, NEWEST_FIRST).stream()
+                        .filter(entry -> viewer.seesZone(entry.getZone())).count();
 
         OverviewStatsDto stats = OverviewStatsDto.builder()
                 .activePoints((int) gates.stream()
@@ -69,9 +87,10 @@ public class SiteSecurityService {
                 .controlledZones((int) zones.stream().filter(zone -> !OPEN_ZONE.equals(zone.getId())).count())
                 .totalZones(zones.size())
                 .visitors((int) userRepository.findAll().stream()
+                        .filter(user -> viewer.seesZone(user.getLevel()))
                         .filter(user -> VISITOR_TYPE.equals(user.getType()) && isValid(user))
                         .count())
-                .alerts((int) logRepository.countByStatus(DENIED_STATUS))
+                .alerts((int) alerts)
                 .build();
 
         return OverviewResponseDto.builder()
@@ -81,25 +100,36 @@ public class SiteSecurityService {
     }
 
     public List<ZoneDto> getZones() {
+        return getZones(WHOLE_SITE);
+    }
+
+    public List<ZoneDto> getZones(SiteSecurityPrincipal viewer) {
         List<CredentialUserEntity> users = userRepository.findAll();
         List<GateEntity> gates = gateRepository.findAll();
         return zoneRepository.findAll().stream()
+                .filter(zone -> viewer.seesZone(zone.getId()))
                 .map(zone -> mapZoneToDto(zone, users, gates))
                 .collect(Collectors.toList());
     }
 
     public List<UserDto> getCredentials(SiteSecurityRole role) {
+        return getCredentials(new SiteSecurityPrincipal(null, null, role));
+    }
+
+    /** Emails only for admins; a user only sees credentials whose level is one of their zones. */
+    public List<UserDto> getCredentials(SiteSecurityPrincipal viewer) {
         List<UserDto> credentials = userRepository.findAll().stream()
+                .filter(user -> viewer.seesZone(user.getLevel()))
                 .map(this::mapUserToDto)
                 .collect(Collectors.toList());
-        if (role != SiteSecurityRole.ADMIN) {
+        if (!viewer.isAdmin()) {
             credentials.forEach(credential -> credential.setEmail(null));
         }
         return credentials;
     }
 
     @Transactional
-    public UserDto createCredential(CreateUserRequestDto req) {
+    public UserDto createCredential(CreateUserRequestDto req, SiteSecurityPrincipal actor) {
         String name = req.getName().trim();
         if (userRepository.existsByName(name)) {
             throw duplicateCredential(name);
@@ -128,6 +158,7 @@ public class SiteSecurityService {
         try {
             // Flush here so a concurrent duplicate fails inside this method, as a 409.
             CredentialUserEntity saved = userRepository.saveAndFlush(entity);
+            audit.record(actor, SiteSecurityAuditAction.CREDENTIAL_CREATED, saved.getId(), saved.getLevel());
             eventPublisher.publishEvent(new CredentialNotificationEvent(
                     saved.getId(), CredentialNotificationEvent.Type.GRANTED));
             return mapUserToDto(saved);
@@ -136,10 +167,10 @@ public class SiteSecurityService {
         }
     }
 
-    /** Idempotent: revoking a credential that is already revoked changes nothing. */
+    /** Idempotent: revoking a credential that is already revoked changes nothing and records nothing. */
     @Transactional
-    public UserDto revokeCredential(String id) {
-        CredentialUserEntity credential = userRepository.findById(id)
+    public UserDto revokeCredential(String id, SiteSecurityPrincipal actor) {
+        CredentialUserEntity credential = userRepository.lockById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No credential with id '" + id + "'."));
         if (!REVOKED_STATUS.equals(credential.getStatus())) {
             credential.setStatus(REVOKED_STATUS);
@@ -149,9 +180,16 @@ public class SiteSecurityService {
                         credential.getId(), CredentialNotificationEvent.Type.REVOKED));
             }
             userRepository.save(credential);
+            audit.record(actor, SiteSecurityAuditAction.CREDENTIAL_REVOKED, credential.getId(), null);
             log.info("Site Security credential revoked: {}", credential.getId());
         }
         return mapUserToDto(credential);
+    }
+
+    public List<LogEntryDto> getAccessLogs(LogFilter filter, SiteSecurityPrincipal viewer) {
+        return getAccessLogs(filter).stream()
+                .filter(entry -> viewer.seesZone(entry.getZone()))
+                .collect(Collectors.toList());
     }
 
     public List<LogEntryDto> getAccessLogs(LogFilter filter) {

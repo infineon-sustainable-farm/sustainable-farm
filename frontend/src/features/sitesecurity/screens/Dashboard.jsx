@@ -1,11 +1,11 @@
-import { AlertTriangle, ArrowUpRight, ChevronsRight, DoorOpen, HardHat, Layers3, ShieldAlert, ShieldCheck, TriangleAlert, Truck, UserRound, UserRoundCheck, } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, ChevronsRight, DoorOpen, Layers3, TriangleAlert, UserRoundCheck, } from "lucide-react";
 import { cn } from "../utils/cn";
 import PerimeterMap from "../components/PerimeterMap";
 import { Card, Eyebrow, ScreenHeader, StatusChip } from "../components/ui";
 import { LEVEL_META, levelMeta } from "../api/sitesecurityTypes";
 import { useSecurityOverview } from "../hooks/useSecurityOverview";
-import { useAccessLogs } from "../hooks/useAccessLogs";
-import { recentEvents } from "../utils/accessLogs";
+import RecentActivity from "../components/RecentActivity";
+import InvitationsPanel from "../components/InvitationsPanel";
 import { buildStatCards } from "../utils/dashboardStats";
 const MODEL_STEPS = [
     "Define the perimeter",
@@ -21,25 +21,9 @@ const STAT_STYLE = {
     visitors: { icon: UserRoundCheck, tint: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
     denied: { icon: AlertTriangle, tint: "bg-rose-50 text-rose-600", dot: "bg-rose-500" },
 };
-const FEED_ICON = {
-    Staff: HardHat,
-    Visitor: UserRound,
-    Service: Truck,
-    Security: ShieldCheck,
-    Unknown: ShieldAlert,
-};
-const FEED_TINT = {
-    Staff: "bg-blue-50 text-blue-600",
-    Visitor: "bg-slate-100 text-slate-600",
-    Service: "bg-amber-50 text-amber-600",
-    Security: "bg-emerald-50 text-emerald-600",
-    Unknown: "bg-rose-50 text-rose-600",
-};
-export default function Dashboard({ onOpenZones, onOpenLog, }) {
+export default function Dashboard({ onOpenZones, onOpenLog, canOpenZones = true, canViewLog = true, isAdmin = false, onOpenUsers, }) {
     const { gates, stats, isLoading: isLoadingOverview, error: overviewError } = useSecurityOverview();
-    const { allLogs, isLoading: isLoadingLogs, error: logsError } = useAccessLogs();
-    const error = overviewError ?? logsError;
-    const feed = recentEvents(allLogs);
+    const error = overviewError;
     const cards = buildStatCards(stats, gates.length);
     return (<div className="space-y-5">
       <ScreenHeader kicker="01 · Overview" title="Security Overview" subtitle="Farm perimeter & access control" actions={<span className="hidden items-center gap-2 rounded-full border border-dashed border-amber-300 bg-amber-50 px-3.5 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700 lg:inline-flex">
@@ -69,8 +53,8 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
         {cards.map((s) => {
             const style = STAT_STYLE[s.id];
             const Icon = style.icon;
-            const StatCard = s.alert ? "button" : "div";
-            const action = s.alert ? { type: "button", onClick: () => onOpenLog("denied") } : {};
+            const StatCard = s.alert && canViewLog ? "button" : "div";
+            const action = s.alert && canViewLog ? { type: "button", onClick: () => onOpenLog("denied") } : {};
             return (<StatCard key={s.id} data-stat={s.id} {...action} className={cn("rounded-2xl border bg-white p-5 text-left shadow-[0_1px_2px_rgba(16,27,46,0.04),0_10px_30px_-14px_rgba(16,27,46,0.12)]", s.alert
                     ? "border-rose-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(16,27,46,0.05),0_16px_36px_-14px_rgba(16,27,46,0.18)]"
                     : "border-slate-200/80")}>
@@ -108,10 +92,10 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
                   {LEVEL_META[l].label}
                 </span>))}
             </div>
-            <button onClick={() => onOpenZones()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3.5 py-1.5 text-[13px] font-semibold text-navy-900 transition-all hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 font-sans">
+            {canOpenZones && (<button onClick={() => onOpenZones()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3.5 py-1.5 text-[13px] font-semibold text-navy-900 transition-all hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 font-sans">
               Perimeter & Zones
               <ArrowUpRight className="size-3.5"/>
-            </button>
+            </button>)}
           </div>
         </div>
 
@@ -155,41 +139,8 @@ export default function Dashboard({ onOpenZones, onOpenLog, }) {
         </div>
       </Card>
 
-      {/* recent activity */}
-      <Card>
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <h2 className="font-display text-[16px] font-semibold text-navy-900">Recent Access Activity</h2>
-          <button onClick={() => onOpenLog()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-navy-900 transition-all hover:border-accent-200 hover:bg-accent-50 hover:text-accent-600">
-            View full log
-            <ArrowUpRight className="size-3.5"/>
-          </button>
-        </div>
-        <div className="divide-y divide-slate-100 px-6">
-          {feed.length === 0 && (<p className="py-8 text-center text-[13px] text-slate-600">
-              {isLoadingLogs ? "Loading recent activity..." : !error && "No access events have been recorded."}
-            </p>)}
-          {feed.map((e) => {
-            const Icon = FEED_ICON[e.type] ?? UserRound;
-            return (<button key={e.id} onClick={() => onOpenLog()} className="flex w-full items-center gap-4 py-3.5 text-left transition-colors hover:bg-slate-50/50">
-                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", FEED_TINT[e.type])}>
-                  <Icon className="size-4" strokeWidth={2.2}/>
-                </span>
-                <p className="flex-1 text-[13px] text-slate-600">
-                  <span className="font-semibold text-navy-900">{e.user}</span>
-                  {e.type === "Unknown"
-                    ? " attempted entry at "
-                    : e.action === "Entry"
-                        ? " entered "
-                        : " exited "}
-                  {e.zoneName}
-                </p>
-                <StatusChip status={e.status} size="sm"/>
-                <span className="w-12 text-right font-mono text-[11.5px] font-medium text-slate-600">
-                  {e.time}
-                </span>
-              </button>);
-        })}
-        </div>
-      </Card>
+      {isAdmin && <InvitationsPanel onOpenUsers={onOpenUsers}/>}
+
+      {canViewLog && <RecentActivity onOpenLog={onOpenLog}/>}
     </div>);
 }

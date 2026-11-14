@@ -3,6 +3,7 @@ export const SCREEN_LABEL = {
     access: "Access Control",
     zones: "Perimeter & Zones",
     log: "Access Log",
+    users: "Users",
 };
 
 export const LEVEL_ORDER = ["open", "controlled", "restricted", "critical"];

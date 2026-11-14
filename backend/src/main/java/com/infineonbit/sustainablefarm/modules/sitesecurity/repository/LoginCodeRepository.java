@@ -16,6 +16,8 @@ public interface LoginCodeRepository extends JpaRepository<LoginCodeEntity, Stri
 
     long countByOperatorIdAndCreatedAtAfter(String operatorId, Instant since);
 
+    List<LoginCodeEntity> findByOperatorIdAndConsumedAtIsNull(String operatorId);
+
     /** Locks the code, so that concurrent guesses are all counted and it is used only once. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from LoginCodeEntity c where c.consumedAt is null and c.operatorId in "

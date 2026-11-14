@@ -51,7 +51,10 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-mailpit}
       MAIL_FROM: ${MAIL_FROM:-visits@sustainable-farm.local}
     ports:
-      - "8080:8080"
+      # This machine only: other machines go through nginx (port 3000), where
+      # the Site Security sign-in limits apply. nginx reaches the backend
+      # inside the Compose network, at backend:8080.
+      - "127.0.0.1:8080:8080"
 
   # Test mail server: it keeps every email and delivers none of them.
   # Inbox: http://localhost:8025. Both ports stay on this machine because the

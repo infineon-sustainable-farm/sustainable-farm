@@ -121,7 +121,7 @@ class SiteSecurityAccessIntegrationTest {
     void session_shouldReportTheRoleAndEmailOfTheOperator() throws Exception {
         mvc.perform(get(BASE + "/session").with(signedIn(readSession)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.role").value("read"))
+                .andExpect(jsonPath("$.role").value("user"))
                 .andExpect(jsonPath("$.email").value("session-reader@example.test"));
         mvc.perform(get(BASE + "/session").with(signedIn(adminSession)))
                 .andExpect(status().isOk())
@@ -147,7 +147,7 @@ class SiteSecurityAccessIntegrationTest {
         }
         create(readSession, json("Reader", "Staff", "open", futureDate()))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("This action requires the admin role."));
+                .andExpect(jsonPath("$.message").value("This action requires the admin role or a permission you do not have."));
         assertEquals(0, credentials.count());
     }
 

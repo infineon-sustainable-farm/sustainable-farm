@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 import com.infineonbit.sustainablefarm.core.notification.NotificationService;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.OperatorEntity;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.FailedSignInRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.LoginCodeRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.OperatorRepository;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import org.springframework.mock.env.MockEnvironment;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -38,15 +40,21 @@ class LoginCodeServiceTest {
     private LoginCodeRepository loginCodes;
 
     @Mock
+    private FailedSignInRepository failedSignIns;
+
+    @Mock
     private NotificationService notifications;
 
     @Mock
     private PlatformTransactionManager transactionManager;
 
+    @Mock
+    private org.springframework.beans.factory.ObjectProvider<CodeSignInSettings> codeSignInSettings;
+
     private LoginCodeService service(String secret, boolean mailEnabled, String... profiles) {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(profiles);
-        return new LoginCodeService(operators, loginCodes, notifications, transactionManager,
+        return new LoginCodeService(operators, loginCodes, failedSignIns, notifications, codeSignInSettings, transactionManager,
                 environment, secret, mailEnabled);
     }
 
@@ -114,5 +122,15 @@ class LoginCodeServiceTest {
 
         verify(loginCodes, never()).save(any());
         verifyNoInteractions(notifications);
+    }
+
+    @Test
+    void formatCode_shouldKeepLeadingZeros_forBothLengths() {
+        assertEquals("000042", LoginCodeService.formatCode(42, 6));
+        assertEquals("0000000042", LoginCodeService.formatCode(42, 10));
+        assertEquals("000000", LoginCodeService.formatCode(0, 6));
+        assertEquals("0000000000", LoginCodeService.formatCode(0, 10));
+        assertEquals("999999", LoginCodeService.formatCode(999_999, 6));
+        assertEquals("9999999999", LoginCodeService.formatCode(9_999_999_999L, 10));
     }
 }
