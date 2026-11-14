@@ -21,8 +21,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +55,7 @@ class SchedulingServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        monday = LocalDate.now().plusDays(1);
+        monday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.MONDAY));
     }
 
     private TimeSlot buildSlot(Long id, TimeSlotStatus status) {
