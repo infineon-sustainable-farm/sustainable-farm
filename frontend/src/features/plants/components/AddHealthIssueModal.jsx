@@ -2,10 +2,10 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { formatCode } from "../utils/format";
 import PlantsModal from "./PlantsModal";
+import { FIELD_INPUT, FIELD_LABEL, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
+const LABEL_CLASS = FIELD_LABEL;
+const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT}`;
 // The default placeholder is the text colour at half opacity, about 3:1 on
 // white; gray-500 (#6a7282) reaches 4.84:1.
 const TEXT_INPUT_CLASS = `${INPUT_CLASS} placeholder:text-gray-500`;
@@ -108,7 +108,7 @@ export default function AddHealthIssueModal({ isSubmitting, error, onSubmit, onC
     return (
         <PlantsModal labelledBy="add-health-issue-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2 id="add-health-issue-title" className="font-heading text-lg font-bold text-gray-900">
+                <h2 id="add-health-issue-title" className="font-heading text-lg font-bold text-on-background">
                     Add a pest or disease
                 </h2>
                 <button
@@ -207,14 +207,14 @@ export default function AddHealthIssueModal({ isSubmitting, error, onSubmit, onC
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        className={SECONDARY_BUTTON}
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isSubmitting ? "Adding…" : "Add to catalogue"}
                     </button>
