@@ -1,4 +1,5 @@
 import { formatBlock, formatDate, formatNumber, formatText } from "../utils/format";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // The mock-up's columns that the API records, in its order ("Actual Harvest" is
 // the harvest date), with Source last. A harvest recorded before lot numbers
@@ -15,7 +16,7 @@ const COLUMNS = [
 /** Recorded harvests, one row per picking, in the order the API sends them. */
 export default function HarvestsTable({ harvests }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -23,7 +24,7 @@ export default function HarvestsTable({ harvests }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className={TABLE_HEAD}
                             >
                                 {column}
                             </th>

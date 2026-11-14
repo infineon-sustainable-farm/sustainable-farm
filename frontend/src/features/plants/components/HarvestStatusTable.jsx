@@ -2,6 +2,7 @@ import { formatBlock, formatCode, formatDate, formatDaysAhead, formatText, NO_VA
 import { formatObservationMethod } from "../utils/maturityObservations";
 import MaturityStatusBadge from "./MaturityStatusBadge";
 import Value from "./Value";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // The mock-up's columns that the API gives: "Est. Harvest" is the harvest
 // window, "Actual Harvest" the first harvest in it, and "Maturity" is shown
@@ -96,7 +97,7 @@ function Sources({ status }) {
 /** The maturity status of each planted variety, in the order the API sends it. */
 export default function HarvestStatusTable({ statuses }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -104,7 +105,7 @@ export default function HarvestStatusTable({ statuses }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase"
+                                className={`${TABLE_HEAD} align-bottom whitespace-normal`}
                             >
                                 {column}
                             </th>
