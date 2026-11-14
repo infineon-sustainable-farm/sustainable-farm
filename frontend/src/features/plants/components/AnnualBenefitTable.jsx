@@ -20,7 +20,7 @@ import {
     parseTreeCountChange,
     parseYieldChangePct,
 } from "../utils/scenarioRequests";
-import { PRIMARY_BUTTON, TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { PRIMARY_BUTTON, TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const TH_CLASS = TABLE_HEAD;
 
@@ -71,7 +71,7 @@ function BenefitTable({ analysis }) {
                 <thead>
                     <tr>
                         <th scope="col" className={TH_CLASS}>Benefit type</th>
-                        <th scope="col" className={TH_CLASS}>{`Amount (${currencyUnit(currency)})`}</th>
+                        <th scope="col" className={TABLE_HEAD_NUM}>{`Amount (${currencyUnit(currency)})`}</th>
                         <th scope="col" className={TH_CLASS}>Details</th>
                     </tr>
                 </thead>
@@ -81,7 +81,7 @@ function BenefitTable({ analysis }) {
                             <th scope="row" className="px-4 py-3 text-left font-semibold text-gray-800">
                                 {benefitLineLabel(line)}
                             </th>
-                            <td className={`px-4 py-3 font-semibold whitespace-nowrap ${toneOf(line.amount, currency)}`}>
+                            <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap ${toneOf(line.amount, currency)}`}>
                                 {formatSignedAmount(line.amount, currency)}
                                 {formatSignedOtherAmount(line.amount, currency) && (
                                     <span className="block text-xs font-normal text-gray-600">
@@ -96,7 +96,7 @@ function BenefitTable({ analysis }) {
                         <th scope="row" className="px-4 py-3 text-left font-bold tracking-wide text-on-background">
                             TOTAL ANNUAL BENEFIT
                         </th>
-                        <td className={`px-4 py-3 font-bold whitespace-nowrap ${toneOf(change.annualBenefit, currency)}`}>
+                        <td className={`px-4 py-3 text-right font-bold whitespace-nowrap ${toneOf(change.annualBenefit, currency)}`}>
                             {formatSignedAmount(change.annualBenefit, currency)}
                             {formatSignedOtherAmount(change.annualBenefit, currency) && (
                                 <span className="block text-xs font-normal text-gray-600">

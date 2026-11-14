@@ -1,6 +1,6 @@
 import { formatBlock, formatCode, formatDate, formatNumber, formatText } from "../utils/format";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 // Each column holds what one event type records; the others show the dash.
 const COLUMNS = [
@@ -14,6 +14,9 @@ const COLUMNS = [
     "Source",
 ];
 
+// Numbers, quantities and durations line up on the right, header included.
+const NUMERIC = new Set(["Quantity"]);
+
 /** Nursery events, one row per event, in the order the API sends them. */
 export default function NurseryEventsTable({ events }) {
     return (
@@ -25,7 +28,7 @@ export default function NurseryEventsTable({ events }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className={TABLE_HEAD}
+                                className={NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -47,7 +50,7 @@ export default function NurseryEventsTable({ events }) {
                             <td className="px-4 py-3 text-gray-700">
                                 <Value>{formatCode(event.stage)}</Value>
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 <Value>{formatNumber(event.quantity)}</Value>
                             </td>
                             <td className="px-4 py-3 text-gray-700">

@@ -11,6 +11,8 @@ import { FIELD_INPUT, PRIMARY_BUTTON, TABLE_CARD } from "./plantsStyles";
 const TH_CLASS =
     "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left align-bottom text-xs font-semibold whitespace-normal text-gray-500";
 const TD_CLASS = "px-3 py-3 text-gray-700";
+// Every column but the year and the growth phase holds figures: they line up on the right.
+const TEXT_COLUMNS = new Set(["Year", "Growth phase"]);
 
 function columns(currency) {
     const unit = currencyUnit(currency);
@@ -46,7 +48,11 @@ function YearsTable({ analysis }) {
                 <thead>
                     <tr>
                         {columns(currency).map((column) => (
-                            <th key={column} scope="col" className={TH_CLASS}>
+                            <th
+                                key={column}
+                                scope="col"
+                                className={TEXT_COLUMNS.has(column) ? TH_CLASS : TH_CLASS.replace("text-left", "text-right")}
+                            >
                                 {column}
                             </th>
                         ))}
@@ -68,15 +74,15 @@ function YearsTable({ analysis }) {
                                         </span>
                                     )}
                                 </th>
-                                <td className={TD_CLASS}>{`${year.ageYears} ${year.ageYears === 1 ? "yr" : "yrs"}`}</td>
+                                <td className={`${TD_CLASS} text-right`}>{`${year.ageYears} ${year.ageYears === 1 ? "yr" : "yrs"}`}</td>
                                 <td className={TD_CLASS}>{formatCode(year.growthPhase)}</td>
-                                <td className={TD_CLASS}>{formatShare(year.yieldShare)}</td>
-                                <td className={TD_CLASS}>{formatNumber(year.harvestKg)}</td>
-                                <td className={TD_CLASS}>{formatNumber(year.sellableKg)}</td>
-                                <td className={TD_CLASS}>{formatAmountFigure(year.revenue, currency)}</td>
-                                <td className={TD_CLASS}>{formatAmountFigure(year.operatingCost, currency)}</td>
-                                <td className={TD_CLASS}>{formatAmountFigure(year.netBenefit, currency)}</td>
-                                <td className="px-3 py-3 font-semibold text-gray-800">
+                                <td className={`${TD_CLASS} text-right`}>{formatShare(year.yieldShare)}</td>
+                                <td className={`${TD_CLASS} text-right`}>{formatNumber(year.harvestKg)}</td>
+                                <td className={`${TD_CLASS} text-right`}>{formatNumber(year.sellableKg)}</td>
+                                <td className={`${TD_CLASS} text-right`}>{formatAmountFigure(year.revenue, currency)}</td>
+                                <td className={`${TD_CLASS} text-right`}>{formatAmountFigure(year.operatingCost, currency)}</td>
+                                <td className={`${TD_CLASS} text-right`}>{formatAmountFigure(year.netBenefit, currency)}</td>
+                                <td className="px-3 py-3 text-right font-semibold text-gray-800">
                                     {formatAmountFigure(year.cumulativeNetBenefit, currency)}
                                 </td>
                             </tr>

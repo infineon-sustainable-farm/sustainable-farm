@@ -2,7 +2,7 @@ import { CircleCheckBig, SprayCan } from "lucide-react";
 import { formatBlock, formatDate, formatText } from "../utils/format";
 import FindingStatusBadge from "./FindingStatusBadge";
 import Value from "./Value";
-import { TABLE_CARD } from "./plantsStyles";
+import { ROW_BUTTON, TABLE_CARD } from "./plantsStyles";
 
 // The mock-up's columns that the API records ("Tree ID" is the tree label,
 // "Treatment" the status), then the harvest and resolution dates. The mock-up's
@@ -22,8 +22,6 @@ const COLUMNS = [
 // beside the seven columns on a 1280 px screen instead of scrolling away.
 const TH_CLASS =
     "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left text-xs font-semibold whitespace-normal text-gray-500";
-const ACTION_BUTTON_CLASS =
-    "inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50";
 
 /** What a finding is and where, for the name of its buttons: "Anthracnose on Block A, tree 12". */
 function describeFinding(finding) {
@@ -86,7 +84,7 @@ export default function FindingsTable({ findings, onTreat, onResolve }) {
                                             type="button"
                                             onClick={() => onTreat(finding)}
                                             aria-label={`Treat ${describeFinding(finding)}`}
-                                            className={ACTION_BUTTON_CLASS}
+                                            className={ROW_BUTTON}
                                         >
                                             <SprayCan size={14} />
                                             Treat
@@ -95,7 +93,7 @@ export default function FindingsTable({ findings, onTreat, onResolve }) {
                                             type="button"
                                             onClick={() => onResolve(finding)}
                                             aria-label={`Resolve ${describeFinding(finding)}`}
-                                            className={ACTION_BUTTON_CLASS}
+                                            className={ROW_BUTTON}
                                         >
                                             <CircleCheckBig size={14} />
                                             Resolve

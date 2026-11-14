@@ -7,12 +7,10 @@ import { useVarietyReferences } from "../hooks/useVarietyReferences";
 import { formatCode, formatKilograms, formatSeason, formatShare, formatText, formatTimestamp } from "../utils/format";
 import PlantsEmptyState from "./PlantsEmptyState";
 import VarietyReferenceModal from "./VarietyReferenceModal";
-import { FIELD_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { FIELD_INPUT, PRIMARY_BUTTON, ROW_BUTTON, SECONDARY_BUTTON, TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const SUBTITLE_CLASS = "font-heading text-sm font-bold text-on-background";
 const TH_CLASS = TABLE_HEAD;
-const EDIT_BUTTON_CLASS =
-    "inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50";
 const INPUT_CLASS = FIELD_INPUT;
 
 /** Same rule as the API: from 0 to 1, with at most 3 decimals. */
@@ -61,7 +59,7 @@ function VarietyReferencesTable({ references, onEdit }) {
                 <thead>
                     <tr>
                         <th scope="col" className={TH_CLASS}>Variety</th>
-                        <th scope="col" className={TH_CLASS}>Yield per tree</th>
+                        <th scope="col" className={TABLE_HEAD_NUM}>Yield per tree</th>
                         <th scope="col" className={TH_CLASS}>Harvest season</th>
                         <th scope="col" className={TH_CLASS}>Sources</th>
                         <th scope="col" className={TH_CLASS}>
@@ -75,7 +73,7 @@ function VarietyReferencesTable({ references, onEdit }) {
                             <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(reference.varietyName)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatKilograms(reference.yieldPerTreeKg)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
@@ -92,7 +90,7 @@ function VarietyReferencesTable({ references, onEdit }) {
                                     type="button"
                                     onClick={() => onEdit(reference)}
                                     aria-label={`Edit ${reference.varietyName}`}
-                                    className={EDIT_BUTTON_CLASS}
+                                    className={ROW_BUTTON}
                                 >
                                     <Pencil size={14} />
                                     Edit

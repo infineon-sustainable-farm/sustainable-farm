@@ -6,7 +6,7 @@ import MonthPeriodControls from "./MonthPeriodControls";
 import PlantsEmptyState from "./PlantsEmptyState";
 import YieldForecastChart from "./YieldForecastChart";
 import YieldForecastTable from "./YieldForecastTable";
-import { PRIMARY_BUTTON, TABLE_HEAD } from "./plantsStyles";
+import { PRIMARY_BUTTON, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const DEFAULT_MONTHS = 12;
 
@@ -41,21 +41,21 @@ function MonthlyTotalsTable({ monthlyTotals, totalKg }) {
                     <thead>
                         <tr>
                             <th scope="col" className={TH_CLASS}>Month</th>
-                            <th scope="col" className={TH_CLASS}>Expected yield</th>
+                            <th scope="col" className={TABLE_HEAD_NUM}>Expected yield</th>
                         </tr>
                     </thead>
                     <tbody>
                         {monthlyTotals.map((month) => (
                             <tr key={month.month} className="border-b border-gray-100">
                                 <td className="px-4 py-2.5 text-gray-700">{formatMonth(month.month)}</td>
-                                <td className="px-4 py-2.5 text-gray-700">{formatKilograms(month.expectedKg)}</td>
+                                <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(month.expectedKg)}</td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot>
                         <tr>
                             <td className="px-4 py-2.5 font-semibold text-on-background">Total</td>
-                            <td className="px-4 py-2.5 font-semibold text-on-background">{formatKilograms(totalKg)}</td>
+                            <td className="px-4 py-2.5 text-right font-semibold text-on-background">{formatKilograms(totalKg)}</td>
                         </tr>
                     </tfoot>
                 </table>

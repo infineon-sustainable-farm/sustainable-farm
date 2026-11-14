@@ -5,7 +5,7 @@ import {
     formatNumber,
     formatText,
 } from "../utils/format";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const COLUMNS = [
     "Month",
@@ -16,6 +16,9 @@ const COLUMNS = [
     "Expected yield",
     "Sources",
 ];
+
+// Numbers, quantities and durations line up on the right, header included.
+const NUMERIC = new Set(["Trees", "Expected yield"]);
 
 /**
  * The forecast line by line: one row per month and variety with a yield above
@@ -32,7 +35,7 @@ export default function YieldForecastTable({ entries }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className={TABLE_HEAD}
+                                className={NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -54,13 +57,13 @@ export default function YieldForecastTable({ entries }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(entry.varietyName)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatNumber(entry.treeCount)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(entry.growthPhase)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatKilograms(entry.expectedKg)}
                             </td>
                             {/* The only cell allowed to wrap: three sources on one line would push

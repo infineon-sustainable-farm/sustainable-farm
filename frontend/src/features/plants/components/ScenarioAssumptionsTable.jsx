@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { formatCode, formatKilograms, formatNumber, formatShare, formatText, formatTimestamp, NO_VALUE } from "../utils/format";
 import { formatMoney, formatUnitPrice } from "../utils/scenarioRequests";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const TH_CLASS = TABLE_HEAD;
 const CURRENCY_NAMES = { XOF: "XOF (FCFA)", EUR: "EUR (€)" };
@@ -100,7 +100,7 @@ export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
                                 <tr>
                                     <th scope="col" className={TH_CLASS}>Growth phase</th>
                                     <th scope="col" className={TH_CLASS}>Age</th>
-                                    <th scope="col" className={TH_CLASS}>Share of the full yield</th>
+                                    <th scope="col" className={TABLE_HEAD_NUM}>Share of the full yield</th>
                                     <th scope="col" className={TH_CLASS}>Source</th>
                                 </tr>
                             </thead>
@@ -111,7 +111,7 @@ export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
                                             {formatCode(share.code)}
                                         </th>
                                         <td className="px-4 py-3 text-gray-700">{formatText(share.yearsBand)}</td>
-                                        <td className="px-4 py-3 text-gray-700">{formatShare(share.yieldShare)}</td>
+                                        <td className="px-4 py-3 text-right text-gray-700">{formatShare(share.yieldShare)}</td>
                                         <td className="px-4 py-3 text-gray-700">{formatText(share.source)}</td>
                                     </tr>
                                 ))}
