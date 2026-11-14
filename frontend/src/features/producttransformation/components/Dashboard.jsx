@@ -285,7 +285,7 @@ const Dashboard = () => {
       {DEMO_DATA_ENABLED ? (
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Demo mode is on: charts with no records fall back to a synthetic set (LOT-DEMO). Real API
-          data is always used when present. The mock set lives in
+          data is always used when present. The synthetic dataset lives in
           frontend/src/features/producttransformation/data/dashboardDemoData.js.
         </div>
       ) : null}
