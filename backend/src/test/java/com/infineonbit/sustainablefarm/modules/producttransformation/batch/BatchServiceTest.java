@@ -18,9 +18,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
+import com.infineonbit.sustainablefarm.modules.producttransformation.exception.DuplicateResourceException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.InvalidStateException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
@@ -33,6 +35,9 @@ class BatchServiceTest {
 
     @Autowired
     private BatchRepository batchRepository;
+
+    @Autowired
+    private BatchService batchService;
 
     @BeforeEach
     void setUp() {
@@ -247,5 +252,36 @@ class BatchServiceTest {
         // Try to advance again - should also work (INTAKE -> WASHING)
         batch.advanceStatus();
         assertEquals(BatchStatus.WASHING, batch.getCurrentStatus());
+    }
+
+    @Test
+    @DisplayName("Rejects a duplicate batch id instead of silently overwriting the existing batch")
+    void testDuplicateBatchIdIsRejected() {
+        Batch first = new Batch();
+        first.setBatchId("TEST-BATCH-DUP");
+        first.setHarvestDate(LocalDate.of(2026, 10, 6));
+        first.setMangoVariety(MangoVariety.KEITT);
+        first.setHarvestQuantityKg(new BigDecimal("250.00"));
+        first.setFarmId("FARM-006");
+        first.setBlockId("BLOCK-F");
+        first.setCurrentStatus(BatchStatus.CREATED);
+        batchService.createBatch(first);
+
+        Batch duplicate = new Batch();
+        duplicate.setBatchId("TEST-BATCH-DUP");
+        duplicate.setHarvestDate(LocalDate.of(2026, 10, 7));
+        duplicate.setMangoVariety(MangoVariety.KENT);
+        duplicate.setHarvestQuantityKg(new BigDecimal("999.00"));
+        duplicate.setFarmId("FARM-OTHER");
+        duplicate.setBlockId("BLOCK-OTHER");
+        duplicate.setCurrentStatus(BatchStatus.CREATED);
+
+        assertThrows(DuplicateResourceException.class, () -> batchService.createBatch(duplicate));
+
+        // The original row must be untouched: no silent merge/overwrite.
+        Batch stored = batchRepository.findById("TEST-BATCH-DUP").orElseThrow();
+        assertEquals(new BigDecimal("250.00"), stored.getHarvestQuantityKg());
+        assertEquals(MangoVariety.KEITT, stored.getMangoVariety());
+        assertEquals("FARM-006", stored.getFarmId());
     }
 }

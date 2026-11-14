@@ -18,9 +18,13 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { formatDateTime, getQcResultColor } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Plus, Filter, Pencil, Trash2 } from 'lucide-react';
+
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
 
 const QC_STAGES = ['INTAKE', 'WASHING', 'DRYING', 'COOLING', 'PACKAGING', 'FINAL'];
 const QC_RESULTS = ['PENDING', 'PASS', 'FAIL', 'REWORK'];
@@ -171,6 +175,13 @@ const QcCheckpointList = () => {
     setFormError('');
   };
 
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
   const updateForm = (key) => (event) => {
     setForm((current) => ({ ...current, [key]: event.target.value }));
   };
@@ -243,27 +254,30 @@ const QcCheckpointList = () => {
     }
   };
 
+  const header = (
+    <PTListHeader
+      title="Quality Control"
+      subtitle="Record and track QC checkpoints for each batch and stage."
+    >
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New QC Checkpoint
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading QC checkpoints..." />;
-  if (error) return <ErrorState message={error?.message || 'Failed to load QC checkpoints'} onRetry={load} />;
+  if (error)
+    return (
+      <div className="p-6">
+        {header}
+        <ErrorState message={error?.message || 'Failed to load QC checkpoints'} onRetry={load} />
+      </div>
+    );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quality Control</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Record and track QC checkpoints for each batch and stage.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New QC Checkpoint
-        </button>
-      </div>
+      {header}
 
       {actionError && (
         <div role="alert" className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -272,20 +286,20 @@ const QcCheckpointList = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500">
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filters</span>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Batch
             <select
               aria-label="Filter by batch"
               value={filters.batchId}
               onChange={updateFilter('batchId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All batches</option>
               {batches.map((batch) => (
@@ -296,13 +310,13 @@ const QcCheckpointList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Stage
             <select
               aria-label="Filter by stage"
               value={filters.stage}
               onChange={updateFilter('stage')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All stages</option>
               {QC_STAGES.map((stage) => (
@@ -313,13 +327,13 @@ const QcCheckpointList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Result
             <select
               aria-label="Filter by result"
               value={filters.result}
               onChange={updateFilter('result')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All results</option>
               {QC_RESULTS.map((result) => (
@@ -330,13 +344,13 @@ const QcCheckpointList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Inspector
             <select
               aria-label="Filter by inspector"
               value={filters.inspectorId}
               onChange={updateFilter('inspectorId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All inspectors</option>
               {inspectors.map((operator) => (
@@ -347,14 +361,14 @@ const QcCheckpointList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Date
             <input
               type="date"
               aria-label="Filter by date"
               value={filters.date}
               onChange={updateFilter('date')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             />
           </label>
 
@@ -364,7 +378,7 @@ const QcCheckpointList = () => {
 
       {/* Table */}
       {filteredCheckpoints.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className={CARD_FRAME}>
           <EmptyState
             message={checkpoints.length === 0 ? 'No QC checkpoints found' : 'No checkpoints match the filters'}
             actionLabel={checkpoints.length === 0 ? 'New QC Checkpoint' : undefined}
@@ -372,17 +386,15 @@ const QcCheckpointList = () => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 {['Checkpoint', 'Batch', 'Stage', 'Result', 'Defects', 'Inspector', 'Checkpoint Time', 'Actions'].map(
                   (label) => (
                     <th
                       key={label}
-                      className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                        label === 'Actions' ? 'text-right' : 'text-left'
-                      }`}
+                      className={`${TABLE_HEAD_BASE} ${label === 'Actions' ? 'text-right' : 'text-left'}`}
                     >
                       {label}
                     </th>
@@ -393,17 +405,17 @@ const QcCheckpointList = () => {
             <tbody className="divide-y divide-gray-200">
               {filteredCheckpoints.map((checkpoint) => (
                 <tr key={checkpoint.checkpointId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{checkpoint.checkpointId}</div>
                     {checkpoint.mandatory && (
                       <span className="text-xs text-amber-700">Mandatory</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{checkpoint.batchId}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{checkpoint.batchId}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {stageLabel(checkpoint.stage)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getQcResultColor(
                         checkpoint.result,
@@ -412,16 +424,16 @@ const QcCheckpointList = () => {
                       {stageLabel(checkpoint.result)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {checkpoint.defectsCount ?? 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {inspectorName(checkpoint.inspectorId)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatDateTime(checkpoint.checkpointTime)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       type="button"
                       onClick={() => openEdit(checkpoint)}
@@ -451,15 +463,16 @@ const QcCheckpointList = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={editing ? 'Edit QC checkpoint' : 'New QC checkpoint'}
+          aria-labelledby={titleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={panelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 id={titleId} className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit QC Checkpoint' : 'New QC Checkpoint'}
             </h2>
 
@@ -470,24 +483,24 @@ const QcCheckpointList = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Checkpoint ID
                 <input
                   type="text"
                   value={form.checkpointId}
                   onChange={updateForm('checkpointId')}
                   disabled={Boolean(editing)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                  className={`${FIELD_INPUT} disabled:bg-gray-100`}
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Batch
                 <select
                   value={form.batchId}
                   onChange={updateForm('batchId')}
                   disabled={Boolean(editing)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                  className={`${FIELD_INPUT} disabled:bg-gray-100`}
                 >
                   <option value="">Select a batch</option>
                   {batches.map((batch) => (
@@ -499,12 +512,12 @@ const QcCheckpointList = () => {
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Stage
                   <select
                     value={form.stage}
                     onChange={updateForm('stage')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {QC_STAGES.map((stage) => (
                       <option key={stage} value={stage}>
@@ -514,12 +527,12 @@ const QcCheckpointList = () => {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Result
                   <select
                     value={form.result}
                     onChange={updateForm('result')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {QC_RESULTS.map((result) => (
                       <option key={result} value={result}>
@@ -531,34 +544,34 @@ const QcCheckpointList = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Defects Count
                   <input
                     type="number"
                     min="0"
                     value={form.defectsCount}
                     onChange={updateForm('defectsCount')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Checkpoint Time
                   <input
                     type="datetime-local"
                     value={form.checkpointTime}
                     onChange={updateForm('checkpointTime')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Inspector
                 <select
                   value={form.inspectorId}
                   onChange={updateForm('inspectorId')}
-                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  className={FIELD_INPUT}
                 >
                   <option value="">No inspector</option>
                   {inspectors.map((operator) => (
@@ -569,23 +582,23 @@ const QcCheckpointList = () => {
                 </select>
               </label>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Defects
                 <textarea
                   value={form.defects}
                   onChange={updateForm('defects')}
                   rows={2}
-                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  className={FIELD_INPUT}
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Notes
                 <textarea
                   value={form.notes}
                   onChange={updateForm('notes')}
                   rows={2}
-                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  className={FIELD_INPUT}
                 />
               </label>
 
@@ -594,14 +607,14 @@ const QcCheckpointList = () => {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className={SECONDARY_BUTTON}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-60"
+                  className={PRIMARY_BUTTON}
                 >
                   {saving ? 'Saving...' : editing ? 'Save' : 'Create'}
                 </button>

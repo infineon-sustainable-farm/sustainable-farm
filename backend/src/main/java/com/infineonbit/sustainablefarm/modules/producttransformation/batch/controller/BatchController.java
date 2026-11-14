@@ -7,8 +7,10 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.r
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.response.BatchResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,11 +22,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * REST Controller for Batch operations
- * 
+ *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
@@ -35,11 +39,46 @@ public class BatchController {
 
     private final BatchService batchService;
     private final DtoMapper dtoMapper;
+    private final HarvestEventRepository harvestEventRepository;
 
     @Autowired
-    public BatchController(BatchService batchService, DtoMapper dtoMapper) {
+    public BatchController(BatchService batchService, DtoMapper dtoMapper,
+                           HarvestEventRepository harvestEventRepository) {
         this.batchService = batchService;
         this.dtoMapper = dtoMapper;
+        this.harvestEventRepository = harvestEventRepository;
+    }
+
+    /**
+     * Resolves the Plants identity (lot number, plants harvest id) of the
+     * harvest event linked to this batch, joined by batch_id (option B).
+     * Returns null when the batch does not come from the Plants import.
+     */
+    private HarvestEvent harvestEventFor(String batchId) {
+        if (batchId == null) {
+            return null;
+        }
+        return harvestEventRepository.findByBatchId(batchId).orElse(null);
+    }
+
+    /**
+     * Batched resolution of the Plants identity for many batches, avoiding
+     * one query per row on list endpoints.
+     */
+    private Map<String, HarvestEvent> harvestEventsFor(List<Batch> batches) {
+        if (batches == null || batches.isEmpty()) {
+            return Map.of();
+        }
+        List<String> batchIds = batches.stream().map(Batch::getBatchId).collect(Collectors.toList());
+        return harvestEventRepository.findByBatchIdIn(batchIds).stream()
+                .collect(Collectors.toMap(HarvestEvent::getBatchId, Function.identity(), (first, second) -> first));
+    }
+
+    private List<BatchResponse> toResponses(List<Batch> batches) {
+        Map<String, HarvestEvent> eventsByBatchId = harvestEventsFor(batches);
+        return batches.stream()
+                .map(b -> dtoMapper.toResponse(b, eventsByBatchId.get(b.getBatchId())))
+                .collect(Collectors.toList());
     }
 
     @PostMapping
@@ -47,7 +86,7 @@ public class BatchController {
     public ResponseEntity<BatchResponse> createBatch(@Valid @RequestBody BatchCreateRequest request) {
         Batch batch = dtoMapper.toEntity(request);
         Batch createdBatch = batchService.createBatch(batch);
-        BatchResponse response = dtoMapper.toResponse(createdBatch);
+        BatchResponse response = dtoMapper.toResponse(createdBatch, harvestEventFor(createdBatch.getBatchId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -56,7 +95,7 @@ public class BatchController {
     public ResponseEntity<BatchResponse> getBatchById(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
         Batch batch = batchService.getBatchById(batchId);
-        BatchResponse response = dtoMapper.toResponse(batch);
+        BatchResponse response = dtoMapper.toResponse(batch, harvestEventFor(batch.getBatchId()));
         return ResponseEntity.ok(response);
     }
 
@@ -64,10 +103,7 @@ public class BatchController {
     @Operation(summary = "Get all batches", description = "Retrieves all batches")
     public ResponseEntity<List<BatchResponse>> getAllBatches() {
         List<Batch> batches = batchService.getAllBatches();
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(toResponses(batches));
     }
 
     @PutMapping("/{batchId}")
@@ -84,7 +120,7 @@ public class BatchController {
         batch.setCurrentStatus(request.getCurrentStatus());
         
         Batch updatedBatch = batchService.updateBatch(batchId, batch);
-        BatchResponse response = dtoMapper.toResponse(updatedBatch);
+        BatchResponse response = dtoMapper.toResponse(updatedBatch, harvestEventFor(updatedBatch.getBatchId()));
         return ResponseEntity.ok(response);
     }
 
@@ -100,9 +136,9 @@ public class BatchController {
     @Operation(summary = "Advance batch status", description = "Advances batch status to next stage following business rules")
     public ResponseEntity<BatchResponse> advanceBatchStatus(
             @Parameter(description = "Batch ID") @PathVariable String batchId,
-            @Valid @RequestBody BatchStatusAdvanceRequest request) {
+            @Valid @RequestBody(required = false) BatchStatusAdvanceRequest request) {
         Batch batch = batchService.advanceBatchStatus(batchId);
-        BatchResponse response = dtoMapper.toResponse(batch);
+        BatchResponse response = dtoMapper.toResponse(batch, harvestEventFor(batch.getBatchId()));
         return ResponseEntity.ok(response);
     }
 
@@ -112,7 +148,7 @@ public class BatchController {
             @Parameter(description = "Batch ID") @PathVariable String batchId,
             @Parameter(description = "New status") @RequestParam BatchStatus status) {
         Batch batch = batchService.setBatchStatus(batchId, status);
-        BatchResponse response = dtoMapper.toResponse(batch);
+        BatchResponse response = dtoMapper.toResponse(batch, harvestEventFor(batch.getBatchId()));
         return ResponseEntity.ok(response);
     }
 
@@ -121,10 +157,7 @@ public class BatchController {
     public ResponseEntity<List<BatchResponse>> getBatchesByStatus(
             @Parameter(description = "Batch status") @PathVariable BatchStatus status) {
         List<Batch> batches = batchService.getBatchesByStatus(status);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(toResponses(batches));
     }
 
     @GetMapping("/farm/{farmId}")
@@ -132,10 +165,7 @@ public class BatchController {
     public ResponseEntity<List<BatchResponse>> getBatchesByFarm(
             @Parameter(description = "Farm ID") @PathVariable String farmId) {
         List<Batch> batches = batchService.getBatchesByFarm(farmId);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(toResponses(batches));
     }
 
     @GetMapping("/variety/{variety}")
@@ -143,20 +173,14 @@ public class BatchController {
     public ResponseEntity<List<BatchResponse>> getBatchesByVariety(
             @Parameter(description = "Mango variety") @PathVariable MangoVariety variety) {
         List<Batch> batches = batchService.getBatchesByVariety(variety);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(toResponses(batches));
     }
 
     @GetMapping("/ready-for-shipping")
     @Operation(summary = "Get batches ready for shipping", description = "Retrieves batches that are ready for shipping")
     public ResponseEntity<List<BatchResponse>> getBatchesReadyForShipping() {
         List<Batch> batches = batchService.getBatchesReadyForShipping();
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(toResponses(batches));
     }
 
     @GetMapping("/farm/{farmId}/block/{blockId}")
@@ -165,10 +189,7 @@ public class BatchController {
             @Parameter(description = "Farm ID") @PathVariable String farmId,
             @Parameter(description = "Block ID") @PathVariable String blockId) {
         List<Batch> batches = batchService.getBatchesByFarmAndBlock(farmId, blockId);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(toResponses(batches));
     }
 
     @GetMapping("/date-range")
@@ -177,9 +198,6 @@ public class BatchController {
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,
             @Parameter(description = "End date") @RequestParam LocalDate endDate) {
         List<Batch> batches = batchService.getBatchesByHarvestDateRange(startDate, endDate);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(toResponses(batches));
     }
 }

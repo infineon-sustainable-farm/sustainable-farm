@@ -102,7 +102,7 @@ describe('WashSortRecordList', () => {
     expect(within(table).getByText('WS-1')).toBeTruthy();
     expect(within(table).getByText('92.3%')).toBeTruthy();
     expect(within(table).getByText('92.6%')).toBeTruthy();
-    expect(within(table).getByText('1250 L')).toBeTruthy();
+    expect(within(table).getByText('1,250 L')).toBeTruthy();
     expect(within(table).getAllByText('Washer 1').length).toBeGreaterThan(0);
     expect(within(table).getAllByText('Moussa').length).toBeGreaterThan(0);
     // Names are resolved from all operators, not just the assignable role.
@@ -245,6 +245,7 @@ describe('WashSortRecordList', () => {
     render(<WashSortRecordList />);
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Washing & Sorting' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

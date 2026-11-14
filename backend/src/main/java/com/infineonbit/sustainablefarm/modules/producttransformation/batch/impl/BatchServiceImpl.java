@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.impl;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
+import com.infineonbit.sustainablefarm.modules.producttransformation.exception.DuplicateResourceException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.InvalidStateException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -45,6 +46,12 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     public Batch createBatch(Batch batch) {
+        // Business Rule: the batch id is assigned by the caller, so a duplicate
+        // id would silently overwrite the existing row through JPA merge().
+        // Reject it explicitly with a 409 instead of losing data.
+        if (batch.getBatchId() != null && batchRepository.existsById(batch.getBatchId())) {
+            throw new DuplicateResourceException("Batch already exists: " + batch.getBatchId());
+        }
         // Business Rule: Default to CREATED status if not set
         if (batch.getCurrentStatus() == null) {
             batch.setCurrentStatus(BatchStatus.CREATED);

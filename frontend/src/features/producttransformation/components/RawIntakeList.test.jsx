@@ -65,8 +65,8 @@ describe('RawIntakeList', () => {
     const table = await screen.findByRole('table');
     expect(within(table).getByText('RI-1')).toBeTruthy();
     expect(within(table).getByText('RI-2')).toBeTruthy();
-    expect(within(table).getByText('520.00 kg')).toBeTruthy();
-    expect(within(table).getByText('480.50 kg')).toBeTruthy();
+    expect(within(table).getByText('520 kg')).toBeTruthy();
+    expect(within(table).getByText('480.5 kg')).toBeTruthy();
     expect(within(table).getByText('Farm A / Block A')).toBeTruthy();
     expect(within(table).getByText('Grade A')).toBeTruthy();
     expect(within(table).getByText('Grade B')).toBeTruthy();
@@ -221,6 +221,7 @@ describe('RawIntakeList', () => {
     render(<RawIntakeList />);
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Raw Intake' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

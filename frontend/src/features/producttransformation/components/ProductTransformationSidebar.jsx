@@ -17,11 +17,12 @@ import {
   FileText,
   Flame,
   LayoutDashboard,
+  LogOut,
   Menu,
   Package,
   PackageCheck,
-  Settings,
   Truck,
+  Users,
   Waves,
   X,
 } from 'lucide-react';
@@ -44,7 +45,7 @@ const NAV_ITEMS = [
   { label: 'Compliance', icon: FileText, path: '/product-transformation/compliance' },
   { label: 'Packaging', icon: PackageCheck, path: '/product-transformation/packaging' },
   { label: 'Equipment', icon: Cog, path: '/product-transformation/equipment' },
-  { label: 'Settings', icon: Settings, path: '/product-transformation/settings' },
+  { label: 'Operators', icon: Users, path: '/product-transformation/operators' },
 ];
 
 // 32 px entries with 16 px icons, the one icon size of the module shell.
@@ -57,8 +58,16 @@ const linkStyles = ({ isActive }) =>
     isActive ? 'bg-black/10 font-semibold shadow-[inset_2px_0_0_#fff]' : 'font-normal'
   }`;
 
+// Same footprint as a nav entry, so the menu keeps one vertical rhythm.
+const LOGOUT_STYLES = `${ITEM_BASE} cursor-pointer hover:bg-black/10`;
+
 export default function ProductTransformationSidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [logoutNotice, setLogoutNotice] = useState(false);
+
+  // The demo has no authentication backend: rather than shipping a button that
+  // does nothing, it states the limitation instead of faking a sign-out.
+  const handleLogout = () => setLogoutNotice(true);
 
   return (
     <>
@@ -103,6 +112,18 @@ export default function ProductTransformationSidebar() {
             </li>
           ))}
         </ul>
+
+        <div className="mt-auto flex flex-col gap-1">
+          <button type="button" onClick={handleLogout} className={LOGOUT_STYLES}>
+            <LogOut size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
+            Log out
+          </button>
+          {logoutNotice && (
+            <p role="status" className="rounded-md bg-black/10 px-3 py-2 text-xs text-white">
+              Authentication is not enabled in this demo.
+            </p>
+          )}
+        </div>
       </nav>
     </>
   );

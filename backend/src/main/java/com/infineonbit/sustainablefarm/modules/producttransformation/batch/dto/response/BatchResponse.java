@@ -32,4 +32,12 @@ public class BatchResponse {
     private String blockId;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    /**
+     * Identity of the Plants harvest this batch was imported from (option B).
+     * Resolved from the linked harvest_event (joined by batch_id), never
+     * duplicated into the batch table. Null for batches that do not come
+     * from the Plants import.
+     */
+    private String lotNumber;
+    private Long plantsHarvestId;
 }

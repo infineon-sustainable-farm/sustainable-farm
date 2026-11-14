@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
@@ -51,6 +51,18 @@ public class HarvestEvent {
     @Column(name = "plants_harvest_id")
     private Long plantsHarvestId;
 
+    /**
+     * Lot number assigned by Plants (for example {@code LOT-2026-A-001}).
+     *
+     * <p>Stored as its own field, not reused as {@code batchId}: a harvest lot and
+     * a transformation lot are not always the same thing (one harvest can be split
+     * into several drying lots, and several harvests can be merged into one
+     * transformation lot). Keeping both lets a transformation lot be traced back
+     * to the farm harvest it came from.
+     */
+    @Column(name = "lot_number", length = 50)
+    private String lotNumber;
+
     @Column(name = "batch_id", nullable = false, unique = true, length = 50)
     private String batchId;
 
@@ -69,7 +81,16 @@ public class HarvestEvent {
     @Column(name = "mango_variety", nullable = false, length = 20)
     private MangoVariety mangoVariety;
 
-    @Column(name = "farm_id", nullable = false, length = 50)
+    /**
+     * Farm identifier of the harvest.
+     *
+     * <p>Optional because the Plants module has a single farm and does not record
+     * an identifier: an imported harvest therefore arrives without one. The
+     * common cross-module farm identifier is still to be agreed, so a null value
+     * means "not assigned yet", not "unknown". A harvest created through the
+     * Product Transformation API still validates it as required.
+     */
+    @Column(name = "farm_id", length = 50)
     private String farmId;
 
     @Column(name = "block_id", nullable = false, length = 50)
@@ -136,12 +157,10 @@ public class HarvestEvent {
          * whole harvest import.
          */
         public static MangoVariety fromPlants(String varietyName) {
-            if (varietyName == null) {
+            String normalized = normalize(varietyName);
+            if (normalized == null) {
                 return OTHER;
             }
-            String normalized = java.text.Normalizer.normalize(varietyName.trim(), java.text.Normalizer.Form.NFD)
-                    .replaceAll("\\p{M}", "")
-                    .toUpperCase(java.util.Locale.ROOT);
             switch (normalized) {
                 case "KEITT":
                     return KEITT;
@@ -152,9 +171,60 @@ public class HarvestEvent {
                     return TOMMY;
                 case "AMELIE":
                     return AMÉLIE;
+                case "OTHER":
+                    return OTHER;
                 default:
                     return OTHER;
             }
+        }
+
+        /**
+         * Bind a variety name coming from an HTTP payload.
+         *
+         * <p>Unlike {@link #fromPlants(String)} this creator is strict: a client
+         * that writes {@code "Alphonso"} gets a {@code 400}, not a silent
+         * {@link #OTHER}. The lenient path exists for data owned by Plants, where
+         * refusing a whole harvest over an unmapped variety would be worse than
+         * keeping the record with {@code OTHER}. Accepting case and accents here
+         * is what lets Plants' usual spelling ({@code "Keitt"}, {@code "Amélie"})
+         * be posted directly to the Product Transformation API.
+         *
+         * @param varietyName variety name as written by the client
+         * @return the matching constant
+         * @throws IllegalArgumentException when the name is not a known variety
+         */
+        @JsonCreator
+        public static MangoVariety fromJson(String varietyName) {
+            String normalized = normalize(varietyName);
+            if (normalized == null) {
+                return null;
+            }
+            switch (normalized) {
+                case "KEITT":
+                    return KEITT;
+                case "KENT":
+                    return KENT;
+                case "TOMMY":
+                case "TOMMY ATKINS":
+                    return TOMMY;
+                case "AMELIE":
+                    return AMÉLIE;
+                case "OTHER":
+                    return OTHER;
+                default:
+                    throw new IllegalArgumentException(
+                            "Unknown mango variety: '" + varietyName
+                                    + "'. Expected one of KEITT, KENT, TOMMY, AMÉLIE, OTHER");
+            }
+        }
+
+        private static String normalize(String varietyName) {
+            if (varietyName == null) {
+                return null;
+            }
+            return java.text.Normalizer.normalize(varietyName.trim(), java.text.Normalizer.Form.NFD)
+                    .replaceAll("\\p{M}", "")
+                    .toUpperCase(java.util.Locale.ROOT);
         }
     }
 
