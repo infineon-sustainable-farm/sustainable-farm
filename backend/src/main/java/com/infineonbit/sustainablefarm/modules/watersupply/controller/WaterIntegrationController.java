@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Endpoints consumed by the other modules (Plants, Visitor Management, Product Transformation) and
- * planned water unavailability. Contracts and examples: {@code docs/integrations/}.
+ * planned water unavailability. Contracts and examples: {@code watersupply/docs/integrations/}.
  * Device commands are in {@code iot.IotCommandController}.
  */
 @RestController

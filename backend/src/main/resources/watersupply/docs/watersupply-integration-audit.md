@@ -104,7 +104,7 @@ Pagination: `partiel`. Plusieurs listes acceptent `page`/`size` et retournent `P
 
 Format d'erreur standard: `existe` pour le module watersupply via envelope `timestamp`, `status`, `error`, `code`, `message`. Preuve: `WaterSupplyExceptionHandler.java:112-119`.
 
-Documentation OpenAPI/Swagger: `partiel`. Dependency springdoc presente et Swagger UI configure; annotations `@Tag`/`@Operation` sur certains controleurs seulement. Preuves: `backend/pom.xml:73-74`, `application.properties:17-18`, `WaterController.java:36`, `IrrigationController.java:33`.
+Documentation OpenAPI/Swagger: `partiel`. Dependency springdoc presente et Swagger UI configure; annotations `@Tag`/`@Operation` sur certains controleurs seulement. Preuves: `backend/pom.xml:73-74`, `watersupply/application.properties`, `WaterController.java:36`, `IrrigationController.java:33`.
 
 ## 2. Entites, tables, relations, index
 

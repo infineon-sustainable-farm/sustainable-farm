@@ -7,9 +7,10 @@ import org.springframework.stereotype.Component;
  * Thresholds and coefficients used by the inter-module integrations (Plants, Visitor Management,
  * Product Transformation, IoT commands).
  *
- * <p>Every value is overridable through an environment variable (see {@code application.properties}).
+ * <p>Every value is overridable through an environment variable (see
+ * {@code watersupply/application.properties}).
  * The defaults are working values, NOT validated business references: each one is listed as an open
- * question in {@code docs/integrations/} and must be confirmed by the owning team.</p>
+ * question in {@code watersupply/docs/integrations/} and must be confirmed by the owning team.</p>
  */
 @Component
 public class WaterIntegrationProperties {

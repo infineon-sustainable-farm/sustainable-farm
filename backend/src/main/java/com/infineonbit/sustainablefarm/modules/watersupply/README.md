@@ -20,8 +20,8 @@ The module is mounted under `/watersupply` in the application (`routes.jsx`), li
 ## Integration
 
 Water Supply serves Plants, Visitor Management, Product Transformation and IoT. The contracts,
-examples and open questions for each team are in [`docs/integrations/`](../../../../../../../../../docs/integrations/README.md).
-The source of the needs is the [integration audit](../../../../../../../../../docs/watersupply-integration-audit.md).
+examples and open questions for each team are in [`docs/integrations/`](../../../../../../resources/watersupply/docs/integrations/README.md).
+The source of the needs is the [integration audit](../../../../../../resources/watersupply/docs/watersupply-integration-audit.md).
 
 ### Progress
 
@@ -183,8 +183,8 @@ This is a first version, **to be reviewed soon**:
 | `app.water.plants.phase-factor.*` | 1.0 | Need multiplier per Plants growth phase (to validate) |
 | `app.water.iot.valve-max-duration-seconds` / `offline-threshold-minutes` | 30 / 15 | Valve opening cap, device offline delay |
 
-Every `app.water.*` value has an environment variable (see `application.properties`); the
-integration values are working defaults listed as open questions in `docs/integrations/`.
+Every `app.water.*` value has an environment variable (see [`watersupply/application.properties`](../../../../../../resources/watersupply/application.properties)); the
+integration values are working defaults listed as open questions in [`docs/integrations/`](../../../../../../resources/watersupply/docs/integrations/README.md).
 
 ## IoT ingestion contract
 
@@ -230,12 +230,12 @@ React Query client (`components/views/testRender.jsx`).
   (`SystemUsers.IOT_SYSTEM_USER_ID`, with no usable password).
 - **Migration numbers**: `V11` (zone/block mapping), `V12` (integrations) and `V13` (answers of the
   teams) belong to watersupply; the next free number is `V14`.
-- **Fresh PostgreSQL startup**: V1-V12 apply, but `ddl-auto=validate` then fails on tables of other
-  modules that have no migration (list in `docs/integrations/README.md`).
+- **Fresh PostgreSQL startup**: V1-V12 apply, but `ddl-auto=update` creates tables of other modules
+  that have no migration (list in [`docs/integrations/README.md`](../../../../../../resources/watersupply/docs/integrations/README.md)).
 - **Farm and field location**: first version from the device geolocation, to be reviewed (see
   "Farm and field location" above).
 - **Integration answers** expected from Plants, Visitor Management, Product Transformation, IoT and
-  Site Security: see the "What we need from you" section of each page in `docs/integrations/`.
+  Site Security: see the "What we need from you" section of each page in [`docs/integrations/`](../../../../../../resources/watersupply/docs/integrations/README.md).
 - **`shared/hooks/useAuth.js`**: dead code outside the module importing `getToken`/`setToken` from
   `shared/api/client.js` — those functions do not exist; to fix in coordination or remove.
 
