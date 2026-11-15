@@ -3,12 +3,6 @@ import { RotateCcw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { simulateWhatIf } from "../api/energyApi";
 
-// WhatIfResponseDto (backend) currently exposes only "proposed" values —
-// there is no baseline/current scenario in the response:
-//   additionalCapexEur, newPaybackYears, newCo2ReductionPct, newSystemCapacityKwp
-// A "Current vs Proposed" comparison isn't possible until the backend
-// adds baseline fields. This version shows only the proposed outcome.
-
 const DEFAULTS = { additionalPanels: 40, additionalBatteryKwh: 80, productionScaleKgPerDay: 500 };
 
 function SliderField({ label, value, onChange, min, max, step, unit }) {
@@ -20,6 +14,7 @@ function SliderField({ label, value, onChange, min, max, step, unit }) {
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
+        aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
         className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-surface-container-low accent-primary"
       />
@@ -80,9 +75,9 @@ export default function WhatIfAnalysis() {
 
   const chartData = result
     ? [
-        { metric: "Capacity (kWp)", value: result.newSystemCapacityKwp },
-        { metric: "CO₂ Reduction (%)", value: result.newCo2ReductionPct },
-        { metric: "Payback (yrs)", value: result.newPaybackYears },
+        { metric: "Additional PV generation", value: result.additionalPvGenerationKwhPerYear },
+        { metric: "Production demand", value: result.additionalProductionDemandKwhPerYear },
+        { metric: "Net energy balance", value: result.netAnnualEnergyBalanceKwh },
       ]
     : [];
 
@@ -125,8 +120,14 @@ export default function WhatIfAnalysis() {
             <div className="p-5">
               <Row label="New System Capacity" value={`${result.newSystemCapacityKwp?.toFixed(1)} kWp`} />
               <Row label="Additional CAPEX" value={`€${result.additionalCapexEur?.toLocaleString()}`} />
-              <Row label="Payback Period" value={`${result.newPaybackYears?.toFixed(1)} yrs`} />
-              <Row label="CO₂ Reduction" value={`${result.newCo2ReductionPct}%`} noBorder />
+              <Row label="Estimated Payback Period" value={result.newPaybackYears == null ? "N/A" : `${result.newPaybackYears.toFixed(1)} yrs`} />
+              <Row label="Additional Production Demand" value={`${result.additionalProductionDemandKwhPerYear?.toLocaleString()} kWh/year`} />
+              <Row label="Net Annual Energy Balance" value={`${result.netAnnualEnergyBalanceKwh?.toLocaleString()} kWh/year`} />
+              <Row
+                label={result.netAnnualCo2AvoidedKg >= 0 ? "Net Annual CO₂ Avoided" : "Net Annual CO₂ Increase"}
+                value={`${Math.abs(result.netAnnualCo2AvoidedKg).toLocaleString()} kg/year`}
+                noBorder
+              />
             </div>
           )}
         </div>

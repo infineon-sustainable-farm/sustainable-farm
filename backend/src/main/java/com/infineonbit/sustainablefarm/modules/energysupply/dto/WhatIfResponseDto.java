@@ -13,6 +13,9 @@ public class WhatIfResponseDto {
 
     private BigDecimal additionalCapexEur;
     private BigDecimal newPaybackYears;
-    private BigDecimal newCo2ReductionPct;
     private BigDecimal newSystemCapacityKwp;
+    private BigDecimal additionalPvGenerationKwhPerYear;
+    private BigDecimal additionalProductionDemandKwhPerYear;
+    private BigDecimal netAnnualEnergyBalanceKwh;
+    private BigDecimal netAnnualCo2AvoidedKg;
 }

@@ -15,8 +15,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,6 +32,28 @@ class AlertControllerTest {
 
     @MockitoBean
     private AlertService energyAlertService;
+
+    @Test
+    void listReturnsAlertsForTheFrontend() throws Exception {
+        when(energyAlertService.findAll()).thenReturn(List.of(openAlert()));
+
+        mockMvc.perform(get("/api/energy/alerts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].alertId").value("alert-1"))
+                .andExpect(jsonPath("$[0].componentName").value("Battery"))
+                .andExpect(jsonPath("$[0].severity").value("WARNING"))
+                .andExpect(jsonPath("$[0].status").value("OPEN"));
+    }
+
+    @Test
+    void listOpenReturnsOnlyOpenAlerts() throws Exception {
+        when(energyAlertService.findOpen()).thenReturn(List.of(openAlert()));
+
+        mockMvc.perform(get("/api/energy/alerts/open"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].alertId").value("alert-1"))
+                .andExpect(jsonPath("$[0].status").value("OPEN"));
+    }
 
     @Test
     void resolveChangesAlertStatus() throws Exception {
@@ -63,5 +87,11 @@ class AlertControllerTest {
         return new EnergyAlertResponse(
                 "alert-1", "ENG-002", "Battery", AlertSeverity.WARNING,
                 "Battery charge is low", LocalDateTime.now(), AlertStatus.RESOLVED);
+    }
+
+    private EnergyAlertResponse openAlert() {
+        return new EnergyAlertResponse(
+                "alert-1", "ENG-002", "Battery", AlertSeverity.WARNING,
+                "Battery charge is low", LocalDateTime.now(), AlertStatus.OPEN);
     }
 }
