@@ -18,11 +18,13 @@ import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyAle
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.GeneratorEventRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.SolarGenerationLogRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -50,26 +52,28 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
     private final GeneratorEventRepository generatorEventRepository;
     private final SolarGenerationLogRepository solarGenerationLogRepository;
     private final EnergyAlertRepository energyAlertRepository;
+    private final EntityManager entityManager;
 
     public EnergySupplyDataSeeder(EnergyComponentRepository componentRepository,
                                    ConsumptionLogRepository consumptionLogRepository,
                                    CarbonMetricRepository carbonMetricRepository,
                                    GeneratorEventRepository generatorEventRepository,
                                    SolarGenerationLogRepository solarGenerationLogRepository,
-                                   EnergyAlertRepository energyAlertRepository) {
+                                   EnergyAlertRepository energyAlertRepository,
+                                   EntityManager entityManager) {
         this.componentRepository = componentRepository;
         this.consumptionLogRepository = consumptionLogRepository;
         this.carbonMetricRepository = carbonMetricRepository;
         this.generatorEventRepository = generatorEventRepository;
         this.solarGenerationLogRepository = solarGenerationLogRepository;
         this.energyAlertRepository = energyAlertRepository;
+        this.entityManager = entityManager;
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
-        if (componentRepository.count() == 0) {
-            seedComponents();
-        }
+        seedComponents();
 
         if (consumptionLogRepository.count() == 0) {
             seedTodayConsumption();
@@ -98,7 +102,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         pv.setUnitCostEur(new BigDecimal("6500.00"));
         pv.setStatus(ComponentStatus.OPERATIONAL);
         pv.setLocation("Banfora farm site");
-        componentRepository.save(pv);
+        persistIfMissing(pv);
 
         EnergyComponent battery = new EnergyComponent();
         battery.setComponentId("ENG-002");
@@ -109,7 +113,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         battery.setUnitCostEur(new BigDecimal("4200.00"));
         battery.setStatus(ComponentStatus.OPERATIONAL);
         battery.setLocation("Banfora farm site");
-        componentRepository.save(battery);
+        persistIfMissing(battery);
 
         EnergyComponent inverter = new EnergyComponent();
         inverter.setComponentId("ENG-003");
@@ -120,7 +124,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         inverter.setUnitCostEur(new BigDecimal("1100.00"));
         inverter.setStatus(ComponentStatus.OPERATIONAL);
         inverter.setLocation("Banfora farm site");
-        componentRepository.save(inverter);
+        persistIfMissing(inverter);
 
         EnergyComponent generator = new EnergyComponent();
         generator.setComponentId("ENG-004");
@@ -131,7 +135,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         generator.setUnitCostEur(new BigDecimal("4000.00"));
         generator.setStatus(ComponentStatus.OPERATIONAL);
         generator.setLocation("Banfora farm site");
-        componentRepository.save(generator);
+        persistIfMissing(generator);
 
         EnergyComponent monitoring = new EnergyComponent();
         monitoring.setComponentId("ENG-005");
@@ -142,7 +146,13 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         monitoring.setUnitCostEur(new BigDecimal("350.00"));
         monitoring.setStatus(ComponentStatus.OPERATIONAL);
         monitoring.setLocation("Banfora farm site");
-        componentRepository.save(monitoring);
+        persistIfMissing(monitoring);
+    }
+
+    private void persistIfMissing(EnergyComponent component) {
+        if (!componentRepository.existsById(component.getComponentId())) {
+            entityManager.persist(component);
+        }
     }
 
     private void seedTodayConsumption() {
