@@ -12,6 +12,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,14 +39,14 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
-    private final SiteSecurityAuthorizationService authorizationService;
+    private final ObjectProvider<SiteSecurityAuthorizationService> authorizationService;
     private final byte[] gateTokenDigest;
 
     /**
      * The identity provider is injected so production can fail closed until the
      * central platform adapter is configured.
      */
-    public SiteSecurityAccessInterceptor(SiteSecurityAuthorizationService authorizationService,
+    public SiteSecurityAccessInterceptor(ObjectProvider<SiteSecurityAuthorizationService> authorizationService,
             @Value("${SITESECURITY_GATE_TOKEN:}") String gateToken) {
         this.authorizationService = authorizationService;
         this.gateTokenDigest = configuredDigest(gateToken);
@@ -85,7 +86,8 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
         if (isGateToken(request.getHeader(HttpHeaders.AUTHORIZATION))) {
             return Optional.of(SiteSecurityPrincipal.gateScanner());
         }
-        return authorizationService.currentPrincipal();
+        SiteSecurityAuthorizationService service = authorizationService.getIfAvailable();
+        return service == null ? Optional.empty() : service.currentPrincipal();
     }
 
     /**
