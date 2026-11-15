@@ -1,4 +1,5 @@
 import { formatBlock, formatNumber, formatPercent } from "../utils/format";
+import { CARD } from "./plantsStyles";
 
 /** "P1 · Keitt (Block E)", or "P1 · Keitt" for a batch with no planned block. */
 function cardTitle(batch) {
@@ -20,18 +21,18 @@ function cardTitle(batch) {
 export default function NurserySurvivalCards({ batches }) {
     return (
         <div className="flex flex-col gap-3">
-            <h3 id="survival-rate-title" className="font-heading text-sm font-bold text-gray-900">
+            <h3 id="survival-rate-title" className="font-heading text-sm font-bold text-on-background">
                 Survival rate by batch
             </h3>
             <ul aria-labelledby="survival-rate-title" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {batches.map((batch) => (
-                    <li key={batch.id} className="rounded-xl border border-gray-200 bg-white px-4 py-4">
-                        <p className="text-sm font-semibold break-words text-gray-900">{cardTitle(batch)}</p>
+                    <li key={batch.id} className={CARD}>
+                        <p className="text-sm font-semibold break-words text-on-background">{cardTitle(batch)}</p>
                         <div className="mt-2 flex items-baseline justify-between gap-3">
                             <span className="text-sm text-gray-600">
                                 {`${formatNumber(batch.survivedCount)} of ${formatNumber(batch.initialCount)} survived`}
                             </span>
-                            <span className="text-lg font-bold text-gray-900">
+                            <span className="text-lg font-bold text-on-background">
                                 {formatPercent(batch.survivalRatePct)}
                             </span>
                         </div>

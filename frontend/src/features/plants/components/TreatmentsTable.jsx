@@ -1,5 +1,6 @@
 import { formatBlock, formatDate, formatQuantity, formatText, NO_VALUE } from "../utils/format";
 import Value from "./Value";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 /*
  * What a GLOBALG.A.P. plant protection record keeps for each treatment. What
@@ -24,7 +25,7 @@ const COLUMNS = [
 
 // Headers may wrap, as in the cash flow: long titles no longer widen their column.
 const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase";
+    `${TABLE_HEAD} align-bottom whitespace-normal`;
 
 /** A whole number of days, as the API stores the pre-harvest interval: "14 days", "1 day". */
 function formatDays(days) {
@@ -35,7 +36,7 @@ function formatDays(days) {
 /** The treatment record, one row per treatment, in the order the API sends it. */
 export default function TreatmentsTable({ treatments }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>

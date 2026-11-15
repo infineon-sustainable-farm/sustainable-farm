@@ -3,8 +3,8 @@ import PlantsSidebar from "./PlantsSidebar";
 
 /**
  * Shell of the Plants module: its own sidebar, with the module's screens
- * rendered beside it. Same structure as MachineryLayout, so both modules carry
- * their navigation the same way.
+ * rendered beside it. The sidebar stays in place and only the screen beside it
+ * scrolls.
  */
 export default function PlantsLayout() {
     return (

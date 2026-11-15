@@ -15,13 +15,14 @@ import RecordInspectionModal from "./RecordInspectionModal";
 import ResolveFindingModal from "./ResolveFindingModal";
 import TreatmentModal from "./TreatmentModal";
 import TreatmentsSection from "./TreatmentsSection";
+import { PAGE, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
 function RecordInspectionButton({ onClick }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className={PRIMARY_BUTTON}
         >
             <Plus size={16} />
             Record an inspection
@@ -34,7 +35,7 @@ function RecordPreventiveTreatmentButton({ onClick }) {
         <button
             type="button"
             onClick={onClick}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className={SECONDARY_BUTTON}
         >
             <Plus size={16} />
             Record a preventive treatment
@@ -123,16 +124,16 @@ export default function DiseasesAlertsPage() {
     }
 
     return (
-        <div className="min-h-dvh bg-gray-50">
+        <div className={PAGE}>
             {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                        {/* A gray 12 px overline: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
                         <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                             Task 4
                         </p>
-                        <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">
+                        <h1 className="font-heading mt-1 text-2xl font-bold text-on-background">
                             Diseases &amp; Alerts
                         </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">

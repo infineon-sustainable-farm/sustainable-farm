@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL } from "./plantsStyles";
 
 const MONTHS_OPTIONS = [6, 12, 18, 24];
 
@@ -8,9 +9,6 @@ const MONTHS_OPTIONS = [6, 12, 18, 24];
  */
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-const LABEL_CLASS = "text-xs font-semibold text-gray-500";
-const CONTROL_CLASS =
-    "rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none";
 
 /**
  * Period of a monthly read: a first month and a number of months. Until a
@@ -34,10 +32,10 @@ export default function MonthPeriodControls({ idPrefix, titleId, answeredFrom, o
     }
 
     return (
-        <div className="flex flex-wrap items-start gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <div className={`flex flex-wrap items-start gap-x-6 gap-y-3 px-4 py-3 ${CARD_FRAME}`}>
             <div>
                 <div className="flex items-center gap-3">
-                    <label id={`${idPrefix}-from-label`} htmlFor={`${idPrefix}-from`} className={LABEL_CLASS}>
+                    <label id={`${idPrefix}-from-label`} htmlFor={`${idPrefix}-from`} className={FIELD_LABEL}>
                         From
                     </label>
                     <input
@@ -46,7 +44,7 @@ export default function MonthPeriodControls({ idPrefix, titleId, answeredFrom, o
                         value={fromInput ?? answeredFrom ?? ""}
                         onChange={(event) => changeFrom(event.target.value)}
                         aria-labelledby={`${titleId} ${idPrefix}-from-label`}
-                        className={CONTROL_CLASS}
+                        className={FIELD_INPUT}
                         {...(fromError
                             ? { "aria-invalid": true, "aria-describedby": `${idPrefix}-from-error` }
                             : {})}
@@ -60,7 +58,7 @@ export default function MonthPeriodControls({ idPrefix, titleId, answeredFrom, o
             </div>
 
             <div className="flex items-center gap-3">
-                <label id={`${idPrefix}-months-label`} htmlFor={`${idPrefix}-months`} className={LABEL_CLASS}>
+                <label id={`${idPrefix}-months-label`} htmlFor={`${idPrefix}-months`} className={FIELD_LABEL}>
                     Months
                 </label>
                 <select
@@ -68,7 +66,7 @@ export default function MonthPeriodControls({ idPrefix, titleId, answeredFrom, o
                     value={months}
                     onChange={(event) => onMonthsChange(Number(event.target.value))}
                     aria-labelledby={`${titleId} ${idPrefix}-months-label`}
-                    className={CONTROL_CLASS}
+                    className={FIELD_INPUT}
                 >
                     {MONTHS_OPTIONS.map((option) => (
                         <option key={option} value={option}>

@@ -4,7 +4,7 @@ import { useEffect } from "react";
  * Dialog frame of the Plants module: the overlay, the white panel, and the two
  * ways to close it (Escape, or a click outside the panel).
  *
- * Local to the module, like the Visitor Management modal. The shared Modal has
+ * Local to the module. The shared Modal has
  * no Escape handling and no dialog semantics, and changing it is a decision for
  * the team that owns it.
  *
