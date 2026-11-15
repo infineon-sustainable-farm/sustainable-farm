@@ -9,7 +9,7 @@ import {
 } from "../api/energyApi";
 import { formatEnergyLabel } from "../utils/formatEnergyLabel";
 
-const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground";
+const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-on-background";
 const today = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -46,25 +46,25 @@ function SolarLogForm({ log, arrays, saving, error, onClose, onSave }) {
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <form onSubmit={submit} className="grid w-full max-w-lg gap-4 rounded-lg border border-border bg-card p-5 sm:grid-cols-2">
+      <form onSubmit={submit} className="grid w-full max-w-lg gap-4 rounded-lg border border-border bg-surface-container-lowest p-5 sm:grid-cols-2">
         <h2 className="font-heading text-lg font-bold sm:col-span-2">{log ? "Edit solar log" : "Add solar log"}</h2>
         <label className="grid gap-1 text-sm sm:col-span-2">PV component<select className={inputClass} value={values.componentId}
           onChange={(e) => setValues({ ...values, componentId: e.target.value })}>
           {arrays.map((array) => <option key={array.componentId} value={array.componentId}>{array.componentId} · {array.name}</option>)}
-        </select>{errors.componentId && <span className="text-xs text-destructive">{errors.componentId}</span>}</label>
+        </select>{errors.componentId && <span className="text-xs text-error">{errors.componentId}</span>}</label>
         <label className="grid gap-1 text-sm">Date<input className={inputClass} type="date" max={today()} value={values.date}
-          onChange={(e) => setValues({ ...values, date: e.target.value })} />{errors.date && <span className="text-xs text-destructive">{errors.date}</span>}</label>
+          onChange={(e) => setValues({ ...values, date: e.target.value })} />{errors.date && <span className="text-xs text-error">{errors.date}</span>}</label>
         <label className="grid gap-1 text-sm">Energy generated (kWh)<input className={inputClass} type="number" min="0" step="any"
           value={values.kwhProduced} onChange={(e) => setValues({ ...values, kwhProduced: e.target.value })} />
-          {errors.kwhProduced && <span className="text-xs text-destructive">{errors.kwhProduced}</span>}</label>
+          {errors.kwhProduced && <span className="text-xs text-error">{errors.kwhProduced}</span>}</label>
         <label className="grid gap-1 text-sm sm:col-span-2">Efficiency (%)<input className={inputClass} type="number" min="0" step="any"
           max="100"
           value={values.efficiencyPct} onChange={(e) => setValues({ ...values, efficiencyPct: e.target.value })} />
-          {errors.efficiencyPct && <span className="text-xs text-destructive">{errors.efficiencyPct}</span>}</label>
-        {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
+          {errors.efficiencyPct && <span className="text-xs text-error">{errors.efficiencyPct}</span>}</label>
+        {error && <p className="text-sm text-error sm:col-span-2" role="alert">{error}</p>}
         <div className="flex justify-end gap-2 border-t border-border pt-4 sm:col-span-2">
           <button type="button" disabled={saving} onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm">Cancel</button>
-          <button disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">{saving ? "Saving..." : "Save"}</button>
+          <button disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary">{saving ? "Saving..." : "Save"}</button>
         </div>
       </form>
     </div>
@@ -75,21 +75,21 @@ const statusBadge = (status) => {
   const map = {
     OPERATIONAL: "bg-primary/10 text-primary",
     UNDER_MAINTENANCE: "bg-warning/10 text-warning",
-    OUT_OF_SERVICE: "bg-destructive/10 text-destructive",
+    OUT_OF_SERVICE: "bg-error/10 text-error",
   };
   const label = formatEnergyLabel(status);
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${map[status] || "bg-muted-foreground/10 text-muted-foreground"}`}>{label}</span>;
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${map[status] || "bg-outline/10 text-on-surface-variant"}`}>{label}</span>;
 };
 
 function ScoreCard({ label, value, unit, icon: Icon }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm border-t-[3px] border-t-primary">
+    <div className="rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm border-t-[3px] border-t-primary">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">{label}</p>
-          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-foreground">
+          <p className="text-xs font-medium uppercase tracking-[0.05em] text-on-surface-variant">{label}</p>
+          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-on-background">
             {value}
-            <span className="ml-1 text-base font-semibold text-muted-foreground">{unit}</span>
+            <span className="ml-1 text-base font-semibold text-on-surface-variant">{unit}</span>
           </p>
         </div>
         <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -182,8 +182,8 @@ export default function SolarGeneration() {
     }
   }
 
-  if (error && !arrays.length && !logs.length) return <p className="text-sm text-destructive" role="alert">Failed to load solar data: {error}</p>;
-  if (loading) return <p className="text-sm text-muted-foreground">Loading solar data...</p>;
+  if (error && !arrays.length && !logs.length) return <p className="text-sm text-error" role="alert">Failed to load solar data: {error}</p>;
+  if (loading) return <p className="text-sm text-on-surface-variant">Loading solar data...</p>;
 
   const totalCapacity = arrays.reduce((s, a) => s + (Number(a.capacityValue) || 0), 0);
   const totalYield = arrays.reduce((s, a) => s + (Number(a.latest?.kwhProduced) || 0), 0);
@@ -194,15 +194,15 @@ export default function SolarGeneration() {
   return (
     <section>
       <div className="mb-5">
-        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-foreground">
+        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-on-background">
           Solar &amp; Generation Monitoring
         </h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
           Latest output and efficiency across all PV arrays serving the mango-drying operation.
         </p>
       </div>
 
-      {error && <p className="mb-4 text-sm text-destructive" role="alert">{error}</p>}
+      {error && <p className="mb-4 text-sm text-error" role="alert">{error}</p>}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <ScoreCard label="Total Installed Capacity" value={totalCapacity.toFixed(1)} unit="kWp" icon={Sun} />
@@ -210,24 +210,24 @@ export default function SolarGeneration() {
         <ScoreCard label="Average Efficiency" value={avgEfficiency.toFixed(1)} unit="%" icon={TrendingUp} />
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary">
+      <div className="mt-6 rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary">
         <div className="border-b border-border px-5 py-3.5">
-          <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Solar Array Monitoring</h2>
+          <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Solar Array Monitoring</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr>
                 {["Component ID", "Name", "Capacity (kWp)", "Latest Output (kWh)", "Efficiency (%)", "Status"].map((h) => (
-                  <th key={h} className="border-b border-border bg-muted/50 px-5 py-3 text-left text-xs font-bold uppercase text-muted-foreground">{h}</th>
+                  <th key={h} className="border-b border-border bg-surface-container-low px-5 py-3 text-left text-xs font-bold uppercase text-on-surface-variant">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {arrays.length === 0 ? (
-                <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-muted-foreground">No solar arrays configured yet.</td></tr>
+                <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-on-surface-variant">No solar arrays configured yet.</td></tr>
               ) : arrays.map((a) => (
-                <tr key={a.componentId} className="hover:bg-muted/40">
+                <tr key={a.componentId} className="hover:bg-surface-container-low">
                   <td className="border-b border-border px-5 py-3 font-semibold">{a.componentId}</td>
                   <td className="border-b border-border px-5 py-3">{a.name}</td>
                   <td className="border-b border-border px-5 py-3 tabular-nums">{a.capacityValue?.toFixed(1)}</td>
@@ -240,18 +240,18 @@ export default function SolarGeneration() {
           </table>
         </div>
       </div>
-      <div className="mt-6 rounded-lg border border-border bg-card">
+      <div className="mt-6 rounded-lg border border-border bg-surface-container-lowest">
         <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
           <h2 className="font-heading text-[13px] font-bold uppercase">Solar generation logs</h2>
           <button type="button" disabled={!arrays.length} onClick={() => { setEditing(null); setFormOpen(true); }}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:opacity-50">
             <Plus size={16} /> Add log
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead><tr>{["Date", "PV component", "kWh generated", "Efficiency (%)", "Actions"].map((item) =>
-              <th key={item} className="border-b border-border bg-muted/50 px-4 py-3 text-xs uppercase text-muted-foreground">{item}</th>)}</tr></thead>
+              <th key={item} className="border-b border-border bg-surface-container-low px-4 py-3 text-xs uppercase text-on-surface-variant">{item}</th>)}</tr></thead>
             <tbody>
               {logs.map((log) => <tr key={log.logId}>
                 <td className="border-b border-border px-4 py-3">{log.date}</td>
@@ -262,10 +262,10 @@ export default function SolarGeneration() {
                   <button type="button" aria-label={`Edit solar log ${log.logId}`} disabled={saving}
                     onClick={() => { setEditing(log); setFormOpen(true); }} className="mr-2 text-primary"><Pencil size={16} /></button>
                   <button type="button" aria-label={`Delete solar log ${log.logId}`} disabled={saving}
-                    onClick={() => remove(log)} className="text-destructive"><Trash2 size={16} /></button>
+                    onClick={() => remove(log)} className="text-error"><Trash2 size={16} /></button>
                 </td>
               </tr>)}
-              {!logs.length && <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No solar logs recorded.</td></tr>}
+              {!logs.length && <tr><td colSpan={5} className="px-4 py-8 text-center text-on-surface-variant">No solar logs recorded.</td></tr>}
             </tbody>
           </table>
         </div>

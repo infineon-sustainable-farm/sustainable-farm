@@ -6,13 +6,13 @@ import { formatEnergyLabel } from "../utils/formatEnergyLabel";
 
 function ScoreCard({ label, value, unit, icon: Icon }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm border-t-[3px] border-t-primary">
+    <div className="rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm border-t-[3px] border-t-primary">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">{label}</p>
-          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-foreground">
+          <p className="text-xs font-medium uppercase tracking-[0.05em] text-on-surface-variant">{label}</p>
+          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-on-background">
             {value}
-            <span className="ml-1 text-base font-semibold text-muted-foreground">{unit}</span>
+            <span className="ml-1 text-base font-semibold text-on-surface-variant">{unit}</span>
           </p>
         </div>
         <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -51,20 +51,20 @@ export default function Dashboard() {
   }, []);
 
   if (error) {
-    return <p className="text-sm text-destructive">Failed to load dashboard: {error}</p>;
+    return <p className="text-sm text-error">Failed to load dashboard: {error}</p>;
   }
 
   if (!summary) {
-    return <p className="text-sm text-muted-foreground">Loading dashboard...</p>;
+    return <p className="text-sm text-on-surface-variant">Loading dashboard...</p>;
   }
 
   return (
     <section>
       <div className="mb-5">
-        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-foreground">
+        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-on-background">
           System Overview
         </h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
           Real-time snapshot of the farm's energy supply — solar generation, consumption, backup, and emissions.
         </p>
       </div>
@@ -77,15 +77,15 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-5">
-        <div className="rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary xl:col-span-3">
+        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary xl:col-span-3">
           <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">
+            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">
               Solar Production · Last 7 Days
             </h2>
           </div>
           <div className="p-5" style={{ height: 240 }}>
             {weekly.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No solar readings recorded yet.</p>
+              <p className="text-sm text-on-surface-variant">No solar readings recorded yet.</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weekly}>
@@ -99,9 +99,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary xl:col-span-2">
+        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary xl:col-span-2">
           <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">
+            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">
               System Status Overview
             </h2>
           </div>
@@ -109,23 +109,23 @@ export default function Dashboard() {
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr>
-                  <th className="border-b border-border bg-muted/50 px-5 py-3 text-left text-xs font-bold uppercase text-muted-foreground">
+                  <th className="border-b border-border bg-surface-container-low px-5 py-3 text-left text-xs font-bold uppercase text-on-surface-variant">
                     Component
                   </th>
-                  <th className="border-b border-border bg-muted/50 px-5 py-3 text-left text-xs font-bold uppercase text-muted-foreground">
+                  <th className="border-b border-border bg-surface-container-low px-5 py-3 text-left text-xs font-bold uppercase text-on-surface-variant">
                     Value
                   </th>
-                  <th className="border-b border-border bg-muted/50 px-5 py-3 text-left text-xs font-bold uppercase text-muted-foreground">
+                  <th className="border-b border-border bg-surface-container-low px-5 py-3 text-left text-xs font-bold uppercase text-on-surface-variant">
                     Status
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {components.map((c) => (
-                  <tr key={c.componentId} className="hover:bg-muted/40">
+                  <tr key={c.componentId} className="hover:bg-surface-container-low">
                     <td className="border-b border-border px-5 py-3">
                       <div className="font-semibold">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">{formatEnergyLabel(c.category)}</div>
+                      <div className="text-xs text-on-surface-variant">{formatEnergyLabel(c.category)}</div>
                     </td>
                     <td className="border-b border-border px-5 py-3 text-sm">
                       {c.capacityValue ?? "-"}

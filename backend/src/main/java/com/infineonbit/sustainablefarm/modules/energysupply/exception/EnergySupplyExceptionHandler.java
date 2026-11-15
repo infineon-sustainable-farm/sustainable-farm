@@ -7,6 +7,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
@@ -39,6 +40,16 @@ public class EnergySupplyExceptionHandler {
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException exception) {
         return ResponseEntity.badRequest()
                 .body(new ApiError(Instant.now(), HttpStatus.BAD_REQUEST.value(), exception.getMessage()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiError> handleResponseStatus(ResponseStatusException exception) {
+        int status = exception.getStatusCode().value();
+        String message = exception.getReason();
+        if (message == null || message.isBlank()) {
+            message = exception.getStatusCode().toString();
+        }
+        return ResponseEntity.status(status).body(new ApiError(Instant.now(), status, message));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

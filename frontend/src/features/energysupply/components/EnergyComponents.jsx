@@ -10,7 +10,7 @@ import { formatEnergyLabel } from "../utils/formatEnergyLabel";
 
 const CATEGORIES = ["PV_ARRAY", "BATTERY", "INVERTER", "GENERATOR", "MONITORING"];
 const STATUSES = ["OPERATIONAL", "UNDER_MAINTENANCE", "OUT_OF_SERVICE"];
-const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground";
+const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-on-background";
 
 function nextComponentId(components) {
   const highestId = components.reduce((highest, component) => {
@@ -53,13 +53,13 @@ function ComponentForm({ component, usedIds, saving, error, onClose, onSave }) {
     <div>
       <label className="mb-1 block text-sm font-medium" htmlFor={`component-${name}`}>{label}</label>
       {element}
-      {errors[name] && <p className="mt-1 text-xs text-destructive">{errors[name]}</p>}
+      {errors[name] && <p className="mt-1 text-xs text-error">{errors[name]}</p>}
     </div>
   );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <form onSubmit={submit} className="grid w-full max-w-lg gap-4 rounded-lg border border-border bg-card p-5 sm:grid-cols-2">
+      <form onSubmit={submit} className="grid w-full max-w-lg gap-4 rounded-lg border border-border bg-surface-container-lowest p-5 sm:grid-cols-2">
         <h2 className="font-heading text-lg font-bold sm:col-span-2">{component ? "Edit component" : "Add component"}</h2>
         {field("componentId", "Registry ID", <input id="component-componentId" className={inputClass}
           value={values.componentId} readOnly aria-readonly="true" />)}
@@ -75,10 +75,10 @@ function ComponentForm({ component, usedIds, saving, error, onClose, onSave }) {
           onChange={(e) => setValues({ ...values, status: e.target.value })}>
           {STATUSES.map((status) => <option key={status} value={status}>{formatEnergyLabel(status)}</option>)}
         </select>)}
-        {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
+        {error && <p className="text-sm text-error sm:col-span-2" role="alert">{error}</p>}
         <div className="flex justify-end gap-2 border-t border-border pt-4 sm:col-span-2">
           <button type="button" onClick={onClose} disabled={saving} className="rounded-md border border-border px-4 py-2 text-sm">Cancel</button>
-          <button type="submit" disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+          <button type="submit" disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary">
             {saving ? "Saving..." : component ? "Save changes" : "Add component"}
           </button>
         </div>
@@ -147,30 +147,30 @@ export default function EnergyComponents() {
     <section>
       <div className="mb-5">
         <h1 className="font-heading text-2xl font-bold uppercase">Energy Components</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Manage registry components ENG-001 through ENG-005.</p>
+        <p className="mt-1 text-sm text-on-surface-variant">Manage registry components ENG-001 through ENG-005.</p>
       </div>
-      {error && <div className="mb-4 flex items-center justify-between gap-3 text-sm text-destructive" role="alert">
+      {error && <div className="mb-4 flex items-center justify-between gap-3 text-sm text-error" role="alert">
         <span>{error}</span><button type="button" onClick={refresh} aria-label="Retry"><RefreshCw size={16} /></button>
       </div>}
-      <div className="rounded-lg border border-border bg-card">
+      <div className="rounded-lg border border-border bg-surface-container-lowest">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <h2 className="font-heading text-sm font-bold uppercase">Component registry</h2>
           <button type="button" onClick={() => { setEditing(null); setFormOpen(true); }}
             disabled={!nextComponentId(components)}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:opacity-50">
             <Plus size={16} /> Add component
           </button>
         </div>
         {components.length >= 5 && nextComponentId(components) && (
-          <p className="border-b border-border px-5 py-2 text-xs text-muted-foreground">
+          <p className="border-b border-border px-5 py-2 text-xs text-on-surface-variant">
             The original ENG-001 to ENG-005 registry is populated; new components continue from {nextComponentId(components)}.
           </p>
         )}
-        {loading ? <p className="p-5 text-sm text-muted-foreground">Loading components...</p> : (
+        {loading ? <p className="p-5 text-sm text-on-surface-variant">Loading components...</p> : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead><tr>{["ID", "Name", "Category", "Capacity", "Status", "Actions"].map((item) =>
-                <th key={item} className="border-b border-border bg-muted/50 px-4 py-3 text-xs uppercase text-muted-foreground">{item}</th>)}</tr></thead>
+                <th key={item} className="border-b border-border bg-surface-container-low px-4 py-3 text-xs uppercase text-on-surface-variant">{item}</th>)}</tr></thead>
               <tbody>
                 {components.map((component) => <tr key={component.componentId}>
                   <td className="border-b border-border px-4 py-3 font-semibold">{component.componentId}</td>
@@ -182,10 +182,10 @@ export default function EnergyComponents() {
                     <button type="button" aria-label={`Edit ${component.componentId}`} disabled={saving}
                       onClick={() => { setEditing(component); setFormOpen(true); }} className="mr-2 text-primary"><Pencil size={16} /></button>
                     <button type="button" aria-label={`Delete ${component.componentId}`} disabled={saving}
-                      onClick={() => remove(component)} className="text-destructive"><Trash2 size={16} /></button>
+                      onClick={() => remove(component)} className="text-error"><Trash2 size={16} /></button>
                   </td>
                 </tr>)}
-                {!components.length && <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No components configured.</td></tr>}
+                {!components.length && <tr><td colSpan={6} className="px-4 py-8 text-center text-on-surface-variant">No components configured.</td></tr>}
               </tbody>
             </table>
           </div>

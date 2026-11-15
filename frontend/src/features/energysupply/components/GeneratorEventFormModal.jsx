@@ -51,14 +51,14 @@ function toPayload(values) {
 function FormField({ id, label, error, children }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-on-background">{label}</label>
       {children}
-      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+      {error && <p className="mt-1 text-xs text-error">{error}</p>}
     </div>
   );
 }
 
-const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-on-background outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function GeneratorEventFormModal({ event, saving, error, onClose, onSave }) {
   const [values, setValues] = useState(() => initialValues(event));
@@ -88,15 +88,15 @@ export default function GeneratorEventFormModal({ event, saving, error, onClose,
       <section
         aria-labelledby="generator-event-form-title"
         aria-modal="true"
-        className="w-full max-w-lg rounded-lg border border-border bg-card shadow-xl"
+        className="w-full max-w-lg rounded-lg border border-border bg-surface-container-lowest shadow-xl"
         role="dialog"
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 id="generator-event-form-title" className="font-heading text-lg font-bold text-foreground">
+          <h2 id="generator-event-form-title" className="font-heading text-lg font-bold text-on-background">
             {editing ? "Edit backup event" : "Add backup event"}
           </h2>
           <button type="button" aria-label="Close form" onClick={onClose} disabled={saving}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-50">
+            className="rounded-md p-1.5 text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50">
             <X size={18} />
           </button>
         </div>
@@ -125,14 +125,14 @@ export default function GeneratorEventFormModal({ event, saving, error, onClose,
               value={values.costEur}
               onChange={(eventChange) => updateField("costEur", eventChange.target.value)} />
           </FormField>
-          {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
+          {error && <p className="text-sm text-error sm:col-span-2" role="alert">{error}</p>}
           <div className="flex justify-end gap-2 border-t border-border pt-4 sm:col-span-2">
             <button type="button" onClick={onClose} disabled={saving}
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50">
+              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-on-background hover:bg-surface-container-low disabled:opacity-50">
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
               {saving ? "Saving..." : editing ? "Save changes" : "Add event"}
             </button>
           </div>

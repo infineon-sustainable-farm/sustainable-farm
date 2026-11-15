@@ -1,4 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("./components/EnergyApp", () => ({
+  default: function EnergyApp() {
+    return null;
+  },
+}));
+
 import routes from "./routes";
 
 describe("energy supply routes", () => {
