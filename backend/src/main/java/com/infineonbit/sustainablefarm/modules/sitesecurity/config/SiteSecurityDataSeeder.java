@@ -37,10 +37,10 @@ public class SiteSecurityDataSeeder implements CommandLineRunner {
 
         if (userRepository.count() == 0) {
             userRepository.saveAll(Arrays.asList(
-                CredentialUserEntity.builder().id("u1").name("Dr. Elena Rostova").role("Chief Agonomist").type("Staff").level("restricted").validUntil("Permanent").status("Active").initials("ER").lastActive("10 min ago").build(),
-                CredentialUserEntity.builder().id("u2").name("Marcus Vance").role("Facilities Tech").type("Service").level("controlled").validUntil("2026-12-31").status("Active").initials("MV").lastActive("1 hour ago").build(),
-                CredentialUserEntity.builder().id("u3").name("Amina Diallo").role("Security Lead").type("Security").level("critical").validUntil("Permanent").status("Active").initials("AD").lastActive("Just now").build(),
-                CredentialUserEntity.builder().id("u4").name("Lucas Meyer").role("Harvest Contractor").type("Visitor").level("open").validUntil(LocalDate.now().toString()).status("Authorized").initials("LM").lastActive("3 hours ago").build()
+                CredentialUserEntity.builder().id("00000000-0000-0000-0000-000000000001").name("Dr. Elena Rostova").role("Chief Agonomist").type("Staff").level("restricted").validUntil("Permanent").status("Active").initials("ER").lastActive("10 min ago").build(),
+                CredentialUserEntity.builder().id("00000000-0000-0000-0000-000000000002").name("Marcus Vance").role("Facilities Tech").type("Service").level("controlled").validUntil("2026-12-31").status("Active").initials("MV").lastActive("1 hour ago").build(),
+                CredentialUserEntity.builder().id("00000000-0000-0000-0000-000000000003").name("Amina Diallo").role("Security Lead").type("Security").level("critical").validUntil("Permanent").status("Active").initials("AD").lastActive("Just now").build(),
+                CredentialUserEntity.builder().id("00000000-0000-0000-0000-000000000004").name("Lucas Meyer").role("Harvest Contractor").type("Visitor").level("open").validUntil(LocalDate.now().toString()).status("Authorized").initials("LM").lastActive("3 hours ago").build()
             ));
         }
 

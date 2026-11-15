@@ -4,7 +4,7 @@ import java.util.Locale;
 
 /**
  * Account email normalization, shared by sign-in, invitations and the physical
- * access register. Account management itself lives in {@link AccountService}.
+ * access register.
  */
 public final class OperatorService {
 

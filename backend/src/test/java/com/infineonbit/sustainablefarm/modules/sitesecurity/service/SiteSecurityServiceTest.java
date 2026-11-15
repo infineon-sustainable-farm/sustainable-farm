@@ -64,7 +64,7 @@ public class SiteSecurityServiceTest {
     private SiteSecurityAuditService audit;
 
     private static final SiteSecurityPrincipal ADMIN =
-            new SiteSecurityPrincipal("admin-operator-id", "admin@example.test", SiteSecurityRole.ADMIN);
+            new SiteSecurityPrincipal("central-admin-id", SiteSecurityRole.ADMIN, java.util.Set.of(), java.util.Set.of());
 
     @InjectMocks
     private SiteSecurityService siteSecurityService;

@@ -63,7 +63,7 @@ public class SiteSecurityService {
 
     /** The whole site, as an admin sees it. */
     private static final SiteSecurityPrincipal WHOLE_SITE =
-            new SiteSecurityPrincipal(null, null, SiteSecurityRole.ADMIN);
+            new SiteSecurityPrincipal(null, SiteSecurityRole.ADMIN, Set.of(), Set.of());
 
     public OverviewResponseDto getOverview() {
         return getOverview(WHOLE_SITE);
@@ -113,7 +113,7 @@ public class SiteSecurityService {
     }
 
     public List<UserDto> getCredentials(SiteSecurityRole role) {
-        return getCredentials(new SiteSecurityPrincipal(null, null, role));
+        return getCredentials(new SiteSecurityPrincipal(null, role, Set.of(), Set.of()));
     }
 
     /** Emails only for admins; a user only sees credentials whose level is one of their zones. */

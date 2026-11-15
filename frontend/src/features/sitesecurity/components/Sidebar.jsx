@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, LayoutGrid, KeyRound, Map, ScrollText, Users, } from "lucide-react";
+import { Activity, LayoutGrid, KeyRound, Map, ScrollText, } from "lucide-react";
 import { cn } from "../utils/cn";
 import { Eyebrow } from "./ui";
 import { SCREEN_LABEL } from "../api/sitesecurityTypes";
@@ -10,7 +10,6 @@ const NAV = [
     { id: "access", icon: KeyRound },
     { id: "zones", icon: Map },
     { id: "log", icon: ScrollText },
-    { id: "users", icon: Users },
 ];
 /* `screens` lists what this account may open; the rest stays out of the menu. */
 export default function Sidebar({ screen, onNavigate, session, screens, }) {
@@ -76,7 +75,7 @@ export default function Sidebar({ screen, onNavigate, session, screens, }) {
           <div className="mt-4 flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5">
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-medium text-white">{accessLabel(session)}</span>
-              <span className="block truncate text-[10.5px] text-white">{session?.fullName || session?.email || "Willow Ridge Farm"}</span>
+              <span className="block truncate text-[10.5px] text-white">{session?.centralUserId || "Central identity"}</span>
             </span>
           </div>
           <p className="pb-2 pt-3 text-center font-mono text-[9px] uppercase tracking-[0.18em] text-white">

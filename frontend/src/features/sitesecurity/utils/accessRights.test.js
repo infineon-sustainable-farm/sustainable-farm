@@ -4,8 +4,8 @@ import { accessLabel, canOpen, visibleScreens } from "./accessRights";
 const user = (permissions) => ({ role: "user", permissions });
 
 describe("visibleScreens", () => {
-    it("shows everything and Users to an admin", () => {
-        expect(visibleScreens({ role: "admin", permissions: [] })).toEqual(["dashboard", "access", "zones", "log", "users"]);
+    it("shows every operational screen to an admin", () => {
+        expect(visibleScreens({ role: "admin", permissions: [] })).toEqual(["dashboard", "access", "zones", "log"]);
     });
 
     it("shows the four views to a legacy operator", () => {

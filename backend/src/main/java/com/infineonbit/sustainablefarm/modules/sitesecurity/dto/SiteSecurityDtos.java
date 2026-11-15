@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -123,58 +122,15 @@ public class SiteSecurityDtos {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class RequestLoginCodeDto {
-        @NotBlank(message = "Email is required")
-        @Email(message = "Email must be a valid address")
-        @Size(max = 254, message = "Email must not exceed 254 characters")
-        @ToString.Exclude
-        private String email;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class VerifyLoginCodeDto {
-        @NotBlank(message = "Email is required")
-        @Email(message = "Email must be a valid address")
-        @Size(max = 254, message = "Email must not exceed 254 characters")
-        @ToString.Exclude
-        private String email;
-
-        @NotBlank(message = "Code is required")
-        @Pattern(regexp = "\\d{6}|\\d{10}", message = "Code must be 6 or 10 digits")
-        @ToString.Exclude
-        private String code;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AuthMessageDto {
-        private String message;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class SessionDto {
         private String role;
-        private String email;
-        private String fullName;
+        private String centralUserId;
         private List<String> permissions;
-        private boolean passwordSet;
-        private boolean codeSignInRetired;
 
         public static SessionDto of(SiteSecurityPrincipal principal) {
-            return of(principal, false);
-        }
-
-        public static SessionDto of(SiteSecurityPrincipal principal, boolean codeSignInRetired) {
-            return new SessionDto(principal.role().name().toLowerCase(Locale.ROOT), principal.email(),
-                    principal.fullName(),
+            return new SessionDto(principal.role().name().toLowerCase(), principal.operatorId(),
                     principal.isAdmin() ? List.of()
-                            : principal.permissions().stream().map(p -> p.toLowerCase(Locale.ROOT)).sorted().toList(),
-                    principal.passwordSet(), codeSignInRetired);
+                            : principal.permissions().stream().map(p -> p.toLowerCase(Locale.ROOT)).sorted().toList());
         }
     }
 

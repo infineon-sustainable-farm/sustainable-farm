@@ -1,5 +1,5 @@
 /*
- * What the signed-in account may open. Admins see everything; a user sees
+ * What the central identity's module authorization may open. Admins see everything; a user sees
  * the screens their permissions name (legacy_read_all = the four views).
  * The server filters the data itself, this only shapes the navigation.
  */
@@ -18,7 +18,7 @@ export function isAdmin(session) {
 
 export function visibleScreens(session) {
     if (!session) return [];
-    if (isAdmin(session)) return [...OPERATION_SCREENS, "users"];
+    if (isAdmin(session)) return [...OPERATION_SCREENS];
     const permissions = session.permissions ?? [];
     if (permissions.includes("legacy_read_all")) return [...OPERATION_SCREENS];
     return OPERATION_SCREENS.filter((screen) => permissions.includes(SCREEN_PERMISSION[screen]));

@@ -19,20 +19,10 @@ public class SiteSecurityWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // The origin check also covers sign-in and sign-out.
+        // The origin check applies to all module endpoints.
         registry.addInterceptor(originInterceptor).addPathPatterns(API).order(0);
         registry.addInterceptor(accessInterceptor)
                 .addPathPatterns(API)
-                // Public sign-in endpoints, each by its exact path (never a wildcard).
-                .excludePathPatterns("/api/v1/sitesecurity/auth/request-code",
-                        "/api/v1/sitesecurity/auth/verify",
-                        "/api/v1/sitesecurity/auth/logout",
-                        "/api/v1/sitesecurity/auth/login",
-                        "/api/v1/sitesecurity/auth/tokens/inspect",
-                        "/api/v1/sitesecurity/auth/invitations/confirm",
-                        "/api/v1/sitesecurity/auth/activate",
-                        "/api/v1/sitesecurity/auth/forgot-password",
-                        "/api/v1/sitesecurity/auth/reset-password")
                 .order(1);
     }
 

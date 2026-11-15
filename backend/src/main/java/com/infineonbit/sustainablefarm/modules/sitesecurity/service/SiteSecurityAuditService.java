@@ -6,7 +6,6 @@ import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.SiteSecurityA
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.SiteSecurityAuditEventRepository;
 import java.time.Instant;
 import java.util.Locale;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +58,6 @@ public class SiteSecurityAuditService {
 
     private void save(String actorId, String actorKind, SiteSecurityAuditAction action, String targetId, String detail) {
         repository.save(SiteSecurityAuditEventEntity.builder()
-                .id(UUID.randomUUID().toString())
                 .occurredAt(Instant.now())
                 .actorOperatorId(actorId)
                 .actorKind(actorKind)

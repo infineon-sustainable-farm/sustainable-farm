@@ -6,7 +6,6 @@ import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityP
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.UserPermission;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.AccountValues.Permission;
-import com.infineonbit.sustainablefarm.modules.sitesecurity.service.CodeSignInSettings;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.service.LogFilter;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.service.SiteSecurityService;
 import jakarta.validation.Valid;
@@ -26,13 +25,11 @@ import org.springframework.web.bind.annotation.*;
 public class SiteSecurityController {
 
     private final SiteSecurityService siteSecurityService;
-    private final CodeSignInSettings codeSignInSettings;
-
     @AnyAccount
     @GetMapping("/session")
     public ResponseEntity<SessionDto> getSession(
             @RequestAttribute(SiteSecurityAccessInterceptor.PRINCIPAL_ATTRIBUTE) SiteSecurityPrincipal principal) {
-        return ResponseEntity.ok(SessionDto.of(principal, codeSignInSettings.isRetired()));
+        return ResponseEntity.ok(SessionDto.of(principal));
     }
 
     @UserPermission(Permission.VIEW_DASHBOARD)

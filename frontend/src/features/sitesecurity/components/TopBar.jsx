@@ -1,7 +1,7 @@
-import { ChevronRight, KeyRound, Lock, MapPin } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
 import { LiveClock } from "./ui";
 import { SCREEN_LABEL } from "../api/sitesecurityTypes";
-export default function TopBar({ screen, onLock, onChangePassword }) {
+export default function TopBar({ screen }) {
     return (<header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/70 bg-[#f4f6f9]/85 px-8 backdrop-blur-md">
       <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.2em] text-slate-600">
         <span className="text-navy-900">Fenceline</span>
@@ -14,12 +14,6 @@ export default function TopBar({ screen, onLock, onChangePassword }) {
           Willow Ridge Farm
         </span>
         <LiveClock />
-        {onChangePassword && (<button type="button" onClick={onChangePassword} aria-label="Change password" title="Change password" className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:text-navy-900">
-            <KeyRound className="size-4"/>
-          </button>)}
-        <button type="button" onClick={onLock} aria-label="Sign out" title="Sign out" className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:text-navy-900">
-          <Lock className="size-4"/>
-        </button>
       </div>
     </header>);
 }

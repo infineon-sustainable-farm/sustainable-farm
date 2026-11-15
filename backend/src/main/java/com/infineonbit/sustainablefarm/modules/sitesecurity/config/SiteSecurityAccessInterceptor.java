@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.config;
 
-import com.infineonbit.sustainablefarm.modules.sitesecurity.service.SessionService;
-import jakarta.servlet.http.Cookie;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.service.SiteSecurityAuthorizationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -12,7 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,8 +21,8 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Access control for the Site Security API. An operator is known by the session
- * cookie set at sign-in; the gate scanner by SITESECURITY_GATE_TOKEN, which only
+ * Access control for the Site Security API. An operator is supplied by the
+ * central identity adapter; the gate scanner by SITESECURITY_GATE_TOKEN, which only
  * opens the endpoints marked {@link GateScanner}. The operator's role is read
  * again on every request. Any method that is not a read requires ADMIN, so new
  * write endpoints are protected by default. It fails closed.
@@ -40,16 +38,16 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
-    private final ObjectProvider<SessionService> sessionService;
+    private final SiteSecurityAuthorizationService authorizationService;
     private final byte[] gateTokenDigest;
 
     /**
-     * The session service is looked up on use: test slices of other modules load
-     * this interceptor without the Site Security services, and must still start.
+     * The identity provider is injected so production can fail closed until the
+     * central platform adapter is configured.
      */
-    public SiteSecurityAccessInterceptor(ObjectProvider<SessionService> sessionService,
+    public SiteSecurityAccessInterceptor(SiteSecurityAuthorizationService authorizationService,
             @Value("${SITESECURITY_GATE_TOKEN:}") String gateToken) {
-        this.sessionService = sessionService;
+        this.authorizationService = authorizationService;
         this.gateTokenDigest = configuredDigest(gateToken);
     }
 
@@ -62,7 +60,7 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
 
         Optional<SiteSecurityPrincipal> caller = resolve(request);
         if (caller.isEmpty()) {
-            log.warn("Site Security access denied (not signed in): {} {}",
+            log.warn("Site Security access denied (central identity unavailable): {} {}",
                     request.getMethod(), request.getRequestURI());
             writeError(response, HttpStatus.UNAUTHORIZED, "Sign in to use Site Security.");
             return false;
@@ -82,17 +80,12 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    /** The session cookie wins: a browser never sends the gate token. */
+    /** The central identity wins; a browser cannot use the gate token as an account. */
     private Optional<SiteSecurityPrincipal> resolve(HttpServletRequest request) {
-        String session = sessionCookie(request);
-        if (session != null) {
-            SessionService sessions = sessionService.getIfAvailable();
-            return sessions == null ? Optional.empty() : sessions.resolve(session);
-        }
         if (isGateToken(request.getHeader(HttpHeaders.AUTHORIZATION))) {
             return Optional.of(SiteSecurityPrincipal.gateScanner());
         }
-        return Optional.empty();
+        return authorizationService.currentPrincipal();
     }
 
     /**
@@ -119,19 +112,6 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
         }
         UserPermission permission = method.getMethodAnnotation(UserPermission.class);
         return permission != null && READ_METHODS.contains(request.getMethod()) && principal.can(permission.value());
-    }
-
-    static String sessionCookie(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            return null;
-        }
-        for (Cookie cookie : cookies) {
-            if (SessionService.COOKIE_NAME.equals(cookie.getName()) && !cookie.getValue().isBlank()) {
-                return cookie.getValue();
-            }
-        }
-        return null;
     }
 
     private boolean isGateToken(String authorization) {

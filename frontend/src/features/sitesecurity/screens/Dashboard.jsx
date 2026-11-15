@@ -5,7 +5,6 @@ import { Card, Eyebrow, ScreenHeader, StatusChip } from "../components/ui";
 import { LEVEL_META, levelMeta } from "../api/sitesecurityTypes";
 import { useSecurityOverview } from "../hooks/useSecurityOverview";
 import RecentActivity from "../components/RecentActivity";
-import InvitationsPanel from "../components/InvitationsPanel";
 import { buildStatCards } from "../utils/dashboardStats";
 const MODEL_STEPS = [
     "Define the perimeter",
@@ -21,7 +20,7 @@ const STAT_STYLE = {
     visitors: { icon: UserRoundCheck, tint: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
     denied: { icon: AlertTriangle, tint: "bg-rose-50 text-rose-600", dot: "bg-rose-500" },
 };
-export default function Dashboard({ onOpenZones, onOpenLog, canOpenZones = true, canViewLog = true, isAdmin = false, onOpenUsers, }) {
+export default function Dashboard({ onOpenZones, onOpenLog, canOpenZones = true, canViewLog = true }) {
     const { gates, stats, isLoading: isLoadingOverview, error: overviewError } = useSecurityOverview();
     const error = overviewError;
     const cards = buildStatCards(stats, gates.length);
@@ -138,8 +137,6 @@ export default function Dashboard({ onOpenZones, onOpenLog, canOpenZones = true,
           </div>
         </div>
       </Card>
-
-      {isAdmin && <InvitationsPanel onOpenUsers={onOpenUsers}/>}
 
       {canViewLog && <RecentActivity onOpenLog={onOpenLog}/>}
     </div>);
