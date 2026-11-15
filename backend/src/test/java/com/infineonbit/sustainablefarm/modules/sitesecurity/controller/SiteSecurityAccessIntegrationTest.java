@@ -131,7 +131,7 @@ class SiteSecurityAccessIntegrationTest {
     @Test
     void corsPreflight_shouldPassWithoutAToken() throws Exception {
         mvc.perform(options(BASE + "/credentials")
-                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ORIGIN, TestSessions.APP_ORIGIN)
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization"))
                 .andExpect(status().isOk());

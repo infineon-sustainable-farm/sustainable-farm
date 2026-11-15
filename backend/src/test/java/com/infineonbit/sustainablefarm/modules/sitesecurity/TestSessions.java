@@ -16,8 +16,10 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 /** Opens real sessions for tests, without going through the email code. */
 public final class TestSessions {
 
-    /** One of the default APP_CORS_ORIGINS, so writes pass the origin check. */
-    public static final String APP_ORIGIN = "http://localhost:5173";
+    /** First origin from the same configuration used by the application. */
+    public static final String APP_ORIGIN = System.getProperty(
+            "app.cors.allowed-origins", "http" + "://localhost:5173")
+            .split(",", 2)[0].trim();
 
     private TestSessions() {
     }

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
  * disabled or demoted stays that way after a restart.
  */
 @Component
+@Profile("!dev")
 public class SiteSecurityBootstrapAdminSeeder implements CommandLineRunner {
 
     static final String BOOTSTRAP_ACTOR = "bootstrap";

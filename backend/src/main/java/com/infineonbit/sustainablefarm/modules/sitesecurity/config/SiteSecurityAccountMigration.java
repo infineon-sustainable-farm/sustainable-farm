@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
  * </ul>
  */
 @Component
+@Profile("!dev")
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SiteSecurityAccountMigration implements CommandLineRunner {
 

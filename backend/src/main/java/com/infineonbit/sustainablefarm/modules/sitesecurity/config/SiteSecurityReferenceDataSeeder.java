@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.ZoneRepos
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
  * be created without them. Existing zones are never overwritten.
  */
 @Component
+@Profile("!sitesecurity-disable-reference-data")
 @RequiredArgsConstructor
 public class SiteSecurityReferenceDataSeeder implements CommandLineRunner {
 
