@@ -1,6 +1,6 @@
 # Setup
 
-The full stack runs locally through Docker Compose: PostgreSQL, the Spring Boot backend, the nginx-served frontend, and Mailpit, a test mail server. All four services are defined in `docker-compose.yml` at the repository root.
+The full stack runs locally through Docker Compose: PostgreSQL, the Spring Boot backend, and the nginx-served frontend. All three services are defined in `docker-compose.yml` at the repository root.
 
 ## Prerequisites
 
@@ -35,14 +35,6 @@ A local JDK and Node.js are **not** required: both the backend (Maven/Temurin 21
    | `POSTGRES_USER` | `farm_admin` | PostgreSQL user |
    | `POSTGRES_PASSWORD` | `changeme` | PostgreSQL password (change this) |
    | `POSTGRES_PORT` | `5432` | Host port published for PostgreSQL |
-   | `SITESECURITY_BOOTSTRAP_ADMIN_EMAIL` | empty | Email of the first Site Security admin, created at startup if it does not exist |
-   | `SITESECURITY_OTP_SECRET` | empty | Key used to hash Site Security sign-in codes (at least 32 characters); without it, nobody can sign in |
-   | `SITESECURITY_GATE_TOKEN` | empty | Token of the gate scanner (at least 32 characters); empty disables the scanner |
-   | `SITESECURITY_COOKIE_SECURE` | `true` | Set to `false` only when the app is opened over plain HTTP from another machine |
-
-   Site Security operators sign in with their email and a 6-digit code sent by email (read it in Mailpit at http://localhost:8025). Open the app at one of the addresses listed in `APP_CORS_ORIGINS`: changes are refused from any other origin.
-
-   Email settings are optional: by default, Docker Compose sends every email to Mailpit. To use a real SMTP relay, set the `MAIL_*` variables described in `.env.example`.
 
 3. Build and start all services:
 
@@ -50,7 +42,7 @@ A local JDK and Node.js are **not** required: both the backend (Maven/Temurin 21
    docker compose up -d --build
    ```
 
-   This builds the backend and frontend images and pulls `postgres:17-alpine` and `axllent/mailpit`. The backend waits for the PostgreSQL health check (`pg_isready`) to pass and for Mailpit to start; the frontend starts after the backend.
+   This builds the backend and frontend images and pulls `postgres:17-alpine`. The backend waits for the PostgreSQL health check (`pg_isready`) to pass before starting; the frontend starts after the backend.
 
 ## Verifying the Services
 
@@ -60,7 +52,7 @@ Check overall status first:
 docker compose ps
 ```
 
-All four containers should be `running` (or `Up`), and `sustainable-farm-db` should report `healthy`.
+All three containers should be `running` (or `Up`), and `sustainable-farm-db` should report `healthy`.
 
 | Service | Container name | URL / port | How to verify |
 |---|---|---|---|
@@ -68,12 +60,11 @@ All four containers should be `running` (or `Up`), and `sustainable-farm-db` sho
 | Backend health | `sustainable-farm-backend` | http://localhost:8080/actuator/health | Returns JSON with `"status":"UP"` (Spring Boot Actuator default; no exposure overrides exist in `application.properties`) |
 | Swagger UI | `sustainable-farm-backend` | http://localhost:8080/swagger-ui/index.html | Swagger UI loads (springdoc default path; `/swagger-ui.html` also redirects there). Note: no API controllers exist yet, so the UI will be empty |
 | PostgreSQL | `sustainable-farm-db` | `localhost:${POSTGRES_PORT}` (5432 by default) | Container reports `healthy`; or run manually: `docker exec sustainable-farm-db pg_isready -U farm_admin -d sustainable_farm` |
-| Mailpit | `sustainable-farm-mailpit` | http://localhost:8025 | The inbox loads and shows the emails sent by the backend. It delivers nothing to real addresses, and stopping the container clears the inbox |
 
 To inspect logs of a service:
 
 ```bash
-docker compose logs -f backend    # or: postgres, frontend, mailpit
+docker compose logs -f backend    # or: postgres, frontend
 ```
 
 ## Stopping and Resetting

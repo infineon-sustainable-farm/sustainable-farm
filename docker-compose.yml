@@ -24,51 +24,32 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      mailpit:
-        condition: service_started
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
-      APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
-      SITESECURITY_BOOTSTRAP_ADMIN_EMAIL: ${SITESECURITY_BOOTSTRAP_ADMIN_EMAIL:-}
-      SITESECURITY_OTP_SECRET: ${SITESECURITY_OTP_SECRET:-}
-      SITESECURITY_GATE_TOKEN: ${SITESECURITY_GATE_TOKEN:-}
-      SITESECURITY_COOKIE_SECURE: ${SITESECURITY_COOKIE_SECURE:-true}
-      MAIL_ENABLED: ${MAIL_ENABLED:-true}
-      MAIL_HOST: ${MAIL_HOST:-mailpit}
-      MAIL_PORT: ${MAIL_PORT:-1025}
-      MAIL_USERNAME: ${MAIL_USERNAME:-mailpit}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-mailpit}
-      MAIL_FROM: ${MAIL_FROM:-visits@sustainable-farm.local}
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # Origines autorisees pour le frontend conteneurise (port 3000) et le serveur de dev (5173).
+      # Sans cela, les requetes de mutation (POST/PUT/DELETE) sont refusees en 403 par le CORS.
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173}
     ports:
-      # This machine only: other machines go through nginx (port 3000), where
-      # the Site Security sign-in limits apply. nginx reaches the backend
-      # inside the Compose network, at backend:8080.
-      - "127.0.0.1:8080:8080"
-
-  # Test mail server: it keeps every email and delivers none of them.
-  # Inbox: http://localhost:8025. Both ports stay on this machine because the
-  # inbox has no login and will show sign-in codes.
-  mailpit:
-    image: axllent/mailpit:v1.32.0
-    container_name: sustainable-farm-mailpit
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
-      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
     container_name: sustainable-farm-frontend
     restart: unless-stopped
     depends_on:
@@ -76,6 +57,12 @@ services:
         condition: service_healthy
     ports:
       - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   postgres_data:
