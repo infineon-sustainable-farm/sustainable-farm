@@ -17,7 +17,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity(name = "CropStorageAlert")
-@Table(name = "alert")
+@Table(name = "crop_storage_alert")
 @Getter
 @Setter
 public class Alert {
@@ -49,7 +49,7 @@ public class Alert {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id")
-    private Batch batch;
+    private CropStorageBatch batch;
 
     private String correctiveAction;
 

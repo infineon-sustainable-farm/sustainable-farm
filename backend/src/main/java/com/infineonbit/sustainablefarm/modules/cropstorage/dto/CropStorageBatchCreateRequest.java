@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -12,7 +12,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record BatchCreateRequest(
+public record CropStorageBatchCreateRequest(
         @NotBlank String batchCode,
         @NotBlank String productType,
         String productStage,
@@ -35,14 +35,14 @@ public record BatchCreateRequest(
         @NotNull @Min(0) Integer customerPriority,
         @PositiveOrZero BigDecimal valuePerKgFcfa) {
 
-    public BatchCreateRequest {
+    public CropStorageBatchCreateRequest {
         if (customerPriority == null) {
             customerPriority = 0;
         }
     }
 
-    public Batch toEntity() {
-        Batch batch = new Batch();
+    public CropStorageBatch toEntity() {
+        CropStorageBatch batch = new CropStorageBatch();
         batch.setBatchCode(batchCode);
         batch.setProductType(productType);
         batch.setProductStage(productStage);

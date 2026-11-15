@@ -1,7 +1,7 @@
 import { apiClient } from "../../shared/api/client";
 
 const ENDPOINTS = {
-    BATCHES: "/api/batches",
+    BATCHES: "/api/crop-storage/batches",
     SENSORS: "/api/sensors",
     ALERTS: "/api/crop-storage/alerts",
     STORAGE_ENTRIES: "/api/crop-storage/entries",

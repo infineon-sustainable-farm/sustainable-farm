@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
-import com.infineonbit.sustainablefarm.modules.cropstorage.dto.BatchCreateRequest;
-import com.infineonbit.sustainablefarm.modules.cropstorage.service.BatchService;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageBatchCreateRequest;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageBatchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,21 +18,21 @@ import java.util.Map;
  * REST endpoints of the batch inventory: creation, full listing, the FIFO
  * rotation queue, the multi-unit valuation summary and the expiry list.
  */
-@RestController
-@RequestMapping("/api/batches")
+@RestController("cropStorageBatchController")
+@RequestMapping("/api/crop-storage/batches")
 @RequiredArgsConstructor
-public class BatchController {
+public class CropStorageBatchController {
 
-    private final BatchService batchService;
+    private final CropStorageBatchService batchService;
 
     /**
-     * Creates one batch; see BatchService for the batch code convention.
+     * Creates one batch; see CropStorageBatchService for the batch code convention.
      *
      * @param request validated batch fields from the request body
      * @return the saved batch
      */
     @PostMapping
-    public Batch create(@Valid @RequestBody BatchCreateRequest request) {
+    public CropStorageBatch create(@Valid @RequestBody CropStorageBatchCreateRequest request) {
         return batchService.create(request.toEntity());
     }
 
@@ -42,7 +42,7 @@ public class BatchController {
      * @return all batches
      */
     @GetMapping
-    public List<Batch> findAll() {
+    public List<CropStorageBatch> findAll() {
         return batchService.findAll();
     }
 
@@ -52,7 +52,7 @@ public class BatchController {
      * @return non-empty batches, priority then entry date
      */
     @GetMapping("/fifo")
-    public List<Batch> fifo() {
+    public List<CropStorageBatch> fifo() {
         return batchService.fifo();
     }
 
@@ -74,7 +74,7 @@ public class BatchController {
      * @return batches with an expiry date, soonest first
      */
     @GetMapping("/expiring")
-    public List<Batch> expiring() {
+    public List<CropStorageBatch> expiring() {
         return batchService.expiring();
     }
 }

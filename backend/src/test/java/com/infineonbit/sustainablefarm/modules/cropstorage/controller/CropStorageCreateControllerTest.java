@@ -2,7 +2,7 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.LossRecord;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.QualityCheck;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
@@ -11,7 +11,7 @@ import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.AlertService;
-import com.infineonbit.sustainablefarm.modules.cropstorage.service.BatchService;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageBatchService;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.LossRecordService;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.QualityCheckService;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.SensorReadingService;
@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = {
         AlertController.class,
-        BatchController.class,
+        CropStorageBatchController.class,
         LossRecordController.class,
         QualityCheckController.class,
         SensorController.class,
@@ -58,7 +58,7 @@ class CropStorageCreateControllerTest {
     private AlertService alertService;
 
     @MockitoBean
-    private BatchService batchService;
+    private CropStorageBatchService batchService;
 
     @MockitoBean
     private LossRecordService lossRecordService;
@@ -115,7 +115,7 @@ class CropStorageCreateControllerTest {
     void createBatchIgnoresEntityVersionAndNestedServerFields() throws Exception {
         when(batchService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/batches")
+        mockMvc.perform(post("/api/crop-storage/batches")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"version":55,"createdAt":"2000-01-01T00:00:00",
@@ -127,9 +127,9 @@ class CropStorageCreateControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.batchCode").value("B-1"));
 
-        var captor = org.mockito.ArgumentCaptor.forClass(Batch.class);
+        var captor = org.mockito.ArgumentCaptor.forClass(CropStorageBatch.class);
         verify(batchService).create(captor.capture());
-        Batch saved = captor.getValue();
+        CropStorageBatch saved = captor.getValue();
         assertNull(saved.getId());
         assertNull(saved.getVersion());
         assertNull(saved.getCreatedAt());
@@ -300,7 +300,7 @@ class CropStorageCreateControllerTest {
 
     @Test
     void invalidBatchStillReturnsValidationErrorWithoutCallingService() throws Exception {
-        mockMvc.perform(post("/api/batches")
+        mockMvc.perform(post("/api/crop-storage/batches")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"batchCode":"B-1","productType":"MANGO",

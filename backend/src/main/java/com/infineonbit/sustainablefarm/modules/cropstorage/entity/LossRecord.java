@@ -29,7 +29,7 @@ public class LossRecord {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false)
-    private Batch batch;
+    private CropStorageBatch batch;
 
     @NotNull
     @PositiveOrZero

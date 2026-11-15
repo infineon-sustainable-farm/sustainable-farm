@@ -2,10 +2,10 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
-import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class BatchService {
+public class CropStorageBatchService {
 
     /** Fixed CFA franc peg: 1 EUR = 655.957 XOF. */
     private static final BigDecimal XOF_PER_EUR = new BigDecimal("655.957");
@@ -38,7 +38,7 @@ public class BatchService {
     /** 1 lb = 0.453592 kg. */
     private static final BigDecimal KG_PER_LB = new BigDecimal("0.453592");
 
-    private final BatchRepository batchRepository;
+    private final CropStorageBatchRepository batchRepository;
     private final SupplierRepository supplierRepository;
     private final StorageZoneRepository storageZoneRepository;
 
@@ -49,7 +49,7 @@ public class BatchService {
      * @param batch batch parsed from the request body
      * @return the saved batch with its generated id
      */
-    public Batch create(Batch batch) {
+    public CropStorageBatch create(CropStorageBatch batch) {
         if (batch.getSupplier() != null) {
             Long supplierId = requireId(batch.getSupplier().getId(), "supplier");
             Supplier supplier = supplierRepository.findById(supplierId)
@@ -77,7 +77,7 @@ public class BatchService {
      *
      * @return all batches of the module
      */
-    public List<Batch> findAll() {
+    public List<CropStorageBatch> findAll() {
         return batchRepository.findAll();
     }
 
@@ -88,7 +88,7 @@ public class BatchService {
      * @return batches with remaining stock, ordered by customerPriority desc
      *         then storageEntryDate asc
      */
-    public List<Batch> fifo() {
+    public List<CropStorageBatch> fifo() {
         return batchRepository
                 .findByCurrentQuantityKgGreaterThanOrderByCustomerPriorityDescStorageEntryDateAsc(BigDecimal.ZERO);
     }
@@ -107,7 +107,7 @@ public class BatchService {
     public Map<String, Object> summary() {
         BigDecimal totalKg = BigDecimal.ZERO;
         BigDecimal totalValueFcfa = BigDecimal.ZERO;
-        for (Batch b : batchRepository.findAll()) {
+        for (CropStorageBatch b : batchRepository.findAll()) {
             BigDecimal qty = b.getCurrentQuantityKg() != null ? b.getCurrentQuantityKg() : BigDecimal.ZERO;
             totalKg = totalKg.add(qty);
             if (b.getValuePerKgFcfa() != null) {
@@ -131,7 +131,7 @@ public class BatchService {
      *
      * @return batches whose expiryDate is set, ordered by expiry date asc
      */
-    public List<Batch> expiring() {
+    public List<CropStorageBatch> expiring() {
         return batchRepository.findByExpiryDateNotNullOrderByExpiryDateAsc();
     }
 }

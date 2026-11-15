@@ -3,10 +3,10 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
-import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StockMovementRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import java.util.List;
 public class StockMovementService {
 
     private final StockMovementRepository stockMovementRepository;
-    private final BatchRepository batchRepository;
+    private final CropStorageBatchRepository batchRepository;
     private final StorageZoneRepository storageZoneRepository;
 
     /**
@@ -46,11 +46,11 @@ public class StockMovementService {
         if (movement.getBatch() == null || movement.getBatch().getId() == null) {
             throw new BusinessRuleException("A batch is required");
         }
-        Batch batch = batchRepository.findWithRelationshipsById(movement.getBatch().getId())
+        CropStorageBatch batch = batchRepository.findWithRelationshipsById(movement.getBatch().getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Batch not found with id " + movement.getBatch().getId()));
 
-        // The request body carries a bare-id batch shell; since Batch has
+        // The request body carries a bare-id batch shell; since CropStorageBatch has
         // @Version, Hibernate reads a null version as unsaved and refuses
         // to link the movement. Attach the managed batch instead.
         movement.setBatch(batch);
@@ -122,13 +122,13 @@ public class StockMovementService {
     }
 
     // HYPOTHESIS: total of batch quantities in a zone must stay under capacityKg
-    private void checkCapacity(StorageZone zone, Batch movedBatch, BigDecimal resultingKg) {
+    private void checkCapacity(StorageZone zone, CropStorageBatch movedBatch, BigDecimal resultingKg) {
         if (zone.getCapacityKg() == null) {
             return;
         }
         BigDecimal others = batchRepository.findByStorageZoneId(zone.getId()).stream()
                 .filter(b -> !b.getId().equals(movedBatch.getId()))
-                .map(Batch::getCurrentQuantityKg)
+                .map(CropStorageBatch::getCurrentQuantityKg)
                 .filter(q -> q != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (others.add(resultingKg).compareTo(zone.getCapacityKg()) > 0) {

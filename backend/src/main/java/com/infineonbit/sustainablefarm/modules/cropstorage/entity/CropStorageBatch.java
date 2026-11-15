@@ -25,11 +25,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "batch")
+@Entity(name = "CropStorageBatch")
+@Table(name = "crop_storage_batch")
 @Getter
 @Setter
-public class Batch {
+public class CropStorageBatch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

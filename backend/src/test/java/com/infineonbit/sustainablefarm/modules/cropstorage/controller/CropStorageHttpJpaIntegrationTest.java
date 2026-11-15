@@ -2,13 +2,13 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
 import com.infineonbit.sustainablefarm.SustainableFarmApplication;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.SensorReading;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.AlertRepository;
-import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.LossRecordRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.QualityCheckRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SensorReadingRepository;
@@ -74,7 +74,7 @@ class CropStorageHttpJpaIntegrationTest {
     private StorageZoneRepository storageZoneRepository;
 
     @Autowired
-    private BatchRepository batchRepository;
+    private CropStorageBatchRepository batchRepository;
 
     @Autowired
     private SensorRepository sensorRepository;
@@ -135,12 +135,12 @@ class CropStorageHttpJpaIntegrationTest {
     void dashboardListsSerializeLinkedBatchesSensorsReadingsAndActiveAlerts() throws Exception {
         Supplier supplier = createSupplier();
         StorageZone zone = createZone();
-        Batch batch = createBatch(supplier, zone, "12");
+        CropStorageBatch batch = createBatch(supplier, zone, "12");
         Sensor sensor = createSensor(zone);
         createReading(sensor);
         createAlert(sensor, zone, batch);
 
-        mockMvc.perform(get("/api/batches"))
+        mockMvc.perform(get("/api/crop-storage/batches"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].supplier.name").value(supplier.getName()))
                 .andExpect(jsonPath("$[0].storageZone.zoneCode").value(zone.getZoneCode()));
@@ -160,7 +160,7 @@ class CropStorageHttpJpaIntegrationTest {
     void createsAndListsMovementsLossesAndQualityChecksWithLinkedBatch() throws Exception {
         Supplier supplier = createSupplier();
         StorageZone zone = createZone();
-        Batch batch = createBatch(supplier, zone, "10");
+        CropStorageBatch batch = createBatch(supplier, zone, "10");
 
         mockMvc.perform(post("/api/stock-movements")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -235,7 +235,7 @@ class CropStorageHttpJpaIntegrationTest {
         Supplier supplier = createSupplier();
         StorageZone zone = createZone();
 
-        mockMvc.perform(post("/api/batches")
+        mockMvc.perform(post("/api/crop-storage/batches")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":999,"version":55,"batchCode":"NESTED-%d","productType":"MANGO",
@@ -318,9 +318,9 @@ class CropStorageHttpJpaIntegrationTest {
         return storageZoneRepository.save(zone);
     }
 
-    private Batch createBatch(Supplier supplier, StorageZone zone, String quantity) {
+    private CropStorageBatch createBatch(Supplier supplier, StorageZone zone, String quantity) {
         int suffix = NEXT_CODE.incrementAndGet();
-        Batch batch = new Batch();
+        CropStorageBatch batch = new CropStorageBatch();
         batch.setBatchCode("BATCH-" + suffix);
         batch.setProductType("DRIED_MANGO");
         batch.setInitialQuantityKg(new BigDecimal(quantity));
@@ -351,7 +351,7 @@ class CropStorageHttpJpaIntegrationTest {
         return sensorReadingRepository.save(reading);
     }
 
-    private Alert createAlert(Sensor sensor, StorageZone zone, Batch batch) {
+    private Alert createAlert(Sensor sensor, StorageZone zone, CropStorageBatch batch) {
         Alert alert = new Alert();
         alert.setType("DAMAGE");
         alert.setSeverity("HIGH");

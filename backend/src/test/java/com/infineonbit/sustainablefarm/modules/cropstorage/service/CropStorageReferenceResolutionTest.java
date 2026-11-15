@@ -1,14 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.SensorReading;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.AlertRepository;
-import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SensorReadingRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SensorRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
@@ -30,7 +30,7 @@ class CropStorageReferenceResolutionTest {
 
     @Test
     void batchCreateReplacesNestedReferenceShellsWithStoredReferences() {
-        BatchRepository batches = mock(BatchRepository.class);
+        CropStorageBatchRepository batches = mock(CropStorageBatchRepository.class);
         SupplierRepository suppliers = mock(SupplierRepository.class);
         StorageZoneRepository zones = mock(StorageZoneRepository.class);
         Supplier storedSupplier = new Supplier();
@@ -39,9 +39,9 @@ class CropStorageReferenceResolutionTest {
         storedZone.setId(6L);
         when(suppliers.findById(5L)).thenReturn(Optional.of(storedSupplier));
         when(zones.findById(6L)).thenReturn(Optional.of(storedZone));
-        when(batches.save(any(Batch.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(batches.save(any(CropStorageBatch.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Batch request = new Batch();
+        CropStorageBatch request = new CropStorageBatch();
         Supplier supplierReference = new Supplier();
         supplierReference.setId(5L);
         StorageZone zoneReference = new StorageZone();
@@ -49,7 +49,7 @@ class CropStorageReferenceResolutionTest {
         request.setSupplier(supplierReference);
         request.setStorageZone(zoneReference);
 
-        new BatchService(batches, suppliers, zones).create(request);
+        new CropStorageBatchService(batches, suppliers, zones).create(request);
 
         assertSame(storedSupplier, request.getSupplier());
         assertSame(storedZone, request.getStorageZone());
@@ -62,10 +62,10 @@ class CropStorageReferenceResolutionTest {
         AlertRepository alerts = mock(AlertRepository.class);
         SensorRepository sensors = mock(SensorRepository.class);
         StorageZoneRepository zones = mock(StorageZoneRepository.class);
-        BatchRepository batches = mock(BatchRepository.class);
+        CropStorageBatchRepository batches = mock(CropStorageBatchRepository.class);
         Sensor storedSensor = new Sensor();
         StorageZone storedZone = new StorageZone();
-        Batch storedBatch = new Batch();
+        CropStorageBatch storedBatch = new CropStorageBatch();
         storedSensor.setId(5L);
         storedZone.setId(6L);
         storedBatch.setId(7L);
@@ -83,7 +83,7 @@ class CropStorageReferenceResolutionTest {
         sensorReference.setId(5L);
         StorageZone zoneReference = new StorageZone();
         zoneReference.setId(6L);
-        Batch batchReference = new Batch();
+        CropStorageBatch batchReference = new CropStorageBatch();
         batchReference.setId(7L);
         request.setSensor(sensorReference);
         request.setStorageZone(zoneReference);
@@ -141,9 +141,9 @@ class CropStorageReferenceResolutionTest {
     @Test
     void stockMovementCreateReplacesBatchAndBothZoneReferenceShells() {
         StockMovementRepository movements = mock(StockMovementRepository.class);
-        BatchRepository batches = mock(BatchRepository.class);
+        CropStorageBatchRepository batches = mock(CropStorageBatchRepository.class);
         StorageZoneRepository zones = mock(StorageZoneRepository.class);
-        Batch storedBatch = new Batch();
+        CropStorageBatch storedBatch = new CropStorageBatch();
         storedBatch.setId(7L);
         storedBatch.setCurrentQuantityKg(new BigDecimal("2"));
         StorageZone storedFromZone = new StorageZone();
@@ -155,13 +155,13 @@ class CropStorageReferenceResolutionTest {
         when(zones.findById(6L)).thenReturn(Optional.of(storedFromZone));
         when(zones.findById(8L)).thenReturn(Optional.of(storedToZone));
         when(batches.findByStorageZoneId(8L)).thenReturn(List.of());
-        when(batches.save(any(Batch.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(batches.save(any(CropStorageBatch.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(movements.save(any(StockMovement.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         StockMovement request = new StockMovement();
         request.setType("TRANSFER");
         request.setQuantityKg(BigDecimal.ONE);
-        Batch batchReference = new Batch();
+        CropStorageBatch batchReference = new CropStorageBatch();
         batchReference.setId(7L);
         StorageZone fromReference = new StorageZone();
         fromReference.setId(6L);

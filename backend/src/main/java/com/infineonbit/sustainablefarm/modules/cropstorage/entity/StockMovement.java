@@ -39,7 +39,7 @@ public class StockMovement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false)
-    private Batch batch;
+    private CropStorageBatch batch;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_zone_id")

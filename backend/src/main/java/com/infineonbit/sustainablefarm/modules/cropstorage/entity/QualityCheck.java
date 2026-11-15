@@ -31,7 +31,7 @@ public class QualityCheck {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", nullable = false)
-    private Batch batch;
+    private CropStorageBatch batch;
 
     @DecimalMin("0.0")
     @DecimalMax("100.0")

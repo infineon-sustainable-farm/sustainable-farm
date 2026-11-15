@@ -4,10 +4,10 @@ import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StorageEntryRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StorageEntryResponse;
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
-import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StockMovementRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class StorageEntryService {
 
-    private final BatchRepository batchRepository;
+    private final CropStorageBatchRepository batchRepository;
     private final StorageZoneRepository storageZoneRepository;
     private final StockMovementRepository stockMovementRepository;
 
@@ -41,7 +41,7 @@ public class StorageEntryService {
         StorageZone zone = chooseZone(request);
         BigDecimal remainingBefore = remainingCapacity(zone);
 
-        Batch batch = new Batch();
+        CropStorageBatch batch = new CropStorageBatch();
         batch.setBatchCode(request.batchId());
         batch.setProductType("DRIED_MANGO");
         batch.setProductStage("PACKAGED");
@@ -54,7 +54,7 @@ public class StorageEntryService {
         // Plants traceability: harvest_id arrives as a string; store its
         // numeric form, anything not numeric means "no Plants link".
         batch.setHarvestId(parseLongOrNull(request.harvestId()));
-        Batch savedBatch = batchRepository.save(batch);
+        CropStorageBatch savedBatch = batchRepository.save(batch);
 
         StockMovement movement = new StockMovement();
         movement.setType("IN");
@@ -100,7 +100,7 @@ public class StorageEntryService {
     /** Room left in a zone: capacity minus the stock of the batches inside. */
     private BigDecimal remainingCapacity(StorageZone zone) {
         BigDecimal used = batchRepository.findByStorageZoneId(zone.getId()).stream()
-                .map(Batch::getCurrentQuantityKg)
+                .map(CropStorageBatch::getCurrentQuantityKg)
                 .filter(q -> q != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return zone.getCapacityKg() != null ? zone.getCapacityKg().subtract(used) : BigDecimal.ZERO;

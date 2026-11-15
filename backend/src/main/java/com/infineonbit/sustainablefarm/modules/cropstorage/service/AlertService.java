@@ -3,11 +3,11 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.AlertRepository;
-import com.infineonbit.sustainablefarm.modules.cropstorage.repository.BatchRepository;
+import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SensorRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class AlertService {
     private final AlertRepository alertRepository;
     private final SensorRepository sensorRepository;
     private final StorageZoneRepository storageZoneRepository;
-    private final BatchRepository batchRepository;
+    private final CropStorageBatchRepository batchRepository;
 
     /**
      * Saves a manually created alert, for issues an operator observes and the

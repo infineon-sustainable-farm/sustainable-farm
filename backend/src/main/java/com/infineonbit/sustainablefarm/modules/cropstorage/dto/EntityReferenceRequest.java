@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Batch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
@@ -11,11 +11,11 @@ import jakarta.validation.constraints.NotNull;
  */
 public record EntityReferenceRequest(@NotNull Long id) {
 
-    public Batch toBatch() {
+    public CropStorageBatch toBatch() {
         if (id == null) {
             return null;
         }
-        Batch batch = new Batch();
+        CropStorageBatch batch = new CropStorageBatch();
         batch.setId(id);
         return batch;
     }
