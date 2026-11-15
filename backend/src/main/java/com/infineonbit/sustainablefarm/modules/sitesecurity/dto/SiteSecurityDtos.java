@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
