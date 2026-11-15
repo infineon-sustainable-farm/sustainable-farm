@@ -9,4 +9,13 @@
   --color-sidebar-accent: #4caf50;
   --color-sidebar-border: #4caf50;
 }
-  
+
+.energy-supply-theme {
+  --color-sidebar-foreground: #ffffff;
+}
+.energy-supply-theme .bg-sidebar { background-color: var(--color-sidebar); }
+.energy-supply-theme .text-sidebar-foreground { color: var(--color-sidebar-foreground); }
+.energy-supply-theme .text-sidebar-foreground\/50 { color: rgb(255 255 255 / 0.5); }
+.energy-supply-theme .text-sidebar-foreground\/70 { color: rgb(255 255 255 / 0.7); }
+.energy-supply-theme .text-sidebar-foreground\/85 { color: rgb(255 255 255 / 0.85); }
+.energy-supply-theme .border-sidebar-border { border-color: var(--color-sidebar-border); }

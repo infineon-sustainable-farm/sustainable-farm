@@ -7,12 +7,12 @@ import { formatEnergyLabel } from "../utils/formatEnergyLabel";
 
 function ScoreCard({ label, value, unit, icon: Icon }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm border-t-[3px] border-t-primary">
+    <div className="rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm border-t-[3px] border-t-primary">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">{label}</p>
-          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-foreground">
-            {value}<span className="ml-1 text-base font-semibold text-muted-foreground">{unit}</span>
+          <p className="text-xs font-medium uppercase tracking-[0.05em] text-on-surface-variant">{label}</p>
+          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-on-background">
+            {value}<span className="ml-1 text-base font-semibold text-on-surface-variant">{unit}</span>
           </p>
         </div>
         <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -49,28 +49,28 @@ export default function GeneratorBackup() {
   }, []);
 
   if (loading || generatorLoading) {
-    return <p className="text-sm text-muted-foreground">Loading generator data...</p>;
+    return <p className="text-sm text-on-surface-variant">Loading generator data...</p>;
   }
 
   return (
     <section>
       <div className="mb-5">
-        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-foreground">
+        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-on-background">
           Generator Backup Management
         </h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
           Diesel backup readiness and run-time history during grid outages or low-battery events.
         </p>
       </div>
 
       {generatorError && (
-        <p className="mb-4 text-sm text-destructive" role="alert">
+        <p className="mb-4 text-sm text-error" role="alert">
           Failed to load generator component: {generatorError}
         </p>
       )}
       {error && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
-          <p className="text-sm text-destructive" role="alert">Generator events: {error}</p>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-error/30 bg-error/5 px-4 py-3">
+          <p className="text-sm text-error" role="alert">Generator events: {error}</p>
           <button type="button" onClick={() => refresh().catch(() => {})}
             className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
             <RefreshCw size={15} /> Retry
@@ -85,13 +85,13 @@ export default function GeneratorBackup() {
         <ScoreCard label="Fuel Used (This Month)" value={Number(summary?.fuelLitersThisMonth ?? 0).toFixed(1)} unit="L" icon={Fuel} />
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary">
+      <div className="mt-6 rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
-          <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">
+          <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">
             Backup Events Log
           </h2>
           <button type="button" onClick={() => { setEditingEvent(null); setFormOpen(true); }}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-on-primary hover:opacity-90">
             <Plus size={16} /> Add event
           </button>
         </div>
@@ -100,7 +100,7 @@ export default function GeneratorBackup() {
             <thead>
               <tr>
                 {["Date", "Trigger Reason", "Duration (hrs)", "Fuel (L)", "Cost (EUR)", "Actions"].map((heading) => (
-                  <th key={heading} className="border-b border-border bg-muted/50 px-5 py-3 text-left text-xs font-bold uppercase text-muted-foreground">
+                  <th key={heading} className="border-b border-border bg-surface-container-low px-5 py-3 text-left text-xs font-bold uppercase text-on-surface-variant">
                     {heading}
                   </th>
                 ))}
@@ -109,14 +109,14 @@ export default function GeneratorBackup() {
             <tbody>
               {events.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-sm text-muted-foreground">
+                  <td colSpan={6} className="px-5 py-8 text-center text-sm text-on-surface-variant">
                     No backup events recorded.
                   </td>
                 </tr>
               )}
               {events.map((event) => (
-                <tr key={event.eventId} className="hover:bg-muted/40">
-                  <td className="whitespace-nowrap border-b border-border px-5 py-3 text-muted-foreground">{event.date}</td>
+                <tr key={event.eventId} className="hover:bg-surface-container-low">
+                  <td className="whitespace-nowrap border-b border-border px-5 py-3 text-on-surface-variant">{event.date}</td>
                   <td className="border-b border-border px-5 py-3">{event.triggerReason || "—"}</td>
                   <td className="border-b border-border px-5 py-3 tabular-nums">
                     {event.durationHours == null ? "not recorded" : Number(event.durationHours).toFixed(1)}
@@ -140,7 +140,7 @@ export default function GeneratorBackup() {
                             removeEvent(event.eventId).catch(() => {});
                           }
                         }}
-                        className="rounded-md p-2 text-destructive hover:bg-destructive/10 disabled:opacity-50">
+                        className="rounded-md p-2 text-error hover:bg-error/10 disabled:opacity-50">
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -151,7 +151,7 @@ export default function GeneratorBackup() {
           </table>
         </div>
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">
+      <p className="mt-3 text-xs text-on-surface-variant">
         Note: the "Critical Loads Covered" and "Payback vs Full Diesel" panels from the original mock-up aren't included here —
         there's no backing table for them in the current data model (Generator Event only tracks trigger, duration, fuel, cost).
       </p>
