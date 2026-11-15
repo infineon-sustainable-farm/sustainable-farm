@@ -1,167 +1,277 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.*;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialNotificationStatus;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.GateEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.LogEntryEntity;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.SiteSecurityAuditAction;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.ZoneEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.CredentialUserRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.GateRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.LogEntryRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.ZoneRepository;
-import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SiteSecurityService {
+
+    private static final Logger log = LoggerFactory.getLogger(SiteSecurityService.class);
+
+    /** From the least to the most sensitive: a level also covers the zones below it. */
+    private static final List<String> LEVEL_ORDER = List.of("open", "controlled", "restricted", "critical");
+    private static final String OPEN_ZONE = "open";
+    private static final Set<String> VISITOR_ALLOWED_LEVELS = Set.of("open", "controlled");
+    private static final String VISITOR_TYPE = "Visitor";
+    private static final String PERMANENT = "Permanent";
+    private static final String INITIAL_STATUS = "Active";
+    private static final String EXPIRED_STATUS = "Expired";
+    private static final String REVOKED_STATUS = "Revoked";
+    private static final Set<String> VALID_STATUSES = Set.of("Active", "Authorized");
+    private static final Set<String> OPERATIONAL_GATE_STATUSES = Set.of("Active", "Secure");
+    private static final String DENIED_STATUS = "Denied";
+    private static final Sort NEWEST_FIRST = Sort.by(Sort.Direction.DESC, "date", "time");
 
     private final GateRepository gateRepository;
     private final ZoneRepository zoneRepository;
     private final CredentialUserRepository userRepository;
     private final LogEntryRepository logRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final SiteSecurityAuditService audit;
 
-    @PostConstruct
-    public void initDefaultData() {
-        if (gateRepository.count() == 0) {
-            gateRepository.saveAll(Arrays.asList(
-                GateEntity.builder().id("g1").name("Gate 1 · North Drive").shortName("Gate 1").zone("open").status("Active").detail("Main visitor & vehicle intake").build(),
-                GateEntity.builder().id("g2").name("Gate 2 · Barn Yard").shortName("Gate 2").zone("controlled").status("Active").detail("Equipment & staff access").build(),
-                GateEntity.builder().id("g3").name("Gate 3 · Processing Hub").shortName("Gate 3").zone("restricted").status("Secure").detail("Keycard & PIN required").build(),
-                GateEntity.builder().id("g4").name("Gate 4 · Control Vault").shortName("Gate 4").zone("critical").status("Locked").detail("Biometric + escort required").build()
-            ));
-        }
-
-        if (zoneRepository.count() == 0) {
-            zoneRepository.saveAll(Arrays.asList(
-                ZoneEntity.builder().id("open").name("Open Zone").tagline("Visitor-facing areas").authorizedUsers(24).entryPoints(2).status("Open Access").description("Public access areas including farm shop, main drive, and visitor center.").requirements(Arrays.asList("No clearance needed", "Visitor check-in recommended")).build(),
-                ZoneEntity.builder().id("controlled").name("Controlled Zone").tagline("Operational farm grounds").authorizedUsers(14).entryPoints(3).status("Monitored").description("Active farming zones including barns, storage sheds, and equipment yards.").requirements(Arrays.asList("Staff or escorted visitor pass", "Safety briefing completed")).build(),
-                ZoneEntity.builder().id("restricted").name("Restricted Zone").tagline("Processing & chemical storage").authorizedUsers(6).entryPoints(1).status("Protected").description("High-value equipment, product transformation, and hazardous chemical stores.").requirements(Arrays.asList("Level 3 badge clearance", "Dual-custody access protocol")).build(),
-                ZoneEntity.builder().id("critical").name("Critical Zone").tagline("Server, power & water control").authorizedUsers(2).entryPoints(1).status("Locked Down").description("Infrastructure backbone: primary power distribution, main water valves, and security control room.").requirements(Arrays.asList("Level 4 clearance + biometric", "Security escort required", "Continuous audit logging")).build()
-            ));
-        }
-
-        if (userRepository.count() == 0) {
-            userRepository.saveAll(Arrays.asList(
-                CredentialUserEntity.builder().id("u1").name("Dr. Elena Rostova").role("Chief Agonomist").type("Staff").level("restricted").validUntil("Permanent").status("Active").initials("ER").lastActive("10 min ago").build(),
-                CredentialUserEntity.builder().id("u2").name("Marcus Vance").role("Facilities Tech").type("Service").level("controlled").validUntil("2026-12-31").status("Active").initials("MV").lastActive("1 hour ago").build(),
-                CredentialUserEntity.builder().id("u3").name("Amina Diallo").role("Security Lead").type("Security").level("critical").validUntil("Permanent").status("Active").initials("AD").lastActive("Just now").build(),
-                CredentialUserEntity.builder().id("u4").name("Lucas Meyer").role("Harvest Contractor").type("Visitor").level("open").validUntil("Today, 18:00").status("Authorized").initials("LM").lastActive("3 hours ago").build()
-            ));
-        }
-
-        if (logRepository.count() == 0) {
-            logRepository.saveAll(Arrays.asList(
-                LogEntryEntity.builder().id("l1").ref("LOG-8821").time("10:28:14").date("2026-09-05").user("Amina Diallo").initials("AD").type("Security").zone("critical").zoneName("Critical Zone").action("Entry").status("Approved").gate("Gate 4").method("Biometric Scan").note("Routine perimeter sweep").build(),
-                LogEntryEntity.builder().id("l2").ref("LOG-8820").time("10:27:02").date("2026-09-05").user("Unknown Subject").initials("??").type("Unknown").zone("restricted").zoneName("Restricted Zone").action("Entry").status("Denied").gate("Gate 3").method("Keycard Reject").note("Invalid badge ID — escalated").build(),
-                LogEntryEntity.builder().id("l3").ref("LOG-8819").time("10:14:50").date("2026-09-05").user("Marcus Vance").initials("MV").type("Service").zone("controlled").zoneName("Controlled Zone").action("Entry").status("Approved").gate("Gate 2").method("RFID Pass").note("HVAC maintenance").build(),
-                LogEntryEntity.builder().id("l4").ref("LOG-8818").time("09:45:11").date("2026-09-05").user("Lucas Meyer").initials("LM").type("Visitor").zone("open").zoneName("Open Zone").action("Entry").status("Approved").gate("Gate 1").method("QR Guest Code").note("Temp visitor pass").build(),
-                LogEntryEntity.builder().id("l5").ref("LOG-8817").time("09:30:00").date("2026-09-05").user("Dr. Elena Rostova").initials("ER").type("Staff").zone("restricted").zoneName("Restricted Zone").action("Entry").status("Approved").gate("Gate 3").method("PIN + Keycard").note("Crop analysis").build(),
-                LogEntryEntity.builder().id("l6").ref("LOG-8816").time("08:15:22").date("2026-09-05").user("Amina Diallo").initials("AD").type("Security").zone("open").zoneName("Open Zone").action("Exit").status("Approved").gate("Gate 1").method("Manual Gate Open").note("Perimeter check").build()
-            ));
-        }
-    }
+    /** The whole site, as an admin sees it. */
+    private static final SiteSecurityPrincipal WHOLE_SITE =
+            new SiteSecurityPrincipal(null, SiteSecurityRole.ADMIN, Set.of(), Set.of());
 
     public OverviewResponseDto getOverview() {
-        List<GateDto> gates = gateRepository.findAll().stream()
-                .map(this::mapGateToDto)
-                .collect(Collectors.toList());
+        return getOverview(WHOLE_SITE);
+    }
+
+    /** Admins see the whole site; a user only the gates, zones, credentials and denials of their zones. */
+    public OverviewResponseDto getOverview(SiteSecurityPrincipal viewer) {
+        List<GateEntity> gates = gateRepository.findAll().stream()
+                .filter(gate -> viewer.seesZone(gate.getZone())).toList();
+        List<ZoneEntity> zones = zoneRepository.findAll().stream()
+                .filter(zone -> viewer.seesZone(zone.getId())).toList();
+        long alerts = viewer.seesAllZones()
+                ? logRepository.countByStatus(DENIED_STATUS)
+                : logRepository.findByStatus(DENIED_STATUS, NEWEST_FIRST).stream()
+                        .filter(entry -> viewer.seesZone(entry.getZone())).count();
 
         OverviewStatsDto stats = OverviewStatsDto.builder()
-                .activePoints(4)
-                .controlledZones(3)
-                .visitors(2)
-                .alerts(1)
+                .activePoints((int) gates.stream()
+                        .filter(gate -> OPERATIONAL_GATE_STATUSES.contains(gate.getStatus()))
+                        .count())
+                .controlledZones((int) zones.stream().filter(zone -> !OPEN_ZONE.equals(zone.getId())).count())
+                .totalZones(zones.size())
+                .visitors((int) userRepository.findAll().stream()
+                        .filter(user -> viewer.seesZone(user.getLevel()))
+                        .filter(user -> VISITOR_TYPE.equals(user.getType()) && isValid(user))
+                        .count())
+                .alerts((int) alerts)
                 .build();
 
         return OverviewResponseDto.builder()
-                .gates(gates)
+                .gates(gates.stream().map(this::mapGateToDto).collect(Collectors.toList()))
                 .stats(stats)
                 .build();
     }
 
     public List<ZoneDto> getZones() {
+        return getZones(WHOLE_SITE);
+    }
+
+    public List<ZoneDto> getZones(SiteSecurityPrincipal viewer) {
+        List<CredentialUserEntity> users = userRepository.findAll();
+        List<GateEntity> gates = gateRepository.findAll();
         return zoneRepository.findAll().stream()
-                .map(this::mapZoneToDto)
+                .filter(zone -> viewer.seesZone(zone.getId()))
+                .map(zone -> mapZoneToDto(zone, users, gates))
                 .collect(Collectors.toList());
     }
 
-    public List<UserDto> getCredentials() {
-        return userRepository.findAll().stream()
+    public List<UserDto> getCredentials(SiteSecurityRole role) {
+        return getCredentials(new SiteSecurityPrincipal(null, role, Set.of(), Set.of()));
+    }
+
+    /** Emails only for admins; a user only sees credentials whose level is one of their zones. */
+    public List<UserDto> getCredentials(SiteSecurityPrincipal viewer) {
+        List<UserDto> credentials = userRepository.findAll().stream()
+                .filter(user -> viewer.seesZone(user.getLevel()))
                 .map(this::mapUserToDto)
                 .collect(Collectors.toList());
+        if (!viewer.isAdmin()) {
+            credentials.forEach(credential -> credential.setEmail(null));
+        }
+        return credentials;
     }
-
-    private static final Set<String> ALLOWED_TYPES = Set.of("Staff", "Service", "Security", "Visitor");
-    private static final Set<String> ALLOWED_STATUSES = Set.of("Active", "Authorized", "Suspended", "Expired");
 
     @Transactional
-    public UserDto createCredential(CreateUserRequestDto req) {
+    public UserDto createCredential(CreateUserRequestDto req, SiteSecurityPrincipal actor) {
         String name = req.getName().trim();
         if (userRepository.existsByName(name)) {
-            throw new IllegalArgumentException("A credential for '" + name + "' already exists.");
+            throw duplicateCredential(name);
         }
         if (!zoneRepository.existsById(req.getLevel())) {
-            throw new IllegalArgumentException("Unknown access level '" + req.getLevel()
+            throw new BusinessRuleException("Unknown access level '" + req.getLevel()
                     + "': no zone with this id is defined.");
         }
-        if (!ALLOWED_TYPES.contains(req.getType())) {
-            throw new IllegalArgumentException("Invalid credential type '" + req.getType()
-                    + "'. Allowed values: " + String.join(", ", ALLOWED_TYPES) + ".");
-        }
-        if (req.getStatus() != null && !ALLOWED_STATUSES.contains(req.getStatus())) {
-            throw new IllegalArgumentException("Invalid status '" + req.getStatus()
-                    + "'. Allowed values: " + String.join(", ", ALLOWED_STATUSES) + ".");
-        }
         validateValidUntil(req.getValidUntil());
+        validateVisitorRules(req);
 
-        String id = "u-" + System.currentTimeMillis();
         CredentialUserEntity entity = CredentialUserEntity.builder()
-                .id(id)
+                .id(UUID.randomUUID().toString())
                 .name(name)
-                .role(req.getRole())
+                .email(OperatorService.normalizeEmail(req.getEmail()))
+                .notificationStatus(CredentialNotificationStatus.PENDING)
+                .role(req.getRole().trim())
                 .type(req.getType())
                 .level(req.getLevel())
-                .validUntil(req.getValidUntil())
-                .status(req.getStatus() != null ? req.getStatus() : "Active")
-                .initials(req.getInitials() != null ? req.getInitials() : initialsOf(name))
-                .lastActive("Just now")
+                .validUntil(PERMANENT.equalsIgnoreCase(req.getValidUntil()) ? PERMANENT : req.getValidUntil())
+                .status(INITIAL_STATUS)
+                .initials(initialsOf(name))
+                .lastActive("Not yet on site")
                 .build();
 
-        CredentialUserEntity saved = userRepository.save(entity);
-        return mapUserToDto(saved);
+        try {
+            // Flush here so a concurrent duplicate fails inside this method, as a 409.
+            CredentialUserEntity saved = userRepository.saveAndFlush(entity);
+            audit.record(actor, SiteSecurityAuditAction.CREDENTIAL_CREATED, saved.getId(), saved.getLevel());
+            eventPublisher.publishEvent(new CredentialNotificationEvent(
+                    saved.getId(), CredentialNotificationEvent.Type.GRANTED));
+            return mapUserToDto(saved);
+        } catch (DataIntegrityViolationException e) {
+            throw duplicateCredential(name);
+        }
     }
 
-    public List<LogEntryDto> getAccessLogs(String filter) {
-        List<LogEntryEntity> logs;
-        if (filter == null || filter.equalsIgnoreCase("all")) {
-            logs = logRepository.findAll();
-        } else if (filter.equalsIgnoreCase("approved")) {
-            logs = logRepository.findByStatus("Approved");
-        } else if (filter.equalsIgnoreCase("denied")) {
-            logs = logRepository.findByStatus("Denied");
-        } else if (filter.equalsIgnoreCase("visitors")) {
-            logs = logRepository.findByType("Visitor");
-        } else if (filter.equalsIgnoreCase("staff")) {
-            logs = logRepository.findByType("Staff");
-        } else if (filter.equalsIgnoreCase("service")) {
-            logs = logRepository.findByType("Service");
-        } else {
-            logs = logRepository.findAll();
+    /** Idempotent: revoking a credential that is already revoked changes nothing and records nothing. */
+    @Transactional
+    public UserDto revokeCredential(String id, SiteSecurityPrincipal actor) {
+        CredentialUserEntity credential = userRepository.lockById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No credential with id '" + id + "'."));
+        if (!REVOKED_STATUS.equals(credential.getStatus())) {
+            credential.setStatus(REVOKED_STATUS);
+            if (credential.getEmail() != null) {
+                credential.setNotificationStatus(CredentialNotificationStatus.PENDING);
+                eventPublisher.publishEvent(new CredentialNotificationEvent(
+                        credential.getId(), CredentialNotificationEvent.Type.REVOKED));
+            }
+            userRepository.save(credential);
+            audit.record(actor, SiteSecurityAuditAction.CREDENTIAL_REVOKED, credential.getId(), null);
+            log.info("Site Security credential revoked: {}", credential.getId());
         }
+        return mapUserToDto(credential);
+    }
+
+    public List<LogEntryDto> getAccessLogs(LogFilter filter, SiteSecurityPrincipal viewer) {
+        return getAccessLogs(filter).stream()
+                .filter(entry -> viewer.seesZone(entry.getZone()))
+                .collect(Collectors.toList());
+    }
+
+    public List<LogEntryDto> getAccessLogs(LogFilter filter) {
+        List<LogEntryEntity> logs = switch (filter) {
+            case ALL -> logRepository.findAll(NEWEST_FIRST);
+            case APPROVED -> logRepository.findByStatus("Approved", NEWEST_FIRST);
+            case DENIED -> logRepository.findByStatus(DENIED_STATUS, NEWEST_FIRST);
+            case VISITORS -> logRepository.findByType(VISITOR_TYPE, NEWEST_FIRST);
+            case STAFF -> logRepository.findByType("Staff", NEWEST_FIRST);
+            case SERVICE -> logRepository.findByType("Service", NEWEST_FIRST);
+        };
 
         return logs.stream()
                 .map(this::mapLogToDto)
                 .collect(Collectors.toList());
+    }
+
+    private ConflictException duplicateCredential(String name) {
+        return new ConflictException("A credential for '" + name + "' already exists.");
+    }
+
+    private void validateVisitorRules(CreateUserRequestDto req) {
+        if (!VISITOR_TYPE.equals(req.getType())) {
+            return;
+        }
+        if (!VISITOR_ALLOWED_LEVELS.contains(req.getLevel())) {
+            throw new BusinessRuleException("A visitor credential is limited to the open and controlled zones.");
+        }
+        if (PERMANENT.equalsIgnoreCase(req.getValidUntil())) {
+            throw new BusinessRuleException("A visitor credential must have an end date.");
+        }
+    }
+
+    private void validateValidUntil(String validUntil) {
+        if (PERMANENT.equalsIgnoreCase(validUntil)) {
+            return;
+        }
+        LocalDate parsed;
+        try {
+            parsed = LocalDate.parse(validUntil);
+        } catch (DateTimeParseException e) {
+            throw new BusinessRuleException(
+                    "Invalid validUntil '" + validUntil + "': expected an ISO date (yyyy-MM-dd) or 'Permanent'.");
+        }
+        if (parsed.isBefore(LocalDate.now())) {
+            throw new BusinessRuleException("validUntil '" + validUntil + "' is in the past.");
+        }
+    }
+
+    /** The status to act on: a revocation or an end date overrides the stored status. */
+    private String effectiveStatus(CredentialUserEntity credential) {
+        if (REVOKED_STATUS.equals(credential.getStatus())) {
+            return REVOKED_STATUS;
+        }
+        return hasExpired(credential.getValidUntil()) ? EXPIRED_STATUS : credential.getStatus();
+    }
+
+    /** A validity that cannot be read is treated as expired: it cannot be proved valid. */
+    private boolean hasExpired(String validUntil) {
+        if (PERMANENT.equalsIgnoreCase(validUntil)) {
+            return false;
+        }
+        if (validUntil == null) {
+            return true;
+        }
+        try {
+            return LocalDate.parse(validUntil).isBefore(LocalDate.now());
+        } catch (DateTimeParseException e) {
+            return true;
+        }
+    }
+
+    private boolean isValid(CredentialUserEntity credential) {
+        return VALID_STATUSES.contains(effectiveStatus(credential));
+    }
+
+    private int authorizedUsers(String zoneId, List<CredentialUserEntity> users) {
+        int zoneRank = LEVEL_ORDER.indexOf(zoneId);
+        return (int) users.stream()
+                .filter(this::isValid)
+                .filter(user -> zoneRank >= 0 && LEVEL_ORDER.indexOf(user.getLevel()) >= zoneRank)
+                .count();
     }
 
     private GateDto mapGateToDto(GateEntity e) {
@@ -175,16 +285,17 @@ public class SiteSecurityService {
                 .build();
     }
 
-    private ZoneDto mapZoneToDto(ZoneEntity e) {
+    private ZoneDto mapZoneToDto(ZoneEntity e, List<CredentialUserEntity> users, List<GateEntity> gates) {
         return ZoneDto.builder()
                 .id(e.getId())
                 .name(e.getName())
                 .tagline(e.getTagline())
-                .authorizedUsers(e.getAuthorizedUsers())
-                .entryPoints(e.getEntryPoints())
+                .authorizedUsers(authorizedUsers(e.getId(), users))
+                .entryPoints((int) gates.stream().filter(gate -> e.getId().equals(gate.getZone())).count())
                 .status(e.getStatus())
                 .description(e.getDescription())
-                .requirements(e.getRequirements() != null ? e.getRequirements() : new ArrayList<>())
+                // Copied here: this lazy collection cannot be read once the transaction ends.
+                .requirements(e.getRequirements() != null ? new ArrayList<>(e.getRequirements()) : new ArrayList<>())
                 .build();
     }
 
@@ -196,9 +307,12 @@ public class SiteSecurityService {
                 .type(e.getType())
                 .level(e.getLevel())
                 .validUntil(e.getValidUntil())
-                .status(e.getStatus())
+                .status(effectiveStatus(e))
                 .initials(e.getInitials())
                 .lastActive(e.getLastActive())
+                .email(e.getEmail())
+                .notificationStatus(e.getNotificationStatus() == null
+                        ? null : e.getNotificationStatus().name().toLowerCase(Locale.ROOT))
                 .build();
     }
 
@@ -219,22 +333,6 @@ public class SiteSecurityService {
                 .method(e.getMethod())
                 .note(e.getNote())
                 .build();
-    }
-
-    private void validateValidUntil(String validUntil) {
-        if ("Permanent".equalsIgnoreCase(validUntil)) {
-            return;
-        }
-        LocalDate parsed;
-        try {
-            parsed = LocalDate.parse(validUntil);
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException(
-                    "Invalid validUntil '" + validUntil + "': expected an ISO date (yyyy-MM-dd) or 'Permanent'.");
-        }
-        if (parsed.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("validUntil '" + validUntil + "' is in the past.");
-        }
     }
 
     private String initialsOf(String name) {

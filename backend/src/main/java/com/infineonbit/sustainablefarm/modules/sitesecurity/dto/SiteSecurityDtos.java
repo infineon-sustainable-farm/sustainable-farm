@@ -1,12 +1,18 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 public class SiteSecurityDtos {
 
@@ -17,6 +23,7 @@ public class SiteSecurityDtos {
     public static class OverviewStatsDto {
         private int activePoints;
         private int controlledZones;
+        private int totalZones;
         private int visitors;
         private int alerts;
     }
@@ -73,6 +80,10 @@ public class SiteSecurityDtos {
         private String status;
         private String initials;
         private String lastActive;
+        /** Only filled for the admin role. */
+        @ToString.Exclude
+        private String email;
+        private String notificationStatus;
     }
 
     @Data
@@ -84,21 +95,44 @@ public class SiteSecurityDtos {
         @Size(max = 100, message = "Name must not exceed 100 characters")
         private String name;
 
+        @NotBlank(message = "Email is required")
+        @Email(message = "Email must be a valid address")
+        @Size(max = 254, message = "Email must not exceed 254 characters")
+        @ToString.Exclude
+        private String email;
+
         @NotBlank(message = "Role is required")
         @Size(max = 100, message = "Role must not exceed 100 characters")
         private String role;
 
         @NotBlank(message = "Type is required")
+        @Pattern(regexp = "Staff|Service|Security|Visitor",
+                message = "Type must be one of Staff, Service, Security or Visitor")
         private String type;
 
         @NotBlank(message = "Level is required")
+        @Size(max = 50, message = "Level must not exceed 50 characters")
         private String level;
 
         @NotBlank(message = "validUntil is required")
+        @Pattern(regexp = "(?i:permanent)|\\d{4}-\\d{2}-\\d{2}",
+                message = "validUntil must be an ISO date (yyyy-MM-dd) or Permanent")
         private String validUntil;
+    }
 
-        private String status;
-        private String initials;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SessionDto {
+        private String role;
+        private String centralUserId;
+        private List<String> permissions;
+
+        public static SessionDto of(SiteSecurityPrincipal principal) {
+            return new SessionDto(principal.role().name().toLowerCase(), principal.operatorId(),
+                    principal.isAdmin() ? List.of()
+                            : principal.permissions().stream().map(p -> p.toLowerCase(Locale.ROOT)).sorted().toList());
+        }
     }
 
     @Data

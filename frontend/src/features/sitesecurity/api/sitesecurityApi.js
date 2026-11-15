@@ -1,77 +1,43 @@
 import { apiClient } from "../../../shared/api/client";
 import { SITESECURITY_ENDPOINTS as ENDPOINTS } from "./endpoints";
-import { GATES, LOGS, USERS, ZONES } from "./sitesecurityMockFixtures";
+const WITH_COOKIE = {};
 
-// Mock data is only ever used as a development fallback, never in production.
-const DEV = import.meta.env.DEV;
-
-function devFallback(warn, data) {
-    if (DEV) {
-        console.warn(`[sitesecurity] ${warn} — serving mock fixtures (development only).`);
-        return Promise.resolve(data);
-    }
-    throw new Error(warn);
+function authorizedGet(endpoint, config = {}) {
+    return apiClient.get(endpoint, { ...config, ...WITH_COOKIE });
 }
 
+function authorizedPost(endpoint, body) {
+    return apiClient.post(endpoint, body, WITH_COOKIE);
+}
+
+export const restoreSession = () => authorizedGet(ENDPOINTS.SESSION);
+
+/* ---------------------------- operations ----------------------------- */
+
 export function fetchSecurityOverview() {
-    return apiClient
-        .get(`${ENDPOINTS.SITESECURITY}/overview`)
-        .catch((err) =>
-            devFallback(`Failed to load security overview: ${err.message}`, {
-                gates: GATES,
-                stats: { activePoints: 4, controlledZones: 3, visitors: 2, alerts: 1 },
-            })
-        );
+    return authorizedGet(ENDPOINTS.OVERVIEW);
 }
 
 export function fetchZones() {
-    return apiClient
-        .get(`${ENDPOINTS.SITESECURITY}/zones`)
-        .catch((err) => devFallback(`Failed to load zones: ${err.message}`, ZONES));
+    return authorizedGet(ENDPOINTS.ZONES);
 }
 
 export function fetchCredentials() {
-    return apiClient
-        .get(`${ENDPOINTS.SITESECURITY}/credentials`)
-        .catch((err) => devFallback(`Failed to load credentials: ${err.message}`, USERS));
+    return authorizedGet(ENDPOINTS.CREDENTIALS);
 }
 
 export function createCredentialApi(credential) {
-    return apiClient
-        .post(`${ENDPOINTS.SITESECURITY}/credentials`, credential)
-        .catch((err) => {
-            throw new Error(err.message || "Failed to create credential. Please try again.");
-        });
+    return authorizedPost(ENDPOINTS.CREDENTIALS, credential);
+}
+
+export function revokeCredentialApi(id) {
+    return authorizedPost(`${ENDPOINTS.CREDENTIALS}/${encodeURIComponent(id)}/revoke`, null);
 }
 
 export function fetchAccessLogs(filter) {
-    return apiClient
-        .get(`${ENDPOINTS.SITESECURITY}/logs`, { params: { filter } })
-        .catch((err) =>
-            devFallback(
-                `Failed to load access logs: ${err.message}`,
-                filter === "all" ? LOGS : LOGS.filter(matchesFilter(filter))
-            )
-        );
+    return authorizedGet(ENDPOINTS.LOGS, { params: { filter } });
 }
 
-function matchesFilter(f) {
-    return (e) => {
-        switch (f) {
-            case "all":
-                return true;
-            case "approved":
-                return e.status === "Approved";
-            case "denied":
-                return e.status === "Denied";
-            case "visitors":
-                return e.type === "Visitor";
-            case "staff":
-                return e.type === "Staff";
-            case "service":
-                return e.type === "Service";
-            default:
-                return true;
-        }
-    };
+export function fetchAuthorization() {
+    return authorizedGet(ENDPOINTS.AUTHORIZATION);
 }

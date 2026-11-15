@@ -36,6 +36,19 @@ export default function PerimeterMap({ selected, onSelect, interactive = true, c
         onMouseEnter: () => interactive && setHover(id),
         onMouseLeave: () => setHover(null),
         style: { cursor: interactive ? "pointer" : "default" },
+        ...(interactive && {
+            role: "button",
+            tabIndex: 0,
+            "aria-label": `${LEVEL_META[id].label} zone`,
+            "aria-pressed": selected === id,
+            className: "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600",
+            onKeyDown: (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelect?.(id);
+                }
+            },
+        }),
     });
     const strokeFor = (id) => {
         if (selected === id)
@@ -45,7 +58,7 @@ export default function PerimeterMap({ selected, onSelect, interactive = true, c
         return 1.4;
     };
     return (<div className="relative">
-      <svg viewBox="0 0 760 600" className="h-auto w-full" role="img" aria-label="Conceptual perimeter diagram">
+      <svg viewBox="0 0 760 600" className="h-auto w-full" role="group" aria-label="Conceptual perimeter diagram">
         <defs>
           <pattern id="hatch-amber" width="9" height="9" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
             <line x1="0" y1="0" x2="0" y2="9" stroke="#D97706" strokeOpacity="0.14" strokeWidth="3.5"/>
@@ -68,7 +81,7 @@ export default function PerimeterMap({ selected, onSelect, interactive = true, c
           <path d={BOUNDS} fill="none" stroke="#B23A68" strokeOpacity={0.5} strokeWidth={2.2} strokeLinecap="round" className="fence-sweep"/>
         </g>
 
-        <text x={366} y={72} className="svg-label pointer-events-none" fontSize={9.5} fontWeight={600} fill="#94A3B8" textAnchor="end">
+        <text x={366} y={72} className="svg-label pointer-events-none" fontSize={9.5} fontWeight={600} fill="#64748B" textAnchor="end">
           FARM BOUNDARY
         </text>
 
@@ -100,7 +113,6 @@ export default function PerimeterMap({ selected, onSelect, interactive = true, c
                 <Icon size={24} color="#101B2E" strokeWidth={1.9}/>
               </svg>
               <circle cx={g.x + 13} cy={g.y - 13} r={4.5} fill={g.dot} stroke="white" strokeWidth={1.6}/>
-              <title>{g.name}</title>
               {!compact && (<LabelChip x={g.lx} y={g.ly} w={g.w} color="#475569" text={g.name.toUpperCase()} size={8}/>)}
             </g>);
         })}
@@ -119,11 +131,11 @@ export default function PerimeterMap({ selected, onSelect, interactive = true, c
           <line x1="0" y1="0" x2="64" y2="0" stroke="#94A3B8" strokeWidth={1.4}/>
           <line x1="0" y1="-4" x2="0" y2="4" stroke="#94A3B8" strokeWidth={1.4}/>
           <line x1="64" y1="-4" x2="64" y2="4" stroke="#94A3B8" strokeWidth={1.4}/>
-          <text x="0" y="16" className="svg-label" fontSize={8.5} fill="#94A3B8">
+          <text x="0" y="16" className="svg-label" fontSize={8.5} fill="#64748B">
             CONCEPT — NOT TO SCALE
           </text>
         </g>
-        <text x={734} y={584} textAnchor="end" className="svg-label pointer-events-none" fontSize={8.5} fill="#B6C0D0">
+        <text x={734} y={584} textAnchor="end" className="svg-label pointer-events-none" fontSize={8.5} fill="#64748B">
           PRELIMINARY CONCEPT — SITE VALIDATION REQUIRED
         </text>
       </svg>

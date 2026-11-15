@@ -4,9 +4,13 @@
  * from two branches make every merge conflict. Module-local constants keep the
  * shared file untouched, so merging develop stays clean.
  */
+const BASE = "/api/v1/sitesecurity";
+
 export const SITESECURITY_ENDPOINTS = {
-  OVERVIEW: "/api/v1/sitesecurity/overview",
-  ZONES: "/api/v1/sitesecurity/zones",
-  CREDENTIALS: "/api/v1/sitesecurity/credentials",
-  LOGS: "/api/v1/sitesecurity/logs",
+  SESSION: `${BASE}/session`,
+  OVERVIEW: `${BASE}/overview`,
+  ZONES: `${BASE}/zones`,
+  CREDENTIALS: `${BASE}/credentials`,
+  LOGS: `${BASE}/logs`,
+  AUTHORIZATION: `${BASE}/authorization/current`,
 };

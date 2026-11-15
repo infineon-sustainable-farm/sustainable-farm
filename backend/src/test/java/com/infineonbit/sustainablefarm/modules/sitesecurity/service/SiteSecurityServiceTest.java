@@ -1,5 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
+import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityRole;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.CreateUserRequestDto;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.GateDto;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.dto.SiteSecurityDtos.LogEntryDto;
@@ -23,12 +27,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,49 +57,27 @@ public class SiteSecurityServiceTest {
     @Mock
     private LogEntryRepository logRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private SiteSecurityAuditService audit;
+
+    private static final SiteSecurityPrincipal ADMIN =
+            new SiteSecurityPrincipal("central-admin-id", SiteSecurityRole.ADMIN, java.util.Set.of(), java.util.Set.of());
+
     @InjectMocks
     private SiteSecurityService siteSecurityService;
 
     private CreateUserRequestDto validRequest() {
         return CreateUserRequestDto.builder()
                 .name("John Doe")
+                .email("john.doe@example.test")
                 .role("Technician")
                 .type("Staff")
                 .level("restricted")
                 .validUntil(LocalDate.now().plusYears(1).toString())
                 .build();
-    }
-
-    // --- initDefaultData idempotence ---
-
-    @Test
-    void initDefaultData_shouldNotSeed_whenDataAlreadyExists() {
-        when(gateRepository.count()).thenReturn(4L);
-        when(zoneRepository.count()).thenReturn(4L);
-        when(userRepository.count()).thenReturn(4L);
-        when(logRepository.count()).thenReturn(6L);
-
-        siteSecurityService.initDefaultData();
-
-        verify(gateRepository, never()).saveAll(any());
-        verify(zoneRepository, never()).saveAll(any());
-        verify(userRepository, never()).saveAll(any());
-        verify(logRepository, never()).saveAll(any());
-    }
-
-    @Test
-    void initDefaultData_shouldSeed_whenRepositoriesAreEmpty() {
-        when(gateRepository.count()).thenReturn(0L);
-        when(zoneRepository.count()).thenReturn(0L);
-        when(userRepository.count()).thenReturn(0L);
-        when(logRepository.count()).thenReturn(0L);
-
-        siteSecurityService.initDefaultData();
-
-        verify(gateRepository).saveAll(any());
-        verify(zoneRepository).saveAll(any());
-        verify(userRepository).saveAll(any());
-        verify(logRepository).saveAll(any());
     }
 
     // --- createCredential ---
@@ -99,9 +86,9 @@ public class SiteSecurityServiceTest {
     void createCredential_shouldCreate_whenRequestIsValid() {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
-        when(userRepository.save(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UserDto result = siteSecurityService.createCredential(validRequest());
+        UserDto result = siteSecurityService.createCredential(validRequest(), ADMIN);
 
         assertEquals("John Doe", result.getName());
         assertEquals("restricted", result.getLevel());
@@ -110,7 +97,7 @@ public class SiteSecurityServiceTest {
         assertNotNull(result.getId());
 
         ArgumentCaptor<CredentialUserEntity> captor = ArgumentCaptor.forClass(CredentialUserEntity.class);
-        verify(userRepository).save(captor.capture());
+        verify(userRepository).saveAndFlush(captor.capture());
         assertEquals("John Doe", captor.getValue().getName());
     }
 
@@ -118,11 +105,67 @@ public class SiteSecurityServiceTest {
     void createCredential_shouldThrow_whenNameAlreadyExists() {
         when(userRepository.existsByName("John Doe")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(validRequest()));
+        ConflictException ex = assertThrows(ConflictException.class,
+                () -> siteSecurityService.createCredential(validRequest(), ADMIN));
 
         assertEquals("A credential for 'John Doe' already exists.", ex.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void createCredential_shouldReportConflict_whenConcurrentDuplicateHitsTheConstraint() {
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("restricted")).thenReturn(true);
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class)))
+                .thenThrow(new DataIntegrityViolationException("uk_site_security_users_name"));
+
+        ConflictException ex = assertThrows(ConflictException.class,
+                () -> siteSecurityService.createCredential(validRequest(), ADMIN));
+
+        assertEquals("A credential for 'John Doe' already exists.", ex.getMessage());
+    }
+
+    @Test
+    void createCredential_shouldGenerateADifferentIdForEachCredential() {
+        when(userRepository.existsByName(any())).thenReturn(false);
+        when(zoneRepository.existsById("restricted")).thenReturn(true);
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String first = siteSecurityService.createCredential(validRequest(), ADMIN).getId();
+        String second = siteSecurityService.createCredential(validRequest(), ADMIN).getId();
+
+        assertNotEquals(first, second);
+    }
+
+    @Test
+    void createCredential_shouldRejectVisitorAboveControlledZone() {
+        CreateUserRequestDto req = validRequest().toBuilder().type("Visitor").build();
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("restricted")).thenReturn(true);
+
+        assertThrows(BusinessRuleException.class, () -> siteSecurityService.createCredential(req, ADMIN));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void createCredential_shouldRejectPermanentVisitor_whateverTheCase() {
+        CreateUserRequestDto req = validRequest().toBuilder()
+                .type("Visitor").level("open").validUntil("permanent").build();
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("open")).thenReturn(true);
+
+        assertThrows(BusinessRuleException.class, () -> siteSecurityService.createCredential(req, ADMIN));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void createCredential_shouldAcceptDatedVisitorInControlledZone() {
+        CreateUserRequestDto req = validRequest().toBuilder().type("Visitor").level("controlled").build();
+        when(userRepository.existsByName("John Doe")).thenReturn(false);
+        when(zoneRepository.existsById("controlled")).thenReturn(true);
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertEquals("controlled", siteSecurityService.createCredential(req, ADMIN).getLevel());
     }
 
     @Test
@@ -130,35 +173,11 @@ public class SiteSecurityServiceTest {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(false);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(validRequest()));
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> siteSecurityService.createCredential(validRequest(), ADMIN));
 
         assertTrue(ex.getMessage().contains("Unknown access level 'restricted'"));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void createCredential_shouldThrow_whenTypeIsNotAllowed() {
-        CreateUserRequestDto req = validRequest().toBuilder().type("Superuser").build();
-        when(userRepository.existsByName("John Doe")).thenReturn(false);
-        when(zoneRepository.existsById("restricted")).thenReturn(true);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(req));
-
-        assertTrue(ex.getMessage().contains("Invalid credential type 'Superuser'"));
-    }
-
-    @Test
-    void createCredential_shouldThrow_whenStatusIsNotAllowed() {
-        CreateUserRequestDto req = validRequest().toBuilder().status("GodMode").build();
-        when(userRepository.existsByName("John Doe")).thenReturn(false);
-        when(zoneRepository.existsById("restricted")).thenReturn(true);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(req));
-
-        assertTrue(ex.getMessage().contains("Invalid status 'GodMode'"));
+        verify(userRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -167,8 +186,8 @@ public class SiteSecurityServiceTest {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(req));
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> siteSecurityService.createCredential(req, ADMIN));
 
         assertTrue(ex.getMessage().contains("in the past"));
     }
@@ -179,8 +198,8 @@ public class SiteSecurityServiceTest {
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> siteSecurityService.createCredential(req));
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> siteSecurityService.createCredential(req, ADMIN));
 
         assertTrue(ex.getMessage().contains("Invalid validUntil"));
     }
@@ -190,9 +209,9 @@ public class SiteSecurityServiceTest {
         CreateUserRequestDto req = validRequest().toBuilder().validUntil("Permanent").build();
         when(userRepository.existsByName("John Doe")).thenReturn(false);
         when(zoneRepository.existsById("restricted")).thenReturn(true);
-        when(userRepository.save(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(CredentialUserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UserDto result = siteSecurityService.createCredential(req);
+        UserDto result = siteSecurityService.createCredential(req, ADMIN);
 
         assertEquals("Permanent", result.getValidUntil());
     }
@@ -201,24 +220,24 @@ public class SiteSecurityServiceTest {
 
     @Test
     void getAccessLogs_shouldReturnAll_whenFilterIsAll() {
-        when(logRepository.findAll()).thenReturn(Arrays.asList(logEntry("l1", "Approved", "Staff")));
-        List<LogEntryDto> result = siteSecurityService.getAccessLogs("all");
+        when(logRepository.findAll(any(Sort.class))).thenReturn(Arrays.asList(logEntry("l1", "Approved", "Staff")));
+        List<LogEntryDto> result = siteSecurityService.getAccessLogs(LogFilter.ALL);
         assertEquals(1, result.size());
         assertEquals("l1", result.get(0).getId());
     }
 
     @Test
     void getAccessLogs_shouldFilterByStatus() {
-        when(logRepository.findByStatus("Denied")).thenReturn(Arrays.asList(logEntry("l2", "Denied", "Visitor")));
-        List<LogEntryDto> result = siteSecurityService.getAccessLogs("denied");
+        when(logRepository.findByStatus(eq("Denied"), any(Sort.class))).thenReturn(Arrays.asList(logEntry("l2", "Denied", "Visitor")));
+        List<LogEntryDto> result = siteSecurityService.getAccessLogs(LogFilter.DENIED);
         assertEquals(1, result.size());
         assertEquals("Denied", result.get(0).getStatus());
     }
 
     @Test
     void getAccessLogs_shouldFilterByType() {
-        when(logRepository.findByType("Visitor")).thenReturn(Arrays.asList(logEntry("l3", "Approved", "Visitor")));
-        List<LogEntryDto> result = siteSecurityService.getAccessLogs("visitors");
+        when(logRepository.findByType(eq("Visitor"), any(Sort.class))).thenReturn(Arrays.asList(logEntry("l3", "Approved", "Visitor")));
+        List<LogEntryDto> result = siteSecurityService.getAccessLogs(LogFilter.VISITORS);
         assertEquals(1, result.size());
         assertEquals("Visitor", result.get(0).getType());
     }
@@ -229,7 +248,7 @@ public class SiteSecurityServiceTest {
     void getZones_shouldMapEntitiesToDtos() {
         ZoneEntity zone = ZoneEntity.builder()
                 .id("critical").name("Critical Zone").tagline("Infrastructure")
-                .authorizedUsers(2).entryPoints(1).status("Locked Down")
+                .status("Locked Down")
                 .description("desc").requirements(Arrays.asList("Level 4 clearance"))
                 .build();
         when(zoneRepository.findAll()).thenReturn(Arrays.asList(zone));
@@ -240,7 +259,7 @@ public class SiteSecurityServiceTest {
         ZoneDto dto = result.get(0);
         assertEquals("critical", dto.getId());
         assertEquals("Critical Zone", dto.getName());
-        assertEquals(2, dto.getAuthorizedUsers());
+        assertEquals(0, dto.getAuthorizedUsers());
         assertEquals(1, dto.getRequirements().size());
     }
 
@@ -279,7 +298,7 @@ public class SiteSecurityServiceTest {
                 .initials("AD").lastActive("Just now").build();
         when(userRepository.findAll()).thenReturn(Arrays.asList(user));
 
-        List<UserDto> result = siteSecurityService.getCredentials();
+        List<UserDto> result = siteSecurityService.getCredentials(SiteSecurityRole.ADMIN);
 
         assertEquals(1, result.size());
         assertEquals("Amina Diallo", result.get(0).getName());
