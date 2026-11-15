@@ -1,22 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.energysupply;
 
-import com.infineonbit.sustainablefarm.core.config.SecurityConfig;
-import com.infineonbit.sustainablefarm.modules.energysupply.controller.EnergyComponentController;
-import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergyComponent;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
+import com.infineonbit.sustainablefarm.modules.energysupply.testconfig.EnergySupplyTestApplication;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
-import com.infineonbit.sustainablefarm.modules.energysupply.service.EnergyComponentService;
-import org.springframework.boot.SpringBootConfiguration;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Import;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -30,7 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = {
+@SpringBootTest(classes = EnergySupplyTestApplication.class, properties = {
         "spring.datasource.url=jdbc:h2:mem:energy-supply-dev-startup;DB_CLOSE_DELAY=-1",
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
@@ -53,27 +44,27 @@ class EnergySupplyDataSeederTest {
         assertSeededDataCounts();
 
         String component = """
-                {"componentId":"ENG-999","name":"Test battery","category":"BATTERY","capacityValue":3.5,"status":"OPERATIONAL"}
+                {"componentId":"ENG-006","name":"Test battery","category":"BATTERY","capacityValue":3.5,"status":"OPERATIONAL"}
                 """;
         mockMvc.perform(post("/api/energy/components")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(component))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.componentId").value("ENG-999"));
-        mockMvc.perform(get("/api/energy/components/ENG-999"))
+                .andExpect(jsonPath("$.componentId").value("ENG-006"));
+        mockMvc.perform(get("/api/energy/components/ENG-006"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Test battery"));
 
-        mockMvc.perform(put("/api/energy/components/ENG-999")
+        mockMvc.perform(put("/api/energy/components/ENG-006")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"componentId":"ENG-999","name":"Updated battery","category":"BATTERY","capacityValue":4.5,"status":"OPERATIONAL"}
+                                {"componentId":"ENG-006","name":"Updated battery","category":"BATTERY","capacityValue":4.5,"status":"OPERATIONAL"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated battery"));
-        mockMvc.perform(delete("/api/energy/components/ENG-999"))
+        mockMvc.perform(delete("/api/energy/components/ENG-006"))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/api/energy/components/ENG-999"))
+        mockMvc.perform(get("/api/energy/components/ENG-006"))
                 .andExpect(status().isNotFound());
         mockMvc.perform(post("/api/energy/components")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -89,7 +80,7 @@ class EnergySupplyDataSeederTest {
                                 """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Energy component already exists: ENG-001"));
-        mockMvc.perform(put("/api/energy/components/ENG-999")
+        mockMvc.perform(put("/api/energy/components/ENG-006")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"componentId":"ENG-998","name":"Mismatched ID","category":"BATTERY","capacityValue":1,"status":"OPERATIONAL"}
@@ -124,19 +115,5 @@ class EnergySupplyDataSeederTest {
 
     private int count(String table) {
         return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + table, Integer.class);
-    }
-
-    @SpringBootConfiguration
-    @EnableAutoConfiguration
-    @EntityScan(basePackageClasses = EnergyComponent.class)
-    @EnableJpaRepositories(basePackageClasses = EnergyComponentRepository.class)
-    @Import({
-            EnergySupplyDataSeeder.class,
-            SecurityConfig.class,
-            EnergyComponentController.class,
-            EnergyComponentService.class,
-            EnergySupplyExceptionHandler.class
-    })
-    static class EnergySupplyTestApplication {
     }
 }
