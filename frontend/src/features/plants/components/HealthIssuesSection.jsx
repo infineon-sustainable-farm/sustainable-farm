@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Loader2, Plus, TriangleAlert } from "lucide-react";
 import { useAddHealthIssue } from "../hooks/useAddHealthIssue";
 import { useHealthIssues } from "../hooks/useHealthIssues";
-import { formatCode, formatText } from "../utils/format";
+import { formatCode, formatText, NO_VALUE } from "../utils/format";
 import AddHealthIssueModal from "./AddHealthIssueModal";
 import PlantsEmptyState from "./PlantsEmptyState";
-import { PRIMARY_BUTTON, SECONDARY_BUTTON, TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { CELL_NOTE, PRIMARY_BUTTON, SECONDARY_BUTTON, TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
-const COLUMNS = ["Name", "Kind", "Code", "Scientific name", "EPPO code", "Source"];
+// The scientific name sits in small gray under the name, and the EPPO code under the source.
+const COLUMNS = ["Name", "Kind", "Code", "Source"];
 
 function AddHealthIssueButton({ onClick }) {
     return (
@@ -41,16 +42,26 @@ function HealthIssuesTable({ issues }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {issues.map((issue) => (
-                        <tr key={issue.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-semibold text-gray-800">{formatText(issue.name)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatCode(issue.kind)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatText(issue.code)}</td>
-                            <td className="px-4 py-3 text-gray-700 italic">{formatText(issue.scientificName)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatText(issue.eppoCode)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatText(issue.source)}</td>
-                        </tr>
-                    ))}
+                    {issues.map((issue) => {
+                        const scientificName = formatText(issue.scientificName);
+                        const eppoCode = formatText(issue.eppoCode);
+                        return (
+                            <tr key={issue.id} className="border-b border-gray-100 align-top last:border-b-0">
+                                <td className="px-4 py-3 font-semibold text-gray-800">
+                                    {formatText(issue.name)}
+                                    {scientificName !== NO_VALUE && (
+                                        <span className={`font-normal italic ${CELL_NOTE}`}>{scientificName}</span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-gray-700">{formatCode(issue.kind)}</td>
+                                <td className="px-4 py-3 text-gray-700">{formatText(issue.code)}</td>
+                                <td className="px-4 py-3 text-gray-700">
+                                    {formatText(issue.source)}
+                                    {eppoCode !== NO_VALUE && <span className={CELL_NOTE}>{`EPPO code: ${eppoCode}`}</span>}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

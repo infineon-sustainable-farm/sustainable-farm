@@ -1,6 +1,6 @@
 import { formatBlock, formatKilograms, formatPercent, formatShare, formatText, NO_VALUE } from "../utils/format";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const TH_CLASS = TABLE_HEAD;
 
@@ -21,18 +21,18 @@ function BlockTable({ blocks }) {
                 <thead>
                     <tr>
                         <th scope="col" className={TH_CLASS}>Block</th>
-                        <th scope="col" className={TH_CLASS}>Expected</th>
-                        <th scope="col" className={TH_CLASS}>Actual</th>
-                        <th scope="col" className={TH_CLASS}>Achieved</th>
+                        <th scope="col" className={TABLE_HEAD_NUM}>Expected</th>
+                        <th scope="col" className={TABLE_HEAD_NUM}>Actual</th>
+                        <th scope="col" className={TABLE_HEAD_NUM}>Achieved</th>
                     </tr>
                 </thead>
                 <tbody>
                     {blocks.map((block) => (
                         <tr key={`${block.farmId}-${block.blockCode}`} className="border-b border-gray-100 last:border-b-0">
                             <td className="px-4 py-2.5 font-semibold text-gray-800">{formatBlock(block.blockCode)}</td>
-                            <td className="px-4 py-2.5 text-gray-700">{formatKilograms(block.expectedKg)}</td>
-                            <td className="px-4 py-2.5 text-gray-700">{formatKilograms(block.actualKg)}</td>
-                            <td className="px-4 py-2.5 text-gray-700">{formatPercent(block.achievedPct)}</td>
+                            <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(block.expectedKg)}</td>
+                            <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(block.actualKg)}</td>
+                            <td className="px-4 py-2.5 text-right text-gray-700">{formatPercent(block.achievedPct)}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -58,7 +58,7 @@ function ComputationDetails({ lines }) {
                         <tr>
                             <th scope="col" className={TH_CLASS}>Variety</th>
                             <th scope="col" className={TH_CLASS}>Block</th>
-                            <th scope="col" className={TH_CLASS}>Yield per tree</th>
+                            <th scope="col" className={TABLE_HEAD_NUM}>Yield per tree</th>
                             <th scope="col" className={TH_CLASS}>Growth phases in the harvest months</th>
                             <th scope="col" className={TH_CLASS}>Sources</th>
                         </tr>
@@ -68,7 +68,7 @@ function ComputationDetails({ lines }) {
                             <tr key={line.varietyId} className="border-b border-gray-100 align-top last:border-b-0">
                                 <td className="px-4 py-2.5 font-semibold text-gray-800">{formatText(line.varietyName)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">{formatBlock(line.blockCode)}</td>
-                                <td className="px-4 py-2.5 text-gray-700">{formatKilograms(line.yieldPerTreeKg)}</td>
+                                <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(line.yieldPerTreeKg)}</td>
                                 <td className="px-4 py-2.5 text-gray-700">
                                     <Value>{formatPhases(line.phases)}</Value>
                                 </td>
