@@ -27,9 +27,11 @@ Variables d'environnement communes : `DEMO_DB_CONTAINER`, `DEMO_DB_USER`
 
 ## 1. Prérequis — 2 min
 
+Outils : `docker compose`, `git`, `curl`, `jq`, Node 20+ / `npm`.
+
 ```bash
 docker info >/dev/null && echo "docker OK"
-git branch --show-current          # feature/producttransformation/demo-hardening
+git branch --show-current          # feature/producttransformation/init (ou develop après intégration)
 ls .env                            # obligatoire pour docker compose
 ```
 
@@ -96,7 +98,7 @@ Attendu sur un jeu de démo **seul** : `gradeAPercentage: 73.25`,
 `qualityTargetStatus: "above"`. (Après un golden path qui a ajouté des lots
 `LOT-GP-*`, la valeur monte : 83.80 sur la base de répétition.)
 
-Les endpoints des écrans (9) :
+Les endpoints des écrans (9, le dashboard est contrôlé juste au-dessus) :
 
 ```bash
 for p in batches raw-intakes wash-sort-records drying-runs qc-checkpoints \
@@ -105,7 +107,7 @@ for p in batches raw-intakes wash-sort-records drying-runs qc-checkpoints \
 done
 ```
 
-Attendu : `200` partout (10 endpoints ; `operators` inclus depuis C2).
+Attendu : `200` partout (9 endpoints ; `operators` inclus depuis C2).
 
 ---
 
@@ -135,6 +137,10 @@ Parcours de contrôle (2 min) :
 4. **Operators** : les 2 opérateurs DEMO s'affichent, filtres rôle/statut actifs.
 5. **Menu** : 10 entrées, `Settings` absent, bouton `Log out` qui affiche
    « Authentication is not enabled in this demo. ».
+6. **Nettoyage** : `LOT-RUNBOOK-01` ne contient pas `DEMO`, donc `demo-reset.sh`
+   ne le supprime pas. Le retirer avant la démo :
+   `curl -s -o /dev/null -w '%{http_code}\n' -X DELETE $B/api/batches/LOT-RUNBOOK-01`
+   (attendu `204`).
 
 ---
 
@@ -199,5 +205,7 @@ Frontend : `Ctrl+C` dans le terminal Vite.
   poste où d'autres modules tournent, préférer `DEMO_SERVICES=backend`.
 - **Emplacement des scripts** : `scripts/demo/` plutôt que `db/demo/` et
   `docs/`, car `db/` (nouvelle entrée racine) et `docs/` sont réservés aux
-  admins par `scripts/module-ownership-guard.sh`. Un compte non-admin peut
-  modifier `scripts/` sans changer la configuration du dépôt.
+  admins par `scripts/module-ownership-guard.sh`. `scripts/` est autorisé comme
+  entrée racine, mais le check 2 du même garde le réserve aussi aux admins :
+  ces fichiers doivent être repris par l'admin lors de l'intégration (c'est le
+  seul check rouge de la PR PT).
