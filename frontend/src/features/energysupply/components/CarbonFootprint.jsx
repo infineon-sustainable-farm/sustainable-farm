@@ -5,12 +5,12 @@ import { getCarbonMetrics } from "../api/energyApi";
 
 function ScoreCard({ label, value, unit, icon: Icon }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm border-t-[3px] border-t-primary">
+    <div className="rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm border-t-[3px] border-t-primary">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">{label}</p>
-          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-foreground">
-            {value}<span className="ml-1 text-base font-semibold text-muted-foreground">{unit}</span>
+          <p className="text-xs font-medium uppercase tracking-[0.05em] text-on-surface-variant">{label}</p>
+          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-on-background">
+            {value}<span className="ml-1 text-base font-semibold text-on-surface-variant">{unit}</span>
           </p>
         </div>
         <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -31,8 +31,8 @@ export default function CarbonFootprint() {
       .catch((err) => setError(err.message));
   }, []);
 
-  if (error) return <p className="text-sm text-destructive">Failed to load carbon data: {error}</p>;
-  if (!metrics) return <p className="text-sm text-muted-foreground">Loading carbon data...</p>;
+  if (error) return <p className="text-sm text-error">Failed to load carbon data: {error}</p>;
+  if (!metrics) return <p className="text-sm text-on-surface-variant">Loading carbon data...</p>;
 
   const latest = metrics[metrics.length - 1] || null;
   const currentYear = new Date().getFullYear().toString();
@@ -50,8 +50,8 @@ export default function CarbonFootprint() {
   return (
     <section>
       <div className="mb-5">
-        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-foreground">Carbon Footprint</h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-on-background">Carbon Footprint</h1>
+        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
           Emissions avoided by running the farm on solar instead of the grid or diesel generator.
         </p>
       </div>
@@ -63,13 +63,13 @@ export default function CarbonFootprint() {
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-5">
-        <div className="rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary xl:col-span-3">
+        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary xl:col-span-3">
           <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Cumulative CO₂ Avoided</h2>
+            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Cumulative CO₂ Avoided</h2>
           </div>
           <div className="p-5" style={{ height: 260 }}>
             {chartData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No carbon metrics recorded yet.</p>
+              <p className="text-sm text-on-surface-variant">No carbon metrics recorded yet.</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
@@ -83,22 +83,22 @@ export default function CarbonFootprint() {
             )}
           </div>
         </div>
-        <div className="rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary xl:col-span-2">
+        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary xl:col-span-2">
           <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Carbon Metrics by Period</h2>
+            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Carbon Metrics by Period</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr>
                   {["Period", "Scenario", "CO₂ Avoided (kg)", "Emission Factor"].map((h) => (
-                    <th key={h} className="border-b border-border bg-muted/50 px-5 py-3 text-left text-xs font-bold uppercase text-muted-foreground">{h}</th>
+                    <th key={h} className="border-b border-border bg-surface-container-low px-5 py-3 text-left text-xs font-bold uppercase text-on-surface-variant">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {metrics.map((m) => (
-                  <tr key={m.metricId} className="hover:bg-muted/40">
+                  <tr key={m.metricId} className="hover:bg-surface-container-low">
                     <td className="border-b border-border px-5 py-3 whitespace-nowrap">{m.period}</td>
                     <td className="border-b border-border px-5 py-3">{m.scenario}</td>
                     <td className="border-b border-border px-5 py-3 tabular-nums font-medium">{m.co2AvoidedKg}</td>

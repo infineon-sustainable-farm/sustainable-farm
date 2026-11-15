@@ -7,14 +7,11 @@ import { useVarietyReferences } from "../hooks/useVarietyReferences";
 import { formatCode, formatKilograms, formatSeason, formatShare, formatText, formatTimestamp } from "../utils/format";
 import PlantsEmptyState from "./PlantsEmptyState";
 import VarietyReferenceModal from "./VarietyReferenceModal";
+import { FIELD_INPUT, PRIMARY_BUTTON, ROW_BUTTON, SECONDARY_BUTTON, TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
-const SUBTITLE_CLASS = "font-heading text-sm font-bold text-gray-900";
-const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const EDIT_BUTTON_CLASS =
-    "inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50";
-const INPUT_CLASS =
-    "rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
+const SUBTITLE_CLASS = "font-heading text-sm font-bold text-on-background";
+const TH_CLASS = TABLE_HEAD;
+const INPUT_CLASS = FIELD_INPUT;
 
 /** Same rule as the API: from 0 to 1, with at most 3 decimals. */
 const SHARE_PATTERN = /^\d(\.\d{1,3})?$/;
@@ -22,7 +19,7 @@ const SHARE_ERROR = "Share must be between 0 and 1, with at most 3 decimals.";
 
 function LoadingBox({ label }) {
     return (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500">
+        <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card p-6 text-sm text-gray-500">
             <Loader2 size={18} className="animate-spin" />
             {label}
         </div>
@@ -31,12 +28,12 @@ function LoadingBox({ label }) {
 
 function ErrorBox({ title, onRetry, isRetrying }) {
     return (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 p-6">
             <div className="flex items-start gap-3">
                 <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                 <div>
-                    <p className="text-sm font-bold text-gray-900">{title}</p>
-                    {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
+                    <p className="text-sm font-bold text-on-background">{title}</p>
+                    {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
                     <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
                 </div>
             </div>
@@ -44,7 +41,7 @@ function ErrorBox({ title, onRetry, isRetrying }) {
                 type="button"
                 onClick={onRetry}
                 disabled={isRetrying}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                className={PRIMARY_BUTTON}
             >
                 {isRetrying ? "Retrying…" : "Retry"}
             </button>
@@ -57,12 +54,12 @@ function VarietyReferencesTable({ references, onEdit }) {
     return (
         // relative: the hidden "Actions" header is absolutely positioned. Without a positioned box
         // here it would sit outside the scrolling area and widen the whole page on a phone.
-        <div className="relative overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={`relative ${TABLE_CARD}`}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
                         <th scope="col" className={TH_CLASS}>Variety</th>
-                        <th scope="col" className={TH_CLASS}>Yield per tree</th>
+                        <th scope="col" className={TABLE_HEAD_NUM}>Yield per tree</th>
                         <th scope="col" className={TH_CLASS}>Harvest season</th>
                         <th scope="col" className={TH_CLASS}>Sources</th>
                         <th scope="col" className={TH_CLASS}>
@@ -76,7 +73,7 @@ function VarietyReferencesTable({ references, onEdit }) {
                             <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(reference.varietyName)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatKilograms(reference.yieldPerTreeKg)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
@@ -93,7 +90,7 @@ function VarietyReferencesTable({ references, onEdit }) {
                                     type="button"
                                     onClick={() => onEdit(reference)}
                                     aria-label={`Edit ${reference.varietyName}`}
-                                    className={EDIT_BUTTON_CLASS}
+                                    className={ROW_BUTTON}
                                 >
                                     <Pencil size={14} />
                                     Edit
@@ -193,10 +190,10 @@ function GrowthPhaseShareItem({ share, isEditing, saveShare, onEdit, onClose }) 
             {!isEditing && (
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-on-background">
                             {phase} <span className="font-normal text-gray-600">({formatText(share.yearsBand)})</span>
                         </p>
-                        <p className="mt-0.5 text-lg font-semibold text-gray-900">
+                        <p className="mt-0.5 text-lg font-semibold text-on-background">
                             {formatShare(share.yieldShare)}{" "}
                             <span className="text-sm font-normal text-gray-600">of the full yield</span>
                         </p>
@@ -213,7 +210,7 @@ function GrowthPhaseShareItem({ share, isEditing, saveShare, onEdit, onClose }) 
                         type="button"
                         onClick={openForm}
                         aria-label={`Edit the share of ${phase.toLowerCase()}`}
-                        className={EDIT_BUTTON_CLASS}
+                        className={SECONDARY_BUTTON}
                     >
                         <Pencil size={14} />
                         Edit
@@ -223,7 +220,7 @@ function GrowthPhaseShareItem({ share, isEditing, saveShare, onEdit, onClose }) 
 
             {isEditing && (
                 <form noValidate onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-3">
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-on-background">
                         {phase} <span className="font-normal text-gray-600">({formatText(share.yearsBand)})</span>
                     </p>
                     {/* Text in the darkened error hue of the dialogs: #9a3f32 on the tinted
@@ -293,14 +290,14 @@ function GrowthPhaseShareItem({ share, isEditing, saveShare, onEdit, onClose }) 
                         <button
                             type="submit"
                             disabled={saveShare.isPending}
-                            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                            className={PRIMARY_BUTTON}
                         >
                             {saveShare.isPending ? "Saving…" : "Save"}
                         </button>
                         <button
                             type="button"
                             onClick={closeForm}
-                            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            className={SECONDARY_BUTTON}
                         >
                             Cancel
                         </button>
@@ -360,7 +357,7 @@ export default function ReferenceValuesSection() {
     return (
         <section aria-labelledby="reference-values-title" className="flex flex-col gap-4">
             <div>
-                <h2 id="reference-values-title" className="font-heading text-lg font-bold text-gray-900">
+                <h2 id="reference-values-title" className="font-heading text-lg font-bold text-on-background">
                     Reference values
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm text-gray-600">
@@ -373,7 +370,7 @@ export default function ReferenceValuesSection() {
                 <button
                     type="button"
                     onClick={() => openReferenceForm(null)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                    className={SECONDARY_BUTTON}
                 >
                     <Plus size={16} />
                     Add a variety
@@ -414,7 +411,7 @@ export default function ReferenceValuesSection() {
             )}
 
             {!shares.isPending && !shares.isError && (
-                <ul className="divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white">
+                <ul className="divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white shadow-card">
                     {shares.data.map((share) => (
                         <GrowthPhaseShareItem
                             key={share.code}

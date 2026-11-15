@@ -5,7 +5,7 @@ import {
     formatSpacing,
     formatText,
 } from "../utils/format";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 // The expected and actual yields are compared over a period, under this table.
 const COLUMNS = [
@@ -15,6 +15,9 @@ const COLUMNS = [
     "Spacing",
     "Vigor",
 ];
+
+// Numbers, quantities and durations line up on the right, header included.
+const NUMERIC = new Set(["Trees"]);
 
 export default function VarietiesTable({ varieties, onSelect }) {
     return (
@@ -26,7 +29,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className={TABLE_HEAD}
+                                className={NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -53,7 +56,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatBlock(variety.blockCode)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatNumber(variety.currentTreeCount)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

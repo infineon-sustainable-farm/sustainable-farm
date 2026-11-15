@@ -1,7 +1,7 @@
 import { formatCode, formatDate, formatQuantity, formatText } from "../utils/format";
 import StockStatusBadge from "./StockStatusBadge";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 // The unit sits in each cell rather than in the header: a catalogue can mix
 // kilograms and litres. "Last restock" is the date of the latest purchase, as
@@ -16,6 +16,9 @@ const COLUMNS = [
     "Last restock",
 ];
 
+// Numbers, quantities and durations line up on the right, header included.
+const NUMERIC = new Set(["Stock", "Alert threshold"]);
+
 /** The catalogue with the stock of each fertilizer, in the order the API sends it. */
 export default function FertilizerStockTable({ fertilizers }) {
     return (
@@ -27,7 +30,7 @@ export default function FertilizerStockTable({ fertilizers }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className={TABLE_HEAD}
+                                className={NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -46,10 +49,10 @@ export default function FertilizerStockTable({ fertilizers }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(fertilizer.composition)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatQuantity(fertilizer.currentStock, fertilizer.unit)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatQuantity(fertilizer.reorderThreshold, fertilizer.unit)}
                             </td>
                             <td className="px-4 py-3">

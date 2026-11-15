@@ -70,7 +70,7 @@ export default function EnergyApp() {
   }
 
   return (
-    <div className="energy-supply-theme flex min-h-screen bg-background text-foreground">
+    <div className="energy-supply-theme flex min-h-screen bg-background text-on-background">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <button
@@ -82,22 +82,22 @@ export default function EnergyApp() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[240px] flex-col bg-sidebar text-sidebar-foreground transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[240px] flex-col bg-[#0a8276] text-white transition-transform lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex flex-col items-center gap-2 border-b border-sidebar-border px-5 py-5 text-center">
+        <div className="flex flex-col items-center gap-2 border-b border-[#4caf50] px-5 py-5 text-center">
           <div className="flex size-[100px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
             <img src="/logo.webp" alt="Farm logo" className="h-auto max-h-[80px] w-auto max-w-[80px] object-contain" />
           </div>
           <div className="min-w-0">
             <p className="font-heading text-sm font-bold uppercase tracking-[0.05em] text-white">CropCore</p>
-            <p className="truncate text-xs text-sidebar-foreground/70">Module 05 · Energy</p>
+            <p className="truncate text-xs text-white/70">Module 05 · Energy</p>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="px-3 pb-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/50">
+          <p className="px-3 pb-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-white/50">
             Navigation
           </p>
           <ul className="grid gap-1">
@@ -113,7 +113,7 @@ export default function EnergyApp() {
                     className={`group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium transition-colors ${
                       active
                         ? "bg-white/15 text-white shadow-sm"
-                        : "text-sidebar-foreground/85 hover:bg-white/10 hover:text-white"
+                        : "text-white/85 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     <Icon size={18} className="shrink-0" />
@@ -125,8 +125,8 @@ export default function EnergyApp() {
           </ul>
         </nav>
 
-        <div className="border-t border-sidebar-border px-5 py-4">
-          <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
+        <div className="border-t border-[#4caf50] px-5 py-4">
+          <div className="flex items-center gap-2 text-xs text-white/70">
             Site location · Banfora, Burkina Faso
           </div>
         </div>
@@ -134,10 +134,10 @@ export default function EnergyApp() {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-border bg-card px-4 py-3 md:px-6">
+        <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-border bg-surface-container-lowest px-4 py-3 md:px-6">
           <button
             aria-label="Open navigation"
-            className="rounded-md p-2 text-muted-foreground hover:bg-muted lg:hidden"
+            className="rounded-md p-2 text-on-surface-variant hover:bg-surface-container-low lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu size={20} />
@@ -146,16 +146,16 @@ export default function EnergyApp() {
             <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-primary">
               Energy Supply Systems
             </p>
-            <h1 className="truncate font-heading text-[18px] font-bold uppercase tracking-[0.04em] text-foreground">
+            <h1 className="truncate font-heading text-[18px] font-bold uppercase tracking-[0.04em] text-on-background">
               {TITLES[activeTab]}
             </h1>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-foreground">MADIEGA S Aida Justine</p>
-              <p className="text-xs text-muted-foreground">Energy Supply Systems</p>
+              <p className="text-sm font-semibold text-on-background">MADIEGA S Aida Justine</p>
+              <p className="text-xs text-on-surface-variant">Energy Supply Systems</p>
             </div>
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary font-heading text-sm font-bold text-primary-foreground">
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary font-heading text-sm font-bold text-on-primary">
               AM
             </div>
           </div>

@@ -3,27 +3,22 @@ import { RotateCcw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { simulateWhatIf } from "../api/energyApi";
 
-// WhatIfResponseDto (backend) currently exposes only "proposed" values —
-// there is no baseline/current scenario in the response:
-//   additionalCapexEur, newPaybackYears, newCo2ReductionPct, newSystemCapacityKwp
-// A "Current vs Proposed" comparison isn't possible until the backend
-// adds baseline fields. This version shows only the proposed outcome.
-
 const DEFAULTS = { additionalPanels: 40, additionalBatteryKwh: 80, productionScaleKgPerDay: 500 };
 
 function SliderField({ label, value, onChange, min, max, step, unit }) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-foreground">{label}</label>
+        <label className="text-sm font-medium text-on-background">{label}</label>
         <span className="font-heading text-sm font-bold text-primary tabular-nums">{value.toLocaleString()} {unit}</span>
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
+        aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
+        className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-surface-container-low accent-primary"
       />
-      <div className="mt-1 flex justify-between text-[12px] text-muted-foreground">
+      <div className="mt-1 flex justify-between text-[12px] text-on-surface-variant">
         <span>{min} {unit}</span><span>{max} {unit}</span>
       </div>
     </div>
@@ -33,7 +28,7 @@ function SliderField({ label, value, onChange, min, max, step, unit }) {
 function Row({ label, value, noBorder }) {
   return (
     <div className={`flex items-center justify-between py-3 ${noBorder ? "" : "border-b border-border"}`}>
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm text-on-surface-variant">{label}</span>
       <span className="font-heading text-sm font-bold tabular-nums text-primary">{value}</span>
     </div>
   );
@@ -80,27 +75,28 @@ export default function WhatIfAnalysis() {
 
   const chartData = result
     ? [
-        { metric: "Capacity (kWp)", value: result.newSystemCapacityKwp },
-        { metric: "CO₂ Reduction (%)", value: result.newCo2ReductionPct },
-        { metric: "Payback (yrs)", value: result.newPaybackYears },
+        { metric: "Additional PV generation", value: result.additionalPvGenerationKwhPerYear },
+        { metric: "Production demand", value: result.additionalProductionDemandKwhPerYear },
+        { metric: "Net energy balance", value: result.netAnnualEnergyBalanceKwh },
       ]
     : [];
 
   return (
     <section>
       <div className="mb-5">
-        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-foreground">What-If Scenario Analysis</h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Model an expansion of the energy system and see the resulting capacity, cost, payback, and emissions.
+        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-on-background">What-If Scenario Analysis</h1>
+        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
+          Model an expansion of the energy system and see the resulting capacity, cost, payback, energy balance, and emissions.
+          Production scale-up is treated as additional daily output.
         </p>
       </div>
 
-      {error && <p className="mb-4 text-sm text-destructive">Simulation failed: {error}</p>}
+      {error && <p className="mb-4 text-sm text-error">Simulation failed: {error}</p>}
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <div className="rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary lg:col-span-2">
+        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary lg:col-span-2">
           <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Scenario Inputs</h2>
+            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Scenario Inputs</h2>
             <button onClick={resetScenario} className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10">
               <RotateCcw className="size-3.5" />Reset
             </button>
@@ -112,29 +108,35 @@ export default function WhatIfAnalysis() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary lg:col-span-3">
+        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary lg:col-span-3">
           <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Projected Outcome</h2>
+            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Projected Outcome</h2>
           </div>
           {loading || (!result && !error) ? (
-            <p className="p-5 text-sm text-muted-foreground">Calculating...</p>
+            <p className="p-5 text-sm text-on-surface-variant">Calculating...</p>
           ) : !result ? (
-            <p className="p-5 text-sm text-destructive">No scenario result is available.</p>
+            <p className="p-5 text-sm text-error">No scenario result is available.</p>
           ) : (
             <div className="p-5">
               <Row label="New System Capacity" value={`${result.newSystemCapacityKwp?.toFixed(1)} kWp`} />
               <Row label="Additional CAPEX" value={`€${result.additionalCapexEur?.toLocaleString()}`} />
-              <Row label="Payback Period" value={`${result.newPaybackYears?.toFixed(1)} yrs`} />
-              <Row label="CO₂ Reduction" value={`${result.newCo2ReductionPct}%`} noBorder />
+              <Row label="Estimated Payback Period" value={result.newPaybackYears == null ? "N/A" : `${result.newPaybackYears.toFixed(1)} yrs`} />
+              <Row label="Additional Production Demand" value={`${result.additionalProductionDemandKwhPerYear?.toLocaleString()} kWh/year`} />
+              <Row label="Net Annual Energy Balance" value={`${result.netAnnualEnergyBalanceKwh?.toLocaleString()} kWh/year`} />
+              <Row
+                label={result.netAnnualCo2AvoidedKg >= 0 ? "Net Annual CO₂ Avoided" : "Net Annual CO₂ Increase"}
+                value={`${Math.abs(result.netAnnualCo2AvoidedKg).toLocaleString()} kg/year`}
+                noBorder
+              />
             </div>
           )}
         </div>
       </div>
 
       {result && (
-        <div className="mt-6 rounded-lg border border-border bg-card shadow-sm border-t-[3px] border-t-primary">
+        <div className="mt-6 rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary">
           <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">Impact Overview</h2>
+            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Annual Energy Impact (kWh)</h2>
           </div>
           <div className="p-5" style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">

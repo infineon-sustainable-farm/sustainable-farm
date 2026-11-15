@@ -6,11 +6,11 @@ import MonthPeriodControls from "./MonthPeriodControls";
 import PlantsEmptyState from "./PlantsEmptyState";
 import YieldForecastChart from "./YieldForecastChart";
 import YieldForecastTable from "./YieldForecastTable";
+import { PRIMARY_BUTTON, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const DEFAULT_MONTHS = 12;
 
-const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase";
+const TH_CLASS = TABLE_HEAD;
 
 /**
  * The API gives no total. The monthly totals are added here and the sum is
@@ -32,7 +32,7 @@ function formatTrees(count) {
  */
 function MonthlyTotalsTable({ monthlyTotals, totalKg }) {
     return (
-        <details className="rounded-xl border border-gray-200 bg-white">
+        <details className="rounded-2xl border border-gray-200 bg-white shadow-card">
             <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700">
                 Show monthly totals as a table
             </summary>
@@ -41,21 +41,21 @@ function MonthlyTotalsTable({ monthlyTotals, totalKg }) {
                     <thead>
                         <tr>
                             <th scope="col" className={TH_CLASS}>Month</th>
-                            <th scope="col" className={TH_CLASS}>Expected yield</th>
+                            <th scope="col" className={TABLE_HEAD_NUM}>Expected yield</th>
                         </tr>
                     </thead>
                     <tbody>
                         {monthlyTotals.map((month) => (
                             <tr key={month.month} className="border-b border-gray-100">
                                 <td className="px-4 py-2.5 text-gray-700">{formatMonth(month.month)}</td>
-                                <td className="px-4 py-2.5 text-gray-700">{formatKilograms(month.expectedKg)}</td>
+                                <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(month.expectedKg)}</td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td className="px-4 py-2.5 font-semibold text-gray-900">Total</td>
-                            <td className="px-4 py-2.5 font-semibold text-gray-900">{formatKilograms(totalKg)}</td>
+                            <td className="px-4 py-2.5 font-semibold text-on-background">Total</td>
+                            <td className="px-4 py-2.5 text-right font-semibold text-on-background">{formatKilograms(totalKg)}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -77,7 +77,7 @@ function VarietiesWithoutReferenceNote({ varieties }) {
     const subject = varieties.length === 1 ? "this variety" : "these varieties";
 
     return (
-        <div className="flex gap-3 rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+        <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white shadow-card p-6 text-sm text-gray-600">
             <Info size={18} className="mt-0.5 shrink-0 text-info" />
             <p>
                 {`Not in the forecast: ${listed}. No reference value is entered for ${subject} yet: `
@@ -108,7 +108,7 @@ export default function YieldForecastSection({ blockCode }) {
 
     return (
         <section aria-labelledby="yield-forecast-title" className="flex flex-col gap-4">
-            <h2 id="yield-forecast-title" className="font-heading text-lg font-bold text-gray-900">
+            <h2 id="yield-forecast-title" className="font-heading text-lg font-bold text-on-background">
                 Expected yield by month
             </h2>
 
@@ -122,20 +122,20 @@ export default function YieldForecastSection({ blockCode }) {
             />
 
             {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-12 text-sm text-gray-500">
+                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-12 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Loading yield forecast…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-12 text-center">
+                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-12 text-center">
                     <TriangleAlert size={28} className="text-error" />
                     <div>
-                        <p className="font-heading text-lg font-bold text-gray-900">
+                        <p className="font-heading text-lg font-bold text-on-background">
                             The forecast is unavailable.
                         </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
+                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
                         <p className="mt-1 text-sm text-gray-600">
                             Check your connection, then try again.
                         </p>
@@ -144,7 +144,7 @@ export default function YieldForecastSection({ blockCode }) {
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>
@@ -163,10 +163,10 @@ export default function YieldForecastSection({ blockCode }) {
 
             {!isPending && !isError && !isEmpty && (
                 <>
-                    <div className="rounded-xl border border-gray-200 bg-white p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white shadow-card p-6">
                         <p className="mb-4 text-sm text-gray-600">
                             Total over the period:{" "}
-                            <span className="font-semibold text-gray-900">{formatKilograms(totalKg)}</span>
+                            <span className="font-semibold text-on-background">{formatKilograms(totalKg)}</span>
                         </p>
                         <YieldForecastChart monthlyTotals={forecast.monthlyTotals} totalKg={totalKg} />
                     </div>

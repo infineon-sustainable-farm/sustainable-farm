@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { usePlantAlerts } from "../hooks/usePlantAlerts";
 import { usePlantsOverview } from "../hooks/usePlantsOverview";
+import { countActNow } from "../utils/alertPriority";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { formatDate } from "../utils/format";
 import BlockFilter from "./BlockFilter";
@@ -34,6 +36,9 @@ export default function OverviewPage() {
 
     const { data: blocks } = useVarietyBlocks();
     const overviewQuery = usePlantsOverview({ blockCode: selectedBlock || null });
+    // The same read as the list of alerts below: the figure and the list count the same alerts.
+    const alertsQuery = usePlantAlerts({ blockCode: selectedBlock || null });
+    const actNowAlerts = alertsQuery.data ? countActNow(alertsQuery.data.alerts) : null;
 
     return (
         <div className={PAGE}>
@@ -55,7 +60,7 @@ export default function OverviewPage() {
                     <BlockFilter bare blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
                 </header>
 
-                <OverviewKpiCards query={overviewQuery} />
+                <OverviewKpiCards query={overviewQuery} actNowAlerts={actNowAlerts} />
 
                 <OverviewAlertsSection blockCode={selectedBlock || null} />
 
