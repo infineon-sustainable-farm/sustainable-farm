@@ -15,6 +15,7 @@ export const PLANTS_ENDPOINTS = {
     MATURITY_OBSERVATIONS: "/api/plants/maturity-observations",
     FERTILIZERS: "/api/plants/fertilizers",
     FERTILIZER_MOVEMENTS: "/api/plants/fertilizer-movements",
+    FERTILIZER_PLANS: "/api/plants/fertilizer-plans",
     EUR_XOF_RATE: "/api/plants/currency-rates/EUR/XOF",
     VARIETY_REFERENCES: "/api/plants/variety-references",
     GROWTH_PHASE_YIELD_SHARES: "/api/plants/growth-phase-yield-shares",

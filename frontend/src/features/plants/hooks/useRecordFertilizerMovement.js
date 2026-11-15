@@ -19,7 +19,10 @@ const RECORDERS = {
  * The catalogue, every movement list, the plant alerts and the overview are
  * refreshed afterwards, whatever their filter: a movement changes the stock of
  * its fertilizer and adds a line to the history, and a stock at or below its
- * alert threshold is a stock alert, counted by the overview.
+ * alert threshold is a stock alert, counted by the overview. The planned
+ * applications are refreshed too: their costs follow the price of the last
+ * purchase, their stock check follows the stock, and their comparison counts
+ * every application.
  */
 export function useRecordFertilizerMovement() {
     const queryClient = useQueryClient();
@@ -29,6 +32,7 @@ export function useRecordFertilizerMovement() {
             Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["plants", "fertilizers"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "fertilizer-movements"] }),
+                queryClient.invalidateQueries({ queryKey: ["plants", "fertilizer-plans"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "alerts"] }),
                 queryClient.invalidateQueries({ queryKey: ["plants", "overview"] }),
             ]),
