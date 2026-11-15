@@ -16,7 +16,7 @@ Backend (from `backend/pom.xml`):
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.0-6DB33F?style=flat&logo=springboot&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9-C71A36?style=flat&logo=apachemaven&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat&logo=postgresql&logoColor=white)
-![SpringDoc OpenAPI](https://img.shields.io/badge/SpringDoc_OpenAPI-3.1.1-6BA639?style=flat&logo=openapiinitiative&logoColor=white)
+![SpringDoc OpenAPI](https://img.shields.io/badge/SpringDoc_OpenAPI-2.8.5-6BA639?style=flat&logo=openapiinitiative&logoColor=white)
 ![Lombok](https://img.shields.io/badge/Lombok-annotated-D2000F?style=flat&logo=lombok&logoColor=white)
 
 Frontend (from `frontend/package.json`):
@@ -38,4 +38,3 @@ Infrastructure:
 - [Architecture](docs/ARCHITECTURE.md) — modular monolith structure, module layering, backend and frontend layout
 - [Setup](docs/SETUP.md) — prerequisites, Docker Compose startup, service verification
 - [Contributing](docs/CONTRIBUTING.md) — git workflow, branch naming, PR rules, module ownership
-- [Energy Supply Systems](docs/ENERGY-SUPPLY.md) — Module 05 API endpoints, CRUD contract, validation and development data
