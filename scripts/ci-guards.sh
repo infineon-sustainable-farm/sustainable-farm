@@ -7,7 +7,7 @@
 # localhost CORS, EAGER @ManyToOne, secrets/demo data in migrations, pom.xml
 # downgrades, entity bound to @RequestBody, runner without @Profile, second
 # advice without @Order, PK without @GeneratedValue, hardcoded URLs,
-# unbounded findAll...).
+# unbounded findAll, mock data in application code...).
 #
 # Only the diff is checked: existing debt on the base never blocks PRs,
 # only new code is gated.
@@ -235,6 +235,57 @@ for f in "${SECRETFILES[@]:-}" "${FEFILES[@]:-}"; do
         n="${line%%:*}"
         fail "F11 **hardcoded literal secret** - \`$f:$n\` - use an environment variable (never a literal value, see PR-33)."
     done < <(added_lines "$f" | grep -iE '(password|passwd|secret|api[-_]?key|token)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"'${}]{6,}' || true)
+done
+
+# ---------------------------------------------------------------------------
+# F12 - Mock data in application code (screens must be wired to the real API)
+#
+# Test code is exempt (src/test/, __tests__/, *.test.*, *.spec.*). Comments
+# are ignored, and "mock-up" (a design mock-up) never matches. Demo data
+# belongs in the database, through a seeder or SQL loaded under the "dev"
+# profile, never in the frontend or in production code paths.
+# ---------------------------------------------------------------------------
+is_test_path() {
+    case "$1" in
+        */src/test/*|*/__tests__/*|*.test.*|*.spec.*) return 0 ;;
+    esac
+    return 1
+}
+MOCK_NAME_RE='((^|[/._-])(mock|fixture|fake|dummy|stub)|[A-Za-z0-9]?(Mock|Fixture|Fake|Dummy|Stub)|(MOCK|FIXTURE|FAKE|DUMMY|STUB))s?([._A-Z0-9-]|$)'
+MOCK_LIB_RE='(@faker-js/faker|["'"'"']faker["'"'"']|["'"'"']msw(/[a-z]+)?["'"'"']|miragejs|json-server|@mswjs/)'
+MOCK_IDENT_RE='\b(mock|fake|dummy|fixture|stub)s?(?!-|up|Up)([A-Z_0-9]\w*)?\b|\b\w*[a-z0-9](Mock(?!up)|Fake|Dummy|Fixture|Stub)s?\w*\b|\b[A-Z0-9_]*(MOCK(?!UP)|FAKE|DUMMY|FIXTURE)S?[A-Z0-9_]*\b'
+
+mapfile -t MOCKSCAN < <(changed_files 'frontend/src/' "$FE_RE"; changed_files 'backend/src/main/' "$JAVA_RE")
+mapfile -t MOCKNEW < <(added_files 'frontend/src/' "$FE_RE"; added_files 'backend/src/main/' "$JAVA_RE")
+
+for f in "${MOCKNEW[@]:-}"; do
+    [ -z "$f" ] && continue
+    is_test_path "$f" && continue
+    if basename "$f" | grep -qE "$MOCK_NAME_RE"; then
+        fail "F12 **mock data file** - \`$f\` - application code must call the real API. Put demo data in the database (dev seeder) and keep fakes in test code only."
+    fi
+done
+
+for f in "${MOCKSCAN[@]:-}"; do
+    [ -z "$f" ] && continue
+    is_test_path "$f" && continue
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        n="${line%%:*}"; c="${line#*:}"
+        # Skip comment lines (//, /*, *, {/* JSX comments).
+        printf '%s' "$c" | grep -qE '^[[:space:]]*(//|/\*|\*|\{/\*)' && continue
+        # Drop trailing // comments before matching.
+        code=$(printf '%s' "$c" | sed -E 's#[[:space:]]//.*$##')
+        if printf '%s' "$code" | grep -qE "$MOCK_LIB_RE"; then
+            fail "F12 **mocking library in application code** - \`$f:$n\` - faker / msw / miragejs / json-server are for tests only. Wire the screen to the real API."
+        elif printf '%s' "$code" | grep -qE "from[[:space:]]+['\"][^'\"]*$MOCK_NAME_RE|require\(['\"][^'\"]*$MOCK_NAME_RE"; then
+            fail "F12 **import of mock data** - \`$f:$n\` - application code must not load mock/fixture/fake data. Call the module API instead."
+        elif printf '%s' "$code" | grep -qE '\bMockito\b|org\.mockito'; then
+            fail "F12 **Mockito in production code** - \`$f:$n\` - mocking belongs in \`src/test\` only."
+        elif printf '%s' "$code" | grep -qP "$MOCK_IDENT_RE"; then
+            fail "F12 **mock data in application code** - \`$f:$n\` - \`$(printf '%s' "$code" | grep -oP "$MOCK_IDENT_RE" | head -1)\`: screens must show what the API returns, including empty and error states, never invented data."
+        fi
+    done < <(added_lines "$f" | grep -iE 'mock|fake|dummy|fixture|stub|faker|msw|mirage|json-server' || true)
 done
 
 # ---------------------------------------------------------------------------

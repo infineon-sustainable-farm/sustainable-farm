@@ -78,7 +78,7 @@ function BenefitTable({ analysis }) {
                 <tbody>
                     {change.benefitLines.map((line) => (
                         <tr key={line.type} className="border-b border-gray-100">
-                            <th scope="row" className="px-4 py-3 text-left font-medium text-gray-800">
+                            <th scope="row" className="px-4 py-3 text-left font-semibold text-gray-800">
                                 {benefitLineLabel(line)}
                             </th>
                             <td className={`px-4 py-3 font-semibold whitespace-nowrap ${toneOf(line.amount, currency)}`}>
@@ -142,9 +142,9 @@ export default function AnnualBenefitTable({ scenario, levers }) {
     return (
         <section aria-labelledby="annual-benefit-title" className="flex flex-col gap-4">
             <div>
-                <h3 id="annual-benefit-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="annual-benefit-title" className="font-heading text-lg font-bold text-gray-900">
                     Annual Benefit
-                </h3>
+                </h2>
                 <p className="mt-1 max-w-3xl text-sm text-gray-600">
                     The levers entered above, applied together, in a year of full production. Each line is what one
                     lever adds, in this order: trees, yield per tree, losses, then the variable cost of what is sold in
@@ -227,7 +227,7 @@ export default function AnnualBenefitTable({ scenario, levers }) {
                     </dl>
 
                     <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
-                        <h4 className="font-heading text-sm font-bold text-gray-900">Assumptions</h4>
+                        <h3 className="font-heading text-sm font-bold text-gray-900">Assumptions</h3>
                         <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-gray-700">
                             {assumptionItems(scenario, values).map((item) => (
                                 <li key={item}>{item}</li>

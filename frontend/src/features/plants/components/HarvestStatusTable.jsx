@@ -104,7 +104,7 @@ export default function HarvestStatusTable({ statuses }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase"
                             >
                                 {column}
                             </th>
@@ -114,7 +114,7 @@ export default function HarvestStatusTable({ statuses }) {
                 <tbody>
                     {statuses.map((status) => (
                         <tr key={status.varietyId} className="border-b border-gray-100 align-top last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">{formatBlock(status.blockCode)}</td>
+                            <td className="px-4 py-3 font-semibold text-gray-800">{formatBlock(status.blockCode)}</td>
                             <td className="px-4 py-3 text-gray-700">{formatText(status.varietyName)}</td>
                             <td className="px-4 py-3">
                                 {/* Without a reference there is no season, hence no estimate: said, not dashed. */}

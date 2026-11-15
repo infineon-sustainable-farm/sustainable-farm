@@ -1,131 +1,119 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 8000,
-});
+import { apiClient } from '../../../shared/api/client.js';
 
 export const api = {
   // Demand Forecasts
-  getDemandForecasts: () => apiClient.get('/demand-forecasts'),
-  getDemandForecastById: (id) => apiClient.get(`/demand-forecasts/${id}`),
-  createDemandForecast: (data) => apiClient.post('/demand-forecasts', data),
-  updateDemandForecast: (id, data) => apiClient.put(`/demand-forecasts/${id}`, data),
-  deleteDemandForecast: (id) => apiClient.delete(`/demand-forecasts/${id}`),
+  getDemandForecasts: () => apiClient.get('/api/demand-forecasts'),
+  getDemandForecastById: (id) => apiClient.get(`/api/demand-forecasts/${id}`),
+  createDemandForecast: (data) => apiClient.post('/api/demand-forecasts', data),
+  updateDemandForecast: (id, data) => apiClient.put(`/api/demand-forecasts/${id}`, data),
+  deleteDemandForecast: (id) => apiClient.delete(`/api/demand-forecasts/${id}`),
 
   // Forecast Model Runs
-  getForecastModelRuns: () => apiClient.get('/forecast-model-runs'),
-  getForecastModelRunById: (id) => apiClient.get(`/forecast-model-runs/${id}`),
-  createForecastModelRun: (data) => apiClient.post('/forecast-model-runs', data),
-  updateForecastModelRun: (id, data) => apiClient.put(`/forecast-model-runs/${id}`, data),
-  deleteForecastModelRun: (id) => apiClient.delete(`/forecast-model-runs/${id}`),
+  getForecastModelRuns: () => apiClient.get('/api/forecast-model-runs'),
+  getForecastModelRunById: (id) => apiClient.get(`/api/forecast-model-runs/${id}`),
+  createForecastModelRun: (data) => apiClient.post('/api/forecast-model-runs', data),
+  updateForecastModelRun: (id, data) => apiClient.put(`/api/forecast-model-runs/${id}`, data),
+  deleteForecastModelRun: (id) => apiClient.delete(`/api/forecast-model-runs/${id}`),
 
   // Alerts
-  getAlerts: () => apiClient.get('/alerts'),
-  getAlertById: (id) => apiClient.get(`/alerts/${id}`),
-  createAlert: (data) => apiClient.post('/alerts', data),
-  updateAlert: (id, data) => apiClient.put(`/alerts/${id}`, data),
-  deleteAlert: (id) => apiClient.delete(`/alerts/${id}`),
+  getAlerts: () => apiClient.get('/api/alerts'),
+  getAlertById: (id) => apiClient.get(`/api/alerts/${id}`),
+  createAlert: (data) => apiClient.post('/api/alerts', data),
+  updateAlert: (id, data) => apiClient.put(`/api/alerts/${id}`, data),
+  deleteAlert: (id) => apiClient.delete(`/api/alerts/${id}`),
 
   // Product Batches
-  getProductBatches: () => apiClient.get('/product-batches'),
-  getProductBatchById: (id) => apiClient.get(`/product-batches/${id}`),
-  createProductBatch: (data) => apiClient.post('/product-batches', data),
-  updateProductBatch: (id, data) => apiClient.put(`/product-batches/${id}`, data),
-  deleteProductBatch: (id) => apiClient.delete(`/product-batches/${id}`),
+  getProductBatches: () => apiClient.get('/api/product-batches'),
+  getProductBatchById: (id) => apiClient.get(`/api/product-batches/${id}`),
+  createProductBatch: (data) => apiClient.post('/api/product-batches', data),
+  updateProductBatch: (id, data) => apiClient.put(`/api/product-batches/${id}`, data),
+  deleteProductBatch: (id) => apiClient.delete(`/api/product-batches/${id}`),
 
   // Products
-  getProducts: () => apiClient.get('/products'),
+  getProducts: () => apiClient.get('/api/products'),
 
   // Demand Reports
-  getDemandReports: () => apiClient.get('/demand-reports'),
-  getDemandReportById: (id) => apiClient.get(`/demand-reports/${id}`),
-  createDemandReport: (data) => apiClient.post('/demand-reports', data),
-  updateDemandReport: (id, data) => apiClient.put(`/demand-reports/${id}`, data),
-  deleteDemandReport: (id) => apiClient.delete(`/demand-reports/${id}`),
+  getDemandReports: () => apiClient.get('/api/demand-reports'),
+  getDemandReportById: (id) => apiClient.get(`/api/demand-reports/${id}`),
+  createDemandReport: (data) => apiClient.post('/api/demand-reports', data),
+  updateDemandReport: (id, data) => apiClient.put(`/api/demand-reports/${id}`, data),
+  deleteDemandReport: (id) => apiClient.delete(`/api/demand-reports/${id}`),
 
   // Report Files
-  getReportFiles: () => apiClient.get('/report-files'),
-  getReportFileById: (id) => apiClient.get(`/report-files/${id}`),
-  createReportFile: (data) => apiClient.post('/report-files', data),
-  updateReportFile: (id, data) => apiClient.put(`/report-files/${id}`, data),
-  deleteReportFile: (id) => apiClient.delete(`/report-files/${id}`),
+  getReportFiles: () => apiClient.get('/api/report-files'),
+  getReportFileById: (id) => apiClient.get(`/api/report-files/${id}`),
+  createReportFile: (data) => apiClient.post('/api/report-files', data),
+  updateReportFile: (id, data) => apiClient.put(`/api/report-files/${id}`, data),
+  deleteReportFile: (id) => apiClient.delete(`/api/report-files/${id}`),
 
   // Customers
   getCustomers: (status) =>
-    apiClient.get('/customers', status ? { params: { status } } : undefined),
-  getCustomerById: (id) => apiClient.get(`/customers/${id}`),
-  createCustomer: (data) => apiClient.post('/customers', data),
-  updateCustomer: (id, data) => apiClient.put(`/customers/${id}`, data),
-  deleteCustomer: (id) => apiClient.delete(`/customers/${id}`),
+    apiClient.get('/api/customers', status ? { params: { status } } : undefined),
+  getCustomerById: (id) => apiClient.get(`/api/customers/${id}`),
+  createCustomer: (data) => apiClient.post('/api/customers', data),
+  updateCustomer: (id, data) => apiClient.put(`/api/customers/${id}`, data),
+  deleteCustomer: (id) => apiClient.delete(`/api/customers/${id}`),
     // Orders
-  getOrders: () => apiClient.get('/orders'),
-  getOrderById: (id) => apiClient.get(`/orders/${id}`),
-getOrderItems: () => apiClient.get('/order-items'),
+  getOrders: () => apiClient.get('/api/orders'),
+  getOrderById: (id) => apiClient.get(`/api/orders/${id}`),
+  getOrderItems: () => apiClient.get('/api/order-items'),
   // Customer Contacts
-  getCustomerContacts: () => apiClient.get('/customer-contacts'),
-  getCustomerContactById: (id) => apiClient.get(`/customer-contacts/${id}`),
-  createCustomerContact: (data) => apiClient.post('/customer-contacts', data),
-  updateCustomerContact: (id, data) => apiClient.put(`/customer-contacts/${id}`, data),
-  deleteCustomerContact: (id) => apiClient.delete(`/customer-contacts/${id}`),
+  getCustomerContacts: () => apiClient.get('/api/customer-contacts'),
+  getCustomerContactById: (id) => apiClient.get(`/api/customer-contacts/${id}`),
+  createCustomerContact: (data) => apiClient.post('/api/customer-contacts', data),
+  updateCustomerContact: (id, data) => apiClient.put(`/api/customer-contacts/${id}`, data),
+  deleteCustomerContact: (id) => apiClient.delete(`/api/customer-contacts/${id}`),
 
   // Certifications
-  getCertifications: () => apiClient.get('/certifications'),
-  getCustomerCertifications: (customerId) => apiClient.get(`/customers/${customerId}/certifications`),
+  getCertifications: () => apiClient.get('/api/certifications'),
+  getCustomerCertifications: (customerId) => apiClient.get(`/api/customers/${customerId}/certifications`),
   linkCustomerCertification: (customerId, certificationId) =>
-    apiClient.post(`/customers/${customerId}/certifications/${certificationId}`),
+    apiClient.post(`/api/customers/${customerId}/certifications/${certificationId}`),
   unlinkCustomerCertification: (customerId, certificationId) =>
-    apiClient.delete(`/customers/${customerId}/certifications/${certificationId}`),
+    apiClient.delete(`/api/customers/${customerId}/certifications/${certificationId}`),
 
   // Sales Channels
-  getSalesChannels: () => apiClient.get('/sales-channels'),
-  getSalesChannelById: (id) => apiClient.get(`/sales-channels/${id}`),
-  createSalesChannel: (data) => apiClient.post('/sales-channels', data),
-  updateSalesChannel: (id, data) => apiClient.put(`/sales-channels/${id}`, data),
-  deleteSalesChannel: (id) => apiClient.delete(`/sales-channels/${id}`),
-  getSalesChannelTargets: () => apiClient.get('/sales-channel-targets'),
-  getSalesChannelTargetById: (id) => apiClient.get(`/sales-channel-targets/${id}`),
-  createSalesChannelTarget: (data) => apiClient.post('/sales-channel-targets', data),
-  updateSalesChannelTarget: (id, data) => apiClient.put(`/sales-channel-targets/${id}`, data),
-  deleteSalesChannelTarget: (id) => apiClient.delete(`/sales-channel-targets/${id}`),
+  getSalesChannels: () => apiClient.get('/api/sales-channels'),
+  getSalesChannelById: (id) => apiClient.get(`/api/sales-channels/${id}`),
+  createSalesChannel: (data) => apiClient.post('/api/sales-channels', data),
+  updateSalesChannel: (id, data) => apiClient.put(`/api/sales-channels/${id}`, data),
+  deleteSalesChannel: (id) => apiClient.delete(`/api/sales-channels/${id}`),
+  getSalesChannelTargets: () => apiClient.get('/api/sales-channel-targets'),
+  getSalesChannelTargetById: (id) => apiClient.get(`/api/sales-channel-targets/${id}`),
+  createSalesChannelTarget: (data) => apiClient.post('/api/sales-channel-targets', data),
+  updateSalesChannelTarget: (id, data) => apiClient.put(`/api/sales-channel-targets/${id}`, data),
+  deleteSalesChannelTarget: (id) => apiClient.delete(`/api/sales-channel-targets/${id}`),
 
   // Pricing
-  getPricingHistory: () => apiClient.get('/pricing-history'),
-  getPricingHistoryById: (id) => apiClient.get(`/pricing-history/${id}`),
-  createPricingHistory: (data) => apiClient.post('/pricing-history', data),
-  updatePricingHistory: (id, data) => apiClient.put(`/pricing-history/${id}`, data),
-  deletePricingHistory: (id) => apiClient.delete(`/pricing-history/${id}`),
-  getCompetitorPrices: () => apiClient.get('/competitor-prices'),
-  getCompetitorPriceById: (id) => apiClient.get(`/competitor-prices/${id}`),
-  createCompetitorPrice: (data) => apiClient.post('/competitor-prices', data),
-  updateCompetitorPrice: (id, data) => apiClient.put(`/competitor-prices/${id}`, data),
-  deleteCompetitorPrice: (id) => apiClient.delete(`/competitor-prices/${id}`),
-  getPricingRecommendations: () => apiClient.get('/pricing-recommendations'),
-  getPricingRecommendationById: (id) => apiClient.get(`/pricing-recommendations/${id}`),
-  createPricingRecommendation: (data) => apiClient.post('/pricing-recommendations', data),
-  updatePricingRecommendation: (id, data) => apiClient.put(`/pricing-recommendations/${id}`, data),
-  deletePricingRecommendation: (id) => apiClient.delete(`/pricing-recommendations/${id}`),
+  getPricingHistory: () => apiClient.get('/api/pricing-history'),
+  getPricingHistoryById: (id) => apiClient.get(`/api/pricing-history/${id}`),
+  createPricingHistory: (data) => apiClient.post('/api/pricing-history', data),
+  updatePricingHistory: (id, data) => apiClient.put(`/api/pricing-history/${id}`, data),
+  deletePricingHistory: (id) => apiClient.delete(`/api/pricing-history/${id}`),
+  getCompetitorPrices: () => apiClient.get('/api/competitor-prices'),
+  getCompetitorPriceById: (id) => apiClient.get(`/api/competitor-prices/${id}`),
+  createCompetitorPrice: (data) => apiClient.post('/api/competitor-prices', data),
+  updateCompetitorPrice: (id, data) => apiClient.put(`/api/competitor-prices/${id}`, data),
+  deleteCompetitorPrice: (id) => apiClient.delete(`/api/competitor-prices/${id}`),
+  getPricingRecommendations: () => apiClient.get('/api/pricing-recommendations'),
+  getPricingRecommendationById: (id) => apiClient.get(`/api/pricing-recommendations/${id}`),
+  createPricingRecommendation: (data) => apiClient.post('/api/pricing-recommendations', data),
+  updatePricingRecommendation: (id, data) => apiClient.put(`/api/pricing-recommendations/${id}`, data),
+  deletePricingRecommendation: (id) => apiClient.delete(`/api/pricing-recommendations/${id}`),
 
   // Campaigns
-  getCampaigns: () => apiClient.get('/campaigns'),
-  getCampaignById: (id) => apiClient.get(`/campaigns/${id}`),
-  createCampaign: (data) => apiClient.post('/campaigns', data),
-  updateCampaign: (id, data) => apiClient.put(`/campaigns/${id}`, data),
-  deleteCampaign: (id) => apiClient.delete(`/campaigns/${id}`),
-  getCampaignMetrics: () => apiClient.get('/campaign-metrics'),
-  getCampaignMetricById: (id) => apiClient.get(`/campaign-metrics/${id}`),
-  createCampaignMetric: (data) => apiClient.post('/campaign-metrics', data),
-  updateCampaignMetric: (id, data) => apiClient.put(`/campaign-metrics/${id}`, data),
-  deleteCampaignMetric: (id) => apiClient.delete(`/campaign-metrics/${id}`),
+  getCampaigns: () => apiClient.get('/api/campaigns'),
+  getCampaignById: (id) => apiClient.get(`/api/campaigns/${id}`),
+  createCampaign: (data) => apiClient.post('/api/campaigns', data),
+  updateCampaign: (id, data) => apiClient.put(`/api/campaigns/${id}`, data),
+  deleteCampaign: (id) => apiClient.delete(`/api/campaigns/${id}`),
+  getCampaignMetrics: () => apiClient.get('/api/campaign-metrics'),
+  getCampaignMetricById: (id) => apiClient.get(`/api/campaign-metrics/${id}`),
+  createCampaignMetric: (data) => apiClient.post('/api/campaign-metrics', data),
+  updateCampaignMetric: (id, data) => apiClient.put(`/api/campaign-metrics/${id}`, data),
+  deleteCampaignMetric: (id) => apiClient.delete(`/api/campaign-metrics/${id}`),
 
   // Delivery / Shipments
-  getShipments: () => apiClient.get('/shipments'),
-  getShipmentEvents: () => apiClient.get('/shipment-events'),
+  getShipments: () => apiClient.get('/api/shipments'),
+  getShipmentEvents: () => apiClient.get('/api/shipment-events'),
 };
-
-export default apiClient;

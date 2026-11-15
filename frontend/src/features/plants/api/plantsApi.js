@@ -39,7 +39,9 @@ export function fetchGrowthCalendar({ blockCode, farmId } = {}) {
 }
 
 /**
- * Records a planting: date, block, variety and number of trees.
+ * Records a planting: date, block, variety and number of trees, and optionally
+ * the two spacings in metres (rowSpacingM and treeSpacingM, both or none) and
+ * the vigor (GOOD, AVERAGE or POOR).
  *
  * The values go out as entered. The API trims and upper-cases the block code
  * (" a " becomes "A"), answers 400 with fieldErrors for an invalid value, and

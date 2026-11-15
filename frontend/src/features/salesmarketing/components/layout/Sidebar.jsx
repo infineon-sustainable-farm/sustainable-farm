@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
 const navItems = [
-  { path: '/dashboard', label: 'DASHBOARD', icon: 'grid_view' },
-  { path: '/forecasting', label: 'DEMAND FORECASTING', icon: 'trending_up' },
-  { path: '/demand-alerts', label: 'DEMAND ALERTS', icon: 'notifications' },
-  { path: '/reports', label: 'DEMAND REPORTS', icon: 'description' },
-  { path: '/crm', label: 'CUSTOMERS', icon: 'group' },
-  { path: '/sales-channels', label: 'SALES CHANNELS', icon: 'shopping_cart' },
-  { path: '/pricing', label: 'PRICING', icon: 'sell' },
-  { path: '/campaigns', label: 'CAMPAIGNS', icon: 'campaign' },
-  { path: '/delivery', label: 'DELIVERY TRACKING', icon: 'local_shipping' },
+  { path: '/salesmarketing', label: 'DASHBOARD', icon: 'grid_view', end: true },
+  { path: '/salesmarketing/forecasting', label: 'DEMAND FORECASTING', icon: 'trending_up' },
+  { path: '/salesmarketing/demand-alerts', label: 'DEMAND ALERTS', icon: 'notifications' },
+  { path: '/salesmarketing/reports', label: 'DEMAND REPORTS', icon: 'description' },
+  { path: '/salesmarketing/crm', label: 'CUSTOMERS', icon: 'group' },
+  { path: '/salesmarketing/sales-channels', label: 'SALES CHANNELS', icon: 'shopping_cart' },
+  { path: '/salesmarketing/pricing', label: 'PRICING', icon: 'sell' },
+  { path: '/salesmarketing/campaigns', label: 'CAMPAIGNS', icon: 'campaign' },
+  { path: '/salesmarketing/delivery', label: 'DELIVERY TRACKING', icon: 'local_shipping' },
 ];
 
 export default function Sidebar() {
@@ -22,7 +22,7 @@ export default function Sidebar() {
     window.localStorage.clear();
     window.sessionStorage.clear();
     setShowLogoutConfirm(false);
-    navigate('/dashboard', { replace: true });
+    navigate('/salesmarketing', { replace: true });
   };
 
   return (
@@ -50,6 +50,7 @@ export default function Sidebar() {
           <NavLink
             key={item.path}
             to={item.path}
+            end={item.end}
             className={({ isActive }) =>
               `flex items-center px-lg py-md rounded-full transition-all duration-200 group ${
                 isActive

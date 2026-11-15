@@ -59,9 +59,9 @@ export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
     return (
         <section aria-labelledby="scenario-assumptions-title" className="flex flex-col gap-4">
             <div>
-                <h3 id="scenario-assumptions-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="scenario-assumptions-title" className="font-heading text-lg font-bold text-gray-900">
                     Assumptions
-                </h3>
+                </h2>
                 <p className="mt-1 max-w-3xl text-sm text-gray-600">
                     {`As entered, each with its source. Last updated ${formatTimestamp(scenario.lastUpdated)}. A dash `
                         + "means not entered: the results that need the value are not computed."}
@@ -80,7 +80,7 @@ export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
                     <tbody>
                         {assumptionRows(scenario).map((row) => (
                             <tr key={row.label} className="border-b border-gray-100 last:border-b-0">
-                                <th scope="row" className="px-4 py-3 text-left font-medium whitespace-nowrap text-gray-800">
+                                <th scope="row" className="px-4 py-3 text-left font-semibold whitespace-nowrap text-gray-800">
                                     {row.label}
                                 </th>
                                 <td className="px-4 py-3 text-gray-700">{row.value}</td>
@@ -92,7 +92,7 @@ export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
             </div>
 
             <div className="flex flex-col gap-3">
-                <h4 className="font-heading text-sm font-bold text-gray-900">Yield share by growth phase</h4>
+                <h3 className="font-heading text-sm font-bold text-gray-900">Yield share by growth phase</h3>
                 {phaseShares ? (
                     <div className="relative overflow-x-auto rounded-xl border border-gray-200 bg-white">
                         <table className="w-full border-collapse text-sm whitespace-nowrap">
@@ -107,7 +107,7 @@ export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
                             <tbody>
                                 {phaseShares.map((share) => (
                                     <tr key={share.code} className="border-b border-gray-100 last:border-b-0">
-                                        <th scope="row" className="px-4 py-3 text-left font-medium text-gray-800">
+                                        <th scope="row" className="px-4 py-3 text-left font-semibold text-gray-800">
                                             {formatCode(share.code)}
                                         </th>
                                         <td className="px-4 py-3 text-gray-700">{formatText(share.yearsBand)}</td>

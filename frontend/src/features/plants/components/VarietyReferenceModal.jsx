@@ -155,9 +155,9 @@ export default function VarietyReferenceModal({ reference, isSubmitting, error, 
     return (
         <PlantsModal labelledBy="variety-reference-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h3 id="variety-reference-title" className="font-heading text-xl font-bold text-gray-900">
+                <h2 id="variety-reference-title" className="font-heading text-lg font-bold text-gray-900">
                     {isEditing ? `Edit ${reference.varietyName}` : "Add a variety"}
-                </h3>
+                </h2>
                 <button
                     type="button"
                     onClick={onClose}

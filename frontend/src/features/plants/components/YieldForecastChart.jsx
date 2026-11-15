@@ -6,7 +6,7 @@ import { formatKilograms, formatMonth, formatMonthName, formatNumber } from "../
  * down, so its labels keep their font size on a phone; when the months do not
  * fit, the chart scrolls sideways inside its card, as the module's tables do.
  */
-const FONT_SIZE = 11;
+const FONT_SIZE = 12;
 const CHAR_WIDTH = 7; // generous width of one digit or comma at 11px
 const MIN_SLOT_WIDTH = 40;
 const MAX_BAR_WIDTH = 24;

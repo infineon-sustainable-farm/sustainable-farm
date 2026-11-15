@@ -224,9 +224,9 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
     return (
         <PlantsModal labelledBy="treatment-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h3 id="treatment-title" className="font-heading text-xl font-bold text-gray-900">
+                <h2 id="treatment-title" className="font-heading text-lg font-bold text-gray-900">
                     {isPreventive ? "Record a preventive treatment" : "Treat a finding"}
-                </h3>
+                </h2>
                 <button
                     type="button"
                     onClick={onClose}

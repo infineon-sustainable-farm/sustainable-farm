@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/api';
 
 const MAP_IMAGE =
   "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBIm-zErSziwUiSSJzhvrKgcrj-IuZDfCZDbfSqbQlcrHwsnfJ7L0Z0wkyOcxg6ImSv_Y8emrvLdoTY8GlsnffE1E9sGLd0GAPYlbtFbPAqkyOJ0uneLb0yk5bSveVBNCYxQmkp18mnvtX48wrd5g8urh2nDoDops0PXBsMRNgeTzdMkesfMfOOXeNFy1LE7ayoz9DPfmYE1u6p9p2Xq0cNqxz_PlbtH4nTKslKW4FMdSDLAPNcOZMw')";
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   return data.message || fallback;
 }
@@ -98,24 +98,18 @@ export default function DeliveryPage() {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  useEffect(() => {
-    fetchDeliveryData();
-  }, []);
-
-  const fetchDeliveryData = async () => {
-    setLoading(true);
-    setApiError(null);
-
+  const fetchDeliveryData = useCallback(async () => {
     try {
       const [shipRes, eventRes] = await Promise.allSettled([
         api.getShipments(),
         api.getShipmentEvents(),
       ]);
+      setApiError(null);
 
       const failures = [];
 
       if (shipRes.status === 'fulfilled') {
-        const nextShipments = Array.isArray(shipRes.value.data) ? shipRes.value.data : [];
+        const nextShipments = Array.isArray(shipRes.value) ? shipRes.value : [];
         setShipments(nextShipments);
         setSelectedId(nextShipments.length > 0 ? nextShipments[0].shipmentId : null);
       } else {
@@ -125,7 +119,7 @@ export default function DeliveryPage() {
       }
 
       if (eventRes.status === 'fulfilled') {
-        setEvents(Array.isArray(eventRes.value.data) ? eventRes.value.data : []);
+        setEvents(Array.isArray(eventRes.value) ? eventRes.value : []);
       } else {
         setEvents([]);
         failures.push(`Shipment events: ${getErrorMessage(eventRes.reason, 'Unable to load shipment events.')}`);
@@ -135,14 +129,18 @@ export default function DeliveryPage() {
         setApiError(failures.join(' · '));
       }
     } catch (err) {
-      setApiError(getErrorMessage(err, 'Unable to connect to the backend API.'));
+      setApiError(getErrorMessage(err, 'Unable to load delivery data. Please try again.'));
       setShipments([]);
       setEvents([]);
       setSelectedId(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchDeliveryData);
+  }, [fetchDeliveryData]);
 
   const sourceShipments = shipments;
   const sourceEvents = events;
@@ -161,14 +159,11 @@ export default function DeliveryPage() {
     return matchesQuery && matchesStatus;
   });
 
-  useEffect(() => {
-    if (filtered.length === 0) return;
-    if (!filtered.some((s) => s.shipmentId === selectedId)) {
-      setSelectedId(filtered[0].shipmentId);
-    }
-  }, [filtered, selectedId]);
-
-  const selected = filtered.find((s) => s.shipmentId === selectedId) || sourceShipments[0] || null;
+  const selected =
+    filtered.find((s) => s.shipmentId === selectedId) ||
+    filtered[0] ||
+    sourceShipments[0] ||
+    null;
 
   const handleDownloadManifest = () => {
     if (!selected) return;

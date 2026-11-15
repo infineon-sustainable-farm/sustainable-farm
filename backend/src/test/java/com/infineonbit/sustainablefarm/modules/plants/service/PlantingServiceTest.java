@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -167,6 +168,88 @@ public class PlantingServiceTest {
         assertEquals(1L, response.varietyId());
         assertEquals("Keitt", response.varietyName());
         assertEquals(150, response.treeCount());
+    }
+
+    /** A planting of block A with spacings and a vigor, as the form sends them. */
+    private static PlantingRequest detailedRequest(String varietyName, String rowSpacingM, String treeSpacingM,
+                                                   String vigor) {
+        return new PlantingRequest(null, "A", varietyName, PLANTING_DATE, 150,
+                rowSpacingM == null ? null : new BigDecimal(rowSpacingM),
+                treeSpacingM == null ? null : new BigDecimal(treeSpacingM), vigor);
+    }
+
+    @Test
+    void recordPlanting_shouldWriteTheSpacingsAndTheVigor_onANewVarietyRow() {
+        // Arrange
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
+        varietySaveAssignsId(10L);
+        eventSaveAssignsId(100L);
+        // Act
+        plantingService.recordPlanting(detailedRequest("Kent", "8", "7.5", " good "), NOW);
+        // Assert: the vigor is trimmed and upper-cased
+        ArgumentCaptor<Variety> varietyCaptor = ArgumentCaptor.forClass(Variety.class);
+        verify(varietyRepository).save(varietyCaptor.capture());
+        Variety variety = varietyCaptor.getValue();
+        assertEquals(8.0, variety.getRowSpacingM());
+        assertEquals(7.5, variety.getTreeSpacingM());
+        assertEquals("GOOD", variety.getVigor());
+        assertNull(variety.getTreeDensityPerHa());
+    }
+
+    @Test
+    void recordPlanting_shouldReplaceTheSpacingsAndTheVigor_ofAnExistingRowWithoutPlanting() {
+        // Arrange: the seeded Zalka row, 8 × 8 m, vigor not assessed
+        Variety zalkaKeitt = zalkaKeitt();
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt));
+        when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
+                .thenReturn(false);
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
+        when(varietyRepository.save(zalkaKeitt)).thenReturn(zalkaKeitt);
+        eventSaveAssignsId(100L);
+        // Act
+        plantingService.recordPlanting(detailedRequest("Keitt", "10", "6", "Poor"), NOW);
+        // Assert: the values entered replace the row's; the rest of the row is kept
+        verify(varietyRepository).save(zalkaKeitt);
+        assertEquals(10.0, zalkaKeitt.getRowSpacingM());
+        assertEquals(6.0, zalkaKeitt.getTreeSpacingM());
+        assertEquals("POOR", zalkaKeitt.getVigor());
+        assertEquals(NOW, zalkaKeitt.getLastUpdated());
+        assertEquals(200, zalkaKeitt.getTreeCount());
+        assertEquals("Zalka_2025", zalkaKeitt.getSource());
+    }
+
+    @Test
+    void recordPlanting_shouldKeepTheSpacingsOfAnExistingRow_whenOnlyTheVigorIsGiven() {
+        // Arrange
+        Variety zalkaKeitt = zalkaKeitt();
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt));
+        when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
+                .thenReturn(false);
+        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
+        when(varietyRepository.save(zalkaKeitt)).thenReturn(zalkaKeitt);
+        eventSaveAssignsId(100L);
+        // Act
+        plantingService.recordPlanting(detailedRequest("Keitt", null, null, "AVERAGE"), NOW);
+        // Assert: a field left out changes nothing
+        assertEquals(8.0, zalkaKeitt.getRowSpacingM());
+        assertEquals(8.0, zalkaKeitt.getTreeSpacingM());
+        assertEquals("AVERAGE", zalkaKeitt.getVigor());
+    }
+
+    @Test
+    void recordPlanting_shouldLeaveTheRowUntouched_whenTheVarietyIsAlreadyPlanted() {
+        // Arrange
+        Variety zalkaKeitt = zalkaKeitt();
+        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt));
+        when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
+                .thenReturn(true);
+        PlantingRequest request = detailedRequest("Keitt", "10", "6", "POOR");
+        // Act & Assert: the 409 comes before any write
+        assertThrows(ConflictException.class, () -> plantingService.recordPlanting(request, NOW));
+        verify(varietyRepository, never()).save(any(Variety.class));
+        assertEquals(8.0, zalkaKeitt.getRowSpacingM());
+        assertNull(zalkaKeitt.getVigor());
     }
 
     @Test

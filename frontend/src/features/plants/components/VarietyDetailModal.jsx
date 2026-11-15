@@ -30,12 +30,12 @@ export default function VarietyDetailModal({ variety, onClose }) {
         <PlantsModal labelledBy="variety-detail-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
                 <div>
-                    <h3
+                    <h2
                         id="variety-detail-title"
-                        className="font-heading text-xl font-bold text-gray-900"
+                        className="font-heading text-lg font-bold text-gray-900"
                     >
                         {formatText(variety.name)}
-                    </h3>
+                    </h2>
                     <p className="mt-1 text-sm text-gray-500">
                         {formatBlock(variety.blockCode)}
                     </p>

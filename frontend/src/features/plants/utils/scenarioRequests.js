@@ -324,6 +324,20 @@ export function formatAmount(amount, currency) {
     return formatMoney(pick(amount, currency), currency);
 }
 
+/**
+ * An amount of the analysis in the currency of the scenario, without its unit,
+ * for a column whose header names it: "1,870,000", "−3,137,750", "2,850.80".
+ * Euros keep their two decimals, as with the unit.
+ */
+export function formatAmountFigure(amount, currency) {
+    const value = pick(amount, currency);
+    if (isMissing(value)) return NO_VALUE;
+    const magnitude = currency === "XOF"
+        ? Math.abs(value).toLocaleString("en-US")
+        : Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return value < 0 ? `${MINUS}${magnitude}` : magnitude;
+}
+
 /** The same amount in the other currency, or null while the API has no rate to convert it. */
 export function formatOtherAmount(amount, currency) {
     const other = otherCurrency(currency);

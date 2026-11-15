@@ -5,6 +5,7 @@ import {
     formatSpacing,
     formatText,
 } from "../utils/format";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // The expected and actual yields are compared over a period, under this table.
 const COLUMNS = [
@@ -17,7 +18,7 @@ const COLUMNS = [
 
 export default function VarietiesTable({ varieties, onSelect }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -25,7 +26,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className={TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -46,7 +47,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                             }}
                             className="cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                         >
-                            <td className="px-4 py-3 font-medium text-gray-800">
+                            <td className="px-4 py-3 font-semibold text-gray-800">
                                 {formatText(variety.name)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

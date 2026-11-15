@@ -15,3 +15,5 @@ _*.log
 
 # Outillage local de l'agent / aperçu
 .freebuff/
+# Guides et rapports personnels : jamais suivis ni pousses
+guides/

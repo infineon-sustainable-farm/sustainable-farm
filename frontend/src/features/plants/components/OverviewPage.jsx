@@ -9,6 +9,7 @@ import MaturityStatusDonut from "./MaturityStatusDonut";
 import NurserySurvivalChart from "./NurserySurvivalChart";
 import OverviewAlertsSection from "./OverviewAlertsSection";
 import OverviewKpiCards from "./OverviewKpiCards";
+import { PAGE } from "./plantsStyles";
 
 /**
  * Overview, the home of the module: the figures of the day for the selected
@@ -35,26 +36,32 @@ export default function OverviewPage() {
     const overviewQuery = usePlantsOverview({ blockCode: selectedBlock || null });
 
     return (
-        <div className="min-h-dvh bg-gray-50">
-            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
-                <header>
-                    <h2 className="font-heading text-3xl font-bold text-gray-900">Overview</h2>
-                    <p className="mt-2 max-w-xl text-sm text-gray-500">
-                        Trees, alerts, yield, maturity, nursery and fertilizer stock at a glance.
-                    </p>
-                    {overviewQuery.data && (
-                        <p className="mt-1 text-sm text-gray-600">{`As of ${formatDate(overviewQuery.data.today)}`}</p>
-                    )}
+        <div className={PAGE}>
+            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. Every
+                gap is 16 px, inside the cards as between them, on the 8 px grid. */}
+            <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pt-20 pb-8 sm:px-6 md:pt-6">
+                {/* The filter sits on the title row from lg up, and under the title below. */}
+                <header className="mb-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h1 className="font-heading text-2xl font-bold text-on-background">Overview</h1>
+                        {/* gray-600: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
+                        <p className="mt-1 text-sm text-gray-600">
+                            Your orchard today.
+                            {overviewQuery.data && (
+                                <span className="text-xs">{` As of ${formatDate(overviewQuery.data.today)}`}</span>
+                            )}
+                        </p>
+                    </div>
+                    <BlockFilter bare blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
                 </header>
-
-                <BlockFilter blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />
 
                 <OverviewKpiCards query={overviewQuery} />
 
                 <OverviewAlertsSection blockCode={selectedBlock || null} />
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {/* From lg up, the three cards share two grid rows through subgrid: the tallest header sets
+                    the first row, so the three charts start at the same height. */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
                     <BlockYieldChart blockCode={selectedBlock || null} />
                     <MaturityStatusDonut query={overviewQuery} />
                     <NurserySurvivalChart />

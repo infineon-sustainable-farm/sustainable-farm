@@ -1,17 +1,18 @@
 import { formatCode, NO_VALUE } from "../utils/format";
+import PlantsBadge from "./PlantsBadge";
 import Value from "./Value";
 
 /*
- * Same colours as VigorBadge, which stays untouched (4.50, 4.52 and 5.67:1).
+ * The tones of PlantsBadge, which holds the colours and their contrast.
  * Untreated is red and in progress amber, as in the mock-up. A resolved
  * finding needs nothing more, treated or not: both are green, and the label
  * tells them apart.
  */
-const STATUS_STYLES = {
-    UNTREATED: "border-error bg-[#f7e9e7] text-[#9a3f32]",
-    IN_PROGRESS: "border-warning bg-[#f8efde] text-[#8e661c]",
-    TREATED: "border-success bg-[#e5f7ef] text-[#257e55]",
-    CLOSED_WITHOUT_TREATMENT: "border-success bg-[#e5f7ef] text-[#257e55]",
+const STATUS_TONES = {
+    UNTREATED: "error",
+    IN_PROGRESS: "warning",
+    TREATED: "success",
+    CLOSED_WITHOUT_TREATMENT: "success",
 };
 
 /**
@@ -24,11 +25,6 @@ export default function FindingStatusBadge({ status }) {
         return <Value>{NO_VALUE}</Value>;
     }
 
-    // An unknown status is still shown, in neutral styling.
-    const style = STATUS_STYLES[status] ?? "border-gray-300 bg-gray-100 text-gray-700";
-    return (
-        <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-bold ${style}`}>
-            {label}
-        </span>
-    );
+    // An unknown status is still shown, in the neutral tone.
+    return <PlantsBadge tone={STATUS_TONES[status]}>{label}</PlantsBadge>;
 }

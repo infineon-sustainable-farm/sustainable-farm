@@ -12,7 +12,7 @@ import {
 const BUTTON_CLASS =
     "inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50";
 const CARD_LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const CARD_VALUE_CLASS = "font-heading text-xl font-bold break-words text-gray-900";
+const CARD_VALUE_CLASS = "font-heading text-2xl font-bold break-words text-gray-900";
 const CARD_NOTE_CLASS = "text-xs text-gray-600";
 
 function FigureCard({ label, value, notes = [], children }) {
@@ -42,11 +42,11 @@ function PaybackCard({ baseline, horizonYears }) {
             <div className="mt-1 flex flex-col gap-2">
                 <div>
                     <p className={CARD_NOTE_CLASS}>Simple payback (full production from year 1)</p>
-                    <p className="font-heading text-base font-bold text-gray-900">{simple}</p>
+                    <p className="font-heading text-lg font-bold text-gray-900">{simple}</p>
                 </div>
                 <div>
                     <p className={CARD_NOTE_CLASS}>Payback with growth phases</p>
-                    <p className="font-heading text-base font-bold text-gray-900">{withPhases}</p>
+                    <p className="font-heading text-lg font-bold text-gray-900">{withPhases}</p>
                 </div>
             </div>
         </FigureCard>
@@ -128,9 +128,9 @@ export default function ScenarioBaselineSection({
     return (
         <section aria-labelledby="scenario-baseline-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-                <h3 id="scenario-baseline-title" className="font-heading text-base font-bold break-words text-gray-900">
+                <h2 id="scenario-baseline-title" className="font-heading text-lg font-bold break-words text-gray-900">
                     {`Baseline — ${scenario.name}`}
-                </h3>
+                </h2>
                 <div className="flex flex-wrap items-center gap-2">
                     {scenarios.length > 1 && (
                         <div className="flex items-center gap-2">

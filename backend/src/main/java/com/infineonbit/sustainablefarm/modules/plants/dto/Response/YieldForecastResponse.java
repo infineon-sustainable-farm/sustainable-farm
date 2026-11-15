@@ -52,7 +52,9 @@ public record YieldForecastResponse(
      * @param phaseShare       share of that yield in the growth phase
      * @param monthShare       share of the year's harvest picked in the month,
      *                         shown to 4 decimals
-     * @param expectedKg       expected yield, rounded to 0.1 kg
+     * @param expectedKg       expected yield, to 0.1 kg: the months of a season are rounded
+     *                         together, by largest remainder, to add up to the season's exact
+     *                         yield rounded to 0.1 kg
      * @param yieldSource      source of the yield per tree
      * @param seasonSource     source of the harvest season
      * @param phaseShareSource source of the phase share

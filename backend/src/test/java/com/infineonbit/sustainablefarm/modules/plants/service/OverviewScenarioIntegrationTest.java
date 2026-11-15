@@ -197,20 +197,20 @@ class OverviewScenarioIntegrationTest {
         assertEquals(190.0, fertilizerService.getFertilizerById(npk).currentStock());
         assertNull(fertilizerService.getFertilizerById(manure).lastPurchaseDate());
 
-        // 2. Yield comparison over 2027: 3 × 733.3 kg expected on A, nothing on B, Brooks apart
+        // 2. Yield comparison over 2027: 733.4 + 733.3 + 733.3 kg expected on A, nothing on B, Brooks apart
         YieldComparisonResponse comparison = new YieldComparisonService(yieldForecastService, harvestService,
                 noonOf(JUNE_15)).getYieldComparison(FARM, null, null, null);
         assertEquals(YearMonth.of(2027, 1), comparison.from());
         assertEquals(12, comparison.months());
         assertEquals(List.of(
-                new VarietyComparison(FARM, "A", keittA, "Keitt", 40, 2199.9, 550.5, 2, 25.0, 220.0, "Zalka_2025",
+                new VarietyComparison(FARM, "A", keittA, "Keitt", 40, 2200.0, 550.5, 2, 25.0, 220.0, "Zalka_2025",
                         KEITT_SEASON_SOURCE, List.of(new PhaseShare("gradual production", 0.25, "Bally_2002"))),
                 new VarietyComparison(FARM, "B", keittB, "Keitt", 100, 0.0, null, 0, null, 220.0, "Zalka_2025",
                         KEITT_SEASON_SOURCE, List.of(new PhaseShare("establishment", 0.0, "orchard_literature")))),
                 comparison.varieties());
-        assertEquals(List.of(new BlockComparison(FARM, "A", 2199.9, 550.5, 25.0),
+        assertEquals(List.of(new BlockComparison(FARM, "A", 2200.0, 550.5, 25.0),
                 new BlockComparison(FARM, "B", 0.0, null, null)), comparison.blocks());
-        assertEquals(new Comparison(2199.9, 550.5, 25.0), comparison.total());
+        assertEquals(new Comparison(2200.0, 550.5, 25.0), comparison.total());
         assertEquals(List.of(new NotCompared(FARM, "C", brooksC, "Brooks", 30, 120.0, 1, "NO_REFERENCE")),
                 comparison.notCompared());
 

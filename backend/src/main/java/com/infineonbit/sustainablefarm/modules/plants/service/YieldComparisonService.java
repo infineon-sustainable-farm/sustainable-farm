@@ -167,8 +167,10 @@ public class YieldComparisonService {
 
     /**
      * Expected and actual yield of one planted variety row over the months.
-     * The expected yield adds up the rounded expected yields of the months, as
-     * the monthly totals of the forecast do.
+     * The expected yield adds up the expected yields of the months, as the
+     * monthly totals of the forecast do. Each month is its share of its whole
+     * season, rounded together with the other months of that season, so a
+     * whole season adds up to its exact yield rounded to 0.1 kg.
      */
     private static VarietyComparison compare(PlantedVariety planted, List<YearMonth> window,
                                              Map<String, GrowthPhaseYieldShareResponse> sharesByPhase,

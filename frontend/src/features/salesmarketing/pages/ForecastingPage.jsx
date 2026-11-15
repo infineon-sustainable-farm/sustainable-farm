@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api/api';
 
 function getErrorMessage(err, fallback = 'Request failed') {
-  const data = err?.response?.data;
-  if (!data) return err?.message || fallback;
+  const data = err?.data;
+  if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
     if (data.validationErrors && typeof data.validationErrors === 'object') {
@@ -194,10 +194,6 @@ export default function ForecastingPage() {
     ),
   ];
 
-  useEffect(() => {
-    fetchForecastingData();
-  }, []);
-
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
@@ -213,10 +209,7 @@ export default function ForecastingPage() {
     setActionSuccess(null);
   };
 
-  const fetchForecastingData = async () => {
-    setLoading(true);
-    setApiError(null);
-
+  const fetchForecastingData = useCallback(async () => {
     try {
       const [
         forecastRes,
@@ -231,13 +224,14 @@ export default function ForecastingPage() {
         api.getOrders(),
         api.getOrderItems(),
       ]);
+      setApiError(null);
 
       const failures = [];
 
       if (forecastRes.status === 'fulfilled') {
         setForecasts(
-          Array.isArray(forecastRes.value.data)
-            ? forecastRes.value.data
+          Array.isArray(forecastRes.value)
+            ? forecastRes.value
             : []
         );
       } else {
@@ -251,8 +245,8 @@ export default function ForecastingPage() {
       }
 
       if (modelRunRes.status === 'fulfilled') {
-        const runs = Array.isArray(modelRunRes.value.data)
-          ? modelRunRes.value.data
+        const runs = Array.isArray(modelRunRes.value)
+          ? modelRunRes.value
           : [];
 
         setModelRuns(runs);
@@ -310,21 +304,18 @@ export default function ForecastingPage() {
 
       if (productRes.status === 'fulfilled') {
         const list = Array.isArray(
-          productRes.value.data
+          productRes.value
         )
-          ? productRes.value.data
+          ? productRes.value
           : [];
 
         setProducts(list);
 
-        if (
-          !selectedProductId &&
-          list[0]?.productId
-        ) {
-          setSelectedProductId(
-            String(list[0].productId)
-          );
-        }
+        setSelectedProductId((current) =>
+          current || !list[0]?.productId
+            ? current
+            : String(list[0].productId)
+        );
       } else {
         setProducts([]);
 
@@ -338,8 +329,8 @@ export default function ForecastingPage() {
       // Orders
       if (orderRes.status === 'fulfilled') {
         setOrders(
-          Array.isArray(orderRes.value.data)
-            ? orderRes.value.data
+          Array.isArray(orderRes.value)
+            ? orderRes.value
             : []
         );
       } else {
@@ -355,8 +346,8 @@ export default function ForecastingPage() {
       // Order items
       if (orderItemRes.status === 'fulfilled') {
         setOrderItems(
-          Array.isArray(orderItemRes.value.data)
-            ? orderItemRes.value.data
+          Array.isArray(orderItemRes.value)
+            ? orderItemRes.value
             : []
         );
       } else {
@@ -376,7 +367,7 @@ export default function ForecastingPage() {
       setApiError(
         getErrorMessage(
           err,
-          'Unable to connect to the backend API.'
+          'Unable to load forecast data. Please try again.'
         )
       );
 
@@ -387,7 +378,11 @@ export default function ForecastingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchForecastingData);
+  }, [fetchForecastingData]);
 
   const selectedProduct = products.find(
     (p) =>
@@ -697,9 +692,7 @@ export default function ForecastingPage() {
           'Cold-Start Forecast',
       });
 
-      flashSuccess(
-        'Model retrain job recorded (POST /api/forecast-model-runs).'
-      );
+      flashSuccess('Model retraining request submitted successfully.');
 
       await fetchForecastingData();
     } catch (err) {
@@ -1113,7 +1106,7 @@ export default function ForecastingPage() {
           </span>
 
           <p className="font-body-md text-body-md text-on-surface-variant mt-md">
-            Loading forecasts from APIââ‚¬Â¦
+            Loading forecasts…
           </p>
         </div>
       ) : (
@@ -1782,7 +1775,7 @@ export default function ForecastingPage() {
 
               {sortedTable.length === 0 ? (
                 <div className="p-xl text-center text-on-surface-variant font-body-sm">
-                  No forecasts from /api/demand-forecasts match the current filters.
+                  No forecasts match the current filters.
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse">
@@ -2235,21 +2228,7 @@ export default function ForecastingPage() {
             </h3>
 
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-              Calls{' '}
-              <code className="text-primary">
-                DELETE /api/demand-forecasts/
-                {
-                  pendingDelete.forecastId
-                }
-              </code>{' '}
-              for{' '}
-              {formatMonth(
-                pendingDelete.forecastMonth
-              )}{' '}
-              (
-              {pendingDelete.scenario ||
-                'scenario'}
-              ).
+              Are you sure you want to delete the forecast for {formatMonth(pendingDelete.forecastMonth)} ({pendingDelete.scenario || 'scenario'})? This action cannot be undone.
             </p>
 
             <div className="flex gap-md">

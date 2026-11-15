@@ -140,7 +140,7 @@ function LeverCard({ lever, scenario, text, onChange }) {
 
     return (
         <li className="flex min-w-0 flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4">
-            <h4 className="font-heading text-sm font-bold text-gray-900">{lever.title}</h4>
+            <h3 className="font-heading text-sm font-bold text-gray-900">{lever.title}</h3>
             <div>
                 <label htmlFor={inputId} className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
                     {lever.inputLabel}
@@ -204,9 +204,9 @@ export default function ScenarioLeverCards({ scenario, levers, onChange }) {
     return (
         <section aria-labelledby="scenario-levers-title" className="flex flex-col gap-4">
             <div>
-                <h3 id="scenario-levers-title" className="font-heading text-base font-bold text-gray-900">
+                <h2 id="scenario-levers-title" className="font-heading text-lg font-bold text-gray-900">
                     Production Increase Scenarios
-                </h3>
+                </h2>
                 <p className="mt-1 max-w-3xl text-sm text-gray-600">
                     Each lever on its own, against the baseline. A variant is another plan, planted before year 1
                     like the baseline; removed trees save no investment.
