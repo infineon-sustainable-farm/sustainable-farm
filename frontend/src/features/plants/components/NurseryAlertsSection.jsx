@@ -1,6 +1,7 @@
 import { CircleCheck, Loader2, TriangleAlert } from "lucide-react";
 import { useNurseryAlerts } from "../hooks/useNurseryAlerts";
 import PlantAlertItem from "./PlantAlertItem";
+import PlantAlertGroups from "./PlantAlertGroups";
 import { PRIMARY_BUTTON } from "./plantsStyles";
 
 /**
@@ -62,16 +63,19 @@ export default function NurseryAlertsSection() {
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
-                <ul className="flex flex-col gap-3">
-                    {data.alerts.map((alert) => (
+                <PlantAlertGroups
+                    alerts={data.alerts}
+                    idPrefix="transplant-alerts"
+                    listClassName="flex flex-col gap-3"
+                    renderAlert={(alert) => (
                         <PlantAlertItem
                             key={`${alert.type}-${alert.batchId}`}
                             alert={alert}
                             title="Batch to transplant"
                             dateLabel="Planned transplant"
                         />
-                    ))}
-                </ul>
+                    )}
+                />
             )}
         </section>
     );

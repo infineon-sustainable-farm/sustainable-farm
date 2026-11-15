@@ -11,11 +11,12 @@ import {
     formatText,
     formatTimestamp,
 } from "../utils/format";
+import { FIELD_LABEL } from "./plantsStyles";
 
 function Field({ label, children }) {
     return (
         <div className="flex flex-col gap-1">
-            <dt className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+            <dt className={FIELD_LABEL}>
                 {label}
             </dt>
             <dd className="text-sm text-gray-800">
@@ -32,7 +33,7 @@ export default function VarietyDetailModal({ variety, onClose }) {
                 <div>
                     <h2
                         id="variety-detail-title"
-                        className="font-heading text-lg font-bold text-gray-900"
+                        className="font-heading text-lg font-bold text-on-background"
                     >
                         {formatText(variety.name)}
                     </h2>

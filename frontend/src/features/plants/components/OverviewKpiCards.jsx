@@ -39,7 +39,8 @@ const FIGURES = [
     {
         field: "activeAlerts",
         label: "Active Alerts",
-        note: (overview) => `${formatNumber(overview.criticalAlerts)} critical`,
+        // Counted from the list of alerts shown under the figures; a dash until that list is there.
+        note: (overview, actNowAlerts) => (actNowAlerts === null ? "Act now —" : `${formatNumber(actNowAlerts)} Act now`),
         icon: TriangleAlert,
         tone: "red",
     },
@@ -50,7 +51,7 @@ const FIGURES = [
  * in 12 px gray. gray-700 #364153 -> 10.30:1 and gray-600 #4a5565 -> 7.56:1 on
  * white.
  */
-function FigureCard({ figure, overview }) {
+function FigureCard({ figure, overview, actNowAlerts }) {
     const Icon = figure.icon;
     return (
         // Two tiles per row on a phone, with the chip above the value; beside it from sm up.
@@ -63,7 +64,7 @@ function FigureCard({ figure, overview }) {
                     {formatNumber(overview[figure.field])}
                 </p>
                 <p className="text-xs font-semibold text-gray-700">{figure.label}</p>
-                <p className="text-xs text-gray-600">{figure.note(overview)}</p>
+                <p className="text-xs text-gray-600">{figure.note(overview, actNowAlerts)}</p>
             </div>
         </li>
     );
@@ -72,9 +73,11 @@ function FigureCard({ figure, overview }) {
 /**
  * The four figures of the day, as the API computes them for the selected
  * block; none of them is computed or added up here. They do not add up to the
- * total; the line under each value says which trees it counts.
+ * total; the line under each value says which trees it counts. Under Active
+ * Alerts, `actNowAlerts` is how many of the listed alerts are in the "Act now"
+ * group, or null while the list is not there.
  */
-export default function OverviewKpiCards({ query }) {
+export default function OverviewKpiCards({ query, actNowAlerts = null }) {
     const { data: overview, isPending, isError, refetch, isFetching } = query;
 
     if (isPending) {
@@ -121,7 +124,7 @@ export default function OverviewKpiCards({ query }) {
         <section aria-label="Figures of the day">
             <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 {FIGURES.map((figure) => (
-                    <FigureCard key={figure.field} figure={figure} overview={overview} />
+                    <FigureCard key={figure.field} figure={figure} overview={overview} actNowAlerts={actNowAlerts} />
                 ))}
             </ul>
         </section>

@@ -4,14 +4,13 @@ import { useHealthIssues } from "../hooks/useHealthIssues";
 import { formatCode } from "../utils/format";
 import { issueOptions, OTHER_ISSUE_CODE } from "../utils/healthIssues";
 import PlantsModal from "./PlantsModal";
+import { FIELD_INPUT, FIELD_LABEL, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
+const LABEL_CLASS = FIELD_LABEL;
+const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT}`;
 const ERROR_CLASS = "mt-1 text-xs text-error";
 const NOTE_CLASS = "mt-1 text-xs text-gray-600";
-const SECONDARY_BUTTON_CLASS =
-    "inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50";
+const SECONDARY_BUTTON_CLASS = SECONDARY_BUTTON;
 
 // The API codes, sent as they are; the method may be left out.
 const METHODS = ["VISUAL", "TRAP"];
@@ -77,7 +76,7 @@ function FindingFields({ finding, number, options, catalogueNote, errorOf, onCha
 
     return (
         <fieldset className="rounded-lg border border-gray-200 px-4 pb-4">
-            <legend className="px-1 text-xs font-semibold tracking-wide text-gray-600 uppercase">
+            <legend className="px-1 text-xs font-semibold text-gray-600">
                 {`Finding ${number}`}
             </legend>
 
@@ -295,7 +294,7 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
     return (
         <PlantsModal labelledBy="record-inspection-title" onClose={onClose}>
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2 id="record-inspection-title" className="font-heading text-lg font-bold text-gray-900">
+                <h2 id="record-inspection-title" className="font-heading text-lg font-bold text-on-background">
                     Record an inspection
                 </h2>
                 <button
@@ -444,14 +443,14 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        className={SECONDARY_BUTTON}
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isSubmitting ? "Recording…" : "Record inspection"}
                     </button>
