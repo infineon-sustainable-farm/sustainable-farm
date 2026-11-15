@@ -41,8 +41,7 @@ public class SiteSecurityOriginInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws IOException {
         if (READ_METHODS.contains(request.getMethod()) || CorsUtils.isPreFlightRequest(request)
-                || (isBearer(request.getHeader(HttpHeaders.AUTHORIZATION))
-                        && SiteSecurityAccessInterceptor.sessionCookie(request) == null)) {
+                || isBearer(request.getHeader(HttpHeaders.AUTHORIZATION))) {
             return true;
         }
         String origin = request.getHeader(HttpHeaders.ORIGIN);
