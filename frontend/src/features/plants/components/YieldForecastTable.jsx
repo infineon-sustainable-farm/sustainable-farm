@@ -5,6 +5,7 @@ import {
     formatNumber,
     formatText,
 } from "../utils/format";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const COLUMNS = [
     "Month",
@@ -16,6 +17,9 @@ const COLUMNS = [
     "Sources",
 ];
 
+// Numbers, quantities and durations line up on the right, header included.
+const NUMERIC = new Set(["Trees", "Expected yield"]);
+
 /**
  * The forecast line by line: one row per month and variety with a yield above
  * zero, as the API lists them. The sources are shown as the raw codes the API
@@ -23,7 +27,7 @@ const COLUMNS = [
  */
 export default function YieldForecastTable({ entries }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -31,7 +35,7 @@ export default function YieldForecastTable({ entries }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className={NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -53,13 +57,13 @@ export default function YieldForecastTable({ entries }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(entry.varietyName)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatNumber(entry.treeCount)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(entry.growthPhase)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatKilograms(entry.expectedKg)}
                             </td>
                             {/* The only cell allowed to wrap: three sources on one line would push

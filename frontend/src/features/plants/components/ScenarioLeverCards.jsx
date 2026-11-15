@@ -14,9 +14,9 @@ import {
     parseTreeCountChange,
     parseYieldChangePct,
 } from "../utils/scenarioRequests";
+import { FIELD_INPUT, PRIMARY_BUTTON } from "./plantsStyles";
 
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT}`;
 
 /*
  * A gain in the module's green and a loss in its red, both darkened for text
@@ -139,10 +139,10 @@ function LeverCard({ lever, scenario, text, onChange }) {
     else if (note) describedBy = `${inputId}-note`;
 
     return (
-        <li className="flex min-w-0 flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4">
-            <h3 className="font-heading text-sm font-bold text-gray-900">{lever.title}</h3>
+        <li className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-200 bg-white shadow-card p-4">
+            <h3 className="font-heading text-sm font-bold text-on-background">{lever.title}</h3>
             <div>
-                <label htmlFor={inputId} className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                <label htmlFor={inputId} className="text-xs font-semibold text-gray-500">
                     {lever.inputLabel}
                 </label>
                 <input
@@ -182,7 +182,7 @@ function LeverCard({ lever, scenario, text, onChange }) {
                             type="button"
                             onClick={() => refetch()}
                             disabled={isFetching}
-                            className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                            className={PRIMARY_BUTTON}
                         >
                             {isFetching ? "Retrying…" : "Retry"}
                         </button>
@@ -204,7 +204,7 @@ export default function ScenarioLeverCards({ scenario, levers, onChange }) {
     return (
         <section aria-labelledby="scenario-levers-title" className="flex flex-col gap-4">
             <div>
-                <h2 id="scenario-levers-title" className="font-heading text-lg font-bold text-gray-900">
+                <h2 id="scenario-levers-title" className="font-heading text-lg font-bold text-on-background">
                     Production Increase Scenarios
                 </h2>
                 <p className="mt-1 max-w-3xl text-sm text-gray-600">
