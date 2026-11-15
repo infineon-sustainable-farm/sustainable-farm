@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+    createTourStop,
     createWorkshop,
+    deactivateTourStop,
     deactivateWorkshop,
     fetchTourStops,
     fetchWorkshops,
     publishWorkshop,
+    updateTourStop,
     updateWorkshop,
 } from "../api/visitormanagementApi";
 
@@ -24,6 +27,35 @@ export function useWorkshops() {
     return useQuery({
         queryKey: WORKSHOPS_KEY,
         queryFn: fetchWorkshops,
+    });
+}
+
+function useInvalidateTourStops() {
+    const queryClient = useQueryClient();
+    return () => queryClient.invalidateQueries({ queryKey: TOUR_STOPS_KEY });
+}
+
+export function useCreateTourStop() {
+    const invalidate = useInvalidateTourStops();
+    return useMutation({
+        mutationFn: createTourStop,
+        onSettled: invalidate,
+    });
+}
+
+export function useUpdateTourStop() {
+    const invalidate = useInvalidateTourStops();
+    return useMutation({
+        mutationFn: ({ id, data }) => updateTourStop(id, data),
+        onSettled: invalidate,
+    });
+}
+
+export function useDeactivateTourStop() {
+    const invalidate = useInvalidateTourStops();
+    return useMutation({
+        mutationFn: deactivateTourStop,
+        onSettled: invalidate,
     });
 }
 

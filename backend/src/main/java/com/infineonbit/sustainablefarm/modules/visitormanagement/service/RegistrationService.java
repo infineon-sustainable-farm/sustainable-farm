@@ -21,6 +21,8 @@ public interface RegistrationService {
 
     VisitorResponse updateVisitor(Long id, VisitorRequest request);
 
+    void deleteVisitor(Long id);
+
     VisitorResponse getVisitor(Long id);
 
     List<VisitorResponse> listVisitors();

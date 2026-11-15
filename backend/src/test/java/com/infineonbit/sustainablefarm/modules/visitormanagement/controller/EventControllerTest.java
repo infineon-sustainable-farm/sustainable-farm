@@ -41,7 +41,8 @@ class EventControllerTest {
     private EventService eventService;
 
     private Long eventId = 1L;
-    private LocalDateTime start = LocalDateTime.of(2026, 10, 4, 10, 0);
+    private LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    private LocalDateTime end = start.withHour(16);
 
     @BeforeEach
     void setUp() {
@@ -53,7 +54,7 @@ class EventControllerTest {
         r.setTitle("Open Farm Day");
         r.setType(EventType.OPEN_DAY);
         r.setStartDateTime(start);
-        r.setEndDateTime(start.plusHours(6));
+        r.setEndDateTime(end);
         r.setMaxCapacity(60);
         r.setBooked(0);
         r.setStatus(EventStatus.DRAFT);
@@ -103,8 +104,8 @@ class EventControllerTest {
         mockMvc.perform(post("/api/v1/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Open Farm Day\",\"type\":\"OPEN_DAY\","
-                                + "\"startDateTime\":\"2026-10-04T10:00:00\","
-                                + "\"endDateTime\":\"2026-10-04T16:00:00\",\"maxCapacity\":60}"))
+                                + "\"startDateTime\":\"" + start + "\","
+                                + "\"endDateTime\":\"" + end + "\",\"maxCapacity\":60}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(eventId));
     }
@@ -114,8 +115,8 @@ class EventControllerTest {
         mockMvc.perform(post("/api/v1/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"OPEN_DAY\","
-                                + "\"startDateTime\":\"2026-10-04T10:00:00\","
-                                + "\"endDateTime\":\"2026-10-04T16:00:00\"}"))
+                                + "\"startDateTime\":\"" + start + "\","
+                                + "\"endDateTime\":\"" + end + "\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -127,8 +128,8 @@ class EventControllerTest {
         mockMvc.perform(put("/api/v1/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Updated\",\"type\":\"OPEN_DAY\","
-                                + "\"startDateTime\":\"2026-10-04T10:00:00\","
-                                + "\"endDateTime\":\"2026-10-04T16:00:00\"}"))
+                                + "\"startDateTime\":\"" + start + "\","
+                                + "\"endDateTime\":\"" + end + "\"}"))
                 .andExpect(status().isOk());
     }
 

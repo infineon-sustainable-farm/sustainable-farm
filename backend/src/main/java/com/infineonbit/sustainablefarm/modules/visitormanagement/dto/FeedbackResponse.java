@@ -29,8 +29,10 @@ public class FeedbackResponse {
     public static FeedbackResponse from(Feedback feedback) {
         FeedbackResponse r = new FeedbackResponse();
         r.id = feedback.getId();
-        r.visitorId = feedback.getVisitor().getId();
-        r.visitorName = feedback.getVisitor().getFullName();
+        r.visitorId = feedback.getVisitor() == null ? null : feedback.getVisitor().getId();
+        r.visitorName = feedback.getVisitor() == null
+                ? feedback.getVisitorName()
+                : feedback.getVisitor().getFullName();
         r.surveyId = feedback.getSurveySend() == null ? null : feedback.getSurveySend().getId();
         r.origin = feedback.getOrigin();
         r.rating = feedback.getRating();

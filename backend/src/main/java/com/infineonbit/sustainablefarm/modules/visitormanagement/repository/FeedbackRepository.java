@@ -10,15 +10,17 @@ import java.util.List;
 
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
-    @Query("SELECT f FROM Feedback f JOIN FETCH f.visitor LEFT JOIN FETCH f.surveySend "
+    @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.visitor LEFT JOIN FETCH f.surveySend "
             + "WHERE f.visitor.id = :visitorId")
     List<Feedback> findByVisitorId(@Param("visitorId") Long visitorId);
 
-    @Query("SELECT f FROM Feedback f JOIN FETCH f.visitor LEFT JOIN FETCH f.surveySend "
+    boolean existsByVisitorId(Long visitorId);
+
+    @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.visitor LEFT JOIN FETCH f.surveySend "
             + "WHERE f.submittedAt BETWEEN :from AND :to")
     List<Feedback> findBySubmittedAtBetween(@Param("from") Instant from, @Param("to") Instant to);
 
-    @Query("SELECT f FROM Feedback f JOIN FETCH f.visitor LEFT JOIN FETCH f.surveySend "
+    @Query("SELECT f FROM Feedback f LEFT JOIN FETCH f.visitor LEFT JOIN FETCH f.surveySend "
             + "ORDER BY f.submittedAt DESC")
     List<Feedback> findAllByOrderBySubmittedAtDesc();
 

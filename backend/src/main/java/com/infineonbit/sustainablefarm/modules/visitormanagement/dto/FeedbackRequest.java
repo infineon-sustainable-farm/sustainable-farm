@@ -9,12 +9,16 @@ import jakarta.validation.constraints.Size;
  * Request to submit a feedback response. If {@code surveyId} is provided the
  * response is linked to a previously sent post-visit survey (and that survey
  * becomes RECEIVED); otherwise the response is recorded as an on-site tablet
- * submission.
+ * submission. An on-site response is identified either by {@code visitorId}
+ * (a known visitor) or by {@code visitorName} (typed by the visitor on the
+ * tablet).
  */
 public class FeedbackRequest {
 
-    @NotNull(message = "visitorId is required")
     private Long visitorId;
+
+    @Size(max = 150, message = "visitorName must be at most 150 characters")
+    private String visitorName;
 
     private Long surveyId;
 
@@ -41,6 +45,14 @@ public class FeedbackRequest {
 
     public void setVisitorId(Long visitorId) {
         this.visitorId = visitorId;
+    }
+
+    public String getVisitorName() {
+        return visitorName;
+    }
+
+    public void setVisitorName(String visitorName) {
+        this.visitorName = visitorName;
     }
 
     public Long getSurveyId() {

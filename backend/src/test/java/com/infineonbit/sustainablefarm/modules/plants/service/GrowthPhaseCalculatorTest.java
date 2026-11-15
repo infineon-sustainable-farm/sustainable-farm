@@ -1,9 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.plants.service.GrowthPhaseCalculator.GrowthPhase;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -81,5 +83,23 @@ public class GrowthPhaseCalculatorTest {
         assertEquals("3–5 yrs", GrowthPhaseCalculator.computePhaseYearsBand(Period.of(5, 11, 30)));
         assertEquals("6+ yrs", GrowthPhaseCalculator.computePhaseYearsBand(Period.of(6, 0, 0)));
         assertEquals("6+ yrs", GrowthPhaseCalculator.computePhaseYearsBand(Period.of(12, 0, 0)));
+    }
+
+    @Test
+    void phases_shouldListEveryPhase_youngestFirst_withItsCodeAndBand() {
+        // Act & Assert: the same labels and bands as computePhase and computePhaseYearsBand
+        assertEquals(List.of(
+                        new GrowthPhase("ESTABLISHMENT", "establishment", "0–2 yrs"),
+                        new GrowthPhase("GRADUAL_PRODUCTION", "gradual production", "3–5 yrs"),
+                        new GrowthPhase("FULL_PRODUCTION", "full production", "6+ yrs")),
+                GrowthPhaseCalculator.phases());
+    }
+
+    @Test
+    void lastPhaseFirstCompletedYear_shouldBeTheFirstYearOfFullProduction() {
+        // Act & Assert: from that age on, the phase never changes
+        assertEquals(6, GrowthPhaseCalculator.lastPhaseFirstCompletedYear());
+        assertEquals("full production", GrowthPhaseCalculator.computePhase(Period.of(6, 0, 0)));
+        assertEquals("gradual production", GrowthPhaseCalculator.computePhase(Period.of(5, 11, 30)));
     }
 }

@@ -1,0 +1,347 @@
+package com.infineonbit.sustainablefarm.modules.watersupply.iot;
+
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.SoilMoistureReading;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.DripMaintenanceService;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.IotDeviceService;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.RainwaterHarvestService;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.RainwaterTankMonitor;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterQuotaService;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterService;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
+
+/**
+ * Routing of IoT sensor telemetry to the module's business tables.
+ * An unknown measurement or a missing value never interrupts the batch:
+ * each item responds individually (processed / rejected / not_routed_yet).
+ */
+@Service
+public class IotTelemetryService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IotTelemetryService.class);
+
+    /** Input record: a measurement from a device. */
+    public record Telemetry(String deviceId, String type, UUID sourceId, UUID zoneId,
+                            Map<String, Object> values, Instant timestamp) {}
+
+    /** Individual result of the routing. */
+    public record Result(String type, UUID sourceId, String status, String message) {}
+
+    private final WaterSourceRepository waterSourceRepository;
+    private final WaterService waterService;
+    private final RainwaterHarvestService rainwaterHarvestService;
+    private final DripMaintenanceService dripMaintenanceService;
+    private final SoilMoistureReadingRepository soilMoistureReadingRepository;
+    private final IotDeviceService iotDeviceService;
+    private final WaterQuotaService waterQuotaService;
+    private final RainwaterTankMonitor rainwaterTankMonitor;
+    private final WaterIntegrationProperties properties;
+    private final TransactionTemplate itemTransaction;
+
+    public IotTelemetryService(WaterSourceRepository waterSourceRepository,
+                               WaterService waterService,
+                               RainwaterHarvestService rainwaterHarvestService,
+                               DripMaintenanceService dripMaintenanceService,
+                               SoilMoistureReadingRepository soilMoistureReadingRepository,
+                               IotDeviceService iotDeviceService,
+                               WaterQuotaService waterQuotaService,
+                               RainwaterTankMonitor rainwaterTankMonitor,
+                               WaterIntegrationProperties properties,
+                               PlatformTransactionManager transactionManager) {
+        this.waterSourceRepository = waterSourceRepository;
+        this.waterService = waterService;
+        this.rainwaterHarvestService = rainwaterHarvestService;
+        this.dripMaintenanceService = dripMaintenanceService;
+        this.soilMoistureReadingRepository = soilMoistureReadingRepository;
+        this.iotDeviceService = iotDeviceService;
+        this.waterQuotaService = waterQuotaService;
+        this.rainwaterTankMonitor = rainwaterTankMonitor;
+        this.properties = properties;
+        TransactionTemplate perItem = new TransactionTemplate(transactionManager);
+        perItem.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.itemTransaction = perItem;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Telemetry parse(Object raw) {
+        if (!(raw instanceof Map<?, ?> nodeMap)) {
+            throw new IllegalArgumentException("Expected JSON body: measurement object");
+        }
+        Map<String, Object> node = (Map<String, Object>) nodeMap;
+        String deviceId = node.get("device_id") == null ? null : String.valueOf(node.get("device_id"));
+        String type = node.get("type") == null ? null : String.valueOf(node.get("type"));
+        UUID sourceId = node.get("source_id") == null ? null : UUID.fromString(String.valueOf(node.get("source_id")));
+        UUID zoneId = node.get("zone_id") == null ? null : UUID.fromString(String.valueOf(node.get("zone_id")));
+        Instant timestamp = node.get("timestamp") == null ? Instant.now()
+                : Instant.parse(String.valueOf(node.get("timestamp")));
+        Map<String, Object> values = new java.util.LinkedHashMap<>();
+        if (node.get("values") instanceof Map<?, ?> v) {
+            values.putAll((Map<String, Object>) v);
+        }
+        return new Telemetry(deviceId, type, sourceId, zoneId, values, timestamp);
+    }
+
+    /** Synthetic telemetry to report a parsing error without failing the batch. */
+    public Telemetry errorTelemetry(Exception e) {
+        Map<String, Object> values = new java.util.LinkedHashMap<>();
+        values.put("error", e.getClass().getSimpleName() + ": " + e.getMessage());
+        return new Telemetry(null, "?", null, null, values, Instant.now());
+    }
+
+    /**
+     * Batch ingestion. Each measurement is processed in ITS OWN transaction: an invalid
+     * measurement therefore can no longer mark the batch transaction rollback-only, which
+     * caused a 500 (UnexpectedRollbackException) at commit instead of a simple rejection.
+     */
+    public List<Result> ingest(List<Telemetry> batch) {
+        List<Result> results = new ArrayList<>();
+        for (Telemetry t : batch) {
+            results.add(ingestOne(t));
+        }
+        return results;
+    }
+
+    private Result ingestOne(Telemetry t) {
+        // An unreadable measurement (invalid JSON) carries the parser's reason: we pass it on as-is.
+        Object parseError = t.values() == null ? null : t.values().get("error");
+        if (parseError != null) {
+            return rejected(t, String.valueOf(parseError));
+        }
+        // Without a sensor id, no write makes sense: rejected before any query.
+        if (t.deviceId() == null || t.deviceId().isBlank()) {
+            return rejected(t, "Missing 'device_id' field");
+        }
+        try {
+            return itemTransaction.execute(status -> {
+                // Sensor registry (P7): last_seen updated at each ingestion
+                iotDeviceService.recordTelemetry(t.deviceId(), t.type(), t.timestamp(),
+                        batteryFromValues(t.values()), rssiFromValues(t.values()));
+                return route(t);
+            });
+        } catch (Exception e) {
+            return rejected(t, e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        }
+    }
+
+    private Result rejected(Telemetry t, String message) {
+        // A rejected measurement is logged: this is the only place where a badly
+        // configured gateway (missing id, out-of-range value) becomes visible in operations.
+        LOGGER.warn("Telemetry rejected [{}] device={} source={} zone={}: {}",
+                t.type(), t.deviceId(), t.sourceId(), t.zoneId(), message);
+        return new Result(t.type() == null ? "?" : t.type(), t.sourceId(), "rejected", message);
+    }
+
+    private Integer batteryFromValues(Map<String, Object> values) {
+        if (values == null) return null;
+        Object v = values.get("battery_percent");
+        if (v instanceof Number n) return n.intValue();
+        if (v instanceof String s && !s.isBlank()) {
+            try { return Integer.parseInt(s.trim()); } catch (NumberFormatException ignored) {}
+        }
+        return null;
+    }
+
+    private Integer rssiFromValues(Map<String, Object> values) {
+        if (values == null) return null;
+        Object v = values.get("rssi");
+        if (v instanceof Number n) return n.intValue();
+        if (v instanceof String s && !s.isBlank()) {
+            try { return Integer.parseInt(s.trim()); } catch (NumberFormatException ignored) {}
+        }
+        return null;
+    }
+
+    private Result route(Telemetry t) {
+        if (t.type() == null || "?".equals(t.type())) {
+            Object err = t.values() != null ? t.values().get("error") : null;
+            return new Result("?", t.sourceId(), "rejected",
+                    err != null ? String.valueOf(err) : "Missing 'type' field");
+        }
+        return switch (t.type().toLowerCase()) {
+            case "level" -> routeLevel(t);
+            case "flow" -> routeFlow(t);
+            case "quality" -> routeQuality(t);
+            case "rain" -> routeRain(t);
+            case "clogging" -> routeClogging(t);
+            case "soil" -> routeSoil(t);
+            default -> new Result(t.type(), t.sourceId(), "rejected", "Unknown measurement type");
+        };
+    }
+
+    private Result routeLevel(Telemetry t) {
+        WaterSource source = requireSource(t.sourceId());
+        Double liters = doubleValue(t, "level_liters");
+        if (liters == null) {
+            Double percent = doubleValue(t, "level_percent");
+            if (percent == null || source.getCapacityLiters() == null) {
+                return new Result("level", t.sourceId(), "rejected", "Missing 'level_liters' (or 'level_percent') value");
+            }
+            liters = source.getCapacityLiters() * percent / 100.0;
+        }
+        if (!Double.isFinite(liters) || liters < 0
+                || (source.getCapacityLiters() != null && liters > source.getCapacityLiters())) {
+            return new Result("level", t.sourceId(), "rejected",
+                    "Reservoir level must be between 0 and its capacity");
+        }
+        source.setCurrentLevelLiters(liters);
+        waterSourceRepository.save(source);
+        waterService.recordLevel(source, liters, t.timestamp());
+        // Rainwater tank rules (module 5.3): they only concern rain sources
+        // and must never fail the ingestion of a valid measurement.
+        String alerts = "";
+        try {
+            List<String> raised = rainwaterTankMonitor.evaluate(source);
+            if (!raised.isEmpty()) {
+                alerts = " (alerts: " + String.join(", ", raised) + ")";
+            }
+        } catch (RuntimeException ex) {
+            alerts = "";
+            LOGGER.warn("Rainwater tank alert evaluation failed for source {}", source.getId(), ex);
+        }
+        return new Result("level", t.sourceId(), "processed", "Reservoir level = " + liters + " L" + alerts);
+    }
+
+    private Result routeFlow(Telemetry t) {
+        Double liters = doubleValue(t, "flow_liters");
+        if (liters == null) {
+            return new Result("flow", t.sourceId(), "rejected", "Missing 'flow_liters' value");
+        }
+        WaterSource source = requireSource(t.sourceId());
+        java.time.Instant measuredAt = t.timestamp() == null ? Instant.now() : t.timestamp();
+        waterService.createConsumption(new WaterConsumptionCreateRequest(
+                source.getFarmId(), source.getId(), liters, measuredAt, null, t.zoneId()));
+        // Quota alert (80 % / 100 %): sensor ingestion is the main path of measurements.
+        try {
+            waterQuotaService.checkThresholds(source.getFarmId(), t.zoneId(), measuredAt);
+        } catch (RuntimeException ignored) {
+            LOGGER.warn("Quota alert evaluation failed for telemetry flow source={} zone={}",
+                    source.getId(), t.zoneId(), ignored);
+        }
+        return new Result("flow", t.sourceId(), "processed", "Consumption recorded: " + liters + " L");
+    }
+
+    private Result routeQuality(Telemetry t) {
+        Double ph = doubleValue(t, "ph");
+        Double ntu = doubleValue(t, "turbidity_ntu");
+        if (ph == null && ntu == null) {
+            return new Result("quality", t.sourceId(), "rejected", "Missing 'ph' or 'turbidity_ntu' values");
+        }
+        waterService.createQualityTest(new WaterQualityCreateRequest(
+                t.sourceId(),
+                ph,
+                doubleValue(t, "temperature_celsius"),
+                ntu,
+                doubleValue(t, "conductivity_us_cm"),
+                doubleValue(t, "salinity_ppt"),
+                t.timestamp() == null ? Instant.now() : t.timestamp()));
+        boolean outOfRange = (ph != null && (ph < properties.qualityPhMin || ph > properties.qualityPhMax))
+                || (ntu != null && ntu > properties.qualityTurbidityMaxNtu);
+        return new Result("quality", t.sourceId(), "processed",
+                outOfRange ? "Out-of-range reading recorded (alert generated)" : "Compliant reading recorded");
+    }
+    private Result routeSoil(Telemetry t) {
+        if (t.zoneId() == null) {
+            return new Result("soil", t.sourceId(), "rejected", "Missing 'zone_id' field");
+        }
+        Double moisture = doubleValue(t, "moisture_percent");
+        if (moisture == null) {
+            return new Result("soil", t.sourceId(), "rejected", "Missing 'moisture_percent' value");
+        }
+        if (moisture < 0 || moisture > 100) {
+            return new Result("soil", t.sourceId(), "rejected", "'moisture_percent' out of range (0-100)");
+        }
+        SoilMoistureReading reading = new SoilMoistureReading();
+        reading.setZoneId(t.zoneId());
+        Integer depth = t.values() != null && t.values().get("depth_cm") instanceof Number n
+                ? n.intValue() : null;
+        reading.setDepthCm(depth == null || depth < 0 ? 10 : depth);
+        reading.setMoisturePercent(moisture);
+        reading.setMeasuredAt(t.timestamp() == null ? Instant.now() : t.timestamp());
+        soilMoistureReadingRepository.save(reading);
+        return new Result("soil", t.zoneId(), "processed",
+                "Soil moisture = " + Math.round(moisture) + " % (zone " + t.zoneId() + ")");
+    }
+
+
+
+    private Result routeRain(Telemetry t) {
+        Double mm = doubleValue(t, "rainfall_mm");
+        if (mm == null) {
+            return new Result("rain", t.sourceId(), "rejected", "Missing 'rainfall_mm' value");
+        }
+        Double area = doubleValue(t, "catchment_area_m2");
+        Double runoff = doubleValue(t, "runoff_coefficient");
+        RainwaterHarvestResponse saved = rainwaterHarvestService.create(new RainwaterHarvestRequest(
+                requireSource(t.sourceId()).getId(),
+                area == null ? properties.rainDefaultCatchmentAreaM2 : area,
+                mm,
+                runoff == null ? properties.rainDefaultRunoffCoefficient : runoff,
+                null,
+                t.timestamp() == null ? Instant.now() : t.timestamp()));
+        return new Result("rain", t.sourceId(), "processed",
+                "Rainwater harvest recorded: " + saved.harvestedLiters() + " L");
+    }
+
+    private Result routeClogging(Telemetry t) {
+        if (t.zoneId() == null) {
+            return new Result("clogging", t.sourceId(), "rejected", "Missing 'zone_id' field");
+        }
+        String severity = t.values() != null && t.values().get("severity") != null
+                ? String.valueOf(t.values().get("severity")).toLowerCase() : "medium";
+        dripMaintenanceService.create(new DripMaintenanceLogRequest(
+                t.zoneId(),
+                t.timestamp() == null ? Instant.now() : t.timestamp(),
+                "cleaning",
+                false,
+                true,
+                severity,
+                0,
+                "IoT sensor detection - abnormal flow (" + severity + ")",
+                t.deviceId() == null ? "IoT sensor" : t.deviceId()));
+        return new Result("clogging", t.zoneId(), "processed", "Clogging " + severity + " recorded");
+    }
+
+    private WaterSource requireSource(UUID sourceId) {
+        if (sourceId == null) {
+            throw new IllegalArgumentException("Missing 'source_id' field");
+        }
+        return waterSourceRepository.findById(sourceId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown source: " + sourceId));
+    }
+
+    private Double doubleValue(Telemetry t, String key) {
+        if (t.values() == null) {
+            return null;
+        }
+        Object raw = t.values().get(key);
+        if (raw instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (raw instanceof String s && !s.isBlank()) {
+            try {
+                return Double.parseDouble(s.trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+}

@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.machinery.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,7 +21,18 @@ public class GlobalExceptionHandler{
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrityViolationException(DataIntegrityViolationException e){
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("This equipment already exists.");
+        String message = e.getMostSpecificCause().getMessage();
+        if (message != null && (message.contains("duplicate key") || message.contains("Duplicate entry")
+                || message.contains("unique constraint") || message.contains("UNIQUE constraint"))) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("A record with the same unique value already exists.");
+        }
+        if (message != null && message.contains("foreign key")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("This operation conflicts with a related record. Please refresh and try again.");
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body("The request conflicts with the current state of the data. Please refresh and try again.");
     }
 
     @ExceptionHandler (MethodArgumentNotValidException.class)
@@ -38,6 +50,47 @@ public class GlobalExceptionHandler{
     @ExceptionHandler(EquipmentNotFoundException.class)
     public ResponseEntity<String> handleNotFound(EquipmentNotFoundException e){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(SparePartNotFoundException.class)
+    public ResponseEntity<String> handleSparePartNotFound(SparePartNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(MaintenanceScheduleNotFoundException.class)
+    public ResponseEntity<String> handleMaintenanceScheduleNotFound(MaintenanceScheduleNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(UsageLogNotFoundException.class)
+    public ResponseEntity<String> handleUsageLogNotFound(UsageLogNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(FuelLogNotFoundException.class)
+    public ResponseEntity<String> handleFuelLogNotFound(FuelLogNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(RepairLogNotFoundException.class)
+    public ResponseEntity<String> handleRepairLogNotFound(RepairLogNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(EquipmentAlreadyAssignedException.class)
+    public ResponseEntity<String> handleEquipmentAlreadyAssigned(EquipmentAlreadyAssignedException e){
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
+
+    @ExceptionHandler(OperatorAssignmentNotFoundException.class)
+    public ResponseEntity<String> handleOperatorAssignmentNotFound(OperatorAssignmentNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<String> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException e){
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body("This record was modified or deleted by another user. Please refresh and try again.");
     }
 
 }

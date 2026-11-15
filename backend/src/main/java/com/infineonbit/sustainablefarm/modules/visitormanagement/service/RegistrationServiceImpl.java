@@ -19,7 +19,9 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitorType;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitPurpose;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BriefingRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.FeedbackRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.SurveySendRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
 import org.springframework.data.domain.Page;
@@ -43,17 +45,23 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final RegistrationRepository registrationRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final BriefingRepository briefingRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final SurveySendRepository surveySendRepository;
     private final SchedulingService schedulingService;
 
     public RegistrationServiceImpl(VisitorRepository visitorRepository,
                                    RegistrationRepository registrationRepository,
                                    TimeSlotRepository timeSlotRepository,
                                    BriefingRepository briefingRepository,
+                                   FeedbackRepository feedbackRepository,
+                                   SurveySendRepository surveySendRepository,
                                    SchedulingService schedulingService) {
         this.visitorRepository = visitorRepository;
         this.registrationRepository = registrationRepository;
         this.timeSlotRepository = timeSlotRepository;
         this.briefingRepository = briefingRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.surveySendRepository = surveySendRepository;
         this.schedulingService = schedulingService;
     }
 
@@ -92,6 +100,25 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Transactional(readOnly = true)
     public VisitorResponse getVisitor(Long id) {
         return VisitorResponse.from(getVisitorEntity(id));
+    }
+
+    @Override
+    @Transactional
+    public void deleteVisitor(Long id) {
+        getVisitorEntity(id);
+        if (registrationRepository.existsByVisitorId(id)) {
+            throw new BusinessRuleException("Visitor " + id
+                    + " cannot be deleted: registrations still reference it");
+        }
+        if (feedbackRepository.existsByVisitorId(id)) {
+            throw new BusinessRuleException("Visitor " + id
+                    + " cannot be deleted: feedback still references it");
+        }
+        if (surveySendRepository.existsByVisitorId(id)) {
+            throw new BusinessRuleException("Visitor " + id
+                    + " cannot be deleted: surveys still reference it");
+        }
+        visitorRepository.deleteById(id);
     }
 
     @Override

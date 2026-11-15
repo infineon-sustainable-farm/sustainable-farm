@@ -18,10 +18,12 @@ const STATUS_COLORS = {
     CANCELLED: "bg-error/15 text-error",
     PAID: "bg-success/15 text-success",
     UNPAID: "bg-warning/15 text-warning",
+    REFUNDED: "bg-info/15 text-info",
     AVAILABLE: "bg-success/15 text-success",
     RESERVED: "bg-info/15 text-info",
     FULL: "bg-warning/15 text-warning",
     SENT: "bg-info/15 text-info",
+    RECEIVED: "bg-success/15 text-success",
     DONE: "bg-success/15 text-success",
 };
 

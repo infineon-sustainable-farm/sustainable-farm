@@ -58,6 +58,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findDueReminders(@Param("status") BookingStatus status,
                                    @Param("now") Instant now);
 
+    @Query("SELECT b.timeSlot.id FROM Booking b "
+            + "WHERE b.timeSlot.date BETWEEN :start AND :end AND b.status NOT IN :excluded")
+    List<Long> findBusySlotIdsBetween(@Param("start") LocalDate start,
+                                      @Param("end") LocalDate end,
+                                      @Param("excluded") List<BookingStatus> excluded);
+
+    @Query("SELECT COALESCE(SUM(b.peopleCount), 0) FROM Booking b "
+            + "WHERE b.timeSlot.date BETWEEN :start AND :end AND b.status NOT IN :excluded")
+    long sumPeopleCountBetween(@Param("start") LocalDate start,
+                               @Param("end") LocalDate end,
+                               @Param("excluded") List<BookingStatus> excluded);
+
     List<Booking> findByTimeSlotIdAndStatusIn(Long timeSlotId, Collection<BookingStatus> statuses);
 
     List<Booking> findByActivityIdAndStatusIn(Long activityId, Collection<BookingStatus> statuses);

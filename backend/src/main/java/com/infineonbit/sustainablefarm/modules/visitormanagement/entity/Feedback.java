@@ -20,18 +20,23 @@ import java.time.Instant;
 
 /**
  * A visitor's satisfaction response (on-site tablet wrap-up stop, or a
- * response to a post-visit survey sent by email/SMS/WhatsApp). Answers
- * mirror the confirmed mockup questions: overall rating (1-5), briefing
- * clarity, educational value, recommendation and free comment.
+ * response to a post-visit survey sent by email). Answers mirror the mockup
+ * questions: overall rating (1-5), briefing clarity, educational value,
+ * recommendation and an optional comment. An on-site response records the
+ * typed name; the visitor link stays when the response comes from the
+ * registration flow.
  */
 @Entity
 @Table(name = "feedback")
 public class Feedback extends BaseEntity {
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "visitor_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "visitor_id")
     private Visitor visitor;
+
+    @Size(max = 150)
+    @Column(name = "visitor_name", length = 150)
+    private String visitorName;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "survey_send_id")
@@ -76,6 +81,14 @@ public class Feedback extends BaseEntity {
 
     public void setVisitor(Visitor visitor) {
         this.visitor = visitor;
+    }
+
+    public String getVisitorName() {
+        return visitorName;
+    }
+
+    public void setVisitorName(String visitorName) {
+        this.visitorName = visitorName;
     }
 
     public SurveySend getSurveySend() {

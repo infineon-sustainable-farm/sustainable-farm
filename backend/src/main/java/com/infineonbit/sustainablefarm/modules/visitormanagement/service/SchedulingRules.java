@@ -12,9 +12,6 @@ public final class SchedulingRules {
     private SchedulingRules() {
     }
 
-    /** Maximum visitors per time slot (confirmed with module owners). */
-    public static final int MAX_VISITORS_PER_SLOT = 10;
-
     /** Maximum number of slots per day. */
     public static final int MAX_SLOTS_PER_DAY = 2;
 

@@ -17,4 +17,9 @@ public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
     @Transactional
     @Query("UPDATE Equipment e SET e.status = :status WHERE e.id = :id")
     int updateEquipmentStatusById(@Param("id")Long id,@Param("status") Status status);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Equipment e WHERE e.id = :id")
+    int deleteEquipmentById(@Param("id") Long id);
 }

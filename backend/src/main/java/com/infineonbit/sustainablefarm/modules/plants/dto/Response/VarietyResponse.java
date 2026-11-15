@@ -5,27 +5,45 @@ import java.time.Instant;
 /**
  * API representation of a variety.
  *
- * <p>The component names deliberately keep the snake_case domain names of the
- * Zalka 2025 study ({@code nombre_arbres}, {@code rendement_attendu_kg},
- * {@code bloc_parcelle}, ...). Other modules will consume this contract, so the
- * names are part of it and must not be renamed to camelCase.
+ * <p>The component names are English camelCase, like every other module of the
+ * project. They are the JSON contract read by other modules.
+ *
+ * <p>The physical table keeps its snake_case French column names
+ * ({@code nombre_arbres}, {@code bloc_parcelle}, ...): the mapping lives in the
+ * explicit {@code @Column} annotations of
+ * {@link com.infineonbit.sustainablefarm.modules.plants.entity.Variety}, so the
+ * schema is untouched by this naming and the two can differ without either
+ * side moving.
  *
  * <p>A component is {@code null} whenever the underlying data does not exist.
  * Consumers render that as an explicit "no value", never as zero.
+ *
+ * <p>Two tree counts, which can differ:
+ * <ul>
+ *     <li>{@code treeCount} — the number declared when the row was created. For a
+ *         row created by a planting, the trees of that planting.</li>
+ *     <li>{@code currentTreeCount} — the balance of the population events recorded
+ *         for the row: plantings, replacements and extensions minus deaths and
+ *         removals. Computed on every read, never stored. {@code null} when the row
+ *         has no event: the current count is then unknown, not zero.</li>
+ * </ul>
+ *
+ * <p>No yield is given here: the expected and the actual yield of a variety
+ * depend on a period, and {@code GET /api/plants/yield-comparison} computes
+ * both over the same months.
  */
 public record VarietyResponse(
         Long id,
-        Integer id_ferme,
-        String nom,
-        Integer nombre_arbres,
-        Double espacement_inter_rang_m,
-        Double espacement_intra_rang_m,
-        Double densite_arbres_ha,
-        Double rendement_attendu_kg,
-        Double rendement_reel_kg,
-        String vigueur,
-        String bloc_parcelle,
-        String origine_plant,
+        Integer farmId,
+        String name,
+        Integer treeCount,
+        Integer currentTreeCount,
+        Double rowSpacingM,
+        Double treeSpacingM,
+        Double treeDensityPerHa,
+        String vigor,
+        String blockCode,
+        String plantOrigin,
         String source,
-        Instant date_maj) {
+        Instant lastUpdated) {
 }

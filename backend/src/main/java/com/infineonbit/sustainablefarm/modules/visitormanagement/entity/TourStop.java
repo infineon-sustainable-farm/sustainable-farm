@@ -26,7 +26,7 @@ public class TourStop extends BaseEntity {
 
     @NotNull
     @Min(1)
-    @Column(name = "position", nullable = false)
+    @Column(name = "stop_position", nullable = false)
     private int position;
 
     @Size(max = 2000)

@@ -9,7 +9,7 @@ import Pagination from "../../../shared/components/Pagination";
 import { useEquipments } from "../hooks/useEquipments";
 import { useCreateEquipment, useUpdateEquipmentStatus, useDeleteEquipment } from "../hooks/useEquipmentMutations";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 function EquipmentRegistry() {
   const [page, setPage] = useState(0);

@@ -8,11 +8,13 @@ const TITLES = {
     "/visitormanagement": "Dashboard Overview",
     "/visitormanagement/scheduling": "Farm Tour Scheduling",
     "/visitormanagement/registration": "Visitor Registration",
+    "/visitormanagement/visitors": "Visitors",
     "/visitormanagement/education": "Educational Program",
     "/visitormanagement/safety": "Safety Briefing Tracker",
     "/visitormanagement/booking": "Agritourism Booking System",
     "/visitormanagement/feedback": "Satisfaction Survey",
     "/visitormanagement/events": "Events",
+    "/visitormanagement/staff": "Staff & Guides",
 };
 
 /**

@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.dto;
 
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,7 +22,6 @@ public class TimeSlotRequest {
     private LocalTime endTime;
 
     @Min(value = 1, message = "maxCapacity must be at least 1")
-    @Max(value = 10, message = "maxCapacity cannot exceed 10")
     private Integer maxCapacity = 10;
 
     private Long guideId;

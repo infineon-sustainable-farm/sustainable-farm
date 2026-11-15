@@ -1,0 +1,393 @@
+package com.infineonbit.sustainablefarm.modules.watersupply.service;
+
+import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleCreateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
+import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class IrrigationService {
+    /** Logging: named LOGGER because `log` already refers to the IrrigationLog entity in the methods. */
+    private static final Logger LOGGER = LoggerFactory.getLogger(IrrigationService.class);
+
+    /**
+     * System id used as createdBy when no user context is provided
+     * (see {@link SystemUsers}: authentication is handled by the global software).
+     */
+    private static final UUID DEFAULT_SYSTEM_USER_ID = SystemUsers.IOT_SYSTEM_USER_ID;
+
+    /**
+     * Rain probability threshold (%) from which a scheduled irrigation is discouraged.
+     * Value retained after functional validation: below it, the announced rain is not
+     * reliable enough to justify a postponement.
+     */
+    public static final int RAIN_PROBABILITY_THRESHOLD = 60;
+
+    /** Forecast rain amount (mm) from which the postponement is justified. */
+    public static final double RAIN_AMOUNT_THRESHOLD_MM = 5.0;
+
+    private final IrrigationScheduleRepository scheduleRepository;
+    private final IrrigationLogRepository logRepository;
+    private final FieldZoneRepository fieldZoneRepository;
+    private final AgroWeatherService agroWeatherService;
+    private final AlertService alertService;
+    private final ZoneBlockResolver zoneBlockResolver;
+
+    public IrrigationService(
+            IrrigationScheduleRepository scheduleRepository,
+            IrrigationLogRepository logRepository,
+            FieldZoneRepository fieldZoneRepository,
+            AgroWeatherService agroWeatherService,
+            AlertService alertService,
+            ZoneBlockResolver zoneBlockResolver) {
+        this.scheduleRepository = scheduleRepository;
+        this.logRepository = logRepository;
+        this.fieldZoneRepository = fieldZoneRepository;
+        this.agroWeatherService = agroWeatherService;
+        this.alertService = alertService;
+        this.zoneBlockResolver = zoneBlockResolver;
+    }
+
+    public List<IrrigationScheduleResponse> findSchedules() {
+        return scheduleResponses(scheduleRepository.findAll());
+    }
+
+    public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, UUID zoneId) {
+        return findSchedules(pageable, zoneId, null, null);
+    }
+
+    /**
+     * Paginated schedules, optionally restricted to a zone and/or to the zones of a Plants block
+     * ({@code farmId} narrows the block lookup when the same code exists on several farms).
+     */
+    public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, UUID zoneId, UUID farmId, String blockCode) {
+        Page<IrrigationSchedule> page;
+        if (blockCode == null || blockCode.isBlank()) {
+            page = zoneId == null ? scheduleRepository.findAll(pageable) : scheduleRepository.findByZoneId(zoneId, pageable);
+        } else {
+            List<UUID> blockZones = zoneBlockResolver.zoneIdsForBlock(farmId, blockCode);
+            if (zoneId != null) {
+                blockZones = blockZones.contains(zoneId) ? List.of(zoneId) : List.of();
+            }
+            page = blockZones.isEmpty() ? Page.empty(pageable) : scheduleRepository.findByZoneIdIn(blockZones, pageable);
+        }
+        return new PageResponse<>(scheduleResponses(page.getContent()), page.getNumber(), page.getSize(),
+                page.getTotalElements(), page.getTotalPages());
+    }
+
+    @Transactional
+    public IrrigationScheduleResponse createSchedule(IrrigationScheduleCreateRequest request) {
+        requireZone(request.zoneId());
+        IrrigationSchedule schedule = new IrrigationSchedule();
+        schedule.setZoneId(request.zoneId());
+        schedule.setStartTime(request.startTime());
+        schedule.setDurationMinutes(request.durationMinutes());
+        schedule.setWaterQuantityLiters(request.waterQuantityLiters());
+        schedule.setStatus(request.status() == null ? "scheduled" : request.status());
+        // Authentication is handled by the global software: without a user context,
+        // the schedule is attributed to a fixed system id.
+        schedule.setCreatedBy(request.createdBy() != null ? request.createdBy() : DEFAULT_SYSTEM_USER_ID);
+        return scheduleResponse(scheduleRepository.save(schedule));
+    }
+
+    public IrrigationScheduleResponse getSchedule(UUID scheduleId) {
+        return scheduleResponse(getScheduleEntity(scheduleId));
+    }
+
+    @Transactional
+    public IrrigationScheduleResponse updateSchedule(UUID scheduleId, IrrigationScheduleUpdateRequest request) {
+        IrrigationSchedule schedule = getScheduleEntity(scheduleId);
+        if (request.zoneId() != null && !request.zoneId().equals(schedule.getZoneId())) {
+            requireZone(request.zoneId());
+            schedule.setZoneId(request.zoneId());
+        }
+        schedule.setStartTime(request.startTime() == null ? schedule.getStartTime() : request.startTime());
+        schedule.setDurationMinutes(request.durationMinutes() == null ? schedule.getDurationMinutes() : request.durationMinutes());
+        schedule.setWaterQuantityLiters(request.waterQuantityLiters() == null ? schedule.getWaterQuantityLiters() : request.waterQuantityLiters());
+        schedule.setStatus(request.status() == null ? schedule.getStatus() : request.status());
+        schedule.setCreatedBy(request.createdBy() == null ? schedule.getCreatedBy() : request.createdBy());
+        return scheduleResponse(scheduleRepository.save(schedule));
+    }
+
+    @Transactional
+    public void deleteSchedule(UUID scheduleId) {
+        scheduleRepository.delete(getScheduleEntity(scheduleId));
+    }
+
+    public List<IrrigationLogResponse> findLogs() {
+        return logRepository.findAll().stream().map(IrrigationLogResponse::from).toList();
+    }
+
+    public PageResponse<IrrigationLogResponse> findLogs(Pageable pageable, UUID scheduleId) {
+        Page<IrrigationLog> page = scheduleId == null
+                ? logRepository.findAll(pageable)
+                : logRepository.findByScheduleId(scheduleId, pageable);
+        return toPageResponse(page.map(IrrigationLogResponse::from));
+    }
+
+    @Transactional
+    public IrrigationLogResponse createLog(IrrigationLogCreateRequest request) {
+        requireScheduleEntity(request.scheduleId());
+        IrrigationLog log = new IrrigationLog();
+        log.setScheduleId(request.scheduleId());
+        log.setActualStartTime(request.actualStartTime());
+        log.setActualEndTime(request.actualEndTime());
+        log.setWaterUsedLiters(request.waterUsedLiters());
+        log.setStatus(request.status());
+        return IrrigationLogResponse.from(logRepository.save(log));
+    }
+
+    public IrrigationLogResponse getLog(UUID logId) {
+        return IrrigationLogResponse.from(getLogEntity(logId));
+    }
+
+    @Transactional
+    public IrrigationLogResponse updateLog(UUID logId, IrrigationLogUpdateRequest request) {
+        IrrigationLog log = getLogEntity(logId);
+        if (request.scheduleId() != null && !request.scheduleId().equals(log.getScheduleId())) {
+            requireScheduleEntity(request.scheduleId());
+            log.setScheduleId(request.scheduleId());
+        }
+        log.setActualStartTime(request.actualStartTime() == null ? log.getActualStartTime() : request.actualStartTime());
+        log.setActualEndTime(request.actualEndTime() == null ? log.getActualEndTime() : request.actualEndTime());
+        log.setWaterUsedLiters(request.waterUsedLiters() == null ? log.getWaterUsedLiters() : request.waterUsedLiters());
+        log.setStatus(request.status() == null ? log.getStatus() : request.status());
+        return IrrigationLogResponse.from(logRepository.save(log));
+    }
+
+    @Transactional
+    public void deleteLog(UUID logId) {
+        logRepository.delete(getLogEntity(logId));
+    }
+
+    @Transactional
+    public IrrigationLogResponse start(UUID scheduleId) {
+        IrrigationSchedule schedule = getScheduleEntity(scheduleId);
+        schedule.setStatus("running");
+        scheduleRepository.save(schedule);
+
+        IrrigationLog log = new IrrigationLog();
+        log.setScheduleId(scheduleId);
+        log.setActualStartTime(Instant.now());
+        log.setWaterUsedLiters(0.0);
+        log.setStatus("started");
+        IrrigationLog saved = logRepository.save(log);
+        LOGGER.info("Irrigation started: schedule {} of zone {}", scheduleId, schedule.getZoneId());
+        return IrrigationLogResponse.from(saved);
+    }
+
+    @Transactional
+    public IrrigationLogResponse stop(UUID scheduleId) {
+        IrrigationSchedule schedule = getScheduleEntity(scheduleId);
+        schedule.setStatus("completed");
+        scheduleRepository.save(schedule);
+
+        Instant stoppedAt = Instant.now();
+        IrrigationLog log = logRepository.findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(scheduleId, "started")
+                .orElseGet(() -> {
+                    IrrigationLog fallback = new IrrigationLog();
+                    fallback.setScheduleId(scheduleId);
+                    fallback.setActualStartTime(stoppedAt);
+                    return fallback;
+                });
+        log.setActualEndTime(stoppedAt);
+        log.setWaterUsedLiters(schedule.getWaterQuantityLiters() == null ? 0.0 : schedule.getWaterQuantityLiters());
+        log.setStatus("completed");
+        IrrigationLog saved = logRepository.save(log);
+        LOGGER.info("Irrigation stopped: schedule {} of zone {}, {} L counted",
+                scheduleId, schedule.getZoneId(), saved.getWaterUsedLiters());
+        return IrrigationLogResponse.from(saved);
+    }
+
+    /**
+     * Postponement suggestions based on forecast rain: this is the first water-savings lever.
+     *
+     * <p>A scheduled irrigation is discouraged when the forecast rain on the trigger day
+     * reaches {@value #RAIN_PROBABILITY_THRESHOLD}% probability and
+     * {@value #RAIN_AMOUNT_THRESHOLD_MM} mm. The decision stays human: the API suggests, only
+     * {@link #postpone(UUID, String)} applies the postponement.</p>
+     *
+     * <p>If the agro-weather data is unavailable, the response is returned with
+     * {@code weather_available=false} instead of failing: the schedule must stay readable.</p>
+     */
+    public Map<String, Object> suggestions() {
+        List<Map<String, Object>> suggestions = new ArrayList<>();
+        boolean weatherAvailable = true;
+        try {
+            for (IrrigationSchedule schedule : scheduleRepository.findAll()) {
+                if (!"scheduled".equalsIgnoreCase(schedule.getStatus()) || schedule.getStartTime() == null) {
+                    continue;
+                }
+                LocalDate day = LocalDate.ofInstant(schedule.getStartTime(), ZoneOffset.UTC);
+                Optional<AgroWeatherService.DailyAgro> forecast = agroWeatherService.forDate(day);
+                if (forecast.isEmpty()) {
+                    continue;
+                }
+                AgroWeatherService.DailyAgro weather = forecast.get();
+                double probability = weather.rainProbability() == null ? 0 : weather.rainProbability();
+                double rainMm = weather.rainMm() == null ? 0 : weather.rainMm();
+                if (probability < RAIN_PROBABILITY_THRESHOLD || rainMm < RAIN_AMOUNT_THRESHOLD_MM) {
+                    continue;
+                }
+                suggestions.add(suggestion(schedule, probability, rainMm));
+            }
+        } catch (RuntimeException ex) {
+            // Weather unavailable: return an empty list and an explicit indicator.
+            weatherAvailable = false;
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("weather_available", weatherAvailable);
+        response.put("rain_probability_threshold", RAIN_PROBABILITY_THRESHOLD);
+        response.put("rain_amount_threshold_mm", RAIN_AMOUNT_THRESHOLD_MM);
+        response.put("suggested_water_saving_liters", suggestions.stream()
+                .mapToDouble(item -> ((Number) item.get("potential_saving_liters")).doubleValue()).sum());
+        response.put("suggestions", suggestions);
+        return response;
+    }
+
+    private Map<String, Object> suggestion(IrrigationSchedule schedule, double probability, double rainMm) {
+        double planned = schedule.getWaterQuantityLiters() == null ? 0d : schedule.getWaterQuantityLiters();
+        String zoneName = fieldZoneRepository.findById(schedule.getZoneId())
+                .map(Zone::getName).orElse("Unknown zone");
+
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("schedule_id", schedule.getId());
+        item.put("zone_id", schedule.getZoneId());
+        item.put("zone_name", zoneName);
+        item.put("start_time", schedule.getStartTime().toString());
+        item.put("planned_liters", planned);
+        item.put("rain_probability", probability);
+        item.put("rain_mm", rainMm);
+        item.put("potential_saving_liters", planned);
+        item.put("message", "Rain forecast on " + LocalDate.ofInstant(schedule.getStartTime(), ZoneOffset.UTC)
+                + ": " + Math.round(rainMm) + " mm (" + Math.round(probability) + "% probability). "
+                + "Postponing irrigation of " + zoneName + " would save " + Math.round(planned)
+                + " L of supply water.");
+        return item;
+    }
+
+    /**
+     * Postpones a planned irrigation (decision taken after a weather suggestion) and records
+     * the matching alert so the achieved water saving is kept in history.
+     */
+    @Transactional
+    public IrrigationScheduleResponse postpone(UUID scheduleId, String reason) {
+        IrrigationSchedule schedule = getScheduleEntity(scheduleId);
+        if ("completed".equalsIgnoreCase(schedule.getStatus())) {
+            throw new IllegalArgumentException("A completed irrigation can no longer be postponed.");
+        }
+        String previousStatus = schedule.getStatus();
+        schedule.setStatus("postponed");
+        if (reason != null && !reason.isBlank()) {
+            schedule.setPostponeReason(reason);
+        }
+        IrrigationScheduleResponse response = scheduleResponse(scheduleRepository.save(schedule));
+
+        double planned = schedule.getWaterQuantityLiters() == null ? 0d : schedule.getWaterQuantityLiters();
+        alertService.raise("info", "Irrigation postponed - water saved",
+                "Irrigation of " + Math.round(planned) + " L postponed (status: " + previousStatus + " -> postponed)."
+                        + (reason == null || reason.isBlank() ? "" : " Reason: " + reason),
+                "/irrigation");
+        return response;
+    }
+
+    private void requireZone(UUID zoneId) {
+        if (zoneId == null || fieldZoneRepository.findById(zoneId).isEmpty()) {
+            throw new NotFoundException("Zone");
+        }
+    }
+
+    private IrrigationSchedule requireScheduleEntity(UUID scheduleId) {
+        if (scheduleId == null) {
+            throw new NotFoundException("Irrigation");
+        }
+        return getScheduleEntity(scheduleId);
+    }
+
+    private IrrigationSchedule getScheduleEntity(UUID scheduleId) {
+        return scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new NotFoundException("Irrigation"));
+    }
+
+    private IrrigationLog getLogEntity(UUID logId) {
+        return logRepository.findById(logId)
+                .orElseThrow(() -> new NotFoundException("IrrigationLog"));
+    }
+
+    private <T> PageResponse<T> toPageResponse(Page<T> page) {
+        return new PageResponse<>(page.getContent(), page.getNumber(), page.getSize(),
+                page.getTotalElements(), page.getTotalPages());
+    }
+
+    /**
+     * Irrigation status of a zone for Visitor Management (V3): {@code active} is true while a schedule
+     * is {@code running}; otherwise the most recent schedule is reported. {@code lastActivationAt} is
+     * the actual start of its last log, or the planned start when it never ran.
+     */
+    public Map<String, Object> irrigationStatus(UUID zoneId) {
+        requireZone(zoneId);
+        List<IrrigationSchedule> running = scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running");
+        IrrigationSchedule active = running.stream()
+                .sorted(Comparator.comparing(IrrigationSchedule::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                .findFirst().orElse(null);
+        IrrigationSchedule last = active != null ? active : scheduleRepository.findByZoneId(zoneId).stream()
+                .sorted(Comparator.comparing(IrrigationSchedule::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                .findFirst().orElse(null);
+        Instant lastActivation = last == null ? null : logRepository.findFirstByScheduleIdOrderByActualStartTimeDesc(last.getId())
+                .map(IrrigationLog::getActualStartTime).orElse(last.getStartTime());
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("active", active != null);
+        response.put("zoneId", zoneId);
+        response.put("scheduleId", last == null ? null : last.getId());
+        response.put("status", active == null ? (last == null ? "none" : last.getStatus()) : active.getStatus());
+        response.put("lastActivationAt", lastActivation);
+        response.put("plannedLiters", last == null ? null : last.getWaterQuantityLiters());
+        return response;
+    }
+
+    private IrrigationScheduleResponse scheduleResponse(IrrigationSchedule schedule) {
+        return scheduleResponse(schedule, zoneBlockResolver.blockCodesForZone(schedule.getZoneId()));
+    }
+
+    /** Batch variant: one mapping lookup for the whole page instead of one per schedule. */
+    private List<IrrigationScheduleResponse> scheduleResponses(List<IrrigationSchedule> schedules) {
+        Map<UUID, List<String>> blocks = zoneBlockResolver.blockCodesForZones(
+                schedules.stream().map(IrrigationSchedule::getZoneId).toList());
+        return schedules.stream()
+                .map(s -> scheduleResponse(s, s.getZoneId() == null ? List.of() : blocks.getOrDefault(s.getZoneId(), List.of())))
+                .toList();
+    }
+
+    private static IrrigationScheduleResponse scheduleResponse(IrrigationSchedule schedule, List<String> blocks) {
+        return IrrigationScheduleResponse.from(schedule, blocks.size() == 1 ? blocks.get(0) : null, blocks.size() > 1);
+    }
+}

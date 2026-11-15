@@ -7,15 +7,16 @@ import {
     formatMillimeters,
     formatText,
 } from "../utils/format";
+import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
-// Mockup order, with Precision after Planting Date and Source last.
+// Mockup order, with Precision after Planting Date and Source last. The mockup's
+// Stage is left out: no screen records it, so it could only show a dash.
 const COLUMNS = [
     "Block",
     "Variety",
     "Planting Date",
     "Precision",
     "Age",
-    "Stage",
     "Phase",
     "Rainfall",
     "Source",
@@ -23,7 +24,7 @@ const COLUMNS = [
 
 export default function GrowthCalendarTable({ entries }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -31,7 +32,7 @@ export default function GrowthCalendarTable({ entries }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className={TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -41,29 +42,26 @@ export default function GrowthCalendarTable({ entries }) {
                 <tbody>
                     {entries.map((entry) => (
                         <tr key={entry.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-medium text-gray-800">
-                                {formatBlock(entry.bloc_parcelle)}
+                            <td className="px-4 py-3 font-semibold text-gray-800">
+                                {formatBlock(entry.blockCode)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatList(entry.varietes)}
+                                {formatList(entry.varieties)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatDate(entry.date_plantation)}
+                                {formatDate(entry.plantingDate)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.precision_date)}
+                                {formatText(entry.datePrecision)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatAge(entry.age_annees, entry.age_mois)}
+                                {formatAge(entry.ageYears, entry.ageMonths)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.stade_actuel)}
+                                {formatPhaseBand(entry.growthPhase, entry.phaseYearsBand)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
-                                {formatPhaseBand(entry.phase_croissance, entry.phase_tranche_annees)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatMillimeters(entry.pluviometrie_locale_mm)}
+                                {formatMillimeters(entry.localRainfallMm)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(entry.source)}

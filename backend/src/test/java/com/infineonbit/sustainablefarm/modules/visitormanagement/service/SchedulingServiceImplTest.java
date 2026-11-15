@@ -53,7 +53,7 @@ class SchedulingServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        monday = LocalDate.of(2026, 9, 7);
+        monday = LocalDate.now().plusDays(1);
     }
 
     private TimeSlot buildSlot(Long id, TimeSlotStatus status) {

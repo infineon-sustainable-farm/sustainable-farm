@@ -6,6 +6,5 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.entity;
 public enum StaffRole {
     GUIDE,
     RECEPTION,
-    FARM,
     MANAGER
 }

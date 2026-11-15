@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
     BookOpen,
+    Briefcase,
     Calendar,
     LayoutDashboard,
     LogOut,
@@ -10,6 +11,7 @@ import {
     ShieldCheck,
     Ticket,
     UserPlus,
+    Users,
     X,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -24,11 +26,13 @@ const NAV_ITEMS = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/visitormanagement" },
     { label: "Scheduling", icon: Calendar, path: "/visitormanagement/scheduling" },
     { label: "Registration", icon: UserPlus, path: "/visitormanagement/registration" },
+    { label: "Visitors", icon: Users, path: "/visitormanagement/visitors" },
     { label: "Education", icon: BookOpen, path: "/visitormanagement/education" },
-    { label: "Safety", icon: ShieldCheck },
-    { label: "Booking", icon: Ticket },
-    { label: "Feedback", icon: MessageSquare },
-    { label: "Events", icon: PartyPopper },
+    { label: "Safety", icon: ShieldCheck, path: "/visitormanagement/safety" },
+    { label: "Booking", icon: Ticket, path: "/visitormanagement/booking" },
+    { label: "Feedback", icon: MessageSquare, path: "/visitormanagement/feedback" },
+    { label: "Events", icon: PartyPopper, path: "/visitormanagement/events" },
+    { label: "Staff", icon: Briefcase, path: "/visitormanagement/staff" },
 ];
 
 const ITEM_BASE = "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm";
@@ -87,10 +91,11 @@ export default function VisitorManagementSidebar() {
                     transition-transform duration-300 md:translate-x-0
                     ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
-                <div className="mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-full bg-white shadow-lg">
-                    {/* The application's logo. Empty alt: the module name follows
-                        immediately, in text below. */}
-                    <img src="/logo.webp" alt="" className="h-4/5 w-4/5 rounded-full" />
+                <div className="mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full bg-white shadow-lg">
+                    {/* The application's logo, clipped to the white circle so the
+                        badge reads as a perfect round. Empty alt: the module name
+                        follows immediately, in text below. */}
+                    <img src="/logo.webp" alt="" className="h-full w-full object-cover" />
                 </div>
 
                 <p className="font-heading mb-2.5 border-b border-white/25 px-1.5 pb-3.5 text-center text-sm font-bold tracking-widest text-white uppercase">

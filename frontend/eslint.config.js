@@ -17,5 +17,12 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Les modules declarent un adaptateur d'ecran (withModuleUi) reutilise par le
+      // routeur : c'est un HOC, pas un composant, et la regle le signale par defaut
+      // dans ModuleScreen.jsx. extraHOCs le declare explicitement plutot que de
+      // desactiver la regle sur tout le projet.
+      'react-refresh/only-export-components': ['error', { extraHOCs: ['withModuleUi'] }],
+    },
   },
 ])
