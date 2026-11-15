@@ -9,7 +9,7 @@ import {
 } from "../utils/format";
 import NurseryStageBadge from "./NurseryStageBadge";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 // The mock-up's columns, with "Batch" for its "Lot", as the API's messages say,
 // and the plants still in the nursery where it showed the starting count.
@@ -23,6 +23,9 @@ const COLUMNS = [
     "Survival rate",
     "Origin",
 ];
+
+// Numbers, quantities and durations line up on the right, header included.
+const NUMERIC = new Set(["In nursery", "Survival rate"]);
 
 /**
  * Stage of a batch, with the day it was reached. A batch with no plant left
@@ -73,7 +76,7 @@ export default function NurseryBatchesTable({ batches }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className={`${TABLE_HEAD} align-bottom whitespace-normal`}
+                                className={`${NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD} align-bottom whitespace-normal`}
                             >
                                 {column}
                             </th>
@@ -89,7 +92,7 @@ export default function NurseryBatchesTable({ batches }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatText(batch.varietyName)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatNumber(batch.currentCount)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">
@@ -101,7 +104,7 @@ export default function NurseryBatchesTable({ batches }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatDate(batch.plannedTransplantOn)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatPercent(batch.survivalRatePct)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

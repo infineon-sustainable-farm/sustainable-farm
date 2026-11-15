@@ -9,13 +9,14 @@ import RecordHarvestModal from "./RecordHarvestModal";
 import ReferenceValuesSection from "./ReferenceValuesSection";
 import UpcomingDeadlinesSection from "./UpcomingDeadlinesSection";
 import YieldForecastSection from "./YieldForecastSection";
+import { PAGE, PRIMARY_BUTTON } from "./plantsStyles";
 
 function RecordHarvestButton({ onClick }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className={PRIMARY_BUTTON}
         >
             <Plus size={16} />
             Record a harvest
@@ -26,11 +27,11 @@ function RecordHarvestButton({ onClick }) {
 /** Confirmation of the harvest just recorded, with the lot number to write on its crates. */
 function RecordedHarvestMessage({ harvest }) {
     return (
-        <p className="mt-4 inline-flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+        <p className="mt-4 inline-flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3 text-sm text-gray-700">
             <CircleCheck size={18} aria-hidden="true" className="shrink-0 text-success" />
             {harvest.lotNumber ? (
                 <span>
-                    Harvest recorded — lot <span className="font-semibold text-gray-900">{harvest.lotNumber}</span>
+                    Harvest recorded — lot <span className="font-semibold text-on-background">{harvest.lotNumber}</span>
                 </span>
             ) : (
                 "Harvest recorded"
@@ -85,16 +86,16 @@ export default function HarvestMaturityPage() {
     }
 
     return (
-        <div className="min-h-dvh bg-gray-50">
+        <div className={PAGE}>
             {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
+                        {/* A gray 12 px overline: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
                         <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
                             Task 5
                         </p>
-                        <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">
+                        <h1 className="font-heading mt-1 text-2xl font-bold text-on-background">
                             Harvest &amp; Maturity
                         </h1>
                         <p className="mt-2 max-w-xl text-sm text-gray-500">

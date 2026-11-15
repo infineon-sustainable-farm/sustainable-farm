@@ -8,16 +8,15 @@ import {
     formatUnitPrice,
     formatYears,
 } from "../utils/scenarioRequests";
+import { FIELD_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
-const BUTTON_CLASS =
-    "inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50";
-const CARD_LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const CARD_VALUE_CLASS = "font-heading text-2xl font-bold break-words text-gray-900";
+const CARD_LABEL_CLASS = "text-xs font-semibold text-gray-500";
+const CARD_VALUE_CLASS = "font-heading text-2xl font-bold break-words text-on-background";
 const CARD_NOTE_CLASS = "text-xs text-gray-600";
 
 function FigureCard({ label, value, notes = [], children }) {
     return (
-        <li className="flex min-w-0 flex-col gap-1 rounded-xl border border-gray-200 bg-white px-4 py-4">
+        <li className="flex min-w-0 flex-col gap-1 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-4">
             {label && <p className={CARD_LABEL_CLASS}>{label}</p>}
             {value !== undefined && <p className={CARD_VALUE_CLASS}>{value}</p>}
             {notes.filter(Boolean).map((note) => (
@@ -42,11 +41,11 @@ function PaybackCard({ baseline, horizonYears }) {
             <div className="mt-1 flex flex-col gap-2">
                 <div>
                     <p className={CARD_NOTE_CLASS}>Simple payback (full production from year 1)</p>
-                    <p className="font-heading text-lg font-bold text-gray-900">{simple}</p>
+                    <p className="font-heading text-lg font-bold text-on-background">{simple}</p>
                 </div>
                 <div>
                     <p className={CARD_NOTE_CLASS}>Payback with growth phases</p>
-                    <p className="font-heading text-lg font-bold text-gray-900">{withPhases}</p>
+                    <p className="font-heading text-lg font-bold text-on-background">{withPhases}</p>
                 </div>
             </div>
         </FigureCard>
@@ -128,7 +127,7 @@ export default function ScenarioBaselineSection({
     return (
         <section aria-labelledby="scenario-baseline-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-                <h2 id="scenario-baseline-title" className="font-heading text-lg font-bold break-words text-gray-900">
+                <h2 id="scenario-baseline-title" className="font-heading text-lg font-bold break-words text-on-background">
                     {`Baseline — ${scenario.name}`}
                 </h2>
                 <div className="flex flex-wrap items-center gap-2">
@@ -141,7 +140,7 @@ export default function ScenarioBaselineSection({
                                 id="scenario-select"
                                 value={scenario.id}
                                 onChange={(event) => onSelect(Number(event.target.value))}
-                                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none"
+                                className={FIELD_INPUT}
                             >
                                 {scenarios.map((candidate) => (
                                     <option key={candidate.id} value={candidate.id}>
@@ -156,12 +155,12 @@ export default function ScenarioBaselineSection({
                         type="button"
                         onClick={onEdit}
                         aria-label={`Edit ${scenario.name}`}
-                        className={BUTTON_CLASS}
+                        className={SECONDARY_BUTTON}
                     >
                         <Pencil size={14} />
                         Edit
                     </button>
-                    <button ref={addButtonRef} type="button" onClick={onAdd} className={BUTTON_CLASS}>
+                    <button ref={addButtonRef} type="button" onClick={onAdd} className={SECONDARY_BUTTON}>
                         <Plus size={14} />
                         Add a scenario
                     </button>
@@ -169,19 +168,19 @@ export default function ScenarioBaselineSection({
             </div>
 
             {isPending && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-500">
                     <Loader2 size={18} className="animate-spin" />
                     Computing the baseline…
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 px-5 py-4">
                     <div className="flex items-start gap-3">
                         <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
                         <div>
-                            <p className="text-sm font-bold text-gray-900">The baseline could not be computed</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
+                            <p className="text-sm font-bold text-on-background">The baseline could not be computed</p>
+                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
                             <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
                         </div>
                     </div>
@@ -189,7 +188,7 @@ export default function ScenarioBaselineSection({
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isFetching ? "Retrying…" : "Retry"}
                     </button>

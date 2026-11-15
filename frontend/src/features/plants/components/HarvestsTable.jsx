@@ -1,4 +1,5 @@
 import { formatBlock, formatDate, formatNumber, formatText } from "../utils/format";
+import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 // The mock-up's columns that the API records, in its order ("Actual Harvest" is
 // the harvest date), with Source last. A harvest recorded before lot numbers
@@ -12,10 +13,13 @@ const COLUMNS = [
     "Source",
 ];
 
+// Numbers, quantities and durations line up on the right, header included.
+const NUMERIC = new Set(["Quantity (kg)"]);
+
 /** Recorded harvests, one row per picking, in the order the API sends them. */
 export default function HarvestsTable({ harvests }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className={TABLE_CARD}>
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
                     <tr>
@@ -23,7 +27,7 @@ export default function HarvestsTable({ harvests }) {
                             <th
                                 key={column}
                                 scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                className={NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD}
                             >
                                 {column}
                             </th>
@@ -42,7 +46,7 @@ export default function HarvestsTable({ harvests }) {
                             <td className="px-4 py-3 text-gray-700">
                                 {formatDate(harvest.harvestDate)}
                             </td>
-                            <td className="px-4 py-3 text-gray-700">
+                            <td className="px-4 py-3 text-right text-gray-700">
                                 {formatNumber(harvest.quantityKg)}
                             </td>
                             <td className="px-4 py-3 text-gray-700">

@@ -4,10 +4,10 @@ import { useFertilizers } from "../hooks/useFertilizers";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { formatCode, formatDate, formatQuantity, formatUnit } from "../utils/format";
 import PlantsModal from "./PlantsModal";
+import { FIELD_INPUT, FIELD_LABEL, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50";
+const LABEL_CLASS = FIELD_LABEL;
+const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT} disabled:bg-gray-50`;
 const ERROR_CLASS = "mt-1 text-xs text-error";
 const NOTE_CLASS = "mt-1 text-xs text-gray-600";
 
@@ -253,7 +253,7 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
                 <h2
                     id="record-movement-title"
-                    className="font-heading text-lg font-bold text-gray-900"
+                    className="font-heading text-lg font-bold text-on-background"
                 >
                     Record a movement
                 </h2>
@@ -467,14 +467,14 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        className={SECONDARY_BUTTON}
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting || fertilizerNote !== null}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        className={PRIMARY_BUTTON}
                     >
                         {isSubmitting ? "Recording…" : SUBMIT_LABELS[movementType]}
                     </button>

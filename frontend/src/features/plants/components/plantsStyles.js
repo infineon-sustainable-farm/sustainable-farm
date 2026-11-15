@@ -29,6 +29,16 @@ export const TABLE_CARD = `overflow-x-auto ${CARD_FRAME}`;
 /** A column header: 12 px semibold in sentence case; gray-500 on gray-50 -> 4.63:1. */
 export const TABLE_HEAD = "border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-500";
 
+/** The header of a column of numbers, quantities, amounts or durations: as TABLE_HEAD, on the right. */
+export const TABLE_HEAD_NUM = TABLE_HEAD.replace("text-left", "text-right");
+
+/** A second line under a value in a table cell: 12 px; gray-600 #4a5565 on white -> 7.56:1. */
+export const CELL_NOTE = "block text-xs text-gray-600";
+
+/** An action inside a table row, 32 px high so the row stays compact: gray-700 on white -> 10.30:1. */
+export const ROW_BUTTON =
+    "inline-flex h-8 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50";
+
 /** The one icon size inside the screens, in px. */
 export const ICON_SIZE = 16;
 
