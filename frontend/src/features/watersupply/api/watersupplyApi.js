@@ -216,9 +216,14 @@ export const outageApi = {
   deleteOutage: (outageId) => apiClient.delete(`/api/water/outages/${outageId}`),
 }
 
-// What Visitor Management reads, previewed by the water team.
+// What Visitor Management reads, previewed by the water team. Its tour stops have a name only:
+// the water team maps the ones that pass by water facilities to a zone and/or a tank.
 export const visitorApi = {
   getSummary: (params) => apiClient.get('/api/water/visitor/summary', { params }),
+  getStops: () => apiClient.get('/api/water/visitor/stops'),
+  createStop: (stop) => apiClient.post('/api/water/visitor/stops', stop),
+  updateStop: (stopId, payload) => apiClient.put(`/api/water/visitor/stops/${stopId}`, payload),
+  deleteStop: (stopId) => apiClient.delete(`/api/water/visitor/stops/${stopId}`),
   getSafetyBriefing: () => apiClient.get('/api/water/visitor/safety-briefing'),
   publishSafetyBriefing: (briefing) => apiClient.patch('/api/water/visitor/safety-briefing', briefing),
 }

@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 /** Plants zone-to-block mapping (1.1): normalization, farm consistency and the resolver lookups. */
 @ExtendWith(MockitoExtension.class)
@@ -109,6 +110,49 @@ class ZoneBlockMappingServiceTest {
     void blockCodesForZonesWithoutZoneDoesNotQuery() {
         assertTrue(service().blockCodesForZones(List.of()).isEmpty());
         verify(mappingRepository, never()).findByZoneIdIn(any());
+    }
+
+    @Test
+    void blockCodesFollowThePlantsRule() {
+        // Plants: 1 to 10 letters or digits, without prefix or space.
+        for (String code : List.of("Block A", "ABCDEFGHIJK", "B-2")) {
+            assertThrows(IllegalArgumentException.class, () -> service().zoneIdsForBlock(null, code), code);
+        }
+        assertEquals(List.of(), service().zoneIdsForBlock(null, "abcdefghij"));
+    }
+
+    @Test
+    void aBlockAlreadyLinkedToAnotherZoneIsAConflict() {
+        UUID farmId = UUID.randomUUID();
+        UUID zoneId = stubZoneOfFarm(farmId);
+        when(farmRepository.findById(farmId)).thenReturn(Optional.of(new Farm()));
+        ZoneBlockMapping other = mapping(UUID.randomUUID(), "A");
+        other.setId(UUID.randomUUID());
+        when(mappingRepository.findByFarmIdAndBlockCode(farmId, "A")).thenReturn(List.of(other));
+
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> service().create(new ZoneBlockMappingCreateRequest(zoneId, "a", farmId)));
+
+        // Plants: a zone may cover several blocks, but a block belongs to only one zone.
+        assertEquals(409, error.getStatusCode().value());
+        assertTrue(error.getReason().contains("another zone"));
+        verify(mappingRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void movingALinkKeepsItsOwnBlock() {
+        UUID farmId = UUID.randomUUID();
+        UUID zoneId = stubZoneOfFarm(farmId);
+        when(farmRepository.findById(farmId)).thenReturn(Optional.of(new Farm()));
+        ZoneBlockMapping current = mapping(zoneId, "A");
+        current.setId(UUID.randomUUID());
+        current.setFarmId(farmId);
+        when(mappingRepository.findById(current.getId())).thenReturn(Optional.of(current));
+        when(mappingRepository.findByFarmIdAndBlockCode(farmId, "A")).thenReturn(List.of(current));
+        when(mappingRepository.saveAndFlush(current)).thenReturn(current);
+
+        assertEquals("A", service().update(current.getId(),
+                new com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneBlockMappingUpdateRequest(null, "a", null)).blockCode());
     }
 
     @Test

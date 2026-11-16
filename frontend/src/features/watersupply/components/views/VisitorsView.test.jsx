@@ -12,6 +12,9 @@ afterEach(cleanup)
 vi.mock('../../api/watersupplyApi', () => ({
   visitorApi: {
     getSummary: vi.fn(),
+    getStops: vi.fn(),
+    createStop: vi.fn(),
+    deleteStop: vi.fn(),
     getSafetyBriefing: vi.fn(),
     publishSafetyBriefing: vi.fn(),
   },
@@ -41,10 +44,13 @@ beforeEach(() => {
     sourceLevel: null,
     waterSavingsPercentage: 18,
     irrigationStatus: null,
-    liveConsumption: { liters: 12.5, windowMinutes: 15 },
+    liveConsumption: { liters: 30, flowRateLitersPerMinute: 2, windowMinutes: 15 },
     activeUnavailability: [],
   })
   iotCommandApi.getCommands.mockResolvedValue([])
+  visitorApi.getStops.mockResolvedValue([
+    { id: 'stop-1', stopName: 'Smart drip irrigation', zoneId: 'zone-1', sourceId: null },
+  ])
 })
 
 const props = { notify: vi.fn() }
@@ -84,10 +90,35 @@ describe('VisitorsView', () => {
     render(<VisitorsView {...props} />)
 
     await waitFor(() => expect(screen.getByText('18%')).toBeTruthy())
-    expect(screen.getByText('12.5 L')).toBeTruthy()
+    // The short window only gives the instantaneous flow; the visit total uses the time slot.
+    expect(screen.getByText('2 L/min')).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Zone shown'), { target: { value: 'zone-1' } })
     await waitFor(() => expect(visitorApi.getSummary).toHaveBeenCalledWith({ sourceId: undefined, zoneId: 'zone-1' }))
+
+    // Visitor Management speaks in stop names: the preview can use them too.
+    fireEvent.change(await screen.findByLabelText('Visit stop'), { target: { value: 'Smart drip irrigation' } })
+    await waitFor(() => expect(visitorApi.getSummary).toHaveBeenCalledWith({ stop: 'Smart drip irrigation' }))
+  })
+
+  it('maps a Visitor Management stop to the zone it shows', async () => {
+    visitorApi.createStop.mockResolvedValue({ id: 'stop-2' })
+    render(<VisitorsView {...props} />)
+    await screen.findByText('1 water stop(s)')
+    const form = screen.getByRole('button', { name: 'Map the stop' }).closest('form')
+
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText(/exactly as Visitor Management shows it/)).toBeTruthy())
+
+    fireEvent.change(controlByLabel(form, 'Stop name'), { target: { value: ' Rain tank tour ' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText(/the zone, the tank, or both/)).toBeTruthy())
+
+    fireEvent.change(controlByLabel(form, 'Zone shown'), { target: { value: 'zone-1' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(visitorApi.createStop)
+      .toHaveBeenCalledWith({ stopName: 'Rain tank tour', zoneId: 'zone-1', sourceId: null }))
+    await waitFor(() => expect(visitorApi.getStops).toHaveBeenCalledTimes(2))
   })
 
   it('says plainly that the demo valve did not move while no gateway exists', async () => {

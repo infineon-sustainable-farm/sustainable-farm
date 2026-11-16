@@ -88,6 +88,19 @@ describe('PlantsBlocksView', () => {
     await waitFor(() => expect(props.notify).toHaveBeenCalledWith('Zone linked to block D1'))
   })
 
+  it('refuses a block code longer than the 10 characters Plants accepts', async () => {
+    render(<PlantsBlocksView {...props} />)
+    await screen.findByText('3 block(s), 3 link(s)')
+    const form = document.querySelector('form')
+
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: 'zone-1' } })
+    fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'ABCDEFGHIJK' } })
+    fireEvent.submit(form)
+
+    await waitFor(() => expect(screen.getByText(/1 to 10 letters or digits/)).toBeTruthy())
+    expect(zoneBlockMappingApi.createMapping).not.toHaveBeenCalled()
+  })
+
   it('refuses a block code that Plants would not accept', async () => {
     render(<PlantsBlocksView {...props} />)
     await screen.findByText('3 block(s), 3 link(s)')
@@ -97,12 +110,13 @@ describe('PlantsBlocksView', () => {
     fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'Block A' } })
     fireEvent.submit(form)
 
-    await waitFor(() => expect(screen.getByText(/short code such as A or B2/)).toBeTruthy())
+    await waitFor(() => expect(screen.getByText(/1 to 10 letters or digits/)).toBeTruthy())
     expect(zoneBlockMappingApi.createMapping).not.toHaveBeenCalled()
   })
 
   it('explains a zone whose farm cannot be resolved and a duplicate link', async () => {
-    zoneBlockMappingApi.createMapping.mockRejectedValue(Object.assign(new Error('conflict'), { status: 409 }))
+    zoneBlockMappingApi.createMapping.mockRejectedValue(Object.assign(
+      new Error('Block A is already linked to another zone: a block belongs to only one zone'), { status: 409 }))
     render(<PlantsBlocksView {...props} />)
     await screen.findByText('3 block(s), 3 link(s)')
     const form = document.querySelector('form')
@@ -114,6 +128,6 @@ describe('PlantsBlocksView', () => {
 
     fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: 'zone-1' } })
     fireEvent.submit(form)
-    await waitFor(() => expect(screen.getByText('This zone is already linked to this block.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText(/already linked to another zone/)).toBeTruthy())
   })
 })

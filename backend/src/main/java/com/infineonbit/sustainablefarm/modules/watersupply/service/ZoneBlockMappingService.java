@@ -18,13 +18,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional(readOnly = true)
 public class ZoneBlockMappingService implements ZoneBlockResolver {
+    /** Same rule as Plants: 1 to 10 letters or digits, upper case ("B", "B2", never "Block B"). */
+    private static final Pattern BLOCK_CODE = Pattern.compile("[A-Z0-9]{1,10}");
+
     private final ZoneBlockMappingRepository mappingRepository;
     private final FieldZoneRepository zoneRepository;
     private final FieldRepository fieldRepository;
@@ -134,8 +140,19 @@ public class ZoneBlockMappingService implements ZoneBlockResolver {
             throw new IllegalArgumentException("farmId must match the farm of the mapped zone");
         }
 
+        String block = requireBlockCode(blockCode);
+        // Plants: a zone may cover several blocks, but a block belongs to only one zone of its farm.
+        mappingRepository.findByFarmIdAndBlockCode(resolvedFarmId, block).stream()
+                .filter(existing -> !Objects.equals(existing.getId(), mapping.getId()))
+                .findFirst()
+                .ifPresent(existing -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, existing.getZoneId().equals(zoneId)
+                            ? "This zone is already linked to block " + block
+                            : "Block " + block + " is already linked to another zone: a block belongs to only one zone");
+                });
+
         mapping.setZoneId(zoneId);
-        mapping.setBlockCode(requireBlockCode(blockCode));
+        mapping.setBlockCode(block);
         mapping.setFarmId(resolvedFarmId);
     }
 
@@ -159,8 +176,8 @@ public class ZoneBlockMappingService implements ZoneBlockResolver {
 
     private String requireBlockCode(String blockCode) {
         String normalized = normalizeBlockCode(blockCode);
-        if (normalized == null) {
-            throw new IllegalArgumentException("blockCode must not be blank");
+        if (normalized == null || !BLOCK_CODE.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("blockCode must be 1 to 10 letters or digits, without prefix or space (for example A or B2)");
         }
         return normalized;
     }

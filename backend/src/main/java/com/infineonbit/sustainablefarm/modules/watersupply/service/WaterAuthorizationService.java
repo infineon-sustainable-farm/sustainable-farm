@@ -12,6 +12,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class WaterAuthorizationService {
     public void checkPhysicalCommandAllowed(String action) {
-        // To be wired to the platform authorization once it exists (see docs/integrations).
+        // To be wired to the platform authorization once it exists (see watersupply/docs/integrations).
     }
 }

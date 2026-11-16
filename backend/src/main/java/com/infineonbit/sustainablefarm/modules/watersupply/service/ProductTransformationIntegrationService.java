@@ -127,9 +127,14 @@ public class ProductTransformationIntegrationService {
     }
 
     /**
-     * Quality of the water used by a lot (T2): tests of the sources that supplied the lot, over the
-     * given window or, by default, over the lot's consumption window. Without any test the verdict
-     * is {@code no_test} and {@code compliant=false}: no proof is not a proof of compliance.
+     * Quality of the water used by a lot (T2), source by source.
+     *
+     * <p>Window: the given one or, by default, the lot's first-to-last consumption. Each source that
+     * supplied the lot needs its own test: a change of source therefore needs a test of the new
+     * source, whatever the time elapsed. For a source, the decisive tests are the last one made in
+     * the {@code app.water.quality.test-validity-days} before the window, and every test made during
+     * it. A source without decisive test is {@code no_test}, and so is the lot: no proof is not a
+     * proof of compliance.</p>
      */
     public Map<String, Object> qualityCompliance(String lotId, Instant from, Instant to) {
         String lot = lotId == null || lotId.isBlank() ? null : lotId.trim();
@@ -144,11 +149,32 @@ public class ProductTransformationIntegrationService {
         if (end.isBefore(start)) {
             throw new IllegalArgumentException("to must be after from");
         }
-        List<UUID> sourceIds = lotItems.stream().map(WaterConsumption::getSourceId).filter(Objects::nonNull).distinct().toList();
-        List<WaterQualityTest> tests = sourceIds.isEmpty()
-                ? qualityRepository.findBetween(start, end)
-                : qualityRepository.findBySourcesBetween(sourceIds, start, end);
-        String status = tests.isEmpty() ? "no_test" : tests.stream().anyMatch(this::nonCompliant) ? "non_compliant" : "compliant";
+        Instant validFrom = start.minus(properties.qualityTestValidityDays, ChronoUnit.DAYS);
+        List<UUID> lotSources = lotItems.stream().map(WaterConsumption::getSourceId).filter(Objects::nonNull).distinct().toList();
+        List<WaterQualityTest> candidates = lotSources.isEmpty()
+                ? qualityRepository.findBetween(validFrom, end)
+                : qualityRepository.findBySourcesBetween(lotSources, validFrom, end);
+        // Without a lot, the sources checked are those that have a test in the period.
+        List<UUID> sourceIds = lotSources.isEmpty()
+                ? candidates.stream().map(WaterQualityTest::getSourceId).filter(Objects::nonNull).distinct().toList()
+                : lotSources;
+
+        List<Map<String, Object>> sources = new ArrayList<>();
+        List<WaterQualityTest> tests = new ArrayList<>();
+        for (UUID sourceId : sourceIds) {
+            List<WaterQualityTest> decisive = decisiveTests(candidates, sourceId, start);
+            tests.addAll(decisive);
+            Map<String, Object> source = new LinkedHashMap<>();
+            source.put("sourceId", sourceId);
+            source.put("status", verdict(decisive));
+            source.put("testCount", decisive.size());
+            source.put("lastTestDate", decisive.isEmpty() ? null : decisive.get(decisive.size() - 1).getTestDate());
+            sources.add(source);
+        }
+        tests.sort(Comparator.comparing(WaterQualityTest::getTestDate, Comparator.nullsFirst(Comparator.naturalOrder())));
+        List<String> verdicts = sources.stream().map(source -> (String) source.get("status")).toList();
+        String status = verdicts.contains("non_compliant") ? "non_compliant"
+                : verdicts.isEmpty() || verdicts.contains("no_test") ? "no_test" : "compliant";
 
         Map<String, Object> rule = new LinkedHashMap<>();
         rule.put("phMin", properties.qualityPhMin);
@@ -158,12 +184,34 @@ public class ProductTransformationIntegrationService {
         response.put("lotId", lot);
         response.put("from", start);
         response.put("to", end);
+        response.put("validityDays", properties.qualityTestValidityDays);
         response.put("sourceIds", sourceIds);
         response.put("status", status);
         response.put("compliant", "compliant".equals(status));
         response.put("rule", rule);
+        response.put("sources", sources);
         response.put("tests", tests.stream().map(this::testItem).toList());
         return response;
+    }
+
+    /** Last test of the source before the window (within the validity period, already filtered) + tests during it. */
+    private static List<WaterQualityTest> decisiveTests(List<WaterQualityTest> candidates, UUID sourceId, Instant start) {
+        List<WaterQualityTest> ofSource = candidates.stream()
+                .filter(test -> sourceId.equals(test.getSourceId()) && test.getTestDate() != null)
+                .sorted(Comparator.comparing(WaterQualityTest::getTestDate))
+                .toList();
+        List<WaterQualityTest> decisive = new ArrayList<>();
+        ofSource.stream().filter(test -> test.getTestDate().isBefore(start)).reduce((first, second) -> second)
+                .ifPresent(decisive::add);
+        ofSource.stream().filter(test -> !test.getTestDate().isBefore(start)).forEach(decisive::add);
+        return decisive;
+    }
+
+    private String verdict(List<WaterQualityTest> decisive) {
+        if (decisive.isEmpty()) {
+            return "no_test";
+        }
+        return decisive.stream().anyMatch(this::nonCompliant) ? "non_compliant" : "compliant";
     }
 
     /**

@@ -104,6 +104,11 @@ public class WaterUnavailabilityService {
         return !search(null, null, zoneId, null, at).isEmpty();
     }
 
+    /** True when a non-cancelled period covers the source (or its farm) at the given instant. */
+    public boolean isSourceUnavailable(UUID sourceId, Instant at) {
+        return !search(null, null, null, sourceId, at).isEmpty();
+    }
+
     /** Non-cancelled periods in force at the given instant, every scope. */
     public List<WaterUnavailabilityResponse> activeAt(Instant at) {
         return outageRepository.activeAt(at).stream().map(WaterUnavailabilityResponse::from).toList();

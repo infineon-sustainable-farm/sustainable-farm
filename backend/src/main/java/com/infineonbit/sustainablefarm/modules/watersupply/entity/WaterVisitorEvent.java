@@ -15,6 +15,9 @@ public class WaterVisitorEvent extends BaseEntity {
     private Instant expectedAt;
     @Column(columnDefinition = "text")
     private String zones;
+    /** Stop names as sent by Visitor Management, mapped or not. */
+    @Column(columnDefinition = "text")
+    private String stops;
     @Column(nullable = false)
     private Boolean conflict = false;
 
@@ -26,6 +29,8 @@ public class WaterVisitorEvent extends BaseEntity {
     public void setExpectedAt(Instant expectedAt) { this.expectedAt = expectedAt; }
     public String getZones() { return zones; }
     public void setZones(String zones) { this.zones = zones; }
+    public String getStops() { return stops; }
+    public void setStops(String stops) { this.stops = stops; }
     public Boolean getConflict() { return conflict; }
     public void setConflict(Boolean conflict) { this.conflict = conflict; }
 }

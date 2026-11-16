@@ -22,8 +22,8 @@ const PHASE_SOURCE_LABELS = {
   unknown: 'unknown, no adjustment',
 }
 
-/** Same shape as Plants block codes ("A", "B2"): letters and digits, no prefix or space. */
-const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
+/** Plants rule: 1 to 10 letters or digits, no prefix or space ("A", "B2", never "Block A"). */
+const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,10}$/
 
 /**
  * Plants blocks: links Water Supply zones to the Plants blocks they water, then shows what Plants
@@ -73,7 +73,7 @@ export function PlantsBlocksView({ notify }) {
       return
     }
     if (!BLOCK_CODE_PATTERN.test(form.blockCode.trim())) {
-      setFormError('The block code is a short code such as A or B2, without prefix or space.')
+      setFormError('The block code is 1 to 10 letters or digits, such as A or B2, without prefix or space.')
       return
     }
     const farmId = farmIdOfZone(form.zoneId)
@@ -90,7 +90,7 @@ export function PlantsBlocksView({ notify }) {
         notify(`Zone linked to block ${created?.blockCode ?? form.blockCode.trim().toUpperCase()}`)
         setForm({ zoneId: '', blockCode: '' })
       })
-      .catch((err) => setFormError(err.status === 409 ? 'This zone is already linked to this block.' : err.message || 'Unable to save.'))
+      .catch((err) => setFormError(err.message || 'Unable to save.'))
       .finally(() => setBusy(false))
   }
 
@@ -186,7 +186,8 @@ export function PlantsBlocksView({ notify }) {
                 <input style={inputStyle} value={form.blockCode} onChange={updateForm('blockCode')} placeholder="A, B2…" />
               </FormField>
               <p style={{ margin: 0, fontSize: '12px', color: 'var(--ws-muted)' }}>
-                Codes are stored in upper case. A zone watering two blocks can be linked to both.
+                Codes are stored in upper case. A zone watering two blocks can be linked to both,
+                but a block belongs to only one zone.
               </p>
               <div className="ws-form-actions">
                 <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Link'}</button>
