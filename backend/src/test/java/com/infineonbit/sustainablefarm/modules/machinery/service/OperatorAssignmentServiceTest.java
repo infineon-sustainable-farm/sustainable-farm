@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.OperatorAssignmentCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.OperatorAssignmentUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.OperatorAssignmentObtainingResponse;
@@ -136,7 +137,7 @@ public class OperatorAssignmentServiceTest {
         );
         when(equipmentRepository.findById(6L)).thenReturn(Optional.of(equipment));
         // Act
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException ex = assertThrows(ConflictException.class, () -> {
             operatorAssignmentService.addOperatorAssignment(request);
         });
         // Assert
@@ -326,7 +327,7 @@ public class OperatorAssignmentServiceTest {
         );
         when(operatorAssignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
         // Act
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> operatorAssignmentService.updateOperatorAssignment(1L, request));
         // Assert
         assertEquals("End date cannot be before the stored start date.", ex.getMessage());
@@ -344,7 +345,7 @@ public class OperatorAssignmentServiceTest {
         );
         when(operatorAssignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
         // Act
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> operatorAssignmentService.updateOperatorAssignment(1L, request));
         // Assert
         assertEquals("Start date cannot be after the stored end date.", ex.getMessage());
@@ -362,7 +363,7 @@ public class OperatorAssignmentServiceTest {
         );
         when(operatorAssignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
         // Act
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> operatorAssignmentService.updateOperatorAssignment(1L, request));
         // Assert
         assertEquals("Full name cannot be blank.", ex.getMessage());

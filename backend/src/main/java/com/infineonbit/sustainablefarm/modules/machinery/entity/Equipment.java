@@ -5,11 +5,6 @@ import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
 import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
-// import org.hibernate.annotations.CreationTimestamp;
-// import org.hibernate.annotations.UpdateTimestamp;
-
-// import java.time.Instant;
-
 
 @Entity
 @Table(name = "equipment")
@@ -36,12 +31,4 @@ public class Equipment {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status;
-
-    // @CreationTimestamp
-    // @Column(nullable = false, updatable = false)
-    // private Instant createdAt;
-
-    // @UpdateTimestamp
-    // @Column(nullable = false)
-    // private Instant updatedAt;
 }

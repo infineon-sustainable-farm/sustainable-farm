@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
@@ -112,7 +113,7 @@ class RepairLogServiceTest {
         );
         when(equipmentRepository.findById(1L)).thenReturn(Optional.of(testEquipment));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> repairLogService.addRepairLog(blankIssueRequest));
 
         assertTrue(exception.getMessage().contains("Issue description is required"));
@@ -189,7 +190,7 @@ class RepairLogServiceTest {
                 null, null, "  ", null, null, null);
         when(repairLogRepository.findById(1L)).thenReturn(Optional.of(testRepairLog));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> repairLogService.updateRepairLog(1L, updateRequest));
 
         assertTrue(exception.getMessage().contains("Issue description cannot be blank"));

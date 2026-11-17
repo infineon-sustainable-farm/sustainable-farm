@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
@@ -90,7 +91,7 @@ class SparePartServiceTest {
     void testAddSparePart_NameAlreadyExists() {
         when(sparePartRepository.existsByName("Air Filter")).thenReturn(true);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -102,7 +103,7 @@ class SparePartServiceTest {
         when(sparePartRepository.existsByName("Air Filter")).thenReturn(false);
         when(equipmentRepository.findById(1L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -261,7 +262,7 @@ class SparePartServiceTest {
                 "duplicate key value violates unique constraint \"spare_part_name_key\""))
                 .when(sparePartRepository).save(any(SparePart.class));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -276,7 +277,7 @@ class SparePartServiceTest {
                 "insert or update on table \"spare_part\" violates foreign key constraint \"fk_spare_part_equipment\""))
                 .when(sparePartRepository).save(any(SparePart.class));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -301,7 +302,7 @@ class SparePartServiceTest {
                 "update on table \"spare_part\" violates foreign key constraint \"fk_spare_part_equipment\""))
                 .when(sparePartRepository).save(any(SparePart.class));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.updateSparePart(1L, updateRequest);
         });
 

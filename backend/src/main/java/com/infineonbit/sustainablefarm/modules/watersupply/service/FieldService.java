@@ -3,7 +3,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FieldUpdateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Farm;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Field;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
