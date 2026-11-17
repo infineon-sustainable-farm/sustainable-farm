@@ -40,6 +40,29 @@ Les bases de données existantes sont jetables : il n'y a aucun environnement de
 | Migrations | Une baseline unique `V1__baseline.sql` écrite depuis le modèle consolidé à la fin du Lot 3 (T46), V1 à V15 supprimées, `spring.jpa.hibernate.ddl-auto=validate`. D'ici là, `ddl-auto=update` permet à l'application de tourner à chaque étape |
 | CI | Un test d'intégration rejoue Flyway et valide le schéma sur PostgreSQL 17 à chaque PR (T47) |
 
+### Montants et devises (T14)
+
+Le support monétaire commun est dans `core.money` :
+
+| Élément | Rôle |
+|---|---|
+| `CurrencyCode` | Enum des devises (`XOF`, `EUR`), stockée par son nom ; connaît son unité mineure (0 décimale pour le franc, 2 pour l'euro) |
+| `Money` | Record `@Embeddable` : `amount` en `BigDecimal` toujours à l'échelle 2, arrondi au plus proche avec demi vers le haut (`HALF_UP`), et `currency`. Égalité par devise et valeur ; additionner ou soustraire deux devises différentes lève une `IllegalArgumentException` |
+| `CurrencyConversion` | Port de conversion `convert(Money, CurrencyCode, LocalDate)` ; résultat arrondi à l'unité mineure de la devise cible ; `ExchangeRateNotFoundException` (404) si aucun taux n'est enregistré |
+
+Les taux de change restent la propriété de plants (table `currency_rate`, saisie par `PUT /api/plants/currency-rates/EUR/XOF`, chargement par défaut en profil `dev`). Plants implémente le port avec le bean `CurrencyRateConversion` : un autre module injecte `CurrencyConversion` et ne dépend que de `core`. La table ne garde pas d'historique : la date est acceptée pour l'avenir, le taux enregistré vaut pour toute date.
+
+Un module déclare un champ monétaire ainsi, avec les colonnes `<prefix>_amount numeric(14,2)` et `<prefix>_currency varchar(3)` :
+
+```java
+@Embedded
+@AttributeOverride(name = "amount", column = @Column(name = "price_amount", precision = 14, scale = 2))
+@AttributeOverride(name = "currency", column = @Column(name = "price_currency", length = 3))
+private Money price;
+```
+
+Les deux colonnes vides donnent un champ `null`. Les colonnes existantes sans devise (machinery, visitormanagement) ou avec la devise dans le nom (`*_eur` d'energysupply et salesmarketing) passent à ce modèle module par module au Lot 3.
+
 ### API (A5)
 
 | Sujet | Convention |
