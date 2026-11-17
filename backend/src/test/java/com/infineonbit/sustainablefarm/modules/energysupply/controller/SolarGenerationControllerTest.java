@@ -1,13 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.SolarGenerationLogResponse;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.SolarGenerationLogService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SolarGenerationController.class)
-@Import(EnergySupplyExceptionHandler.class)
 class SolarGenerationControllerTest {
 
     @Autowired
@@ -88,7 +85,7 @@ class SolarGenerationControllerTest {
                                 {"componentId":"","date":null,"kwhProduced":-1,"efficiencyPct":-5}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("componentId")));
+                .andExpect(jsonPath("$.fieldErrors.componentId").exists());
     }
 
     private String validRequest() {

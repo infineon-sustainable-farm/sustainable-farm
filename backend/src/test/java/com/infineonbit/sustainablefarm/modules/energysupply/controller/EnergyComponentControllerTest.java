@@ -4,13 +4,11 @@ import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyComponentR
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyComponentResponse;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentCategory;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentStatus;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.EnergyComponentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EnergyComponentController.class)
-@Import(EnergySupplyExceptionHandler.class)
 class EnergyComponentControllerTest {
 
     @Autowired
@@ -112,7 +109,7 @@ class EnergyComponentControllerTest {
                                 {"componentId":"bad","name":"","category":null,"capacityValue":-1,"status":null}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("componentId")));
+                .andExpect(jsonPath("$.fieldErrors.componentId").exists());
     }
 
     private String validRequest() {

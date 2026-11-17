@@ -1,6 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.exception;
 
-public class GeneratorEventNotFoundException extends RuntimeException {
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+
+public class GeneratorEventNotFoundException extends ResourceNotFoundException {
 
     public GeneratorEventNotFoundException(String eventId) {
         super("Generator event not found: " + eventId);
