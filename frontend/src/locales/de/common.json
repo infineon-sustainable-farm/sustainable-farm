@@ -18,11 +18,27 @@
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "close": "Schließen",
-    "search": "Suchen"
+    "search": "Suchen",
+    "dismiss": "Ausblenden"
   },
   "status": {
     "loading": "Wird geladen…",
     "noResults": "Keine Ergebnisse",
     "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "confirm": {
+    "deleteTitle": "Diesen Eintrag löschen?"
+  },
+  "pagination": {
+    "label": "Seitennavigation",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "pageOf": "Seite {{page}} von {{total}}"
+  },
+  "table": {
+    "actions": "Aktionen"
+  },
+  "toast": {
+    "region": "Benachrichtigungen"
   }
 }
