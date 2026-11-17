@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.core.config;
+package com.infineonbit.sustainablefarm.modules.visitormanagement.config;
 
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.AgriActivity;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Event;
@@ -36,15 +36,16 @@ import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 
 /**
- * Dev-only reference data. Enable with the {@code dev} Spring profile
+ * Dev-only visitor management data (tour stops, workshops, slots, events,
+ * visitors, registrations). Enable with the {@code dev} Spring profile
  * (e.g. {@code SPRING_PROFILES_ACTIVE=dev}). Never active in production.
  * Each entity type is seeded only when its table is empty (idempotent).
  */
 @Component
 @Profile("dev")
-public class DevDataSeeder implements CommandLineRunner {
+public class VisitorDevDataSeeder implements CommandLineRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(DevDataSeeder.class);
+    private static final Logger log = LoggerFactory.getLogger(VisitorDevDataSeeder.class);
 
     private final TourStopRepository tourStopRepository;
     private final WorkshopRepository workshopRepository;
@@ -54,7 +55,7 @@ public class DevDataSeeder implements CommandLineRunner {
     private final VisitorRepository visitorRepository;
     private final RegistrationRepository registrationRepository;
 
-    public DevDataSeeder(TourStopRepository tourStopRepository,
+    public VisitorDevDataSeeder(TourStopRepository tourStopRepository,
                          WorkshopRepository workshopRepository,
                          AgriActivityRepository activityRepository,
                          TimeSlotRepository timeSlotRepository,
