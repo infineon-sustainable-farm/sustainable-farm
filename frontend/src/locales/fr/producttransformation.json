@@ -1,3 +1,15 @@
 {
-  "name": "Transformation des produits"
+  "name": "Transformation des produits",
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "rawIntake": "Réception des matières premières",
+    "batches": "Lots",
+    "washingSorting": "Lavage et tri",
+    "drying": "Séchage",
+    "qualityControl": "Contrôle qualité",
+    "compliance": "Conformité",
+    "packaging": "Conditionnement",
+    "equipment": "Équipements",
+    "settings": "Paramètres"
+  }
 }

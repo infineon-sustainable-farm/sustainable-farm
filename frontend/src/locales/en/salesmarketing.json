@@ -1,3 +1,14 @@
 {
-  "name": "Sales & marketing"
+  "name": "Sales & marketing",
+  "nav": {
+    "dashboard": "Dashboard",
+    "forecasting": "Demand forecasting",
+    "demandAlerts": "Demand alerts",
+    "reports": "Demand reports",
+    "customers": "Customers",
+    "salesChannels": "Sales channels",
+    "pricing": "Pricing",
+    "campaigns": "Campaigns",
+    "delivery": "Delivery tracking"
+  }
 }

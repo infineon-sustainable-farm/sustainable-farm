@@ -1,3 +1,15 @@
 {
-  "name": "Product transformation"
+  "name": "Product transformation",
+  "nav": {
+    "dashboard": "Dashboard",
+    "rawIntake": "Raw Intake",
+    "batches": "Batches",
+    "washingSorting": "Washing & Sorting",
+    "drying": "Drying",
+    "qualityControl": "Quality Control",
+    "compliance": "Compliance",
+    "packaging": "Packaging",
+    "equipment": "Equipment",
+    "settings": "Settings"
+  }
 }

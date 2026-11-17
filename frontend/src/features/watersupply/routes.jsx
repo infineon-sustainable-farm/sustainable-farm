@@ -1,6 +1,23 @@
+import {
+  Boxes,
+  Bug,
+  CalendarDays,
+  CalendarX,
+  ClipboardList,
+  Droplets,
+  FlaskConical,
+  Fuel,
+  Home,
+  LayoutDashboard,
+  Leaf,
+  Package,
+  Sprout,
+  Users,
+  Wrench,
+} from 'lucide-react'
 import WaterSupplyLayout from './components/WaterSupplyLayout'
 import { UnknownView } from './components/views/UnknownView'
-import { VIEW_PATHS } from './paths'
+import { VIEW_PATHS, WATERSUPPLY_BASE, viewUrl } from './paths'
 import { VIEW_COMPONENTS, withModuleUi } from './ModuleScreen'
 
 /**
@@ -33,3 +50,36 @@ export default [
   },
 ]
 
+/**
+ * Navigation of the module, read by the application shell (app/Sidebar.jsx) and the launcher
+ * page (app/LauncherPage.jsx). Same entries, order and targets as the module's own sidebar.
+ */
+const NAV_ICONS = {
+  dashboard: LayoutDashboard,
+  farms: Home,
+  sources: Boxes,
+  irrigation: CalendarDays,
+  consumption: Fuel,
+  rainwater: Leaf,
+  maintenance: Wrench,
+  quality: FlaskConical,
+  drought: Bug,
+  outages: CalendarX,
+  plants: Sprout,
+  lots: Package,
+  visitors: Users,
+  notifications: ClipboardList,
+}
+
+export const nav = {
+  id: 'watersupply',
+  basePath: WATERSUPPLY_BASE,
+  icon: Droplets,
+  nameKey: 'watersupply:name',
+  items: Object.keys(VIEW_PATHS).map((viewId) => ({
+    to: viewUrl(viewId),
+    labelKey: `watersupply:nav.${viewId}`,
+    icon: NAV_ICONS[viewId],
+    end: viewId === 'dashboard',
+  })),
+}
