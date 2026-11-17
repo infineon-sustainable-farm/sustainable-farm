@@ -1,0 +1,5 @@
+{
+  "about": "Photos de CONTENU de la marque (humanisation, scènes, objets). Une fiche par photo : licence, auteur, source, date de vérification, statut, usage. Ajouter : déposer dans files/, écrire la fiche, puis arc-design photos --brand-dir <marque> --sync, puis sans --sync.",
+  "statuses": {"validated": "validée par le propriétaire", "candidate": "licence vérifiée, pas encore validée", "rejected": "à ne plus proposer (raison dans notes)"},
+  "photos": []
+}

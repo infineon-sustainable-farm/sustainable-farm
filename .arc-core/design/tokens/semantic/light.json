@@ -1,0 +1,113 @@
+{
+  "color": {
+    "background": {
+      "body": {
+        "$value": "{color.ink.50}",
+        "$type": "color"
+      },
+      "surface": {
+        "$value": "{color.gray.0}",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "{color.gray.50}",
+        "$type": "color"
+      },
+      "inverse": {
+        "$value": "{color.gray.900}",
+        "$type": "color"
+      }
+    },
+    "text": {
+      "primary": {
+        "$value": "{color.ink.950}",
+        "$type": "color"
+      },
+      "secondary": {
+        "$value": "{color.gray.500}",
+        "$type": "color"
+      },
+      "inverse": {
+        "$value": "{color.gray.50}",
+        "$type": "color"
+      },
+      "accent": {
+        "$value": "{color.teal.700}",
+        "$type": "color"
+      },
+      "error": {
+        "$value": "{color.red.700}",
+        "$type": "color"
+      },
+      "success": {
+        "$value": "{color.green.700}",
+        "$type": "color"
+      },
+      "warning": {
+        "$value": "{color.amber.700}",
+        "$type": "color"
+      }
+    },
+    "border": {
+      "default": {
+        "$value": "{color.gray.100}",
+        "$type": "color"
+      },
+      "strong": {
+        "$value": "{color.gray.500}",
+        "$type": "color"
+      }
+    },
+    "accent": {
+      "default": {
+        "$value": "{color.teal.600}",
+        "$type": "color"
+      },
+      "pressed": {
+        "$value": "{color.teal.700}",
+        "$type": "color"
+      },
+      "on": {
+        "$value": "{color.gray.0}",
+        "$type": "color"
+      }
+    },
+    "focus": {
+      "ring": {
+        "$value": "{color.teal.600}",
+        "$type": "color"
+      }
+    },
+    "status": {
+      "error-bg": {
+        "$value": "{color.red.100}",
+        "$type": "color"
+      },
+      "success-bg": {
+        "$value": "{color.green.100}",
+        "$type": "color"
+      },
+      "warning-bg": {
+        "$value": "{color.amber.100}",
+        "$type": "color"
+      }
+    }
+  },
+  "shadow": {
+    "overlay": {
+      "$value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+      "$type": "shadow",
+      "$description": "Tailwind shadow-md (card hover, popovers)"
+    }
+  },
+  "font": {
+    "heading": {
+      "$value": "{font.family.sans}",
+      "$type": "fontFamily"
+    },
+    "body": {
+      "$value": "{font.family.sans}",
+      "$type": "fontFamily"
+    }
+  }
+}

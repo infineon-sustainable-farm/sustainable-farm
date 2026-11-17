@@ -1,0 +1,219 @@
+{
+  "color": {
+    "$description": "Palette of the machinery module (reference look of Sustainable Farm). Neutrals and states are the Tailwind 4 values machinery uses, converted from oklch to sRGB hex.",
+    "gray": {
+      "0": {
+        "$value": "#FFFFFF",
+        "$type": "color"
+      },
+      "50": {
+        "$value": "#F9FAFB",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#F3F4F6",
+        "$type": "color"
+      },
+      "200": {
+        "$value": "#E5E7EB",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#D1D5DC",
+        "$type": "color"
+      },
+      "400": {
+        "$value": "#99A1AF",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#6A7282",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#4A5565",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#364153",
+        "$type": "color"
+      },
+      "800": {
+        "$value": "#1E2939",
+        "$type": "color"
+      },
+      "850": {
+        "$value": "#172033",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#101828",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#030712",
+        "$type": "color"
+      }
+    },
+    "ink": {
+      "50": {
+        "$value": "#F8F9FF",
+        "$type": "color",
+        "$description": "page background of every module (body)"
+      },
+      "950": {
+        "$value": "#0B1C30",
+        "$type": "color",
+        "$description": "body text colour"
+      }
+    },
+    "teal": {
+      "50": {
+        "$value": "#F0FDFA",
+        "$type": "color",
+        "$description": "primary KPI tile (Tailwind teal-50)"
+      },
+      "300": {
+        "$value": "#5FD4C6",
+        "$type": "color",
+        "$description": "accent on dark theme"
+      },
+      "400": {
+        "$value": "#0FA396",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#0A8276",
+        "$type": "color",
+        "$description": "brand primary: sidebar, buttons, charts"
+      },
+      "700": {
+        "$value": "#065E55",
+        "$type": "color",
+        "$description": "primary pressed, primary text on the page background"
+      }
+    },
+    "red": {
+      "50": {
+        "$value": "#FEF2F2",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#FFE2E2",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#FFB0A8",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#E7000B",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#C10007",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#3E1F1C",
+        "$type": "color"
+      }
+    },
+    "green": {
+      "50": {
+        "$value": "#F0FDF4",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#DCFCE7",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#8CDEA0",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#00A63E",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#008236",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#1B3324",
+        "$type": "color"
+      }
+    },
+    "amber": {
+      "50": {
+        "$value": "#FFFBEB",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#FEF3C6",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#F3C46F",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#E17100",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#BB4D00",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#3A2D12",
+        "$type": "color"
+      }
+    },
+    "sky": {
+      "50": {
+        "$value": "#F0F9FF",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#DFF2FE",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#8EC5FF",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#0069A8",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#102A43",
+        "$type": "color"
+      }
+    },
+    "chart": {
+      "teal": {
+        "$value": "#0A8276",
+        "$type": "color",
+        "$description": "series 1"
+      },
+      "gold": {
+        "$value": "#D9A441",
+        "$type": "color",
+        "$description": "series 2"
+      },
+      "slate": {
+        "$value": "#94A3B8",
+        "$type": "color",
+        "$description": "axis ticks, series 3"
+      },
+      "grid": {
+        "$value": "#EEF2F1",
+        "$type": "color",
+        "$description": "grid lines"
+      }
+    }
+  }
+}

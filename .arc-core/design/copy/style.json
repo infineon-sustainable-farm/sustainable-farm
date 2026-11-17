@@ -1,0 +1,8 @@
+{
+  "about": "Règles d'écriture propres à la marque, fusionnées avec core/copy/style.json. Laisser vide ce qui ne change pas.",
+  "banned": {"fr": [], "en": []},
+  "limits": {},
+  "glossary": {
+    "about": "Un mot par concept, imposé dans toute l'interface. Exemple : \"member\": {\"fr\": \"membre\", \"en\": \"member\"}."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "radius": {
+    "$description": "Tailwind lg/xl/2xl/full as used by machinery. sm: controls, buttons, inputs, nav links (rounded-lg); md: icon tiles, small panels (rounded-xl); lg: cards (rounded-2xl); xl: media; pill: badges (rounded-full).",
+    "none": {
+      "$value": "0px",
+      "$type": "dimension"
+    },
+    "sm": {
+      "$value": "8px",
+      "$type": "dimension"
+    },
+    "md": {
+      "$value": "12px",
+      "$type": "dimension"
+    },
+    "lg": {
+      "$value": "16px",
+      "$type": "dimension"
+    },
+    "xl": {
+      "$value": "24px",
+      "$type": "dimension"
+    },
+    "pill": {
+      "$value": "9999px",
+      "$type": "dimension"
+    }
+  }
+}

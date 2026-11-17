@@ -1,0 +1,13 @@
+{
+  "opacity": {
+    "$description": "Seuls usages permis : état désactivé et voile derrière un dialogue. Jamais sur du texte.",
+    "disabled": {
+      "$value": 0.4,
+      "$type": "number"
+    },
+    "scrim": {
+      "$value": 0.6,
+      "$type": "number"
+    }
+  }
+}

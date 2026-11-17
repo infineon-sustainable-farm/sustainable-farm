@@ -1,0 +1,1 @@
+{"name": "sustainable-farm", "prefix": "sf", "themeAttr": "data-theme", "scope": ":root", "stack": "react-ts", "defaultLandingTheme": "light", "icons": {"set": "lucide", "also": [], "stroke": 2}}
