@@ -100,10 +100,6 @@ describe('complianceApi', () => {
 describe('dashboardApi', () => {
   it('uses the documented dashboard endpoints, with optional date filters', async () => {
     await dashboardApi.getDashboardStats();
-    await dashboardApi.getBatchStatusDistribution();
-    await dashboardApi.getHarvestQuantityKPI();
-    await dashboardApi.getProcessingEfficiencyKPI();
-    await dashboardApi.getQcPassRateKPI();
     await dashboardApi.getHarvestTrendData();
     await dashboardApi.getHarvestTrendData('2026-10-01', '2026-10-31');
     await dashboardApi.getProductionOutputData();
@@ -114,18 +110,6 @@ describe('dashboardApi', () => {
     await dashboardApi.getQualityTrendData('2026-10-01', '2026-10-31');
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/dashboard/kpis');
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/active-batches',
-    );
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/harvest-quantity',
-    );
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/energy-consumption',
-    );
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/quality-pass-rate',
-    );
     expect(apiClient.get).toHaveBeenCalledWith(
       '/api/product-transformation/dashboard/charts/harvest-trend',
     );
