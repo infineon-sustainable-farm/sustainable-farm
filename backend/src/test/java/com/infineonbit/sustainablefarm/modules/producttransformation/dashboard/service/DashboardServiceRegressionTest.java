@@ -96,7 +96,6 @@ public class DashboardServiceRegressionTest {
             service.calculateHarvestQuantity(LocalDate.now().minusDays(7), LocalDate.now());
         } catch (NullPointerException npe) {
             // Confirmed risk: stream reduce with null quantity produces NPE.
-            System.out.println("CONFIRMED RISK: Null harvest quantity triggers NullPointerException: " + npe.getMessage());
         }
     }
 }

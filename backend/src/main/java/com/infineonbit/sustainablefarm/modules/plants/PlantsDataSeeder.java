@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * PostgreSQL at startup.
  *
  * <p>Runs under the {@code dev} Spring profile only
- * (e.g. {@code SPRING_PROFILES_ACTIVE=dev}), like {@code DevDataSeeder}. With no
+ * (e.g. {@code SPRING_PROFILES_ACTIVE=dev}), like {@code VisitorDevDataSeeder}. With no
  * profile set the bean is not created at all, so this never seeds production.
  *
  * <p>Why this exists: the project has neither Flyway nor a SQL script — the

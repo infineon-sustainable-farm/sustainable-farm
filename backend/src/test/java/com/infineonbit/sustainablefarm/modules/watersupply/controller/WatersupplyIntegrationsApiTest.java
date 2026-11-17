@@ -125,7 +125,7 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
         mockMvc.perform(get("/api/water/plants/rainfall").param("blockCode", block))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }
 
     @Test
@@ -156,11 +156,11 @@ class WatersupplyIntegrationsApiTest {
                                 {"blockCode":"%s","growthPhase":"flowering"}
                                 """.formatted(block)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
         mockMvc.perform(post("/api/water/plants/irrigation-need").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"treeCount\":3}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.fieldErrors").isNotEmpty());
     }
 
     // --- Product Transformation -----------------------------------------------------------------
@@ -213,13 +213,13 @@ class WatersupplyIntegrationsApiTest {
         mockMvc.perform(post("/api/water/lot-usage").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"startAt\":\"2026-10-13T08:00:00Z\",\"endAt\":\"2026-10-13T09:00:00Z\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.fieldErrors").isNotEmpty());
         mockMvc.perform(post("/api/water/consumption").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%s","sourceId":"%s","consumptionLiters":1,"consumptionDate":"2026-10-13T08:00:00Z","activity":"painting"}
                                 """.formatted(UUID.randomUUID(), UUID.randomUUID())))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
         mockMvc.perform(get("/api/water/consumption/by-lot"))
                 .andExpect(status().isBadRequest());
     }
@@ -248,7 +248,7 @@ class WatersupplyIntegrationsApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"sourceId\":\"%s\",\"batches\":[{\"activity\":\"painting\"}]}".formatted(sourceId)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }
 
     // --- Visitor Management and planned unavailability ------------------------------------------
@@ -264,7 +264,7 @@ class WatersupplyIntegrationsApiTest {
         mockMvc.perform(post("/api/water/outages").contentType(MediaType.APPLICATION_JSON)
                         .content(outageJson("zone", zoneId, now, now.plus(30, ChronoUnit.MINUTES), "planned")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
         mockMvc.perform(post("/api/water/outages").contentType(MediaType.APPLICATION_JSON)
                         .content(outageJson("zone", UUID.randomUUID().toString(), now, now.plusSeconds(60), "planned")))
                 .andExpect(status().isNotFound());
@@ -327,7 +327,7 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(status().isNotFound());
         mockMvc.perform(get("/api/water/visitor/irrigation-status"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
         createConsumption(farmId, sourceId, zoneId, 12.5, Instant.now().minus(2, ChronoUnit.MINUTES), null, null);
         createConsumption(farmId, sourceId, zoneId, 99.0, Instant.now().minus(2, ChronoUnit.HOURS), null, null);
@@ -394,7 +394,7 @@ class WatersupplyIntegrationsApiTest {
 
         mockMvc.perform(command(deviceId, "{\"command\":\"OPEN_VALVE\",\"durationSeconds\":10,\"reason\":\"visitor_demo\"}"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.code").value("VALVE_GATEWAY_UNAVAILABLE"));
+                .andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"));
         mockMvc.perform(get("/api/iot/devices/{id}/commands", deviceId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))

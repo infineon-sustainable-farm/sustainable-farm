@@ -3,13 +3,11 @@ package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyAlertResponse;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertSeverity;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertStatus;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.AlertService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,7 +20,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AlertController.class)
-@Import(EnergySupplyExceptionHandler.class)
 class AlertControllerTest {
 
     @Autowired

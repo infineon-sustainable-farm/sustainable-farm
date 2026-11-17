@@ -4,7 +4,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanc
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;

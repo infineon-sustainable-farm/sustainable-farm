@@ -25,8 +25,7 @@ public class PackagingRecordUpdateRequest {
     @Positive(message = "Package quantity must be positive")
     private BigDecimal packageQuantityKg;
 
-    // Lot code not updatable - mandatory for traceability compliance
-    // private String lotCode;
+    // No lotCode: it is not updatable, for traceability compliance.
 
     private Boolean exportReady;
 

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.OperatorAssignmentCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.OperatorAssignmentUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.OperatorAssignmentObtainingResponse;
@@ -32,7 +33,7 @@ public class OperatorAssignmentService {
      * @return the representation of the created assignment, including its generated ID
      * @throws EquipmentNotFoundException      if no equipment exists with the given ID
      * @throws EquipmentAlreadyAssignedException if the equipment is already linked to an assignment
-     * @throws IllegalArgumentException        if the end date is before the start date
+     * @throws ConflictException        if the end date is before the start date
      */
     public OperatorAssignmentObtainingResponse addOperatorAssignment(OperatorAssignmentCreationRequest operatorAssignmentCreationRequest) {
         Equipment equipment = equipmentRepository.findById(operatorAssignmentCreationRequest.equipmentId())
@@ -77,11 +78,11 @@ public class OperatorAssignmentService {
      *
      * @param startDate the start date sent by the client (never null in the POST flow)
      * @param endDate   the end date sent by the client (may be null)
-     * @throws IllegalArgumentException if the end date is before the start date
+     * @throws ConflictException if the end date is before the start date
      */
     private void validateAssignmentDates(LocalDate startDate, LocalDate endDate) {
         if (endDate != null && endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date cannot be before start date.");
+            throw new ConflictException("End date cannot be before start date.");
         }
     }
 
@@ -94,11 +95,11 @@ public class OperatorAssignmentService {
      *
      * @param endDate       the end date sent by the client (may be null)
      * @param storedStartDate the start date already registered in the database
-     * @throws IllegalArgumentException if the end date is before the stored start date
+     * @throws ConflictException if the end date is before the stored start date
      */
     private void validateEndDateAgainstStoredStartDate(LocalDate endDate, LocalDate storedStartDate) {
         if (endDate != null && endDate.isBefore(storedStartDate)) {
-            throw new IllegalArgumentException("End date cannot be before the stored start date.");
+            throw new ConflictException("End date cannot be before the stored start date.");
         }
     }
 
@@ -111,11 +112,11 @@ public class OperatorAssignmentService {
      *
      * @param startDate     the start date sent by the client (may be null)
      * @param storedEndDate the end date already registered in the database (may be null)
-     * @throws IllegalArgumentException if the start date is after the stored end date
+     * @throws ConflictException if the start date is after the stored end date
      */
     private void validateStartDateAgainstStoredEndDate(LocalDate startDate, LocalDate storedEndDate) {
         if (storedEndDate != null && startDate != null && startDate.isAfter(storedEndDate)) {
-            throw new IllegalArgumentException("Start date cannot be after the stored end date.");
+            throw new ConflictException("Start date cannot be after the stored end date.");
         }
     }
 
@@ -129,7 +130,7 @@ public class OperatorAssignmentService {
      * @throws OperatorAssignmentNotFoundException if no assignment exists with this ID
      * @throws EquipmentNotFoundException          if the new equipment does not exist
      * @throws EquipmentAlreadyAssignedException   if the new equipment is linked to another assignment
-     * @throws IllegalArgumentException            if a provided date is incoherent or a provided text is blank
+     * @throws ConflictException            if a provided date is incoherent or a provided text is blank
      */
     public OperatorAssignmentObtainingResponse updateOperatorAssignment(Long id,
             OperatorAssignmentUpdateRequest operatorAssignmentUpdateRequest) {
@@ -150,7 +151,7 @@ public class OperatorAssignmentService {
         if (operatorAssignmentUpdateRequest.fullName() != null) {
             String fullName = operatorAssignmentUpdateRequest.fullName().trim();
             if (fullName.isEmpty()) {
-                throw new IllegalArgumentException("Full name cannot be blank.");
+                throw new ConflictException("Full name cannot be blank.");
             }
             assignment.setFullName(fullName);
         }
@@ -158,7 +159,7 @@ public class OperatorAssignmentService {
         if (operatorAssignmentUpdateRequest.jobTitle() != null) {
             String jobTitle = operatorAssignmentUpdateRequest.jobTitle().trim();
             if (jobTitle.isEmpty()) {
-                throw new IllegalArgumentException("Job title cannot be blank.");
+                throw new ConflictException("Job title cannot be blank.");
             }
             assignment.setJobTitle(jobTitle);
         }

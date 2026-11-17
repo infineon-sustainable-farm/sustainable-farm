@@ -3,13 +3,11 @@ package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.ConsumptionLogResponse;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergySource;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.LoadCategory;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.ConsumptionLogService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,7 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ConsumptionController.class)
-@Import(EnergySupplyExceptionHandler.class)
 class ConsumptionControllerTest {
 
     @Autowired
@@ -91,7 +88,7 @@ class ConsumptionControllerTest {
                                 {"date":null,"loadCategory":null,"kwhConsumed":-1,"source":"SOLAR"}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("date")));
+                .andExpect(jsonPath("$.fieldErrors.date").exists());
     }
 
     private String validRequest() {

@@ -273,7 +273,7 @@ public class PlantingControllerTest {
     }
 
     @Test
-    void recordPlanting_shouldReturn500WithoutRunningAgain_whenAnotherConstraintIsViolated() throws Exception {
+    void recordPlanting_shouldReturn409WithoutRunningAgain_whenAnotherConstraintIsViolated() throws Exception {
         // Arrange: not a lost race on a natural key, so not something a second run can fix
         when(plantingService.recordPlanting(any(PlantingRequest.class)))
                 .thenThrow(violationOf("fk_population_event_variety"));
@@ -281,8 +281,8 @@ public class PlantingControllerTest {
         ResultActions result = postPlanting("""
                 {"blockCode":"A","varietyName":"Keitt","plantingDate":"2023-09-24","treeCount":150}
                 """);
-        // Assert
-        result.andExpect(status().isInternalServerError());
+        // Assert: the core handler answers every constraint violation with a 409
+        result.andExpect(status().isConflict());
         verify(plantingService, times(1)).recordPlanting(any(PlantingRequest.class));
     }
 }
