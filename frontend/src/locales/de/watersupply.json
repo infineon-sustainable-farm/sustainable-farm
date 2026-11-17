@@ -1,3 +1,19 @@
 {
-  "name": "Wasserversorgung"
+  "name": "Wasserversorgung",
+  "nav": {
+    "dashboard": "Übersicht",
+    "farms": "Betriebe und Felder",
+    "sources": "Wasserquellen",
+    "irrigation": "Bewässerungsplanung",
+    "consumption": "Verbrauchserfassung",
+    "rainwater": "Regenwassernutzung",
+    "maintenance": "Wartung",
+    "quality": "Wasserqualität",
+    "drought": "Dürrewarnungen",
+    "outages": "Geplante Unterbrechungen",
+    "plants": "Pflanzenblöcke",
+    "lots": "Verarbeitungschargen",
+    "visitors": "Besucher",
+    "notifications": "Benachrichtigungen"
+  }
 }
