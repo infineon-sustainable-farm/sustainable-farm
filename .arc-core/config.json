@@ -1,0 +1,41 @@
+{
+  "checks": {
+    "docs : README et liens relatifs (phase 3)": {
+      "phase": 3
+    },
+    "parcours : test de bout en bout a ecrire (phase 6)": {
+      "phase": 6
+    },
+    "securite : gitleaks (secrets, changements indexes)": {
+      "kind": "tool",
+      "phase": 2,
+      "tool": {
+        "name": "gitleaks",
+        "version": "v8.30.1"
+      }
+    },
+    "securite : gitleaks (secrets, tout l'historique)": {
+      "kind": "tool",
+      "phase": 4,
+      "prePush": true,
+      "tool": {
+        "name": "gitleaks",
+        "version": "v8.30.1"
+      }
+    },
+    "securite : osv-scanner (dependances)": {
+      "kind": "tool",
+      "phase": 4,
+      "tool": {
+        "name": "osv-scanner",
+        "version": "v2.7.0"
+      }
+    }
+  },
+  "mode": "ticket",
+  "stack": [
+    "node",
+    "react"
+  ],
+  "version": 1
+}

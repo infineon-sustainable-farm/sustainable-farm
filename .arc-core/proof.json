@@ -1,0 +1,82 @@
+{
+  "checks": [
+    {
+      "name": "node : npm run lint (frontend)",
+      "run": "cd 'frontend' && npm run lint",
+      "when": [
+        "frontend/**"
+      ]
+    },
+    {
+      "name": "node : npm test (frontend)",
+      "run": "cd 'frontend' && npm test",
+      "when": [
+        "frontend/**"
+      ]
+    },
+    {
+      "name": "docs : README et liens relatifs (phase 3)",
+      "run": "arc-core check-docs",
+      "when": [
+        "*.md",
+        "**/*.md"
+      ]
+    },
+    {
+      "name": "securite : gitleaks (secrets, changements indexes)",
+      "run": "if git diff --cached --quiet; then echo \"nothing staged, nothing to scan: the whole history is scanned before each push\"; else gitleaks git --staged --no-banner --redact --no-color --exit-code 1 .; fi"
+    },
+    {
+      "name": "securite : gitleaks (secrets, tout l'historique)",
+      "run": "gitleaks git --no-banner --redact --no-color --exit-code 1 ."
+    },
+    {
+      "name": "securite : osv-scanner (dependances)",
+      "run": "osv-scanner scan source -r .",
+      "when": [
+        "go.mod",
+        "**/go.mod",
+        "go.sum",
+        "**/go.sum",
+        "Cargo.toml",
+        "**/Cargo.toml",
+        "Cargo.lock",
+        "**/Cargo.lock",
+        "package.json",
+        "**/package.json",
+        "package-lock.json",
+        "**/package-lock.json",
+        "pnpm-lock.yaml",
+        "**/pnpm-lock.yaml",
+        "yarn.lock",
+        "**/yarn.lock",
+        "pyproject.toml",
+        "**/pyproject.toml",
+        "poetry.lock",
+        "**/poetry.lock",
+        "uv.lock",
+        "**/uv.lock",
+        "Pipfile",
+        "**/Pipfile",
+        "Pipfile.lock",
+        "**/Pipfile.lock",
+        "requirements*.txt",
+        "**/requirements*.txt",
+        "composer.json",
+        "**/composer.json",
+        "composer.lock",
+        "**/composer.lock",
+        "Gemfile",
+        "**/Gemfile",
+        "Gemfile.lock",
+        "**/Gemfile.lock",
+        "osv-scanner.toml",
+        "**/osv-scanner.toml"
+      ]
+    },
+    {
+      "name": "parcours : test de bout en bout a ecrire (phase 6)",
+      "run": "echo \"phase 6: this project has no end-to-end or smoke test yet. Write one that uses the product as a person would (for instance scripts/e2e.sh), then put its command in place of this one in proof.json\" >&2; exit 1"
+    }
+  ]
+}
