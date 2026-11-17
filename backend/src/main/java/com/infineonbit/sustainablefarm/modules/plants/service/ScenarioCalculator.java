@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -147,10 +147,11 @@ final class ScenarioCalculator {
 
     /**
      * Rounds an amount to the unit of its currency, halves up: the franc for
-     * XOF, the cent for EUR, as {@link CurrencyConverter} does.
+     * XOF, the cent for EUR, as {@link CurrencyConverter} does
+     * ({@link CurrencyCode#round(BigDecimal)}).
      */
     static BigDecimal roundMoney(BigDecimal amount, CurrencyCode currency) {
-        return amount.setScale(currency == CurrencyCode.XOF ? 0 : 2, RoundingMode.HALF_UP);
+        return currency.round(amount);
     }
 
     /**

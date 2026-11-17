@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.service.ScenarioCalculator.Change;
 import com.infineonbit.sustainablefarm.modules.plants.service.ScenarioCalculator.Line;
 import com.infineonbit.sustainablefarm.modules.plants.service.ScenarioCalculator.Plan;
