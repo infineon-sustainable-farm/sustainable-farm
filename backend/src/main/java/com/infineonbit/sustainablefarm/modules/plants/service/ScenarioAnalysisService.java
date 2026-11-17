@@ -9,7 +9,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnaly
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Change;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Projection;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Year;
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyRate;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantScenario;
 import com.infineonbit.sustainablefarm.modules.plants.exception.PlantScenarioNotFoundException;
