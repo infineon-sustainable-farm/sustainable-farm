@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.GeneratorEventResponseDto;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.GeneratorEventNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.GeneratorEventService;
 import org.junit.jupiter.api.Test;
@@ -9,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GeneratorController.class)
-@Import(EnergySupplyExceptionHandler.class)
 class GeneratorControllerTest {
 
     @Autowired
@@ -104,8 +101,8 @@ class GeneratorControllerTest {
                         .content(request))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message", containsString("date")))
-                .andExpect(jsonPath("$.message", containsString("durationHours")));
+                .andExpect(jsonPath("$.fieldErrors.date").exists())
+                .andExpect(jsonPath("$.fieldErrors.durationHours").exists());
     }
 
     @Test
