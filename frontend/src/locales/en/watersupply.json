@@ -1,3 +1,19 @@
 {
-  "name": "Water supply"
+  "name": "Water supply",
+  "nav": {
+    "dashboard": "Dashboard",
+    "farms": "Farms & Fields",
+    "sources": "Water sources",
+    "irrigation": "Irrigation planning",
+    "consumption": "Consumption tracking",
+    "rainwater": "Rainwater harvesting",
+    "maintenance": "Maintenance",
+    "quality": "Water quality",
+    "drought": "Drought alerts",
+    "outages": "Planned outages",
+    "plants": "Plants blocks",
+    "lots": "Processing lots",
+    "visitors": "Visitors",
+    "notifications": "Notifications"
+  }
 }
