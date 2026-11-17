@@ -8,7 +8,8 @@ afterEach(() => {
 })
 
 // Simulated localStorage for jsdom (already provided, but we guarantee a clean state).
+// Files on the default node environment have no localStorage.
 afterEach(() => {
-  localStorage.clear()
+  if (typeof localStorage !== 'undefined') localStorage.clear()
   vi.restoreAllMocks()
 })
