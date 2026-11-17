@@ -394,14 +394,6 @@ const currentPriceEurPerKg =
 
       return total + customerVolumeKg / 1000;
     }, 0);
-    console.log('GERMANY DEMAND DEBUG');
-console.log('Customers:', customers);
-console.log('Orders:', orders);
-console.log('Germany customers:', customers.filter(
-  (customer) =>
-    String(customer.country || '').toLowerCase() === 'germany'
-));
-console.log('Germany Demand MT:', germanyDemandT);
 
   return (
     <div className="flex flex-col w-full px-margin-desktop py-xl gap-gutter max-w-[1600px] mx-auto">
