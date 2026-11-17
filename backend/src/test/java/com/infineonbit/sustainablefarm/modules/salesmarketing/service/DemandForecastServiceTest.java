@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
-import com.infineonbit.sustainablefarm.modules.salesmarketing.common.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.DemandForecast;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.DemandForecastRepository;
 import org.junit.jupiter.api.Test;
