@@ -1,3 +1,14 @@
 {
-  "name": "Ventes et marketing"
+  "name": "Ventes et marketing",
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "forecasting": "Prévision de la demande",
+    "demandAlerts": "Alertes de demande",
+    "reports": "Rapports de demande",
+    "customers": "Clients",
+    "salesChannels": "Canaux de vente",
+    "pricing": "Tarification",
+    "campaigns": "Campagnes",
+    "delivery": "Suivi des livraisons"
+  }
 }
