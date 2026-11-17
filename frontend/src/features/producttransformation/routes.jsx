@@ -1,3 +1,16 @@
+import {
+  CheckCircle,
+  Cog,
+  Factory,
+  FileText,
+  Flame,
+  LayoutDashboard,
+  Package,
+  PackageCheck,
+  Settings,
+  Truck,
+  Waves,
+} from 'lucide-react';
 import ProductTransformationLayout from './components/ProductTransformationLayout';
 import Dashboard from './components/Dashboard';
 import RawIntakeList from './components/RawIntakeList';
@@ -46,3 +59,26 @@ export default [
     ],
   },
 ];
+
+/**
+ * Navigation of the module, read by the application shell (app/Sidebar.jsx) and the launcher
+ * page (app/LauncherPage.jsx). Same entries, order and targets as the module's own sidebar.
+ */
+export const nav = {
+  id: 'producttransformation',
+  basePath: '/product-transformation',
+  icon: Factory,
+  nameKey: 'producttransformation:name',
+  items: [
+    { to: '/product-transformation', labelKey: 'producttransformation:nav.dashboard', icon: LayoutDashboard, end: true },
+    { to: '/product-transformation/raw-intake', labelKey: 'producttransformation:nav.rawIntake', icon: Truck },
+    { to: '/product-transformation/batches', labelKey: 'producttransformation:nav.batches', icon: Package },
+    { to: '/product-transformation/washing-sorting', labelKey: 'producttransformation:nav.washingSorting', icon: Waves },
+    { to: '/product-transformation/drying', labelKey: 'producttransformation:nav.drying', icon: Flame },
+    { to: '/product-transformation/quality-control', labelKey: 'producttransformation:nav.qualityControl', icon: CheckCircle },
+    { to: '/product-transformation/compliance', labelKey: 'producttransformation:nav.compliance', icon: FileText },
+    { to: '/product-transformation/packaging', labelKey: 'producttransformation:nav.packaging', icon: PackageCheck },
+    { to: '/product-transformation/equipment', labelKey: 'producttransformation:nav.equipment', icon: Cog },
+    { to: '/product-transformation/settings', labelKey: 'producttransformation:nav.settings', icon: Settings },
+  ],
+};
