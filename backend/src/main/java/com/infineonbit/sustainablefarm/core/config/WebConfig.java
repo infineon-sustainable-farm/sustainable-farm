@@ -8,8 +8,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.List;
 
 /**
- * Cross-origin access for the frontend(s), controlled by the
- * {@code APP_CORS_ORIGINS} environment variable.
+ * The single cross-origin configuration of the API, for every module. The
+ * allowed origins come from the {@code app.cors.allowed-origins} property,
+ * set by the {@code CORS_ALLOWED_ORIGINS} environment variable (comma
+ * separated). PATCH is allowed because several modules use it (for example
+ * marking notifications as read).
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
