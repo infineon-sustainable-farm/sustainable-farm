@@ -28,7 +28,10 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "drying_run")
+@Table(name = "drying_run", indexes = {
+        @Index(name = "idx_drying_run_batch_id", columnList = "batch_id"),
+        @Index(name = "idx_drying_run_start_time", columnList = "start_time")
+})
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -44,7 +47,7 @@ public class DryingRun {
     private String runId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_drying_run_batch"), nullable = false, referencedColumnName = "batch_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Batch batch;
@@ -74,11 +77,11 @@ public class DryingRun {
     private LocalDateTime endTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipment_id", referencedColumnName = "equipment_id")
+    @JoinColumn(name = "equipment_id", foreignKey = @ForeignKey(name = "fk_drying_run_equipment"), referencedColumnName = "equipment_id")
     private Equipment equipment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_id", referencedColumnName = "operator_id")
+    @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_drying_run_operator"), referencedColumnName = "operator_id")
     private Operator operator;
 
     @Column(name = "created_at", updatable = false)

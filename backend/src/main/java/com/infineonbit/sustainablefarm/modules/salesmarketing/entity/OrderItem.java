@@ -13,7 +13,10 @@ import java.math.BigDecimal;
  * of this backend.
  */
 @Entity
-@Table(name = "order_items")
+@Table(name = "order_items", indexes = {
+        @Index(name = "idx_order_items_order", columnList = "order_id"),
+        @Index(name = "idx_order_items_product", columnList = "product_id")
+})
 public class OrderItem {
 
     @Id
@@ -22,21 +25,21 @@ public class OrderItem {
     private Integer orderItemId;
 
     @NotNull(message = "orderId is required")
-    @Column(name = "order_id")
+    @Column(name = "order_id", nullable = false)
     private Integer orderId;
 
     @NotNull(message = "productId is required")
-    @Column(name = "product_id")
+    @Column(name = "product_id", nullable = false)
     private Integer productId;
 
     @NotNull(message = "quantityKg is required")
     @Positive(message = "quantityKg must be greater than zero")
-    @Column(name = "quantity_kg")
+    @Column(name = "quantity_kg", nullable = false, precision = 12, scale = 2)
     private BigDecimal quantityKg;
 
     @NotNull(message = "unitPriceEur is required")
     @PositiveOrZero
-    @Column(name = "unit_price_eur")
+    @Column(name = "unit_price_eur", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPriceEur;
 
     public Integer getOrderItemId() { return orderItemId; }

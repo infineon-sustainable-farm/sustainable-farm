@@ -3,11 +3,12 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = @UniqueConstraint(name = "users_email_key", columnNames = "email"))
 public class User extends BaseEntity {
     @NotBlank
     @Column(nullable = false, length = 100)
@@ -19,7 +20,7 @@ public class User extends BaseEntity {
 
     @Email
     @NotBlank
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, length = 255)
     private String email;
 
     private Boolean status = true;

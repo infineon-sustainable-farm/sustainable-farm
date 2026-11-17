@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
@@ -9,11 +10,17 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.UUID;
+import org.hibernate.annotations.Check;
 
 @Entity
 @Table(name = "water_quotas", uniqueConstraints = {
         @UniqueConstraint(name = "uk_water_quotas_target_month", columnNames = {"target_type", "target_id", "quota_month"})
+}, indexes = {
+        @Index(name = "idx_water_quotas_target", columnList = "target_type, target_id"),
+        @Index(name = "idx_water_quotas_month", columnList = "quota_month")
 })
+@Check(name = "chk_water_quotas_target_type", constraints = "target_type IN ('farm', 'zone')")
+@Check(name = "chk_water_quotas_positive", constraints = "quota_liters > 0")
 public class WaterQuota extends BaseEntity {
     @NotBlank
     @Column(name = "target_type", nullable = false, length = 20)

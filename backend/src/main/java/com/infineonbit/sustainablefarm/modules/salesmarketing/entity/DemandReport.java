@@ -6,9 +6,12 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "demand_reports")
+@Table(name = "demand_reports", indexes = @Index(name = "idx_reports_period", columnList = "period_start, period_end"))
+@Check(name = "demand_reports_status_check", constraints = "status IN ('ready', 'processing', 'scheduled', 'failed')")
 public class DemandReport {
 
     @Id
@@ -16,45 +19,49 @@ public class DemandReport {
     @Column(name = "report_id")
     private Integer reportId;
 
-    @Column(name = "report_type")
+    @ColumnDefault("'weekly'")
+    @Column(name = "report_type", length = 40)
     private String reportType;
 
     @NotNull(message = "periodStart is required")
-    @Column(name = "period_start")
+    @Column(name = "period_start", nullable = false)
     private LocalDate periodStart;
 
     @NotNull(message = "periodEnd is required")
-    @Column(name = "period_end")
+    @Column(name = "period_end", nullable = false)
     private LocalDate periodEnd;
 
-    @Column(name = "total_forecasted_volume_t")
+    @Column(name = "total_forecasted_volume_t", precision = 10, scale = 2)
     private BigDecimal totalForecastedVolumeT;
 
-    @Column(name = "total_actual_volume_t")
+    @Column(name = "total_actual_volume_t", precision = 10, scale = 2)
     private BigDecimal totalActualVolumeT;
 
-    @Column(name = "variance_pct")
+    @Column(name = "variance_pct", precision = 5, scale = 2)
     private BigDecimal variancePct;
 
-    @Column(name = "status")
+    @ColumnDefault("'ready'")
+    @Column(name = "status", length = 20)
     private String status;
 
+    @ColumnDefault("false")
     @Column(name = "is_scheduled")
     private Boolean isScheduled;
 
     @Column(name = "next_run_at")
     private LocalDateTime nextRunAt;
 
-    @Column(name = "schedule_frequency")
+    @Column(name = "schedule_frequency", length = 20)
     private String scheduleFrequency;
 
-    @Column(name = "summary")
+    @Column(name = "summary", columnDefinition = "text")
     private String summary;
 
-    @Column(name = "generated_by")
+    @Column(name = "generated_by", length = 100)
     private String generatedBy;
 
-    @Column(name = "generated_at")
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;
 
     @PrePersist

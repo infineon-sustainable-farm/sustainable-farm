@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "zone_block_mapping", uniqueConstraints = {
         @UniqueConstraint(name = "uk_zone_block_mapping_zone_block", columnNames = {"zone_id", "block_code"})
+}, indexes = {
+        @Index(name = "idx_zone_block_mapping_zone_id", columnList = "zone_id"),
+        @Index(name = "idx_zone_block_mapping_farm_block", columnList = "farm_id, block_code")
 })
 public class ZoneBlockMapping extends BaseEntity {
     @NotNull

@@ -6,13 +6,15 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 /**
  * Maps to the "product_batches" table.
  * Foreign keys are kept as plain Integer id fields.
  */
 @Entity
-@Table(name = "product_batches")
+@Table(name = "product_batches", uniqueConstraints = @UniqueConstraint(name = "product_batches_batch_code_key", columnNames = "batch_code"),
+        indexes = @Index(name = "idx_product_batches_status", columnList = "status"))
 public class ProductBatch {
 
     @Id
@@ -21,19 +23,20 @@ public class ProductBatch {
     private Integer batchId;
 
     @NotBlank(message = "batchCode is required")
-    @Column(name = "batch_code")
+    @Column(name = "batch_code", nullable = false, length = 20)
     private String batchCode;
 
     @Column(name = "product_id")
     private Integer productId;
 
     @PositiveOrZero(message = "stockT cannot be negative")
-    @Column(name = "stock_t")
+    @Column(name = "stock_t", precision = 10, scale = 2)
     private BigDecimal stockT;
 
-    @Column(name = "status")
+    @Column(name = "status", length = 20)
     private String status;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "synced_at")
     private LocalDateTime syncedAt;
 

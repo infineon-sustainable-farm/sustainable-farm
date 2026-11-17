@@ -7,9 +7,10 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "pricing_history")
+@Table(name = "pricing_history", indexes = @Index(name = "idx_pricing_product_date", columnList = "product_id, price_date"))
 public class PricingHistory {
 
     @Id
@@ -18,40 +19,42 @@ public class PricingHistory {
     private Integer pricingId;
 
     @NotNull(message = "productId is required")
-    @Column(name = "product_id")
+    @Column(name = "product_id", nullable = false)
     private Integer productId;
 
     @NotNull(message = "priceDate is required")
-    @Column(name = "price_date")
+    @Column(name = "price_date", nullable = false)
     private LocalDate priceDate;
 
     @NotNull(message = "priceEurPerKg is required")
     @Positive(message = "priceEurPerKg must be greater than zero")
-    @Column(name = "price_eur_per_kg")
+    @Column(name = "price_eur_per_kg", nullable = false, precision = 8, scale = 2)
     private BigDecimal priceEurPerKg;
 
-    @Column(name = "harvest_season_factor")
+    @Column(name = "harvest_season_factor", precision = 5, scale = 2)
     private BigDecimal harvestSeasonFactor;
 
-    @Column(name = "season_label")
+    @Column(name = "season_label", length = 30)
     private String seasonLabel;
 
-    @Column(name = "stock_level_tons")
+    @Column(name = "stock_level_tons", precision = 10, scale = 2)
     private BigDecimal stockLevelTons;
 
-    @Column(name = "stock_target_tons")
+    @Column(name = "stock_target_tons", precision = 10, scale = 2)
     private BigDecimal stockTargetTons;
 
-    @Column(name = "demand_factor")
+    @Column(name = "demand_factor", precision = 5, scale = 2)
     private BigDecimal demandFactor;
 
-    @Column(name = "demand_index_label")
+    @Column(name = "demand_index_label", length = 20)
     private String demandIndexLabel;
 
+    @ColumnDefault("false")
     @Column(name = "is_applied")
     private Boolean isApplied;
 
-    @Column(name = "created_at")
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

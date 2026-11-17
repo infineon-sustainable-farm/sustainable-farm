@@ -3,9 +3,17 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "customers")
+@Table(name = "customers", uniqueConstraints = @UniqueConstraint(name = "customers_customer_code_key", columnNames = "customer_code"),
+        indexes = {
+                @Index(name = "idx_customers_country", columnList = "country"),
+                @Index(name = "idx_customers_status", columnList = "status")
+        })
+@Check(name = "customers_customer_type_check", constraints = "customer_type IN ('distributor', 'retailer', 'direct_export', 'other')")
+@Check(name = "customers_status_check", constraints = "status IN ('active', 'inactive', 'prospect')")
 public class Customer {
 
     @Id
@@ -13,30 +21,36 @@ public class Customer {
     @Column(name = "customer_id")
     private Integer customerId;
 
-    @Column(name = "customer_code", unique = true)
+    @Column(name = "customer_code", length = 20)
     private String customerCode;
 
     @NotBlank(message = "Company name is required")
-    @Column(name = "company_name", nullable = false)
+    @Column(name = "company_name", nullable = false, length = 150)
     private String companyName;
 
-    @Column(name = "customer_type", nullable = false)
+    @Column(name = "customer_type", nullable = false, length = 30)
     private String customerType;
 
+    @Column(length = 80)
     private String country;
+    @Column(length = 80)
     private String region;
+    @Column(length = 80)
     private String city;
 
-    @Column(nullable = false)
+    @ColumnDefault("'prospect'")
+    @Column(nullable = false, length = 20)
     private String status = "prospect";
 
-    @Column(name = "payment_terms")
+    @Column(name = "payment_terms", length = 50)
     private String paymentTerms;
 
-    @Column(name = "created_at", updatable = false)
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     public Integer getCustomerId() { return customerId; }

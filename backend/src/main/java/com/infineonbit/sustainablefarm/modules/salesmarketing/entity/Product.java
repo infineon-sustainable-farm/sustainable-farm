@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 /**
  * Maps to the "products" table.
@@ -18,15 +19,17 @@ public class Product {
     private Integer productId;
 
     @NotBlank(message = "Product name is required")
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "variety")
+    @Column(name = "variety", length = 80)
     private String variety;
 
-    @Column(name = "unit")
+    @ColumnDefault("'kg'")
+    @Column(name = "unit", length = 10)
     private String unit;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
