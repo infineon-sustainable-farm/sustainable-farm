@@ -1,0 +1,49 @@
+{
+  "space": {
+    "$description": "Spacing scale, multiples of 4 px (Tailwind --spacing 0.25rem). Machinery uses 4, 8, 12, 16, 20, 24.",
+    "0": {
+      "$value": "0px",
+      "$type": "dimension"
+    },
+    "1": {
+      "$value": "4px",
+      "$type": "dimension"
+    },
+    "2": {
+      "$value": "8px",
+      "$type": "dimension"
+    },
+    "3": {
+      "$value": "12px",
+      "$type": "dimension"
+    },
+    "4": {
+      "$value": "16px",
+      "$type": "dimension"
+    },
+    "5": {
+      "$value": "20px",
+      "$type": "dimension"
+    },
+    "6": {
+      "$value": "24px",
+      "$type": "dimension"
+    },
+    "7": {
+      "$value": "32px",
+      "$type": "dimension"
+    },
+    "8": {
+      "$value": "48px",
+      "$type": "dimension"
+    },
+    "9": {
+      "$value": "64px",
+      "$type": "dimension"
+    },
+    "10": {
+      "$value": "96px",
+      "$type": "dimension"
+    }
+  }
+}

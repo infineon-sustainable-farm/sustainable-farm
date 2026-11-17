@@ -1,0 +1,103 @@
+{
+  "font": {
+    "family": {
+      "sans": {
+        "$value": [
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif"
+        ],
+        "$type": "fontFamily",
+        "$description": "Inter (SIL Open Font License 1.1), body and headings, loaded from Google Fonts in index.html"
+      },
+      "mono": {
+        "$value": [
+          "ui-monospace",
+          "SFMono-Regular",
+          "Consolas",
+          "Liberation Mono",
+          "monospace"
+        ],
+        "$type": "fontFamily"
+      }
+    },
+    "size": {
+      "xs": {
+        "$value": "12px",
+        "$type": "dimension"
+      },
+      "sm": {
+        "$value": "14px",
+        "$type": "dimension"
+      },
+      "md": {
+        "$value": "16px",
+        "$type": "dimension"
+      },
+      "lg": {
+        "$value": "18px",
+        "$type": "dimension"
+      },
+      "xl": {
+        "$value": "20px",
+        "$type": "dimension"
+      },
+      "2xl": {
+        "$value": "24px",
+        "$type": "dimension"
+      },
+      "3xl": {
+        "$value": "30px",
+        "$type": "dimension"
+      }
+    },
+    "weight": {
+      "regular": {
+        "$value": 400,
+        "$type": "fontWeight"
+      },
+      "medium": {
+        "$value": 500,
+        "$type": "fontWeight"
+      },
+      "strong": {
+        "$value": 600,
+        "$type": "fontWeight"
+      },
+      "bold": {
+        "$value": 700,
+        "$type": "fontWeight"
+      }
+    },
+    "line-height": {
+      "tight": {
+        "$value": 1.25,
+        "$type": "number"
+      },
+      "snug": {
+        "$value": 1.375,
+        "$type": "number"
+      },
+      "body": {
+        "$value": 1.5,
+        "$type": "number"
+      }
+    },
+    "tracking": {
+      "tight": {
+        "$value": "-0.025em",
+        "$type": "dimension"
+      },
+      "normal": {
+        "$value": "0em",
+        "$type": "dimension"
+      },
+      "wide": {
+        "$value": "0.18em",
+        "$type": "dimension"
+      }
+    },
+    "$description": "1 à 2 familles, 6 à 8 tailles, 2 à 3 graisses. Une marque y met sa police (fichier woff2 auto-hébergé)."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "border": {
+    "$description": "Épaisseurs de trait. Bordures seulement pour les champs et le focus.",
+    "width": {
+      "hairline": {
+        "$value": "1px",
+        "$type": "dimension"
+      },
+      "strong": {
+        "$value": "2px",
+        "$type": "dimension"
+      }
+    },
+    "focus": {
+      "width": {
+        "$value": "2px",
+        "$type": "dimension",
+        "$description": "épaisseur de l'anneau :focus-visible"
+      },
+      "offset": {
+        "$value": "2px",
+        "$type": "dimension"
+      }
+    }
+  }
+}

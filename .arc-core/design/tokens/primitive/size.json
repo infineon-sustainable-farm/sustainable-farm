@@ -1,0 +1,109 @@
+{
+  "size": {
+    "target": {
+      "$value": "44px",
+      "$type": "dimension"
+    },
+    "control-sm": {
+      "$value": "36px",
+      "$type": "dimension",
+      "$description": "sidebar links (h-9)"
+    },
+    "control-md": {
+      "$value": "40px",
+      "$type": "dimension",
+      "$description": "buttons and inputs (py-2 + text-sm), KPI icon tile (h-10)"
+    },
+    "control-lg": {
+      "$value": "52px",
+      "$type": "dimension"
+    },
+    "header": {
+      "$value": "64px",
+      "$type": "dimension"
+    },
+    "$description": "Tailles de contrôles et de cibles. target ≥ 44 px.",
+    "icon-sm": {
+      "$value": "16px",
+      "$type": "dimension"
+    },
+    "icon-md": {
+      "$value": "18px",
+      "$type": "dimension",
+      "$description": "nav icons"
+    },
+    "icon-lg": {
+      "$value": "20px",
+      "$type": "dimension",
+      "$description": "KPI icons"
+    }
+  },
+  "layout": {
+    "content-max": {
+      "$value": "1200px",
+      "$type": "dimension"
+    },
+    "prose-max": {
+      "$value": "68ch",
+      "$type": "dimension"
+    },
+    "gutter": {
+      "$value": "24px",
+      "$type": "dimension"
+    },
+    "gutter-mobile": {
+      "$value": "16px",
+      "$type": "dimension"
+    },
+    "$description": "Largeurs de mise en page.",
+    "sidebar": {
+      "$value": "240px",
+      "$type": "dimension",
+      "$description": "sidebar width (w-60)"
+    }
+  },
+  "breakpoint": {
+    "sm": {
+      "$value": "600px",
+      "$type": "dimension"
+    },
+    "md": {
+      "$value": "768px",
+      "$type": "dimension"
+    },
+    "lg": {
+      "$value": "1024px",
+      "$type": "dimension"
+    },
+    "xl": {
+      "$value": "1280px",
+      "$type": "dimension"
+    },
+    "$description": "Points de rupture (mobile d'abord)."
+  },
+  "z": {
+    "base": {
+      "$value": 0,
+      "$type": "number"
+    },
+    "raised": {
+      "$value": 1,
+      "$type": "number"
+    },
+    "header": {
+      "$value": 40,
+      "$type": "number",
+      "$description": "sidebar drawer (z-40)"
+    },
+    "overlay": {
+      "$value": 50,
+      "$type": "number",
+      "$description": "menu button, modals (z-50)"
+    },
+    "toast": {
+      "$value": 60,
+      "$type": "number"
+    },
+    "$description": "Seule échelle de z-index autorisée."
+  }
+}

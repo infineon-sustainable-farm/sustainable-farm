@@ -84,6 +84,22 @@
     {
       "name": "parcours : test de bout en bout a ecrire (phase 6)",
       "run": "echo \"phase 6: this project has no end-to-end or smoke test yet. Write one that uses the product as a person would (for instance scripts/e2e.sh), then put its command in place of this one in proof.json\" >&2; exit 1"
+    },
+    {
+      "name": "design : tokens et contrat de la marque",
+      "run": "arc-design check tokens --brand-dir .arc-core/design",
+      "when": [
+        ".arc-core/design/**"
+      ]
+    },
+    {
+      "name": "design : valeurs en dur et jeu d'icones de la marque",
+      "run": "scripts/design-check.sh",
+      "when": [
+        "frontend/src/**",
+        "scripts/design-check.sh",
+        ".arc-core/design/**"
+      ]
     }
   ]
 }

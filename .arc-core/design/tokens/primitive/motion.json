@@ -1,0 +1,82 @@
+{
+  "motion": {
+    "duration": {
+      "instant": {
+        "$value": "80ms",
+        "$type": "duration"
+      },
+      "fast": {
+        "$value": "150ms",
+        "$type": "duration",
+        "$description": "Tailwind default transition (transition-colors, transition-all)"
+      },
+      "base": {
+        "$value": "200ms",
+        "$type": "duration"
+      },
+      "slow": {
+        "$value": "300ms",
+        "$type": "duration",
+        "$description": "mobile sidebar drawer (duration-300)"
+      },
+      "overlay": {
+        "$value": "360ms",
+        "$type": "duration"
+      },
+      "reveal": {
+        "$value": "550ms",
+        "$type": "duration",
+        "$description": "card entrance (animate-fade-up)"
+      }
+    },
+    "easing": {
+      "standard": {
+        "$value": [
+          0.4,
+          0,
+          0.2,
+          1
+        ],
+        "$type": "cubicBezier"
+      },
+      "out": {
+        "$value": [
+          0.22,
+          1,
+          0.36,
+          1
+        ],
+        "$type": "cubicBezier"
+      },
+      "spring": {
+        "$value": [
+          0.32,
+          0.72,
+          0,
+          1
+        ],
+        "$type": "cubicBezier"
+      },
+      "in-out": {
+        "$value": [
+          0.65,
+          0,
+          0.35,
+          1
+        ],
+        "$type": "cubicBezier"
+      }
+    },
+    "scale": {
+      "press": {
+        "$value": 0.98,
+        "$type": "number"
+      },
+      "enter": {
+        "$value": 0.96,
+        "$type": "number"
+      }
+    },
+    "$description": "Durées : menus ≤ 200 ms, dialogues 300 à 450 ms. Courbes : standard (UI), out (entrées), spring (feuilles), in-out (dessin)."
+  }
+}
