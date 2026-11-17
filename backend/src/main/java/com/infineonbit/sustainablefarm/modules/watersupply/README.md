@@ -19,9 +19,9 @@ The module is mounted under `/watersupply` in the application (`routes.jsx`), li
 
 ## Integration
 
-Water Supply serves Plants, Visitor Management, Product Transformation and IoT. The contracts,
-examples and open questions for each team are in [`docs/integrations/`](../../../../../../../../../docs/integrations/README.md).
-The source of the needs is the [integration audit](../../../../../../../../../docs/watersupply-integration-audit.md).
+Water Supply serves Plants, Visitor Management, Product Transformation and IoT. How modules
+talk to each other and which module owns each shared referential are decided in the
+architecture decision records of `docs/adr/` (0003 and 0004).
 
 ### Progress
 
