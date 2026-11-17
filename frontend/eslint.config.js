@@ -25,4 +25,9 @@ export default defineConfig([
       'react-refresh/only-export-components': ['error', { extraHOCs: ['withModuleUi'] }],
     },
   },
+  {
+    // Node scripts run outside the browser.
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: { globals: globals.node },
+  },
 ])
