@@ -91,6 +91,15 @@
       "when": [
         ".arc-core/design/**"
       ]
+    },
+    {
+      "name": "design : valeurs en dur et jeu d'icones de la marque",
+      "run": "scripts/design-check.sh",
+      "when": [
+        "frontend/src/**",
+        "scripts/design-check.sh",
+        ".arc-core/design/**"
+      ]
     }
   ]
 }
