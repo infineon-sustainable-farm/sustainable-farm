@@ -18,11 +18,27 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "close": "Fermer",
-    "search": "Rechercher"
+    "search": "Rechercher",
+    "dismiss": "Masquer"
   },
   "status": {
     "loading": "Chargement…",
     "noResults": "Aucun résultat",
-    "error": "Une erreur est survenue. Veuillez réessayer."
+    "error": "Une erreur est survenue. Réessayez."
+  },
+  "confirm": {
+    "deleteTitle": "Supprimer cet élément ?"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pageOf": "Page {{page}} sur {{total}}"
+  },
+  "table": {
+    "actions": "Actions"
+  },
+  "toast": {
+    "region": "Notifications"
   }
 }

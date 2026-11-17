@@ -18,11 +18,27 @@
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
-    "search": "Search"
+    "search": "Search",
+    "dismiss": "Dismiss"
   },
   "status": {
     "loading": "Loading…",
     "noResults": "No results",
     "error": "Something went wrong. Please try again."
+  },
+  "confirm": {
+    "deleteTitle": "Delete this item?"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{total}}"
+  },
+  "table": {
+    "actions": "Actions"
+  },
+  "toast": {
+    "region": "Notifications"
   }
 }
