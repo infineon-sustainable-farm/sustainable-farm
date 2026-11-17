@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.EquipmentCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.EquipmentStatusUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.EquipmentObtainingResponse;
@@ -83,7 +84,7 @@ public class EquipmentServiceTest {
         );
         when(equipmentRepository.existsByName("Tractor")).thenReturn(true);
         // Act
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException ex = assertThrows(ConflictException.class, () -> {
             equipmentService.addEquipment(equipmentCreationRequest);
         });
         // Assert
@@ -213,7 +214,7 @@ public class EquipmentServiceTest {
                 .when(equipmentRepository).save(any(Equipment.class));
 
         // Act
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> equipmentService.addEquipment(request));
 
         // Assert

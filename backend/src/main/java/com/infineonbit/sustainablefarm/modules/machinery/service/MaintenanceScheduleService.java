@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.MaintenanceScheduleObtainingResponse;
@@ -30,7 +31,7 @@ public class MaintenanceScheduleService {
      * @param request the creation data (equipmentId, type, frequency, lastCompleted, nextDue, operator)
      * @return the created maintenance schedule, including its generated ID
      * @throws EquipmentNotFoundException if no equipment exists with the given ID
-     * @throws IllegalArgumentException  if the next due date is before the last completed date
+     * @throws ConflictException  if the next due date is before the last completed date
      */
     public MaintenanceScheduleObtainingResponse addMaintenanceSchedule(MaintenanceScheduleCreationRequest request) {
         Equipment equipment = equipmentRepository.findById(request.equipmentId())
@@ -90,7 +91,7 @@ public class MaintenanceScheduleService {
      * @return the complete state of the maintenance schedule after the update
      * @throws MaintenanceScheduleNotFoundException if no schedule exists with this ID
      * @throws EquipmentNotFoundException           if the new equipment does not exist
-     * @throws IllegalArgumentException             if the resulting dates are incoherent
+     * @throws ConflictException             if the resulting dates are incoherent
      */
     @Transactional
     public MaintenanceScheduleObtainingResponse updateMaintenanceSchedule(Long id, MaintenanceScheduleUpdateRequest request) {
@@ -141,7 +142,7 @@ public class MaintenanceScheduleService {
 
     private void validateDates(LocalDate lastCompleted, LocalDate nextDue) {
         if (lastCompleted != null && nextDue != null && nextDue.isBefore(lastCompleted)) {
-            throw new IllegalArgumentException("Next due date cannot be before the last completed date.");
+            throw new ConflictException("Next due date cannot be before the last completed date.");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
@@ -127,7 +128,7 @@ class MaintenanceScheduleServiceTest {
         );
         when(equipmentRepository.findById(1L)).thenReturn(Optional.of(testEquipment));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> maintenanceScheduleService.addMaintenanceSchedule(incoherentRequest));
 
         assertTrue(exception.getMessage().contains("Next due date cannot be before"));
@@ -213,7 +214,7 @@ class MaintenanceScheduleServiceTest {
                 null, null, null, null, LocalDate.of(2026, 7, 1), null);
         when(maintenanceScheduleRepository.findById(1L)).thenReturn(Optional.of(testSchedule));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> maintenanceScheduleService.updateMaintenanceSchedule(1L, updateRequest));
 
         assertTrue(exception.getMessage().contains("Next due date cannot be before"));
