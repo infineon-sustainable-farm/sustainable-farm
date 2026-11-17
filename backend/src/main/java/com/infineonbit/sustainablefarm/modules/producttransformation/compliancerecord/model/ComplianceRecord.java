@@ -40,7 +40,7 @@ public class ComplianceRecord {
     private String recordId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_compliance_record_batch"), nullable = false, referencedColumnName = "batch_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Batch batch;
@@ -60,7 +60,7 @@ public class ComplianceRecord {
     private String evidence;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "auditor_id", referencedColumnName = "operator_id")
+    @JoinColumn(name = "auditor_id", foreignKey = @ForeignKey(name = "fk_compliance_record_auditor"), referencedColumnName = "operator_id")
     private Operator auditor;
 
     @Column(name = "audit_date", nullable = false)

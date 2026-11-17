@@ -6,9 +6,13 @@ import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "shipments")
+@Table(name = "shipments", uniqueConstraints = @UniqueConstraint(name = "shipments_shipment_code_key", columnNames = "shipment_code"),
+        indexes = @Index(name = "idx_shipments_order", columnList = "order_id"))
+@Check(name = "shipments_status_check", constraints = "status IN ('packed', 'shipped', 'port', 'in_transit', 'delivered', 'delayed')")
 public class Shipment {
 
     @Id
@@ -16,72 +20,74 @@ public class Shipment {
     @Column(name = "shipment_id")
     private Integer shipmentId;
 
-    @Column(name = "shipment_code")
+    @Column(name = "shipment_code", length = 20)
     private String shipmentCode;
 
     @Column(name = "order_id")
     private Integer orderId;
 
     @NotBlank(message = "origin is required")
-    @Column(name = "origin")
+    @Column(name = "origin", length = 100)
     private String origin;
 
     @NotBlank(message = "destination is required")
-    @Column(name = "destination")
+    @Column(name = "destination", length = 100)
     private String destination;
 
-    @Column(name = "status")
+    @ColumnDefault("'packed'")
+    @Column(name = "status", length = 30)
     private String status;
 
     @Column(name = "eta")
     private LocalDate eta;
 
-    @Column(name = "vessel_name")
+    @Column(name = "vessel_name", length = 100)
     private String vesselName;
 
-    @Column(name = "voyage_number")
+    @Column(name = "voyage_number", length = 30)
     private String voyageNumber;
 
-    @Column(name = "delay_reason")
+    @Column(name = "delay_reason", length = 200)
     private String delayReason;
 
-    @Column(name = "current_lat")
+    @Column(name = "current_lat", precision = 9, scale = 6)
     private BigDecimal currentLat;
 
-    @Column(name = "current_lon")
+    @Column(name = "current_lon", precision = 9, scale = 6)
     private BigDecimal currentLon;
 
-    @Column(name = "speed_knots")
+    @Column(name = "speed_knots", precision = 5, scale = 1)
     private BigDecimal speedKnots;
 
-    @Column(name = "current_location_label")
+    @Column(name = "current_location_label", length = 150)
     private String currentLocationLabel;
 
-    @Column(name = "distance_remaining_nm")
+    @Column(name = "distance_remaining_nm", precision = 8, scale = 1)
     private BigDecimal distanceRemainingNm;
 
-    @Column(name = "commodity_description")
+    @Column(name = "commodity_description", length = 150)
     private String commodityDescription;
 
     @Column(name = "container_count")
     private Integer containerCount;
 
-    @Column(name = "container_type")
+    @Column(name = "container_type", length = 20)
     private String containerType;
 
-    @Column(name = "cargo_weight_kg")
+    @Column(name = "cargo_weight_kg", precision = 10, scale = 1)
     private BigDecimal cargoWeightKg;
 
-    @Column(name = "current_temp_c")
+    @Column(name = "current_temp_c", precision = 4, scale = 1)
     private BigDecimal currentTempC;
 
-    @Column(name = "temp_status")
+    @Column(name = "temp_status", length = 20)
     private String tempStatus;
 
     @Column(name = "manifest_url")
     private String manifestUrl;
 
-    @Column(name = "created_at")
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

@@ -31,7 +31,12 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "harvest_event")
+@Table(name = "harvest_event",
+        uniqueConstraints = @UniqueConstraint(name = "uk_harvest_event_batch_id", columnNames = "batch_id"),
+        indexes = {
+                @Index(name = "idx_harvest_event_harvest_date", columnList = "harvest_date"),
+                @Index(name = "idx_harvest_event_farm_id", columnList = "farm_id")
+        })
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -51,7 +56,7 @@ public class HarvestEvent {
     @Column(name = "plants_harvest_id")
     private Long plantsHarvestId;
 
-    @Column(name = "batch_id", nullable = false, unique = true, length = 50)
+    @Column(name = "batch_id", nullable = false, length = 50)
     private String batchId;
 
     // Note: No @OneToOne relationship to Batch entity

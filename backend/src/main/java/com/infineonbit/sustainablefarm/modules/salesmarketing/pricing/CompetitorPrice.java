@@ -8,9 +8,10 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "competitor_prices")
+@Table(name = "competitor_prices", indexes = @Index(name = "idx_competitor_prices_product", columnList = "product_id, price_date"))
 public class CompetitorPrice {
 
     @Id
@@ -22,21 +23,23 @@ public class CompetitorPrice {
     private Integer productId;
 
     @NotBlank(message = "competitorName is required")
-    @Column(name = "competitor_name")
+    @Column(name = "competitor_name", nullable = false, length = 50)
     private String competitorName;
 
     @NotNull(message = "priceEur is required")
     @Positive
-    @Column(name = "price_eur")
+    @Column(name = "price_eur", nullable = false, precision = 8, scale = 2)
     private BigDecimal priceEur;
 
     @NotNull(message = "priceDate is required")
-    @Column(name = "price_date")
+    @Column(name = "price_date", nullable = false)
     private LocalDate priceDate;
 
+    @ColumnDefault("false")
     @Column(name = "is_target")
     private Boolean isTarget;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

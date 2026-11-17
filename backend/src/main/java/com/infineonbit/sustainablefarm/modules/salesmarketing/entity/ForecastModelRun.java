@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 /**
  * Maps to the "forecast_model_runs" table.
@@ -18,28 +19,33 @@ public class ForecastModelRun {
     @Column(name = "run_id")
     private Integer runId;
 
-    @Column(name = "crop_variety")
+    @Column(name = "crop_variety", length = 60)
     private String cropVariety;
 
-    @Column(name = "region")
+    @Column(name = "region", length = 100)
     private String region;
 
-    @Column(name = "confidence_interval_pct")
+    @Column(name = "confidence_interval_pct", precision = 5, scale = 2)
     private BigDecimal confidenceIntervalPct;
 
+    @ColumnDefault("false")
     @Column(name = "use_weather_data")
     private Boolean useWeatherData;
 
+    @ColumnDefault("false")
     @Column(name = "use_commodity_prices")
     private Boolean useCommodityPrices;
 
+    @ColumnDefault("false")
     @Column(name = "use_geopolitical_index")
     private Boolean useGeopoliticalIndex;
 
-    @Column(name = "model_status")
+    @ColumnDefault("'cold_start'")
+    @Column(name = "model_status", length = 30)
     private String modelStatus;
 
-    @Column(name = "created_at")
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

@@ -26,7 +26,8 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "raw_intake")
+@Table(name = "raw_intake",
+        uniqueConstraints = @UniqueConstraint(name = "uk_raw_intake_batch_id", columnNames = "batch_id"))
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -42,7 +43,7 @@ public class RawIntake {
     private String intakeId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false, unique = true, referencedColumnName = "batch_id")
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_raw_intake_batch"), nullable = false, referencedColumnName = "batch_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Batch batch;

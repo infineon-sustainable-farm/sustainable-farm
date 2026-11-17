@@ -2,13 +2,18 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "irrigation_schedules")
+@Table(name = "irrigation_schedules", indexes = {
+        @Index(name = "idx_irrigation_schedules_zone_id", columnList = "zone_id"),
+        @Index(name = "idx_irrigation_schedules_start_time", columnList = "start_time")
+})
 public class IrrigationSchedule extends BaseEntity {
     @NotNull
     @Column(nullable = false)
@@ -40,6 +45,7 @@ public class IrrigationSchedule extends BaseEntity {
      * Origin of the schedule: {@code manual} (entered by a user) or {@code auto}
      * (created by the soil moisture rule, see IrrigationAutomationService).
      */
+    @ColumnDefault("'manual'")
     @Column(name = "trigger_source", nullable = false, length = 20)
     private String triggerSource = "manual";
 
