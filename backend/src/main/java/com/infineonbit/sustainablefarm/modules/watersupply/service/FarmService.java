@@ -6,7 +6,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FarmCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FarmResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.FarmUpdateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.ZoneUpdateRequest;
