@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,7 +33,7 @@ final class CurrencyConverter {
             case XOF -> amount;
             case EUR -> eurToXof == null ? null : amount.multiply(eurToXof);
         };
-        return xof == null ? null : xof.setScale(0, RoundingMode.HALF_UP).longValueExact();
+        return xof == null ? null : CurrencyCode.XOF.round(xof).longValueExact();
     }
 
     /**
@@ -47,8 +47,8 @@ final class CurrencyConverter {
      */
     static BigDecimal toEur(BigDecimal amount, CurrencyCode currency, BigDecimal eurToXof) {
         return switch (currency) {
-            case EUR -> amount.setScale(2, RoundingMode.HALF_UP);
-            case XOF -> eurToXof == null ? null : amount.divide(eurToXof, 2, RoundingMode.HALF_UP);
+            case EUR -> CurrencyCode.EUR.round(amount);
+            case XOF -> eurToXof == null ? null : amount.divide(eurToXof, CurrencyCode.EUR.fractionDigits(), RoundingMode.HALF_UP);
         };
     }
 }
