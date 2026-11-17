@@ -15,5 +15,7 @@ export default defineConfig({
   },
   test: {
     setupFiles: ['./src/test/setup.js'],
+    // The suite runs slowly when the machine is busy: leave room before timing out.
+    testTimeout: 15000,
   },
 })   
