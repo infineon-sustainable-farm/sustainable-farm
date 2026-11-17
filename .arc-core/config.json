@@ -35,7 +35,9 @@
   "mode": "ticket",
   "stack": [
     "node",
-    "react"
+    "react",
+    "java",
+    "spring"
   ],
   "version": 1
 }
