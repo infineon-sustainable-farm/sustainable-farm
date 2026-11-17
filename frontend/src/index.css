@@ -40,6 +40,7 @@
   --color-border-subtle: var(--color-gray-100); /* cards */
   --color-border-input: var(--color-gray-300); /* inputs and selects, as in machinery */
   --color-border-strong: var(--color-gray-500); /* boundaries that must reach 3:1 */
+  --color-border-divider: var(--color-gray-200); /* table header rule, as machinery (border-gray-200) */
 
   /* Primary */
   --color-primary: #0a8276; /* sidebar, primary buttons: 4.7:1 with on-primary */
@@ -62,6 +63,15 @@
   --color-info-bg: var(--color-sky-100);
   --color-info-fg: var(--color-sky-700);
   --color-info-tint: var(--color-sky-50);
+  --color-neutral-bg: var(--color-gray-100); /* neutral badge, skeleton blocks (machinery bg-gray-100) */
+  --color-neutral-fg: var(--color-gray-600); /* neutral badge text: 6.6:1 on neutral-bg */
+
+  /* Danger actions (machinery delete buttons, bg-red-600): 4.8:1 with on-primary */
+  --color-danger: var(--color-red-600);
+  --color-danger-pressed: var(--color-red-700);
+
+  /* Dialog backdrop (machinery bg-black/50) */
+  --color-backdrop: rgb(0 0 0 / 0.5);
 
   /* Charts (machinery fuel and usage chart) */
   --color-chart-1: #0a8276;
