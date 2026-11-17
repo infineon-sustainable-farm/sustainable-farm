@@ -6,13 +6,17 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import org.hibernate.annotations.ColumnDefault;
 
 /**
  * Maps to the "orders" table.
  * Foreign keys are kept as plain Integer id fields.
  */
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_orders_channel", columnList = "sales_channel_id"),
+        @Index(name = "idx_orders_customer", columnList = "customer_id")
+})
 public class Order {
 
     @Id
@@ -21,25 +25,26 @@ public class Order {
     private Integer orderId;
 
     @NotNull(message = "customerId is required")
-    @Column(name = "customer_id")
+    @Column(name = "customer_id", nullable = false)
     private Integer customerId;
 
     @Column(name = "sales_channel_id")
     private Integer salesChannelId;
 
     @NotNull(message = "orderDate is required")
-    @Column(name = "order_date")
+    @Column(name = "order_date", nullable = false)
     private LocalDate orderDate;
 
     @PositiveOrZero(message = "totalVolumeKg cannot be negative")
-    @Column(name = "total_volume_kg")
+    @Column(name = "total_volume_kg", precision = 12, scale = 2)
     private BigDecimal totalVolumeKg;
 
     @PositiveOrZero(message = "totalValueEur cannot be negative")
-    @Column(name = "total_value_eur")
+    @Column(name = "total_value_eur", precision = 12, scale = 2)
     private BigDecimal totalValueEur;
 
-    @Column(name = "status")
+    @ColumnDefault("'pending'")
+    @Column(name = "status", length = 30)
     private String status;
 
     // ---- Getters and setters ----

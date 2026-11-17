@@ -33,7 +33,10 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "batch")
+@Table(name = "batch", indexes = {
+        @Index(name = "idx_batch_current_status", columnList = "current_status"),
+        @Index(name = "idx_batch_harvest_date", columnList = "harvest_date")
+})
 @Getter
 @Setter
 @EqualsAndHashCode

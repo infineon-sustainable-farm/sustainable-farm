@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotBlank;
  * of this backend.
  */
 @Entity
-@Table(name = "certifications")
+@Table(name = "certifications", uniqueConstraints = @UniqueConstraint(name = "certifications_name_key", columnNames = "name"))
 public class Certification {
 
     @Id
@@ -19,7 +19,7 @@ public class Certification {
     private Integer certificationId;
 
     @NotBlank(message = "Certification name is required")
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
     public Integer getCertificationId() { return certificationId; }

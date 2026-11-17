@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "report_files")
+@Table(name = "report_files", indexes = @Index(name = "idx_report_files_report", columnList = "report_id"))
 public class ReportFile {
 
     @Id
@@ -14,11 +14,11 @@ public class ReportFile {
     private Integer fileId;
 
     @NotNull(message = "reportId is required")
-    @Column(name = "report_id")
+    @Column(name = "report_id", nullable = false)
     private Integer reportId;
 
     @NotBlank(message = "format is required")
-    @Column(name = "format")
+    @Column(name = "format", nullable = false, length = 10)
     private String format;
 
     @Column(name = "file_url")

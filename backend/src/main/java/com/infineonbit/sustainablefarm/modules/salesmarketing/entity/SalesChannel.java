@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
-@Table(name = "sales_channels")
+@Table(name = "sales_channels", uniqueConstraints = @UniqueConstraint(name = "sales_channels_name_key", columnNames = "name"))
 public class SalesChannel {
 
     @Id
@@ -13,7 +13,7 @@ public class SalesChannel {
     private Integer channelId;
 
     @NotBlank(message = "Channel name is required")
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 60)
     private String name;
 
     public Integer getChannelId() {

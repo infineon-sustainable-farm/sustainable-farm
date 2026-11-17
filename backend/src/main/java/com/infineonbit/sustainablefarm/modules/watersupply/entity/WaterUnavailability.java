@@ -2,12 +2,20 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.Check;
 
 @Entity
-@Table(name = "water_unavailability")
+@Table(name = "water_unavailability", indexes = {
+        @Index(name = "idx_water_unavailability_scope", columnList = "scope, scope_id"),
+        @Index(name = "idx_water_unavailability_period", columnList = "start_at, end_at")
+})
+@Check(name = "chk_water_unavailability_scope", constraints = "scope IN ('farm', 'source', 'zone')")
+@Check(name = "chk_water_unavailability_status", constraints = "status IN ('planned', 'active', 'cancelled')")
+@Check(name = "chk_water_unavailability_period", constraints = "end_at > start_at")
 public class WaterUnavailability extends BaseEntity {
     @Column(nullable = false, length = 16)
     private String scope;

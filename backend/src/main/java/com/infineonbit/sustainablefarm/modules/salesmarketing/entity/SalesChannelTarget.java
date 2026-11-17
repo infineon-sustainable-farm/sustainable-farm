@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "sales_channel_targets")
+@Table(name = "sales_channel_targets", indexes = @Index(name = "idx_channel_targets_channel", columnList = "channel_id, period_start"))
 public class SalesChannelTarget {
 
     @Id
@@ -16,19 +16,19 @@ public class SalesChannelTarget {
     private Integer targetId;
 
     @NotNull(message = "channelId is required")
-    @Column(name = "channel_id")
+    @Column(name = "channel_id", nullable = false)
     private Integer channelId;
 
     @NotNull(message = "periodStart is required")
-    @Column(name = "period_start")
+    @Column(name = "period_start", nullable = false)
     private LocalDate periodStart;
 
     @NotNull(message = "periodEnd is required")
-    @Column(name = "period_end")
+    @Column(name = "period_end", nullable = false)
     private LocalDate periodEnd;
 
     @NotNull(message = "revenueTargetEur is required")
-    @Column(name = "revenue_target_eur")
+    @Column(name = "revenue_target_eur", nullable = false, precision = 12, scale = 2)
     private BigDecimal revenueTargetEur;
 
     public Integer getTargetId() {

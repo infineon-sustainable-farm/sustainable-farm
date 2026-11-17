@@ -8,13 +8,17 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.ColumnDefault;
 
 /**
  * Maps to the "demand_forecasts" table.
  * Foreign keys are kept as plain Integer id fields.
  */
 @Entity
-@Table(name = "demand_forecasts")
+@Table(name = "demand_forecasts", indexes = @Index(name = "idx_forecasts_month", columnList = "forecast_month, scenario"))
+@Check(name = "demand_forecasts_capacity_risk_check", constraints = "capacity_risk IN ('low', 'medium', 'high')")
+@Check(name = "demand_forecasts_scenario_check", constraints = "scenario IN ('pessimistic', 'base', 'optimistic')")
 public class DemandForecast {
 
     @Id
@@ -26,34 +30,37 @@ public class DemandForecast {
     private Integer productId;
 
     @NotNull(message = "forecastMonth is required")
-    @Column(name = "forecast_month")
+    @Column(name = "forecast_month", nullable = false)
     private LocalDate forecastMonth;
 
     @NotBlank(message = "scenario is required")
-    @Column(name = "scenario")
+    @ColumnDefault("'base'")
+    @Column(name = "scenario", nullable = false, length = 20)
     private String scenario;
 
     @NotNull(message = "forecastedVolumeT is required")
     @PositiveOrZero
-    @Column(name = "forecasted_volume_t")
+    @Column(name = "forecasted_volume_t", nullable = false, precision = 10, scale = 2)
     private BigDecimal forecastedVolumeT;
 
-    @Column(name = "lower_bound_t")
+    @Column(name = "lower_bound_t", precision = 10, scale = 2)
     private BigDecimal lowerBoundT;
 
-    @Column(name = "upper_bound_t")
+    @Column(name = "upper_bound_t", precision = 10, scale = 2)
     private BigDecimal upperBoundT;
 
-    @Column(name = "capacity_risk")
+    @Column(name = "capacity_risk", length = 10)
     private String capacityRisk;
 
+    @ColumnDefault("false")
     @Column(name = "is_actual")
     private Boolean isActual;
 
-    @Column(name = "model_version")
+    @Column(name = "model_version", length = 30)
     private String modelVersion;
 
-    @Column(name = "created_at")
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

@@ -7,9 +7,12 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "campaigns")
+@Check(name = "campaigns_status_check", constraints = "status IN ('active', 'scheduled', 'ended', 'draft')")
 public class Campaign {
 
     @Id
@@ -18,23 +21,25 @@ public class Campaign {
     private Integer campaignId;
 
     @NotBlank(message = "Campaign name is required")
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 120)
     private String name;
 
-    @Column(name = "status")
+    @ColumnDefault("'scheduled'")
+    @Column(name = "status", length = 20)
     private String status;
 
     @PositiveOrZero(message = "budgetEur cannot be negative")
-    @Column(name = "budget_eur")
+    @Column(name = "budget_eur", precision = 10, scale = 2)
     private BigDecimal budgetEur;
 
-    @Column(name = "budget_spent_eur")
+    @Column(name = "budget_spent_eur", precision = 10, scale = 2)
     private BigDecimal budgetSpentEur;
 
     @Column(name = "estimated_reach")
     private Integer estimatedReach;
 
-    @Column(name = "currency")
+    @ColumnDefault("'EUR'")
+    @Column(name = "currency", length = 3)
     private String currency;
 
     @Column(name = "start_date")
@@ -43,7 +48,8 @@ public class Campaign {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "created_at")
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
