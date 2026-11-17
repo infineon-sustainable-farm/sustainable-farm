@@ -1,3 +1,15 @@
 {
-  "name": "Visitor management"
+  "name": "Visitor management",
+  "nav": {
+    "dashboard": "Dashboard",
+    "scheduling": "Scheduling",
+    "registration": "Registration",
+    "visitors": "Visitors",
+    "education": "Education",
+    "safety": "Safety",
+    "booking": "Booking",
+    "feedback": "Feedback",
+    "events": "Events",
+    "staff": "Staff"
+  }
 }

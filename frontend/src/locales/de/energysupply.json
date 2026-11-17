@@ -1,3 +1,6 @@
 {
-  "name": "Energieversorgung"
+  "name": "Energieversorgung",
+  "nav": {
+    "dashboard": "Übersicht"
+  }
 }

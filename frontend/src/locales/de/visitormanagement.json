@@ -1,3 +1,15 @@
 {
-  "name": "Besucherverwaltung"
+  "name": "Besucherverwaltung",
+  "nav": {
+    "dashboard": "Übersicht",
+    "scheduling": "Terminplanung",
+    "registration": "Anmeldung",
+    "visitors": "Besucher",
+    "education": "Bildung",
+    "safety": "Sicherheit",
+    "booking": "Buchung",
+    "feedback": "Feedback",
+    "events": "Veranstaltungen",
+    "staff": "Personal"
+  }
 }

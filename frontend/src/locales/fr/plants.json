@@ -1,3 +1,13 @@
 {
-  "name": "Plantes"
+  "name": "Plantes",
+  "nav": {
+    "overview": "Vue d’ensemble",
+    "varieties": "Variétés",
+    "growthCalendar": "Calendrier de croissance",
+    "fertilizerInventory": "Stock d’engrais",
+    "diseasesAlerts": "Maladies et alertes",
+    "harvestMaturity": "Récolte et maturité",
+    "nursery": "Pépinière",
+    "scenarioAnalysis": "Analyse de scénarios"
+  }
 }

@@ -40,5 +40,13 @@
   },
   "toast": {
     "region": "Notifications"
+  },
+  "shell": {
+    "navigation": "Modules",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation"
+  },
+  "launcher": {
+    "modules": "Modules"
   }
 }

@@ -1,3 +1,6 @@
 {
-  "name": "Approvisionnement en énergie"
+  "name": "Approvisionnement en énergie",
+  "nav": {
+    "dashboard": "Tableau de bord"
+  }
 }

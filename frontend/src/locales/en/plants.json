@@ -1,3 +1,13 @@
 {
-  "name": "Plants"
+  "name": "Plants",
+  "nav": {
+    "overview": "Overview",
+    "varieties": "Varieties",
+    "growthCalendar": "Growth Calendar",
+    "fertilizerInventory": "Fertilizer Inventory",
+    "diseasesAlerts": "Diseases & Alerts",
+    "harvestMaturity": "Harvest & Maturity",
+    "nursery": "Nursery",
+    "scenarioAnalysis": "Scenario Analysis"
+  }
 }

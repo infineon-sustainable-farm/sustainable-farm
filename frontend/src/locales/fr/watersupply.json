@@ -1,3 +1,19 @@
 {
-  "name": "Approvisionnement en eau"
+  "name": "Approvisionnement en eau",
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "farms": "Fermes et parcelles",
+    "sources": "Sources d’eau",
+    "irrigation": "Planification de l’irrigation",
+    "consumption": "Suivi de la consommation",
+    "rainwater": "Récupération de l’eau de pluie",
+    "maintenance": "Maintenance",
+    "quality": "Qualité de l’eau",
+    "drought": "Alertes sécheresse",
+    "outages": "Coupures planifiées",
+    "plants": "Blocs de cultures",
+    "lots": "Lots de transformation",
+    "visitors": "Visiteurs",
+    "notifications": "Notifications"
+  }
 }
