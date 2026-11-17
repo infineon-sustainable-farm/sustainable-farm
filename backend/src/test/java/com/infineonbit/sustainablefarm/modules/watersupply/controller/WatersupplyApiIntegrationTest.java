@@ -153,7 +153,7 @@ class WatersupplyApiIntegrationTest {
                     {"farmId":"%s","sourceId":"%s","consumptionLiters":250,"consumptionDate":"2026-09-16T10:00:00Z"}
                     """.formatted(otherFarmId, sourceId)))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+            .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
         mockMvc.perform(delete("/api/water/consumption/{consumptionId}", consumptionId))
             .andExpect(status().isNoContent());
@@ -317,7 +317,7 @@ class WatersupplyApiIntegrationTest {
                     {"zoneId":"%s","blockCode":"C","farmId":"%s"}
                     """.formatted(zoneId, otherFarmId)))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+            .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
         mockMvc.perform(post("/api/water/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -340,7 +340,7 @@ class WatersupplyApiIntegrationTest {
                     {"zoneId":"%s","blockCode":"C","farmId":"%s"}
                     """.formatted(zoneId, farmId)))
             .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.code").value("DATA_CONSTRAINT_VIOLATION"));
+            .andExpect(jsonPath("$.code").value("CONFLICT"));
         }
 
         private String createSource(String farmId, String name) throws Exception {
