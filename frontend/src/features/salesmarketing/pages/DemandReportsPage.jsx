@@ -17,8 +17,8 @@ function getErrorMessage(err, fallback = 'Request failed') {
   if (!data) return err?.message || (err?.status ? `${fallback} (${err.status})` : fallback);
   if (typeof data === 'string') return data;
   if (data.message) {
-    if (data.validationErrors && typeof data.validationErrors === 'object') {
-      const details = Object.values(data.validationErrors).join(', ');
+    if (data.fieldErrors && typeof data.fieldErrors === 'object') {
+      const details = Object.values(data.fieldErrors).join(', ');
       return details ? `${data.message}: ${details}` : data.message;
     }
     return data.message;
