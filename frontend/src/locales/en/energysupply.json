@@ -1,3 +1,6 @@
 {
-  "name": "Energy supply"
+  "name": "Energy supply",
+  "nav": {
+    "dashboard": "Dashboard"
+  }
 }
