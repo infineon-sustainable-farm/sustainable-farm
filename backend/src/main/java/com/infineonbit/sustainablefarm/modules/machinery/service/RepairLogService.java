@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.RepairLogObtainingResponse;
@@ -28,7 +29,7 @@ public class RepairLogService {
      * @param request the creation data (equipmentId, date, issue, downtime, cost, technician)
      * @return the created repair log, including its generated ID
      * @throws EquipmentNotFoundException if no equipment exists with the given ID
-     * @throws IllegalArgumentException  if the issue description is missing
+     * @throws ConflictException  if the issue description is missing
      */
     public RepairLogObtainingResponse addRepairLog(RepairLogCreationRequest request) {
         Equipment equipment = equipmentRepository.findById(request.equipmentId())
@@ -86,7 +87,7 @@ public class RepairLogService {
      * @return the complete state of the repair log after the update
      * @throws RepairLogNotFoundException if no repair log exists with this ID
      * @throws EquipmentNotFoundException if the new equipment does not exist
-     * @throws IllegalArgumentException   if the issue description is blank
+     * @throws ConflictException   if the issue description is blank
      */
     @Transactional
     public RepairLogObtainingResponse updateRepairLog(Long id, RepairLogUpdateRequest request) {
@@ -133,7 +134,7 @@ public class RepairLogService {
 
     private String trimRequired(String value, String message) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(message);
+            throw new ConflictException(message);
         }
         return value.trim();
     }

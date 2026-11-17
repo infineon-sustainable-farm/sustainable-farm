@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.EquipmentCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.EquipmentStatusUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.EquipmentObtainingResponse;
@@ -57,13 +58,13 @@ public class EquipmentService {
      *
      * @param request the creation data (name, category, stage, status)
      * @return the representation of the created equipment, including its generated ID
-     * @throws IllegalArgumentException if a piece of equipment with the same name (case-insensitive) already exists
+     * @throws ConflictException if a piece of equipment with the same name (case-insensitive) already exists
      */
     public EquipmentObtainingResponse addEquipment(EquipmentCreationRequest equipmentCreationRequest) {
 
         String clientSendingEquipmentName = normalizeEquipmentName(equipmentCreationRequest.name());
         if (equipmentRepository.existsByName(clientSendingEquipmentName)){
-            throw new IllegalArgumentException(clientSendingEquipmentName+" already exists.");
+            throw new ConflictException(clientSendingEquipmentName+" already exists.");
         }
         Equipment equipment = new Equipment();
         equipment.setName(clientSendingEquipmentName);
@@ -74,7 +75,7 @@ public class EquipmentService {
             equipmentRepository.save(equipment);
         } catch (DataIntegrityViolationException e) {
             if (equipmentRepository.existsByName(clientSendingEquipmentName)) {
-                throw new IllegalArgumentException(clientSendingEquipmentName + " already exists.");
+                throw new ConflictException(clientSendingEquipmentName + " already exists.");
             }
             throw e;
         }

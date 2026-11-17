@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.SparePartObtainingResponse;
@@ -29,17 +30,17 @@ public class SparePartService {
      *
      * @param request the creation data (name, quantity, reorderThreshold, unitCost, equipmentId)
      * @return the representation of the created spare part, including its generated ID
-     * @throws IllegalArgumentException if a spare part with the same name already exists
+     * @throws ConflictException if a spare part with the same name already exists
      */
     public SparePartObtainingResponse addSparePart(SparePartCreationRequest request) {
         if (sparePartRepository.existsByName(request.name())) {
-            throw new IllegalArgumentException("Spare part with name '" + request.name() + "' already exists.");
+            throw new ConflictException("Spare part with name '" + request.name() + "' already exists.");
         }
 
         Equipment equipment = null;
         if (request.equipmentId() != null) {
             equipment = equipmentRepository.findById(request.equipmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Equipment not found with id: " + request.equipmentId()));
+                    .orElseThrow(() -> new ConflictException("Equipment not found with id: " + request.equipmentId()));
         }
 
         SparePart sparePart = new SparePart();
@@ -53,10 +54,10 @@ public class SparePartService {
             sparePartRepository.save(sparePart);
         } catch (DataIntegrityViolationException e) {
             if (sparePartRepository.existsByName(request.name())) {
-                throw new IllegalArgumentException("Spare part with name '" + request.name() + "' already exists.");
+                throw new ConflictException("Spare part with name '" + request.name() + "' already exists.");
             }
             if (request.equipmentId() != null) {
-                throw new IllegalArgumentException("Equipment not found with id: " + request.equipmentId());
+                throw new ConflictException("Equipment not found with id: " + request.equipmentId());
             }
             throw e;
         }
@@ -95,7 +96,7 @@ public class SparePartService {
      * @param request the update data
      * @return the complete state of the spare part after the update
      * @throws SparePartNotFoundException if no spare part exists with this ID
-     * @throws IllegalArgumentException if equipment ID is invalid
+     * @throws ConflictException if equipment ID is invalid
      */
     @Transactional
     public SparePartObtainingResponse updateSparePart(Long id, SparePartUpdateRequest request) {
@@ -106,7 +107,7 @@ public class SparePartService {
 
         if (request.name() != null && !request.name().isEmpty()) {
             if (!request.name().equals(sparePart.getName()) && sparePartRepository.existsByName(request.name())) {
-                throw new IllegalArgumentException("Spare part with name '" + request.name() + "' already exists.");
+                throw new ConflictException("Spare part with name '" + request.name() + "' already exists.");
             }
             sparePart.setName(request.name());
         }
@@ -125,7 +126,7 @@ public class SparePartService {
 
         if (request.equipmentId() != null) {
             Equipment equipment = equipmentRepository.findById(request.equipmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Equipment not found with id: " + request.equipmentId()));
+                    .orElseThrow(() -> new ConflictException("Equipment not found with id: " + request.equipmentId()));
             sparePart.setEquipment(equipment);
         }
 
@@ -134,10 +135,10 @@ public class SparePartService {
         } catch (DataIntegrityViolationException e) {
             if (request.name() != null && !request.name().equals(originalName)
                     && sparePartRepository.existsByName(request.name())) {
-                throw new IllegalArgumentException("Spare part with name '" + request.name() + "' already exists.");
+                throw new ConflictException("Spare part with name '" + request.name() + "' already exists.");
             }
             if (request.equipmentId() != null) {
-                throw new IllegalArgumentException("Equipment not found with id: " + request.equipmentId());
+                throw new ConflictException("Equipment not found with id: " + request.equipmentId());
             }
             throw e;
         }

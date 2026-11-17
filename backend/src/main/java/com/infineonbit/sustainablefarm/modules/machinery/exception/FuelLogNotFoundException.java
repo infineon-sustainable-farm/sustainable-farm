@@ -1,6 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.machinery.exception;
 
-public class FuelLogNotFoundException extends RuntimeException {
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+
+public class FuelLogNotFoundException extends ResourceNotFoundException {
     public FuelLogNotFoundException(Long id) {
         super("Fuel log not found with id: " + id);
     }
