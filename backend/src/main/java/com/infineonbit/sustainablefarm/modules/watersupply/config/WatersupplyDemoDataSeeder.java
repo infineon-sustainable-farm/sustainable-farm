@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * <p>Why this bean exists: the Flyway migrations must carry neither accounts nor
  * demo data (PR-33) - Flyway has no profile mechanism, those values would ship to
  * production. The script therefore lives in {@code resources/seed/} and only runs under
- * the {@code dev} profile, like {@code DevDataSeeder} and
+ * the {@code dev} profile, like {@code VisitorDevDataSeeder} and
  * {@code PlantsDataSeeder}.
  *
  * <p>The script is idempotent (clauses {@code ON CONFLICT ... DO NOTHING}): it can be
