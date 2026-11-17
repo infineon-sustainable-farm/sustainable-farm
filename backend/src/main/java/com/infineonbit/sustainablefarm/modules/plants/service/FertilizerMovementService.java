@@ -5,7 +5,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationReq
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyRate;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovement;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
