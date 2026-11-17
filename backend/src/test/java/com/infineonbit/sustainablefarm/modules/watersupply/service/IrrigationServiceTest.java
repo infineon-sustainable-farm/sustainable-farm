@@ -15,7 +15,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogCrea
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;

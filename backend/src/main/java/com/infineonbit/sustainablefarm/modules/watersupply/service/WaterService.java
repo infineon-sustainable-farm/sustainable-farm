@@ -17,7 +17,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityUpdat
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceUpdateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ConsumptionCriteria;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;

@@ -3,7 +3,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserRepository;
