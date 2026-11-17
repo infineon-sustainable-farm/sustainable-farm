@@ -10,7 +10,7 @@ share the same structure and the same conventions.
 | Part | Location |
 |---|---|
 | REST API, services, entities | `backend/src/main/java/com/infineonbit/sustainablefarm/modules/watersupply/` |
-| Database schema (migrations V1 -> V12) | `backend/src/main/resources/db/migration/` |
+| Database schema | built from the entities during the integration, single baseline migration afterwards (see `docs/adr/`) |
 | Interface (views, hooks, API client) | `frontend/src/features/watersupply/` |
 | Sensors and ESP32 firmware | `iot/` |
 

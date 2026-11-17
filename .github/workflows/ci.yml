@@ -8,10 +8,9 @@
 #  - the job is split into separate steps (connectivity, compile, tests) so a
 #    red check points at the failing phase directly from the GitHub UI.
 #
-# Note: the backend uses Flyway (backend/src/main/resources/db/migration), but
-# the tests disable it (spring.flyway.enabled=false in src/test/resources), so
-# this workflow does not apply the migrations. A dedicated job that applies
-# them to a fresh PostgreSQL instance is still to add.
+# Note: Flyway is off during the module integration (the schema comes from the
+# entities). The single baseline migration and a job that applies it to a fresh
+# PostgreSQL instance come with tasks T46 and T47 of the integration plan.
 #
 # Required checks for branch protection (see docs/CI-AUTO-REVIEW.md):
 #   - "Backend tests (PostgreSQL)"

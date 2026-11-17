@@ -64,7 +64,7 @@ The `Module ownership` check (`.github/workflows/module-ownership.yml`, running 
 | `backend/src/test/java/.../modules/<module>/` | Module backend tests |
 | `backend/src/main/resources/<module>/`, `backend/src/test/resources/<module>/` | Module resources |
 | `backend/src/main/resources/seed/<module>-*` | Module seed data (loaded under the `dev` profile only) |
-| `backend/src/main/resources/db/migration/V<n>__<module>_<description>.sql` | New migrations only; existing migrations are never edited |
+| `backend/src/main/resources/db/migration/V<n>__<module>_<description>.sql` | New migrations only, after the integration baseline; existing migrations are never edited |
 | `frontend/src/features/<module>/` | Module frontend code |
 
 Run the check locally before opening a PR:
