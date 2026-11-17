@@ -29,7 +29,8 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "packaging_record")
+@Table(name = "packaging_record",
+        uniqueConstraints = @UniqueConstraint(name = "uk_packaging_record_lot_code", columnNames = "lot_code"))
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -45,7 +46,7 @@ public class PackagingRecord {
     private String recordId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_packaging_record_batch"), nullable = false, referencedColumnName = "batch_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Batch batch;
@@ -57,7 +58,7 @@ public class PackagingRecord {
     @Column(name = "package_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal packageQuantityKg;
 
-    @Column(name = "lot_code", nullable = false, unique = true, length = 50)
+    @Column(name = "lot_code", nullable = false, length = 50)
     private String lotCode;
 
     @Column(name = "export_ready", nullable = false)
@@ -67,11 +68,11 @@ public class PackagingRecord {
     private LocalDate packagingDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipment_id", referencedColumnName = "equipment_id")
+    @JoinColumn(name = "equipment_id", foreignKey = @ForeignKey(name = "fk_packaging_record_equipment"), referencedColumnName = "equipment_id")
     private Equipment equipment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_id", referencedColumnName = "operator_id")
+    @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_packaging_record_operator"), referencedColumnName = "operator_id")
     private Operator operator;
 
     @Column(name = "created_at", updatable = false)

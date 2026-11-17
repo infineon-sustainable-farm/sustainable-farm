@@ -2,7 +2,9 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.UUID;
@@ -13,11 +15,16 @@ import java.util.UUID;
  * The backend availability indicator (P7) relies on this registry.
  */
 @Entity
-@Table(name = "iot_devices")
+@Table(name = "iot_devices",
+        uniqueConstraints = @UniqueConstraint(name = "iot_devices_device_id_key", columnNames = "device_id"),
+        indexes = {
+                @Index(name = "idx_iot_device_uid", columnList = "device_id"),
+                @Index(name = "idx_iot_last_seen", columnList = "last_seen")
+        })
 public class IotDevice extends BaseEntity {
 
     @NotBlank
-    @Column(name = "device_id", nullable = false, unique = true, length = 64)
+    @Column(name = "device_id", nullable = false, length = 64)
     private String deviceUid;
 
     @NotBlank

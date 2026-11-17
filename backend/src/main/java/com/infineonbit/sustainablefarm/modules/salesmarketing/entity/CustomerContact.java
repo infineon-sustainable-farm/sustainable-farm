@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 /**
  * Maps to the "customer_contacts" table.
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
  * of this backend.
  */
 @Entity
-@Table(name = "customer_contacts")
+@Table(name = "customer_contacts", indexes = @Index(name = "idx_customer_contacts_cust", columnList = "customer_id"))
 public class CustomerContact {
 
     @Id
@@ -24,22 +25,24 @@ public class CustomerContact {
     private Integer customerId;
 
     @NotBlank(message = "Full name is required")
-    @Column(name = "full_name")
+    @Column(name = "full_name", nullable = false, length = 120)
     private String fullName;
 
     @Email(message = "Must be a valid email address")
-    @Column(name = "email")
+    @Column(name = "email", length = 150)
     private String email;
 
-    @Column(name = "phone")
+    @Column(name = "phone", length = 40)
     private String phone;
 
-    @Column(name = "role")
+    @Column(name = "role", length = 80)
     private String role;
 
+    @ColumnDefault("false")
     @Column(name = "is_primary")
     private Boolean isPrimary;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

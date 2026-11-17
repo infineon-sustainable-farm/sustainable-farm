@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -9,7 +10,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "rainwater_harvests")
+@Table(name = "rainwater_harvests", indexes = {
+        @Index(name = "idx_rainwater_harvests_source_id", columnList = "source_id"),
+        @Index(name = "idx_rainwater_harvests_capture_date", columnList = "capture_date")
+})
 public class RainwaterHarvest extends BaseEntity {
     @NotNull
     @Column(nullable = false)

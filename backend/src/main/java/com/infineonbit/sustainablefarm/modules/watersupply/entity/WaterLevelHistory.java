@@ -2,12 +2,14 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "water_level_history")
+@Table(name = "water_level_history",
+        indexes = @Index(name = "idx_water_level_history_source_date", columnList = "source_id, measured_at"))
 public class WaterLevelHistory extends BaseEntity {
     @Column(nullable = false)
     private UUID sourceId;

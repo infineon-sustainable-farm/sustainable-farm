@@ -5,9 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.time.LocalDate;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "campaign_metrics")
+@Table(name = "campaign_metrics", indexes = @Index(name = "idx_campaign_metrics_camp", columnList = "campaign_id"))
 public class CampaignMetric {
 
     @Id
@@ -16,21 +17,24 @@ public class CampaignMetric {
     private Integer metricId;
 
     @NotNull(message = "campaignId is required")
-    @Column(name = "campaign_id")
+    @Column(name = "campaign_id", nullable = false)
     private Integer campaignId;
 
     @Column(name = "metric_date")
     private LocalDate metricDate;
 
     @PositiveOrZero
+    @ColumnDefault("0")
     @Column(name = "clicks")
     private Integer clicks;
 
     @PositiveOrZero
+    @ColumnDefault("0")
     @Column(name = "signups")
     private Integer signups;
 
     @PositiveOrZero
+    @ColumnDefault("0")
     @Column(name = "reach")
     private Integer reach;
 

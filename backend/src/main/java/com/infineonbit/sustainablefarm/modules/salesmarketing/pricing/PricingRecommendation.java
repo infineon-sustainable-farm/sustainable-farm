@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "pricing_recommendations")
@@ -19,12 +20,13 @@ public class PricingRecommendation {
     private Integer productId;
 
     @NotBlank(message = "message is required")
-    @Column(name = "message")
+    @Column(name = "message", nullable = false, columnDefinition = "text")
     private String message;
 
-    @Column(name = "suggested_price_eur")
+    @Column(name = "suggested_price_eur", precision = 8, scale = 2)
     private BigDecimal suggestedPriceEur;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

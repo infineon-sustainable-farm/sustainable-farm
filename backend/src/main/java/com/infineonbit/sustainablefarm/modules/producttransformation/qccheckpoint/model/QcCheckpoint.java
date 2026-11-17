@@ -25,7 +25,10 @@ import java.time.LocalDateTime;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "qc_checkpoint")
+@Table(name = "qc_checkpoint", indexes = {
+        @Index(name = "idx_qc_checkpoint_checkpoint_time", columnList = "checkpoint_time"),
+        @Index(name = "idx_qc_checkpoint_batch_id", columnList = "batch_id")
+})
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -41,7 +44,7 @@ public class QcCheckpoint {
     private String checkpointId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_batch"), nullable = false, referencedColumnName = "batch_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Batch batch;
@@ -61,7 +64,7 @@ public class QcCheckpoint {
     private Integer defectsCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inspector_id", referencedColumnName = "operator_id")
+    @JoinColumn(name = "inspector_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_inspector"), referencedColumnName = "operator_id")
     private Operator inspector;
 
     @Column(name = "checkpoint_time", nullable = false)

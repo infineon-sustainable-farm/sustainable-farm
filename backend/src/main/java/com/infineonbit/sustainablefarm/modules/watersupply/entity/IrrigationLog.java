@@ -2,13 +2,14 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "irrigation_logs")
+@Table(name = "irrigation_logs", indexes = @Index(name = "idx_irrigation_logs_schedule_id", columnList = "schedule_id"))
 public class IrrigationLog extends BaseEntity {
     @NotNull
     @Column(nullable = false)

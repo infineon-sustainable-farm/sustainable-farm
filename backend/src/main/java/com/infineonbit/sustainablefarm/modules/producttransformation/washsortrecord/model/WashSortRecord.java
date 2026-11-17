@@ -31,7 +31,8 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "wash_sort_record")
+@Table(name = "wash_sort_record",
+        indexes = @Index(name = "idx_wash_sort_record_start_time", columnList = "start_time"))
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -47,7 +48,7 @@ public class WashSortRecord {
     private String recordId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_batch"), nullable = false, referencedColumnName = "batch_id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Batch batch;
@@ -71,11 +72,11 @@ public class WashSortRecord {
     private LocalDateTime endTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipment_id", referencedColumnName = "equipment_id")
+    @JoinColumn(name = "equipment_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_equipment"), referencedColumnName = "equipment_id")
     private Equipment equipment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_id", referencedColumnName = "operator_id")
+    @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_operator"), referencedColumnName = "operator_id")
     private Operator operator;
 
     @Column(name = "created_at", updatable = false)

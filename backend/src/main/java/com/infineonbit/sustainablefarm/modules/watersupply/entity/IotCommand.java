@@ -2,12 +2,14 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "iot_commands")
+@Table(name = "iot_commands",
+        indexes = @Index(name = "idx_iot_commands_device_requested", columnList = "device_id, requested_at"))
 public class IotCommand extends BaseEntity {
     @Column(nullable = false, length = 64)
     private String deviceId;

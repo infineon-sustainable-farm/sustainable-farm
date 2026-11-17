@@ -2,13 +2,17 @@ package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "drip_maintenance_logs")
+@Table(name = "drip_maintenance_logs", indexes = {
+        @Index(name = "idx_drip_maintenance_logs_zone_id", columnList = "zone_id"),
+        @Index(name = "idx_drip_maintenance_logs_maintenance_date", columnList = "maintenance_date")
+})
 public class DripMaintenanceLog extends BaseEntity {
     @NotNull
     @Column(name = "zone_id", nullable = false)
@@ -37,7 +41,7 @@ public class DripMaintenanceLog extends BaseEntity {
     @Column(name = "notes", length = 1000)
     private String notes;
 
-    @Column(name = "performed_by")
+    @Column(name = "performed_by", length = 100)
     private String performedBy;
 
     public UUID getZoneId() {
