@@ -4,10 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,9 +22,9 @@ import java.time.LocalDate;
 @Table(name = "energy_component")
 public class EnergyComponent {
 
+    // Business id assigned by the caller (ENG-001...), validated by EnergyComponentRequest.
+    // No @GeneratedValue: with one, Hibernate 7 treats a new component as detached and refuses it.
     @Id
-    @GeneratedValue(generator = "energy-component-id")
-    @GenericGenerator(name = "energy-component-id", type = EnergyComponentIdGenerator.class)
     @Column(name = "component_id", length = 20)
     private String componentId;
 

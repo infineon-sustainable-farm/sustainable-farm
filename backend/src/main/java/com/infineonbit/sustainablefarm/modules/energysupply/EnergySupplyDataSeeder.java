@@ -18,9 +18,12 @@ import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyAle
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.GeneratorEventRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.SolarGenerationLogRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
@@ -44,6 +47,11 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EnergySupplyDataSeeder.class);
 
+    // Components have an assigned business id (ENG-001...): Spring Data save() would merge them as
+    // detached entities, so they are persisted directly, as EnergyComponentService.create does.
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final EnergyComponentRepository componentRepository;
     private final ConsumptionLogRepository consumptionLogRepository;
     private final CarbonMetricRepository carbonMetricRepository;
@@ -66,6 +74,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         if (componentRepository.count() == 0) {
             seedComponents();
@@ -98,7 +107,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         pv.setUnitCostEur(new BigDecimal("6500.00"));
         pv.setStatus(ComponentStatus.OPERATIONAL);
         pv.setLocation("Banfora farm site");
-        componentRepository.save(pv);
+        entityManager.persist(pv);
 
         EnergyComponent battery = new EnergyComponent();
         battery.setComponentId("ENG-002");
@@ -109,7 +118,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         battery.setUnitCostEur(new BigDecimal("4200.00"));
         battery.setStatus(ComponentStatus.OPERATIONAL);
         battery.setLocation("Banfora farm site");
-        componentRepository.save(battery);
+        entityManager.persist(battery);
 
         EnergyComponent inverter = new EnergyComponent();
         inverter.setComponentId("ENG-003");
@@ -120,7 +129,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         inverter.setUnitCostEur(new BigDecimal("1100.00"));
         inverter.setStatus(ComponentStatus.OPERATIONAL);
         inverter.setLocation("Banfora farm site");
-        componentRepository.save(inverter);
+        entityManager.persist(inverter);
 
         EnergyComponent generator = new EnergyComponent();
         generator.setComponentId("ENG-004");
@@ -131,7 +140,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         generator.setUnitCostEur(new BigDecimal("4000.00"));
         generator.setStatus(ComponentStatus.OPERATIONAL);
         generator.setLocation("Banfora farm site");
-        componentRepository.save(generator);
+        entityManager.persist(generator);
 
         EnergyComponent monitoring = new EnergyComponent();
         monitoring.setComponentId("ENG-005");
@@ -142,7 +151,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         monitoring.setUnitCostEur(new BigDecimal("350.00"));
         monitoring.setStatus(ComponentStatus.OPERATIONAL);
         monitoring.setLocation("Banfora farm site");
-        componentRepository.save(monitoring);
+        entityManager.persist(monitoring);
     }
 
     private void seedTodayConsumption() {
