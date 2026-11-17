@@ -1,3 +1,13 @@
 {
-  "name": "Pflanzen"
+  "name": "Pflanzen",
+  "nav": {
+    "overview": "Übersicht",
+    "varieties": "Sorten",
+    "growthCalendar": "Wachstumskalender",
+    "fertilizerInventory": "Düngemittelbestand",
+    "diseasesAlerts": "Krankheiten und Warnungen",
+    "harvestMaturity": "Ernte und Reife",
+    "nursery": "Anzucht",
+    "scenarioAnalysis": "Szenarioanalyse"
+  }
 }
