@@ -1,0 +1,28 @@
+{
+  "appName": "Sustainable Farm",
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "La page demandée n’existe pas ou a été déplacée.",
+    "backToModules": "Retour aux modules"
+  },
+  "actions": {
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "search": "Rechercher"
+  },
+  "status": {
+    "loading": "Chargement…",
+    "noResults": "Aucun résultat",
+    "error": "Une erreur est survenue. Veuillez réessayer."
+  }
+}
