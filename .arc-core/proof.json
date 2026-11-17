@@ -15,6 +15,13 @@
       ]
     },
     {
+      "name": "java : backend tests",
+      "run": "scripts/backend-test.sh",
+      "when": [
+        "backend/**"
+      ]
+    },
+    {
       "name": "docs : README et liens relatifs (phase 3)",
       "run": "arc-core check-docs",
       "when": [
