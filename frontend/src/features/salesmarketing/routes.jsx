@@ -1,3 +1,14 @@
+import {
+  Bell,
+  FileText,
+  LayoutGrid,
+  Megaphone,
+  ShoppingCart,
+  Tag,
+  TrendingUp,
+  Truck,
+  Users,
+} from 'lucide-react';
 import MainLayout from './components/layout/MainLayout';
 import CampaignsPage from './pages/CampaignsPage';
 import CustomersPage from './pages/CustomersPage';
@@ -26,3 +37,26 @@ export default [
     ],
   },
 ];
+
+/**
+ * Navigation of the module, read by the application shell (app/Sidebar.jsx) and the launcher
+ * page (app/LauncherPage.jsx). Same entries, order and targets as the module's own sidebar; its Material Symbols are
+ * replaced by the closest lucide icons.
+ */
+export const nav = {
+  id: 'salesmarketing',
+  basePath: '/salesmarketing',
+  icon: ShoppingCart,
+  nameKey: 'salesmarketing:name',
+  items: [
+    { to: '/salesmarketing', labelKey: 'salesmarketing:nav.dashboard', icon: LayoutGrid, end: true },
+    { to: '/salesmarketing/forecasting', labelKey: 'salesmarketing:nav.forecasting', icon: TrendingUp },
+    { to: '/salesmarketing/demand-alerts', labelKey: 'salesmarketing:nav.demandAlerts', icon: Bell },
+    { to: '/salesmarketing/reports', labelKey: 'salesmarketing:nav.reports', icon: FileText },
+    { to: '/salesmarketing/crm', labelKey: 'salesmarketing:nav.customers', icon: Users },
+    { to: '/salesmarketing/sales-channels', labelKey: 'salesmarketing:nav.salesChannels', icon: ShoppingCart },
+    { to: '/salesmarketing/pricing', labelKey: 'salesmarketing:nav.pricing', icon: Tag },
+    { to: '/salesmarketing/campaigns', labelKey: 'salesmarketing:nav.campaigns', icon: Megaphone },
+    { to: '/salesmarketing/delivery', labelKey: 'salesmarketing:nav.delivery', icon: Truck },
+  ],
+};

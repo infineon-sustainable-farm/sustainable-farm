@@ -1,3 +1,14 @@
 {
-  "name": "Vertrieb und Marketing"
+  "name": "Vertrieb und Marketing",
+  "nav": {
+    "dashboard": "Übersicht",
+    "forecasting": "Bedarfsprognose",
+    "demandAlerts": "Bedarfswarnungen",
+    "reports": "Bedarfsberichte",
+    "customers": "Kunden",
+    "salesChannels": "Vertriebskanäle",
+    "pricing": "Preisgestaltung",
+    "campaigns": "Kampagnen",
+    "delivery": "Lieferverfolgung"
+  }
 }
