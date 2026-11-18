@@ -536,6 +536,203 @@
       "volume": "Gesammelte Menge"
     }
   },
+  "lots": {
+    "title": "Verarbeitungslose",
+    "subtitle": "Wasserverbrauch je Los der Produktverarbeitung, seine Qualität und was die Tanks noch liefern können.",
+    "lookupTitle": "Los suchen",
+    "lookupPlaceholder": "Loskennung, z. B. LOT-2026-0142",
+    "lookupLabel": "Loskennung",
+    "lookup": "Suchen",
+    "noLotTitle": "Kein Los ausgewählt",
+    "noLot": "Geben Sie eine Loskennung ein, um Wasserverbrauch und Qualität zu sehen.",
+    "loading": "Los wird geladen…",
+    "loadError": "Das Los kann nicht geladen werden.",
+    "sourceFallback": "Quelle {{id}}",
+    "waterUsed": "Wasserverbrauch von {{lotId}}",
+    "quality": "Qualität des Waschwassers",
+    "verdictLoading": "…",
+    "compliance": {
+      "compliant": "Konform",
+      "non_compliant": "Nicht konform",
+      "no_test": "Kein Test im Zeitfenster"
+    },
+    "noVerdict": "Keine Qualitätsbewertung: {{message}}",
+    "complianceDetail": "{{tests}} Test(s) der Quellen des Loses zwischen {{from}} und {{to}} · pH {{phMin}}–{{phMax}}, Trübung ≤ {{turbidity}} NTU.",
+    "noTestWarning": "Ohne Test kann das Wasser dieses Loses nicht als konform gelten.",
+    "emptyTitle": "Kein Verbrauch für dieses Los",
+    "empty": "Ordnen Sie diesem Los mit dem Formular rechts ein Messzeitfenster zu.",
+    "byActivity": "{{activity}}: {{volume}}",
+    "consumptionsCaption": "Verbräuche des Loses",
+    "columns": {
+      "date": "Datum",
+      "activity": "Tätigkeit",
+      "source": "Quelle",
+      "volume": "Menge"
+    },
+    "attachTitle": "Messzeitfenster zuordnen",
+    "fields": {
+      "lot": "Los",
+      "lotPlaceholder": "LOT-2026-0142",
+      "activity": "Tätigkeit",
+      "source": "Quelle",
+      "from": "Von",
+      "to": "Bis"
+    },
+    "attach": "Zuordnen",
+    "attached": "{{count}} Verbrauch/Verbräuche {{lotId}} zugeordnet",
+    "attachedSummary": "<strong>{{count}} Verbrauch/Verbräuche, {{volume}}</strong> {{lotId}} zugeordnet.",
+    "warnings": {
+      "no_consumption_found": "Kein gemessener Verbrauch in diesem Zeitfenster.",
+      "window_overlaps_other_lot": "Einige Verbräuche gehören bereits zu einem anderen Los: Sie wurden nicht verändert.",
+      "no_source_or_zone_filter": "Keine Quelle angegeben: Alle Zähler des Standorts wurden berücksichtigt."
+    },
+    "errors": {
+      "lotRequired": "Die Loskennung ist erforderlich.",
+      "sourceRequired": "Wählen Sie die vom Los genutzte Quelle.",
+      "window": "Geben Sie einen Beginn und ein Ende nach dem Beginn an.",
+      "attachFailed": "Das Zeitfenster kann nicht zugeordnet werden."
+    },
+    "activities": {
+      "WASHING": "Waschen",
+      "CUTTING": "Schneiden",
+      "DRYER_CLEANING": "Trocknerreinigung",
+      "IRRIGATION": "Bewässerung",
+      "OTHER": "Sonstiges"
+    },
+    "forecast": {
+      "title": "Verfügbarkeitsprognose",
+      "subtitle": "Kann der Tank die geplanten Chargen versorgen?",
+      "fields": {
+        "source": "Quelle",
+        "horizon": "Horizont (Tage)",
+        "includeIrrigation": "Geplante Bewässerungen des Betriebs einbeziehen"
+      },
+      "batchesCaption": "Geplante Chargen",
+      "columns": {
+        "lot": "Los",
+        "activity": "Tätigkeit",
+        "size": "Größe (kg)",
+        "plannedAt": "Geplant am"
+      },
+      "batchLot": "Los der Charge {{number}}",
+      "batchActivity": "Tätigkeit der Charge {{number}}",
+      "batchSize": "Größe der Charge {{number}}",
+      "batchDate": "Datum der Charge {{number}}",
+      "removeBatch": "Charge entfernen",
+      "addBatch": "Charge hinzufügen",
+      "submit": "Prognostizieren",
+      "buffer": {
+        "ok": "Genug Wasser",
+        "tight": "Unter dem Mindestpuffer",
+        "insufficient": "Nicht genug Wasser"
+      },
+      "result": {
+        "current": "Aktuell im Tank",
+        "batches": "Chargen",
+        "irrigations": "Bewässerungen",
+        "left": "Rest nach {{days}} Tag(en)",
+        "buffer": "Mindestpuffer {{value}}.",
+        "noCoefficient": "Einige Tätigkeiten haben keinen Wasserkoeffizienten und zählen mit 0 L: {{activities}}.",
+        "defaults": "Liter pro kg und der Mindestpuffer sind vorläufige Standardwerte, die die Produktverarbeitung bestätigen muss."
+      },
+      "errors": {
+        "sourceRequired": "Wählen Sie die Quelle für die Prognose.",
+        "horizonRange": "Der Horizont liegt zwischen 1 und 90 Tagen.",
+        "failed": "Die Prognose kann nicht berechnet werden."
+      }
+    }
+  },
+  "visitors": {
+    "title": "Besucher",
+    "subtitle": "Sicherheitsregeln und Live-Werte, die die Besucherverwaltung den Besuchergruppen zeigt.",
+    "briefing": {
+      "title": "Wassersicherheitsunterweisung",
+      "version": "Version {{version}}",
+      "notValidated": "Standardtext, nicht freigegeben",
+      "loading": "Unterweisung wird geladen…",
+      "loadError": "Die Unterweisung kann nicht geladen werden.",
+      "fields": {
+        "version": "Version (leer = heutiges Datum)",
+        "text": "Text, der der Gruppe vorgelesen wird",
+        "allowed": "Erlaubte Bereiche (einer pro Zeile)",
+        "forbidden": "Verbotene Bereiche (einer pro Zeile)",
+        "risks": "Risiken (eines pro Zeile)",
+        "maxCapacity": "Maximale Gruppengröße",
+        "guideRequired": "Ein Führer muss die Gruppe begleiten"
+      },
+      "publish": "Veröffentlichen",
+      "published": "Sicherheitsunterweisung veröffentlicht",
+      "allowed": "Erlaubte Bereiche",
+      "forbidden": "Verbotene Bereiche",
+      "risks": "Risiken",
+      "maxGroup": "Höchstens <strong>{{value}}</strong> Besucher pro Gruppe.",
+      "maxGroupGuided": "Höchstens <strong>{{value}}</strong> Besucher pro Gruppe, immer mit Führung.",
+      "publishedAt": "Veröffentlicht am {{date}}. Frühere Versionen bleiben erhalten.",
+      "newVersion": "Neue Version veröffentlichen",
+      "errors": {
+        "groupSize": "Die Gruppe umfasst mindestens 1 Besucher.",
+        "publishFailed": "Veröffentlichen nicht möglich."
+      }
+    },
+    "preview": {
+      "title": "Vorschau des Besucherbildschirms",
+      "tankShown": "Angezeigter Tank",
+      "noTank": "Kein Tank",
+      "zoneShown": "Angezeigte Zone",
+      "wholeSite": "Gesamter Standort",
+      "loading": "Vorschau wird geladen…",
+      "loadError": "Die Vorschau kann nicht geladen werden.",
+      "level": "Füllstand {{name}}",
+      "selectTank": "Tank auswählen",
+      "saved": "Diesen Monat eingespartes Wasser",
+      "used": "Verbrauch der letzten {{minutes}} min",
+      "irrigating": "Bewässert gerade",
+      "notIrrigating": "Keine Bewässerung",
+      "lastStarted": "Zuletzt gestartet am {{date}}.",
+      "outages": "{{count}} geplante Unterbrechung(en) in Kraft: Besuchern wird mitgeteilt, dass kein Wasser verfügbar ist.",
+      "outagesHere": "{{count}} geplante Unterbrechung(en) hier in Kraft: Besuchern wird mitgeteilt, dass kein Wasser verfügbar ist.",
+      "savingsUnavailable": "Einsparungen sind nicht verfügbar, solange der Wetterdienst ausgefallen ist."
+    }
+  },
+  "valves": {
+    "title": "Vorführventil",
+    "gatewayMissing": "Gateway nicht eingerichtet",
+    "devicePlaceholder": "Geräte-ID, z. B. valve-demo-01",
+    "deviceLabel": "Geräte-ID des Ventils",
+    "open": "{{seconds}} s öffnen",
+    "close": "Schließen",
+    "showJournal": "Protokoll anzeigen",
+    "explanation": "Öffnungen werden abgelehnt, solange eine geplante Unterbrechung in Kraft ist; Schließen ist immer erlaubt. Bis das IoT-Team ein Gateway anbindet, werden Befehle protokolliert, erreichen das Ventil aber nie.",
+    "noDeviceTitle": "Kein Gerät ausgewählt",
+    "noDevice": "Geben Sie die Geräte-ID des Ventils ein, um sein Befehlsprotokoll zu sehen.",
+    "loading": "Protokoll wird geladen…",
+    "loadError": "Das Protokoll kann nicht geladen werden.",
+    "emptyTitle": "Noch kein Befehl",
+    "empty": "An {{deviceId}} wurde noch nie etwas gesendet.",
+    "journalCaption": "Befehlsprotokoll",
+    "columns": {
+      "requested": "Angefordert",
+      "command": "Befehl",
+      "status": "Status"
+    },
+    "commands": {
+      "open": "Öffnen",
+      "close": "Schließen"
+    },
+    "status": {
+      "dispatched": "Gesendet",
+      "queued": "In Warteschlange",
+      "rejected": "Nicht gesendet"
+    },
+    "opened": "Ventil für {{seconds}} s geöffnet",
+    "closed": "Ventil geschlossen",
+    "errors": {
+      "noGateway": "Noch kein Geräte-Gateway: Der Befehl wurde protokolliert, aber nicht gesendet.",
+      "offline": "Das Gerät ist offline oder eine Wasserunterbrechung ist in Kraft.",
+      "unknownDevice": "Unbekanntes Gerät: Es meldet sich mit seiner ersten Telemetrie an.",
+      "failed": "Befehl fehlgeschlagen."
+    }
+  },
   "irrigation": {
     "title": "Bewässerungsplanung",
     "subtitle": "Bewässert wird, wenn der Boden es braucht, nicht nur weil die Uhr es sagt.",

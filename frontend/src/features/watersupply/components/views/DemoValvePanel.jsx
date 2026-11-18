@@ -1,16 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Badge, Button, Card, EmptyState, ErrorState, Input, Table } from '../../../../shared/ui'
 import { iotCommandApi } from '../../api/watersupplyApi'
 import { useValveCommands } from '../../hooks/useIntegrations'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { EmptyState } from './EmptyState'
-import { formatInstant } from './datetime'
+import { useWaterFormat } from '../../format'
+import { LoadingState } from '../common/LoadingState'
 
-const STATUS_META = {
-  dispatched: { cls: 'green', text: 'Sent' },
-  queued: { cls: 'primary', text: 'Queued' },
-  rejected: { cls: 'red', text: 'Not sent' },
-}
+const STATUS_TONES = { dispatched: 'success', queued: 'info', rejected: 'error' }
 
 /** Short opening of the demonstration valve (the backend caps it, 30 s by default). */
 const DEMO_OPENING_SECONDS = 10
@@ -22,10 +18,13 @@ const DEMO_OPENING_SECONDS = 10
  * attempt as "rejected": the screen says so plainly instead of pretending the valve moved.
  */
 export function DemoValvePanel({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const [deviceInput, setDeviceInput] = useState('')
   const [deviceId, setDeviceId] = useState('')
   const [busy, setBusy] = useState(false)
   const { commands, loading, error, refetch } = useValveCommands(deviceId)
+  const seconds = format.number(DEMO_OPENING_SECONDS)
 
   const send = (command) => {
     const target = deviceInput.trim()
@@ -37,16 +36,16 @@ export function DemoValvePanel({ notify }) {
       : { command, reason: 'visitor_demo' }
     iotCommandApi
       .sendCommand(target, body)
-      .then(() => notify(command === 'OPEN_VALVE' ? `Valve opened for ${DEMO_OPENING_SECONDS} s` : 'Valve closed'))
+      .then(() => notify(command === 'OPEN_VALVE' ? t('valves.opened', { seconds }) : t('valves.closed')))
       .catch((err) => {
         if (err.status === 503) {
-          notify('No device gateway yet: the command was recorded but not sent.')
+          notify(t('valves.errors.noGateway'), 'warning')
         } else if (err.status === 409) {
-          notify(err.message || 'The device is offline or a water outage is in force.')
+          notify(err.message || t('valves.errors.offline'), 'error')
         } else if (err.status === 404) {
-          notify('Unknown device: it registers itself with its first telemetry.')
+          notify(t('valves.errors.unknownDevice'), 'error')
         } else {
-          notify(err.message || 'Command failed.')
+          notify(err.message || t('valves.errors.failed'), 'error')
         }
       })
       // The journal is refreshed in every case: a refused attempt is part of the audit trail.
@@ -56,67 +55,52 @@ export function DemoValvePanel({ notify }) {
       })
   }
 
+  const columns = [
+    { key: 'requestedAt', header: t('valves.columns.requested'), cell: (command) => format.instant(command.requestedAt) },
+    {
+      key: 'command',
+      header: t('valves.columns.command'),
+      cell: (command) => (command.command === 'OPEN_VALVE' ? t('valves.commands.open') : t('valves.commands.close')),
+    },
+    {
+      key: 'status',
+      header: t('valves.columns.status'),
+      cell: (command) => (
+        <Badge tone={STATUS_TONES[command.status] ?? 'info'}>
+          {t(`valves.status.${command.status}`, { defaultValue: command.status })}
+        </Badge>
+      ),
+    },
+  ]
+
+  function renderJournal() {
+    if (!deviceId) return <EmptyState title={t('valves.noDeviceTitle')} message={t('valves.noDevice')} />
+    if (loading) return <LoadingState compact label={t('valves.loading')} />
+    if (error) return <ErrorState message={error.message || t('valves.loadError')} />
+    if (commands.length === 0) {
+      return <EmptyState title={t('valves.emptyTitle')} message={t('valves.empty', { deviceId })} />
+    }
+    return <Table caption={t('valves.journalCaption')} columns={columns} rows={commands} getRowKey={(command) => command.commandId} />
+  }
+
+  const noDevice = !deviceInput.trim()
+
   return (
-    <div className="ws-panel">
-      <div className="ws-panel-header">
-        <h2>Demonstration valve</h2>
-        <span className="ws-tag orange">Gateway not configured</span>
-      </div>
-      <div className="ws-filters">
-        <input
-          style={{ ...inputStyle, maxWidth: '220px' }}
+    <Card title={t('valves.title')} actions={<Badge tone="warning">{t('valves.gatewayMissing')}</Badge>}>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Input
+          className="max-w-56"
           value={deviceInput}
           onChange={(event) => setDeviceInput(event.target.value)}
-          placeholder="Device id, e.g. valve-demo-01"
-          aria-label="Valve device id"
+          placeholder={t('valves.devicePlaceholder')}
+          aria-label={t('valves.deviceLabel')}
         />
-        <button className="ws-action-btn" disabled={busy || !deviceInput.trim()} onClick={() => send('OPEN_VALVE')}>
-          Open {DEMO_OPENING_SECONDS} s
-        </button>
-        <button className="ws-action-btn secondary" disabled={busy || !deviceInput.trim()} onClick={() => send('CLOSE_VALVE')}>
-          Close
-        </button>
-        <button className="ws-chip" disabled={!deviceInput.trim()} onClick={() => setDeviceId(deviceInput.trim())}>
-          Show journal
-        </button>
+        <Button disabled={busy || noDevice} onClick={() => send('OPEN_VALVE')}>{t('valves.open', { seconds })}</Button>
+        <Button variant="secondary" disabled={busy || noDevice} onClick={() => send('CLOSE_VALVE')}>{t('valves.close')}</Button>
+        <Button variant="ghost" disabled={noDevice} onClick={() => setDeviceId(deviceInput.trim())}>{t('valves.showJournal')}</Button>
       </div>
-      <div className="ws-panel-body">
-        <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--ws-muted)' }}>
-          Openings are refused while a planned outage is in force; closing is always allowed. Until IoT
-          connects a gateway, commands are journaled but never reach the valve.
-        </p>
-        {!deviceId ? (
-          <EmptyState title="No device selected" description="Enter the valve's device id to see its command journal." />
-        ) : loading ? (
-          <Spinner label="Loading the journal…" />
-        ) : error ? (
-          <EmptyState title="Error" description={error.message || 'Unable to load the journal.'} />
-        ) : commands.length === 0 ? (
-          <EmptyState title="No command yet" description={`Nothing was ever sent to ${deviceId}.`} />
-        ) : (
-          <table className="ws-table">
-            <thead>
-              <tr>
-                <th>Requested</th>
-                <th>Command</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {commands.map((command) => {
-                const status = STATUS_META[command.status] || { cls: 'primary', text: command.status }
-                return (
-                  <tr key={command.commandId}>
-                    <td>{formatInstant(command.requestedAt)}</td>
-                    <td>{command.command === 'OPEN_VALVE' ? 'Open' : 'Close'}</td>
-                    <td><span className={`ws-tag ${status.cls}`}>{status.text}</span></td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
+      <p className="mb-3 text-xs text-text-muted">{t('valves.explanation')}</p>
+      {renderJournal()}
+    </Card>
   )
 }
