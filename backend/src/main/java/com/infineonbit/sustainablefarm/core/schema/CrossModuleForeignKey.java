@@ -3,12 +3,12 @@ package com.infineonbit.sustainablefarm.core.schema;
 /**
  * A foreign key from the table of one module to the table of another.
  *
- * <p>Hibernate builds the schema from the entities (docs/adr/0002), and declares a
- * foreign key only on an association to another entity. A module never maps the
- * entity of another module (docs/adr/0003): it stores the key of the referenced row
- * in a plain column. Such a column declares its foreign key as a bean of this type,
- * and {@link CrossModuleForeignKeyInstaller} adds the constraint once Hibernate has
- * built the tables.
+ * <p>Hibernate declares a foreign key only on an association to another entity, and a
+ * module never maps the entity of another module (docs/adr/0003): it stores the key of
+ * the referenced row in a plain column. Such a column declares its foreign key as a bean
+ * of this type. The Flyway migrations create the constraint (docs/adr/0002), and
+ * {@link CrossModuleForeignKeyInstaller} checks at startup that it is there; in the tests,
+ * where Hibernate builds the schema from the entities, it adds it.
  *
  * @param name             name of the constraint, for example {@code fk_batch_variety}
  * @param table            the referencing table

@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -33,7 +34,8 @@ import java.util.Locale;
  */
 @Entity
 @Table(name = "harvest_record",
-        uniqueConstraints = @UniqueConstraint(name = HarvestRecord.LOT_NUMBER_CONSTRAINT, columnNames = "lot_number"))
+        uniqueConstraints = @UniqueConstraint(name = HarvestRecord.LOT_NUMBER_CONSTRAINT, columnNames = "lot_number"),
+        indexes = @Index(name = "idx_harvest_record_block_variety_id", columnList = "block_variety_id"))
 @Getter
 @Setter
 @NoArgsConstructor

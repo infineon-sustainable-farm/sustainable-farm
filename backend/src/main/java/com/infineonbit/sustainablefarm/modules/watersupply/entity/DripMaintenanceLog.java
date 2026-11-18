@@ -11,7 +11,8 @@ import java.time.Instant;
 @Entity
 @Table(name = "drip_maintenance_logs", indexes = {
         @Index(name = "idx_drip_maintenance_logs_zone_id", columnList = "zone_id"),
-        @Index(name = "idx_drip_maintenance_logs_maintenance_date", columnList = "maintenance_date")
+        @Index(name = "idx_drip_maintenance_logs_maintenance_date", columnList = "maintenance_date"),
+        @Index(name = "idx_drip_maintenance_logs_performed_by_person_id", columnList = "performed_by_person_id")
 })
 public class DripMaintenanceLog extends BaseEntity {
     @NotNull

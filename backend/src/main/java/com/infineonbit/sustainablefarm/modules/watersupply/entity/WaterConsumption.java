@@ -23,7 +23,8 @@ import org.hibernate.annotations.OnDeleteAction;
         @Index(name = "idx_water_consumption_date", columnList = "consumption_date"),
         @Index(name = "idx_water_consumption_zone_date", columnList = "zone_id, consumption_date"),
         @Index(name = "idx_water_consumption_lot_id", columnList = "lot_id"),
-        @Index(name = "idx_water_consumption_processing_batch_id", columnList = "processing_batch_id")
+        @Index(name = "idx_water_consumption_processing_batch_id", columnList = "processing_batch_id"),
+        @Index(name = "idx_water_consumption_irrigation_id", columnList = "irrigation_id")
 })
 public class WaterConsumption extends BaseEntity {
     @NotNull
