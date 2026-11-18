@@ -13,25 +13,25 @@ class NaturalKeyTest {
 
     @Test
     void varietyKeyOf_shouldJoinTheBlockIdAndTheLowerCaseName() {
-        assertEquals("3|keitt", Variety.keyOf(3L, "Keitt"));
+        assertEquals("3|keitt", BlockVariety.keyOf(3L, "Keitt"));
     }
 
     @Test
     void varietyKeyOf_shouldKeepTwoBlocksApart() {
-        assertEquals("1|kent", Variety.keyOf(1L, "Kent"));
-        assertEquals("2|kent", Variety.keyOf(2L, "Kent"));
+        assertEquals("1|kent", BlockVariety.keyOf(1L, "Kent"));
+        assertEquals("2|kent", BlockVariety.keyOf(2L, "Kent"));
     }
 
     @Test
     void varietyKeyOf_shouldLowerTheCaseOnly_andKeepAccentsAndSpacesAsStored() {
         // The lookup compares LOWER(name) without trimming the stored name
-        assertEquals("3|amélie ", Variety.keyOf(3L, "AMÉLIE "));
+        assertEquals("3|amélie ", BlockVariety.keyOf(3L, "AMÉLIE "));
     }
 
     @Test
     void varietyKeyOf_shouldBeNull_withoutBlockOrName() {
-        assertNull(Variety.keyOf(null, "Keitt"));
-        assertNull(Variety.keyOf(3L, null));
+        assertNull(BlockVariety.keyOf(null, "Keitt"));
+        assertNull(BlockVariety.keyOf(3L, null));
     }
 
     @Test

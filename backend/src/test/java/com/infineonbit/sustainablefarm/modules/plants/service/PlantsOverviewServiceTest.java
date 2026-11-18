@@ -6,12 +6,12 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertRes
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse.MaturityShare;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertSeverity;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -98,7 +99,7 @@ public class PlantsOverviewServiceTest {
 
     /** A variety row of farm 7 planted on a day, with trees left; stubbed by {@link #stubPlantings}. */
     private void planted(long id, String blockCode, String name, LocalDate plantedOn, long treesLeft) {
-        Variety variety = new Variety();
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.setFarmId(FARM);
         variety.setBlockCode(blockCode);
@@ -113,7 +114,7 @@ public class PlantsOverviewServiceTest {
                 PLANTS_BLOCKS.filter(FARM, blockCode).ids())).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
-                new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa", null)));
+                new VarietyReference(1L, "Keitt", BigDecimal.valueOf(220.0), "Zalka_2025", 5, 7, "varietal_guide_west_africa", null)));
     }
 
     /** A line whose status holds as given, from the estimate; the overview reads no other field. */

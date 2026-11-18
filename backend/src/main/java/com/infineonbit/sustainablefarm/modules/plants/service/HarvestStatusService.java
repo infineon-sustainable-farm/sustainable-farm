@@ -1,13 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.FieldObservation;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.HarvestWindow;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.Season;
@@ -153,7 +153,7 @@ public class HarvestStatusService {
         rows.sort(ORDER);
         List<VarietyHarvestStatus> varieties = rows.stream()
                 .map(planted -> {
-                    Variety variety = planted.variety();
+                    BlockVariety variety = planted.variety();
                     HealthTreatmentResponse interval = intervals.get(
                             new BlockKey(variety.getFarmId(), variety.getBlockCode()));
                     List<MaturityObservationResponse> ofTheRow =
@@ -312,7 +312,7 @@ public class HarvestStatusService {
                                                HealthTreatmentResponse interval, LocalDate firstHarvestDate,
                                                List<MaturityObservationResponse> observations,
                                                ForecastBasis basis, LocalDate today, int withinDays) {
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         VarietyReference reference = planted.reference();
         String phaseShareSource = window == null
                 ? null
@@ -359,7 +359,7 @@ public class HarvestStatusService {
      */
     private static VarietyHarvestStatus withoutReference(PlantedVariety planted, HealthTreatmentResponse interval,
                                                          List<MaturityObservationResponse> observations) {
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         MaturityObservationResponse latest = observations.isEmpty() ? null : observations.getLast();
         return new VarietyHarvestStatus(
                 variety.getFarmId(),

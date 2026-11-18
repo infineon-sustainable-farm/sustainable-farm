@@ -1,12 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.plants;
 
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantsBlocks;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 /**
  * PROVISIONAL. Loads the single real variety row of the project into
@@ -21,12 +23,12 @@ import org.springframework.stereotype.Component;
  * decided how reference data is managed. This seeder is the stop-gap and is
  * expected to be replaced once that decision is made.
  *
- * <p>Runs only if the varietes table is empty, so restarting the application
+ * <p>Runs only if the block_variety table is empty, so restarting the application
  * never duplicates rows.
  *
  * <p>The row below is the only real data available: the Zalka 2025 study.
- * The three fields it does not document (densite_arbres_ha, vigueur,
- * origine_plant) are left NULL on purpose and must not be filled with a
+ * The three fields it does not document (tree_density_per_ha, vigor,
+ * plant_origin) are left NULL on purpose and must not be filled with a
  * default, an average or a zero. Its yearly output of 44,000 kg is not seeded
  * either: it is a scenario figure, which belongs to Scenario Analysis, not to
  * the orchard. The A/B/C/D blocks shown in the visual mock-up are illustration
@@ -41,28 +43,28 @@ import org.springframework.stereotype.Component;
 @Profile("dev")
 public class PlantsDataSeeder implements CommandLineRunner {
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final PlantsBlocks plantsBlocks;
 
-    public PlantsDataSeeder(VarietyRepository varietyRepository, PlantsBlocks plantsBlocks) {
-        this.varietyRepository = varietyRepository;
+    public PlantsDataSeeder(BlockVarietyRepository blockVarietyRepository, PlantsBlocks plantsBlocks) {
+        this.blockVarietyRepository = blockVarietyRepository;
         this.plantsBlocks = plantsBlocks;
     }
 
     @Override
     public void run(String... args) {
-        if (varietyRepository.count() > 0) {
+        if (blockVarietyRepository.count() > 0) {
             return; // already seeded, do nothing
         }
         seedZalka2025();
     }
 
     private void seedZalka2025() {
-        Variety keitt = new Variety();
+        BlockVariety keitt = new BlockVariety();
         keitt.setName("Keitt");
         keitt.setTreeCount(200);
-        keitt.setRowSpacingM(8.0);
-        keitt.setTreeSpacingM(8.0);
+        keitt.setRowSpacingM(new BigDecimal("8.0"));
+        keitt.setTreeSpacingM(new BigDecimal("8.0"));
         BlockDto blockA = plantsBlocks.resolve(null, "A");
         keitt.assignBlock(blockA.id(), PlantsBlocks.label(blockA));
         keitt.setSource("Zalka_2025");
@@ -70,6 +72,6 @@ public class PlantsDataSeeder implements CommandLineRunner {
         // no source data in the study, left NULL. lastUpdated records when the variety
         // record itself was last revised, which the study does not state; seeding it
         // with the current time would date 2025 data to the day the container started.
-        varietyRepository.save(keitt);
+        blockVarietyRepository.save(keitt);
     }
 }
