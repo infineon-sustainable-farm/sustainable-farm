@@ -79,7 +79,7 @@ export default function DashboardPage() {
         }
       });
 
-      if (failures.length === 5) {
+      if (failures.length === LOADS.length) {
         setApiError(failures.join(' · ') || t('dashboard.loadFailed'));
       } else if (failures.length > 0) {
         setApiError(t('dashboard.partialLoad', { failures: failures.join(' · ') }));

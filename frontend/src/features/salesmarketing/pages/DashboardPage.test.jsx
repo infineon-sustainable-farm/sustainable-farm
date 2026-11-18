@@ -102,4 +102,18 @@ describe('DashboardPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: new RegExp(title) }));
     expect(screen.getByTestId('where')).toHaveTextContent('/salesmarketing/forecasting');
   });
+
+  it('reports a full failure, not a partial load, when all seven requests fail', async () => {
+    Object.values(api).forEach((mock) => mock.mockRejectedValue(new Error('offline')));
+    renderPage();
+    expect(await screen.findByText('Forecasts: offline', { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText(/Partial load/)).not.toBeInTheDocument();
+  });
+
+  it('reports a partial load when only some requests fail', async () => {
+    api.getOrders.mockRejectedValue(new Error('offline'));
+    api.getCustomers.mockRejectedValue(new Error('offline'));
+    renderPage();
+    expect(await screen.findByText(/Partial load - Customers: offline/)).toBeInTheDocument();
+  });
 });
