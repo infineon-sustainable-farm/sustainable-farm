@@ -2,7 +2,6 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.batch.serv
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -54,7 +53,7 @@ public interface BatchService {
     /**
      * Get batches by mango variety
      */
-    List<Batch> getBatchesByVariety(MangoVariety variety);
+    List<Batch> getBatchesByVariety(String variety);
 
     /**
      * Get batches by farm
@@ -69,7 +68,7 @@ public interface BatchService {
     /**
      * Get batches by variety and status
      */
-    List<Batch> getBatchesByVarietyAndStatus(MangoVariety variety, BatchStatus status);
+    List<Batch> getBatchesByVarietyAndStatus(String variety, BatchStatus status);
 
     /**
      * Count batches by status
@@ -79,7 +78,7 @@ public interface BatchService {
     /**
      * Get total harvest quantity by variety
      */
-    Double getTotalHarvestQuantityByVariety(MangoVariety variety);
+    Double getTotalHarvestQuantityByVariety(String variety);
 
     /**
      * Get batches ready for shipping

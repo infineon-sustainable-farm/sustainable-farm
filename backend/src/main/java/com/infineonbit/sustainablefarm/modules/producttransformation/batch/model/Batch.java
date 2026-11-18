@@ -8,6 +8,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrec
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord;
 
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
@@ -35,7 +36,8 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "batch", indexes = {
         @Index(name = "idx_batch_current_status", columnList = "current_status"),
-        @Index(name = "idx_batch_harvest_date", columnList = "harvest_date")
+        @Index(name = "idx_batch_harvest_date", columnList = "harvest_date"),
+        @Index(name = "idx_batch_variety_key", columnList = "variety_key")
 })
 @Getter
 @Setter
@@ -54,9 +56,9 @@ public class Batch {
     @Column(name = "harvest_date", nullable = false)
     private LocalDate harvestDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mango_variety", nullable = false, length = 20)
-    private HarvestEvent.MangoVariety mangoVariety;
+    /** Catalogue key of the variety, for example {@code KENT}: foreign key to plants {@code variety_reference}. */
+    @Column(name = "variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
+    private String varietyKey;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal harvestQuantityKg;

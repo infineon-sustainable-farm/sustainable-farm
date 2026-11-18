@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.response;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +24,8 @@ public class BatchResponse {
 
     private String batchId;
     private LocalDate harvestDate;
-    private MangoVariety mangoVariety;
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
+    private String mangoVariety;
     private BigDecimal harvestQuantityKg;
     private BatchStatus currentStatus;
     private String farmId;
