@@ -49,5 +49,10 @@
   },
   "launcher": {
     "modules": "Modules"
+  },
+  "home": {
+    "eyebrow": "De Banfora, au Burkina Faso, jusqu’en Allemagne",
+    "hero": "Du verger à l’export, une seule plateforme.",
+    "lede": "Enregistrez le travail de la ferme et décidez avec les mêmes données à chaque étape de la filière mangue séchée."
   }
 }
