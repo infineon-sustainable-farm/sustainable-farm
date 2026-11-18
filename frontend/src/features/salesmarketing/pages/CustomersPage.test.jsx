@@ -163,4 +163,18 @@ describe('CustomersPage', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Edit Customer #3' });
     expect(within(dialog).getByLabelText(/Company Name/)).toHaveValue('Fresh Fruits AG');
   });
+
+  it("attaches a contact added from a row menu to that row's customer", async () => {
+    const other = { ...customer, customerId: 8, companyName: 'Zest Imports Ltd', customerCode: 'CUST-0008' };
+    api.getCustomers.mockResolvedValue([customer, other]);
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Zest Imports Ltd' }, LOAD));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add Contact' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add Contact' });
+    fireEvent.change(within(dialog).getByLabelText(/Full Name/), { target: { value: 'Import desk' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add Contact' }));
+    await waitFor(() =>
+      expect(api.createCustomerContact).toHaveBeenCalledWith(expect.objectContaining({ customerId: 8, fullName: 'Import desk' }))
+    );
+  });
 });

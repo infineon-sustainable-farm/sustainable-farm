@@ -298,7 +298,7 @@ export default function CustomersPage() {
           onAddContact={(customer) => {
             setOpenMenuCustomerId(null);
             setSelectedId(customer.customerId);
-            openCreateContact();
+            openCreateContact(customer.customerId);
           }}
           onDelete={(customer) => {
             setOpenMenuCustomerId(null);
@@ -314,7 +314,7 @@ export default function CustomersPage() {
             onEdit={openEditCustomer}
             onRefreshCertifications={fetchCustomerCertifications}
             onToggleCertification={toggleCertification}
-            onAddContact={openCreateContact}
+            onAddContact={() => openCreateContact()}
             onEditContact={openEditContact}
             onDeleteContact={setPendingDeleteContact}
           />
