@@ -10,7 +10,7 @@
     "maintenance": "Wartung",
     "quality": "Wasserqualität",
     "drought": "Dürrewarnungen",
-    "outages": "Geplante Unterbrechungen",
+    "outages": "Geplante Ausfälle",
     "plants": "Pflanzenblöcke",
     "lots": "Verarbeitungschargen",
     "visitors": "Besucher",
@@ -313,8 +313,8 @@
       "sprinkler": "Beregnung",
       "surface": "Oberflächenbewässerung"
     },
-    "locating": "Standort wird ermittelt…",
-    "useMyPosition": "Meinen Standort verwenden",
+    "locating": "Ortung läuft…",
+    "useMyPosition": "Meinen Standort nutzen",
     "accuracy": "Standort dieses Geräts, auf etwa {{accuracy}} m genau: korrigieren Sie ihn, wenn Sie nicht vor Ort sind.",
     "errors": {
       "locationFormat": "Geben Sie den Standort als „Breitengrad, Längengrad“ ein."
@@ -501,7 +501,7 @@
     "phRange": "6,0 - 7,5",
     "maxTurbidity": "Maximale Trübung",
     "outOfRange": "Außerhalb der Grenzwerte",
-    "outOfRangeAction": "Warnung + automatische Benachrichtigung",
+    "outOfRangeAction": "Warnung + automatische Meldung",
     "dataSourceTitle": "Datenquelle",
     "dataSourceText": "Die Messwerte stammen von IoT-Sonden an den Quellen. Sie werden automatisch über den Ingestion-Endpunkt gemeldet - keine manuelle Eingabe."
   },

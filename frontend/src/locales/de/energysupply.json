@@ -7,8 +7,8 @@
     "consumption": "Verbrauchserfassung",
     "generator": "Notstromaggregat",
     "carbon": "CO₂-Bilanz",
-    "scenario": "Was-wäre-wenn-Analyse",
-    "alerts": "Warnungen & Benachrichtigungen"
+    "scenario": "Szenarioanalyse",
+    "alerts": "Warnungen & Hinweise"
   },
   "common": {
     "none": "—"

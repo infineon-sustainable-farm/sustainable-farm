@@ -7,7 +7,7 @@ import { focusRing, transition } from './styles'
 // when disabled. The kit adds a named navigation landmark, the focus mark and 44 px targets on
 // touch screens.
 const buttonClass = cx(
-  'inline-flex min-h-7 cursor-pointer items-center rounded-control border border-border-divider px-3 py-1 pointer-coarse:min-h-11',
+  'inline-flex min-h-7 cursor-pointer items-center whitespace-nowrap rounded-control border border-border-divider px-3 py-1 pointer-coarse:min-h-11',
   'enabled:hover:bg-surface-muted enabled:active:scale-98 enabled:active:bg-neutral-bg motion-reduce:enabled:active:scale-100',
   'disabled:cursor-not-allowed disabled:opacity-40',
   focusRing,
@@ -30,7 +30,7 @@ function Pagination({ page, totalPages, onPageChange, label, className }) {
   const isLastPage = page >= totalPages - 1
 
   return (
-    <nav aria-label={label ?? t('pagination.label')} className={cx('mt-4 flex items-center justify-end gap-3 text-sm', className)}>
+    <nav aria-label={label ?? t('pagination.label')} className={cx('mt-4 flex flex-wrap items-center justify-end gap-3 text-sm', className)}>
       <span className="text-text-muted">
         {t('pagination.pageOf', { page: page + 1, total: totalPages })}
       </span>
