@@ -5,7 +5,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationRespo
 import com.infineonbit.sustainablefarm.modules.watersupply.service.NotificationService;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -46,12 +45,12 @@ public class NotificationController {
     }
 
     @GetMapping("/{notificationId}")
-    public NotificationResponse get(@PathVariable UUID notificationId) {
+    public NotificationResponse get(@PathVariable Long notificationId) {
         return notificationService.get(notificationId);
     }
 
     @PatchMapping("/{notificationId}/read")
-    public NotificationResponse markAsRead(@PathVariable UUID notificationId) {
+    public NotificationResponse markAsRead(@PathVariable Long notificationId) {
         return notificationService.markAsRead(notificationId);
     }
 
@@ -62,12 +61,12 @@ public class NotificationController {
 
     @DeleteMapping("/{notificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID notificationId) {
+    public void delete(@PathVariable Long notificationId) {
         notificationService.delete(notificationId);
     }
 
     private PageRequest pageRequest(Integer page, Integer size) {
         return PageRequest.of(page == null ? 0 : page, size == null ? 20 : size,
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+                Sort.by(Sort.Direction.DESC, "raisedAt"));
     }
 }

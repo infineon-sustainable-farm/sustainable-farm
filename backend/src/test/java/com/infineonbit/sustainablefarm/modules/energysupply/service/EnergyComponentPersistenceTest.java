@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -36,6 +37,9 @@ class EnergyComponentPersistenceTest {
 
     @Autowired
     private EnergyComponentRepository repository;
+
+    @MockitoBean
+    private AlertService alertService;
 
     @Configuration(proxyBeanMethods = false)
     @EntityScan(basePackageClasses = EnergyComponent.class)

@@ -143,7 +143,7 @@ This is a first version, **to be reviewed soon**:
 - **Dashboard**: `GET /api/dashboard/kpis|activities|alerts|water-savings|savings-series|water-balance|leaks`.
 - **AI**: `GET /api/ai/recommendations`, `GET /api/ai/drought-prediction`, `POST /api/ai/analyze`.
 - **Weather**: `GET /api/weather/current`, `GET /api/weather/forecast` (optional coordinates).
-- **Notifications**: `GET|POST /api/notifications`, `GET /api/notifications/{id}`,
+- **Notifications** (stored as the module alerts of the `notification` module, table `alert`, docs/adr/0004): `GET|POST /api/notifications`, `GET /api/notifications/{id}`,
   `PATCH /api/notifications/{id}/read`, `PATCH /api/notifications/read-all`, `DELETE /api/notifications/{id}`.
 - **Reports**: `GET /api/reports/consumption|irrigation|quality` and `.../csv`.
 - **Health**: `GET /api/health` (really checks the database, 503 when it is down).

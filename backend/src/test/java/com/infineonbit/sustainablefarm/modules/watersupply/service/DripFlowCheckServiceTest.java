@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
@@ -48,7 +48,7 @@ class DripFlowCheckServiceTest {
         stubTwoHourCycle(zoneId);
         when(consumptionRepository.sumConsumptionByZoneIdBetween(any(), any(), eq(zoneId))).thenReturn(300d);
         when(alertService.raiseOnce(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(Optional.of(new Notification()));
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(AlertDto.class)));
 
         Map<String, Object> result = service().check(zoneId);
 
@@ -65,7 +65,7 @@ class DripFlowCheckServiceTest {
         stubTwoHourCycle(zoneId);
         when(consumptionRepository.sumConsumptionByZoneIdBetween(any(), any(), eq(zoneId))).thenReturn(500d);
         when(alertService.raiseOnce(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(Optional.of(new Notification()));
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(AlertDto.class)));
 
         Map<String, Object> result = service().check(zoneId);
 
