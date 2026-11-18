@@ -741,5 +741,112 @@
       "deleteContactFailed": "Échec de la suppression du contact",
       "certificationUpdateFailed": "Échec de la mise à jour de la certification"
     }
+  },
+  "channels": {
+    "title": "Canaux de vente",
+    "subtitle": "Indicateurs de performance en temps réel sur tous les réseaux de distribution.",
+    "offline": "Mode hors ligne",
+    "liveSync": "Synchronisation en direct active",
+    "hideTargets": "Masquer les objectifs",
+    "manageTargets": "Gérer les objectifs",
+    "addTarget": "Ajouter un objectif",
+    "newChannel": "Nouveau canal",
+    "apiNotice": "Avis de connexion à l’API",
+    "actionFailed": "Échec de l’action",
+    "loading": "Chargement des canaux de vente…",
+    "requestFailed": "Échec de la requête",
+    "failure": {
+      "channels": "Canaux : {{message}}",
+      "targets": "Objectifs : {{message}}",
+      "orders": "Commandes : {{message}}"
+    },
+    "failureSeparator": " · ",
+    "loadFailed": "Impossible de charger les données des canaux de vente. Veuillez réessayer. {{failures}}",
+    "partialLoad": "Chargement partiel - {{failures}}",
+    "loadDataFailed": "Impossible de charger les données des canaux de vente. Veuillez réessayer.",
+    "loadChannelForEditFailed": "Impossible de charger le canal de vente n° {{id}} pour le modifier.",
+    "loadTargetForEditFailed": "Impossible de charger l’objectif n° {{id}} pour le modifier.",
+    "channelCreated": "Canal de vente « {{name}} » créé.",
+    "channelUpdated": "Canal de vente « {{name}} » mis à jour.",
+    "channelDeleted": "Canal de vente « {{name}} » supprimé.",
+    "createChannelFailed": "Échec de la création du canal",
+    "updateChannelFailed": "Échec de la mise à jour du canal",
+    "deleteChannelFailed": "Échec de la suppression du canal",
+    "selectChannelFirst": "Veuillez d’abord choisir un canal.",
+    "targetCreated": "Objectif créé.",
+    "targetUpdated": "Objectif mis à jour.",
+    "targetDeleted": "Objectif supprimé.",
+    "createTargetFailed": "Échec de la création de l’objectif",
+    "updateTargetFailed": "Échec de la mise à jour de l’objectif",
+    "deleteTargetFailed": "Échec de la suppression de l’objectif",
+    "menuFor": "Actions pour {{name}}",
+    "editChannel": "Modifier le canal",
+    "deleteChannel": "Supprimer le canal",
+    "revenueTarget": "Objectif de chiffre d’affaires",
+    "channelId": "ID du canal",
+    "comparison": "Comparaison des performances des canaux",
+    "actualYtd": "Chiffre d’affaires réel depuis le début de l’année",
+    "targetsTitle": "Objectifs de vente",
+    "targetsSubtitle": "Objectifs de chiffre d’affaires par période pour chaque canal.",
+    "filterChannel": "Canal",
+    "allChannels": "Tous les canaux",
+    "newTarget": "Nouvel objectif",
+    "noTargets": "Aucun objectif. Cliquez sur « Nouvel objectif » pour en ajouter un.",
+    "table": {
+      "channel": "Canal",
+      "period": "Période",
+      "targetRevenue": "Chiffre d’affaires visé"
+    },
+    "channelNumber": "Canal n° {{id}}",
+    "period": "{{start}} - {{end}}",
+    "editTarget": "Modifier l’objectif",
+    "deleteTarget": "Supprimer l’objectif",
+    "newChannelTitle": "Nouveau canal de vente",
+    "editChannelTitle": "Modifier le canal de vente n° {{id}}",
+    "channelFormHint": "Saisissez les informations du canal de vente ci-dessous.",
+    "newTargetTitle": "Nouvel objectif de vente",
+    "editTargetTitle": "Modifier l’objectif n° {{id}}",
+    "targetFormHint": "Saisissez les informations de l’objectif de vente ci-dessous.",
+    "fields": {
+      "name": "Nom du canal",
+      "namePlaceholder": "p. ex. Boutique en ligne, Distributeurs, Export direct…",
+      "channel": "Canal",
+      "selectChannel": "Choisir un canal…",
+      "periodStart": "Début de période",
+      "periodEnd": "Fin de période",
+      "revenueTarget": "Objectif de chiffre d’affaires (€)",
+      "revenuePlaceholder": "p. ex. 4500000"
+    },
+    "saving": "Enregistrement…",
+    "saveChanges": "Enregistrer les modifications",
+    "createChannel": "Créer le canal",
+    "createTarget": "Créer l’objectif",
+    "deleting": "Suppression…",
+    "deleteChannelTitle": "Supprimer le canal ?",
+    "deleteChannelMessage": "Voulez-vous vraiment supprimer {{name}} ? Cette action est irréversible.",
+    "deleteTargetTitle": "Supprimer l’objectif ?",
+    "deleteTargetMessage": "Voulez-vous vraiment supprimer cet objectif de vente du {{start}} - {{end}} ({{revenue}}) ? Cette action est irréversible.",
+    "presets": {
+      "online": {
+        "name": "Boutique en ligne",
+        "short": "En ligne"
+      },
+      "distributors": {
+        "name": "Distributeurs",
+        "short": "Distributeurs"
+      },
+      "retail": {
+        "name": "Partenaires de détail",
+        "short": "Détail"
+      },
+      "export": {
+        "name": "Export direct",
+        "short": "Export"
+      }
+    },
+    "none": "-",
+    "revenue": "{{value}} €",
+    "revenueThousands": "{{value}} k€",
+    "revenueMillions": "{{value}} M€"
   }
 }
