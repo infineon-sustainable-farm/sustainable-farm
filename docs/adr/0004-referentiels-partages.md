@@ -51,7 +51,7 @@ Le champ (`Field`) de watersupply et le bloc de plants désignent la même parce
 | Hiérarchie | `farm` (Farm) vers `block` (Block) vers `zone` (Zone), clés `Long` de `core.entity.BaseEntity`, FK `block.farm_id` et `zone.block_id` |
 | Code de bloc | `block.code` (« A », « B2 »), unique sur toutes les fermes, en majuscules ; vide tant que le bloc n'est pas relié à plants |
 | `zone_block_mapping` | Supprimée : le bloc d'une zone est `zone.block_id`, son code Plants est `block.code`. Une zone n'arrose plus qu'un bloc, et toutes les zones d'un bloc partagent son code |
-| API REST | Le module `farm` sert `/api/farm/farms`, `/api/farm/fields` (les blocs, sous leur nom watersupply), `/api/farm/zones` et `/api/farm/zone-block-mappings` (préfixe du module, ADR 0002 ; anciens chemins `/api/farms`, `/api/fields`, `/api/zones`, `/api/water/zone-block-mappings` jusqu'à T36), mêmes champs JSON ; les identifiants deviennent des nombres. Relier une zone donne son code au bloc de la zone, la délier l'efface (409 si le bloc porte déjà un autre code ou si le code appartient à un autre bloc) |
+| API REST | Le module `farm` sert `/api/farm/farms`, `/api/farm/fields` (les blocs, sous leur nom watersupply), `/api/farm/zones` et `/api/farm/zone-block-mappings` (préfixe du module, ADR 0002 ; les anciens chemins `/api/farms`, `/api/fields`, `/api/zones`, `/api/water/zone-block-mappings` ont disparu avec T36), mêmes champs JSON ; les identifiants deviennent des nombres. Relier une zone donne son code au bloc de la zone, la délier l'efface (409 si le bloc porte déjà un autre code ou si le code appartient à un autre bloc) |
 | Lecture par les autres modules | `farm.api.FarmDirectory` (ferme, bloc par id ou par code, blocs d'une ferme, zones d'un bloc ou d'une ferme) et ses records `FarmDto`, `BlockDto`, `ZoneDto` |
 | Clés étrangères entre modules | Colonne `Long` simple dans le module consommateur, contrainte déclarée par un bean `core.schema.CrossModuleForeignKey` vers `FarmDirectory.FARM_TABLE`, `BLOCK_TABLE` ou `ZONE_TABLE` ; une ligne encore référencée ne peut pas être supprimée (409) |
 | Attributs d'irrigation | Méthode d'irrigation, coefficient cultural et goutteurs restent sur `Zone` pour ne pas changer le JSON de `/api/farm/zones` ; T36 ne les a pas déplacés vers watersupply (fonctionnalités gelées), à reconsidérer plus tard |
@@ -94,13 +94,24 @@ Les trois copies (energysupply `alert`, salesmarketing `alerts`, watersupply `no
 
 `notification.api.AlertBoard` : `raise`, `raiseOnce` (fenêtre anti-doublon : alerte non lue du même module et du même titre), `find`, `list` (par statut), `page` (par destinataire), `update`, `changeStatus`, `markRead`, `markAllRead`, `delete`, `count`, `countByType`, `isAbout`. Le service de courriel `core.notification.NotificationService` reste un concept distinct.
 
+### Mise en œuvre
+
+| Référentiel | État final |
+|---|---|
+| `farm` | `/api/farm/farms`, `/api/farm/fields`, `/api/farm/zones`, `/api/farm/zone-block-mappings` ; lu par plants, producttransformation et watersupply via `FarmDirectory` et `BlockRegistry` |
+| `staff` | Table `person`, sans contrôleur ; lu via `PersonDirectory` par machinery, producttransformation (extension `operator`), visitormanagement (guides de la table `staff`, servis par `/api/visitor-management/staff`), watersupply et notification (destinataire d'une alerte) |
+| `notification` | Table `alert`, sans contrôleur ; chaque module sert ses alertes sur son propre chemin : `/api/energy-supply/alerts`, `/api/sales-marketing/alerts`, `/api/water-supply/notifications` |
+| Équipement | Table `equipment` de machinery, servie par `/api/machinery/equipment` ; producttransformation lit et modifie ses machines de transformation et de séchage via `EquipmentLookup` et `ProcessingEquipmentRegistry`, sous `/api/product-transformation/equipment`, et garde `pt_equipment_spec` |
+| Variété | Catalogue `variety_reference` de plants, référencé sur sa colonne unique `variety_key` (et non sur l'id) par producttransformation et salesmarketing, via `VarietyCatalog` |
+| Chaîne des lots | `harvest_event.plants_harvest_id` vers `harvest_record`, `packaging_record.batch_id` vers `batch`, `product_batches.packaging_record_id` vers `packaging_record`, `water_consumption.processing_batch_id` vers `batch` ; les deux derniers liens passent à `NULL` si la cible est supprimée, la ligne gardant son propre code. Le lien `harvest_event` vers `batch` reste un code métier (`batch_code`) interne à producttransformation |
+
 ## Conséquences
 
 | Type | Conséquence |
 |---|---|
 | Positive | Une personne, un lieu, un équipement ou une variété est saisi une seule fois et référencé partout |
 | Positive | La traçabilité récolte, transformation, vente devient possible par jointure |
-| Négative | Trois nouveaux modules (`farm`, `staff`, `notification`) à ajouter à `module-owners.conf` et aux scripts de garde (T48) |
+| Négative | Trois nouveaux modules (`farm`, `staff`, `notification`), partagés : ils sont inscrits dans `module-owners.conf` au nom de l'admin (T48) ; les scripts de garde, génériques, n'avaient rien à changer |
 | Négative | Les modules consommateurs dépendent du propriétaire : un changement de son package `api` les touche tous |
 | Neutre | Aucune fonctionnalité n'est ajoutée ni retirée (A11) : pas de cloche de notifications, pas de tableau de bord global, pas d'endpoint de traçabilité |
 
