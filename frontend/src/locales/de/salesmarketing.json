@@ -78,5 +78,130 @@
     "money": "{{value}} {{symbol}}",
     "moneyThousands": "{{value}} Tsd. {{symbol}}",
     "thousands": "{{value}} Tsd."
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "eyebrow": "Nachfrageanalyse",
+    "export": "BERICHT EXPORTIEREN",
+    "newForecast": "NEUE PROGNOSE",
+    "loading": "Dashboard wird geladen…",
+    "apiNotice": "Hinweis zur API-Verbindung",
+    "actionFailed": "Aktion fehlgeschlagen",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "loadFailed": "Vertriebs- und Marketingdaten konnten nicht geladen werden.",
+    "loadDataFailed": "Dashboard-Daten konnten nicht geladen werden. Bitte erneut versuchen.",
+    "partialLoad": "Teilweise geladen - {{failures}}",
+    "failure": {
+      "forecasts": "Prognosen: {{message}}",
+      "alerts": "Warnungen: {{message}}",
+      "batches": "Chargen: {{message}}",
+      "products": "Produkte: {{message}}",
+      "pricing": "Preise: {{message}}",
+      "customers": "Kunden: {{message}}",
+      "orders": "Bestellungen: {{message}}"
+    },
+    "forecastCreated": "Prognose erfolgreich erstellt.",
+    "forecastCreateFailed": "Prognose konnte nicht erstellt werden",
+    "exportEmpty": "Keine Prognosedaten zum Exportieren vorhanden.",
+    "exportDone": "Prognose-Export heruntergeladen.",
+    "alertDeleted": "Warnung {{code}} gelöscht.",
+    "alertDeleteFailed": "Warnung konnte nicht gelöscht werden",
+    "deleteAlertTitle": "Warnung löschen?",
+    "deleteAlertMessage": "Möchten Sie die Warnung {{code}} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleting": "Wird gelöscht…",
+    "none": "-",
+    "noData": "Keine Daten",
+    "tons": "{{value}} t",
+    "euroMillions": "{{value}} Mio. EUR",
+    "thousands": "{{value}} Tsd.",
+    "kpi": {
+      "forecasted": "Prognostizierte Nachfrage (Basis)",
+      "range": "Spanne: {{lower}} - {{upper}}",
+      "awaiting": "Warten auf Prognosezeilen",
+      "germany": "Nachfrage Deutschland",
+      "metricTons": "{{value}} t",
+      "noRegional": "Kein regionales Prognosefeld verfügbar",
+      "activeAlerts": "Aktive Warnungen",
+      "activeCount": "{{number}} aktiv",
+      "degraded": "Eingeschränkte Verbindung",
+      "operational": "System betriebsbereit",
+      "revenue": "Umsatzpotenzial",
+      "latestPrice": "Letzter Preis: {{price}} EUR/kg",
+      "noPricing": "Keine Preisdaten geladen"
+    },
+    "chart": {
+      "title": "Nachfrageprognose und Verlauf",
+      "rows": "{{number}} Prognosezeile(n)",
+      "projection": "90-Tage-Projektion auf Basis der aktuellen Ernteerträge",
+      "historical": "Verlauf",
+      "forecast": "Prognose",
+      "band": "Konfidenzband",
+      "today": "HEUTE",
+      "empty": "Noch nicht genug Prognosepunkte für ein Diagramm.",
+      "create": "Prognose erstellen"
+    },
+    "harvest": {
+      "title": "Haupterntezeit",
+      "months": "März - Juli"
+    },
+    "batches": {
+      "title": "Produktverarbeitung",
+      "refresh": "Chargen aktualisieren",
+      "empty": "Keine Produktchargen verfügbar.",
+      "id": "Chargen-ID",
+      "stock": "Bestand",
+      "status": "Status"
+    },
+    "batchStatus": {
+      "processed": "Verarbeitet",
+      "inTransit": "Unterwegs",
+      "scheduled": "Geplant",
+      "delayed": "Verspätet"
+    },
+    "alerts": {
+      "title": "Systemwarnungen",
+      "empty": "Keine Warnungen vorhanden.",
+      "clickToDelete": "Klicken, um diese Warnung zu löschen",
+      "fallbackCode": "Warnung #{{id}}",
+      "viewAll": "ALLE WARNUNGEN ANZEIGEN"
+    },
+    "shortcuts": {
+      "historical": {
+        "title": "Verlaufsdaten",
+        "text": "Frühere Leistung ansehen"
+      },
+      "model": {
+        "title": "Modelleinstellungen",
+        "text": "KI-Parameter konfigurieren"
+      },
+      "seasonal": {
+        "title": "Saisonplanung",
+        "text": "Erntezyklen verwalten"
+      }
+    },
+    "form": {
+      "title": "Neue Prognose",
+      "product": "Produkt",
+      "selectProduct": "Produkt auswählen…",
+      "noProducts": "Keine Produkte verfügbar. Legen Sie ein Produkt an, bevor Sie eine Prognose erstellen.",
+      "month": "Monat",
+      "scenario": "Szenario",
+      "volume": "Menge (t)",
+      "lower": "Untergrenze",
+      "upper": "Obergrenze",
+      "risk": "Kapazitätsrisiko",
+      "saving": "Wird gespeichert…",
+      "create": "Erstellen"
+    },
+    "scenario": {
+      "base": "Basis",
+      "optimistic": "optimistisch",
+      "pessimistic": "pessimistisch"
+    },
+    "risk": {
+      "low": "niedrig",
+      "medium": "mittel",
+      "high": "hoch"
+    }
   }
 }

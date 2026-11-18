@@ -78,5 +78,130 @@
     "money": "{{symbol}}{{value}}",
     "moneyThousands": "{{symbol}}{{value}}k",
     "thousands": "{{value}}k"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "eyebrow": "Demand Intelligence",
+    "export": "EXPORT REPORT",
+    "newForecast": "NEW FORECAST",
+    "loading": "Loading dashboard…",
+    "apiNotice": "API Connection Notice",
+    "actionFailed": "Action failed",
+    "requestFailed": "Request failed",
+    "loadFailed": "Unable to load Sales & Marketing data.",
+    "loadDataFailed": "Unable to load dashboard data. Please try again.",
+    "partialLoad": "Partial load - {{failures}}",
+    "failure": {
+      "forecasts": "Forecasts: {{message}}",
+      "alerts": "Alerts: {{message}}",
+      "batches": "Batches: {{message}}",
+      "products": "Products: {{message}}",
+      "pricing": "Pricing: {{message}}",
+      "customers": "Customers: {{message}}",
+      "orders": "Orders: {{message}}"
+    },
+    "forecastCreated": "Forecast created successfully.",
+    "forecastCreateFailed": "Failed to create forecast",
+    "exportEmpty": "No forecast data available to export.",
+    "exportDone": "Forecast export downloaded.",
+    "alertDeleted": "Alert {{code}} deleted.",
+    "alertDeleteFailed": "Failed to delete alert",
+    "deleteAlertTitle": "Delete alert?",
+    "deleteAlertMessage": "Are you sure you want to delete alert {{code}}? This action cannot be undone.",
+    "deleting": "Deleting…",
+    "none": "-",
+    "noData": "No data",
+    "tons": "{{value}} t",
+    "euroMillions": "EUR{{value}}M",
+    "thousands": "{{value}}k",
+    "kpi": {
+      "forecasted": "Forecasted Demand (Base)",
+      "range": "Range: {{lower}} - {{upper}}",
+      "awaiting": "Awaiting forecast rows",
+      "germany": "Germany Demand",
+      "metricTons": "{{value}} MT",
+      "noRegional": "No regional forecast field available",
+      "activeAlerts": "Active Alerts",
+      "activeCount": "{{number}} Active",
+      "degraded": "Degraded connectivity",
+      "operational": "System operational",
+      "revenue": "Revenue Potential",
+      "latestPrice": "Latest price: EUR{{price}}/kg",
+      "noPricing": "No pricing data loaded"
+    },
+    "chart": {
+      "title": "Demand Forecast vs. Historical",
+      "rows": "{{number}} forecast row(s)",
+      "projection": "90-day projection based on current harvest yields",
+      "historical": "Historical",
+      "forecast": "Forecast",
+      "band": "Confidence Band",
+      "today": "TODAY",
+      "empty": "Not enough forecast points to draw a chart yet.",
+      "create": "Create a forecast"
+    },
+    "harvest": {
+      "title": "Peak Harvest Window",
+      "months": "March - July"
+    },
+    "batches": {
+      "title": "Prod. Transformation",
+      "refresh": "Refresh batches",
+      "empty": "No product batches are available.",
+      "id": "Batch ID",
+      "stock": "Stock",
+      "status": "Status"
+    },
+    "batchStatus": {
+      "processed": "Processed",
+      "inTransit": "In Transit",
+      "scheduled": "Scheduled",
+      "delayed": "Delayed"
+    },
+    "alerts": {
+      "title": "System Alerts",
+      "empty": "No alerts to display.",
+      "clickToDelete": "Click to delete this alert",
+      "fallbackCode": "Alert #{{id}}",
+      "viewAll": "VIEW ALL ALERTS"
+    },
+    "shortcuts": {
+      "historical": {
+        "title": "Historical Data",
+        "text": "Browse past performance"
+      },
+      "model": {
+        "title": "Model Settings",
+        "text": "Configure AI parameters"
+      },
+      "seasonal": {
+        "title": "Seasonal Planning",
+        "text": "Manage harvest cycles"
+      }
+    },
+    "form": {
+      "title": "New Forecast",
+      "product": "Product",
+      "selectProduct": "Select product…",
+      "noProducts": "No products are available. Add a product before creating a forecast.",
+      "month": "Month",
+      "scenario": "Scenario",
+      "volume": "Volume (t)",
+      "lower": "Lower",
+      "upper": "Upper",
+      "risk": "Capacity Risk",
+      "saving": "Saving…",
+      "create": "Create"
+    },
+    "scenario": {
+      "base": "base",
+      "optimistic": "optimistic",
+      "pessimistic": "pessimistic"
+    },
+    "risk": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    }
   }
 }
