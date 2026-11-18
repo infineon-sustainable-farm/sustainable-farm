@@ -15,5 +15,108 @@
     "lots": "Verarbeitungschargen",
     "visitors": "Besucher",
     "notifications": "Benachrichtigungen"
+  },
+  "common": {
+    "none": "—",
+    "loading": "Wird geladen…",
+    "error": "Fehler",
+    "save": "Speichern",
+    "saving": "...",
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "close": "Schließen",
+    "select": "Auswählen",
+    "allFarms": "Alle Betriebe",
+    "saveError": "Speichern nicht möglich.",
+    "deleteError": "Löschen nicht möglich.",
+    "history": "Verlauf"
+  },
+  "units": {
+    "liters": "{{value}} L",
+    "cubicMeters": "{{value}} m³",
+    "mm": "{{value}} mm",
+    "percent": "{{value}} %",
+    "minutes": "{{value}} min",
+    "kmh": "{{value}} km/h",
+    "celsius": "{{value}} °C"
+  },
+  "charts": {
+    "unit": "Einheit: {{unit}}",
+    "units": {
+      "liters": "Liter",
+      "millimeters": "Millimeter",
+      "percent": "%"
+    },
+    "axis": {
+      "liters": "L",
+      "cubicMeters": "m³",
+      "mm": "mm",
+      "percent": "%"
+    },
+    "label": "Diagramm in {{unit}}",
+    "exportPng": "Diagramm als PNG-Bild exportieren",
+    "exportCsv": "Diagrammdaten als CSV exportieren",
+    "png": "PNG",
+    "csv": "CSV",
+    "target": "Ziel {{value}}",
+    "ofTarget": "/ Ziel {{value}}"
+  },
+  "sources": {
+    "title": "Wasserquellen",
+    "subtitle": "Brunnen, Regentanks, Flüsse: Entnahmestellen je Betrieb verwalten.",
+    "listTitle": "Quellenliste",
+    "count": "{{count}} Quelle(n)",
+    "farmFilter": "Nach Betrieb filtern",
+    "search": "Quelle suchen…",
+    "loading": "Quellen werden geladen...",
+    "loadError": "Quellen können nicht geladen werden.",
+    "emptyTitle": "Keine Quellen",
+    "empty": "Legen Sie zum Start eine Wasserquelle an, die einem Betrieb zugeordnet ist.",
+    "columns": {
+      "name": "Name",
+      "farm": "Betrieb",
+      "type": "Typ",
+      "capacity": "Kapazität",
+      "level": "Füllstand"
+    },
+    "levelValue": "{{level}} ({{pct}})",
+    "farmFallback": "Betrieb {{id}}",
+    "types": {
+      "borehole": "Bohrbrunnen",
+      "rain": "Regen",
+      "river": "Fluss",
+      "well": "Brunnen",
+      "municipal": "Leitungsnetz"
+    },
+    "newTitle": "Neue Quelle",
+    "editTitle": "Quelle bearbeiten",
+    "fields": {
+      "farm": "Betrieb",
+      "name": "Name",
+      "type": "Typ",
+      "capacity": "Kapazität (L)"
+    },
+    "errors": {
+      "farmRequired": "Der Betrieb ist erforderlich.",
+      "nameRequired": "Der Name ist erforderlich.",
+      "capacityPositive": "Die Kapazität muss größer als 0 sein.",
+      "levelRange": "Der aktuelle Füllstand muss zwischen 0 und der Kapazität liegen."
+    },
+    "created": "Quelle angelegt",
+    "updated": "Quelle aktualisiert",
+    "deleted": "Quelle gelöscht",
+    "deleteTitle": "{{name}} löschen",
+    "theSource": "Die Quelle",
+    "deleteMessage": "Diese Quelle wird entfernt. Zugehörige Verbräuche und Qualitätstests können betroffen sein.",
+    "history": {
+      "title": "Füllstandsverlauf - {{name}}",
+      "loading": "Füllstandsverlauf wird geladen…",
+      "loadError": "Der Verlauf kann nicht geladen werden.",
+      "emptyTitle": "Kein Füllstand erfasst",
+      "empty": "Messwerte erscheinen hier, sobald der Füllstandssensor sie meldet oder der Füllstand bearbeitet wird.",
+      "series": "Füllstand (L)",
+      "capacity": "Kapazität"
+    }
   }
 }

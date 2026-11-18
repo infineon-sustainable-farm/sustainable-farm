@@ -1,37 +1,63 @@
 import { useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { History, Pencil, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import {
+  Badge,
+  Button,
+  Card,
+  ConfirmDialog,
+  EmptyState,
+  ErrorState,
+  Field,
+  IconButton,
+  Input,
+  Select,
+  Table,
+} from '../../../../shared/ui'
+import { useListControls } from '../../../../shared/hooks/useListControls'
 import { waterSourceApi } from '../../api/watersupplyApi'
 import { useFarms } from '../../hooks/useFarms'
 import { useWaterSources } from '../../hooks/useWaterData'
-import { useListControls } from '../../../../shared/hooks/useListControls'
-import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from './Pagination'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
+import { useWaterFormat } from '../../format'
+import { Filters, FormActions, Screen, SplitLayout } from '../common/Screen'
+import { FormAlert } from '../common/FormAlert'
+import { ListPagination } from '../common/ListPagination'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { tableSort } from '../common/listSort'
 import { LevelHistoryPanel } from './LevelHistoryPanel'
 import { sameId } from './ids'
 
 const SOURCE_TYPES = ['borehole', 'rain', 'river', 'well', 'municipal']
+const EMPTY_FORM = { farmId: '', name: '', type: 'borehole', capacityLiters: '', currentLevelLiters: '' }
+
+/** Level tone: orange when nearly full, green when there is water, red when empty. */
+function levelTone(pct) {
+  if (pct >= 90) return 'warning'
+  return pct > 0 ? 'success' : 'error'
+}
 
 /**
  * Water sources view: full CRUD with farm association and validation.
  * Backend contract: WaterSource { farmId, name, type, capacityLiters, currentLevelLiters }.
  */
 export function SourcesView({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { sources, loading, error, refetch } = useWaterSources()
   const { farms } = useFarms()
   const [farmFilter, setFarmFilter] = useState('')
-  const [form, setForm] = useState({ farmId: '', name: '', type: 'borehole', capacityLiters: '', currentLevelLiters: '' })
+  const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [historyTarget, setHistoryTarget] = useState(null)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
 
-  const farmName = (farmId) => farms.find((f) => f.id === farmId)?.name || (farmId ? `Farm ${String(farmId).slice(0, 8)}` : '—')
+  const farmName = (farmId) =>
+    farms.find((f) => f.id === farmId)?.name || (farmId ? t('sources.farmFallback', { id: String(farmId).slice(0, 8) }) : t('common.none'))
+  const typeLabel = (type) => (type ? t(`sources.types.${type}`, { defaultValue: type }) : t('common.none'))
 
   const farmFiltered = useMemo(
     () => sources.filter((item) => !farmFilter || sameId(item.farmId, farmFilter)),
@@ -48,28 +74,28 @@ export function SourcesView({ notify }) {
 
   const resetForm = () => {
     setEditingId(null)
-    setForm({ farmId: '', name: '', type: 'borehole', capacityLiters: '', currentLevelLiters: '' })
+    setForm(EMPTY_FORM)
     setFormError(null)
   }
 
   const submitSource = (event) => {
     event.preventDefault()
     if (!form.farmId) {
-      setFormError('The farm is required.')
+      setFormError(t('sources.errors.farmRequired'))
       return
     }
     if (!form.name.trim()) {
-      setFormError('The name is required.')
+      setFormError(t('sources.errors.nameRequired'))
       return
     }
     const capacity = Number(form.capacityLiters)
     if (!(capacity > 0)) {
-      setFormError('The capacity must be greater than 0.')
+      setFormError(t('sources.errors.capacityPositive'))
       return
     }
     const level = form.currentLevelLiters === '' ? 0 : Number(form.currentLevelLiters)
     if (level < 0 || level > capacity) {
-      setFormError('The current level must be between 0 and the capacity.')
+      setFormError(t('sources.errors.levelRange'))
       return
     }
     setBusy(true)
@@ -85,10 +111,10 @@ export function SourcesView({ notify }) {
     request
       .then(() => refetch())
       .then(() => {
-        notify(editingId ? 'Source updated' : 'Source created')
+        notify(editingId ? t('sources.updated') : t('sources.created'))
         resetForm()
       })
-      .catch((err) => setFormError(err.message || 'Unable to save.'))
+      .catch((err) => setFormError(err.message || t('common.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -107,131 +133,128 @@ export function SourcesView({ notify }) {
   const deleteSource = () => {
     if (!deleteTarget) return
     setBusy(true)
+    setDeleteError(null)
     waterSourceApi
       .deleteSource(deleteTarget.id)
       .then(() => refetch())
       .then(() => {
-        notify('Source deleted')
+        notify(t('sources.deleted'))
         setDeleteTarget(null)
       })
-      .catch((err) => setFormError(err.message || 'Unable to delete.'))
+      .catch((err) => setDeleteError(err.message || t('common.deleteError')))
       .finally(() => setBusy(false))
   }
 
-  return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Water sources</h1>
-          <p>Boreholes, rain tanks, rivers: manage abstraction points per farm.</p>
-        </div>
-      </div>
+  const columns = [
+    { key: 'name', header: t('sources.columns.name'), sortable: true },
+    { key: 'farm', header: t('sources.columns.farm'), cell: (item) => farmName(item.farmId) },
+    { key: 'type', header: t('sources.columns.type'), cell: (item) => <Badge tone="info">{typeLabel(item.type)}</Badge> },
+    { key: 'capacity', header: t('sources.columns.capacity'), cell: (item) => format.liters(item.capacityLiters ?? 0) },
+    {
+      key: 'level',
+      header: t('sources.columns.level'),
+      cell: (item) => {
+        const pct = item.capacityLiters ? Math.round((item.currentLevelLiters / item.capacityLiters) * 100) : 0
+        return (
+          <Badge tone={levelTone(pct)}>
+            {t('sources.levelValue', { level: format.liters(item.currentLevelLiters ?? 0), pct: format.percent(pct) })}
+          </Badge>
+        )
+      },
+    },
+  ]
 
-      <div className="ws-layout-2">
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Source list</h2>
-            <span>{list.total} source(s)</span>
-          </div>
-          <div className="ws-filters">
-            <select value={farmFilter} onChange={(event) => setFarmFilter(event.target.value)}>
-              <option value="">All farms</option>
-              {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
-            </select>
-            <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search a source…" />
-          </div>
-          <div className="ws-panel-body">
-            {loading ? (
-              <Spinner label="Loading sources..." full />
-            ) : error ? (
-              <EmptyState title="Error" description={error.message || 'Unable to load sources.'} />
-            ) : farmFiltered.length === 0 ? (
-              <EmptyState title="No sources" description="Create a water source linked to a farm to get started." />
-            ) : (
-              <table className="ws-table">
-                <thead>
-                  <tr>
-                    <th onClick={() => list.toggleSort('name')} style={{ cursor: 'pointer' }}>
-                      Name {list.sort?.key === 'name' ? (list.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                    </th>
-                    <th>Farm</th>
-                    <th>Type</th>
-                    <th>Capacity</th>
-                    <th>Level</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.items.map((item) => {
-                    const pct = item.capacityLiters ? Math.round((item.currentLevelLiters / item.capacityLiters) * 100) : 0
-                    return (
-                      <tr key={item.id}>
-                        <td><strong>{item.name}</strong></td>
-                        <td>{farmName(item.farmId)}</td>
-                        <td><span className="ws-tag primary">{item.type || '—'}</span></td>
-                        <td>{item.capacityLiters ?? 0} L</td>
-                        <td>
-                          <span className={`ws-tag ${pct >= 90 ? 'orange' : pct > 0 ? 'green' : 'red'}`}>{item.currentLevelLiters ?? 0} L ({pct}%)</span>
-                        </td>
-                        <td className="ws-table-actions">
-                          <button className="ws-chip" onClick={() => setHistoryTarget(item)}>History</button>
-                          <button className="ws-chip" onClick={() => editSource(item)}>Edit</button>
-                          <button className="ws-icon-btn danger" title="Delete" onClick={() => setDeleteTarget(item)}>
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
-            <Pagination page={list.page} pageCount={list.pageCount} onPage={list.setPage} total={list.total} unit="source" />
-          </div>
-        </div>
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>{editingId ? 'Edit source' : 'New source'}</h2>
-            <Plus size={16} />
-          </div>
-          <div className="ws-panel-body">
-            {formError && <div className="ws-inline-error">{formError}</div>}
-            <form className="ws-form-grid" onSubmit={submitSource}>
-              <FormField label="Farm" required>
-                <select style={inputStyle} value={form.farmId} onChange={updateForm('farmId')} required>
-                  <option value="">Select</option>
-                  {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
-                </select>
-              </FormField>
-              <FormField label="Name" required>
-                <input style={inputStyle} value={form.name} onChange={updateForm('name')} required />
-              </FormField>
-              <FormField label="Type" required>
-                <select style={inputStyle} value={form.type} onChange={updateForm('type')} required>
-                  {SOURCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-                </select>
-              </FormField>
-              <FormField label="Capacity (L)" required>
-                <input style={inputStyle} type="number" min="0" step="0.01" value={form.capacityLiters} onChange={updateForm('capacityLiters')} required />
-              </FormField>
-              <div className="ws-form-actions">
-                {editingId && <button type="button" className="ws-chip" onClick={resetForm}>Cancel</button>}
-                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Save'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {historyTarget && <LevelHistoryPanel source={historyTarget} onClose={() => setHistoryTarget(null)} />}
-      {deleteTarget && (
-        <ConfirmDialog
-          title={`Delete ${deleteTarget.name || 'the source'}`}
-          message="This source will be removed. Related consumption and quality tests could be impacted."
-          onConfirm={deleteSource}
-          onCancel={() => setDeleteTarget(null)}
-          busy={busy}
+  function renderList() {
+    if (loading) return <LoadingState label={t('sources.loading')} />
+    if (error) return <ErrorState message={error.message || t('sources.loadError')} />
+    if (farmFiltered.length === 0) return <EmptyState title={t('sources.emptyTitle')} message={t('sources.empty')} />
+    return (
+      <>
+        <Table
+          caption={t('sources.listTitle')}
+          columns={columns}
+          rows={list.items}
+          {...tableSort(list)}
+          rowActions={(item) => (
+            <div className="flex justify-end gap-1">
+              <IconButton icon={History} label={t('common.history')} onClick={() => setHistoryTarget(item)} />
+              <IconButton icon={Pencil} label={t('common.edit')} onClick={() => editSource(item)} />
+              <IconButton icon={Trash2} tone="danger" label={t('common.delete')} onClick={() => setDeleteTarget(item)} />
+            </div>
+          )}
         />
-      )}
-    </>
+        <ListPagination list={list} />
+      </>
+    )
+  }
+
+  return (
+    <Screen title={t('sources.title')} subtitle={t('sources.subtitle')}>
+      <SplitLayout
+        main={
+          <>
+            <Card
+              title={t('sources.listTitle')}
+              actions={<span className="text-sm text-text-muted">{t('sources.count', { count: list.total })}</span>}
+            >
+              <Filters>
+                <Select
+                  aria-label={t('sources.farmFilter')}
+                  value={farmFilter}
+                  onChange={(event) => setFarmFilter(event.target.value)}
+                  className="w-auto"
+                >
+                  <option value="">{t('common.allFarms')}</option>
+                  {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
+                </Select>
+                <SearchField value={list.query} onChange={list.setQuery} placeholder={t('sources.search')} />
+              </Filters>
+              {renderList()}
+            </Card>
+            {historyTarget && <LevelHistoryPanel source={historyTarget} onClose={() => setHistoryTarget(null)} />}
+          </>
+        }
+        aside={
+          <Card title={editingId ? t('sources.editTitle') : t('sources.newTitle')}>
+            <FormAlert>{formError}</FormAlert>
+            <form className="flex flex-col gap-4" onSubmit={submitSource}>
+              <Field label={t('sources.fields.farm')} required>
+                <Select value={form.farmId} onChange={updateForm('farmId')}>
+                  <option value="">{t('common.select')}</option>
+                  {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
+                </Select>
+              </Field>
+              <Field label={t('sources.fields.name')} required>
+                <Input value={form.name} onChange={updateForm('name')} />
+              </Field>
+              <Field label={t('sources.fields.type')} required>
+                <Select value={form.type} onChange={updateForm('type')}>
+                  {SOURCE_TYPES.map((type) => <option key={type} value={type}>{typeLabel(type)}</option>)}
+                </Select>
+              </Field>
+              <Field label={t('sources.fields.capacity')} required>
+                <Input type="number" min="0" step="0.01" value={form.capacityLiters} onChange={updateForm('capacityLiters')} />
+              </Field>
+              <FormActions>
+                {editingId && <Button variant="secondary" onClick={resetForm}>{t('common.cancel')}</Button>}
+                <Button type="submit" loading={busy}>{t('common.save')}</Button>
+              </FormActions>
+            </form>
+          </Card>
+        }
+      />
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t('sources.deleteTitle', { name: deleteTarget?.name || t('sources.theSource') })}
+        message={t('sources.deleteMessage')}
+        onConfirm={deleteSource}
+        onClose={() => {
+          setDeleteTarget(null)
+          setDeleteError(null)
+        }}
+        loading={busy}
+        error={deleteError}
+      />
+    </Screen>
   )
 }

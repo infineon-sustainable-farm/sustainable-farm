@@ -16,97 +16,80 @@ import {
   PolarAngleAxis,
 } from 'recharts'
 import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Button } from '../../../shared/ui'
+import { useWaterFormat } from '../format'
 import { C, exportChartAsPng, exportRowsAsCsv } from './chartUtils'
 
-const tooltipStyle = {
-  fontFamily: "'Inter', Arial, sans-serif",
-  fontSize: '12px',
-  borderRadius: '8px',
-  border: '1px solid var(--ws-line, #e2e9e7)',
-  background: '#fff',
-  color: 'var(--ws-ink, #1c2b29)',
+// Colours and sizes from the tokens of src/index.css, as the machinery fuel chart. The axis ticks
+// are SVG attributes: their font size is the text-xs value as a number.
+const TEXT_XS = 12
+const AXIS_TICK = { fill: C.muted, fontSize: TEXT_XS }
+const AXIS_LABEL = { fill: C.muted, fontSize: TEXT_XS }
+const TOOLTIP_STYLE = {
+  borderRadius: 'var(--radius-tile)',
+  border: 'thin solid var(--color-border-divider)',
+  fontSize: 'var(--text-xs)',
 }
+const LEGEND_STYLE = { fontSize: 'var(--text-xs)' }
+const AREA_OPACITY = 0.15
+const BAND_OPACITY = 0.08
+const BAR_RADIUS = [4, 4, 0, 0]
+const BAR_MAX_SIZE = 28
 
-const axisTick = { fontSize: 11, fill: C.muted, fontFamily: 'Inter' }
-
-const legendStyle = {
-  fontFamily: "'Inter', Arial, sans-serif",
-  fontSize: '11px',
-  paddingTop: '4px',
-}
-
-/**
- * Formats a volume in litres with the matching unit (L, m³ above 10,000 L).
- * Charts must always carry a readable unit to be usable.
- * @param {number} liters
- * @param {number} [decimals]
- */
-function formatLiters(liters, decimals = 0) {
-  const value = Number(liters) || 0
-  if (Math.abs(value) >= 10000) return `${(value / 1000).toFixed(1)} m³`
-  return `${value.toFixed(decimals)} L`
-}
-
-/** Formats an amount in millimetres (rainfall, ET0). */
-/** Compact unit suffix for axes (avoids long labels). */
+/** Compact unit of an axis: m³ above 10,000 L. */
 function axisUnit(values, kind = 'liters') {
   const max = values.reduce((acc, v) => Math.max(acc, Math.abs(Number(v) || 0)), 0)
-  if (kind === 'liters') return max >= 10000 ? { label: 'm³', divisor: 1000 } : { label: 'L', divisor: 1 }
-  if (kind === 'mm') return { label: 'mm', divisor: 1 }
-  return { label: '', divisor: 1 }
+  if (kind === 'liters') return max >= 10000 ? { key: 'cubicMeters', divisor: 1000 } : { key: 'liters', divisor: 1 }
+  if (kind === 'mm') return { key: 'mm', divisor: 1 }
+  return { key: 'percent', divisor: 1 }
 }
 
-/** Formats an axis value according to the selected unit. */
-function tickFormatter({ label, divisor }) {
-  return (value) => {
-    const scaled = (Number(value) || 0) / divisor
-    return `${label === 'm³' ? scaled.toFixed(1) : Math.round(scaled)}`
-  }
-}
+/** Unit name shown above a chart. */
+const UNIT_NAMES = { liters: 'liters', mm: 'millimeters', percent: 'percent' }
 
 /**
- * Common shell: unit header, empty-state note, and PNG / CSV chart export.
- * The export is optional: it only appears when a file name is provided.
+ * Common frame: unit line and, when a file name is given, PNG and CSV export of the chart.
  *
  * @param {string} [exportName] - exported file name (without extension); omitted = no export.
- * @param {Array<Object>} [exportRows] - raw rows to export as CSV.
+ * @param {Array<Object>} [exportRows] - raw rows exported as CSV.
  * @param {Array<{ key: string, label: string }>} [exportColumns] - CSV columns.
  */
-function ChartShell({ children, unit, note, exportName, exportRows, exportColumns }) {
+function ChartShell({ children, unitKind, exportName, exportRows, exportColumns }) {
+  const { t } = useTranslation('watersupply')
   const shellRef = useRef(null)
-  const canExport = Boolean(exportName)
-  // The chart is exposed as an image with a label: a screen reader announces at least
-  // what it represents (unit and note), instead of a silent SVG.
-  const chartLabel = ['Chart', unit ? `in ${unit}` : null, note || null].filter(Boolean).join(' - ')
+  const unit = t(`charts.units.${UNIT_NAMES[unitKind] ?? UNIT_NAMES.liters}`)
   return (
-    <div className="ws-chart-shell">
-      <div className="ws-chart-shell-top">
-        {unit && <span className="ws-chart-unit">Unit: {unit}</span>}
-        {canExport && (
-          <div className="ws-chart-toolbar">
-            <button
-              type="button"
-              aria-label="Export the chart as a PNG image"
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs text-text-muted">{t('charts.unit', { unit })}</span>
+        {exportName && (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              aria-label={t('charts.exportPng')}
+              title={t('charts.exportPng')}
               onClick={() => exportChartAsPng(shellRef.current, `${exportName}.png`)}
-              title="Export the chart as a PNG image"
             >
-              PNG
-            </button>
-            <button
-              type="button"
-              aria-label="Export the chart data as CSV"
+              {t('charts.png')}
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              aria-label={t('charts.exportCsv')}
+              title={t('charts.exportCsv')}
               onClick={() => exportRowsAsCsv(exportRows || [], exportColumns || [], `${exportName}.csv`)}
-              title="Export the chart data as CSV"
             >
-              CSV
-            </button>
+              {t('charts.csv')}
+            </Button>
           </div>
         )}
       </div>
-      <div ref={shellRef} role="img" aria-label={chartLabel}>
+      {/* The chart is exposed as an image named by its unit, instead of a silent SVG. */}
+      <div ref={shellRef} role="img" aria-label={t('charts.label', { unit })} className="h-64 w-full">
         {children}
       </div>
-      {note && <p className="ws-chart-note">{note}</p>}
     </div>
   )
 }
@@ -116,71 +99,55 @@ function columnsOf(xKey, series = []) {
   return [{ key: xKey, label: xKey }, ...series.map((s) => ({ key: s.key, label: s.name || s.key }))]
 }
 
+function useTickFormatter(unit) {
+  const format = useWaterFormat()
+  return (value) => {
+    const scaled = (Number(value) || 0) / unit.divisor
+    return unit.key === 'cubicMeters' ? format.fixed(scaled, 1) : format.fixed(scaled, 0)
+  }
+}
+
 /**
- * Area chart (time-series / volume data).
- *
- * Readability: a unit is always displayed, the legend only shows from two series,
- * and a reference series (dashed) lets measured values be compared against need.
+ * Area chart (time series, volumes). A unit is always shown, the legend only from two series,
+ * and dashed reference lines compare measured values with a need or a capacity.
  *
  * @param {Array} data - chart rows.
  * @param {string} xKey - X axis key.
  * @param {Array} series - [{ key, name, color, dashed?, fillArea? }]
- * @param {number} [height]
- * @param {'liters'|'mm'|'percent'} [unitKind] - unit of the values.
- * @param {Array} [referenceLines] - [{ value, label, color }] horizontal comparison lines.
- * @param {Object} [band] - { from, to, color, label } tolerance / target band.
+ * @param {'liters'|'mm'|'percent'} [unitKind]
+ * @param {Array} [referenceLines] - [{ value, label, color }]
+ * @param {Object} [band] - { from, to, color, label } tolerance or target band.
  * @param {boolean} [showLegend]
  */
-export function WsAreaChart({
-  data,
-  xKey,
-  series,
-  height = 260,
-  unitKind = 'liters',
-  referenceLines = [],
-  band = null,
-  showLegend,
-  exportName,
-}) {
+export function WsAreaChart({ data, xKey, series, unitKind = 'liters', referenceLines = [], band = null, showLegend, exportName }) {
+  const { t } = useTranslation('watersupply')
   const unit = axisUnit((data || []).flatMap((row) => series.map((s) => row[s.key])), unitKind)
+  const tickFormatter = useTickFormatter(unit)
   const legend = showLegend === undefined ? series.length > 1 || referenceLines.length > 0 : showLegend
   return (
-    <ChartShell
-      unit={unitKind === 'liters' ? 'liters' : unitKind === 'mm' ? 'millimeters' : '%'}
-      exportName={exportName}
-      exportRows={data}
-      exportColumns={columnsOf(xKey, series)}
-    >
-      <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <defs>
-            {series.map((s) => (
-              <linearGradient key={s.key} id={`grad-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={s.color} stopOpacity={0.28} />
-                <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
-              </linearGradient>
-            ))}
-          </defs>
+    <ChartShell unitKind={unitKind} exportName={exportName} exportRows={data} exportColumns={columnsOf(xKey, series)}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={C.line} vertical={false} />
-          <XAxis dataKey={xKey} tick={axisTick} axisLine={false} tickLine={false} />
+          <XAxis dataKey={xKey} tick={AXIS_TICK} axisLine={false} tickLine={false} />
           <YAxis
-            tick={axisTick}
+            tick={AXIS_TICK}
             axisLine={false}
             tickLine={false}
             width={48}
-            tickFormatter={tickFormatter(unit)}
-            label={{ value: unit.label, angle: 0, position: 'insideTopLeft', offset: 8, fill: C.muted, fontSize: 10 }}
+            tickFormatter={tickFormatter}
+            label={{ value: t(`charts.axis.${unit.key}`), angle: 0, position: 'insideTopLeft', offset: 8, ...AXIS_LABEL }}
           />
-          <Tooltip contentStyle={tooltipStyle} />
-          {legend && <Legend wrapperStyle={legendStyle} iconType="plainline" />}
+          <Tooltip contentStyle={TOOLTIP_STYLE} />
+          {legend && <Legend wrapperStyle={LEGEND_STYLE} iconType="plainline" />}
           {band && (
             <ReferenceArea
               y1={band.from}
               y2={band.to}
               fill={band.color || C.green}
-              fillOpacity={0.08}
+              fillOpacity={BAND_OPACITY}
               stroke="none"
-              label={{ value: band.label, position: 'insideTopRight', fill: C.muted, fontSize: 10 }}
+              label={{ value: band.label, position: 'insideTopRight', ...AXIS_LABEL }}
             />
           )}
           {referenceLines.map((ref) => (
@@ -190,7 +157,7 @@ export function WsAreaChart({
               stroke={ref.color || C.muted}
               strokeDasharray="5 4"
               strokeWidth={1.5}
-              label={{ value: ref.label, position: 'insideBottomRight', fill: ref.color || C.muted, fontSize: 10 }}
+              label={{ value: ref.label, position: 'insideBottomRight', fill: ref.color || C.muted, fontSize: TEXT_XS }}
             />
           ))}
           {series.map((s) => (
@@ -200,10 +167,12 @@ export function WsAreaChart({
               dataKey={s.key}
               name={s.name}
               stroke={s.color}
-              fill={s.fillArea === false ? 'transparent' : `url(#grad-${s.key})`}
+              fill={s.fillArea === false ? 'transparent' : s.color}
+              fillOpacity={AREA_OPACITY}
               strokeWidth={2}
               strokeDasharray={s.dashed ? '6 4' : undefined}
               dot={false}
+              isAnimationActive={false}
             />
           ))}
         </AreaChart>
@@ -213,53 +182,40 @@ export function WsAreaChart({
 }
 
 /**
- * Bar chart (comparison / breakdown), with support for stacked bars
- * and a reference line (alert threshold, quota).
+ * Bar chart (comparison, breakdown), stacked bars and a reference line (threshold, quota).
  *
- * @param {Array} data - [{name, ...}]
+ * @param {Array} data - [{ name, ... }]
  * @param {string} xKey
- * @param {Array} bars - [{key, name, color, stackId?}]
- * @param {number} [height]
+ * @param {Array} bars - [{ key, name, color, stackId? }]
  * @param {'liters'|'mm'|'percent'} [unitKind]
  * @param {Object} [referenceLine] - { value, label, color }
  */
-export function WsBarChart({
-  data,
-  xKey,
-  bars,
-  height = 260,
-  unitKind = 'liters',
-  referenceLine = null,
-  exportName,
-}) {
+export function WsBarChart({ data, xKey, bars, unitKind = 'liters', referenceLine = null, exportName }) {
+  const { t } = useTranslation('watersupply')
   const unit = axisUnit((data || []).flatMap((row) => bars.map((b) => row[b.key])), unitKind)
+  const tickFormatter = useTickFormatter(unit)
   return (
-    <ChartShell
-      unit={unitKind === 'liters' ? 'liters' : unitKind === 'mm' ? 'millimeters' : '%'}
-      exportName={exportName}
-      exportRows={data}
-      exportColumns={columnsOf(xKey, bars)}
-    >
-      <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barGap={4}>
+    <ChartShell unitKind={unitKind} exportName={exportName} exportRows={data} exportColumns={columnsOf(xKey, bars)}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={4}>
           <CartesianGrid strokeDasharray="3 3" stroke={C.line} vertical={false} />
-          <XAxis dataKey={xKey} tick={axisTick} axisLine={false} tickLine={false} />
+          <XAxis dataKey={xKey} tick={AXIS_TICK} axisLine={false} tickLine={false} />
           <YAxis
-            tick={axisTick}
+            tick={AXIS_TICK}
             axisLine={false}
             tickLine={false}
             width={48}
-            tickFormatter={tickFormatter(unit)}
-            label={{ value: unit.label, angle: 0, position: 'insideTopLeft', offset: 8, fill: C.muted, fontSize: 10 }}
+            tickFormatter={tickFormatter}
+            label={{ value: t(`charts.axis.${unit.key}`), angle: 0, position: 'insideTopLeft', offset: 8, ...AXIS_LABEL }}
           />
-          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(10,130,118,.05)' }} />
-          {bars.length > 1 && <Legend wrapperStyle={legendStyle} iconType="square" />}
+          <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: C.line }} />
+          {bars.length > 1 && <Legend wrapperStyle={LEGEND_STYLE} iconType="square" />}
           {referenceLine && (
             <ReferenceLine
               y={referenceLine.value}
               stroke={referenceLine.color || C.orange}
               strokeDasharray="5 4"
-              label={{ value: referenceLine.label, position: 'insideTopRight', fill: referenceLine.color || C.orange, fontSize: 10 }}
+              label={{ value: referenceLine.label, position: 'insideTopRight', fill: referenceLine.color || C.orange, fontSize: TEXT_XS }}
             />
           )}
           {bars.map((b) => (
@@ -269,8 +225,9 @@ export function WsBarChart({
               name={b.name}
               fill={b.color}
               stackId={b.stackId}
-              radius={b.stackId ? undefined : [4, 4, 0, 0]}
-              maxBarSize={28}
+              radius={b.stackId ? undefined : BAR_RADIUS}
+              maxBarSize={BAR_MAX_SIZE}
+              isAnimationActive={false}
             />
           ))}
         </BarChart>
@@ -280,74 +237,74 @@ export function WsBarChart({
 }
 
 /**
- * Radial 0-100 gauge (tank, volume, %, etc.).
- * @param {number} value - value between 0 and max.
+ * Radial 0-100 gauge (tank level, reservoir), the percentage in its centre.
+ * @param {number} value - between 0 and max.
  * @param {number} [max]
- * @param {string} [color]
+ * @param {string} [color] - chart colour (C.*).
  */
-export function WsRadialGauge({ value = 0, max = 100, color = C.primary, height = 220 }) {
+export function WsRadialGauge({ value = 0, max = 100, color = C.primary }) {
+  const format = useWaterFormat()
   const pct = Math.max(0, Math.min(100, (value / (max || 1)) * 100))
   const data = [{ name: 'level', value: pct, fill: color }]
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: 220, margin: '0 auto' }}>
-      <ResponsiveContainer width="100%" height={height}>
+    <div className="relative mx-auto h-56 w-full max-w-56">
+      <ResponsiveContainer width="100%" height="100%">
         <RadialBarChart cx="50%" cy="50%" innerRadius="72%" outerRadius="100%" barSize={16} data={data} startAngle={90} endAngle={-270}>
           <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-          <RadialBar background={{ fill: C.line }} dataKey="value" cornerRadius={10} angleAxisId={0} />
+          <RadialBar background={{ fill: C.line }} dataKey="value" cornerRadius={10} angleAxisId={0} isAnimationActive={false} />
         </RadialBarChart>
       </ResponsiveContainer>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'grid',
-          placeItems: 'center',
-          fontFamily: "'Montserrat', Arial, sans-serif",
-          fontWeight: 700,
-          fontSize: '28px',
-          color: 'var(--ws-ink, #1c2b29)',
-          pointerEvents: 'none',
-        }}
-      >
-        {Math.round(pct)}%
+      <div className="pointer-events-none absolute inset-0 grid place-items-center text-3xl font-bold">
+        {format.percent(Math.round(pct))}
       </div>
     </div>
   )
 }
 
-
-const primaryRgb = '10,130,118'
+// Background zones of the bullet chart, from the tone tokens.
+const ZONES = { success: 'bg-success-bg', warning: 'bg-warning-bg', error: 'bg-error-bg' }
 
 /**
- * "Bullet" chart: a value compared to a target, on a zoned scale.
- * Used for consumption quotas (monthly target vs actual).
+ * "Bullet" chart: a value compared with a target on a zoned scale (monthly quota vs actual).
+ * The bar widths and the target position are percentages of the scale, set as inline styles.
  *
  * @param {number} value
  * @param {number} target
  * @param {number} max
- * @param {Array} [zones] - [{ upTo, color }] background zones.
- * @param {string} [unit]
+ * @param {Array} [zones] - [{ upTo, tone: 'success'|'warning'|'error' }] background zones.
  */
-export function WsBulletChart({ value = 0, target = 0, max = 100, zones = [], unit = 'L' }) {
+export function WsBulletChart({ value = 0, target = 0, max = 100, zones = [] }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const safeMax = max || 100
   const pct = (v) => Math.max(0, Math.min(100, (Number(v) / safeMax) * 100))
   const overTarget = Number(value) > Number(target)
+  const targetLabel = t('charts.target', { value: format.volume(target) })
   return (
-    <div className="ws-bullet">
-      <div className="ws-bullet-track">
-        {zones.map((zone, i) => (
-          <span key={i} className="ws-bullet-zone" style={{ width: `${pct(zone.upTo)}%`, background: zone.color }} />
+    <div className="flex flex-col gap-2">
+      <div className="relative h-4 overflow-hidden rounded-pill bg-neutral-bg">
+        {/* Widest zone first: each narrower zone is painted over it, from the left edge. */}
+        {[...zones].sort((a, b) => b.upTo - a.upTo).map((zone) => (
+          <span
+            key={`${zone.tone}-${zone.upTo}`}
+            className={`absolute inset-y-0 left-0 ${ZONES[zone.tone] ?? ZONES.success}`}
+            style={{ width: `${pct(zone.upTo)}%` }}
+          />
         ))}
         <span
-          className="ws-bullet-value"
-          style={{ width: `${pct(value)}%`, background: overTarget ? 'rgb(198,40,40)' : primaryRgb ? `rgb(${primaryRgb})` : undefined }}
+          className={`absolute top-1 bottom-1 left-0 rounded-pill ${overTarget ? 'bg-danger' : 'bg-primary'}`}
+          style={{ width: `${pct(value)}%` }}
         />
-        <span className="ws-bullet-target" style={{ left: `${pct(target)}%` }} title={`Target ${formatLiters(target)}`} />
+        <span
+          className="absolute inset-y-0 w-0.5 bg-text"
+          style={{ left: `${pct(target)}%` }}
+          title={targetLabel}
+        />
       </div>
-      <div className="ws-bullet-caption">
-        <strong>{formatLiters(value)}</strong>
-        {` / target ${formatLiters(target)}${unit === '%' ? ' %' : ''}`}
-      </div>
+      <p className="text-xs text-text-muted">
+        <strong className="font-semibold text-text">{format.volume(value)}</strong>
+        {` ${t('charts.ofTarget', { value: format.volume(target) })}`}
+      </p>
     </div>
   )
 }

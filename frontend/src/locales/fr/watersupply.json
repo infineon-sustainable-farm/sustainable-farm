@@ -15,5 +15,108 @@
     "lots": "Lots de transformation",
     "visitors": "Visiteurs",
     "notifications": "Notifications"
+  },
+  "common": {
+    "none": "—",
+    "loading": "Chargement…",
+    "error": "Erreur",
+    "save": "Enregistrer",
+    "saving": "...",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "select": "Sélectionner",
+    "allFarms": "Toutes les fermes",
+    "saveError": "Enregistrement impossible.",
+    "deleteError": "Suppression impossible.",
+    "history": "Historique"
+  },
+  "units": {
+    "liters": "{{value}} L",
+    "cubicMeters": "{{value}} m³",
+    "mm": "{{value}} mm",
+    "percent": "{{value}} %",
+    "minutes": "{{value}} min",
+    "kmh": "{{value}} km/h",
+    "celsius": "{{value}} °C"
+  },
+  "charts": {
+    "unit": "Unité : {{unit}}",
+    "units": {
+      "liters": "litres",
+      "millimeters": "millimètres",
+      "percent": "%"
+    },
+    "axis": {
+      "liters": "L",
+      "cubicMeters": "m³",
+      "mm": "mm",
+      "percent": "%"
+    },
+    "label": "Graphique en {{unit}}",
+    "exportPng": "Exporter le graphique en image PNG",
+    "exportCsv": "Exporter les données du graphique en CSV",
+    "png": "PNG",
+    "csv": "CSV",
+    "target": "Objectif {{value}}",
+    "ofTarget": "/ objectif {{value}}"
+  },
+  "sources": {
+    "title": "Sources d’eau",
+    "subtitle": "Forages, cuves de pluie, rivières : gérez les points de prélèvement par ferme.",
+    "listTitle": "Liste des sources",
+    "count": "{{count}} source(s)",
+    "farmFilter": "Filtrer par ferme",
+    "search": "Rechercher une source…",
+    "loading": "Chargement des sources...",
+    "loadError": "Impossible de charger les sources.",
+    "emptyTitle": "Aucune source",
+    "empty": "Créez une source d’eau rattachée à une ferme pour commencer.",
+    "columns": {
+      "name": "Nom",
+      "farm": "Ferme",
+      "type": "Type",
+      "capacity": "Capacité",
+      "level": "Niveau"
+    },
+    "levelValue": "{{level}} ({{pct}})",
+    "farmFallback": "Ferme {{id}}",
+    "types": {
+      "borehole": "forage",
+      "rain": "pluie",
+      "river": "rivière",
+      "well": "puits",
+      "municipal": "réseau public"
+    },
+    "newTitle": "Nouvelle source",
+    "editTitle": "Modifier la source",
+    "fields": {
+      "farm": "Ferme",
+      "name": "Nom",
+      "type": "Type",
+      "capacity": "Capacité (L)"
+    },
+    "errors": {
+      "farmRequired": "La ferme est obligatoire.",
+      "nameRequired": "Le nom est obligatoire.",
+      "capacityPositive": "La capacité doit être supérieure à 0.",
+      "levelRange": "Le niveau actuel doit être compris entre 0 et la capacité."
+    },
+    "created": "Source créée",
+    "updated": "Source mise à jour",
+    "deleted": "Source supprimée",
+    "deleteTitle": "Supprimer {{name}}",
+    "theSource": "la source",
+    "deleteMessage": "Cette source sera supprimée. Les consommations et tests de qualité associés peuvent être affectés.",
+    "history": {
+      "title": "Historique du niveau - {{name}}",
+      "loading": "Chargement de l’historique du niveau…",
+      "loadError": "Impossible de charger l’historique.",
+      "emptyTitle": "Aucun niveau enregistré",
+      "empty": "Les relevés apparaissent ici dès que le capteur de niveau les transmet ou que le niveau est modifié.",
+      "series": "Niveau (L)",
+      "capacity": "Capacité"
+    }
   }
 }
