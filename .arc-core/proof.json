@@ -5,21 +5,24 @@
       "run": "cd 'frontend' && npm run lint",
       "when": [
         "frontend/**"
-      ]
+      ],
+      "timeout": 900
     },
     {
       "name": "node : npm test (frontend)",
       "run": "cd 'frontend' && npm test",
       "when": [
         "frontend/**"
-      ]
+      ],
+      "timeout": 900
     },
     {
       "name": "java : backend tests",
       "run": "scripts/backend-test.sh",
       "when": [
         "backend/**"
-      ]
+      ],
+      "timeout": 3600
     },
     {
       "name": "docs : README et liens relatifs (phase 3)",
