@@ -203,5 +203,135 @@
       "medium": "moyen",
       "high": "élevé"
     }
+  },
+  "forecasting": {
+    "title": "Prévision de la demande",
+    "subtitle": "Modélisation prédictive du rendement agricole et de la capacité de la chaîne d’approvisionnement",
+    "apiNotice": "Avis de connexion à l’API",
+    "loading": "Chargement des prévisions…",
+    "requestFailed": "Échec de la requête",
+    "loadFailed": "Impossible de charger les données de prévision. Veuillez réessayer.",
+    "failures": {
+      "forecasts": "Prévisions : {{message}}",
+      "modelRuns": "Exécutions du modèle : {{message}}",
+      "products": "Produits : {{message}}",
+      "orders": "Commandes : {{message}}",
+      "orderItems": "Lignes de commande : {{message}}",
+      "separator": " · "
+    },
+    "modelChip": "Modèle : {{status}}",
+    "coldStart": "Prévision à froid",
+    "add": "Ajouter une prévision",
+    "retrain": "Réentraîner le modèle",
+    "retrained": "Demande de réentraînement du modèle envoyée.",
+    "retrainFailed": "Échec de la création de l’exécution du modèle",
+    "exportEmpty": "Aucune ligne de prévision à exporter.",
+    "exported": "Export CSV téléchargé.",
+    "created": "Prévision créée.",
+    "updated": "Prévision n° {{id}} mise à jour.",
+    "deleted": "Prévision n° {{id}} supprimée.",
+    "createFailed": "Échec de la création de la prévision",
+    "updateFailed": "Échec de la mise à jour de la prévision",
+    "deleteFailed": "Échec de la suppression de la prévision",
+    "deleteTitle": "Supprimer la prévision ?",
+    "deleteMessage": "Voulez-vous vraiment supprimer la prévision de {{month}} ({{scenario}}) ? Cette action est irréversible.",
+    "scenarioFallback": "scénario",
+    "deleting": "Suppression…",
+    "none": "-",
+    "notAvailable": "N/D",
+    "tons": "{{value}} t",
+    "metricTons": "{{value}} t",
+    "percent": "{{value}} %",
+    "percentValue": "{{value}} %",
+    "scenarioSuffix": "({{scenario}})",
+    "parameters": {
+      "title": "Paramètres du modèle",
+      "cropVariety": "Variété",
+      "allProducts": "Tous les produits",
+      "region": "Région",
+      "scenarioFilter": "Filtre de scénario",
+      "allScenarios": "Tous les scénarios",
+      "confidence": "Intervalle de confiance",
+      "externalVariables": "Variables externes",
+      "weather": "Conditions météo",
+      "commodity": "Prix des matières premières",
+      "geopolitical": "Indice géopolitique"
+    },
+    "scenario": {
+      "base": "référence",
+      "optimistic": "optimiste",
+      "pessimistic": "pessimiste"
+    },
+    "status": {
+      "title": "ÉTAT DU MODÈLE",
+      "runs_one": "{{count}} exécution du modèle · dernière n° {{id}}",
+      "runs_other": "{{count}} exécutions du modèle · dernière n° {{id}}",
+      "noAccuracy": "Précision : pas encore disponible, en attente des ventes historiques",
+      "pessimistic": "Cas pessimiste",
+      "base": "Cas de référence",
+      "optimistic": "Cas optimiste",
+      "regionalBase": "Base régionale",
+      "noData": "Aucune donnée",
+      "revenue": "Potentiel de revenus"
+    },
+    "chart": {
+      "title": "Projection de la demande (6 prochains mois)",
+      "subtitle": "En tonnes (t)",
+      "subtitleRows_one": "En tonnes (t) · {{count}} ligne",
+      "subtitleRows_other": "En tonnes (t) · {{count}} lignes",
+      "historical": "Historique",
+      "forecast": "Prévision",
+      "ci": "IC {{value}} %",
+      "today": "AUJOURD’HUI",
+      "empty": "Pas assez de points de prévision pour tracer le graphique.",
+      "addRows": "Ajouter des lignes de prévision"
+    },
+    "accuracy": {
+      "title": "Précision des prévisions",
+      "subtitle": "Comparaison entre la demande prévue et les ventes réelles lorsque les données réelles sont disponibles.",
+      "empty": "Aucune donnée de précision disponible."
+    },
+    "monthly": {
+      "title": "Prévisions mensuelles",
+      "export": "EXPORTER EN CSV",
+      "empty": "Aucune prévision ne correspond aux filtres actuels."
+    },
+    "columns": {
+      "month": "Mois",
+      "forecastMt": "Prévision (t)",
+      "actualMt": "Réel (t)",
+      "accuracy": "Précision des prévisions",
+      "predicted": "Demande prévue (t)",
+      "lower": "Borne basse ({{value}} %)",
+      "upper": "Borne haute ({{value}} %)",
+      "growth": "Croissance mensuelle",
+      "risk": "Risque de capacité"
+    },
+    "risk": {
+      "low": "Risque faible",
+      "medium": "Risque moyen",
+      "high": "Risque élevé"
+    },
+    "riskOption": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé"
+    },
+    "form": {
+      "addTitle": "Ajouter une prévision",
+      "editTitle": "Modifier la prévision n° {{id}}",
+      "product": "Produit",
+      "select": "Sélectionner…",
+      "productOption": "{{name}} ({{variety}})",
+      "month": "Mois",
+      "scenario": "Scénario",
+      "volume": "Volume (t)",
+      "lower": "Borne basse",
+      "upper": "Borne haute",
+      "risk": "Risque de capacité",
+      "saving": "Enregistrement…",
+      "update": "Mettre à jour",
+      "create": "Créer"
+    }
   }
 }

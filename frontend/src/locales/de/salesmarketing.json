@@ -203,5 +203,135 @@
       "medium": "mittel",
       "high": "hoch"
     }
+  },
+  "forecasting": {
+    "title": "Nachfrageprognose",
+    "subtitle": "Prognosemodelle für landwirtschaftlichen Ertrag und Lieferkettenkapazität",
+    "apiNotice": "Hinweis zur API-Verbindung",
+    "loading": "Prognosen werden geladen…",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "loadFailed": "Prognosedaten konnten nicht geladen werden. Bitte erneut versuchen.",
+    "failures": {
+      "forecasts": "Prognosen: {{message}}",
+      "modelRuns": "Modellläufe: {{message}}",
+      "products": "Produkte: {{message}}",
+      "orders": "Bestellungen: {{message}}",
+      "orderItems": "Bestellpositionen: {{message}}",
+      "separator": " · "
+    },
+    "modelChip": "Modell: {{status}}",
+    "coldStart": "Kaltstart-Prognose",
+    "add": "Prognose hinzufügen",
+    "retrain": "Modell neu trainieren",
+    "retrained": "Anfrage zum Neutrainieren des Modells erfolgreich gesendet.",
+    "retrainFailed": "Modelllauf konnte nicht erstellt werden",
+    "exportEmpty": "Keine Prognosezeilen zum Exportieren.",
+    "exported": "CSV-Export heruntergeladen.",
+    "created": "Prognose erstellt.",
+    "updated": "Prognose #{{id}} aktualisiert.",
+    "deleted": "Prognose #{{id}} gelöscht.",
+    "createFailed": "Prognose konnte nicht erstellt werden",
+    "updateFailed": "Prognose konnte nicht aktualisiert werden",
+    "deleteFailed": "Prognose konnte nicht gelöscht werden",
+    "deleteTitle": "Prognose löschen?",
+    "deleteMessage": "Möchten Sie die Prognose für {{month}} ({{scenario}}) wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "scenarioFallback": "Szenario",
+    "deleting": "Wird gelöscht…",
+    "none": "-",
+    "notAvailable": "k. A.",
+    "tons": "{{value}} t",
+    "metricTons": "{{value}} t",
+    "percent": "{{value}} %",
+    "percentValue": "{{value}} %",
+    "scenarioSuffix": "({{scenario}})",
+    "parameters": {
+      "title": "Modellparameter",
+      "cropVariety": "Sorte",
+      "allProducts": "Alle Produkte",
+      "region": "Region",
+      "scenarioFilter": "Szenariofilter",
+      "allScenarios": "Alle Szenarien",
+      "confidence": "Konfidenzintervall",
+      "externalVariables": "Externe Variablen",
+      "weather": "Wettermuster",
+      "commodity": "Rohstoffpreise",
+      "geopolitical": "Geopolitischer Index"
+    },
+    "scenario": {
+      "base": "Basis",
+      "optimistic": "optimistisch",
+      "pessimistic": "pessimistisch"
+    },
+    "status": {
+      "title": "MODELLSTATUS",
+      "runs_one": "{{count}} Modelllauf · letzter #{{id}}",
+      "runs_other": "{{count}} Modellläufe · letzter #{{id}}",
+      "noAccuracy": "Genauigkeit: noch nicht verfügbar, historische Verkaufsdaten fehlen",
+      "pessimistic": "Pessimistischer Fall",
+      "base": "Basisfall",
+      "optimistic": "Optimistischer Fall",
+      "regionalBase": "Regionale Basis",
+      "noData": "Keine Daten",
+      "revenue": "Umsatzpotenzial"
+    },
+    "chart": {
+      "title": "Nachfrageprojektion (nächste 6 Monate)",
+      "subtitle": "In Tonnen (t)",
+      "subtitleRows_one": "In Tonnen (t) · {{count}} Zeile",
+      "subtitleRows_other": "In Tonnen (t) · {{count}} Zeilen",
+      "historical": "Historisch",
+      "forecast": "Prognose",
+      "ci": "{{value}} % KI",
+      "today": "HEUTE",
+      "empty": "Nicht genug Prognosepunkte für ein Diagramm.",
+      "addRows": "Prognosezeilen hinzufügen"
+    },
+    "accuracy": {
+      "title": "Prognosegenauigkeit",
+      "subtitle": "Vergleich zwischen prognostizierter Nachfrage und tatsächlichen Verkäufen, sofern Ist-Daten vorliegen.",
+      "empty": "Keine Daten zur Prognosegenauigkeit verfügbar."
+    },
+    "monthly": {
+      "title": "Monatliche Prognosedaten",
+      "export": "CSV EXPORTIEREN",
+      "empty": "Keine Prognosen entsprechen den aktuellen Filtern."
+    },
+    "columns": {
+      "month": "Monat",
+      "forecastMt": "Prognose (t)",
+      "actualMt": "Ist (t)",
+      "accuracy": "Prognosegenauigkeit",
+      "predicted": "Prognostizierte Nachfrage (t)",
+      "lower": "Untergrenze ({{value}} %)",
+      "upper": "Obergrenze ({{value}} %)",
+      "growth": "Wachstum ggü. Vormonat",
+      "risk": "Kapazitätsrisiko"
+    },
+    "risk": {
+      "low": "Geringes Risiko",
+      "medium": "Mittleres Risiko",
+      "high": "Hohes Risiko"
+    },
+    "riskOption": {
+      "low": "gering",
+      "medium": "mittel",
+      "high": "hoch"
+    },
+    "form": {
+      "addTitle": "Prognose hinzufügen",
+      "editTitle": "Prognose #{{id}} bearbeiten",
+      "product": "Produkt",
+      "select": "Auswählen…",
+      "productOption": "{{name}} ({{variety}})",
+      "month": "Monat",
+      "scenario": "Szenario",
+      "volume": "Menge (t)",
+      "lower": "Untergrenze",
+      "upper": "Obergrenze",
+      "risk": "Kapazitätsrisiko",
+      "saving": "Wird gespeichert…",
+      "update": "Aktualisieren",
+      "create": "Erstellen"
+    }
   }
 }
