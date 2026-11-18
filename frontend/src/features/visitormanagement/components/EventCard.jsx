@@ -1,16 +1,13 @@
-import StatusBadge from "./StatusBadge";
-import { formatDateShort, formatNumber, formatTimeRange } from "../utils/format";
-
-const TINY_BUTTON =
-    "rounded border border-[#C3D8D4] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-[#ECFAF7] disabled:opacity-60";
-const TINY_DANGER =
-    "rounded border border-[#EDC9C9] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-error hover:bg-[#FBEAEA] disabled:opacity-60";
+import { CircleX, Pencil, Send, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Card } from "../../../shared/ui";
+import { useVisitorFormat } from "../utils/format";
+import StatusTag from "./StatusTag";
 
 /*
- * Publish is only legal from DRAFT; cancel is legal until the event is
- * COMPLETED. There is no manual "complete" call — the visit lifecycle job
- * completes past events — so the mockup's complete button has no counterpart.
- * The participants action opens the attendee panel for any status.
+ * Publish is only legal from DRAFT; cancel is legal until the event is COMPLETED. There is no
+ * manual "complete" call (the visit lifecycle job completes past events). The participants
+ * action opens the attendee panel for any status.
  */
 function cardActions(status) {
     if (status === "DRAFT") return ["participants", "publish", "edit", "cancel"];
@@ -18,15 +15,11 @@ function cardActions(status) {
     return ["participants"];
 }
 
-export default function EventCard({
-    event,
-    pendingAction,
-    actionError,
-    onAction,
-    onEdit,
-    onParticipants,
-    delay = 0,
-}) {
+const ACTION_ICONS = { participants: Users, publish: Send, edit: Pencil, cancel: CircleX };
+
+export default function EventCard({ event, pendingAction, actionError, onAction, onEdit, onParticipants }) {
+    const { t } = useTranslation("visitormanagement");
+    const format = useVisitorFormat();
     const isPending = pendingAction?.id === event.id;
     const failed = actionError?.id === event.id;
 
@@ -34,54 +27,46 @@ export default function EventCard({
     const startTime = event.startDateTime?.slice(11, 19);
     const endTime = event.endDateTime?.slice(11, 19);
 
+    const meta = [format.dateShort(date), format.timeRange(startTime, endTime)];
+    if (event.location) meta.push(event.location);
+    meta.push(t("events.card.max", { value: format.number(event.maxCapacity) }));
+
     return (
-        <article
-            className="flex min-h-[150px] flex-col rounded-lg border border-line bg-white p-4.5 animate-fade-up"
-            style={{ animationDelay: `${delay}ms` }}
-        >
-            <h3 className="font-heading text-[17px] leading-snug font-bold text-ink">
-                {event.title}
-            </h3>
-            <p className="mt-2 text-[11px] text-muted">
-                {formatDateShort(date)}
-                {" · "}
-                {formatTimeRange(startTime, endTime)}
-                {event.location ? ` · ${event.location}` : ""}
-                {` · Max ${formatNumber(event.maxCapacity)}`}
-            </p>
-            <p className="mt-1 text-[11px] text-muted">
+        <Card as="article" title={event.title} titleAs="h3" className="flex flex-col">
+            <p className="-mt-2 text-xs text-text-muted">{meta.join(" · ")}</p>
+            <p className="mt-1 text-xs text-text-muted">
                 {event.booked > 0
-                    ? `${formatNumber(event.booked)} registered`
-                    : "No registration yet"}
+                    ? t("events.registered", { value: format.number(event.booked) })
+                    : t("events.noRegistration")}
             </p>
 
-            <div className="mt-2.5">
-                <StatusBadge value={event.status} />
+            <div className="mt-3">
+                <StatusTag value={event.status} />
             </div>
 
-            <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3">
+            <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
                 {cardActions(event.status).map((action) => (
-                    <button
+                    <Button
                         key={action}
-                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        icon={ACTION_ICONS[action]}
                         disabled={isPending}
                         onClick={() => {
                             if (action === "edit") onEdit(event);
                             else if (action === "participants") onParticipants(event);
                             else onAction(event, action);
                         }}
-                        className={action === "cancel" ? TINY_DANGER : TINY_BUTTON}
                     >
-                        {action === "participants" && "participants"}
-                        {action === "publish" && "✓ publish"}
-                        {action === "edit" && "✎ edit"}
-                        {action === "cancel" && "✕ cancel"}
-                    </button>
+                        {t(`events.card.actions.${action}`)}
+                    </Button>
                 ))}
                 {failed && (
-                    <p className="w-full text-[11px] text-error">{actionError.message}</p>
+                    <p role="alert" className="w-full text-xs text-error-fg">
+                        {actionError.message}
+                    </p>
                 )}
             </div>
-        </article>
+        </Card>
     );
 }
