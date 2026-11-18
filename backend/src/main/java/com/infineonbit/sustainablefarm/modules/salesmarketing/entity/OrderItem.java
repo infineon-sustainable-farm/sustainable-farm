@@ -1,59 +1,48 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.math.BigDecimal;
 
-/**
- * Maps to the "order_items" table.
- * Foreign keys are kept as plain Integer id fields (not @ManyToOne)
- * to keep things simple while learning - same approach as the rest
- * of this backend.
- */
+/** A line of an order, deleted with the order. The unit price is in euros. */
 @Entity
 @Table(name = "order_items", indexes = {
         @Index(name = "idx_order_items_order", columnList = "order_id"),
         @Index(name = "idx_order_items_product", columnList = "product_id")
 })
-public class OrderItem {
+@Getter
+@Setter
+public class OrderItem extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_item_id")
-    private Integer orderItemId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "order_id", nullable = false, foreignKey = @ForeignKey(name = "order_items_order_id_fkey"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Order order;
 
-    @NotNull(message = "orderId is required")
-    @Column(name = "order_id", nullable = false)
-    private Integer orderId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_id", nullable = false, foreignKey = @ForeignKey(name = "order_items_product_id_fkey"))
+    private Product product;
 
-    @NotNull(message = "productId is required")
-    @Column(name = "product_id", nullable = false)
-    private Integer productId;
-
-    @NotNull(message = "quantityKg is required")
-    @Positive(message = "quantityKg must be greater than zero")
     @Column(name = "quantity_kg", nullable = false, precision = 12, scale = 2)
     private BigDecimal quantityKg;
 
-    @NotNull(message = "unitPriceEur is required")
-    @PositiveOrZero
-    @Column(name = "unit_price_eur", nullable = false, precision = 10, scale = 2)
-    private BigDecimal unitPriceEur;
-
-    public Integer getOrderItemId() { return orderItemId; }
-    public void setOrderItemId(Integer orderItemId) { this.orderItemId = orderItemId; }
-
-    public Integer getOrderId() { return orderId; }
-    public void setOrderId(Integer orderId) { this.orderId = orderId; }
-
-    public Integer getProductId() { return productId; }
-    public void setProductId(Integer productId) { this.productId = productId; }
-
-    public BigDecimal getQuantityKg() { return quantityKg; }
-    public void setQuantityKg(BigDecimal quantityKg) { this.quantityKg = quantityKg; }
-
-    public BigDecimal getUnitPriceEur() { return unitPriceEur; }
-    public void setUnitPriceEur(BigDecimal unitPriceEur) { this.unitPriceEur = unitPriceEur; }
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "unit_price_amount", nullable = false, precision = 14, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "unit_price_currency", nullable = false, length = 3))
+    private Money unitPrice;
 }

@@ -1,34 +1,20 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.Getter;
+import lombok.Setter;
 
+/** A sales channel (export, retail...). */
 @Entity
 @Table(name = "sales_channels", uniqueConstraints = @UniqueConstraint(name = "sales_channels_name_key", columnNames = "name"))
-public class SalesChannel {
+@Getter
+@Setter
+public class SalesChannel extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "channel_id")
-    private Integer channelId;
-
-    @NotBlank(message = "Channel name is required")
     @Column(name = "name", nullable = false, length = 60)
     private String name;
-
-    public Integer getChannelId() {
-        return channelId;
-    }
-
-    public void setChannelId(Integer channelId) {
-        this.channelId = channelId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }

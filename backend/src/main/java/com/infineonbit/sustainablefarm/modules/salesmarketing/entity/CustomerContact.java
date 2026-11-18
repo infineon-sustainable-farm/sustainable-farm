@@ -1,34 +1,36 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
-/**
- * Maps to the "customer_contacts" table.
- * Foreign keys are kept as plain Integer id fields (not @ManyToOne)
- * to keep things simple while learning - same approach as the rest
- * of this backend.
- */
+/** A person to contact at a customer, deleted with the customer. */
 @Entity
 @Table(name = "customer_contacts", indexes = @Index(name = "idx_customer_contacts_cust", columnList = "customer_id"))
-public class CustomerContact {
+@Getter
+@Setter
+public class CustomerContact extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "contact_id")
-    private Integer contactId;
+    /** The customer; the API still accepts a contact without one. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", foreignKey = @ForeignKey(name = "customer_contacts_customer_id_fkey"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Customer customer;
 
-    @Column(name = "customer_id")
-    private Integer customerId;
-
-    @NotBlank(message = "Full name is required")
     @Column(name = "full_name", nullable = false, length = 120)
     private String fullName;
 
-    @Email(message = "Must be a valid email address")
     @Column(name = "email", length = 150)
     private String email;
 
@@ -38,35 +40,8 @@ public class CustomerContact {
     @Column(name = "role", length = 80)
     private String role;
 
+    /** {@code false} when none is sent. */
     @ColumnDefault("false")
-    @Column(name = "is_primary")
+    @Column(name = "is_primary", nullable = false)
     private Boolean isPrimary;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    public Integer getContactId() { return contactId; }
-    public void setContactId(Integer contactId) { this.contactId = contactId; }
-
-    public Integer getCustomerId() { return customerId; }
-    public void setCustomerId(Integer customerId) { this.customerId = customerId; }
-
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
-
-    public Boolean getIsPrimary() { return isPrimary; }
-    public void setIsPrimary(Boolean isPrimary) { this.isPrimary = isPrimary; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

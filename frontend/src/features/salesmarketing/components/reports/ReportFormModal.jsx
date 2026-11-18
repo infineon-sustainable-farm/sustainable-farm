@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Field, Input, Modal, Select, Textarea } from '../../../../shared/ui';
 import { REPORT_TYPE_KEYS, REPORT_TYPES, SCHEDULE_FREQUENCIES, STATUS_OPTIONS } from './reportUtils';
 
-/** Create or edit a demand report (POST /api/demand-reports, PUT /api/demand-reports/{id}). */
+/** Create or edit a demand report (POST /api/sales-marketing/demand-reports, PUT /api/sales-marketing/demand-reports/{id}). */
 function ReportFormModal({ open, editingId, form, setForm, saving, onClose, onSubmit }) {
   const { t } = useTranslation('salesmarketing');
   const set = (key) => (event) => {

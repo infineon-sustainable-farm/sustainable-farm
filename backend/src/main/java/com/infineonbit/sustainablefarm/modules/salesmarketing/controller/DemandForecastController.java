@@ -1,53 +1,56 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
-import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.DemandForecast;
-import com.infineonbit.sustainablefarm.modules.salesmarketing.service.DemandForecastService;
-import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.DemandForecastRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.DemandForecastResponse;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.service.DemandForecastService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/demand-forecasts")
+@RequestMapping("/api/sales-marketing/demand-forecasts")
 public class DemandForecastController {
 
     private final DemandForecastService service;
-    private final SalesMarketingRequestMapper requestMapper;
 
-    public DemandForecastController(DemandForecastService service, SalesMarketingRequestMapper requestMapper) {
+    public DemandForecastController(DemandForecastService service) {
         this.service = service;
-        this.requestMapper = requestMapper;
     }
 
     @GetMapping
-    public List<DemandForecast> getAll() {
+    public List<DemandForecastResponse> getAll() {
         return service.getAll();
     }
 
     @GetMapping("/{id}")
-    public DemandForecast getOne(@PathVariable Integer id) {
+    public DemandForecastResponse getOne(@PathVariable Long id) {
         return service.getById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DemandForecast create(@Valid @RequestBody DemandForecastRequest request) {
-        return service.create(requestMapper.toEntity(request, DemandForecast.class));
+    public DemandForecastResponse create(@Valid @RequestBody DemandForecastRequest request) {
+        return service.create(request);
     }
 
     @PutMapping("/{id}")
-    public DemandForecast update(
-            @PathVariable Integer id,
-            @Valid @RequestBody DemandForecastRequest request) {
-        return service.update(id, requestMapper.toEntity(request, DemandForecast.class));
+    public DemandForecastResponse update(@PathVariable Long id, @Valid @RequestBody DemandForecastRequest request) {
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Integer id) {
+    public void delete(@PathVariable Long id) {
         service.delete(id);
     }
 }

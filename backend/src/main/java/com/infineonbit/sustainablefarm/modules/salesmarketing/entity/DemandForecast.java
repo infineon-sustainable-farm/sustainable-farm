@@ -1,45 +1,41 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import org.hibernate.annotations.Check;
-import org.hibernate.annotations.ColumnDefault;
 
-/**
- * Maps to the "demand_forecasts" table.
- * Foreign keys are kept as plain Integer id fields.
- */
+/** The demand forecast of a month for a product and a scenario. */
 @Entity
 @Table(name = "demand_forecasts", indexes = @Index(name = "idx_forecasts_month", columnList = "forecast_month, scenario"))
-@Check(name = "demand_forecasts_capacity_risk_check", constraints = "capacity_risk IN ('low', 'medium', 'high')")
-@Check(name = "demand_forecasts_scenario_check", constraints = "scenario IN ('pessimistic', 'base', 'optimistic')")
-public class DemandForecast {
+@Getter
+@Setter
+public class DemandForecast extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "forecast_id")
-    private Integer forecastId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "demand_forecasts_product_id_fkey"))
+    private Product product;
 
-    @Column(name = "product_id")
-    private Integer productId;
-
-    @NotNull(message = "forecastMonth is required")
     @Column(name = "forecast_month", nullable = false)
     private LocalDate forecastMonth;
 
-    @NotBlank(message = "scenario is required")
     @ColumnDefault("'base'")
+    @Convert(converter = ForecastScenario.Converter.class)
     @Column(name = "scenario", nullable = false, length = 20)
-    private String scenario;
+    private ForecastScenario scenario;
 
-    @NotNull(message = "forecastedVolumeT is required")
-    @PositiveOrZero
     @Column(name = "forecasted_volume_t", nullable = false, precision = 10, scale = 2)
     private BigDecimal forecastedVolumeT;
 
@@ -49,112 +45,15 @@ public class DemandForecast {
     @Column(name = "upper_bound_t", precision = 10, scale = 2)
     private BigDecimal upperBoundT;
 
+    @Convert(converter = CapacityRisk.Converter.class)
     @Column(name = "capacity_risk", length = 10)
-    private String capacityRisk;
+    private CapacityRisk capacityRisk;
 
+    /** {@code false} when none is sent. */
     @ColumnDefault("false")
-    @Column(name = "is_actual")
+    @Column(name = "is_actual", nullable = false)
     private Boolean isActual;
 
     @Column(name = "model_version", length = 30)
     private String modelVersion;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
-
-    public Integer getForecastId() {
-        return forecastId;
-    }
-
-    public void setForecastId(Integer forecastId) {
-        this.forecastId = forecastId;
-    }
-
-    public Integer getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Integer productId) {
-        this.productId = productId;
-    }
-
-    public LocalDate getForecastMonth() {
-        return forecastMonth;
-    }
-
-    public void setForecastMonth(LocalDate forecastMonth) {
-        this.forecastMonth = forecastMonth;
-    }
-
-    public String getScenario() {
-        return scenario;
-    }
-
-    public void setScenario(String scenario) {
-        this.scenario = scenario;
-    }
-
-    public BigDecimal getForecastedVolumeT() {
-        return forecastedVolumeT;
-    }
-
-    public void setForecastedVolumeT(BigDecimal forecastedVolumeT) {
-        this.forecastedVolumeT = forecastedVolumeT;
-    }
-
-    public BigDecimal getLowerBoundT() {
-        return lowerBoundT;
-    }
-
-    public void setLowerBoundT(BigDecimal lowerBoundT) {
-        this.lowerBoundT = lowerBoundT;
-    }
-
-    public BigDecimal getUpperBoundT() {
-        return upperBoundT;
-    }
-
-    public void setUpperBoundT(BigDecimal upperBoundT) {
-        this.upperBoundT = upperBoundT;
-    }
-
-    public String getCapacityRisk() {
-        return capacityRisk;
-    }
-
-    public void setCapacityRisk(String capacityRisk) {
-        this.capacityRisk = capacityRisk;
-    }
-
-    public Boolean getIsActual() {
-        return isActual;
-    }
-
-    public void setIsActual(Boolean isActual) {
-        this.isActual = isActual;
-    }
-
-    public String getModelVersion() {
-        return modelVersion;
-    }
-
-    public void setModelVersion(String modelVersion) {
-        this.modelVersion = modelVersion;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }

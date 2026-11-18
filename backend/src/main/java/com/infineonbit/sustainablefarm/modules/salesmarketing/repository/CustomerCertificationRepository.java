@@ -1,15 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.repository;
 
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.CustomerCertification;
-import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.CustomerCertificationId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface CustomerCertificationRepository
-        extends JpaRepository<CustomerCertification, CustomerCertificationId> {
+public interface CustomerCertificationRepository extends JpaRepository<CustomerCertification, Long> {
 
-    List<CustomerCertification> findByCustomerId(Integer customerId);
+    List<CustomerCertification> findByCustomerId(Long customerId);
 
-    List<CustomerCertification> findByCertificationId(Integer certificationId);
+    Optional<CustomerCertification> findByCustomerIdAndCertificationId(Long customerId, Long certificationId);
 }

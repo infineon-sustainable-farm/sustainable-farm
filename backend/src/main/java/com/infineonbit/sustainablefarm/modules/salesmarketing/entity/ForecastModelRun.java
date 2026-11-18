@@ -1,23 +1,24 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.math.BigDecimal;
+
 /**
- * Maps to the "forecast_model_runs" table.
- * Foreign keys are kept as plain Integer id fields.
+ * A run of the demand forecast model. Its status is the free label the interface sends
+ * ({@code Cold-Start Forecast}).
  */
 @Entity
 @Table(name = "forecast_model_runs")
-public class ForecastModelRun {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "run_id")
-    private Integer runId;
+@Getter
+@Setter
+public class ForecastModelRun extends BaseEntity {
 
     @Column(name = "crop_variety", length = 60)
     private String cropVariety;
@@ -43,87 +44,4 @@ public class ForecastModelRun {
     @ColumnDefault("'cold_start'")
     @Column(name = "model_status", length = 30)
     private String modelStatus;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
-
-    public Integer getRunId() {
-        return runId;
-    }
-
-    public void setRunId(Integer runId) {
-        this.runId = runId;
-    }
-
-    public String getCropVariety() {
-        return cropVariety;
-    }
-
-    public void setCropVariety(String cropVariety) {
-        this.cropVariety = cropVariety;
-    }
-
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public BigDecimal getConfidenceIntervalPct() {
-        return confidenceIntervalPct;
-    }
-
-    public void setConfidenceIntervalPct(BigDecimal confidenceIntervalPct) {
-        this.confidenceIntervalPct = confidenceIntervalPct;
-    }
-
-    public Boolean getUseWeatherData() {
-        return useWeatherData;
-    }
-
-    public void setUseWeatherData(Boolean useWeatherData) {
-        this.useWeatherData = useWeatherData;
-    }
-
-    public Boolean getUseCommodityPrices() {
-        return useCommodityPrices;
-    }
-
-    public void setUseCommodityPrices(Boolean useCommodityPrices) {
-        this.useCommodityPrices = useCommodityPrices;
-    }
-
-    public Boolean getUseGeopoliticalIndex() {
-        return useGeopoliticalIndex;
-    }
-
-    public void setUseGeopoliticalIndex(Boolean useGeopoliticalIndex) {
-        this.useGeopoliticalIndex = useGeopoliticalIndex;
-    }
-
-    public String getModelStatus() {
-        return modelStatus;
-    }
-
-    public void setModelStatus(String modelStatus) {
-        this.modelStatus = modelStatus;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }

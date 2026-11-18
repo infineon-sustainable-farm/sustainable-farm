@@ -5,7 +5,7 @@ import { Button, Field, Input, Modal, Select } from '../../../../shared/ui';
 const SCENARIOS = ['base', 'optimistic', 'pessimistic'];
 const RISKS = ['low', 'medium', 'high'];
 
-/** New forecast dialog (POST /api/demand-forecasts). */
+/** New forecast dialog (POST /api/sales-marketing/demand-forecasts). */
 function ForecastFormModal({ open, form, setForm, products, saving, onClose, onSubmit }) {
   const { t } = useTranslation('salesmarketing');
   const set = (key) => (event) => {
