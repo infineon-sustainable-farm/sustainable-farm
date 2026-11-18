@@ -4,8 +4,8 @@
     "dashboard": "Tableau de bord",
     "components": "Composants",
     "solar": "Solaire et production",
-    "consumption": "Suivi de la consommation",
-    "generator": "Groupe électrogène de secours",
+    "consumption": "Consommation",
+    "generator": "Groupe électrogène",
     "carbon": "Empreinte carbone",
     "scenario": "Analyse de scénarios",
     "alerts": "Alertes et notifications"
@@ -21,7 +21,7 @@
   },
   "form": {
     "save": "Enregistrer",
-    "saveChanges": "Enregistrer les modifications",
+    "saveChanges": "Enregistrer",
     "saving": "Enregistrement…"
   },
   "fields": {

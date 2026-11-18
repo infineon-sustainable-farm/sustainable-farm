@@ -389,7 +389,7 @@
   "staff": {
     "documentTitle": "Personnel — Gestion des visiteurs",
     "title": "Personnel et guides",
-    "new": "Nouveau membre du personnel",
+    "new": "Nouveau membre d’équipe",
     "editTitle": "Modifier le membre du personnel — {{name}}",
     "roleFilter": "Rôle",
     "allRoles": "Tous les rôles",

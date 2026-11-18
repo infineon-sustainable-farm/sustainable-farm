@@ -63,4 +63,10 @@ describe('Tabs', () => {
     render(<Tabs tabs={tabs} label="Energy sources" />)
     expect(screen.getByRole('tab', { name: 'Solar' })).toHaveClass('font-semibold', 'bg-surface-raised', 'shadow-raised')
   })
+
+  it('keeps each tab label on one line and wraps the tabs instead', () => {
+    render(<Tabs tabs={tabs} label="Energy sources" />)
+    expect(screen.getByRole('tablist')).toHaveClass('flex-wrap')
+    for (const tab of screen.getAllByRole('tab')) expect(tab).toHaveClass('whitespace-nowrap')
+  })
 })

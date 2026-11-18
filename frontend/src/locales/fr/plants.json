@@ -3,7 +3,7 @@
   "nav": {
     "overview": "Vue d’ensemble",
     "varieties": "Variétés",
-    "growthCalendar": "Calendrier de croissance",
+    "growthCalendar": "Calendrier cultural",
     "fertilizerInventory": "Stock d’engrais",
     "diseasesAlerts": "Maladies et alertes",
     "harvestMaturity": "Récolte et maturité",
@@ -481,9 +481,9 @@
       "selectStage": "Choisir un stade",
       "submitting": "Enregistrement…",
       "submit": {
-        "STAGE_CHANGE": "Enregistrer le changement de stade",
+        "STAGE_CHANGE": "Saisir le nouveau stade",
         "LOSS": "Enregistrer la perte",
-        "TRANSPLANT": "Enregistrer la transplantation"
+        "TRANSPLANT": "Saisir la transplantation"
       },
       "notes": {
         "currentStage": "Stade actuel : {{stage}}, depuis le {{date}}.",
@@ -510,8 +510,8 @@
     "title": "Maladies et alertes",
     "subtitle": "Santé des blocs, constats et traitements.",
     "documentTitle": "Maladies et alertes — Plantes",
-    "recordInspection": "Enregistrer une inspection",
-    "recordPreventiveTreatment": "Enregistrer un traitement préventif",
+    "recordInspection": "Saisir une inspection",
+    "recordPreventiveTreatment": "Saisir un traitement préventif",
     "requestFailed": "La requête au serveur n’a pas abouti.",
     "selectAllBlocks": "Sélectionnez « Tous les blocs » pour voir les blocs inspectés.",
     "optional": "Facultatif.",
@@ -614,7 +614,7 @@
     "issues": {
       "title": "Ravageurs et maladies",
       "subtitle": "Les problèmes qu’une inspection peut signaler, pour chaque bloc. « Autre » couvre un problème hors de cette liste ; il y figure dès qu’une inspection l’a utilisé.",
-      "add": "Ajouter un ravageur ou une maladie",
+      "add": "Ajouter un bioagresseur",
       "loading": "Chargement des ravageurs et maladies…",
       "loadError": "Les ravageurs et maladies n’ont pas pu être chargés",
       "emptyTitle": "Aucun ravageur ni maladie dans le catalogue pour l’instant",
@@ -750,7 +750,7 @@
     "status": {
       "title": "État de maturité",
       "subtitle": "Maturité du jour, estimée et observée.",
-      "record": "Enregistrer une observation",
+      "record": "Saisir une observation",
       "loading": "Chargement de l’état de maturité…",
       "error": "La maturité est indisponible.",
       "emptyBlockTitle": "Aucune variété plantée sur ce bloc",

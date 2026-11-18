@@ -5,7 +5,7 @@
     "varieties": "Sorten",
     "growthCalendar": "Wachstumskalender",
     "fertilizerInventory": "Düngemittelbestand",
-    "diseasesAlerts": "Krankheiten und Warnungen",
+    "diseasesAlerts": "Krankheiten & Alarme",
     "harvestMaturity": "Ernte und Reife",
     "nursery": "Anzucht",
     "scenarioAnalysis": "Szenarioanalyse"
@@ -511,7 +511,7 @@
     "subtitle": "Gesundheit der Blöcke, Befunde und Behandlungen.",
     "documentTitle": "Krankheiten und Warnungen — Pflanzen",
     "recordInspection": "Inspektion erfassen",
-    "recordPreventiveTreatment": "Vorbeugende Behandlung erfassen",
+    "recordPreventiveTreatment": "Präventivbehandlung erfassen",
     "requestFailed": "Die Anfrage an den Server ist fehlgeschlagen.",
     "selectAllBlocks": "Wählen Sie „Alle Blöcke“, um die inspizierten Blöcke zu sehen.",
     "optional": "Optional.",
@@ -614,7 +614,7 @@
     "issues": {
       "title": "Schädlinge und Krankheiten",
       "subtitle": "Die Probleme, die eine Inspektion melden kann, für jeden Block. „Sonstiges“ deckt ein Problem außerhalb dieser Liste ab; es erscheint hier, sobald eine Inspektion es verwendet hat.",
-      "add": "Schädling oder Krankheit hinzufügen",
+      "add": "Schaderreger hinzufügen",
       "loading": "Schädlinge und Krankheiten werden geladen…",
       "loadError": "Die Schädlinge und Krankheiten konnten nicht geladen werden",
       "emptyTitle": "Noch kein Schädling und keine Krankheit im Katalog",

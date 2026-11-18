@@ -63,11 +63,14 @@ Bouton d'action. Rendu machinery : `bg-primary text-white px-4 py-2 rounded-lg`,
 | `icon` | composant lucide | | Icône avant le libellé, décorative |
 | `loading` | booléen | `false` | Spinner, `aria-busy`, clic bloqué |
 | `disabled` | booléen | `false` | Opacité 60 %, curseur interdit |
-| `fullWidth` | booléen | `false` | Pleine largeur |
+| `fullWidth` | booléen | `false` | Pleine largeur ; seul cas où le libellé peut passer à la ligne |
 | `type` | `button`, `submit`, `reset` | `button` | Type natif |
 
 Le survol garde la couleur d'un bouton plein, l'appui l'assombrit (`primary-pressed`, `danger-pressed`)
-et le réduit à 0,98.
+et le réduit à 0,98. Le libellé reste sur une ligne (`whitespace-nowrap`) : ce sont les rangées de
+boutons (en-tête de page, pied de dialogue, pagination) qui passent à la ligne (`flex-wrap`). Un
+bouton `fullWidth` prend la largeur de son conteneur, son libellé peut donc y passer à la ligne.
+Les libellés allemands et français restent courts (environ 20 caractères) pour tenir.
 
 ### IconButton
 
@@ -228,7 +231,8 @@ et 44 px au toucher. Pages numérotées à partir de 0, comme l'API.
 
 Absent de machinery, construit sur ses tokens : rail gris clair, onglet choisi sur surface blanche
 avec ombre et en gras, sans trait de soulignement. Modèle d'onglets WAI-ARIA : un seul arrêt de
-tabulation, flèches gauche et droite, Début et Fin, onglets désactivés sautés.
+tabulation, flèches gauche et droite, Début et Fin, onglets désactivés sautés. Chaque libellé reste
+sur une ligne ; ce sont les onglets qui passent à la ligne quand le rail manque de place.
 
 | Prop | Type | Rôle |
 |---|---|---|

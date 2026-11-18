@@ -74,7 +74,7 @@ function Tabs({ tabs, value, defaultValue, onChange, label, className }) {
               disabled={disabled}
               onClick={() => select(id)}
               className={cx(
-                'inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-control px-3 text-sm pointer-coarse:min-h-11',
+                'inline-flex min-h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-control px-3 text-sm pointer-coarse:min-h-11',
                 'disabled:cursor-not-allowed disabled:opacity-60',
                 isSelected
                   ? 'bg-surface-raised font-semibold text-text shadow-raised'

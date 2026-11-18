@@ -5,7 +5,9 @@ import { focusRing, transition } from './styles'
 
 // Machinery: primary "bg-primary text-white px-4 py-2 rounded-lg", secondary "border border-gray-300",
 // danger "bg-red-600 text-white". Hover keeps the colour of a filled button; pressing darkens it
-// and scales it to 0.98.
+// and scales it to 0.98. The label stays on one line: the rows that hold buttons (page header,
+// dialog footer) wrap them onto a new line instead. A full-width button takes the width of its
+// container, so its label may wrap there rather than overflow.
 const VARIANTS = {
   primary: 'bg-primary text-on-primary enabled:active:bg-primary-pressed',
   secondary:
@@ -61,7 +63,7 @@ const Button = forwardRef(function Button(
         'disabled:cursor-not-allowed disabled:opacity-60',
         VARIANTS[variant] ?? VARIANTS.primary,
         SIZES[size] ?? SIZES.md,
-        fullWidth && 'w-full',
+        fullWidth ? 'w-full' : 'whitespace-nowrap',
         focusRing,
         transition,
         className,
