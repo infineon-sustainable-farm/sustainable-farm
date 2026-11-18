@@ -13,8 +13,8 @@ import java.util.List;
  * Repository for Operator entity
  * Personnel data - Supporting Entity
  *
- * <p>The active status belongs to the person of the staff referential: the queries on it are
- * in {@code OperatorServiceImpl}.</p>
+ * <p>The name belongs to the person of the staff referential; the status queries filter in
+ * {@code OperatorServiceImpl}, which also fills the name.</p>
  *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0

@@ -62,7 +62,9 @@ describe('EquipmentList', () => {
   it('renders equipment with type, capacity, energy and maintenance status', async () => {
     render(<EquipmentList />);
 
-    const table = await screen.findByRole('table');
+    // The loading state is a skeleton table: wait for the rows before reading the table.
+    await screen.findByText('EQ-1');
+    const table = screen.getByRole('table');
     expect(within(table).getByText('EQ-1')).toBeTruthy();
     expect(within(table).getByText('Solar dryer 1')).toBeTruthy();
     expect(within(table).getByText('Solar dryer')).toBeTruthy();
@@ -87,7 +89,9 @@ describe('EquipmentList', () => {
     ]);
     render(<EquipmentList />);
 
-    const table = await screen.findByRole('table');
+    // The loading state is a skeleton table: wait for the rows before reading the table.
+    await screen.findByText('EQ-00007');
+    const table = screen.getByRole('table');
     expect(within(table).getByText('EQ-00007')).toBeTruthy();
     expect(within(table).getByText('Drum dryer')).toBeTruthy();
     expect(within(table).getByText('N/A kg/h')).toBeTruthy();
@@ -278,5 +282,36 @@ describe('EquipmentList', () => {
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 
     expect(await screen.findByText('EQ-1')).toBeTruthy();
+  });
+  it('keeps the delete dialog open with the server error when the deletion fails', async () => {
+    equipmentApi.deleteEquipment.mockRejectedValueOnce(new Error('Equipment in use'));
+    render(<EquipmentList />);
+    await screen.findByText('EQ-1');
+
+    const row = screen.getByText('EQ-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(await within(dialog).findByText('Equipment in use')).toBeTruthy();
+    expect(equipmentApi.getAllEquipment).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the server error in the form and closes it on Cancel', async () => {
+    equipmentApi.createEquipment.mockRejectedValueOnce(new Error(''));
+    render(<EquipmentList />);
+    await screen.findByText('EQ-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Equipment/i }));
+    const dialog = screen.getByRole('dialog', { name: 'New Equipment' });
+    fireEvent.change(within(dialog).getByLabelText('Equipment ID'), { target: { value: 'EQ-4' } });
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'Dryer' } });
+    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), { target: { value: '10' } });
+    fireEvent.change(within(dialog).getByLabelText('Energy (kWh/kg)'), { target: { value: '1' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
+
+    expect(await within(dialog).findByText('Failed to save the equipment')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 });
