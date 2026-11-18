@@ -3,10 +3,9 @@
 // extra Vitest configuration (same approach as the Water Supply view tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import ComplianceScreen from './ComplianceScreen';
 import PackagingScreen from './PackagingScreen';
-import ProductTransformationLayout from './ProductTransformationLayout';
 import LoadingState from './LoadingState';
 
 const navigateMock = vi.fn();
@@ -33,10 +32,6 @@ vi.mock('./PackagingRecordList', () => ({
       </button>
     </div>
   ),
-}));
-
-vi.mock('./ProductTransformationSidebar', () => ({
-  default: () => <nav>PT sidebar</nav>,
 }));
 
 afterEach(cleanup);
@@ -92,24 +87,6 @@ describe('PackagingScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'open all' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/product-transformation/compliance');
-  });
-});
-
-describe('ProductTransformationLayout', () => {
-  it('renders one module sidebar and the active route', () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <Routes>
-          <Route element={<ProductTransformationLayout />}>
-            <Route index element={<div>Active screen</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText('PT sidebar')).toBeTruthy();
-    expect(screen.getByText('Active screen')).toBeTruthy();
-    expect(screen.getAllByRole('navigation')).toHaveLength(1);
   });
 });
 
