@@ -30,12 +30,15 @@ const navsWithFooters = [
 ]
 
 describe('Sidebar', () => {
-  it('shows one group per module, the current one expanded with its links', () => {
+  it('is the sidebar of the current module only, with a way back to all modules', () => {
     const nav = renderSidebar()
-    expect(within(nav).getByRole('link', { name: 'Machinery' })).toHaveAttribute('href', '/machinery')
-    expect(within(nav).getByRole('link', { name: 'Water supply' })).toHaveAttribute('href', '/watersupply')
+    // The logo shows the module name and leads back to the launcher.
+    expect(within(nav).getByRole('link', { name: 'Machinery' })).toHaveAttribute('href', '/')
     expect(within(nav).getByRole('link', { name: 'Equipment Registry' })).toHaveAttribute('aria-current', 'page')
     expect(within(nav).getByRole('link', { name: 'Dashboard' })).not.toHaveAttribute('aria-current')
+    expect(within(nav).getByRole('link', { name: 'All modules' })).toHaveAttribute('href', '/')
+    // No link to the other modules nor to their pages.
+    expect(within(nav).queryByRole('link', { name: 'Water supply' })).not.toBeInTheDocument()
     expect(within(nav).queryByRole('link', { name: 'Farms & Fields' })).not.toBeInTheDocument()
   })
 
@@ -103,7 +106,7 @@ describe('Sidebar', () => {
     await act(async () => {
       fireEvent.change(screen.getByRole('combobox', { name: 'Sprache' }), { target: { value: 'fr' } })
     })
-    expect(await within(nav).findByRole('link', { name: 'Approvisionnement en eau' })).toBeInTheDocument()
+    expect(await within(nav).findByRole('link', { name: 'Tous les modules' })).toBeInTheDocument()
     expect(document.documentElement.lang).toBe('fr')
   })
 

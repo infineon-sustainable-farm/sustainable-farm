@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 
 /**
- * Shell of the modules that opted in: the global sidebar and the main area, as MachineryLayout.
+ * Shell of the modules that opted in: the sidebar of the current module and the main area, as MachineryLayout.
  * Under md the menu button sits over the top left corner, so the main area starts below it.
  * The module screens load on first visit (React.lazy): the sidebar stays while one loads.
  *
