@@ -34,6 +34,8 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.*;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.*;
 import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentLookup;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
 import org.springframework.stereotype.Component;
 
 /**
@@ -46,9 +48,16 @@ import org.springframework.stereotype.Component;
 public class DtoMapper {
 
     private final MangoVarietyCodes mangoVarietyCodes;
+    private final EquipmentLookup equipmentLookup;
 
-    public DtoMapper(MangoVarietyCodes mangoVarietyCodes) {
+    public DtoMapper(MangoVarietyCodes mangoVarietyCodes, EquipmentLookup equipmentLookup) {
         this.mangoVarietyCodes = mangoVarietyCodes;
+        this.equipmentLookup = equipmentLookup;
+    }
+
+    /** The business code of the register equipment with this id, shown as {@code equipmentId}. */
+    private String equipmentCode(Long equipmentId) {
+        return equipmentLookup.findById(equipmentId).map(EquipmentView::code).orElse(null);
     }
 
     /**
@@ -132,7 +141,7 @@ public class DtoMapper {
         record.setWaterUsageLiters(request.getWaterUsageLiters());
         record.setStartTime(request.getStartTime());
         record.setEndTime(request.getEndTime());
-        record.setEquipment(equipment);
+        record.setEquipmentId(equipment != null ? equipment.getId() : null);
         record.setOperator(operator);
         return record;
     }
@@ -147,7 +156,7 @@ public class DtoMapper {
                 .waterUsageLiters(entity.getWaterUsageLiters())
                 .startTime(entity.getStartTime())
                 .endTime(entity.getEndTime())
-                .equipmentId(entity.getEquipment() != null ? entity.getEquipment().getEquipmentId() : null)
+                .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -170,7 +179,7 @@ public class DtoMapper {
         run.setEnergyUsageKwh(request.getEnergyUsageKwh());
         run.setStartTime(request.getStartTime());
         run.setEndTime(request.getEndTime());
-        run.setEquipment(equipment);
+        run.setEquipmentId(equipment != null ? equipment.getId() : null);
         run.setOperator(operator);
         return run;
     }
@@ -187,7 +196,7 @@ public class DtoMapper {
                 .energyUsageKwh(entity.getEnergyUsageKwh())
                 .startTime(entity.getStartTime())
                 .endTime(entity.getEndTime())
-                .equipmentId(entity.getEquipment() != null ? entity.getEquipment().getEquipmentId() : null)
+                .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -208,7 +217,7 @@ public class DtoMapper {
         record.setLotCode(request.getLotCode());
         record.setExportReady(request.getExportReady() != null ? request.getExportReady() : false);
         record.setPackagingDate(request.getPackagingDate());
-        record.setEquipment(equipment);
+        record.setEquipmentId(equipment != null ? equipment.getId() : null);
         record.setOperator(operator);
         return record;
     }
@@ -222,7 +231,7 @@ public class DtoMapper {
                 .lotCode(entity.getLotCode())
                 .exportReady(entity.getExportReady())
                 .packagingDate(entity.getPackagingDate())
-                .equipmentId(entity.getEquipment() != null ? entity.getEquipment().getEquipmentId() : null)
+                .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

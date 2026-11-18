@@ -6,7 +6,7 @@ import { useEnumLabels } from "../format";
 import FormActions from "./FormActions";
 import FormAlert from "./FormAlert";
 
-const MAX_NAME_LENGTH = 30;
+const MAX_NAME_LENGTH = 100;
 
 const initialForm = {
   name: "",

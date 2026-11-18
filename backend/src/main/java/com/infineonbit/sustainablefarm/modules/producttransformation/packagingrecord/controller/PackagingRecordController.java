@@ -10,7 +10,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.service.PackagingRecordService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,19 +38,19 @@ public class PackagingRecordController {
 
     private final PackagingRecordService packagingRecordService;
     private final BatchRepository batchRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final OperatorRepository operatorRepository;
     private final DtoMapper dtoMapper;
 
     @Autowired
     public PackagingRecordController(PackagingRecordService packagingRecordService,
                                     BatchRepository batchRepository,
-                                    EquipmentRepository equipmentRepository,
+                                    EquipmentService equipmentService,
                                     OperatorRepository operatorRepository,
                                     DtoMapper dtoMapper) {
         this.packagingRecordService = packagingRecordService;
         this.batchRepository = batchRepository;
-        this.equipmentRepository = equipmentRepository;
+        this.equipmentService = equipmentService;
         this.operatorRepository = operatorRepository;
         this.dtoMapper = dtoMapper;
     }
@@ -63,7 +63,7 @@ public class PackagingRecordController {
         
         Equipment equipment = null;
         if (request.getEquipmentId() != null) {
-            equipment = equipmentRepository.findById(request.getEquipmentId())
+            equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
         }
         
@@ -129,9 +129,9 @@ public class PackagingRecordController {
             existingRecord.setPackagingDate(request.getPackagingDate());
         }
         if (request.getEquipmentId() != null) {
-            Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
+            Equipment equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
-            existingRecord.setEquipment(equipment);
+            existingRecord.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
             Operator operator = operatorRepository.findById(request.getOperatorId())

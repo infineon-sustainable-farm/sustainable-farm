@@ -10,7 +10,8 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.repository.DryingRunRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.service.DryingRunService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +53,7 @@ class DryingRunDtoMappingTest {
     private BatchRepository batchRepository;
 
     @Autowired
-    private EquipmentRepository equipmentRepository;
+    private EquipmentService equipmentService;
 
     @Autowired
     private OperatorRepository operatorRepository;
@@ -93,7 +94,8 @@ class DryingRunDtoMappingTest {
         equipment.setCapacityKgPerHour(new BigDecimal("250.00"));
         equipment.setEnergyConsumptionKwhPerKg(new BigDecimal("0.2500"));
         equipment.setMaintenanceStatus(Equipment.MaintenanceStatus.ACTIVE);
-        equipmentRepository.saveAndFlush(equipment);
+        Equipment registered = equipmentService.findEquipmentById(EQUIPMENT_ID)
+                .orElseGet(() -> equipmentService.createEquipment(equipment));
 
         Operator operator = new Operator();
         operator.setOperatorId(OPERATOR_ID);
@@ -106,7 +108,7 @@ class DryingRunDtoMappingTest {
         DryingRun run = new DryingRun();
         run.setRunId(RUN_ID);
         run.setBatch(batch);
-        run.setEquipment(equipment);
+        run.setEquipmentId(registered.getId());
         run.setOperator(operator);
         run.setDurationHours(new BigDecimal("6.50"));
         run.setTargetTemperatureC(new BigDecimal("55.00"));

@@ -72,6 +72,54 @@ describe('EquipmentList', () => {
     expect(within(table).getByText('Maintenance')).toBeTruthy();
   });
 
+  it('lists a machine registered from Machinery without its PT attributes', async () => {
+    equipmentApi.getAllEquipment.mockResolvedValue([
+      {
+        equipmentId: 'EQ-00007',
+        equipmentName: 'Drum dryer',
+        equipmentType: null,
+        capacityKgPerHour: null,
+        energyConsumptionKwhPerKg: null,
+        location: null,
+        maintenanceStatus: 'ACTIVE',
+        lastMaintenanceDate: null,
+      },
+    ]);
+    render(<EquipmentList />);
+
+    const table = await screen.findByRole('table');
+    expect(within(table).getByText('EQ-00007')).toBeTruthy();
+    expect(within(table).getByText('Drum dryer')).toBeTruthy();
+    expect(within(table).getByText('N/A kg/h')).toBeTruthy();
+
+    fireEvent.click(within(table).getByRole('button', { name: 'Edit' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Type'), { target: { value: 'TUNNEL_DRYER' } });
+    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), { target: { value: '90' } });
+    fireEvent.change(within(dialog).getByLabelText('Energy (kWh/kg)'), { target: { value: '1.2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(equipmentApi.updateEquipment).toHaveBeenCalledWith(
+        'EQ-00007',
+        expect.objectContaining({
+          equipmentName: 'Drum dryer',
+          equipmentType: 'TUNNEL_DRYER',
+          capacityKgPerHour: 90,
+          energyConsumptionKwhPerKg: 1.2,
+        }),
+      ),
+    );
+  });
+
+  it('limits the name to 100 characters, like the Machinery form', async () => {
+    render(<EquipmentList />);
+    await screen.findByText('EQ-1');
+    fireEvent.click(screen.getByRole('button', { name: /New Equipment/i }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByLabelText('Name').getAttribute('maxlength')).toBe('100');
+  });
+
   it('filters by type, status and search', async () => {
     render(<EquipmentList />);
     await screen.findByText('EQ-1');

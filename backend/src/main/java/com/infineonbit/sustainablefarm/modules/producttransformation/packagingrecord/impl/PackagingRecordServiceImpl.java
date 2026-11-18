@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.packagingr
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.repository.PackagingRecordRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.service.PackagingRecordService;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +28,13 @@ import java.util.List;
 public class PackagingRecordServiceImpl implements PackagingRecordService {
 
     private final PackagingRecordRepository packagingRecordRepository;
+    private final EquipmentService equipmentService;
 
     @Autowired
-    public PackagingRecordServiceImpl(PackagingRecordRepository packagingRecordRepository) {
+    public PackagingRecordServiceImpl(PackagingRecordRepository packagingRecordRepository,
+                                      EquipmentService equipmentService) {
         this.packagingRecordRepository = packagingRecordRepository;
+        this.equipmentService = equipmentService;
     }
 
     @Override
@@ -58,7 +62,7 @@ public class PackagingRecordServiceImpl implements PackagingRecordService {
         existingRecord.setLotCode(packagingRecord.getLotCode());
         existingRecord.setExportReady(packagingRecord.getExportReady());
         existingRecord.setPackagingDate(packagingRecord.getPackagingDate());
-        existingRecord.setEquipment(packagingRecord.getEquipment());
+        existingRecord.setEquipmentId(packagingRecord.getEquipmentId());
         existingRecord.setOperator(packagingRecord.getOperator());
         
         return packagingRecordRepository.save(existingRecord);
@@ -106,7 +110,9 @@ public class PackagingRecordServiceImpl implements PackagingRecordService {
     @Override
     @Transactional(readOnly = true)
     public List<PackagingRecord> getPackagingRecordsByEquipment(String equipmentId) {
-        return packagingRecordRepository.findByEquipmentEquipmentId(equipmentId);
+        return equipmentService.findEquipmentById(equipmentId)
+                .map(equipment -> packagingRecordRepository.findByEquipmentId(equipment.getId()))
+                .orElse(List.of());
     }
 
     @Override

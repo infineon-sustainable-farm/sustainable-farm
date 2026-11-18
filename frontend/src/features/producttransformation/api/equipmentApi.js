@@ -2,8 +2,9 @@
  * Product Transformation - Equipment API
  * API client for Product Transformation equipment operations.
  *
- * Equipment collision rule (Option A): this client targets the PT-only
- * `pt_equipment` entity, not the Machinery module's `equipment`.
+ * Single equipment register (ADR 0004): `equipmentId` is the business code of
+ * a processing or drying machine of the farm register owned by Machinery
+ * (`equipment`); its PT attributes live in `pt_equipment_spec`.
  *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
