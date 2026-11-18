@@ -39,7 +39,12 @@ public record CrossModuleForeignKey(String name, String table, String column,
         /** The deletion of a referenced row fails while rows reference it. */
         NO_ACTION("NO ACTION"),
         /** The referencing rows are deleted with the referenced row, for a 1:1 extension. */
-        CASCADE("CASCADE");
+        CASCADE("CASCADE"),
+        /**
+         * The referencing column is emptied when the referenced row is deleted, for an optional
+         * link resolved from a code the referencing row keeps on its own.
+         */
+        SET_NULL("SET NULL");
 
         private final String sql;
 
