@@ -119,6 +119,132 @@
       "capacity": "Kapazität"
     }
   },
+  "outages": {
+    "title": "Geplante Ausfälle",
+    "subtitle": "Vorab angekündigte Wartungen oder Abschaltungen: Besucher werden gewarnt, Ventile und automatische Bewässerung bleiben aus.",
+    "inForceNow": "Derzeit wirksam",
+    "plannedPeriods": "Geplante Zeiträume",
+    "listTitle": "Zeiträume der Nichtverfügbarkeit",
+    "filterLabel": "Zeiträume anzeigen",
+    "filters": {
+      "current": "Laufend und anstehend",
+      "past": "Beendet",
+      "cancelled": "Abgesagt",
+      "all": "Alle"
+    },
+    "phases": {
+      "cancelled": "Abgesagt",
+      "active": "Wirksam",
+      "upcoming": "Anstehend",
+      "past": "Beendet"
+    },
+    "scopes": {
+      "zone": "Zone",
+      "source": "Wasserquelle",
+      "farm": "Gesamter Betrieb"
+    },
+    "statuses": {
+      "planned": "Geplant",
+      "active": "Aktiv",
+      "cancelled": "Abgesagt"
+    },
+    "columns": {
+      "what": "Was",
+      "from": "Von",
+      "to": "Bis",
+      "reason": "Grund",
+      "status": "Status"
+    },
+    "loading": "Geplante Ausfälle werden geladen…",
+    "loadError": "Geplante Ausfälle können nicht geladen werden.",
+    "emptyTitle": "Kein geplanter Ausfall",
+    "empty": "Planen Sie rechts eine Wartung oder Abschaltung: Besucher und automatische Bewässerung berücksichtigen sie.",
+    "newTitle": "Nichtverfügbarkeit planen",
+    "editTitle": "Nichtverfügbarkeit bearbeiten",
+    "fields": {
+      "scope": "Nicht verfügbar",
+      "start": "Beginn",
+      "end": "Ende",
+      "reason": "Grund",
+      "reasonPlaceholder": "Filterreinigung, Pumpenreparatur…",
+      "status": "Status",
+      "postpone": "In diesem Zeitraum geplante Bewässerungen verschieben"
+    },
+    "sourceNoPostpone": "Eine Quelle ist keinen Zonen zugeordnet: Ihre Bewässerungen können nicht automatisch verschoben werden.",
+    "errors": {
+      "targetRequired": "Wählen Sie aus, was nicht verfügbar ist.",
+      "periodRequired": "Beginn und Ende sind erforderlich.",
+      "endAfterStart": "Das Ende muss nach dem Beginn liegen."
+    },
+    "planned": "Nichtverfügbarkeit geplant",
+    "updated": "Nichtverfügbarkeit aktualisiert",
+    "cancelled": "Nichtverfügbarkeit abgesagt",
+    "deleted": "Nichtverfügbarkeit gelöscht",
+    "cancelError": "Absagen nicht möglich.",
+    "deleteTitle": "Diese Nichtverfügbarkeit löschen",
+    "deleteMessage": "Der Zeitraum wird aus dem Verlauf entfernt. Um eine Spur zu behalten, sagen Sie ihn stattdessen ab."
+  },
+  "plantsBlocks": {
+    "title": "Pflanzenblöcke",
+    "subtitle": "Verknüpfen Sie jede bewässerte Zone mit dem Pflanzenblock, den sie bewässert: Plants liest dann sein Wasser je Block.",
+    "listTitle": "Verknüpfungen Zone ↔ Block",
+    "count": "{{blocks}} Block/Blöcke, {{links}} Verknüpfung(en)",
+    "columns": {
+      "block": "Block",
+      "zone": "Zone",
+      "farm": "Betrieb"
+    },
+    "zoneFallback": "Zone {{id}}",
+    "farmFallback": "Betrieb {{id}}",
+    "severalBlocks": "mehrere Blöcke",
+    "severalBlocksHint": "Ihre Mengen können keinem einzelnen Block zugeordnet werden",
+    "unlink": "Verknüpfung lösen",
+    "loading": "Verknüpfungen werden geladen…",
+    "loadError": "Die Verknüpfungen können nicht geladen werden.",
+    "emptyTitle": "Noch keine Zone verknüpft",
+    "empty": "Verknüpfen Sie eine Zone mit dem Formular rechts mit ihrem Pflanzenblock.",
+    "formTitle": "Zone verknüpfen",
+    "fields": {
+      "zone": "Zone",
+      "blockCode": "Code des Pflanzenblocks",
+      "blockCodePlaceholder": "A, B2…"
+    },
+    "codeHint": "Codes werden in Großbuchstaben gespeichert. Der Code gehört zum Feld der Zone: Jede Zone dieses Felds wird mit dem Block verknüpft.",
+    "link": "Verknüpfen",
+    "errors": {
+      "zoneRequired": "Wählen Sie eine Zone.",
+      "codeFormat": "Der Blockcode ist ein kurzer Code wie A oder B2, ohne Präfix und Leerzeichen.",
+      "farmUnknown": "Der Betrieb dieser Zone ist unbekannt: Prüfen Sie ihr Feld unter Betriebe und Felder.",
+      "alreadyLinked": "Diese Zone ist bereits mit einem Block verknüpft."
+    },
+    "linked": "Zone mit Block {{code}} verknüpft",
+    "unlinked": "Zone von Block {{code}} gelöst",
+    "details": {
+      "title": "Block {{code}}",
+      "blockChoice": "Angezeigter Block",
+      "pending": "…",
+      "rainfall": "Niederschlag in diesem Monat",
+      "rainfallWithGauges": "Niederschlag in diesem Monat · {{count}} Regenmesser des Betriebs",
+      "need": "Bewässerungsbedarf heute",
+      "phaseValue": "{{phase}} × {{factor}}",
+      "unknownPhase": "unbekannt",
+      "phase": "Wachstumsphase ({{source}})",
+      "phaseSources": {
+        "request": "hier gewählt",
+        "plants_calendar": "Plants-Kalender",
+        "unknown": "unbekannt, keine Anpassung"
+      },
+      "phaseField": "Für den Bedarf verwendete Wachstumsphase",
+      "phases": {
+        "calendar": "Aus dem Plants-Kalender",
+        "establishment": "Etablierung (0–2 J.)",
+        "gradual": "Ansteigende Produktion (3–5 J.)",
+        "full": "Volle Produktion (ab 6 J.)"
+      },
+      "factorsNotValidated": "Die Phasenfaktoren stehen noch auf 1,0: Sie warten auf die Freigabe der Agronomen, der Bedarf ist der reine FAO-56-Wert (Basis {{base}}, ET0 {{et0}}).",
+      "gaugesPerFarm": "Regenmesser gehören zum Betrieb, nicht zum Block: Zwei Messer desselben Betriebs werden nie addiert."
+    }
+  },
   "farms": {
     "title": "Betriebe, Felder und Zonen",
     "subtitle": "Produktionsstandorte, ihre Felder und Bewässerungszonen verwalten.",
