@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFinding;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueKind;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReference;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlockIds;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -19,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ActiveProfiles("test")
 public class HealthFindingRepositoryTest {
 
+    private final TestBlockIds blocks = new TestBlockIds();
+
     @Autowired
     private HealthIssueReferenceRepository healthIssueReferenceRepository;
 
@@ -33,10 +36,9 @@ public class HealthFindingRepositoryTest {
                 new HealthIssueReference(null, code, code, kind, null, null, "by_definition", null));
     }
 
-    private HealthInspection inspection(Integer farmId, String blockCode, LocalDate inspectedOn) {
+    private HealthInspection inspection(Long farmId, String blockCode, LocalDate inspectedOn) {
         HealthInspection inspection = new HealthInspection();
-        inspection.setFarmId(farmId);
-        inspection.setBlockCode(blockCode);
+        inspection.setBlockId(blocks.of(farmId, blockCode));
         inspection.setInspectedOn(inspectedOn);
         inspection.setHealthScorePct(48);
         inspection.setSource("user_entry");
@@ -80,7 +82,7 @@ public class HealthFindingRepositoryTest {
         HealthIssueReference anthracnose = issue("ANTHRACNOSE", HealthIssueKind.DISEASE);
         HealthInspection september21 = inspection(null, "C", LocalDate.of(2026, 9, 21));
         HealthInspection september1 = inspection(null, "C", LocalDate.of(2026, 9, 1));
-        HealthInspection farm1BlockD = inspection(1, "D", LocalDate.of(2026, 9, 2));
+        HealthInspection farm1BlockD = inspection(1L, "D", LocalDate.of(2026, 9, 2));
         HealthFinding late = finding(september21, anthracnose, null);
         HealthFinding early = finding(september1, anthracnose, "42");
         HealthFinding earlySecond = finding(september1, anthracnose, "43");
@@ -89,7 +91,7 @@ public class HealthFindingRepositoryTest {
         assertEquals(List.of(early.getId(), earlySecond.getId(), blockD.getId(), late.getId()),
                 find(null, null, null, null));
         // Act & Assert: the farm, block and dates of the inspection
-        assertEquals(List.of(blockD.getId()), find(1, null, null, null));
+        assertEquals(List.of(blockD.getId()), find(1L, null, null, null));
         assertEquals(List.of(early.getId(), earlySecond.getId(), late.getId()), find(null, "C", null, null));
         assertEquals(List.of(blockD.getId(), late.getId()), find(null, null, LocalDate.of(2026, 9, 2), null));
         assertEquals(List.of(early.getId(), earlySecond.getId()), find(null, null, null, LocalDate.of(2026, 9, 1)));
@@ -115,8 +117,9 @@ public class HealthFindingRepositoryTest {
         assertEquals(firstWrite, stored.getLastUpdated());
     }
 
-    private List<Long> find(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return healthFindingRepository.findByOptionalFilters(farmId, blockCode, from, to).stream()
+    private List<Long> find(Long farmId, String blockCode, LocalDate from, LocalDate to) {
+        return healthFindingRepository.findByOptionalFilters(blocks.all(farmId, blockCode), blocks.ids(farmId, blockCode),
+                        from, to).stream()
                 .map(HealthFinding::getId)
                 .toList();
     }

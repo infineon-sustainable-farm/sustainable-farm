@@ -16,6 +16,8 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.InspectionMethod;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthInspectionRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthTreatmentRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestRows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -73,8 +76,10 @@ public class HealthInspectionServiceTest {
 
     @BeforeEach
     void setUp() {
+        PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).asPlantsBlocks();
         healthInspectionService = new HealthInspectionService(healthInspectionRepository, healthFindingRepository,
-                healthIssueService, new HealthFindingService(healthFindingRepository, healthTreatmentRepository));
+                healthIssueService, new HealthFindingService(healthFindingRepository, healthTreatmentRepository,
+                plantsBlocks), plantsBlocks);
     }
 
     /**
@@ -128,7 +133,7 @@ public class HealthInspectionServiceTest {
         return captor.getAllValues();
     }
 
-    private static HealthInspectionRequest inspection(Integer farmId, String blockCode, double score,
+    private static HealthInspectionRequest inspection(Long farmId, String blockCode, double score,
                                                       List<HealthFindingRequest> findings) {
         return new HealthInspectionRequest(farmId, blockCode, SEPTEMBER_1, score, "Awa", "VISUAL", findings);
     }
@@ -144,7 +149,9 @@ public class HealthInspectionServiceTest {
                         new HealthFindingRequest("MANGO_MEALYBUG", null, null))), NOW);
         // Assert: the stored inspection
         HealthInspection inspection = savedInspection();
-        assertNull(inspection.getFarmId());
+        assertEquals(TestBlocks.idOf("C"), inspection.getBlockId());
+        // No farm requested: the farm is that of block C in the farm referential
+        assertEquals(1L, inspection.getFarmId());
         assertEquals("C", inspection.getBlockCode());
         assertEquals(SEPTEMBER_1, inspection.getInspectedOn());
         assertEquals(48, inspection.getHealthScorePct());
@@ -166,11 +173,11 @@ public class HealthInspectionServiceTest {
             assertEquals(NOW, finding.getLastUpdated());
         });
         // Assert: the response, both findings untreated
-        assertEquals(new HealthInspectionResponse(1L, null, "C", SEPTEMBER_1, 48, HealthCategory.MODERATE, "Awa",
+        assertEquals(new HealthInspectionResponse(1L, 1L, "C", SEPTEMBER_1, 48, HealthCategory.MODERATE, "Awa",
                 InspectionMethod.VISUAL, "user_entry", NOW, List.of(
-                new HealthFindingResponse(10L, 1L, null, "C", SEPTEMBER_1, "ANTHRACNOSE", "Anthracnose",
+                new HealthFindingResponse(10L, 1L, 1L, "C", SEPTEMBER_1, "ANTHRACNOSE", "Anthracnose",
                         HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.UNTREATED, 0, null, null, null, null),
-                new HealthFindingResponse(11L, 1L, null, "C", SEPTEMBER_1, "MANGO_MEALYBUG", "Mango mealybug",
+                new HealthFindingResponse(11L, 1L, 1L, "C", SEPTEMBER_1, "MANGO_MEALYBUG", "Mango mealybug",
                         HealthIssueKind.PEST, null, null, HealthFindingStatus.UNTREATED, 0, null, null, null, null))),
                 response);
     }
@@ -215,10 +222,10 @@ public class HealthInspectionServiceTest {
         savesAssignIds();
         // Act
         HealthInspectionResponse response = healthInspectionService.recordInspection(
-                inspection(1, "C", 48.0, List.of()), NOW);
+                inspection(1L, "C", 48.0, List.of()), NOW);
         // Assert
-        assertEquals(1, savedInspection().getFarmId());
-        assertEquals(1, response.farmId());
+        assertEquals(1L, savedInspection().getFarmId());
+        assertEquals(1L, response.farmId());
     }
 
     @Test
@@ -258,17 +265,17 @@ public class HealthInspectionServiceTest {
         // Arrange: two inspections, the second with nothing found
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        HealthInspection blockC = new HealthInspection(1L, 1, "C", SEPTEMBER_1, 48, "Awa",
+        HealthInspection blockC = TestRows.inspection(1L, 1, "C", SEPTEMBER_1, 48, "Awa",
                 InspectionMethod.VISUAL, "user_entry", NOW);
-        HealthInspection blockCAgain = new HealthInspection(3L, 1, "C", LocalDate.of(2026, 9, 21), 72, null,
+        HealthInspection blockCAgain = TestRows.inspection(3L, 1, "C", LocalDate.of(2026, 9, 21), 72, null,
                 null, "user_entry", NOW);
-        when(healthInspectionRepository.findByOptionalFilters(1, "C", from, to))
+        when(healthInspectionRepository.findByOptionalFilters(false, TestBlocks.idsOf("C"), from, to))
                 .thenReturn(List.of(blockC, blockCAgain));
         when(healthFindingRepository.findByInspectionIds(List.of(1L, 3L))).thenReturn(List.of(
                 new HealthFinding(10L, blockC, ANTHRACNOSE, null, "42", null, null, "user_entry", NOW),
                 new HealthFinding(11L, blockC, MEALYBUG, null, null, null, null, "user_entry", NOW)));
         // Act
-        List<HealthInspectionResponse> inspections = healthInspectionService.getAllInspections(1, " C ", from, to);
+        List<HealthInspectionResponse> inspections = healthInspectionService.getAllInspections(1L, " C ", from, to);
         // Assert: in the order of the repository, each with its own findings
         assertEquals(List.of(1L, 3L), inspections.stream().map(HealthInspectionResponse::id).toList());
         assertEquals(List.of(10L, 11L),
@@ -281,11 +288,11 @@ public class HealthInspectionServiceTest {
     @Test
     void getBlockHealth_shouldGiveTheLatestScoreAndCategoryOfEachBlock_withOneQuery() {
         // Arrange: block C inspected twice, block D once
-        when(healthInspectionRepository.findByOptionalFilters(null, null, null, null)).thenReturn(List.of(
-                new HealthInspection(1L, null, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,
+        when(healthInspectionRepository.findByOptionalFilters(true, TestBlocks.NO_IDS, null, null)).thenReturn(List.of(
+                TestRows.inspection(1L, null, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,
                         "user_entry", NOW),
-                new HealthInspection(2L, null, "D", LocalDate.of(2026, 9, 2), 85, null, null, "user_entry", NOW),
-                new HealthInspection(4L, null, "C", LocalDate.of(2026, 9, 21), 72, null, null, "user_entry", NOW)));
+                TestRows.inspection(2L, null, "D", LocalDate.of(2026, 9, 2), 85, null, null, "user_entry", NOW),
+                TestRows.inspection(4L, null, "C", LocalDate.of(2026, 9, 21), 72, null, null, "user_entry", NOW)));
         // Act
         List<BlockHealthResponse> blocks = healthInspectionService.getBlockHealth(null);
         // Assert
@@ -293,14 +300,14 @@ public class HealthInspectionServiceTest {
                 new BlockHealthResponse(null, "C", 4L, LocalDate.of(2026, 9, 21), 72, HealthCategory.HEALTHY),
                 new BlockHealthResponse(null, "D", 2L, LocalDate.of(2026, 9, 2), 85, HealthCategory.VERY_HEALTHY)),
                 blocks);
-        verify(healthInspectionRepository, times(1)).findByOptionalFilters(any(), any(), any(), any());
+        verify(healthInspectionRepository, times(1)).findByOptionalFilters(anyBoolean(), any(), any(), any());
     }
 
     @Test
     void getBlockHealth_shouldPassTheFarmFilter() {
         // Arrange
-        when(healthInspectionRepository.findByOptionalFilters(1, null, null, null)).thenReturn(List.of());
+        when(healthInspectionRepository.findByOptionalFilters(false, TestBlocks.idsOf("C"), null, null)).thenReturn(List.of());
         // Act & Assert
-        assertTrue(healthInspectionService.getBlockHealth(1).isEmpty());
+        assertTrue(healthInspectionService.getBlockHealth(1L).isEmpty());
     }
 }

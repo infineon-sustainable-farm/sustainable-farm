@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
@@ -80,6 +81,47 @@ class FarmApiIntegrationTest {
         mockMvc.perform(delete("/api/zones/{id}", zoneId)).andExpect(status().isConflict());
         mockMvc.perform(delete("/api/fields/{id}", fieldId)).andExpect(status().isConflict());
         mockMvc.perform(delete("/api/farms/{id}", farmId)).andExpect(status().isConflict());
+    }
+
+    @Test
+    void aPlantingOnANewCodeCreatesTheBlockUnderTheRequestedFarm() throws Exception {
+        long farmId = idOf(post("/api/farms"), "{\"name\":\"Planting Farm\"}");
+        String code = "N" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        assertTrue(farmDirectory.findBlockByCode(code).isEmpty());
+
+        mockMvc.perform(post("/api/plants/plantings").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"farmId":%d,"blockCode":"%s","varietyName":"Keitt","plantingDate":"2023-09-15","treeCount":10}
+                        """.formatted(farmId, code.toLowerCase())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.farmId").value(farmId))
+                .andExpect(jsonPath("$.blockCode").value(code));
+
+        BlockDto block = farmDirectory.findBlockByCode(code).orElseThrow();
+        assertEquals(farmId, block.farmId());
+        assertEquals(code, block.name());
+    }
+
+    @Test
+    void unlinkingAZoneWhoseBlockIsUsedByPlantsIsRefusedAndKeepsTheCode() throws Exception {
+        long farmId = idOf(post("/api/farms"), "{\"name\":\"Used Block Farm\"}");
+        long fieldId = idOf(post("/api/fields"),
+                "{\"farmId\":%d,\"name\":\"Used Field\",\"areaHectares\":2}".formatted(farmId));
+        long zoneId = idOf(post("/api/zones"),
+                "{\"fieldId\":%d,\"name\":\"Used Zone\",\"areaHectares\":1}".formatted(fieldId));
+        String code = "U" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        mockMvc.perform(post("/api/water/zone-block-mappings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"zoneId\":%d,\"blockCode\":\"%s\",\"farmId\":%d}".formatted(zoneId, code, farmId)))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/plants/plantings").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"blockCode":"%s","varietyName":"Kent","plantingDate":"2023-09-15","treeCount":10}
+                        """.formatted(code)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.farmId").value(farmId));
+
+        mockMvc.perform(delete("/api/water/zone-block-mappings/{id}", zoneId)).andExpect(status().isConflict());
+
+        assertEquals(fieldId, farmDirectory.findBlockByCode(code).orElseThrow().id());
+        assertEquals(code, farmDirectory.findZone(zoneId).orElseThrow().blockCode());
     }
 
     private long idOf(MockHttpServletRequestBuilder request, String body) throws Exception {

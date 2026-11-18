@@ -29,6 +29,7 @@ public class HealthFindingService {
 
     private final HealthFindingRepository healthFindingRepository;
     private final HealthTreatmentRepository healthTreatmentRepository;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * An optional text as stored: trimmed, and {@code null} when it is blank.
@@ -103,17 +104,18 @@ public class HealthFindingService {
      * the treatments, so its filter applies after that, in Java.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "C"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "C"}), or {@code null}
+     *                  or blank for every block
      * @param status    computed status, or {@code null} for every status
      * @param from      first inspection date, included, or {@code null}
      * @param to        last inspection date, included, or {@code null}
      * @return the matching findings, ordered by inspection date, inspection, then identifier
      */
-    public List<HealthFindingResponse> getAllFindings(Integer farmId, String blockCode, HealthFindingStatus status,
+    public List<HealthFindingResponse> getAllFindings(Long farmId, String blockCode, HealthFindingStatus status,
                                                       LocalDate from, LocalDate to) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
         List<HealthFinding> findings = healthFindingRepository.findByOptionalFilters(
-                farmId, normalizeOptionalText(blockCode), from, to);
+                blocks.all(), blocks.ids(), from, to);
         return toResponses(findings).stream()
                 .filter(finding -> status == null || finding.status() == status)
                 .toList();

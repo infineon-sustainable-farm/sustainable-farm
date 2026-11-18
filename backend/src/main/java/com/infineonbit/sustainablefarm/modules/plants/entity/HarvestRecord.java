@@ -23,7 +23,7 @@ import java.util.Locale;
  * A quantity of mangoes picked from a variety row on a given day.
  *
  * <p>Like {@link PopulationEvent}, the record holds no farm and no block: the
- * {@link Variety} row already stands for one (farm, block, variety) triple.
+ * {@link Variety} row already stands for one (block, variety) pair, the block giving the farm.
  * Several records may share a day, one per picking.
  *
  * <p>Each record gets a lot number when it is recorded (PL-05-05 "Batch

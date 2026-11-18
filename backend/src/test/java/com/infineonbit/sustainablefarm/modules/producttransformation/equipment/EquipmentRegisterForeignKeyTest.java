@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -48,6 +49,9 @@ class EquipmentRegisterForeignKeyTest {
     private BatchRepository batchRepository;
 
     @Autowired
+    private ProductTransformationBlocks blocks;
+
+    @Autowired
     private DryingRunRepository dryingRunRepository;
 
     @Autowired
@@ -74,8 +78,7 @@ class EquipmentRegisterForeignKeyTest {
         batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
         batch.setCurrentStatus(Batch.BatchStatus.CREATED);
-        batch.setFarmId("F-FK");
-        batch.setBlockId("BL-FK");
+        batch.setFarmBlockId(blocks.resolve("F-FK", "BL-FK"));
         batchRepository.saveAndFlush(batch);
 
         DryingRun run = new DryingRun();

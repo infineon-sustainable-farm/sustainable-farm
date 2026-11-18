@@ -92,7 +92,7 @@ public class NurseryBatchController {
          @ApiResponse(responseCode = "400", description = "An unknown stage or a non-numeric farm")
    })
    public ResponseEntity<List<NurseryBatchResponse>> getAllBatches(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "GERMINATION, ROOTSTOCK_GROWTH, GRAFTED, HARDENING or READY_TO_TRANSPLANT") @RequestParam(name = "stage", required = false) NurseryStage stage) {
       List<NurseryBatchResponse> batchResponses = nurseryBatchService.getAllBatches(farmId, stage);
       return ResponseEntity.status(HttpStatus.OK).body(batchResponses);

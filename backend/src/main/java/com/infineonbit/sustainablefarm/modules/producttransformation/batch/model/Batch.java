@@ -37,7 +37,8 @@ import java.math.BigDecimal;
 @Table(name = "batch", indexes = {
         @Index(name = "idx_batch_current_status", columnList = "current_status"),
         @Index(name = "idx_batch_harvest_date", columnList = "harvest_date"),
-        @Index(name = "idx_batch_variety_key", columnList = "variety_key")
+        @Index(name = "idx_batch_variety_key", columnList = "variety_key"),
+        @Index(name = "idx_batch_block_id", columnList = "block_id")
 })
 @Getter
 @Setter
@@ -67,11 +68,12 @@ public class Batch {
     @Column(name = "current_status", nullable = false, length = 30)
     private BatchStatus currentStatus = BatchStatus.CREATED;
 
-    @Column(name = "farm_id", nullable = false, length = 50)
-    private String farmId;
-
-    @Column(name = "block_id", nullable = false, length = 50)
-    private String blockId;
+    /**
+     * Block of the farm the lot was harvested on: foreign key to {@code farm.block} (ADR 0004). The
+     * API shows it as {@code blockId} (the block code) and {@code farmId} (the name of its farm).
+     */
+    @Column(name = "block_id", nullable = false)
+    private Long farmBlockId;
 
     @Column(name = "created_at", updatable = false)
     private java.sql.Timestamp createdAt;

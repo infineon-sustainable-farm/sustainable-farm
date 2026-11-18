@@ -1,7 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.service.PlantsBlocks;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -29,15 +31,22 @@ import org.springframework.stereotype.Component;
  * either: it is a scenario figure, which belongs to Scenario Analysis, not to
  * the orchard. The A/B/C/D blocks shown in the visual mock-up are illustration
  * only and are deliberately NOT seeded.
+ *
+ * <p>Block A is the {@code farm.block} row of code A: the demo farm seed
+ * ({@code FarmDemoDataSeeder}, which runs first) gives it to farm 1, the farm of
+ * the Water Supply demo zone, so plants and Water Supply show the same block.
+ * Without that seed, the block is created under the default farm.
  */
 @Component
 @Profile("dev")
 public class PlantsDataSeeder implements CommandLineRunner {
 
     private final VarietyRepository varietyRepository;
+    private final PlantsBlocks plantsBlocks;
 
-    public PlantsDataSeeder(VarietyRepository varietyRepository) {
+    public PlantsDataSeeder(VarietyRepository varietyRepository, PlantsBlocks plantsBlocks) {
         this.varietyRepository = varietyRepository;
+        this.plantsBlocks = plantsBlocks;
     }
 
     @Override
@@ -54,7 +63,8 @@ public class PlantsDataSeeder implements CommandLineRunner {
         keitt.setTreeCount(200);
         keitt.setRowSpacingM(8.0);
         keitt.setTreeSpacingM(8.0);
-        keitt.setBlockCode("A");
+        BlockDto blockA = plantsBlocks.resolve(null, "A");
+        keitt.assignBlock(blockA.id(), PlantsBlocks.label(blockA));
         keitt.setSource("Zalka_2025");
         // treeDensityPerHa, vigor, plantOrigin and lastUpdated:
         // no source data in the study, left NULL. lastUpdated records when the variety

@@ -19,24 +19,7 @@ public class VarietyService {
 
     private final VarietyRepository varietyRepository;
     private final PopulationEventRepository populationEventRepository;
-
-    /**
-     * Turns a blank filter into no filter at all.
-     *
-     * <p>A filter sent as an empty or whitespace-only string means "no filter".
-     * It is turned into {@code null} so the query ignores it instead of looking
-     * for a variety whose block is literally the empty string.
-     *
-     * @param value the filter value as received, possibly {@code null}
-     * @return the trimmed value, or {@code null} if it was null or blank
-     */
-    private static String normalizeFilter(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * Maps an entity to its API representation.
@@ -73,14 +56,14 @@ public class VarietyService {
      * row is a normal outcome and returns an empty list; it is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
-     * @return the matching varieties, possibly empty
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
+     * @return the matching varieties ordered by block code, name and id, possibly empty
      */
-    public List<VarietyResponse> getAllVarieties(Integer farmId, String blockCode) {
-        List<Variety> varieties = varietyRepository.findByOptionalFilters(
-                farmId,
-                normalizeFilter(blockCode));
+    public List<VarietyResponse> getAllVarieties(Long farmId, String blockCode) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        List<Variety> varieties = PlantsBlocks.sortedByBlockCode(
+                varietyRepository.findByOptionalFilters(blocks.all(), blocks.ids()), Variety::getBlockCode);
         Map<Long, Integer> currentTreeCounts = currentTreeCounts(varieties);
         return varieties.stream()
                 .map(variety -> toResponse(variety, currentTreeCounts.get(variety.getId())))

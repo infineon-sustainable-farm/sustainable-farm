@@ -44,17 +44,15 @@ public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Stri
     List<HarvestEvent> findByQualityGrade(QualityGrade qualityGrade);
 
     /**
-     * Find harvest events by farm
+     * Find harvest events of several blocks (the blocks of a farm)
      */
-    List<HarvestEvent> findByFarmId(String farmId);
+    List<HarvestEvent> findByFarmBlockIdIn(java.util.Collection<Long> farmBlockIds);
 
     /**
-     * Find harvest events by farm and date range
+     * Find harvest events of several blocks (the blocks of a farm) and a date range
      */
-    @Query("SELECT h FROM HarvestEvent h WHERE h.farmId = :farmId AND h.harvestDate BETWEEN :startDate AND :endDate")
-    List<HarvestEvent> findByFarmAndDateRange(@Param("farmId") String farmId, 
-                                            @Param("startDate") LocalDate startDate, 
-                                            @Param("endDate") LocalDate endDate);
+    List<HarvestEvent> findByFarmBlockIdInAndHarvestDateBetween(java.util.Collection<Long> farmBlockIds,
+                                                                LocalDate startDate, LocalDate endDate);
 
     /**
      * Find harvest events by variety and quality grade

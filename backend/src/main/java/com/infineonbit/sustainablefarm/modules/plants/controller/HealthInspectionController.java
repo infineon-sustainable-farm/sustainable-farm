@@ -73,7 +73,7 @@ public class HealthInspectionController {
          @ApiResponse(responseCode = "400", description = "A date is not in the yyyy-MM-dd format")
    })
    public ResponseEntity<List<HealthInspectionResponse>> getAllInspections(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"C\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Parameter(description = "First inspection date, included, as yyyy-MM-dd") @RequestParam(name = "from", required = false)
          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

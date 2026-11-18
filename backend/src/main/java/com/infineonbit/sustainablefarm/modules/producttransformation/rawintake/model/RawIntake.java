@@ -29,7 +29,10 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "raw_intake",
         uniqueConstraints = @UniqueConstraint(name = "uk_raw_intake_batch_id", columnNames = "batch_id"),
-        indexes = @Index(name = "idx_raw_intake_received_variety_key", columnList = "received_variety_key"))
+        indexes = {
+                @Index(name = "idx_raw_intake_received_variety_key", columnList = "received_variety_key"),
+                @Index(name = "idx_raw_intake_source_block_id", columnList = "source_block_id")
+        })
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -50,11 +53,12 @@ public class RawIntake {
     @EqualsAndHashCode.Exclude
     private Batch batch;
 
-    @Column(name = "source_farm", nullable = false, length = 100)
-    private String sourceFarm;
-
-    @Column(name = "source_block", nullable = false, length = 50)
-    private String sourceBlock;
+    /**
+     * Block of the farm the fruit comes from: foreign key to {@code farm.block} (ADR 0004). The API
+     * shows it as {@code sourceBlock} (the block code) and {@code sourceFarm} (the name of its farm).
+     */
+    @Column(name = "source_block_id", nullable = false)
+    private Long sourceBlockId;
 
     @Column(name = "intake_date", nullable = false)
     private LocalDate intakeDate;

@@ -2,16 +2,21 @@ package com.infineonbit.sustainablefarm.modules.plants.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Transient;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -48,12 +53,12 @@ import java.time.LocalDate;
  * snake_case and a singular table name.
  */
 @Entity
-@Table(name = "fertilizer_movement")
+@EntityListeners(BlockLabelListener.class)
+@Table(name = "fertilizer_movement", indexes = @Index(name = "idx_fertilizer_movement_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class FertilizerMovement {
+public class FertilizerMovement implements BlockRow {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,13 +82,14 @@ public class FertilizerMovement {
     @Column(name = "quantity", nullable = false, precision = 12, scale = 3)
     private BigDecimal quantity;
 
-    /** Farm of an application, or NULL. */
-    @Column(name = "farm_id")
-    private Integer farmId;
+    /** Block of an application, a {@code farm.block} row (foreign key {@code fk_fertilizer_movement_block}); NULL for the other types. */
+    @Column(name = "block_id")
+    private Long blockId;
 
-    /** Block of an application, trimmed and upper-cased; NULL for the other types. */
-    @Column(name = "block_code")
-    private String blockCode;
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink block = new BlockLink();
 
     /** Person or team who applied the fertilizer; NULL for the other types. */
     @Column(name = "applicator")
@@ -119,4 +125,41 @@ public class FertilizerMovement {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** Farm of the block, read from the farm referential; {@code null} without a block. */
+    public Long getFarmId() {
+        return block.label(blockId).farmId();
+    }
+
+    /** Sets the farm by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setFarmId(Long farmId) {
+        block.setFarmId(farmId);
+    }
+
+    /** Code of the block of an application, read from the farm referential; {@code null} for the other types. */
+    public String getBlockCode() {
+        return block.label(blockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setBlockCode(String blockCode) {
+        block.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignBlock(Long blockId, BlockLabel label) {
+        this.blockId = blockId;
+        block.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        block.useSource(source);
+    }
+
+    @PrePersist
+    @PreUpdate
+    void requireResolvedBlock() {
+        block.requireResolved("fertilizer movement");
+    }
 }

@@ -162,8 +162,8 @@ public class HealthFindingControllerTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        when(healthFindingService.getAllFindings(1, "C", HealthFindingStatus.IN_PROGRESS, from, to))
-                .thenReturn(List.of(new HealthFindingResponse(1L, 1L, 1, "C", from, "ANTHRACNOSE", "Anthracnose",
+        when(healthFindingService.getAllFindings(1L, "C", HealthFindingStatus.IN_PROGRESS, from, to))
+                .thenReturn(List.of(new HealthFindingResponse(1L, 1L, 1L, "C", from, "ANTHRACNOSE", "Anthracnose",
                         HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.IN_PROGRESS, 1,
                         LocalDate.of(2026, 9, 4), LocalDate.of(2026, 9, 18), null, null)));
         // Act & Assert
@@ -176,7 +176,7 @@ public class HealthFindingControllerTest {
                 .andExpect(jsonPath("$[0].lastTreatedOn").value("2026-09-04"))
                 .andExpect(jsonPath("$[0].harvestAllowedFrom").value("2026-09-18"))
                 .andExpect(jsonPath("$[0].resolvedOn").value(nullValue()));
-        verify(healthFindingService).getAllFindings(eq(1), eq("C"), eq(HealthFindingStatus.IN_PROGRESS),
+        verify(healthFindingService).getAllFindings(eq(1L), eq("C"), eq(HealthFindingStatus.IN_PROGRESS),
                 eq(from), eq(to));
     }
 

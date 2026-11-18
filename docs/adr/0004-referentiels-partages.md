@@ -56,6 +56,22 @@ Le champ (`Field`) de watersupply et le bloc de plants désignent la même parce
 | Clés étrangères entre modules | Colonne `Long` simple dans le module consommateur, contrainte déclarée par un bean `core.schema.CrossModuleForeignKey` vers `FarmDirectory.FARM_TABLE`, `BLOCK_TABLE` ou `ZONE_TABLE` ; une ligne encore référencée ne peut pas être supprimée (409) |
 | Attributs d'irrigation | Méthode d'irrigation, coefficient cultural et goutteurs restent sur `Zone` pour ne pas changer le JSON de `/api/zones` ; leur déplacement vers watersupply est à reconsidérer avec T36 |
 
+### Plants et Product Transformation sur le référentiel (T16)
+
+Plants et Product Transformation désignent un bloc par un code saisi (« A », « B2 ») : ce code est celui d'une ligne `block`. Leurs lignes gardent une seule colonne `Long` vers `block` (clé étrangère `core.schema.CrossModuleForeignKey`), le bloc donnant la ferme ; le JSON garde les mêmes champs.
+
+| Élément | Décision |
+|---|---|
+| Colonnes plants | `block_id` sur `varietes`, `calendrier_croissance`, `health_inspection`, `health_treatment`, `fertilizer_movement`, `nursery_event` ; `nursery_batch` garde `farm_id` (FK vers `farm`, la ferme de la pépinière, sans bloc) et `planned_block_id`. `id_ferme`, `bloc_parcelle`, `farm_id Integer` et `block_code` disparaissent |
+| Colonnes Product Transformation | `batch.block_id`, `harvest_event.block_id`, `raw_intake.source_block_id` (Long, non nuls) ; `farm_id String`, `block_id String`, `source_farm` et `source_block` disparaissent |
+| Code inconnu à l'écriture | Le bloc est créé par `farm.api.BlockRegistry.findOrCreateBlock` : nommé d'après son code, 0 ha, sous la ferme demandée, ou sans ferme demandée sous la ferme par défaut (celle du plus petit id, créée sous le nom « Default farm » si le référentiel est vide). Tout code accepté avant reste accepté, aucun écran ne change |
+| Ferme demandée par plants | `farmId` doit exister et posséder le bloc, sinon 400 ; une récolte ou une observation sur un bloc d'une autre ferme reste « aucune plantation » (422 comme avant). Le `farmId` des réponses est la ferme du bloc : il n'est plus `null` pour une ligne saisie sans ferme |
+| Ferme demandée par Product Transformation | Texte libre : un code existant l'emporte (le texte de ferme est ignoré) ; pour un nouveau code, le texte désigne une ferme par id numérique ou par nom, sinon la ferme par défaut. Jamais de 400 pour ce texte. Les réponses donnent le code du bloc et le nom de sa ferme |
+| Lecture et filtres | Un filtre sur un code ou une ferme inconnus renvoie une liste vide ; le code est comparé après passage en majuscules. Plants lit le code et la ferme de ses lignes par `farm.api` (`FarmDirectory`) au premier usage ; un code renommé dans le référentiel apparaît à la lecture suivante |
+| Délier une zone | Refusé (409) quand des lignes d'un autre module référencent son bloc (lu depuis les `CrossModuleForeignKey` vers `block`) : le bloc garde son code, sinon plants et Product Transformation perdraient le bloc qu'ils affichent |
+| Données de démonstration | `seed/farm-demo-data.sql` (profil dev, joué en premier, `FarmDirectory.DEMO_SEED_ORDER`) crée la ferme 1 et les blocs A, B, C ; la variété Keitt de plants, la zone Water Supply « Zone Goutte A » et les lots de Product Transformation désignent les mêmes lignes |
+| Water Supply | Lit la croissance d'un bloc par `plants.api.BlockGrowthLookup` ; l'import gelé de `plants.service.GrowthCalendarService` disparaît |
+
 ## Conséquences
 
 | Type | Conséquence |

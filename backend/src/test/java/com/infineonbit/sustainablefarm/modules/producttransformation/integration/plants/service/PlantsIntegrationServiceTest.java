@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.plants.service.VarietyCatalogService;
@@ -24,7 +25,8 @@ import static org.mockito.Mockito.when;
 class PlantsIntegrationServiceTest {
 
     private final MangoVarietyCodes codes = codes();
-    private final PlantsIntegrationService service = new PlantsIntegrationService(null, codes);
+    private final ProductTransformationBlocks blocks = mock(ProductTransformationBlocks.class);
+    private final PlantsIntegrationService service = new PlantsIntegrationService(null, codes, blocks);
 
     private static MangoVarietyCodes codes() {
         VarietyReferenceRepository repository = mock(VarietyReferenceRepository.class);
@@ -67,6 +69,8 @@ class PlantsIntegrationServiceTest {
                 .source("user_entry")
                 .build();
 
+        when(blocks.resolve("7", "A")).thenReturn(11L);
+
         HarvestEvent event = service.toHarvestEvent(harvest, "LOT-2026-0001");
 
         assertEquals("LOT-2026-0001", event.getBatchId(), "original lot must be preserved");
@@ -74,8 +78,7 @@ class PlantsIntegrationServiceTest {
         assertEquals(42L, event.getPlantsHarvestId());
         assertEquals("KEITT", event.getVarietyKey());
         assertEquals(LocalDate.of(2026, 11, 5), event.getHarvestDate());
-        assertEquals("7", event.getFarmId());
-        assertEquals("A", event.getBlockId());
+        assertEquals(11L, event.getFarmBlockId(), "the Plants block code designates the same farm block");
         assertEquals(0, event.getHarvestQuantityKg().compareTo(java.math.BigDecimal.valueOf(125.5)));
     }
 

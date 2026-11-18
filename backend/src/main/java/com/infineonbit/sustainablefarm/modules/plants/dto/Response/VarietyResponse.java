@@ -35,7 +35,7 @@ import java.time.Instant;
  */
 public record VarietyResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String name,
         Integer treeCount,
         Integer currentTreeCount,

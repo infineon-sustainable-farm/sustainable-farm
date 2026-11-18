@@ -2,16 +2,21 @@ package com.infineonbit.sustainablefarm.modules.plants.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Transient;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,12 +41,12 @@ import java.time.LocalDate;
  * snake_case and a singular table name.
  */
 @Entity
-@Table(name = "nursery_event")
+@EntityListeners(BlockLabelListener.class)
+@Table(name = "nursery_event", indexes = @Index(name = "idx_nursery_event_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class NurseryEvent {
+public class NurseryEvent implements BlockRow {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -71,9 +76,14 @@ public class NurseryEvent {
     @Column(name = "reason")
     private String reason;
 
-    /** Block the plants went to, stored like the block of a planting, for a transplant only. */
-    @Column(name = "block_code")
-    private String blockCode;
+    /** Block the plants went to, a {@code farm.block} row (foreign key {@code fk_nursery_event_block}), for a transplant only. */
+    @Column(name = "block_id")
+    private Long blockId;
+
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink block = new BlockLink();
 
     /** The PLANTING event the transplant created in the orchard, for a transplant only. */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -86,4 +96,31 @@ public class NurseryEvent {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** Code of the block the plants went to, read from the farm referential; {@code null} but for a transplant. */
+    public String getBlockCode() {
+        return block.label(blockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setBlockCode(String blockCode) {
+        block.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignBlock(Long blockId, BlockLabel label) {
+        this.blockId = blockId;
+        block.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        block.useSource(source);
+    }
+
+    @PrePersist
+    @PreUpdate
+    void requireResolvedBlock() {
+        block.requireResolved("nursery event");
+    }
 }

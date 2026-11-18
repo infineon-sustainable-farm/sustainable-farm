@@ -13,7 +13,7 @@ import java.time.LocalDate;
  */
 public record PlantingResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         Long varietyId,
         String varietyName,

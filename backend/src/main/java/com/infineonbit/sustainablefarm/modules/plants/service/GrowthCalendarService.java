@@ -20,32 +20,14 @@ public class GrowthCalendarService {
 
     private final GrowthCalendarRepository growthCalendarRepository;
     private final VarietyRepository varietyRepository;
+    private final PlantsBlocks plantsBlocks;
 
     /**
-     * Turns a blank filter into no filter at all.
+     * Names of the varieties planted on the same block as the entry.
      *
-     * <p>A filter sent as an empty or whitespace-only string means "no filter".
-     * It is turned into {@code null} so the query ignores it instead of looking
-     * for an entry whose block is literally the empty string.
-     *
-     * @param value the filter value as received, possibly {@code null}
-     * @return the trimmed value, or {@code null} if it was null or blank
-     */
-    private static String normalizeFilter(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
-
-    /**
-     * Names of the varieties planted on the same farm and block as the entry.
-     *
-     * <p>The link between the plants tables is made on the {@code blockCode} and
-     * {@code farmId} fields (columns {@code bloc_parcelle} and {@code id_ferme} in
-     * the database). Both must match, NULL matching NULL, so a block "A" of one
-     * farm never borrows the varieties of block "A" of another farm.
+     * <p>The link between the plants tables is made on the block id (column
+     * {@code block_id}, a {@code farm.block} row): the block gives the farm, so a
+     * block of one farm never borrows the varieties of another farm.
      *
      * <p>Every matching variety is returned — none is picked when there are
      * several. Names are de-duplicated and sorted so the output is stable.
@@ -56,8 +38,7 @@ public class GrowthCalendarService {
      */
     private static List<String> varietyNamesFor(GrowthCalendar entry, List<Variety> varieties) {
         return varieties.stream()
-                .filter(variety -> Objects.equals(variety.getBlockCode(), entry.getBlockCode()))
-                .filter(variety -> Objects.equals(variety.getFarmId(), entry.getFarmId()))
+                .filter(variety -> Objects.equals(variety.getBlockId(), entry.getBlockId()))
                 .map(Variety::getName)
                 .distinct()
                 .sorted()
@@ -103,26 +84,26 @@ public class GrowthCalendarService {
      * Age and phase are computed against today's date.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
-     * @return the matching entries, possibly empty
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
+     * @return the matching entries ordered by block code, planting date and id, possibly empty
      */
-    public List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Integer farmId, String blockCode) {
+    public List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Long farmId, String blockCode) {
         return getAllGrowthCalendarEntries(farmId, blockCode, LocalDate.now());
     }
 
     /**
-     * Same as {@link #getAllGrowthCalendarEntries(Integer, String)}, against an
+     * Same as {@link #getAllGrowthCalendarEntries(Long, String)}, against an
      * explicit reference date so the age computation can be tested.
      */
-    List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Integer farmId, String blockCode, LocalDate today) {
-        String normalizedBlock = normalizeFilter(blockCode);
-        List<GrowthCalendar> entries = growthCalendarRepository.findByOptionalFilters(farmId, normalizedBlock);
+    List<GrowthCalendarResponse> getAllGrowthCalendarEntries(Long farmId, String blockCode, LocalDate today) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        List<GrowthCalendar> entries = PlantsBlocks.sortedByBlockCode(
+                growthCalendarRepository.findByOptionalFilters(blocks.all(), blocks.ids()), GrowthCalendar::getBlockCode);
         if (entries.isEmpty()) {
             return List.of();
         }
-        // Farm matching is done in memory, NULL-safe; only the block narrows the query.
-        List<Variety> varieties = varietyRepository.findByOptionalFilters(null, normalizedBlock);
+        List<Variety> varieties = varietyRepository.findByOptionalFilters(blocks.all(), blocks.ids());
         return entries.stream().map(entry -> toResponse(entry, varieties, today)).toList();
     }
 
@@ -144,7 +125,7 @@ public class GrowthCalendarService {
     GrowthCalendarResponse getGrowthCalendarEntryById(Long id, LocalDate today) {
         GrowthCalendar entry = growthCalendarRepository.findById(id)
                 .orElseThrow(() -> new GrowthCalendarNotFoundException(id));
-        List<Variety> varieties = varietyRepository.findByOptionalFilters(null, entry.getBlockCode());
+        List<Variety> varieties = varietyRepository.findByOptionalFilters(false, List.of(entry.getBlockId()));
         return toResponse(entry, varieties, today);
     }
 }

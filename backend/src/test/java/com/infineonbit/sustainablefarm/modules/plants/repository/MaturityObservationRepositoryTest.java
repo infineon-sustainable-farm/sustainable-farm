@@ -1,9 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityObservation;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlockIds;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -23,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 public class MaturityObservationRepositoryTest {
 
+    private final TestBlockIds blocks = new TestBlockIds();
+
     @Autowired
     private VarietyRepository varietyRepository;
 
@@ -32,10 +36,9 @@ public class MaturityObservationRepositoryTest {
     @Autowired
     private TestEntityManager entityManager;
 
-    private Variety variety(Integer farmId, String blockCode, String name) {
+    private Variety variety(Long farmId, String blockCode, String name) {
         Variety variety = new Variety();
-        variety.setFarmId(farmId);
-        variety.setBlockCode(blockCode);
+        variety.assignBlock(blocks.of(farmId, blockCode), new BlockLabel(farmId, blockCode));
         variety.setName(name);
         return varietyRepository.save(variety);
     }
@@ -45,8 +48,9 @@ public class MaturityObservationRepositoryTest {
                 MaturityStatus.RIPE, MaturityMethod.VISUAL, null, null, "user_entry", null));
     }
 
-    private List<Long> find(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return maturityObservationRepository.findByOptionalFilters(farmId, blockCode, from, to).stream()
+    private List<Long> find(Long farmId, String blockCode, LocalDate from, LocalDate to) {
+        return maturityObservationRepository.findByOptionalFilters(
+                        blocks.all(farmId, blockCode), blocks.ids(farmId, blockCode), from, to).stream()
                 .map(MaturityObservation::getId)
                 .toList();
     }
@@ -66,11 +70,11 @@ public class MaturityObservationRepositoryTest {
     void findByOptionalFilters_shouldKeepFarmNullAndFarm1Apart() {
         // Arrange: the same block and variety on no farm and on farm 1
         MaturityObservation noFarm = observation(variety(null, "B", "Keitt"), LocalDate.of(2026, 10, 12));
-        MaturityObservation farm1 = observation(variety(1, "B", "Keitt"), LocalDate.of(2026, 10, 12));
+        MaturityObservation farm1 = observation(variety(1L, "B", "Keitt"), LocalDate.of(2026, 10, 12));
         // Act & Assert: farm 1 excludes the row without a farm; no farm filter means every farm
-        assertEquals(List.of(farm1.getId()), find(1, null, null, null));
+        assertEquals(List.of(farm1.getId()), find(1L, null, null, null));
         assertEquals(List.of(noFarm.getId(), farm1.getId()), find(null, null, null, null));
-        assertTrue(find(2, null, null, null).isEmpty());
+        assertTrue(find(2L, null, null, null).isEmpty());
     }
 
     @Test

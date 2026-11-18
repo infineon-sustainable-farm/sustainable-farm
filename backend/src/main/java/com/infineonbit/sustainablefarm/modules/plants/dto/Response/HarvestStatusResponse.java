@@ -66,7 +66,7 @@ public record HarvestStatusResponse(
      *                             give a yield
      */
     public record VarietyHarvestStatus(
-            Integer farmId,
+            Long farmId,
             String blockCode,
             Long varietyId,
             String varietyName,

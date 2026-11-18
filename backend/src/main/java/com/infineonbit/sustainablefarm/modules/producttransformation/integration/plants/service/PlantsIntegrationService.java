@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
@@ -34,10 +35,13 @@ public class PlantsIntegrationService {
 
     private final HarvestLookup harvestLookup;
     private final MangoVarietyCodes mangoVarietyCodes;
+    private final ProductTransformationBlocks blocks;
 
-    public PlantsIntegrationService(HarvestLookup harvestLookup, MangoVarietyCodes mangoVarietyCodes) {
+    public PlantsIntegrationService(HarvestLookup harvestLookup, MangoVarietyCodes mangoVarietyCodes,
+                                    ProductTransformationBlocks blocks) {
         this.harvestLookup = harvestLookup;
         this.mangoVarietyCodes = mangoVarietyCodes;
+        this.blocks = blocks;
     }
 
     /**
@@ -69,8 +73,7 @@ public class PlantsIntegrationService {
      * @return List of harvests from Plants for the specified farm
      */
     public List<PlantsHarvestResponse> getHarvestsByFarm(Long farmId) {
-        // Plants identifies a farm by an int: a larger id was refused by Plants, an error as before.
-        return toResponses(harvestLookup.listHarvests(toPlantsFarmId(farmId), null));
+        return toResponses(harvestLookup.listHarvests(farmId, null));
     }
 
     /**
@@ -91,7 +94,7 @@ public class PlantsIntegrationService {
     static PlantsHarvestResponse toResponse(HarvestSummary harvest) {
         return PlantsHarvestResponse.builder()
                 .id(harvest.id())
-                .farmId(harvest.farmId() != null ? Long.valueOf(harvest.farmId()) : null)
+                .farmId(harvest.farmId())
                 .blockCode(harvest.blockCode())
                 .varietyId(harvest.varietyId())
                 .varietyName(harvest.varietyName())
@@ -143,21 +146,12 @@ public class PlantsIntegrationService {
         event.setBatchId(originalBatchId.trim());
         event.setHarvestDate(LocalDate.parse(harvest.getHarvestDate()));
         event.setVarietyKey(mangoVarietyCodes.keyOfPlantsName(harvest.getVarietyName()));
-        event.setFarmId(harvest.getFarmId() != null ? String.valueOf(harvest.getFarmId()) : null);
-        event.setBlockId(harvest.getBlockCode());
+        // A Plants block code is the code of a farm.block row: the same block for both modules.
+        event.setFarmBlockId(blocks.resolve(harvest.getFarmId() != null ? String.valueOf(harvest.getFarmId()) : null,
+                harvest.getBlockCode()));
         event.setHarvestQuantityKg(harvest.getQuantityKg() != null
                 ? BigDecimal.valueOf(harvest.getQuantityKg())
                 : null);
         return event;
-    }
-
-    private static Integer toPlantsFarmId(Long farmId) {
-        if (farmId == null) {
-            return null;
-        }
-        if (farmId < Integer.MIN_VALUE || farmId > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Farm id out of range: " + farmId);
-        }
-        return farmId.intValue();
     }
 }

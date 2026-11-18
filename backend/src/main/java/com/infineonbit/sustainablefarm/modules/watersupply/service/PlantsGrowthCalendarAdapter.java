@@ -1,18 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.service.GrowthCalendarService;
+import com.infineonbit.sustainablefarm.modules.plants.api.BlockGrowthLookup;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * In-process adapter on the Plants growth calendar ({@code GET /api/plants/growth-calendar}).
- *
- * <p>The application is a modular monolith: modules call each other in the same JVM instead of
- * over HTTP. Only the public service and its {@code GrowthCalendarResponse}, documented by Plants as
- * "the contract other modules consume", are used. Plants identifies farms with an {@code Integer}
- * while Water Supply uses UUIDs, so the lookup is by block code only (open question for Plants).</p>
+ * {@link PlantsGrowthPort} on the public interface of Plants, {@code plants.api.BlockGrowthLookup}
+ * (docs/adr/0003): the growth calendar entries of a block, read in the same process.
  *
  * <p>A Plants failure never breaks irrigation: the adapter answers "unknown" and logs.</p>
  */
@@ -20,16 +16,16 @@ import org.springframework.stereotype.Component;
 public class PlantsGrowthCalendarAdapter implements PlantsGrowthPort {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlantsGrowthCalendarAdapter.class);
 
-    private final GrowthCalendarService growthCalendarService;
+    private final BlockGrowthLookup blockGrowthLookup;
 
-    public PlantsGrowthCalendarAdapter(GrowthCalendarService growthCalendarService) {
-        this.growthCalendarService = growthCalendarService;
+    public PlantsGrowthCalendarAdapter(BlockGrowthLookup blockGrowthLookup) {
+        this.blockGrowthLookup = blockGrowthLookup;
     }
 
     @Override
     public List<BlockGrowth> growthForBlock(String blockCode) {
         try {
-            return growthCalendarService.getAllGrowthCalendarEntries(null, blockCode).stream()
+            return blockGrowthLookup.growthOfBlock(blockCode).stream()
                     .map(entry -> new BlockGrowth(entry.blockCode(), entry.growthPhase(), entry.ageYears()))
                     .toList();
         } catch (RuntimeException ex) {

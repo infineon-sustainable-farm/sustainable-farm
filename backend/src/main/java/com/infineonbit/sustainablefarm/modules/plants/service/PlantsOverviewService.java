@@ -60,7 +60,7 @@ public class PlantsOverviewService {
      *                  or {@code null} for every block
      * @return the figures of today
      */
-    public PlantsOverviewResponse getOverview(Integer farmId, String blockCode) {
+    public PlantsOverviewResponse getOverview(Long farmId, String blockCode) {
         LocalDate today = LocalDate.now(clock);
         ForecastBasis basis = yieldForecastService.basis(farmId, blockCode);
         List<PlantedVariety> planted = new ArrayList<>(basis.plantedVarieties());

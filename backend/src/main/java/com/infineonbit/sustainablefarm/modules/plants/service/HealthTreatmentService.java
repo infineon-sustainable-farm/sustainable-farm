@@ -1,10 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PreventiveTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFinding;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReference;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
@@ -32,6 +34,7 @@ public class HealthTreatmentService {
     private final HealthTreatmentRepository healthTreatmentRepository;
     private final HealthFindingRepository healthFindingRepository;
     private final HealthIssueService healthIssueService;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " kg "} becomes
@@ -150,8 +153,8 @@ public class HealthTreatmentService {
         HealthTreatment treatment = newTreatment(request.treatedOn(), request.productName(),
                 request.activeIngredient(), request.quantity(), request.unit(), request.preHarvestIntervalDays(),
                 request.applicator(), request.equipment(), now);
-        treatment.setFarmId(inspection.getFarmId());
-        treatment.setBlockCode(inspection.getBlockCode());
+        treatment.assignBlock(inspection.getBlockId(),
+                new BlockLabel(inspection.getFarmId(), inspection.getBlockCode()));
         treatment.setTargetIssue(finding.getIssue());
         treatment.setTargetOtherLabel(finding.getOtherLabel());
         treatment.setFinding(finding);
@@ -185,8 +188,8 @@ public class HealthTreatmentService {
         HealthTreatment treatment = newTreatment(request.treatedOn(), request.productName(),
                 request.activeIngredient(), request.quantity(), request.unit(), request.preHarvestIntervalDays(),
                 request.applicator(), request.equipment(), now);
-        treatment.setFarmId(request.farmId());
-        treatment.setBlockCode(normalizeCode(request.blockCode()));
+        BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeCode(request.blockCode()));
+        treatment.assignBlock(block.id(), PlantsBlocks.label(block));
         treatment.setTargetIssue(target);
         treatment.setTargetOtherLabel(normalizeOptionalText(request.targetOtherLabel()));
         return toResponse(healthTreatmentRepository.save(treatment));
@@ -199,15 +202,16 @@ public class HealthTreatmentService {
      * farm, as for the other lists of the module. Both dates are included.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "C"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "C"}), or {@code null}
+     *                  or blank for every block
      * @param from      first treatment date, included, or {@code null}
      * @param to        last treatment date, included, or {@code null}
      * @return the matching treatments, ordered by date then identifier
      */
-    public List<HealthTreatmentResponse> getAllTreatments(Integer farmId, String blockCode,
+    public List<HealthTreatmentResponse> getAllTreatments(Long farmId, String blockCode,
                                                           LocalDate from, LocalDate to) {
-        return healthTreatmentRepository.findByOptionalFilters(farmId, normalizeOptionalText(blockCode), from, to)
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        return healthTreatmentRepository.findByOptionalFilters(blocks.all(), blocks.ids(), from, to)
                 .stream()
                 .map(HealthTreatmentService::toResponse)
                 .toList();

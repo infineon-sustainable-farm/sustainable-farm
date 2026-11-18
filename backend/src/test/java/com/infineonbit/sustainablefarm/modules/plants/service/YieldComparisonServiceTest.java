@@ -1,22 +1,23 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.BlockComparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.Comparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.NotCompared;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.PhaseShare;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.VarietyComparison;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -43,7 +44,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class YieldComparisonServiceTest {
 
-    private static final int FARM = 7;
+    private static final Long FARM = 7L;
+    /** Blocks A to E of farm 7 in the farm referential. */
+    private static final PlantsBlocks PLANTS_BLOCKS = TestBlocks.onFarm(FARM, "A", "B", "C", "D", "E").asPlantsBlocks();
+    private static final List<Long> FARM_BLOCKS = TestBlocks.idsOf("A", "B", "C", "D", "E");
     private static final LocalDate JUNE_15_2027 = LocalDate.of(2027, 6, 15);
     private static final String KEITT_SEASON_SOURCE = "varietal_guide_west_africa";
     private static final PhaseShare GRADUAL = new PhaseShare("gradual production", 0.25, "Bally_2002");
@@ -67,7 +71,7 @@ public class YieldComparisonServiceTest {
     /** The real forecast and shares on the mocked repositories: the comparison follows their rules. */
     private YieldForecastService yieldForecastService() {
         return new YieldForecastService(populationEventRepository, varietyReferenceRepository,
-                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository), PLANTS_BLOCKS);
     }
 
     /** The service on a clock fixed at noon UTC of 15 June 2027. */
@@ -105,7 +109,7 @@ public class YieldComparisonServiceTest {
 
     /** Stubs the plantings of farm 7 and the Keitt and Kent references of the dev loader. */
     private void stubPlantings() {
-        when(populationEventRepository.findPlantingsByOptionalFilters(FARM, null)).thenReturn(plantings);
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, FARM_BLOCKS)).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
                 new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, null),
@@ -291,7 +295,7 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldPassTheFiltersAndTheMonthsToTheHarvests() {
         // Arrange
-        when(populationEventRepository.findPlantingsByOptionalFilters(null, "B")).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, TestBlocks.idsOf("B"))).thenReturn(List.of());
         when(varietyReferenceRepository.findAll()).thenReturn(List.of());
         when(harvestService.getAllHarvests(null, "B", LocalDate.of(2026, 11, 1), LocalDate.of(2027, 2, 28)))
                 .thenReturn(List.of());

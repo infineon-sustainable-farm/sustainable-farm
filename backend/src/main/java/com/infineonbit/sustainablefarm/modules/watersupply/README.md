@@ -111,7 +111,8 @@ This is a first version, **to be reviewed soon**:
   (`registration-<id>`), and records them like `POST /api/water/visitor-events`, which stays for
   external callers. A cancelled visit removes its announcement. Visitor Management knows no farm
   zone, so these announcements carry no zone and raise no zone conflict.
-- **Plants** is read in a single class, `PlantsGrowthCalendarAdapter`, behind `PlantsGrowthPort`.
+- **Plants** is read in a single class, `PlantsGrowthCalendarAdapter`, behind `PlantsGrowthPort`, through
+  the public interface `plants.api.BlockGrowthLookup`.
 - **Valve commands** go through `ValveCommandPort`. Its only implementation refuses every command
   until an MQTT/HTTP gateway is chosen. The attempt is journaled anyway (`noRollbackFor`).
 - Optional filters use Criteria (`ConsumptionCriteria`, unavailability search) instead of JPQL

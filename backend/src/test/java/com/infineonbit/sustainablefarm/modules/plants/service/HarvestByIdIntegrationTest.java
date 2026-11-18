@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * One harvest read by its identifier, through the real service and the
@@ -37,6 +36,9 @@ class HarvestByIdIntegrationTest {
     @Autowired
     private HarvestRecordRepository harvestRecordRepository;
 
+    @Autowired
+    private PlantsBlocks plantsBlocks;
+
     @Test
     void getHarvestById_shouldReturnEveryField_withTheVarietyLoadedWithTheHarvest() {
         // Arrange: Keitt planted on block HR1 without farm, then one harvest of it
@@ -51,7 +53,8 @@ class HarvestByIdIntegrationTest {
         // Assert
         assertEquals(harvestId, response.id());
         assertEquals("LOT-2026-HR1-001", response.lotNumber());
-        assertNull(response.farmId());
+        // A block always belongs to a farm: the default farm when the planting named none
+        assertEquals(plantsBlocks.find(null, "HR1").orElseThrow().farmId(), response.farmId());
         assertEquals("HR1", response.blockCode());
         assertEquals(varietyId, response.varietyId());
         assertEquals("Keitt", response.varietyName());

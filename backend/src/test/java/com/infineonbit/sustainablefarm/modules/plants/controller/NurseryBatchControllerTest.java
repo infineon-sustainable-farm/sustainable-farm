@@ -261,13 +261,13 @@ public class NurseryBatchControllerTest {
     @Test
     void getAllBatches_shouldPassTheFarmAndStageFilters() throws Exception {
         // Arrange
-        when(nurseryBatchService.getAllBatches(1, NurseryStage.GERMINATION)).thenReturn(List.of(p1()));
+        when(nurseryBatchService.getAllBatches(1L, NurseryStage.GERMINATION)).thenReturn(List.of(p1()));
         // Act & Assert
         mockMvc.perform(get(URL).param("farmId", "1").param("stage", "GERMINATION"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].batchCode").value("P1"));
-        verify(nurseryBatchService).getAllBatches(1, NurseryStage.GERMINATION);
+        verify(nurseryBatchService).getAllBatches(1L, NurseryStage.GERMINATION);
     }
 
     @Test

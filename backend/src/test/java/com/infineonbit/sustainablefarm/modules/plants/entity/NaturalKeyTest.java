@@ -3,32 +3,41 @@ package com.infineonbit.sustainablefarm.modules.plants.entity;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
- * The natural keys follow the planting lookups: a NULL farm is a value of its
- * own, the variety name ignores case only, and the block is taken as stored.
+ * The natural keys follow the planting lookups: the block id (which gives the
+ * farm), and the variety name, which ignores case only.
  */
 class NaturalKeyTest {
 
     @Test
-    void varietyKeyOf_shouldWriteZero_whenTheRowHasNoFarm() {
-        assertEquals("0|A|keitt", Variety.keyOf(null, "A", "Keitt"));
+    void varietyKeyOf_shouldJoinTheBlockIdAndTheLowerCaseName() {
+        assertEquals("3|keitt", Variety.keyOf(3L, "Keitt"));
     }
 
     @Test
-    void varietyKeyOf_shouldKeepTheFarm_whenTheRowHasOne() {
-        assertEquals("1|C|kent", Variety.keyOf(1, "C", "Kent"));
+    void varietyKeyOf_shouldKeepTwoBlocksApart() {
+        assertEquals("1|kent", Variety.keyOf(1L, "Kent"));
+        assertEquals("2|kent", Variety.keyOf(2L, "Kent"));
     }
 
     @Test
     void varietyKeyOf_shouldLowerTheCaseOnly_andKeepAccentsAndSpacesAsStored() {
         // The lookup compares LOWER(name) without trimming the stored name
-        assertEquals("0|C|amélie ", Variety.keyOf(null, "C", "AMÉLIE "));
+        assertEquals("3|amélie ", Variety.keyOf(3L, "AMÉLIE "));
     }
 
     @Test
-    void growthCalendarKeyOf_shouldKeepFarmNullAndFarm1Apart() {
-        assertEquals("0|A", GrowthCalendar.keyOf(null, "A"));
-        assertEquals("1|A", GrowthCalendar.keyOf(1, "A"));
+    void varietyKeyOf_shouldBeNull_withoutBlockOrName() {
+        assertNull(Variety.keyOf(null, "Keitt"));
+        assertNull(Variety.keyOf(3L, null));
+    }
+
+    @Test
+    void growthCalendarKeyOf_shouldBeTheBlockId() {
+        assertEquals("1", GrowthCalendar.keyOf(1L));
+        assertEquals("2", GrowthCalendar.keyOf(2L));
+        assertNull(GrowthCalendar.keyOf(null));
     }
 }
