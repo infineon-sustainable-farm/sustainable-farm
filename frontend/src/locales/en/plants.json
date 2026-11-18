@@ -976,5 +976,30 @@
       "lot": "Lot No.",
       "source": "Source"
     }
+  },
+  "calendar": {
+    "documentTitle": "Growth Calendar — Plants",
+    "title": "Planting Calendar & Growth Stages",
+    "subtitle": "Tree age and growth stage, from the planting date.",
+    "loading": "Loading growth calendar…",
+    "loadError": "Growth calendar could not be loaded.",
+    "loadErrorHint": "The request to the server did not succeed.",
+    "emptyFilteredTitle": "No growth calendar records match this filter",
+    "emptyFilteredHint": "Try another block, or select “All blocks”.",
+    "emptyTitle": "No planting recorded yet",
+    "emptyHint": "Record a planting from the Varieties screen.",
+    "missingDateZalka": "Planting date not recorded in the reference study (Zalka 2025 gives only “beginning of the rainy season”). Tree age and growth phase are computed from the planting date and cannot be shown until it is recorded.",
+    "missingDate": "Planting date not entered yet. Tree age and growth phase are computed from the planting date and appear once it is entered.",
+    "legend": "Age bands of the growth phases, from the Zalka 2025 study: 0–2 yrs establishment · 3–5 yrs gradual production · 6+ yrs full production. The study gives “years 5 to 7” for full production: year 5 is counted as gradual production, and full production continues after year 7. The share of the full yield in each phase, with its source, is under Reference values on <page>Harvest & Maturity</page>.",
+    "columns": {
+      "block": "Block",
+      "variety": "Variety",
+      "plantingDate": "Planting Date",
+      "precision": "Precision",
+      "age": "Age",
+      "phase": "Phase",
+      "rainfall": "Rainfall",
+      "source": "Source"
+    }
   }
 }

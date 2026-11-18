@@ -976,5 +976,30 @@
       "lot": "Charge",
       "source": "Quelle"
     }
+  },
+  "calendar": {
+    "documentTitle": "Wachstumskalender — Pflanzen",
+    "title": "Pflanzkalender und Wachstumsstadien",
+    "subtitle": "Baumalter und Wachstumsstadium, ab dem Pflanzdatum.",
+    "loading": "Wachstumskalender wird geladen…",
+    "loadError": "Der Wachstumskalender konnte nicht geladen werden.",
+    "loadErrorHint": "Die Anfrage an den Server ist fehlgeschlagen.",
+    "emptyFilteredTitle": "Keine Einträge im Wachstumskalender für diesen Filter",
+    "emptyFilteredHint": "Wählen Sie einen anderen Block oder „Alle Blöcke“.",
+    "emptyTitle": "Noch keine Pflanzung erfasst",
+    "emptyHint": "Erfassen Sie eine Pflanzung auf dem Bildschirm „Sorten“.",
+    "missingDateZalka": "Pflanzdatum in der Referenzstudie nicht erfasst (Zalka 2025 nennt nur „Beginn der Regenzeit“). Baumalter und Wachstumsphase werden aus dem Pflanzdatum berechnet und können erst angezeigt werden, wenn es erfasst ist.",
+    "missingDate": "Pflanzdatum noch nicht eingegeben. Baumalter und Wachstumsphase werden aus dem Pflanzdatum berechnet und erscheinen, sobald es eingegeben ist.",
+    "legend": "Altersstufen der Wachstumsphasen, aus der Studie Zalka 2025: 0–2 J. Etablierung · 3–5 J. allmähliche Produktion · 6+ J. volle Produktion. Die Studie nennt „Jahre 5 bis 7“ für die volle Produktion: Jahr 5 zählt als allmähliche Produktion, und die volle Produktion setzt sich nach Jahr 7 fort. Der Anteil am vollen Ertrag je Phase steht mit seiner Quelle unter „Referenzwerte“ auf <page>Ernte und Reife</page>.",
+    "columns": {
+      "block": "Block",
+      "variety": "Sorte",
+      "plantingDate": "Pflanzdatum",
+      "precision": "Genauigkeit",
+      "age": "Alter",
+      "phase": "Phase",
+      "rainfall": "Niederschlag",
+      "source": "Quelle"
+    }
   }
 }
