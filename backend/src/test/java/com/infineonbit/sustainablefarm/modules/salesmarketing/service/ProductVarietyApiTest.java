@@ -49,7 +49,7 @@ class ProductVarietyApiTest {
 
     @Test
     void aVarietyNameIsResolvedToTheCatalogueAndSentBackByName() throws Exception {
-        String body = mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
+        String body = mockMvc.perform(post("/api/sales-marketing/products").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"Mangue fraîche\", \"variety\": \"kent\", \"unit\": \"kg\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.variety").value("Kent"))
@@ -57,22 +57,22 @@ class ProductVarietyApiTest {
                 .andReturn().getResponse().getContentAsString();
         int id = com.jayway.jsonpath.JsonPath.read(body, "$.productId");
 
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/api/sales-marketing/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].variety", hasItem("Kent")));
 
-        mockMvc.perform(put("/api/products/{id}", id).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/sales-marketing/products/{id}", id).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"Mangue séchée\", \"variety\": \"Amélie\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.variety").value("Amelie"));
 
-        mockMvc.perform(get("/api/products/{id}", id))
+        mockMvc.perform(get("/api/sales-marketing/products/{id}", id))
                 .andExpect(jsonPath("$.variety").value("Amelie"));
     }
 
     @Test
     void aProductMayHaveNoVariety() throws Exception {
-        mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/sales-marketing/products").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"Jus\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.variety").doesNotExist());
@@ -80,7 +80,7 @@ class ProductVarietyApiTest {
 
     @Test
     void anUnknownVarietyIsRefused() throws Exception {
-        mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/sales-marketing/products").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"Mangue\", \"variety\": \"Alphonso\"}"))
                 .andExpect(status().isBadRequest());
     }

@@ -1,88 +1,47 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
-import org.hibernate.annotations.ColumnDefault;
 
+/** The figures of a campaign on a day, deleted with the campaign. */
 @Entity
 @Table(name = "campaign_metrics", indexes = @Index(name = "idx_campaign_metrics_camp", columnList = "campaign_id"))
-public class CampaignMetric {
+@Getter
+@Setter
+public class CampaignMetric extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "metric_id")
-    private Integer metricId;
-
-    @NotNull(message = "campaignId is required")
-    @Column(name = "campaign_id", nullable = false)
-    private Integer campaignId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "campaign_id", nullable = false,
+            foreignKey = @ForeignKey(name = "campaign_metrics_campaign_id_fkey"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Campaign campaign;
 
     @Column(name = "metric_date")
     private LocalDate metricDate;
 
-    @PositiveOrZero
     @ColumnDefault("0")
     @Column(name = "clicks")
     private Integer clicks;
 
-    @PositiveOrZero
     @ColumnDefault("0")
     @Column(name = "signups")
     private Integer signups;
 
-    @PositiveOrZero
     @ColumnDefault("0")
     @Column(name = "reach")
     private Integer reach;
-
-    public Integer getMetricId() {
-        return metricId;
-    }
-
-    public void setMetricId(Integer metricId) {
-        this.metricId = metricId;
-    }
-
-    public Integer getCampaignId() {
-        return campaignId;
-    }
-
-    public void setCampaignId(Integer campaignId) {
-        this.campaignId = campaignId;
-    }
-
-    public LocalDate getMetricDate() {
-        return metricDate;
-    }
-
-    public void setMetricDate(LocalDate metricDate) {
-        this.metricDate = metricDate;
-    }
-
-    public Integer getClicks() {
-        return clicks;
-    }
-
-    public void setClicks(Integer clicks) {
-        this.clicks = clicks;
-    }
-
-    public Integer getSignups() {
-        return signups;
-    }
-
-    public void setSignups(Integer signups) {
-        this.signups = signups;
-    }
-
-    public Integer getReach() {
-        return reach;
-    }
-
-    public void setReach(Integer reach) {
-        this.reach = reach;
-    }
 }

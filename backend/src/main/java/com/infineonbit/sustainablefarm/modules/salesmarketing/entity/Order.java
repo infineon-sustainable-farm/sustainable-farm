@@ -1,72 +1,57 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import org.hibernate.annotations.ColumnDefault;
 
 /**
- * Maps to the "orders" table.
- * Foreign keys are kept as plain Integer id fields.
+ * An order of a customer, through a sales channel. A customer or a channel that has orders
+ * cannot be deleted. The total value is in euros; the status is the free label the API keeps.
  */
 @Entity
 @Table(name = "orders", indexes = {
         @Index(name = "idx_orders_channel", columnList = "sales_channel_id"),
         @Index(name = "idx_orders_customer", columnList = "customer_id")
 })
-public class Order {
+@Getter
+@Setter
+public class Order extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_id")
-    private Integer orderId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "customer_id", nullable = false, foreignKey = @ForeignKey(name = "orders_customer_id_fkey"))
+    private Customer customer;
 
-    @NotNull(message = "customerId is required")
-    @Column(name = "customer_id", nullable = false)
-    private Integer customerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sales_channel_id", foreignKey = @ForeignKey(name = "orders_sales_channel_id_fkey"))
+    private SalesChannel salesChannel;
 
-    @Column(name = "sales_channel_id")
-    private Integer salesChannelId;
-
-    @NotNull(message = "orderDate is required")
     @Column(name = "order_date", nullable = false)
     private LocalDate orderDate;
 
-    @PositiveOrZero(message = "totalVolumeKg cannot be negative")
     @Column(name = "total_volume_kg", precision = 12, scale = 2)
     private BigDecimal totalVolumeKg;
 
-    @PositiveOrZero(message = "totalValueEur cannot be negative")
-    @Column(name = "total_value_eur", precision = 12, scale = 2)
-    private BigDecimal totalValueEur;
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "total_value_amount", precision = 14, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "total_value_currency", length = 3))
+    private Money totalValue;
 
     @ColumnDefault("'pending'")
     @Column(name = "status", length = 30)
     private String status;
-
-    // ---- Getters and setters ----
-
-    public Integer getOrderId() { return orderId; }
-    public void setOrderId(Integer orderId) { this.orderId = orderId; }
-
-    public Integer getCustomerId() { return customerId; }
-    public void setCustomerId(Integer customerId) { this.customerId = customerId; }
-
-    public Integer getSalesChannelId() { return salesChannelId; }
-    public void setSalesChannelId(Integer salesChannelId) { this.salesChannelId = salesChannelId; }
-
-    public LocalDate getOrderDate() { return orderDate; }
-    public void setOrderDate(LocalDate orderDate) { this.orderDate = orderDate; }
-
-    public BigDecimal getTotalVolumeKg() { return totalVolumeKg; }
-    public void setTotalVolumeKg(BigDecimal totalVolumeKg) { this.totalVolumeKg = totalVolumeKg; }
-
-    public BigDecimal getTotalValueEur() { return totalValueEur; }
-    public void setTotalValueEur(BigDecimal totalValueEur) { this.totalValueEur = totalValueEur; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
 }

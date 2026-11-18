@@ -1,56 +1,56 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
-
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.DemandForecastRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.DemandForecastResponse;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.DemandForecast;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.DemandForecastRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class DemandForecastService {
 
     private final DemandForecastRepository repository;
+    private final SalesMarketingRequestMapper mapper;
 
-    public DemandForecastService(DemandForecastRepository repository) {
+    public DemandForecastService(DemandForecastRepository repository, SalesMarketingRequestMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public List<DemandForecast> getAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<DemandForecastResponse> getAll() {
+        return repository.findAll().stream().map(DemandForecastResponse::of).toList();
     }
 
-    public DemandForecast getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("DemandForecast not found with id: " + id));
+    @Transactional(readOnly = true)
+    public DemandForecastResponse getById(Long id) {
+        return DemandForecastResponse.of(find(id));
     }
 
-    public DemandForecast create(DemandForecast item) {
-        return repository.save(item);
+    public DemandForecastResponse create(DemandForecastRequest request) {
+        return DemandForecastResponse.of(repository.save(mapper.apply(request, new DemandForecast())));
+    }
+
+    /** Replaces every field of the request; the id and the creation time stay. */
+    public DemandForecastResponse update(Long id, DemandForecastRequest request) {
+        return DemandForecastResponse.of(repository.save(mapper.apply(request, find(id))));
+    }
+
+    public void delete(Long id) {
+        repository.deleteById(id);
     }
 
     /**
-     * Copies every editable field from updatedData onto the existing
-     * row, then saves it. The id and created_at are left untouched.
+     * @throws ResourceNotFoundException if no row has this id
      */
-    public DemandForecast update(Integer id, DemandForecast updatedData) {
-        DemandForecast existing = getById(id);
-
-        existing.setProductId(updatedData.getProductId());
-        existing.setForecastMonth(updatedData.getForecastMonth());
-        existing.setScenario(updatedData.getScenario());
-        existing.setForecastedVolumeT(updatedData.getForecastedVolumeT());
-        existing.setLowerBoundT(updatedData.getLowerBoundT());
-        existing.setUpperBoundT(updatedData.getUpperBoundT());
-        existing.setCapacityRisk(updatedData.getCapacityRisk());
-        existing.setIsActual(updatedData.getIsActual());
-        existing.setModelVersion(updatedData.getModelVersion());
-
-        return repository.save(existing);
-    }
-
-    public void delete(Integer id) {
-        repository.deleteById(id);
+    private DemandForecast find(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("DemandForecast not found with id: " + id));
     }
 }

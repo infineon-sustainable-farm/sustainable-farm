@@ -1,49 +1,56 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
-
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.OrderRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.OrderResponse;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Order;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class OrderService {
 
     private final OrderRepository repository;
+    private final SalesMarketingRequestMapper mapper;
 
-    public OrderService(OrderRepository repository) {
+    public OrderService(OrderRepository repository, SalesMarketingRequestMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public List<Order> getAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAll() {
+        return repository.findAll().stream().map(OrderResponse::of).toList();
     }
 
-    public Order getById(Integer id) {
+    @Transactional(readOnly = true)
+    public OrderResponse getById(Long id) {
+        return OrderResponse.of(find(id));
+    }
+
+    public OrderResponse create(OrderRequest request) {
+        return OrderResponse.of(repository.save(mapper.apply(request, new Order())));
+    }
+
+    /** Replaces every field of the request; the id and the creation time stay. */
+    public OrderResponse update(Long id, OrderRequest request) {
+        return OrderResponse.of(repository.save(mapper.apply(request, find(id))));
+    }
+
+    public void delete(Long id) {
+        repository.deleteById(id);
+    }
+
+    /**
+     * @throws ResourceNotFoundException if no row has this id
+     */
+    private Order find(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
-    }
-
-    public Order create(Order item) {
-        return repository.save(item);
-    }
-
-    public Order update(Integer id, Order updatedData) {
-        Order existing = getById(id);
-
-        existing.setCustomerId(updatedData.getCustomerId());
-        existing.setSalesChannelId(updatedData.getSalesChannelId());
-        existing.setOrderDate(updatedData.getOrderDate());
-        existing.setTotalVolumeKg(updatedData.getTotalVolumeKg());
-        existing.setTotalValueEur(updatedData.getTotalValueEur());
-        existing.setStatus(updatedData.getStatus());
-
-        return repository.save(existing);
-    }
-
-    public void delete(Integer id) {
-        repository.deleteById(id);
     }
 }

@@ -4,48 +4,57 @@ import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.api.PackagedLot;
 import com.infineonbit.sustainablefarm.modules.producttransformation.api.PackagedLotLookup;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.ProductBatchRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.ProductBatchResponse;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.ProductBatch;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.ProductBatchRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class ProductBatchService {
 
     private final ProductBatchRepository repository;
     private final PackagedLotLookup packagedLots;
+    private final SalesMarketingRequestMapper mapper;
 
-    public ProductBatchService(ProductBatchRepository repository, PackagedLotLookup packagedLots) {
+    public ProductBatchService(ProductBatchRepository repository, PackagedLotLookup packagedLots,
+                               SalesMarketingRequestMapper mapper) {
         this.repository = repository;
         this.packagedLots = packagedLots;
+        this.mapper = mapper;
     }
 
-    public List<ProductBatch> getAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<ProductBatchResponse> getAll() {
+        return repository.findAll().stream().map(ProductBatchResponse::of).toList();
     }
 
-    public ProductBatch getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("ProductBatch not found with id: " + id));
+    @Transactional(readOnly = true)
+    public ProductBatchResponse getById(Long id) {
+        return ProductBatchResponse.of(find(id));
     }
 
-    public ProductBatch create(ProductBatch item) {
+    public ProductBatchResponse create(ProductBatchRequest request) {
+        ProductBatch item = mapper.apply(request, new ProductBatch());
         linkPackagedLot(item);
-        return repository.save(item);
+        return ProductBatchResponse.of(repository.save(item));
     }
 
-    public ProductBatch update(Integer id, ProductBatch updatedData) {
-        ProductBatch existing = getById(id);
-
-        existing.setBatchCode(updatedData.getBatchCode());
-        existing.setProductId(updatedData.getProductId());
-        existing.setStockT(updatedData.getStockT());
-        existing.setStatus(updatedData.getStatus());
-        existing.setSyncedAt(updatedData.getSyncedAt());
+    public ProductBatchResponse update(Long id, ProductBatchRequest request) {
+        ProductBatch existing = mapper.apply(request, find(id));
         linkPackagedLot(existing);
 
-        return repository.save(existing);
+        return ProductBatchResponse.of(repository.save(existing));
+    }
+
+    private ProductBatch find(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ProductBatch not found with id: " + id));
     }
 
     /**
@@ -59,7 +68,7 @@ public class ProductBatchService {
                 .orElse(null));
     }
 
-    public void delete(Integer id) {
+    public void delete(Long id) {
         repository.deleteById(id);
     }
 }
