@@ -84,18 +84,18 @@ describe('Sidebar', () => {
     renderSidebar()
     const toggle = screen.getByRole('button', { name: 'Open navigation' })
     fireEvent.click(toggle)
-    const select = screen.getByRole('combobox', { name: 'Language' })
-    select.focus()
+    const last = screen.getByRole('button', { name: 'Français' })
+    last.focus()
     fireEvent.keyDown(document, { key: 'Tab' })
     expect(document.activeElement).toBe(toggle)
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
-    expect(document.activeElement).toBe(select)
+    expect(document.activeElement).toBe(last)
   })
 
   it('switches the interface language and <html lang>', async () => {
     const nav = renderSidebar()
     await act(async () => {
-      fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'de' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Deutsch' }))
     })
     // German and French load on demand.
     expect(await within(nav).findByRole('link', { name: 'Geräteverzeichnis' })).toBeInTheDocument()
@@ -104,7 +104,7 @@ describe('Sidebar', () => {
     expect(i18n.resolvedLanguage).toBe('de')
 
     await act(async () => {
-      fireEvent.change(screen.getByRole('combobox', { name: 'Sprache' }), { target: { value: 'fr' } })
+      fireEvent.click(within(screen.getByRole('group', { name: 'Sprache' })).getByRole('button', { name: 'Français' }))
     })
     expect(await within(nav).findByRole('link', { name: 'Tous les modules' })).toBeInTheDocument()
     expect(document.documentElement.lang).toBe('fr')
@@ -115,7 +115,7 @@ describe('Sidebar', () => {
       const nav = renderSidebar('/machinery/spare-parts', navsWithFooters)
       const footer = within(nav).getByRole('button', { name: 'machinery footer' })
       expect(within(nav).queryByText('water footer')).not.toBeInTheDocument()
-      const language = within(nav).getByRole('combobox', { name: 'Language' })
+      const language = within(nav).getByRole('group', { name: 'Language' })
       expect(footer.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     })
 
@@ -170,7 +170,8 @@ describe('Sidebar', () => {
     it('shows no heading for another module, and a module without sections stays flat', () => {
       const nav = renderSidebar('/machinery', navs)
       expect(within(nav).queryByText('Data management')).not.toBeInTheDocument()
-      expect(within(nav).queryByRole('group')).not.toBeInTheDocument()
+      // The only group left is the language switcher: no section group.
+      expect(within(nav).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual(['Language'])
       expect(within(nav).getByRole('link', { name: 'Equipment Registry' })).toBeInTheDocument()
     })
 

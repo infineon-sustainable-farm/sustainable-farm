@@ -17,7 +17,7 @@ export default function LauncherPage({ navs }) {
   return (
     <div className="flex min-h-dvh flex-col bg-surface px-4 py-6">
       <div className="flex justify-end">
-        <LanguageSwitcher className="w-40" />
+        <LanguageSwitcher tone="onSurface" className="w-40" />
       </div>
 
       <main className="flex flex-1 flex-col items-center justify-center gap-10 py-10">

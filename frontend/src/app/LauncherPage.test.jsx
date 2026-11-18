@@ -24,7 +24,8 @@ describe('LauncherPage', () => {
   it('shows the app name, the language switcher and one tile per module, with no sidebar', () => {
     const tiles = renderLauncher()
     expect(screen.getByRole('heading', { level: 1, name: 'Sustainable Farm' })).toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Language' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Language' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true')
     expect(tiles.getAllByRole('link')).toHaveLength(7)
     expect(tiles.getByRole('link', { name: 'Machinery' })).toHaveAttribute('href', '/machinery')
     expect(screen.queryByRole('button', { name: 'Open navigation' })).not.toBeInTheDocument()
@@ -35,7 +36,7 @@ describe('LauncherPage', () => {
     const tiles = renderLauncher()
     expect(tiles.getByRole('link', { name: 'Maschinen' })).toHaveAttribute('href', '/machinery')
     expect(tiles.getByRole('link', { name: 'Wasserversorgung' })).toHaveAttribute('href', '/watersupply')
-    expect(screen.getByRole('combobox', { name: 'Sprache' })).toHaveValue('de')
+    expect(screen.getByRole('button', { name: 'Deutsch' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('names the tiles in French', async () => {
