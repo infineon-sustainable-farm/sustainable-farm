@@ -409,5 +409,234 @@
       "date": "Date",
       "volume": "Collected volume"
     }
+  },
+  "irrigation": {
+    "title": "Irrigation scheduling",
+    "subtitle": "Irrigation starts when the soil needs it, not just because the clock says so.",
+    "zoneFallback": "Zone {{id}}",
+    "status": {
+      "running": "Running",
+      "completed": "Completed",
+      "postponed": "Postponed",
+      "scheduled": "Scheduled"
+    },
+    "schedules": {
+      "title": "Irrigation schedules",
+      "count": "{{count}} active schedule(s)",
+      "loading": "Loading schedules…",
+      "loadError": "Unable to load.",
+      "emptyTitle": "No running or scheduled plans",
+      "empty": "Create an irrigation schedule on the right. Completed schedules are listed in the Irrigation journal.",
+      "block": "Block {{code}}",
+      "severalBlocks": "Several blocks",
+      "planned": "{{volume}} planned",
+      "start": "Start now",
+      "stop": "Stop irrigation",
+      "archived": "Completed schedules are archived in the Irrigation journal below."
+    },
+    "journal": {
+      "title": "Irrigation journal",
+      "count": "{{count}} completed cycle(s)",
+      "search": "Search by date (YYYY-MM-DD)…",
+      "loading": "Loading journal…",
+      "emptyTitle": "No completed cycles",
+      "empty": "Start then stop an irrigation: each closed cycle is added to the journal automatically.",
+      "scheduleRef": "#{{id}}",
+      "columns": {
+        "schedule": "Schedule",
+        "start": "Start",
+        "stop": "Stop",
+        "duration": "Actual duration",
+        "volume": "Actual volume",
+        "status": "Status"
+      },
+      "limit": "Only the last {{count}} completed cycles are shown here.",
+      "olderStored": "Older cycles remain stored in the database.",
+      "moreStored": "Additional cycles will also remain stored in the database."
+    },
+    "form": {
+      "newTitle": "Create a schedule",
+      "editTitle": "Edit schedule",
+      "zone": "Zone",
+      "start": "Start",
+      "duration": "Duration (min)",
+      "volume": "Planned volume (L)",
+      "status": "Status"
+    },
+    "errors": {
+      "zoneRequired": "Zone is required.",
+      "startRequired": "Start date is required.",
+      "durationPositive": "Duration must be greater than 0.",
+      "volumePositive": "Planned volume must be greater than 0."
+    },
+    "created": "Schedule created",
+    "updated": "Schedule updated",
+    "started": "Irrigation started for {{zone}}.",
+    "stopped": "Irrigation stopped for {{zone}}.",
+    "actionFailed": "Action failed."
+  },
+  "consumption": {
+    "title": "Consumption tracking",
+    "subtitle": "Measurements reported automatically by IoT sensors - compared with the theoretical baseline.",
+    "stats": {
+      "period": "Selected period",
+      "total": "Total consumed",
+      "peak": "Peak",
+      "peakValue": "{{day}} - {{volume}}",
+      "noPeak": "-"
+    },
+    "periodNames": {
+      "all": "All history",
+      "week": "Last week",
+      "month": "Last month"
+    },
+    "periodLabel": "Period",
+    "periods": {
+      "week": "Week",
+      "month": "Month",
+      "all": "All"
+    },
+    "report": "CSV report",
+    "exporting": "Exporting…",
+    "reportHint": "Download the consumption report (CSV)",
+    "exported": "CSV report downloaded.",
+    "exportFailed": "Export failed.",
+    "chart": {
+      "title": "Consumption over time",
+      "loading": "Loading consumptions…",
+      "loadError": "Unable to load data.",
+      "emptyTitle": "No consumption",
+      "empty": "IoT sensor measurements will appear here as soon as they are reported.",
+      "series": "Volume (L)"
+    },
+    "history": {
+      "title": "Measurement history",
+      "count": "{{count}} measurement(s)",
+      "loading": "Loading measurements…",
+      "emptyTitle": "No recorded consumption",
+      "empty": "Volumes are measured by IoT sensors and reported automatically - no manual entry."
+    },
+    "farmFilter": "Filter by farm",
+    "sourceFilter": "Filter by source",
+    "allSources": "All sources",
+    "search": "Search by date, lot or block…",
+    "columns": {
+      "date": "Date",
+      "volume": "Volume",
+      "block": "Plants block",
+      "lot": "Lot"
+    },
+    "severalBlocks": "Several",
+    "lotValue": "{{lot}} · {{activity}}"
+  },
+  "quota": {
+    "title": "Monthly water quotas",
+    "status": {
+      "exceeded": "Quota exceeded",
+      "warning": "80% of quota reached",
+      "ok": "Under quota",
+      "none": "No baseline"
+    },
+    "targetTypes": {
+      "farm": "Farm",
+      "zone": "Zone"
+    },
+    "chooseFarm": "Choose a farm…",
+    "chooseZone": "Choose a zone…",
+    "fields": {
+      "targetType": "Quota target type",
+      "target": "Quota target",
+      "month": "Quota month",
+      "liters": "Monthly quota (L)"
+    },
+    "submit": "Set quota",
+    "saving": "Saving…",
+    "errors": {
+      "chooseFarm": "Choose a farm.",
+      "chooseZone": "Choose a zone.",
+      "positive": "Quota must be a positive volume (liters).",
+      "save": "Unable to save the quota.",
+      "delete": "Unable to delete the quota."
+    },
+    "saved": "Quota saved.",
+    "deleted": "Quota deleted.",
+    "loading": "Loading quotas…",
+    "loadError": "Unable to load quotas.",
+    "emptyTitle": "No quota defined",
+    "empty": "Set a monthly quota per farm or per zone: sensor consumption will be compared with this target, with an automatic alert at 80% then 100%.",
+    "unknownTarget": "Unknown target",
+    "used": "{{pct}} of quota used",
+    "over": "over by {{volume}}",
+    "left": "{{volume}} left",
+    "usageLine": "{{used}} — {{rest}}"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "subtitle": "Track interventions and plan emitter upkeep.",
+    "historyTitle": "Intervention history",
+    "periodLabel": "Period",
+    "periods": {
+      "week": "week",
+      "month": "month",
+      "all": "all"
+    },
+    "zoneFilter": "Filter by zone",
+    "allZones": "All zones",
+    "search": "Search an intervention…",
+    "loading": "Loading interventions...",
+    "loadError": "Unable to load interventions.",
+    "emptyTitle": "No interventions",
+    "empty": "Record a maintenance intervention to start the history.",
+    "zoneFallback": "Zone {{id}}",
+    "columns": {
+      "date": "Date",
+      "zone": "Zone",
+      "type": "Type",
+      "state": "State",
+      "emitters": "Emitters"
+    },
+    "types": {
+      "cleaning": "cleaning",
+      "filter_change": "filter_change",
+      "repair": "repair",
+      "inspection": "inspection"
+    },
+    "clogging": "Clogging {{severity}}",
+    "ok": "OK",
+    "severityInline": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    },
+    "severities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "planningTitle": "Maintenance planning",
+    "planning": "Recommended: check filters weekly and replace clogged emitters.",
+    "recent": "{{count}} intervention(s) in the last 7 days (relative to the latest data).",
+    "form": {
+      "newTitle": "New intervention",
+      "editTitle": "Edit intervention",
+      "zone": "Zone",
+      "type": "Intervention type",
+      "date": "Intervention date",
+      "filterCleaned": "Filter cleaned",
+      "cloggingDetected": "Clogging detected",
+      "severity": "Clogging severity",
+      "emitters": "Emitters replaced",
+      "performedBy": "Performed by",
+      "notes": "Notes"
+    },
+    "errors": {
+      "zoneRequired": "The zone is required.",
+      "dateRequired": "The intervention date is required."
+    },
+    "saved": "Intervention saved",
+    "updated": "Intervention updated",
+    "deleted": "Intervention deleted",
+    "deleteTitle": "Delete intervention",
+    "deleteMessage": "This intervention will be removed from the maintenance history."
   }
 }

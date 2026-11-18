@@ -409,5 +409,234 @@
       "date": "Datum",
       "volume": "Gesammelte Menge"
     }
+  },
+  "irrigation": {
+    "title": "Bewässerungsplanung",
+    "subtitle": "Bewässert wird, wenn der Boden es braucht, nicht nur weil die Uhr es sagt.",
+    "zoneFallback": "Zone {{id}}",
+    "status": {
+      "running": "Läuft",
+      "completed": "Abgeschlossen",
+      "postponed": "Verschoben",
+      "scheduled": "Geplant"
+    },
+    "schedules": {
+      "title": "Bewässerungspläne",
+      "count": "{{count}} aktive(r) Plan/Pläne",
+      "loading": "Pläne werden geladen…",
+      "loadError": "Laden nicht möglich.",
+      "emptyTitle": "Keine laufenden oder geplanten Pläne",
+      "empty": "Legen Sie rechts einen Bewässerungsplan an. Abgeschlossene Pläne stehen im Bewässerungsjournal.",
+      "block": "Block {{code}}",
+      "severalBlocks": "Mehrere Blöcke",
+      "planned": "{{volume}} geplant",
+      "start": "Jetzt starten",
+      "stop": "Bewässerung stoppen",
+      "archived": "Abgeschlossene Pläne werden unten im Bewässerungsjournal archiviert."
+    },
+    "journal": {
+      "title": "Bewässerungsjournal",
+      "count": "{{count}} abgeschlossene(r) Zyklus/Zyklen",
+      "search": "Nach Datum suchen (JJJJ-MM-TT)…",
+      "loading": "Journal wird geladen…",
+      "emptyTitle": "Keine abgeschlossenen Zyklen",
+      "empty": "Starten und stoppen Sie eine Bewässerung: Jeder beendete Zyklus wird automatisch ins Journal übernommen.",
+      "scheduleRef": "#{{id}}",
+      "columns": {
+        "schedule": "Plan",
+        "start": "Start",
+        "stop": "Stopp",
+        "duration": "Tatsächliche Dauer",
+        "volume": "Tatsächliche Menge",
+        "status": "Status"
+      },
+      "limit": "Hier werden nur die letzten {{count}} abgeschlossenen Zyklen angezeigt.",
+      "olderStored": "Ältere Zyklen bleiben in der Datenbank gespeichert.",
+      "moreStored": "Weitere Zyklen bleiben ebenfalls in der Datenbank gespeichert."
+    },
+    "form": {
+      "newTitle": "Plan anlegen",
+      "editTitle": "Plan bearbeiten",
+      "zone": "Zone",
+      "start": "Start",
+      "duration": "Dauer (min)",
+      "volume": "Geplante Menge (L)",
+      "status": "Status"
+    },
+    "errors": {
+      "zoneRequired": "Die Zone ist erforderlich.",
+      "startRequired": "Das Startdatum ist erforderlich.",
+      "durationPositive": "Die Dauer muss größer als 0 sein.",
+      "volumePositive": "Die geplante Menge muss größer als 0 sein."
+    },
+    "created": "Plan angelegt",
+    "updated": "Plan aktualisiert",
+    "started": "Bewässerung für {{zone}} gestartet.",
+    "stopped": "Bewässerung für {{zone}} gestoppt.",
+    "actionFailed": "Aktion fehlgeschlagen."
+  },
+  "consumption": {
+    "title": "Verbrauchsverfolgung",
+    "subtitle": "Automatisch von IoT-Sensoren gemeldete Messwerte, verglichen mit dem theoretischen Bedarf.",
+    "stats": {
+      "period": "Gewählter Zeitraum",
+      "total": "Gesamtverbrauch",
+      "peak": "Spitze",
+      "peakValue": "{{day}} - {{volume}}",
+      "noPeak": "-"
+    },
+    "periodNames": {
+      "all": "Gesamter Verlauf",
+      "week": "Letzte Woche",
+      "month": "Letzter Monat"
+    },
+    "periodLabel": "Zeitraum",
+    "periods": {
+      "week": "Woche",
+      "month": "Monat",
+      "all": "Alle"
+    },
+    "report": "CSV-Bericht",
+    "exporting": "Export läuft…",
+    "reportHint": "Verbrauchsbericht herunterladen (CSV)",
+    "exported": "CSV-Bericht heruntergeladen.",
+    "exportFailed": "Export fehlgeschlagen.",
+    "chart": {
+      "title": "Verbrauch im Zeitverlauf",
+      "loading": "Verbräuche werden geladen…",
+      "loadError": "Daten können nicht geladen werden.",
+      "emptyTitle": "Kein Verbrauch",
+      "empty": "Messwerte der IoT-Sensoren erscheinen hier, sobald sie gemeldet werden.",
+      "series": "Menge (L)"
+    },
+    "history": {
+      "title": "Messverlauf",
+      "count": "{{count}} Messung(en)",
+      "loading": "Messungen werden geladen…",
+      "emptyTitle": "Kein Verbrauch erfasst",
+      "empty": "Mengen werden von IoT-Sensoren gemessen und automatisch gemeldet, ohne manuelle Eingabe."
+    },
+    "farmFilter": "Nach Betrieb filtern",
+    "sourceFilter": "Nach Quelle filtern",
+    "allSources": "Alle Quellen",
+    "search": "Nach Datum, Charge oder Block suchen…",
+    "columns": {
+      "date": "Datum",
+      "volume": "Menge",
+      "block": "Pflanzenblock",
+      "lot": "Charge"
+    },
+    "severalBlocks": "Mehrere",
+    "lotValue": "{{lot}} · {{activity}}"
+  },
+  "quota": {
+    "title": "Monatliche Wasserkontingente",
+    "status": {
+      "exceeded": "Kontingent überschritten",
+      "warning": "80 % des Kontingents erreicht",
+      "ok": "Unter dem Kontingent",
+      "none": "Keine Referenz"
+    },
+    "targetTypes": {
+      "farm": "Betrieb",
+      "zone": "Zone"
+    },
+    "chooseFarm": "Betrieb wählen…",
+    "chooseZone": "Zone wählen…",
+    "fields": {
+      "targetType": "Art des Kontingentziels",
+      "target": "Kontingentziel",
+      "month": "Kontingentmonat",
+      "liters": "Monatskontingent (L)"
+    },
+    "submit": "Kontingent festlegen",
+    "saving": "Wird gespeichert…",
+    "errors": {
+      "chooseFarm": "Wählen Sie einen Betrieb.",
+      "chooseZone": "Wählen Sie eine Zone.",
+      "positive": "Das Kontingent muss eine positive Menge (Liter) sein.",
+      "save": "Das Kontingent kann nicht gespeichert werden.",
+      "delete": "Das Kontingent kann nicht gelöscht werden."
+    },
+    "saved": "Kontingent gespeichert.",
+    "deleted": "Kontingent gelöscht.",
+    "loading": "Kontingente werden geladen…",
+    "loadError": "Kontingente können nicht geladen werden.",
+    "emptyTitle": "Kein Kontingent festgelegt",
+    "empty": "Legen Sie ein Monatskontingent je Betrieb oder Zone fest: Der Sensorverbrauch wird mit diesem Ziel verglichen, mit automatischer Warnung bei 80 % und 100 %.",
+    "unknownTarget": "Unbekanntes Ziel",
+    "used": "{{pct}} des Kontingents verbraucht",
+    "over": "um {{volume}} überschritten",
+    "left": "{{volume}} übrig",
+    "usageLine": "{{used}} — {{rest}}"
+  },
+  "maintenance": {
+    "title": "Wartung",
+    "subtitle": "Einsätze verfolgen und die Pflege der Tropfer planen.",
+    "historyTitle": "Einsatzverlauf",
+    "periodLabel": "Zeitraum",
+    "periods": {
+      "week": "Woche",
+      "month": "Monat",
+      "all": "alle"
+    },
+    "zoneFilter": "Nach Zone filtern",
+    "allZones": "Alle Zonen",
+    "search": "Einsatz suchen…",
+    "loading": "Einsätze werden geladen...",
+    "loadError": "Einsätze können nicht geladen werden.",
+    "emptyTitle": "Keine Einsätze",
+    "empty": "Erfassen Sie einen Wartungseinsatz, um den Verlauf zu beginnen.",
+    "zoneFallback": "Zone {{id}}",
+    "columns": {
+      "date": "Datum",
+      "zone": "Zone",
+      "type": "Typ",
+      "state": "Zustand",
+      "emitters": "Tropfer"
+    },
+    "types": {
+      "cleaning": "Reinigung",
+      "filter_change": "Filterwechsel",
+      "repair": "Reparatur",
+      "inspection": "Inspektion"
+    },
+    "clogging": "Verstopfung {{severity}}",
+    "ok": "OK",
+    "severityInline": {
+      "low": "gering",
+      "medium": "mittel",
+      "high": "hoch"
+    },
+    "severities": {
+      "low": "Gering",
+      "medium": "Mittel",
+      "high": "Hoch"
+    },
+    "planningTitle": "Wartungsplanung",
+    "planning": "Empfohlen: Filter wöchentlich prüfen und verstopfte Tropfer ersetzen.",
+    "recent": "{{count}} Einsatz/Einsätze in den letzten 7 Tagen (bezogen auf die neuesten Daten).",
+    "form": {
+      "newTitle": "Neuer Einsatz",
+      "editTitle": "Einsatz bearbeiten",
+      "zone": "Zone",
+      "type": "Einsatzart",
+      "date": "Einsatzdatum",
+      "filterCleaned": "Filter gereinigt",
+      "cloggingDetected": "Verstopfung festgestellt",
+      "severity": "Schwere der Verstopfung",
+      "emitters": "Ersetzte Tropfer",
+      "performedBy": "Durchgeführt von",
+      "notes": "Notizen"
+    },
+    "errors": {
+      "zoneRequired": "Die Zone ist erforderlich.",
+      "dateRequired": "Das Einsatzdatum ist erforderlich."
+    },
+    "saved": "Einsatz gespeichert",
+    "updated": "Einsatz aktualisiert",
+    "deleted": "Einsatz gelöscht",
+    "deleteTitle": "Einsatz löschen",
+    "deleteMessage": "Dieser Einsatz wird aus dem Wartungsverlauf entfernt."
   }
 }

@@ -409,5 +409,234 @@
       "date": "Date",
       "volume": "Volume récupéré"
     }
+  },
+  "irrigation": {
+    "title": "Planification de l’irrigation",
+    "subtitle": "L’irrigation démarre quand le sol en a besoin, pas seulement parce que l’horloge le dit.",
+    "zoneFallback": "Zone {{id}}",
+    "status": {
+      "running": "En cours",
+      "completed": "Terminé",
+      "postponed": "Reporté",
+      "scheduled": "Planifié"
+    },
+    "schedules": {
+      "title": "Plans d’irrigation",
+      "count": "{{count}} plan(s) actif(s)",
+      "loading": "Chargement des plans…",
+      "loadError": "Chargement impossible.",
+      "emptyTitle": "Aucun plan en cours ou planifié",
+      "empty": "Créez un plan d’irrigation à droite. Les plans terminés figurent dans le journal d’irrigation.",
+      "block": "Bloc {{code}}",
+      "severalBlocks": "Plusieurs blocs",
+      "planned": "{{volume}} prévus",
+      "start": "Démarrer maintenant",
+      "stop": "Arrêter l’irrigation",
+      "archived": "Les plans terminés sont archivés dans le journal d’irrigation ci-dessous."
+    },
+    "journal": {
+      "title": "Journal d’irrigation",
+      "count": "{{count}} cycle(s) terminé(s)",
+      "search": "Rechercher par date (AAAA-MM-JJ)…",
+      "loading": "Chargement du journal…",
+      "emptyTitle": "Aucun cycle terminé",
+      "empty": "Démarrez puis arrêtez une irrigation : chaque cycle clos est ajouté automatiquement au journal.",
+      "scheduleRef": "#{{id}}",
+      "columns": {
+        "schedule": "Plan",
+        "start": "Début",
+        "stop": "Arrêt",
+        "duration": "Durée réelle",
+        "volume": "Volume réel",
+        "status": "Statut"
+      },
+      "limit": "Seuls les {{count}} derniers cycles terminés sont affichés ici.",
+      "olderStored": "Les cycles plus anciens restent enregistrés dans la base de données.",
+      "moreStored": "Les cycles supplémentaires resteront aussi enregistrés dans la base de données."
+    },
+    "form": {
+      "newTitle": "Créer un plan",
+      "editTitle": "Modifier le plan",
+      "zone": "Zone",
+      "start": "Début",
+      "duration": "Durée (min)",
+      "volume": "Volume prévu (L)",
+      "status": "Statut"
+    },
+    "errors": {
+      "zoneRequired": "La zone est obligatoire.",
+      "startRequired": "La date de début est obligatoire.",
+      "durationPositive": "La durée doit être supérieure à 0.",
+      "volumePositive": "Le volume prévu doit être supérieur à 0."
+    },
+    "created": "Plan créé",
+    "updated": "Plan mis à jour",
+    "started": "Irrigation démarrée pour {{zone}}.",
+    "stopped": "Irrigation arrêtée pour {{zone}}.",
+    "actionFailed": "L’action a échoué."
+  },
+  "consumption": {
+    "title": "Suivi de la consommation",
+    "subtitle": "Mesures transmises automatiquement par les capteurs IoT, comparées au besoin théorique.",
+    "stats": {
+      "period": "Période choisie",
+      "total": "Total consommé",
+      "peak": "Pic",
+      "peakValue": "{{day}} - {{volume}}",
+      "noPeak": "-"
+    },
+    "periodNames": {
+      "all": "Tout l’historique",
+      "week": "Semaine dernière",
+      "month": "Mois dernier"
+    },
+    "periodLabel": "Période",
+    "periods": {
+      "week": "Semaine",
+      "month": "Mois",
+      "all": "Tout"
+    },
+    "report": "Rapport CSV",
+    "exporting": "Export en cours…",
+    "reportHint": "Télécharger le rapport de consommation (CSV)",
+    "exported": "Rapport CSV téléchargé.",
+    "exportFailed": "L’export a échoué.",
+    "chart": {
+      "title": "Consommation dans le temps",
+      "loading": "Chargement des consommations…",
+      "loadError": "Impossible de charger les données.",
+      "emptyTitle": "Aucune consommation",
+      "empty": "Les mesures des capteurs IoT apparaîtront ici dès leur transmission.",
+      "series": "Volume (L)"
+    },
+    "history": {
+      "title": "Historique des mesures",
+      "count": "{{count}} mesure(s)",
+      "loading": "Chargement des mesures…",
+      "emptyTitle": "Aucune consommation enregistrée",
+      "empty": "Les volumes sont mesurés par les capteurs IoT et transmis automatiquement, sans saisie manuelle."
+    },
+    "farmFilter": "Filtrer par ferme",
+    "sourceFilter": "Filtrer par source",
+    "allSources": "Toutes les sources",
+    "search": "Rechercher par date, lot ou bloc…",
+    "columns": {
+      "date": "Date",
+      "volume": "Volume",
+      "block": "Bloc de cultures",
+      "lot": "Lot"
+    },
+    "severalBlocks": "Plusieurs",
+    "lotValue": "{{lot}} · {{activity}}"
+  },
+  "quota": {
+    "title": "Quotas d’eau mensuels",
+    "status": {
+      "exceeded": "Quota dépassé",
+      "warning": "80 % du quota atteint",
+      "ok": "Sous le quota",
+      "none": "Aucune référence"
+    },
+    "targetTypes": {
+      "farm": "Ferme",
+      "zone": "Zone"
+    },
+    "chooseFarm": "Choisir une ferme…",
+    "chooseZone": "Choisir une zone…",
+    "fields": {
+      "targetType": "Type de cible du quota",
+      "target": "Cible du quota",
+      "month": "Mois du quota",
+      "liters": "Quota mensuel (L)"
+    },
+    "submit": "Définir le quota",
+    "saving": "Enregistrement…",
+    "errors": {
+      "chooseFarm": "Choisissez une ferme.",
+      "chooseZone": "Choisissez une zone.",
+      "positive": "Le quota doit être un volume positif (litres).",
+      "save": "Impossible d’enregistrer le quota.",
+      "delete": "Impossible de supprimer le quota."
+    },
+    "saved": "Quota enregistré.",
+    "deleted": "Quota supprimé.",
+    "loading": "Chargement des quotas…",
+    "loadError": "Impossible de charger les quotas.",
+    "emptyTitle": "Aucun quota défini",
+    "empty": "Définissez un quota mensuel par ferme ou par zone : la consommation des capteurs sera comparée à cet objectif, avec une alerte automatique à 80 % puis 100 %.",
+    "unknownTarget": "Cible inconnue",
+    "used": "{{pct}} du quota utilisé",
+    "over": "dépassé de {{volume}}",
+    "left": "{{volume}} restants",
+    "usageLine": "{{used}} — {{rest}}"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "subtitle": "Suivez les interventions et planifiez l’entretien des goutteurs.",
+    "historyTitle": "Historique des interventions",
+    "periodLabel": "Période",
+    "periods": {
+      "week": "semaine",
+      "month": "mois",
+      "all": "tout"
+    },
+    "zoneFilter": "Filtrer par zone",
+    "allZones": "Toutes les zones",
+    "search": "Rechercher une intervention…",
+    "loading": "Chargement des interventions...",
+    "loadError": "Impossible de charger les interventions.",
+    "emptyTitle": "Aucune intervention",
+    "empty": "Enregistrez une intervention de maintenance pour démarrer l’historique.",
+    "zoneFallback": "Zone {{id}}",
+    "columns": {
+      "date": "Date",
+      "zone": "Zone",
+      "type": "Type",
+      "state": "État",
+      "emitters": "Goutteurs"
+    },
+    "types": {
+      "cleaning": "nettoyage",
+      "filter_change": "changement de filtre",
+      "repair": "réparation",
+      "inspection": "inspection"
+    },
+    "clogging": "Colmatage {{severity}}",
+    "ok": "OK",
+    "severityInline": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé"
+    },
+    "severities": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé"
+    },
+    "planningTitle": "Planification de la maintenance",
+    "planning": "Recommandé : contrôler les filtres chaque semaine et remplacer les goutteurs colmatés.",
+    "recent": "{{count}} intervention(s) sur les 7 derniers jours (par rapport aux données les plus récentes).",
+    "form": {
+      "newTitle": "Nouvelle intervention",
+      "editTitle": "Modifier l’intervention",
+      "zone": "Zone",
+      "type": "Type d’intervention",
+      "date": "Date de l’intervention",
+      "filterCleaned": "Filtre nettoyé",
+      "cloggingDetected": "Colmatage détecté",
+      "severity": "Gravité du colmatage",
+      "emitters": "Goutteurs remplacés",
+      "performedBy": "Réalisée par",
+      "notes": "Notes"
+    },
+    "errors": {
+      "zoneRequired": "La zone est obligatoire.",
+      "dateRequired": "La date de l’intervention est obligatoire."
+    },
+    "saved": "Intervention enregistrée",
+    "updated": "Intervention mise à jour",
+    "deleted": "Intervention supprimée",
+    "deleteTitle": "Supprimer l’intervention",
+    "deleteMessage": "Cette intervention sera retirée de l’historique de maintenance."
   }
 }

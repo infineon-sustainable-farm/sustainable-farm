@@ -1,28 +1,33 @@
 import { useMemo, useState } from 'react'
+import { Pause, Pencil, Play } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Badge, Button, Card, EmptyState, ErrorState, Field, IconButton, Input, Select, Table } from '../../../../shared/ui'
+import { useListControls } from '../../../../shared/hooks/useListControls'
 import { useIrrigationSchedules, useIrrigationLogs } from '../../hooks/useWaterData'
 import { useZones } from '../../hooks/useFarms'
-import { useListControls } from '../../../../shared/hooks/useListControls'
-import { SearchInput } from '../../../../shared/components/SearchInput'
 import { irrigationApi } from '../../api/watersupplyApi'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
+import { useWaterFormat } from '../../format'
+import { Filters, FormActions, Screen, SplitLayout } from '../common/Screen'
+import { FormAlert } from '../common/FormAlert'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { tableSort } from '../common/listSort'
 
+/** Status label key and badge tone of a schedule. */
 function statusMeta(status) {
   switch ((status || '').toLowerCase()) {
     case 'running':
     case 'in_progress':
     case 'in-progress':
-      return { cls: 'orange', text: 'Running' }
+      return { tone: 'warning', key: 'running' }
     case 'completed':
     case 'done':
-      return { cls: 'green', text: 'Completed' }
+      return { tone: 'success', key: 'completed' }
     case 'postponed':
     case 'saved':
-      return { cls: 'red', text: 'Postponed' }
+      return { tone: 'error', key: 'postponed' }
     default:
-      return { cls: 'primary', text: 'Scheduled' }
+      return { tone: 'info', key: 'scheduled' }
   }
 }
 
@@ -38,6 +43,8 @@ const VISIBLE_LIMIT = 10
  *                    IrrigationLog { scheduleId, actualStartTime, actualEndTime, waterUsedLiters, status }.
  */
 export function IrrigationView({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { schedules, loading, error, refetch } = useIrrigationSchedules()
   const { logs, loading: logsLoading, refetch: refetchLogs } = useIrrigationLogs()
   const { zones } = useZones()
@@ -55,7 +62,9 @@ export function IrrigationView({ notify }) {
     setFormError(null)
   }
 
-  const zoneName = (zoneId) => zones.find((z) => z.id === zoneId)?.name || (zoneId ? `Zone ${String(zoneId).slice(0, 8)}` : '—')
+  const zoneName = (zoneId) =>
+    zones.find((z) => z.id === zoneId)?.name || (zoneId ? t('irrigation.zoneFallback', { id: String(zoneId).slice(0, 8) }) : t('common.none'))
+  const instant = (iso) => (iso ? format.instant(iso) : '')
 
   // Irrigation journal: only COMPLETED cycles.
   // Only the last 10 cycles are displayed; the 11th and older ones stay stored in the database.
@@ -85,21 +94,21 @@ export function IrrigationView({ notify }) {
   const submitSchedule = (event) => {
     event.preventDefault()
     if (!scheduleForm.zoneId) {
-      setFormError('Zone is required.')
+      setFormError(t('irrigation.errors.zoneRequired'))
       return
     }
     if (!scheduleForm.startTime) {
-      setFormError('Start date is required.')
+      setFormError(t('irrigation.errors.startRequired'))
       return
     }
     const duration = Number(scheduleForm.durationMinutes)
     if (!(duration > 0)) {
-      setFormError('Duration must be greater than 0.')
+      setFormError(t('irrigation.errors.durationPositive'))
       return
     }
     const volume = Number(scheduleForm.waterQuantityLiters)
     if (!(volume > 0)) {
-      setFormError('Planned volume must be greater than 0.')
+      setFormError(t('irrigation.errors.volumePositive'))
       return
     }
     setBusy(true)
@@ -118,10 +127,10 @@ export function IrrigationView({ notify }) {
     request
       .then(() => refetch())
       .then(() => {
-        notify(editingScheduleId ? 'Schedule updated' : 'Schedule created')
+        notify(editingScheduleId ? t('irrigation.updated') : t('irrigation.created'))
         resetScheduleForm()
       })
-      .catch((err) => setFormError(err.message || 'Unable to save.'))
+      .catch((err) => setFormError(err.message || t('common.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -141,178 +150,167 @@ export function IrrigationView({ notify }) {
     const req = action === 'start' ? irrigationApi.startIrrigation(schedule.id) : irrigationApi.stopIrrigation(schedule.id)
     req
       .then(() => {
-        notify(action === 'start' ? `Irrigation started for ${zoneName(schedule.zoneId)}.` : `Irrigation stopped for ${zoneName(schedule.zoneId)}.`)
+        const zone = zoneName(schedule.zoneId)
+        notify(action === 'start' ? t('irrigation.started', { zone }) : t('irrigation.stopped', { zone }))
         // The backend closes/opens the log and sets the schedule to "completed": refresh both lists.
         refetch()
         refetchLogs()
       })
-      .catch((e) => notify(e?.message || 'Action failed.'))
+      .catch((e) => notify(e?.message || t('irrigation.actionFailed'), 'error'))
+  }
+
+  const scheduleOf = (log) => schedules.find((s) => s.id === log.scheduleId)
+
+  const journalColumns = [
+    {
+      key: 'schedule',
+      header: t('irrigation.journal.columns.schedule'),
+      cell: (l) => (
+        <span title={l.scheduleId}>
+          {scheduleOf(l) ? zoneName(scheduleOf(l).zoneId) : t('irrigation.journal.scheduleRef', { id: String(l.scheduleId || '').slice(0, 8) })}
+        </span>
+      ),
+    },
+    { key: 'actualStartTime', header: t('irrigation.journal.columns.start'), sortable: true, cell: (l) => instant(l.actualStartTime) },
+    { key: 'actualEndTime', header: t('irrigation.journal.columns.stop'), cell: (l) => instant(l.actualEndTime) || t('common.none') },
+    {
+      key: 'duration',
+      header: t('irrigation.journal.columns.duration'),
+      cell: (l) =>
+        l.actualEndTime
+          ? format.minutes(Math.round((new Date(l.actualEndTime) - new Date(l.actualStartTime)) / 60000))
+          : t('common.none'),
+    },
+    {
+      key: 'waterUsedLiters',
+      header: t('irrigation.journal.columns.volume'),
+      sortable: true,
+      cell: (l) => <strong className="font-semibold">{format.liters(l.waterUsedLiters ?? 0)}</strong>,
+    },
+    {
+      key: 'status',
+      header: t('irrigation.journal.columns.status'),
+      cell: (l) => (
+        <Badge tone={l.status === 'completed' ? 'success' : 'warning'}>
+          {l.status === 'completed' ? t('irrigation.status.completed') : t('irrigation.status.running')}
+        </Badge>
+      ),
+    },
+  ]
+
+  function renderSchedules() {
+    if (loading) return <LoadingState label={t('irrigation.schedules.loading')} />
+    if (error) return <ErrorState message={error.message || t('irrigation.schedules.loadError')} />
+    if (activeSchedules.length === 0) {
+      return <EmptyState title={t('irrigation.schedules.emptyTitle')} message={t('irrigation.schedules.empty')} />
+    }
+    return (
+      <ul className="flex flex-col">
+        {activeSchedules.map((s) => {
+          const st = statusMeta(s.status)
+          const status = String(s.status || '').toLowerCase()
+          const canStop = ['running', 'in_progress', 'in-progress'].includes(status)
+          const canStart = ['scheduled', 'postponed', 'saved'].includes(status)
+          return (
+            <li key={s.id} className="flex flex-wrap items-center gap-4 border-b border-border-subtle py-3 last:border-b-0">
+              <p className="min-w-40 flex-1 text-sm font-semibold">
+                {zoneName(s.zoneId)}
+                <span className="mt-1 block text-xs font-medium text-text-muted">
+                  {instant(s.startTime)}
+                  {/* Plants block watered by the zone (only when the zone maps to a single block). */}
+                  {s.blockCode && ` · ${t('irrigation.schedules.block', { code: s.blockCode })}`}
+                  {s.multipleBlockCodes && ` · ${t('irrigation.schedules.severalBlocks')}`}
+                </span>
+              </p>
+              <p className="min-w-28 text-sm">
+                {format.minutes(s.durationMinutes ?? 0)}
+                <span className="mt-1 block text-xs font-medium text-text-muted">
+                  {t('irrigation.schedules.planned', { volume: format.liters(s.waterQuantityLiters ?? 0) })}
+                </span>
+              </p>
+              <Badge tone={st.tone}>{t(`irrigation.status.${st.key}`)}</Badge>
+              <div className="ml-auto flex gap-1">
+                {canStart && <IconButton icon={Play} label={t('irrigation.schedules.start')} onClick={() => handleAction(s, 'start')} />}
+                {canStop && <IconButton icon={Pause} label={t('irrigation.schedules.stop')} onClick={() => handleAction(s, 'stop')} />}
+                <IconButton icon={Pencil} label={t('common.edit')} onClick={() => editSchedule(s)} />
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    )
+  }
+
+  function renderJournal() {
+    if (logsLoading) return <LoadingState compact label={t('irrigation.journal.loading')} />
+    if (completedLogs.length === 0) {
+      return <EmptyState title={t('irrigation.journal.emptyTitle')} message={t('irrigation.journal.empty')} />
+    }
+    return <Table caption={t('irrigation.journal.title')} columns={journalColumns} rows={logList.items} {...tableSort(logList)} />
   }
 
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Irrigation scheduling</h1>
-          <p>Irrigation starts when the soil needs it, not just because the clock says so.</p>
-        </div>
-      </div>
-
-      <div className="ws-layout-2">
-        <div className="ws-stack">
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Irrigation schedules</h2>
-              <span>{activeSchedules.length} active schedule(s)</span>
-            </div>
-            {loading ? (
-              <Spinner label="Loading schedules…" full />
-            ) : error ? (
-              <EmptyState title="Error" description={error.message || 'Unable to load.'} />
-            ) : activeSchedules.length === 0 ? (
-              <EmptyState
-                title="No running or scheduled plans"
-                description="Create an irrigation schedule on the right. Completed schedules are listed in the Irrigation journal."
-              />
-            ) : (
-              activeSchedules.map((s) => {
-                const st = statusMeta(s.status)
-                const status = String(s.status || '').toLowerCase()
-                const canStop = ['running', 'in_progress', 'in-progress'].includes(status)
-                const canStart = ['scheduled', 'postponed', 'saved'].includes(status)
-                return (
-                  <div className="ws-row" key={s.id}>
-                    <div className="ws-row-title">
-                      {zoneName(s.zoneId)}
-                      <small>
-                        {(s.startTime || '').replace('T', ' ').slice(0, 16)}
-                        {/* Plants block watered by the zone (only when the zone maps to a single block). */}
-                        {s.blockCode && ` · Block ${s.blockCode}`}
-                        {s.multipleBlockCodes && ' · Several blocks'}
-                      </small>
-                    </div>
-                    <div className="ws-row-detail">
-                      {s.durationMinutes ?? 0} min<small>{s.waterQuantityLiters ?? 0} L planned</small>
-                    </div>
-                    <span className={`ws-tag ${st.cls}`}>{st.text}</span>
-                    <div className="ws-actions">
-                      {canStart && (
-                        <button className="ws-icon-btn" title="Start now" onClick={() => handleAction(s, 'start')}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="6 3 20 12 6 21 6 3" /></svg>
-                        </button>
-                      )}
-                      {canStop && (
-                        <button className="ws-icon-btn" title="Stop irrigation" onClick={() => handleAction(s, 'stop')}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="14" y="4" width="4" height="16" rx="1" /><rect x="6" y="4" width="4" height="16" rx="1" /></svg>
-                        </button>
-                      )}
-                      <button className="ws-chip" onClick={() => editSchedule(s)}>Edit</button>
-                      </div>
-                  </div>
-                )
-              })
-            )}
-            {schedules.length > activeSchedules.length && (
-              <p style={{ margin: '4px 18px 16px', fontSize: '12px', color: 'var(--ws-muted)' }}>
-                Completed schedules are archived in the Irrigation journal below.
-              </p>
-            )}
-          </div>
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Irrigation journal</h2>
-              <span>{completedLogs.length} completed cycle(s)</span>
-            </div>
-            <div className="ws-filters">
-              <SearchInput value={logList.query} onChange={logList.setQuery} placeholder="Search by date (YYYY-MM-DD)…" />
-            </div>
-            <div className="ws-panel-body">
-              {logsLoading ? (
-                <Spinner label="Loading journal…" />
-              ) : completedLogs.length === 0 ? (
-                <EmptyState
-                  title="No completed cycles"
-                  description="Start then stop an irrigation: each closed cycle is added to the journal automatically."
-                />
-              ) : (
-                <table className="ws-table">
-                  <thead>
-                    <tr>
-                      <th>Schedule</th>
-                      <th onClick={() => logList.toggleSort('actualStartTime')} style={{ cursor: 'pointer' }}>
-                        Start {logList.sort?.key === 'actualStartTime' ? (logList.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                      </th>
-                      <th>Stop</th>
-                      <th>Actual duration</th>
-                      <th onClick={() => logList.toggleSort('waterUsedLiters')} style={{ cursor: 'pointer' }}>
-                        Actual volume {logList.sort?.key === 'waterUsedLiters' ? (logList.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                      </th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {logList.items.map((l) => (
-                      <tr key={l.id}>
-                        <td title={l.scheduleId}>{schedules.find((s) => s.id === l.scheduleId)
-                          ? zoneName(schedules.find((s) => s.id === l.scheduleId).zoneId)
-                          : `#${String(l.scheduleId || '').slice(0, 8)}`}</td>
-                        <td>{(l.actualStartTime || '').replace('T', ' ').slice(0, 16)}</td>
-                        <td>{(l.actualEndTime || '').replace('T', ' ').slice(0, 16) || '—'}</td>
-                        <td>{l.actualEndTime ? `${Math.round((new Date(l.actualEndTime) - new Date(l.actualStartTime)) / 60000)} min` : '—'}</td>
-                        <td><strong>{l.waterUsedLiters ?? 0} L</strong></td>
-                        <td><span className={`ws-tag ${l.status === 'completed' ? 'green' : 'orange'}`}>{l.status === 'completed' ? 'Completed' : 'Running'}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+    <Screen title={t('irrigation.title')} subtitle={t('irrigation.subtitle')}>
+      <SplitLayout
+        main={
+          <>
+            <Card
+              title={t('irrigation.schedules.title')}
+              actions={<span className="text-sm text-text-muted">{t('irrigation.schedules.count', { count: activeSchedules.length })}</span>}
+            >
+              {renderSchedules()}
+              {schedules.length > activeSchedules.length && (
+                <p className="mt-4 text-xs text-text-muted">{t('irrigation.schedules.archived')}</p>
               )}
-              <p style={{ margin: '10px 0 0', fontSize: '12px', color: 'var(--ws-muted)' }}>
-                Only the last {VISIBLE_LIMIT} completed cycles are shown here.
-                {completedLogs.length > VISIBLE_LIMIT
-                  ? ` Older cycles remain stored in the database.`
-                  : ' Additional cycles will also remain stored in the database.'}
+            </Card>
+            <Card
+              title={t('irrigation.journal.title')}
+              actions={<span className="text-sm text-text-muted">{t('irrigation.journal.count', { count: completedLogs.length })}</span>}
+            >
+              <Filters>
+                <SearchField value={logList.query} onChange={logList.setQuery} placeholder={t('irrigation.journal.search')} />
+              </Filters>
+              {renderJournal()}
+              <p className="mt-4 text-xs text-text-muted">
+                {t('irrigation.journal.limit', { count: VISIBLE_LIMIT })}
+                {completedLogs.length > VISIBLE_LIMIT ? ` ${t('irrigation.journal.olderStored')}` : ` ${t('irrigation.journal.moreStored')}`}
               </p>
-            </div>
-          </div>
-        </div>
-        <div className="ws-stack">
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>{editingScheduleId ? 'Edit schedule' : 'Create a schedule'}</h2>
-            </div>
-            <div className="ws-panel-body">
-              {formError && <div className="ws-inline-error">{formError}</div>}
-              <form className="ws-form-grid" onSubmit={submitSchedule}>
-                <FormField label="Zone" required>
-                  <select style={inputStyle} value={scheduleForm.zoneId} onChange={updateScheduleForm('zoneId')} required>
-                    <option value="">Select</option>
-                    {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
-                  </select>
-                </FormField>
-                <FormField label="Start" required>
-                  <input style={inputStyle} type="datetime-local" value={scheduleForm.startTime} onChange={updateScheduleForm('startTime')} required />
-                </FormField>
-                <FormField label="Duration (min)" required>
-                  <input style={inputStyle} type="number" min="1" step="1" value={scheduleForm.durationMinutes} onChange={updateScheduleForm('durationMinutes')} required />
-                </FormField>
-                <FormField label="Planned volume (L)" required>
-                  <input style={inputStyle} type="number" min="0" step="0.01" value={scheduleForm.waterQuantityLiters} onChange={updateScheduleForm('waterQuantityLiters')} required />
-                </FormField>
-                <FormField label="Status">
-                  <select style={inputStyle} value={scheduleForm.status} onChange={updateScheduleForm('status')}>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="postponed">Postponed</option>
-                  </select>
-                </FormField>
-                <div className="ws-form-actions">
-                  {editingScheduleId && <button type="button" className="ws-chip" onClick={resetScheduleForm}>Cancel</button>}
-                  <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Save'}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+            </Card>
+          </>
+        }
+        aside={
+          <Card title={editingScheduleId ? t('irrigation.form.editTitle') : t('irrigation.form.newTitle')}>
+            <FormAlert>{formError}</FormAlert>
+            <form className="flex flex-col gap-4" onSubmit={submitSchedule}>
+              <Field label={t('irrigation.form.zone')} required>
+                <Select value={scheduleForm.zoneId} onChange={updateScheduleForm('zoneId')}>
+                  <option value="">{t('common.select')}</option>
+                  {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+                </Select>
+              </Field>
+              <Field label={t('irrigation.form.start')} required>
+                <Input type="datetime-local" value={scheduleForm.startTime} onChange={updateScheduleForm('startTime')} />
+              </Field>
+              <Field label={t('irrigation.form.duration')} required>
+                <Input type="number" min="1" step="1" value={scheduleForm.durationMinutes} onChange={updateScheduleForm('durationMinutes')} />
+              </Field>
+              <Field label={t('irrigation.form.volume')} required>
+                <Input type="number" min="0" step="0.01" value={scheduleForm.waterQuantityLiters} onChange={updateScheduleForm('waterQuantityLiters')} />
+              </Field>
+              <Field label={t('irrigation.form.status')}>
+                <Select value={scheduleForm.status} onChange={updateScheduleForm('status')}>
+                  <option value="scheduled">{t('irrigation.status.scheduled')}</option>
+                  <option value="postponed">{t('irrigation.status.postponed')}</option>
+                </Select>
+              </Field>
+              <FormActions>
+                {editingScheduleId && <Button variant="secondary" onClick={resetScheduleForm}>{t('common.cancel')}</Button>}
+                <Button type="submit" loading={busy}>{t('common.save')}</Button>
+              </FormActions>
+            </form>
+          </Card>
+        }
+      />
+    </Screen>
   )
 }
