@@ -10,8 +10,11 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitCancel
 import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitScheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.*;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.*;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BookingRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BriefingRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.FeedbackRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.SurveySendRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +49,12 @@ class RegistrationServiceImplTest {
     private TimeSlotRepository timeSlotRepository;
     @Mock
     private BriefingRepository briefingRepository;
+    @Mock
+    private FeedbackRepository feedbackRepository;
+    @Mock
+    private SurveySendRepository surveySendRepository;
+    @Mock
+    private BookingRepository bookingRepository;
     @Mock
     private SchedulingService schedulingService;
     @Spy
@@ -506,5 +515,16 @@ class RegistrationServiceImplTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).isProspect()).isTrue();
         assertThat(result.get(0).getVisitPurpose()).isEqualTo(VisitPurpose.PURCHASE);
+    }
+
+    @Test
+    void deleteVisitor_stillBooked_isRefused() {
+        when(visitorRepository.findById(5L)).thenReturn(Optional.of(new Visitor()));
+        when(bookingRepository.existsByVisitorId(5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.deleteVisitor(5L))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("bookings");
+        verify(visitorRepository, never()).deleteById(any());
     }
 }

@@ -50,7 +50,7 @@ class VisitorControllerTest {
     void list_returns200() throws Exception {
         when(registrationService.listVisitors()).thenReturn(List.of(buildResponse(1L)));
 
-        mockMvc.perform(get("/api/v1/visitors"))
+        mockMvc.perform(get("/api/visitor-management/visitors"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].fullName").value("Alice Dupont"));
     }
@@ -59,7 +59,7 @@ class VisitorControllerTest {
     void get_byId_returns200() throws Exception {
         when(registrationService.getVisitor(1L)).thenReturn(buildResponse(1L));
 
-        mockMvc.perform(get("/api/v1/visitors/1"))
+        mockMvc.perform(get("/api/visitor-management/visitors/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
     }
@@ -68,7 +68,7 @@ class VisitorControllerTest {
     void get_notFound_returns404() throws Exception {
         when(registrationService.getVisitor(999L)).thenThrow(new ResourceNotFoundException("not found"));
 
-        mockMvc.perform(get("/api/v1/visitors/999"))
+        mockMvc.perform(get("/api/visitor-management/visitors/999"))
                 .andExpect(status().isNotFound());
     }
 
@@ -76,7 +76,7 @@ class VisitorControllerTest {
     void create_valid_returns201() throws Exception {
         when(registrationService.createVisitor(any(VisitorRequest.class))).thenReturn(buildResponse(1L));
 
-        mockMvc.perform(post("/api/v1/visitors")
+        mockMvc.perform(post("/api/visitor-management/visitors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fullName\":\"Alice\",\"groupSize\":2,\"email\":\"alice@test.com\",\"type\":\"INDIVIDUAL\"}"))
                 .andExpect(status().isCreated())
@@ -88,7 +88,7 @@ class VisitorControllerTest {
         when(registrationService.createVisitor(any(VisitorRequest.class)))
                 .thenThrow(new ConflictException("duplicate"));
 
-        mockMvc.perform(post("/api/v1/visitors")
+        mockMvc.perform(post("/api/visitor-management/visitors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fullName\":\"Alice\",\"groupSize\":1,\"email\":\"alice@test.com\",\"type\":\"INDIVIDUAL\"}"))
                 .andExpect(status().isConflict());
@@ -96,7 +96,7 @@ class VisitorControllerTest {
 
     @Test
     void create_missingFullName_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/visitors")
+        mockMvc.perform(post("/api/visitor-management/visitors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"groupSize\":1,\"type\":\"INDIVIDUAL\"}"))
                 .andExpect(status().isBadRequest());
@@ -104,7 +104,7 @@ class VisitorControllerTest {
 
     @Test
     void create_invalidPhone_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/visitors")
+        mockMvc.perform(post("/api/visitor-management/visitors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fullName\":\"Alice\",\"groupSize\":1,"
                                 + "\"phone\":\"abc\",\"type\":\"INDIVIDUAL\"}"))
@@ -113,7 +113,7 @@ class VisitorControllerTest {
 
     @Test
     void create_unknownVisitorType_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/visitors")
+        mockMvc.perform(post("/api/visitor-management/visitors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fullName\":\"Alice\",\"groupSize\":1,\"type\":\"FAMILY\"}"))
                 .andExpect(status().isBadRequest());
@@ -124,7 +124,7 @@ class VisitorControllerTest {
         when(registrationService.updateVisitor(any(Long.class), any(VisitorRequest.class)))
                 .thenReturn(buildResponse(1L));
 
-        mockMvc.perform(put("/api/v1/visitors/1")
+        mockMvc.perform(put("/api/visitor-management/visitors/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fullName\":\"Alice\",\"groupSize\":2,\"email\":\"alice@test.com\",\"type\":\"INDIVIDUAL\"}"))
                 .andExpect(status().isOk());
@@ -134,7 +134,7 @@ class VisitorControllerTest {
     void delete_returns204() throws Exception {
         doNothing().when(registrationService).deleteVisitor(1L);
 
-        mockMvc.perform(delete("/api/v1/visitors/1"))
+        mockMvc.perform(delete("/api/visitor-management/visitors/1"))
                 .andExpect(status().isNoContent());
 
         verify(registrationService).deleteVisitor(1L);
@@ -145,7 +145,7 @@ class VisitorControllerTest {
         doThrow(new ResourceNotFoundException("Visitor 999 not found"))
                 .when(registrationService).deleteVisitor(999L);
 
-        mockMvc.perform(delete("/api/v1/visitors/999"))
+        mockMvc.perform(delete("/api/visitor-management/visitors/999"))
                 .andExpect(status().isNotFound());
     }
 
@@ -154,7 +154,7 @@ class VisitorControllerTest {
         doThrow(new BusinessRuleException("registrations still reference it"))
                 .when(registrationService).deleteVisitor(1L);
 
-        mockMvc.perform(delete("/api/v1/visitors/1"))
+        mockMvc.perform(delete("/api/visitor-management/visitors/1"))
                 .andExpect(status().isUnprocessableEntity());
     }
 }
