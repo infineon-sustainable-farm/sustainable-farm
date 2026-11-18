@@ -4,17 +4,18 @@ import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantingResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -29,7 +30,7 @@ public class PlantingService {
     /** {@code datePrecision} of a date entered through the form, which is always a full date. */
     static final String DAY_KNOWN_PRECISION = "day known";
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final GrowthCalendarRepository growthCalendarRepository;
     private final PopulationEventRepository populationEventRepository;
     private final PlantsBlocks plantsBlocks;
@@ -54,8 +55,8 @@ public class PlantingService {
      * planting, when given; density, yields and plant origin are not entered
      * with a planting: they stay NULL rather than being guessed.
      */
-    private static Variety newVariety(BlockDto block, String name, Integer treeCount, Instant now) {
-        Variety variety = new Variety();
+    private static BlockVariety newVariety(BlockDto block, String name, Integer treeCount, Instant now) {
+        BlockVariety variety = new BlockVariety();
         variety.assignBlock(block.id(), PlantsBlocks.label(block));
         variety.setName(name);
         variety.setTreeCount(treeCount);
@@ -74,11 +75,11 @@ public class PlantingService {
      * @param request the planting, already validated: both spacings or none
      * @return {@code true} if a value was written
      */
-    private static boolean applySpacingAndVigor(Variety variety, PlantingRequest request) {
+    private static boolean applySpacingAndVigor(BlockVariety variety, PlantingRequest request) {
         boolean written = false;
         if (request.rowSpacingM() != null) {
-            variety.setRowSpacingM(request.rowSpacingM().doubleValue());
-            variety.setTreeSpacingM(request.treeSpacingM().doubleValue());
+            variety.setRowSpacingM(request.rowSpacingM().setScale(BlockVariety.SPACING_SCALE, RoundingMode.HALF_UP));
+            variety.setTreeSpacingM(request.treeSpacingM().setScale(BlockVariety.SPACING_SCALE, RoundingMode.HALF_UP));
             written = true;
         }
         if (request.vigor() != null) {
@@ -96,7 +97,7 @@ public class PlantingService {
      * @return the API representation of that planting
      */
     private static PlantingResponse toResponse(PopulationEvent planting) {
-        Variety variety = planting.getVariety();
+        BlockVariety variety = planting.getVariety();
         return new PlantingResponse(
                 planting.getId(),
                 variety.getFarmId(),
@@ -143,20 +144,20 @@ public class PlantingService {
         BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeBlockCode(request.blockCode()));
         String varietyName = request.varietyName().trim();
 
-        Variety variety = varietyRepository.findByBlockAndNameForUpdate(block.id(), varietyName)
+        BlockVariety variety = blockVarietyRepository.findByBlockAndNameForUpdate(block.id(), varietyName)
                 .stream()
                 .findFirst()
                 .orElse(null);
         if (variety == null) {
-            Variety created = newVariety(block, varietyName, request.treeCount(), now);
+            BlockVariety created = newVariety(block, varietyName, request.treeCount(), now);
             applySpacingAndVigor(created, request);
-            variety = varietyRepository.save(created);
+            variety = blockVarietyRepository.save(created);
         } else if (populationEventRepository.existsByVarietyIdAndEventType(variety.getId(), PopulationEventType.PLANTING)) {
             throw new ConflictException("A planting of " + variety.getName()
                     + " is already recorded on block " + variety.getBlockCode());
         } else if (applySpacingAndVigor(variety, request)) {
             variety.setLastUpdated(now);
-            variety = varietyRepository.save(variety);
+            variety = blockVarietyRepository.save(variety);
         }
 
         recordPlantingDate(block, request.plantingDate(), now);

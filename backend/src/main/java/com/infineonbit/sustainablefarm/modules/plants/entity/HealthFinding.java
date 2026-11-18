@@ -1,15 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -37,12 +34,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class HealthFinding {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class HealthFinding extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "inspection_id", nullable = false)
@@ -72,4 +64,25 @@ public class HealthFinding {
     /** Write time of the finding, then of its resolution, its only change. */
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public HealthFinding(Long id,
+            HealthInspection inspection,
+            HealthIssueReference issue,
+            String otherLabel,
+            String treeLabel,
+            LocalDate resolvedOn,
+            String resolutionNote,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.inspection = inspection;
+        this.issue = issue;
+        this.otherLabel = otherLabel;
+        this.treeLabel = treeLabel;
+        this.resolvedOn = resolvedOn;
+        this.resolutionNote = resolutionNote;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
 }

@@ -1,15 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -39,12 +36,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class FertilizerProduct {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class FertilizerProduct extends BaseEntity {
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -74,4 +66,23 @@ public class FertilizerProduct {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public FertilizerProduct(Long id,
+            String name,
+            FertilizerType fertilizerType,
+            String composition,
+            FertilizerUnit unit,
+            BigDecimal reorderThreshold,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.name = name;
+        this.fertilizerType = fertilizerType;
+        this.composition = composition;
+        this.unit = unit;
+        this.reorderThreshold = reorderThreshold;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
 }

@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatus
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
@@ -15,7 +16,6 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
@@ -27,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -119,8 +120,8 @@ public class HarvestStatusServiceTest {
     }
 
     /** A variety row of farm 7 planted on a day; the plantings are stubbed by {@link #stubPlantings}. */
-    private Variety planted(long id, String blockCode, String name, LocalDate plantedOn, int trees) {
-        Variety variety = new Variety();
+    private BlockVariety planted(long id, String blockCode, String name, LocalDate plantedOn, int trees) {
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.setFarmId(FARM);
         variety.setBlockCode(blockCode);
@@ -136,7 +137,7 @@ public class HarvestStatusServiceTest {
         when(populationEventRepository.findPlantingsByOptionalFilters(false, FARM_BLOCKS)).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
-                new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, null)));
+                new VarietyReference(1L, "Keitt", BigDecimal.valueOf(220.0), "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, null)));
     }
 
     private static HealthTreatmentResponse treatment(long id, String blockCode, LocalDate treatedOn,
@@ -146,7 +147,7 @@ public class HarvestStatusServiceTest {
                 treatedOn.plusDays(intervalDays), "Awa", null, "user_entry", null);
     }
 
-    private static HarvestResponse harvest(long id, Variety variety, LocalDate harvestDate) {
+    private static HarvestResponse harvest(long id, BlockVariety variety, LocalDate harvestDate) {
         return new HarvestResponse(id, null, FARM, variety.getBlockCode(), variety.getId(), variety.getName(),
                 harvestDate, 100.0, "user_entry", null);
     }
@@ -155,7 +156,7 @@ public class HarvestStatusServiceTest {
      * The status of a Keitt row with its harvest window, the default share of
      * gradual production, and no observation: the estimate holds.
      */
-    private static VarietyHarvestStatus keitt(Variety variety, int trees, MaturityStatus status,
+    private static VarietyHarvestStatus keitt(BlockVariety variety, int trees, MaturityStatus status,
                                               LocalDate windowStart, LocalDate windowEnd, Integer days,
                                               HealthTreatmentResponse interval, LocalDate firstHarvestDate) {
         return observedKeitt(variety, trees, status, status, null, windowStart, windowEnd, days, interval,
@@ -163,7 +164,7 @@ public class HarvestStatusServiceTest {
     }
 
     /** The status of a Keitt row whose observation counts, with the estimate beside it. */
-    private static VarietyHarvestStatus observedKeitt(Variety variety, int trees, MaturityStatus status,
+    private static VarietyHarvestStatus observedKeitt(BlockVariety variety, int trees, MaturityStatus status,
                                                       MaturityStatus estimatedStatus, FieldObservation observation,
                                                       LocalDate windowStart, LocalDate windowEnd, Integer days,
                                                       HealthTreatmentResponse interval, LocalDate firstHarvestDate) {
@@ -175,7 +176,7 @@ public class HarvestStatusServiceTest {
     }
 
     /** A visual observation of a variety row by Awa, as the observation service gives it. */
-    private static MaturityObservationResponse observation(long id, Variety variety, LocalDate observedOn,
+    private static MaturityObservationResponse observation(long id, BlockVariety variety, LocalDate observedOn,
                                                            MaturityStatus status) {
         return new MaturityObservationResponse(id, FARM, variety.getBlockCode(), variety.getId(), variety.getName(),
                 observedOn, status, MaturityMethod.VISUAL, null, null, "Awa", "user_entry", null);
@@ -196,7 +197,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldBeReadyForHarvest_whenTheWindowIsOpenAndNoIntervalRuns() {
         // Arrange: Keitt on A, 3 years old in May 2027; a harvest in April, before the window, is not read
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         when(harvestService.getAllHarvests(FARM, null, LocalDate.of(2027, 5, 1), JUNE_15_2027)).thenReturn(List.of(
                 harvest(11L, keittA, LocalDate.of(2027, 5, 20)), harvest(12L, keittA, LocalDate.of(2027, 6, 10))));
@@ -212,7 +213,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldBeRipe_whileAPreHarvestIntervalRunsOnTheBlock() {
         // Arrange: of the treatments of block A, the one whose interval ends last counts; the others do not
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         HealthTreatmentResponse lastToEnd = treatment(21L, "A", LocalDate.of(2027, 6, 10), 14);
         when(healthTreatmentService.getAllTreatments(FARM, null, null, JUNE_15_2027)).thenReturn(List.of(
@@ -231,7 +232,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldBeRipe_withinTheLookAheadOfTheAlerts() {
         // Arrange
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         LocalDate april10 = LocalDate.of(2027, 4, 10);
         // Act & Assert: the window opens in 21 days, ripe within 30 days but not within 20
@@ -251,7 +252,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldEstimateTheFirstHarvest_yearsAhead_forYoungTrees() {
         // Arrange: Keitt on B planted in March 2026, in establishment in 2027 and 2028
-        Variety keittB = planted(2L, "B", "Keitt", LocalDate.of(2026, 3, 1), 100);
+        BlockVariety keittB = planted(2L, "B", "Keitt", LocalDate.of(2026, 3, 1), 100);
         stubPlantings();
         // Act
         HarvestStatusResponse response = serviceOn(JUNE_15_2027).getHarvestStatus(FARM, null, null);
@@ -264,12 +265,12 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldGiveNoDate_whenNoPhaseGivesAYield() {
         // Arrange: every share corrected to 0
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(List.of(
-                new GrowthPhaseYieldShare(1L, "establishment", 0.0, "user_entry", null),
-                new GrowthPhaseYieldShare(2L, "gradual production", 0.0, "user_entry", null),
-                new GrowthPhaseYieldShare(3L, "full production", 0.0, "user_entry", null)));
+                new GrowthPhaseYieldShare(1L, "establishment", BigDecimal.valueOf(0.0), "user_entry", null),
+                new GrowthPhaseYieldShare(2L, "gradual production", BigDecimal.valueOf(0.0), "user_entry", null),
+                new GrowthPhaseYieldShare(3L, "full production", BigDecimal.valueOf(0.0), "user_entry", null)));
         // Act
         HarvestStatusResponse response = serviceOn(JUNE_15_2027).getHarvestStatus(FARM, null, null);
         // Assert: the search ends once the trees are in full production
@@ -280,7 +281,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldBeImmature_afterTheSeason_untilTheNextOneComesNear() {
         // Arrange
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         // Act & Assert: on 1 August 2027 the next window opens in 274 days
         assertEquals(List.of(keitt(keittA, 40, MaturityStatus.IMMATURE, LocalDate.of(2028, 5, 1),
@@ -291,8 +292,8 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldGiveNoStatus_withoutReference_butStillTheInterval() {
         // Arrange: Brooks is not in the reference; listed after Keitt on A by block
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
-        Variety brooks = planted(3L, "C", "Brooks", LocalDate.of(2020, 1, 10), 30);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety brooks = planted(3L, "C", "Brooks", LocalDate.of(2020, 1, 10), 30);
         stubPlantings();
         HealthTreatmentResponse onC = treatment(24L, "C", LocalDate.of(2027, 6, 14), 7);
         when(healthTreatmentService.getAllTreatments(FARM, null, null, JUNE_15_2027)).thenReturn(List.of(onC));
@@ -347,7 +348,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldLetTheObservationOfTheSeasonTakePrecedence_overTheEstimate() {
         // Arrange: on 12 May 2027 the window of Keitt on A is open; the flesh near the stone is still white
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         LocalDate may12 = LocalDate.of(2027, 5, 12);
         MaturityObservationResponse immature = new MaturityObservationResponse(30L, FARM, "A", 1L, "Keitt",
@@ -365,7 +366,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldCountTheObservationUntilTheLastDayOfItsSeason_andNotTheDayAfter() {
         // Arrange
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         MaturityObservationResponse ripe = observation(30L, keittA, LocalDate.of(2027, 6, 20), MaturityStatus.RIPE);
         LocalDate july31 = LocalDate.of(2027, 7, 31);
@@ -385,7 +386,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldCountAnObservationMadeBetweenTwoSeasons_forTheComingOne() {
         // Arrange: an observation of 10 September 2027, after the 2027 season
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         MaturityObservationResponse immature = observation(30L, keittA, LocalDate.of(2027, 9, 10),
                 MaturityStatus.IMMATURE);
@@ -401,7 +402,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldTakeTheLatestObservation_byDateThenId() {
         // Arrange: two observations on 10 May, given out of order, and an older one
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         LocalDate may12 = LocalDate.of(2027, 5, 12);
         MaturityObservationResponse recordedLast = observation(31L, keittA, LocalDate.of(2027, 5, 10),
@@ -419,7 +420,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldIgnoreAnObservationMadeAfterTheDay() {
         // Arrange: the overview reads an earlier day than the latest observation
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         LocalDate may12 = LocalDate.of(2027, 5, 12);
         stubObservations(may12, observation(30L, keittA, LocalDate.of(2027, 5, 20), MaturityStatus.IMMATURE));
@@ -432,7 +433,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldHoldAnObservedReadyBackToRipe_whileAPreHarvestIntervalRuns() {
         // Arrange: ready on 10 May, then a treatment on 11 May with a 14-day interval
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
         stubPlantings();
         LocalDate may12 = LocalDate.of(2027, 5, 12);
         HealthTreatmentResponse onA = treatment(21L, "A", LocalDate.of(2027, 5, 11), 14);
@@ -452,7 +453,7 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldShowTheLatestObservation_withoutCounting_whenTheVarietyHasNoReference() {
         // Arrange: Brooks is not in the reference
-        Variety brooks = planted(3L, "C", "Brooks", LocalDate.of(2020, 1, 10), 30);
+        BlockVariety brooks = planted(3L, "C", "Brooks", LocalDate.of(2020, 1, 10), 30);
         stubPlantings();
         MaturityObservationResponse latest = observation(31L, brooks, LocalDate.of(2027, 6, 1), MaturityStatus.RIPE);
         stubObservations(JUNE_15_2027, observation(30L, brooks, LocalDate.of(2027, 5, 1), MaturityStatus.IMMATURE),
@@ -467,11 +468,11 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldFollowASeasonOverTheNewYear() {
         // Arrange: Kent on D, in full production, with a November to February season
-        Variety kentD = planted(4L, "D", "Kent", LocalDate.of(2015, 3, 1), 25);
+        BlockVariety kentD = planted(4L, "D", "Kent", LocalDate.of(2015, 3, 1), 25);
         when(populationEventRepository.findPlantingsByOptionalFilters(false, FARM_BLOCKS)).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
-                new VarietyReference(2L, "Kent", 180.0, "user_entry", 11, 2, "user_entry", null)));
+                new VarietyReference(2L, "Kent", BigDecimal.valueOf(180.0), "user_entry", 11, 2, "user_entry", null)));
         // Observed in late October, before the season, then ripe in November
         MaturityObservationResponse ripe = observation(31L, kentD, LocalDate.of(2026, 11, 20), MaturityStatus.RIPE);
         LocalDate january15 = LocalDate.of(2027, 1, 15);
@@ -495,8 +496,8 @@ public class HarvestStatusServiceTest {
     @Test
     void getHarvestStatus_shouldKeepTheObservationsOfEachVarietyRowApart() {
         // Arrange: Keitt on A and on B; only B is observed
-        Variety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
-        Variety keittB = planted(2L, "B", "Keitt", KEITT_A_PLANTED_ON, 60);
+        BlockVariety keittA = planted(1L, "A", "Keitt", KEITT_A_PLANTED_ON, 40);
+        BlockVariety keittB = planted(2L, "B", "Keitt", KEITT_A_PLANTED_ON, 60);
         stubPlantings();
         LocalDate may12 = LocalDate.of(2027, 5, 12);
         MaturityObservationResponse onB = observation(30L, keittB, LocalDate.of(2027, 5, 10), MaturityStatus.RIPE);

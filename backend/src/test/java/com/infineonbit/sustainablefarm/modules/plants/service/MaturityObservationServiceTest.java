@@ -3,15 +3,15 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.MaturityObservationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityObservation;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.MaturityObservationRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,7 @@ public class MaturityObservationServiceTest {
     private static final LocalDate OBSERVED_ON = LocalDate.of(2026, 10, 12);
 
     @Mock
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Mock
     private PopulationEventRepository populationEventRepository;
@@ -70,22 +70,22 @@ public class MaturityObservationServiceTest {
                 measuredValue, observer);
     }
 
-    private static Variety variety(Long id, String blockCode, String name) {
-        Variety variety = new Variety();
+    private static BlockVariety variety(Long id, String blockCode, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.assignBlock(TestBlocks.idOf(blockCode), TestBlocks.label(blockCode));
         variety.setName(name);
         return variety;
     }
 
-    private static PopulationEvent planting(Variety variety, LocalDate date) {
+    private static PopulationEvent planting(BlockVariety variety, LocalDate date) {
         return new PopulationEvent(50L, variety, PopulationEventType.PLANTING, date, 40, "user_entry", NOW);
     }
 
     /** Keitt planted on block B without farm on 1 March 2015, looked up by the given name. */
-    private Variety keittPlantedOnB(String nameAsLookedUp) {
-        Variety keitt = variety(10L, "B", "Keitt");
-        when(varietyRepository.findByBlockAndName(B, nameAsLookedUp)).thenReturn(List.of(keitt));
+    private BlockVariety keittPlantedOnB(String nameAsLookedUp) {
+        BlockVariety keitt = variety(10L, "B", "Keitt");
+        when(blockVarietyRepository.findByBlockAndName(B, nameAsLookedUp)).thenReturn(List.of(keitt));
         when(populationEventRepository.findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(
                 10L, PopulationEventType.PLANTING)).thenReturn(Optional.of(planting(keitt, PLANTING_DATE)));
         return keitt;
@@ -109,7 +109,7 @@ public class MaturityObservationServiceTest {
     @Test
     void recordObservation_shouldStoreTheObservation_whenVarietyIsPlanted() {
         // Arrange
-        Variety keitt = keittPlantedOnB("Keitt");
+        BlockVariety keitt = keittPlantedOnB("Keitt");
         saveAssignsId(300L);
         // Act
         MaturityObservationResponse response = maturityObservationService.recordObservation(
@@ -192,8 +192,8 @@ public class MaturityObservationServiceTest {
     @Test
     void recordObservation_shouldLookUpTheFarmAsSent() {
         // Arrange: Keitt on block B of farm 1
-        Variety keitt = variety(11L, "B", "Keitt");
-        when(varietyRepository.findByBlockAndName(B, "Keitt")).thenReturn(List.of(keitt));
+        BlockVariety keitt = variety(11L, "B", "Keitt");
+        when(blockVarietyRepository.findByBlockAndName(B, "Keitt")).thenReturn(List.of(keitt));
         when(populationEventRepository.findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(
                 11L, PopulationEventType.PLANTING)).thenReturn(Optional.of(planting(keitt, PLANTING_DATE)));
         saveAssignsId(300L);
@@ -214,7 +214,7 @@ public class MaturityObservationServiceTest {
                         NOW));
         // Assert
         assertEquals("No planting of Keitt is recorded on block B", ex.getMessage());
-        verifyNoInteractions(varietyRepository);
+        verifyNoInteractions(blockVarietyRepository);
     }
 
     @Test
@@ -226,15 +226,15 @@ public class MaturityObservationServiceTest {
                         request(" c ", "Kent", OBSERVED_ON, "RIPE", "VISUAL", null, null), NOW));
         // Assert: the name as sent, the block as normalized; nothing written
         assertEquals("No planting of Kent is recorded on block C", ex.getMessage());
-        verifyNoInteractions(varietyRepository, populationEventRepository);
+        verifyNoInteractions(blockVarietyRepository, populationEventRepository);
         verify(maturityObservationRepository, never()).save(any());
     }
 
     @Test
     void recordObservation_shouldThrow422_whenVarietyRowHasNoPlanting() {
         // Arrange: the Zalka row of the dev profile, which has no PLANTING event
-        Variety zalkaKeitt = variety(1L, "A", "Keitt");
-        when(varietyRepository.findByBlockAndName(A, "keitt")).thenReturn(List.of(zalkaKeitt));
+        BlockVariety zalkaKeitt = variety(1L, "A", "Keitt");
+        when(blockVarietyRepository.findByBlockAndName(A, "keitt")).thenReturn(List.of(zalkaKeitt));
         when(populationEventRepository.findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(
                 1L, PopulationEventType.PLANTING)).thenReturn(Optional.empty());
         // Act
@@ -263,7 +263,7 @@ public class MaturityObservationServiceTest {
     @Test
     void getAllObservations_shouldMapEveryObservation_andTurnABlankBlockIntoNoFilter() {
         // Arrange
-        Variety keitt = variety(10L, "B", "Keitt");
+        BlockVariety keitt = variety(10L, "B", "Keitt");
         MaturityObservation brix = new MaturityObservation(300L, keitt, OBSERVED_ON, MaturityStatus.RIPE,
                 MaturityMethod.BRIX, new BigDecimal("12.0"), "Awa", "user_entry", NOW);
         when(maturityObservationRepository.findByOptionalFilters(false, List.of(A, B), OBSERVED_ON, null))
