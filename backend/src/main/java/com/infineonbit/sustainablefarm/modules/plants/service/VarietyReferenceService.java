@@ -49,7 +49,7 @@ public class VarietyReferenceService {
         return new VarietyReferenceResponse(
                 reference.getId(),
                 reference.getVarietyName(),
-                reference.getYieldPerTreeKg(),
+                Decimals.toDouble(reference.getYieldPerTreeKg()),
                 reference.getYieldSource(),
                 reference.getHarvestStartMonth(),
                 reference.getHarvestEndMonth(),
@@ -166,7 +166,7 @@ public class VarietyReferenceService {
         refuseTakenKey(name);
         String yieldSource = normalizeSource(request.yieldSource());
         String seasonSource = normalizeSource(request.seasonSource());
-        return saveFlushed(new VarietyReference(null, name, request.yieldPerTreeKg(),
+        return saveFlushed(new VarietyReference(null, name, Decimals.of(request.yieldPerTreeKg(), VarietyReference.YIELD_SCALE),
                 yieldSource == null ? USER_ENTRY_SOURCE : yieldSource,
                 request.harvestStartMonth(), request.harvestEndMonth(),
                 seasonSource == null ? USER_ENTRY_SOURCE : seasonSource,
@@ -207,7 +207,7 @@ public class VarietyReferenceService {
 
         String yieldSource = normalizeSource(request.yieldSource());
         if (yieldSource == null) {
-            boolean sameYield = Objects.equals(request.yieldPerTreeKg(), reference.getYieldPerTreeKg());
+            boolean sameYield = Decimals.sameValue(request.yieldPerTreeKg(), reference.getYieldPerTreeKg());
             yieldSource = sameYield ? reference.getYieldSource() : USER_ENTRY_SOURCE;
         }
         String seasonSource = normalizeSource(request.seasonSource());
@@ -218,7 +218,7 @@ public class VarietyReferenceService {
         }
 
         reference.setVarietyName(name);
-        reference.setYieldPerTreeKg(request.yieldPerTreeKg());
+        reference.setYieldPerTreeKg(Decimals.of(request.yieldPerTreeKg(), VarietyReference.YIELD_SCALE));
         reference.setYieldSource(yieldSource);
         reference.setHarvestStartMonth(request.harvestStartMonth());
         reference.setHarvestEndMonth(request.harvestEndMonth());

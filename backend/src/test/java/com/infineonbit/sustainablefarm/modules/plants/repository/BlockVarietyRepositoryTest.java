@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -13,39 +13,39 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Variety rows are found by their block id (a {@code farm.block} row) and their name. */
+/** BlockVariety rows are found by their block id (a {@code farm.block} row) and their name. */
 @DataJpaTest
 @ActiveProfiles("test")
-public class VarietyRepositoryTest {
+public class BlockVarietyRepositoryTest {
 
     private static final Long BLOCK_A = 11L;
     private static final Long BLOCK_B = 12L;
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
-    private static Variety variety(Long blockId, String name) {
-        Variety variety = new Variety();
+    private static BlockVariety variety(Long blockId, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.setBlockId(blockId);
         variety.setName(name);
         return variety;
     }
 
-    private Variety save(Long blockId, String name) {
-        return varietyRepository.save(variety(blockId, name));
+    private BlockVariety save(Long blockId, String name) {
+        return blockVarietyRepository.save(variety(blockId, name));
     }
 
-    private static List<Long> ids(List<Variety> varieties) {
-        return varieties.stream().map(Variety::getId).toList();
+    private static List<Long> ids(List<BlockVariety> varieties) {
+        return varieties.stream().map(BlockVariety::getId).toList();
     }
 
     @Test
     void findByBlockAndName_shouldMatchOnlyThatBlock() {
         // Arrange
-        Variety onA = save(BLOCK_A, "Keitt");
+        BlockVariety onA = save(BLOCK_A, "Keitt");
         save(BLOCK_B, "Keitt");
         // Act
-        List<Variety> found = varietyRepository.findByBlockAndName(BLOCK_A, "Keitt");
+        List<BlockVariety> found = blockVarietyRepository.findByBlockAndName(BLOCK_A, "Keitt");
         // Assert
         assertEquals(List.of(onA.getId()), ids(found));
     }
@@ -53,9 +53,9 @@ public class VarietyRepositoryTest {
     @Test
     void findByBlockAndName_shouldIgnoreNameCase() {
         // Arrange
-        Variety keitt = save(BLOCK_A, "Keitt");
+        BlockVariety keitt = save(BLOCK_A, "Keitt");
         // Act
-        List<Variety> found = varietyRepository.findByBlockAndName(BLOCK_A, "kEITT");
+        List<BlockVariety> found = blockVarietyRepository.findByBlockAndName(BLOCK_A, "kEITT");
         // Assert
         assertEquals(List.of(keitt.getId()), ids(found));
     }
@@ -65,18 +65,18 @@ public class VarietyRepositoryTest {
         // Arrange
         save(BLOCK_A, "Keitt");
         // Act & Assert
-        assertTrue(varietyRepository.findByBlockAndName(BLOCK_B, "Keitt").isEmpty());
+        assertTrue(blockVarietyRepository.findByBlockAndName(BLOCK_B, "Keitt").isEmpty());
     }
 
     @Test
     void findByOptionalFilters_shouldReadEveryBlock_orOnlyTheGivenBlocks() {
         // Arrange
-        Variety onA = save(BLOCK_A, "Keitt");
-        Variety onB = save(BLOCK_B, "Kent");
+        BlockVariety onA = save(BLOCK_A, "Keitt");
+        BlockVariety onB = save(BLOCK_B, "Kent");
         // Act
-        List<Variety> all = varietyRepository.findByOptionalFilters(true, List.of(-1L));
-        List<Variety> onlyB = varietyRepository.findByOptionalFilters(false, List.of(BLOCK_B));
-        List<Variety> none = varietyRepository.findByOptionalFilters(false, List.of(-1L));
+        List<BlockVariety> all = blockVarietyRepository.findByOptionalFilters(true, List.of(-1L));
+        List<BlockVariety> onlyB = blockVarietyRepository.findByOptionalFilters(false, List.of(BLOCK_B));
+        List<BlockVariety> none = blockVarietyRepository.findByOptionalFilters(false, List.of(-1L));
         // Assert: ordered by block id, then name
         assertEquals(List.of(onA.getId(), onB.getId()), ids(all));
         assertEquals(List.of(onB.getId()), ids(onlyB));
@@ -86,40 +86,40 @@ public class VarietyRepositoryTest {
     @Test
     void findByBlockAndNameForUpdate_shouldMatchTheSameRowsAsTheSharedLookup() {
         // Arrange
-        Variety onA = save(BLOCK_A, "Keitt");
+        BlockVariety onA = save(BLOCK_A, "Keitt");
         save(BLOCK_B, "Keitt");
         // Act: the locked lookup runs inside the transaction of the test
-        List<Variety> found = varietyRepository.findByBlockAndNameForUpdate(BLOCK_A, "kEITT");
+        List<BlockVariety> found = blockVarietyRepository.findByBlockAndNameForUpdate(BLOCK_A, "kEITT");
         // Assert
         assertEquals(List.of(onA.getId()), ids(found));
-        assertEquals(ids(varietyRepository.findByBlockAndName(BLOCK_A, "kEITT")), ids(found));
+        assertEquals(ids(blockVarietyRepository.findByBlockAndName(BLOCK_A, "kEITT")), ids(found));
     }
 
     @Test
     void save_shouldRefuseASecondRowOfTheSamePair() {
         // Arrange
-        varietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt"));
+        blockVarietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt"));
         // Act & Assert
         assertThrows(DataIntegrityViolationException.class,
-                () -> varietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt")));
+                () -> blockVarietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt")));
     }
 
     @Test
     void save_shouldRefuseASecondRowOfTheSamePair_whenOnlyTheCaseOfTheNameDiffers() {
         // Arrange
-        varietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt"));
+        blockVarietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt"));
         // Act & Assert: the planting lookup already reads "keitt" as "Keitt"
         assertThrows(DataIntegrityViolationException.class,
-                () -> varietyRepository.saveAndFlush(variety(BLOCK_A, "keitt")));
+                () -> blockVarietyRepository.saveAndFlush(variety(BLOCK_A, "keitt")));
     }
 
     @Test
     void save_shouldAcceptTheSameNameOnAnotherBlock() {
         // Arrange
-        varietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt"));
+        blockVarietyRepository.saveAndFlush(variety(BLOCK_A, "Keitt"));
         // Act
-        varietyRepository.saveAndFlush(variety(BLOCK_B, "Keitt"));
+        blockVarietyRepository.saveAndFlush(variety(BLOCK_B, "Keitt"));
         // Assert
-        assertEquals(2, varietyRepository.count());
+        assertEquals(2, blockVarietyRepository.count());
     }
 }

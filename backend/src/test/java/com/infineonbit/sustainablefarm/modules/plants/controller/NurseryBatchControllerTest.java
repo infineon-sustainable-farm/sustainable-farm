@@ -492,7 +492,7 @@ public class NurseryBatchControllerTest {
     void recordTransplant_shouldRunTheTransplantOnceMore_whenItsPlantingLostARace() throws Exception {
         // Arrange: the first run loses the race on the calendar row of the block, the second one succeeds
         when(nurseryEventService.recordTransplant(eq(1L), any(TransplantRequest.class)))
-                .thenThrow(violationOf("uk_calendrier_croissance_block_key"))
+                .thenThrow(violationOf("uk_growth_calendar_block_key"))
                 .thenReturn(new NurseryEventResponse(22L, 1L, "P1", null, NurseryEventType.TRANSPLANT, SEPTEMBER_20,
                         null, 100, null, "E", 7L, "user_entry", NOW));
         // Act
@@ -509,7 +509,7 @@ public class NurseryBatchControllerTest {
     void recordTransplant_shouldReturn409AndStop_whenTheSecondRunLosesARaceAgain() throws Exception {
         // Arrange
         when(nurseryEventService.recordTransplant(eq(1L), any(TransplantRequest.class)))
-                .thenThrow(violationOf("uk_varietes_variety_key"));
+                .thenThrow(violationOf("uk_block_variety_variety_key"));
         // Act
         ResultActions result = postTo(TRANSPLANTS_URL, """
                 {"transplantedOn":"2026-09-20","quantity":100,"blockCode":" e "}

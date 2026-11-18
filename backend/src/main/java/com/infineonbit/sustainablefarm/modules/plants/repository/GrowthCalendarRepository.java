@@ -85,7 +85,7 @@ public interface GrowthCalendarRepository extends JpaRepository<GrowthCalendar, 
     /**
      * Writes the natural key of one row that has none yet.
      *
-     * <p>A bulk update: it changes no other column, {@code date_maj} included,
+     * <p>A bulk update: it changes no other column, {@code last_updated} and {@code updated_at} included,
      * and runs no entity callback. Must run inside a transaction.
      *
      * @param id       the row

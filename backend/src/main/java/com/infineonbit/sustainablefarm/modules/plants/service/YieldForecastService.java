@@ -1,15 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYieldShareResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.MonthlyTotal;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.VarietyWithoutReference;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -73,7 +73,7 @@ public class YieldForecastService {
      * @param reference    its agronomic reference, {@code null} for a row of
      *                     {@link ForecastBasis#plantedWithoutReference()}
      */
-    record PlantedVariety(Variety variety, LocalDate plantingDate, int treeCount, VarietyReference reference) {
+    record PlantedVariety(BlockVariety variety, LocalDate plantingDate, int treeCount, VarietyReference reference) {
     }
 
     /**
@@ -191,7 +191,7 @@ public class YieldForecastService {
         List<PlantedVariety> plantedVarieties = new ArrayList<>();
         List<PlantedVariety> plantedWithoutReference = new ArrayList<>();
         for (PopulationEvent planting : plantings) {
-            Variety variety = planting.getVariety();
+            BlockVariety variety = planting.getVariety();
             Integer treeCount = treeCounts.get(variety.getId());
             if (treeCount == null || treeCount <= 0) {
                 // No tree left on this row: nothing to harvest.
@@ -277,7 +277,8 @@ public class YieldForecastService {
         return phase == null
                 ? BigDecimal.ZERO
                 : YieldForecastCalculator.yearlyKg(
-                        planted.treeCount(), planted.reference().getYieldPerTreeKg(), phase.share().yieldShare());
+                        planted.treeCount(), planted.reference().getYieldPerTreeKg().doubleValue(),
+                        phase.share().yieldShare());
     }
 
     /**
@@ -295,7 +296,7 @@ public class YieldForecastService {
         MonthExpectation expectation = found.get();
         PhaseOfMonth phase = expectation.phase();
         GrowthPhaseYieldShareResponse phaseShare = phase.share();
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         VarietyReference reference = planted.reference();
         int treeCount = planted.treeCount();
         double monthShare = expectation.monthShare();
@@ -309,7 +310,7 @@ public class YieldForecastService {
                 treeCount,
                 phase.age().getYears(),
                 phase.growthPhase(),
-                reference.getYieldPerTreeKg(),
+                Decimals.toDouble(reference.getYieldPerTreeKg()),
                 phaseShare.yieldShare(),
                 YieldForecastCalculator.roundShare(monthShare),
                 expectedKg,

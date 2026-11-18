@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +9,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,29 +22,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class HarvestRecordRepositoryTest {
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private HarvestRecordRepository harvestRecordRepository;
 
     /** A variety row on the block of a code, by its stable test id ({@link TestBlocks#idOf}). */
-    private Variety variety(String blockCode, String name) {
-        Variety variety = new Variety();
+    private BlockVariety variety(String blockCode, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.setBlockId(TestBlocks.idOf(blockCode));
         variety.setName(name);
-        return varietyRepository.save(variety);
+        return blockVarietyRepository.save(variety);
     }
 
-    private HarvestRecord harvest(Variety variety, LocalDate date, double quantityKg) {
+    private HarvestRecord harvest(BlockVariety variety, LocalDate date, double quantityKg) {
         return harvest(variety, date, quantityKg, null);
     }
 
-    private HarvestRecord harvest(Variety variety, LocalDate date, double quantityKg, String lotNumber) {
+    private HarvestRecord harvest(BlockVariety variety, LocalDate date, double quantityKg, String lotNumber) {
         HarvestRecord harvest = new HarvestRecord();
         harvest.setLotNumber(lotNumber);
         harvest.setVariety(variety);
         harvest.setHarvestDate(date);
-        harvest.setQuantityKg(quantityKg);
+        harvest.setQuantityKg(BigDecimal.valueOf(quantityKg));
         harvest.setSource("user_entry");
         return harvestRecordRepository.save(harvest);
     }
@@ -67,7 +68,7 @@ public class HarvestRecordRepositoryTest {
     @Test
     void findByOptionalFilters_shouldReturnEveryHarvestByDateThenId_whenNoFilterIsGiven() {
         // Arrange: two pickings on the same day, saved out of date order
-        Variety keitt = variety("B", "Keitt");
+        BlockVariety keitt = variety("B", "Keitt");
         HarvestRecord late = harvest(keitt, LocalDate.of(2026, 7, 2), 300.0);
         HarvestRecord firstPicking = harvest(keitt, LocalDate.of(2026, 6, 10), 800.0);
         HarvestRecord secondPicking = harvest(keitt, LocalDate.of(2026, 6, 10), 800.0);
@@ -101,7 +102,7 @@ public class HarvestRecordRepositoryTest {
     @Test
     void findByOptionalFilters_shouldIncludeBothBounds() {
         // Arrange
-        Variety keitt = variety("B", "Keitt");
+        BlockVariety keitt = variety("B", "Keitt");
         harvest(keitt, LocalDate.of(2026, 5, 31), 100.0);
         HarvestRecord first = harvest(keitt, LocalDate.of(2026, 6, 1), 200.0);
         HarvestRecord last = harvest(keitt, LocalDate.of(2026, 6, 30), 300.0);
@@ -114,7 +115,7 @@ public class HarvestRecordRepositoryTest {
     @Test
     void findByOptionalFilters_shouldApplyASingleBound() {
         // Arrange
-        Variety keitt = variety("B", "Keitt");
+        BlockVariety keitt = variety("B", "Keitt");
         HarvestRecord may = harvest(keitt, LocalDate.of(2026, 5, 31), 100.0);
         HarvestRecord june = harvest(keitt, LocalDate.of(2026, 6, 1), 200.0);
         // Act & Assert
@@ -133,7 +134,7 @@ public class HarvestRecordRepositoryTest {
     @Test
     void findByOptionalFilters_shouldMatchTheLotNumberExactly() {
         // Arrange: lot numbers that share a beginning
-        Variety keitt = variety("A", "Keitt");
+        BlockVariety keitt = variety("A", "Keitt");
         HarvestRecord lot1 = harvest(keitt, LocalDate.of(2026, 6, 10), 800.0, "LOT-2026-A-001");
         harvest(keitt, LocalDate.of(2026, 6, 11), 700.0, "LOT-2026-A-0010");
         harvest(keitt, LocalDate.of(2026, 6, 12), 600.0, "LOT-2026-A-010");
@@ -168,7 +169,7 @@ public class HarvestRecordRepositoryTest {
     void save_shouldRefuseASecondHarvestWithTheSameLotNumber() {
         // Arrange
         harvest(variety("B", "Keitt"), LocalDate.of(2026, 6, 10), 800.0, "LOT-2026-B-001");
-        Variety kent = variety("B", "Kent");
+        BlockVariety kent = variety("B", "Kent");
         // Act & Assert: refused by the unique constraint, whatever the variety
         assertThrows(DataIntegrityViolationException.class,
                 () -> harvest(kent, LocalDate.of(2026, 6, 10), 500.0, "LOT-2026-B-001"));
@@ -177,7 +178,7 @@ public class HarvestRecordRepositoryTest {
     @Test
     void save_shouldAcceptSeveralHarvestsWithoutLotNumber() {
         // Arrange: rows written before lot numbers existed
-        Variety keitt = variety("B", "Keitt");
+        BlockVariety keitt = variety("B", "Keitt");
         // Act
         harvest(keitt, LocalDate.of(2026, 6, 10), 800.0);
         harvest(keitt, LocalDate.of(2026, 6, 11), 700.0);

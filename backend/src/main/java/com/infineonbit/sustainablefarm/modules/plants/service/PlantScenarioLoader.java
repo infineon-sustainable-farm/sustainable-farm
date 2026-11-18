@@ -74,7 +74,7 @@ public class PlantScenarioLoader implements CommandLineRunner {
         scenario.setVarietyName("Keitt");
         scenario.setTreeCount(200);
         scenario.setTreeCountSource("Zalka_2025_C43");
-        scenario.setYieldPerTreeKg(220.0);
+        scenario.setYieldPerTreeKg(new BigDecimal("220.0"));
         scenario.setYieldSource("derived: Zalka_2025 D4 / B4");
         scenario.setPricePerKg(new BigDecimal("0.9072"));
         scenario.setPriceSource("derived: Zalka_2025 R19 / D4");

@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface VarietyRepository extends JpaRepository<Variety, Long> {
+public interface BlockVarietyRepository extends JpaRepository<BlockVariety, Long> {
 
     /**
      * Returns the varieties matching the given filters.
@@ -29,11 +29,11 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      * @return the matching varieties, ordered by block, then name, then id
      */
     @Query("""
-            SELECT v FROM Variety v
+            SELECT v FROM BlockVariety v
             WHERE (:allBlocks = true OR v.blockId IN :blockIds)
             ORDER BY v.blockId ASC, v.name ASC, v.id ASC
             """)
-    List<Variety> findByOptionalFilters(@Param("allBlocks") boolean allBlocks,
+    List<BlockVariety> findByOptionalFilters(@Param("allBlocks") boolean allBlocks,
                                         @Param("blockIds") Collection<Long> blockIds);
 
     /**
@@ -48,12 +48,12 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      * @return the matching rows, oldest first, possibly empty
      */
     @Query("""
-            SELECT v FROM Variety v
+            SELECT v FROM BlockVariety v
             WHERE v.blockId = :blockId
               AND LOWER(v.name) = LOWER(:name)
             ORDER BY v.id ASC
             """)
-    List<Variety> findByBlockAndName(@Param("blockId") Long blockId,
+    List<BlockVariety> findByBlockAndName(@Param("blockId") Long blockId,
                                      @Param("name") String name);
 
     /**
@@ -72,12 +72,12 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
-            SELECT v FROM Variety v
+            SELECT v FROM BlockVariety v
             WHERE v.blockId = :blockId
               AND LOWER(v.name) = LOWER(:name)
             ORDER BY v.id ASC
             """)
-    List<Variety> findByBlockAndNameForUpdate(@Param("blockId") Long blockId,
+    List<BlockVariety> findByBlockAndNameForUpdate(@Param("blockId") Long blockId,
                                               @Param("name") String name);
 
     /**
@@ -86,20 +86,20 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      *
      * @return the rows whose {@code variety_key} is NULL
      */
-    List<Variety> findByVarietyKeyIsNullOrderByIdAsc();
+    List<BlockVariety> findByVarietyKeyIsNullOrderByIdAsc();
 
     /**
      * The row holding a natural key; there is at most one.
      *
-     * @param varietyKey the natural key, see {@link Variety#keyOf}
+     * @param varietyKey the natural key, see {@link BlockVariety#keyOf}
      * @return the row, or empty if no row holds this key
      */
-    Optional<Variety> findByVarietyKey(String varietyKey);
+    Optional<BlockVariety> findByVarietyKey(String varietyKey);
 
     /**
      * Writes the natural key of one row that has none yet.
      *
-     * <p>A bulk update: it changes no other column, {@code date_maj} included,
+     * <p>A bulk update: it changes no other column, {@code last_updated} and {@code updated_at} included,
      * and runs no entity callback. Must run inside a transaction.
      *
      * @param id         the row
@@ -107,6 +107,6 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      * @return the number of rows updated: 1, or 0 if the row already has a key
      */
     @Modifying
-    @Query("UPDATE Variety v SET v.varietyKey = :varietyKey WHERE v.id = :id AND v.varietyKey IS NULL")
+    @Query("UPDATE BlockVariety v SET v.varietyKey = :varietyKey WHERE v.id = :id AND v.varietyKey IS NULL")
     int fillVarietyKey(@Param("id") Long id, @Param("varietyKey") String varietyKey);
 }

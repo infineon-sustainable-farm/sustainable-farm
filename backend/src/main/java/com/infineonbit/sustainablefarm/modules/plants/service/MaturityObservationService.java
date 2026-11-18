@@ -3,15 +3,15 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.MaturityObservationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityObservation;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.MaturityObservationRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +30,7 @@ public class MaturityObservationService {
     /** {@code source} of every observation written through the API. */
     static final String USER_ENTRY_SOURCE = "user_entry";
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final PopulationEventRepository populationEventRepository;
     private final MaturityObservationRepository maturityObservationRepository;
     private final PlantsBlocks plantsBlocks;
@@ -68,7 +68,7 @@ public class MaturityObservationService {
      * @return the API representation of that observation
      */
     private static MaturityObservationResponse toResponse(MaturityObservation observation) {
-        Variety variety = observation.getVariety();
+        BlockVariety variety = observation.getVariety();
         BigDecimal value = observation.getMeasuredValue();
         return new MaturityObservationResponse(
                 observation.getId(),
@@ -136,8 +136,8 @@ public class MaturityObservationService {
 
         // An observation designates an existing variety row: an unknown block, or a block of
         // another farm than the one requested, has no planting, and no block is created.
-        Variety variety = plantsBlocks.find(request.farmId(), blockCode)
-                .flatMap(block -> varietyRepository.findByBlockAndName(block.id(), varietyName).stream().findFirst())
+        BlockVariety variety = plantsBlocks.find(request.farmId(), blockCode)
+                .flatMap(block -> blockVarietyRepository.findByBlockAndName(block.id(), varietyName).stream().findFirst())
                 .orElse(null);
         if (variety == null) {
             throw noPlanting(varietyName, blockCode);

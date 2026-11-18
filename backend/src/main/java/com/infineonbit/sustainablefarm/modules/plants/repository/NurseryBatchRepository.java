@@ -19,7 +19,7 @@ public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long
      *
      * <p>A {@code null} farm is a value here, not a missing filter: it matches
      * only the batches without a farm, as in
-     * {@link VarietyRepository#findByFarmBlockAndName}. The code must match
+     * {@link BlockVarietyRepository#findByFarmBlockAndName}. The code must match
      * exactly; it is stored normalized ({@code "P1"}).
      *
      * @param farmId    farm identifier, or {@code null} for the batches without a farm
