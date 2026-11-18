@@ -54,8 +54,8 @@ public class NurseryEventControllerTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        when(nurseryEventService.getAllEvents(1L, 2, NurseryEventType.TRANSPLANT, from, to)).thenReturn(List.of(
-                new NurseryEventResponse(14L, 1L, "P1", 2, NurseryEventType.TRANSPLANT, LocalDate.of(2026, 9, 20),
+        when(nurseryEventService.getAllEvents(1L, 2L, NurseryEventType.TRANSPLANT, from, to)).thenReturn(List.of(
+                new NurseryEventResponse(14L, 1L, "P1", 2L, NurseryEventType.TRANSPLANT, LocalDate.of(2026, 9, 20),
                         null, 100, null, "E", 7L, "user_entry", NOW)));
         // Act & Assert
         mockMvc.perform(get(URL).param("batchId", "1").param("farmId", "2").param("eventType", "TRANSPLANT")
@@ -66,7 +66,7 @@ public class NurseryEventControllerTest {
                 .andExpect(jsonPath("$[0].batchCode").value("P1"))
                 .andExpect(jsonPath("$[0].eventType").value("TRANSPLANT"))
                 .andExpect(jsonPath("$[0].populationEventId").value(7));
-        verify(nurseryEventService).getAllEvents(1L, 2, NurseryEventType.TRANSPLANT, from, to);
+        verify(nurseryEventService).getAllEvents(1L, 2L, NurseryEventType.TRANSPLANT, from, to);
     }
 
     @Test

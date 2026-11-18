@@ -25,7 +25,7 @@ import java.time.LocalDate;
  * day (PL-05-01, "Manual entry"), with how it was seen and by whom.
  *
  * <p>Like {@link HarvestRecord}, the row holds no farm and no block: the
- * {@link Variety} row already stands for one (farm, block, variety) triple.
+ * {@link Variety} row already stands for one (block, variety) pair, the block giving the farm.
  * Several observations may share a day.
  *
  * <p>Only the observations are stored, never the status of a variety: the

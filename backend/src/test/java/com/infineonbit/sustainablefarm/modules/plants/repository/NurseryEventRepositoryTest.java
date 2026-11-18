@@ -25,19 +25,39 @@ public class NurseryEventRepositoryTest {
     @Autowired
     private NurseryEventRepository nurseryEventRepository;
 
-    private NurseryBatch batch(Integer farmId, String batchCode) {
-        return nurseryBatchRepository.save(new NurseryBatch(null, farmId, batchCode, "Keitt", NurseryOrigin.IN_HOUSE,
-                null, null, LocalDate.of(2026, 3, 2), 150, LocalDate.of(2026, 9, 20), null, "user_entry", null));
+    private NurseryBatch batch(Long farmId, String batchCode) {
+        NurseryBatch batch = new NurseryBatch();
+        batch.setFarmId(farmId);
+        batch.setBatchCode(batchCode);
+        batch.setVarietyName("Keitt");
+        batch.setOrigin(NurseryOrigin.IN_HOUSE);
+        batch.setStartedOn(LocalDate.of(2026, 3, 2));
+        batch.setInitialCount(150);
+        batch.setPlannedTransplantOn(LocalDate.of(2026, 9, 20));
+        batch.setSource("user_entry");
+        return nurseryBatchRepository.save(batch);
     }
 
     private NurseryEvent stageChange(NurseryBatch batch, LocalDate date, NurseryStage stage) {
-        return nurseryEventRepository.save(new NurseryEvent(null, batch, NurseryEventType.STAGE_CHANGE, date, stage,
-                null, null, null, null, "user_entry", null));
+        NurseryEvent event = event(batch, NurseryEventType.STAGE_CHANGE, date);
+        event.setStage(stage);
+        return nurseryEventRepository.save(event);
     }
 
     private NurseryEvent loss(NurseryBatch batch, LocalDate date, int quantity) {
-        return nurseryEventRepository.save(new NurseryEvent(null, batch, NurseryEventType.LOSS, date, null, quantity,
-                "Graft failure", null, null, "user_entry", null));
+        NurseryEvent event = event(batch, NurseryEventType.LOSS, date);
+        event.setQuantity(quantity);
+        event.setReason("Graft failure");
+        return nurseryEventRepository.save(event);
+    }
+
+    private static NurseryEvent event(NurseryBatch batch, NurseryEventType type, LocalDate date) {
+        NurseryEvent event = new NurseryEvent();
+        event.setBatch(batch);
+        event.setEventType(type);
+        event.setEventDate(date);
+        event.setSource("user_entry");
+        return event;
     }
 
     private static List<Long> ids(List<NurseryEvent> events) {
@@ -60,7 +80,7 @@ public class NurseryEventRepositoryTest {
         assertEquals(List.of(p1Early.getId(), p2SameDay.getId(), p1Late.getId()), ids(events));
     }
 
-    private List<Long> find(Long batchId, Integer farmId, NurseryEventType eventType, LocalDate from, LocalDate to) {
+    private List<Long> find(Long batchId, Long farmId, NurseryEventType eventType, LocalDate from, LocalDate to) {
         return ids(nurseryEventRepository.findByOptionalFilters(batchId, farmId, eventType, from, to));
     }
 
@@ -68,7 +88,7 @@ public class NurseryEventRepositoryTest {
     void findByOptionalFilters_shouldReturnEveryEvent_byDateThenIdentifier_withoutFilter() {
         // Arrange: saved out of date order, two on the same day
         NurseryBatch p1 = batch(null, "P1");
-        NurseryBatch p2 = batch(1, "P2");
+        NurseryBatch p2 = batch(1L, "P2");
         NurseryEvent late = loss(p1, LocalDate.of(2026, 9, 15), 12);
         NurseryEvent early = stageChange(p2, LocalDate.of(2026, 3, 2), NurseryStage.HARDENING);
         NurseryEvent sameDay = stageChange(p1, LocalDate.of(2026, 3, 2), NurseryStage.GERMINATION);
@@ -80,15 +100,15 @@ public class NurseryEventRepositoryTest {
     void findByOptionalFilters_shouldFilterOnTheBatchAndOnTheFarmOfTheBatch() {
         // Arrange
         NurseryBatch p1 = batch(null, "P1");
-        NurseryBatch p2 = batch(1, "P2");
+        NurseryBatch p2 = batch(1L, "P2");
         NurseryEvent ofP1 = stageChange(p1, LocalDate.of(2026, 3, 2), NurseryStage.GERMINATION);
         NurseryEvent ofP2 = stageChange(p2, LocalDate.of(2026, 3, 2), NurseryStage.HARDENING);
         // Act & Assert: an unknown batch or farm matches nothing
         assertEquals(List.of(ofP1.getId()), find(p1.getId(), null, null, null, null));
-        assertEquals(List.of(ofP2.getId()), find(null, 1, null, null, null));
-        assertEquals(List.of(), find(p1.getId(), 1, null, null, null));
+        assertEquals(List.of(ofP2.getId()), find(null, 1L, null, null, null));
+        assertEquals(List.of(), find(p1.getId(), 1L, null, null, null));
         assertEquals(List.of(), find(p2.getId() + 1000, null, null, null, null));
-        assertEquals(List.of(), find(null, 3, null, null, null));
+        assertEquals(List.of(), find(null, 3L, null, null, null));
     }
 
     @Test

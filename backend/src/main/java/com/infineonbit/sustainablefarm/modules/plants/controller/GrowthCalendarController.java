@@ -50,7 +50,7 @@ public class GrowthCalendarController {
          @ApiResponse(responseCode = "200", description = "Matching entries, possibly an empty list")
    })
    public ResponseEntity<List<GrowthCalendarResponse>> getAllGrowthCalendarEntries(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode) {
       List<GrowthCalendarResponse> growthCalendarResponses = growthCalendarService.getAllGrowthCalendarEntries(farmId, blockCode);
       return ResponseEntity.status(HttpStatus.OK).body(growthCalendarResponses);

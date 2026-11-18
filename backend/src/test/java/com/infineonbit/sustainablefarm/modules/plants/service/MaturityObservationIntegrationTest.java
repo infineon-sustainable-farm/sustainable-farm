@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
+import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.MaturityObservationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.VarietyReferenceRequest;
@@ -46,7 +48,21 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @ActiveProfiles("test")
 class MaturityObservationIntegrationTest {
 
-    private static final int FARM = 8;
+    /**
+     * Farm of this test class, created once: block codes are unique across the farms of the
+     * referential, and a requested farm must exist.
+     */
+    private static Long FARM;
+
+    @Autowired
+    private FarmService farmService;
+
+    @BeforeEach
+    void createTheFarmOfTheTestOnce() {
+        if (FARM == null) {
+            FARM = farmService.createFarm(new FarmCreateRequest("MaturityObservation test farm", null, null, null, null, null)).id();
+        }
+    }
     private static final String KEITT_SEASON_SOURCE = "varietal_guide_west_africa";
 
     @Autowired

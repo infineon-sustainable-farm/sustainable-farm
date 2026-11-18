@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryLossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.StageChangeRequest;
@@ -37,6 +38,7 @@ public class NurseryEventService {
     private final NurseryEventRepository nurseryEventRepository;
     private final PopulationEventRepository populationEventRepository;
     private final PlantingService plantingService;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * A code as the enums spell it: trimmed and upper-cased, so
@@ -257,7 +259,8 @@ public class NurseryEventService {
         int quantity = request.quantity().intValue();
         requirePlants(batch, summarize(batch), quantity);
 
-        String blockCode = normalizeCode(request.blockCode());
+        BlockDto block = plantsBlocks.resolve(batch.getFarmId(), normalizeCode(request.blockCode()));
+        String blockCode = block.code();
         // Never caught: a refusal of the planting service has already marked the
         // transaction for rollback, and a caught exception would only turn into
         // a failed commit (UnexpectedRollbackException) instead of its own answer.
@@ -266,7 +269,7 @@ public class NurseryEventService {
 
         NurseryEvent transplant = newEvent(batch, NurseryEventType.TRANSPLANT, request.transplantedOn(), now);
         transplant.setQuantity(quantity);
-        transplant.setBlockCode(blockCode);
+        transplant.assignBlock(block.id(), PlantsBlocks.label(block));
         transplant.setPopulationEvent(populationEventRepository.getReferenceById(planting.id()));
         return toResponse(nurseryEventRepository.save(transplant));
     }
@@ -288,7 +291,7 @@ public class NurseryEventService {
      * @param to        last event date, included, or {@code null}
      * @return the matching events, ordered by date then identifier
      */
-    public List<NurseryEventResponse> getAllEvents(Long batchId, Integer farmId, NurseryEventType eventType,
+    public List<NurseryEventResponse> getAllEvents(Long batchId, Long farmId, NurseryEventType eventType,
                                                    LocalDate from, LocalDate to) {
         return nurseryEventRepository.findByOptionalFilters(batchId, farmId, eventType, from, to).stream()
                 .map(NurseryEventService::toResponse)

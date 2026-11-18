@@ -86,7 +86,7 @@ public class HarvestController {
          @ApiResponse(responseCode = "400", description = "A date is not in the yyyy-MM-dd format")
    })
    public ResponseEntity<List<HarvestResponse>> getAllHarvests(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Parameter(description = "Lot number, for example \"LOT-2026-A-002\"; \" lot-2026-a-002 \" finds it too")
          @RequestParam(name = "lotNumber", required = false) String lotNumber,

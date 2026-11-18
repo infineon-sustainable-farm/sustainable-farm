@@ -76,9 +76,8 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
      *
      * @param fertilizerId fertilizer identifier, or {@code null} for every fertilizer
      * @param movementType movement type, or {@code null} for every type
-     * @param farmId       farm identifier, or {@code null} to ignore the farm
-     * @param blockCode    raw block value as stored (for example {@code "B"}),
-     *                     or {@code null} to ignore the block
+     * @param allBlocks   {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds  ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @param from         first movement date, included, or {@code null} for no lower bound
      * @param to           last movement date, included, or {@code null} for no upper bound
      * @return the matching movements, ordered by date then identifier
@@ -87,16 +86,15 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
             SELECT m FROM FertilizerMovement m JOIN FETCH m.product p
             WHERE (CAST(:fertilizerId AS Long) IS NULL OR p.id = :fertilizerId)
               AND (CAST(:movementType AS String) IS NULL OR m.movementType = :movementType)
-              AND (CAST(:farmId AS Integer) IS NULL OR m.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR m.blockCode = :blockCode)
+              AND (:allBlocks = true OR m.blockId IN :blockIds)
               AND (CAST(:from AS LocalDate) IS NULL OR m.movementDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR m.movementDate <= :to)
             ORDER BY m.movementDate ASC, m.id ASC
             """)
     List<FertilizerMovement> findByOptionalFilters(@Param("fertilizerId") Long fertilizerId,
                                                    @Param("movementType") FertilizerMovementType movementType,
-                                                   @Param("farmId") Integer farmId,
-                                                   @Param("blockCode") String blockCode,
+                                                   @Param("allBlocks") boolean allBlocks,
+                                                   @Param("blockIds") Collection<Long> blockIds,
                                                    @Param("from") LocalDate from,
                                                    @Param("to") LocalDate to);
 

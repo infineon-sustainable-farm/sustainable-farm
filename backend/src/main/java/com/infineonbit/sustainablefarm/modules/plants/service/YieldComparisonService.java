@@ -79,8 +79,8 @@ public class YieldComparisonService {
         this.clock = clock;
     }
 
-    /** A block, as the (farm, block) pair: a {@code null} farm is a farm of its own. */
-    private record BlockKey(Integer farmId, String blockCode) {
+    /** A block, by its farm and code: a code designates one {@code farm.block} row. */
+    private record BlockKey(Long farmId, String blockCode) {
     }
 
     /**
@@ -144,7 +144,7 @@ public class YieldComparisonService {
      * @param months    number of months, from 1 to 24, or {@code null} for 12
      * @return the comparison
      */
-    public YieldComparisonResponse getYieldComparison(Integer farmId, String blockCode, YearMonth from,
+    public YieldComparisonResponse getYieldComparison(Long farmId, String blockCode, YearMonth from,
                                                       Integer months) {
         YearMonth firstMonth = from == null ? YearMonth.of(LocalDate.now(clock).getYear(), 1) : from;
         List<YearMonth> window = YieldForecastCalculator.window(firstMonth, months == null ? DEFAULT_MONTHS : months);

@@ -29,12 +29,14 @@ public class ZoneBlockMappingService {
     private final FarmZoneRepository zoneRepository;
     private final BlockRepository blockRepository;
     private final FarmRepository farmRepository;
+    private final BlockReferences blockReferences;
 
     public ZoneBlockMappingService(FarmZoneRepository zoneRepository, BlockRepository blockRepository,
-                                   FarmRepository farmRepository) {
+                                   FarmRepository farmRepository, BlockReferences blockReferences) {
         this.zoneRepository = zoneRepository;
         this.blockRepository = blockRepository;
         this.farmRepository = farmRepository;
+        this.blockReferences = blockReferences;
     }
 
     public List<ZoneBlockMappingResponse> findAll(Long zoneId, String blockCode, Long farmId) {
@@ -89,10 +91,17 @@ public class ZoneBlockMappingService {
         return ZoneBlockMappingResponse.from(FarmMapper.toDto(zone));
     }
 
-    /** Unlinks the zone: its block loses its code, for every zone of the block. */
+    /**
+     * Unlinks the zone: its block loses its code, for every zone of the block. Refused (409) while
+     * rows of Plants or Product Transformation reference the block, since they designate it by its code.
+     */
     @Transactional
     public void delete(Long mappingId) {
         Block block = getLinkedZone(mappingId).getBlock();
+        if (blockReferences.isReferenced(block.getId())) {
+            throw new ConflictException("Block " + block.getCode()
+                    + " is used by Plants or Product Transformation: it keeps its code");
+        }
         block.setCode(null);
         blockRepository.save(block);
     }

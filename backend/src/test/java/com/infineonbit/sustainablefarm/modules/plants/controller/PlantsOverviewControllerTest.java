@@ -49,7 +49,7 @@ public class PlantsOverviewControllerTest {
     @Test
     void getOverview_shouldReturnTheFiguresOfTheDay() throws Exception {
         // Arrange
-        when(plantsOverviewService.getOverview(7, "A"))
+        when(plantsOverviewService.getOverview(7L, "A"))
                 .thenReturn(new PlantsOverviewResponse(LocalDate.of(2027, 6, 15), 170, 100, 40, 3, 1, List.of(
                         new MaturityShare(MaturityStatus.IMMATURE, 100, 58.8),
                         new MaturityShare(MaturityStatus.RIPE, 0, 0.0),

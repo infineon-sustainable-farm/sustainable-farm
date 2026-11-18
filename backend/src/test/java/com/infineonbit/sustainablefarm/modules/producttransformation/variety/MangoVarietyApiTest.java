@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.variety;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -41,6 +42,9 @@ class MangoVarietyApiTest {
 
     @Autowired
     private BatchRepository batchRepository;
+
+    @Autowired
+    private ProductTransformationBlocks blocks;
 
     @Autowired
     private VarietyReferenceRepository varietyReferenceRepository;
@@ -99,8 +103,7 @@ class MangoVarietyApiTest {
         batch.setVarietyKey("ALPHONSO");
         batch.setHarvestQuantityKg(new BigDecimal("10.00"));
         batch.setCurrentStatus(Batch.BatchStatus.CREATED);
-        batch.setFarmId("F-VAR");
-        batch.setBlockId("B-VAR");
+        batch.setFarmBlockId(blocks.resolve("F-VAR", "B-VAR"));
 
         assertThatThrownBy(() -> batchRepository.saveAndFlush(batch))
                 .isInstanceOf(DataIntegrityViolationException.class);

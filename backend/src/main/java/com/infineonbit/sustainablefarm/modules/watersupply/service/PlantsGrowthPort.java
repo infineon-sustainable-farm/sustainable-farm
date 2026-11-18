@@ -13,6 +13,6 @@ public interface PlantsGrowthPort {
     /** One growth calendar entry of a block, as Plants computes it from the planting date. */
     record BlockGrowth(String blockCode, String growthPhase, Integer ageYears) {}
 
-    /** Entries Plants holds for the block (several farms or plantings may share a code); empty if unknown. */
+    /** Entries Plants holds for the block (a block code designates one block of the farm referential); empty if unknown. */
     List<BlockGrowth> growthForBlock(String blockCode);
 }

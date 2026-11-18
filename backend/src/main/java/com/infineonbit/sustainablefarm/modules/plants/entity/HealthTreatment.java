@@ -2,16 +2,21 @@ package com.infineonbit.sustainablefarm.modules.plants.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Transient;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -42,23 +47,25 @@ import java.time.LocalDate;
  * snake_case and a singular table name.
  */
 @Entity
-@Table(name = "health_treatment")
+@EntityListeners(BlockLabelListener.class)
+@Table(name = "health_treatment", indexes = @Index(name = "idx_health_treatment_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class HealthTreatment {
+public class HealthTreatment implements BlockRow {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "farm_id")
-    private Integer farmId;
+    /** Treated block, a {@code farm.block} row (foreign key {@code fk_health_treatment_block}). */
+    @Column(name = "block_id", nullable = false)
+    private Long blockId;
 
-    /** Block code as stored, trimmed and upper-cased, for example {@code "C"}. */
-    @Column(name = "block_code", nullable = false)
-    private String blockCode;
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink block = new BlockLink();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "target_issue_id", nullable = false)
@@ -105,4 +112,41 @@ public class HealthTreatment {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** Farm of the block, read from the farm referential; {@code null} without a block. */
+    public Long getFarmId() {
+        return block.label(blockId).farmId();
+    }
+
+    /** Sets the farm by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setFarmId(Long farmId) {
+        block.setFarmId(farmId);
+    }
+
+    /** Code of the block, for example {@code "C"}, read from the farm referential. */
+    public String getBlockCode() {
+        return block.label(blockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setBlockCode(String blockCode) {
+        block.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignBlock(Long blockId, BlockLabel label) {
+        this.blockId = blockId;
+        block.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        block.useSource(source);
+    }
+
+    @PrePersist
+    @PreUpdate
+    void requireResolvedBlock() {
+        block.requireResolved("health treatment");
+    }
 }

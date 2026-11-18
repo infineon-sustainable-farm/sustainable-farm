@@ -30,6 +30,7 @@ public class HarvestService {
     private final VarietyRepository varietyRepository;
     private final PopulationEventRepository populationEventRepository;
     private final HarvestRecordRepository harvestRecordRepository;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * Block code as stored: trimmed and upper-cased, so {@code " b "} becomes
@@ -108,9 +109,10 @@ public class HarvestService {
      * Records a harvest of a variety planted on a block, in a single transaction.
      *
      * <ol>
-     *     <li>Finds the variety row of the (farm, block, name) triple, as a
-     *         planting does: a NULL farm matches only the rows without a farm,
-     *         and the name ignores case but not accents.</li>
+     *     <li>Finds the variety row of the (block, name) pair, as a planting
+     *         does: the block of the code, which must belong to the requested
+     *         farm when one is given (no block is created), and the name, which
+     *         ignores case but not accents.</li>
      *     <li>Refuses a harvest of a variety with no recorded planting.</li>
      *     <li>Refuses a harvest dated before the planting of that variety.</li>
      *     <li>Stores the harvest with the next lot number of its block for the
@@ -133,13 +135,13 @@ public class HarvestService {
      * so the {@code lastUpdated} value can be tested.
      */
     HarvestResponse recordHarvest(HarvestRequest request, Instant now) {
-        Integer farmId = request.farmId();
         String blockCode = normalizeBlockCode(request.blockCode());
         String varietyName = request.varietyName().trim();
 
-        Variety variety = varietyRepository.findByFarmBlockAndName(farmId, blockCode, varietyName)
-                .stream()
-                .findFirst()
+        // A harvest designates an existing variety row: an unknown block, or a block of
+        // another farm than the one requested, has no planting, and no block is created.
+        Variety variety = plantsBlocks.find(request.farmId(), blockCode)
+                .flatMap(block -> varietyRepository.findByBlockAndName(block.id(), varietyName).stream().findFirst())
                 .orElse(null);
         if (variety == null) {
             throw noPlanting(varietyName, blockCode);
@@ -201,17 +203,18 @@ public class HarvestService {
      * {@code to}, returns an empty list and is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
      * @param lotNumber lot number (for example {@code "LOT-2026-A-002"}), or
      *                  {@code null} for every harvest
      * @param from      first harvest date, included, or {@code null}
      * @param to        last harvest date, included, or {@code null}
      * @return the matching harvests, ordered by date then identifier
      */
-    public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, String lotNumber,
+    public List<HarvestResponse> getAllHarvests(Long farmId, String blockCode, String lotNumber,
                                                 LocalDate from, LocalDate to) {
-        return harvestRecordRepository.findByOptionalFilters(farmId, normalizeFilter(blockCode),
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        return harvestRecordRepository.findByOptionalFilters(blocks.all(), blocks.ids(),
                         normalizeLotNumberFilter(lotNumber), from, to)
                 .stream()
                 .map(HarvestService::toResponse)
@@ -219,17 +222,17 @@ public class HarvestService {
     }
 
     /**
-     * Same as {@link #getAllHarvests(Integer, String, String, LocalDate, LocalDate)}
+     * Same as {@link #getAllHarvests(Long, String, String, LocalDate, LocalDate)}
      * without the lot number: the harvests of a farm, block and period, as the
      * harvest status and the yield comparison read them.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored, or {@code null} for every block
+     * @param blockCode block code, or {@code null} or blank for every block
      * @param from      first harvest date, included, or {@code null}
      * @param to        last harvest date, included, or {@code null}
      * @return the matching harvests, ordered by date then identifier
      */
-    public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
+    public List<HarvestResponse> getAllHarvests(Long farmId, String blockCode, LocalDate from, LocalDate to) {
         return getAllHarvests(farmId, blockCode, null, from, to);
     }
 

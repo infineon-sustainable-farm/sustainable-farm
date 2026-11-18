@@ -16,7 +16,7 @@ import java.time.LocalDate;
  */
 public record HealthTreatmentResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         String targetIssueCode,
         String targetIssueName,

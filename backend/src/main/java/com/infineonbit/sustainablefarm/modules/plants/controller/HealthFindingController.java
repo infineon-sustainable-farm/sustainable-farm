@@ -68,7 +68,7 @@ public class HealthFindingController {
          @ApiResponse(responseCode = "400", description = "A date is not in the yyyy-MM-dd format, or an unknown status")
    })
    public ResponseEntity<List<HealthFindingResponse>> getAllFindings(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"C\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Parameter(description = "UNTREATED, IN_PROGRESS, TREATED or CLOSED_WITHOUT_TREATMENT") @RequestParam(name = "status", required = false) HealthFindingStatus status,
          @Parameter(description = "First inspection date, included, as yyyy-MM-dd") @RequestParam(name = "from", required = false)

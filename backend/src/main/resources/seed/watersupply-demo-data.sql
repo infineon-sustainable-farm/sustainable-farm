@@ -14,38 +14,10 @@ VALUES (
 )
 ON CONFLICT (email) DO NOTHING;
 
--- Site referential of the farm module (Long ids): one farm, block A (the Plants block of the
--- Keitt variety seeded by PlantsDataSeeder) and one irrigated zone. Explicit ids keep the rows
--- below relationally valid; the identity sequences are moved past them at the end of this block.
-INSERT INTO farm (id, created_at, updated_at, name, description, address, latitude, longitude, area_hectares)
-VALUES (
-    1,
-    '2026-01-01T08:05:00Z',
-    '2026-01-01T08:05:00Z',
-    'Ferme Demo Nord',
-    'Ferme pilote pour le module water supply.',
-    'Route agricole 1',
-    48.8566,
-    2.3522,
-    24.5
-)
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO block (id, created_at, updated_at, farm_id, code, name, area_hectares, crop_type, soil_type, coordinates)
-VALUES (
-    1,
-    '2026-01-01T08:10:00Z',
-    '2026-01-01T08:10:00Z',
-    1,
-    'A',
-    'Champ Maraicher A',
-    6.8,
-    'legumes',
-    'limon',
-    '48.8566,2.3522'
-)
-ON CONFLICT (id) DO NOTHING;
-
+-- Farm 1 and its blocks A, B and C come from the farm module seed (seed/farm-demo-data.sql, run
+-- before this script by FarmDemoDataSeeder): block A is the Plants block of the Keitt variety
+-- seeded by PlantsDataSeeder. Explicit ids keep the rows below relationally valid; the identity
+-- sequence of zone is moved past them at the end of this block.
 INSERT INTO zone (id, created_at, updated_at, block_id, name, area_hectares, irrigation_method)
 VALUES (
     1,
@@ -73,8 +45,6 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
-SELECT setval(pg_get_serial_sequence('farm', 'id'), GREATEST((SELECT MAX(id) FROM farm), 1));
-SELECT setval(pg_get_serial_sequence('block', 'id'), GREATEST((SELECT MAX(id) FROM block), 1));
 SELECT setval(pg_get_serial_sequence('zone', 'id'), GREATEST((SELECT MAX(id) FROM zone), 1));
 SELECT setval(pg_get_serial_sequence('water_sources', 'id'), GREATEST((SELECT MAX(id) FROM water_sources), 1));
 

@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
+import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.GrowthPhaseYieldShareRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
@@ -52,7 +54,21 @@ class AgronomicReferenceIntegrationTest {
     /** Each race runs this many times, since H2 does not reproduce it on every trial. */
     private static final int TRIALS = 10;
 
-    private static final int FARM = 6;
+    /**
+     * Farm of this test class, created once: block codes are unique across the farms of the
+     * referential, and a requested farm must exist.
+     */
+    private static Long FARM;
+
+    @Autowired
+    private FarmService farmService;
+
+    @BeforeEach
+    void createTheFarmOfTheTestOnce() {
+        if (FARM == null) {
+            FARM = farmService.createFarm(new FarmCreateRequest("AgronomicReference test farm", null, null, null, null, null)).id();
+        }
+    }
     private static final String SENSATION = "Sensation";
     private static final String RACE_MANGO = "Race mango";
     private static final LocalDate APRIL_1_2026 = LocalDate.of(2026, 4, 1);

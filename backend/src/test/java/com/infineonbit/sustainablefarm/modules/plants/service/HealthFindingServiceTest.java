@@ -15,10 +15,13 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
 import com.infineonbit.sustainablefarm.modules.plants.exception.HealthFindingNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthTreatmentRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestRows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -50,7 +53,7 @@ public class HealthFindingServiceTest {
     private static final HealthIssueReference OTHER = new HealthIssueReference(8L, "OTHER", "Other",
             HealthIssueKind.OTHER, null, null, "by_definition", NOW);
 
-    private static final HealthInspection BLOCK_C = new HealthInspection(1L, null, "C", SEPTEMBER_1, 48, "Awa",
+    private static final HealthInspection BLOCK_C = TestRows.inspection(1L, null, "C", SEPTEMBER_1, 48, "Awa",
             InspectionMethod.VISUAL, "user_entry", NOW);
 
     @Mock
@@ -58,6 +61,9 @@ public class HealthFindingServiceTest {
 
     @Mock
     private HealthTreatmentRepository healthTreatmentRepository;
+
+    @Spy
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).asPlantsBlocks();
 
     @InjectMocks
     private HealthFindingService healthFindingService;
@@ -67,7 +73,7 @@ public class HealthFindingServiceTest {
     }
 
     private static HealthTreatment treatment(HealthFinding finding, LocalDate treatedOn, int interval) {
-        return new HealthTreatment(null, null, "C", finding.getIssue(), null, finding, treatedOn, "Product",
+        return TestRows.treatment(null, null, "C", finding.getIssue(), null, finding, treatedOn, "Product",
                 "ingredient", BigDecimal.ONE, TreatmentUnit.KG, interval, "Awa", null, "user_entry", NOW);
     }
 
@@ -79,7 +85,7 @@ public class HealthFindingServiceTest {
         HealthFinding anthracnose = finding(10L, ANTHRACNOSE, null, null);
         HealthFinding mealybug = finding(11L, MEALYBUG, null, LocalDate.of(2026, 9, 10));
         HealthFinding leafCurl = finding(12L, OTHER, "Leaf curl", null);
-        when(healthFindingRepository.findByOptionalFilters(null, "C", from, to))
+        when(healthFindingRepository.findByOptionalFilters(false, TestBlocks.idsOf("C"), from, to))
                 .thenReturn(List.of(anthracnose, mealybug, leafCurl));
         when(healthTreatmentRepository.findByFindingIds(List.of(10L, 11L, 12L))).thenReturn(List.of(
                 treatment(anthracnose, LocalDate.of(2026, 9, 4), 14),
@@ -119,9 +125,9 @@ public class HealthFindingServiceTest {
     @Test
     void getAllFindings_shouldNotQueryTreatments_whenThereIsNoFinding() {
         // Arrange
-        when(healthFindingRepository.findByOptionalFilters(1, null, null, null)).thenReturn(List.of());
+        when(healthFindingRepository.findByOptionalFilters(false, TestBlocks.idsOf("C"), null, null)).thenReturn(List.of());
         // Act
-        List<HealthFindingResponse> findings = healthFindingService.getAllFindings(1, "  ", null, null, null);
+        List<HealthFindingResponse> findings = healthFindingService.getAllFindings(1L, "  ", null, null, null);
         // Assert: a blank block is no filter, and no treatment query is sent
         assertTrue(findings.isEmpty());
         verify(healthTreatmentRepository, never()).findByFindingIds(any());

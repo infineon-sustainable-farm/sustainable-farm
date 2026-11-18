@@ -24,6 +24,12 @@ public interface FarmDirectory {
     /** Primary key column of {@link #FARM_TABLE}, {@link #BLOCK_TABLE} and {@link #ZONE_TABLE}. */
     String KEY_COLUMN = "id";
 
+    /**
+     * Order of the {@code dev} seeder of the demo farm and blocks. A seeder of another module that
+     * references them runs after it (a higher {@code @Order} value, or none).
+     */
+    int DEMO_SEED_ORDER = -100;
+
     Optional<FarmDto> findFarm(Long farmId);
 
     boolean farmExists(Long farmId);
@@ -34,6 +40,12 @@ public interface FarmDirectory {
 
     /** Block carrying a code; the code is normalized ({@link #normalizeBlockCode}) before the lookup. */
     Optional<BlockDto> findBlockByCode(String code);
+
+    /** Blocks of several ids in one lookup; unknown ids are absent from the result. */
+    List<BlockDto> listBlocks(Collection<Long> blockIds);
+
+    /** Farm of a name, ignoring case and surrounding spaces; the lowest id when several farms share it. */
+    Optional<FarmDto> findFarmByName(String name);
 
     /** Blocks of a farm, empty for an unknown farm. */
     List<BlockDto> listBlocksOfFarm(Long farmId);

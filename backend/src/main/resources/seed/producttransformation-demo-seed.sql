@@ -23,6 +23,14 @@
 --   script en profil dev (AgronomicReferenceLoader). L'API PT renvoie AMELIE
 --   sous sa valeur historique AMÉLIE.
 --
+--   Les blocs d'origine (batch.block_id, harvest_event.block_id,
+--   raw_intake.source_block_id) sont des cles etrangeres vers farm.block : les
+--   blocs A, B et C de la ferme 1 « Ferme Demo Nord », charges avant ce script
+--   par FarmDemoDataSeeder (seed/farm-demo-data.sql). Le bloc A est aussi celui
+--   de la variete Keitt de plants et du champ de la zone water supply. L'API PT
+--   les montre sous leur code (blockId, sourceBlock) et le nom de leur ferme
+--   (farmId, sourceFarm).
+--
 --   Ce script n'ajoute volontairement aucune colonne, ne cree aucune table,
 --   ne modifie aucune table existante et ne supprime aucune donnee.
 --
@@ -78,29 +86,29 @@ ON CONFLICT DO NOTHING;
 -- 3) Lots (3 actifs : WASHING / DRYING / PACKAGING, 1 termine, 1 expedie)
 --    Les lots portent le prefixe LOT-DEMO pour etre identifiables.
 -- ---------------------------------------------------------------------------
-INSERT INTO batch (batch_id, block_id, created_at, current_status, farm_id,
+INSERT INTO batch (batch_id, block_id, created_at, current_status,
                    harvest_date, harvest_quantity_kg, variety_key, updated_at)
 VALUES
-    ('LOT-DEMO-001', 'BLOC-A', now(), 'WASHING',   'FERME-DEMO', CURRENT_DATE - 1, 520.00, 'KEITT',   now()),
-    ('LOT-DEMO-002', 'BLOC-A', now(), 'DRYING',    'FERME-DEMO', CURRENT_DATE - 2, 480.50, 'KEITT',   now()),
-    ('LOT-DEMO-003', 'BLOC-B', now(), 'PACKAGING', 'FERME-DEMO', CURRENT_DATE - 3, 610.25, 'AMELIE',  now()),
-    ('LOT-DEMO-004', 'BLOC-B', now(), 'COMPLETED', 'FERME-DEMO', CURRENT_DATE - 5, 395.00, 'KENT',    now()),
-    ('LOT-DEMO-005', 'BLOC-C', now(), 'SHIPPED',   'FERME-DEMO', CURRENT_DATE - 6, 275.75, 'TOMMY',   now())
+    ('LOT-DEMO-001', (SELECT id FROM block WHERE code = 'A'), now(), 'WASHING',   CURRENT_DATE - 1, 520.00, 'KEITT',   now()),
+    ('LOT-DEMO-002', (SELECT id FROM block WHERE code = 'A'), now(), 'DRYING',    CURRENT_DATE - 2, 480.50, 'KEITT',   now()),
+    ('LOT-DEMO-003', (SELECT id FROM block WHERE code = 'B'), now(), 'PACKAGING', CURRENT_DATE - 3, 610.25, 'AMELIE',  now()),
+    ('LOT-DEMO-004', (SELECT id FROM block WHERE code = 'B'), now(), 'COMPLETED', CURRENT_DATE - 5, 395.00, 'KENT',    now()),
+    ('LOT-DEMO-005', (SELECT id FROM block WHERE code = 'C'), now(), 'SHIPPED',   CURRENT_DATE - 6, 275.75, 'TOMMY',   now())
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 4) Recoltes (1 evenement par lot, conserve le numero de lot d'origine)
 --    plants_harvest_id est volontairement omis : la colonne peut ne pas exister.
 -- ---------------------------------------------------------------------------
-INSERT INTO harvest_event (harvest_id, batch_id, block_id, created_at, farm_id,
+INSERT INTO harvest_event (harvest_id, batch_id, block_id, created_at,
                            harvest_date, harvest_quantity_kg, harvest_time,
                            variety_key, quality_grade, updated_at)
 VALUES
-    ('HE-DEMO-001', 'LOT-DEMO-001', 'BLOC-A', now(), 'FERME-DEMO', CURRENT_DATE - 1, 520.00, time '07:30', 'KEITT',  'A', now()),
-    ('HE-DEMO-002', 'LOT-DEMO-002', 'BLOC-A', now(), 'FERME-DEMO', CURRENT_DATE - 2, 480.50, time '08:10', 'KEITT',  'A', now()),
-    ('HE-DEMO-003', 'LOT-DEMO-003', 'BLOC-B', now(), 'FERME-DEMO', CURRENT_DATE - 3, 610.25, time '07:45', 'AMELIE', 'B', now()),
-    ('HE-DEMO-004', 'LOT-DEMO-004', 'BLOC-B', now(), 'FERME-DEMO', CURRENT_DATE - 5, 395.00, time '09:00', 'KENT',   'A', now()),
-    ('HE-DEMO-005', 'LOT-DEMO-005', 'BLOC-C', now(), 'FERME-DEMO', CURRENT_DATE - 6, 275.75, time '08:25', 'TOMMY',  'A', now())
+    ('HE-DEMO-001', 'LOT-DEMO-001', (SELECT id FROM block WHERE code = 'A'), now(), CURRENT_DATE - 1, 520.00, time '07:30', 'KEITT',  'A', now()),
+    ('HE-DEMO-002', 'LOT-DEMO-002', (SELECT id FROM block WHERE code = 'A'), now(), CURRENT_DATE - 2, 480.50, time '08:10', 'KEITT',  'A', now()),
+    ('HE-DEMO-003', 'LOT-DEMO-003', (SELECT id FROM block WHERE code = 'B'), now(), CURRENT_DATE - 3, 610.25, time '07:45', 'AMELIE', 'B', now()),
+    ('HE-DEMO-004', 'LOT-DEMO-004', (SELECT id FROM block WHERE code = 'B'), now(), CURRENT_DATE - 5, 395.00, time '09:00', 'KENT',   'A', now()),
+    ('HE-DEMO-005', 'LOT-DEMO-005', (SELECT id FROM block WHERE code = 'C'), now(), CURRENT_DATE - 6, 275.75, time '08:25', 'TOMMY',  'A', now())
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -153,13 +161,13 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 INSERT INTO raw_intake (intake_id, created_at, intake_date, intake_operator,
                         received_grade, received_quantity_kg, received_variety_key,
-                        source_block, source_farm, updated_at, batch_id)
+                        source_block_id, updated_at, batch_id)
 VALUES
-    ('RI-DEMO-001', now(), CURRENT_DATE - 1, 'Moussa DEMO (Lavage)', 'A', 520.00, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-001'),
-    ('RI-DEMO-002', now(), CURRENT_DATE - 2, 'Moussa DEMO (Lavage)', 'A', 480.50, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-002'),
-    ('RI-DEMO-003', now(), CURRENT_DATE - 3, 'Moussa DEMO (Lavage)', 'B', 610.25, 'AMELIE',  'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-003'),
-    ('RI-DEMO-004', now(), CURRENT_DATE - 5, 'Moussa DEMO (Lavage)', 'A', 395.00, 'KENT',    'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-004'),
-    ('RI-DEMO-005', now(), CURRENT_DATE - 6, 'Moussa DEMO (Lavage)', 'A', 275.75, 'TOMMY',   'BLOC-C', 'FERME-DEMO', now(), 'LOT-DEMO-005')
+    ('RI-DEMO-001', now(), CURRENT_DATE - 1, 'Moussa DEMO (Lavage)', 'A', 520.00, 'KEITT',   (SELECT id FROM block WHERE code = 'A'), now(), 'LOT-DEMO-001'),
+    ('RI-DEMO-002', now(), CURRENT_DATE - 2, 'Moussa DEMO (Lavage)', 'A', 480.50, 'KEITT',   (SELECT id FROM block WHERE code = 'A'), now(), 'LOT-DEMO-002'),
+    ('RI-DEMO-003', now(), CURRENT_DATE - 3, 'Moussa DEMO (Lavage)', 'B', 610.25, 'AMELIE',  (SELECT id FROM block WHERE code = 'B'), now(), 'LOT-DEMO-003'),
+    ('RI-DEMO-004', now(), CURRENT_DATE - 5, 'Moussa DEMO (Lavage)', 'A', 395.00, 'KENT',    (SELECT id FROM block WHERE code = 'B'), now(), 'LOT-DEMO-004'),
+    ('RI-DEMO-005', now(), CURRENT_DATE - 6, 'Moussa DEMO (Lavage)', 'A', 275.75, 'TOMMY',   (SELECT id FROM block WHERE code = 'C'), now(), 'LOT-DEMO-005')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------

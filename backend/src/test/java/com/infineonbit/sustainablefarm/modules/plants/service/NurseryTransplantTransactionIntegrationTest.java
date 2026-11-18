@@ -36,6 +36,9 @@ class NurseryTransplantTransactionIntegrationTest {
     private static final LocalDate MARCH_2 = LocalDate.of(2026, 3, 2);
 
     @Autowired
+    private PlantsBlocks plantsBlocks;
+
+    @Autowired
     private NurseryBatchService nurseryBatchService;
 
     @Autowired
@@ -57,6 +60,11 @@ class NurseryTransplantTransactionIntegrationTest {
     private GrowthCalendarRepository growthCalendarRepository;
 
     /** A batch of 150 Keitt without farm, sown on March 2. */
+    /** Id of the farm.block row of a code, created by the transplant. */
+    private Long blockIdOf(String blockCode) {
+        return plantsBlocks.find(null, blockCode).orElseThrow().id();
+    }
+
     private Long startBatch(String batchCode) {
         return nurseryBatchService.createBatch(new NurseryBatchRequest(null, batchCode, "Keitt", "IN_HOUSE", null,
                 null, MARCH_2, 150.0, "GERMINATION", LocalDate.of(2026, 9, 20), null)).id();
@@ -71,14 +79,14 @@ class NurseryTransplantTransactionIntegrationTest {
         NurseryEventResponse transplant = nurseryEventService.recordTransplant(batchId,
                 new TransplantRequest(transplantedOn, 100.0, "n1"));
         // Assert: the variety row of the block, its PLANTING and the calendar date of the block
-        List<Variety> varieties = varietyRepository.findByFarmBlockAndName(null, "N1", "Keitt");
+        List<Variety> varieties = varietyRepository.findByBlockAndName(blockIdOf("N1"), "Keitt");
         assertEquals(1, varieties.size());
         PopulationEvent planting = populationEventRepository.findById(transplant.populationEventId()).orElseThrow();
         assertEquals(PopulationEventType.PLANTING, planting.getEventType());
         assertEquals(varieties.get(0).getId(), planting.getVariety().getId());
         assertEquals(transplantedOn, planting.getEventDate());
         assertEquals(100, planting.getTreeCount());
-        assertEquals(transplantedOn, growthCalendarRepository.findByFarmAndBlock(null, "N1").get(0).getPlantingDate());
+        assertEquals(transplantedOn, growthCalendarRepository.findByBlock(blockIdOf("N1")).get(0).getPlantingDate());
         // Assert: the batch, computed from its events
         NurseryBatchResponse batch = nurseryBatchService.getBatchById(batchId);
         assertEquals(50, batch.currentCount());

@@ -15,7 +15,7 @@ import java.util.List;
  */
 public record HealthInspectionResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         LocalDate inspectedOn,
         Integer healthScorePct,

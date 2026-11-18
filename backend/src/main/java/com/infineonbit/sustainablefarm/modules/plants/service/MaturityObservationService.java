@@ -33,6 +33,7 @@ public class MaturityObservationService {
     private final VarietyRepository varietyRepository;
     private final PopulationEventRepository populationEventRepository;
     private final MaturityObservationRepository maturityObservationRepository;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " b "} becomes
@@ -103,9 +104,10 @@ public class MaturityObservationService {
      * in a single transaction.
      *
      * <ol>
-     *     <li>Finds the variety row of the (farm, block, name) triple, as a
-     *         harvest does: a NULL farm matches only the rows without a farm,
-     *         and the name ignores case but not accents.</li>
+     *     <li>Finds the variety row of the (block, name) pair, as a harvest
+     *         does: the block of the code, which must belong to the requested
+     *         farm when one is given (no block is created), and the name, which
+     *         ignores case but not accents.</li>
      *     <li>Refuses an observation of a variety with no recorded planting.</li>
      *     <li>Refuses an observation dated before the planting of that variety.</li>
      *     <li>Stores the observation. A variety without agronomic reference is
@@ -129,13 +131,13 @@ public class MaturityObservationService {
      * explicit write time so the {@code lastUpdated} value can be tested.
      */
     MaturityObservationResponse recordObservation(MaturityObservationRequest request, Instant now) {
-        Integer farmId = request.farmId();
         String blockCode = normalizeCode(request.blockCode());
         String varietyName = request.varietyName().trim();
 
-        Variety variety = varietyRepository.findByFarmBlockAndName(farmId, blockCode, varietyName)
-                .stream()
-                .findFirst()
+        // An observation designates an existing variety row: an unknown block, or a block of
+        // another farm than the one requested, has no planting, and no block is created.
+        Variety variety = plantsBlocks.find(request.farmId(), blockCode)
+                .flatMap(block -> varietyRepository.findByBlockAndName(block.id(), varietyName).stream().findFirst())
                 .orElse(null);
         if (variety == null) {
             throw noPlanting(varietyName, blockCode);
@@ -173,15 +175,16 @@ public class MaturityObservationService {
      * an empty list and is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
      * @param from      first observation date, included, or {@code null}
      * @param to        last observation date, included, or {@code null}
      * @return the matching observations, ordered by date then identifier
      */
-    public List<MaturityObservationResponse> getAllObservations(Integer farmId, String blockCode,
+    public List<MaturityObservationResponse> getAllObservations(Long farmId, String blockCode,
                                                                 LocalDate from, LocalDate to) {
-        return maturityObservationRepository.findByOptionalFilters(farmId, normalizeOptionalText(blockCode), from, to)
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        return maturityObservationRepository.findByOptionalFilters(blocks.all(), blocks.ids(), from, to)
                 .stream()
                 .map(MaturityObservationService::toResponse)
                 .toList();
