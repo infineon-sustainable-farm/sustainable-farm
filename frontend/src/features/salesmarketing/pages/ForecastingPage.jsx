@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { BrainCircuit, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import AccuracyTable from '../components/forecasting/AccuracyTable';
 import ForecastFormModal from '../components/forecasting/ForecastFormModal';
 import ModelParametersCard from '../components/forecasting/ModelParametersCard';
@@ -52,10 +54,11 @@ export default function ForecastingPage() {
 
   const regions = [...new Set(modelRuns.map((run) => run.region).filter(Boolean))];
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), SUCCESS_DURATION);
+    later(() => setActionSuccess(null), SUCCESS_DURATION);
   };
   const flashError = (msg) => {
     setActionError(msg);
@@ -126,7 +129,7 @@ export default function ForecastingPage() {
     setForecastForm({
       ...emptyForecastForm,
       productId: selectedProductId || (products[0] ? String(products[0].productId) : ''),
-      forecastMonth: new Date().toISOString().slice(0, 7) + '-01',
+      forecastMonth: todayIsoDate().slice(0, 7) + '-01',
     });
     setShowForecastModal(true);
   };

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { justAfterLocalMidnight } from '../testing/nearMidnight';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import DashboardPage from './DashboardPage';
 
 const api = vi.hoisted(() => ({
@@ -35,6 +36,21 @@ function renderPage() {
   return render(
     <MemoryRouter>
       <DashboardPage />
+    </MemoryRouter>
+  );
+}
+
+function Where() {
+  return <p data-testid="where">{useLocation().pathname}</p>;
+}
+
+function renderInModule() {
+  return render(
+    <MemoryRouter initialEntries={['/salesmarketing']}>
+      <Routes>
+        <Route path="/salesmarketing" element={<DashboardPage />} />
+        <Route path="*" element={<Where />} />
+      </Routes>
     </MemoryRouter>
   );
 }
@@ -74,5 +90,47 @@ describe('DashboardPage', () => {
 
     await waitFor(() => expect(api.deleteAlert).toHaveBeenCalledWith(9));
     expect(await screen.findByText('Alert AL-9 deleted.')).toBeInTheDocument();
+  });
+
+  it('links View all alerts to the module alerts screen', async () => {
+    renderInModule();
+    fireEvent.click(await screen.findByRole('link', { name: 'VIEW ALL ALERTS' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/salesmarketing/demand-alerts');
+  });
+
+  it.each(['Historical Data', 'Model Settings', 'Seasonal Planning'])('sends the %s shortcut to the module forecasting screen', async (title) => {
+    renderInModule();
+    fireEvent.click(await screen.findByRole('button', { name: new RegExp(title) }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/salesmarketing/forecasting');
+  });
+
+  it('reports a full failure, not a partial load, when all seven requests fail', async () => {
+    Object.values(api).forEach((mock) => mock.mockRejectedValue(new Error('offline')));
+    renderPage();
+    expect(await screen.findByText('Forecasts: offline', { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText(/Partial load/)).not.toBeInTheDocument();
+  });
+
+  it('reports a partial load when only some requests fail', async () => {
+    api.getOrders.mockRejectedValue(new Error('offline'));
+    api.getCustomers.mockRejectedValue(new Error('offline'));
+    renderPage();
+    expect(await screen.findByText(/Partial load - Customers: offline/)).toBeInTheDocument();
+  });
+
+  it('defaults the forecast month to the local month just after midnight', async () => {
+    const restore = justAfterLocalMidnight();
+    try {
+      renderPage();
+      fireEvent.click(await screen.findByRole('button', { name: 'NEW FORECAST' }));
+      const dialog = screen.getByRole('dialog', { name: 'New Forecast' });
+      fireEvent.change(within(dialog).getByLabelText(/Volume \(t\)/), { target: { value: '800' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
+      await waitFor(() =>
+        expect(api.createDemandForecast).toHaveBeenCalledWith(expect.objectContaining({ forecastMonth: '2026-04-01' }))
+      );
+    } finally {
+      restore();
+    }
   });
 });

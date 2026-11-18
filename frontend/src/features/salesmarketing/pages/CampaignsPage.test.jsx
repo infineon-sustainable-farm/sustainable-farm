@@ -77,4 +77,13 @@ describe('CampaignsPage', () => {
     await waitFor(() => expect(api.deleteCampaign).toHaveBeenCalledWith(4));
     expect(await screen.findByText('Campaign deleted successfully.')).toBeInTheDocument();
   });
+
+  it('opens the edit dialog filled from the single campaign fetch', async () => {
+    api.getCampaignById.mockResolvedValue({ ...campaign, name: 'Mango season 2026' });
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Mango season' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Campaign #4' });
+    expect(within(dialog).getByLabelText(/Campaign Name/)).toHaveValue('Mango season 2026');
+    expect(api.getCampaignById).toHaveBeenCalledWith(4);
+  });
 });

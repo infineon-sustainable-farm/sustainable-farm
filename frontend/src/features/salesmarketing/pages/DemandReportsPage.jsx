@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { CalendarDays, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { localIsoDateTime } from '../format';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import ReportActivityTable from '../components/reports/ReportActivityTable';
 import { NewScheduleCard, ReportCard } from '../components/reports/ReportCard';
 import ReportFilters from '../components/reports/ReportFilters';
@@ -38,16 +40,17 @@ export default function DemandReportsPage() {
   const [pendingDeleteReport, setPendingDeleteReport] = useState(null);
   const [deletingReport, setDeletingReport] = useState(false);
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (msg) => {
     setActionError(msg);
     setActionSuccess(null);
-    window.setTimeout(() => setActionError(null), 6000);
+    later(() => setActionError(null), 6000);
   };
 
   const fetchReportsData = useCallback(async () => {
@@ -113,7 +116,7 @@ export default function DemandReportsPage() {
       const nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
       nextWeek.setHours(8, 0, 0, 0);
-      form.nextRunAt = nextWeek.toISOString().slice(0, 16);
+      form.nextRunAt = localIsoDateTime(nextWeek);
       form.scheduleFrequency = 'Weekly';
     }
     setReportForm(form);
@@ -127,7 +130,7 @@ export default function DemandReportsPage() {
     setSavingReport(true);
     try {
       const res = await api.getDemandReportById(report.reportId);
-      const r = res.data || report;
+      const r = res || report;
       setReportForm({
         reportType: r.reportType || 'Forecasting',
         periodStart: r.periodStart ? new Date(r.periodStart).toISOString().slice(0, 10) : '',
@@ -137,7 +140,7 @@ export default function DemandReportsPage() {
         variancePct: r.variancePct != null ? String(r.variancePct) : '',
         status: r.status || 'ready',
         isScheduled: !!r.isScheduled,
-        nextRunAt: r.nextRunAt ? new Date(r.nextRunAt).toISOString().slice(0, 16) : '',
+        nextRunAt: r.nextRunAt ? localIsoDateTime(new Date(r.nextRunAt)) : '',
         scheduleFrequency: r.scheduleFrequency || '',
         summary: r.summary || '',
         generatedBy: r.generatedBy || '',
@@ -177,7 +180,7 @@ export default function DemandReportsPage() {
         flashSuccess(t('reports.updated', { id: editingReportId }));
       } else {
         const created = await api.createDemandReport(payload);
-        flashSuccess(t('reports.created', { id: created.data?.reportId || t('reports.newId') }));
+        flashSuccess(t('reports.created', { id: created?.reportId || t('reports.newId') }));
       }
 
       setShowReportModal(false);

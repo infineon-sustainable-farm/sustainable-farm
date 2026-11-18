@@ -1,12 +1,14 @@
 import { BellRing, Timer, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { KpiCard } from '../../../../shared/ui';
+import { useSalesFormat } from '../../format';
 import { useAlertText } from './alertUtils';
 
-/** Base case volume, high priority alerts and revenue potential. */
+/** Base case volume, number of active high priority alerts and revenue potential. */
 function AlertKpis({ hasForecasts, totalBase, activeCount, highActiveCount, revenuePotentialEur }) {
   const { t } = useTranslation('salesmarketing');
   const text = useAlertText();
+  const format = useSalesFormat();
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       <KpiCard
@@ -18,9 +20,8 @@ function AlertKpis({ hasForecasts, totalBase, activeCount, highActiveCount, reve
       <KpiCard
         icon={TriangleAlert}
         tone="error"
-        label={t('alerts.kpi.germanyBaseCase')}
-        value={t('alerts.kpi.noData')}
-        hint={highActiveCount > 0 ? t('alerts.kpi.highPriority', { count: highActiveCount }) : t('alerts.kpi.noHigh')}
+        label={t('alerts.kpi.highPriorityAlerts')}
+        value={format.number(highActiveCount)}
       />
       <KpiCard
         icon={Timer}

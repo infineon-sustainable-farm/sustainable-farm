@@ -496,9 +496,7 @@
       "baseCase": "Scénario de base",
       "noData": "Aucune donnée",
       "activeHint": "{{count}} alertes actives en cours",
-      "germanyBaseCase": "Scénario de base Allemagne",
-      "highPriority": "{{count}} de priorité haute",
-      "noHigh": "Aucune alerte haute",
+      "highPriorityAlerts": "Alertes de priorité haute",
       "revenue": "Potentiel de revenus",
       "revenueHint": "Selon les derniers prix appliqués aux prévisions de demande"
     },
@@ -610,9 +608,7 @@
     },
     "stats": {
       "totalActive": "Total actifs",
-      "activeTrend": "12 % par rapport au mois dernier",
       "newOnboarded": "Nouveaux clients",
-      "onboardedTrend": "5 % par rapport au mois dernier",
       "inactive": "Inactifs",
       "followUp": "Relance recommandée",
       "insight": "Analyse IA",
@@ -950,14 +946,12 @@
     "timeline": "Chronologie de l’expédition",
     "cargo": "Détails de la cargaison",
     "commodity": "Marchandise",
-    "defaultCommodity": "Mangue séchée",
     "volumeWeight": "Volume / poids",
     "containers": "{{number}} x {{type}} / {{weight}}",
     "container": "conteneur",
     "kg": "{{value}} kg",
     "condition": "Surveillance des conditions",
     "celsius": "{{value}} °C",
-    "optimal": "OPTIMAL",
     "download": "Télécharger le manifeste"
   }
 }

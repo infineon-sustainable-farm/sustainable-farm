@@ -19,6 +19,21 @@ export function parseIsoDate(value) {
   return new Date(year, month - 1, day);
 }
 
+const pad = (n) => String(n).padStart(2, '0');
+
+/**
+ * "2026-03-05" of a date in local time. Date#toISOString gives the UTC day, which is the day
+ * before or after near midnight. For today, use shared/utils/todayIsoDate.
+ */
+export function localIsoDate(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** "2026-03-05T08:00" of a date in local time, the value of a datetime-local input. */
+export function localIsoDateTime(date) {
+  return `${localIsoDate(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 /**
  * Formatters of the sales and marketing screens for one language. They mirror the native calls the
  * screens used: number(value, options) for Number#toLocaleString, date(value, options) for
