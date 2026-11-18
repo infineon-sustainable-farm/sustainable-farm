@@ -1,48 +1,46 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.Column;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 /**
- * Maps to the "customer_certifications" junction table.
- * The primary key is the combination of customer_id and certification_id.
+ * A certification held by a customer: one row per customer and certification, deleted with
+ * either of them.
  */
 @Entity
-@Table(name = "customer_certifications")
-@IdClass(CustomerCertificationId.class)
-public class CustomerCertification {
+@Table(name = "customer_certifications", uniqueConstraints = @UniqueConstraint(
+        name = "customer_certifications_customer_id_certification_id_key",
+        columnNames = {"customer_id", "certification_id"}))
+@Getter
+@Setter
+@NoArgsConstructor
+public class CustomerCertification extends BaseEntity {
 
-    @Id
-    @Column(name = "customer_id")
-    private Integer customerId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "customer_id", nullable = false,
+            foreignKey = @ForeignKey(name = "customer_certifications_customer_id_fkey"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Customer customer;
 
-    @Id
-    @Column(name = "certification_id")
-    private Integer certificationId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "certification_id", nullable = false,
+            foreignKey = @ForeignKey(name = "customer_certifications_certification_id_fkey"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Certification certification;
 
-    public CustomerCertification() {}
-
-    public CustomerCertification(Integer customerId, Integer certificationId) {
-        this.customerId = customerId;
-        this.certificationId = certificationId;
-    }
-
-    public Integer getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(Integer customerId) {
-        this.customerId = customerId;
-    }
-
-    public Integer getCertificationId() {
-        return certificationId;
-    }
-
-    public void setCertificationId(Integer certificationId) {
-        this.certificationId = certificationId;
+    public CustomerCertification(Customer customer, Certification certification) {
+        this.customer = customer;
+        this.certification = certification;
     }
 }

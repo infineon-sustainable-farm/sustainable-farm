@@ -1,58 +1,34 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+/** A file of a demand report, deleted with the report. */
 @Entity
 @Table(name = "report_files", indexes = @Index(name = "idx_report_files_report", columnList = "report_id"))
-public class ReportFile {
+@Getter
+@Setter
+public class ReportFile extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "file_id")
-    private Integer fileId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "report_id", nullable = false, foreignKey = @ForeignKey(name = "report_files_report_id_fkey"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private DemandReport report;
 
-    @NotNull(message = "reportId is required")
-    @Column(name = "report_id", nullable = false)
-    private Integer reportId;
-
-    @NotBlank(message = "format is required")
     @Column(name = "format", nullable = false, length = 10)
     private String format;
 
     @Column(name = "file_url")
     private String fileUrl;
-
-    public Integer getFileId() {
-        return fileId;
-    }
-
-    public void setFileId(Integer fileId) {
-        this.fileId = fileId;
-    }
-
-    public Integer getReportId() {
-        return reportId;
-    }
-
-    public void setReportId(Integer reportId) {
-        this.reportId = reportId;
-    }
-
-    public String getFormat() {
-        return format;
-    }
-
-    public void setFormat(String format) {
-        this.format = format;
-    }
-
-    public String getFileUrl() {
-        return fileUrl;
-    }
-
-    public void setFileUrl(String fileUrl) {
-        this.fileUrl = fileUrl;
-    }
 }

@@ -1,72 +1,35 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import org.hibernate.annotations.ColumnDefault;
-
+/** A pricing advice for a product, with a suggested price in euros. */
 @Entity
 @Table(name = "pricing_recommendations")
-public class PricingRecommendation {
+@Getter
+@Setter
+public class PricingRecommendation extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "recommendation_id")
-    private Integer recommendationId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "pricing_recommendations_product_id_fkey"))
+    private Product product;
 
-    @Column(name = "product_id")
-    private Integer productId;
-
-    @NotBlank(message = "message is required")
     @Column(name = "message", nullable = false, columnDefinition = "text")
     private String message;
 
-    @Column(name = "suggested_price_eur", precision = 8, scale = 2)
-    private BigDecimal suggestedPriceEur;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    public Integer getRecommendationId() {
-        return recommendationId;
-    }
-
-    public void setRecommendationId(Integer recommendationId) {
-        this.recommendationId = recommendationId;
-    }
-
-    public Integer getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Integer productId) {
-        this.productId = productId;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public BigDecimal getSuggestedPriceEur() {
-        return suggestedPriceEur;
-    }
-
-    public void setSuggestedPriceEur(BigDecimal suggestedPriceEur) {
-        this.suggestedPriceEur = suggestedPriceEur;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "suggested_price_amount", precision = 14, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "suggested_price_currency", length = 3))
+    private Money suggestedPrice;
 }

@@ -5,13 +5,16 @@ import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 
 import com.infineonbit.sustainablefarm.modules.plants.api.CatalogVariety;
 import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.ProductRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.ProductResponse;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Product;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -20,28 +23,33 @@ import java.util.stream.Collectors;
  * and a product read carries the catalogue name of its variety.
  */
 @Service
+@Transactional
 public class ProductService {
 
     private final ProductRepository repository;
     private final VarietyCatalog varietyCatalog;
+    private final SalesMarketingRequestMapper mapper;
 
-    public ProductService(ProductRepository repository, VarietyCatalog varietyCatalog) {
+    public ProductService(ProductRepository repository, VarietyCatalog varietyCatalog,
+                          SalesMarketingRequestMapper mapper) {
         this.repository = repository;
         this.varietyCatalog = varietyCatalog;
+        this.mapper = mapper;
     }
 
-    public List<Product> getAll() {
-        List<Product> products = repository.findAll();
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getAll() {
         Map<String, String> names = varietyCatalog.listVarieties().stream()
                 .collect(Collectors.toMap(CatalogVariety::key, CatalogVariety::name, (a, b) -> a));
-        products.forEach(product -> fillVarietyName(product, names::get));
-        return products;
+        return repository.findAll().stream()
+                .map(product -> ProductResponse.of(product,
+                        product.getVarietyKey() == null ? null : names.get(product.getVarietyKey())))
+                .toList();
     }
 
-    public Product getById(Integer id) {
-        Product product = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        return withVarietyName(product);
+    @Transactional(readOnly = true)
+    public ProductResponse getById(Long id) {
+        return withVarietyName(find(id));
     }
 
     /**
@@ -49,29 +57,30 @@ public class ProductService {
      *
      * @throws BadRequestException if the variety is not in the catalogue
      */
-    public Product create(Product item) {
-        item.setVarietyKey(varietyKeyOf(item.getVariety()));
-        return withVarietyName(repository.save(item));
+    public ProductResponse create(ProductRequest request) {
+        Product product = mapper.apply(request, new Product());
+        product.setVarietyKey(varietyKeyOf(request.variety()));
+        return withVarietyName(repository.save(product));
     }
 
     /**
-     * Copies every editable field from updatedData onto the existing
-     * row, then saves it. The id and created_at are left untouched.
+     * Replaces the name, the variety and the unit of a product.
      *
      * @throws BadRequestException if the variety is not in the catalogue
      */
-    public Product update(Integer id, Product updatedData) {
-        Product existing = getById(id);
-
-        existing.setName(updatedData.getName());
-        existing.setVarietyKey(varietyKeyOf(updatedData.getVariety()));
-        existing.setUnit(updatedData.getUnit());
-
+    public ProductResponse update(Long id, ProductRequest request) {
+        Product existing = mapper.apply(request, find(id));
+        existing.setVarietyKey(varietyKeyOf(request.variety()));
         return withVarietyName(repository.save(existing));
     }
 
-    public void delete(Integer id) {
+    public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    private Product find(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 
     /** The catalogue key of a variety name, {@code null} for no variety. */
@@ -84,12 +93,9 @@ public class ProductService {
                 .orElseThrow(() -> new BadRequestException("Unknown variety: " + varietyName));
     }
 
-    private Product withVarietyName(Product product) {
-        fillVarietyName(product, key -> varietyCatalog.findByKey(key).map(CatalogVariety::name).orElse(null));
-        return product;
-    }
-
-    private static void fillVarietyName(Product product, Function<String, String> nameOfKey) {
-        product.setVariety(product.getVarietyKey() == null ? null : nameOfKey.apply(product.getVarietyKey()));
+    private ProductResponse withVarietyName(Product product) {
+        String name = product.getVarietyKey() == null ? null
+                : varietyCatalog.findByKey(product.getVarietyKey()).map(CatalogVariety::name).orElse(null);
+        return ProductResponse.of(product, name);
     }
 }
