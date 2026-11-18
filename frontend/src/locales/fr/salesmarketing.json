@@ -78,5 +78,130 @@
     "money": "{{value}} {{symbol}}",
     "moneyThousands": "{{value}} k{{symbol}}",
     "thousands": "{{value}} k"
+  },
+  "dashboard": {
+    "title": "Vue d’ensemble",
+    "eyebrow": "Analyse de la demande",
+    "export": "EXPORTER LE RAPPORT",
+    "newForecast": "NOUVELLE PRÉVISION",
+    "loading": "Chargement du tableau de bord…",
+    "apiNotice": "Avis de connexion à l’API",
+    "actionFailed": "Échec de l’action",
+    "requestFailed": "Échec de la requête",
+    "loadFailed": "Impossible de charger les données ventes et marketing.",
+    "loadDataFailed": "Impossible de charger les données du tableau de bord. Veuillez réessayer.",
+    "partialLoad": "Chargement partiel - {{failures}}",
+    "failure": {
+      "forecasts": "Prévisions : {{message}}",
+      "alerts": "Alertes : {{message}}",
+      "batches": "Lots : {{message}}",
+      "products": "Produits : {{message}}",
+      "pricing": "Prix : {{message}}",
+      "customers": "Clients : {{message}}",
+      "orders": "Commandes : {{message}}"
+    },
+    "forecastCreated": "Prévision créée.",
+    "forecastCreateFailed": "Échec de la création de la prévision",
+    "exportEmpty": "Aucune donnée de prévision à exporter.",
+    "exportDone": "Export des prévisions téléchargé.",
+    "alertDeleted": "Alerte {{code}} supprimée.",
+    "alertDeleteFailed": "Échec de la suppression de l’alerte",
+    "deleteAlertTitle": "Supprimer l’alerte ?",
+    "deleteAlertMessage": "Voulez-vous vraiment supprimer l’alerte {{code}} ? Cette action est irréversible.",
+    "deleting": "Suppression…",
+    "none": "-",
+    "noData": "Aucune donnée",
+    "tons": "{{value}} t",
+    "euroMillions": "{{value}} M EUR",
+    "thousands": "{{value}} k",
+    "kpi": {
+      "forecasted": "Demande prévue (base)",
+      "range": "Fourchette : {{lower}} - {{upper}}",
+      "awaiting": "En attente de lignes de prévision",
+      "germany": "Demande Allemagne",
+      "metricTons": "{{value}} t",
+      "noRegional": "Aucun champ de prévision régionale disponible",
+      "activeAlerts": "Alertes actives",
+      "activeCount": "{{number}} actives",
+      "degraded": "Connexion dégradée",
+      "operational": "Système opérationnel",
+      "revenue": "Potentiel de chiffre d’affaires",
+      "latestPrice": "Dernier prix : {{price}} EUR/kg",
+      "noPricing": "Aucune donnée de prix chargée"
+    },
+    "chart": {
+      "title": "Prévision de la demande et historique",
+      "rows": "{{number}} ligne(s) de prévision",
+      "projection": "Projection sur 90 jours selon les rendements de récolte actuels",
+      "historical": "Historique",
+      "forecast": "Prévision",
+      "band": "Intervalle de confiance",
+      "today": "AUJOURD’HUI",
+      "empty": "Pas encore assez de points de prévision pour tracer un graphique.",
+      "create": "Créer une prévision"
+    },
+    "harvest": {
+      "title": "Pic de récolte",
+      "months": "Mars - juillet"
+    },
+    "batches": {
+      "title": "Transformation des produits",
+      "refresh": "Actualiser les lots",
+      "empty": "Aucun lot de produits disponible.",
+      "id": "N° de lot",
+      "stock": "Stock",
+      "status": "Statut"
+    },
+    "batchStatus": {
+      "processed": "Transformé",
+      "inTransit": "En transit",
+      "scheduled": "Planifié",
+      "delayed": "En retard"
+    },
+    "alerts": {
+      "title": "Alertes système",
+      "empty": "Aucune alerte à afficher.",
+      "clickToDelete": "Cliquer pour supprimer cette alerte",
+      "fallbackCode": "Alerte n° {{id}}",
+      "viewAll": "VOIR TOUTES LES ALERTES"
+    },
+    "shortcuts": {
+      "historical": {
+        "title": "Données historiques",
+        "text": "Consulter les performances passées"
+      },
+      "model": {
+        "title": "Paramètres du modèle",
+        "text": "Configurer les paramètres de l’IA"
+      },
+      "seasonal": {
+        "title": "Planification saisonnière",
+        "text": "Gérer les cycles de récolte"
+      }
+    },
+    "form": {
+      "title": "Nouvelle prévision",
+      "product": "Produit",
+      "selectProduct": "Choisir un produit…",
+      "noProducts": "Aucun produit disponible. Ajoutez un produit avant de créer une prévision.",
+      "month": "Mois",
+      "scenario": "Scénario",
+      "volume": "Volume (t)",
+      "lower": "Borne basse",
+      "upper": "Borne haute",
+      "risk": "Risque de capacité",
+      "saving": "Enregistrement…",
+      "create": "Créer"
+    },
+    "scenario": {
+      "base": "base",
+      "optimistic": "optimiste",
+      "pessimistic": "pessimiste"
+    },
+    "risk": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé"
+    }
   }
 }
