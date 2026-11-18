@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useScenarioAnalysis } from "../hooks/useScenarioAnalysis";
 import { formatKilograms, formatNumber } from "../utils/format";
 import OverviewCard from "./OverviewCard";
@@ -16,8 +17,9 @@ const PLOT_HEIGHT = 180;
 const BOTTOM = 26; // the step under each column
 /** The mock-up's steps of the yield increase. */
 const STEPS = [10, 20, 30];
-// Darkened amber of the module: #a87a1e on white -> 3.6:1 for the dashed mark.
-const REFERENCE_COLOUR = "#a87a1e";
+// The columns take the first chart colour, the dashed baseline mark the second (chart tokens).
+const BAR_COLOUR = "var(--color-chart-1)";
+const REFERENCE_COLOUR = "var(--color-chart-2)";
 
 /** Width of the element's content box, kept up to date as it resizes. */
 function useContentWidth() {
@@ -43,6 +45,7 @@ function barPath(x, y, width, height) {
 
 /** The columns, from 0 to the largest value, each with its value written above it. */
 function Chart({ columns }) {
+    const { t } = useTranslation("plants");
     const [containerRef, width] = useContentWidth();
     const slotWidth = Math.max(MIN_SLOT_WIDTH, Math.floor(width / columns.length));
     const chartWidth = slotWidth * columns.length;
@@ -51,16 +54,17 @@ function Chart({ columns }) {
     const baseline = TOP + PLOT_HEIGHT;
     const heightOf = (kg) => (maxKg > 0 ? (kg / maxKg) * PLOT_HEIGHT : 0);
     const referenceY = baseline - heightOf(columns[0].harvestKg);
-    const description = "Annual yield in full production: "
-        + columns.map((column) => `${column.label} ${formatKilograms(column.harvestKg)}`).join(", ") + ".";
+    const description = t("scenarios.chart.description", {
+        values: columns.map((column) => `${column.label} ${formatKilograms(column.harvestKg)}`).join(", "),
+    });
 
     return (
         <div ref={containerRef} className="overflow-x-auto">
             {width > 0 && (
                 <svg role="img" aria-label={description} width={chartWidth} height={baseline + BOTTOM}
                     className="block font-sans">
-                    <text x={0} y={FONT_SIZE} fontSize={FONT_SIZE} className="fill-gray-500">
-                        kg
+                    <text x={0} y={FONT_SIZE} fontSize={FONT_SIZE} className="fill-text-muted">
+                        {t("scenarios.chart.unit")}
                     </text>
                     {columns.map((column, index) => {
                         const center = slotWidth * index + slotWidth / 2;
@@ -70,15 +74,15 @@ function Chart({ columns }) {
                                 {height > 0 && (
                                     <path
                                         d={barPath(center - barWidth / 2, baseline - height, barWidth, height)}
-                                        className="fill-primary"
+                                        fill={BAR_COLOUR}
                                     />
                                 )}
                                 <text x={center} y={baseline - height - 6} textAnchor="middle" fontSize={FONT_SIZE}
-                                    className="fill-gray-700 font-semibold">
+                                    className="fill-text font-semibold">
                                     {formatNumber(column.harvestKg)}
                                 </text>
                                 <text x={center} y={baseline + 18} textAnchor="middle" fontSize={FONT_SIZE}
-                                    className="fill-gray-500">
+                                    className="fill-text-muted">
                                     {column.label}
                                 </text>
                             </g>
@@ -86,7 +90,7 @@ function Chart({ columns }) {
                     })}
                     <line x1={0} x2={chartWidth} y1={referenceY} y2={referenceY} stroke={REFERENCE_COLOUR}
                         strokeWidth={2} strokeDasharray="5 4" />
-                    <line x1={0} x2={chartWidth} y1={baseline + 0.5} y2={baseline + 0.5} className="stroke-gray-300" />
+                    <line x1={0} x2={chartWidth} y1={baseline + 0.5} y2={baseline + 0.5} className="stroke-border-input" />
                 </svg>
             )}
         </div>
@@ -101,6 +105,7 @@ function Chart({ columns }) {
  * true size.
  */
 export default function ScenarioYieldChart({ scenario }) {
+    const { t } = useTranslation("plants");
     const queries = [
         useScenarioAnalysis(scenario.id, { yieldPerTreeChangePct: STEPS[0] }),
         useScenarioAnalysis(scenario.id, { yieldPerTreeChangePct: STEPS[1] }),
@@ -115,9 +120,9 @@ export default function ScenarioYieldChart({ scenario }) {
     const columns = combined.isPending || combined.isError
         ? null
         : [
-            { label: "Baseline", harvestKg: queries[0].data.analysis.baseline.harvestKg },
+            { label: t("scenarios.chart.baseline"), harvestKg: queries[0].data.analysis.baseline.harvestKg },
             ...queries.map((query, index) => ({
-                label: `+${STEPS[index]}%`,
+                label: t("scenarios.chart.step", { value: STEPS[index] }),
                 harvestKg: query.data.analysis.variant.harvestKg,
             })),
         ];
@@ -125,26 +130,26 @@ export default function ScenarioYieldChart({ scenario }) {
     return (
         <OverviewCard
             titleId="yield-growth-title"
-            title="Yield Growth Projection"
-            caption="Annual yield in full production, at the baseline and with 10, 20 and 30% more yield per tree."
+            title={t("scenarios.chart.title")}
+            caption={t("scenarios.chart.caption")}
             query={combined}
-            loadingText="Computing the projection…"
-            errorText="The projection could not be computed"
+            loadingText={t("scenarios.chart.computing")}
+            errorText={t("scenarios.chart.error")}
         >
             {columns && (
                 <>
                     <Chart columns={columns} />
-                    <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-600">
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-text-muted">
                         <span className="flex items-center gap-2">
                             <span aria-hidden="true" className="inline-block size-3 rounded-sm bg-primary" />
-                            Projected yield (kg)
+                            {t("scenarios.chart.legendYield")}
                         </span>
                         <span className="flex items-center gap-2">
                             <svg aria-hidden="true" width="18" height="6">
                                 <line x1="0" x2="18" y1="3" y2="3" stroke={REFERENCE_COLOUR} strokeWidth="2"
                                     strokeDasharray="5 4" />
                             </svg>
-                            Baseline reference
+                            {t("scenarios.chart.legendBaseline")}
                         </span>
                     </div>
                 </>

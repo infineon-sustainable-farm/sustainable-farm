@@ -1001,5 +1001,303 @@
       "rainfall": "Pluviométrie",
       "source": "Source"
     }
+  },
+  "scenarios": {
+    "documentTitle": "Analyse de scénarios — Plantes",
+    "title": "Analyse de scénarios",
+    "subtitle": "Coûts et bénéfices d’une hausse de la production de mangues.",
+    "loading": "Chargement des scénarios…",
+    "loadError": "Les scénarios n’ont pas pu être chargés",
+    "requestFailed": "La requête au serveur a échoué.",
+    "emptyTitle": "Aucun scénario de référence saisi pour l’instant",
+    "emptyHint": "Saisissez les hypothèses d’un plan de plantation : arbres, rendement par arbre, coûts et investissement. Le serveur en calcule chaque résultat.",
+    "enterBaseline": "Saisir la référence",
+    "unknownTitle": "Ce scénario ne peut pas être affiché",
+    "unknownLooking": "Recherche du scénario…",
+    "showScenario": "Afficher {{name}}",
+    "editName": "Modifier {{name}}",
+    "notRecovered": "Non amorti",
+    "enterPriceRevenue": "Saisissez un prix au kg pour calculer le chiffre d’affaires.",
+    "enterCostPerTree": "Saisissez un coût par arbre ajouté dans la référence pour le calculer.",
+    "optionalSuffix": " (facultatif)",
+    "currencies": {
+      "XOF": "XOF (FCFA)",
+      "EUR": "EUR (€)"
+    },
+    "baseline": {
+      "title": "Référence — {{name}}",
+      "scenarioLabel": "Scénario :",
+      "edit": "Modifier",
+      "add": "Ajouter un scénario",
+      "computing": "Calcul de la référence…",
+      "error": "La référence n’a pas pu être calculée",
+      "payback": "Retour sur investissement",
+      "year": "Année {{year}}",
+      "notWithin": "Pas en {{years}} ans",
+      "simplePayback": "Délai simple (pleine production dès l’année 1)",
+      "phasesPayback": "Délai avec phases de croissance",
+      "beforeLosses": "Avant pertes (aucun taux de perte saisi)",
+      "soldAfterLosses": "{{sold}} vendus après {{lost}} de pertes",
+      "totalTrees": "Total des arbres",
+      "annualYield": "Rendement annuel",
+      "annualRevenue": "Chiffre d’affaires annuel",
+      "annualNetBenefit": "Bénéfice net annuel",
+      "operatingCost": "Coût d’exploitation {{amount}}",
+      "roi": "ROI",
+      "roiNote": "Bénéfice net d’une année en pleine production, en part de l’investissement.",
+      "investment": "Investissement total {{amount}}",
+      "investmentWithOther": "Investissement total {{amount}} ({{other}})",
+      "noPrice": "Aucun prix au kg saisi",
+      "price": "Prix {{price}} le kg",
+      "investmentLine": "{{investment}} · {{price}}",
+      "paybackExplained": "Délai simple (pleine production dès l’année 1) : l’investissement divisé par le bénéfice net d’une année en pleine production, comme si les arbres donnaient leur plein rendement dès l’année 1. Délai avec phases de croissance : la première année dont les bénéfices nets, cumulés année après année avec la part de rendement de chaque phase de croissance, couvrent l’investissement."
+    },
+    "assumptions": {
+      "title": "Hypothèses",
+      "intro": "Telles que saisies, chacune avec sa source. Dernière mise à jour {{date}}. Un tiret signifie non saisi : les résultats qui ont besoin de la valeur ne sont pas calculés.",
+      "assumption": "Hypothèse",
+      "value": "Valeur",
+      "source": "Source",
+      "rows": {
+        "variety": "Variété",
+        "trees": "Arbres",
+        "yieldPerTree": "Rendement par arbre",
+        "lossRate": "Taux de perte",
+        "pricePerKg": "Prix au kg",
+        "currency": "Devise",
+        "fixedCost": "Coût d’exploitation fixe",
+        "variableCost": "Coût d’exploitation variable",
+        "investment": "Investissement",
+        "costPerTree": "Coût par arbre ajouté"
+      },
+      "units": {
+        "perYearFull": "{{value}} par an en pleine production",
+        "ofHarvest": "{{value}} de la récolte",
+        "perYear": "{{value}} par an",
+        "perKgSold": "{{value}} par kg vendu"
+      },
+      "sharesTitle": "Part de rendement par phase de croissance",
+      "growthPhase": "Phase de croissance",
+      "age": "Âge",
+      "share": "Part du plein rendement",
+      "sharesPending": "Les parts arrivent avec l’analyse du scénario.",
+      "sharesNote": "La prévision de rendement utilise les mêmes parts. Elles se corrigent sur <page>Récolte et maturité</page> ; une correction compte ici immédiatement."
+    },
+    "simulator": {
+      "title": "Simulateur de hausse de rendement",
+      "yieldIncrease": "Hausse de rendement",
+      "baselineStep": "Référence (0 %)",
+      "step": "+{{value}} %",
+      "computedNote": "Calculé par le serveur à partir des hypothèses de la référence.",
+      "additionalInvestment": "Investissement supplémentaire ({{unit}})",
+      "investmentAdded": "Ajouté à l’investissement de la référence.",
+      "investmentNone": "Aucun investissement supplémentaire saisi",
+      "computing": "Calcul de la variante…",
+      "error": "La variante n’a pas pu être calculée",
+      "updating": "Mise à jour…",
+      "results": "Résultats pour {{increase}}, {{investment}}",
+      "resultsBaseline": "le rendement de référence (0 %)",
+      "resultsIncrease": "+{{value}} % de rendement par arbre",
+      "resultsNoInvestment": "sans investissement supplémentaire",
+      "resultsInvestment": "{{amount}} d’investissement supplémentaire",
+      "projectedYield": "Rendement projeté",
+      "projectedRevenue": "Chiffre d’affaires projeté",
+      "annualBenefit": "Bénéfice annuel",
+      "resultingRoi": "ROI obtenu",
+      "netBenefit": "Bénéfice net {{amount}}",
+      "investmentBaseline": "Investissement {{amount}}, celui de la référence",
+      "investmentAdditional": "Investissement {{amount}} ({{additional}} en plus)"
+    },
+    "chart": {
+      "title": "Projection de la croissance du rendement",
+      "caption": "Rendement annuel en pleine production, à la référence et avec 10, 20 et 30 % de rendement en plus par arbre.",
+      "computing": "Calcul de la projection…",
+      "error": "La projection n’a pas pu être calculée",
+      "description": "Rendement annuel en pleine production : {{values}}.",
+      "unit": "kg",
+      "baseline": "Référence",
+      "step": "+{{value}} %",
+      "legendYield": "Rendement projeté (kg)",
+      "legendBaseline": "Repère de la référence"
+    },
+    "levers": {
+      "title": "Scénarios de hausse de production",
+      "intro": "Chaque levier seul, face à la référence. Une variante est un autre plan, planté avant l’année 1 comme la référence ; les arbres retirés n’économisent aucun investissement.",
+      "trees": {
+        "title": "Plus ou moins d’arbres",
+        "input": "Arbres ajoutés (négatif pour retirer)"
+      },
+      "yieldPct": {
+        "title": "Rendement par arbre",
+        "input": "Variation du rendement par arbre (%)"
+      },
+      "loss": {
+        "title": "Moins de pertes",
+        "input": "Taux de perte (0 à 1)"
+      },
+      "lossDisabled": "Saisissez d’abord le taux de perte de la référence : un taux plus bas a besoin d’un point de comparaison.",
+      "lossNote": "La référence perd {{rate}} de sa récolte. Saisissez un taux plus bas pour voir son effet.",
+      "enterValue": "Saisissez une valeur pour voir son effet.",
+      "computing": "Calcul…",
+      "noAdditional": "Aucun investissement supplémentaire",
+      "yield": "Rendement",
+      "revenue": "Chiffre d’affaires",
+      "annualBenefit": "Bénéfice annuel",
+      "additionalInvestment": "Invest. suppl.",
+      "roi": "ROI",
+      "additionalPayback": "Délai de l’invest. suppl.",
+      "noPrice": "Saisissez un prix au kg dans la référence pour calculer le chiffre d’affaires."
+    },
+    "benefit": {
+      "title": "Bénéfice annuel",
+      "intro": "Les leviers saisis plus haut, appliqués ensemble, sur une année de pleine production. Chaque ligne est l’apport d’un levier, dans cet ordre : arbres, rendement par arbre, pertes, puis le coût variable de ce qui est vendu en plus. Les lignes s’additionnent pour donner le total.",
+      "noLever": "Saisissez au moins un levier plus haut pour voir le bénéfice annuel des leviers ensemble.",
+      "computing": "Calcul du bénéfice annuel…",
+      "error": "Le bénéfice annuel n’a pas pu être calculé",
+      "noPrice": "Saisissez un prix au kg dans la référence pour calculer le bénéfice annuel.",
+      "conversionNote": "En {{unit}}, chaque montant est converti séparément : le total peut différer d’une unité de la somme des lignes.",
+      "additionalInvestment": "Investissement supplémentaire",
+      "additionalPayback": "Délai de retour de l’investissement supplémentaire",
+      "assumptions": "Hypothèses",
+      "typeColumn": "Type de bénéfice",
+      "amountColumn": "Montant ({{unit}})",
+      "detailsColumn": "Détails",
+      "total": "BÉNÉFICE ANNUEL TOTAL",
+      "totalDetails": "Les lignes ci-dessus, additionnées.",
+      "sourced": "{{value}} ({{source}})",
+      "perKg": "{{value}} le kg",
+      "trees": "Arbres : {{value}}",
+      "yieldPerTree": "Rendement par arbre : {{value}}",
+      "pricePerKg": "Prix au kg : {{value}}",
+      "lossRateMissing": "Taux de perte : non saisi, les quantités sont donc avant pertes",
+      "lossRate": "Taux de perte : {{value}}",
+      "variableCostMissing": "Coût d’exploitation variable : non saisi",
+      "variableCost": "Coût d’exploitation variable : {{value}}",
+      "costPerTreeMissing": "Coût par arbre ajouté : non saisi",
+      "costPerTree": "Coût par arbre ajouté : {{value}}",
+      "treesAdded": "Arbres ajoutés : {{value}} (saisi plus haut)",
+      "yieldChange": "Variation du rendement par arbre : {{value}} (saisi plus haut)",
+      "variantLossRate": "Taux de perte de la variante : {{value}} (saisi plus haut)",
+      "treeCountMore": "Arbres supplémentaires",
+      "treeCountLess": "Moins d’arbres",
+      "yieldPerTreeMore": "Rendement par arbre plus élevé",
+      "yieldPerTreeLess": "Rendement par arbre plus faible",
+      "lossRateMore": "Réduction des pertes",
+      "lossRateLess": "Pertes plus élevées",
+      "variableCostMore": "Coût d’exploitation supplémentaire",
+      "variableCostLess": "Coût d’exploitation économisé",
+      "factors": "{{quantity}} × {{price}}/kg",
+      "variableCostFactors": "{{quantity}} × {{price}}/kg de coût variable"
+    },
+    "cashFlow": {
+      "title": "Flux de trésorerie par année",
+      "yearsShown": "Années affichées :",
+      "computing": "Calcul des années…",
+      "error": "Les années n’ont pas pu être calculées",
+      "paybackYear": "Délai avec phases de croissance : année {{year}}",
+      "enterPrice": "Saisissez un prix au kg pour calculer le délai de retour.",
+      "paybackNotWithin": "Délai avec phases de croissance : pas en {{years}} ans",
+      "payback": "Retour",
+      "age_one": "{{count}} an",
+      "age_other": "{{count}} ans",
+      "columns": {
+        "year": "Année",
+        "age": "Âge",
+        "growthPhase": "Phase de croissance",
+        "yieldShare": "Part de rendement",
+        "harvest": "Récolte (kg)",
+        "sellable": "Vendable (kg)",
+        "revenue": "Chiffre d’affaires ({{unit}})",
+        "operatingCost": "Coût d’exploitation ({{unit}})",
+        "netBenefit": "Bénéfice net ({{unit}})",
+        "cumulative": "Cumul ({{unit}})"
+      },
+      "note": "Les arbres sont tous plantés avant l’année 1 : l’année n, ils ont n − 1 ans et donnent la part du plein rendement de leur phase de croissance. L’investissement est engagé avant l’année 1, et le coût fixe court dès l’année 1, avec ou sans récolte."
+    },
+    "form": {
+      "newTitle": "Saisir un scénario",
+      "intro": "Chaque résultat est calculé par le serveur à partir de ces valeurs. Une source est facultative : laissée vide, user_entry est enregistré pour une nouvelle valeur, et la source enregistrée reste tant que sa valeur ne change pas.",
+      "name": "Nom",
+      "variety": "Variété",
+      "currency": "Devise",
+      "currencyNote": "Tous les montants ci-dessous sont dans cette devise.",
+      "reference": "Référence de {{variety}} : {{yield}} ({{source}}).",
+      "useReference": "Utiliser cette valeur",
+      "recorded": "Enregistré : {{source}}",
+      "cancel": "Annuler",
+      "save": "Enregistrer le scénario",
+      "saving": "Enregistrement…",
+      "fields": {
+        "treeCount": {
+          "label": "Arbres",
+          "note": "Tous plantés avant l’année 1.",
+          "source": "Source des arbres"
+        },
+        "yieldPerTreeKg": {
+          "label": "Rendement par arbre (kg par an, pleine production)",
+          "source": "Source du rendement par arbre"
+        },
+        "lossRate": {
+          "label": "Taux de perte (0 à 1)",
+          "note": "Part de la récolte perdue avant la vente, 0,15 pour 15 %. Vide : les chiffres sont avant pertes.",
+          "source": "Source du taux de perte"
+        },
+        "pricePerKg": {
+          "label": "Prix au kg",
+          "note": "Prix de vente des mangues fraîches. Vide : aucun chiffre d’affaires n’est calculé.",
+          "source": "Source du prix au kg"
+        },
+        "annualFixedCost": {
+          "label": "Coût d’exploitation fixe (par an)",
+          "source": "Source du coût d’exploitation fixe"
+        },
+        "variableCostPerKg": {
+          "label": "Coût d’exploitation variable (par kg vendu)",
+          "note": "Comme l’emballage ou le transport. Vide : le coût d’exploitation est le coût fixe seul.",
+          "source": "Source du coût d’exploitation variable"
+        },
+        "initialInvestment": {
+          "label": "Investissement",
+          "source": "Source de l’investissement"
+        },
+        "costPerAdditionalTree": {
+          "label": "Coût par arbre ajouté",
+          "note": "Plant et plantation, pour une variante avec plus d’arbres.",
+          "source": "Source du coût par arbre ajouté"
+        }
+      }
+    },
+    "messages": {
+      "nameRequired": "Le nom est obligatoire.",
+      "nameTooLong": "Le nom doit faire au plus {{max}} caractères.",
+      "varietyTooLong": "La variété doit faire au plus {{max}} caractères.",
+      "treeCount": "Le nombre d’arbres doit être un entier de 1 à 1 000 000.",
+      "yieldPerTreeKg": "Le rendement par arbre doit être supérieur à 0 et d’au plus 1 000 kg, avec au plus 1 décimale.",
+      "lossRate": "Le taux de perte doit être compris entre 0 et 1, avec au plus 3 décimales.",
+      "pricePerKg": "Le prix au kg doit être supérieur à 0, avec au plus 4 décimales.",
+      "currency": "La devise est obligatoire.",
+      "annualFixedCostRequired": "Le coût d’exploitation fixe est obligatoire.",
+      "annualFixedCost": "Le coût d’exploitation fixe doit être de 0 ou plus, avec au plus 2 décimales.",
+      "variableCostPerKg": "Le coût d’exploitation variable doit être de 0 ou plus, avec au plus 4 décimales.",
+      "initialInvestmentRequired": "L’investissement est obligatoire.",
+      "initialInvestment": "L’investissement doit être supérieur à 0, avec au plus 2 décimales.",
+      "costPerAdditionalTree": "Le coût par arbre ajouté doit être de 0 ou plus, avec au plus 2 décimales.",
+      "source": "La source doit faire au plus {{max}} caractères."
+    },
+    "variantMessages": {
+      "treeCountChange": "Les arbres ajoutés doivent être un entier de -1 000 000 à 1 000 000.",
+      "yieldPerTreeChangePct": "La variation doit être supérieure à -100 % et d’au plus 1 000 %, avec au plus 1 décimale.",
+      "lossRate": "Le taux de perte doit être compris entre 0 et 1, avec au plus 3 décimales.",
+      "additionalInvestment": "L’investissement supplémentaire doit être de 0 ou plus, avec au plus 2 décimales."
+    },
+    "format": {
+      "percent": "{{value}} %",
+      "points": "{{value}} pts",
+      "xof": "{{value}} FCFA",
+      "years_one": "{{value}} an",
+      "years_other": "{{value}} ans",
+      "trees_one": "{{value}} arbre",
+      "trees_other": "{{value}} arbres"
+    }
   }
 }
