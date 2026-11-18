@@ -1,15 +1,12 @@
-import { CircleCheck, TriangleAlert } from "lucide-react";
+import { CircleCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, ErrorState, Skeleton } from "../../../shared/ui";
 import { useHealthFindings } from "../hooks/useHealthFindings";
 import { useNurseryBatches } from "../hooks/useNurseryBatches";
 import { usePlantAlerts } from "../hooks/usePlantAlerts";
 import { formatBlock } from "../utils/format";
 import OverviewAlertRow from "./OverviewAlertRow";
-import { ALERT_COLUMNS, CARD, CARD_CAPTION, CARD_TITLE, ERROR_BOX, ICON_SIZE, PRIMARY_BUTTON, SKELETON } from "./plantsStyles";
-
-/** What the list covers; the day is the one under the page title. */
-function scopeSentence(blockCode) {
-    return blockCode ? `${formatBlock(blockCode)}. Stock alerts show under All blocks.` : "Most urgent first.";
-}
+import { ALERT_COLUMNS } from "./overviewAlertColumns";
 
 /** Values by id, to name the batch or the tree an alert points at; empty until the list is there. */
 function byId(items, pick) {
@@ -27,50 +24,47 @@ function byId(items, pick) {
  * row names the nursery or the block.
  */
 export default function OverviewAlertsSection({ blockCode }) {
+    const { t } = useTranslation("plants");
     const { data, isPending, isError, refetch, isFetching } = usePlantAlerts({ blockCode });
     const batchCodes = byId(useNurseryBatches().data, (batch) => batch.batchCode);
     const treeLabels = byId(useHealthFindings().data, (finding) => finding.treeLabel);
 
-    return (
-        // A dashboard tile: the title sits in the card, as on the charts below.
-        <section aria-labelledby="overview-alerts-title" className={`flex flex-col gap-2 ${CARD}`}>
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 id="overview-alerts-title" className={CARD_TITLE}>
-                    Alerts
-                </h2>
-                <p className={CARD_CAPTION}>{scopeSentence(blockCode)}</p>
-            </div>
+    // What the list covers; the day is the one under the page title.
+    const scope = blockCode
+        ? t("overview.alerts.scopeBlock", { block: formatBlock(blockCode) })
+        : t("overview.alerts.scopeAll");
 
+    return (
+        <Card
+            aria-labelledby="overview-alerts-title"
+            title={<span id="overview-alerts-title">{t("overview.alerts.title")}</span>}
+            subtitle={scope}
+        >
             {isPending && (
                 // Gray blocks in the place of the first rows; the sentence is for screen readers.
                 <div role="status" className="flex flex-col gap-3 py-2">
-                    <span className="sr-only">Loading alerts…</span>
-                    <div aria-hidden="true" className={`h-4 w-full ${SKELETON}`} />
-                    <div aria-hidden="true" className={`h-4 w-5/6 ${SKELETON}`} />
-                    <div aria-hidden="true" className={`h-4 w-2/3 ${SKELETON}`} />
+                    <span className="sr-only">{t("overview.alerts.loading")}</span>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-4 w-2/3" />
                 </div>
             )}
 
             {isError && (
-                <div className={ERROR_BOX}>
-                    <div className="flex items-start gap-2">
-                        <TriangleAlert size={ICON_SIZE} className="mt-0.5 shrink-0 text-error" />
-                        <div>
-                            <p className="text-sm font-bold text-on-background">Alerts are unavailable.</p>
-                            <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
-                        </div>
-                    </div>
-                    <button type="button" onClick={() => refetch()} disabled={isFetching} className={PRIMARY_BUTTON}>
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <ErrorState
+                    className="py-6"
+                    message={`${t("overview.alerts.error")} ${t("common.checkConnection")}`}
+                    onRetry={() => refetch()}
+                    retrying={isFetching}
+                    retryLabel={t("common.retry")}
+                />
             )}
 
             {!isPending && !isError && data.alerts.length === 0 && (
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CircleCheck size={ICON_SIZE} aria-hidden="true" className="shrink-0 text-success" />
-                    Nothing needs attention today.
-                </div>
+                <p className="flex items-center gap-2 text-sm text-text">
+                    <CircleCheck size={16} aria-hidden="true" className="shrink-0 text-success-fg" />
+                    {t("overview.alerts.empty")}
+                </p>
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
@@ -78,15 +72,15 @@ export default function OverviewAlertsSection({ blockCode }) {
                     {/* Column names for the eye from lg up; each row reads in full on its own. */}
                     <div
                         aria-hidden="true"
-                        className={`hidden gap-x-4 border-b border-gray-200 pb-1 text-xs font-semibold text-gray-600 lg:grid ${ALERT_COLUMNS}`}
+                        className="hidden gap-x-4 border-b border-border-divider pb-1 text-sm text-text-muted lg:grid lg:grid-cols-12"
                     >
-                        <span>Priority</span>
-                        <span>Where</span>
-                        <span>Issue</span>
-                        <span>When</span>
-                        <span />
+                        <span className={ALERT_COLUMNS.priority}>{t("overview.alerts.priority")}</span>
+                        <span className={ALERT_COLUMNS.place}>{t("overview.alerts.where")}</span>
+                        <span className={ALERT_COLUMNS.issue}>{t("overview.alerts.issue")}</span>
+                        <span className={ALERT_COLUMNS.when}>{t("overview.alerts.when")}</span>
+                        <span className={ALERT_COLUMNS.action} />
                     </div>
-                    <ul className="flex flex-col divide-y divide-gray-200">
+                    <ul className="flex flex-col">
                         {data.alerts.map((alert) => (
                             <OverviewAlertRow
                                 key={`${alert.type}-${alert.varietyId}-${alert.treatmentId}-${alert.findingId}-${alert.fertilizerId}-${alert.batchId}`}
@@ -98,6 +92,6 @@ export default function OverviewAlertsSection({ blockCode }) {
                     </ul>
                 </div>
             )}
-        </section>
+        </Card>
     );
 }

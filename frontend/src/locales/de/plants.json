@@ -1299,5 +1299,124 @@
       "trees_one": "{{value}} Baum",
       "trees_other": "{{value}} Bäume"
     }
+  },
+  "overview": {
+    "title": "Übersicht",
+    "documentTitle": "Übersicht — Pflanzen",
+    "subtitle": "Ihr Obstgarten heute.",
+    "asOf": "Stand: {{date}}",
+    "kpi": {
+      "region": "Kennzahlen des Tages",
+      "loading": "Kennzahlen des Tages werden geladen…",
+      "error": "Die heutigen Kennzahlen sind nicht verfügbar.",
+      "totalPlants": "Pflanzen gesamt",
+      "totalPlantsNote": "Feldbäume, ohne Anzucht",
+      "inGrowthStage": "In der Wachstumsphase",
+      "inGrowthStageNote": "Etablierung, 0–2 Jahre",
+      "readyForHarvest": "Erntereif",
+      "activeAlerts": "Aktive Warnungen",
+      "criticalNote": "{{count}} kritisch"
+    },
+    "alerts": {
+      "title": "Warnungen",
+      "scopeBlock": "{{block}}. Bestandswarnungen erscheinen unter Alle Blöcke.",
+      "scopeAll": "Dringendste zuerst.",
+      "loading": "Warnungen werden geladen…",
+      "error": "Warnungen sind nicht verfügbar.",
+      "empty": "Heute ist nichts zu tun.",
+      "priority": "Priorität",
+      "where": "Ort",
+      "issue": "Problem",
+      "when": "Wann",
+      "noDate": "Kein Datum",
+      "view": "Anzeigen",
+      "viewLabel": "Anzeigen: {{issue}}, {{place}}, unter {{screen}}"
+    },
+    "alertTypes": {
+      "OPEN_HEALTH_ISSUE": "Gesundheitsproblem noch offen",
+      "PRE_HARVEST_INTERVAL": "Wartezeit vor der Ernte läuft",
+      "LOW_STOCK": "Niedriger Bestand",
+      "NURSERY_READY": "Bereit zum Auspflanzen",
+      "HARVEST_APPROACHING": "Erntezeit naht",
+      "now": "Jetzt"
+    },
+    "places": {
+      "inventory": "Bestand",
+      "batch": "Charge {{code}}",
+      "nursery": "Anzucht",
+      "allBlocks": "Alle Blöcke",
+      "blockTree": "{{block}} · Baum {{tree}}"
+    },
+    "relative": {
+      "today": "heute",
+      "ahead_one": "in {{days}} Tag",
+      "ahead_other": "in {{days}} Tagen",
+      "ago_one": "vor {{days}} Tag",
+      "ago_other": "vor {{days}} Tagen"
+    },
+    "yield": {
+      "title": "Erwarteter und tatsächlicher Ertrag nach Block",
+      "caption_one": "Erwartet und geerntet über {{months}} Monat ab {{from}}.",
+      "caption_other": "Erwartet und geerntet über {{months}} Monate ab {{from}}.",
+      "loading": "Ertrag nach Block wird geladen…",
+      "error": "Ertrag ist nicht verfügbar.",
+      "empty": "Keine gepflanzte Sorte mit Referenzwert in diesem Zeitraum.",
+      "expected": "Erwartet",
+      "actual": "Tatsächlich",
+      "noHarvestExpected": "In diesem Zeitraum keine Ernte erwartet",
+      "noHarvestRecorded": "Noch keine Ernte erfasst",
+      "notCompared": "Gepflanzte Sorten ohne Referenzwert werden nicht verglichen.",
+      "link": "Zu Ernte und Reife"
+    },
+    "maturity": {
+      "title": "Erntereife",
+      "caption": "Bäume nach Reife heute.",
+      "loading": "Reifestatus wird geladen…",
+      "error": "Reife ist nicht verfügbar.",
+      "empty": "Kein gepflanzter Baum vorhanden.",
+      "trees_one": "Baum",
+      "trees_other": "Bäume",
+      "share": "{{trees}} · {{percent}}",
+      "meaningLabel": "{{label}}: ",
+      "meaningSentence": "{{meaning}}.",
+      "labels": {
+        "IMMATURE": "Unreif",
+        "RIPE": "Reif",
+        "READY_FOR_HARVEST": "Erntebereit",
+        "NO_REFERENCE": "Kein Referenzwert"
+      },
+      "meanings": {
+        "IMMATURE": "Ernte noch nicht nahe, junge Bäume eingeschlossen",
+        "RIPE": "Ernte nahe oder wegen einer Wartezeit zurückgestellt",
+        "READY_FOR_HARVEST": "Kann heute gepflückt werden"
+      }
+    },
+    "nursery": {
+      "title": "Überlebensrate der Anzucht nach Charge",
+      "caption": "Alle Anzuchtchargen.",
+      "loading": "Anzuchtchargen werden geladen…",
+      "error": "Anzuchtchargen sind nicht verfügbar.",
+      "empty": "Noch keine Anzuchtcharge.",
+      "batch": "Charge {{code}}",
+      "destination": " · nach {{block}}",
+      "survivedOf": "{{survived}} von {{initial}}",
+      "survived_one": " Pflanze überlebt ({{percent}})",
+      "survived_other": " Pflanzen überlebt ({{percent}})",
+      "lost": " · {{lost}} verloren",
+      "transplanted": "{{transplanted}} ausgepflanzt · {{current}} noch in der Anzucht"
+    },
+    "fertilizer": {
+      "title": "Düngemittelbestand und Warnschwelle",
+      "caption": "Bestand des gesamten Betriebs, nach Einheit.",
+      "loading": "Düngemittelbestand wird geladen…",
+      "error": "Düngemittelbestand ist nicht verfügbar.",
+      "empty": "Noch kein Düngemittel im Katalog.",
+      "stockIn": "Bestand in {{unit}}",
+      "currentStock": "Aktueller Bestand",
+      "alertThreshold": "Warnschwelle",
+      "stock": "Bestand {{quantity}}",
+      "noThreshold": " · Keine Schwelle",
+      "threshold": " · Schwelle {{quantity}}"
+    }
   }
 }
