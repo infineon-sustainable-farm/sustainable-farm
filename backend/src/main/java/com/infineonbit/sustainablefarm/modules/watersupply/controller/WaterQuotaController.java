@@ -42,7 +42,7 @@ public class WaterQuotaController {
     @GetMapping
     public List<WaterQuotaResponse> quotas(
             @RequestParam(required = false) String targetType,
-            @RequestParam(required = false) UUID targetId) {
+            @RequestParam(required = false) Long targetId) {
         if (targetType != null && targetId != null) {
             return quotaService.findQuotas(targetType, targetId);
         }

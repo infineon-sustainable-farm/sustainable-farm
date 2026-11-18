@@ -43,7 +43,7 @@ public class RainwaterHarvestController {
     public Object list(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID sourceId) {
+            @RequestParam(required = false) Long sourceId) {
         if (page == null && size == null && sourceId == null) {
             return rainwaterHarvestService.findAll();
         }

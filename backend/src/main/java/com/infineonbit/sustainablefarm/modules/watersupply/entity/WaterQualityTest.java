@@ -6,7 +6,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "water_quality_tests", indexes = {
@@ -16,7 +15,7 @@ import java.util.UUID;
 public class WaterQualityTest extends BaseEntity {
     @NotNull
     @Column(nullable = false)
-    private UUID sourceId;
+    private Long sourceId;
 
     private Double ph;
     private Double temperatureCelsius;
@@ -25,11 +24,11 @@ public class WaterQualityTest extends BaseEntity {
     private Double salinityPpt;
     private Instant testDate;
 
-    public UUID getSourceId() {
+    public Long getSourceId() {
         return sourceId;
     }
 
-    public void setSourceId(UUID sourceId) {
+    public void setSourceId(Long sourceId) {
         this.sourceId = sourceId;
     }
 

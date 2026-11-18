@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface RainwaterHarvestRepository extends JpaRepository<RainwaterHarvest, UUID> {
-    Page<RainwaterHarvest> findBySourceId(UUID sourceId, Pageable pageable);
+    Page<RainwaterHarvest> findBySourceId(Long sourceId, Pageable pageable);
 
     /**
      * Rainwater volume recovered over a semi-open interval [start, end[: computed in the
@@ -24,5 +24,5 @@ public interface RainwaterHarvestRepository extends JpaRepository<RainwaterHarve
     /** Rain gauge readings of the given sources over [start, end[, oldest first (callers pass a non-empty list). */
     @Query("select h from RainwaterHarvest h where h.sourceId in :sourceIds "
             + "and h.captureDate >= :start and h.captureDate < :end order by h.captureDate asc")
-    List<RainwaterHarvest> findBySourcesBetween(Collection<UUID> sourceIds, Instant start, Instant end);
+    List<RainwaterHarvest> findBySourcesBetween(Collection<Long> sourceIds, Instant start, Instant end);
 }

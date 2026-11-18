@@ -13,12 +13,11 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionR
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceUpdateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Farm;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterLevelHistory;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
@@ -38,7 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class WaterServiceTest {
     @Mock
-    private FarmRepository farmRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private WaterSourceRepository waterSourceRepository;
@@ -66,9 +65,9 @@ class WaterServiceTest {
 
     @Test
     void createSourceRejectsUnknownFarm() {
-        UUID farmId = UUID.randomUUID();
+        Long farmId = 111L;
         WaterSourceCreateRequest source = new WaterSourceCreateRequest(farmId, "Source", "tank", 100.0, 50.0, null, null);
-        when(farmRepository.findById(farmId)).thenReturn(Optional.empty());
+        when(farmDirectory.farmExists(farmId)).thenReturn(false);
         WaterService service = service();
 
         assertThrows(NotFoundException.class, () -> service.createSource(source));
@@ -77,12 +76,12 @@ class WaterServiceTest {
 
     @Test
     void createConsumptionRejectsSourceFromAnotherFarm() {
-        UUID farmId = UUID.randomUUID();
-        UUID sourceId = UUID.randomUUID();
+        Long farmId = 112L;
+        Long sourceId = 113L;
         WaterSource source = new WaterSource();
-        source.setFarmId(UUID.randomUUID());
+        source.setFarmId(121L);
         WaterConsumptionCreateRequest consumption = new WaterConsumptionCreateRequest(farmId, sourceId, 10.0, java.time.Instant.now(), null, null);
-        when(farmRepository.findById(farmId)).thenReturn(Optional.of(new com.infineonbit.sustainablefarm.modules.watersupply.entity.Farm()));
+        when(farmDirectory.farmExists(farmId)).thenReturn(true);
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.of(source));
         WaterService service = service();
 
@@ -92,7 +91,7 @@ class WaterServiceTest {
 
     @Test
     void createQualityTestRejectsUnknownSource() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 114L;
         WaterQualityCreateRequest test = new WaterQualityCreateRequest(sourceId, 7.0, null, null, null, null, java.time.Instant.now());
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.empty());
         WaterService service = service();
@@ -103,12 +102,12 @@ class WaterServiceTest {
 
     @Test
     void createConsumptionNormalizesLotAndActivityAndExposesTheBlock() {
-        UUID farmId = UUID.randomUUID();
-        UUID sourceId = UUID.randomUUID();
-        UUID zoneId = UUID.randomUUID();
+        Long farmId = 115L;
+        Long sourceId = 116L;
+        Long zoneId = 117L;
         WaterSource source = new WaterSource();
         source.setFarmId(farmId);
-        when(farmRepository.findById(farmId)).thenReturn(Optional.of(new Farm()));
+        when(farmDirectory.farmExists(farmId)).thenReturn(true);
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.of(source));
         when(waterConsumptionRepository.save(any(WaterConsumption.class))).thenAnswer(call -> call.getArgument(0));
         when(zoneBlockResolver.blockCodesForZone(zoneId)).thenReturn(List.of("A"));
@@ -126,9 +125,9 @@ class WaterServiceTest {
 
     @Test
     void createConsumptionRejectsUnknownActivity() {
-        UUID farmId = UUID.randomUUID();
+        Long farmId = 118L;
         WaterConsumptionCreateRequest request = new WaterConsumptionCreateRequest(
-                farmId, UUID.randomUUID(), 10.0, Instant.now(), null, null, "LOT-1", "painting");
+                farmId, 119L, 10.0, Instant.now(), null, null, "LOT-1", "painting");
 
         assertThrows(IllegalArgumentException.class, () -> service().createConsumption(request));
         verify(waterConsumptionRepository, never()).save(any());
@@ -136,7 +135,7 @@ class WaterServiceTest {
 
     @Test
     void updateSourceRecordsLevelHistoryOnlyWhenTheLevelChanges() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 119L;
         WaterSource source = new WaterSource();
         source.setId(sourceId);
         source.setCurrentLevelLiters(500.0);
@@ -156,7 +155,7 @@ class WaterServiceTest {
 
     @Test
     void levelHistoryRejectsAnInvertedWindow() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 120L;
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.of(new WaterSource()));
 
         assertThrows(IllegalArgumentException.class, () -> service().sourceLevelHistory(
@@ -165,7 +164,7 @@ class WaterServiceTest {
 
     private WaterService service() {
         return new WaterService(
-                farmRepository,
+                farmDirectory,
                 waterSourceRepository,
                 waterConsumptionRepository,
                 waterQualityTestRepository,

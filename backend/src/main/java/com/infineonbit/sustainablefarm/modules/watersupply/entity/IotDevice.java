@@ -7,7 +7,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Registry of an IoT sensor connected to the module (level, flow, quality, rain, soil, clogging).

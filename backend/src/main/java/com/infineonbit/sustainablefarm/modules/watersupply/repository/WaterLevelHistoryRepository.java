@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WaterLevelHistoryRepository extends JpaRepository<WaterLevelHistory, UUID> {
     List<WaterLevelHistory> findBySourceIdAndMeasuredAtBetweenOrderByMeasuredAtAsc(
-            UUID sourceId, Instant from, Instant to);
+            Long sourceId, Instant from, Instant to);
 }

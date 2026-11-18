@@ -42,6 +42,20 @@ Chaque concept a un propriétaire unique ; les autres modules le référencent p
 | cropstorage | Aucun code sur develop | Ni codé ni intégré, absent du modèle partagé et de la navigation. Le stub crop-storage de producttransformation garde son comportement, seul son appel HTTP vers lui-même devient un appel direct (A3) |
 | sitesecurity | Classé « Ébauche » (Q6) | Code laissé tel quel, retiré de la navigation, aucune table ni API touchée. T43 et T44 restent bloquées ; son gestionnaire d'erreurs reste une exception gelée du test ArchUnit |
 
+### Modèle du site (T15)
+
+Le champ (`Field`) de watersupply et le bloc de plants désignent la même parcelle : il n'y a qu'une entité, `Block`.
+
+| Élément | Décision |
+|---|---|
+| Hiérarchie | `farm` (Farm) vers `block` (Block) vers `zone` (Zone), clés `Long` de `core.entity.BaseEntity`, FK `block.farm_id` et `zone.block_id` |
+| Code de bloc | `block.code` (« A », « B2 »), unique sur toutes les fermes, en majuscules ; vide tant que le bloc n'est pas relié à plants |
+| `zone_block_mapping` | Supprimée : le bloc d'une zone est `zone.block_id`, son code Plants est `block.code`. Une zone n'arrose plus qu'un bloc, et toutes les zones d'un bloc partagent son code |
+| API REST | Le module `farm` sert `/api/farms`, `/api/fields` (les blocs, sous leur nom watersupply), `/api/zones` et `/api/water/zone-block-mappings` aux mêmes chemins et champs JSON ; les identifiants deviennent des nombres. Relier une zone donne son code au bloc de la zone, la délier l'efface (409 si le bloc porte déjà un autre code ou si le code appartient à un autre bloc) |
+| Lecture par les autres modules | `farm.api.FarmDirectory` (ferme, bloc par id ou par code, blocs d'une ferme, zones d'un bloc ou d'une ferme) et ses records `FarmDto`, `BlockDto`, `ZoneDto` |
+| Clés étrangères entre modules | Colonne `Long` simple dans le module consommateur, contrainte déclarée par un bean `core.schema.CrossModuleForeignKey` vers `FarmDirectory.FARM_TABLE`, `BLOCK_TABLE` ou `ZONE_TABLE` ; une ligne encore référencée ne peut pas être supprimée (409) |
+| Attributs d'irrigation | Méthode d'irrigation, coefficient cultural et goutteurs restent sur `Zone` pour ne pas changer le JSON de `/api/zones` ; leur déplacement vers watersupply est à reconsidérer avec T36 |
+
 ## Conséquences
 
 | Type | Conséquence |

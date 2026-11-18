@@ -14,9 +14,13 @@ VALUES (
 )
 ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO farms (id, created_at, name, description, address, latitude, longitude, area_hectares)
+-- Site referential of the farm module (Long ids): one farm, block A (the Plants block of the
+-- Keitt variety seeded by PlantsDataSeeder) and one irrigated zone. Explicit ids keep the rows
+-- below relationally valid; the identity sequences are moved past them at the end of this block.
+INSERT INTO farm (id, created_at, updated_at, name, description, address, latitude, longitude, area_hectares)
 VALUES (
-    '20000000-0000-0000-0000-000000000001',
+    1,
+    '2026-01-01T08:05:00Z',
     '2026-01-01T08:05:00Z',
     'Ferme Demo Nord',
     'Ferme pilote pour le module water supply.',
@@ -27,11 +31,13 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO fields (id, created_at, farm_id, name, area_hectares, crop_type, soil_type, coordinates)
+INSERT INTO block (id, created_at, updated_at, farm_id, code, name, area_hectares, crop_type, soil_type, coordinates)
 VALUES (
-    '30000000-0000-0000-0000-000000000001',
+    1,
     '2026-01-01T08:10:00Z',
-    '20000000-0000-0000-0000-000000000001',
+    '2026-01-01T08:10:00Z',
+    1,
+    'A',
     'Champ Maraicher A',
     6.8,
     'legumes',
@@ -40,22 +46,24 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO zones (id, created_at, field_id, name, area_hectares, irrigation_method)
+INSERT INTO zone (id, created_at, updated_at, block_id, name, area_hectares, irrigation_method)
 VALUES (
-    '40000000-0000-0000-0000-000000000001',
+    1,
     '2026-01-01T08:15:00Z',
-    '30000000-0000-0000-0000-000000000001',
+    '2026-01-01T08:15:00Z',
+    1,
     'Zone Goutte A',
     2.4,
     'drip'
 )
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO water_sources (id, created_at, farm_id, name, type, capacity_liters, current_level_liters, latitude, longitude)
+INSERT INTO water_sources (id, created_at, updated_at, farm_id, name, type, capacity_liters, current_level_liters, latitude, longitude)
 VALUES (
-    '50000000-0000-0000-0000-000000000001',
+    1,
     '2026-01-01T08:20:00Z',
-    '20000000-0000-0000-0000-000000000001',
+    '2026-01-01T08:20:00Z',
+    1,
     'Citerne principale',
     'rain_tank',
     50000,
@@ -65,12 +73,17 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
+SELECT setval(pg_get_serial_sequence('farm', 'id'), GREATEST((SELECT MAX(id) FROM farm), 1));
+SELECT setval(pg_get_serial_sequence('block', 'id'), GREATEST((SELECT MAX(id) FROM block), 1));
+SELECT setval(pg_get_serial_sequence('zone', 'id'), GREATEST((SELECT MAX(id) FROM zone), 1));
+SELECT setval(pg_get_serial_sequence('water_sources', 'id'), GREATEST((SELECT MAX(id) FROM water_sources), 1));
+
 INSERT INTO water_consumption (id, created_at, farm_id, source_id, consumption_liters, consumption_date, irrigation_id)
 VALUES (
     '60000000-0000-0000-0000-000000000001',
     '2026-01-01T08:25:00Z',
-    '20000000-0000-0000-0000-000000000001',
-    '50000000-0000-0000-0000-000000000001',
+    1,
+    1,
     1250,
     '2026-01-01T09:00:00Z',
     null
@@ -81,7 +94,7 @@ INSERT INTO water_quality_tests (id, created_at, source_id, ph, temperature_cels
 VALUES (
     '70000000-0000-0000-0000-000000000001',
     '2026-01-01T08:30:00Z',
-    '50000000-0000-0000-0000-000000000001',
+    1,
     7.1,
     18.5,
     2.2,
@@ -95,7 +108,7 @@ INSERT INTO irrigation_schedules (id, created_at, zone_id, start_time, duration_
 VALUES (
     '80000000-0000-0000-0000-000000000001',
     '2026-01-01T08:35:00Z',
-    '40000000-0000-0000-0000-000000000001',
+    1,
     '2026-01-02T06:00:00Z',
     45,
     1500,
@@ -133,7 +146,7 @@ INSERT INTO rainwater_harvests (id, created_at, source_id, catchment_area_m2, ra
 VALUES (
     'b0000000-0000-0000-0000-000000000001',
     '2026-01-01T08:50:00Z',
-    '50000000-0000-0000-0000-000000000001',
+    1,
     180,
     12,
     0.82,
@@ -158,7 +171,7 @@ INSERT INTO drip_maintenance_logs (
 VALUES (
     'c0000000-0000-0000-0000-000000000001',
     '2026-01-01T08:55:00Z',
-    '40000000-0000-0000-0000-000000000001',
+    1,
     '2026-01-03T07:30:00Z',
     'inspection',
     true,

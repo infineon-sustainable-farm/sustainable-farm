@@ -4,7 +4,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterUnavailab
 import java.time.Instant;
 import java.util.UUID;
 
-public record WaterUnavailabilityResponse(UUID id, String scope, UUID scopeId, Instant startAt,
+public record WaterUnavailabilityResponse(UUID id, String scope, Long scopeId, Instant startAt,
                                           Instant endAt, String reason, String status,
                                           Instant createdAt) {
     public static WaterUnavailabilityResponse from(WaterUnavailability outage) {

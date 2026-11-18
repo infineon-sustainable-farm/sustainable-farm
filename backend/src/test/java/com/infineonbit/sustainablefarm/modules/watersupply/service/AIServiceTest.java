@@ -11,10 +11,10 @@ import static org.mockito.Mockito.when;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -35,7 +35,7 @@ class AIServiceTest {
     private WaterSourceRepository waterSourceRepository;
 
     @Mock
-    private FieldZoneRepository fieldZoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private WaterConsumptionRepository waterConsumptionRepository;
@@ -46,7 +46,7 @@ class AIServiceTest {
     @Test
     void recommendationsFollowTheReserveLevel() {
         stubReserve(1000d, 100d);
-        when(fieldZoneRepository.findAll()).thenReturn(List.of());
+        when(farmDirectory.listZones()).thenReturn(List.of());
 
         List<Map<String, Object>> recommendations = service().recommendations();
 
@@ -73,7 +73,7 @@ class AIServiceTest {
     @Test
     void recommendationsMentionDripEquippedZones() {
         stubReserve(1000d, 800d);
-        when(fieldZoneRepository.findAll()).thenReturn(List.of(zone("drip"), zone("goutte-a-goutte"), zone("sprinkler")));
+        when(farmDirectory.listZones()).thenReturn(List.of(zone("drip"), zone("goutte-a-goutte"), zone("sprinkler")));
 
         List<Map<String, Object>> recommendations = service().recommendations();
 
@@ -145,7 +145,7 @@ class AIServiceTest {
     /** Priority of the first recommendation for a given reserve (capacity, level). */
     private String reservePriority(double capacity, double level) {
         stubReserve(capacity, level);
-        when(fieldZoneRepository.findAll()).thenReturn(List.of());
+        when(farmDirectory.listZones()).thenReturn(List.of());
         return String.valueOf(service().recommendations().get(0).get("priority"));
     }
 
@@ -156,10 +156,8 @@ class AIServiceTest {
         when(waterSourceRepository.findAll()).thenReturn(List.of(source));
     }
 
-    private Zone zone(String irrigationMethod) {
-        Zone zone = new Zone();
-        zone.setIrrigationMethod(irrigationMethod);
-        return zone;
+    private ZoneDto zone(String irrigationMethod) {
+        return TestZones.zone().irrigationMethod(irrigationMethod).build();
     }
 
     /** One consumption measurement per day, over the 7-day analysis window (D-0 to D-6). */
@@ -177,6 +175,6 @@ class AIServiceTest {
     }
 
     private AIService service() {
-        return new AIService(waterSourceRepository, fieldZoneRepository, waterConsumptionRepository, alertService);
+        return new AIService(waterSourceRepository, farmDirectory, waterConsumptionRepository, alertService);
     }
 }

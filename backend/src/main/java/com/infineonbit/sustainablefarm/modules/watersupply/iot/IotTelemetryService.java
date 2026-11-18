@@ -39,11 +39,11 @@ public class IotTelemetryService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IotTelemetryService.class);
 
     /** Input record: a measurement from a device. */
-    public record Telemetry(String deviceId, String type, UUID sourceId, UUID zoneId,
+    public record Telemetry(String deviceId, String type, Long sourceId, Long zoneId,
                             Map<String, Object> values, Instant timestamp) {}
 
     /** Individual result of the routing. */
-    public record Result(String type, UUID sourceId, String status, String message) {}
+    public record Result(String type, Long sourceId, String status, String message) {}
 
     private final WaterSourceRepository waterSourceRepository;
     private final WaterService waterService;
@@ -88,8 +88,8 @@ public class IotTelemetryService {
         Map<String, Object> node = (Map<String, Object>) nodeMap;
         String deviceId = node.get("device_id") == null ? null : String.valueOf(node.get("device_id"));
         String type = node.get("type") == null ? null : String.valueOf(node.get("type"));
-        UUID sourceId = node.get("source_id") == null ? null : UUID.fromString(String.valueOf(node.get("source_id")));
-        UUID zoneId = node.get("zone_id") == null ? null : UUID.fromString(String.valueOf(node.get("zone_id")));
+        Long sourceId = node.get("source_id") == null ? null : Long.valueOf(String.valueOf(node.get("source_id")).trim());
+        Long zoneId = node.get("zone_id") == null ? null : Long.valueOf(String.valueOf(node.get("zone_id")).trim());
         Instant timestamp = node.get("timestamp") == null ? Instant.now()
                 : Instant.parse(String.valueOf(node.get("timestamp")));
         Map<String, Object> values = new java.util.LinkedHashMap<>();
@@ -319,7 +319,7 @@ public class IotTelemetryService {
         return new Result("clogging", t.zoneId(), "processed", "Clogging " + severity + " recorded");
     }
 
-    private WaterSource requireSource(UUID sourceId) {
+    private WaterSource requireSource(Long sourceId) {
         if (sourceId == null) {
             throw new IllegalArgumentException("Missing 'source_id' field");
         }

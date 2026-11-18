@@ -4,12 +4,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record WaterConsumptionUpdateRequest(
-        UUID farmId,
-        UUID sourceId,
+        Long farmId,
+        Long sourceId,
         Double consumptionLiters,
         Instant consumptionDate,
         UUID irrigationId,
-        UUID zoneId,
+        Long zoneId,
         String lotId,
         String activity) {
 }
