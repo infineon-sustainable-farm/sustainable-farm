@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { Plus, Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Card, Field, Input, Modal, PageHeader, Select } from "../../../../shared/ui";
 import {
     useFeedbackList,
     useRouteFeedback,
@@ -8,57 +10,28 @@ import {
     useSurveys,
 } from "../../hooks/useFeedback";
 import { useVisitors } from "../../hooks/useVisitors";
-import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
+import { useLabels } from "../../utils/labels";
 import FeedbackTable from "../FeedbackTable";
-import Modal from "../Modal";
 import SendSurveyForm from "../Forms/SendSurveyForm";
 import SurveysTable from "../SurveysTable";
 import TabletSurveyForm from "../Forms/TabletSurveyForm";
+import { LoadError, LoadingBlock } from "../LoadState";
 
-/**
- * Error/retry block shared by the three feedback sections, so each one can
- * fail independently without blanking the screen.
- */
-function SectionError({ title, onRetry, isRetrying }) {
-    return (
-        <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-10 text-center">
-            <TriangleAlert size={28} className="text-error" />
-            <div>
-                <p className="font-heading text-base font-bold text-ink">{title}</p>
-                <p className="mt-1 text-sm text-muted">The request to the server did not succeed.</p>
-            </div>
-            <button
-                type="button"
-                onClick={onRetry}
-                disabled={isRetrying}
-                className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
-            >
-                {isRetrying ? "Retrying…" : "Retry"}
-            </button>
-        </div>
-    );
-}
-
-function SectionLoading({ label }) {
-    return (
-        <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-10 text-sm text-muted">
-            <Loader2 size={18} className="animate-spin" />
-            {label}
-        </div>
-    );
-}
+const SURVEY_STATUSES = ["SENT", "RECEIVED"];
+const NO_FILTER = { visitorId: "", from: "", to: "" };
 
 export default function FeedbackPage() {
+    const { t } = useTranslation("visitormanagement");
+    const labels = useLabels();
     const [sendFormOpen, setSendFormOpen] = useState(false);
     const [tabletFormOpen, setTabletFormOpen] = useState(false);
     const [formKey, setFormKey] = useState(0);
-    const [feedbackFilters, setFeedbackFilters] = useState({ visitorId: "", from: "", to: "" });
+    const [feedbackFilters, setFeedbackFilters] = useState(NO_FILTER);
     const [surveyStatus, setSurveyStatus] = useState("");
 
     /*
-     * The API applies visitorId first and the date range only when both bounds
-     * are given, so the controls clear each other and the range stays idle
-     * until it is complete.
+     * The API applies visitorId first and the date range only when both bounds are given, so the
+     * controls clear each other and the range stays idle until it is complete.
      */
     function updateVisitorFilter(value) {
         setFeedbackFilters({ visitorId: value, from: "", to: "" });
@@ -81,8 +54,8 @@ export default function FeedbackPage() {
             (!feedbackFilters.from && feedbackFilters.to));
 
     useEffect(() => {
-        document.title = "Satisfaction Survey — Visitor Management";
-    }, []);
+        document.title = t("feedback.documentTitle");
+    }, [t]);
 
     const {
         data: feedback,
@@ -109,233 +82,160 @@ export default function FeedbackPage() {
         ? { id: routeMutation.variables?.id, message: routeMutation.error.message }
         : null;
 
+    function closeSendForm() {
+        sendMutation.reset();
+        setSendFormOpen(false);
+    }
+
     return (
-        <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
-                <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
-                    Satisfaction survey
-                </h2>
-
-                <div className="mb-4 rounded-md border-l-[3px] border-primary bg-[#F2FBF9] px-3.5 py-2.5 text-[13px] text-ink">
-                    <span className="font-semibold">Feedback flow:</span> visitors give a quick
-                    rating on-site on the tablet at the wrap-up stop, and the survey link is sent
-                    by email after the visit. All responses are collected here.
-                </div>
-
-                <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <button
-                        type="button"
+        <div className="flex flex-col gap-6 p-6">
+            <PageHeader
+                title={t("feedback.title")}
+                actions={
+                    <Button
+                        icon={Send}
                         onClick={() => {
                             sendMutation.reset();
-                            setSendFormOpen((open) => !open);
+                            setSendFormOpen(true);
                         }}
-                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
                     >
-                        Send survey (email)
-                    </button>
-                    {/* No report endpoint yet; the mockup's button stays inert. */}
-                    <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        className="cursor-not-allowed rounded-md border border-line bg-white px-3.5 py-2 text-xs text-primary opacity-60"
-                    >
-                        Compile report
-                        <span className="sr-only"> (not available yet)</span>
-                    </button>
-                </div>
+                        {t("feedback.sendSurvey")}
+                    </Button>
+                }
+            />
 
-                {sendFormOpen && (
-                    <Modal title="Send survey" onClose={() => setSendFormOpen(false)}>
-                        <SendSurveyForm
-                            visitors={visitors ?? []}
-                            isSubmitting={sendMutation.isPending}
-                            submitError={sendMutation.error?.message}
-                            serverFieldErrors={sendMutation.error?.data?.fieldErrors}
-                            onSubmit={(values) =>
-                                sendMutation.mutate(values, {
-                                    onSuccess: () => setSendFormOpen(false),
-                                })
-                            }
-                            onCancel={() => {
-                                sendMutation.reset();
-                                setSendFormOpen(false);
-                            }}
-                        />
-                    </Modal>
-                )}
+            <p className="rounded-tile bg-primary-tint px-4 py-3 text-sm text-text">
+                <span className="font-semibold">{t("feedback.flowLabel")}</span> {t("feedback.flowText")}
+            </p>
 
-                {visitorsError && (
-                    <p className="mb-4 text-xs text-muted">
-                        Visitors could not be loaded — sending a survey needs a visitor and is
-                        unavailable until the list returns.
-                    </p>
-                )}
+            {visitorsError && <p className="text-xs text-text-muted">{t("feedback.visitorsError")}</p>}
 
-                <div className="mb-3 mt-6.5 flex flex-wrap items-center gap-4">
-                    <h3 className="font-heading text-[17px] font-bold text-ink">
-                        On-site tablet survey (wrap-up stop)
-                    </h3>
-                    <button
-                        type="button"
+            <Modal open={sendFormOpen} onClose={closeSendForm} title={t("feedback.send.title")} size="xl">
+                <SendSurveyForm
+                    visitors={visitors ?? []}
+                    isSubmitting={sendMutation.isPending}
+                    submitError={sendMutation.error?.message}
+                    serverFieldErrors={sendMutation.error?.data?.fieldErrors}
+                    onSubmit={(values) =>
+                        sendMutation.mutate(values, {
+                            onSuccess: () => setSendFormOpen(false),
+                        })
+                    }
+                    onCancel={closeSendForm}
+                />
+            </Modal>
+
+            <Card
+                title={t("feedback.tabletTitle")}
+                subtitle={t("feedback.tabletNote")}
+                actions={
+                    <Button
+                        icon={Plus}
                         onClick={() => {
                             submitMutation.reset();
                             setTabletFormOpen(true);
                             setFormKey((current) => current + 1);
                         }}
-                        className="ml-auto rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
                     >
-                        + New on-site response
-                    </button>
-                </div>
+                        {t("feedback.newResponse")}
+                    </Button>
+                }
+            />
 
-                <p className="text-[11px] text-muted">
-                    Responses collected on the tablet are stored with the ON_SITE origin.
-                </p>
+            <Modal
+                open={tabletFormOpen}
+                onClose={() => setTabletFormOpen(false)}
+                title={t("feedback.tablet.title")}
+                size="xl"
+            >
+                <TabletSurveyForm
+                    key={formKey}
+                    isSubmitting={submitMutation.isPending}
+                    submitError={submitMutation.error?.message}
+                    serverFieldErrors={submitMutation.error?.data?.fieldErrors}
+                    onSubmit={(values) =>
+                        submitMutation.mutate(values, {
+                            onSuccess: () => setTabletFormOpen(false),
+                        })
+                    }
+                    onCancel={() => setTabletFormOpen(false)}
+                />
+            </Modal>
 
-                {tabletFormOpen && (
-                    <Modal
-                        title="On-site tablet survey"
-                        onClose={() => setTabletFormOpen(false)}
-                        widthClass="max-w-3xl"
-                    >
-                        <TabletSurveyForm
-                            key={formKey}
-                            isSubmitting={submitMutation.isPending}
-                            submitError={submitMutation.error?.message}
-                            serverFieldErrors={submitMutation.error?.data?.fieldErrors}
-                            onSubmit={(values) =>
-                                submitMutation.mutate(values, {
-                                    onSuccess: () => setTabletFormOpen(false),
-                                })
-                            }
-                            onCancel={() => setTabletFormOpen(false)}
-                        />
-                    </Modal>
-                )}
-
-                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
-                    Sent surveys (after visit)
-                </h3>
-
-                <div className="mb-4 flex flex-wrap items-end gap-3.5">
-                    <div>
-                        <label
-                            htmlFor="sv-filter-status"
-                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
-                        >
-                            Status
-                        </label>
-                        <select
-                            id="sv-filter-status"
-                            value={surveyStatus}
-                            onChange={(event) => setSurveyStatus(event.target.value)}
-                            className="min-w-[150px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
-                        >
-                            <option value="">All statuses</option>
-                            {["SENT", "RECEIVED"].map((status) => (
+            <Card title={t("feedback.surveysTitle")}>
+                <div className="mb-4 flex flex-wrap items-end gap-4">
+                    <Field label={t("feedback.filters.status")} className="min-w-40">
+                        <Select value={surveyStatus} onChange={(event) => setSurveyStatus(event.target.value)}>
+                            <option value="">{t("feedback.filters.allStatuses")}</option>
+                            {SURVEY_STATUSES.map((status) => (
                                 <option key={status} value={status}>
-                                    {formatEnumLabel(status)}
+                                    {labels.enum(status)}
                                 </option>
                             ))}
-                        </select>
-                    </div>
+                        </Select>
+                    </Field>
                 </div>
 
-                {surveysPending && <SectionLoading label="Loading surveys…" />}
+                {surveysPending && <LoadingBlock label={t("feedback.loadingSurveys")} />}
                 {surveysError && (
-                    <SectionError
-                        title="Surveys could not be loaded"
+                    <LoadError
+                        title={t("feedback.surveysError")}
                         onRetry={() => refetchSurveys()}
-                        isRetrying={surveysFetching}
+                        retrying={surveysFetching}
                     />
                 )}
                 {!surveysPending && !surveysError && <SurveysTable surveys={surveys ?? []} />}
+            </Card>
 
-                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
-                    Recent responses
-                </h3>
-
-                <div className="mb-4 flex flex-wrap items-end gap-3.5">
-                    <div>
-                        <label
-                            htmlFor="fb-filter-visitor"
-                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
-                        >
-                            Visitor
-                        </label>
-                        <select
-                            id="fb-filter-visitor"
+            <Card title={t("feedback.responsesTitle")}>
+                <div className="mb-4 flex flex-wrap items-end gap-4">
+                    <Field label={t("feedback.filters.visitor")} className="min-w-48">
+                        <Select
                             value={feedbackFilters.visitorId}
                             onChange={(event) => updateVisitorFilter(event.target.value)}
-                            className="min-w-[190px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
                         >
-                            <option value="">All visitors</option>
+                            <option value="">{t("feedback.filters.allVisitors")}</option>
                             {(visitors ?? []).map((visitor) => (
                                 <option key={visitor.id} value={visitor.id}>
                                     {visitor.fullName}
                                 </option>
                             ))}
-                        </select>
-                    </div>
+                        </Select>
+                    </Field>
 
-                    <div>
-                        <label
-                            htmlFor="fb-filter-from"
-                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
-                        >
-                            From
-                        </label>
-                        <input
-                            id="fb-filter-from"
+                    <Field label={t("feedback.filters.from")}>
+                        <Input
                             type="date"
                             value={feedbackFilters.from}
                             onChange={(event) => updateDateFilter("from", event.target.value)}
-                            className="rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
                         />
-                    </div>
+                    </Field>
 
-                    <div>
-                        <label
-                            htmlFor="fb-filter-to"
-                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
-                        >
-                            To
-                        </label>
-                        <input
-                            id="fb-filter-to"
+                    <Field label={t("feedback.filters.to")}>
+                        <Input
                             type="date"
                             value={feedbackFilters.to}
                             onChange={(event) => updateDateFilter("to", event.target.value)}
-                            className="rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
                         />
-                    </div>
+                    </Field>
 
                     {hasFeedbackFilter && (
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setFeedbackFilters({ visitorId: "", from: "", to: "" })
-                            }
-                            className="rounded-md border border-line bg-white px-3.5 py-2 text-xs text-primary hover:bg-[#F2FBF9]"
-                        >
-                            Clear filters
-                        </button>
+                        <Button variant="secondary" onClick={() => setFeedbackFilters(NO_FILTER)}>
+                            {t("feedback.filters.clear")}
+                        </Button>
                     )}
 
                     {incompleteRange && (
-                        <p className="text-xs text-muted">
-                            Set both dates to filter on a period.
-                        </p>
+                        <p className="pb-2 text-xs text-text-muted">{t("feedback.filters.incompleteRange")}</p>
                     )}
                 </div>
 
-                {feedbackPending && <SectionLoading label="Loading responses…" />}
+                {feedbackPending && <LoadingBlock label={t("feedback.loadingResponses")} />}
                 {feedbackError && (
-                    <SectionError
-                        title="Responses could not be loaded"
+                    <LoadError
+                        title={t("feedback.responsesError")}
                         onRetry={() => refetchFeedback()}
-                        isRetrying={feedbackFetching}
+                        retrying={feedbackFetching}
                     />
                 )}
                 {!feedbackPending && !feedbackError && (
@@ -346,14 +246,10 @@ export default function FeedbackPage() {
                             routeError={routeError}
                             onRoute={(id, data) => routeMutation.mutate({ id, data })}
                         />
-                        <p className="mt-6 text-[11px] text-muted">
-                            Quick ratings are collected on-site, the survey link goes out by email
-                            after the visit, and each response can be routed to the team that owns
-                            the follow-up.
-                        </p>
+                        <p className="mt-6 text-xs text-text-muted">{t("feedback.footnote")}</p>
                     </>
                 )}
-            </section>
+            </Card>
         </div>
     );
 }
