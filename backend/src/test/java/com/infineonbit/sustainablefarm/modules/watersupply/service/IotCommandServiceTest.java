@@ -132,7 +132,7 @@ class IotCommandServiceTest {
     }
 
     private static IotCommandRequest request(String command, Integer durationSeconds) {
-        return new IotCommandRequest(command, durationSeconds, "visitor \"demo\"", UUID.randomUUID());
+        return new IotCommandRequest(command, durationSeconds, "visitor \"demo\"", 7L);
     }
 
     private IotCommandService service() {

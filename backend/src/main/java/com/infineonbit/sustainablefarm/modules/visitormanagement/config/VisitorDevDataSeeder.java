@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.config;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.AgriActivity;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Event;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.EventStatus;
@@ -40,6 +41,7 @@ import java.time.temporal.TemporalAdjusters;
  * visitors, registrations). Enable with the {@code dev} Spring profile
  * (e.g. {@code SPRING_PROFILES_ACTIVE=dev}). Never active in production.
  * Each entity type is seeded only when its table is empty (idempotent).
+ * Workshop facilitators are people of the staff referential, found or created by name.
  */
 @Component
 @Profile("dev")
@@ -54,6 +56,7 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
     private final EventRepository eventRepository;
     private final VisitorRepository visitorRepository;
     private final RegistrationRepository registrationRepository;
+    private final PersonDirectory personDirectory;
 
     public VisitorDevDataSeeder(TourStopRepository tourStopRepository,
                          WorkshopRepository workshopRepository,
@@ -61,7 +64,8 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
                          TimeSlotRepository timeSlotRepository,
                          EventRepository eventRepository,
                          VisitorRepository visitorRepository,
-                         RegistrationRepository registrationRepository) {
+                         RegistrationRepository registrationRepository,
+                         PersonDirectory personDirectory) {
         this.tourStopRepository = tourStopRepository;
         this.workshopRepository = workshopRepository;
         this.activityRepository = activityRepository;
@@ -69,6 +73,7 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
         this.eventRepository = eventRepository;
         this.visitorRepository = visitorRepository;
         this.registrationRepository = registrationRepository;
+        this.personDirectory = personDirectory;
     }
 
     @Override
@@ -138,7 +143,7 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
         workshop.setName(name);
         workshop.setDurationMinutes(duration);
         workshop.setTargetGroup(targetGroup);
-        workshop.setFacilitator(facilitator);
+        workshop.setFacilitatorPersonId(personDirectory.idOf(facilitator));
         workshop.setDescription(description);
         workshop.setStatus(status);
         return workshop;

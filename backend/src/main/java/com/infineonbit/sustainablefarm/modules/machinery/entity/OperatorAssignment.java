@@ -20,8 +20,9 @@ public class OperatorAssignment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 60, nullable = false)
-    private String fullName;
+    /** The operator: a person of the staff referential ({@code person.id}, see MachineryPersonForeignKeys). */
+    @Column(name = "person_id", nullable = false)
+    private Long personId;
 
     @OneToOne
     @JoinColumn(name="equipment_id", nullable = false, unique = true)

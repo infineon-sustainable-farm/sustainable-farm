@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
  * irrigation postponed because of rain, maintenance to schedule).
  *
  * <p>These alerts do not come from any logged-in user: they are attached to the technical
- * account {@link SystemUsers#IOT_SYSTEM_USER_ID}, since they must be visible in the
+ * IoT system person ({@link SystemUsers#iotSystemUserId()}), since they must be visible in the
  * notification center until the global platform reassigns them.</p>
  */
 @Service
@@ -28,9 +28,11 @@ public class AlertService {
     private static final Duration DEDUPLICATION_WINDOW = Duration.ofHours(12);
 
     private final NotificationRepository notificationRepository;
+    private final SystemUsers systemUsers;
 
-    public AlertService(NotificationRepository notificationRepository) {
+    public AlertService(NotificationRepository notificationRepository, SystemUsers systemUsers) {
         this.notificationRepository = notificationRepository;
+        this.systemUsers = systemUsers;
     }
 
     /**
@@ -44,7 +46,7 @@ public class AlertService {
     @Transactional
     public Notification raise(String type, String title, String message, String actionUrl) {
         Notification notification = new Notification();
-        notification.setUserId(SystemUsers.IOT_SYSTEM_USER_ID);
+        notification.setUserId(systemUsers.iotSystemUserId());
         notification.setType(type);
         notification.setTitle(title);
         notification.setMessage(message);

@@ -3,16 +3,16 @@
 -- une migration ne doit porter ni comptes ni donnees de demonstration (PR-33).
 -- Jeu minimal, relationnellement valide et idempotent pour les environnements demo/dev.
 
-INSERT INTO users (id, created_at, first_name, last_name, email, status)
-VALUES (
-    '10000000-0000-0000-0000-000000000001',
-    '2026-01-01T08:00:00Z',
-    'Demo',
-    'Admin',
-    'demo.admin@sustainable-farm.local',
-    true
-)
+-- People of the staff referential (person, Long ids, docs/adr/0004): the demo user, recipient
+-- and author of the rows below, and the technician of the drip maintenance log. No fixed ids:
+-- the rows are found by email, or by full name for a person without one.
+INSERT INTO person (created_at, updated_at, full_name, email, phone, active)
+VALUES ('2026-01-01T08:00:00Z', '2026-01-01T08:00:00Z', 'Demo Admin', 'demo.admin@sustainable-farm.local', null, true)
 ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO person (created_at, updated_at, full_name, email, phone, active)
+SELECT '2026-01-01T08:00:00Z', '2026-01-01T08:00:00Z', 'Technicien Demo', null, null, true
+WHERE NOT EXISTS (SELECT 1 FROM person WHERE lower(full_name) = lower('Technicien Demo'));
 
 -- Site referential of the farm module (Long ids): one farm, block A (the Plants block of the
 -- Keitt variety seeded by PlantsDataSeeder) and one irrigated zone. Explicit ids keep the rows
@@ -113,7 +113,7 @@ VALUES (
     45,
     1500,
     'scheduled',
-    '10000000-0000-0000-0000-000000000001'
+    (SELECT id FROM person WHERE email = 'demo.admin@sustainable-farm.local')
 )
 ON CONFLICT (id) DO NOTHING;
 
@@ -133,7 +133,7 @@ INSERT INTO notifications (id, created_at, user_id, title, message, type, is_rea
 VALUES (
     'a0000000-0000-0000-0000-000000000001',
     '2026-01-01T08:45:00Z',
-    '10000000-0000-0000-0000-000000000001',
+    (SELECT id FROM person WHERE email = 'demo.admin@sustainable-farm.local'),
     'Demo pret',
     'Les donnees de demonstration water supply sont disponibles.',
     'info',
@@ -166,7 +166,7 @@ INSERT INTO drip_maintenance_logs (
     clogging_severity,
     emitter_replaced_count,
     notes,
-    performed_by
+    performed_by_person_id
 )
 VALUES (
     'c0000000-0000-0000-0000-000000000001',
@@ -179,6 +179,6 @@ VALUES (
     null,
     0,
     'Controle demo sans anomalie.',
-    'Technicien Demo'
+    (SELECT MIN(id) FROM person WHERE lower(full_name) = lower('Technicien Demo'))
 )
 ON CONFLICT (id) DO NOTHING;

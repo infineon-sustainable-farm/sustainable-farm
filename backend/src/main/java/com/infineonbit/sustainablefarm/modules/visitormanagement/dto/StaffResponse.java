@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.dto;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Staff;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.StaffRole;
 
@@ -19,13 +20,14 @@ public class StaffResponse {
     private Instant createdAt;
     private Instant updatedAt;
 
-    public static StaffResponse from(Staff s) {
+    /** @param person the person of the staff row, from the staff referential */
+    public static StaffResponse from(Staff s, PersonDto person) {
         StaffResponse r = new StaffResponse();
         r.id = s.getId();
-        r.fullName = s.getFullName();
+        r.fullName = person.fullName();
         r.role = s.getRole();
-        r.email = s.getEmail();
-        r.phone = s.getPhone();
+        r.email = person.email();
+        r.phone = person.phone();
         r.active = s.isActive();
         r.createdAt = s.getCreatedAt();
         r.updatedAt = s.getUpdatedAt();

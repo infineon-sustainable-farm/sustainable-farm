@@ -15,6 +15,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.Irrigation
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import java.time.Instant;
 import java.time.Month;
 import java.util.List;
@@ -235,6 +237,6 @@ class IrrigationAutomationServiceTest {
                 rainfallService, waterNeedService, agroWeatherService, plantsGrowthPort, properties);
         return new IrrigationAutomationService(farmDirectory, soilMoistureRepository, scheduleRepository,
                 logRepository, agroWeatherService, alertService, rainfallService,
-                unavailabilityService, plants, properties);
+                unavailabilityService, plants, properties, new SystemUsers(new InMemoryPersonDirectory()));
     }
 }

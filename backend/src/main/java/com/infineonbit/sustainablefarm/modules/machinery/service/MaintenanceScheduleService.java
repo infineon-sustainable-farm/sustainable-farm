@@ -10,6 +10,7 @@ import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotF
 import com.infineonbit.sustainablefarm.modules.machinery.exception.MaintenanceScheduleNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceScheduleRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,6 +25,7 @@ import java.time.LocalDate;
 public class MaintenanceScheduleService {
     private final MaintenanceScheduleRepository maintenanceScheduleRepository;
     private final EquipmentRepository equipmentRepository;
+    private final PersonDirectory personDirectory;
 
     /**
      * Creates a maintenance schedule entry for an existing equipment.
@@ -45,7 +47,7 @@ public class MaintenanceScheduleService {
         schedule.setFrequency(trimToNull(request.frequency()));
         schedule.setLastCompleted(request.lastCompleted());
         schedule.setNextDue(request.nextDue());
-        schedule.setOperator(trimToNull(request.operator()));
+        schedule.setOperatorPersonId(personDirectory.idOf(request.operator()));
 
         try {
             maintenanceScheduleRepository.save(schedule);
@@ -120,7 +122,7 @@ public class MaintenanceScheduleService {
             schedule.setNextDue(request.nextDue());
         }
         if (request.operator() != null) {
-            schedule.setOperator(trimToNull(request.operator()));
+            schedule.setOperatorPersonId(personDirectory.idOf(request.operator()));
         }
 
         return toResponse(maintenanceScheduleRepository.saveAndFlush(schedule));
@@ -160,7 +162,7 @@ public class MaintenanceScheduleService {
                 schedule.getFrequency(),
                 schedule.getLastCompleted(),
                 schedule.getNextDue(),
-                schedule.getOperator()
+                personDirectory.nameOf(schedule.getOperatorPersonId())
         );
     }
 }
