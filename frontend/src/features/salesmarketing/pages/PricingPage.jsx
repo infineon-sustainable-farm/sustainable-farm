@@ -4,6 +4,7 @@ import { api } from '../api/api';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { PageHeader } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import CurrentPriceCard from '../components/pricing/CurrentPriceCard';
 import PriceTrendChart from '../components/pricing/PriceTrendChart';
 import PricingVariables from '../components/pricing/PricingVariables';
@@ -29,10 +30,11 @@ export default function PricingPage() {
   const [stock, setStock] = useState(1000);
   const [demand, setDemand] = useState(50);
 
+  const later = useLater();
   const flashSuccess = (message) => {
     setActionSuccess(message);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (message) => {

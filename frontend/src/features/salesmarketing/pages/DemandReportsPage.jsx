@@ -5,6 +5,7 @@ import { api } from '../api/api';
 import { localIsoDateTime } from '../format';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import ReportActivityTable from '../components/reports/ReportActivityTable';
 import { NewScheduleCard, ReportCard } from '../components/reports/ReportCard';
 import ReportFilters from '../components/reports/ReportFilters';
@@ -39,16 +40,17 @@ export default function DemandReportsPage() {
   const [pendingDeleteReport, setPendingDeleteReport] = useState(null);
   const [deletingReport, setDeletingReport] = useState(false);
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (msg) => {
     setActionError(msg);
     setActionSuccess(null);
-    window.setTimeout(() => setActionError(null), 6000);
+    later(() => setActionError(null), 6000);
   };
 
   const fetchReportsData = useCallback(async () => {
