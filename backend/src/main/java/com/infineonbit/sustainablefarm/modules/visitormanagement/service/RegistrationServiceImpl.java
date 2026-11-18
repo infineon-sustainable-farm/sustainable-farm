@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BriefingDeliverRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BriefingResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationRequest;
@@ -48,6 +49,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final FeedbackRepository feedbackRepository;
     private final SurveySendRepository surveySendRepository;
     private final SchedulingService schedulingService;
+    private final PersonDirectory personDirectory;
 
     public RegistrationServiceImpl(VisitorRepository visitorRepository,
                                    RegistrationRepository registrationRepository,
@@ -55,7 +57,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                                    BriefingRepository briefingRepository,
                                    FeedbackRepository feedbackRepository,
                                    SurveySendRepository surveySendRepository,
-                                   SchedulingService schedulingService) {
+                                   SchedulingService schedulingService,
+                                   PersonDirectory personDirectory) {
         this.visitorRepository = visitorRepository;
         this.registrationRepository = registrationRepository;
         this.timeSlotRepository = timeSlotRepository;
@@ -63,6 +66,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.feedbackRepository = feedbackRepository;
         this.surveySendRepository = surveySendRepository;
         this.schedulingService = schedulingService;
+        this.personDirectory = personDirectory;
     }
 
     // ---------------- Visitors ----------------
@@ -301,7 +305,7 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new ResourceNotFoundException(
                     "No briefing for registration " + registrationId + " (not confirmed)");
         }
-        return BriefingResponse.from(briefing);
+        return toResponse(briefing);
     }
 
     @Override
@@ -318,18 +322,22 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new BusinessRuleException("No briefing to deliver for registration " + registrationId);
         }
         if (briefing.getStatus() == BriefingStatus.DONE) {
-            return BriefingResponse.from(briefing);
+            return toResponse(briefing);
         }
-        briefing.setStaffMember(request.getStaffMember());
+        briefing.setStaffMemberPersonId(personDirectory.idOf(request.getStaffMember()));
         briefing.setSignature(request.getSignature());
         briefing.setDeliveredAt(Instant.now());
         briefing.setStatus(BriefingStatus.DONE);
         briefingRepository.save(briefing);
         briefingRepository.flush();
-        return BriefingResponse.from(briefing);
+        return toResponse(briefing);
     }
 
     // ---------------- Helpers ----------------
+
+    private BriefingResponse toResponse(Briefing briefing) {
+        return BriefingResponse.from(briefing, personDirectory.nameOf(briefing.getStaffMemberPersonId()));
+    }
 
     private void apply(Visitor visitor, VisitorRequest request) {
         visitor.setFullName(request.getFullName());

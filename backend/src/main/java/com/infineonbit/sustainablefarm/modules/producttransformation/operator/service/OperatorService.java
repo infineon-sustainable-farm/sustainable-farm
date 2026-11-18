@@ -36,6 +36,11 @@ public interface OperatorService {
     Operator getOperatorById(String operatorId);
 
     /**
+     * Find an operator by ID, with the name and active status of its person
+     */
+    java.util.Optional<Operator> findOperatorById(String operatorId);
+
+    /**
      * Get all operators
      */
     List<Operator> getAllOperators();

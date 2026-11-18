@@ -7,7 +7,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.repository.WashSortRecordRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.service.OperatorService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.service.WashSortRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,15 +35,15 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
 
     private final WashSortRecordRepository washSortRecordRepository;
     private final EquipmentService equipmentService;
-    private final OperatorRepository operatorRepository;
+    private final OperatorService operatorService;
 
     @Autowired
     public WashSortRecordServiceImpl(WashSortRecordRepository washSortRecordRepository,
                                      EquipmentService equipmentService,
-                                     OperatorRepository operatorRepository) {
+                                     OperatorService operatorService) {
         this.washSortRecordRepository = washSortRecordRepository;
         this.equipmentService = equipmentService;
-        this.operatorRepository = operatorRepository;
+        this.operatorService = operatorService;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
         if (washSortRecord.getOperator() != null) {
             Operator operator = washSortRecord.getOperator();
             // Verify operator exists and is active
-            Operator dbOperator = operatorRepository.findById(operator.getOperatorId())
+            Operator dbOperator = operatorService.findOperatorById(operator.getOperatorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Operator not found with ID: " + operator.getOperatorId()));
             
             if (dbOperator.getActiveStatus() != Operator.ActiveStatus.ACTIVE) {

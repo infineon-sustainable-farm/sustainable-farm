@@ -34,7 +34,7 @@ public class NotificationController {
     public Object list(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID userId) {
+            @RequestParam(required = false) Long userId) {
         if (page == null && size == null && userId == null) return notificationService.findAll();
         return notificationService.findAll(pageRequest(page, size), userId);
     }

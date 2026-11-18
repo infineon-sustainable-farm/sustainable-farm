@@ -170,7 +170,7 @@ class SchedulingServiceImplTest {
         TimeSlot slot = buildSlot(1L, TimeSlotStatus.AVAILABLE);
         Staff guide = new Staff();
         guide.setId(42L);
-        guide.setFullName("Awa");
+        guide.setPersonId(7L);
         when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
         when(staffRepository.findById(42L)).thenReturn(Optional.of(guide));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));

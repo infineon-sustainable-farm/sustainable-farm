@@ -40,8 +40,9 @@ public class DripMaintenanceLog extends BaseEntity {
     @Column(name = "notes", length = 1000)
     private String notes;
 
-    @Column(name = "performed_by", length = 100)
-    private String performedBy;
+    /** Who did the work: a person of the staff referential (docs/adr/0004), by id. */
+    @Column(name = "performed_by_person_id")
+    private Long performedByPersonId;
 
     public Long getZoneId() {
         return zoneId;
@@ -107,11 +108,11 @@ public class DripMaintenanceLog extends BaseEntity {
         this.notes = notes;
     }
 
-    public String getPerformedBy() {
-        return performedBy;
+    public Long getPerformedByPersonId() {
+        return performedByPersonId;
     }
 
-    public void setPerformedBy(String performedBy) {
-        this.performedBy = performedBy;
+    public void setPerformedByPersonId(Long performedByPersonId) {
+        this.performedByPersonId = performedByPersonId;
     }
 }

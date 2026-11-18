@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
-	Page<Notification> findByUserId(UUID userId, Pageable pageable);
+	Page<Notification> findByUserId(Long userId, Pageable pageable);
 
 	/** Number of alerts of a given type (dashboard "anomalies" KPI), computed in the database. */
 	long countByTypeIgnoreCase(String type);

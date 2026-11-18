@@ -10,8 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.User;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDetails;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,10 @@ class WatersupplyApiIntegrationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private UserRepository userRepository;
+    private PersonDirectory personDirectory;
+
+    @Autowired
+    private SystemUsers systemUsers;
 
     @Test
     void healthEndpointReturnsStableContract() throws Exception {
@@ -162,7 +166,7 @@ class WatersupplyApiIntegrationTest {
         @Test
         @Transactional
         void irrigationStartStopCompletesStartedLog() throws Exception {
-        UUID userId = createUser();
+        Long userId = createUser();
         String farmId = createFarm("Irrigation Farm");
         String fieldId = createField(farmId, "Irrigation Field");
         String zoneId = createZone(fieldId, "Irrigation Zone");
@@ -170,7 +174,7 @@ class WatersupplyApiIntegrationTest {
         MvcResult schedule = mockMvc.perform(post("/api/irrigations")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"zoneId":"%s","startTime":"2026-09-16T12:00:00Z","durationMinutes":30,"waterQuantityLiters":900,"createdBy":"%s"}
+                    {"zoneId":"%s","startTime":"2026-09-16T12:00:00Z","durationMinutes":30,"waterQuantityLiters":900,"createdBy":%d}
                     """.formatted(zoneId, userId)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.zoneId").value(zoneId))
@@ -191,19 +195,20 @@ class WatersupplyApiIntegrationTest {
 
         @Test
         void systemUserIsSeededSoAutomaticNotificationsCanBeCreated() throws Exception {
-        // The IoT technical account is created by the Flyway migrations (V2/V4). Without this seed,
-        // creating automatic alerts failed with 404 "User not found".
-        org.junit.jupiter.api.Assertions.assertTrue(
-                userRepository.findById(SystemUsers.IOT_SYSTEM_USER_ID).isPresent(),
-                "The IoT technical account must be seeded by SystemUserSeeder at startup");
+        // The IoT technical person is created at startup by SystemUserSeeder, in every profile.
+        // Without it, creating automatic alerts failed with 404 "User not found".
+        PersonDto iot = personDirectory.findByEmail(SystemUsers.IOT_SYSTEM_EMAIL).orElseThrow(
+                () -> new AssertionError("The IoT technical person must be seeded by SystemUserSeeder at startup"));
+        org.junit.jupiter.api.Assertions.assertEquals(iot.id(), systemUsers.iotSystemUserId());
+        org.junit.jupiter.api.Assertions.assertFalse(iot.active());
 
         MvcResult result = mockMvc.perform(post("/api/notifications")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"userId":"%s","title":"Sensor alert","message":"Integration test","type":"warning"}
-                    """.formatted(SystemUsers.IOT_SYSTEM_USER_ID)))
+                    {"userId":%d,"title":"Sensor alert","message":"Integration test","type":"warning"}
+                    """.formatted(iot.id())))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.userId").value(SystemUsers.IOT_SYSTEM_USER_ID.toString()))
+            .andExpect(jsonPath("$.userId").value(iot.id()))
             .andReturn();
 
         String notificationId = String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
@@ -387,12 +392,8 @@ class WatersupplyApiIntegrationTest {
         return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
         }
 
-        private UUID createUser() {
-        User user = new User();
-        user.setFirstName("Integration");
-        user.setLastName("User");
-        user.setEmail("integration-" + UUID.randomUUID() + "@example.test");
-        user.setStatus(true);
-        return userRepository.save(user).getId();
+        private Long createUser() {
+        return personDirectory.findOrCreate(new PersonDetails("Integration User",
+                "integration-" + UUID.randomUUID() + "@example.test", null, null), id -> true).id();
         }
 }

@@ -19,12 +19,13 @@ public class BriefingResponse {
     private Instant createdAt;
     private Instant updatedAt;
 
-    public static BriefingResponse from(Briefing b) {
+    /** @param staffMember full name of the person who delivered the briefing, or null */
+    public static BriefingResponse from(Briefing b, String staffMember) {
         BriefingResponse r = new BriefingResponse();
         r.id = b.getId();
         r.registrationId = b.getRegistration().getId();
         r.deliveredAt = b.getDeliveredAt();
-        r.staffMember = b.getStaffMember();
+        r.staffMember = staffMember;
         r.signature = b.getSignature();
         r.status = b.getStatus();
         r.createdAt = b.getCreatedAt();

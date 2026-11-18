@@ -39,12 +39,6 @@ public class IrrigationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IrrigationService.class);
 
     /**
-     * System id used as createdBy when no user context is provided
-     * (see {@link SystemUsers}: authentication is handled by the global software).
-     */
-    private static final UUID DEFAULT_SYSTEM_USER_ID = SystemUsers.IOT_SYSTEM_USER_ID;
-
-    /**
      * Rain probability threshold (%) from which a scheduled irrigation is discouraged.
      * Value retained after functional validation: below it, the announced rain is not
      * reliable enough to justify a postponement.
@@ -60,6 +54,11 @@ public class IrrigationService {
     private final AgroWeatherService agroWeatherService;
     private final AlertService alertService;
     private final ZoneBlockResolver zoneBlockResolver;
+    /**
+     * Gives the person used as createdBy when no user context is provided
+     * (see {@link SystemUsers}: authentication is handled by the global software).
+     */
+    private final SystemUsers systemUsers;
 
     public IrrigationService(
             IrrigationScheduleRepository scheduleRepository,
@@ -67,13 +66,15 @@ public class IrrigationService {
             FarmDirectory farmDirectory,
             AgroWeatherService agroWeatherService,
             AlertService alertService,
-            ZoneBlockResolver zoneBlockResolver) {
+            ZoneBlockResolver zoneBlockResolver,
+            SystemUsers systemUsers) {
         this.scheduleRepository = scheduleRepository;
         this.logRepository = logRepository;
         this.farmDirectory = farmDirectory;
         this.agroWeatherService = agroWeatherService;
         this.alertService = alertService;
         this.zoneBlockResolver = zoneBlockResolver;
+        this.systemUsers = systemUsers;
     }
 
     public List<IrrigationScheduleResponse> findSchedules() {
@@ -114,7 +115,7 @@ public class IrrigationService {
         schedule.setStatus(request.status() == null ? "scheduled" : request.status());
         // Authentication is handled by the global software: without a user context,
         // the schedule is attributed to a fixed system id.
-        schedule.setCreatedBy(request.createdBy() != null ? request.createdBy() : DEFAULT_SYSTEM_USER_ID);
+        schedule.setCreatedBy(request.createdBy() != null ? request.createdBy() : systemUsers.iotSystemUserId());
         return scheduleResponse(scheduleRepository.save(schedule));
     }
 
