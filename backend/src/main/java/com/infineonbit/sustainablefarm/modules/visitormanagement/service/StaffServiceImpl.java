@@ -2,68 +2,118 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDetails;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.StaffRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.StaffResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Staff;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.StaffRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
+/**
+ * Staff members and guides: the visitor management role of a person of the staff
+ * referential ({@link PersonDirectory}). Full name, email and phone are read from and written
+ * to the person, so a guide named like a machinery or product transformation operator is the
+ * same person. The active flag is the guide's own: deactivating a guide leaves the person's
+ * other roles as they are.
+ */
 @Service
 public class StaffServiceImpl implements StaffService {
 
-    private final StaffRepository staffRepository;
+    private static final Comparator<StaffResponse> BY_NAME = Comparator
+            .comparing(StaffResponse::getFullName, String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(StaffResponse::getId);
 
-    public StaffServiceImpl(StaffRepository staffRepository) {
+    private final StaffRepository staffRepository;
+    private final PersonDirectory personDirectory;
+
+    public StaffServiceImpl(StaffRepository staffRepository, PersonDirectory personDirectory) {
         this.staffRepository = staffRepository;
+        this.personDirectory = personDirectory;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<StaffResponse> list() {
-        return staffRepository.findAllByOrderByFullNameAsc().stream()
-                .map(StaffResponse::from)
-                .collect(Collectors.toList());
+        List<Staff> staff = staffRepository.findAll();
+        Map<Long, PersonDto> people = personDirectory.findAllById(staff.stream().map(Staff::getPersonId).toList());
+        return staff.stream()
+                .filter(s -> people.containsKey(s.getPersonId()))
+                .map(s -> StaffResponse.from(s, people.get(s.getPersonId())))
+                .sorted(BY_NAME)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<StaffResponse> list(int page, int size) {
-        return staffRepository.findAll(
-                PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "fullName")))
-                .map(StaffResponse::from);
+        PageRequest pageable = PageRequest.of(page, size);
+        List<StaffResponse> all = list();
+        int from = (int) Math.min(pageable.getOffset(), all.size());
+        int to = Math.min(from + size, all.size());
+        return new PageImpl<>(all.subList(from, to), pageable, all.size());
     }
 
     @Override
     @Transactional(readOnly = true)
     public StaffResponse get(Long id) {
-        return StaffResponse.from(getEntity(id));
+        Staff staff = getEntity(id);
+        return StaffResponse.from(staff, person(staff));
     }
 
     @Override
     @Transactional
     public StaffResponse create(StaffRequest request) {
-        assertEmailFree(request.getEmail(), null);
+        PersonDto person = personDirectory.findOrCreate(
+                new PersonDetails(request.getFullName(), request.getEmail(), request.getPhone(), null),
+                personId -> !staffRepository.existsByPersonId(personId));
+        staffRepository.findByPersonId(person.id()).ifPresent(existing -> {
+            throw new ConflictException("Email already used by staff member " + existing.getId());
+        });
+        if (person.phone() == null && request.getPhone() != null && !request.getPhone().isBlank()) {
+            person = personDirectory.update(person.id(), new PersonDetails(null, null, request.getPhone(), null));
+        }
         Staff staff = new Staff();
-        apply(staff, request);
-        return StaffResponse.from(staffRepository.save(staff));
+        staff.setPersonId(person.id());
+        staff.setRole(request.getRole());
+        if (request.getActive() != null) {
+            staff.setActive(request.getActive());
+        }
+        return StaffResponse.from(staffRepository.save(staff), person);
     }
 
     @Override
     @Transactional
     public StaffResponse update(Long id, StaffRequest request) {
         Staff staff = getEntity(id);
-        assertEmailFree(request.getEmail(), id);
-        apply(staff, request);
+        PersonDto person;
+        try {
+            person = personDirectory.update(staff.getPersonId(), new PersonDetails(request.getFullName(),
+                    request.getEmail() == null ? "" : request.getEmail(),
+                    request.getPhone() == null ? "" : request.getPhone(),
+                    null));
+        } catch (ConflictException e) {
+            throw new ConflictException(staffRepository.findByPersonId(
+                            personDirectory.findByEmail(request.getEmail()).map(PersonDto::id).orElse(null))
+                    .map(existing -> "Email already used by staff member " + existing.getId())
+                    .orElse("Email already used by another person"));
+        }
+        staff.setRole(request.getRole());
+        if (request.getActive() != null) {
+            staff.setActive(request.getActive());
+        }
         staffRepository.save(staff);
         staffRepository.flush();
-        return StaffResponse.from(staff);
+        return StaffResponse.from(staff, person);
     }
 
     @Override
@@ -74,25 +124,9 @@ public class StaffServiceImpl implements StaffService {
         staffRepository.save(staff);
     }
 
-    private void apply(Staff staff, StaffRequest request) {
-        staff.setFullName(request.getFullName());
-        staff.setRole(request.getRole());
-        staff.setEmail(request.getEmail());
-        staff.setPhone(request.getPhone());
-        if (request.getActive() != null) {
-            staff.setActive(request.getActive());
-        }
-    }
-
-    private void assertEmailFree(String email, Long excludeId) {
-        if (email == null || email.isBlank()) {
-            return;
-        }
-        staffRepository.findByEmail(email)
-                .filter(existing -> !existing.getId().equals(excludeId))
-                .ifPresent(existing -> {
-                    throw new ConflictException("Email already used by staff member " + existing.getId());
-                });
+    private PersonDto person(Staff staff) {
+        return personDirectory.findById(staff.getPersonId())
+                .orElseThrow(() -> new ResourceNotFoundException("Person " + staff.getPersonId() + " not found"));
     }
 
     private Staff getEntity(Long id) {

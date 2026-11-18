@@ -1,7 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.model;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
@@ -13,16 +11,24 @@ import lombok.ToString;
 import java.time.LocalDate;
 
 /**
- * Operator Entity
- * Personnel data - Supporting Entity
- * 
+ * Operator Entity: the product transformation role of a person of the staff referential
+ * (ADR 0004). The person ({@code person_id}, foreign key in
+ * {@code ProductTransformationPersonForeignKeys}) carries the name; the role, certifications,
+ * hire date and active status stay here (deactivating an operator leaves the person's other
+ * roles as they are).
+ *
+ * <p>{@code operatorName} is not stored in this table: it is the person's name, filled by
+ * {@code OperatorServiceImpl} when it returns an operator, and carries the requested name when
+ * an operator is created or updated.</p>
+ *
  * Business Rule: Operators must be certified for assigned role
- * 
+ *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
 @Entity
-@Table(name = "operator")
+@Table(name = "operator", uniqueConstraints =
+        @UniqueConstraint(name = "operator_person_id_key", columnNames = "person_id"))
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -37,7 +43,12 @@ public class Operator {
     @Column(name = "operator_id", length = 50)
     private String operatorId;
 
-    @Column(name = "operator_name", nullable = false, length = 100)
+    /** The person of the staff referential ({@code person.id}). */
+    @Column(name = "person_id", nullable = false)
+    private Long personId;
+
+    /** The person's full name (not stored here). */
+    @Transient
     private String operatorName;
 
     @Enumerated(EnumType.STRING)

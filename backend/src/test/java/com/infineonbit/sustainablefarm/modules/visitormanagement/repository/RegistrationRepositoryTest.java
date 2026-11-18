@@ -203,7 +203,6 @@ class RegistrationRepositoryTest {
         Registration withBriefing = createReg(newVisitor("Briefed", VisitorType.GROUP), slot, RegistrationStatus.CONFIRMED);
         Briefing briefing = new Briefing();
         briefing.setRegistration(withBriefing);
-        briefing.setStaffMember("Alix");
         briefing.setStatus(BriefingStatus.DONE);
         briefingRepository.save(briefing);
 

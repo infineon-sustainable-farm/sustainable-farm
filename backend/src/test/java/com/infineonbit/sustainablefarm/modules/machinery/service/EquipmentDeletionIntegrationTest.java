@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.service.PersonDirectoryService;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.FuelLog;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.MaintenanceSchedule;
@@ -31,11 +33,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
-@Import(EquipmentService.class)
+@Import({EquipmentService.class, PersonDirectoryService.class})
 class EquipmentDeletionIntegrationTest {
 
     @Autowired
     private EquipmentService equipmentService;
+
+    @Autowired
+    private PersonDirectory personDirectory;
 
     @Autowired
     private EquipmentRepository equipmentRepository;
@@ -131,14 +136,14 @@ class EquipmentDeletionIntegrationTest {
         schedule.setFrequency("Every 3 months");
         schedule.setLastCompleted(LocalDate.of(2026, 5, 15));
         schedule.setNextDue(LocalDate.of(2026, 8, 15));
-        schedule.setOperator("Jean-Louis R.");
+        schedule.setOperatorPersonId(personDirectory.idOf("Jean-Louis R."));
         schedule = maintenanceScheduleRepository.save(schedule);
 
         UsageLog usageLog = new UsageLog();
         usageLog.setEquipment(equipment);
         usageLog.setDate(LocalDate.of(2026, 7, 23));
         usageLog.setHoursUsed(new BigDecimal("6.50"));
-        usageLog.setOperator("Wilfried Y.");
+        usageLog.setOperatorPersonId(personDirectory.idOf("Wilfried Y."));
         usageLog.setNotes("Morning drying cycle");
         usageLog = usageLogRepository.save(usageLog);
 
@@ -155,7 +160,7 @@ class EquipmentDeletionIntegrationTest {
         repairLog.setIssue("Heating element malfunction");
         repairLog.setDowntime(new BigDecimal("14.00"));
         repairLog.setCost(new BigDecimal("150.00"));
-        repairLog.setTechnician("Maintenance Team A");
+        repairLog.setTechnicianPersonId(personDirectory.idOf("Maintenance Team A"));
         repairLog = repairLogRepository.save(repairLog);
 
         Long equipmentId = equipment.getId();

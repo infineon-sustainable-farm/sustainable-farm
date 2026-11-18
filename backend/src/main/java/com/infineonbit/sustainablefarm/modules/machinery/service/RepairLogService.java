@@ -10,6 +10,7 @@ import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotF
 import com.infineonbit.sustainablefarm.modules.machinery.exception.RepairLogNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.RepairLogRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class RepairLogService {
     private final RepairLogRepository repairLogRepository;
     private final EquipmentRepository equipmentRepository;
+    private final PersonDirectory personDirectory;
 
     /**
      * Creates a repair log entry for an existing equipment.
@@ -41,7 +43,7 @@ public class RepairLogService {
         repairLog.setIssue(trimRequired(request.issue(), "Issue description is required."));
         repairLog.setDowntime(request.downtime());
         repairLog.setCost(request.cost());
-        repairLog.setTechnician(trimToNull(request.technician()));
+        repairLog.setTechnicianPersonId(personDirectory.idOf(request.technician()));
 
         try {
             repairLogRepository.save(repairLog);
@@ -112,7 +114,7 @@ public class RepairLogService {
             repairLog.setCost(request.cost());
         }
         if (request.technician() != null) {
-            repairLog.setTechnician(trimToNull(request.technician()));
+            repairLog.setTechnicianPersonId(personDirectory.idOf(request.technician()));
         }
 
         return toResponse(repairLogRepository.saveAndFlush(repairLog));
@@ -139,12 +141,6 @@ public class RepairLogService {
         return value.trim();
     }
 
-    private String trimToNull(String value) {
-        if (value == null) return null;
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
-
     private RepairLogObtainingResponse toResponse(RepairLog repairLog) {
         return new RepairLogObtainingResponse(
                 repairLog.getId(),
@@ -153,7 +149,7 @@ public class RepairLogService {
                 repairLog.getIssue(),
                 repairLog.getDowntime(),
                 repairLog.getCost(),
-                repairLog.getTechnician()
+                personDirectory.nameOf(repairLog.getTechnicianPersonId())
         );
     }
 }

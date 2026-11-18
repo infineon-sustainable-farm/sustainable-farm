@@ -6,7 +6,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
 
 @Entity
 @Table(name = "notifications", indexes = {
@@ -16,7 +15,7 @@ import java.util.UUID;
 public class Notification extends BaseEntity {
     @NotNull
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private Long userId;
 
     @NotBlank
     @Column(nullable = false, length = 255)
@@ -36,11 +35,11 @@ public class Notification extends BaseEntity {
     @Column(name = "action_url", length = 500)
     private String actionUrl;
 
-    public UUID getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(UUID userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

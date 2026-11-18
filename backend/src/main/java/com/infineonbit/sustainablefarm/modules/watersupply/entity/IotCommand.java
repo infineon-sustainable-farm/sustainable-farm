@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "iot_commands",
@@ -19,7 +18,7 @@ public class IotCommand extends BaseEntity {
     private String payload;
     @Column(nullable = false, length = 32)
     private String status;
-    private UUID requestedBy;
+    private Long requestedBy;
     @Column(nullable = false)
     private Instant requestedAt;
     private Instant acknowledgedAt;
@@ -32,8 +31,8 @@ public class IotCommand extends BaseEntity {
     public void setPayload(String payload) { this.payload = payload; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    public UUID getRequestedBy() { return requestedBy; }
-    public void setRequestedBy(UUID requestedBy) { this.requestedBy = requestedBy; }
+    public Long getRequestedBy() { return requestedBy; }
+    public void setRequestedBy(Long requestedBy) { this.requestedBy = requestedBy; }
     public Instant getRequestedAt() { return requestedAt; }
     public void setRequestedAt(Instant requestedAt) { this.requestedAt = requestedAt; }
     public Instant getAcknowledgedAt() { return acknowledgedAt; }
