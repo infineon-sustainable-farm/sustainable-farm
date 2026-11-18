@@ -269,22 +269,25 @@ class WatersupplyApiIntegrationTest {
         String farmId = createFarm("Block Mapping Farm");
         String fieldId = createField(farmId, "Block Mapping Field");
         String zoneId = createZone(fieldId, "Block Mapping Zone");
+        // Unique codes: other integration tests commit blocks (B, C...) in the shared test database.
+        String code = uniqueBlock();
+        String renamed = uniqueBlock();
 
         MvcResult created = mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"zoneId":"%s","blockCode":"a","farmId":"%s"}
-                    """.formatted(zoneId, farmId)))
+                    {"zoneId":"%s","blockCode":"%s","farmId":"%s"}
+                    """.formatted(zoneId, code.toLowerCase(), farmId)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.zoneId").value(zoneId))
-            .andExpect(jsonPath("$.blockCode").value("A"))
+            .andExpect(jsonPath("$.blockCode").value(code))
             .andExpect(jsonPath("$.farmId").value(farmId))
             .andReturn();
         String mappingId = String.valueOf((Object) JsonPath.read(created.getResponse().getContentAsString(), "$.id"));
 
         mockMvc.perform(get("/api/farm/zone-block-mappings")
                 .param("farmId", farmId)
-                .param("blockCode", "A"))
+                .param("blockCode", code))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(mappingId));
 
@@ -295,10 +298,10 @@ class WatersupplyApiIntegrationTest {
         mockMvc.perform(put("/api/farm/zone-block-mappings/{mappingId}", mappingId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"blockCode":"B"}
-                    """))
+                    {"blockCode":"%s"}
+                    """.formatted(renamed)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.blockCode").value("B"));
+            .andExpect(jsonPath("$.blockCode").value(renamed));
 
         mockMvc.perform(delete("/api/farm/zone-block-mappings/{mappingId}", mappingId))
             .andExpect(status().isNoContent());
@@ -315,37 +318,42 @@ class WatersupplyApiIntegrationTest {
         String fieldId = createField(farmId, "Invalid Mapping Field");
         String zoneId = createZone(fieldId, "Invalid Mapping Zone");
         String otherFarmId = createFarm("Other Mapping Farm");
+        String code = uniqueBlock();
 
         mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"zoneId":"%s","blockCode":"C","farmId":"%s"}
-                    """.formatted(zoneId, otherFarmId)))
+                    {"zoneId":"%s","blockCode":"%s","farmId":"%s"}
+                    """.formatted(zoneId, code, otherFarmId)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
         mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"zoneId":"999999","blockCode":"C","farmId":"%s"}
-                    """.formatted(farmId)))
+                    {"zoneId":"999999","blockCode":"%s","farmId":"%s"}
+                    """.formatted(code, farmId)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("NOT_FOUND"));
 
         mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"zoneId":"%s","blockCode":"C","farmId":"%s"}
-                    """.formatted(zoneId, farmId)))
+                    {"zoneId":"%s","blockCode":"%s","farmId":"%s"}
+                    """.formatted(zoneId, code, farmId)))
             .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"zoneId":"%s","blockCode":"C","farmId":"%s"}
-                    """.formatted(zoneId, farmId)))
+                    {"zoneId":"%s","blockCode":"%s","farmId":"%s"}
+                    """.formatted(zoneId, code, farmId)))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("CONFLICT"));
+        }
+
+        private static String uniqueBlock() {
+        return "M" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         }
 
         private String createSource(String farmId, String name) throws Exception {

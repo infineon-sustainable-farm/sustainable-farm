@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage;
 
 import java.time.LocalDateTime;
 import java.util.List;

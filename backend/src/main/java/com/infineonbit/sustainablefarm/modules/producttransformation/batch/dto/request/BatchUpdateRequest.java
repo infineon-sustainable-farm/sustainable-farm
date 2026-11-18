@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/packaging-records")
+@RequestMapping("/api/product-transformation/packaging-records")
 @Tag(name = "Packaging Management", description = "APIs for managing packaging records")
 public class PackagingRecordController {
 
@@ -58,7 +58,7 @@ public class PackagingRecordController {
     @PostMapping
     @Operation(summary = "Create a new packaging record", description = "Creates a new packaging record")
     public ResponseEntity<PackagingRecordResponse> createPackagingRecord(@Valid @RequestBody PackagingRecordCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Equipment equipment = null;
@@ -69,7 +69,7 @@ public class PackagingRecordController {
         
         Operator operator = null;
         if (request.getOperatorId() != null) {
-            operator = operatorRepository.findById(request.getOperatorId())
+            operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
         }
         
@@ -134,7 +134,7 @@ public class PackagingRecordController {
             existingRecord.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
-            Operator operator = operatorRepository.findById(request.getOperatorId())
+            Operator operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
             existingRecord.setOperator(operator);
         }

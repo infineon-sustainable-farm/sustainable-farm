@@ -63,7 +63,7 @@ public interface RawIntakeService {
     /**
      * Get raw intakes by quality grade
      */
-    List<RawIntake> getRawIntakesByGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade);
+    List<RawIntake> getRawIntakesByGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade);
 
     /**
      * Get raw intakes by farm and date range
@@ -78,7 +78,7 @@ public interface RawIntakeService {
     /**
      * Get average quality grade distribution
      */
-    long countByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade);
+    long countByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade);
 
     /**
      * Initialize batch from raw intake

@@ -38,48 +38,48 @@ class SolarGenerationControllerTest {
     @Test
     void createReturnsCreatedAndLocation() throws Exception {
         when(energySolarGenerationLogService.create(any())).thenReturn(log());
-        mockMvc.perform(post("/api/energy/solar")
+        mockMvc.perform(post("/api/energy-supply/solar")
                         .contentType(MediaType.APPLICATION_JSON).content(validRequest()))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/energy/solar/solar-1")))
-                .andExpect(jsonPath("$.logId").value("solar-1"));
+                .andExpect(header().string("Location", containsString("/api/energy-supply/solar/1")))
+                .andExpect(jsonPath("$.logId").value(1));
     }
 
     @Test
     void listAndGetReturnDtos() throws Exception {
         when(energySolarGenerationLogService.findAll()).thenReturn(List.of(log()));
-        when(energySolarGenerationLogService.findById("solar-1")).thenReturn(log());
-        mockMvc.perform(get("/api/energy/solar"))
+        when(energySolarGenerationLogService.findById(1L)).thenReturn(log());
+        mockMvc.perform(get("/api/energy-supply/solar"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].componentId").value("ENG-001"));
-        mockMvc.perform(get("/api/energy/solar/solar-1"))
+        mockMvc.perform(get("/api/energy-supply/solar/1"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.kwhProduced").value(22.5));
     }
 
     @Test
     void updateReturnsUpdatedLog() throws Exception {
         when(energySolarGenerationLogService.update(any(), any())).thenReturn(log());
-        mockMvc.perform(put("/api/energy/solar/solar-1")
+        mockMvc.perform(put("/api/energy-supply/solar/1")
                         .contentType(MediaType.APPLICATION_JSON).content(validRequest()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.logId").value("solar-1"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.logId").value(1));
     }
 
     @Test
     void deleteReturnsNoContent() throws Exception {
-        doNothing().when(energySolarGenerationLogService).delete("solar-1");
-        mockMvc.perform(delete("/api/energy/solar/solar-1")).andExpect(status().isNoContent());
+        doNothing().when(energySolarGenerationLogService).delete(1L);
+        mockMvc.perform(delete("/api/energy-supply/solar/1")).andExpect(status().isNoContent());
     }
 
     @Test
     void missingLogReturnsNotFound() throws Exception {
-        when(energySolarGenerationLogService.findById("missing"))
-                .thenThrow(new EnergySupplyNotFoundException("Solar generation log", "missing"));
-        mockMvc.perform(get("/api/energy/solar/missing"))
+        when(energySolarGenerationLogService.findById(99L))
+                .thenThrow(new EnergySupplyNotFoundException("Solar generation log", "99"));
+        mockMvc.perform(get("/api/energy-supply/solar/99"))
                 .andExpect(status().isNotFound()).andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void invalidLogReturnsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/energy/solar")
+        mockMvc.perform(post("/api/energy-supply/solar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"componentId":"","date":null,"kwhProduced":-1,"efficiencyPct":-5}
@@ -96,7 +96,7 @@ class SolarGenerationControllerTest {
 
     private SolarGenerationLogResponse log() {
         return new SolarGenerationLogResponse(
-                "solar-1", "ENG-001", "PV array", LocalDate.now(),
+                1L, "ENG-001", "PV array", LocalDate.now(),
                 new BigDecimal("22.50"), new BigDecimal("80.00"));
     }
 }

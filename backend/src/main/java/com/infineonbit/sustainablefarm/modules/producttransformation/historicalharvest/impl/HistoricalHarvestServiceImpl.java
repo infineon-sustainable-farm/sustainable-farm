@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvest;
-import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvestId;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.repository.HistoricalHarvestRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.service.HistoricalHarvestService;
@@ -56,7 +56,6 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
 
     @Override
     public HistoricalHarvest updateHistoricalHarvest(Integer year, Integer month, Integer week, String variety, HistoricalHarvest historicalHarvest) {
-        HistoricalHarvestId id = new HistoricalHarvestId(year, month, week, variety);
         HistoricalHarvest existingRecord = getHistoricalHarvestById(year, month, week, variety);
         
         // Update fields
@@ -73,19 +72,15 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
 
     @Override
     public void deleteHistoricalHarvest(Integer year, Integer month, Integer week, String variety) {
-        HistoricalHarvestId id = new HistoricalHarvestId(year, month, week, variety);
-        if (!historicalHarvestRepository.existsById(id)) {
-            throw new IllegalArgumentException("Historical harvest not found with composite key: " + id);
-        }
-        historicalHarvestRepository.deleteById(id);
+        historicalHarvestRepository.delete(getHistoricalHarvestById(year, month, week, variety));
     }
 
     @Override
     @Transactional(readOnly = true)
     public HistoricalHarvest getHistoricalHarvestById(Integer year, Integer month, Integer week, String variety) {
-        HistoricalHarvestId id = new HistoricalHarvestId(year, month, week, variety);
-        return historicalHarvestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Historical harvest not found with composite key: " + id));
+        return historicalHarvestRepository.findByYearAndMonthAndWeekAndVarietyKey(year, month, week, variety)
+                .orElseThrow(() -> new IllegalArgumentException("Historical harvest not found with composite key: "
+                        + periodAndVariety(year, month, week, variety)));
     }
 
     @Override
@@ -169,15 +164,15 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
         
         // Calculate quality grade distribution
         long gradeACount = harvestEvents.stream()
-            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == HarvestEvent.QualityGrade.A)
+            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == QualityGrade.A)
             .count();
         
         long gradeBCount = harvestEvents.stream()
-            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == HarvestEvent.QualityGrade.B)
+            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == QualityGrade.B)
             .count();
         
         long gradeCCount = harvestEvents.stream()
-            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == HarvestEvent.QualityGrade.C)
+            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == QualityGrade.C)
             .count();
         
         long totalGraded = gradeACount + gradeBCount + gradeCCount;
@@ -196,5 +191,10 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
         }
         
         return historicalHarvestRepository.save(historicalHarvest);
+    }
+
+    /** The period and variety of a row, as the error messages show them. */
+    private static String periodAndVariety(Integer year, Integer month, Integer week, String variety) {
+        return "HistoricalHarvestId{year=" + year + ", month=" + month + ", week=" + week + ", varietyKey=" + variety + "}";
     }
 }

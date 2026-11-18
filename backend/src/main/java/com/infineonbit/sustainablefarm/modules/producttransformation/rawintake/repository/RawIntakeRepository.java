@@ -18,7 +18,17 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Repository
-public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
+public interface RawIntakeRepository extends JpaRepository<RawIntake, Long> {
+
+    /** The RawIntake of a business code, shown as {@code intakeId}. */
+    Optional<RawIntake> findByIntakeId(String intakeId);
+
+    /** Whether a RawIntake has this business code. */
+    boolean existsByIntakeId(String intakeId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByIntakeId(String intakeId);
+
 
     /**
      * Find raw intake by batch ID
@@ -44,7 +54,7 @@ public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
     /**
      * Find raw intake by quality grade
      */
-    List<RawIntake> findByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade receivedGrade);
+    List<RawIntake> findByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade receivedGrade);
 
     /**
      * Find raw intake by farm and date range
@@ -62,5 +72,5 @@ public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
      * Get average quality grade distribution
      */
     @Query("SELECT COUNT(r) FROM RawIntake r WHERE r.receivedGrade = :grade")
-    long countByReceivedGrade(@Param("grade") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade);
+    long countByReceivedGrade(@Param("grade") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade);
 }

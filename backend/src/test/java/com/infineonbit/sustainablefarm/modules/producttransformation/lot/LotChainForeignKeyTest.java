@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.lot;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackageType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -118,7 +121,7 @@ class LotChainForeignKeyTest {
         event.setVarietyKey("KEITT");
         event.setFarmBlockId(blocks.resolve(String.valueOf(farm), BLOCK));
         event.setHarvestQuantityKg(new BigDecimal("300.00"));
-        event.setQualityGrade(HarvestEvent.QualityGrade.A);
+        event.setQualityGrade(QualityGrade.A);
         return event;
     }
 
@@ -128,7 +131,7 @@ class LotChainForeignKeyTest {
         batch.setHarvestDate(LocalDate.of(2026, 6, 1));
         batch.setVarietyKey("KEITT");
         batch.setHarvestQuantityKg(new BigDecimal("300.00"));
-        batch.setCurrentStatus(Batch.BatchStatus.PACKAGING);
+        batch.setCurrentStatus(BatchStatus.PACKAGING);
         batch.setFarmBlockId(blocks.resolve(String.valueOf(farm), BLOCK));
         return batchRepository.saveAndFlush(batch);
     }
@@ -137,7 +140,7 @@ class LotChainForeignKeyTest {
         PackagingRecord record = new PackagingRecord();
         record.setRecordId(recordId);
         record.setBatch(batch);
-        record.setPackageType(PackagingRecord.PackageType.BULK);
+        record.setPackageType(PackageType.BULK);
         record.setPackageQuantityKg(new BigDecimal("280.00"));
         record.setLotCode(lotCode);
         record.setExportReady(false);
@@ -153,7 +156,7 @@ class LotChainForeignKeyTest {
         harvestEventService.createHarvestEvent(harvestEvent("HE-LC-1", "LOT-LC-1", harvestId));
         harvestEventRepository.flush();
 
-        assertThat(jdbc.queryForObject("select plants_harvest_id from harvest_event where harvest_id = 'HE-LC-1'",
+        assertThat(jdbc.queryForObject("select plants_harvest_id from harvest_event where code = 'HE-LC-1'",
                 Long.class)).isEqualTo(harvestId);
         assertThatThrownBy(() -> harvestEventService.createHarvestEvent(harvestEvent("HE-LC-2", "LOT-LC-2", 987654321L)))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -175,16 +178,17 @@ class LotChainForeignKeyTest {
     @Test
     @DisplayName("A packaged lot cannot reference an unknown processing batch")
     void packagedLotReferencesItsBatch() {
-        assertThatThrownBy(() -> jdbc.update("insert into packaging_record (record_id, batch_id, package_type,"
-                + " package_quantity_kg, lot_code, export_ready, packaging_date) values"
-                + " ('PKG-LC-X', 'NO-SUCH-BATCH', 'BULK', 1, 'LOT-LC-X-PKG', false, DATE '2026-06-03')"))
+        assertThatThrownBy(() -> jdbc.update("insert into packaging_record (code, batch_id, package_type,"
+                + " package_quantity_kg, lot_code, export_ready, packaging_date, created_at, updated_at) values"
+                + " ('PKG-LC-X', -1, 'BULK', 1, 'LOT-LC-X-PKG', false, DATE '2026-06-03',"
+                + " CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     @DisplayName("A sales batch with the code of a packaged lot is linked to it, with the same JSON")
     void salesBatchIsLinkedToThePackagedLotOfItsCode() throws Exception {
-        packagedLot("PKG-LC-5", batch("LOT-LC-5"), "LOT-LC-5-PKG");
+        long packagedLotId = packagedLot("PKG-LC-5", batch("LOT-LC-5"), "LOT-LC-5-PKG").getId();
 
         String linked = mockMvc.perform(post("/api/product-batches").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"batchCode\":\"LOT-LC-5-PKG\",\"stockT\":0.28,\"status\":\"AVAILABLE\"}"))
@@ -200,7 +204,7 @@ class LotChainForeignKeyTest {
         int otherId = objectMapper.readTree(other).get("batchId").asInt();
         entityManager.flush();
 
-        assertThat(packagingRecordIdOfSalesBatch(linkedId)).isEqualTo("PKG-LC-5");
+        assertThat(packagingRecordIdOfSalesBatch(linkedId)).isEqualTo(packagedLotId);
         assertThat(packagingRecordIdOfSalesBatch(otherId)).isNull();
         mockMvc.perform(get("/api/product-batches/{id}", linkedId))
                 .andExpect(status().isOk())
@@ -208,14 +212,14 @@ class LotChainForeignKeyTest {
                 .andExpect(jsonPath("$.packagingRecordId").doesNotExist());
 
         // Product transformation can still delete the lot: the sales batch keeps its code, the link is cleared.
-        jdbc.update("delete from packaging_record where record_id = 'PKG-LC-5'");
+        jdbc.update("delete from packaging_record where code = 'PKG-LC-5'");
         assertThat(packagingRecordIdOfSalesBatch(linkedId)).isNull();
     }
 
     @Test
     @DisplayName("A water consumption whose lot is a processing batch is linked to it, with the same JSON")
     void waterConsumptionIsLinkedToTheProcessingBatchOfItsLot() throws Exception {
-        batch("LOT-LC-6");
+        long batchId = batch("LOT-LC-6").getId();
         String source = mockMvc.perform(post("/api/water-supply/sources").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%d","name":"Lot Chain Tank","type":"tank","capacityLiters":5000,"currentLevelLiters":2500}
@@ -245,23 +249,23 @@ class LotChainForeignKeyTest {
         String freeId = objectMapper.readTree(free).get("id").asText();
         entityManager.flush();
 
-        assertThat(processingBatchIdOfConsumption(linkedId)).isEqualTo("LOT-LC-6");
+        assertThat(processingBatchIdOfConsumption(linkedId)).isEqualTo(batchId);
         assertThat(processingBatchIdOfConsumption(freeId)).isNull();
 
         // Product transformation can still delete the batch: the consumption keeps its lot, the link is cleared.
-        jdbc.update("delete from batch where batch_id = 'LOT-LC-6'");
+        jdbc.update("delete from batch where code = 'LOT-LC-6'");
         assertThat(processingBatchIdOfConsumption(linkedId)).isNull();
         assertThat(jdbc.queryForObject("select lot_id from water_consumption where id = ?", String.class,
                 Long.valueOf(linkedId))).isEqualTo("LOT-LC-6");
     }
 
-    private String packagingRecordIdOfSalesBatch(int batchId) {
+    private Long packagingRecordIdOfSalesBatch(int batchId) {
         return jdbc.queryForObject("select packaging_record_id from product_batches where batch_id = ?",
-                String.class, batchId);
+                Long.class, batchId);
     }
 
-    private String processingBatchIdOfConsumption(String consumptionId) {
+    private Long processingBatchIdOfConsumption(String consumptionId) {
         return jdbc.queryForObject("select processing_batch_id from water_consumption where id = ?",
-                String.class, Long.valueOf(consumptionId));
+                Long.class, Long.valueOf(consumptionId));
     }
 }

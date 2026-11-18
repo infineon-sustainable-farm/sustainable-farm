@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The product transformation equipment API on the single equipment register (ADR 0004): the
- * {@code /api/equipment} JSON is unchanged, its equipment is the processing and drying part of
+ * {@code /api/product-transformation/equipment} JSON is unchanged, its equipment is the processing and drying part of
  * machinery's register ({@code /api/machinery/equipment}), in both directions.
  */
 @SpringBootTest
@@ -64,7 +64,7 @@ class ProductTransformationEquipmentApiTest {
 
     @Test
     void equipmentCrudIsExposedUnderProductTransformationRoute() throws Exception {
-        mockMvc.perform(post("/api/equipment")
+        mockMvc.perform(post("/api/product-transformation/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload(EQUIPMENT_ID, "Tunnel dryer test", "DRYING")))
                 .andExpect(status().isCreated())
@@ -76,23 +76,23 @@ class ProductTransformationEquipmentApiTest {
                 .andExpect(jsonPath("$.maintenanceStatus").value("ACTIVE"))
                 .andExpect(jsonPath("$.createdAt").exists());
 
-        mockMvc.perform(get("/api/equipment/{id}", EQUIPMENT_ID))
+        mockMvc.perform(get("/api/product-transformation/equipment/{id}", EQUIPMENT_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.equipmentId").value(EQUIPMENT_ID));
 
-        mockMvc.perform(get("/api/equipment"))
+        mockMvc.perform(get("/api/product-transformation/equipment"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].equipmentId", hasItem(EQUIPMENT_ID)));
 
-        mockMvc.perform(get("/api/equipment/available"))
+        mockMvc.perform(get("/api/product-transformation/equipment/available"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].equipmentId", hasItem(EQUIPMENT_ID)));
 
-        mockMvc.perform(get("/api/equipment/type/DRYING"))
+        mockMvc.perform(get("/api/product-transformation/equipment/type/DRYING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].equipmentId", hasItem(EQUIPMENT_ID)));
 
-        mockMvc.perform(put("/api/equipment/{id}", EQUIPMENT_ID)
+        mockMvc.perform(put("/api/product-transformation/equipment/{id}", EQUIPMENT_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"equipmentName": "Tunnel dryer renamed", "maintenanceStatus": "MAINTENANCE",
@@ -104,14 +104,14 @@ class ProductTransformationEquipmentApiTest {
                 .andExpect(jsonPath("$.capacityKgPerHour").value(150.0))
                 .andExpect(jsonPath("$.location").value("Demo hall"));
 
-        mockMvc.perform(get("/api/equipment/status/MAINTENANCE"))
+        mockMvc.perform(get("/api/product-transformation/equipment/status/MAINTENANCE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].equipmentId", hasItem(EQUIPMENT_ID)));
 
-        mockMvc.perform(delete("/api/equipment/{id}", EQUIPMENT_ID))
+        mockMvc.perform(delete("/api/product-transformation/equipment/{id}", EQUIPMENT_ID))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/equipment"))
+        mockMvc.perform(get("/api/product-transformation/equipment"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].equipmentId", not(hasItem(EQUIPMENT_ID))));
         mockMvc.perform(get("/api/machinery/equipment").param("size", "1000"))
@@ -121,11 +121,11 @@ class ProductTransformationEquipmentApiTest {
 
     @Test
     void productTransformationEquipmentJoinsTheMachineryRegister() throws Exception {
-        mockMvc.perform(post("/api/equipment")
+        mockMvc.perform(post("/api/product-transformation/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload("PT-EQ-REG-DRY", "Register solar dryer", "SOLAR_DRYER")))
                 .andExpect(status().isCreated());
-        mockMvc.perform(post("/api/equipment")
+        mockMvc.perform(post("/api/product-transformation/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload("PT-EQ-REG-WASH", "Register washer", "WASHING")))
                 .andExpect(status().isCreated());
@@ -149,19 +149,19 @@ class ProductTransformationEquipmentApiTest {
                 "$.content[?(@.id == " + dryerId + ")].code");
         String code = codes.get(0);
 
-        mockMvc.perform(get("/api/equipment"))
+        mockMvc.perform(get("/api/product-transformation/equipment"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].equipmentName", hasItem("Register drum dryer")))
                 .andExpect(jsonPath("$[*].equipmentName", not(hasItem("Register field tractor"))));
 
-        mockMvc.perform(get("/api/equipment/{id}", code))
+        mockMvc.perform(get("/api/product-transformation/equipment/{id}", code))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.equipmentName").value("Register drum dryer"))
                 .andExpect(jsonPath("$.maintenanceStatus").value("ACTIVE"))
                 .andExpect(jsonPath("$.equipmentType").doesNotExist());
 
         // Its product transformation attributes are given on its first edit.
-        mockMvc.perform(put("/api/equipment/{id}", code)
+        mockMvc.perform(put("/api/product-transformation/equipment/{id}", code)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"equipmentType": "TUNNEL_DRYER", "capacityKgPerHour": 90.00,
@@ -176,17 +176,17 @@ class ProductTransformationEquipmentApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\": \"OUT_OF_SERVICE\"}"))
                 .andExpect(status().isOk());
-        mockMvc.perform(get("/api/equipment/{id}", code))
+        mockMvc.perform(get("/api/product-transformation/equipment/{id}", code))
                 .andExpect(jsonPath("$.maintenanceStatus").value("RETIRED"));
     }
 
     @Test
     void equipmentCodeAndNameStayUniqueInTheRegister() throws Exception {
-        mockMvc.perform(post("/api/equipment")
+        mockMvc.perform(post("/api/product-transformation/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload("PT-EQ-UNIQUE", "Unique washer", "WASHING")))
                 .andExpect(status().isCreated());
-        mockMvc.perform(post("/api/equipment")
+        mockMvc.perform(post("/api/product-transformation/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload("PT-EQ-UNIQUE", "Another washer", "WASHING")))
                 .andExpect(status().isConflict());
@@ -195,7 +195,7 @@ class ProductTransformationEquipmentApiTest {
     @Test
     void equipmentNameAcceptsOneHundredCharacters() throws Exception {
         String name = "N".repeat(100);
-        mockMvc.perform(post("/api/equipment")
+        mockMvc.perform(post("/api/product-transformation/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload("PT-EQ-LONG", name, "PACKAGING")))
                 .andExpect(status().isCreated())
@@ -207,7 +207,7 @@ class ProductTransformationEquipmentApiTest {
                                  "status": "OPERATIONAL"}
                                 """.formatted("m".repeat(100))))
                 .andExpect(status().isCreated());
-        mockMvc.perform(post("/api/equipment")
+        mockMvc.perform(post("/api/product-transformation/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload("PT-EQ-TOO-LONG", "N".repeat(101), "PACKAGING")))
                 .andExpect(status().isBadRequest());

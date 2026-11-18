@@ -66,7 +66,7 @@ SELECT
     null,
     'LOT-DEMO-001',
     'WASHING',
-    (SELECT batch_id FROM batch WHERE batch_id = 'LOT-DEMO-001')
+    (SELECT id FROM batch WHERE code = 'LOT-DEMO-001')
 WHERE NOT EXISTS (SELECT 1 FROM water_consumption WHERE lot_id = 'LOT-DEMO-001' AND source_id = 1);
 
 INSERT INTO water_quality_tests (created_at, updated_at, source_id, ph, temperature_celsius, turbidity_ntu, conductivity_us_cm, salinity_ppt, test_date)

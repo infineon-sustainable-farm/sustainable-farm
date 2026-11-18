@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record GeneratorEventResponseDto(
-        String eventId,
+        Long eventId,
         LocalDate date,
         String triggerReason,
         BigDecimal durationHours,

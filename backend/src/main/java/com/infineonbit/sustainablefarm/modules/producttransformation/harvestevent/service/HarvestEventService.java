@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 
 import java.time.LocalDate;
 import java.util.List;

@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class VarietyReferenceMatcherTest {
 
     private static VarietyReference reference(long id, String varietyName) {
-        return new VarietyReference(id, varietyName, 160.0, "Zalka_2025", 2, 4, "FAO_mango_burkina", null);
+        return new VarietyReference(id, varietyName, BigDecimal.valueOf(160.0), "Zalka_2025", 2, 4, "FAO_mango_burkina", null);
     }
 
     private static final List<VarietyReference> REFERENCES = List.of(

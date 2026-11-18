@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
 import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
-import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -72,12 +71,12 @@ public class WaterConsumption extends BaseEntity {
     private String lotId;
 
     /**
-     * The product transformation batch whose id is {@link #lotId}, or {@code null}: foreign key to
+     * Id of the product transformation batch whose code is {@link #lotId}, or {@code null}: foreign key to
      * {@code batch} ({@code fk_water_consumption_processing_batch}), resolved when the lot is
      * written through {@code producttransformation.api.ProcessingBatchLookup}. Not part of the JSON.
      */
-    @Column(name = "processing_batch_id", length = ProcessingBatchLookup.KEY_LENGTH)
-    private String processingBatchId;
+    @Column(name = "processing_batch_id")
+    private Long processingBatchId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "activity", length = 32)
@@ -139,11 +138,11 @@ public class WaterConsumption extends BaseEntity {
         this.lotId = lotId;
     }
 
-    public String getProcessingBatchId() {
+    public Long getProcessingBatchId() {
         return processingBatchId;
     }
 
-    public void setProcessingBatchId(String processingBatchId) {
+    public void setProcessingBatchId(Long processingBatchId) {
         this.processingBatchId = processingBatchId;
     }
 
