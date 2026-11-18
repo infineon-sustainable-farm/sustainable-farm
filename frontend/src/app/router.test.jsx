@@ -38,11 +38,11 @@ describe('application router', () => {
     expect(navs).toHaveLength(7)
   })
 
-  it('opts machinery, the reference module, into the shell, the others not yet', () => {
+  it('opts the migrated modules into the shell, the others not yet', () => {
     const shellIds = collectModules(realFiles)
       .filter((module) => module.shell)
       .map((module) => module.nav?.id)
-    expect(shellIds).toEqual(['machinery'])
+    expect(shellIds).toEqual(['energysupply', 'machinery'])
   })
 
   it('renders the sidebar footer of the current shell module', () => {

@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal } from "../../../shared/ui";
+import { todayAsLocalDate } from "../format";
+import FormActions from "./FormActions";
+import InlineAlert from "./InlineAlert";
 
-function todayAsLocalDate() {
-  const today = new Date();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${today.getFullYear()}-${month}-${day}`;
-}
+const MAX_REASON_LENGTH = 500;
 
 function initialValues(event) {
   return {
@@ -18,22 +17,22 @@ function initialValues(event) {
   };
 }
 
-function validate(values) {
+function validate(values, t) {
   const errors = {};
   if (!values.date) {
-    errors.date = "Date is required.";
+    errors.date = t("validation.dateRequired");
   } else if (values.date > todayAsLocalDate()) {
-    errors.date = "Date must be today or in the past.";
+    errors.date = t("generator.dateNotFuture");
   }
 
   for (const field of ["durationHours", "fuelLiters", "costEur"]) {
     if (values[field] !== "" && (!Number.isFinite(Number(values[field])) || Number(values[field]) < 0)) {
-      errors[field] = "Enter a value greater than or equal to 0.";
+      errors[field] = t("generator.valueNonNegative");
     }
   }
 
-  if (values.triggerReason.length > 500) {
-    errors.triggerReason = "Trigger reason must be 500 characters or fewer.";
+  if (values.triggerReason.length > MAX_REASON_LENGTH) {
+    errors.triggerReason = t("generator.reasonTooLong", { max: MAX_REASON_LENGTH });
   }
   return errors;
 }
@@ -48,19 +47,8 @@ function toPayload(values) {
   };
 }
 
-function FormField({ id, label, error, children }) {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
-      {children}
-      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-    </div>
-  );
-}
-
-const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
-
 export default function GeneratorEventFormModal({ event, saving, error, onClose, onSave }) {
+  const { t } = useTranslation("energysupply");
   const [values, setValues] = useState(() => initialValues(event));
   const [errors, setErrors] = useState({});
   const editing = Boolean(event);
@@ -71,7 +59,7 @@ export default function GeneratorEventFormModal({ event, saving, error, onClose,
 
   async function handleSubmit(submitEvent) {
     submitEvent.preventDefault();
-    const nextErrors = validate(values);
+    const nextErrors = validate(values, t);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -84,60 +72,66 @@ export default function GeneratorEventFormModal({ event, saving, error, onClose,
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
-      <section
-        aria-labelledby="generator-event-form-title"
-        aria-modal="true"
-        className="w-full max-w-lg rounded-lg border border-border bg-card shadow-xl"
-        role="dialog"
-      >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 id="generator-event-form-title" className="font-heading text-lg font-bold text-foreground">
-            {editing ? "Edit backup event" : "Add backup event"}
-          </h2>
-          <button type="button" aria-label="Close form" onClick={onClose} disabled={saving}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-50">
-            <X size={18} />
-          </button>
-        </div>
-        <form className="grid gap-4 p-5 sm:grid-cols-2" onSubmit={handleSubmit} noValidate>
-          <FormField id="generator-event-date" label="Date" error={errors.date}>
-            <input id="generator-event-date" className={inputClass} type="date" max={todayAsLocalDate()}
-              value={values.date} onChange={(eventChange) => updateField("date", eventChange.target.value)} />
-          </FormField>
-          <FormField id="generator-event-reason" label="Trigger reason" error={errors.triggerReason}>
-            <input id="generator-event-reason" className={inputClass} type="text" maxLength={500}
-              value={values.triggerReason}
-              onChange={(eventChange) => updateField("triggerReason", eventChange.target.value)} />
-          </FormField>
-          <FormField id="generator-event-duration" label="Duration (hours)" error={errors.durationHours}>
-            <input id="generator-event-duration" className={inputClass} type="number" min="0" step="any"
-              value={values.durationHours}
-              onChange={(eventChange) => updateField("durationHours", eventChange.target.value)} />
-          </FormField>
-          <FormField id="generator-event-fuel" label="Fuel (liters)" error={errors.fuelLiters}>
-            <input id="generator-event-fuel" className={inputClass} type="number" min="0" step="any"
-              value={values.fuelLiters}
-              onChange={(eventChange) => updateField("fuelLiters", eventChange.target.value)} />
-          </FormField>
-          <FormField id="generator-event-cost" label="Cost (EUR)" error={errors.costEur}>
-            <input id="generator-event-cost" className={inputClass} type="number" min="0" step="any"
-              value={values.costEur}
-              onChange={(eventChange) => updateField("costEur", eventChange.target.value)} />
-          </FormField>
-          {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
-          <div className="flex justify-end gap-2 border-t border-border pt-4 sm:col-span-2">
-            <button type="button" onClick={onClose} disabled={saving}
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50">
-              Cancel
-            </button>
-            <button type="submit" disabled={saving}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-              {saving ? "Saving..." : editing ? "Save changes" : "Add event"}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
+    <Modal
+      open
+      size="lg"
+      onClose={onClose}
+      dismissible={!saving}
+      closeLabel={t("generator.closeForm")}
+      title={editing ? t("generator.editEvent") : t("generator.addEvent")}
+    >
+      <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit} noValidate>
+        <Field id="generator-event-date" label={t("fields.date")} error={errors.date}>
+          <Input
+            type="date"
+            max={todayAsLocalDate()}
+            value={values.date}
+            onChange={(eventChange) => updateField("date", eventChange.target.value)}
+          />
+        </Field>
+        <Field id="generator-event-reason" label={t("generator.triggerReasonLabel")} error={errors.triggerReason}>
+          <Input
+            type="text"
+            maxLength={MAX_REASON_LENGTH}
+            value={values.triggerReason}
+            onChange={(eventChange) => updateField("triggerReason", eventChange.target.value)}
+          />
+        </Field>
+        <Field id="generator-event-duration" label={t("generator.durationHours")} error={errors.durationHours}>
+          <Input
+            type="number"
+            min="0"
+            step="any"
+            value={values.durationHours}
+            onChange={(eventChange) => updateField("durationHours", eventChange.target.value)}
+          />
+        </Field>
+        <Field id="generator-event-fuel" label={t("generator.fuelLiters")} error={errors.fuelLiters}>
+          <Input
+            type="number"
+            min="0"
+            step="any"
+            value={values.fuelLiters}
+            onChange={(eventChange) => updateField("fuelLiters", eventChange.target.value)}
+          />
+        </Field>
+        <Field id="generator-event-cost" label={t("generator.costEur")} error={errors.costEur}>
+          <Input
+            type="number"
+            min="0"
+            step="any"
+            value={values.costEur}
+            onChange={(eventChange) => updateField("costEur", eventChange.target.value)}
+          />
+        </Field>
+        {error && <InlineAlert className="sm:col-span-2">{error}</InlineAlert>}
+        <FormActions
+          className="sm:col-span-2"
+          onCancel={onClose}
+          saving={saving}
+          submitLabel={editing ? t("form.saveChanges") : t("generator.addEventButton")}
+        />
+      </form>
+    </Modal>
   );
 }

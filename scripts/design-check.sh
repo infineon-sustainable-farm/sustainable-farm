@@ -19,6 +19,7 @@ cd "$REPO_ROOT"
 MIGRATED_DIRS=(
   frontend/src/shared/ui
   frontend/src/app
+  frontend/src/features/energysupply
   frontend/src/features/machinery
 )
 

@@ -10,6 +10,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 const I18N_MIGRATED_FILES = [
   'src/shared/ui/**/*.{js,jsx}',
   'src/app/**/*.{js,jsx}',
+  'src/features/energysupply/**/*.{js,jsx}',
   'src/features/machinery/**/*.{js,jsx}',
 ]
 
