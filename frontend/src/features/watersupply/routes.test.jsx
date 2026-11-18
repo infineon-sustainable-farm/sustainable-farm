@@ -53,6 +53,26 @@ describe('watersupply module routes', () => {
     expect(nav.items.filter((item) => item.end).map((item) => item.to)).toEqual([WATERSUPPLY_BASE])
   })
 
+  it('groups the entries under the four headings of the former module menu', () => {
+    const sections = nav.items.map((item) => [item.to.replace(WATERSUPPLY_BASE, ''), item.sectionKey?.replace('watersupply:navSections.', '')])
+    expect(sections).toEqual([
+      ['', undefined],
+      ['/farms', 'dataManagement'],
+      ['/sources', 'dataManagement'],
+      ['/irrigation', 'waterPlanning'],
+      ['/consumption', 'waterPlanning'],
+      ['/rainwater', 'waterPlanning'],
+      ['/maintenance', 'waterPlanning'],
+      ['/quality', 'waterPlanning'],
+      ['/drought', 'waterPlanning'],
+      ['/outages', 'waterPlanning'],
+      ['/plants-blocks', 'integrations'],
+      ['/lots', 'integrations'],
+      ['/visitors', 'integrations'],
+      ['/notifications', 'operations'],
+    ])
+  })
+
   it('shows the shell "not found" page on an unknown URL, without silent redirection', () => {
     expect(screenAt('/watersupply/no-such-screen').type).toBe(NotFoundPage)
   })
