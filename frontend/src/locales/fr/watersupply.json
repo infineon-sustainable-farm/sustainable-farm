@@ -16,6 +16,12 @@
     "visitors": "Visiteurs",
     "notifications": "Notifications"
   },
+  "navSections": {
+    "dataManagement": "Gestion des données",
+    "waterPlanning": "Planification de l’eau",
+    "integrations": "Intégrations",
+    "operations": "Exploitation"
+  },
   "common": {
     "none": "—",
     "loading": "Chargement…",
