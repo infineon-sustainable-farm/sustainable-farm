@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { LayoutGrid, Menu, X } from 'lucide-react'
+import { ArrowLeft, Menu, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -194,16 +194,19 @@ export default function Sidebar({ navs }) {
           </span>
         </Link>
 
-        <div className="mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        {/* Way out of the module, styled apart from the module's links: an outlined back button. */}
+        <Link
+          to="/"
+          onClick={closeOnNavigate}
+          className={`mt-4 flex min-h-9 items-center justify-center gap-2 rounded-control border border-on-primary px-3
+            text-xs font-medium text-on-primary hover:bg-primary-hover pointer-coarse:min-h-11 ${focusOnPrimary} ${shellTransition}`}
+        >
+          <ArrowLeft size={16} aria-hidden="true" className="shrink-0" />
+          {t('shell.allModules')}
+        </Link>
+
+        <div className="mt-5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
           {activeNav && <ModuleItems items={activeNav.items} onNavigate={closeOnNavigate} />}
-          <Link
-            to="/"
-            onClick={closeOnNavigate}
-            className={`${LINK_BASE} mt-4 hover:bg-primary-hover`}
-          >
-            <LayoutGrid size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
-            {t('shell.allModules')}
-          </Link>
         </div>
 
         <div className="mt-auto flex flex-col gap-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
