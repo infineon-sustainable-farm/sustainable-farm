@@ -15,9 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * The crop storage endpoints of Product Transformation, while no Crop Storage
- * module receives the entries: a storage entry is refused with a 500 error,
- * as when the entry was posted over HTTP to the application itself, but at
- * once; the capacity check answers 503.
+ * module receives the entries: a storage entry is refused at once with a 503,
+ * like the capacity check.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -33,11 +32,10 @@ class CropStorageIntegrationApiTest {
     private MockMvc mockMvc;
 
     @Test
-    void aStorageEntry_isRefusedAtOnce_withA500() throws Exception {
+    void aStorageEntry_isRefusedAtOnce_withA503() throws Exception {
         long start = System.nanoTime();
         mockMvc.perform(post("/api/crop-storage/entries").contentType(MediaType.APPLICATION_JSON).content(ENTRY))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message").value("Unexpected server error"));
+                .andExpect(status().isServiceUnavailable());
         // The former HTTP call to the application itself ended on its 5 s read timeout.
         assertThat(System.nanoTime() - start).isLessThan(2_000_000_000L);
     }

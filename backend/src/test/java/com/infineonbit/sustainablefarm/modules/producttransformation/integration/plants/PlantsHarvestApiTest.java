@@ -102,15 +102,15 @@ class PlantsHarvestApiTest {
     }
 
     @Test
-    void anUnknownHarvest_isStillA500_asWhenPlantsAnswered404OverHttp() throws Exception {
+    void anUnknownHarvest_isA404() throws Exception {
         mockMvc.perform(get("/api/harvest-events/plants/{id}", 987_654_321L))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message").value("Unexpected server error"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Plants harvest 987654321 not found"));
     }
 
     @Test
-    void aFarmIdBeyondTheRangeOfPlants_isStillA500() throws Exception {
+    void aFarmIdBeyondTheRangeOfPlants_isA400() throws Exception {
         mockMvc.perform(get("/api/harvest-events/plants/farm/{farmId}", 99_999_999_999L))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 }

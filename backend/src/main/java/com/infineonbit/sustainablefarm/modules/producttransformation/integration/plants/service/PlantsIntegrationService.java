@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.dto.PlantsHarvestResponse;
@@ -19,9 +20,8 @@ import java.util.List;
  * ({@link PlantsHarvestResponse}: id, farmId, blockCode, varietyId, varietyName,
  * harvestDate, quantityKg, source, lastUpdated, in camelCase).
  *
- * <p>An unknown harvest id is answered as before, when Plants was called over
- * HTTP and its 404 reached the generic error handler: an
- * {@link IllegalStateException}, a 500 error.
+ * <p>An unknown harvest id is a 404 ({@link ResourceNotFoundException}); a farm id
+ * outside the range Plants stores is a 400.
  *
  * @author Abdoul Ben Fatao SANON
  * @version 1.1.0
@@ -54,12 +54,12 @@ public class PlantsIntegrationService {
      *
      * @param harvestId Harvest ID from Plants
      * @return Harvest data from Plants
-     * @throws IllegalStateException if Plants has no harvest with this ID
+     * @throws ResourceNotFoundException if Plants has no harvest with this ID
      */
     public PlantsHarvestResponse getHarvestById(Long harvestId) {
         return harvestLookup.findHarvest(harvestId)
                 .map(PlantsIntegrationService::toResponse)
-                .orElseThrow(() -> new IllegalStateException("Plants harvest " + harvestId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Plants harvest " + harvestId + " not found"));
     }
 
     /**
@@ -70,7 +70,7 @@ public class PlantsIntegrationService {
      */
     public List<PlantsHarvestResponse> getHarvestsByFarm(Long farmId) {
         // Plants identifies a farm by an int: a larger id was refused by Plants, an error as before.
-        return toResponses(harvestLookup.listHarvests(Math.toIntExact(farmId), null));
+        return toResponses(harvestLookup.listHarvests(toPlantsFarmId(farmId), null));
     }
 
     /**
@@ -149,5 +149,15 @@ public class PlantsIntegrationService {
                 ? BigDecimal.valueOf(harvest.getQuantityKg())
                 : null);
         return event;
+    }
+
+    private static Integer toPlantsFarmId(Long farmId) {
+        if (farmId == null) {
+            return null;
+        }
+        if (farmId < Integer.MIN_VALUE || farmId > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Farm id out of range: " + farmId);
+        }
+        return farmId.intValue();
     }
 }
