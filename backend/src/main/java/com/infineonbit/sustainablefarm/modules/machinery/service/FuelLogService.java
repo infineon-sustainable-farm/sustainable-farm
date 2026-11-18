@@ -37,7 +37,7 @@ public class FuelLogService {
         fuelLog.setEquipment(equipment);
         fuelLog.setDate(request.date());
         fuelLog.setLiters(request.liters());
-        fuelLog.setCost(request.cost());
+        fuelLog.setCost(MachineryMoney.of(request.cost()));
 
         try {
             fuelLogRepository.save(fuelLog);
@@ -101,7 +101,7 @@ public class FuelLogService {
             fuelLog.setLiters(request.liters());
         }
         if (request.cost() != null) {
-            fuelLog.setCost(request.cost());
+            fuelLog.setCost(MachineryMoney.of(request.cost()));
         }
 
         return toResponse(fuelLogRepository.saveAndFlush(fuelLog));
@@ -127,7 +127,7 @@ public class FuelLogService {
                 fuelLog.getEquipment() != null ? fuelLog.getEquipment().getId() : null,
                 fuelLog.getDate(),
                 fuelLog.getLiters(),
-                fuelLog.getCost()
+                MachineryMoney.amountOf(fuelLog.getCost())
         );
     }
 }
