@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/customer-contacts")
+@RequestMapping("/api/sales-marketing/customer-contacts")
 public class CustomerContactController {
 
     private final CustomerContactService service;

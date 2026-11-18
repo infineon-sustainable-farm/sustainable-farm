@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/shipment-events")
+@RequestMapping("/api/sales-marketing/shipment-events")
 public class ShipmentEventController {
 
     private final ShipmentEventService service;

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/customers/{customerId}/certifications")
+@RequestMapping("/api/sales-marketing/customers/{customerId}/certifications")
 public class CustomerCertificationController {
 
     private final CustomerCertificationService service;

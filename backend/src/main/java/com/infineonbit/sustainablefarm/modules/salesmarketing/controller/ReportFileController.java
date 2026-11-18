@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/report-files")
+@RequestMapping("/api/sales-marketing/report-files")
 public class ReportFileController {
 
     private final ReportFileService service;

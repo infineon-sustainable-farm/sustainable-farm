@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pricing-history")
+@RequestMapping("/api/sales-marketing/pricing-history")
 public class PricingHistoryController {
 
     private final PricingHistoryService service;
