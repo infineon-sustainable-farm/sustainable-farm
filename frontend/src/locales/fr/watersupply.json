@@ -119,6 +119,132 @@
       "capacity": "Capacité"
     }
   },
+  "outages": {
+    "title": "Coupures planifiées",
+    "subtitle": "Maintenances ou coupures annoncées à l’avance : les visiteurs sont prévenus, les vannes et l’irrigation automatique restent fermées.",
+    "inForceNow": "En cours",
+    "plannedPeriods": "Périodes planifiées",
+    "listTitle": "Périodes d’indisponibilité",
+    "filterLabel": "Périodes affichées",
+    "filters": {
+      "current": "En cours et à venir",
+      "past": "Terminées",
+      "cancelled": "Annulées",
+      "all": "Toutes"
+    },
+    "phases": {
+      "cancelled": "Annulée",
+      "active": "En cours",
+      "upcoming": "À venir",
+      "past": "Terminée"
+    },
+    "scopes": {
+      "zone": "Zone",
+      "source": "Source d’eau",
+      "farm": "Ferme entière"
+    },
+    "statuses": {
+      "planned": "Planifiée",
+      "active": "Active",
+      "cancelled": "Annulée"
+    },
+    "columns": {
+      "what": "Quoi",
+      "from": "Du",
+      "to": "Au",
+      "reason": "Motif",
+      "status": "Statut"
+    },
+    "loading": "Chargement des coupures planifiées…",
+    "loadError": "Impossible de charger les coupures planifiées.",
+    "emptyTitle": "Aucune coupure planifiée",
+    "empty": "Planifiez une maintenance ou une coupure à droite : les visiteurs et l’irrigation automatique en tiendront compte.",
+    "newTitle": "Planifier une indisponibilité",
+    "editTitle": "Modifier l’indisponibilité",
+    "fields": {
+      "scope": "Indisponible",
+      "start": "Début",
+      "end": "Fin",
+      "reason": "Motif",
+      "reasonPlaceholder": "Nettoyage du filtre, réparation de pompe…",
+      "status": "Statut",
+      "postpone": "Reporter les irrigations prévues pendant cette période"
+    },
+    "sourceNoPostpone": "Une source n’est rattachée à aucune zone : ses irrigations ne peuvent pas être reportées automatiquement.",
+    "errors": {
+      "targetRequired": "Choisissez ce qui est indisponible.",
+      "periodRequired": "Le début et la fin sont obligatoires.",
+      "endAfterStart": "La fin doit être postérieure au début."
+    },
+    "planned": "Indisponibilité planifiée",
+    "updated": "Indisponibilité mise à jour",
+    "cancelled": "Indisponibilité annulée",
+    "deleted": "Indisponibilité supprimée",
+    "cancelError": "Annulation impossible.",
+    "deleteTitle": "Supprimer cette indisponibilité",
+    "deleteMessage": "La période est retirée de l’historique. Pour en garder une trace, annulez-la plutôt."
+  },
+  "plantsBlocks": {
+    "title": "Blocs de cultures",
+    "subtitle": "Reliez chaque zone irriguée au bloc Plants qu’elle arrose : Plants lit alors son eau par bloc.",
+    "listTitle": "Liens zone ↔ bloc",
+    "count": "{{blocks}} bloc(s), {{links}} lien(s)",
+    "columns": {
+      "block": "Bloc",
+      "zone": "Zone",
+      "farm": "Ferme"
+    },
+    "zoneFallback": "Zone {{id}}",
+    "farmFallback": "Ferme {{id}}",
+    "severalBlocks": "plusieurs blocs",
+    "severalBlocksHint": "Ses volumes ne peuvent pas être attribués à un seul bloc",
+    "unlink": "Délier",
+    "loading": "Chargement des liens…",
+    "loadError": "Impossible de charger les liens.",
+    "emptyTitle": "Aucune zone liée pour l’instant",
+    "empty": "Reliez une zone à son bloc Plants avec le formulaire de droite.",
+    "formTitle": "Relier une zone",
+    "fields": {
+      "zone": "Zone",
+      "blockCode": "Code du bloc Plants",
+      "blockCodePlaceholder": "A, B2…"
+    },
+    "codeHint": "Les codes sont enregistrés en majuscules. Le code appartient à la parcelle de la zone : toutes les zones de cette parcelle sont reliées au bloc.",
+    "link": "Relier",
+    "errors": {
+      "zoneRequired": "Choisissez une zone.",
+      "codeFormat": "Le code de bloc est un code court comme A ou B2, sans préfixe ni espace.",
+      "farmUnknown": "La ferme de cette zone est inconnue : vérifiez sa parcelle dans Fermes et parcelles.",
+      "alreadyLinked": "Cette zone est déjà reliée à un bloc."
+    },
+    "linked": "Zone reliée au bloc {{code}}",
+    "unlinked": "Zone déliée du bloc {{code}}",
+    "details": {
+      "title": "Bloc {{code}}",
+      "blockChoice": "Bloc affiché",
+      "pending": "…",
+      "rainfall": "Pluie ce mois-ci",
+      "rainfallWithGauges": "Pluie ce mois-ci · {{count}} pluviomètre(s) de la ferme",
+      "need": "Besoin d’irrigation aujourd’hui",
+      "phaseValue": "{{phase}} × {{factor}}",
+      "unknownPhase": "inconnue",
+      "phase": "Phase de croissance ({{source}})",
+      "phaseSources": {
+        "request": "choisie ici",
+        "plants_calendar": "calendrier Plants",
+        "unknown": "inconnue, sans ajustement"
+      },
+      "phaseField": "Phase de croissance utilisée pour le besoin",
+      "phases": {
+        "calendar": "Selon le calendrier Plants",
+        "establishment": "Installation (0–2 ans)",
+        "gradual": "Entrée en production (3–5 ans)",
+        "full": "Pleine production (6 ans et plus)"
+      },
+      "factorsNotValidated": "Les facteurs de phase valent encore 1,0 : ils attendent la validation des agronomes, le besoin est le besoin FAO-56 simple (base {{base}}, ET0 {{et0}}).",
+      "gaugesPerFarm": "Les pluviomètres appartiennent à la ferme, pas au bloc : deux pluviomètres d’une même ferme ne sont jamais additionnés."
+    }
+  },
   "farms": {
     "title": "Fermes, parcelles et zones",
     "subtitle": "Gérez les sites de production, leurs parcelles et leurs zones d’irrigation.",

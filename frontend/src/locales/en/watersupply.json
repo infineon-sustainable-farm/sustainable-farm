@@ -119,6 +119,132 @@
       "capacity": "Capacity"
     }
   },
+  "outages": {
+    "title": "Planned outages",
+    "subtitle": "Maintenance or cuts announced in advance: visitors are warned, valves and automatic irrigation stay off.",
+    "inForceNow": "In force now",
+    "plannedPeriods": "Planned periods",
+    "listTitle": "Unavailability periods",
+    "filterLabel": "Show periods",
+    "filters": {
+      "current": "Current & upcoming",
+      "past": "Finished",
+      "cancelled": "Cancelled",
+      "all": "All"
+    },
+    "phases": {
+      "cancelled": "Cancelled",
+      "active": "In force",
+      "upcoming": "Upcoming",
+      "past": "Finished"
+    },
+    "scopes": {
+      "zone": "Zone",
+      "source": "Water source",
+      "farm": "Whole farm"
+    },
+    "statuses": {
+      "planned": "Planned",
+      "active": "Active",
+      "cancelled": "Cancelled"
+    },
+    "columns": {
+      "what": "What",
+      "from": "From",
+      "to": "To",
+      "reason": "Reason",
+      "status": "Status"
+    },
+    "loading": "Loading planned outages…",
+    "loadError": "Unable to load planned outages.",
+    "emptyTitle": "No planned outage",
+    "empty": "Plan a maintenance or a cut on the right: visitors and automatic irrigation will take it into account.",
+    "newTitle": "Plan an unavailability",
+    "editTitle": "Edit unavailability",
+    "fields": {
+      "scope": "Unavailable",
+      "start": "Start",
+      "end": "End",
+      "reason": "Reason",
+      "reasonPlaceholder": "Filter cleaning, pump repair…",
+      "status": "Status",
+      "postpone": "Postpone the irrigations planned during this period"
+    },
+    "sourceNoPostpone": "A source is not linked to zones: its irrigations cannot be postponed automatically.",
+    "errors": {
+      "targetRequired": "Select what is unavailable.",
+      "periodRequired": "Start and end are required.",
+      "endAfterStart": "The end must be after the start."
+    },
+    "planned": "Unavailability planned",
+    "updated": "Unavailability updated",
+    "cancelled": "Unavailability cancelled",
+    "deleted": "Unavailability deleted",
+    "cancelError": "Unable to cancel.",
+    "deleteTitle": "Delete this unavailability",
+    "deleteMessage": "The period is removed from the history. To keep a trace, cancel it instead."
+  },
+  "plantsBlocks": {
+    "title": "Plants blocks",
+    "subtitle": "Link each irrigated zone to the Plants block it waters: Plants then reads its water per block.",
+    "listTitle": "Zone ↔ block links",
+    "count": "{{blocks}} block(s), {{links}} link(s)",
+    "columns": {
+      "block": "Block",
+      "zone": "Zone",
+      "farm": "Farm"
+    },
+    "zoneFallback": "Zone {{id}}",
+    "farmFallback": "Farm {{id}}",
+    "severalBlocks": "several blocks",
+    "severalBlocksHint": "Its volumes cannot be attributed to a single block",
+    "unlink": "Unlink",
+    "loading": "Loading links…",
+    "loadError": "Unable to load the links.",
+    "emptyTitle": "No zone linked yet",
+    "empty": "Link a zone to its Plants block with the form on the right.",
+    "formTitle": "Link a zone",
+    "fields": {
+      "zone": "Zone",
+      "blockCode": "Plants block code",
+      "blockCodePlaceholder": "A, B2…"
+    },
+    "codeHint": "Codes are stored in upper case. The code belongs to the field of the zone: every zone of that field is linked to the block.",
+    "link": "Link",
+    "errors": {
+      "zoneRequired": "Select a zone.",
+      "codeFormat": "The block code is a short code such as A or B2, without prefix or space.",
+      "farmUnknown": "The farm of this zone is unknown: check its field in Farms & Fields.",
+      "alreadyLinked": "This zone is already linked to a block."
+    },
+    "linked": "Zone linked to block {{code}}",
+    "unlinked": "Zone unlinked from block {{code}}",
+    "details": {
+      "title": "Block {{code}}",
+      "blockChoice": "Block shown",
+      "pending": "…",
+      "rainfall": "Rainfall this month",
+      "rainfallWithGauges": "Rainfall this month · {{count}} gauge(s) of the farm",
+      "need": "Irrigation need today",
+      "phaseValue": "{{phase}} × {{factor}}",
+      "unknownPhase": "unknown",
+      "phase": "Growth phase ({{source}})",
+      "phaseSources": {
+        "request": "chosen here",
+        "plants_calendar": "Plants calendar",
+        "unknown": "unknown, no adjustment"
+      },
+      "phaseField": "Growth phase used for the need",
+      "phases": {
+        "calendar": "From the Plants calendar",
+        "establishment": "Establishment (0–2 yrs)",
+        "gradual": "Gradual production (3–5 yrs)",
+        "full": "Full production (6+ yrs)"
+      },
+      "factorsNotValidated": "Phase factors are still 1.0: they wait for the agronomists' validation, the need is the plain FAO-56 one (base {{base}}, ET0 {{et0}}).",
+      "gaugesPerFarm": "Rain gauges belong to the farm, not to the block: two gauges of the same farm are never added up."
+    }
+  },
   "farms": {
     "title": "Farms, fields & zones",
     "subtitle": "Manage production sites, their fields and irrigation zones.",
