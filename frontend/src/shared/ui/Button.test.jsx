@@ -35,6 +35,14 @@ describe('Button', () => {
     expect(button.className).not.toContain('hover:scale')
   })
 
+  it('keeps its label on one line, except at full width where the container sets the width', () => {
+    const { rerender } = render(<Button>Ajouter un équipement</Button>)
+    expect(screen.getByRole('button')).toHaveClass('whitespace-nowrap')
+    rerender(<Button fullWidth>Télécharger le manifeste</Button>)
+    expect(screen.getByRole('button')).toHaveClass('w-full')
+    expect(screen.getByRole('button')).not.toHaveClass('whitespace-nowrap')
+  })
+
   it('renders a decorative leading icon', () => {
     const { container } = render(<Button icon={Plus}>Add</Button>)
     expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
