@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -40,12 +41,12 @@ public class VarietyReferenceServiceTest {
     private VarietyReferenceService varietyReferenceService;
 
     private static VarietyReference reference(long id, String name) {
-        return new VarietyReference(id, name, 200.0, "Zalka_2025", 4, 5, "FAO_mango_burkina", ENTERED);
+        return new VarietyReference(id, name, BigDecimal.valueOf(200.0), "Zalka_2025", 4, 5, "FAO_mango_burkina", ENTERED);
     }
 
     /** Keitt as the dev loader enters it: 220 kg from Zalka 2025, May to July. */
     private static VarietyReference keitt() {
-        return new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, ENTERED);
+        return new VarietyReference(1L, "Keitt", BigDecimal.valueOf(220.0), "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, ENTERED);
     }
 
     /** Stubs the rows of the reference. */

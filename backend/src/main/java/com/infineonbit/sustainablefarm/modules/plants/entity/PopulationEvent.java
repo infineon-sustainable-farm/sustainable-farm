@@ -1,17 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,29 +24,23 @@ import java.time.LocalDate;
  * {@link com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository}),
  * the same way the tree age is computed from the planting date.
  *
- * <p>The event holds no farm and no block: a {@link Variety} row already stands
+ * <p>The event holds no farm and no block: a {@link BlockVariety} row already stands
  * for one (block, variety) pair, the block giving the farm, and copying them here would make two
  * sources of truth.
  *
- * <p>Unlike {@code varietes} and {@code calendrier_croissance}, the table and its
- * columns follow the naming of the other modules: English snake_case and a
- * singular table name.
+ * <p>The table and its columns follow the naming of the other modules: English
+ * snake_case and a singular table name.
  */
 @Entity
 @Table(name = "population_event")
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class PopulationEvent {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class PopulationEvent extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "variety_id", nullable = false)
-    private Variety variety;
+    @JoinColumn(name = "block_variety_id", nullable = false)
+    private BlockVariety variety;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 30)
@@ -68,4 +59,21 @@ public class PopulationEvent {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public PopulationEvent(Long id,
+            BlockVariety variety,
+            PopulationEventType eventType,
+            LocalDate eventDate,
+            Integer treeCount,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.variety = variety;
+        this.eventType = eventType;
+        this.eventDate = eventDate;
+        this.treeCount = treeCount;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
 }

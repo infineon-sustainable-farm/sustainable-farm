@@ -6,13 +6,13 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingReques
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,7 +51,7 @@ class NurseryTransplantTransactionIntegrationTest {
     private NurseryEventRepository nurseryEventRepository;
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private PopulationEventRepository populationEventRepository;
@@ -79,7 +79,7 @@ class NurseryTransplantTransactionIntegrationTest {
         NurseryEventResponse transplant = nurseryEventService.recordTransplant(batchId,
                 new TransplantRequest(transplantedOn, 100.0, "n1"));
         // Assert: the variety row of the block, its PLANTING and the calendar date of the block
-        List<Variety> varieties = varietyRepository.findByBlockAndName(blockIdOf("N1"), "Keitt");
+        List<BlockVariety> varieties = blockVarietyRepository.findByBlockAndName(blockIdOf("N1"), "Keitt");
         assertEquals(1, varieties.size());
         PopulationEvent planting = populationEventRepository.findById(transplant.populationEventId()).orElseThrow();
         assertEquals(PopulationEventType.PLANTING, planting.getEventType());
@@ -100,7 +100,7 @@ class NurseryTransplantTransactionIntegrationTest {
         plantingService.recordPlanting(new PlantingRequest(null, "N2", "Keitt", LocalDate.of(2026, 9, 1), 20));
         Long batchId = startBatch("IT-N2");
         long eventsBefore = nurseryEventRepository.count();
-        long varietiesBefore = varietyRepository.count();
+        long varietiesBefore = blockVarietyRepository.count();
         long populationEventsBefore = populationEventRepository.count();
         long calendarsBefore = growthCalendarRepository.count();
         // Act
@@ -110,7 +110,7 @@ class NurseryTransplantTransactionIntegrationTest {
         // Assert: the answer of the planting service, unchanged, and nothing stored
         assertEquals("A planting of Keitt is already recorded on block N2", exception.getMessage());
         assertEquals(eventsBefore, nurseryEventRepository.count());
-        assertEquals(varietiesBefore, varietyRepository.count());
+        assertEquals(varietiesBefore, blockVarietyRepository.count());
         assertEquals(populationEventsBefore, populationEventRepository.count());
         assertEquals(calendarsBefore, growthCalendarRepository.count());
         assertEquals(150, nurseryBatchService.getBatchById(batchId).currentCount());

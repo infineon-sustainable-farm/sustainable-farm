@@ -3,14 +3,14 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -43,7 +44,7 @@ public class HarvestServiceTest {
     private static final LocalDate PLANTING_DATE = LocalDate.of(2023, 9, 24);
 
     @Mock
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Mock
     private PopulationEventRepository populationEventRepository;
@@ -66,22 +67,22 @@ public class HarvestServiceTest {
         return new HarvestRequest(farmId, blockCode, varietyName, harvestDate, quantityKg);
     }
 
-    private static Variety variety(Long id, String blockCode, String name) {
-        Variety variety = new Variety();
+    private static BlockVariety variety(Long id, String blockCode, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.assignBlock(TestBlocks.idOf(blockCode), TestBlocks.label(blockCode));
         variety.setName(name);
         return variety;
     }
 
-    private static PopulationEvent planting(Variety variety, LocalDate date) {
+    private static PopulationEvent planting(BlockVariety variety, LocalDate date) {
         return new PopulationEvent(50L, variety, PopulationEventType.PLANTING, date, 150, "user_entry", NOW);
     }
 
     /** Keitt planted on block B on 2023-09-24, as in the orchard of the runtime check. */
-    private Variety keittPlantedOnB() {
-        Variety keitt = variety(10L, "B", "Keitt");
-        when(varietyRepository.findByBlockAndName(B, "Keitt")).thenReturn(List.of(keitt));
+    private BlockVariety keittPlantedOnB() {
+        BlockVariety keitt = variety(10L, "B", "Keitt");
+        when(blockVarietyRepository.findByBlockAndName(B, "Keitt")).thenReturn(List.of(keitt));
         when(populationEventRepository.findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(
                 10L, PopulationEventType.PLANTING)).thenReturn(Optional.of(planting(keitt, PLANTING_DATE)));
         return keitt;
@@ -99,7 +100,7 @@ public class HarvestServiceTest {
     @Test
     void recordHarvest_shouldStoreTheHarvest_whenVarietyIsPlanted() {
         // Arrange
-        Variety keitt = keittPlantedOnB();
+        BlockVariety keitt = keittPlantedOnB();
         harvestSaveAssignsId(200L);
         // Act
         HarvestResponse response = harvestService.recordHarvest(
@@ -110,7 +111,7 @@ public class HarvestServiceTest {
         HarvestRecord harvest = captor.getValue();
         assertSame(keitt, harvest.getVariety());
         assertEquals(LocalDate.of(2026, 6, 10), harvest.getHarvestDate());
-        assertEquals(800.0, harvest.getQuantityKg());
+        assertEquals(800.0, harvest.getQuantityKg().doubleValue());
         assertEquals("user_entry", harvest.getSource());
         assertEquals(NOW, harvest.getLastUpdated());
         // Assert: the first lot of block B for 2026, read from the lots already given
@@ -124,8 +125,8 @@ public class HarvestServiceTest {
     @Test
     void recordHarvest_shouldNormalizeBlockAndName_likeAPlanting() {
         // Arrange: " b " and " keitt " find the row of "Keitt" on block B
-        Variety keitt = variety(10L, "B", "Keitt");
-        when(varietyRepository.findByBlockAndName(B, "keitt")).thenReturn(List.of(keitt));
+        BlockVariety keitt = variety(10L, "B", "Keitt");
+        when(blockVarietyRepository.findByBlockAndName(B, "keitt")).thenReturn(List.of(keitt));
         when(populationEventRepository.findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(
                 10L, PopulationEventType.PLANTING)).thenReturn(Optional.of(planting(keitt, PLANTING_DATE)));
         harvestSaveAssignsId(200L);
@@ -210,15 +211,15 @@ public class HarvestServiceTest {
                 request(null, " c ", "Kent", LocalDate.of(2026, 6, 10), 800.0), NOW));
         // Assert: the name as sent, the block as normalized; nothing written
         assertEquals("No planting of Kent is recorded on block C", ex.getMessage());
-        verifyNoInteractions(varietyRepository, populationEventRepository);
+        verifyNoInteractions(blockVarietyRepository, populationEventRepository);
         verify(harvestRecordRepository, never()).save(any());
     }
 
     @Test
     void recordHarvest_shouldThrow422_whenVarietyRowHasNoPlanting() {
         // Arrange: the Zalka row of the dev profile, which has no PLANTING event
-        Variety zalkaKeitt = variety(1L, "A", "Keitt");
-        when(varietyRepository.findByBlockAndName(A, "keitt")).thenReturn(List.of(zalkaKeitt));
+        BlockVariety zalkaKeitt = variety(1L, "A", "Keitt");
+        when(blockVarietyRepository.findByBlockAndName(A, "keitt")).thenReturn(List.of(zalkaKeitt));
         when(populationEventRepository.findFirstByVarietyIdAndEventTypeOrderByEventDateAsc(
                 1L, PopulationEventType.PLANTING)).thenReturn(Optional.empty());
         // Act
@@ -250,15 +251,15 @@ public class HarvestServiceTest {
                 request(2L, "B", "Keitt", LocalDate.of(2026, 6, 10), 800.0), NOW));
         // Assert: no lookup of a variety row, nothing written
         assertEquals("No planting of Keitt is recorded on block B", ex.getMessage());
-        verifyNoInteractions(varietyRepository);
+        verifyNoInteractions(blockVarietyRepository);
         verify(harvestRecordRepository, never()).save(any());
     }
 
     @Test
     void getAllHarvests_shouldPassFiltersAndTurnABlankBlockOrLotNumberIntoNoFilter() {
         // Arrange
-        Variety keitt = variety(10L, "B", "Keitt");
-        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
+        BlockVariety keitt = variety(10L, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), BigDecimal.valueOf(800.0),
                 "user_entry", NOW);
         LocalDate from = LocalDate.of(2026, 6, 1);
         LocalDate to = LocalDate.of(2026, 6, 30);
@@ -273,8 +274,8 @@ public class HarvestServiceTest {
     @Test
     void getAllHarvests_shouldTrimAndUpperCaseTheLotNumber() {
         // Arrange
-        Variety keitt = variety(10L, "B", "Keitt");
-        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
+        BlockVariety keitt = variety(10L, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), BigDecimal.valueOf(800.0),
                 "user_entry", NOW);
         when(harvestRecordRepository.findByOptionalFilters(true, ALL, "LOT-2026-B-001", null, null))
                 .thenReturn(List.of(harvest));
@@ -308,8 +309,8 @@ public class HarvestServiceTest {
     @Test
     void getHarvestById_shouldReturnEveryField_withTheFarmBlockAndNameOfTheVarietyRow() {
         // Arrange
-        Variety keitt = variety(10L, "B", "Keitt");
-        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), 800.0,
+        BlockVariety keitt = variety(10L, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(200L, "LOT-2026-B-001", keitt, LocalDate.of(2026, 6, 10), BigDecimal.valueOf(800.0),
                 "user_entry", NOW);
         when(harvestRecordRepository.findWithVarietyById(200L)).thenReturn(Optional.of(harvest));
         // Act
@@ -322,8 +323,8 @@ public class HarvestServiceTest {
     @Test
     void getHarvestById_shouldGiveNoLotNumber_forAHarvestRecordedBeforeLotNumbers() {
         // Arrange: a row written before the lot number existed
-        Variety keitt = variety(10L, "B", "Keitt");
-        HarvestRecord harvest = new HarvestRecord(150L, null, keitt, LocalDate.of(2026, 5, 2), 300.0,
+        BlockVariety keitt = variety(10L, "B", "Keitt");
+        HarvestRecord harvest = new HarvestRecord(150L, null, keitt, LocalDate.of(2026, 5, 2), BigDecimal.valueOf(300.0),
                 "user_entry", NOW);
         when(harvestRecordRepository.findWithVarietyById(150L)).thenReturn(Optional.of(harvest));
         // Act & Assert: null, never a number made up on the way out

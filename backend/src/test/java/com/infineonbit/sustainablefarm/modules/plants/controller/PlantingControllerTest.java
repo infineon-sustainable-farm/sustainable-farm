@@ -245,7 +245,7 @@ public class PlantingControllerTest {
     void recordPlanting_shouldRunThePlantingOnceMore_whenItLostARaceOnTheVarietyKey() throws Exception {
         // Arrange: the first run loses the race, the second one finds the row of the winner
         when(plantingService.recordPlanting(any(PlantingRequest.class)))
-                .thenThrow(violationOf("uk_varietes_variety_key"))
+                .thenThrow(violationOf("uk_block_variety_variety_key"))
                 .thenReturn(keittOnBlockA());
         // Act
         ResultActions result = postPlanting("""
@@ -261,7 +261,7 @@ public class PlantingControllerTest {
     void recordPlanting_shouldReturn409AndStop_whenTheSecondRunLosesARaceAgain() throws Exception {
         // Arrange: both runs lose a race, for example with three plantings or more on a new block
         when(plantingService.recordPlanting(any(PlantingRequest.class)))
-                .thenThrow(violationOf("uk_calendrier_croissance_block_key"));
+                .thenThrow(violationOf("uk_growth_calendar_block_key"));
         // Act
         ResultActions result = postPlanting("""
                 {"blockCode":" c ","varietyName":"Kent","plantingDate":"2021-03-01","treeCount":50}
