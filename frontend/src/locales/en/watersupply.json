@@ -19,9 +19,7 @@
   "common": {
     "none": "—",
     "loading": "Loading…",
-    "error": "Error",
     "save": "Save",
-    "saving": "...",
     "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
