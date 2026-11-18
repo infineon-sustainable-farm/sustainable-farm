@@ -13,12 +13,13 @@ export function useContactActions({ effectiveSelectedId, flashSuccess, flashErro
   const [pendingDeleteContact, setPendingDeleteContact] = useState(null);
   const [deletingContact, setDeletingContact] = useState(false);
 
-  const openCreateContact = () => {
-    if (effectiveSelectedId == null) {
+  /** Opens the Add Contact dialog for the given customer, the selected one by default. */
+  const openCreateContact = (customerId = effectiveSelectedId) => {
+    if (customerId == null) {
       flashError(t('customers.errors.selectCustomerFirst'));
       return;
     }
-    setContactForm(emptyContactForm(effectiveSelectedId));
+    setContactForm(emptyContactForm(customerId));
     setEditingContactId(null);
     setShowContactModal(true);
     setActionError(null);
