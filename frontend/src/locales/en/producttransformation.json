@@ -526,7 +526,6 @@
   },
   "batches": {
     "title": "Batch Management",
-    "new": "New Batch",
     "advance": "Advance",
     "filterStatus": "Filter by status",
     "allStatuses": "All Statuses",

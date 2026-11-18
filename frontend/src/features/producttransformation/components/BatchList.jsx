@@ -7,9 +7,9 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Package, Plus } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, EmptyState, ErrorState, PageHeader, Select } from '../../../shared/ui';
+import { EmptyState, ErrorState, PageHeader, Select } from '../../../shared/ui';
 import { batchApi } from '../api/batchApi';
 import BatchTable from './BatchTable';
 import FilterBar from './FilterBar';
@@ -95,8 +95,7 @@ const BatchList = () => {
 
   return (
     <div className="p-6">
-      {/* "New Batch" has never been wired to a form; it is kept as it was (see the T30 report). */}
-      <PageHeader className="mb-6" title={t('batches.title')} actions={<Button icon={Plus}>{t('batches.new')}</Button>} />
+      <PageHeader className="mb-6" title={t('batches.title')} />
       {renderContent()}
     </div>
   );
