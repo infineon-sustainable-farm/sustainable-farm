@@ -1,13 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.repository;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.SoilMoistureReading;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-public interface SoilMoistureReadingRepository extends JpaRepository<SoilMoistureReading, UUID> {
+public interface SoilMoistureReadingRepository extends JpaRepository<SoilMoistureReading, Long> {
 
     List<SoilMoistureReading> findByZoneIdOrderByMeasuredAtDesc(Long zoneId);
 

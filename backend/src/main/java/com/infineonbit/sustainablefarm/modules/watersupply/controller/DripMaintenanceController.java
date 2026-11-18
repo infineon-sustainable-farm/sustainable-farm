@@ -6,7 +6,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.service.DripMaintenan
 import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/drip-maintenance-logs")
+@RequestMapping("/api/water-supply/drip-maintenance-logs")
 public class DripMaintenanceController {
     private final DripMaintenanceService maintenanceService;
 
@@ -51,19 +50,19 @@ public class DripMaintenanceController {
     }
 
     @GetMapping("/{logId}")
-    public DripMaintenanceLogResponse get(@PathVariable UUID logId) {
+    public DripMaintenanceLogResponse get(@PathVariable Long logId) {
         return maintenanceService.get(logId);
     }
 
     @PutMapping("/{logId}")
-    public DripMaintenanceLogResponse update(@PathVariable UUID logId,
+    public DripMaintenanceLogResponse update(@PathVariable Long logId,
             @RequestBody DripMaintenanceLogRequest request) {
         return maintenanceService.update(logId, request);
     }
 
     @DeleteMapping("/{logId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID logId) {
+    public void delete(@PathVariable Long logId) {
         maintenanceService.delete(logId);
     }
 

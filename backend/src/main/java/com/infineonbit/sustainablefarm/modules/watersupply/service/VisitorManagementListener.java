@@ -18,7 +18,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * Keeps the visit announcements ({@code WaterVisitorEvent}) in step with Visitor Management.
  *
  * <p>Runs once the visit is committed on the Visitor Management side, in its own transaction, and
- * goes through the same path as {@code POST /api/water/visitor-events}: idempotent on
+ * goes through the same path as {@code POST /api/water-supply/visitor-events}: idempotent on
  * {@code visitId}, notification for the water team. Visitor Management knows no farm zone, so the
  * announcement carries none and no zone conflict can be flagged from it. The source transaction is
  * already committed: a failure here is logged by Spring and never undoes the booking or the

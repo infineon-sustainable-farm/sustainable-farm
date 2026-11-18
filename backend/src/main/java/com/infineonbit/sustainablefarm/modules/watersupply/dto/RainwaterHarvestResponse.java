@@ -2,11 +2,10 @@ package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
 import java.time.Instant;
-import java.util.UUID;
 
 /** API view of a rainwater harvest: stable contract, independent of the JPA entity. */
 public record RainwaterHarvestResponse(
-        UUID id,
+        Long id,
         Long sourceId,
         Double catchmentAreaM2,
         Double rainfallMm,

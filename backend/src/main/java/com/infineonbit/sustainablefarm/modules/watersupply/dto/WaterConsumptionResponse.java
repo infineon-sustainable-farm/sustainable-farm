@@ -2,10 +2,9 @@ package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import java.time.Instant;
-import java.util.UUID;
 
-public record WaterConsumptionResponse(UUID id, Long farmId, Long sourceId, Double consumptionLiters,
-                                       Instant consumptionDate, UUID irrigationId, Long zoneId,
+public record WaterConsumptionResponse(Long id, Long farmId, Long sourceId, Double consumptionLiters,
+                                       Instant consumptionDate, Long irrigationId, Long zoneId,
                                        String lotId, String activity, String blockCode, Boolean multipleBlockCodes,
                                        Instant createdAt) {
     public static WaterConsumptionResponse from(WaterConsumption consumption) {
@@ -15,7 +14,8 @@ public record WaterConsumptionResponse(UUID id, Long farmId, Long sourceId, Doub
     public static WaterConsumptionResponse from(WaterConsumption consumption, String blockCode, boolean multipleBlockCodes) {
         return new WaterConsumptionResponse(consumption.getId(), consumption.getFarmId(), consumption.getSourceId(),
                 consumption.getConsumptionLiters(), consumption.getConsumptionDate(), consumption.getIrrigationId(),
-                consumption.getZoneId(), consumption.getLotId(), consumption.getActivity(), blockCode, multipleBlockCodes,
+                consumption.getZoneId(), consumption.getLotId(),
+                consumption.getActivity() == null ? null : consumption.getActivity().name(), blockCode, multipleBlockCodes,
                 consumption.getCreatedAt());
     }
 }

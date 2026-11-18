@@ -14,7 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Blocks of the farms, served as Water Supply "fields" under {@code /api/fields}. */
+/** Blocks of the farms, served as Water Supply "fields" under {@code /api/farm/fields}. */
 @Service
 @Transactional(readOnly = true)
 public class BlockService {

@@ -1,14 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogResponse;
-import com.infineonbit.sustainablefarm.core.web.PageResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
-import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
-import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -83,12 +82,12 @@ public class DripMaintenanceService {
         return response(logRepository.save(log));
     }
 
-    public DripMaintenanceLogResponse get(UUID logId) {
+    public DripMaintenanceLogResponse get(Long logId) {
         return response(getEntity(logId));
     }
 
     @Transactional
-    public DripMaintenanceLogResponse update(UUID logId, DripMaintenanceLogRequest request) {
+    public DripMaintenanceLogResponse update(Long logId, DripMaintenanceLogRequest request) {
         DripMaintenanceLog log = getEntity(logId);
         if (request.zoneId() != null && !request.zoneId().equals(log.getZoneId())) {
             requireZone(request.zoneId());
@@ -107,7 +106,7 @@ public class DripMaintenanceService {
     }
 
     @Transactional
-    public void delete(UUID logId) {
+    public void delete(Long logId) {
         logRepository.delete(getEntity(logId));
     }
 
@@ -125,7 +124,7 @@ public class DripMaintenanceService {
                 .toList();
     }
 
-    private DripMaintenanceLog getEntity(UUID logId) {
+    private DripMaintenanceLog getEntity(Long logId) {
         return logRepository.findById(logId)
                 .orElseThrow(() -> new NotFoundException("DripMaintenanceLog"));
     }

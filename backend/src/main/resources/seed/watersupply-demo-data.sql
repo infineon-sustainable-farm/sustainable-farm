@@ -2,6 +2,8 @@
 -- Charge uniquement au demarrage sous le profil "dev" par WatersupplyDemoDataSeeder :
 -- une migration ne doit porter ni comptes ni donnees de demonstration (PR-33).
 -- Jeu minimal, relationnellement valide et idempotent pour les environnements demo/dev.
+-- Ids Long en identite (docs/adr/0002) : seules les lignes de zone et de source ont un id fixe,
+-- les autres lignes sont retrouvees par une cle naturelle (WHERE NOT EXISTS).
 
 -- People of the staff referential (person, Long ids, docs/adr/0004): the demo user, recipient
 -- and author of the rows below, and the technician of the drip maintenance log. No fixed ids:
@@ -52,10 +54,10 @@ SELECT setval(pg_get_serial_sequence('water_sources', 'id'), GREATEST((SELECT MA
 -- 1 250 L, seed/producttransformation-demo-seed.sql, run before this script by
 -- ProductTransformationDemoDataSeeder): lot_id keeps the lot as sent, processing_batch_id is the
 -- foreign key to that batch, NULL when the batch is absent.
-INSERT INTO water_consumption (id, created_at, farm_id, source_id, consumption_liters, consumption_date, irrigation_id,
-                               lot_id, activity, processing_batch_id)
-VALUES (
-    '60000000-0000-0000-0000-000000000001',
+INSERT INTO water_consumption (created_at, updated_at, farm_id, source_id, consumption_liters, consumption_date,
+                               irrigation_id, lot_id, activity, processing_batch_id)
+SELECT
+    '2026-01-01T08:25:00Z',
     '2026-01-01T08:25:00Z',
     1,
     1,
@@ -65,12 +67,11 @@ VALUES (
     'LOT-DEMO-001',
     'WASHING',
     (SELECT batch_id FROM batch WHERE batch_id = 'LOT-DEMO-001')
-)
-ON CONFLICT (id) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM water_consumption WHERE lot_id = 'LOT-DEMO-001' AND source_id = 1);
 
-INSERT INTO water_quality_tests (id, created_at, source_id, ph, temperature_celsius, turbidity_ntu, conductivity_us_cm, salinity_ppt, test_date)
-VALUES (
-    '70000000-0000-0000-0000-000000000001',
+INSERT INTO water_quality_tests (created_at, updated_at, source_id, ph, temperature_celsius, turbidity_ntu, conductivity_us_cm, salinity_ppt, test_date)
+SELECT
+    '2026-01-01T08:30:00Z',
     '2026-01-01T08:30:00Z',
     1,
     7.1,
@@ -79,33 +80,35 @@ VALUES (
     450,
     0.2,
     '2026-01-01T09:10:00Z'
-)
-ON CONFLICT (id) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM water_quality_tests WHERE source_id = 1 AND test_date = '2026-01-01T09:10:00Z');
 
-INSERT INTO irrigation_schedules (id, created_at, zone_id, start_time, duration_minutes, water_quantity_liters, status, created_by)
-VALUES (
-    '80000000-0000-0000-0000-000000000001',
+-- No fixed ids (Long identity, docs/adr/0002): the demo schedule is found by its zone and start time.
+INSERT INTO irrigation_schedules (created_at, updated_at, zone_id, start_time, duration_minutes, water_quantity_liters, status,
+                                  trigger_source, created_by)
+SELECT
+    '2026-01-01T08:35:00Z',
     '2026-01-01T08:35:00Z',
     1,
     '2026-01-02T06:00:00Z',
     45,
     1500,
     'scheduled',
+    'manual',
     (SELECT id FROM person WHERE email = 'demo.admin@sustainable-farm.local')
-)
-ON CONFLICT (id) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM irrigation_schedules WHERE zone_id = 1 AND start_time = '2026-01-02T06:00:00Z');
 
-INSERT INTO irrigation_logs (id, created_at, schedule_id, actual_start_time, actual_end_time, water_used_liters, status)
-VALUES (
-    '90000000-0000-0000-0000-000000000001',
+INSERT INTO irrigation_logs (created_at, updated_at, schedule_id, actual_start_time, actual_end_time, water_used_liters, status)
+SELECT
     '2026-01-01T08:40:00Z',
-    '80000000-0000-0000-0000-000000000001',
+    '2026-01-01T08:40:00Z',
+    s.id,
     '2026-01-02T06:00:00Z',
     '2026-01-02T06:45:00Z',
     1500,
     'completed'
-)
-ON CONFLICT (id) DO NOTHING;
+FROM irrigation_schedules s
+WHERE s.zone_id = 1 AND s.start_time = '2026-01-02T06:00:00Z'
+  AND NOT EXISTS (SELECT 1 FROM irrigation_logs l WHERE l.schedule_id = s.id);
 
 -- The notification of the demo, in the single alert store of the notification module
 -- (docs/adr/0004): no fixed id, the row is found by its source module and title.
@@ -122,13 +125,13 @@ SELECT
     'Les donnees de demonstration water supply sont disponibles.',
     (SELECT id FROM person WHERE email = 'demo.admin@sustainable-farm.local'),
     false,
-    '/api/farms',
+    '/api/farm/farms',
     '2026-01-01T08:45:00Z'
 WHERE NOT EXISTS (SELECT 1 FROM alert WHERE source_module = 'WATERSUPPLY' AND title = 'Demo pret');
 
-INSERT INTO rainwater_harvests (id, created_at, source_id, catchment_area_m2, rainfall_mm, runoff_coefficient, harvested_liters, capture_date)
-VALUES (
-    'b0000000-0000-0000-0000-000000000001',
+INSERT INTO rainwater_harvests (created_at, updated_at, source_id, catchment_area_m2, rainfall_mm, runoff_coefficient, harvested_liters, capture_date)
+SELECT
+    '2026-01-01T08:50:00Z',
     '2026-01-01T08:50:00Z',
     1,
     180,
@@ -136,12 +139,11 @@ VALUES (
     0.82,
     1771.2,
     '2026-01-01T10:00:00Z'
-)
-ON CONFLICT (id) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM rainwater_harvests WHERE source_id = 1 AND capture_date = '2026-01-01T10:00:00Z');
 
 INSERT INTO drip_maintenance_logs (
-    id,
     created_at,
+    updated_at,
     zone_id,
     maintenance_date,
     maintenance_type,
@@ -152,8 +154,8 @@ INSERT INTO drip_maintenance_logs (
     notes,
     performed_by_person_id
 )
-VALUES (
-    'c0000000-0000-0000-0000-000000000001',
+SELECT
+    '2026-01-01T08:55:00Z',
     '2026-01-01T08:55:00Z',
     1,
     '2026-01-03T07:30:00Z',
@@ -164,5 +166,4 @@ VALUES (
     0,
     'Controle demo sans anomalie.',
     (SELECT MIN(id) FROM person WHERE lower(full_name) = lower('Technicien Demo'))
-)
-ON CONFLICT (id) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM drip_maintenance_logs WHERE zone_id = 1 AND maintenance_date = '2026-01-03T07:30:00Z');

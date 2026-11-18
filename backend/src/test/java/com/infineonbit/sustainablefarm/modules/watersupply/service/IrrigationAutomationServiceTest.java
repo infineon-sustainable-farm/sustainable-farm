@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -86,8 +87,8 @@ class IrrigationAutomationServiceTest {
 
         ArgumentCaptor<IrrigationSchedule> saved = ArgumentCaptor.forClass(IrrigationSchedule.class);
         verify(scheduleRepository).save(saved.capture());
-        assertEquals(IrrigationAutomationService.TRIGGER_SOURCE_AUTO, saved.getValue().getTriggerSource());
-        assertEquals("scheduled", saved.getValue().getStatus());
+        assertEquals(IrrigationAutomationService.TRIGGER_SOURCE_AUTO, saved.getValue().getTriggerSource().value());
+        assertEquals("scheduled", saved.getValue().getStatus().value());
         assertEquals(1235d, saved.getValue().getWaterQuantityLiters());
         assertEquals(zone.id(), saved.getValue().getZoneId());
     }
@@ -109,7 +110,7 @@ class IrrigationAutomationServiceTest {
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
         when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.id()), any())).thenReturn(30d);
         IrrigationSchedule open = new IrrigationSchedule();
-        open.setStatus("scheduled");
+        open.setStatus(IrrigationStatus.SCHEDULED);
         when(scheduleRepository.findByZoneId(zone.id())).thenReturn(List.of(open));
 
         Map<String, Object> report = service().trigger();

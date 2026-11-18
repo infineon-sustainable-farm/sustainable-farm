@@ -1,21 +1,21 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.repository;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLogStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface IrrigationLogRepository extends JpaRepository<IrrigationLog, UUID> {
-	Page<IrrigationLog> findByScheduleId(UUID scheduleId, Pageable pageable);
+public interface IrrigationLogRepository extends JpaRepository<IrrigationLog, Long> {
+	Page<IrrigationLog> findByScheduleId(Long scheduleId, Pageable pageable);
 
-	Optional<IrrigationLog> findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(UUID scheduleId, String status);
+	Optional<IrrigationLog> findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(Long scheduleId, IrrigationLogStatus status);
 
-    Optional<IrrigationLog> findFirstByScheduleIdOrderByActualStartTimeDesc(UUID scheduleId);
+    Optional<IrrigationLog> findFirstByScheduleIdOrderByActualStartTimeDesc(Long scheduleId);
 
 	/**
 	 * Irrigation cycles of a zone started within the interval [start, end[: the zone is read

@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The notification center of Water Supply: the module's alerts in the single alert store of the
- * notification module (ADR 0004), under the former {@code /api/notifications} JSON.
+ * notification module (ADR 0004), under the former {@code /api/notifications} JSON, now served at {@code /api/water-supply/notifications}.
  */
 @Service
 @Transactional(readOnly = true)

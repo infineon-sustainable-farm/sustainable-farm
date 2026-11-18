@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.SafetyBriefingRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.VisitorEventRequest;
@@ -8,7 +9,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSafetyBri
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterVisitorEvent;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ConsumptionCriteria;
-import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSafetyBriefingRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>Visitor Management reads (level, savings, irrigation status, live consumption, planned
  * unavailability, safety briefing); its visit announcements arrive as events
- * ({@link VisitorManagementListener}) or through {@code POST /api/water/visitor-events}. Nothing here commands equipment:
+ * ({@link VisitorManagementListener}) or through {@code POST /api/water-supply/visitor-events}. Nothing here commands equipment:
  * the demo valve goes through {@link IotCommandService}.</p>
  */
 @Service

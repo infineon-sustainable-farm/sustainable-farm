@@ -61,7 +61,7 @@ class PlantsHarvestApiTest {
             harvestId = harvests.get(0).get("id").asLong();
             return;
         }
-        String createdFarm = mockMvc.perform(post("/api/farms").contentType(MediaType.APPLICATION_JSON)
+        String createdFarm = mockMvc.perform(post("/api/farm/farms").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Plants Harvest API Farm\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();

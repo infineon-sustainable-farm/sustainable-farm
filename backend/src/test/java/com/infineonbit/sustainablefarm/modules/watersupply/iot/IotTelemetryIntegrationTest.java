@@ -28,7 +28,7 @@ class IotTelemetryIntegrationTest {
         String farmId = createFarm();
         String sourceId = createSource(farmId);
         try {
-            mockMvc.perform(post("/api/iot/telemetry")
+            mockMvc.perform(post("/api/water-supply/iot/telemetry")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                     [
@@ -40,17 +40,17 @@ class IotTelemetryIntegrationTest {
                     .andExpect(jsonPath("$[0].status").value("rejected"))
                     .andExpect(jsonPath("$[1].status").value("rejected"));
 
-            mockMvc.perform(get("/api/water/sources/{sourceId}", sourceId))
+            mockMvc.perform(get("/api/water-supply/sources/{sourceId}", sourceId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.currentLevelLiters").value(2500.0));
         } finally {
-            mockMvc.perform(delete("/api/water/sources/{sourceId}", sourceId));
-            mockMvc.perform(delete("/api/farms/{farmId}", farmId));
+            mockMvc.perform(delete("/api/water-supply/sources/{sourceId}", sourceId));
+            mockMvc.perform(delete("/api/farm/farms/{farmId}", farmId));
         }
     }
 
     private String createFarm() throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/farms")
+        MvcResult result = mockMvc.perform(post("/api/farm/farms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"IoT Level Farm","areaHectares":2.0}
@@ -61,7 +61,7 @@ class IotTelemetryIntegrationTest {
     }
 
     private String createSource(String farmId) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/water/sources")
+        MvcResult result = mockMvc.perform(post("/api/water-supply/sources")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%s","name":"IoT Level Tank","type":"tank","capacityLiters":5000,"currentLevelLiters":2500}
