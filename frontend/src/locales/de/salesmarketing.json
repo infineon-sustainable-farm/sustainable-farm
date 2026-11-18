@@ -569,5 +569,177 @@
     "dismissTitle": "Warnung verwerfen?",
     "dismissMessage": "Möchten Sie die Warnung {{code}} wirklich verwerfen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleting": "Wird gelöscht…"
+  },
+  "customers": {
+    "title": "Kunden",
+    "apiNotice": "Hinweis zur API-Verbindung",
+    "actionFailed": "Aktion fehlgeschlagen",
+    "deleting": "Wird gelöscht...",
+    "typeFallback": "Kunde",
+    "toolbar": {
+      "search": "Kunden suchen",
+      "searchPlaceholder": "Nach Name, ID oder Region suchen...",
+      "statusFilter": "Status",
+      "allStatuses": "Alle Status",
+      "add": "KUNDE HINZUFÜGEN"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "prospect": "Interessent"
+    },
+    "types": {
+      "distributor": "Großhändler",
+      "retailer": "Einzelhändler",
+      "direct_export": "Direktexport",
+      "other": "Sonstige"
+    },
+    "paymentTermsOptions": {
+      "net15": "15 Tage netto",
+      "net30": "30 Tage netto",
+      "net45": "45 Tage netto",
+      "net60": "60 Tage netto",
+      "dueOnReceipt": "Fällig bei Erhalt",
+      "advancePayment": "Vorauszahlung"
+    },
+    "countries": {
+      "germany": "Deutschland",
+      "burkinaFaso": "Burkina Faso",
+      "france": "Frankreich",
+      "netherlands": "Niederlande"
+    },
+    "stats": {
+      "totalActive": "Aktiv gesamt",
+      "activeTrend": "12 % ggü. Vormonat",
+      "newOnboarded": "Neu gewonnen",
+      "onboardedTrend": "5 % ggü. Vormonat",
+      "inactive": "Inaktiv",
+      "followUp": "Nachfassen empfohlen",
+      "insight": "KI-Hinweis",
+      "insightEmpty": "Noch keine Kundendatensätze vorhanden. Legen Sie einen Kunden an, um Kundenbeziehungen zu verwalten.",
+      "insightSummary": "{{active}} und {{prospects}} in den aktuellen CRM-Daten.",
+      "activeCustomers_one": "{{count}} aktiver Kunde",
+      "activeCustomers_other": "{{count}} aktive Kunden",
+      "prospects_one": "{{count}} Interessent",
+      "prospects_other": "{{count}} Interessenten"
+    },
+    "list": {
+      "customerId": "Kunde / ID",
+      "sortAscending": "Aufsteigend sortieren",
+      "sortDescending": "Absteigend sortieren",
+      "region": "Region",
+      "orderVolume": "Bestellvol. (lfd. Jahr)",
+      "status": "Status",
+      "action": "Aktion",
+      "loading": "Kunden werden geladen...",
+      "emptyTitle": "Keine Kunden gefunden",
+      "emptyMessage": "Versuchen Sie einen anderen Suchbegriff.",
+      "id": "ID: {{code}}",
+      "volume": "{{value}} kg",
+      "ytdVolume": "Volumen lfd. Jahr",
+      "zeroVolume": "0 kg",
+      "noOrders": "Keine Bestellungen in diesem Jahr",
+      "actionsFor": "Aktionen für {{name}}",
+      "editCustomer": "Kunde bearbeiten",
+      "addContact": "Kontakt hinzufügen",
+      "deleteCustomer": "Kunde löschen",
+      "showing": "{{shown}} von {{matching}} Treffern ({{total}} insgesamt)",
+      "pagination": "Kundenseiten"
+    },
+    "detail": {
+      "edit": "BEARBEITEN",
+      "locationUnavailable": "Standort nicht verfügbar",
+      "certifications": "Zertifizierungen",
+      "refreshCertifications": "Zertifizierungen aktualisieren",
+      "selectPrompt": "Wählen Sie einen Kunden, um Details anzuzeigen"
+    },
+    "contacts": {
+      "title": "Kontakte ({{count}})",
+      "add": "HINZUFÜGEN",
+      "empty": "Keine Kontakte hinterlegt.",
+      "primary": "Hauptkontakt",
+      "roleFallback": "Kontakt",
+      "edit": "Kontakt bearbeiten",
+      "delete": "Kontakt löschen"
+    },
+    "logistics": {
+      "title": "Logistikzentrum"
+    },
+    "form": {
+      "newTitle": "Neuen Kunden hinzufügen",
+      "editTitle": "Kunde #{{id}} bearbeiten",
+      "description": "Geben Sie unten die Kundendaten ein.",
+      "companyName": "Firmenname",
+      "companyNamePlaceholder": "z. B. AgriTech Solutions GmbH",
+      "customerCode": "Kundennummer",
+      "customerCodePlaceholder": "z. B. CUST-0001-GER (leer lassen für automatische Vergabe)",
+      "customerType": "Kundentyp",
+      "country": "Land",
+      "countryPlaceholder": "z. B. Deutschland",
+      "region": "Region / Bundesland",
+      "regionPlaceholder": "z. B. Bayern",
+      "city": "Stadt",
+      "cityPlaceholder": "z. B. München",
+      "status": "Status",
+      "paymentTerms": "Zahlungsbedingungen",
+      "select": "Auswählen...",
+      "saving": "Wird gespeichert...",
+      "saveChanges": "Änderungen speichern",
+      "create": "Kunde anlegen"
+    },
+    "contactForm": {
+      "newTitle": "Kontakt hinzufügen",
+      "editTitle": "Kontakt bearbeiten",
+      "description": "Geben Sie unten die Kontaktdaten ein.",
+      "fullName": "Vollständiger Name",
+      "role": "Rolle / Titel",
+      "rolePlaceholder": "z. B. Leitung Einkauf",
+      "email": "E-Mail",
+      "emailPlaceholder": "name@company.de",
+      "phone": "Telefon",
+      "phonePlaceholder": "+49 89 1234 5678",
+      "primary": "Als Hauptkontakt markieren",
+      "add": "Kontakt hinzufügen"
+    },
+    "deleteCustomer": {
+      "title": "Kunde löschen?",
+      "message": "Möchten Sie {{name}} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "noLocation": "Kein Standort angegeben"
+    },
+    "deleteContact": {
+      "title": "Kontakt löschen?",
+      "message": "Möchten Sie {{name}} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "noDetails": "Keine weiteren Angaben"
+    },
+    "messages": {
+      "customerCreated": "Kunde „{{name}}“ erfolgreich angelegt.",
+      "customerUpdated": "Kunde „{{name}}“ erfolgreich aktualisiert.",
+      "customerDeleted": "Kunde „{{name}}“ erfolgreich gelöscht.",
+      "contactAdded": "Kontakt „{{name}}“ erfolgreich hinzugefügt.",
+      "contactUpdated": "Kontakt „{{name}}“ erfolgreich aktualisiert.",
+      "contactDeleted": "Kontakt „{{name}}“ erfolgreich gelöscht.",
+      "certificationLinked": "Zertifizierung verknüpft.",
+      "certificationUnlinked": "Zertifizierung entfernt."
+    },
+    "errors": {
+      "requestFailed": "Anfrage fehlgeschlagen",
+      "customersFailed": "Kunden: {{message}}",
+      "ordersFailed": "Bestellungen: {{message}}",
+      "contactsFailed": "Kontakte: {{message}}",
+      "certificationsFailed": "Zertifizierungen: {{message}}",
+      "loadFailed": "Kundendaten konnten nicht geladen werden. Bitte erneut versuchen. {{details}}",
+      "partialLoad": "Teilweise geladen - {{details}}",
+      "loadDataFailed": "Kundendaten konnten nicht geladen werden. Bitte erneut versuchen.",
+      "certificationsLoadFailed": "Zertifizierungen des Kunden konnten nicht geladen werden",
+      "loadForEditFailed": "Kunde #{{id}} konnte nicht zur Bearbeitung geladen werden.",
+      "createCustomerFailed": "Kunde konnte nicht angelegt werden",
+      "updateCustomerFailed": "Kunde konnte nicht aktualisiert werden",
+      "deleteCustomerFailed": "Kunde konnte nicht gelöscht werden",
+      "selectCustomerFirst": "Bitte wählen Sie zuerst einen Kunden.",
+      "createContactFailed": "Kontakt konnte nicht angelegt werden",
+      "updateContactFailed": "Kontakt konnte nicht aktualisiert werden",
+      "deleteContactFailed": "Kontakt konnte nicht gelöscht werden",
+      "certificationUpdateFailed": "Zertifizierung konnte nicht aktualisiert werden"
+    }
   }
 }

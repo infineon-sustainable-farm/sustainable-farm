@@ -569,5 +569,177 @@
     "dismissTitle": "Dismiss alert?",
     "dismissMessage": "Are you sure you want to dismiss alert {{code}}? This action cannot be undone.",
     "deleting": "Deleting…"
+  },
+  "customers": {
+    "title": "Customers",
+    "apiNotice": "API Connection Notice",
+    "actionFailed": "Action failed",
+    "deleting": "Deleting...",
+    "typeFallback": "customer",
+    "toolbar": {
+      "search": "Search customers",
+      "searchPlaceholder": "Search by name, ID or region...",
+      "statusFilter": "Status",
+      "allStatuses": "All Statuses",
+      "add": "ADD CUSTOMER"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "prospect": "Prospect"
+    },
+    "types": {
+      "distributor": "Distributor",
+      "retailer": "Retailer",
+      "direct_export": "Direct Export",
+      "other": "Other"
+    },
+    "paymentTermsOptions": {
+      "net15": "Net 15",
+      "net30": "Net 30",
+      "net45": "Net 45",
+      "net60": "Net 60",
+      "dueOnReceipt": "Due on Receipt",
+      "advancePayment": "Advance Payment"
+    },
+    "countries": {
+      "germany": "Germany",
+      "burkinaFaso": "Burkina Faso",
+      "france": "France",
+      "netherlands": "Netherlands"
+    },
+    "stats": {
+      "totalActive": "Total Active",
+      "activeTrend": "12% vs last month",
+      "newOnboarded": "New Onboarded",
+      "onboardedTrend": "5% vs last month",
+      "inactive": "Inactive",
+      "followUp": "Follow-up recommended",
+      "insight": "AI Insight",
+      "insightEmpty": "No customer records are available yet. Create a customer to begin managing CRM relationships.",
+      "insightSummary": "{{active}} and {{prospects}} in the current CRM data.",
+      "activeCustomers_one": "{{count}} active customer",
+      "activeCustomers_other": "{{count}} active customers",
+      "prospects_one": "{{count}} prospect",
+      "prospects_other": "{{count}} prospects"
+    },
+    "list": {
+      "customerId": "Customer / ID",
+      "sortAscending": "Sort ascending",
+      "sortDescending": "Sort descending",
+      "region": "Region",
+      "orderVolume": "Order Vol (YTD)",
+      "status": "Status",
+      "action": "Action",
+      "loading": "Loading customers...",
+      "emptyTitle": "No customers found",
+      "emptyMessage": "Try a different search term.",
+      "id": "ID: {{code}}",
+      "volume": "{{value}} kg",
+      "ytdVolume": "YTD volume",
+      "zeroVolume": "0 kg",
+      "noOrders": "No orders this year",
+      "actionsFor": "Actions for {{name}}",
+      "editCustomer": "Edit Customer",
+      "addContact": "Add Contact",
+      "deleteCustomer": "Delete Customer",
+      "showing": "Showing {{shown}} of {{matching}} matching ({{total}} total)",
+      "pagination": "Customer pages"
+    },
+    "detail": {
+      "edit": "EDIT",
+      "locationUnavailable": "Location unavailable",
+      "certifications": "Certifications",
+      "refreshCertifications": "Refresh certifications",
+      "selectPrompt": "Select a customer to view details"
+    },
+    "contacts": {
+      "title": "Contacts ({{count}})",
+      "add": "ADD",
+      "empty": "No contacts on file.",
+      "primary": "Primary",
+      "roleFallback": "Contact",
+      "edit": "Edit contact",
+      "delete": "Delete contact"
+    },
+    "logistics": {
+      "title": "Logistics Hub"
+    },
+    "form": {
+      "newTitle": "Add New Customer",
+      "editTitle": "Edit Customer #{{id}}",
+      "description": "Enter the customer details below.",
+      "companyName": "Company Name",
+      "companyNamePlaceholder": "e.g. AgriTech Solutions GmbH",
+      "customerCode": "Customer Code",
+      "customerCodePlaceholder": "e.g. CUST-0001-GER (auto-generated if blank)",
+      "customerType": "Customer Type",
+      "country": "Country",
+      "countryPlaceholder": "e.g. Germany",
+      "region": "Region / State",
+      "regionPlaceholder": "e.g. Bavaria",
+      "city": "City",
+      "cityPlaceholder": "e.g. Munich",
+      "status": "Status",
+      "paymentTerms": "Payment Terms",
+      "select": "Select...",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes",
+      "create": "Create Customer"
+    },
+    "contactForm": {
+      "newTitle": "Add Contact",
+      "editTitle": "Edit Contact",
+      "description": "Enter the contact details below.",
+      "fullName": "Full Name",
+      "role": "Role / Title",
+      "rolePlaceholder": "e.g. Procurement Lead",
+      "email": "Email",
+      "emailPlaceholder": "name@company.de",
+      "phone": "Phone",
+      "phonePlaceholder": "+49 89 1234 5678",
+      "primary": "Mark as Primary Contact",
+      "add": "Add Contact"
+    },
+    "deleteCustomer": {
+      "title": "Delete customer?",
+      "message": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "noLocation": "No location set"
+    },
+    "deleteContact": {
+      "title": "Delete contact?",
+      "message": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "noDetails": "No additional details"
+    },
+    "messages": {
+      "customerCreated": "Customer \"{{name}}\" created successfully.",
+      "customerUpdated": "Customer \"{{name}}\" updated successfully.",
+      "customerDeleted": "Customer \"{{name}}\" deleted successfully.",
+      "contactAdded": "Contact \"{{name}}\" added successfully.",
+      "contactUpdated": "Contact \"{{name}}\" updated successfully.",
+      "contactDeleted": "Contact \"{{name}}\" deleted successfully.",
+      "certificationLinked": "Certification linked.",
+      "certificationUnlinked": "Certification unlinked."
+    },
+    "errors": {
+      "requestFailed": "Request failed",
+      "customersFailed": "Customers: {{message}}",
+      "ordersFailed": "Orders: {{message}}",
+      "contactsFailed": "Contacts: {{message}}",
+      "certificationsFailed": "Certifications: {{message}}",
+      "loadFailed": "Customer data could not be loaded. Please try again. {{details}}",
+      "partialLoad": "Partial load - {{details}}",
+      "loadDataFailed": "Unable to load customer data. Please try again.",
+      "certificationsLoadFailed": "Failed to load customer certifications",
+      "loadForEditFailed": "Unable to load customer #{{id}} for editing.",
+      "createCustomerFailed": "Failed to create customer",
+      "updateCustomerFailed": "Failed to update customer",
+      "deleteCustomerFailed": "Failed to delete customer",
+      "selectCustomerFirst": "Please select a customer first.",
+      "createContactFailed": "Failed to create contact",
+      "updateContactFailed": "Failed to update contact",
+      "deleteContactFailed": "Failed to delete contact",
+      "certificationUpdateFailed": "Failed to update certification"
+    }
   }
 }
