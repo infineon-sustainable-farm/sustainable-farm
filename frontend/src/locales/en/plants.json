@@ -96,6 +96,16 @@
     "inspectionMethod": {
       "VISUAL": "Visual",
       "TRAP": "Trap"
+    },
+    "maturityStatus": {
+      "IMMATURE": "Immature",
+      "RIPE": "Ripe",
+      "READY_FOR_HARVEST": "Ready for harvest"
+    },
+    "growthPhase": {
+      "ESTABLISHMENT": "Establishment",
+      "GRADUAL_PRODUCTION": "Gradual production",
+      "FULL_PRODUCTION": "Full production"
     }
   },
   "blockFilter": {
@@ -726,6 +736,245 @@
         "applicatorTooLong": "Applicator must be at most 255 characters.",
         "equipmentTooLong": "Equipment must be at most 255 characters."
       }
+    }
+  },
+  "harvest": {
+    "page": {
+      "title": "Harvest & Maturity",
+      "subtitle": "Maturity, harvest dates and yield, by block.",
+      "documentTitle": "Harvest & Maturity — Plants",
+      "recordHarvest": "Record a harvest",
+      "recorded": "Harvest recorded",
+      "recordedLot": "Harvest recorded — lot <lot>{{lot}}</lot>"
+    },
+    "status": {
+      "title": "Maturity status",
+      "subtitle": "Maturity today, estimated and observed.",
+      "record": "Record an observation",
+      "loading": "Loading maturity status…",
+      "error": "Maturity is unavailable.",
+      "emptyBlockTitle": "No planted variety on this block",
+      "emptyBlockHint": "Select another block, or “All blocks”.",
+      "emptyTitle": "No planted variety yet",
+      "emptyHint": "Record a planting from the Varieties screen.",
+      "rulesToggle": "How is this estimated?",
+      "rulesEstimated": "As of {{date}}. Estimated — Ready for harvest: the harvest window is open and no pre-harvest interval runs on the block. Ripe: the window opens within {{days}} days, or it is open while an interval runs. Immature: the window opens later.",
+      "rulesObserved": "Observed: the latest field observation of the season under way. An observation made between two seasons counts for the next one. It takes precedence over the estimate until the last day of that season, given as “Counts until” under the observation. A running pre-harvest interval holds Ready for harvest back to Ripe, observed or estimated.",
+      "rulesWindow": "Harvest window: from the first month of the season in which the trees give a yield, to the end of the season, as in the forecast. First harvest: the first harvest recorded in the open window; earlier pickings are listed under Recorded harvests. A dash means no value."
+    },
+    "statusTable": {
+      "block": "Block",
+      "variety": "Variety",
+      "estimated": "Estimated",
+      "observed": "Observed",
+      "harvestWindow": "Harvest window",
+      "harvestAllowedFrom": "Harvest allowed from",
+      "firstHarvest": "First harvest",
+      "sources": "Sources",
+      "noReference": "No reference value",
+      "notCounted": "Not counted: no reference value",
+      "countsUntil": "Counts until {{date}}",
+      "heldAt": "Held at {{status}}: pre-harvest interval",
+      "observationLine": "{{date}} · {{method}}",
+      "season": "Season: {{value}}",
+      "share": "Share: {{value}}",
+      "observation": "Observation: {{value}}"
+    },
+    "deadlines": {
+      "title": "Upcoming deadlines",
+      "subtitle": "Harvest seasons and waiting periods in the next {{days}} days.",
+      "loading": "Loading upcoming deadlines…",
+      "error": "Upcoming dates are unavailable.",
+      "empty": "Nothing in the next {{days}} days.",
+      "otherDate": "Date:",
+      "types": {
+        "HARVEST_APPROACHING": {
+          "title": "Harvest season",
+          "date": "Window from"
+        },
+        "PRE_HARVEST_INTERVAL": {
+          "title": "Pre-harvest interval",
+          "date": "Harvest allowed from"
+        }
+      }
+    },
+    "forecast": {
+      "title": "Expected yield by month",
+      "loading": "Loading yield forecast…",
+      "error": "The forecast is unavailable.",
+      "emptyTitle": "No yield expected over this period",
+      "emptyHint": "The forecast counts recorded plantings only. Record a planting from the Varieties screen, or choose another period.",
+      "totalOverPeriod": "Total over the period:",
+      "basedOn": "Based on recorded plantings and the reference values below.",
+      "showTable": "Show monthly totals as a table",
+      "month": "Month",
+      "expectedYield": "Expected yield",
+      "total": "Total",
+      "trees_one": "{{value}} tree",
+      "trees_other": "{{value}} trees",
+      "listedVariety": "{{variety}} ({{block}}, {{trees}})",
+      "notInForecast_one": "Not in the forecast: {{list}}. No reference value is entered for this variety yet: add it under Reference values below.",
+      "notInForecast_other": "Not in the forecast: {{list}}. No reference value is entered for these varieties yet: add it under Reference values below."
+    },
+    "chart": {
+      "unit": "kg",
+      "monthValue": "{{month}} {{value}}",
+      "zeroMonths": "; 0 kg in the other months",
+      "description": "Expected yield by month, {{first}} to {{last}}: {{months}}{{zeroMonths}}. Total {{total}}."
+    },
+    "forecastTable": {
+      "month": "Month",
+      "block": "Block",
+      "variety": "Variety",
+      "trees": "Trees",
+      "phase": "Phase",
+      "expectedYield": "Expected yield",
+      "sources": "Sources",
+      "sourcesValue": "Yield: {{yield}} · Season: {{season}} · Phase share: {{share}}"
+    },
+    "references": {
+      "title": "Reference values",
+      "subtitle": "Values used for forecasts and alerts. Changes apply at once.",
+      "varieties": "Varieties",
+      "add": "Add a variety",
+      "loading": "Loading the reference values…",
+      "error": "Reference values are unavailable.",
+      "emptyTitle": "No reference values yet",
+      "emptyHint": "Add yield and harvest months for a variety.",
+      "sharesTitle": "Yield share by growth phase",
+      "sharesLoading": "Loading the yield shares…",
+      "variety": "Variety",
+      "yieldPerTree": "Yield per tree",
+      "harvestSeason": "Harvest season",
+      "sources": "Sources",
+      "sourcesValue": "Yield: {{yield}} · Season: {{season}}",
+      "editVariety": "Edit {{name}}",
+      "ofFullYield": "of the full yield",
+      "sourceCorrected": "Source: {{source}} · Updated {{updated}} · Default: {{defaultShare}} ({{defaultSource}})",
+      "sourceDefault": "Source: {{source}} · Default value",
+      "editShare": "Edit the share of {{phase}}",
+      "shareLabel": "Share of the full yield (0 to 1)",
+      "sourceLabel": "Source",
+      "userEntry": "user_entry",
+      "sourceNote": "Optional. user_entry is recorded when left empty.",
+      "saving": "Saving…",
+      "shareRequired": "Share is required.",
+      "shareInvalid": "Share must be between 0 and 1, with at most 3 decimals.",
+      "sourceTooLong": "Source must be at most 255 characters."
+    },
+    "referenceForm": {
+      "editTitle": "Edit {{name}}",
+      "variety": "Variety",
+      "varietyHint": "Its plantings find it ignoring case and accents.",
+      "yield": "Yield per tree (kg)",
+      "yieldHint": "In full production, per year.",
+      "yieldSource": "Yield source",
+      "startMonth": "First harvest month",
+      "endMonth": "Last harvest month",
+      "endMonthHint": "Before the first month for a season over the new year.",
+      "seasonSource": "Season source",
+      "selectMonth": "Select a month",
+      "keepSource": "Leave empty to keep “{{source}}” if {{condition}}; otherwise user_entry is recorded.",
+      "yieldUnchanged": "the yield does not change",
+      "monthsUnchanged": "the months do not change",
+      "adding": "Adding…",
+      "addVariety": "Add variety",
+      "errors": {
+        "varietyRequired": "Variety is required.",
+        "varietyTooLong": "Variety must be at most 255 characters.",
+        "yieldRequired": "Yield per tree is required.",
+        "yieldInvalid": "Yield per tree must be greater than 0 and at most 1,000 kg, with at most 1 decimal.",
+        "startRequired": "First harvest month is required.",
+        "endRequired": "Last harvest month is required.",
+        "yieldSourceTooLong": "Yield source must be at most 255 characters.",
+        "seasonSourceTooLong": "Season source must be at most 255 characters."
+      }
+    },
+    "form": {
+      "block": "Block",
+      "selectBlock": "Select a block",
+      "variety": "Variety",
+      "selectVariety": "Select a variety",
+      "varietiesError": "Varieties could not be loaded",
+      "noPlanted": "No planted variety on this block",
+      "blockRequired": "Block is required.",
+      "varietyRequired": "Variety is required.",
+      "recording": "Recording…"
+    },
+    "recordHarvest": {
+      "title": "Record a harvest",
+      "date": "Harvest date",
+      "quantity": "Quantity (kg)",
+      "submit": "Record harvest",
+      "errors": {
+        "dateRequired": "Harvest date is required.",
+        "dateFuture": "Harvest date cannot be in the future.",
+        "quantity": "Quantity must be a number greater than 0."
+      }
+    },
+    "observation": {
+      "title": "Record a maturity observation",
+      "date": "Observation date",
+      "status": "Maturity status",
+      "selectStatus": "Select a status",
+      "method": "Method",
+      "selectMethod": "Select a method",
+      "measuredValue": "Measured value",
+      "measuredValueUnit": "Measured value ({{unit}})",
+      "valueHint": "Optional. Above 0 and up to 100, one decimal at most.",
+      "valueDisabledHint": "With Brix or dry matter only.",
+      "observer": "Observer",
+      "optional": "Optional.",
+      "submit": "Record observation",
+      "errors": {
+        "dateRequired": "Observation date is required.",
+        "dateFuture": "Observation date cannot be in the future.",
+        "statusRequired": "Maturity status is required.",
+        "methodRequired": "Method is required.",
+        "observerTooLong": "Observer must be at most 255 characters.",
+        "measuredValue": "Measured value must be above 0 and at most 100, with one decimal at most."
+      }
+    },
+    "methods": {
+      "FLESH_COLOR": {
+        "label": "Flesh color near the stone",
+        "name": "Flesh color"
+      },
+      "BRIX": {
+        "label": "Brix (°Bx)",
+        "name": "Brix"
+      },
+      "DRY_MATTER": {
+        "label": "Dry matter (%)",
+        "name": "Dry matter"
+      },
+      "VISUAL": {
+        "label": "Visual (shoulders, skin)",
+        "name": "Visual"
+      }
+    },
+    "methodValue": {
+      "plain": "{{name}} {{value}}",
+      "percent": "{{name}} {{value}}%",
+      "unit": "{{name}} {{value}} {{unit}}"
+    },
+    "harvests": {
+      "title": "Recorded harvests",
+      "from": "From",
+      "to": "To",
+      "loading": "Loading harvests…",
+      "error": "Harvests are unavailable.",
+      "filteredTitle": "No harvest matches these filters",
+      "filteredHint": "Try another block or date range, or select “All blocks”.",
+      "emptyTitle": "No harvest recorded yet"
+    },
+    "harvestsTable": {
+      "block": "Block",
+      "variety": "Variety",
+      "harvestDate": "Harvest Date",
+      "quantity": "Quantity (kg)",
+      "lot": "Lot No.",
+      "source": "Source"
     }
   }
 }
