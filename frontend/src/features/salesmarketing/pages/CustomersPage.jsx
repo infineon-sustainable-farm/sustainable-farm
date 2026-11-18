@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
 import { PageHeader } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import ContactFormModal from '../components/customers/ContactFormModal';
 import { useContactActions } from '../components/customers/useContactActions';
 import CustomerDeleteDialogs from '../components/customers/CustomerDeleteDialogs';
@@ -49,21 +50,18 @@ export default function CustomersPage() {
     }
   }, [openMenuCustomerId]);
 
-  // The messages hide after a delay; the pending timers stop when the screen closes.
-  const flashTimers = useRef([]);
-  useEffect(() => () => flashTimers.current.forEach((id) => window.clearTimeout(id)), []);
-
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    flashTimers.current.push(window.setTimeout(() => setActionSuccess(null), 4000));
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = useCallback((msg) => {
     setActionError(msg);
     setActionSuccess(null);
-    flashTimers.current.push(window.setTimeout(() => setActionError(null), 6000));
-  }, []);
+    later(() => setActionError(null), 6000);
+  }, [later]);
 
   const {
     loading,

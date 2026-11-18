@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
 import { Badge, Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import ChannelCard from '../components/channels/ChannelCard';
 import ChannelComparisonChart from '../components/channels/ChannelComparisonChart';
 import ChannelFormModal from '../components/channels/ChannelFormModal';
@@ -54,16 +55,17 @@ export default function SalesChannelsPage() {
     }
   }, [openMenuChannelId]);
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (msg) => {
     setActionError(msg);
     setActionSuccess(null);
-    window.setTimeout(() => setActionError(null), 6000);
+    later(() => setActionError(null), 6000);
   };
 
   const fetchChannelsData = useCallback(async () => {

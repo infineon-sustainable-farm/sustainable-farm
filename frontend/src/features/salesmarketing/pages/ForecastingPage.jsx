@@ -5,6 +5,7 @@ import { api } from '../api/api';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import AccuracyTable from '../components/forecasting/AccuracyTable';
 import ForecastFormModal from '../components/forecasting/ForecastFormModal';
 import ModelParametersCard from '../components/forecasting/ModelParametersCard';
@@ -53,10 +54,11 @@ export default function ForecastingPage() {
 
   const regions = [...new Set(modelRuns.map((run) => run.region).filter(Boolean))];
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), SUCCESS_DURATION);
+    later(() => setActionSuccess(null), SUCCESS_DURATION);
   };
   const flashError = (msg) => {
     setActionError(msg);

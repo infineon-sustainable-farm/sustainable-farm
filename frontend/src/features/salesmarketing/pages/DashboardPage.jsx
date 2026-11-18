@@ -5,6 +5,7 @@ import { api } from '../api/api';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import AlertsCard from '../components/dashboard/AlertsCard';
 import BatchesCard from '../components/dashboard/BatchesCard';
 import DashboardKpis from '../components/dashboard/DashboardKpis';
@@ -43,10 +44,11 @@ export default function DashboardPage() {
   const [customers, setCustomers] = useState([]);
   const [orders, setOrders] = useState([]);
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (msg) => {
