@@ -114,11 +114,3 @@ export const truncate = (text, maxLength = 50) => {
   if (text.length <= maxLength) return text;
   return `${text.substring(0, maxLength)}...`;
 };
-
-// Colour classes still read by the QC and Compliance screens until they move to the kit tones.
-export const getQcResultColor = (result) =>
-  ({ PASS: 'bg-green-100 text-green-800', FAIL: 'bg-red-100 text-red-800', REWORK: 'bg-yellow-100 text-yellow-800' })[result] ??
-  'bg-gray-100 text-gray-800';
-
-export const getComplianceColor = (result) =>
-  ({ COMPLIANT: 'bg-green-100 text-green-800', NON_COMPLIANT: 'bg-red-100 text-red-800' })[result] ?? 'bg-gray-100 text-gray-800';
