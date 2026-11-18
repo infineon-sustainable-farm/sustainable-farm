@@ -14,6 +14,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.StaffRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -24,6 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -54,17 +56,20 @@ public class SchedulingServiceImpl implements SchedulingService {
     private final StaffRepository staffRepository;
     private final ReentrantLock[] dateLocks = createDateLocks();
     private final TransactionTemplate transactionTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SchedulingServiceImpl(TimeSlotRepository timeSlotRepository,
                                  RegistrationRepository registrationRepository,
                                  BookingService bookingService,
                                  StaffRepository staffRepository,
-                                 PlatformTransactionManager transactionManager) {
+                                 PlatformTransactionManager transactionManager,
+                                 ApplicationEventPublisher eventPublisher) {
         this.timeSlotRepository = timeSlotRepository;
         this.registrationRepository = registrationRepository;
         this.bookingService = bookingService;
         this.staffRepository = staffRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.eventPublisher = eventPublisher;
     }
 
     private static ReentrantLock[] createDateLocks() {
@@ -170,10 +175,14 @@ public class SchedulingServiceImpl implements SchedulingService {
             if (slot.getStatus() == TimeSlotStatus.COMPLETED) {
                 throw new BusinessRuleException("Cannot update a completed time slot " + id);
             }
+            LocalDateTime previousStart = VisitEvents.startOf(slot);
             apply(slot, request);
             refreshStatus(slot);
             timeSlotRepository.save(slot);
             timeSlotRepository.flush();
+            if (!VisitEvents.startOf(slot).equals(previousStart)) {
+                announceMove(slot);
+            }
             return toResponse(slot);
         }));
     }
@@ -195,10 +204,21 @@ public class SchedulingServiceImpl implements SchedulingService {
                 .findByTimeSlotIdAndStatusNotIn(id, INACTIVE_STATUSES);
         for (Registration registration : registrations) {
             registration.setStatus(RegistrationStatus.CANCELLED);
+            eventPublisher.publishEvent(VisitEvents.cancelled(registration));
         }
         registrationRepository.saveAll(registrations);
 
         bookingService.cancelBookingsForSlot(id);
+    }
+
+    /** The slot moved: every visit still planned on it moves with it. */
+    private void announceMove(TimeSlot slot) {
+        LocalDateTime start = VisitEvents.startOf(slot);
+        for (Registration registration : registrationRepository
+                .findByTimeSlotIdAndStatusNotIn(slot.getId(), INACTIVE_STATUSES)) {
+            eventPublisher.publishEvent(VisitEvents.rescheduled(registration, start));
+        }
+        bookingService.rescheduleBookingsForSlot(slot.getId());
     }
 
     @Override

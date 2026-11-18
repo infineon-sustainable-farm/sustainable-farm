@@ -3,6 +3,9 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitCancelled;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitRescheduled;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitScheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.EventRegistrationRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.EventRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.EventResponse;
@@ -23,8 +26,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +50,8 @@ class EventServiceImplTest {
     private RegistrationRepository registrationRepository;
     @Mock
     private VisitorRepository visitorRepository;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private EventServiceImpl service;
 
@@ -137,6 +145,51 @@ class EventServiceImplTest {
 
         assertThat(response.getTitle()).isEqualTo("Updated Title");
         assertThat(response.getBooked()).isEqualTo(3L);
+        // Same start: the registered visitors are still expected at the same time.
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void updateEvent_moved_reschedulesItsVisits() {
+        Visitor visitor = new Visitor();
+        visitor.setId(10L);
+        visitor.setFullName("Test Visitor");
+        visitor.setGroupSize(3);
+        Registration reg = new Registration();
+        reg.setId(5L);
+        reg.setVisitor(visitor);
+        reg.setEventId(eventId);
+        reg.setStatus(RegistrationStatus.CONFIRMED);
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
+        when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(registrationRepository.findByEventIdAndStatusIn(eq(eventId), any())).thenReturn(List.of(reg));
+
+        EventRequest req = buildRequest();
+        req.setStartDateTime(start.plusHours(2));
+        service.updateEvent(eventId, req);
+
+        verify(eventPublisher).publishEvent(new VisitRescheduled("registration-5", "Test Visitor",
+                start.plusHours(2).toInstant(ZoneOffset.UTC), 3));
+    }
+
+    @Test
+    void registerVisitor_publishesVisitScheduledAtTheEventStart() {
+        Visitor visitor = new Visitor();
+        visitor.setId(10L);
+        visitor.setFullName("Test Visitor");
+        visitor.setGroupSize(2);
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(buildEvent(EventStatus.PUBLISHED)));
+        when(visitorRepository.findById(10L)).thenReturn(Optional.of(visitor));
+        when(registrationRepository.save(any(Registration.class))).thenAnswer(inv -> {
+            Registration r = inv.getArgument(0);
+            r.setId(6L);
+            return r;
+        });
+
+        service.registerVisitor(eventId, buildRegistrationRequest());
+
+        verify(eventPublisher).publishEvent(new VisitScheduled("registration-6", "Test Visitor",
+                start.toInstant(ZoneOffset.UTC), 2));
     }
 
     @Test
@@ -213,6 +266,7 @@ class EventServiceImplTest {
 
         assertThat(reg.getStatus()).isEqualTo(RegistrationStatus.CANCELLED);
         verify(registrationRepository).saveAll(any());
+        verify(eventPublisher).publishEvent(new VisitCancelled("registration-5"));
     }
 
     @Test

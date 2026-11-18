@@ -24,6 +24,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.Regi
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.SurveySendRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -48,6 +49,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final FeedbackRepository feedbackRepository;
     private final SurveySendRepository surveySendRepository;
     private final SchedulingService schedulingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RegistrationServiceImpl(VisitorRepository visitorRepository,
                                    RegistrationRepository registrationRepository,
@@ -55,7 +57,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                                    BriefingRepository briefingRepository,
                                    FeedbackRepository feedbackRepository,
                                    SurveySendRepository surveySendRepository,
-                                   SchedulingService schedulingService) {
+                                   SchedulingService schedulingService,
+                                   ApplicationEventPublisher eventPublisher) {
         this.visitorRepository = visitorRepository;
         this.registrationRepository = registrationRepository;
         this.timeSlotRepository = timeSlotRepository;
@@ -63,6 +66,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.feedbackRepository = feedbackRepository;
         this.surveySendRepository = surveySendRepository;
         this.schedulingService = schedulingService;
+        this.eventPublisher = eventPublisher;
     }
 
     // ---------------- Visitors ----------------
@@ -185,6 +189,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         slot.getRegistrations().add(saved);
         schedulingService.refreshStatus(slot);
         timeSlotRepository.save(slot);
+        eventPublisher.publishEvent(VisitEvents.scheduled(saved, VisitEvents.startOf(slot)));
         return RegistrationResponse.from(saved);
     }
 
@@ -226,6 +231,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         registration.setStatus(RegistrationStatus.REJECTED);
         registrationRepository.save(registration);
         registrationRepository.flush();
+        eventPublisher.publishEvent(VisitEvents.cancelled(registration));
         schedulingService.refreshStatus(registration.getTimeSlot());
         timeSlotRepository.save(registration.getTimeSlot());
         return RegistrationResponse.from(registration);
@@ -256,6 +262,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         registration.setStatus(RegistrationStatus.CANCELLED);
         registrationRepository.save(registration);
         registrationRepository.flush();
+        eventPublisher.publishEvent(VisitEvents.cancelled(registration));
         schedulingService.refreshStatus(registration.getTimeSlot());
         timeSlotRepository.save(registration.getTimeSlot());
         return RegistrationResponse.from(registration);
