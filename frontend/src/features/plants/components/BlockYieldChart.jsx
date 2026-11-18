@@ -1,22 +1,19 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useYieldComparison } from "../hooks/useYieldComparison";
 import { formatBlock, formatKilograms, formatMonth, formatNumber } from "../utils/format";
 import OverviewCard from "./OverviewCard";
-import { CARD_CAPTION, CARD_LINK } from "./plantsStyles";
 
 /*
- * Expected in the mock-up's orange, darkened so a bar keeps 3:1 on the white
- * card: #a87a1e -> 3.84:1 (#d9a441 gave 2.25:1). Actual in primary, #0a8276 ->
- * 4.70:1. Each bar sits on a light track, #eef2f1, so that 0 kg reads as an
- * empty bar, and each row writes what it is and its value, so the colours are
- * never the only cue.
+ * Expected in the second chart colour, actual in the first, on the chart grid colour as a track, so
+ * that 0 kg reads as an empty bar. Each row writes what it is and its value, so the colours are never
+ * the only cue.
  */
-const EXPECTED_BAR = "bg-[#a87a1e]";
-const ACTUAL_BAR = "bg-primary";
+const EXPECTED_BAR = "bg-chart-2";
+const ACTUAL_BAR = "bg-chart-1";
 
-function countOf(count, word) {
-    return `${formatNumber(count)} ${Number(count) === 1 ? word : `${word}s`}`;
-}
+const LINK =
+    "text-sm font-semibold text-text-accent underline underline-offset-2 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring";
 
 /**
  * One bar on the card's common scale: as long as its yield against the largest
@@ -26,54 +23,50 @@ function countOf(count, word) {
 function YieldBar({ label, kg, largestKg, barClass }) {
     const width = largestKg > 0 ? `${(kg / largestKg) * 100}%` : "0%";
     return (
-        <div className="grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-2">
-            <span className="text-xs text-gray-600">{label}</span>
-            <div aria-hidden="true" className="h-2.5 rounded-full bg-[#eef2f1]">
-                <div className={`h-2.5 rounded-full ${barClass} ${kg > 0 ? "min-w-1" : ""}`} style={{ width }} />
+        <div className="flex items-center gap-2">
+            <span className="w-16 shrink-0 text-xs text-text-muted">{label}</span>
+            <div aria-hidden="true" className="h-2.5 min-w-0 flex-1 rounded-pill bg-chart-grid">
+                <div className={`h-2.5 rounded-pill ${barClass} ${kg > 0 ? "min-w-1" : ""}`} style={{ width }} />
             </div>
-            <span className="text-right text-xs font-semibold whitespace-nowrap text-on-background">
-                {formatKilograms(kg)}
-            </span>
+            <span className="text-right text-xs font-semibold whitespace-nowrap text-text">{formatKilograms(kg)}</span>
         </div>
     );
 }
 
 function Legend() {
+    const { t } = useTranslation("plants");
     return (
-        <div aria-hidden="true" className={`flex flex-wrap gap-x-4 gap-y-1 ${CARD_CAPTION}`}>
+        <div aria-hidden="true" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted">
             <span className="flex items-center gap-1.5">
-                <span className={`h-2.5 w-4 rounded-full ${EXPECTED_BAR}`} />
-                Expected
+                <span className={`h-2.5 w-4 rounded-pill ${EXPECTED_BAR}`} />
+                {t("overview.yield.expected")}
             </span>
             <span className="flex items-center gap-1.5">
-                <span className={`h-2.5 w-4 rounded-full ${ACTUAL_BAR}`} />
-                Actual
+                <span className={`h-2.5 w-4 rounded-pill ${ACTUAL_BAR}`} />
+                {t("overview.yield.actual")}
             </span>
         </div>
     );
 }
 
 /**
- * The line of a block without harvest, from the API's expected yield alone:
- * none expected over the period (young trees), or none recorded yet.
- * "Awaiting" would promise a harvest the forecast does not expect.
- */
-function noHarvestText(expectedKg) {
-    return expectedKg === 0 ? "No harvest expected over this period" : "No harvest recorded yet";
-}
-
-/**
- * The mock-up's "Expected vs Actual Yield by Block": the block lines of the
- * yield comparison, in the API's order, over the API's default period, the
- * calendar year. Each block has its expected bar and, once a harvest is
- * recorded, its actual one; both are written out in full. Every figure is
- * the API's, and only the length of the bars is laid out here.
+ * Expected vs Actual Yield by Block: the block lines of the yield comparison,
+ * in the API's order, over the API's default period, the calendar year. Each
+ * block has its expected bar and, once a harvest is recorded, its actual one;
+ * both are written out in full. Every figure is the API's, and only the length
+ * of the bars is laid out here. A block without harvest says whether none is
+ * expected over the period (young trees) or none is recorded yet.
  */
 export default function BlockYieldChart({ blockCode }) {
+    const { t } = useTranslation("plants");
     const query = useYieldComparison({ blockCode });
     const comparison = query.data;
     const caption = comparison
-        ? `Expected and harvested over ${countOf(comparison.months, "month")} from ${formatMonth(comparison.from)}.`
+        ? t("overview.yield.caption", {
+              count: Number(comparison.months),
+              months: formatNumber(comparison.months),
+              from: formatMonth(comparison.from),
+          })
         : null;
     // The common scale of the bars: the largest yield written on the card.
     const largestKg = comparison
@@ -83,15 +76,14 @@ export default function BlockYieldChart({ blockCode }) {
     return (
         <OverviewCard
             titleId="overview-yield-title"
-            className="lg:row-span-2 lg:grid lg:grid-rows-subgrid"
-            title="Expected vs Actual Yield by Block"
+            title={t("overview.yield.title")}
             caption={caption}
             query={query}
-            loadingText="Loading the yield by block…"
-            errorText="Yield is unavailable."
+            loadingText={t("overview.yield.loading")}
+            errorText={t("overview.yield.error")}
         >
             {comparison && comparison.blocks.length === 0 && (
-                <p className="text-sm text-gray-700">No planted variety with a reference value over this period.</p>
+                <p className="text-sm text-text">{t("overview.yield.empty")}</p>
             )}
 
             {comparison && comparison.blocks.length > 0 && (
@@ -100,21 +92,25 @@ export default function BlockYieldChart({ blockCode }) {
                     <ul className="flex flex-col gap-3">
                         {comparison.blocks.map((block) => (
                             <li key={`${block.farmId}-${block.blockCode}`} className="flex flex-col gap-1">
-                                <p className="text-sm font-semibold text-on-background">{formatBlock(block.blockCode)}</p>
+                                <p className="text-sm font-semibold text-text">{formatBlock(block.blockCode)}</p>
                                 <YieldBar
-                                    label="Expected"
+                                    label={t("overview.yield.expected")}
                                     kg={block.expectedKg}
                                     largestKg={largestKg}
                                     barClass={EXPECTED_BAR}
                                 />
                                 {block.actualKg === null ? (
-                                    <p className="grid grid-cols-[4rem_minmax(0,1fr)] gap-2 text-xs text-gray-600">
-                                        <span>Actual</span>
-                                        <span>{noHarvestText(block.expectedKg)}</span>
+                                    <p className="flex gap-2 text-xs text-text-muted">
+                                        <span className="w-16 shrink-0">{t("overview.yield.actual")}</span>
+                                        <span>
+                                            {block.expectedKg === 0
+                                                ? t("overview.yield.noHarvestExpected")
+                                                : t("overview.yield.noHarvestRecorded")}
+                                        </span>
                                     </p>
                                 ) : (
                                     <YieldBar
-                                        label="Actual"
+                                        label={t("overview.yield.actual")}
                                         kg={block.actualKg}
                                         largestKg={largestKg}
                                         barClass={ACTUAL_BAR}
@@ -127,11 +123,11 @@ export default function BlockYieldChart({ blockCode }) {
             )}
 
             {comparison && comparison.notCompared.length > 0 && (
-                <p className={CARD_CAPTION}>Planted varieties without a reference value are not compared.</p>
+                <p className="text-xs text-text-muted">{t("overview.yield.notCompared")}</p>
             )}
 
-            <Link to="/plants/harvest-maturity" className={`mt-auto self-start ${CARD_LINK}`}>
-                See Harvest &amp; Maturity
+            <Link to="/plants/harvest-maturity" className={`mt-auto self-start ${LINK}`}>
+                {t("overview.yield.link")}
             </Link>
         </OverviewCard>
     );

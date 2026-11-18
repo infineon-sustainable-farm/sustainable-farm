@@ -1,8 +1,8 @@
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, EmptyState, ErrorState } from "../../../shared/ui";
 import { useNurseryBatches } from "../hooks/useNurseryBatches";
 import NurseryBatchesTable from "./NurseryBatchesTable";
 import NurserySurvivalCards from "./NurserySurvivalCards";
-import PlantsEmptyState from "./PlantsEmptyState";
 
 /**
  * The nursery batches, then the survival rate of each, for the selected
@@ -16,59 +16,43 @@ import PlantsEmptyState from "./PlantsEmptyState";
  * is recorded at all.
  */
 export default function NurseryBatchesSection({ blockCode, addAction }) {
+    const { t } = useTranslation("plants");
     const { data: batches, isPending, isError, refetch, isFetching } = useNurseryBatches();
     const shown = blockCode ? (batches ?? []).filter((batch) => batch.plannedBlockCode === blockCode) : batches;
 
     return (
-        <section aria-labelledby="nursery-batches-title" className="flex flex-col gap-4">
-            <h2 id="nursery-batches-title" className="font-heading text-lg font-bold text-gray-900">
-                Nursery batches
-            </h2>
-
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading batches…
-                </div>
-            )}
+        <Card
+            aria-labelledby="nursery-batches-title"
+            title={<span id="nursery-batches-title">{t("nursery.batches.title")}</span>}
+        >
+            {isPending && <NurseryBatchesTable loading />}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-gray-900">
-                            Batches could not be loaded
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <ErrorState
+                    message={`${t("nursery.batches.error")}. ${t("nursery.batches.errorHint")}`}
+                    onRetry={() => refetch()}
+                    retrying={isFetching}
+                    retryLabel={t("common.retry")}
+                />
             )}
 
             {!isPending && !isError && batches.length === 0 && (
-                <PlantsEmptyState title="No nursery batch yet" action={addAction} />
+                <EmptyState message={t("nursery.batches.empty")} action={addAction} />
             )}
 
             {!isPending && !isError && batches.length > 0 && shown.length === 0 && (
-                <PlantsEmptyState title="No batch is planned for this block" hint="Select “All blocks”." />
+                <EmptyState
+                    title={t("nursery.batches.emptyForBlock")}
+                    message={t("nursery.batches.emptyForBlockHint")}
+                />
             )}
 
             {!isPending && !isError && shown.length > 0 && (
-                <>
+                <div className="flex flex-col gap-6">
                     <NurseryBatchesTable batches={shown} />
                     <NurserySurvivalCards batches={shown} />
-                </>
+                </div>
             )}
-        </section>
+        </Card>
     );
 }

@@ -1,43 +1,13 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal } from "../../../shared/ui";
 import { formatDate } from "../utils/format";
+import { todayAsIsoDate } from "../utils/healthIssues";
 import FindingSummary from "./FindingSummary";
-import PlantsModal from "./PlantsModal";
+import FormAlert from "./FormAlert";
+import HealthFormActions from "./HealthFormActions";
 
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
-
-/** Today as "YYYY-MM-DD", in local time: the latest resolution date the form accepts. */
-function todayAsIsoDate() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${now.getFullYear()}-${month}-${day}`;
-}
-
-function FormField({ id, label, error, note, children }) {
-    return (
-        <div>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
+const NOTE_MAX_LENGTH = 255;
 
 /**
  * Form of the resolution of a finding: the day the problem was seen to be
@@ -52,6 +22,7 @@ function FormField({ id, label, error, note, children }) {
  *   findings are refreshed after a 409, so the row shows the resolution.
  */
 export default function ResolveFindingModal({ finding, isSubmitting, error, onSubmit, onClose }) {
+    const { t } = useTranslation("plants");
     const [resolvedOn, setResolvedOn] = useState("");
     const [note, setNote] = useState("");
     const [fieldErrors, setFieldErrors] = useState({});
@@ -59,35 +30,30 @@ export default function ResolveFindingModal({ finding, isSubmitting, error, onSu
 
     // A treatment never predates its inspection, so the last one, if any, is the earliest date allowed.
     const earliest = finding.lastTreatedOn ?? finding.inspectedOn;
+    const inspection = formatDate(finding.inspectedOn);
     const dateNote = finding.lastTreatedOn
-        ? `Not before the inspection (${formatDate(finding.inspectedOn)}) nor the last treatment `
-            + `(${formatDate(finding.lastTreatedOn)}).`
-        : `Not before the inspection, on ${formatDate(finding.inspectedOn)}.`;
+        ? t("health.resolveForm.dateNoteWithTreatment", { inspection, treatment: formatDate(finding.lastTreatedOn) })
+        : t("health.resolveForm.dateNote", { inspection });
 
     const serverFieldErrors = error?.status === 400 ? error.data?.fieldErrors : null;
     const formError = error && !serverFieldErrors ? error.message : null;
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
-    const fieldProps = (field, id, hasNote = false) => ({
-        "aria-invalid": fieldError(field) ? true : undefined,
-        "aria-describedby":
-            [fieldError(field) ? `${id}-error` : null, hasNote ? `${id}-note` : null].filter(Boolean).join(" ")
-            || undefined,
-    });
 
     function validate() {
         const errors = {};
         if (!resolvedOn) {
-            errors.resolvedOn = "Resolution date is required.";
+            errors.resolvedOn = t("health.resolveForm.errors.dateRequired");
         } else if (resolvedOn > today) {
-            errors.resolvedOn = "Resolution date cannot be in the future.";
+            errors.resolvedOn = t("health.resolveForm.errors.dateInFuture");
         } else if (resolvedOn < finding.inspectedOn) {
-            errors.resolvedOn = `Resolution date cannot be before the inspection, on ${formatDate(finding.inspectedOn)}.`;
+            errors.resolvedOn = t("health.resolveForm.errors.beforeInspection", { date: inspection });
         } else if (finding.lastTreatedOn && resolvedOn < finding.lastTreatedOn) {
-            errors.resolvedOn =
-                `Resolution date cannot be before the last treatment, on ${formatDate(finding.lastTreatedOn)}.`;
+            errors.resolvedOn = t("health.resolveForm.errors.beforeTreatment", {
+                date: formatDate(finding.lastTreatedOn),
+            });
         }
-        if (note.length > 255) {
-            errors.note = "Note must be at most 255 characters.";
+        if (note.length > NOTE_MAX_LENGTH) {
+            errors.note = t("health.resolveForm.errors.noteTooLong");
         }
         return errors;
     }
@@ -104,80 +70,46 @@ export default function ResolveFindingModal({ finding, isSubmitting, error, onSu
     }
 
     return (
-        <PlantsModal labelledBy="resolve-finding-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2 id="resolve-finding-title" className="font-heading text-lg font-bold text-gray-900">
-                    Resolve a finding
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
-
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of the dialogs: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+        <Modal open onClose={onClose} size="xl" title={t("health.resolveForm.title")}>
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <FindingSummary finding={finding} />
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="resolution-date" label="Resolution date" error={fieldError("resolvedOn")} note={dateNote}>
-                        <input
-                            id="resolution-date"
+                    <Field
+                        id="resolution-date"
+                        label={t("health.resolveForm.date")}
+                        error={fieldError("resolvedOn")}
+                        hint={dateNote}
+                    >
+                        <Input
                             type="date"
                             autoFocus
                             min={earliest}
                             max={today}
                             value={resolvedOn}
                             onChange={(event) => setResolvedOn(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("resolvedOn", "resolution-date", true)}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="resolution-note" label="Note" error={fieldError("note")}
-                        note="Optional, such as how the problem was settled.">
-                        <input
-                            id="resolution-note"
-                            type="text"
-                            value={note}
-                            onChange={(event) => setNote(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("note", "resolution-note", true)}
-                        />
-                    </FormField>
+                    <Field
+                        id="resolution-note"
+                        label={t("health.resolveForm.note")}
+                        error={fieldError("note")}
+                        hint={t("health.resolveForm.noteHint")}
+                    >
+                        <Input type="text" value={note} onChange={(event) => setNote(event.target.value)} />
+                    </Field>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isSubmitting ? "Resolving…" : "Resolve finding"}
-                    </button>
-                </div>
+                <HealthFormActions
+                    onCancel={onClose}
+                    isSubmitting={isSubmitting}
+                    submitLabel={t("health.resolveForm.submit")}
+                    submittingLabel={t("health.resolveForm.submitting")}
+                />
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

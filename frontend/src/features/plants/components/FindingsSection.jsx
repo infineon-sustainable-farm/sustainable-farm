@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, EmptyState, Select } from "../../../shared/ui";
 import { useHealthFindings } from "../hooks/useHealthFindings";
-import { formatCode } from "../utils/format";
+import { formatEnum } from "../utils/format";
 import FindingsTable from "./FindingsTable";
-import PlantsEmptyState from "./PlantsEmptyState";
+import { HealthSectionError, HealthSectionLoading } from "./HealthSectionStates";
 
 // The statuses the API computes, in the order a finding goes through them.
 const FINDING_STATUSES = ["UNTREATED", "IN_PROGRESS", "TREATED", "CLOSED_WITHOUT_TREATMENT"];
@@ -18,88 +19,61 @@ const FINDING_STATUSES = ["UNTREATED", "IN_PROGRESS", "TREATED", "CLOSED_WITHOUT
  * treatment and resolution dialogs for a finding.
  */
 export default function FindingsSection({ blockCode, recordAction, onTreat, onResolve }) {
+    const { t } = useTranslation("plants");
     // API code ("UNTREATED"); an empty string means "every status".
     const [status, setStatus] = useState("");
 
-    const { data: findings, isPending, isError, refetch, isFetching } = useHealthFindings({
-        blockCode,
-        status: status || null,
-    });
+    const query = useHealthFindings({ blockCode, status: status || null });
+    const { data: findings, isPending, isError } = query;
     const isFiltered = Boolean(blockCode || status);
+    const statusOptions = FINDING_STATUSES.map((code) => ({ value: code, label: formatEnum("findingStatus", code) }));
 
     return (
-        <section aria-labelledby="findings-title" className="flex flex-col gap-4">
-            <h2 id="findings-title" className="font-heading text-lg font-bold text-gray-900">
-                Findings
-            </h2>
-
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
-                <div className="flex max-w-full min-w-0 items-center gap-3">
-                    {/* Its accessible name joins the section title and its own label. */}
-                    <label
-                        id="findings-status-label"
-                        htmlFor="findings-status"
-                        className="shrink-0 text-xs font-semibold text-gray-500"
-                    >
-                        Status
-                    </label>
-                    <select
+        <Card aria-labelledby="findings-title" title={<span id="findings-title">{t("health.findings.title")}</span>}>
+            <div className="mb-4 flex max-w-full min-w-0 items-center gap-3">
+                {/* Its accessible name joins the section title and its own label. */}
+                <label id="findings-status-label" htmlFor="findings-status" className="shrink-0 text-sm font-medium">
+                    {t("health.findings.status")}
+                </label>
+                <div className="min-w-0">
+                    <Select
                         id="findings-status"
                         value={status}
                         onChange={(event) => setStatus(event.target.value)}
                         aria-labelledby="findings-title findings-status-label"
-                        className="min-w-0 max-w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none"
                     >
-                        <option value="">All statuses</option>
-                        {FINDING_STATUSES.map((code) => (
-                            <option key={code} value={code}>
-                                {formatCode(code)}
+                        <option value="">{t("health.findings.allStatuses")}</option>
+                        {statusOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
             </div>
 
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading findings…
-                </div>
-            )}
+            {isPending && <HealthSectionLoading>{t("health.findings.loading")}</HealthSectionLoading>}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-gray-900">
-                            Findings could not be loaded
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <HealthSectionError
+                    title={t("health.findings.loadError")}
+                    detail={t("health.requestFailed")}
+                    query={query}
+                />
             )}
 
             {!isPending && !isError && findings.length === 0 && (
                 isFiltered ? (
-                    <PlantsEmptyState
-                        title="No finding matches these filters"
-                        hint="Try another block or status, or select “All blocks”."
+                    <EmptyState
+                        className="py-8"
+                        title={t("health.findings.emptyFilteredTitle")}
+                        message={t("health.findings.emptyFilteredHint")}
                     />
                 ) : (
-                    <PlantsEmptyState
-                        title="No finding recorded yet"
-                        hint="Findings are recorded with an inspection."
+                    <EmptyState
+                        className="py-8"
+                        title={t("health.findings.emptyTitle")}
+                        message={t("health.findings.emptyHint")}
                         action={recordAction}
                     />
                 )
@@ -108,6 +82,6 @@ export default function FindingsSection({ blockCode, recordAction, onTreat, onRe
             {!isPending && !isError && findings.length > 0 && (
                 <FindingsTable findings={findings} onTreat={onTreat} onResolve={onResolve} />
             )}
-        </section>
+        </Card>
     );
 }

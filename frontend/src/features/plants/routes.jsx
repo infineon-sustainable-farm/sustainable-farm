@@ -1,5 +1,4 @@
 import { Apple, Bug, CalendarDays, FlaskConical, Home, Leaf, Sprout, TrendingUp } from "lucide-react";
-import PlantsLayout from "./components/PlantsLayout";
 import OverviewPage from "./components/OverviewPage";
 import VarietiesPage from "./components/VarietiesPage";
 import GrowthCalendarPage from "./components/GrowthCalendarPage";
@@ -9,10 +8,10 @@ import DiseasesAlertsPage from "./components/DiseasesAlertsPage";
 import NurseryPage from "./components/NurseryPage";
 import ScenarioAnalysisPage from "./components/ScenarioAnalysisPage";
 
+// The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below.
 export default [
   {
     path: "plants",
-    element: <PlantsLayout />,
     children: [
       { index: true, element: <OverviewPage /> },
       { path: "varieties", element: <VarietiesPage /> },
@@ -28,13 +27,15 @@ export default [
 
 /**
  * Navigation of the module, read by the application shell (app/Sidebar.jsx) and the launcher
- * page (app/LauncherPage.jsx). Same entries, order and targets as the module's own sidebar.
+ * page (app/LauncherPage.jsx). Plants renders inside the shell, with the entries, order and targets
+ * its own sidebar had.
  */
 export const nav = {
   id: "plants",
   basePath: "/plants",
   icon: Sprout,
   nameKey: "plants:name",
+  shell: true,
   items: [
     { to: "/plants", labelKey: "plants:nav.overview", icon: Home, end: true },
     { to: "/plants/varieties", labelKey: "plants:nav.varieties", icon: Sprout },

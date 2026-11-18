@@ -1,60 +1,18 @@
 import { useState } from "react";
-import { X } from "lucide-react";
-import { useVarieties } from "../hooks/useVarieties";
-import { formatBlock } from "../utils/format";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal, Select } from "../../../shared/ui";
 import {
-    MEASURED_VALUE_ERROR,
     measuredValueError,
+    measuredValueMessage,
     METHOD_OPTIONS,
     methodTakesValue,
     methodUnit,
     observationRequest,
     STATUS_OPTIONS,
 } from "../utils/maturityObservations";
-import PlantsModal from "./PlantsModal";
-
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50";
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
-
-/** Today as "YYYY-MM-DD", in local time: the latest observation date the form accepts. */
-function todayAsIsoDate() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${now.getFullYear()}-${month}-${day}`;
-}
-
-/** aria attributes of a field: invalid while it has an error, described by its error and notes. */
-function describe(id, error, ...noteIds) {
-    return {
-        "aria-invalid": error ? true : undefined,
-        "aria-describedby": [error ? `${id}-error` : null, ...noteIds].filter(Boolean).join(" ") || undefined,
-    };
-}
-
-function FormField({ id, label, error, note, className, children }) {
-    return (
-        <div className={className}>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
+import FormAlert from "./FormAlert";
+import { todayAsIsoDate, usePlantedVarieties } from "../hooks/usePlantedVarieties";
+import { BlockAndVarietyFields, FormButtons } from "./HarvestFormParts";
 
 /**
  * Form of a maturity observation: what an observer saw on one variety of one
@@ -73,6 +31,7 @@ function FormField({ id, label, error, note, className, children }) {
  *   the planting), or any other error: one message above the form.
  */
 export default function RecordMaturityObservationModal({ blocks, isSubmitting, error, onSubmit, onClose }) {
+    const { t } = useTranslation("plants");
     const [observedOn, setObservedOn] = useState("");
     const [blockCode, setBlockCode] = useState("");
     const [varietyName, setVarietyName] = useState("");
@@ -86,19 +45,7 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
     const [fieldErrors, setFieldErrors] = useState({});
     const [today] = useState(todayAsIsoDate);
 
-    const varieties = useVarieties({ blockCode: blockCode || null });
-    // A variety row has a current tree count once a planting is recorded for it.
-    const plantedVarieties = blockCode && varieties.data
-        ? varieties.data.filter((variety) => variety.currentTreeCount !== null && variety.currentTreeCount !== undefined)
-        : [];
-
-    let varietyNote = null;
-    if (blockCode && varieties.isError) {
-        varietyNote = "Varieties could not be loaded";
-    } else if (blockCode && varieties.isSuccess && plantedVarieties.length === 0) {
-        varietyNote = "No planted variety on this block";
-    }
-    const canChooseVariety = plantedVarieties.length > 0;
+    const { plantedVarieties, varietyNote } = usePlantedVarieties(blockCode);
 
     const takesValue = methodTakesValue(method);
     const unit = methodUnit(method);
@@ -130,28 +77,28 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
     function validate() {
         const errors = {};
         if (!observedOn) {
-            errors.observedOn = "Observation date is required.";
+            errors.observedOn = t("harvest.observation.errors.dateRequired");
         } else if (observedOn > today) {
-            errors.observedOn = "Observation date cannot be in the future.";
+            errors.observedOn = t("harvest.observation.errors.dateFuture");
         }
         if (!blockCode) {
-            errors.blockCode = "Block is required.";
+            errors.blockCode = t("harvest.form.blockRequired");
         }
         if (!varietyName) {
-            errors.varietyName = "Variety is required.";
+            errors.varietyName = t("harvest.form.varietyRequired");
         }
         if (!maturityStatus) {
-            errors.maturityStatus = "Maturity status is required.";
+            errors.maturityStatus = t("harvest.observation.errors.statusRequired");
         }
         if (!method) {
-            errors.method = "Method is required.";
+            errors.method = t("harvest.observation.errors.methodRequired");
         }
         if (takesValue) {
-            const valueError = isValueUnreadable ? MEASURED_VALUE_ERROR : measuredValueError(measuredValue);
+            const valueError = isValueUnreadable ? measuredValueMessage() : measuredValueError(measuredValue);
             if (valueError) errors.measuredValue = valueError;
         }
         if (observer.length > 255) {
-            errors.observer = "Observer must be at most 255 characters.";
+            errors.observer = t("harvest.observation.errors.observerTooLong");
         }
         return errors;
     }
@@ -173,135 +120,63 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
     }
 
     return (
-        <PlantsModal labelledBy="record-observation-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2
-                    id="record-observation-title"
-                    className="font-heading text-lg font-bold text-gray-900"
-                >
-                    Record a maturity observation
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
-
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of the dialogs: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+        <Modal open onClose={onClose} title={t("harvest.observation.title")} size="xl">
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="observation-date" label="Observation date" error={fieldError("observedOn")}>
-                        <input
-                            id="observation-date"
+                    <Field id="observation-date" label={t("harvest.observation.date")} error={fieldError("observedOn")}>
+                        <Input
                             type="date"
-                            autoFocus
                             max={today}
                             value={observedOn}
                             onChange={(event) => setObservedOn(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...describe("observation-date", fieldError("observedOn"))}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="observation-block" label="Block" error={fieldError("blockCode")}>
-                        <select
-                            id="observation-block"
-                            value={blockCode}
-                            onChange={(event) => changeBlock(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...describe("observation-block", fieldError("blockCode"))}
-                        >
-                            {/* Empty value: sending without a choice gives "Block is required." */}
-                            <option value="">Select a block</option>
-                            {blocks.map((block) => (
-                                <option key={block} value={block}>
-                                    {formatBlock(block)}
-                                </option>
-                            ))}
-                        </select>
-                    </FormField>
+                    <BlockAndVarietyFields
+                        idPrefix="observation"
+                        blocks={blocks}
+                        blockCode={blockCode}
+                        onBlockChange={changeBlock}
+                        varietyName={varietyName}
+                        onVarietyChange={setVarietyName}
+                        plantedVarieties={plantedVarieties}
+                        varietyNote={varietyNote}
+                        fieldError={fieldError}
+                    />
 
-                    <FormField
-                        id="observation-variety"
-                        label="Variety"
-                        error={fieldError("varietyName")}
-                        note={varietyNote}
-                    >
-                        <select
-                            id="observation-variety"
-                            value={varietyName}
-                            disabled={!canChooseVariety}
-                            onChange={(event) => setVarietyName(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...describe("observation-variety", fieldError("varietyName"),
-                                varietyNote ? "observation-variety-note" : null)}
-                        >
-                            {/* Empty value: sending without a choice gives "Variety is required." */}
-                            <option value="">Select a variety</option>
-                            {plantedVarieties.map((variety) => (
-                                <option key={variety.id} value={variety.name}>
-                                    {variety.name}
-                                </option>
-                            ))}
-                        </select>
-                    </FormField>
-
-                    <FormField id="observation-status" label="Maturity status" error={fieldError("maturityStatus")}>
-                        <select
-                            id="observation-status"
-                            value={maturityStatus}
-                            onChange={(event) => setMaturityStatus(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...describe("observation-status", fieldError("maturityStatus"))}
-                        >
-                            <option value="">Select a status</option>
+                    <Field id="observation-status" label={t("harvest.observation.status")} error={fieldError("maturityStatus")}>
+                        <Select value={maturityStatus} onChange={(event) => setMaturityStatus(event.target.value)}>
+                            <option value="">{t("harvest.observation.selectStatus")}</option>
                             {STATUS_OPTIONS.map((status) => (
                                 <option key={status.code} value={status.code}>
                                     {status.label}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </Field>
 
-                    <FormField id="observation-method" label="Method" error={fieldError("method")}>
-                        <select
-                            id="observation-method"
-                            value={method}
-                            onChange={(event) => changeMethod(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...describe("observation-method", fieldError("method"))}
-                        >
-                            <option value="">Select a method</option>
+                    <Field id="observation-method" label={t("harvest.observation.method")} error={fieldError("method")}>
+                        <Select value={method} onChange={(event) => changeMethod(event.target.value)}>
+                            <option value="">{t("harvest.observation.selectMethod")}</option>
                             {METHOD_OPTIONS.map((option) => (
                                 <option key={option.code} value={option.code}>
                                     {option.label}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </Field>
 
-                    <FormField
+                    <Field
                         id="observation-value"
-                        label={unit ? `Measured value (${unit})` : "Measured value"}
+                        label={unit
+                            ? t("harvest.observation.measuredValueUnit", { unit })
+                            : t("harvest.observation.measuredValue")}
                         error={fieldError("measuredValue")}
-                        note={takesValue ? "Optional. Above 0 and up to 100, one decimal at most." : "With Brix or dry matter only."}
+                        hint={takesValue ? t("harvest.observation.valueHint") : t("harvest.observation.valueDisabledHint")}
                     >
-                        <input
-                            id="observation-value"
+                        <Input
                             type="number"
                             min="0"
                             max="100"
@@ -310,41 +185,28 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
                             disabled={!takesValue}
                             value={measuredValue}
                             onChange={changeMeasuredValue}
-                            className={INPUT_CLASS}
-                            {...describe("observation-value", fieldError("measuredValue"), "observation-value-note")}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="observation-observer" label="Observer" error={fieldError("observer")}
-                        note="Optional." className="sm:col-span-2">
-                        <input
-                            id="observation-observer"
-                            type="text"
-                            value={observer}
-                            onChange={(event) => setObserver(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...describe("observation-observer", fieldError("observer"), "observation-observer-note")}
-                        />
-                    </FormField>
+                    <Field
+                        id="observation-observer"
+                        label={t("harvest.observation.observer")}
+                        error={fieldError("observer")}
+                        hint={t("harvest.observation.optional")}
+                        className="sm:col-span-2"
+                    >
+                        <Input type="text" value={observer} onChange={(event) => setObserver(event.target.value)} />
+                    </Field>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || varietyNote !== null}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isSubmitting ? "Recording…" : "Record observation"}
-                    </button>
-                </div>
+                <FormButtons
+                    onCancel={onClose}
+                    isSubmitting={isSubmitting}
+                    submitDisabled={varietyNote !== null}
+                    submitLabel={t("harvest.observation.submit")}
+                    submittingLabel={t("harvest.form.recording")}
+                />
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

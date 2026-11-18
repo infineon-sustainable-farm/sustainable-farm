@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Info, Loader2, TriangleAlert } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import PlantsEmptyState from "./PlantsEmptyState";
+import { Card, EmptyState, ErrorState, PageHeader } from "../../../shared/ui";
 import { useGrowthCalendar, useGrowthCalendarBlocks } from "../hooks/useGrowthCalendar";
 import BlockFilter from "./BlockFilter";
 import GrowthCalendarTable from "./GrowthCalendarTable";
-import { PAGE, PRIMARY_BUTTON } from "./plantsStyles";
 
 /**
  * Explains, next to the table, why age and phase show a dash. Only rendered
@@ -13,21 +13,16 @@ import { PAGE, PRIMARY_BUTTON } from "./plantsStyles";
  * is only quoted for rows that come from that study.
  */
 function MissingPlantingDateNote({ entries }) {
+    const { t } = useTranslation("plants");
     const undated = entries.filter((entry) => !entry.plantingDate);
     if (undated.length === 0) return null;
     const fromZalka = undated.some((entry) => entry.source === "Zalka_2025");
 
     return (
-        <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3 text-sm text-gray-600">
-            <Info size={18} className="mt-0.5 shrink-0 text-info" />
-            <p>
-                {fromZalka
-                    ? "Planting date not recorded in the reference study (Zalka 2025 gives only “beginning of the rainy season”). "
-                        + "Tree age and growth phase are computed from the planting date and cannot be shown until it is recorded."
-                    : "Planting date not entered yet. "
-                        + "Tree age and growth phase are computed from the planting date and appear once it is entered."}
-            </p>
-        </div>
+        <Card className="flex gap-3 text-sm text-text-muted">
+            <Info size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-info-fg" />
+            <p>{fromZalka ? t("calendar.missingDateZalka") : t("calendar.missingDate")}</p>
+        </Card>
     );
 }
 
@@ -41,29 +36,31 @@ function MissingPlantingDateNote({ entries }) {
  */
 function PhaseLegend() {
     return (
-        <p className="px-1 text-xs text-gray-500">
-            Age bands of the growth phases, from the Zalka 2025 study: 0–2 yrs establishment · 3–5 yrs gradual
-            production · 6+ yrs full production. The study gives “years 5 to 7” for full production: year 5 is
-            counted as gradual production, and full production continues after year 7. The share of the full yield
-            in each phase, with its source, is under Reference values on{" "}
-            <Link
-                to="/plants/harvest-maturity"
-                className="font-semibold text-primary-dark underline underline-offset-2 hover:no-underline"
-            >
-                Harvest &amp; Maturity
-            </Link>
-            .
+        <p className="px-1 text-xs text-text-muted">
+            <Trans
+                ns="plants"
+                i18nKey="calendar.legend"
+                components={{
+                    page: (
+                        <Link
+                            to="/plants/harvest-maturity"
+                            className="font-semibold text-text-accent underline underline-offset-2 hover:no-underline"
+                        />
+                    ),
+                }}
+            />
         </p>
     );
 }
 
 export default function GrowthCalendarPage() {
+    const { t } = useTranslation("plants");
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
 
     useEffect(() => {
-        document.title = "Growth Calendar — Plants";
-    }, []);
+        document.title = t("calendar.documentTitle");
+    }, [t]);
 
     const { data: entries, isPending, isError, refetch, isFetching } = useGrowthCalendar({
         blockCode: selectedBlock || null,
@@ -71,81 +68,51 @@ export default function GrowthCalendarPage() {
     const { data: blocks } = useGrowthCalendarBlocks();
 
     return (
-        <div className={PAGE}>
-            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
-                <header>
-                    {/* A gray 12 px overline: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
-                    <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
-                        Task 2
-                    </p>
-                    <h1 className="font-heading mt-1 text-2xl font-bold text-on-background">
-                        Planting Calendar &amp; Growth Stages
-                    </h1>
-                    <p className="mt-2 max-w-xl text-sm text-gray-500">
-                        Tree age and growth stage, from the planting date.
-                    </p>
-                </header>
+        <div className="p-6 space-y-6">
+            <PageHeader title={t("calendar.title")} subtitle={t("calendar.subtitle")} />
 
-                <BlockFilter
-                    blocks={blocks ?? []}
-                    value={selectedBlock}
-                    onChange={setSelectedBlock}
-                    disabled={isPending}
-                />
+            <BlockFilter
+                blocks={blocks ?? []}
+                value={selectedBlock}
+                onChange={setSelectedBlock}
+                disabled={isPending}
+            />
 
-                {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-16 text-sm text-gray-500">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading growth calendar…
-                    </div>
-                )}
+            {isPending && (
+                <Card className="flex items-center justify-center gap-3 py-16 text-sm text-text-muted">
+                    <Loader2 size={18} aria-hidden="true" className="animate-spin motion-reduce:animate-none" />
+                    <span role="status">{t("calendar.loading")}</span>
+                </Card>
+            )}
 
-                {isError && (
-                    <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                        <TriangleAlert size={28} className="text-error" />
-                        <div>
-                            <p className="font-heading text-lg font-bold text-on-background">
-                                Growth calendar could not be loaded
-                            </p>
-                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                            <p className="mt-1 text-sm text-gray-600">
-                                The request to the server did not succeed.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className={PRIMARY_BUTTON}
-                        >
-                            {isFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
-                )}
+            {isError && (
+                <Card>
+                    <ErrorState
+                        message={`${t("calendar.loadError")} ${t("calendar.loadErrorHint")}`}
+                        onRetry={() => refetch()}
+                        retrying={isFetching}
+                        retryLabel={t("common.retry")}
+                    />
+                </Card>
+            )}
 
-                {!isPending && !isError && entries.length === 0 && (
-                    selectedBlock ? (
-                        <PlantsEmptyState
-                            title="No growth calendar records match this filter"
-                            hint="Try another block, or select “All blocks”."
-                        />
+            {!isPending && !isError && entries.length === 0 && (
+                <Card>
+                    {selectedBlock ? (
+                        <EmptyState title={t("calendar.emptyFilteredTitle")} message={t("calendar.emptyFilteredHint")} />
                     ) : (
-                        <PlantsEmptyState
-                            title="No planting recorded yet"
-                            hint="Record a planting from the Varieties screen."
-                        />
-                    )
-                )}
+                        <EmptyState title={t("calendar.emptyTitle")} message={t("calendar.emptyHint")} />
+                    )}
+                </Card>
+            )}
 
-                {!isPending && !isError && entries.length > 0 && (
-                    <>
-                        <GrowthCalendarTable entries={entries} />
-                        <PhaseLegend />
-                        <MissingPlantingDateNote entries={entries} />
-                    </>
-                )}
-            </div>
+            {!isPending && !isError && entries.length > 0 && (
+                <>
+                    <GrowthCalendarTable entries={entries} />
+                    <PhaseLegend />
+                    <MissingPlantingDateNote entries={entries} />
+                </>
+            )}
         </div>
     );
 }

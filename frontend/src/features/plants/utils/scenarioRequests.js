@@ -1,4 +1,26 @@
+import i18n from "../../../shared/i18n/i18n";
 import { formatEur, formatKilograms, formatNumber, formatXof, NO_VALUE } from "./format";
+
+/** Text of the scenario screen in the active language, read at call time (plants:scenarios.*). */
+function t(key, options) {
+    return i18n.t(`scenarios.${key}`, { ns: "plants", ...options });
+}
+
+const NUMBER_LOCALES = { en: "en-US", de: "de-DE", fr: "fr-FR" };
+
+/** A number in the active language: en-US in English, as before the translation. */
+function localeNumber(value, options) {
+    return Number(value).toLocaleString(NUMBER_LOCALES[i18n.resolvedLanguage] ?? NUMBER_LOCALES.en, options);
+}
+
+/** An object whose every key reads its message in the active language when it is used. */
+function messages(group, keys, options = {}) {
+    const result = {};
+    for (const key of keys) {
+        Object.defineProperty(result, key, { enumerable: true, get: () => t(`${group}.${key}`, options) });
+    }
+    return result;
+}
 
 /*
  * The scenario screen and its API, kept apart from the components so their
@@ -66,23 +88,23 @@ const PRICE_PATTERN = /^\d{1,10}(\.\d{1,4})?$/;
 const AMOUNT_PATTERN = /^\d{1,12}(\.\d{1,2})?$/;
 const TEXT_MAX_LENGTH = 255;
 
-export const SCENARIO_MESSAGES = {
-    nameRequired: "Name is required.",
-    nameTooLong: `Name must be at most ${TEXT_MAX_LENGTH} characters.`,
-    varietyTooLong: `Variety must be at most ${TEXT_MAX_LENGTH} characters.`,
-    treeCount: "Trees must be a whole number from 1 to 1,000,000.",
-    yieldPerTreeKg: "Yield per tree must be greater than 0 and at most 1,000 kg, with at most 1 decimal.",
-    lossRate: "Loss rate must be between 0 and 1, with at most 3 decimals.",
-    pricePerKg: "Price per kg must be greater than 0, with at most 4 decimals.",
-    currency: "Currency is required.",
-    annualFixedCostRequired: "Fixed operating cost is required.",
-    annualFixedCost: "Fixed operating cost must be 0 or more, with at most 2 decimals.",
-    variableCostPerKg: "Variable operating cost must be 0 or more, with at most 4 decimals.",
-    initialInvestmentRequired: "Investment is required.",
-    initialInvestment: "Investment must be greater than 0, with at most 2 decimals.",
-    costPerAdditionalTree: "Cost per added tree must be 0 or more, with at most 2 decimals.",
-    source: `Source must be at most ${TEXT_MAX_LENGTH} characters.`,
-};
+export const SCENARIO_MESSAGES = messages("messages", [
+    "nameRequired",
+    "nameTooLong",
+    "varietyTooLong",
+    "treeCount",
+    "yieldPerTreeKg",
+    "lossRate",
+    "pricePerKg",
+    "currency",
+    "annualFixedCostRequired",
+    "annualFixedCost",
+    "variableCostPerKg",
+    "initialInvestmentRequired",
+    "initialInvestment",
+    "costPerAdditionalTree",
+    "source",
+], { max: TEXT_MAX_LENGTH });
 
 /**
  * The errors of the scenario form, by field, with the rules of the API; empty
@@ -172,12 +194,12 @@ function parsed(text, pattern, isInBounds, message) {
     return { value: Number(trimmed), error: null };
 }
 
-export const VARIANT_MESSAGES = {
-    treeCountChange: "Trees added must be a whole number from -1,000,000 to 1,000,000.",
-    yieldPerTreeChangePct: "Change must be above -100% and at most 1,000%, with at most 1 decimal.",
-    lossRate: "Loss rate must be between 0 and 1, with at most 3 decimals.",
-    additionalInvestment: "Additional investment must be 0 or more, with at most 2 decimals.",
-};
+export const VARIANT_MESSAGES = messages("variantMessages", [
+    "treeCountChange",
+    "yieldPerTreeChangePct",
+    "lossRate",
+    "additionalInvestment",
+]);
 
 export function parseTreeCountChange(text) {
     return parsed(text, /^[+-]?\d{1,7}$/, (value) => Math.abs(value) <= 1_000_000, VARIANT_MESSAGES.treeCountChange);
@@ -333,8 +355,8 @@ export function formatAmountFigure(amount, currency) {
     const value = pick(amount, currency);
     if (isMissing(value)) return NO_VALUE;
     const magnitude = currency === "XOF"
-        ? Math.abs(value).toLocaleString("en-US")
-        : Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        ? localeNumber(Math.abs(value))
+        : localeNumber(Math.abs(value), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return value < 0 ? `${MINUS}${magnitude}` : magnitude;
 }
 
@@ -372,14 +394,14 @@ export function formatSignedKilograms(value) {
 /** A return as the API rounded it, to 0.1: "19.4%", "−2%". */
 export function formatReturn(value) {
     if (isMissing(value)) return NO_VALUE;
-    const magnitude = `${Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 1 })}%`;
+    const magnitude = t("format.percent", { value: localeNumber(Math.abs(value), { maximumFractionDigits: 1 }) });
     return value < 0 ? `${MINUS}${magnitude}` : magnitude;
 }
 
 /** A change of return, in percentage points: "+2.3 pts", "−0.4 pts", "0 pts". */
 export function formatSignedPoints(value) {
     if (isMissing(value)) return NO_VALUE;
-    const magnitude = `${Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 1 })} pts`;
+    const magnitude = t("format.points", { value: localeNumber(Math.abs(value), { maximumFractionDigits: 1 }) });
     if (value > 0) return `+${magnitude}`;
     return value < 0 ? `${MINUS}${magnitude}` : magnitude;
 }
@@ -388,9 +410,9 @@ export function formatSignedPoints(value) {
 export function formatUnitPrice(value, currency) {
     if (isMissing(value)) return NO_VALUE;
     if (currency === "XOF") {
-        return `${Number(value).toLocaleString("en-US", { maximumFractionDigits: 4 })} FCFA`;
+        return t("format.xof", { value: localeNumber(value, { maximumFractionDigits: 4 }) });
     }
-    return Number(value).toLocaleString("en-US", {
+    return localeNumber(value, {
         style: "currency",
         currency: "EUR",
         minimumFractionDigits: 2,
@@ -401,13 +423,13 @@ export function formatUnitPrice(value, currency) {
 /** A duration as the API rounded it, to 0.1 year: "5.2 years", "1 year". */
 export function formatYears(value) {
     if (isMissing(value)) return NO_VALUE;
-    return `${Number(value).toLocaleString("en-US", { maximumFractionDigits: 1 })} ${value === 1 ? "year" : "years"}`;
+    return t("format.years", { count: Number(value), value: localeNumber(value, { maximumFractionDigits: 1 }) });
 }
 
 /** A number of trees added, signed: "+20 trees", "−10 trees". */
 export function formatSignedTrees(value) {
     if (isMissing(value)) return NO_VALUE;
-    const magnitude = `${formatNumber(Math.abs(value))} ${Math.abs(value) === 1 ? "tree" : "trees"}`;
+    const magnitude = t("format.trees", { count: Math.abs(value), value: formatNumber(Math.abs(value)) });
     if (value > 0) return `+${magnitude}`;
     return value < 0 ? `${MINUS}${magnitude}` : magnitude;
 }
@@ -415,7 +437,7 @@ export function formatSignedTrees(value) {
 /** A change in percent as typed, signed: "+10%", "−5%". */
 export function formatSignedPercent(value) {
     if (isMissing(value)) return NO_VALUE;
-    const magnitude = `${Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 1 })}%`;
+    const magnitude = t("format.percent", { value: localeNumber(Math.abs(value), { maximumFractionDigits: 1 }) });
     if (value > 0) return `+${magnitude}`;
     return value < 0 ? `${MINUS}${magnitude}` : magnitude;
 }
@@ -425,21 +447,21 @@ export function formatSignedPercent(value) {
  * direction of the quantity it adds: more sold, or less.
  */
 const BENEFIT_LABELS = {
-    TREE_COUNT: ["Additional trees", "Fewer trees"],
-    YIELD_PER_TREE: ["Higher yield per tree", "Lower yield per tree"],
-    LOSS_RATE: ["Loss reduction", "Higher losses"],
-    VARIABLE_OPERATING_COST: ["Additional operating cost", "Operating cost saved"],
+    TREE_COUNT: ["treeCountMore", "treeCountLess"],
+    YIELD_PER_TREE: ["yieldPerTreeMore", "yieldPerTreeLess"],
+    LOSS_RATE: ["lossRateMore", "lossRateLess"],
+    VARIABLE_OPERATING_COST: ["variableCostMore", "variableCostLess"],
 };
 
 /** The name of one line of an annual benefit; an unknown type is shown as received. */
 export function benefitLineLabel(line) {
     const labels = BENEFIT_LABELS[line.type];
     if (!labels) return String(line.type);
-    return line.quantityKg >= 0 ? labels[0] : labels[1];
+    return t(`benefit.${line.quantityKg >= 0 ? labels[0] : labels[1]}`);
 }
 
 /** What a line of an annual benefit is computed from, with the factors the API gives. */
 export function benefitLineDetails(line, currency) {
-    const factors = `${formatSignedKilograms(line.quantityKg)} × ${formatUnitPrice(line.unitAmount, currency)}/kg`;
-    return line.type === "VARIABLE_OPERATING_COST" ? `${factors} variable cost` : factors;
+    const options = { quantity: formatSignedKilograms(line.quantityKg), price: formatUnitPrice(line.unitAmount, currency) };
+    return t(line.type === "VARIABLE_OPERATING_COST" ? "benefit.variableCostFactors" : "benefit.factors", options);
 }
