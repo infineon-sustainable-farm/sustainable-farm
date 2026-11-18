@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, Network, PlaneTakeoff, Store } from 'lucide-react';
-import { useSalesFormat } from '../../format';
+import { localIsoDate, useSalesFormat } from '../../format';
 
 // Look of a channel, picked from its name (or its position when the name matches nothing).
 export const CHANNEL_PRESETS = [
@@ -88,8 +88,8 @@ export function emptyTargetForm(channelId = null) {
   end.setMonth(end.getMonth() + 3);
   return {
     channelId,
-    periodStart: today.toISOString().slice(0, 10),
-    periodEnd: end.toISOString().slice(0, 10),
+    periodStart: localIsoDate(today),
+    periodEnd: localIsoDate(end),
     revenueTargetEur: '',
   };
 }

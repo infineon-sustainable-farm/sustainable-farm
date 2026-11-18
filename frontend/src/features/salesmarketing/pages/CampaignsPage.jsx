@@ -82,8 +82,7 @@ export default function CampaignsPage() {
   };
   const openEdit = async (campaign) => {
     try {
-      const res = await api.getCampaignById(campaign.campaignId);
-      const c = res.data;
+      const c = (await api.getCampaignById(campaign.campaignId)) || campaign;
       setCampaignForm({
         name: c.name || '',
         status: c.status || 'draft',

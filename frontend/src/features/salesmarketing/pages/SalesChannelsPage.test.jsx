@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { justAfterLocalMidnight } from '../testing/nearMidnight';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SalesChannelsPage from './SalesChannelsPage';
@@ -92,5 +93,42 @@ describe('SalesChannelsPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(api.deleteSalesChannel).toHaveBeenCalledWith(3));
     expect(await screen.findByText('Sales channel "Online Store" deleted successfully.')).toBeInTheDocument();
+  });
+
+  it('fills the channel edit form from the single channel fetch', async () => {
+    api.getSalesChannelById.mockResolvedValue({ channelId: 3, name: 'Online Shop' });
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Online Store' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit Channel' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Sales Channel #3' });
+    expect(within(dialog).getByLabelText(/Channel Name/)).toHaveValue('Online Shop');
+  });
+
+  it('fills the target edit form from the single target fetch', async () => {
+    api.getSalesChannelTargetById.mockResolvedValue({ ...target, revenueTargetEur: 500000 });
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Manage Targets' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit target' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Target #9' });
+    expect(within(dialog).getByLabelText(/Revenue Target/)).toHaveValue(500000);
+  });
+
+  it('defaults the target period to local dates just after midnight', async () => {
+    const restore = justAfterLocalMidnight();
+    try {
+      renderPage();
+      fireEvent.click(await screen.findByRole('button', { name: 'Actions for Online Store' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Add Target' }));
+      const dialog = screen.getByRole('dialog', { name: 'New Sales Target' });
+      fireEvent.change(within(dialog).getByLabelText(/Revenue Target/), { target: { value: '1000' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Create Target' }));
+      await waitFor(() =>
+        expect(api.createSalesChannelTarget).toHaveBeenCalledWith(
+          expect.objectContaining({ periodStart: '2026-04-01', periodEnd: '2026-07-01' })
+        )
+      );
+    } finally {
+      restore();
+    }
   });
 });
