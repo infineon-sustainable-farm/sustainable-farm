@@ -1,6 +1,13 @@
 {
   "name": "Energieversorgung",
   "nav": {
-    "dashboard": "Übersicht"
+    "dashboard": "Übersicht",
+    "components": "Komponenten",
+    "solar": "Solar & Erzeugung",
+    "consumption": "Verbrauchserfassung",
+    "generator": "Notstromaggregat",
+    "carbon": "CO₂-Bilanz",
+    "scenario": "Was-wäre-wenn-Analyse",
+    "alerts": "Warnungen & Benachrichtigungen"
   }
 }
