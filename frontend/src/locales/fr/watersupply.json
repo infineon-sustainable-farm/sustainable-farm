@@ -118,5 +118,215 @@
       "series": "Niveau (L)",
       "capacity": "Capacité"
     }
+  },
+  "dashboard": {
+    "title": "Tableau de bord de l’eau",
+    "subtitle": "Vue opérationnelle : irrigation, cuves, qualité et risque de sécheresse.",
+    "health": {
+      "checking": "Vérification du serveur…",
+      "connected": "Serveur connecté",
+      "disconnected": "Serveur déconnecté"
+    },
+    "loading": "Chargement du tableau de bord…",
+    "loadErrorTitle": "Impossible de charger les données",
+    "loadError": "Vérifiez que le serveur est démarré, puis réessayez.",
+    "emptyTitle": "Aucune donnée",
+    "empty": "Ajoutez des données pour afficher le tableau de bord.",
+    "kpis": {
+      "daily": "Consommation du jour",
+      "monthly": "Consommation du mois",
+      "tankLevel": "Niveau des cuves",
+      "savings": "Économies d’eau",
+      "irrigations": "Irrigations du jour",
+      "anomalies": "Anomalies",
+      "quality": "Qualité de l’eau",
+      "sensors": "Capteurs disponibles"
+    },
+    "weather": {
+      "title": "Météo actuelle",
+      "provider": "Open-Meteo",
+      "temperature": "Température",
+      "humidity": "Humidité",
+      "wind": "Vent",
+      "condition": "Conditions"
+    },
+    "recommendations": {
+      "loading": "Recommandations…",
+      "title": "Recommandations",
+      "note": "Par ordre de priorité",
+      "emptyTitle": "Aucune recommandation",
+      "empty": "Rien à afficher pour le moment."
+    },
+    "priorities": {
+      "critical": "critique",
+      "high": "haute",
+      "medium": "moyenne",
+      "low": "basse"
+    },
+    "activity": {
+      "loading": "Activités…",
+      "title": "Activité récente",
+      "note": "Historique",
+      "emptyTitle": "Aucune activité",
+      "empty": "Les consommations enregistrées apparaîtront ici."
+    },
+    "drought": {
+      "title": "Prévision de sécheresse",
+      "note": "Tendance"
+    },
+    "alerts": {
+      "loading": "Alertes…",
+      "title": "Alertes récentes",
+      "note": "Non lues",
+      "emptyTitle": "Aucune alerte",
+      "empty": "Tout est normal."
+    },
+    "actions": {
+      "title": "Actions",
+      "irrigation": "Gérer l’irrigation",
+      "consumption": "Voir la consommation",
+      "quality": "Voir la qualité de l’eau",
+      "outage": "Planifier une coupure",
+      "droughtPlan": "Plan sécheresse",
+      "droughtPlanNotice": "Consultez la vue Sécheresse pour le plan.",
+      "carryOver": "Plan de report préparé",
+      "carryOverNotice": "Démo : rapport préparé."
+    },
+    "balance": {
+      "title": "Bilan hydrique",
+      "status": {
+        "deficit": "Déficit",
+        "unknown": "Aucune capacité de cuve",
+        "balanced": "Équilibré"
+      },
+      "rain": "Pluie récupérée ce mois-ci",
+      "irrigation": "Irrigation ce mois-ci",
+      "tanks": "Dans les cuves actuellement",
+      "tanksDetail": "{{level}} sur {{capacity}} ({{pct}})",
+      "forecast": "Après les irrigations planifiées des 7 prochains jours",
+      "forecastDetail": "{{planned}} prévus, {{left}} restants"
+    }
+  },
+  "drought": {
+    "title": "Alertes sécheresse",
+    "subtitle": "Niveau de risque selon le niveau des réserves, la saison et les besoins d’exploitation.",
+    "loadError": "Chargement impossible.",
+    "empty": "Aucune prévision",
+    "levels": {
+      "normal": "Normal",
+      "vigilance": "Vigilance",
+      "alert": "Alerte",
+      "critical": "Critique"
+    },
+    "stepsLabel": "Niveaux de risque",
+    "gaugeTitle": "Jauge de risque actuelle",
+    "recommendationTitle": "Recommandation",
+    "reserveDays": "Jours de réserve",
+    "days": "{{value}} j",
+    "notAvailable": "n/d",
+    "averageConsumption": "Conso. moyenne (7 j)",
+    "litersPerDay": "{{value}} L/j",
+    "reserve": "Réserve",
+    "reserveValue": "{{reserve}} / {{capacity}} L",
+    "defaultRecommendation": "Réservez l’eau aux cultures prioritaires.",
+    "prediction": "Prévision du {{date}} · confiance {{confidence}}",
+    "automationTitle": "Automatisation en cas critique",
+    "ifCritical": "Si critique",
+    "automationText": "Propose de reporter les irrigations non essentielles jusqu’à ce que la réserve se reconstitue.",
+    "preparePlan": "Préparer le plan de report",
+    "planPrepared": "Plan de report préparé (démo)."
+  },
+  "notifications": {
+    "title": "Centre de notifications",
+    "subtitle": "Alertes d’exploitation issues des contrôles de qualité, d’irrigation et de stockage.",
+    "listTitle": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "allMarkedRead": "Notifications marquées comme lues",
+    "markRead": "Marquer comme lue",
+    "markedRead": "Notification marquée comme lue",
+    "deleted": "Notification supprimée",
+    "actionFailed": "L’action a échoué.",
+    "levelFilter": "Filtrer par niveau",
+    "allLevels": "Tous les niveaux",
+    "search": "Rechercher une notification…",
+    "loading": "Chargement des notifications...",
+    "loadError": "Chargement impossible.",
+    "emptyTitle": "Aucune notification",
+    "empty": "Les alertes apparaîtront ici.",
+    "types": {
+      "critical": "critique",
+      "warning": "avertissement",
+      "info": "info",
+      "success": "succès"
+    },
+    "deleteTitle": "Supprimer la notification",
+    "deleteMessage": "Cette notification sera retirée du centre de notifications."
+  },
+  "quality": {
+    "title": "Qualité de l’eau",
+    "subtitle": "Mesures des sondes IoT - alertes automatiques hors seuils : pH 6-7,5 - turbidité < 5 NTU.",
+    "listTitle": "Historique des mesures",
+    "alertsCount": "{{count}} alerte(s)",
+    "sourceFilter": "Filtrer par source",
+    "allSources": "Toutes les sources",
+    "search": "Rechercher par date...",
+    "loading": "Chargement des mesures...",
+    "loadError": "Impossible de charger les mesures.",
+    "emptyTitle": "Aucune mesure",
+    "empty": "Les mesures des sondes IoT (pH, turbidité) apparaîtront ici dès leur transmission.",
+    "columns": {
+      "date": "Date",
+      "source": "Source",
+      "ph": "pH",
+      "turbidity": "Turbidité",
+      "status": "État"
+    },
+    "unknown": "-",
+    "ntu": "{{value}} NTU",
+    "alert": "Alerte",
+    "compliant": "Conforme",
+    "thresholdsTitle": "Seuils de référence",
+    "compliantPh": "pH conforme",
+    "phRange": "6,0 - 7,5",
+    "maxTurbidity": "Turbidité maximale",
+    "outOfRange": "Hors seuils",
+    "outOfRangeAction": "Alerte + notification automatique",
+    "dataSourceTitle": "Source des données",
+    "dataSourceText": "Les mesures proviennent des sondes IoT installées sur les sources. Elles sont transmises automatiquement par le point d’ingestion - aucune saisie manuelle."
+  },
+  "rainwater": {
+    "title": "Récupération de l’eau de pluie",
+    "subtitle": "Pluviométrie mesurée par capteur IoT - volumes récupérés calculés automatiquement.",
+    "period": "Période",
+    "periodValues": {
+      "all": "Tout l’historique",
+      "week": "Semaine dernière",
+      "month": "Mois dernier"
+    },
+    "totalCollected": "Total récupéré",
+    "coverage": "Taux de couverture",
+    "coverageValue": "{{value}} %",
+    "tankTitle": "Niveau de la cuve",
+    "noSource": "-",
+    "tankNote": "Niveau mesuré par capteur IoT - alerte orange au-delà de 90 pour cent (SC-06).",
+    "harvestTitle": "Récupération par épisode de pluie",
+    "periodLabel": "Période",
+    "periods": {
+      "week": "Semaine",
+      "month": "Mois",
+      "all": "Tout"
+    },
+    "sourceFilter": "Filtrer par source",
+    "allSources": "Toutes les sources",
+    "search": "Rechercher par date...",
+    "loading": "Chargement des récupérations...",
+    "loadError": "Impossible de charger les récupérations.",
+    "emptyTitle": "Aucune récupération",
+    "empty": "La pluviométrie mesurée par le pluviomètre IoT apparaîtra ici - volumes calculés automatiquement.",
+    "series": "Volume récupéré (L)",
+    "columns": {
+      "date": "Date",
+      "volume": "Volume récupéré"
+    }
   }
 }

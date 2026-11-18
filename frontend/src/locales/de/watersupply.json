@@ -118,5 +118,215 @@
       "series": "Füllstand (L)",
       "capacity": "Kapazität"
     }
+  },
+  "dashboard": {
+    "title": "Wasser-Dashboard",
+    "subtitle": "Betriebsübersicht: Bewässerung, Tanks, Qualität und Dürrerisiko.",
+    "health": {
+      "checking": "Backend wird geprüft…",
+      "connected": "Backend verbunden",
+      "disconnected": "Backend getrennt"
+    },
+    "loading": "Dashboard wird geladen…",
+    "loadErrorTitle": "Daten können nicht geladen werden",
+    "loadError": "Prüfen Sie, ob das Backend läuft, und versuchen Sie es erneut.",
+    "emptyTitle": "Keine Daten",
+    "empty": "Erfassen Sie Daten, um das Dashboard anzuzeigen.",
+    "kpis": {
+      "daily": "Tagesverbrauch",
+      "monthly": "Monatsverbrauch",
+      "tankLevel": "Tankfüllstand",
+      "savings": "Wassereinsparung",
+      "irrigations": "Bewässerungen heute",
+      "anomalies": "Anomalien",
+      "quality": "Wasserqualität",
+      "sensors": "Verfügbare Sensoren"
+    },
+    "weather": {
+      "title": "Aktuelles Wetter",
+      "provider": "Open-Meteo",
+      "temperature": "Temperatur",
+      "humidity": "Luftfeuchtigkeit",
+      "wind": "Wind",
+      "condition": "Wetterlage"
+    },
+    "recommendations": {
+      "loading": "Empfehlungen…",
+      "title": "Empfehlungen",
+      "note": "Nach Priorität sortiert",
+      "emptyTitle": "Keine Empfehlungen",
+      "empty": "Derzeit gibt es nichts anzuzeigen."
+    },
+    "priorities": {
+      "critical": "kritisch",
+      "high": "hoch",
+      "medium": "mittel",
+      "low": "niedrig"
+    },
+    "activity": {
+      "loading": "Aktivitäten…",
+      "title": "Letzte Aktivitäten",
+      "note": "Verlauf",
+      "emptyTitle": "Keine Aktivität",
+      "empty": "Erfasste Verbräuche erscheinen hier."
+    },
+    "drought": {
+      "title": "Dürreprognose",
+      "note": "Ausblick"
+    },
+    "alerts": {
+      "loading": "Warnungen…",
+      "title": "Letzte Warnungen",
+      "note": "Ungelesen",
+      "emptyTitle": "Keine Warnungen",
+      "empty": "Alles im Normalbereich."
+    },
+    "actions": {
+      "title": "Aktionen",
+      "irrigation": "Bewässerung verwalten",
+      "consumption": "Verbrauch anzeigen",
+      "quality": "Wasserqualität anzeigen",
+      "outage": "Ausfall planen",
+      "droughtPlan": "Dürreplan",
+      "droughtPlanNotice": "Den Plan finden Sie in der Ansicht Dürre.",
+      "carryOver": "Vorbereiteter Übertragungsplan",
+      "carryOverNotice": "Demo: Bericht vorbereitet."
+    },
+    "balance": {
+      "title": "Wasserbilanz",
+      "status": {
+        "deficit": "Defizit",
+        "unknown": "Keine Tankkapazität",
+        "balanced": "Ausgeglichen"
+      },
+      "rain": "Diesen Monat gesammeltes Regenwasser",
+      "irrigation": "Bewässerung diesen Monat",
+      "tanks": "Derzeit in den Tanks",
+      "tanksDetail": "{{level}} von {{capacity}} ({{pct}})",
+      "forecast": "Nach den geplanten Bewässerungen der nächsten 7 Tage",
+      "forecastDetail": "{{planned}} geplant, {{left}} übrig"
+    }
+  },
+  "drought": {
+    "title": "Dürrewarnungen",
+    "subtitle": "Risikostufe nach Speicherfüllständen, Jahreszeit und betrieblichem Bedarf.",
+    "loadError": "Laden nicht möglich.",
+    "empty": "Keine Prognose",
+    "levels": {
+      "normal": "Normal",
+      "vigilance": "Wachsamkeit",
+      "alert": "Warnung",
+      "critical": "Kritisch"
+    },
+    "stepsLabel": "Risikostufen",
+    "gaugeTitle": "Aktuelle Risikoanzeige",
+    "recommendationTitle": "Empfehlung",
+    "reserveDays": "Reservetage",
+    "days": "{{value}} T",
+    "notAvailable": "k. A.",
+    "averageConsumption": "Ø Verbrauch (7 T)",
+    "litersPerDay": "{{value}} L/T",
+    "reserve": "Reserve",
+    "reserveValue": "{{reserve}} / {{capacity}} L",
+    "defaultRecommendation": "Wasser für vorrangige Kulturen zurückhalten.",
+    "prediction": "Prognose vom {{date}} · Konfidenz {{confidence}}",
+    "automationTitle": "Automatik bei kritischer Lage",
+    "ifCritical": "Wenn kritisch",
+    "automationText": "Schlägt vor, nicht notwendige Bewässerungen zu verschieben, bis sich der Speicher erholt hat.",
+    "preparePlan": "Verschiebungsplan vorbereiten",
+    "planPrepared": "Verschiebungsplan vorbereitet (Demo)."
+  },
+  "notifications": {
+    "title": "Benachrichtigungszentrale",
+    "subtitle": "Betriebswarnungen aus Qualitäts-, Bewässerungs- und Speicherprüfungen.",
+    "listTitle": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "allMarkedRead": "Benachrichtigungen als gelesen markiert",
+    "markRead": "Als gelesen markieren",
+    "markedRead": "Benachrichtigung als gelesen markiert",
+    "deleted": "Benachrichtigung gelöscht",
+    "actionFailed": "Aktion fehlgeschlagen.",
+    "levelFilter": "Nach Stufe filtern",
+    "allLevels": "Alle Stufen",
+    "search": "Benachrichtigung suchen…",
+    "loading": "Benachrichtigungen werden geladen...",
+    "loadError": "Laden nicht möglich.",
+    "emptyTitle": "Keine Benachrichtigungen",
+    "empty": "Warnungen erscheinen hier.",
+    "types": {
+      "critical": "kritisch",
+      "warning": "Warnung",
+      "info": "Info",
+      "success": "Erfolg"
+    },
+    "deleteTitle": "Benachrichtigung löschen",
+    "deleteMessage": "Diese Benachrichtigung wird aus der Benachrichtigungszentrale entfernt."
+  },
+  "quality": {
+    "title": "Wasserqualität",
+    "subtitle": "Messwerte der IoT-Sonden - automatische Warnung außerhalb der Grenzwerte: pH 6-7,5 - Trübung < 5 NTU.",
+    "listTitle": "Messverlauf",
+    "alertsCount": "{{count}} Warnung(en)",
+    "sourceFilter": "Nach Quelle filtern",
+    "allSources": "Alle Quellen",
+    "search": "Nach Datum suchen...",
+    "loading": "Messwerte werden geladen...",
+    "loadError": "Messwerte können nicht geladen werden.",
+    "emptyTitle": "Keine Messwerte",
+    "empty": "Messwerte der IoT-Sonden (pH, Trübung) erscheinen hier, sobald sie gemeldet werden.",
+    "columns": {
+      "date": "Datum",
+      "source": "Quelle",
+      "ph": "pH",
+      "turbidity": "Trübung",
+      "status": "Status"
+    },
+    "unknown": "-",
+    "ntu": "{{value}} NTU",
+    "alert": "Warnung",
+    "compliant": "Konform",
+    "thresholdsTitle": "Referenzgrenzwerte",
+    "compliantPh": "Konformer pH-Wert",
+    "phRange": "6,0 - 7,5",
+    "maxTurbidity": "Maximale Trübung",
+    "outOfRange": "Außerhalb der Grenzwerte",
+    "outOfRangeAction": "Warnung + automatische Benachrichtigung",
+    "dataSourceTitle": "Datenquelle",
+    "dataSourceText": "Die Messwerte stammen von IoT-Sonden an den Quellen. Sie werden automatisch über den Ingestion-Endpunkt gemeldet - keine manuelle Eingabe."
+  },
+  "rainwater": {
+    "title": "Regenwassernutzung",
+    "subtitle": "Niederschlag per IoT-Sensor gemessen - Sammelmengen automatisch berechnet.",
+    "period": "Zeitraum",
+    "periodValues": {
+      "all": "Gesamter Verlauf",
+      "week": "Letzte Woche",
+      "month": "Letzter Monat"
+    },
+    "totalCollected": "Insgesamt gesammelt",
+    "coverage": "Deckungsgrad",
+    "coverageValue": "{{value}} %",
+    "tankTitle": "Tankfüllstand",
+    "noSource": "-",
+    "tankNote": "Füllstand per IoT-Sensor gemessen - orange Warnung über 90 Prozent (SC-06).",
+    "harvestTitle": "Sammelmenge je Regenereignis",
+    "periodLabel": "Zeitraum",
+    "periods": {
+      "week": "Woche",
+      "month": "Monat",
+      "all": "Alle"
+    },
+    "sourceFilter": "Nach Quelle filtern",
+    "allSources": "Alle Quellen",
+    "search": "Nach Datum suchen...",
+    "loading": "Sammelmengen werden geladen...",
+    "loadError": "Sammelmengen können nicht geladen werden.",
+    "emptyTitle": "Keine Sammelmenge",
+    "empty": "Vom IoT-Regenmesser gemessene Niederschläge erscheinen hier - Mengen automatisch berechnet.",
+    "series": "Gesammelte Menge (L)",
+    "columns": {
+      "date": "Datum",
+      "volume": "Gesammelte Menge"
+    }
   }
 }
