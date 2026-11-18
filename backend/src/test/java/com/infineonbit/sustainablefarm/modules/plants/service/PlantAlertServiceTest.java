@@ -4,11 +4,11 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerRes
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.VarietyWithoutReference;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
@@ -24,9 +24,10 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -83,7 +84,8 @@ public class PlantAlertServiceTest {
     /** The real forecast and shares on the mocked repositories: the alerts follow their rules. */
     private YieldForecastService yieldForecastService() {
         return new YieldForecastService(populationEventRepository, varietyReferenceRepository,
-                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository),
+                TestBlocks.onFarm(2L, "C").asPlantsBlocks());
     }
 
     /** The service on a clock fixed at noon UTC of a day. */
@@ -96,7 +98,7 @@ public class PlantAlertServiceTest {
                 fertilizerService, nurseryBatchService, clock);
     }
 
-    private static Variety variety(long id, Integer farmId, String blockCode, String name) {
+    private static Variety variety(long id, Long farmId, String blockCode, String name) {
         Variety variety = new Variety();
         variety.setId(id);
         variety.setFarmId(farmId);
@@ -124,9 +126,9 @@ public class PlantAlertServiceTest {
         };
     }
 
-    /** Stubs the plantings of the filters, each with the same number of trees left. */
-    private void planted(Integer farmId, String blockCode, long treesLeft, PopulationEvent... plantings) {
-        when(populationEventRepository.findPlantingsByOptionalFilters(farmId, blockCode))
+    /** Stubs the plantings of every block, each with the same number of trees left. */
+    private void planted(long treesLeft, PopulationEvent... plantings) {
+        when(populationEventRepository.findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS))
                 .thenReturn(List.of(plantings));
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(Arrays.stream(plantings)
                 .map(planting -> balance(planting.getVariety().getId(), treesLeft))
@@ -164,12 +166,12 @@ public class PlantAlertServiceTest {
     /** Keitt planted on block C without farm in September 2023, with the default reference. */
     private Variety keittOnBlockC() {
         Variety keitt = variety(1L, null, "C", "Keitt");
-        planted(null, null, 40, planting(keitt, KEITT_PLANTED_ON));
+        planted(40, planting(keitt, KEITT_PLANTED_ON));
         defaultReference();
         return keitt;
     }
 
-    private static HealthTreatmentResponse treatment(long id, Integer farmId, String blockCode, Long findingId,
+    private static HealthTreatmentResponse treatment(long id, Long farmId, String blockCode, Long findingId,
                                                      LocalDate treatedOn, String productName, int intervalDays) {
         return new HealthTreatmentResponse(id, farmId, blockCode, "OTHER", "Other", "Fruit fly", findingId,
                 treatedOn, productName, "deltamethrin", 1.5, TreatmentUnit.L, intervalDays,
@@ -194,7 +196,7 @@ public class PlantAlertServiceTest {
                 resolved ? inspectedOn.plusDays(5) : null, null);
     }
 
-    private static NurseryBatchResponse batch(long id, Integer farmId, String batchCode, String varietyName,
+    private static NurseryBatchResponse batch(long id, Long farmId, String batchCode, String varietyName,
                                               NurseryStage stage, LocalDate stageSince, LocalDate plannedOn,
                                               String plannedBlockCode, int plantsLeft) {
         return new NurseryBatchResponse(id, farmId, batchCode, varietyName, NurseryOrigin.IN_HOUSE, null, null,
@@ -202,14 +204,14 @@ public class PlantAlertServiceTest {
                 0, 120 - plantsLeft, plantsLeft, 120, 100.0, "user_entry", null);
     }
 
-    private static PlantAlert harvestAlert(Integer farmId, String blockCode, String varietyName, String message,
+    private static PlantAlert harvestAlert(Long farmId, String blockCode, String varietyName, String message,
                                            String date, String endDate, int days, long varietyId, String source) {
         return new PlantAlert(PlantAlertType.HARVEST_APPROACHING, PlantAlertSeverity.WARNING, farmId, blockCode,
                 varietyName, message, LocalDate.parse(date), LocalDate.parse(endDate), days,
                 varietyId, null, null, null, null, source);
     }
 
-    private static PlantAlert intervalAlert(PlantAlertSeverity severity, Integer farmId, String message,
+    private static PlantAlert intervalAlert(PlantAlertSeverity severity, Long farmId, String message,
                                             String date, int days, long treatmentId, Long findingId) {
         return new PlantAlert(PlantAlertType.PRE_HARVEST_INTERVAL, severity, farmId, "C", null, message,
                 LocalDate.parse(date), null, days, null, treatmentId, findingId, null, null, null);
@@ -225,7 +227,7 @@ public class PlantAlertServiceTest {
                 message, LocalDate.parse(date), null, days, null, null, findingId, null, null, null);
     }
 
-    private static PlantAlert batchAlert(Integer farmId, String blockCode, String varietyName, String message,
+    private static PlantAlert batchAlert(Long farmId, String blockCode, String varietyName, String message,
                                          String date, int days, long batchId) {
         return new PlantAlert(PlantAlertType.NURSERY_READY, PlantAlertSeverity.WARNING, farmId, blockCode,
                 varietyName, message, LocalDate.parse(date), null, days, null, null, null, null, batchId, null);
@@ -298,7 +300,7 @@ public class PlantAlertServiceTest {
         // Arrange: Keitt planted in June 2024 is 2 years old in May and June 2027, and 3 years old in July
         LocalDate today = LocalDate.of(2027, 6, 15);
         Variety keitt = variety(1L, null, "C", "Keitt");
-        planted(null, null, 40, planting(keitt, LocalDate.of(2024, 6, 15)));
+        planted(40, planting(keitt, LocalDate.of(2024, 6, 15)));
         defaultReference();
         when(healthTreatmentService.getAllTreatments(null, null, null, today)).thenReturn(List.of(
                 treatment(31L, null, "C", null, LocalDate.of(2027, 6, 10), "Insecticide B", 14)));
@@ -325,7 +327,7 @@ public class PlantAlertServiceTest {
         // Arrange: the same trees in July 2027, now in gradual production
         LocalDate today = LocalDate.of(2027, 7, 10);
         Variety keitt = variety(1L, null, "C", "Keitt");
-        planted(null, null, 40, planting(keitt, LocalDate.of(2024, 6, 15)));
+        planted(40, planting(keitt, LocalDate.of(2024, 6, 15)));
         defaultReference();
         when(healthTreatmentService.getAllTreatments(null, null, null, today)).thenReturn(List.of(
                 treatment(32L, null, "C", null, LocalDate.of(2027, 7, 5), "Insecticide B", 14)));
@@ -347,7 +349,7 @@ public class PlantAlertServiceTest {
     void harvestApproaching_shouldStaySilent_forTreesPlantedDuringTheSeason() {
         // Arrange: planted on 10 May 2027, after the first day of the season, and in establishment until 2030
         Variety keitt = variety(1L, null, "C", "Keitt");
-        planted(null, null, 40, planting(keitt, LocalDate.of(2027, 5, 10)));
+        planted(40, planting(keitt, LocalDate.of(2027, 5, 10)));
         defaultReference();
         // Act & Assert
         assertTrue(serviceOn(MAY_15).getAlerts(null, null, 90).alerts().isEmpty());
@@ -357,7 +359,7 @@ public class PlantAlertServiceTest {
     void harvestApproaching_shouldListAVarietyWithoutReference_insteadOfAnAlert() {
         // Arrange
         Variety palmer = variety(4L, null, "C", "Palmer");
-        planted(null, null, 10, planting(palmer, LocalDate.of(2020, 1, 10)));
+        planted(10, planting(palmer, LocalDate.of(2020, 1, 10)));
         defaultReference();
         // Act
         PlantAlertResponse response = serviceOn(MAY_15).getAlerts(null, null, null);
@@ -371,7 +373,7 @@ public class PlantAlertServiceTest {
     void harvestApproaching_shouldIgnoreAVarietyWithNoTreeLeft() {
         // Arrange: every Keitt tree died
         Variety keitt = variety(1L, null, "C", "Keitt");
-        planted(null, null, 0, planting(keitt, KEITT_PLANTED_ON));
+        planted(0, planting(keitt, KEITT_PLANTED_ON));
         defaultReference();
         // Act
         PlantAlertResponse response = serviceOn(MAY_15).getAlerts(null, null, null);
@@ -383,13 +385,13 @@ public class PlantAlertServiceTest {
     @Test
     void harvestApproaching_shouldFollowASeasonThatRunsOverTheNewYear() {
         // Arrange: a variety harvested from November to February, in full production
-        Variety winter = variety(5L, 2, "C", "Winter");
-        planted(null, null, 10, planting(winter, LocalDate.of(2015, 1, 1)));
+        Variety winter = variety(5L, 2L, "C", "Winter");
+        planted(10, planting(winter, LocalDate.of(2015, 1, 1)));
         reference(List.of(reference(9L, "Winter", 11, 2, "test_source")), shares(0.0, 0.5, 1.0));
         // Act
         PlantAlertResponse response = serviceOn(LocalDate.of(2028, 1, 15)).getAlerts(null, null, null);
         // Assert
-        assertEquals(List.of(harvestAlert(2, "C", "Winter",
+        assertEquals(List.of(harvestAlert(2L, "C", "Winter",
                         "Winter on block C: harvest season in progress, from 1 November 2027 to 29 February 2028",
                         "2027-11-01", "2028-02-29", -75, 5L, "test_source")),
                 response.alerts());
@@ -399,7 +401,7 @@ public class PlantAlertServiceTest {
     void harvestApproaching_shouldUseTheDefaultShares_whenNoShareIsCorrected() {
         // Arrange: no share row at all, as outside the dev profile
         Variety keitt = variety(1L, null, "C", "Keitt");
-        planted(null, null, 40, planting(keitt, KEITT_PLANTED_ON));
+        planted(40, planting(keitt, KEITT_PLANTED_ON));
         reference(List.of(reference(1L, "Keitt", 5, 7, KEITT_SEASON_SOURCE)), List.of());
         // Act
         PlantAlertResponse establishing = serviceOn(APRIL_1.minusYears(1)).getAlerts(null, null, null);
@@ -447,12 +449,12 @@ public class PlantAlertServiceTest {
     @Test
     void preHarvestInterval_shouldFollowTheSeasonOfTheSameFarm() {
         // Arrange: Keitt is in season on block C of farm 1; block C without farm is another block
-        Variety keitt = variety(1L, 1, "C", "Keitt");
-        planted(null, null, 40, planting(keitt, KEITT_PLANTED_ON));
+        Variety keitt = variety(1L, 1L, "C", "Keitt");
+        planted(40, planting(keitt, KEITT_PLANTED_ON));
         defaultReference();
         when(healthTreatmentService.getAllTreatments(null, null, null, MAY_15)).thenReturn(List.of(
                 treatment(33L, null, "C", null, LocalDate.of(2027, 5, 8), "Insecticide B", 14),
-                treatment(34L, 1, "C", null, LocalDate.of(2027, 5, 8), "Insecticide B", 14)));
+                treatment(34L, 1L, "C", null, LocalDate.of(2027, 5, 8), "Insecticide B", 14)));
         // Act
         List<PlantAlert> intervals = ofType(serviceOn(MAY_15).getAlerts(null, null, null),
                 PlantAlertType.PRE_HARVEST_INTERVAL);
@@ -489,9 +491,9 @@ public class PlantAlertServiceTest {
     @Test
     void preHarvestInterval_shouldReadTheTreatmentsUpToToday() {
         // Act
-        serviceOn(MAY_15).getAlerts(2, " C ", null);
+        serviceOn(MAY_15).getAlerts(2L, " C ", null);
         // Assert: the farm, the trimmed block, no first date, and today as the last one
-        verify(healthTreatmentService).getAllTreatments(2, "C", null, MAY_15);
+        verify(healthTreatmentService).getAllTreatments(2L, "C", null, MAY_15);
     }
 
     @Test
@@ -540,7 +542,7 @@ public class PlantAlertServiceTest {
                 fertilizer(13L, "Urea", FertilizerUnit.KG, 50.0, 0.0, true)));
         // Act
         PlantAlertResponse forBlock = serviceOn(MAY_15).getAlerts(null, "C", null);
-        PlantAlertResponse forFarm = serviceOn(MAY_15).getAlerts(2, null, null);
+        PlantAlertResponse forFarm = serviceOn(MAY_15).getAlerts(2L, null, null);
         // Assert: a fertilizer belongs to no block and to no farm
         assertTrue(forBlock.alerts().isEmpty());
         assertEquals(List.of(13L), forFarm.alerts().stream().map(PlantAlert::fertilizerId).toList());
@@ -599,12 +601,12 @@ public class PlantAlertServiceTest {
     void nurseryReady_shouldWarn_whenTheBatchIsReadyBeforeItsPlannedDate() {
         // Arrange
         when(nurseryBatchService.getAllBatches(null, null)).thenReturn(List.of(
-                batch(21L, 5, "P1", "Keitt", NurseryStage.READY_TO_TRANSPLANT, LocalDate.of(2027, 4, 20),
+                batch(21L, 5L, "P1", "Keitt", NurseryStage.READY_TO_TRANSPLANT, LocalDate.of(2027, 4, 20),
                         LocalDate.of(2027, 6, 15), "D", 120)));
         // Act
         PlantAlertResponse response = serviceOn(MAY_15).getAlerts(null, null, null);
         // Assert
-        assertEquals(List.of(batchAlert(5, "D", "Keitt",
+        assertEquals(List.of(batchAlert(5L, "D", "Keitt",
                 "Batch P1 (Keitt, 120 plants): ready to transplant since 20 April 2027; "
                         + "transplant planned on 15 June 2027 to block D, in 31 days",
                 "2027-06-15", 31, 21L)), response.alerts());
@@ -676,15 +678,15 @@ public class PlantAlertServiceTest {
     @Test
     void getAlerts_shouldPassTheFiltersToEverySource_andTurnABlankBlockIntoNoFilter() {
         // Act
-        PlantAlertResponse filtered = serviceOn(MAY_15).getAlerts(2, " C ", 45);
+        PlantAlertResponse filtered = serviceOn(MAY_15).getAlerts(2L, " C ", 45);
         serviceOn(MAY_15).getAlerts(null, "  ", null);
         // Assert
         assertEquals(45, filtered.withinDays());
-        verify(populationEventRepository).findPlantingsByOptionalFilters(2, "C");
-        verify(healthTreatmentService).getAllTreatments(2, "C", null, MAY_15);
-        verify(healthFindingService).getAllFindings(2, "C", null, null, null);
-        verify(nurseryBatchService).getAllBatches(2, null);
-        verify(populationEventRepository).findPlantingsByOptionalFilters(null, null);
+        verify(populationEventRepository).findPlantingsByOptionalFilters(false, TestBlocks.idsOf("C"));
+        verify(healthTreatmentService).getAllTreatments(2L, "C", null, MAY_15);
+        verify(healthFindingService).getAllFindings(2L, "C", null, null, null);
+        verify(nurseryBatchService).getAllBatches(2L, null);
+        verify(populationEventRepository).findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS);
         verify(fertilizerService).getAllFertilizers();
     }
 
@@ -699,7 +701,7 @@ public class PlantAlertServiceTest {
         when(healthFindingService.getAllFindings(null, null, null, null, null)).thenReturn(List.of(
                 finding(7L, LocalDate.of(2027, 5, 3), "Anthracnose", null, null, HealthFindingStatus.UNTREATED)));
         when(nurseryBatchService.getAllBatches(null, null)).thenReturn(List.of(
-                batch(21L, 5, "P1", "Keitt", NurseryStage.READY_TO_TRANSPLANT, LocalDate.of(2027, 4, 20),
+                batch(21L, 5L, "P1", "Keitt", NurseryStage.READY_TO_TRANSPLANT, LocalDate.of(2027, 4, 20),
                         LocalDate.of(2027, 6, 15), "D", 120)));
         // Act
         PlantAlertResponse response = serviceOn(MAY_15).getAlerts(null, null, null);

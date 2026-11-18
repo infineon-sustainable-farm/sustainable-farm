@@ -56,6 +56,23 @@ public class FarmDirectoryService implements FarmDirectory {
     }
 
     @Override
+    public List<BlockDto> listBlocks(Collection<Long> blockIds) {
+        List<Long> ids = blockIds == null ? List.of() : blockIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return blockRepository.findAllByIdIn(ids).stream().map(FarmMapper::toDto).toList();
+    }
+
+    @Override
+    public Optional<FarmDto> findFarmByName(String name) {
+        if (name == null || name.isBlank()) {
+            return Optional.empty();
+        }
+        return farmRepository.findFirstByNameIgnoreCaseOrderByIdAsc(name.trim()).map(FarmMapper::toDto);
+    }
+
+    @Override
     public List<BlockDto> listBlocksOfFarm(Long farmId) {
         return farmId == null ? List.of() : blockRepository.findByFarmId(farmId).stream().map(FarmMapper::toDto).toList();
     }

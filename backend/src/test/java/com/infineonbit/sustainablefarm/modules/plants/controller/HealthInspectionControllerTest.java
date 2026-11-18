@@ -234,14 +234,14 @@ public class HealthInspectionControllerTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        when(healthInspectionService.getAllInspections(1, "C", from, to)).thenReturn(List.of(blockC()));
+        when(healthInspectionService.getAllInspections(1L, "C", from, to)).thenReturn(List.of(blockC()));
         // Act & Assert
         mockMvc.perform(get(URL).param("farmId", "1").param("blockCode", "C")
                         .param("from", "2026-09-01").param("to", "2026-09-30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].findings[0].issueCode").value("ANTHRACNOSE"));
-        verify(healthInspectionService).getAllInspections(eq(1), eq("C"), eq(from), eq(to));
+        verify(healthInspectionService).getAllInspections(eq(1L), eq("C"), eq(from), eq(to));
     }
 
     @Test

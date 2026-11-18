@@ -18,11 +18,14 @@ import com.infineonbit.sustainablefarm.modules.plants.exception.NurseryBatchNotF
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryBatchRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.NurseryRows;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
@@ -63,12 +66,15 @@ public class NurseryEventServiceTest {
     @Mock
     private PlantingService plantingService;
 
+    @Spy
+    private PlantsBlocks plantsBlocks = TestBlocks.plantsBlocks();
+
     @InjectMocks
     private NurseryEventService nurseryEventService;
 
     /** Batch P1, locked when read: 150 plants sown on March 2. */
     private NurseryBatch p1InDatabase() {
-        NurseryBatch p1 = new NurseryBatch(1L, null, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
+        NurseryBatch p1 = NurseryRows.batch(1L, null, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
                 LocalDate.of(2026, 9, 20), "E", "user_entry", NOW);
         when(nurseryBatchRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(p1));
         return p1;
@@ -76,7 +82,7 @@ public class NurseryEventServiceTest {
 
     private static NurseryEvent event(long id, NurseryBatch batch, NurseryEventType type, LocalDate date,
                                       NurseryStage stage, Integer quantity) {
-        return new NurseryEvent(id, batch, type, date, stage, quantity, null, null, null, "user_entry", NOW);
+        return NurseryRows.event(id, batch, type, date, stage, quantity, null, null, null, "user_entry", NOW);
     }
 
     /** P1 grafted on September 1, with 12 plants lost since: 138 left. */
@@ -246,7 +252,7 @@ public class NurseryEventServiceTest {
     }
 
     /** The planting service records the planting as PLANTING event 7, which the transplant refers to. */
-    private PopulationEvent plantingRecordedAs7(Integer farmId, int treeCount, LocalDate plantingDate) {
+    private PopulationEvent plantingRecordedAs7(Long farmId, int treeCount, LocalDate plantingDate) {
         when(plantingService.recordPlanting(any(PlantingRequest.class))).thenReturn(new PlantingResponse(7L, farmId,
                 "E", 3L, "Keitt", plantingDate, treeCount, "user_entry", NOW));
         PopulationEvent planting = new PopulationEvent();
@@ -259,9 +265,9 @@ public class NurseryEventServiceTest {
     void recordTransplant_shouldPlantTheVarietyOfTheBatchOnTheBlock_andKeepThePlantingIdentifier() {
         // Arrange
         NurseryBatch p1 = p1InDatabase();
-        p1.setFarmId(2);
+        p1.setFarmId(2L);
         graftedWith138Left(p1);
-        PopulationEvent planting = plantingRecordedAs7(2, 100, SEPTEMBER_20);
+        PopulationEvent planting = plantingRecordedAs7(2L, 100, SEPTEMBER_20);
         saveAssignsId();
         // Act
         NurseryEventResponse response = nurseryEventService.recordTransplant(1L,
@@ -269,7 +275,7 @@ public class NurseryEventServiceTest {
         // Assert: the planting, with the farm and variety of the batch and the block, date and quantity sent
         ArgumentCaptor<PlantingRequest> captor = ArgumentCaptor.forClass(PlantingRequest.class);
         verify(plantingService).recordPlanting(captor.capture());
-        assertEquals(new PlantingRequest(2, "E", "Keitt", SEPTEMBER_20, 100), captor.getValue());
+        assertEquals(new PlantingRequest(2L, "E", "Keitt", SEPTEMBER_20, 100), captor.getValue());
         // Assert: the transplant, linked to that planting
         NurseryEvent transplant = savedEvent();
         assertSame(p1, transplant.getBatch());
@@ -279,10 +285,11 @@ public class NurseryEventServiceTest {
         assertEquals(100, transplant.getQuantity());
         assertNull(transplant.getReason());
         assertEquals("E", transplant.getBlockCode());
+        assertEquals(TestBlocks.idOf("E"), transplant.getBlockId());
         assertSame(planting, transplant.getPopulationEvent());
         assertEquals("user_entry", transplant.getSource());
         assertEquals(NOW, transplant.getLastUpdated());
-        assertEquals(new NurseryEventResponse(20L, 1L, "P1", 2, NurseryEventType.TRANSPLANT, SEPTEMBER_20, null, 100,
+        assertEquals(new NurseryEventResponse(20L, 1L, "P1", 2L, NurseryEventType.TRANSPLANT, SEPTEMBER_20, null, 100,
                 null, "E", 7L, "user_entry", NOW), response);
     }
 
@@ -362,19 +369,19 @@ public class NurseryEventServiceTest {
     @Test
     void getAllEvents_shouldPassEveryFilter_andMapEachEvent() {
         // Arrange
-        NurseryBatch p1 = new NurseryBatch(1L, 2, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
+        NurseryBatch p1 = NurseryRows.batch(1L, 2L, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
                 SEPTEMBER_20, "E", "user_entry", NOW);
         PopulationEvent planting = new PopulationEvent();
         planting.setId(7L);
-        NurseryEvent transplant = new NurseryEvent(14L, p1, NurseryEventType.TRANSPLANT, SEPTEMBER_20, null, 100,
+        NurseryEvent transplant = NurseryRows.event(14L, p1, NurseryEventType.TRANSPLANT, SEPTEMBER_20, null, 100,
                 null, "E", planting, "user_entry", NOW);
-        when(nurseryEventRepository.findByOptionalFilters(1L, 2, NurseryEventType.TRANSPLANT, MARCH_2, SEPTEMBER_20))
+        when(nurseryEventRepository.findByOptionalFilters(1L, 2L, NurseryEventType.TRANSPLANT, MARCH_2, SEPTEMBER_20))
                 .thenReturn(List.of(transplant));
         // Act
-        List<NurseryEventResponse> responses = nurseryEventService.getAllEvents(1L, 2, NurseryEventType.TRANSPLANT,
+        List<NurseryEventResponse> responses = nurseryEventService.getAllEvents(1L, 2L, NurseryEventType.TRANSPLANT,
                 MARCH_2, SEPTEMBER_20);
         // Assert: the farm and code of the batch, and the planting of the transplant
-        assertEquals(List.of(new NurseryEventResponse(14L, 1L, "P1", 2, NurseryEventType.TRANSPLANT, SEPTEMBER_20,
+        assertEquals(List.of(new NurseryEventResponse(14L, 1L, "P1", 2L, NurseryEventType.TRANSPLANT, SEPTEMBER_20,
                 null, 100, null, "E", 7L, "user_entry", NOW)), responses);
     }
 

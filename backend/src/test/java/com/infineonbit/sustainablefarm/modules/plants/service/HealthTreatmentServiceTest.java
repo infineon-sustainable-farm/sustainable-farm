@@ -14,11 +14,14 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
 import com.infineonbit.sustainablefarm.modules.plants.exception.HealthFindingNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthTreatmentRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestRows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -62,8 +65,11 @@ public class HealthTreatmentServiceTest {
     @InjectMocks
     private HealthTreatmentService healthTreatmentService;
 
+    @Spy
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).asPlantsBlocks();
+
     private static HealthInspection blockC(Integer farmId) {
-        return new HealthInspection(1L, farmId, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,
+        return TestRows.inspection(1L, farmId, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,
                 "user_entry", NOW);
     }
 
@@ -111,7 +117,8 @@ public class HealthTreatmentServiceTest {
                 copperOn(SEPTEMBER_4), NOW);
         // Assert: the stored row, its farm, block and target copied from the finding
         HealthTreatment treatment = savedTreatment();
-        assertEquals(1, treatment.getFarmId());
+        assertEquals(1L, treatment.getFarmId());
+        assertEquals(TestBlocks.idOf("C"), treatment.getBlockId());
         assertEquals("C", treatment.getBlockCode());
         assertSame(ANTHRACNOSE, treatment.getTargetIssue());
         assertNull(treatment.getTargetOtherLabel());
@@ -127,7 +134,7 @@ public class HealthTreatmentServiceTest {
         assertEquals("user_entry", treatment.getSource());
         assertEquals(NOW, treatment.getLastUpdated());
         // Assert: the response, with the harvest date computed
-        assertEquals(new HealthTreatmentResponse(20L, 1, "C", "ANTHRACNOSE", "Anthracnose", null, 10L, SEPTEMBER_4,
+        assertEquals(new HealthTreatmentResponse(20L, 1L, "C", "ANTHRACNOSE", "Anthracnose", null, 10L, SEPTEMBER_4,
                 "Copper fungicide A", "copper hydroxide", 2.5, TreatmentUnit.KG, 14, LocalDate.of(2026, 9, 18),
                 "Awa", "knapsack sprayer", "user_entry", NOW), response);
     }
@@ -205,7 +212,9 @@ public class HealthTreatmentServiceTest {
                 preventive(" d ", "fruit_fly", null, 1.0, " l ", 1.0, "  "), NOW);
         // Assert
         HealthTreatment treatment = savedTreatment();
-        assertNull(treatment.getFarmId());
+        // A new block D: created under the default farm of the referential
+        assertEquals(1L, treatment.getFarmId());
+        assertEquals(TestBlocks.idOf("D"), treatment.getBlockId());
         assertEquals("D", treatment.getBlockCode());
         assertSame(FRUIT_FLY, treatment.getTargetIssue());
         assertNull(treatment.getTargetOtherLabel());
@@ -214,7 +223,7 @@ public class HealthTreatmentServiceTest {
         assertEquals("Protein bait B", treatment.getProductName());
         assertEquals("Issa", treatment.getApplicator());
         assertNull(treatment.getEquipment());
-        assertEquals(new HealthTreatmentResponse(20L, null, "D", "FRUIT_FLY", "Fruit flies", null, null,
+        assertEquals(new HealthTreatmentResponse(20L, 1L, "D", "FRUIT_FLY", "Fruit flies", null, null,
                 LocalDate.of(2026, 9, 5), "Protein bait B", "spinosad", 1.0, TreatmentUnit.L, 1,
                 LocalDate.of(2026, 9, 6), "Issa", null, "user_entry", NOW), response);
     }
@@ -266,16 +275,17 @@ public class HealthTreatmentServiceTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        HealthTreatment copper = new HealthTreatment(20L, 1, "C", ANTHRACNOSE, null,
+        HealthTreatment copper = TestRows.treatment(20L, 1, "C", ANTHRACNOSE, null,
                 new HealthFinding(10L, blockC(1), ANTHRACNOSE, null, "42", null, null, "user_entry", NOW),
                 SEPTEMBER_4, "Copper fungicide A", "copper hydroxide", new BigDecimal("2.500"), TreatmentUnit.KG, 14,
                 "Awa", "knapsack sprayer", "user_entry", NOW);
-        HealthTreatment bait = new HealthTreatment(21L, 1, "C", FRUIT_FLY, null, null, LocalDate.of(2026, 9, 5),
+        HealthTreatment bait = TestRows.treatment(21L, 1, "C", FRUIT_FLY, null, null, LocalDate.of(2026, 9, 5),
                 "Protein bait B", "spinosad", new BigDecimal("1.000"), TreatmentUnit.L, 1, "Issa", null,
                 "user_entry", NOW);
-        when(healthTreatmentRepository.findByOptionalFilters(1, "C", from, to)).thenReturn(List.of(copper, bait));
+        when(healthTreatmentRepository.findByOptionalFilters(false, TestBlocks.idsOf("C"), from, to))
+                .thenReturn(List.of(copper, bait));
         // Act
-        List<HealthTreatmentResponse> treatments = healthTreatmentService.getAllTreatments(1, " C ", from, to);
+        List<HealthTreatmentResponse> treatments = healthTreatmentService.getAllTreatments(1L, " C ", from, to);
         // Assert
         assertEquals(List.of(20L, 21L), treatments.stream().map(HealthTreatmentResponse::id).toList());
         assertEquals(10L, treatments.get(0).findingId());

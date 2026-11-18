@@ -28,7 +28,7 @@ import java.time.LocalDate;
  * the same way the tree age is computed from the planting date.
  *
  * <p>The event holds no farm and no block: a {@link Variety} row already stands
- * for one (farm, block, variety) triple, and copying them here would make two
+ * for one (block, variety) pair, the block giving the farm, and copying them here would make two
  * sources of truth.
  *
  * <p>Unlike {@code varietes} and {@code calendrier_croissance}, the table and its

@@ -2,14 +2,17 @@ package com.infineonbit.sustainablefarm.modules.plants.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,18 +35,19 @@ import java.util.Locale;
  * variety are computed on every read, from its plantings, the agronomic
  * reference and its harvests (see {@code YieldComparisonService}).
  *
- * <p>One row per (farm, block, name): {@code varietyKey} holds that triple and
- * carries a unique constraint, so two plantings of a new triple sent at the
+ * <p>One row per (block, name): {@code varietyKey} holds that pair and
+ * carries a unique constraint, so two plantings of a new pair sent at the
  * same time cannot both create a row.
  */
 @Entity
+@EntityListeners(BlockLabelListener.class)
 @Table(name = "varietes",
-        uniqueConstraints = @UniqueConstraint(name = Variety.KEY_CONSTRAINT, columnNames = "variety_key"))
+        uniqueConstraints = @UniqueConstraint(name = Variety.KEY_CONSTRAINT, columnNames = "variety_key"),
+        indexes = @Index(name = "idx_varietes_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class Variety {
+public class Variety implements BlockRow {
 
     /** Name of the unique constraint on {@code variety_key}. */
     public static final String KEY_CONSTRAINT = "uk_varietes_variety_key";
@@ -51,9 +55,6 @@ public class Variety {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "id_ferme")
-    private Integer farmId;
 
     @Column(name = "nom", nullable = false)
     private String name;
@@ -75,8 +76,14 @@ public class Variety {
     @Column(name = "vigueur")
     private String vigor;
 
-    @Column(name = "bloc_parcelle")
-    private String blockCode;
+    /** Block of the variety row, a {@code farm.block} row (foreign key {@code fk_varietes_block}). */
+    @Column(name = "block_id")
+    private Long blockId;
+
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink block = new BlockLink();
 
     /** Not documented in the source study. Stays NULL. */
     @Column(name = "origine_plant")
@@ -94,38 +101,69 @@ public class Variety {
      * it existed, until they are updated or, in the dev profile, the startup
      * filling reaches them.
      *
-     * <p>523 characters hold the longest farm (11), block (255) and name (255)
-     * with both separators, so no row is ever cut.
+     * <p>300 characters hold the longest block id (19) and name (255) with
+     * the separator, so no row is ever cut.
      */
-    @Column(name = "variety_key", length = 523)
+    @Column(name = "variety_key", length = 300)
     private String varietyKey;
 
     /**
-     * Natural key of a variety row: the farm, 0 for a row without a farm (farm
-     * identifiers start at 1), the block and the name in lower case, joined by
-     * {@code "|"}. For example {@code "0|C|kent"}.
+     * Natural key of a variety row: the block id and the name in lower case,
+     * joined by {@code "|"}. For example {@code "3|kent"}.
      *
      * <p>It follows the rule of the planting lookup
-     * ({@code VarietyRepository.findByFarmBlockAndName}): a NULL farm is a
-     * value of its own, the name ignores case, and the stored name is taken as
-     * it is, accents and spaces included, without trimming.
+     * ({@code VarietyRepository.findByBlockAndName}): the name ignores case,
+     * and the stored name is taken as it is, accents and spaces included,
+     * without trimming. The block gives the farm, so the farm is not part of
+     * the key.
      *
-     * @param farmId    farm identifier, or {@code null} for no farm
-     * @param blockCode block code as stored
-     * @param name      variety name as stored
+     * @param blockId id of the block
+     * @param name    variety name as stored
      * @return the key, or {@code null} when the block or the name is missing,
      *         since no planting can match such a row
      */
-    public static String keyOf(Integer farmId, String blockCode, String name) {
-        if (blockCode == null || name == null) {
+    public static String keyOf(Long blockId, String name) {
+        if (blockId == null || name == null) {
             return null;
         }
-        return (farmId == null ? 0 : farmId) + "|" + blockCode + "|" + name.toLowerCase(Locale.ROOT);
+        return blockId + "|" + name.toLowerCase(Locale.ROOT);
     }
 
     @PrePersist
     @PreUpdate
     void refreshVarietyKey() {
-        varietyKey = keyOf(farmId, blockCode, name);
+        block.requireResolved("variety row");
+        varietyKey = keyOf(blockId, name);
+    }
+
+    /** Farm of the block, read from the farm referential; {@code null} without a block. */
+    public Long getFarmId() {
+        return block.label(blockId).farmId();
+    }
+
+    /** Sets the farm by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setFarmId(Long farmId) {
+        block.setFarmId(farmId);
+    }
+
+    /** Code of the block, for example {@code "A"}, read from the farm referential. */
+    public String getBlockCode() {
+        return block.label(blockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setBlockCode(String blockCode) {
+        block.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignBlock(Long blockId, BlockLabel label) {
+        this.blockId = blockId;
+        block.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        block.useSource(source);
     }
 }

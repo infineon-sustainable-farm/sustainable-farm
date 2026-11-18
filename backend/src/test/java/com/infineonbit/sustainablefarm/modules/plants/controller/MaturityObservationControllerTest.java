@@ -296,7 +296,7 @@ public class MaturityObservationControllerTest {
     @Test
     void getAllObservations_shouldPassEveryFilter() throws Exception {
         // Arrange
-        when(maturityObservationService.getAllObservations(1, "A", LocalDate.of(2026, 10, 1),
+        when(maturityObservationService.getAllObservations(1L, "A", LocalDate.of(2026, 10, 1),
                 LocalDate.of(2026, 10, 31))).thenReturn(List.of(brixObservation()));
         // Act
         ResultActions result = mockMvc.perform(get(URL)

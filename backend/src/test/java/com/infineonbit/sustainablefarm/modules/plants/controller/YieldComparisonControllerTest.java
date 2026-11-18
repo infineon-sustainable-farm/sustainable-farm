@@ -65,18 +65,18 @@ public class YieldComparisonControllerTest {
 
     private static YieldComparisonResponse comparison() {
         return new YieldComparisonResponse(JANUARY_2027, 12, "recorded_plantings",
-                List.of(new VarietyComparison(7, "A", 1L, "Keitt", 40, 2199.9, 550.5, 2, 25.0,
+                List.of(new VarietyComparison(7L, "A", 1L, "Keitt", 40, 2199.9, 550.5, 2, 25.0,
                         220.0, "Zalka_2025", "varietal_guide_west_africa",
                         List.of(new PhaseShare("gradual production", 0.25, "Bally_2002")))),
-                List.of(new BlockComparison(7, "A", 2199.9, 550.5, 25.0)),
+                List.of(new BlockComparison(7L, "A", 2199.9, 550.5, 25.0)),
                 new Comparison(2199.9, 550.5, 25.0),
-                List.of(new NotCompared(7, "C", 3L, "Brooks", 30, 120.0, 1, "NO_REFERENCE")));
+                List.of(new NotCompared(7L, "C", 3L, "Brooks", 30, 120.0, 1, "NO_REFERENCE")));
     }
 
     @Test
     void getYieldComparison_shouldReturnTheComparison_withMonthsAsYearMonthStrings() throws Exception {
         // Arrange
-        when(yieldComparisonService.getYieldComparison(7, "A", JANUARY_2027, 12)).thenReturn(comparison());
+        when(yieldComparisonService.getYieldComparison(7L, "A", JANUARY_2027, 12)).thenReturn(comparison());
         // Act
         ResultActions result = mockMvc.perform(get(URL)
                 .param("farmId", "7")

@@ -40,6 +40,7 @@ public class YieldForecastService {
     private final PopulationEventRepository populationEventRepository;
     private final VarietyReferenceRepository varietyReferenceRepository;
     private final GrowthPhaseYieldShareService growthPhaseYieldShareService;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * What the forecast is computed from.
@@ -99,21 +100,6 @@ public class YieldForecastService {
     }
 
     /**
-     * Turns a blank filter into no filter at all, as for the other lists of the
-     * module.
-     *
-     * @param value the filter value as received, possibly {@code null}
-     * @return the trimmed value, or {@code null} if it was null or blank
-     */
-    private static String normalizeFilter(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
-
-    /**
      * One planting per variety row, the oldest. A variety row is planted once, so
      * this only guards against a second PLANTING written outside the API.
      *
@@ -137,13 +123,13 @@ public class YieldForecastService {
      * when {@code from} is missing, and lasts 6 months when {@code months} is.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
      * @param from      first month, or {@code null} for the current month
      * @param months    number of months, from 1 to 24, or {@code null} for 6
      * @return the forecast
      */
-    public YieldForecastResponse getYieldForecast(Integer farmId, String blockCode, YearMonth from, Integer months) {
+    public YieldForecastResponse getYieldForecast(Long farmId, String blockCode, YearMonth from, Integer months) {
         return getYieldForecast(farmId, blockCode, from, months, LocalDate.now());
     }
 
@@ -151,7 +137,7 @@ public class YieldForecastService {
      * Same as {@link #getYieldForecast(Integer, String, YearMonth, Integer)},
      * against an explicit current date so the default month can be tested.
      */
-    YieldForecastResponse getYieldForecast(Integer farmId, String blockCode, YearMonth from, Integer months,
+    YieldForecastResponse getYieldForecast(Long farmId, String blockCode, YearMonth from, Integer months,
                                            LocalDate today) {
         YearMonth firstMonth = from == null ? YearMonth.from(today) : from;
         List<YearMonth> window = YieldForecastCalculator.window(firstMonth, months == null ? DEFAULT_MONTHS : months);
@@ -188,13 +174,15 @@ public class YieldForecastService {
      * planting date and its trees.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
      * @return the planted variety rows, those without reference, and the shares
      */
-    ForecastBasis basis(Integer farmId, String blockCode) {
-        Collection<PopulationEvent> plantings = oldestPlantingPerVariety(
-                populationEventRepository.findPlantingsByOptionalFilters(farmId, normalizeFilter(blockCode)));
+    ForecastBasis basis(Long farmId, String blockCode) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        Collection<PopulationEvent> plantings = oldestPlantingPerVariety(PlantsBlocks.sortedByBlockCode(
+                populationEventRepository.findPlantingsByOptionalFilters(blocks.all(), blocks.ids()),
+                planting -> planting.getVariety().getBlockCode()));
         Map<Long, Integer> treeCounts = currentTreeCounts(plantings);
         List<VarietyReference> references = varietyReferenceRepository.findAll();
         Map<String, GrowthPhaseYieldShareResponse> sharesByPhase = growthPhaseYieldShareService.getAllShares().stream()

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
@@ -28,10 +29,12 @@ import java.util.List;
 public class HarvestEventServiceImpl implements HarvestEventService {
 
     private final HarvestEventRepository harvestEventRepository;
+    private final ProductTransformationBlocks blocks;
 
     @Autowired
-    public HarvestEventServiceImpl(HarvestEventRepository harvestEventRepository) {
+    public HarvestEventServiceImpl(HarvestEventRepository harvestEventRepository, ProductTransformationBlocks blocks) {
         this.harvestEventRepository = harvestEventRepository;
+        this.blocks = blocks;
     }
 
     @Override
@@ -53,8 +56,9 @@ public class HarvestEventServiceImpl implements HarvestEventService {
         existingEvent.setHarvestDate(harvestEvent.getHarvestDate());
         existingEvent.setHarvestTime(harvestEvent.getHarvestTime());
         existingEvent.setVarietyKey(harvestEvent.getVarietyKey());
-        existingEvent.setFarmId(harvestEvent.getFarmId());
-        existingEvent.setBlockId(harvestEvent.getBlockId());
+        if (harvestEvent.getFarmBlockId() != null) {
+            existingEvent.setFarmBlockId(harvestEvent.getFarmBlockId());
+        }
         existingEvent.setHarvestQuantityKg(harvestEvent.getHarvestQuantityKg());
         existingEvent.setQualityGrade(harvestEvent.getQualityGrade());
         existingEvent.setQualityGradeDescription(harvestEvent.getQualityGradeDescription());
@@ -116,13 +120,16 @@ public class HarvestEventServiceImpl implements HarvestEventService {
     @Override
     @Transactional(readOnly = true)
     public List<HarvestEvent> getHarvestEventsByFarm(String farmId) {
-        return harvestEventRepository.findByFarmId(farmId);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farmId);
+        return blockIds.isEmpty() ? List.of() : harvestEventRepository.findByFarmBlockIdIn(blockIds);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<HarvestEvent> getHarvestEventsByFarmAndDateRange(String farmId, LocalDate startDate, LocalDate endDate) {
-        return harvestEventRepository.findByFarmAndDateRange(farmId, startDate, endDate);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farmId);
+        return blockIds.isEmpty() ? List.of()
+                : harvestEventRepository.findByFarmBlockIdInAndHarvestDateBetween(blockIds, startDate, endDate);
     }
 
     @Override

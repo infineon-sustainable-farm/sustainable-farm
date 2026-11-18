@@ -31,7 +31,7 @@ import java.time.LocalDate;
 @OtherLabelMatchesIssue(codeField = "targetIssueCode", labelField = "targetOtherLabel")
 public record PreventiveTreatmentRequest(
         @Min(value = 1, message = "farmId must be at least 1")
-        Integer farmId,
+        Long farmId,
 
         @NotNull(message = "blockCode is required")
         @Pattern(regexp = "^\\s*[A-Za-z0-9]{1,10}\\s*$",

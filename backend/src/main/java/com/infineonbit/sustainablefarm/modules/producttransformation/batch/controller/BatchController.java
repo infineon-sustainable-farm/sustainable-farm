@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller for Batch operations
@@ -63,9 +62,7 @@ public class BatchController {
     @Operation(summary = "Get all batches", description = "Retrieves all batches")
     public ResponseEntity<List<BatchResponse>> getAllBatches() {
         List<Batch> batches = batchService.getAllBatches();
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<BatchResponse> responses = dtoMapper.toBatchResponses(batches);
         return ResponseEntity.ok(responses);
     }
 
@@ -78,8 +75,7 @@ public class BatchController {
         batch.setHarvestDate(request.getHarvestDate());
         batch.setVarietyKey(dtoMapper.varietyKey(request.getMangoVariety()));
         batch.setHarvestQuantityKg(request.getHarvestQuantityKg());
-        batch.setFarmId(request.getFarmId());
-        batch.setBlockId(request.getBlockId());
+        batch.setFarmBlockId(dtoMapper.blockIdOrNull(request.getFarmId(), request.getBlockId()));
         batch.setCurrentStatus(request.getCurrentStatus());
         
         Batch updatedBatch = batchService.updateBatch(batchId, batch);
@@ -120,9 +116,7 @@ public class BatchController {
     public ResponseEntity<List<BatchResponse>> getBatchesByStatus(
             @Parameter(description = "Batch status") @PathVariable BatchStatus status) {
         List<Batch> batches = batchService.getBatchesByStatus(status);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<BatchResponse> responses = dtoMapper.toBatchResponses(batches);
         return ResponseEntity.ok(responses);
     }
 
@@ -131,9 +125,7 @@ public class BatchController {
     public ResponseEntity<List<BatchResponse>> getBatchesByFarm(
             @Parameter(description = "Farm ID") @PathVariable String farmId) {
         List<Batch> batches = batchService.getBatchesByFarm(farmId);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<BatchResponse> responses = dtoMapper.toBatchResponses(batches);
         return ResponseEntity.ok(responses);
     }
 
@@ -142,9 +134,7 @@ public class BatchController {
     public ResponseEntity<List<BatchResponse>> getBatchesByVariety(
             @Parameter(description = "Mango variety") @PathVariable String variety) {
         List<Batch> batches = batchService.getBatchesByVariety(dtoMapper.varietyKey(variety));
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<BatchResponse> responses = dtoMapper.toBatchResponses(batches);
         return ResponseEntity.ok(responses);
     }
 
@@ -152,9 +142,7 @@ public class BatchController {
     @Operation(summary = "Get batches ready for shipping", description = "Retrieves batches that are ready for shipping")
     public ResponseEntity<List<BatchResponse>> getBatchesReadyForShipping() {
         List<Batch> batches = batchService.getBatchesReadyForShipping();
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<BatchResponse> responses = dtoMapper.toBatchResponses(batches);
         return ResponseEntity.ok(responses);
     }
 
@@ -164,9 +152,7 @@ public class BatchController {
             @Parameter(description = "Farm ID") @PathVariable String farmId,
             @Parameter(description = "Block ID") @PathVariable String blockId) {
         List<Batch> batches = batchService.getBatchesByFarmAndBlock(farmId, blockId);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<BatchResponse> responses = dtoMapper.toBatchResponses(batches);
         return ResponseEntity.ok(responses);
     }
 
@@ -176,9 +162,7 @@ public class BatchController {
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,
             @Parameter(description = "End date") @RequestParam LocalDate endDate) {
         List<Batch> batches = batchService.getBatchesByHarvestDateRange(startDate, endDate);
-        List<BatchResponse> responses = batches.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<BatchResponse> responses = dtoMapper.toBatchResponses(batches);
         return ResponseEntity.ok(responses);
     }
 }

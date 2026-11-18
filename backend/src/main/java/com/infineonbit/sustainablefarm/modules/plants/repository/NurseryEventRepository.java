@@ -49,14 +49,14 @@ public interface NurseryEventRepository extends JpaRepository<NurseryEvent, Long
     @Query("""
             SELECT e FROM NurseryEvent e JOIN FETCH e.batch b
             WHERE (CAST(:batchId AS Long) IS NULL OR b.id = :batchId)
-              AND (CAST(:farmId AS Integer) IS NULL OR b.farmId = :farmId)
+              AND (CAST(:farmId AS Long) IS NULL OR b.farmId = :farmId)
               AND (CAST(:eventType AS String) IS NULL OR e.eventType = :eventType)
               AND (CAST(:from AS LocalDate) IS NULL OR e.eventDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR e.eventDate <= :to)
             ORDER BY e.eventDate ASC, e.id ASC
             """)
     List<NurseryEvent> findByOptionalFilters(@Param("batchId") Long batchId,
-                                             @Param("farmId") Integer farmId,
+                                             @Param("farmId") Long farmId,
                                              @Param("eventType") NurseryEventType eventType,
                                              @Param("from") LocalDate from,
                                              @Param("to") LocalDate to);

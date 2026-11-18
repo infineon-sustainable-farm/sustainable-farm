@@ -38,15 +38,14 @@ public interface BatchRepository extends JpaRepository<Batch, String> {
     List<Batch> findByVarietyKey(String varietyKey);
 
     /**
-     * Find batches by farm
+     * Find batches of several blocks (the blocks of a farm)
      */
-    List<Batch> findByFarmId(String farmId);
+    List<Batch> findByFarmBlockIdIn(java.util.Collection<Long> farmBlockIds);
 
     /**
-     * Find batches by farm and status
+     * Find batches of several blocks (the blocks of a farm) and a status
      */
-    @Query("SELECT b FROM Batch b WHERE b.farmId = :farmId AND b.currentStatus = :status")
-    List<Batch> findByFarmAndStatus(@Param("farmId") String farmId, @Param("status") BatchStatus status);
+    List<Batch> findByFarmBlockIdInAndCurrentStatus(java.util.Collection<Long> farmBlockIds, BatchStatus currentStatus);
 
     /**
      * Find batches by variety and status
@@ -75,13 +74,7 @@ public interface BatchRepository extends JpaRepository<Batch, String> {
     /**
      * Find batches by block
      */
-    List<Batch> findByBlockId(String blockId);
-
-    /**
-     * Find batches by farm and block
-     */
-    @Query("SELECT b FROM Batch b WHERE b.farmId = :farmId AND b.blockId = :blockId")
-    List<Batch> findByFarmAndBlock(@Param("farmId") String farmId, @Param("blockId") String blockId);
+    List<Batch> findByFarmBlockId(Long farmBlockId);
 
     /**
      * Check if batch exists by status

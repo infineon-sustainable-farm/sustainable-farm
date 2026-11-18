@@ -240,7 +240,7 @@ public class HarvestControllerTest {
     @Test
     void getAllHarvests_shouldPassEveryFilter() throws Exception {
         // Arrange
-        when(harvestService.getAllHarvests(1, "B", null, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)))
+        when(harvestService.getAllHarvests(1L, "B", null, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30)))
                 .thenReturn(List.of(keittHarvest()));
         // Act
         ResultActions result = mockMvc.perform(get(URL)
@@ -302,7 +302,7 @@ public class HarvestControllerTest {
     @Test
     void getHarvestById_shouldReturn200WithTheHarvest() throws Exception {
         // Arrange: a harvest of farm 1, so that no field is null
-        when(harvestService.getHarvestById(200L)).thenReturn(new HarvestResponse(200L, "LOT-2026-B-001", 1, "B",
+        when(harvestService.getHarvestById(200L)).thenReturn(new HarvestResponse(200L, "LOT-2026-B-001", 1L, "B",
                 10L, "Keitt", LocalDate.of(2026, 6, 10), 800.0, "user_entry", NOW));
         // Act
         ResultActions result = mockMvc.perform(get(URL + "/200"));

@@ -31,7 +31,7 @@ public class PlantAlertCalculatorTest {
 
     /** An alert whose message names it, with its row in the field of its type. */
     private static PlantAlert alert(String name, PlantAlertType type, PlantAlertSeverity severity, String date,
-                                    Integer farmId, String blockCode, String varietyName, long id) {
+                                    Long farmId, String blockCode, String varietyName, long id) {
         return new PlantAlert(type, severity, farmId, blockCode, varietyName, name,
                 date == null ? null : LocalDate.parse(date), null, null,
                 type == PlantAlertType.HARVEST_APPROACHING ? id : null,
@@ -220,15 +220,15 @@ public class PlantAlertCalculatorTest {
     void order_shouldPutCriticalFirst_thenTheEarliestDate_andTheAlertsWithoutDateLast() {
         assertEquals(List.of("critical interval", "critical stock", "season", "issue", "batch", "stock"), sorted(
                 alert("season", PlantAlertType.HARVEST_APPROACHING, PlantAlertSeverity.WARNING, "2027-05-01",
-                        5, "C", "Keitt", 1),
+                        5L, "C", "Keitt", 1),
                 alert("critical stock", PlantAlertType.LOW_STOCK, PlantAlertSeverity.CRITICAL, null,
                         null, null, null, 2),
                 alert("critical interval", PlantAlertType.PRE_HARVEST_INTERVAL, PlantAlertSeverity.CRITICAL,
-                        "2027-05-22", 5, "C", null, 3),
+                        "2027-05-22", 5L, "C", null, 3),
                 alert("issue", PlantAlertType.OPEN_HEALTH_ISSUE, PlantAlertSeverity.WARNING, "2027-05-03",
-                        5, "C", null, 4),
+                        5L, "C", null, 4),
                 alert("batch", PlantAlertType.NURSERY_READY, PlantAlertSeverity.WARNING, "2027-06-15",
-                        5, "D", "Keitt", 5),
+                        5L, "D", "Keitt", 5),
                 alert("stock", PlantAlertType.LOW_STOCK, PlantAlertSeverity.WARNING, null,
                         null, null, null, 6)));
     }
@@ -239,7 +239,7 @@ public class PlantAlertCalculatorTest {
         assertEquals(List.of("B Amelie", "C Amelie", "C Keitt 1", "C Keitt 2", "farm 1", "interval", "batch"), sorted(
                 alert("C Keitt 2", PlantAlertType.HARVEST_APPROACHING, warning, "2027-05-01", null, "C", "Keitt", 2),
                 alert("batch", PlantAlertType.NURSERY_READY, warning, "2027-05-01", null, null, "Keitt", 7),
-                alert("farm 1", PlantAlertType.HARVEST_APPROACHING, warning, "2027-05-01", 1, "A", "Kent", 3),
+                alert("farm 1", PlantAlertType.HARVEST_APPROACHING, warning, "2027-05-01", 1L, "A", "Kent", 3),
                 alert("C Keitt 1", PlantAlertType.HARVEST_APPROACHING, warning, "2027-05-01", null, "C", "Keitt", 1),
                 alert("interval", PlantAlertType.PRE_HARVEST_INTERVAL, warning, "2027-05-01", null, "A", null, 6),
                 alert("C Amelie", PlantAlertType.HARVEST_APPROACHING, warning, "2027-05-01", null, "C", "Amelie", 5),

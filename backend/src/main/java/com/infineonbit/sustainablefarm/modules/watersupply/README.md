@@ -105,7 +105,8 @@ This is a first version, **to be reviewed soon**:
   phase factor of the zone's block.
 - **Rainfall** of a farm is the highest cumulative value among its gauges, never their sum (two
   tanks record the same rain).
-- **Plants** is read in a single class, `PlantsGrowthCalendarAdapter`, behind `PlantsGrowthPort`.
+- **Plants** is read in a single class, `PlantsGrowthCalendarAdapter`, behind `PlantsGrowthPort`, through
+  the public interface `plants.api.BlockGrowthLookup`.
 - **Valve commands** go through `ValveCommandPort`. Its only implementation refuses every command
   until an MQTT/HTTP gateway is chosen. The attempt is journaled anyway (`noRollbackFor`).
 - Optional filters use Criteria (`ConsumptionCriteria`, unavailability search) instead of JPQL

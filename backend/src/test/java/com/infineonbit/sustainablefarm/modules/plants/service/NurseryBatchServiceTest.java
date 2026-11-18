@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
@@ -12,11 +13,14 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.exception.NurseryBatchNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryBatchRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.NurseryRows;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
@@ -49,6 +53,9 @@ public class NurseryBatchServiceTest {
     @Mock
     private NurseryEventRepository nurseryEventRepository;
 
+    @Spy
+    private PlantsBlocks plantsBlocks = TestBlocks.plantsBlocks();
+
     @InjectMocks
     private NurseryBatchService nurseryBatchService;
 
@@ -59,23 +66,23 @@ public class NurseryBatchServiceTest {
 
     private static NurseryBatchRequest purchasedP2(String supplierLotNumber, String plannedBlockCode,
                                                    LocalDate plannedTransplantOn) {
-        return new NurseryBatchRequest(2, "p2", "Keitt", "PURCHASED", " Test nursery ", supplierLotNumber, JULY_1,
+        return new NurseryBatchRequest(2L, "p2", "Keitt", "PURCHASED", " Test nursery ", supplierLotNumber, JULY_1,
                 200.0, "hardening", plannedTransplantOn, plannedBlockCode);
     }
 
     private static NurseryBatch p1() {
-        return new NurseryBatch(1L, null, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
+        return NurseryRows.batch(1L, null, "P1", "Keitt", NurseryOrigin.IN_HOUSE, null, null, MARCH_2, 150,
                 SEPTEMBER_20, "E", "user_entry", NOW);
     }
 
     private static NurseryBatch p2() {
-        return new NurseryBatch(2L, null, "P2", "Keitt", NurseryOrigin.PURCHASED, "Test nursery", "L-2026-07",
+        return NurseryRows.batch(2L, null, "P2", "Keitt", NurseryOrigin.PURCHASED, "Test nursery", "L-2026-07",
                 JULY_1, 200, OCTOBER_10, "F", "user_entry", NOW);
     }
 
     private static NurseryEvent event(long id, NurseryBatch batch, NurseryEventType type, LocalDate date,
                                       NurseryStage stage, Integer quantity) {
-        return new NurseryEvent(id, batch, type, date, stage, quantity, null, null, null, "user_entry", NOW);
+        return NurseryRows.event(id, batch, type, date, stage, quantity, null, null, null, "user_entry", NOW);
     }
 
     /** P1 at germination with 12 plants lost, and P2 at hardening. */
@@ -131,6 +138,7 @@ public class NurseryBatchServiceTest {
         assertEquals(150, batch.getInitialCount());
         assertEquals(SEPTEMBER_20, batch.getPlannedTransplantOn());
         assertEquals("E", batch.getPlannedBlockCode());
+        assertEquals(TestBlocks.idOf("E"), batch.getPlannedBlockId());
         assertEquals("user_entry", batch.getSource());
         assertEquals(NOW, batch.getLastUpdated());
         // Assert: the initial stage, stored as the first stage change, on the start date
@@ -151,14 +159,16 @@ public class NurseryBatchServiceTest {
     @Test
     void createBatch_shouldStoreTheSupplierAndLotNumber_ofAPurchasedBatch() {
         // Arrange
-        when(nurseryBatchRepository.findByFarmAndCode(2, "P2")).thenReturn(List.of());
+        when(nurseryBatchRepository.findByFarmAndCode(2L, "P2")).thenReturn(List.of());
         saveAssignsIds();
         // Act
         NurseryBatchResponse response = nurseryBatchService.createBatch(
                 purchasedP2(" L-2026-07 ", "F", OCTOBER_10), NOW);
         // Assert
         NurseryBatch batch = savedBatch();
-        assertEquals(2, batch.getFarmId());
+        assertEquals(2L, batch.getFarmId());
+        assertEquals("F", batch.getPlannedBlockCode());
+        assertEquals(TestBlocks.idOf("F"), batch.getPlannedBlockId());
         assertEquals(NurseryOrigin.PURCHASED, batch.getOrigin());
         assertEquals("Test nursery", batch.getSupplier());
         assertEquals("L-2026-07", batch.getSupplierLotNumber());
@@ -170,7 +180,7 @@ public class NurseryBatchServiceTest {
     @Test
     void createBatch_shouldTreatABlankLotNumberAndPlannedBlockAsNone_andAcceptAPlannedDateOnTheStartDate() {
         // Arrange
-        when(nurseryBatchRepository.findByFarmAndCode(2, "P2")).thenReturn(List.of());
+        when(nurseryBatchRepository.findByFarmAndCode(2L, "P2")).thenReturn(List.of());
         saveAssignsIds();
         // Act
         nurseryBatchService.createBatch(purchasedP2("  ", " ", JULY_1), NOW);
@@ -192,6 +202,17 @@ public class NurseryBatchServiceTest {
         assertEquals("A nursery batch with code P1 already exists", exception.getMessage());
         verify(nurseryBatchRepository, never()).save(any());
         verify(nurseryEventRepository, never()).save(any());
+    }
+
+    @Test
+    void createBatch_shouldRefuseAFarmThatDoesNotExist() {
+        // Arrange
+        NurseryBatchRequest request = new NurseryBatchRequest(9L, "P4", "Keitt", "IN_HOUSE", null, null, MARCH_2,
+                150.0, "GERMINATION", SEPTEMBER_20, null);
+        when(nurseryBatchRepository.findByFarmAndCode(9L, "P4")).thenReturn(List.of());
+        // Act & Assert
+        assertThrows(BadRequestException.class, () -> nurseryBatchService.createBatch(request, NOW));
+        verify(nurseryBatchRepository, never()).save(any());
     }
 
     @Test
@@ -245,9 +266,9 @@ public class NurseryBatchServiceTest {
     @Test
     void getAllBatches_shouldNotQueryTheEvents_whenThereIsNoBatch() {
         // Arrange
-        when(nurseryBatchRepository.findByOptionalFarm(3)).thenReturn(List.of());
+        when(nurseryBatchRepository.findByOptionalFarm(3L)).thenReturn(List.of());
         // Act
-        List<NurseryBatchResponse> responses = nurseryBatchService.getAllBatches(3, null);
+        List<NurseryBatchResponse> responses = nurseryBatchService.getAllBatches(3L, null);
         // Assert
         assertEquals(List.of(), responses);
         verify(nurseryEventRepository, never()).findByBatchIds(any());

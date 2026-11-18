@@ -25,7 +25,7 @@ public class HarvestLookupService implements HarvestLookup {
     }
 
     @Override
-    public List<HarvestSummary> listHarvests(Integer farmId, String blockCode) {
+    public List<HarvestSummary> listHarvests(Long farmId, String blockCode) {
         return harvestService.getAllHarvests(farmId, blockCode, null, null, null).stream()
                 .map(HarvestLookupService::toSummary)
                 .toList();

@@ -12,7 +12,7 @@ import java.time.LocalDate;
  * two share a date. Computed on every read, never stored.
  */
 public record BlockHealthResponse(
-        Integer farmId,
+        Long farmId,
         String blockCode,
         Long inspectionId,
         LocalDate inspectedOn,

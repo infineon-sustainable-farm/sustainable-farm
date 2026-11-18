@@ -19,7 +19,7 @@ public record NurseryEventResponse(
         Long id,
         Long batchId,
         String batchCode,
-        Integer farmId,
+        Long farmId,
         NurseryEventType eventType,
         LocalDate eventDate,
         NurseryStage stage,

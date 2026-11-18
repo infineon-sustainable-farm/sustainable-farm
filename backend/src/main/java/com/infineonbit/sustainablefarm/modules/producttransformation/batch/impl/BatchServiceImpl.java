@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.InvalidStateException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
@@ -34,12 +35,15 @@ public class BatchServiceImpl implements BatchService {
 
     private final BatchRepository batchRepository;
     private final QcCheckpointService qcCheckpointService;
+    private final ProductTransformationBlocks blocks;
 
     @Autowired
     public BatchServiceImpl(BatchRepository batchRepository,
-                            QcCheckpointService qcCheckpointService) {
+                            QcCheckpointService qcCheckpointService,
+                            ProductTransformationBlocks blocks) {
         this.batchRepository = batchRepository;
         this.qcCheckpointService = qcCheckpointService;
+        this.blocks = blocks;
     }
 
     @Override
@@ -59,8 +63,9 @@ public class BatchServiceImpl implements BatchService {
         existingBatch.setHarvestDate(batch.getHarvestDate());
         existingBatch.setVarietyKey(batch.getVarietyKey());
         existingBatch.setHarvestQuantityKg(batch.getHarvestQuantityKg());
-        existingBatch.setFarmId(batch.getFarmId());
-        existingBatch.setBlockId(batch.getBlockId());
+        if (batch.getFarmBlockId() != null) {
+            existingBatch.setFarmBlockId(batch.getFarmBlockId());
+        }
         
         // Only update status if explicitly set and valid
         if (batch.getCurrentStatus() != null) {
@@ -112,13 +117,15 @@ public class BatchServiceImpl implements BatchService {
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByFarm(String farmId) {
-        return batchRepository.findByFarmId(farmId);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farmId);
+        return blockIds.isEmpty() ? List.of() : batchRepository.findByFarmBlockIdIn(blockIds);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByFarmAndStatus(String farmId, BatchStatus status) {
-        return batchRepository.findByFarmAndStatus(farmId, status);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farmId);
+        return blockIds.isEmpty() ? List.of() : batchRepository.findByFarmBlockIdInAndCurrentStatus(blockIds, status);
     }
 
     @Override
@@ -148,13 +155,16 @@ public class BatchServiceImpl implements BatchService {
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByBlock(String blockId) {
-        return batchRepository.findByBlockId(blockId);
+        return blocks.findBlockId(blockId).map(batchRepository::findByFarmBlockId).orElse(List.of());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByFarmAndBlock(String farmId, String blockId) {
-        return batchRepository.findByFarmAndBlock(farmId, blockId);
+        return blocks.findBlockId(blockId)
+                .filter(id -> blocks.blockIdsOfFarm(farmId).contains(id))
+                .map(batchRepository::findByFarmBlockId)
+                .orElse(List.of());
     }
 
     @Override

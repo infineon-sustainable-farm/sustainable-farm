@@ -27,7 +27,7 @@ import java.util.List;
  */
 public record GrowthCalendarResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         List<String> varieties,
         LocalDate plantingDate,

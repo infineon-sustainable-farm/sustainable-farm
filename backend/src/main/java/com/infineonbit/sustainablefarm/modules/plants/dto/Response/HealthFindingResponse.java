@@ -19,7 +19,7 @@ import java.time.LocalDate;
 public record HealthFindingResponse(
         Long id,
         Long inspectionId,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         LocalDate inspectedOn,
         String issueCode,

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.BlockHealthResponse;
@@ -34,6 +35,7 @@ public class HealthInspectionService {
     private final HealthFindingRepository healthFindingRepository;
     private final HealthIssueService healthIssueService;
     private final HealthFindingService healthFindingService;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " c "} becomes
@@ -117,8 +119,8 @@ public class HealthInspectionService {
                 .toList());
 
         HealthInspection inspection = new HealthInspection();
-        inspection.setFarmId(request.farmId());
-        inspection.setBlockCode(normalizeCode(request.blockCode()));
+        BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeCode(request.blockCode()));
+        inspection.assignBlock(block.id(), PlantsBlocks.label(block));
         inspection.setInspectedOn(request.inspectedOn());
         // A whole number from 0 to 100: the request validation refused anything else.
         inspection.setHealthScorePct(request.healthScorePct().intValue());
@@ -154,16 +156,17 @@ public class HealthInspectionService {
      * findings of every inspection come from one query.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "C"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "C"}), or {@code null}
+     *                  or blank for every block
      * @param from      first inspection date, included, or {@code null}
      * @param to        last inspection date, included, or {@code null}
      * @return the matching inspections, ordered by date then identifier
      */
-    public List<HealthInspectionResponse> getAllInspections(Integer farmId, String blockCode,
+    public List<HealthInspectionResponse> getAllInspections(Long farmId, String blockCode,
                                                             LocalDate from, LocalDate to) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
         List<HealthInspection> inspections = healthInspectionRepository.findByOptionalFilters(
-                farmId, normalizeOptionalText(blockCode), from, to);
+                blocks.all(), blocks.ids(), from, to);
         if (inspections.isEmpty()) {
             return List.of();
         }
@@ -182,16 +185,17 @@ public class HealthInspectionService {
      * Retrieves the current health of each inspected block: the score of its
      * most recent inspection, with the date and the category.
      *
-     * <p>A block is the (farm, block) pair, a missing farm being a farm of its
-     * own; the farm filter keeps the usual meaning, a missing farm meaning every
-     * farm. The inspections come from one query, and the most recent one of each
+     * <p>A block is a {@code farm.block} row, which gives its farm; the farm
+     * filter keeps the usual meaning, a missing farm meaning every farm. The inspections come from one query, and the most recent one of each
      * block is picked in Java: latest date, then highest identifier.
      *
      * @param farmId farm identifier, or {@code null} for every farm
      * @return one line per inspected block, by block code then farm
      */
-    public List<BlockHealthResponse> getBlockHealth(Integer farmId) {
-        return HealthCalculator.latestByBlock(healthInspectionRepository.findByOptionalFilters(farmId, null, null, null))
+    public List<BlockHealthResponse> getBlockHealth(Long farmId) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, null);
+        return HealthCalculator.latestByBlock(
+                        healthInspectionRepository.findByOptionalFilters(blocks.all(), blocks.ids(), null, null))
                 .stream()
                 .map(inspection -> new BlockHealthResponse(
                         inspection.getFarmId(),

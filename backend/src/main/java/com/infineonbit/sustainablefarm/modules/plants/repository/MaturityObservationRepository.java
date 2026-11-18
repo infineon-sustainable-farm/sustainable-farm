@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -32,23 +33,21 @@ public interface MaturityObservationRepository extends JpaRepository<MaturityObs
      * <p>The variety is fetched with the observations: it is a lazy
      * association, and open-in-view is disabled.
      *
-     * @param farmId    farm identifier, or {@code null} to ignore the farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} to ignore the block
+     * @param allBlocks   {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds  ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @param from      first observation date, included, or {@code null} for no lower bound
      * @param to        last observation date, included, or {@code null} for no upper bound
      * @return the matching observations, ordered by date then identifier
      */
     @Query("""
             SELECT o FROM MaturityObservation o JOIN FETCH o.variety v
-            WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
+            WHERE (:allBlocks = true OR v.blockId IN :blockIds)
               AND (CAST(:from AS LocalDate) IS NULL OR o.observedOn >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR o.observedOn <= :to)
             ORDER BY o.observedOn ASC, o.id ASC
             """)
-    List<MaturityObservation> findByOptionalFilters(@Param("farmId") Integer farmId,
-                                                    @Param("blockCode") String blockCode,
+    List<MaturityObservation> findByOptionalFilters(@Param("allBlocks") boolean allBlocks,
+                                                    @Param("blockIds") Collection<Long> blockIds,
                                                     @Param("from") LocalDate from,
                                                     @Param("to") LocalDate to);
 }

@@ -1,9 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlockIds;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -28,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 public class PopulationEventRepositoryTest {
 
+    private final TestBlockIds blocks = new TestBlockIds();
+
     @Autowired
     private VarietyRepository varietyRepository;
 
@@ -36,21 +40,21 @@ public class PopulationEventRepositoryTest {
 
     private Variety variety(String name) {
         Variety variety = new Variety();
-        variety.setBlockCode("A");
+        variety.assignBlock(blocks.of(null, "A"), new BlockLabel(null, "A"));
         variety.setName(name);
         return varietyRepository.save(variety);
     }
 
-    private Variety variety(Integer farmId, String blockCode, String name) {
+    private Variety variety(Long farmId, String blockCode, String name) {
         Variety variety = new Variety();
-        variety.setFarmId(farmId);
-        variety.setBlockCode(blockCode);
+        variety.assignBlock(blocks.of(farmId, blockCode), new BlockLabel(farmId, blockCode));
         variety.setName(name);
         return varietyRepository.save(variety);
     }
 
-    private List<String> plantedNames(Integer farmId, String blockCode) {
-        return populationEventRepository.findPlantingsByOptionalFilters(farmId, blockCode).stream()
+    private List<String> plantedNames(Long farmId, String blockCode) {
+        return populationEventRepository.findPlantingsByOptionalFilters(
+                        blocks.all(farmId, blockCode), blocks.ids(farmId, blockCode)).stream()
                 .map(planting -> planting.getVariety().getBlockCode() + " " + planting.getVariety().getName())
                 .toList();
     }
@@ -150,13 +154,13 @@ public class PopulationEventRepositoryTest {
     }
 
     @Test
-    void findPlantingsByOptionalFilters_shouldOrderByBlockThenName_andLoadTheVariety() {
+    void findPlantingsByOptionalFilters_shouldOrderByBlockIdThenName_andLoadTheVariety() {
         // Arrange: saved out of order
         event(variety(null, "B", "Keitt"), PLANTING, 150);
         event(variety(null, "A", "Palmer"), PLANTING, 10);
         event(variety(null, "A", "Kent"), PLANTING, 40);
         // Act
-        List<PopulationEvent> plantings = populationEventRepository.findPlantingsByOptionalFilters(null, null);
+        List<PopulationEvent> plantings = populationEventRepository.findPlantingsByOptionalFilters(true, List.of(-1L));
         // Assert
         assertEquals(List.of("A Kent", "A Palmer", "B Keitt"), plantedNames(null, null));
         assertEquals(PLANTING, plantings.get(0).getEventType());
@@ -167,13 +171,14 @@ public class PopulationEventRepositoryTest {
     void findPlantingsByOptionalFilters_shouldFilterOnFarmAndBlock() {
         // Arrange
         event(variety(null, "B", "Keitt"), PLANTING, 150);
-        event(variety(1, "B", "Keitt"), PLANTING, 80);
-        event(variety(1, "A", "Kent"), PLANTING, 40);
-        // Act & Assert: no farm filter means every farm; farm 1 leaves the row without a farm out
-        assertEquals(List.of("A Kent", "B Keitt", "B Keitt"), plantedNames(null, null));
-        assertEquals(List.of("A Kent", "B Keitt"), plantedNames(1, null));
-        assertEquals(List.of("B Keitt"), plantedNames(1, "B"));
+        event(variety(1L, "B", "Keitt"), PLANTING, 80);
+        event(variety(1L, "A", "Kent"), PLANTING, 40);
+        // Act & Assert: no filter means every block, by block id (the service sorts by code);
+        // the blocks of farm 1 leave the block of the other farm out
+        assertEquals(List.of("B Keitt", "A Kent", "B Keitt"), plantedNames(null, null));
+        assertEquals(List.of("A Kent", "B Keitt"), plantedNames(1L, null));
+        assertEquals(List.of("B Keitt"), plantedNames(1L, "B"));
         assertEquals(List.of("B Keitt", "B Keitt"), plantedNames(null, "B"));
-        assertTrue(plantedNames(2, null).isEmpty());
+        assertTrue(plantedNames(2L, null).isEmpty());
     }
 }

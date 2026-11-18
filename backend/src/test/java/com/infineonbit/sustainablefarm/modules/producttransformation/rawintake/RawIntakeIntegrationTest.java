@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -26,6 +27,9 @@ public class RawIntakeIntegrationTest {
     private BatchRepository batchRepository;
 
     @Autowired
+    private ProductTransformationBlocks blocks;
+
+    @Autowired
     private RawIntakeRepository rawIntakeRepository;
 
     @Autowired
@@ -45,8 +49,7 @@ public class RawIntakeIntegrationTest {
         batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
         batch.setCurrentStatus(Batch.BatchStatus.CREATED);
-        batch.setFarmId("F-TEST");
-        batch.setBlockId("BL-TEST");
+        batch.setFarmBlockId(blocks.resolve("F-TEST", "BL-TEST"));
         Batch savedBatch = batchRepository.save(batch);
         assertThat(savedBatch.getBatchId()).isEqualTo("B-TEST-001");
 
@@ -54,8 +57,7 @@ public class RawIntakeIntegrationTest {
         RawIntake intake = new RawIntake();
         intake.setIntakeId("RI-TEST-001");
         intake.setBatch(savedBatch);
-        intake.setSourceFarm("TestFarm");
-        intake.setSourceBlock("BL-01");
+        intake.setSourceBlockId(blocks.resolve("TestFarm", "BL-01"));
         intake.setIntakeDate(LocalDate.now());
         intake.setReceivedQuantityKg(new BigDecimal("95.00"));
         intake.setReceivedVarietyKey("KENT");

@@ -39,7 +39,7 @@ public class BlockHealthControllerTest {
         when(healthInspectionService.getBlockHealth(null)).thenReturn(List.of(
                 new BlockHealthResponse(null, "C", 4L, LocalDate.of(2026, 9, 21), 72, HealthCategory.HEALTHY),
                 new BlockHealthResponse(null, "D", 2L, LocalDate.of(2026, 9, 2), 85, HealthCategory.VERY_HEALTHY)));
-        when(healthInspectionService.getBlockHealth(1)).thenReturn(List.of());
+        when(healthInspectionService.getBlockHealth(1L)).thenReturn(List.of());
         // Act & Assert: every farm
         mockMvc.perform(get(URL))
                 .andExpect(status().isOk())

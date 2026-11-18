@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.FieldObservation;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
@@ -18,9 +18,10 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -50,7 +51,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class HarvestStatusServiceTest {
 
-    private static final int FARM = 7;
+    private static final Long FARM = 7L;
+    /** Blocks A to E of farm 7 in the farm referential. */
+    private static final PlantsBlocks PLANTS_BLOCKS = TestBlocks.onFarm(FARM, "A", "B", "C", "D", "E").asPlantsBlocks();
+    private static final List<Long> FARM_BLOCKS = TestBlocks.idsOf("A", "B", "C", "D", "E");
     private static final LocalDate JUNE_15_2027 = LocalDate.of(2027, 6, 15);
     private static final LocalDate KEITT_A_PLANTED_ON = LocalDate.of(2023, 9, 15);
     private static final String KEITT_SEASON_SOURCE = "varietal_guide_west_africa";
@@ -87,7 +91,7 @@ public class HarvestStatusServiceTest {
 
     private YieldForecastService yieldForecastService() {
         return new YieldForecastService(populationEventRepository, varietyReferenceRepository,
-                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository), PLANTS_BLOCKS);
     }
 
     private static Clock noonOf(LocalDate day) {
@@ -129,7 +133,7 @@ public class HarvestStatusServiceTest {
 
     /** Stubs the plantings of farm 7 and the Keitt reference of the dev loader, May to July. */
     private void stubPlantings() {
-        when(populationEventRepository.findPlantingsByOptionalFilters(FARM, null)).thenReturn(plantings);
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, FARM_BLOCKS)).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
                 new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, null)));
@@ -464,7 +468,7 @@ public class HarvestStatusServiceTest {
     void getHarvestStatus_shouldFollowASeasonOverTheNewYear() {
         // Arrange: Kent on D, in full production, with a November to February season
         Variety kentD = planted(4L, "D", "Kent", LocalDate.of(2015, 3, 1), 25);
-        when(populationEventRepository.findPlantingsByOptionalFilters(FARM, null)).thenReturn(plantings);
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, FARM_BLOCKS)).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
                 new VarietyReference(2L, "Kent", 180.0, "user_entry", 11, 2, "user_entry", null)));

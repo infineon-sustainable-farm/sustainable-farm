@@ -85,7 +85,7 @@ public class PlantingKeyBackfill implements CommandLineRunner {
         int varietiesKeyed = 0;
         List<Long> varietyDuplicates = new ArrayList<>();
         for (Variety row : varietyRepository.findByVarietyKeyIsNullOrderByIdAsc()) {
-            String key = Variety.keyOf(row.getFarmId(), row.getBlockCode(), row.getName());
+            String key = Variety.keyOf(row.getBlockId(), row.getName());
             if (key == null) {
                 continue;
             }
@@ -94,7 +94,7 @@ public class PlantingKeyBackfill implements CommandLineRunner {
                 varietiesKeyed += updated == null ? 0 : updated;
             } catch (DataIntegrityViolationException duplicate) {
                 varietyDuplicates.add(row.getId());
-                log.error("Variety row {} has the same farm, block and name as row {} (key \"{}\"): its variety_key "
+                log.error("Variety row {} has the same block and name as row {} (key \"{}\"): its variety_key "
                                 + "stays empty. Nothing was deleted.", row.getId(),
                         varietyRepository.findByVarietyKey(key).map(Variety::getId).orElse(null), key);
             }
@@ -103,7 +103,7 @@ public class PlantingKeyBackfill implements CommandLineRunner {
         int calendarsKeyed = 0;
         List<Long> calendarDuplicates = new ArrayList<>();
         for (GrowthCalendar row : growthCalendarRepository.findByBlockKeyIsNullOrderByIdAsc()) {
-            String key = GrowthCalendar.keyOf(row.getFarmId(), row.getBlockCode());
+            String key = GrowthCalendar.keyOf(row.getBlockId());
             if (key == null) {
                 continue;
             }
@@ -112,7 +112,7 @@ public class PlantingKeyBackfill implements CommandLineRunner {
                 calendarsKeyed += updated == null ? 0 : updated;
             } catch (DataIntegrityViolationException duplicate) {
                 calendarDuplicates.add(row.getId());
-                log.error("Calendar row {} has the same farm and block as row {} (key \"{}\"): its block_key stays "
+                log.error("Calendar row {} has the same block as row {} (key \"{}\"): its block_key stays "
                                 + "empty. Nothing was deleted.", row.getId(),
                         growthCalendarRepository.findByBlockKey(key).map(GrowthCalendar::getId).orElse(null), key);
             }

@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller for RawIntake operations
@@ -80,9 +79,7 @@ public class RawIntakeController {
     @Operation(summary = "Get all raw intakes", description = "Retrieves all raw intake records")
     public ResponseEntity<List<RawIntakeResponse>> getAllRawIntakes() {
         List<RawIntake> intakes = rawIntakeService.getAllRawIntakes();
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
@@ -93,8 +90,10 @@ public class RawIntakeController {
             @Valid @RequestBody RawIntakeUpdateRequest request) {
         RawIntake existingIntake = rawIntakeService.getRawIntakeById(intakeId);
         
-        existingIntake.setSourceFarm(request.getSourceFarm());
-        existingIntake.setSourceBlock(request.getSourceBlock());
+        Long sourceBlockId = dtoMapper.blockIdOrNull(request.getSourceFarm(), request.getSourceBlock());
+        if (sourceBlockId != null) {
+            existingIntake.setSourceBlockId(sourceBlockId);
+        }
         existingIntake.setIntakeDate(request.getIntakeDate());
         existingIntake.setReceivedQuantityKg(request.getReceivedQuantityKg());
         existingIntake.setReceivedVarietyKey(dtoMapper.varietyKey(request.getReceivedVariety()));
@@ -129,9 +128,7 @@ public class RawIntakeController {
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,
             @Parameter(description = "End date") @RequestParam LocalDate endDate) {
         List<RawIntake> intakes = rawIntakeService.getRawIntakesByDateRange(startDate, endDate);
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
@@ -140,9 +137,7 @@ public class RawIntakeController {
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesBySourceFarm(
             @Parameter(description = "Source farm") @PathVariable String sourceFarm) {
         List<RawIntake> intakes = rawIntakeService.getRawIntakesBySourceFarm(sourceFarm);
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
@@ -151,9 +146,7 @@ public class RawIntakeController {
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByVariety(
             @Parameter(description = "Mango variety") @PathVariable String variety) {
         List<RawIntake> intakes = rawIntakeService.getRawIntakesByVariety(dtoMapper.varietyKey(variety));
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
@@ -162,9 +155,7 @@ public class RawIntakeController {
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByGrade(
             @Parameter(description = "Quality grade") @PathVariable QualityGrade grade) {
         List<RawIntake> intakes = rawIntakeService.getRawIntakesByGrade(grade);
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 }
