@@ -1,5 +1,9 @@
 import { useState } from "react";
-import Modal from "../../../shared/components/Modal";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal } from "../../../shared/ui";
+import EquipmentField from "./EquipmentField";
+import FormActions from "./FormActions";
+import FormAlert from "./FormAlert";
 
 const MAX_TEXT_LENGTH = 60;
 
@@ -22,6 +26,7 @@ function OperatorAssignmentFormModal({
   onSubmit,
   serverError,
 }) {
+  const { t } = useTranslation("machinery");
   const [form, setForm] = useState(() => toFormState(assignment));
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -38,16 +43,16 @@ function OperatorAssignmentFormModal({
     const fullName = form.fullName.trim();
     const jobTitle = form.jobTitle.trim();
 
-    if (!fullName) errors.fullName = "Operator's full name is required.";
-    else if (fullName.length > MAX_TEXT_LENGTH) errors.fullName = `Full name must be ${MAX_TEXT_LENGTH} characters or fewer.`;
+    if (!fullName) errors.fullName = t("operators.fullNameRequired");
+    else if (fullName.length > MAX_TEXT_LENGTH) errors.fullName = t("operators.fullNameTooLong", { max: MAX_TEXT_LENGTH });
 
-    if (!jobTitle) errors.jobTitle = "Job title is required.";
-    else if (jobTitle.length > MAX_TEXT_LENGTH) errors.jobTitle = `Job title must be ${MAX_TEXT_LENGTH} characters or fewer.`;
+    if (!jobTitle) errors.jobTitle = t("operators.jobTitleRequired");
+    else if (jobTitle.length > MAX_TEXT_LENGTH) errors.jobTitle = t("operators.jobTitleTooLong", { max: MAX_TEXT_LENGTH });
 
-    if (!form.equipmentId) errors.equipmentId = "Equipment is required.";
-    if (!form.startDate) errors.startDate = "Start date is required.";
+    if (!form.equipmentId) errors.equipmentId = t("validation.equipmentRequired");
+    if (!form.startDate) errors.startDate = t("operators.startDateRequired");
     if (form.endDate && form.startDate && form.endDate < form.startDate) {
-      errors.endDate = "End date cannot be before start date.";
+      errors.endDate = t("operators.endDateBeforeStart");
     }
 
     return errors;
@@ -75,103 +80,40 @@ function OperatorAssignmentFormModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <h2 className="text-lg font-bold mb-4">
-        {isEditing ? "Edit operator assignment" : "Assign operator"}
-      </h2>
+    <Modal open={isOpen} onClose={handleClose} title={isEditing ? t("operators.editTitle") : t("operators.add")}>
+      {serverError && <FormAlert>{serverError}</FormAlert>}
 
-      {serverError && (
-        <p className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded mb-4">{serverError}</p>
-      )}
-
-      {!hasEquipment && !isEquipmentLoading && (
-        <p className="bg-amber-50 text-amber-700 text-sm px-3 py-2 rounded mb-4">
-          No equipment available. Add equipment before assigning an operator.
-        </p>
-      )}
+      {!hasEquipment && !isEquipmentLoading && <FormAlert tone="warning">{t("operators.noEquipment")}</FormAlert>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div>
-          <label className="text-sm font-medium">Operator's full name</label>
-          <input
-            type="text"
-            name="fullName"
-            value={form.fullName}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-          />
-          {fieldErrors.fullName && <p className="text-red-600 text-xs mt-1">{fieldErrors.fullName}</p>}
-        </div>
+        <Field label={t("operators.fullName")} error={fieldErrors.fullName}>
+          <Input name="fullName" value={form.fullName} onChange={handleChange} />
+        </Field>
 
-        <div>
-          <label className="text-sm font-medium">Job title</label>
-          <input
-            type="text"
-            name="jobTitle"
-            value={form.jobTitle}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-          />
-          {fieldErrors.jobTitle && <p className="text-red-600 text-xs mt-1">{fieldErrors.jobTitle}</p>}
-        </div>
+        <Field label={t("operators.jobTitle")} error={fieldErrors.jobTitle}>
+          <Input name="jobTitle" value={form.jobTitle} onChange={handleChange} />
+        </Field>
 
-        <div>
-          <label className="text-sm font-medium">Equipment</label>
-          <select
-            name="equipmentId"
-            value={form.equipmentId}
-            onChange={handleChange}
-            disabled={isEquipmentLoading}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1 disabled:bg-gray-50"
-          >
-            <option value="">
-              {isEquipmentLoading ? "Loading equipment…" : "Select equipment"}
-            </option>
-            {equipments.map((equipment) => (
-              <option key={equipment.id} value={equipment.id}>{equipment.name}</option>
-            ))}
-          </select>
-          {fieldErrors.equipmentId && <p className="text-red-600 text-xs mt-1">{fieldErrors.equipmentId}</p>}
-        </div>
+        <EquipmentField
+          value={form.equipmentId}
+          onChange={handleChange}
+          error={fieldErrors.equipmentId}
+          equipments={equipments}
+          isEquipmentLoading={isEquipmentLoading}
+          emptyOptionLabel={t("operators.selectEquipment")}
+        />
 
         <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="text-sm font-medium">Start date</label>
-            <input
-              type="date"
-              name="startDate"
-              value={form.startDate}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-            />
-            {fieldErrors.startDate && <p className="text-red-600 text-xs mt-1">{fieldErrors.startDate}</p>}
-          </div>
+          <Field className="flex-1" label={t("operators.startDate")} error={fieldErrors.startDate}>
+            <Input type="date" name="startDate" value={form.startDate} onChange={handleChange} />
+          </Field>
 
-          <div className="flex-1">
-            <label className="text-sm font-medium">End date (optional)</label>
-            <input
-              type="date"
-              name="endDate"
-              value={form.endDate}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-            />
-            {fieldErrors.endDate && <p className="text-red-600 text-xs mt-1">{fieldErrors.endDate}</p>}
-          </div>
+          <Field className="flex-1" label={t("operators.endDateOptional")} error={fieldErrors.endDate}>
+            <Input type="date" name="endDate" value={form.endDate} onChange={handleChange} />
+          </Field>
         </div>
 
-        <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-300">
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!hasEquipment}
-            className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Save
-          </button>
-        </div>
+        <FormActions onCancel={handleClose} submitDisabled={!hasEquipment} />
       </form>
     </Modal>
   );
