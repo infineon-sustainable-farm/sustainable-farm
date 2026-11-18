@@ -9,7 +9,8 @@
  *
  * Kept from Tailwind 4 without redefinition, because machinery renders with them:
  * - spacing: --spacing 0.25rem (4 px grid: p-1 = 4 px, p-5 = 20 px);
- * - text sizes (7): xs 12, sm 14, base 16, lg 18, xl 20, 2xl 24, 3xl 30 px;
+ * - text sizes (7): xs 12, sm 14, base 16, lg 18, xl 20, 2xl 24, 3xl 30 px (plus --text-display
+ *   below, 64 px, for the headline of the home page only);
  * - weights: normal 400, medium 500, semibold 600, bold 700;
  * - the gray, green, amber, red, sky and teal palettes the semantic colours point to.
  *
@@ -73,6 +74,11 @@
   /* Dialog backdrop (machinery bg-black/50) */
   --color-backdrop: rgb(0 0 0 / 0.5);
 
+  /* Photo scrim (home page): a plain neutral dark layer over the landscape photo, no gradient, so
+     white text passes AA on every pixel of the photo (4.7:1 on the brightest one, 15:1 median) */
+  --color-scrim: rgb(0 0 0 / 0.55);
+  --color-on-scrim: #ffffff; /* text, icons and outlines over the scrim */
+
   /* Charts (machinery fuel and usage chart) */
   --color-chart-1: #0a8276;
   --color-chart-2: #d9a441;
@@ -105,8 +111,14 @@
   --z-overlay: 50; /* menu button, modals */
   --z-toast: 60;
 
+  /* Display text: the headline of the home page only (64 px, scale of @arc/design) */
+  --text-display: 4rem;
+  --text-display--line-height: 1.1;
+
   /* Layout */
   --width-sidebar: 15rem; /* 240 px (w-60) */
+  --breakpoint-xs: 24rem; /* 384 px: two module cards per row on the home page */
+  --breakpoint-wide: 90rem; /* 1440 px: the seven module cards in one row on the home page */
 }
 
 /* Base styles */
