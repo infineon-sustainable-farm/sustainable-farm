@@ -175,8 +175,7 @@
     "deleteMessage": "Das Notstromereignis vom {{date}} löschen?",
     "dateNotFuture": "Das Datum muss heute oder in der Vergangenheit liegen.",
     "valueNonNegative": "Geben Sie einen Wert größer oder gleich 0 ein.",
-    "reasonTooLong": "Der Auslöser darf höchstens {{max}} Zeichen lang sein.",
-    "mockupNote": "Hinweis: Die Felder „Abgedeckte kritische Lasten“ und „Amortisation gegenüber reinem Diesel“ des ursprünglichen Entwurfs fehlen hier, da das aktuelle Datenmodell keine Tabelle dafür hat (ein Aggregatereignis erfasst nur Auslöser, Dauer, Kraftstoff und Kosten)."
+    "reasonTooLong": "Der Auslöser darf höchstens {{max}} Zeichen lang sein."
   },
   "carbon": {
     "title": "CO₂-Bilanz",

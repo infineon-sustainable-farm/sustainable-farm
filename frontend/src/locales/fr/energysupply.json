@@ -175,8 +175,7 @@
     "deleteMessage": "Supprimer l’événement de secours du {{date}} ?",
     "dateNotFuture": "La date doit être aujourd’hui ou dans le passé.",
     "valueNonNegative": "Saisissez une valeur supérieure ou égale à 0.",
-    "reasonTooLong": "Le motif du déclenchement doit compter {{max}} caractères au plus.",
-    "mockupNote": "Remarque : les panneaux « Charges critiques couvertes » et « Retour sur investissement face au tout diesel » de la maquette d’origine ne figurent pas ici, faute de table dans le modèle de données actuel (un événement du groupe électrogène ne suit que le motif, la durée, le carburant et le coût)."
+    "reasonTooLong": "Le motif du déclenchement doit compter {{max}} caractères au plus."
   },
   "carbon": {
     "title": "Empreinte carbone",
