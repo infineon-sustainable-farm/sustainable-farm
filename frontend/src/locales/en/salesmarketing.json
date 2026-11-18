@@ -741,5 +741,112 @@
       "deleteContactFailed": "Failed to delete contact",
       "certificationUpdateFailed": "Failed to update certification"
     }
+  },
+  "channels": {
+    "title": "Sales Channels",
+    "subtitle": "Real-time performance metrics across all distribution networks.",
+    "offline": "Offline Mode",
+    "liveSync": "Live Sync Active",
+    "hideTargets": "Hide Targets",
+    "manageTargets": "Manage Targets",
+    "addTarget": "Add Target",
+    "newChannel": "New Channel",
+    "apiNotice": "API Connection Notice",
+    "actionFailed": "Action failed",
+    "loading": "Loading sales channels…",
+    "requestFailed": "Request failed",
+    "failure": {
+      "channels": "Channels: {{message}}",
+      "targets": "Targets: {{message}}",
+      "orders": "Orders: {{message}}"
+    },
+    "failureSeparator": " · ",
+    "loadFailed": "Sales channel data could not be loaded. Please try again. {{failures}}",
+    "partialLoad": "Partial load - {{failures}}",
+    "loadDataFailed": "Unable to load sales channel data. Please try again.",
+    "loadChannelForEditFailed": "Unable to load sales channel #{{id}} for editing.",
+    "loadTargetForEditFailed": "Unable to load target #{{id}} for editing.",
+    "channelCreated": "Sales channel \"{{name}}\" created successfully.",
+    "channelUpdated": "Sales channel \"{{name}}\" updated successfully.",
+    "channelDeleted": "Sales channel \"{{name}}\" deleted successfully.",
+    "createChannelFailed": "Failed to create channel",
+    "updateChannelFailed": "Failed to update channel",
+    "deleteChannelFailed": "Failed to delete channel",
+    "selectChannelFirst": "Please select a channel first.",
+    "targetCreated": "Target created successfully.",
+    "targetUpdated": "Target updated successfully.",
+    "targetDeleted": "Target deleted successfully.",
+    "createTargetFailed": "Failed to create target",
+    "updateTargetFailed": "Failed to update target",
+    "deleteTargetFailed": "Failed to delete target",
+    "menuFor": "Actions for {{name}}",
+    "editChannel": "Edit Channel",
+    "deleteChannel": "Delete Channel",
+    "revenueTarget": "Revenue Target",
+    "channelId": "Channel ID",
+    "comparison": "Channel Performance Comparison",
+    "actualYtd": "Actual Revenue YTD",
+    "targetsTitle": "Sales Targets",
+    "targetsSubtitle": "Period-based revenue objectives for each channel.",
+    "filterChannel": "Channel",
+    "allChannels": "All Channels",
+    "newTarget": "New Target",
+    "noTargets": "No targets found. Click \"New Target\" to add one.",
+    "table": {
+      "channel": "Channel",
+      "period": "Period",
+      "targetRevenue": "Target Revenue"
+    },
+    "channelNumber": "Channel #{{id}}",
+    "period": "{{start}} - {{end}}",
+    "editTarget": "Edit target",
+    "deleteTarget": "Delete target",
+    "newChannelTitle": "New Sales Channel",
+    "editChannelTitle": "Edit Sales Channel #{{id}}",
+    "channelFormHint": "Enter the sales channel details below.",
+    "newTargetTitle": "New Sales Target",
+    "editTargetTitle": "Edit Target #{{id}}",
+    "targetFormHint": "Enter the sales target details below.",
+    "fields": {
+      "name": "Channel Name",
+      "namePlaceholder": "e.g. Online Store, Distributors, Export Direct…",
+      "channel": "Channel",
+      "selectChannel": "Select a channel…",
+      "periodStart": "Period Start",
+      "periodEnd": "Period End",
+      "revenueTarget": "Revenue Target (€)",
+      "revenuePlaceholder": "e.g. 4500000"
+    },
+    "saving": "Saving…",
+    "saveChanges": "Save Changes",
+    "createChannel": "Create Channel",
+    "createTarget": "Create Target",
+    "deleting": "Deleting…",
+    "deleteChannelTitle": "Delete channel?",
+    "deleteChannelMessage": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "deleteTargetTitle": "Delete target?",
+    "deleteTargetMessage": "Are you sure you want to delete this sales target for {{start}} - {{end}} ({{revenue}})? This action cannot be undone.",
+    "presets": {
+      "online": {
+        "name": "Online Store",
+        "short": "Online"
+      },
+      "distributors": {
+        "name": "Distributors",
+        "short": "Distributors"
+      },
+      "retail": {
+        "name": "Retail Partners",
+        "short": "Retail"
+      },
+      "export": {
+        "name": "Export Direct",
+        "short": "Export"
+      }
+    },
+    "none": "-",
+    "revenue": "€{{value}}",
+    "revenueThousands": "€{{value}}K",
+    "revenueMillions": "€{{value}}M"
   }
 }
