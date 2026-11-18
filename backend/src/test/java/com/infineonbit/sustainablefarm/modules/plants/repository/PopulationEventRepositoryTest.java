@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
 import com.infineonbit.sustainablefarm.modules.plants.support.TestBlockIds;
 import org.junit.jupiter.api.Test;
@@ -33,23 +33,23 @@ public class PopulationEventRepositoryTest {
     private final TestBlockIds blocks = new TestBlockIds();
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private PopulationEventRepository populationEventRepository;
 
-    private Variety variety(String name) {
-        Variety variety = new Variety();
+    private BlockVariety variety(String name) {
+        BlockVariety variety = new BlockVariety();
         variety.assignBlock(blocks.of(null, "A"), new BlockLabel(null, "A"));
         variety.setName(name);
-        return varietyRepository.save(variety);
+        return blockVarietyRepository.save(variety);
     }
 
-    private Variety variety(Long farmId, String blockCode, String name) {
-        Variety variety = new Variety();
+    private BlockVariety variety(Long farmId, String blockCode, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.assignBlock(blocks.of(farmId, blockCode), new BlockLabel(farmId, blockCode));
         variety.setName(name);
-        return varietyRepository.save(variety);
+        return blockVarietyRepository.save(variety);
     }
 
     private List<String> plantedNames(Long farmId, String blockCode) {
@@ -59,7 +59,7 @@ public class PopulationEventRepositoryTest {
                 .toList();
     }
 
-    private void event(Variety variety, PopulationEventType type, int treeCount) {
+    private void event(BlockVariety variety, PopulationEventType type, int treeCount) {
         PopulationEvent event = new PopulationEvent();
         event.setVariety(variety);
         event.setEventType(type);
@@ -69,8 +69,8 @@ public class PopulationEventRepositoryTest {
         populationEventRepository.save(event);
     }
 
-    private Map<Long, Long> balances(Variety... varieties) {
-        List<Long> ids = Arrays.stream(varieties).map(Variety::getId).toList();
+    private Map<Long, Long> balances(BlockVariety... varieties) {
+        List<Long> ids = Arrays.stream(varieties).map(BlockVariety::getId).toList();
         return populationEventRepository.findTreeBalances(ids).stream()
                 .collect(Collectors.toMap(TreeBalance::getVarietyId, TreeBalance::getBalance));
     }
@@ -78,7 +78,7 @@ public class PopulationEventRepositoryTest {
     @Test
     void findTreeBalances_shouldReturnNoLine_whenVarietyHasNoEvent() {
         // Arrange
-        Variety keitt = variety("Keitt");
+        BlockVariety keitt = variety("Keitt");
         // Act & Assert: no event means an unknown count, not zero
         assertTrue(balances(keitt).isEmpty());
     }
@@ -86,7 +86,7 @@ public class PopulationEventRepositoryTest {
     @Test
     void findTreeBalances_shouldAddAndSubtractByEventType() {
         // Arrange
-        Variety keitt = variety("Keitt");
+        BlockVariety keitt = variety("Keitt");
         event(keitt, PLANTING, 100);
         event(keitt, EXTENSION, 20);
         event(keitt, REPLACEMENT, 5);
@@ -99,9 +99,9 @@ public class PopulationEventRepositoryTest {
     @Test
     void findTreeBalances_shouldGiveOneBalancePerVariety() {
         // Arrange
-        Variety keitt = variety("Keitt");
-        Variety kent = variety("Kent");
-        Variety amelie = variety("Amelie");
+        BlockVariety keitt = variety("Keitt");
+        BlockVariety kent = variety("Kent");
+        BlockVariety amelie = variety("Amelie");
         event(keitt, PLANTING, 150);
         event(kent, PLANTING, 40);
         event(kent, MORTALITY, 2);
@@ -112,8 +112,8 @@ public class PopulationEventRepositoryTest {
     @Test
     void existsByVarietyIdAndEventType_shouldFindOnlyThePlantingOfThatVariety() {
         // Arrange
-        Variety keitt = variety("Keitt");
-        Variety kent = variety("Kent");
+        BlockVariety keitt = variety("Keitt");
+        BlockVariety kent = variety("Kent");
         event(keitt, PLANTING, 150);
         // Act & Assert
         assertTrue(populationEventRepository.existsByVarietyIdAndEventType(keitt.getId(), PLANTING));
@@ -124,8 +124,8 @@ public class PopulationEventRepositoryTest {
     @Test
     void findFirstByVarietyIdAndEventType_shouldReturnThePlantingOfThatVarietyOnly() {
         // Arrange: a later mortality must not be taken for the planting
-        Variety keitt = variety("Keitt");
-        Variety kent = variety("Kent");
+        BlockVariety keitt = variety("Keitt");
+        BlockVariety kent = variety("Kent");
         PopulationEvent planting = new PopulationEvent(
                 null, keitt, PLANTING, LocalDate.of(2023, 9, 24), 150, "user_entry", null);
         populationEventRepository.save(planting);
@@ -144,9 +144,9 @@ public class PopulationEventRepositoryTest {
     void findPlantingsByOptionalFilters_shouldSkipRowsWithoutPlanting_likeTheZalkaRow() {
         // Arrange: the Zalka row has no event; another row has a mortality only
         variety(null, "A", "Keitt");
-        Variety kent = variety(null, "A", "Kent");
+        BlockVariety kent = variety(null, "A", "Kent");
         event(kent, MORTALITY, 1);
-        Variety keittB = variety(null, "B", "Keitt");
+        BlockVariety keittB = variety(null, "B", "Keitt");
         event(keittB, PLANTING, 150);
         event(keittB, MORTALITY, 2);
         // Act & Assert: only the planting, not the mortality of the same row

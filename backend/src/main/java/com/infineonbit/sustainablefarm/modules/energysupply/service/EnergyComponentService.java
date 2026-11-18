@@ -6,7 +6,6 @@ import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyComponentR
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergyComponent;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
-import jakarta.persistence.EntityManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/** The components of the energy system, found by their business code (the API {@code componentId}). */
 @Service("energyComponentService")
 @Transactional(readOnly = true)
 public class EnergyComponentService {
@@ -22,13 +22,10 @@ public class EnergyComponentService {
             "This operation conflicts with a related record. Please refresh and try again.";
 
     private final EnergyComponentRepository energyComponentRepository;
-    private final EntityManager entityManager;
     private final AlertService alertService;
 
-    public EnergyComponentService(EnergyComponentRepository energyComponentRepository, EntityManager entityManager,
-                                  AlertService alertService) {
+    public EnergyComponentService(EnergyComponentRepository energyComponentRepository, AlertService alertService) {
         this.energyComponentRepository = energyComponentRepository;
-        this.entityManager = entityManager;
         this.alertService = alertService;
     }
 
@@ -42,16 +39,14 @@ public class EnergyComponentService {
 
     @Transactional
     public EnergyComponentResponse create(EnergyComponentRequest request) {
-        EnergyComponent component = new EnergyComponent();
-        component.setComponentId(request.componentId());
-        applyRequest(component, request);
-        if (energyComponentRepository.existsById(component.getComponentId())) {
+        if (energyComponentRepository.existsByCode(request.componentId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Energy component already exists: " + component.getComponentId());
+                    "Energy component already exists: " + request.componentId());
         }
-        entityManager.persist(component);
-        entityManager.flush();
-        return EnergyComponentResponse.from(component);
+        EnergyComponent component = new EnergyComponent();
+        component.setCode(request.componentId());
+        applyRequest(component, request);
+        return EnergyComponentResponse.from(energyComponentRepository.save(component));
     }
 
     @Transactional
@@ -66,14 +61,14 @@ public class EnergyComponentService {
         EnergyComponent component = findEntity(componentId);
         // The alerts live in the notification module, without a database foreign key to the
         // component: refuse the deletion as the former foreign key did.
-        if (alertService.isAboutComponent(componentId)) {
+        if (alertService.isAboutComponent(component)) {
             throw new ConflictException(RELATED_RECORD_CONFLICT);
         }
         energyComponentRepository.delete(component);
     }
 
     private EnergyComponent findEntity(String componentId) {
-        return energyComponentRepository.findById(componentId)
+        return energyComponentRepository.findByCode(componentId)
                 .orElseThrow(() -> new EnergySupplyNotFoundException("Energy component", componentId));
     }
 

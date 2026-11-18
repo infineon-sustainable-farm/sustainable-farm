@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * handful of rows, so the comparison runs in Java on the whole list rather than
  * in SQL, where accent folding would depend on the database.
  *
- * <p>This matching applies to the reference only. Variety rows are still looked
+ * <p>This matching applies to the reference only. BlockVariety rows are still looked
  * up ignoring case but not accents.
  */
 final class VarietyReferenceMatcher {

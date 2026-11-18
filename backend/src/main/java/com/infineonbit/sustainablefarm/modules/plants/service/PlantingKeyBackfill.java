@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -22,7 +22,7 @@ import java.util.List;
  * finds.
  *
  * <p>Each row is filled in its own transaction, with a bulk update that
- * changes no other column: {@code date_maj} keeps its value. When a row has
+ * changes no other column: {@code last_updated} keeps its value. When a row has
  * the same key as an older one, the unique constraint refuses it: its key
  * stays empty and it is logged as an error with both identifiers. Nothing is
  * ever deleted or merged; that is left to a person who knows the orchard.
@@ -53,14 +53,14 @@ public class PlantingKeyBackfill implements CommandLineRunner {
                   int calendarsKeyed, List<Long> calendarDuplicates) {
     }
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final GrowthCalendarRepository growthCalendarRepository;
     private final TransactionTemplate transactionTemplate;
 
-    public PlantingKeyBackfill(VarietyRepository varietyRepository,
+    public PlantingKeyBackfill(BlockVarietyRepository blockVarietyRepository,
                                GrowthCalendarRepository growthCalendarRepository,
                                PlatformTransactionManager transactionManager) {
-        this.varietyRepository = varietyRepository;
+        this.blockVarietyRepository = blockVarietyRepository;
         this.growthCalendarRepository = growthCalendarRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
@@ -84,19 +84,19 @@ public class PlantingKeyBackfill implements CommandLineRunner {
     Result fill() {
         int varietiesKeyed = 0;
         List<Long> varietyDuplicates = new ArrayList<>();
-        for (Variety row : varietyRepository.findByVarietyKeyIsNullOrderByIdAsc()) {
-            String key = Variety.keyOf(row.getBlockId(), row.getName());
+        for (BlockVariety row : blockVarietyRepository.findByVarietyKeyIsNullOrderByIdAsc()) {
+            String key = BlockVariety.keyOf(row.getBlockId(), row.getName());
             if (key == null) {
                 continue;
             }
             try {
-                Integer updated = transactionTemplate.execute(status -> varietyRepository.fillVarietyKey(row.getId(), key));
+                Integer updated = transactionTemplate.execute(status -> blockVarietyRepository.fillVarietyKey(row.getId(), key));
                 varietiesKeyed += updated == null ? 0 : updated;
             } catch (DataIntegrityViolationException duplicate) {
                 varietyDuplicates.add(row.getId());
                 log.error("Variety row {} has the same block and name as row {} (key \"{}\"): its variety_key "
                                 + "stays empty. Nothing was deleted.", row.getId(),
-                        varietyRepository.findByVarietyKey(key).map(Variety::getId).orElse(null), key);
+                        blockVarietyRepository.findByVarietyKey(key).map(BlockVariety::getId).orElse(null), key);
             }
         }
 

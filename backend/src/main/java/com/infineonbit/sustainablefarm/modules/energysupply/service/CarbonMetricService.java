@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.service;
 
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.CarbonMetricResponse;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.CarbonMetric;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.CarbonMetricRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +19,11 @@ public class CarbonMetricService {
         this.repository = repository;
     }
 
-    public List<CarbonMetric> findAll() {
-        return repository.findAll();
+    public List<CarbonMetricResponse> findAll() {
+        return repository.findAll().stream().map(CarbonMetricResponse::from).toList();
     }
 
-    public Optional<CarbonMetric> findById(String metricId) {
+    public Optional<CarbonMetric> findById(Long metricId) {
         return repository.findById(metricId);
     }
 
@@ -30,7 +31,7 @@ public class CarbonMetricService {
         return repository.save(metric);
     }
 
-    public void deleteById(String metricId) {
+    public void deleteById(Long metricId) {
         repository.deleteById(metricId);
     }
 }

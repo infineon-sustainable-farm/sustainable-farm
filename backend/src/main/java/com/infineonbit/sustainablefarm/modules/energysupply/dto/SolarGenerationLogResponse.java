@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record SolarGenerationLogResponse(
-        String logId,
+        Long logId,
         String componentId,
         String componentName,
         LocalDate date,
@@ -15,8 +15,8 @@ public record SolarGenerationLogResponse(
 
     public static SolarGenerationLogResponse from(SolarGenerationLog log) {
         return new SolarGenerationLogResponse(
-                log.getLogId(),
-                log.getComponent().getComponentId(),
+                log.getId(),
+                log.getComponent().getCode(),
                 log.getComponent().getName(),
                 log.getDate(),
                 log.getKwhProduced(),

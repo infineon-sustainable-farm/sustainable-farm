@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthCalendarResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.exception.GrowthCalendarNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ import java.util.Objects;
 public class GrowthCalendarService {
 
     private final GrowthCalendarRepository growthCalendarRepository;
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final PlantsBlocks plantsBlocks;
 
     /**
@@ -36,10 +36,10 @@ public class GrowthCalendarService {
      * @param varieties candidate varieties, already loaded
      * @return the variety names, empty if the block has none
      */
-    private static List<String> varietyNamesFor(GrowthCalendar entry, List<Variety> varieties) {
+    private static List<String> varietyNamesFor(GrowthCalendar entry, List<BlockVariety> varieties) {
         return varieties.stream()
                 .filter(variety -> Objects.equals(variety.getBlockId(), entry.getBlockId()))
-                .map(Variety::getName)
+                .map(BlockVariety::getName)
                 .distinct()
                 .sorted()
                 .toList();
@@ -56,7 +56,7 @@ public class GrowthCalendarService {
      * @param today     the reference date for the age
      * @return the API representation of that entry
      */
-    private static GrowthCalendarResponse toResponse(GrowthCalendar entry, List<Variety> varieties, LocalDate today) {
+    private static GrowthCalendarResponse toResponse(GrowthCalendar entry, List<BlockVariety> varieties, LocalDate today) {
         Period age = GrowthPhaseCalculator.computeAge(entry.getPlantingDate(), today);
         return new GrowthCalendarResponse(
                 entry.getId(),
@@ -71,7 +71,7 @@ public class GrowthCalendarService {
                 GrowthPhaseCalculator.computePhaseYearsBand(age),
                 entry.getCurrentStage(),
                 entry.getPhaseYears(),
-                entry.getLocalRainfallMm(),
+                Decimals.toDouble(entry.getLocalRainfallMm()),
                 entry.getSource(),
                 entry.getLastUpdated());
     }
@@ -103,7 +103,7 @@ public class GrowthCalendarService {
         if (entries.isEmpty()) {
             return List.of();
         }
-        List<Variety> varieties = varietyRepository.findByOptionalFilters(blocks.all(), blocks.ids());
+        List<BlockVariety> varieties = blockVarietyRepository.findByOptionalFilters(blocks.all(), blocks.ids());
         return entries.stream().map(entry -> toResponse(entry, varieties, today)).toList();
     }
 
@@ -125,7 +125,7 @@ public class GrowthCalendarService {
     GrowthCalendarResponse getGrowthCalendarEntryById(Long id, LocalDate today) {
         GrowthCalendar entry = growthCalendarRepository.findById(id)
                 .orElseThrow(() -> new GrowthCalendarNotFoundException(id));
-        List<Variety> varieties = varietyRepository.findByOptionalFilters(false, List.of(entry.getBlockId()));
+        List<BlockVariety> varieties = blockVarietyRepository.findByOptionalFilters(false, List.of(entry.getBlockId()));
         return toResponse(entry, varieties, today);
     }
 }
