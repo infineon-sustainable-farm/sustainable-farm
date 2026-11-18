@@ -62,6 +62,18 @@
       "LOSS": "Verlust",
       "ADJUSTMENT_IN": "Korrektur (Zugang)",
       "ADJUSTMENT_OUT": "Korrektur (Abgang)"
+    },
+    "nurseryStage": {
+      "GERMINATION": "Keimung",
+      "ROOTSTOCK_GROWTH": "Unterlagenwachstum",
+      "GRAFTED": "Veredelt",
+      "HARDENING": "Abhärtung",
+      "READY_TO_TRANSPLANT": "Bereit zur Auspflanzung"
+    },
+    "nurseryEvent": {
+      "STAGE_CHANGE": "Stadiumwechsel",
+      "LOSS": "Verlust",
+      "TRANSPLANT": "Auspflanzung"
     }
   },
   "blockFilter": {
@@ -311,6 +323,154 @@
         "methodTooLong": "Die Methode darf höchstens 255 Zeichen lang sein.",
         "reasonRequired": "Der Grund ist erforderlich.",
         "reasonTooLong": "Der Grund darf höchstens 255 Zeichen lang sein."
+      }
+    }
+  },
+  "nursery": {
+    "documentTitle": "Anzucht — Pflanzen",
+    "title": "Anzucht",
+    "subtitle": "Sämlingschargen bis zu ihrer Auspflanzung.",
+    "addBatch": "Charge hinzufügen",
+    "recordEvent": "Ereignis erfassen",
+    "destinationBlock": "Zielblock:",
+    "alerts": {
+      "title": "Auspflanzungswarnungen",
+      "subtitle": "Alle Chargen.",
+      "loading": "Auspflanzungswarnungen werden geladen…",
+      "error": "Warnungen sind nicht verfügbar.",
+      "empty": "Heute ist keine Charge auszupflanzen.",
+      "itemTitle": "Auszupflanzende Charge",
+      "dateLabel": "Geplante Auspflanzung"
+    },
+    "batches": {
+      "title": "Anzuchtchargen",
+      "loading": "Chargen werden geladen…",
+      "error": "Chargen konnten nicht geladen werden",
+      "errorHint": "Die Anfrage an den Server ist fehlgeschlagen.",
+      "empty": "Noch keine Anzuchtcharge",
+      "emptyForBlock": "Für diesen Block ist keine Charge geplant",
+      "emptyForBlockHint": "Wählen Sie „Alle Blöcke“.",
+      "caption": "Anzuchtchargen",
+      "columns": {
+        "batch": "Charge",
+        "variety": "Sorte",
+        "inNursery": "In Anzucht",
+        "destBlock": "Zielblock",
+        "stage": "Stadium",
+        "plannedTransplant": "Geplante Auspflanzung",
+        "survivalRate": "Überlebensrate",
+        "origin": "Herkunft"
+      },
+      "noPlantsLeft": "Keine Pflanzen mehr",
+      "since": "seit {{date}}",
+      "supplierLot": "{{supplier}} · Los {{lot}}",
+      "batchOption": "{{code}} · {{variety}}"
+    },
+    "survival": {
+      "title": "Überlebensrate je Charge",
+      "cardTitle": "{{code}} · {{variety}}",
+      "cardTitleWithBlock": "{{code}} · {{variety}} ({{block}})",
+      "survived": "{{survived}} von {{initial}} überlebt",
+      "lostTransplanted": "{{lost}} verloren · {{transplanted}} ausgepflanzt"
+    },
+    "history": {
+      "title": "Anzuchtverlauf",
+      "subtitle": "Der Zielblockfilter gilt hier nicht.",
+      "batch": "Charge",
+      "event": "Ereignis",
+      "from": "Von",
+      "to": "Bis",
+      "allBatches": "Alle Chargen",
+      "allEvents": "Alle Ereignisse",
+      "error": "Anzuchtereignisse konnten nicht geladen werden",
+      "emptyFiltered": "Kein Ereignis entspricht diesen Filtern",
+      "emptyFilteredHint": "Versuchen Sie eine andere Charge, ein anderes Ereignis oder einen anderen Zeitraum.",
+      "empty": "Noch kein Anzuchtereignis erfasst",
+      "caption": "Anzuchtverlauf",
+      "columns": {
+        "date": "Datum",
+        "batch": "Charge",
+        "event": "Ereignis",
+        "stage": "Stadium",
+        "quantity": "Menge",
+        "block": "Block",
+        "reason": "Grund",
+        "source": "Quelle"
+      }
+    },
+    "addForm": {
+      "title": "Anzuchtcharge hinzufügen",
+      "batchCode": "Chargencode",
+      "variety": "Sorte",
+      "origin": "Herkunft",
+      "supplier": "Lieferant",
+      "supplierLot": "Losnummer des Lieferanten",
+      "startDate": "Startdatum",
+      "initialCount": "Anfangsbestand",
+      "initialStage": "Anfangsstadium",
+      "selectStage": "Stadium wählen",
+      "plannedDate": "Geplantes Auspflanzdatum",
+      "plannedBlock": "Geplanter Block",
+      "submit": "Charge hinzufügen",
+      "submitting": "Wird hinzugefügt…",
+      "notes": {
+        "batchCode": "Buchstaben werden großgeschrieben gespeichert: aus p1 wird P1.",
+        "varietyName": "Bei der Auspflanzung wird diese Sorte gepflanzt. Die Prognose verwendet die Referenz mit demselben Namen.",
+        "startedOn": "Tag der Aussaat oder, bei einem Zukauf, des Eingangs.",
+        "plannedBlockCode": "Optional. Die Auspflanzungswarnungen nennen ihn."
+      },
+      "errors": {
+        "batchCodeRequired": "Der Chargencode ist erforderlich.",
+        "batchCodeFormat": "Der Chargencode darf bis zu 20 Buchstaben, Ziffern oder Bindestriche enthalten, etwa P1 oder KEITT-2026-01.",
+        "varietyRequired": "Die Sorte ist erforderlich.",
+        "varietyTooLong": "Die Sorte darf höchstens {{max}} Zeichen lang sein.",
+        "originRequired": "Die Herkunft ist erforderlich.",
+        "supplierRequired": "Bei einem externen Zukauf ist der Lieferant erforderlich.",
+        "supplierTooLong": "Der Lieferant darf höchstens {{max}} Zeichen lang sein.",
+        "lotTooLong": "Die Losnummer des Lieferanten darf höchstens {{max}} Zeichen lang sein.",
+        "startRequired": "Das Startdatum ist erforderlich.",
+        "startFuture": "Das Startdatum darf nicht in der Zukunft liegen.",
+        "countInvalid": "Der Anfangsbestand muss eine ganze Zahl ab 1 sein.",
+        "stageRequired": "Das Anfangsstadium ist erforderlich.",
+        "plannedDateRequired": "Das geplante Auspflanzdatum ist erforderlich.",
+        "plannedBlockFormat": "Der geplante Block muss ein kurzer Code wie E oder B2 sein, ohne Präfix und ohne Leerzeichen."
+      }
+    },
+    "eventForm": {
+      "title": "Anzuchtereignis erfassen",
+      "event": "Ereignis",
+      "batch": "Charge",
+      "date": "Datum",
+      "stage": "Stadium",
+      "quantity": "Menge",
+      "reason": "Grund",
+      "block": "Block",
+      "selectBatch": "Charge wählen",
+      "selectStage": "Stadium wählen",
+      "submitting": "Wird erfasst…",
+      "submit": {
+        "STAGE_CHANGE": "Stadiumwechsel erfassen",
+        "LOSS": "Verlust erfassen",
+        "TRANSPLANT": "Auspflanzung erfassen"
+      },
+      "notes": {
+        "currentStage": "Aktuelles Stadium: {{stage}}, seit {{date}}.",
+        "inNursery": "In Anzucht: {{count}}",
+        "plannedBlock": "Geplanter Block: {{block}}. ",
+        "oncePerBlock": "Eine Sorte kann auf einem Block nur einmal gepflanzt werden.",
+        "transplant": "Die Auspflanzung erfasst auch die Pflanzung von {{variety}} auf diesem Block: Sie erscheint dann unter Sorten, im Wachstumskalender und in der Prognose.",
+        "batchVariety": "der Sorte der Charge"
+      },
+      "errors": {
+        "batchRequired": "Die Charge ist erforderlich.",
+        "dateRequired": "Das Datum ist erforderlich.",
+        "dateFuture": "Das Datum darf nicht in der Zukunft liegen.",
+        "stageRequired": "Das Stadium ist erforderlich.",
+        "quantityInvalid": "Die Menge muss eine ganze Zahl ab 1 sein.",
+        "reasonRequired": "Der Grund ist erforderlich.",
+        "reasonTooLong": "Der Grund darf höchstens {{max}} Zeichen lang sein.",
+        "blockRequired": "Der Block ist erforderlich.",
+        "blockFormat": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix und ohne Leerzeichen."
       }
     }
   }
