@@ -20,7 +20,8 @@ import java.util.Map;
  * Personnel data - Supporting Entity
  * 
  * The operator is the product transformation role of a person of the staff referential
- * ({@code modules.staff.api.PersonDirectory}): name and active status are the person's.
+ * ({@code modules.staff.api.PersonDirectory}): the name is the person's, the active status
+ * is the operator's own.
  *
  * Business Rules:
  * - Only ACTIVE operators can be assigned
@@ -51,19 +52,17 @@ public class OperatorServiceImpl implements OperatorService {
     @Override
     public Operator createOperator(Operator operator) {
         // Business Rule: Default to ACTIVE status if not set
-        boolean statusGiven = operator.getActiveStatus() != null;
-        boolean active = !statusGiven || operator.getActiveStatus() == ActiveStatus.ACTIVE;
-        PersonDto person = personDirectory.findOrCreate(
-                new PersonDetails(operator.getOperatorName(), null, null, active),
-                personId -> !operatorRepository.existsByPersonId(personId));
-        if (statusGiven && person.active() != active) {
-            person = personDirectory.update(person.id(), new PersonDetails(null, null, null, active));
+        if (operator.getActiveStatus() == null) {
+            operator.setActiveStatus(ActiveStatus.ACTIVE);
         }
+        PersonDto person = personDirectory.findOrCreate(
+                PersonDetails.named(operator.getOperatorName()),
+                personId -> !operatorRepository.existsByPersonId(personId));
         operator.setPersonId(person.id());
         return withPerson(operatorRepository.save(operator), person);
     }
 
-    /** Updates the role attributes here and the name and active status on the person. */
+    /** Updates the role attributes here and the name on the person. */
     @Override
     public Operator updateOperator(String operatorId, Operator operator) {
         Operator existingOperator = operatorRepository.findById(operatorId)
@@ -73,9 +72,11 @@ public class OperatorServiceImpl implements OperatorService {
         existingOperator.setRole(operator.getRole());
         existingOperator.setCertifications(operator.getCertifications());
         existingOperator.setHireDate(operator.getHireDate());
-        PersonDto person = personDirectory.update(existingOperator.getPersonId(), new PersonDetails(
-                operator.getOperatorName(), null, null,
-                operator.getActiveStatus() == null ? null : operator.getActiveStatus() == ActiveStatus.ACTIVE));
+        if (operator.getActiveStatus() != null) {
+            existingOperator.setActiveStatus(operator.getActiveStatus());
+        }
+        PersonDto person = personDirectory.update(existingOperator.getPersonId(),
+                PersonDetails.named(operator.getOperatorName()));
 
         return withPerson(operatorRepository.save(existingOperator), person);
     }
@@ -144,7 +145,6 @@ public class OperatorServiceImpl implements OperatorService {
     @Transactional(readOnly = true)
     public boolean isOperatorActive(String operatorId) {
         return operatorRepository.findById(operatorId)
-                .map(this::withPerson)
                 .map(operator -> operator.getActiveStatus() == ActiveStatus.ACTIVE)
                 .orElse(false);
     }
@@ -158,9 +158,8 @@ public class OperatorServiceImpl implements OperatorService {
     @Override
     public Operator updateActiveStatus(String operatorId, ActiveStatus status) {
         Operator operator = getOperatorById(operatorId);
-        PersonDto person = personDirectory.update(operator.getPersonId(),
-                new PersonDetails(null, null, null, status == ActiveStatus.ACTIVE));
-        return withPerson(operator, person);
+        operator.setActiveStatus(status);
+        return withPerson(operatorRepository.save(operator));
     }
 
     @Override
@@ -197,10 +196,9 @@ public class OperatorServiceImpl implements OperatorService {
         return operators;
     }
 
-    /** Fills the name and active status of an operator from its person. */
+    /** Fills the name of an operator from its person. */
     private static Operator withPerson(Operator operator, PersonDto person) {
         operator.setOperatorName(person == null ? null : person.fullName());
-        operator.setActiveStatus(person == null || !person.active() ? ActiveStatus.INACTIVE : ActiveStatus.ACTIVE);
         return operator;
     }
 }

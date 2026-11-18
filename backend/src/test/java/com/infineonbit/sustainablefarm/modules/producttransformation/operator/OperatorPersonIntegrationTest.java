@@ -43,12 +43,12 @@ class OperatorPersonIntegrationTest {
     }
 
     @Test
-    void theActiveStatusIsThePersonsOne() {
+    void theActiveStatusIsTheOperatorsOwnAndLeavesThePersonAlone() {
         Operator created = operatorService.createOperator(operator("OP-PERSON-02", "Nafi PT-Person", ActiveStatus.ACTIVE));
 
         operatorService.updateActiveStatus("OP-PERSON-02", ActiveStatus.INACTIVE);
 
-        assertThat(personDirectory.findById(created.getPersonId()).orElseThrow().active()).isFalse();
+        assertThat(personDirectory.findById(created.getPersonId()).orElseThrow().active()).isTrue();
         assertThat(operatorService.isOperatorActive("OP-PERSON-02")).isFalse();
         assertThat(operatorService.getActiveOperatorsByRole(Role.DRYER))
                 .extracting(Operator::getOperatorId).doesNotContain("OP-PERSON-02");

@@ -21,9 +21,10 @@ import java.util.Map;
 
 /**
  * Staff members and guides: the visitor management role of a person of the staff
- * referential ({@link PersonDirectory}). Full name, email, phone and active status are read
- * from and written to the person, so a guide named like a machinery or product transformation
- * operator is the same person.
+ * referential ({@link PersonDirectory}). Full name, email and phone are read from and written
+ * to the person, so a guide named like a machinery or product transformation operator is the
+ * same person. The active flag is the guide's own: deactivating a guide leaves the person's
+ * other roles as they are.
  */
 @Service
 public class StaffServiceImpl implements StaffService {
@@ -73,20 +74,20 @@ public class StaffServiceImpl implements StaffService {
     @Transactional
     public StaffResponse create(StaffRequest request) {
         PersonDto person = personDirectory.findOrCreate(
-                new PersonDetails(request.getFullName(), request.getEmail(), request.getPhone(), request.getActive()),
+                new PersonDetails(request.getFullName(), request.getEmail(), request.getPhone(), null),
                 personId -> !staffRepository.existsByPersonId(personId));
         staffRepository.findByPersonId(person.id()).ifPresent(existing -> {
             throw new ConflictException("Email already used by staff member " + existing.getId());
         });
-        boolean activeChanges = request.getActive() != null && request.getActive() != person.active();
-        boolean phoneMissing = person.phone() == null && request.getPhone() != null && !request.getPhone().isBlank();
-        if (activeChanges || phoneMissing) {
-            person = personDirectory.update(person.id(),
-                    new PersonDetails(null, null, phoneMissing ? request.getPhone() : null, request.getActive()));
+        if (person.phone() == null && request.getPhone() != null && !request.getPhone().isBlank()) {
+            person = personDirectory.update(person.id(), new PersonDetails(null, null, request.getPhone(), null));
         }
         Staff staff = new Staff();
         staff.setPersonId(person.id());
         staff.setRole(request.getRole());
+        if (request.getActive() != null) {
+            staff.setActive(request.getActive());
+        }
         return StaffResponse.from(staffRepository.save(staff), person);
     }
 
@@ -99,7 +100,7 @@ public class StaffServiceImpl implements StaffService {
             person = personDirectory.update(staff.getPersonId(), new PersonDetails(request.getFullName(),
                     request.getEmail() == null ? "" : request.getEmail(),
                     request.getPhone() == null ? "" : request.getPhone(),
-                    request.getActive()));
+                    null));
         } catch (ConflictException e) {
             throw new ConflictException(staffRepository.findByPersonId(
                             personDirectory.findByEmail(request.getEmail()).map(PersonDto::id).orElse(null))
@@ -107,6 +108,9 @@ public class StaffServiceImpl implements StaffService {
                     .orElse("Email already used by another person"));
         }
         staff.setRole(request.getRole());
+        if (request.getActive() != null) {
+            staff.setActive(request.getActive());
+        }
         staffRepository.save(staff);
         staffRepository.flush();
         return StaffResponse.from(staff, person);
@@ -116,7 +120,8 @@ public class StaffServiceImpl implements StaffService {
     @Transactional
     public void deactivate(Long id) {
         Staff staff = getEntity(id);
-        personDirectory.update(staff.getPersonId(), new PersonDetails(null, null, null, false));
+        staff.setActive(false);
+        staffRepository.save(staff);
     }
 
     private PersonDto person(Staff staff) {

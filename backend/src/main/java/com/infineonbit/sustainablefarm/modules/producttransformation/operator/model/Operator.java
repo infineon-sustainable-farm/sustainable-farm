@@ -13,12 +13,13 @@ import java.time.LocalDate;
 /**
  * Operator Entity: the product transformation role of a person of the staff referential
  * (ADR 0004). The person ({@code person_id}, foreign key in
- * {@code ProductTransformationPersonForeignKeys}) carries the name and the active status; the
- * role, certifications and hire date stay here.
+ * {@code ProductTransformationPersonForeignKeys}) carries the name; the role, certifications,
+ * hire date and active status stay here (deactivating an operator leaves the person's other
+ * roles as they are).
  *
- * <p>{@code operatorName} and {@code activeStatus} are not stored in this table: they are the
- * person's name and active flag, filled by {@code OperatorServiceImpl} when it returns an
- * operator, and carry the requested values when an operator is created or updated.</p>
+ * <p>{@code operatorName} is not stored in this table: it is the person's name, filled by
+ * {@code OperatorServiceImpl} when it returns an operator, and carries the requested name when
+ * an operator is created or updated.</p>
  *
  * Business Rule: Operators must be certified for assigned role
  *
@@ -57,8 +58,8 @@ public class Operator {
     @Column(name = "certifications", columnDefinition = "TEXT")
     private String certifications;
 
-    /** The person's active flag (not stored here). */
-    @Transient
+    @Enumerated(EnumType.STRING)
+    @Column(name = "active_status", nullable = false, length = 20)
     private ActiveStatus activeStatus = ActiveStatus.ACTIVE;
 
     @Column(name = "hire_date", nullable = false)

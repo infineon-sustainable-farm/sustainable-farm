@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import i18n from '../../../shared/i18n/i18n';
 import {
   formatDate,
   formatDateTime,
+  formatEnum,
+  formatIsoDate,
   formatNumber,
   formatWeight,
   formatPercentage,
-  getStatusColor,
-  getQcResultColor,
-  getComplianceColor,
+  getStatusTone,
+  getQcResultTone,
+  getComplianceTone,
   truncate,
 } from './format';
 
@@ -22,11 +25,18 @@ describe('format utilities', () => {
     expect(dateTime).toMatch(/12:00/);
   });
 
+  it('reads date-only values as local dates', () => {
+    expect(formatIsoDate('2026-10-01')).toBe('Oct 1, 2026');
+    expect(formatIsoDate('')).toBe('N/A');
+    expect(formatIsoDate('soon')).toBe('soon');
+  });
+
   it('formats numbers, weights and percentages with defaults and fallbacks', () => {
     expect(formatNumber(null)).toBe('N/A');
     expect(formatNumber(undefined)).toBe('N/A');
     expect(formatNumber(12.345)).toBe('12.35');
     expect(formatNumber(12.345, 1)).toBe('12.3');
+    expect(formatNumber(1250)).toBe('1250.00');
 
     expect(formatWeight(null)).toBe('N/A');
     expect(formatWeight(480.5)).toBe('480.50 kg');
@@ -35,29 +45,45 @@ describe('format utilities', () => {
     expect(formatPercentage(92.346)).toBe('92.35%');
   });
 
-  it('maps every batch status to a colour and falls back for unknown values', () => {
-    expect(getStatusColor('CREATED')).toBe('bg-gray-100 text-gray-800');
-    expect(getStatusColor('INTAKE')).toBe('bg-blue-100 text-blue-800');
-    expect(getStatusColor('WASHING')).toBe('bg-cyan-100 text-cyan-800');
-    expect(getStatusColor('DRYING')).toBe('bg-yellow-100 text-yellow-800');
-    expect(getStatusColor('PACKAGING')).toBe('bg-orange-100 text-orange-800');
-    expect(getStatusColor('COMPLETED')).toBe('bg-green-100 text-green-800');
-    expect(getStatusColor('SHIPPED')).toBe('bg-purple-100 text-purple-800');
-    expect(getStatusColor('REJECTED')).toBe('bg-red-100 text-red-800');
-    expect(getStatusColor('UNKNOWN')).toBe('bg-gray-100 text-gray-800');
+  it('follows the active language', async () => {
+    await i18n.changeLanguage('fr');
+    expect(formatWeight(480.5)).toBe('480,50 kg');
+    expect(formatPercentage(92.346)).toBe('92,35 %');
+    expect(formatNumber(null)).toBe('N/D');
+    await i18n.changeLanguage('de');
+    expect(formatIsoDate('2026-10-01')).toBe('1. Okt. 2026');
+    expect(formatNumber(null)).toBe('k. A.');
+  });
+
+  it('translates enum codes and keeps unknown codes readable', () => {
+    expect(formatEnum('qcResult', 'PASS')).toBe('Pass');
+    expect(formatEnum('qcResult', 'SOMETHING_NEW')).toBe('Something New');
+    expect(formatEnum('qcResult', null)).toBe('N/A');
+  });
+
+  it('maps every batch status to a tone and falls back for unknown values', () => {
+    expect(getStatusTone('CREATED')).toBe('neutral');
+    expect(getStatusTone('INTAKE')).toBe('info');
+    expect(getStatusTone('WASHING')).toBe('info');
+    expect(getStatusTone('DRYING')).toBe('warning');
+    expect(getStatusTone('PACKAGING')).toBe('warning');
+    expect(getStatusTone('COMPLETED')).toBe('success');
+    expect(getStatusTone('SHIPPED')).toBe('success');
+    expect(getStatusTone('REJECTED')).toBe('error');
+    expect(getStatusTone('UNKNOWN')).toBe('neutral');
   });
 
   it('maps QC and compliance results and falls back for unknown values', () => {
-    expect(getQcResultColor('PASS')).toBe('bg-green-100 text-green-800');
-    expect(getQcResultColor('FAIL')).toBe('bg-red-100 text-red-800');
-    expect(getQcResultColor('REWORK')).toBe('bg-yellow-100 text-yellow-800');
-    expect(getQcResultColor('PENDING')).toBe('bg-gray-100 text-gray-800');
-    expect(getQcResultColor('OTHER')).toBe('bg-gray-100 text-gray-800');
+    expect(getQcResultTone('PASS')).toBe('success');
+    expect(getQcResultTone('FAIL')).toBe('error');
+    expect(getQcResultTone('REWORK')).toBe('warning');
+    expect(getQcResultTone('PENDING')).toBe('neutral');
+    expect(getQcResultTone('OTHER')).toBe('neutral');
 
-    expect(getComplianceColor('COMPLIANT')).toBe('bg-green-100 text-green-800');
-    expect(getComplianceColor('NON_COMPLIANT')).toBe('bg-red-100 text-red-800');
-    expect(getComplianceColor('PENDING')).toBe('bg-gray-100 text-gray-800');
-    expect(getComplianceColor('OTHER')).toBe('bg-gray-100 text-gray-800');
+    expect(getComplianceTone('COMPLIANT')).toBe('success');
+    expect(getComplianceTone('NON_COMPLIANT')).toBe('error');
+    expect(getComplianceTone('PENDING')).toBe('neutral');
+    expect(getComplianceTone('OTHER')).toBe('neutral');
   });
 
   it('truncates long text and leaves short text untouched', () => {

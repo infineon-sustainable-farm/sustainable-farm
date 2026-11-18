@@ -3,13 +3,17 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitCancelled;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitRescheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AvailabilityResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TimeSlotResponse;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Registration;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.RegistrationStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Staff;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.StaffRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
@@ -19,10 +23,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,6 +52,8 @@ class SchedulingServiceImplTest {
     private StaffRepository staffRepository;
     @Mock
     private PlatformTransactionManager transactionManager;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private SchedulingServiceImpl service;
 
@@ -225,5 +233,77 @@ class SchedulingServiceImplTest {
 
         service.refreshStatus(slot);
         assertThat(slot.getStatus()).isEqualTo(TimeSlotStatus.FULL);
+    }
+
+    // --- Visit events (consumed by watersupply) ---
+
+    private LocalDate openDay() {
+        LocalDate day = LocalDate.now().plusDays(2);
+        while (day.getDayOfWeek() == SchedulingRules.CLOSED_DAY) {
+            day = day.plusDays(1);
+        }
+        return day;
+    }
+
+    private Registration registrationOn(TimeSlot slot) {
+        Visitor visitor = new Visitor();
+        visitor.setId(5L);
+        visitor.setFullName("School A");
+        visitor.setGroupSize(4);
+        Registration registration = new Registration();
+        registration.setId(50L);
+        registration.setVisitor(visitor);
+        registration.setTimeSlot(slot);
+        registration.setStatus(RegistrationStatus.CONFIRMED);
+        return registration;
+    }
+
+    @Test
+    void update_movedSlot_reschedulesItsVisits() {
+        LocalDate day = openDay();
+        TimeSlot slot = buildSlot(1L, TimeSlotStatus.RESERVED);
+        slot.setDate(day);
+        TimeSlotRequest request = buildRequest();
+        request.setDate(day.plusWeeks(1));
+        request.setStartTime(LocalTime.of(14, 0));
+        request.setEndTime(LocalTime.of(16, 0));
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
+        when(registrationRepository.findByTimeSlotIdAndStatusNotIn(eq(1L), any()))
+                .thenReturn(List.of(registrationOn(slot)));
+
+        service.update(1L, request);
+
+        verify(eventPublisher).publishEvent(new VisitRescheduled("registration-50", "School A",
+                day.plusWeeks(1).atTime(14, 0).toInstant(ZoneOffset.UTC), 4));
+        verify(bookingService).rescheduleBookingsForSlot(1L);
+    }
+
+    @Test
+    void update_sameStart_publishesNothing() {
+        LocalDate day = openDay();
+        TimeSlot slot = buildSlot(1L, TimeSlotStatus.AVAILABLE);
+        slot.setDate(day);
+        TimeSlotRequest request = buildRequest();
+        request.setDate(day);
+        request.setMaxCapacity(8);
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
+
+        service.update(1L, request);
+
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+        verify(bookingService, never()).rescheduleBookingsForSlot(anyLong());
+    }
+
+    @Test
+    void cancel_publishesVisitCancelledForItsRegistrations() {
+        TimeSlot slot = buildSlot(1L, TimeSlotStatus.RESERVED);
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
+        when(registrationRepository.findByTimeSlotIdAndStatusNotIn(eq(1L), any()))
+                .thenReturn(List.of(registrationOn(slot)));
+
+        service.cancel(1L);
+
+        verify(eventPublisher).publishEvent(new VisitCancelled("registration-50"));
+        verify(bookingService).cancelBookingsForSlot(1L);
     }
 }

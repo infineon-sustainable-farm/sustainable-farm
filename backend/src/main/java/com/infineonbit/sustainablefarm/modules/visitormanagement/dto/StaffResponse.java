@@ -28,7 +28,7 @@ public class StaffResponse {
         r.role = s.getRole();
         r.email = person.email();
         r.phone = person.phone();
-        r.active = person.active();
+        r.active = s.isActive();
         r.createdAt = s.getCreatedAt();
         r.updatedAt = s.getUpdatedAt();
         return r;

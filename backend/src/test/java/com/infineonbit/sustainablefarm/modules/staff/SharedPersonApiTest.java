@@ -1,7 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.staff;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -83,5 +86,51 @@ class SharedPersonApiTest {
                 .extracting(a -> a.getPersonId()).containsExactly(person);
         assertThat(operatorRepository.findById("OP-SHARED-PERSON").orElseThrow().getPersonId()).isEqualTo(person);
         assertThat(staffRepository.findAll()).filteredOn(s -> person.equals(s.getPersonId())).hasSize(1);
+    }
+
+    @Test
+    void deactivatingAGuideLeavesTheSamePersonsPtOperatorActive() throws Exception {
+        String name = "Rasmata Active-Flag";
+        createOperator("OP-ACTIVE-FLAG-1", name);
+        long staffId = createGuide(name);
+
+        mockMvc.perform(delete("/api/v1/staff/" + staffId)).andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/staff/" + staffId)).andExpect(jsonPath("$.active").value(false));
+        mockMvc.perform(get("/api/operators/OP-ACTIVE-FLAG-1")).andExpect(jsonPath("$.activeStatus").value("ACTIVE"));
+        assertThat(personRepository.findAllByFullNameIgnoreCaseOrderByIdAsc(name)).singleElement()
+                .satisfies(person -> assertThat(person.isActive()).isTrue());
+    }
+
+    @Test
+    void deactivatingAPtOperatorLeavesTheSamePersonsGuideActive() throws Exception {
+        String name = "Boukary Active-Flag";
+        createOperator("OP-ACTIVE-FLAG-2", name);
+        long staffId = createGuide(name);
+
+        mockMvc.perform(put("/api/operators/OP-ACTIVE-FLAG-2").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"activeStatus\":\"INACTIVE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.activeStatus").value("INACTIVE"));
+
+        mockMvc.perform(get("/api/v1/staff/" + staffId)).andExpect(jsonPath("$.active").value(true));
+        assertThat(personRepository.findAllByFullNameIgnoreCaseOrderByIdAsc(name)).singleElement()
+                .satisfies(person -> assertThat(person.isActive()).isTrue());
+    }
+
+    private void createOperator(String id, String name) throws Exception {
+        mockMvc.perform(post("/api/operators").contentType(MediaType.APPLICATION_JSON).content("""
+                {"operatorId":"%s","operatorName":"%s","role":"DRYER","hireDate":"2025-06-01"}
+                """.formatted(id, name)))
+                .andExpect(status().isCreated());
+    }
+
+    private long createGuide(String name) throws Exception {
+        String body = mockMvc.perform(post("/api/v1/staff").contentType(MediaType.APPLICATION_JSON).content("""
+                {"fullName":"%s","role":"GUIDE"}
+                """.formatted(name)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return ((Number) com.jayway.jsonpath.JsonPath.read(body, "$.id")).longValue();
     }
 }

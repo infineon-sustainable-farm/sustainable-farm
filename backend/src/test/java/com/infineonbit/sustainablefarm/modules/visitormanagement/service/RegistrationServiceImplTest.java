@@ -6,6 +6,8 @@ import org.mockito.Spy;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitCancelled;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitScheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.*;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.*;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BriefingRepository;
@@ -18,7 +20,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -46,6 +50,8 @@ class RegistrationServiceImplTest {
     private SchedulingService schedulingService;
     @Spy
     private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private RegistrationServiceImpl service;
 
@@ -190,6 +196,8 @@ class RegistrationServiceImplTest {
         assertThat(resp.getVisitPurpose()).isEqualTo(VisitPurpose.TOURISM);
         assertThat(resp.isProspect()).isFalse();
         verify(schedulingService).refreshStatus(slot);
+        verify(eventPublisher).publishEvent(new VisitScheduled("registration-100", "Alice Dupont",
+                Instant.parse("2026-09-08T09:00:00Z"), 2));
     }
 
     @Test
@@ -307,6 +315,8 @@ class RegistrationServiceImplTest {
         RegistrationResponse resp = service.approve(100L);
         assertThat(resp.getStatus()).isEqualTo(RegistrationStatus.CONFIRMED);
         verify(briefingRepository).save(any(Briefing.class));
+        // The visit was already announced at registration: approving it changes nothing for it.
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
     // --- Reject ---
@@ -329,6 +339,7 @@ class RegistrationServiceImplTest {
 
         RegistrationResponse resp = service.reject(100L);
         assertThat(resp.getStatus()).isEqualTo(RegistrationStatus.REJECTED);
+        verify(eventPublisher).publishEvent(new VisitCancelled("registration-100"));
     }
 
     // --- Check-in ---
@@ -372,6 +383,7 @@ class RegistrationServiceImplTest {
 
         RegistrationResponse resp = service.cancel(100L);
         assertThat(resp.getStatus()).isEqualTo(RegistrationStatus.CANCELLED);
+        verify(eventPublisher).publishEvent(new VisitCancelled("registration-100"));
     }
 
     // --- Briefing ---

@@ -84,7 +84,9 @@ describe('PackagingRecordList', () => {
   it('renders records, quantities and per-type summary', async () => {
     render(<PackagingRecordList />);
 
-    const table = await screen.findByRole('table');
+    // The loading state is a skeleton table: wait for the rows before reading the table.
+    await screen.findByText('PK-1');
+    const table = screen.getByRole('table');
     expect(within(table).getByText('PK-1')).toBeTruthy();
     expect(within(table).getByText('PK-2')).toBeTruthy();
     expect(within(table).getByText('100.00 kg')).toBeTruthy();
@@ -311,5 +313,47 @@ describe('PackagingRecordList', () => {
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 
     expect(await screen.findByText('PK-1')).toBeTruthy();
+  });
+  it('keeps the delete dialog open with the server error when the deletion fails', async () => {
+    packagingApi.deletePackagingRecord.mockRejectedValueOnce(new Error('Record is shipped'));
+    render(<PackagingRecordList />);
+    await screen.findByText('PK-1');
+
+    const row = screen.getByText('PK-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(await within(dialog).findByText('Record is shipped')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('shows the server error in the form and keeps it open', async () => {
+    packagingApi.updatePackagingRecord.mockRejectedValueOnce(new Error('Lot already shipped'));
+    render(<PackagingRecordList />);
+    await screen.findByText('PK-1');
+
+    const row = screen.getByText('PK-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit Packaging Record' });
+    expect(within(dialog).queryByText('Editable suggestion; the backend enforces uniqueness.')).toBeNull();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(await within(dialog).findByText('Lot already shipped')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('reports a failed export readiness change above the list', async () => {
+    packagingApi.markExportReady.mockRejectedValueOnce(new Error(''));
+    render(<PackagingRecordList />);
+    await screen.findByText('PK-2');
+
+    const row = screen.getByText('PK-2').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Mark ready' }));
+
+    expect(await screen.findByText('Failed to mark the record as export ready')).toBeTruthy();
+    expect(screen.getByText('PK-2')).toBeTruthy();
   });
 });

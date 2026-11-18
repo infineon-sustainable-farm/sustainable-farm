@@ -105,6 +105,7 @@ class DryingRunDtoMappingTest {
         operator.setOperatorId(OPERATOR_ID);
         operator.setPersonId(personDirectory.idOf("DTO operator"));
         operator.setRole(Operator.Role.DRYER);
+        operator.setActiveStatus(Operator.ActiveStatus.ACTIVE);
         operator.setHireDate(LocalDate.now());
         operatorRepository.saveAndFlush(operator);
 

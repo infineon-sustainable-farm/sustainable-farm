@@ -135,7 +135,7 @@ class StaffServiceImplTest {
     }
 
     @Test
-    void update_toAnInactiveState_updatesThePerson() {
+    void update_toAnInactiveState_renamesThePersonButKeepsItActive() {
         when(staffRepository.findById(1L)).thenReturn(Optional.of(staff));
         lenient().when(staffRepository.save(any(Staff.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -147,14 +147,16 @@ class StaffServiceImplTest {
         assertThat(resp.isActive()).isFalse();
         assertThat(resp.getFullName()).isEqualTo("Awa Diallo Traore");
         assertThat(personDirectory.nameOf(staff.getPersonId())).isEqualTo("Awa Diallo Traore");
+        assertThat(personDirectory.findById(staff.getPersonId()).orElseThrow().active()).isTrue();
     }
 
     @Test
-    void deactivate_setsThePersonInactive() {
+    void deactivate_setsTheGuideInactiveAndLeavesThePersonAlone() {
         when(staffRepository.findById(1L)).thenReturn(Optional.of(staff));
 
         service.deactivate(1L);
 
-        assertThat(personDirectory.findById(staff.getPersonId()).orElseThrow().active()).isFalse();
+        assertThat(staff.isActive()).isFalse();
+        assertThat(personDirectory.findById(staff.getPersonId()).orElseThrow().active()).isTrue();
     }
 }

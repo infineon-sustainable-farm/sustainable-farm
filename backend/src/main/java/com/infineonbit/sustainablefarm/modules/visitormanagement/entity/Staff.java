@@ -14,8 +14,9 @@ import jakarta.validation.constraints.NotNull;
  * (A5: staff / guides).
  *
  * <p>The visitor management extension of a person of the staff referential
- * ({@code modules.staff.api}, ADR 0004): full name, email, phone and active status
- * belong to the person, the role stays here. One staff row per person; its foreign key
+ * ({@code modules.staff.api}, ADR 0004): full name, email and phone belong to the person;
+ * the role and the active flag (a guide can be deactivated without touching the person's other
+ * roles) stay here. One staff row per person; its foreign key
  * to {@code person} is declared in {@code VisitorStaffForeignKeys}.</p>
  */
 @Entity
@@ -33,6 +34,9 @@ public class Staff extends BaseEntity {
     @Column(name = "role", nullable = false, length = 20)
     private StaffRole role = StaffRole.GUIDE;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
+
     public Long getPersonId() {
         return personId;
     }
@@ -47,5 +51,13 @@ public class Staff extends BaseEntity {
 
     public void setRole(StaffRole role) {
         this.role = role;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
