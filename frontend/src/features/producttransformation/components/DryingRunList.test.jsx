@@ -100,7 +100,9 @@ describe('DryingRunList', () => {
   it('renders duration, moisture, energy and resolved equipment/operator', async () => {
     render(<DryingRunList />);
 
-    const table = await screen.findByRole('table');
+    // The loading state is a skeleton table: wait for the rows before reading the table.
+    await screen.findByText('DR-1');
+    const table = screen.getByRole('table');
     expect(within(table).getByText('DR-1')).toBeTruthy();
     expect(within(table).getByText('6.50 h')).toBeTruthy();
     expect(within(table).getByText('118.40 kWh')).toBeTruthy();
@@ -298,5 +300,43 @@ describe('DryingRunList', () => {
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 
     expect(await screen.findByText('DR-1')).toBeTruthy();
+  });
+
+  it('offers only dryers and dryer operators in the form', async () => {
+    render(<DryingRunList />);
+    await screen.findByText('DR-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Drying Run/i }));
+    const dialog = screen.getByRole('dialog', { name: 'New Drying Run' });
+
+    const equipmentOptions = within(within(dialog).getByLabelText('Equipment')).getAllByRole('option');
+    expect(equipmentOptions.map((option) => option.textContent)).toEqual(['No equipment', 'Solar dryer 1 · Active']);
+    const operatorOptions = within(within(dialog).getByLabelText('Operator')).getAllByRole('option');
+    expect(operatorOptions.map((option) => option.textContent)).toEqual(['No operator', 'Issa']);
+  });
+
+  it('keeps the delete dialog open with the server error when the deletion fails', async () => {
+    dryingApi.deleteDryingRun.mockRejectedValueOnce(new Error('Run is locked'));
+
+    render(<DryingRunList />);
+    await screen.findByText('DR-1');
+
+    const row = screen.getByText('DR-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog', { name: 'Delete drying run' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Run is locked');
+    expect(dryingApi.getAllDryingRuns).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the run count and the empty state of a filter without match', async () => {
+    render(<DryingRunList />);
+    await screen.findByText('DR-1');
+    expect(screen.getByText('2 runs')).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('Filter by start date'), { target: { value: '2025-01-01' } });
+    expect(screen.getByText('No runs match the filters')).toBeTruthy();
+    expect(screen.getByText('0 runs')).toBeTruthy();
   });
 });
