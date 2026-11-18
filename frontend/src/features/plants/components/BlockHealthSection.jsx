@@ -1,17 +1,14 @@
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, EmptyState } from "../../../shared/ui";
 import { useBlockHealth } from "../hooks/useBlockHealth";
-import { formatBlock, formatDate } from "../utils/format";
+import { formatBlock, formatDate, formatPercent } from "../utils/format";
 import HealthCategoryBadge from "./HealthCategoryBadge";
-import PlantsEmptyState from "./PlantsEmptyState";
+import { HealthSectionError, HealthSectionLoading } from "./HealthSectionStates";
 
-/*
- * Top border in the shared token, as in the mock-up; score in the darkened hue
- * of the badges: #257e55, #8e661c and #9a3f32 on white -> 5.01, 5.16 and
- * 6.71:1. The mock-up's green score (#2e9e6b) is 3.38:1.
- */
-const GOOD = { border: "border-t-success", score: "text-[#257e55]" };
-const FAIR = { border: "border-t-warning", score: "text-[#8e661c]" };
-const POOR = { border: "border-t-error", score: "text-[#9a3f32]" };
+// Top border and score in the hue of the category badge.
+const GOOD = { border: "border-t-success-fg", score: "text-success-fg" };
+const FAIR = { border: "border-t-warning-fg", score: "text-warning-fg" };
+const POOR = { border: "border-t-error-fg", score: "text-error-fg" };
 
 const CATEGORY_TONES = {
     VERY_HEALTHY: GOOD,
@@ -20,19 +17,22 @@ const CATEGORY_TONES = {
     WEAKENED: POOR,
     SEVERE_STRESS: POOR,
 };
-const NEUTRAL = { border: "border-t-gray-300", score: "text-gray-900" };
+const NEUTRAL = { border: "border-t-border-strong", score: "text-text" };
 
 /** One inspected block: its latest score and category, and the day it was inspected. */
 function BlockHealthCard({ block }) {
+    const { t } = useTranslation("plants");
     const tone = CATEGORY_TONES[block.healthCategory] ?? NEUTRAL;
     return (
-        <li className={`rounded-xl border border-t-4 border-gray-200 bg-white px-4 py-4 text-center ${tone.border}`}>
-            <p className="text-sm font-semibold text-gray-600">{formatBlock(block.blockCode)}</p>
-            <p className={`font-heading mt-1 text-2xl font-bold ${tone.score}`}>{`${block.healthScorePct}%`}</p>
+        <li className={`rounded-tile border border-t-4 border-border-subtle bg-surface-raised p-4 text-center ${tone.border}`}>
+            <p className="text-sm font-semibold text-text-muted">{formatBlock(block.blockCode)}</p>
+            <p className={`mt-1 text-2xl font-bold ${tone.score}`}>{formatPercent(block.healthScorePct)}</p>
             <div className="mt-2">
                 <HealthCategoryBadge category={block.healthCategory} />
             </div>
-            <p className="mt-2 text-xs text-gray-600">{`Inspected on ${formatDate(block.inspectedOn)}`}</p>
+            <p className="mt-2 text-xs text-text-muted">
+                {t("health.blocks.inspectedOn", { date: formatDate(block.inspectedOn) })}
+            </p>
         </li>
     );
 }
@@ -49,55 +49,35 @@ function BlockHealthCard({ block }) {
  * when no block is inspected at all.
  */
 export default function BlockHealthSection({ blockCode, recordAction }) {
-    const { data: blocks, isPending, isError, refetch, isFetching } = useBlockHealth();
+    const { t } = useTranslation("plants");
+    const query = useBlockHealth();
+    const { data: blocks, isPending, isError } = query;
     const shown = blockCode ? (blocks ?? []).filter((block) => block.blockCode === blockCode) : blocks;
 
     return (
-        <section aria-labelledby="block-health-title" className="flex flex-col gap-4">
-            <h2 id="block-health-title" className="font-heading text-lg font-bold text-gray-900">
-                Health by block
-            </h2>
-
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading the health of the blocks…
-                </div>
-            )}
+        <Card aria-labelledby="block-health-title" title={<span id="block-health-title">{t("health.blocks.title")}</span>}>
+            {isPending && <HealthSectionLoading>{t("health.blocks.loading")}</HealthSectionLoading>}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-gray-900">
-                            The health of the blocks could not be loaded
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <HealthSectionError
+                    title={t("health.blocks.loadError")}
+                    detail={t("health.requestFailed")}
+                    query={query}
+                />
             )}
 
             {!isPending && !isError && shown.length === 0 && (
                 blockCode ? (
-                    <PlantsEmptyState
-                        title={`${formatBlock(blockCode)} has not been inspected yet`}
-                        hint="Select “All blocks” to see the inspected blocks."
+                    <EmptyState
+                        className="py-8"
+                        title={t("health.blocks.emptyForBlock", { block: formatBlock(blockCode) })}
+                        message={t("health.selectAllBlocks")}
                     />
                 ) : (
-                    <PlantsEmptyState
-                        title="No block inspected yet"
-                        hint="The health of a block comes from its latest inspection."
+                    <EmptyState
+                        className="py-8"
+                        title={t("health.blocks.emptyTitle")}
+                        message={t("health.blocks.emptyHint")}
                         action={recordAction}
                     />
                 )
@@ -110,6 +90,6 @@ export default function BlockHealthSection({ blockCode, recordAction }) {
                     ))}
                 </ul>
             )}
-        </section>
+        </Card>
     );
 }

@@ -74,6 +74,28 @@
       "STAGE_CHANGE": "Stadiumwechsel",
       "LOSS": "Verlust",
       "TRANSPLANT": "Auspflanzung"
+    },
+    "findingStatus": {
+      "UNTREATED": "Unbehandelt",
+      "IN_PROGRESS": "In Behandlung",
+      "TREATED": "Behandelt",
+      "CLOSED_WITHOUT_TREATMENT": "Ohne Behandlung abgeschlossen"
+    },
+    "healthCategory": {
+      "VERY_HEALTHY": "Sehr gesund",
+      "HEALTHY": "Gesund",
+      "MODERATE": "Mäßig",
+      "WEAKENED": "Geschwächt",
+      "SEVERE_STRESS": "Starker Stress"
+    },
+    "issueKind": {
+      "PEST": "Schädling",
+      "DISEASE": "Krankheit",
+      "OTHER": "Sonstiges"
+    },
+    "inspectionMethod": {
+      "VISUAL": "Visuell",
+      "TRAP": "Falle"
     }
   },
   "blockFilter": {
@@ -471,6 +493,238 @@
         "reasonTooLong": "Der Grund darf höchstens {{max}} Zeichen lang sein.",
         "blockRequired": "Der Block ist erforderlich.",
         "blockFormat": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix und ohne Leerzeichen."
+      }
+    }
+  },
+  "health": {
+    "title": "Krankheiten und Warnungen",
+    "subtitle": "Gesundheit der Blöcke, Befunde und Behandlungen.",
+    "documentTitle": "Krankheiten und Warnungen — Pflanzen",
+    "recordInspection": "Inspektion erfassen",
+    "recordPreventiveTreatment": "Vorbeugende Behandlung erfassen",
+    "requestFailed": "Die Anfrage an den Server ist fehlgeschlagen.",
+    "selectAllBlocks": "Wählen Sie „Alle Blöcke“, um die inspizierten Blöcke zu sehen.",
+    "optional": "Optional.",
+    "block": "Block",
+    "blockNote": "Zum Beispiel A oder B2. Der Block braucht keine Pflanzung.",
+    "selectProblem": "Problem auswählen",
+    "otherLabel": "Name des Problems",
+    "place": {
+      "withTree": "{{block}}, Baum {{tree}}"
+    },
+    "summary": {
+      "details": " · {{problem}} · festgestellt am {{date}}"
+    },
+    "errors": {
+      "blockRequired": "Der Block ist erforderlich.",
+      "blockFormat": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix oder Leerzeichen.",
+      "otherLabelRequired": "Bei „Sonstiges“ ist der Name des Problems erforderlich.",
+      "otherLabelTooLong": "Der Name des Problems darf höchstens {{max}} Zeichen lang sein."
+    },
+    "catalogue": {
+      "loadError": "Die Schädlinge und Krankheiten konnten nicht geladen werden: Nur „Sonstiges“ kann gewählt werden.",
+      "empty": "Solange kein Schädling und keine Krankheit im Katalog steht, kann nur „Sonstiges“ gewählt werden."
+    },
+    "alerts": {
+      "title": "Gesundheitswarnungen",
+      "allBlocks": "Alle Blöcke.",
+      "loading": "Gesundheitswarnungen werden geladen…",
+      "loadError": "Warnungen sind nicht verfügbar.",
+      "empty": "Heute keine Gesundheitswarnung.",
+      "types": {
+        "OPEN_HEALTH_ISSUE": "Offenes Gesundheitsproblem",
+        "PRE_HARVEST_INTERVAL": "Wartezeit vor der Ernte"
+      },
+      "seenOn": "Festgestellt am",
+      "harvestAllowedFrom": "Ernte erlaubt ab",
+      "date": "Datum:"
+    },
+    "blocks": {
+      "title": "Gesundheit nach Block",
+      "loading": "Gesundheit der Blöcke wird geladen…",
+      "loadError": "Die Gesundheit der Blöcke konnte nicht geladen werden",
+      "emptyForBlock": "{{block}} wurde noch nicht inspiziert",
+      "emptyTitle": "Noch kein Block inspiziert",
+      "emptyHint": "Die Gesundheit eines Blocks ergibt sich aus seiner letzten Inspektion.",
+      "inspectedOn": "Inspiziert am {{date}}"
+    },
+    "findings": {
+      "title": "Befunde",
+      "status": "Status",
+      "allStatuses": "Alle Status",
+      "loading": "Befunde werden geladen…",
+      "loadError": "Die Befunde konnten nicht geladen werden",
+      "emptyFilteredTitle": "Kein Befund entspricht diesen Filtern",
+      "emptyFilteredHint": "Versuchen Sie einen anderen Block oder Status, oder wählen Sie „Alle Blöcke“.",
+      "emptyTitle": "Noch kein Befund erfasst",
+      "emptyHint": "Befunde werden mit einer Inspektion erfasst.",
+      "columns": {
+        "block": "Block",
+        "tree": "Baum",
+        "problem": "Krankheit / Schädling",
+        "observedOn": "Beobachtet am",
+        "status": "Status",
+        "harvestAllowedFrom": "Ernte erlaubt ab",
+        "resolvedOn": "Erledigt am"
+      },
+      "describe": "{{problem}} in {{place}}",
+      "treat": "Behandeln",
+      "resolve": "Erledigen",
+      "treatLabel": "{{finding}} behandeln",
+      "resolveLabel": "{{finding}} erledigen"
+    },
+    "treatments": {
+      "title": "Behandlungsprotokoll",
+      "subtitle": "Jede Behandlung, mit dem Datum, ab dem wieder geerntet werden darf.",
+      "loading": "Behandlungen werden geladen…",
+      "loadError": "Behandlungen sind nicht verfügbar.",
+      "emptyForBlock": "Keine Behandlung in diesem Block",
+      "emptyForBlockHint": "Wählen Sie „Alle Blöcke“, um das ganze Protokoll zu sehen.",
+      "emptyTitle": "Noch keine Behandlung erfasst",
+      "emptyHint": "Eine Behandlung wird zu einem Befund oder als vorbeugende Behandlung erfasst.",
+      "columns": {
+        "date": "Datum",
+        "block": "Block",
+        "problem": "Behandeltes Problem",
+        "product": "Produkt",
+        "interval": "Wartezeit vor der Ernte",
+        "harvestAllowedFrom": "Ernte erlaubt ab",
+        "type": "Art",
+        "ingredient": "Wirkstoff",
+        "quantity": "Menge",
+        "applicator": "Anwender",
+        "equipment": "Gerät",
+        "source": "Quelle"
+      },
+      "days_one": "{{days}} Tag",
+      "days_other": "{{days}} Tage",
+      "preventive": "Vorbeugend",
+      "finding": "Befund"
+    },
+    "issues": {
+      "title": "Schädlinge und Krankheiten",
+      "subtitle": "Die Probleme, die eine Inspektion melden kann, für jeden Block. „Sonstiges“ deckt ein Problem außerhalb dieser Liste ab; es erscheint hier, sobald eine Inspektion es verwendet hat.",
+      "add": "Schädling oder Krankheit hinzufügen",
+      "loading": "Schädlinge und Krankheiten werden geladen…",
+      "loadError": "Die Schädlinge und Krankheiten konnten nicht geladen werden",
+      "emptyTitle": "Noch kein Schädling und keine Krankheit im Katalog",
+      "emptyHint": "Bis einer hinzugefügt wird, kann eine Inspektion nur „Sonstiges“ melden.",
+      "columns": {
+        "name": "Name",
+        "kind": "Art",
+        "code": "Code",
+        "scientificName": "Wissenschaftlicher Name",
+        "eppoCode": "EPPO-Code",
+        "source": "Quelle"
+      },
+      "groups": {
+        "PEST": "Schädlinge",
+        "DISEASE": "Krankheiten"
+      },
+      "other": "Sonstiges"
+    },
+    "issueForm": {
+      "title": "Schädling oder Krankheit hinzufügen",
+      "name": "Name",
+      "nameNote": "Der Code ergibt sich aus dem Namen: „Powdery mildew“ ergibt POWDERY_MILDEW.",
+      "kind": "Art",
+      "selectKind": "Art auswählen",
+      "scientificName": "Wissenschaftlicher Name",
+      "eppoCode": "EPPO-Code",
+      "eppoCodeNote": "Optional, 1 bis 10 Buchstaben oder Ziffern.",
+      "source": "Quelle",
+      "sourceNote": "Optional. Bleibt das Feld leer, wird user_entry gespeichert.",
+      "sourcePlaceholder": "user_entry",
+      "submit": "Zum Katalog hinzufügen",
+      "submitting": "Wird hinzugefügt…",
+      "errors": {
+        "nameRequired": "Der Name ist erforderlich.",
+        "nameTooLong": "Der Name darf höchstens {{max}} Zeichen lang sein.",
+        "kindRequired": "Die Art ist erforderlich.",
+        "scientificNameTooLong": "Der wissenschaftliche Name darf höchstens 255 Zeichen lang sein.",
+        "eppoCode": "Der EPPO-Code muss aus 1 bis 10 Buchstaben oder Ziffern bestehen.",
+        "sourceTooLong": "Die Quelle darf höchstens 255 Zeichen lang sein."
+      }
+    },
+    "inspectionForm": {
+      "title": "Inspektion erfassen",
+      "date": "Inspektionsdatum",
+      "score": "Gesundheitswert (%)",
+      "scoreNote": "Eine ganze Zahl von 0 bis 100.",
+      "method": "Methode",
+      "notSpecified": "Nicht angegeben",
+      "observer": "Beobachter",
+      "findings": "Befunde",
+      "noFindings": "Keine: Die Inspektion erfasst einen Besuch ohne Befund.",
+      "findingsNote": "Jedes gefundene Problem, im ganzen Block oder an einem Baum.",
+      "addFinding": "Befund hinzufügen",
+      "findingNumber": "Befund {{number}}",
+      "problem": "Problem",
+      "tree": "Baum",
+      "treeNote": "Optional, zum Beispiel 42 oder R3-12. Leer für den ganzen Block.",
+      "remove": "Entfernen",
+      "removeFinding": "Befund {{number}} entfernen",
+      "submit": "Inspektion erfassen",
+      "submitting": "Wird erfasst…",
+      "errors": {
+        "dateRequired": "Das Inspektionsdatum ist erforderlich.",
+        "dateInFuture": "Das Inspektionsdatum darf nicht in der Zukunft liegen.",
+        "scoreRequired": "Der Gesundheitswert ist erforderlich.",
+        "scoreFormat": "Der Gesundheitswert muss eine ganze Zahl von 0 bis 100 sein.",
+        "observerTooLong": "Der Beobachter darf höchstens 255 Zeichen lang sein.",
+        "problemRequired": "Das Problem ist erforderlich.",
+        "treeFormat": "Der Baum darf bis zu 20 Buchstaben, Ziffern oder Bindestriche enthalten, zum Beispiel 42 oder R3-12."
+      }
+    },
+    "resolveForm": {
+      "title": "Befund erledigen",
+      "date": "Erledigungsdatum",
+      "dateNote": "Nicht vor der Inspektion am {{inspection}}.",
+      "dateNoteWithTreatment": "Nicht vor der Inspektion ({{inspection}}) und nicht vor der letzten Behandlung ({{treatment}}).",
+      "note": "Notiz",
+      "noteHint": "Optional, zum Beispiel wie das Problem gelöst wurde.",
+      "submit": "Befund erledigen",
+      "submitting": "Wird erledigt…",
+      "errors": {
+        "dateRequired": "Das Erledigungsdatum ist erforderlich.",
+        "dateInFuture": "Das Erledigungsdatum darf nicht in der Zukunft liegen.",
+        "beforeInspection": "Das Erledigungsdatum darf nicht vor der Inspektion am {{date}} liegen.",
+        "beforeTreatment": "Das Erledigungsdatum darf nicht vor der letzten Behandlung am {{date}} liegen.",
+        "noteTooLong": "Die Notiz darf höchstens 255 Zeichen lang sein."
+      }
+    },
+    "treatmentForm": {
+      "preventiveTitle": "Vorbeugende Behandlung erfassen",
+      "findingTitle": "Befund behandeln",
+      "target": "Behandeltes Problem",
+      "date": "Behandlungsdatum",
+      "interval": "Wartezeit vor der Ernte (Tage)",
+      "intervalNote": "Ganze Tage, bis der Block wieder geerntet werden darf.",
+      "product": "Produkt",
+      "productNote": "Handelsname.",
+      "ingredient": "Wirkstoff",
+      "quantity": "Menge",
+      "unit": "Einheit",
+      "selectUnit": "Einheit auswählen",
+      "applicator": "Anwender",
+      "equipment": "Gerät",
+      "submit": "Behandlung erfassen",
+      "errors": {
+        "targetRequired": "Das behandelte Problem ist erforderlich.",
+        "dateRequired": "Das Behandlungsdatum ist erforderlich.",
+        "dateInFuture": "Das Behandlungsdatum darf nicht in der Zukunft liegen.",
+        "beforeInspection": "Das Behandlungsdatum darf nicht vor der Inspektion am {{date}} liegen.",
+        "intervalRequired": "Die Wartezeit vor der Ernte ist erforderlich.",
+        "intervalFormat": "Die Wartezeit vor der Ernte muss eine ganze Zahl von Tagen sein, 0 oder mehr.",
+        "productRequired": "Das Produkt ist erforderlich.",
+        "productTooLong": "Das Produkt darf höchstens 255 Zeichen lang sein.",
+        "ingredientRequired": "Der Wirkstoff ist erforderlich.",
+        "ingredientTooLong": "Der Wirkstoff darf höchstens 255 Zeichen lang sein.",
+        "quantityFormat": "Die Menge muss eine Zahl größer als 0 mit höchstens 3 Dezimalstellen sein.",
+        "unitRequired": "Die Einheit ist erforderlich.",
+        "applicatorRequired": "Der Anwender ist erforderlich.",
+        "applicatorTooLong": "Der Anwender darf höchstens 255 Zeichen lang sein.",
+        "equipmentTooLong": "Das Gerät darf höchstens 255 Zeichen lang sein."
       }
     }
   }

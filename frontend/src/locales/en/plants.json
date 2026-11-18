@@ -74,6 +74,28 @@
       "STAGE_CHANGE": "Stage change",
       "LOSS": "Loss",
       "TRANSPLANT": "Transplant"
+    },
+    "findingStatus": {
+      "UNTREATED": "Untreated",
+      "IN_PROGRESS": "In progress",
+      "TREATED": "Treated",
+      "CLOSED_WITHOUT_TREATMENT": "Closed without treatment"
+    },
+    "healthCategory": {
+      "VERY_HEALTHY": "Very healthy",
+      "HEALTHY": "Healthy",
+      "MODERATE": "Moderate",
+      "WEAKENED": "Weakened",
+      "SEVERE_STRESS": "Severe stress"
+    },
+    "issueKind": {
+      "PEST": "Pest",
+      "DISEASE": "Disease",
+      "OTHER": "Other"
+    },
+    "inspectionMethod": {
+      "VISUAL": "Visual",
+      "TRAP": "Trap"
     }
   },
   "blockFilter": {
@@ -471,6 +493,238 @@
         "reasonTooLong": "Reason must be at most {{max}} characters.",
         "blockRequired": "Block is required.",
         "blockFormat": "Block must be a short code such as A or B2, without prefix or space."
+      }
+    }
+  },
+  "health": {
+    "title": "Diseases & Alerts",
+    "subtitle": "Block health, findings and treatments.",
+    "documentTitle": "Diseases & Alerts — Plants",
+    "recordInspection": "Record an inspection",
+    "recordPreventiveTreatment": "Record a preventive treatment",
+    "requestFailed": "The request to the server did not succeed.",
+    "selectAllBlocks": "Select “All blocks” to see the inspected blocks.",
+    "optional": "Optional.",
+    "block": "Block",
+    "blockNote": "Such as A or B2. The block needs no planting.",
+    "selectProblem": "Select a problem",
+    "otherLabel": "Name of the problem",
+    "place": {
+      "withTree": "{{block}}, tree {{tree}}"
+    },
+    "summary": {
+      "details": " · {{problem}} · seen on {{date}}"
+    },
+    "errors": {
+      "blockRequired": "Block is required.",
+      "blockFormat": "Block must be a short code such as A or B2, without prefix or space.",
+      "otherLabelRequired": "Name of the problem is required with “Other”.",
+      "otherLabelTooLong": "Name of the problem must be at most {{max}} characters."
+    },
+    "catalogue": {
+      "loadError": "The pests and diseases could not be loaded: only “Other” can be picked.",
+      "empty": "Only “Other” can be picked until a pest or disease is added to the catalogue."
+    },
+    "alerts": {
+      "title": "Health alerts",
+      "allBlocks": "All blocks.",
+      "loading": "Loading health alerts…",
+      "loadError": "Alerts are unavailable.",
+      "empty": "No health alert today.",
+      "types": {
+        "OPEN_HEALTH_ISSUE": "Open health problem",
+        "PRE_HARVEST_INTERVAL": "Pre-harvest interval"
+      },
+      "seenOn": "Seen on",
+      "harvestAllowedFrom": "Harvest allowed from",
+      "date": "Date:"
+    },
+    "blocks": {
+      "title": "Health by block",
+      "loading": "Loading the health of the blocks…",
+      "loadError": "The health of the blocks could not be loaded",
+      "emptyForBlock": "{{block}} has not been inspected yet",
+      "emptyTitle": "No block inspected yet",
+      "emptyHint": "The health of a block comes from its latest inspection.",
+      "inspectedOn": "Inspected on {{date}}"
+    },
+    "findings": {
+      "title": "Findings",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "loading": "Loading findings…",
+      "loadError": "Findings could not be loaded",
+      "emptyFilteredTitle": "No finding matches these filters",
+      "emptyFilteredHint": "Try another block or status, or select “All blocks”.",
+      "emptyTitle": "No finding recorded yet",
+      "emptyHint": "Findings are recorded with an inspection.",
+      "columns": {
+        "block": "Block",
+        "tree": "Tree",
+        "problem": "Disease / Pest",
+        "observedOn": "Observed on",
+        "status": "Status",
+        "harvestAllowedFrom": "Harvest allowed from",
+        "resolvedOn": "Resolved on"
+      },
+      "describe": "{{problem}} on {{place}}",
+      "treat": "Treat",
+      "resolve": "Resolve",
+      "treatLabel": "Treat {{finding}}",
+      "resolveLabel": "Resolve {{finding}}"
+    },
+    "treatments": {
+      "title": "Treatment record",
+      "subtitle": "Every treatment, with the date harvest is allowed again.",
+      "loading": "Loading treatments…",
+      "loadError": "Treatments are unavailable.",
+      "emptyForBlock": "No treatment on this block",
+      "emptyForBlockHint": "Select “All blocks” to see the whole record.",
+      "emptyTitle": "No treatment recorded yet",
+      "emptyHint": "A treatment is recorded for a finding, or as a preventive treatment.",
+      "columns": {
+        "date": "Date",
+        "block": "Block",
+        "problem": "Problem targeted",
+        "product": "Product",
+        "interval": "Pre-harvest interval",
+        "harvestAllowedFrom": "Harvest allowed from",
+        "type": "Type",
+        "ingredient": "Active ingredient",
+        "quantity": "Quantity",
+        "applicator": "Applicator",
+        "equipment": "Equipment",
+        "source": "Source"
+      },
+      "days_one": "{{days}} day",
+      "days_other": "{{days}} days",
+      "preventive": "Preventive",
+      "finding": "Finding"
+    },
+    "issues": {
+      "title": "Pests and diseases",
+      "subtitle": "The problems an inspection can report, for every block. “Other” covers a problem outside this list; it is listed here once an inspection has used it.",
+      "add": "Add a pest or disease",
+      "loading": "Loading the pests and diseases…",
+      "loadError": "The pests and diseases could not be loaded",
+      "emptyTitle": "No pest or disease in the catalogue yet",
+      "emptyHint": "Until one is added, an inspection can report “Other” only.",
+      "columns": {
+        "name": "Name",
+        "kind": "Kind",
+        "code": "Code",
+        "scientificName": "Scientific name",
+        "eppoCode": "EPPO code",
+        "source": "Source"
+      },
+      "groups": {
+        "PEST": "Pests",
+        "DISEASE": "Diseases"
+      },
+      "other": "Other"
+    },
+    "issueForm": {
+      "title": "Add a pest or disease",
+      "name": "Name",
+      "nameNote": "Its code comes from the name: “Powdery mildew” gives POWDERY_MILDEW.",
+      "kind": "Kind",
+      "selectKind": "Select a kind",
+      "scientificName": "Scientific name",
+      "eppoCode": "EPPO code",
+      "eppoCodeNote": "Optional, 1 to 10 letters or digits.",
+      "source": "Source",
+      "sourceNote": "Optional. user_entry is recorded when left empty.",
+      "sourcePlaceholder": "user_entry",
+      "submit": "Add to catalogue",
+      "submitting": "Adding…",
+      "errors": {
+        "nameRequired": "Name is required.",
+        "nameTooLong": "Name must be at most {{max}} characters.",
+        "kindRequired": "Kind is required.",
+        "scientificNameTooLong": "Scientific name must be at most 255 characters.",
+        "eppoCode": "EPPO code must be 1 to 10 letters or digits.",
+        "sourceTooLong": "Source must be at most 255 characters."
+      }
+    },
+    "inspectionForm": {
+      "title": "Record an inspection",
+      "date": "Inspection date",
+      "score": "Health score (%)",
+      "scoreNote": "A whole number from 0 to 100.",
+      "method": "Method",
+      "notSpecified": "Not specified",
+      "observer": "Observer",
+      "findings": "Findings",
+      "noFindings": "None: the inspection records a visit with nothing found.",
+      "findingsNote": "Each problem found, on the whole block or on one tree.",
+      "addFinding": "Add a finding",
+      "findingNumber": "Finding {{number}}",
+      "problem": "Problem",
+      "tree": "Tree",
+      "treeNote": "Optional, such as 42 or R3-12. Empty for the whole block.",
+      "remove": "Remove",
+      "removeFinding": "Remove finding {{number}}",
+      "submit": "Record inspection",
+      "submitting": "Recording…",
+      "errors": {
+        "dateRequired": "Inspection date is required.",
+        "dateInFuture": "Inspection date cannot be in the future.",
+        "scoreRequired": "Health score is required.",
+        "scoreFormat": "Health score must be a whole number from 0 to 100.",
+        "observerTooLong": "Observer must be at most 255 characters.",
+        "problemRequired": "Problem is required.",
+        "treeFormat": "Tree must be up to 20 letters, digits or hyphens, such as 42 or R3-12."
+      }
+    },
+    "resolveForm": {
+      "title": "Resolve a finding",
+      "date": "Resolution date",
+      "dateNote": "Not before the inspection, on {{inspection}}.",
+      "dateNoteWithTreatment": "Not before the inspection ({{inspection}}) nor the last treatment ({{treatment}}).",
+      "note": "Note",
+      "noteHint": "Optional, such as how the problem was settled.",
+      "submit": "Resolve finding",
+      "submitting": "Resolving…",
+      "errors": {
+        "dateRequired": "Resolution date is required.",
+        "dateInFuture": "Resolution date cannot be in the future.",
+        "beforeInspection": "Resolution date cannot be before the inspection, on {{date}}.",
+        "beforeTreatment": "Resolution date cannot be before the last treatment, on {{date}}.",
+        "noteTooLong": "Note must be at most 255 characters."
+      }
+    },
+    "treatmentForm": {
+      "preventiveTitle": "Record a preventive treatment",
+      "findingTitle": "Treat a finding",
+      "target": "Problem targeted",
+      "date": "Treatment date",
+      "interval": "Pre-harvest interval (days)",
+      "intervalNote": "Whole days before the block can be harvested again.",
+      "product": "Product",
+      "productNote": "Trade name.",
+      "ingredient": "Active ingredient",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "applicator": "Applicator",
+      "equipment": "Equipment",
+      "submit": "Record treatment",
+      "errors": {
+        "targetRequired": "Problem targeted is required.",
+        "dateRequired": "Treatment date is required.",
+        "dateInFuture": "Treatment date cannot be in the future.",
+        "beforeInspection": "Treatment date cannot be before the inspection, on {{date}}.",
+        "intervalRequired": "Pre-harvest interval is required.",
+        "intervalFormat": "Pre-harvest interval must be a whole number of days, 0 or more.",
+        "productRequired": "Product is required.",
+        "productTooLong": "Product must be at most 255 characters.",
+        "ingredientRequired": "Active ingredient is required.",
+        "ingredientTooLong": "Active ingredient must be at most 255 characters.",
+        "quantityFormat": "Quantity must be a number greater than 0, with at most 3 decimals.",
+        "unitRequired": "Unit is required.",
+        "applicatorRequired": "Applicator is required.",
+        "applicatorTooLong": "Applicator must be at most 255 characters.",
+        "equipmentTooLong": "Equipment must be at most 255 characters."
       }
     }
   }
