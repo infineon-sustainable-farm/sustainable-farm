@@ -42,7 +42,7 @@ describe('application router', () => {
     const shellIds = collectModules(realFiles)
       .filter((module) => module.shell)
       .map((module) => module.nav?.id)
-    expect(shellIds).toEqual(['energysupply', 'machinery', 'plants', 'producttransformation', 'visitormanagement', 'watersupply'])
+    expect(shellIds).toEqual(['energysupply', 'machinery', 'plants', 'producttransformation', 'salesmarketing', 'visitormanagement', 'watersupply'])
   })
 
   it('renders the sidebar footer of the current shell module', () => {

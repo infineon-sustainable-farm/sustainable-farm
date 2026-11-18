@@ -1,8 +1,12 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 import i18n from '../shared/i18n/i18n'
 import { FALLBACK_LANGUAGE } from '../shared/i18n/config'
+
+// findBy* and waitFor wait up to 5 s: the suite runs alongside other builds and a busy machine
+// rendered some screens after the 1 s default, failing tests that pass on their own.
+configure({ asyncUtilTimeout: 5000 })
 
 // Components render with real translations; every test starts in English.
 await i18n.changeLanguage(FALLBACK_LANGUAGE)
