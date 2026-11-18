@@ -4,13 +4,12 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTe
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface WaterQualityTestRepository extends JpaRepository<WaterQualityTest, UUID> {
+public interface WaterQualityTestRepository extends JpaRepository<WaterQualityTest, Long> {
 	Page<WaterQualityTest> findBySourceId(Long sourceId, Pageable pageable);
 
 	/** Tests of a closed window [from, to], all sources (quality compliance without lot). */

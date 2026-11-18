@@ -2,16 +2,15 @@ package com.infineonbit.sustainablefarm.modules.watersupply.repository;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import java.util.List;
 
 /** Optional multi-criteria filters go through {@link ConsumptionCriteria} (JpaSpecificationExecutor). */
-public interface WaterConsumptionRepository extends JpaRepository<WaterConsumption, UUID>,
+public interface WaterConsumptionRepository extends JpaRepository<WaterConsumption, Long>,
         JpaSpecificationExecutor<WaterConsumption> {
     Page<WaterConsumption> findByFarmId(Long farmId, Pageable pageable);
 

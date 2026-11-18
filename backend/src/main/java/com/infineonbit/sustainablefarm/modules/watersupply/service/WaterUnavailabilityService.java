@@ -1,11 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.UnavailabilityScope;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.UnavailabilityStatus;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterUnavailability;
-import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterUnavailabilityRepository;
@@ -15,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -33,11 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class WaterUnavailabilityService {
-    static final String SCOPE_FARM = "farm";
-    static final String SCOPE_SOURCE = "source";
-    static final String SCOPE_ZONE = "zone";
-    private static final List<String> SCOPES = List.of(SCOPE_FARM, SCOPE_SOURCE, SCOPE_ZONE);
-    private static final List<String> STATUSES = List.of("planned", "active", "cancelled");
 
     private final WaterUnavailabilityRepository outageRepository;
     private final WaterSourceRepository sourceRepository;
@@ -77,13 +73,13 @@ public class WaterUnavailabilityService {
             if (activeOn != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.<Instant>get("startAt"), activeOn));
                 predicates.add(cb.greaterThan(root.<Instant>get("endAt"), activeOn));
-                predicates.add(cb.notEqual(cb.lower(root.get("status")), "cancelled"));
+                predicates.add(cb.notEqual(root.get("status"), UnavailabilityStatus.CANCELLED));
             }
             if (zoneId != null) {
-                predicates.add(cb.or(scopeIs(root, cb, SCOPE_ZONE, zoneId), scopeIs(root, cb, SCOPE_FARM, zoneFarmId)));
+                predicates.add(cb.or(scopeIs(root, cb, UnavailabilityScope.ZONE, zoneId), scopeIs(root, cb, UnavailabilityScope.FARM, zoneFarmId)));
             }
             if (sourceId != null) {
-                predicates.add(cb.or(scopeIs(root, cb, SCOPE_SOURCE, sourceId), scopeIs(root, cb, SCOPE_FARM, sourceFarmId)));
+                predicates.add(cb.or(scopeIs(root, cb, UnavailabilityScope.SOURCE, sourceId), scopeIs(root, cb, UnavailabilityScope.FARM, sourceFarmId)));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -117,12 +113,12 @@ public class WaterUnavailabilityService {
         return WaterUnavailabilityResponse.from(saved);
     }
 
-    public WaterUnavailabilityResponse get(UUID id) {
+    public WaterUnavailabilityResponse get(Long id) {
         return WaterUnavailabilityResponse.from(getEntity(id));
     }
 
     @Transactional
-    public WaterUnavailabilityResponse update(UUID id, WaterUnavailabilityRequest request) {
+    public WaterUnavailabilityResponse update(Long id, WaterUnavailabilityRequest request) {
         WaterUnavailability outage = apply(getEntity(id), request);
         rejectOverlap(outage, id);
         WaterUnavailability saved = outageRepository.save(outage);
@@ -133,7 +129,7 @@ public class WaterUnavailabilityService {
     }
 
     @Transactional
-    public void delete(UUID id) {
+    public void delete(Long id) {
         outageRepository.delete(getEntity(id));
     }
 
@@ -141,12 +137,13 @@ public class WaterUnavailabilityService {
         if (!request.endAt().isAfter(request.startAt())) {
             throw new IllegalArgumentException("endAt must be after startAt");
         }
-        String scope = request.scope().trim().toLowerCase(Locale.ROOT);
-        if (!SCOPES.contains(scope)) {
+        UnavailabilityScope scope = UnavailabilityScope.of(request.scope());
+        if (scope == null) {
             throw new IllegalArgumentException("scope must be farm, source or zone");
         }
-        String status = request.status() == null ? "planned" : request.status().trim().toLowerCase(Locale.ROOT);
-        if (!STATUSES.contains(status)) {
+        UnavailabilityStatus status = request.status() == null ? UnavailabilityStatus.PLANNED
+                : UnavailabilityStatus.of(request.status());
+        if (status == null) {
             throw new IllegalArgumentException("status must be planned, active or cancelled");
         }
         requireTarget(scope, request.scopeId());
@@ -159,8 +156,8 @@ public class WaterUnavailabilityService {
         return outage;
     }
 
-    private void rejectOverlap(WaterUnavailability outage, UUID selfId) {
-        if ("cancelled".equals(outage.getStatus())) {
+    private void rejectOverlap(WaterUnavailability outage, Long selfId) {
+        if (outage.getStatus() == UnavailabilityStatus.CANCELLED) {
             return;
         }
         boolean overlaps = outageRepository.overlaps(outage.getScope(), outage.getScopeId(), outage.getStartAt(), outage.getEndAt())
@@ -172,12 +169,12 @@ public class WaterUnavailabilityService {
 
     /** Postpones the scheduled/running irrigations of the impacted zones during the period. */
     private int postponeIrrigations(WaterUnavailability outage) {
-        if ("cancelled".equals(outage.getStatus())) {
+        if (outage.getStatus() == UnavailabilityStatus.CANCELLED) {
             return 0;
         }
         List<Long> zoneIds = switch (outage.getScope()) {
-            case SCOPE_ZONE -> List.of(outage.getScopeId());
-            case SCOPE_FARM -> farmDirectory.listZonesOfFarm(outage.getScopeId()).stream()
+            case ZONE -> List.of(outage.getScopeId());
+            case FARM -> farmDirectory.listZonesOfFarm(outage.getScopeId()).stream()
                     .map(ZoneDto::id)
                     .toList();
             // A source is not linked to zones in the schema: nothing can be postponed safely.
@@ -194,17 +191,17 @@ public class WaterUnavailabilityService {
         return count;
     }
 
-    private void requireTarget(String scope, Long scopeId) {
+    private void requireTarget(UnavailabilityScope scope, Long scopeId) {
         boolean exists = switch (scope) {
-            case SCOPE_FARM -> farmDirectory.farmExists(scopeId);
-            case SCOPE_SOURCE -> sourceRepository.existsById(scopeId);
-            default -> farmDirectory.zoneExists(scopeId);
+            case FARM -> farmDirectory.farmExists(scopeId);
+            case SOURCE -> sourceRepository.existsById(scopeId);
+            case ZONE -> farmDirectory.zoneExists(scopeId);
         };
         if (!exists) {
             throw new NotFoundException(switch (scope) {
-                case SCOPE_FARM -> "Farm";
-                case SCOPE_SOURCE -> "WaterSource";
-                default -> "Zone";
+                case FARM -> "Farm";
+                case SOURCE -> "WaterSource";
+                case ZONE -> "Zone";
             });
         }
     }
@@ -214,14 +211,14 @@ public class WaterUnavailabilityService {
     }
 
     private static Predicate scopeIs(jakarta.persistence.criteria.Root<WaterUnavailability> root,
-                                     jakarta.persistence.criteria.CriteriaBuilder cb, String scope, Long scopeId) {
+                                     jakarta.persistence.criteria.CriteriaBuilder cb, UnavailabilityScope scope, Long scopeId) {
         if (scopeId == null) {
             return cb.disjunction();
         }
         return cb.and(cb.equal(root.get("scope"), scope), cb.equal(root.get("scopeId"), scopeId));
     }
 
-    private WaterUnavailability getEntity(UUID id) {
+    private WaterUnavailability getEntity(Long id) {
         return outageRepository.findById(id).orElseThrow(() -> new NotFoundException("WaterUnavailability"));
     }
 }

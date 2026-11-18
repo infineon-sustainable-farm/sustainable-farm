@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * Periodic soil moisture check (specification module 1.4).
  *
  * <p>The job only calls {@link IrrigationAutomationService#trigger()}: the rule stays in the
- * same place as the manual endpoint {@code POST /api/irrigations/auto-trigger}, so testing
+ * same place as the manual endpoint {@code POST /api/water-supply/irrigations/auto-trigger}, so testing
  * the API also tests the job.</p>
  *
  * <p>The check can be disabled without redeployment with

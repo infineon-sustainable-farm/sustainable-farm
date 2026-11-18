@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-/** Visitor Management events land on the same path as {@code POST /api/water/visitor-events}. */
+/** Visitor Management events land on the same path as {@code POST /api/water-supply/visitor-events}. */
 @ExtendWith(MockitoExtension.class)
 class VisitorManagementListenerTest {
     private static final Instant NINE = Instant.parse("2030-03-05T09:00:00Z");

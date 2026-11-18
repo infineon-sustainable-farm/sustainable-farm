@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code warning} at 80&nbsp;% and {@code critical} at 100&nbsp;% of the quota.</p>
  */
 @RestController
-@RequestMapping("/api/water/quotas")
+@RequestMapping("/api/water-supply/quotas")
 public class WaterQuotaController {
 
     private final WaterQuotaService quotaService;
@@ -56,19 +55,19 @@ public class WaterQuotaController {
     }
 
     @GetMapping("/{quotaId}")
-    public WaterQuotaResponse quota(@PathVariable UUID quotaId) {
+    public WaterQuotaResponse quota(@PathVariable Long quotaId) {
         return quotaService.getQuota(quotaId);
     }
 
     @PutMapping("/{quotaId}")
-    public WaterQuotaResponse updateQuota(@PathVariable UUID quotaId,
+    public WaterQuotaResponse updateQuota(@PathVariable Long quotaId,
                                           @RequestBody WaterQuotaUpdateRequest request) {
         return quotaService.updateQuota(quotaId, request);
     }
 
     @DeleteMapping("/{quotaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteQuota(@PathVariable UUID quotaId) {
+    public void deleteQuota(@PathVariable Long quotaId) {
         quotaService.deleteQuota(quotaId);
     }
 

@@ -40,14 +40,14 @@ class FarmApiIntegrationTest {
 
     @Test
     void zoneIsReadWithItsBlockAndFarmAndTheLinkSetsTheBlockCode() throws Exception {
-        long farmId = idOf(post("/api/farms"), "{\"name\":\"Referential Farm\"}");
-        long fieldId = idOf(post("/api/fields"),
+        long farmId = idOf(post("/api/farm/farms"), "{\"name\":\"Referential Farm\"}");
+        long fieldId = idOf(post("/api/farm/fields"),
                 "{\"farmId\":%d,\"name\":\"Referential Field\",\"areaHectares\":2}".formatted(farmId));
-        long zoneId = idOf(post("/api/zones"),
+        long zoneId = idOf(post("/api/farm/zones"),
                 "{\"fieldId\":%d,\"name\":\"Referential Zone\",\"areaHectares\":1}".formatted(fieldId));
         String code = "R" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
 
-        mockMvc.perform(post("/api/water/zone-block-mappings").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/farm/zone-block-mappings").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"zoneId\":%d,\"blockCode\":\"%s\",\"farmId\":%d}".formatted(zoneId, code.toLowerCase(), farmId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(zoneId))
@@ -59,33 +59,33 @@ class FarmApiIntegrationTest {
         assertEquals(code, zone.blockCode());
         assertTrue(farmDirectory.findBlockByCode(code).isPresent());
 
-        mockMvc.perform(get("/api/zones/{id}", zoneId))
+        mockMvc.perform(get("/api/farm/zones/{id}", zoneId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fieldId").value(fieldId));
 
-        mockMvc.perform(delete("/api/water/zone-block-mappings/{id}", zoneId)).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/farm/zone-block-mappings/{id}", zoneId)).andExpect(status().isNoContent());
         assertTrue(farmDirectory.findBlockByCode(code).isEmpty());
     }
 
     @Test
     void aReferencedZoneOrFarmCannotBeDeleted() throws Exception {
-        long farmId = idOf(post("/api/farms"), "{\"name\":\"Referenced Farm\"}");
-        long fieldId = idOf(post("/api/fields"),
+        long farmId = idOf(post("/api/farm/farms"), "{\"name\":\"Referenced Farm\"}");
+        long fieldId = idOf(post("/api/farm/fields"),
                 "{\"farmId\":%d,\"name\":\"Referenced Field\",\"areaHectares\":2}".formatted(farmId));
-        long zoneId = idOf(post("/api/zones"),
+        long zoneId = idOf(post("/api/farm/zones"),
                 "{\"fieldId\":%d,\"name\":\"Referenced Zone\",\"areaHectares\":1}".formatted(fieldId));
-        mockMvc.perform(post("/api/irrigations").contentType(MediaType.APPLICATION_JSON).content("""
+        mockMvc.perform(post("/api/water-supply/irrigations").contentType(MediaType.APPLICATION_JSON).content("""
                 {"zoneId":%d,"startTime":"2026-09-16T12:00:00Z","durationMinutes":30,"waterQuantityLiters":900,"createdBy":%d}
                 """.formatted(zoneId, systemUsers.iotSystemUserId()))).andExpect(status().isCreated());
 
-        mockMvc.perform(delete("/api/zones/{id}", zoneId)).andExpect(status().isConflict());
-        mockMvc.perform(delete("/api/fields/{id}", fieldId)).andExpect(status().isConflict());
-        mockMvc.perform(delete("/api/farms/{id}", farmId)).andExpect(status().isConflict());
+        mockMvc.perform(delete("/api/farm/zones/{id}", zoneId)).andExpect(status().isConflict());
+        mockMvc.perform(delete("/api/farm/fields/{id}", fieldId)).andExpect(status().isConflict());
+        mockMvc.perform(delete("/api/farm/farms/{id}", farmId)).andExpect(status().isConflict());
     }
 
     @Test
     void aPlantingOnANewCodeCreatesTheBlockUnderTheRequestedFarm() throws Exception {
-        long farmId = idOf(post("/api/farms"), "{\"name\":\"Planting Farm\"}");
+        long farmId = idOf(post("/api/farm/farms"), "{\"name\":\"Planting Farm\"}");
         String code = "N" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         assertTrue(farmDirectory.findBlockByCode(code).isEmpty());
 
@@ -103,13 +103,13 @@ class FarmApiIntegrationTest {
 
     @Test
     void unlinkingAZoneWhoseBlockIsUsedByPlantsIsRefusedAndKeepsTheCode() throws Exception {
-        long farmId = idOf(post("/api/farms"), "{\"name\":\"Used Block Farm\"}");
-        long fieldId = idOf(post("/api/fields"),
+        long farmId = idOf(post("/api/farm/farms"), "{\"name\":\"Used Block Farm\"}");
+        long fieldId = idOf(post("/api/farm/fields"),
                 "{\"farmId\":%d,\"name\":\"Used Field\",\"areaHectares\":2}".formatted(farmId));
-        long zoneId = idOf(post("/api/zones"),
+        long zoneId = idOf(post("/api/farm/zones"),
                 "{\"fieldId\":%d,\"name\":\"Used Zone\",\"areaHectares\":1}".formatted(fieldId));
         String code = "U" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        mockMvc.perform(post("/api/water/zone-block-mappings").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/farm/zone-block-mappings").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"zoneId\":%d,\"blockCode\":\"%s\",\"farmId\":%d}".formatted(zoneId, code, farmId)))
                 .andExpect(status().isCreated());
         mockMvc.perform(post("/api/plants/plantings").contentType(MediaType.APPLICATION_JSON).content("""
@@ -118,7 +118,7 @@ class FarmApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.farmId").value(farmId));
 
-        mockMvc.perform(delete("/api/water/zone-block-mappings/{id}", zoneId)).andExpect(status().isConflict());
+        mockMvc.perform(delete("/api/farm/zone-block-mappings/{id}", zoneId)).andExpect(status().isConflict());
 
         assertEquals(fieldId, farmDirectory.findBlockByCode(code).orElseThrow().id());
         assertEquals(code, farmDirectory.findZone(zoneId).orElseThrow().blockCode());

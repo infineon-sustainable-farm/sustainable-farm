@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Generates exportable (TXT) reports for analysis and sharing.
  */
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/api/water-supply/reports")
 public class ReportController {
 
     private final WaterConsumptionRepository waterConsumptionRepository;

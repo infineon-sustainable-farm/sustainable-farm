@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Water availability forecast of a source for planned Product Transformation batches.

@@ -2,11 +2,10 @@ package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
 import java.time.Instant;
-import java.util.UUID;
 
 /** API view of a maintenance intervention: stable contract, independent of the JPA entity. */
 public record DripMaintenanceLogResponse(
-        UUID id,
+        Long id,
         Long zoneId,
         Instant maintenanceDate,
         String maintenanceType,

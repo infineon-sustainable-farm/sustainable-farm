@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.QuotaTargetType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,7 +24,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -168,15 +168,15 @@ class WaterQuotaServiceTest {
     /** Stubs necessaires au declenchement des alertes de seuil. */
     private void stubQuotaForThreshold(Long farmId, double quotaLiters, double usedLiters) {
         when(quotaRepository.findFirstByTargetTypeAndTargetIdAndQuotaMonthBetweenOrderByQuotaMonthDesc(
-                eq("farm"), eq(farmId), any(), any())).thenReturn(Optional.of(quota(farmId, quotaLiters)));
+                eq(QuotaTargetType.FARM), eq(farmId), any(), any())).thenReturn(Optional.of(quota(farmId, quotaLiters)));
         when(farmDirectory.findFarm(farmId)).thenReturn(Optional.of(farm("Ferme Nord")));
         when(consumptionRepository.sumConsumptionByFarmIdBetween(any(), any(), eq(farmId))).thenReturn(usedLiters);
     }
 
     private WaterQuota zoneQuota(Long zoneId, double quotaLiters) {
         WaterQuota quota = new WaterQuota();
-        quota.setId(UUID.randomUUID());
-        quota.setTargetType("zone");
+        quota.setId(501L);
+        quota.setTargetType(QuotaTargetType.ZONE);
         quota.setTargetId(zoneId);
         quota.setQuotaMonth(LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1));
         quota.setQuotaLiters(quotaLiters);
@@ -189,8 +189,8 @@ class WaterQuotaServiceTest {
 
     private WaterQuota quota(Long farmId, double quotaLiters) {
         WaterQuota quota = new WaterQuota();
-        quota.setId(UUID.randomUUID());
-        quota.setTargetType("farm");
+        quota.setId(502L);
+        quota.setTargetType(QuotaTargetType.FARM);
         quota.setTargetId(farmId);
         quota.setQuotaMonth(LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1));
         quota.setQuotaLiters(quotaLiters);

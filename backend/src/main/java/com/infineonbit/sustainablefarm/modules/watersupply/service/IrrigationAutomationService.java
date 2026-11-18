@@ -1,14 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
-import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationStatus;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationTrigger;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
-import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
@@ -20,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
  * is created automatically ({@code trigger_source = auto}) with the volume derived from the zone's
  * agronomic need (ET0 x Kc / efficiency, see {@link WaterNeedService}).</p>
  *
- * <p>The same method serves the manual endpoint {@code POST /api/irrigations/auto-trigger} and the
+ * <p>The same method serves the manual endpoint {@code POST /api/water-supply/irrigations/auto-trigger} and the
  * scheduled job ({@link IrrigationAutoTriggerJob}): behavior is therefore identical regardless of
  * the origin, and each excluded zone is justified in the response.</p>
  *
@@ -54,7 +55,7 @@ public class IrrigationAutomationService {
     public static final int DEFAULT_DURATION_MINUTES = 30;
 
     /** Origin recorded on the schedules created by this rule. */
-    public static final String TRIGGER_SOURCE_AUTO = "auto";
+    public static final String TRIGGER_SOURCE_AUTO = IrrigationTrigger.AUTO.value();
 
     private final FarmDirectory farmDirectory;
     private final SoilMoistureReadingRepository soilMoistureRepository;
@@ -193,8 +194,8 @@ public class IrrigationAutomationService {
         schedule.setStartTime(now);
         schedule.setDurationMinutes(DEFAULT_DURATION_MINUTES);
         schedule.setWaterQuantityLiters(liters);
-        schedule.setStatus("scheduled");
-        schedule.setTriggerSource(TRIGGER_SOURCE_AUTO);
+        schedule.setStatus(IrrigationStatus.SCHEDULED);
+        schedule.setTriggerSource(IrrigationTrigger.AUTO);
         schedule.setCreatedBy(systemUsers.iotSystemUserId());
         IrrigationSchedule saved = scheduleRepository.save(schedule);
 
@@ -230,8 +231,8 @@ public class IrrigationAutomationService {
 
     private boolean hasOpenIrrigation(Long zoneId) {
         return scheduleRepository.findByZoneId(zoneId).stream()
-                .anyMatch(schedule -> "scheduled".equalsIgnoreCase(schedule.getStatus())
-                        || "running".equalsIgnoreCase(schedule.getStatus()));
+                .anyMatch(schedule -> schedule.getStatus() == IrrigationStatus.SCHEDULED
+                        || schedule.getStatus() == IrrigationStatus.RUNNING);
     }
 
     private Optional<Long> farmIdOf(ZoneDto zone) {

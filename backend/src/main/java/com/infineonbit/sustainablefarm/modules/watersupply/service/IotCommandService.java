@@ -4,6 +4,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrati
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IotCommandRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IotCommandResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IotCommand;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IotCommandStatus;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IotCommandType;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IotDevice;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.ValveGatewayUnavailableException;
@@ -32,8 +34,8 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class IotCommandService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IotCommandService.class);
-    static final String OPEN_VALVE = "OPEN_VALVE";
-    static final String CLOSE_VALVE = "CLOSE_VALVE";
+    static final String OPEN_VALVE = IotCommandType.OPEN_VALVE.name();
+    static final String CLOSE_VALVE = IotCommandType.CLOSE_VALVE.name();
 
     private final IotDeviceRepository deviceRepository;
     private final IotCommandRepository commandRepository;
@@ -87,17 +89,17 @@ public class IotCommandService {
 
         IotCommand command = new IotCommand();
         command.setDeviceId(deviceId);
-        command.setCommandType(commandType);
+        command.setCommandType(IotCommandType.valueOf(commandType));
         command.setPayload(payload(duration, request.reason()));
-        command.setStatus("queued");
+        command.setStatus(IotCommandStatus.QUEUED);
         command.setRequestedBy(request.requestedBy());
         command.setRequestedAt(now);
         IotCommand saved = commandRepository.save(command);
         try {
             valveCommandPort.send(saved);
-            saved.setStatus("dispatched");
+            saved.setStatus(IotCommandStatus.DISPATCHED);
         } catch (ValveGatewayUnavailableException ex) {
-            saved.setStatus("rejected");
+            saved.setStatus(IotCommandStatus.REJECTED);
             commandRepository.save(saved);
             LOGGER.warn("Valve command {} {} on device {} rejected: {}", saved.getId(), commandType, deviceId, ex.getMessage());
             throw ex;

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controleur IA - mince, delegue la logique metier a AIService.
  */
 @RestController
-@RequestMapping("/api/ai")
+@RequestMapping("/api/water-supply/ai")
 public class AIController {
 
     private final AIService aiService;

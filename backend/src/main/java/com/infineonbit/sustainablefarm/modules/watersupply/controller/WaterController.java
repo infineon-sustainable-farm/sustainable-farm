@@ -3,24 +3,23 @@ package com.infineonbit.sustainablefarm.modules.watersupply.controller;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelHistoryResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceUpdateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelHistoryResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterLevelResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.DripFlowCheckService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.time.Instant;
-import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -37,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Water supply - water", description = "Sources, real-time level, consumption, quality and drip flow check")
 @RestController
-@RequestMapping("/api/water")
+@RequestMapping("/api/water-supply")
 public class WaterController {
     private final WaterService waterService;
     private final DripFlowCheckService dripFlowCheckService;
@@ -127,18 +126,18 @@ public class WaterController {
     }
 
     @GetMapping("/consumption/{consumptionId}")
-    public WaterConsumptionResponse consumption(@PathVariable UUID consumptionId) {
+    public WaterConsumptionResponse consumption(@PathVariable Long consumptionId) {
         return waterService.getConsumption(consumptionId);
     }
 
     @PutMapping("/consumption/{consumptionId}")
-    public WaterConsumptionResponse updateConsumption(@PathVariable UUID consumptionId, @RequestBody WaterConsumptionUpdateRequest request) {
+    public WaterConsumptionResponse updateConsumption(@PathVariable Long consumptionId, @RequestBody WaterConsumptionUpdateRequest request) {
         return waterService.updateConsumption(consumptionId, request);
     }
 
     @DeleteMapping("/consumption/{consumptionId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteConsumption(@PathVariable UUID consumptionId) {
+    public void deleteConsumption(@PathVariable Long consumptionId) {
         waterService.deleteConsumption(consumptionId);
     }
 
@@ -163,18 +162,18 @@ public class WaterController {
     }
 
     @GetMapping("/quality/{qualityTestId}")
-    public WaterQualityResponse qualityTest(@PathVariable UUID qualityTestId) {
+    public WaterQualityResponse qualityTest(@PathVariable Long qualityTestId) {
         return waterService.getQualityTest(qualityTestId);
     }
 
     @PutMapping("/quality/{qualityTestId}")
-    public WaterQualityResponse updateQualityTest(@PathVariable UUID qualityTestId, @RequestBody WaterQualityUpdateRequest request) {
+    public WaterQualityResponse updateQualityTest(@PathVariable Long qualityTestId, @RequestBody WaterQualityUpdateRequest request) {
         return waterService.updateQualityTest(qualityTestId, request);
     }
 
     @DeleteMapping("/quality/{qualityTestId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteQualityTest(@PathVariable UUID qualityTestId) {
+    public void deleteQualityTest(@PathVariable Long qualityTestId) {
         waterService.deleteQualityTest(qualityTestId);
     }
 
