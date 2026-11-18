@@ -21,6 +21,9 @@ const api = vi.hoisted(() => ({
   unlinkCustomerCertification: vi.fn(),
 }));
 
+// The page waits for several requests before the list shows: leave room on a busy machine.
+const LOAD = { timeout: 5000 };
+
 vi.mock('../api/api', () => ({ api }));
 
 const customer = {
@@ -62,7 +65,7 @@ function renderPage() {
 describe('CustomersPage', () => {
   it('lists the customers with their order volume and shows the selected one', async () => {
     renderPage();
-    expect(await screen.findByRole('button', { name: 'Fresh Fruits GmbH' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Fresh Fruits GmbH' }, LOAD)).toBeInTheDocument();
     expect(screen.getByText('1,250.5 kg')).toBeInTheDocument();
     expect(screen.getByText('ID: CUST-0003-GER')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Fresh Fruits GmbH' })).toBeInTheDocument();
@@ -72,7 +75,7 @@ describe('CustomersPage', () => {
 
   it('creates a customer from the Add customer dialog', async () => {
     renderPage();
-    await screen.findByRole('button', { name: 'Fresh Fruits GmbH' });
+    await screen.findByRole('button', { name: 'Fresh Fruits GmbH' }, LOAD);
     fireEvent.click(screen.getByRole('button', { name: 'ADD CUSTOMER' }));
     const dialog = screen.getByRole('dialog', { name: 'Add New Customer' });
     fireEvent.change(within(dialog).getByLabelText(/Company Name/), { target: { value: 'Mango Export SARL' } });
@@ -87,7 +90,7 @@ describe('CustomersPage', () => {
 
   it('edits a customer from the row menu', async () => {
     renderPage();
-    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Fresh Fruits GmbH' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Fresh Fruits GmbH' }, LOAD));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Edit Customer' }));
     const dialog = await screen.findByRole('dialog', { name: 'Edit Customer #3' });
     expect(within(dialog).getByLabelText(/Company Name/)).toHaveValue('Fresh Fruits GmbH');
@@ -97,7 +100,7 @@ describe('CustomersPage', () => {
 
   it('adds a contact to the selected customer', async () => {
     renderPage();
-    await screen.findByRole('button', { name: 'Fresh Fruits GmbH' });
+    await screen.findByRole('button', { name: 'Fresh Fruits GmbH' }, LOAD);
     fireEvent.click(screen.getByRole('button', { name: 'ADD' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Contact' });
     fireEvent.change(within(dialog).getByLabelText(/Full Name/), { target: { value: 'Logistics desk' } });
@@ -112,7 +115,7 @@ describe('CustomersPage', () => {
 
   it('asks for confirmation before deleting a customer or a contact', async () => {
     renderPage();
-    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Fresh Fruits GmbH' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Fresh Fruits GmbH' }, LOAD));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Delete Customer' }));
     let dialog = screen.getByRole('dialog', { name: 'Delete customer?' });
     expect(within(dialog).getByText('Munich, Bavaria, Germany')).toBeInTheDocument();
