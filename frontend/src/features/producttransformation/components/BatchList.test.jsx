@@ -46,7 +46,9 @@ describe('BatchList', () => {
   it('loads and renders batches with quantity, status and origin', async () => {
     render(<BatchList />);
 
-    const table = await screen.findByRole('table');
+    // The loading state is a skeleton table: wait for the rows before reading the table.
+    await screen.findByText('B-001');
+    const table = screen.getByRole('table');
     expect(within(table).getByText('B-001')).toBeTruthy();
     expect(within(table).getByText('B-002')).toBeTruthy();
     expect(within(table).getByText('KEITT')).toBeTruthy();
