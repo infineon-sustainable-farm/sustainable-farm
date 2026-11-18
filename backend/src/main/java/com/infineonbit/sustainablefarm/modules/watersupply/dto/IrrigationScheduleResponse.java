@@ -4,7 +4,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSche
 import java.time.Instant;
 import java.util.UUID;
 
-public record IrrigationScheduleResponse(UUID id, UUID zoneId, Instant startTime, Integer durationMinutes,
+public record IrrigationScheduleResponse(UUID id, Long zoneId, Instant startTime, Integer durationMinutes,
                                          Double waterQuantityLiters, String status, UUID createdBy, Instant createdAt,
                                          String postponeReason, String blockCode, Boolean multipleBlockCodes) {
     public static IrrigationScheduleResponse from(IrrigationSchedule schedule) {

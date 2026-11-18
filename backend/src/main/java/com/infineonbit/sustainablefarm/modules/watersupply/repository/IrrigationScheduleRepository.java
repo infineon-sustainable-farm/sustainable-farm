@@ -11,11 +11,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface IrrigationScheduleRepository extends JpaRepository<IrrigationSchedule, UUID> {
-    Page<IrrigationSchedule> findByZoneId(UUID zoneId, Pageable pageable);
+    Page<IrrigationSchedule> findByZoneId(Long zoneId, Pageable pageable);
 
-    List<IrrigationSchedule> findByZoneId(UUID zoneId);
+    List<IrrigationSchedule> findByZoneId(Long zoneId);
 
-    List<IrrigationSchedule> findByZoneIdAndStatusIgnoreCase(UUID zoneId, String status);
+    List<IrrigationSchedule> findByZoneIdAndStatusIgnoreCase(Long zoneId, String status);
 
     long countByStartTimeBetween(Instant start, Instant end);
 
@@ -32,15 +32,14 @@ public interface IrrigationScheduleRepository extends JpaRepository<IrrigationSc
             + "where lower(s.status) in ('scheduled','running') and s.startTime >= :start and s.startTime < :end")
     double sumPlannedDemandBetween(Instant start, Instant end);
 
-    /** Same forecast restricted to the zones of one farm (zone -> field -> farm). */
-    @Query("select coalesce(sum(s.waterQuantityLiters), 0) from IrrigationSchedule s, Zone z, Field f "
-            + "where s.zoneId = z.id and z.fieldId = f.id and f.farmId = :farmId "
+    /** Same forecast restricted to some zones (the zones of one farm, read from the farm referential). */
+    @Query("select coalesce(sum(s.waterQuantityLiters), 0) from IrrigationSchedule s where s.zoneId in :zoneIds "
             + "and lower(s.status) in ('scheduled','running') and s.startTime >= :start and s.startTime < :end")
-    double sumPlannedDemandForFarmBetween(UUID farmId, Instant start, Instant end);
+    double sumPlannedDemandForZonesBetween(Collection<Long> zoneIds, Instant start, Instant end);
 
-    Page<IrrigationSchedule> findByZoneIdIn(Collection<UUID> zoneIds, Pageable pageable);
+    Page<IrrigationSchedule> findByZoneIdIn(Collection<Long> zoneIds, Pageable pageable);
 
     @Query("select s from IrrigationSchedule s where s.zoneId = :zoneId "
             + "and lower(s.status) in ('scheduled','running') and s.startTime >= :start and s.startTime < :end")
-    List<IrrigationSchedule> findOpenForZoneBetween(UUID zoneId, Instant start, Instant end);
+    List<IrrigationSchedule> findOpenForZoneBetween(Long zoneId, Instant start, Instant end);
 }

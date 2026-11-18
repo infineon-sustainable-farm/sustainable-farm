@@ -3,12 +3,12 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.RainwaterHarvestRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -40,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class WaterEconomyService {
 
-    private final FieldZoneRepository fieldZoneRepository;
+    private final FarmDirectory farmDirectory;
     private final IrrigationScheduleRepository scheduleRepository;
     private final WaterConsumptionRepository consumptionRepository;
     private final WaterSourceRepository sourceRepository;
@@ -49,14 +49,14 @@ public class WaterEconomyService {
     private final AgroWeatherService agroWeatherService;
 
     public WaterEconomyService(
-            FieldZoneRepository fieldZoneRepository,
+            FarmDirectory farmDirectory,
             IrrigationScheduleRepository scheduleRepository,
             WaterConsumptionRepository consumptionRepository,
             WaterSourceRepository sourceRepository,
             RainwaterHarvestRepository harvestRepository,
             WaterNeedService waterNeedService,
             AgroWeatherService agroWeatherService) {
-        this.fieldZoneRepository = fieldZoneRepository;
+        this.farmDirectory = farmDirectory;
         this.scheduleRepository = scheduleRepository;
         this.consumptionRepository = consumptionRepository;
         this.sourceRepository = sourceRepository;
@@ -90,7 +90,7 @@ public class WaterEconomyService {
 
     /** Daily water need of all zones for a given ET0. */
     public double dailyNeedLiters(double et0Mm) {
-        return fieldZoneRepository.findAll().stream()
+        return farmDirectory.listZones().stream()
                 .mapToDouble(zone -> waterNeedService.needLiters(zone, et0Mm))
                 .sum();
     }
@@ -98,14 +98,14 @@ public class WaterEconomyService {
     /** Per-zone detail of the theoretical need: area, Kc, efficiency and irrigation method. */
     public List<Map<String, Object>> needBreakdown(double et0Mm) {
         List<Map<String, Object>> breakdown = new ArrayList<>();
-        for (Zone zone : fieldZoneRepository.findAll()) {
+        for (ZoneDto zone : farmDirectory.listZones()) {
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("zone_id", zone.getId());
-            item.put("zone_name", zone.getName());
-            item.put("area_hectares", zone.getAreaHectares());
+            item.put("zone_id", zone.id());
+            item.put("zone_name", zone.name());
+            item.put("area_hectares", zone.areaHectares());
             item.put("crop_coefficient", waterNeedService.cropCoefficient(zone));
             item.put("system_efficiency", waterNeedService.systemEfficiency(zone));
-            item.put("irrigation_method", zone.getIrrigationMethod());
+            item.put("irrigation_method", zone.irrigationMethod());
             item.put("irrigation_method_label", waterNeedService.methodLabel(zone));
             item.put("daily_need_liters", Math.round(waterNeedService.needLiters(zone, et0Mm)));
             breakdown.add(item);

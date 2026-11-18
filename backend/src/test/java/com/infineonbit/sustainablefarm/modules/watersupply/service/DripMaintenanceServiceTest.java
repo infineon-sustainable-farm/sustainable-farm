@@ -9,17 +9,16 @@ import static org.mockito.Mockito.when;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,14 +30,14 @@ class DripMaintenanceServiceTest {
     private DripMaintenanceLogRepository logRepository;
 
     @Mock
-    private FieldZoneRepository fieldZoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Test
     void createRejectsUnknownZone() {
-        UUID zoneId = UUID.randomUUID();
+        Long zoneId = 3L;
         DripMaintenanceLogRequest request = new DripMaintenanceLogRequest(
                 zoneId, Instant.now(), "inspection", null, null, null, null, null, null);
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service().create(request));
         verify(logRepository, never()).save(org.mockito.ArgumentMatchers.any());
@@ -46,8 +45,8 @@ class DripMaintenanceServiceTest {
 
     @Test
     void createRejectsAMissingMaintenanceDate() {
-        UUID zoneId = UUID.randomUUID();
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(new Zone()));
+        Long zoneId = 4L;
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().id(zoneId).build()));
         DripMaintenanceLogRequest request = new DripMaintenanceLogRequest(
                 zoneId, null, "inspection", null, null, null, null, null, null);
 
@@ -57,9 +56,9 @@ class DripMaintenanceServiceTest {
 
     @Test
     void calendarIsOverdueWhenTheLastInspectionIsTooOld() {
-        Zone zone = stubZone();
+        ZoneDto zone = stubZone();
         // Inspection done 10 days ago for a 7-day periodicity: 3 days of delay.
-        when(logRepository.findAll()).thenReturn(List.of(intervention(zone.getId(), "inspection", 10)));
+        when(logRepository.findAll()).thenReturn(List.of(intervention(zone.id(), "inspection", 10)));
 
         Map<String, Object> entry = entryFor(service().schedule(), "inspection");
 
@@ -71,8 +70,8 @@ class DripMaintenanceServiceTest {
 
     @Test
     void calendarPlansTheNextMonthlyFlush() {
-        Zone zone = stubZone();
-        when(logRepository.findAll()).thenReturn(List.of(intervention(zone.getId(), "filter cleaning", 1)));
+        ZoneDto zone = stubZone();
+        when(logRepository.findAll()).thenReturn(List.of(intervention(zone.id(), "filter cleaning", 1)));
 
         Map<String, Object> flush = entryFor(service().schedule(), "flush");
         Map<String, Object> filter = entryFor(service().schedule(), "filter_cleaning");
@@ -87,20 +86,18 @@ class DripMaintenanceServiceTest {
 
     @Test
     void calendarIsEmptyWithoutZone() {
-        when(fieldZoneRepository.findAll()).thenReturn(List.of());
+        when(farmDirectory.listZones()).thenReturn(List.of());
 
         assertTrue(service().schedule().isEmpty());
     }
 
-    private Zone stubZone() {
-        Zone zone = new Zone();
-        zone.setId(UUID.randomUUID());
-        zone.setName("Zone A");
-        when(fieldZoneRepository.findAll()).thenReturn(List.of(zone));
+    private ZoneDto stubZone() {
+        ZoneDto zone = TestZones.zone().id(8L).name("Zone A").build();
+        when(farmDirectory.listZones()).thenReturn(List.of(zone));
         return zone;
     }
 
-    private DripMaintenanceLog intervention(UUID zoneId, String type, int daysAgo) {
+    private DripMaintenanceLog intervention(Long zoneId, String type, int daysAgo) {
         DripMaintenanceLog log = new DripMaintenanceLog();
         log.setZoneId(zoneId);
         log.setMaintenanceType(type);
@@ -121,6 +118,6 @@ class DripMaintenanceServiceTest {
     }
 
     private DripMaintenanceService service() {
-        return new DripMaintenanceService(logRepository, fieldZoneRepository);
+        return new DripMaintenanceService(logRepository, farmDirectory);
     }
 }

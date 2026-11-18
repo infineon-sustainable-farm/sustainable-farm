@@ -6,7 +6,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "drip_maintenance_logs", indexes = {
@@ -16,7 +15,7 @@ import java.util.UUID;
 public class DripMaintenanceLog extends BaseEntity {
     @NotNull
     @Column(name = "zone_id", nullable = false)
-    private UUID zoneId;
+    private Long zoneId;
 
     @NotNull
     @Column(name = "maintenance_date", nullable = false)
@@ -44,11 +43,11 @@ public class DripMaintenanceLog extends BaseEntity {
     @Column(name = "performed_by", length = 100)
     private String performedBy;
 
-    public UUID getZoneId() {
+    public Long getZoneId() {
         return zoneId;
     }
 
-    public void setZoneId(UUID zoneId) {
+    public void setZoneId(Long zoneId) {
         this.zoneId = zoneId;
     }
 

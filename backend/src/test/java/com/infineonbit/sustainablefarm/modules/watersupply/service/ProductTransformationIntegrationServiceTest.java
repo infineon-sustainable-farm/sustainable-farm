@@ -42,6 +42,9 @@ class ProductTransformationIntegrationServiceTest {
     private static final Instant END = Instant.parse("2026-10-13T10:00:00Z");
 
     @Mock
+    private com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory farmDirectory;
+
+    @Mock
     private WaterConsumptionRepository consumptionRepository;
 
     @Mock
@@ -59,7 +62,7 @@ class ProductTransformationIntegrationServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void lotUsageNeverTakesOverAConsumptionOfAnotherLot() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 144L;
         WaterConsumption free = consumption(sourceId, 100.0, null);
         WaterConsumption sameLot = consumption(sourceId, 50.0, "LOT-1");
         WaterConsumption otherLot = consumption(sourceId, 30.0, "LOT-9");
@@ -99,9 +102,9 @@ class ProductTransformationIntegrationServiceTest {
 
     @Test
     void byLotAggregatesPerActivity() {
-        WaterConsumption washing = consumption(UUID.randomUUID(), 250.0, "LOT-1");
+        WaterConsumption washing = consumption(901L, 250.0, "LOT-1");
         washing.setActivity("WASHING");
-        WaterConsumption unknown = consumption(UUID.randomUUID(), 20.0, "LOT-1");
+        WaterConsumption unknown = consumption(902L, 20.0, "LOT-1");
         when(consumptionRepository.findByLotIdOrderByConsumptionDateAsc("LOT-1")).thenReturn(List.of(washing, unknown));
 
         Map<String, Object> response = service().byLot("LOT-1");
@@ -112,7 +115,7 @@ class ProductTransformationIntegrationServiceTest {
 
     @Test
     void complianceUsesTheLotSourcesAndWindowByDefault() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 145L;
         WaterConsumption first = consumption(sourceId, 10.0, "LOT-1");
         WaterConsumption last = consumption(sourceId, 10.0, "LOT-1");
         last.setConsumptionDate(END);
@@ -149,7 +152,9 @@ class ProductTransformationIntegrationServiceTest {
     void forecastAddsBatchAndFarmIrrigationDemandAndRaisesATightBufferAlert() {
         WaterSource source = source(2000.0);
         when(sourceRepository.findById(source.getId())).thenReturn(Optional.of(source));
-        when(scheduleRepository.sumPlannedDemandForFarmBetween(eq(source.getFarmId()), any(), any())).thenReturn(400d);
+        when(farmDirectory.listZonesOfFarm(source.getFarmId()))
+                .thenReturn(List.of(TestZones.zone().id(31L).build(), TestZones.zone().id(32L).build()));
+        when(scheduleRepository.sumPlannedDemandForZonesBetween(eq(List.of(31L, 32L)), any(), any())).thenReturn(400d);
         Instant tomorrow = Instant.now().plus(1, ChronoUnit.DAYS);
 
         Map<String, Object> response = service().forecast(new AvailabilityForecastRequest(source.getId(), 7, null, List.of(
@@ -175,7 +180,7 @@ class ProductTransformationIntegrationServiceTest {
         // Dryer cleaning: 1 m3 per lot, irrigation excluded on request.
         assertEquals(-700L, response.get("availableAfterForecastLiters"));
         assertEquals("insufficient", response.get("bufferStatus"));
-        verify(scheduleRepository, never()).sumPlannedDemandForFarmBetween(any(), any(), any());
+        verify(scheduleRepository, never()).sumPlannedDemandForZonesBetween(any(), any(), any());
         verify(alertService).raiseOnce(eq("warning"), eq("Water buffer insufficient - Tank"), anyString(), anyString());
     }
 
@@ -190,7 +195,7 @@ class ProductTransformationIntegrationServiceTest {
         assertTrue(((List<?>) response.get("warnings")).contains("no_coefficient_for_activity_other"));
     }
 
-    private static WaterConsumption consumption(UUID sourceId, double liters, String lotId) {
+    private static WaterConsumption consumption(Long sourceId, double liters, String lotId) {
         WaterConsumption consumption = new WaterConsumption();
         consumption.setId(UUID.randomUUID());
         consumption.setSourceId(sourceId);
@@ -200,7 +205,7 @@ class ProductTransformationIntegrationServiceTest {
         return consumption;
     }
 
-    private static WaterQualityTest test(UUID sourceId, double ph, double turbidity) {
+    private static WaterQualityTest test(Long sourceId, double ph, double turbidity) {
         WaterQualityTest test = new WaterQualityTest();
         test.setSourceId(sourceId);
         test.setPh(ph);
@@ -211,8 +216,8 @@ class ProductTransformationIntegrationServiceTest {
 
     private static WaterSource source(double level) {
         WaterSource source = new WaterSource();
-        source.setId(UUID.randomUUID());
-        source.setFarmId(UUID.randomUUID());
+        source.setId(903L);
+        source.setFarmId(146L);
         source.setName("Tank");
         source.setCurrentLevelLiters(level);
         return source;
@@ -220,6 +225,6 @@ class ProductTransformationIntegrationServiceTest {
 
     private ProductTransformationIntegrationService service() {
         return new ProductTransformationIntegrationService(consumptionRepository, qualityRepository, sourceRepository,
-                scheduleRepository, alertService, WaterIntegrationProperties.defaults());
+                scheduleRepository, alertService, WaterIntegrationProperties.defaults(), farmDirectory);
     }
 }

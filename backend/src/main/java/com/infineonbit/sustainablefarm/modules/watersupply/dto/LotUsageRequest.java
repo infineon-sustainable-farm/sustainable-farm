@@ -15,6 +15,6 @@ public record LotUsageRequest(
         String activity,
         @NotNull Instant startAt,
         @NotNull Instant endAt,
-        UUID sourceId,
-        UUID zoneId) {
+        Long sourceId,
+        Long zoneId) {
 }

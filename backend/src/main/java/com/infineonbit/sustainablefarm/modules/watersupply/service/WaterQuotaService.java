@@ -5,11 +5,9 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQuotaRespons
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQuotaUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQuota;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQuotaRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -44,9 +42,7 @@ public class WaterQuotaService {
     private static final String TARGET_ZONE = "zone";
 
     private final WaterQuotaRepository quotaRepository;
-    private final FarmRepository farmRepository;
-    private final FieldZoneRepository fieldZoneRepository;
-    private final FieldRepository fieldRepository;
+    private final FarmDirectory farmDirectory;
     private final WaterConsumptionRepository consumptionRepository;
     private final AlertService alertService;
 
@@ -57,18 +53,14 @@ public class WaterQuotaService {
     private final long checkThrottleSeconds;
 
     public WaterQuotaService(WaterQuotaRepository quotaRepository,
-                             FarmRepository farmRepository,
-                             FieldZoneRepository fieldZoneRepository,
-                             FieldRepository fieldRepository,
+                             FarmDirectory farmDirectory,
                              WaterConsumptionRepository consumptionRepository,
                              AlertService alertService,
                              @Value("${app.quota.check-throttle-seconds:60}") long checkThrottleSeconds) {
         this.checkThrottleSeconds = Math.max(0, checkThrottleSeconds);
         this.alertService = alertService;
         this.consumptionRepository = consumptionRepository;
-        this.fieldRepository = fieldRepository;
-        this.fieldZoneRepository = fieldZoneRepository;
-        this.farmRepository = farmRepository;
+        this.farmDirectory = farmDirectory;
         this.quotaRepository = quotaRepository;
     }
 
@@ -82,7 +74,7 @@ public class WaterQuotaService {
                 .toList();
     }
 
-    public List<WaterQuotaResponse> findQuotas(String targetType, UUID targetId) {
+    public List<WaterQuotaResponse> findQuotas(String targetType, Long targetId) {
         String type = normalizeTargetType(targetType);
         return quotaRepository.findByTargetTypeAndTargetIdOrderByQuotaMonthDesc(type, targetId).stream()
                 .map(WaterQuotaResponse::from)
@@ -154,7 +146,7 @@ public class WaterQuotaService {
      * ingestion of a flow measurement (IoT sensors) and at each manual consumption entry.
      * Alerts go through {@link AlertService#raiseOnce}: no repetition every minute.
      */
-    public void checkThresholds(UUID farmId, UUID zoneId, Instant consumptionDate) {
+    public void checkThresholds(Long farmId, Long zoneId, Instant consumptionDate) {
         // A flow meter can send several measurements per minute: recomputing the quota at
         // every pulse would not change the result and would cost one aggregation per measurement.
         if (throttled(farmId, zoneId)) {
@@ -172,7 +164,7 @@ public class WaterQuotaService {
     }
 
     /** True if the target was already evaluated within the throttle window (0 disables the mechanism). */
-    private boolean throttled(UUID farmId, UUID zoneId) {
+    private boolean throttled(Long farmId, Long zoneId) {
         if (checkThrottleSeconds == 0) {
             return false;
         }
@@ -186,7 +178,7 @@ public class WaterQuotaService {
         return false;
     }
 
-    private void checkThreshold(String targetType, UUID targetId, LocalDate monthStart) {
+    private void checkThreshold(String targetType, Long targetId, LocalDate monthStart) {
         WaterQuota quota = currentQuota(targetType, targetId, monthStart);
         if (quota == null) {
             return;
@@ -243,14 +235,14 @@ public class WaterQuotaService {
     }
 
     /** Quota that applies: the requested month's if it exists, otherwise the most recent earlier one. */
-    private WaterQuota currentQuota(String targetType, UUID targetId, LocalDate monthStart) {
+    private WaterQuota currentQuota(String targetType, Long targetId, LocalDate monthStart) {
         return quotaRepository
                 .findFirstByTargetTypeAndTargetIdAndQuotaMonthBetweenOrderByQuotaMonthDesc(
                         targetType, targetId, monthStart, monthStart.plusMonths(1))
                 .orElse(null);
     }
 
-    private double usedLiters(String targetType, UUID targetId, LocalDate monthStart) {
+    private double usedLiters(String targetType, Long targetId, LocalDate monthStart) {
         Instant start = monthStart.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant end = monthStart.plusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC);
         return switch (targetType) {
@@ -260,21 +252,21 @@ public class WaterQuotaService {
         };
     }
 
-    private double zoneConsumption(Instant start, Instant end, UUID zoneId) {
+    private double zoneConsumption(Instant start, Instant end, Long zoneId) {
         return consumptionRepository.sumConsumptionByZoneIdBetween(start, end, zoneId);
     }
 
-    private String targetName(String targetType, UUID targetId) {
+    private String targetName(String targetType, Long targetId) {
         return switch (targetType) {
-            case TARGET_FARM -> farmRepository.findById(targetId)
-                    .map(farm -> farm.getName()).orElse("Unknown farm");
-            case TARGET_ZONE -> fieldZoneRepository.findById(targetId)
-                    .map(zone -> zone.getName()).orElse("Unknown zone");
+            case TARGET_FARM -> farmDirectory.findFarm(targetId)
+                    .map(farm -> farm.name()).orElse("Unknown farm");
+            case TARGET_ZONE -> farmDirectory.findZone(targetId)
+                    .map(zone -> zone.name()).orElse("Unknown zone");
             default -> "Unknown target";
         };
     }
 
-    private String quotaLabel(String label, String targetType, UUID targetId, LocalDate month) {
+    private String quotaLabel(String label, String targetType, Long targetId, LocalDate month) {
         if (label != null && !label.isBlank()) {
             return label;
         }
@@ -299,13 +291,13 @@ public class WaterQuotaService {
         }
     }
 
-    private void requireTarget(String targetType, UUID targetId) {
+    private void requireTarget(String targetType, Long targetId) {
         if (targetId == null) {
             throw new IllegalArgumentException("The quota target is required.");
         }
         boolean exists = switch (targetType) {
-            case TARGET_FARM -> farmRepository.findById(targetId).isPresent();
-            case TARGET_ZONE -> fieldZoneRepository.findById(targetId).isPresent();
+            case TARGET_FARM -> farmDirectory.farmExists(targetId);
+            case TARGET_ZONE -> farmDirectory.findZone(targetId).isPresent();
             default -> false;
         };
         if (!exists) {

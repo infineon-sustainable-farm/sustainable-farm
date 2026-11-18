@@ -35,7 +35,7 @@ public class RainwaterHarvestService {
     }
 
     /** Paginated list, with optional source filter: same contract as the other module lists. */
-    public PageResponse<RainwaterHarvestResponse> findAll(Pageable pageable, UUID sourceId) {
+    public PageResponse<RainwaterHarvestResponse> findAll(Pageable pageable, Long sourceId) {
         Page<RainwaterHarvest> page = sourceId == null
                 ? harvestRepository.findAll(pageable)
                 : harvestRepository.findBySourceId(sourceId, pageable);
@@ -115,7 +115,7 @@ public class RainwaterHarvestService {
         }
     }
 
-    private void requireSource(UUID sourceId) {
+    private void requireSource(Long sourceId) {
         if (sourceId == null || waterSourceRepository.findById(sourceId).isEmpty()) {
             throw new NotFoundException("WaterSource");
         }

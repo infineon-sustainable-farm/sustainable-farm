@@ -7,7 +7,7 @@ import java.util.UUID;
 /** API view of a rainwater harvest: stable contract, independent of the JPA entity. */
 public record RainwaterHarvestResponse(
         UUID id,
-        UUID sourceId,
+        Long sourceId,
         Double catchmentAreaM2,
         Double rainfallMm,
         Double runoffCoefficient,

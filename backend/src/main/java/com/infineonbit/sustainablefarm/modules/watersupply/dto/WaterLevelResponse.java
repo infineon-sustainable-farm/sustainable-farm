@@ -11,7 +11,7 @@ import java.util.UUID;
  * is the reading instant, {@code status} summarizes the situation against capacity.</p>
  */
 public record WaterLevelResponse(
-        UUID sourceId,
+        Long sourceId,
         String name,
         String type,
         Double capacityLiters,

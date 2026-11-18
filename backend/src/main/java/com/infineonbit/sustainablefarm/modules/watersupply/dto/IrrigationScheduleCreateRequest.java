@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record IrrigationScheduleCreateRequest(
-        @NotNull UUID zoneId,
+        @NotNull Long zoneId,
         @NotNull Instant startTime,
         @NotNull Integer durationMinutes,
         @NotNull Double waterQuantityLiters,

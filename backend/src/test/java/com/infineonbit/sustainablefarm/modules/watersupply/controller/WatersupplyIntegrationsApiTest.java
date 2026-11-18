@@ -67,7 +67,8 @@ class WatersupplyIntegrationsApiTest {
         String farmId = createFarm("Block Filter Farm");
         String fieldId = createField(farmId);
         String zoneA = createZone(fieldId, "Zone A", 1.0);
-        String zoneB = createZone(fieldId, "Zone B", 1.0);
+        // A block code belongs to the field (block) of the zone: zone B sits in another field.
+        String zoneB = createZone(createField(farmId), "Zone B", 1.0);
         String sourceId = createSource(farmId, "Block Filter Tank");
         String block = uniqueBlock();
         mapZone(zoneA, block.toLowerCase(), farmId);
@@ -217,7 +218,7 @@ class WatersupplyIntegrationsApiTest {
         mockMvc.perform(post("/api/water/consumption").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%s","sourceId":"%s","consumptionLiters":1,"consumptionDate":"2026-10-13T08:00:00Z","activity":"painting"}
-                                """.formatted(UUID.randomUUID(), UUID.randomUUID())))
+                                """.formatted(999998L, 999999L)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
         mockMvc.perform(get("/api/water/consumption/by-lot"))
@@ -242,7 +243,7 @@ class WatersupplyIntegrationsApiTest {
 
         mockMvc.perform(post("/api/water/product-transformation/availability-forecast")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"sourceId\":\"%s\"}".formatted(UUID.randomUUID())))
+                        .content("{\"sourceId\":\"%s\"}".formatted(999999L)))
                 .andExpect(status().isNotFound());
         mockMvc.perform(post("/api/water/product-transformation/availability-forecast")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -266,7 +267,7 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
         mockMvc.perform(post("/api/water/outages").contentType(MediaType.APPLICATION_JSON)
-                        .content(outageJson("zone", UUID.randomUUID().toString(), now, now.plusSeconds(60), "planned")))
+                        .content(outageJson("zone", "999999", now, now.plusSeconds(60), "planned")))
                 .andExpect(status().isNotFound());
 
         // A farm-wide period also concerns the zones of that farm.
@@ -323,7 +324,7 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(jsonPath("$.scheduleId").value(scheduleId))
                 .andExpect(jsonPath("$.plannedLiters").value(250.0))
                 .andExpect(jsonPath("$.lastActivationAt").isNotEmpty());
-        mockMvc.perform(get("/api/water/visitor/irrigation-status").param("zoneId", UUID.randomUUID().toString()))
+        mockMvc.perform(get("/api/water/visitor/irrigation-status").param("zoneId", "999999"))
                 .andExpect(status().isNotFound());
         mockMvc.perform(get("/api/water/visitor/irrigation-status"))
                 .andExpect(status().isBadRequest())
@@ -374,7 +375,7 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].levelLiters").value(2500.0))
                 .andExpect(jsonPath("$[1].levelLiters").value(1800.0));
-        mockMvc.perform(get("/api/water/sources/{id}/level-history", UUID.randomUUID()))
+        mockMvc.perform(get("/api/water/sources/{id}/level-history", 999999L))
                 .andExpect(status().isNotFound());
 
         mockMvc.perform(get("/api/dashboard/water-balance"))
@@ -495,7 +496,7 @@ class WatersupplyIntegrationsApiTest {
         MvcResult result = mockMvc.perform(request.contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
     }
 
     private static String quoted(String value) {

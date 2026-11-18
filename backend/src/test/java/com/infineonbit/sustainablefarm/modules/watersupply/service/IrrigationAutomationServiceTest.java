@@ -8,21 +8,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Field;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.Month;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -38,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class IrrigationAutomationServiceTest {
 
     @Mock
-    private FieldZoneRepository fieldZoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private SoilMoistureReadingRepository soilMoistureRepository;
@@ -59,27 +55,24 @@ class IrrigationAutomationServiceTest {
     private AlertService alertService;
 
     @Mock
-    private FieldRepository fieldRepository;
-
-    @Mock
     private RainfallService rainfallService;
 
     @Mock
     private WaterUnavailabilityService unavailabilityService;
 
     @Mock
-    private ZoneBlockMappingService zoneBlockMappingService;
+    private ZoneBlockResolver zoneBlockResolver;
 
     @Mock
     private PlantsGrowthPort plantsGrowthPort;
 
     @Test
     void createsAnAutomaticScheduleWhenSoilIsDry() {
-        Zone zone = stubSingleZone();
+        ZoneDto zone = stubSingleZone();
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
-        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.getId()), any())).thenReturn(30d);
-        when(scheduleRepository.findByZoneId(zone.getId())).thenReturn(List.of());
-        when(logRepository.findForZoneBetween(eq(zone.getId()), any(), any())).thenReturn(List.of());
+        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.id()), any())).thenReturn(30d);
+        when(scheduleRepository.findByZoneId(zone.id())).thenReturn(List.of());
+        when(logRepository.findForZoneBetween(eq(zone.id()), any(), any())).thenReturn(List.of());
         when(waterNeedService.needLiters(zone, 5d)).thenReturn(1234.5d);
         when(scheduleRepository.save(any(IrrigationSchedule.class))).thenAnswer(call -> call.getArgument(0));
 
@@ -94,14 +87,14 @@ class IrrigationAutomationServiceTest {
         assertEquals(IrrigationAutomationService.TRIGGER_SOURCE_AUTO, saved.getValue().getTriggerSource());
         assertEquals("scheduled", saved.getValue().getStatus());
         assertEquals(1235d, saved.getValue().getWaterQuantityLiters());
-        assertEquals(zone.getId(), saved.getValue().getZoneId());
+        assertEquals(zone.id(), saved.getValue().getZoneId());
     }
 
     @Test
     void skipsZonesAboveTheSeasonalThreshold() {
-        Zone zone = stubSingleZone();
+        ZoneDto zone = stubSingleZone();
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
-        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.getId()), any())).thenReturn(80d);
+        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.id()), any())).thenReturn(80d);
 
         Map<String, Object> report = service().trigger();
 
@@ -110,12 +103,12 @@ class IrrigationAutomationServiceTest {
 
     @Test
     void skipsZonesWithAnOpenSchedule() {
-        Zone zone = stubSingleZone();
+        ZoneDto zone = stubSingleZone();
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
-        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.getId()), any())).thenReturn(30d);
+        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.id()), any())).thenReturn(30d);
         IrrigationSchedule open = new IrrigationSchedule();
         open.setStatus("scheduled");
-        when(scheduleRepository.findByZoneId(zone.getId())).thenReturn(List.of(open));
+        when(scheduleRepository.findByZoneId(zone.id())).thenReturn(List.of(open));
 
         Map<String, Object> report = service().trigger();
 
@@ -124,13 +117,13 @@ class IrrigationAutomationServiceTest {
 
     @Test
     void skipsZonesIrrigatedLessThanTwentyFourHoursAgo() {
-        Zone zone = stubSingleZone();
+        ZoneDto zone = stubSingleZone();
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
-        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.getId()), any())).thenReturn(30d);
-        when(scheduleRepository.findByZoneId(zone.getId())).thenReturn(List.of());
+        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.id()), any())).thenReturn(30d);
+        when(scheduleRepository.findByZoneId(zone.id())).thenReturn(List.of());
         IrrigationLog recent = new IrrigationLog();
         recent.setActualStartTime(Instant.now());
-        when(logRepository.findForZoneBetween(eq(zone.getId()), any(), any())).thenReturn(List.of(recent));
+        when(logRepository.findForZoneBetween(eq(zone.id()), any(), any())).thenReturn(List.of(recent));
 
         Map<String, Object> report = service().trigger();
 
@@ -139,10 +132,10 @@ class IrrigationAutomationServiceTest {
 
     @Test
     void reportsZonesWithoutSoilSensor() {
-        Zone zone = stubSingleZone();
+        ZoneDto zone = stubSingleZone();
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
         // The repository returns null when no measurement exists for the zone (no sensor).
-        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.getId()), any())).thenReturn(null);
+        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.id()), any())).thenReturn(null);
 
         Map<String, Object> report = service().trigger();
 
@@ -151,8 +144,8 @@ class IrrigationAutomationServiceTest {
 
     @Test
     void skipsZonesUnderPlannedWaterUnavailability() {
-        Zone zone = stubDryZoneWithoutRecentIrrigation();
-        when(unavailabilityService.isZoneUnavailable(eq(zone.getId()), any())).thenReturn(true);
+        ZoneDto zone = stubDryZoneWithoutRecentIrrigation();
+        when(unavailabilityService.isZoneUnavailable(eq(zone.id()), any())).thenReturn(true);
 
         Map<String, Object> report = service().trigger();
 
@@ -161,12 +154,8 @@ class IrrigationAutomationServiceTest {
 
     @Test
     void skipsZonesWhoseFarmGaugesRecordedRecentRain() {
-        Zone zone = stubDryZoneWithoutRecentIrrigation();
-        UUID farmId = UUID.randomUUID();
-        zone.setFieldId(UUID.randomUUID());
-        Field field = new Field();
-        field.setFarmId(farmId);
-        when(fieldRepository.findById(zone.getFieldId())).thenReturn(Optional.of(field));
+        Long farmId = 147L;
+        stubDryZoneWithoutRecentIrrigation(farmId);
         when(rainfallService.forFarms(eq(List.of(farmId)), any(), any()))
                 .thenReturn(new RainfallService.RainfallSummary(6.2d, Map.of(), List.of()));
 
@@ -178,10 +167,10 @@ class IrrigationAutomationServiceTest {
 
     @Test
     void appliesThePlantsGrowthPhaseFactorToTheVolume() {
-        Zone zone = stubDryZoneWithoutRecentIrrigation();
+        ZoneDto zone = stubDryZoneWithoutRecentIrrigation();
         when(waterNeedService.needLiters(zone, 5d)).thenReturn(1000d);
         when(scheduleRepository.save(any(IrrigationSchedule.class))).thenAnswer(call -> call.getArgument(0));
-        when(zoneBlockMappingService.blockCodesForZone(zone.getId())).thenReturn(List.of("A"));
+        when(zoneBlockResolver.blockCodesForZone(zone.id())).thenReturn(List.of("A"));
         when(plantsGrowthPort.growthForBlock("A"))
                 .thenReturn(List.of(new PlantsGrowthPort.BlockGrowth("A", "full production", 7)));
 
@@ -206,21 +195,26 @@ class IrrigationAutomationServiceTest {
     }
 
     /** A zone below every seasonal threshold, with no open schedule and no irrigation in the last 24 h. */
-    private Zone stubDryZoneWithoutRecentIrrigation() {
-        Zone zone = stubSingleZone();
-        zone.setId(UUID.randomUUID());
+    private ZoneDto stubDryZoneWithoutRecentIrrigation() {
+        return stubDryZoneWithoutRecentIrrigation(null);
+    }
+
+    private ZoneDto stubDryZoneWithoutRecentIrrigation(Long farmId) {
+        ZoneDto zone = stubSingleZone(farmId);
         when(agroWeatherService.et0Between(any(), any())).thenReturn(5d);
-        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.getId()), any())).thenReturn(10d);
-        when(scheduleRepository.findByZoneId(zone.getId())).thenReturn(List.of());
-        when(logRepository.findForZoneBetween(eq(zone.getId()), any(), any())).thenReturn(List.of());
+        when(soilMoistureRepository.findLatestMoisturePercentBefore(eq(zone.id()), any())).thenReturn(10d);
+        when(scheduleRepository.findByZoneId(zone.id())).thenReturn(List.of());
+        when(logRepository.findForZoneBetween(eq(zone.id()), any(), any())).thenReturn(List.of());
         return zone;
     }
 
-    private Zone stubSingleZone() {
-        Zone zone = new Zone();
-        zone.setName("Zone A");
-        zone.setAreaHectares(1.0);
-        when(fieldZoneRepository.findAll()).thenReturn(List.of(zone));
+    private ZoneDto stubSingleZone() {
+        return stubSingleZone(null);
+    }
+
+    private ZoneDto stubSingleZone(Long farmId) {
+        ZoneDto zone = TestZones.zone().id(1L).farmId(farmId).name("Zone A").areaHectares(1.0).build();
+        when(farmDirectory.listZones()).thenReturn(List.of(zone));
         return zone;
     }
 
@@ -237,10 +231,10 @@ class IrrigationAutomationServiceTest {
     }
 
     private IrrigationAutomationService service(WaterIntegrationProperties properties) {
-        PlantsIntegrationService plants = new PlantsIntegrationService(zoneBlockMappingService, fieldZoneRepository,
+        PlantsIntegrationService plants = new PlantsIntegrationService(zoneBlockResolver, farmDirectory,
                 rainfallService, waterNeedService, agroWeatherService, plantsGrowthPort, properties);
-        return new IrrigationAutomationService(fieldZoneRepository, soilMoistureRepository, scheduleRepository,
-                logRepository, agroWeatherService, alertService, fieldRepository, rainfallService,
+        return new IrrigationAutomationService(farmDirectory, soilMoistureRepository, scheduleRepository,
+                logRepository, agroWeatherService, alertService, rainfallService,
                 unavailabilityService, plants, properties);
     }
 }

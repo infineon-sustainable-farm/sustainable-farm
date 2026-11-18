@@ -9,10 +9,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface WaterSourceRepository extends JpaRepository<WaterSource, UUID> {
-	Page<WaterSource> findByFarmId(UUID farmId, Pageable pageable);
+public interface WaterSourceRepository extends JpaRepository<WaterSource, Long> {
+	Page<WaterSource> findByFarmId(Long farmId, Pageable pageable);
 
-	List<WaterSource> findByFarmIdIn(Collection<UUID> farmIds);
+	List<WaterSource> findByFarmIdIn(Collection<Long> farmIds);
 
 	/** Total capacity of the reservoirs, computed in the database (dashboard level KPI). */
 	@Query("select coalesce(sum(s.capacityLiters), 0) from WaterSource s")

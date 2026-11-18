@@ -4,7 +4,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTe
 import java.time.Instant;
 import java.util.UUID;
 
-public record WaterQualityResponse(UUID id, UUID sourceId, Double ph, Double temperatureCelsius,
+public record WaterQualityResponse(UUID id, Long sourceId, Double ph, Double temperatureCelsius,
                                    Double turbidityNtu, Double conductivityUsCm, Double salinityPpt,
                                    Instant testDate, Instant createdAt) {
     public static WaterQualityResponse from(WaterQualityTest test) {

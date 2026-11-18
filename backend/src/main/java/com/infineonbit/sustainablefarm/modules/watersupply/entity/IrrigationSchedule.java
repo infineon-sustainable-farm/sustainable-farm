@@ -16,8 +16,8 @@ import org.hibernate.annotations.ColumnDefault;
 })
 public class IrrigationSchedule extends BaseEntity {
     @NotNull
-    @Column(nullable = false)
-    private UUID zoneId;
+    @Column(name = "zone_id", nullable = false)
+    private Long zoneId;
 
     @NotNull
     @Column(nullable = false)
@@ -49,11 +49,11 @@ public class IrrigationSchedule extends BaseEntity {
     @Column(name = "trigger_source", nullable = false, length = 20)
     private String triggerSource = "manual";
 
-    public UUID getZoneId() {
+    public Long getZoneId() {
         return zoneId;
     }
 
-    public void setZoneId(UUID zoneId) {
+    public void setZoneId(Long zoneId) {
         this.zoneId = zoneId;
     }
 

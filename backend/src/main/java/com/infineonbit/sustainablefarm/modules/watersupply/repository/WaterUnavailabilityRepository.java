@@ -15,7 +15,7 @@ public interface WaterUnavailabilityRepository extends JpaRepository<WaterUnavai
     /** Non-cancelled periods of a scope overlapping [startAt, endAt[. */
     @Query("select u from WaterUnavailability u where u.scope = :scope and u.scopeId = :scopeId "
             + "and lower(u.status) <> 'cancelled' and u.startAt < :endAt and u.endAt > :startAt")
-    List<WaterUnavailability> overlaps(String scope, UUID scopeId, Instant startAt, Instant endAt);
+    List<WaterUnavailability> overlaps(String scope, Long scopeId, Instant startAt, Instant endAt);
 
     /** Non-cancelled periods in force at the given instant, every scope. */
     @Query("select u from WaterUnavailability u where lower(u.status) <> 'cancelled' "

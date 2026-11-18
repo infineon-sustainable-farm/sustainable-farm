@@ -34,7 +34,7 @@ public class DripMaintenanceController {
     public Object list(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID zoneId) {
+            @RequestParam(required = false) Long zoneId) {
         if (page == null && size == null && zoneId == null) {
             return maintenanceService.findAll();
         }
