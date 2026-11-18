@@ -9,5 +9,48 @@
     "harvestMaturity": "Récolte et maturité",
     "nursery": "Pépinière",
     "scenarioAnalysis": "Analyse de scénarios"
+  },
+  "common": {
+    "none": "—",
+    "retry": "Réessayer",
+    "retrying": "Nouvelle tentative…",
+    "checkConnection": "Vérifiez votre connexion, puis réessayez."
+  },
+  "format": {
+    "kilograms": "{{value}} kg",
+    "meters": "{{value}} m",
+    "millimeters": "{{value}} mm",
+    "density": "{{value}} arbres/ha",
+    "spacing": "{{interRow}} × {{intraRow}} m",
+    "block": "Bloc {{block}}",
+    "quantity": "{{value}} {{unit}}",
+    "xof": "{{value}} FCFA",
+    "percent": "{{value}} %",
+    "listSeparator": ", ",
+    "range": "{{start}} – {{end}}",
+    "daysAhead_one": "dans {{days}} jour",
+    "daysAhead_other": "dans {{days}} jours",
+    "age_one": "{{years}} an {{months}} mois",
+    "age_other": "{{years}} ans {{months}} mois",
+    "phaseBand": "{{phase}} · {{band}}"
+  },
+  "enums": {
+    "origin": {
+      "IN_HOUSE": "Production interne",
+      "PURCHASED": "Achat externe"
+    },
+    "severity": {
+      "CRITICAL": "Critique",
+      "WARNING": "Avertissement"
+    }
+  },
+  "blockFilter": {
+    "label": "Bloc / parcelle :",
+    "all": "Tous les blocs"
+  },
+  "period": {
+    "from": "Depuis",
+    "months": "Mois",
+    "fromFormat": "Utilisez le format AAAA-MM."
   }
 }
