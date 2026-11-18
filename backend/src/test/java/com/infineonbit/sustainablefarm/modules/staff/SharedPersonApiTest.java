@@ -67,7 +67,7 @@ class SharedPersonApiTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.fullName").value(NAME))
                 .andExpect(jsonPath("$.jobTitle").value("Driver"));
-        mockMvc.perform(post("/api/operators").contentType(MediaType.APPLICATION_JSON).content("""
+        mockMvc.perform(post("/api/product-transformation/operators").contentType(MediaType.APPLICATION_JSON).content("""
                 {"operatorId":"OP-SHARED-PERSON","operatorName":"%s","role":"DRYER","hireDate":"2025-06-01"}
                 """.formatted(NAME)))
                 .andExpect(status().isCreated())
@@ -84,7 +84,7 @@ class SharedPersonApiTest {
         assertThat(assignmentRepository.findAll()).filteredOn(a -> a.getEquipment().getId().equals(
                 equipmentRepository.findByCode("EQ-SHARED-PERSON").orElseThrow().getId()))
                 .extracting(a -> a.getPersonId()).containsExactly(person);
-        assertThat(operatorRepository.findById("OP-SHARED-PERSON").orElseThrow().getPersonId()).isEqualTo(person);
+        assertThat(operatorRepository.findByOperatorId("OP-SHARED-PERSON").orElseThrow().getPersonId()).isEqualTo(person);
         assertThat(staffRepository.findAll()).filteredOn(s -> person.equals(s.getPersonId())).hasSize(1);
     }
 
@@ -97,7 +97,7 @@ class SharedPersonApiTest {
         mockMvc.perform(delete("/api/visitor-management/staff/" + staffId)).andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/visitor-management/staff/" + staffId)).andExpect(jsonPath("$.active").value(false));
-        mockMvc.perform(get("/api/operators/OP-ACTIVE-FLAG-1")).andExpect(jsonPath("$.activeStatus").value("ACTIVE"));
+        mockMvc.perform(get("/api/product-transformation/operators/OP-ACTIVE-FLAG-1")).andExpect(jsonPath("$.activeStatus").value("ACTIVE"));
         assertThat(personRepository.findAllByFullNameIgnoreCaseOrderByIdAsc(name)).singleElement()
                 .satisfies(person -> assertThat(person.isActive()).isTrue());
     }
@@ -108,7 +108,7 @@ class SharedPersonApiTest {
         createOperator("OP-ACTIVE-FLAG-2", name);
         long staffId = createGuide(name);
 
-        mockMvc.perform(put("/api/operators/OP-ACTIVE-FLAG-2").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/product-transformation/operators/OP-ACTIVE-FLAG-2").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"activeStatus\":\"INACTIVE\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activeStatus").value("INACTIVE"));
@@ -119,7 +119,7 @@ class SharedPersonApiTest {
     }
 
     private void createOperator(String id, String name) throws Exception {
-        mockMvc.perform(post("/api/operators").contentType(MediaType.APPLICATION_JSON).content("""
+        mockMvc.perform(post("/api/product-transformation/operators").contentType(MediaType.APPLICATION_JSON).content("""
                 {"operatorId":"%s","operatorName":"%s","role":"DRYER","hireDate":"2025-06-01"}
                 """.formatted(id, name)))
                 .andExpect(status().isCreated());

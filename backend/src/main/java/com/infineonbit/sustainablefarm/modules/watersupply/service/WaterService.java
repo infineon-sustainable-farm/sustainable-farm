@@ -420,8 +420,8 @@ public class WaterService {
     }
 
     /** The product transformation batch a lot designates, or {@code null} when the lot is not one. */
-    private String processingBatchIdOf(String lotId) {
-        return processingBatches.findBatch(lotId).map(ProcessingBatch::batchId).orElse(null);
+    private Long processingBatchIdOf(String lotId) {
+        return processingBatches.findBatch(lotId).map(ProcessingBatch::id).orElse(null);
     }
 
     static String normalizeLotId(String lotId) {

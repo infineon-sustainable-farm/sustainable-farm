@@ -7,8 +7,8 @@ import com.infineonbit.sustainablefarm.modules.machinery.api.ProcessingEquipment
 import com.infineonbit.sustainablefarm.modules.machinery.api.ProcessingEquipmentRegistration;
 import com.infineonbit.sustainablefarm.modules.machinery.api.ProcessingEquipmentRegistry;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentSpec;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentSpecRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;

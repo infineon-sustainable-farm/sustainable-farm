@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 
 import java.time.LocalDate;
 import java.util.List;

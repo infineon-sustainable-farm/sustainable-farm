@@ -6,7 +6,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.r
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.request.BatchUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.response.BatchResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,7 +27,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/batches")
+@RequestMapping("/api/product-transformation/batches")
 @Tag(name = "Batch Management", description = "APIs for managing mango processing batches")
 public class BatchController {
 
