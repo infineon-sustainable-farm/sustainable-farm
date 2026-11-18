@@ -203,5 +203,135 @@
       "medium": "medium",
       "high": "high"
     }
+  },
+  "forecasting": {
+    "title": "Demand Forecasting",
+    "subtitle": "Predictive modeling for agricultural yield and supply chain capacity",
+    "apiNotice": "API Connection Notice",
+    "loading": "Loading forecasts…",
+    "requestFailed": "Request failed",
+    "loadFailed": "Unable to load forecast data. Please try again.",
+    "failures": {
+      "forecasts": "Forecasts: {{message}}",
+      "modelRuns": "Model runs: {{message}}",
+      "products": "Products: {{message}}",
+      "orders": "Orders: {{message}}",
+      "orderItems": "Order items: {{message}}",
+      "separator": " · "
+    },
+    "modelChip": "Model: {{status}}",
+    "coldStart": "Cold-Start Forecast",
+    "add": "Add Forecast",
+    "retrain": "Retrain Model",
+    "retrained": "Model retraining request submitted successfully.",
+    "retrainFailed": "Failed to create model run",
+    "exportEmpty": "No forecast rows to export.",
+    "exported": "CSV export downloaded.",
+    "created": "Forecast created.",
+    "updated": "Forecast #{{id}} updated.",
+    "deleted": "Forecast #{{id}} deleted.",
+    "createFailed": "Failed to create forecast",
+    "updateFailed": "Failed to update forecast",
+    "deleteFailed": "Failed to delete forecast",
+    "deleteTitle": "Delete forecast?",
+    "deleteMessage": "Are you sure you want to delete the forecast for {{month}} ({{scenario}})? This action cannot be undone.",
+    "scenarioFallback": "scenario",
+    "deleting": "Deleting…",
+    "none": "-",
+    "notAvailable": "N/A",
+    "tons": "{{value}} t",
+    "metricTons": "{{value}} MT",
+    "percent": "{{value}}%",
+    "percentValue": "{{value}}%",
+    "scenarioSuffix": "({{scenario}})",
+    "parameters": {
+      "title": "Model Parameters",
+      "cropVariety": "Crop Variety",
+      "allProducts": "All products",
+      "region": "Region",
+      "scenarioFilter": "Scenario Filter",
+      "allScenarios": "All scenarios",
+      "confidence": "Confidence Interval",
+      "externalVariables": "External Variables",
+      "weather": "Weather Patterns",
+      "commodity": "Commodity Prices",
+      "geopolitical": "Geopolitical Index"
+    },
+    "scenario": {
+      "base": "base",
+      "optimistic": "optimistic",
+      "pessimistic": "pessimistic"
+    },
+    "status": {
+      "title": "MODEL STATUS",
+      "runs_one": "{{count}} model run(s) · latest #{{id}}",
+      "runs_other": "{{count}} model run(s) · latest #{{id}}",
+      "noAccuracy": "Accuracy: Not yet available - awaiting historical sales data",
+      "pessimistic": "Pessimistic Case",
+      "base": "Base Case",
+      "optimistic": "Optimistic Case",
+      "regionalBase": "Regional Base",
+      "noData": "No data",
+      "revenue": "Revenue Potential"
+    },
+    "chart": {
+      "title": "Demand Projection (Next 6 Months)",
+      "subtitle": "Measured in Metric Tons (MT)",
+      "subtitleRows_one": "Measured in Metric Tons (MT) · {{count}} row(s)",
+      "subtitleRows_other": "Measured in Metric Tons (MT) · {{count}} row(s)",
+      "historical": "Historical",
+      "forecast": "Forecast",
+      "ci": "{{value}}% CI",
+      "today": "TODAY",
+      "empty": "Not enough forecast points to chart.",
+      "addRows": "Add forecast rows"
+    },
+    "accuracy": {
+      "title": "Forecast Accuracy",
+      "subtitle": "Comparison between forecasted demand and actual sales when actual data is available.",
+      "empty": "No forecast accuracy data available."
+    },
+    "monthly": {
+      "title": "Monthly Forecast Data",
+      "export": "EXPORT CSV",
+      "empty": "No forecasts match the current filters."
+    },
+    "columns": {
+      "month": "Month",
+      "forecastMt": "Forecast (MT)",
+      "actualMt": "Actual (MT)",
+      "accuracy": "Forecast Accuracy",
+      "predicted": "Predicted Demand (MT)",
+      "lower": "Lower Bound ({{value}}%)",
+      "upper": "Upper Bound ({{value}}%)",
+      "growth": "MoM Growth",
+      "risk": "Capacity Risk"
+    },
+    "risk": {
+      "low": "Low Risk",
+      "medium": "Medium Risk",
+      "high": "High Risk"
+    },
+    "riskOption": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    },
+    "form": {
+      "addTitle": "Add Forecast",
+      "editTitle": "Edit Forecast #{{id}}",
+      "product": "Product",
+      "select": "Select…",
+      "productOption": "{{name}} ({{variety}})",
+      "month": "Month",
+      "scenario": "Scenario",
+      "volume": "Volume (t)",
+      "lower": "Lower",
+      "upper": "Upper",
+      "risk": "Capacity Risk",
+      "saving": "Saving…",
+      "update": "Update",
+      "create": "Create"
+    }
   }
 }
