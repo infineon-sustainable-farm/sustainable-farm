@@ -27,7 +27,10 @@ import java.time.Instant;
  * not a copy of its name, email and phone.</p>
  */
 @Entity
-@Table(name = "booking", indexes = @Index(name = "idx_booking_visitor", columnList = "visitor_id"))
+@Table(name = "booking", indexes = {
+        @Index(name = "idx_booking_visitor", columnList = "visitor_id"),
+        @Index(name = "idx_booking_agri_activity_id", columnList = "agri_activity_id"),
+        @Index(name = "idx_booking_time_slot_id", columnList = "time_slot_id")})
 public class Booking extends BaseEntity {
 
     @NotNull(message = "activity is required")

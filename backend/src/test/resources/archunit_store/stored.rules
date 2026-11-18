@@ -1,4 +1,3 @@
 #
 #Tue Nov 17 13:40:41 UTC 2026
 errors\ are\ handled\ only\ in\ core=00d464c7-77fc-49e9-810e-9239f7bfe921
-modules\ depend\ on\ other\ modules\ only\ through\ their\ api\ package=c1e9cf4f-ad36-4246-9258-84d18a0113e3

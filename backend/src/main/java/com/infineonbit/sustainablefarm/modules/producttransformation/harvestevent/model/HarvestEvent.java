@@ -39,8 +39,8 @@ import java.math.BigDecimal;
                 @Index(name = "idx_harvest_event_harvest_date", columnList = "harvest_date"),
                 @Index(name = "idx_harvest_event_block_id", columnList = "block_id"),
                 @Index(name = "idx_harvest_event_variety_key", columnList = "variety_key"),
-                @Index(name = "idx_harvest_event_plants_harvest_id", columnList = "plants_harvest_id")
-        })
+                @Index(name = "idx_harvest_event_plants_harvest_id", columnList = "plants_harvest_id"),
+                @Index(name = "idx_harvest_event_harvest_supervisor_id", columnList = "harvest_supervisor_id")})
 @Getter
 @Setter
 @ToString

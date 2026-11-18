@@ -24,7 +24,8 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "historical_harvest", uniqueConstraints = @UniqueConstraint(
         name = "uk_historical_harvest_period_variety",
-        columnNames = {"\"year\"", "\"month\"", "\"week\"", "variety_key"}))
+        columnNames = {"\"year\"", "\"month\"", "\"week\"", "variety_key"}),
+        indexes = @Index(name = "idx_historical_harvest_variety_key", columnList = "variety_key"))
 @Getter
 @Setter
 @ToString

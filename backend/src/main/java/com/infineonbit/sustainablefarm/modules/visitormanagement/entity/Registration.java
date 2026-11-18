@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -26,7 +27,8 @@ import jakarta.validation.constraints.NotNull;
                 @UniqueConstraint(
                         name = "uk_registration_event_visitor",
                         columnNames = {"event_id", "visitor_id"})
-        })
+        },
+        indexes = @Index(name = "idx_registration_time_slot_id", columnList = "time_slot_id"))
 public class Registration extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
