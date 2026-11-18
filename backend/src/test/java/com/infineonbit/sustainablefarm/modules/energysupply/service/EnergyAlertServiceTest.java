@@ -69,8 +69,11 @@ class EnergyAlertServiceTest {
             assertThat(alert.timestamp()).isEqualTo(LocalDateTime.ofInstant(raisedAt, ZoneId.systemDefault()));
             assertThat(alert.status()).isEqualTo(AlertStatus.OPEN);
         });
-        assertThat(service.isAboutComponent("ENG-902")).isTrue();
-        assertThat(service.isAboutComponent("ENG-903")).isFalse();
+        assertThat(service.isAboutComponent(battery)).isTrue();
+        assertThat(service.isAboutComponent(component("ENG-903", "Spare inverter"))).isFalse();
+        assertThat(alertRepository.findAll()).filteredOn(alert -> alert.getRelatedEntityId() != null)
+                .singleElement()
+                .satisfies(alert -> assertThat(alert.getRelatedEntityId()).isEqualTo(String.valueOf(battery.getId())));
     }
 
     @Test
@@ -89,9 +92,9 @@ class EnergyAlertServiceTest {
                 .isInstanceOf(EnergySupplyNotFoundException.class);
     }
 
-    private EnergyComponent component(String id, String name) {
+    private EnergyComponent component(String code, String name) {
         EnergyComponent component = new EnergyComponent();
-        component.setComponentId(id);
+        component.setCode(code);
         component.setName(name);
         component.setCategory(ComponentCategory.BATTERY);
         component.setCapacityValue(BigDecimal.ONE);

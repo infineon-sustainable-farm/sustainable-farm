@@ -1,6 +1,6 @@
 import { apiClient } from "../../../shared/api/client";
 
-const BASE = "/api/energy";
+const BASE = "/api/energy-supply";
 
 // Dashboard
 export const getDashboardSummary = () => apiClient.get(`${BASE}/dashboard/summary`);

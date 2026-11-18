@@ -17,8 +17,7 @@ import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyCom
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.GeneratorEventRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.SolarGenerationLogRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.AlertService;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import com.infineonbit.sustainablefarm.modules.energysupply.service.EnergyMoney;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -46,11 +45,6 @@ import java.time.LocalDate;
 public class EnergySupplyDataSeeder implements CommandLineRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EnergySupplyDataSeeder.class);
-
-    // Components have an assigned business id (ENG-001...): Spring Data save() would merge them as
-    // detached entities, so they are persisted directly, as EnergyComponentService.create does.
-    @PersistenceContext
-    private EntityManager entityManager;
 
     private final EnergyComponentRepository componentRepository;
     private final ConsumptionLogRepository consumptionLogRepository;
@@ -99,59 +93,59 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
 
     private void seedComponents() {
         EnergyComponent pv = new EnergyComponent();
-        pv.setComponentId("ENG-001");
+        pv.setCode("ENG-001");
         pv.setName("Solar PV array (polycrystalline)");
         pv.setCategory(ComponentCategory.PV_ARRAY);
         pv.setCapacityValue(new BigDecimal("10.5")); // TODO: confirm kWp from Excel
         pv.setPurchaseDate(LocalDate.of(2026, 7, 1));
-        pv.setUnitCostEur(new BigDecimal("6500.00"));
+        pv.setUnitCost(EnergyMoney.of("6500.00"));
         pv.setStatus(ComponentStatus.OPERATIONAL);
         pv.setLocation("Banfora farm site");
-        entityManager.persist(pv);
+        componentRepository.save(pv);
 
         EnergyComponent battery = new EnergyComponent();
-        battery.setComponentId("ENG-002");
+        battery.setCode("ENG-002");
         battery.setName("Battery storage bank (Li-ion)");
         battery.setCategory(ComponentCategory.BATTERY);
         battery.setCapacityValue(new BigDecimal("20.0")); // kWh, TODO: confirm from Excel
         battery.setPurchaseDate(LocalDate.of(2026, 7, 1));
-        battery.setUnitCostEur(new BigDecimal("4200.00"));
+        battery.setUnitCost(EnergyMoney.of("4200.00"));
         battery.setStatus(ComponentStatus.OPERATIONAL);
         battery.setLocation("Banfora farm site");
-        entityManager.persist(battery);
+        componentRepository.save(battery);
 
         EnergyComponent inverter = new EnergyComponent();
-        inverter.setComponentId("ENG-003");
+        inverter.setCode("ENG-003");
         inverter.setName("Inverter");
         inverter.setCategory(ComponentCategory.INVERTER);
         inverter.setCapacityValue(new BigDecimal("8.0")); // kW
         inverter.setPurchaseDate(LocalDate.of(2026, 7, 1));
-        inverter.setUnitCostEur(new BigDecimal("1100.00"));
+        inverter.setUnitCost(EnergyMoney.of("1100.00"));
         inverter.setStatus(ComponentStatus.OPERATIONAL);
         inverter.setLocation("Banfora farm site");
-        entityManager.persist(inverter);
+        componentRepository.save(inverter);
 
         EnergyComponent generator = new EnergyComponent();
-        generator.setComponentId("ENG-004");
+        generator.setCode("ENG-004");
         generator.setName("Backup diesel generator");
         generator.setCategory(ComponentCategory.GENERATOR);
         generator.setCapacityValue(new BigDecimal("8.0")); // kW
         generator.setPurchaseDate(LocalDate.of(2026, 7, 1));
-        generator.setUnitCostEur(new BigDecimal("4000.00"));
+        generator.setUnitCost(EnergyMoney.of("4000.00"));
         generator.setStatus(ComponentStatus.OPERATIONAL);
         generator.setLocation("Banfora farm site");
-        entityManager.persist(generator);
+        componentRepository.save(generator);
 
         EnergyComponent monitoring = new EnergyComponent();
-        monitoring.setComponentId("ENG-005");
+        monitoring.setCode("ENG-005");
         monitoring.setName("Monitoring / IoT controller");
         monitoring.setCategory(ComponentCategory.MONITORING);
         monitoring.setCapacityValue(BigDecimal.ZERO);
         monitoring.setPurchaseDate(LocalDate.of(2026, 7, 1));
-        monitoring.setUnitCostEur(new BigDecimal("350.00"));
+        monitoring.setUnitCost(EnergyMoney.of("350.00"));
         monitoring.setStatus(ComponentStatus.OPERATIONAL);
         monitoring.setLocation("Banfora farm site");
-        entityManager.persist(monitoring);
+        componentRepository.save(monitoring);
     }
 
     private void seedTodayConsumption() {
@@ -189,7 +183,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         event.setTriggerReason("Battery state of charge below 20%");
         event.setDurationHours(new BigDecimal("2.5"));
         event.setFuelLiters(new BigDecimal("4.0"));
-        event.setCostEur(new BigDecimal("6.80"));
+        event.setCost(EnergyMoney.of("6.80"));
         generatorEventRepository.save(event);
     }
 
@@ -232,8 +226,8 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         }
     }
 
-    private EnergyComponent findDemoComponent(String componentId, ComponentCategory category) {
-        return componentRepository.findById(componentId).orElseGet(() ->
+    private EnergyComponent findDemoComponent(String code, ComponentCategory category) {
+        return componentRepository.findByCode(code).orElseGet(() ->
                 componentRepository.findAll().stream()
                         .filter(component -> component.getCategory() == category)
                         .findFirst()
