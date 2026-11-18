@@ -1,9 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,7 +21,17 @@ import java.util.List;
  * @version 1.0.0
  */
 @Repository
-public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, String> {
+public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Long> {
+
+    /** The QcCheckpoint of a business code, shown as {@code checkpointId}. */
+    Optional<QcCheckpoint> findByCheckpointId(String checkpointId);
+
+    /** Whether a QcCheckpoint has this business code. */
+    boolean existsByCheckpointId(String checkpointId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByCheckpointId(String checkpointId);
+
 
     /**
      * Find QC checkpoints by batch

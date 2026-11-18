@@ -5,7 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.d
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.request.RawIntakeUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.response.RawIntakeResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.model.RawIntake;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.service.RawIntakeService;
@@ -28,7 +28,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/raw-intakes")
+@RequestMapping("/api/product-transformation/raw-intakes")
 @Tag(name = "Raw Intake Management", description = "APIs for managing raw material intake from Plants")
 public class RawIntakeController {
 
@@ -48,7 +48,7 @@ public class RawIntakeController {
     @PostMapping
     @Operation(summary = "Create a new raw intake", description = "Creates a new raw intake record")
     public ResponseEntity<RawIntakeResponse> createRawIntake(@Valid @RequestBody RawIntakeCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         RawIntake intake = dtoMapper.toEntity(request, batch);

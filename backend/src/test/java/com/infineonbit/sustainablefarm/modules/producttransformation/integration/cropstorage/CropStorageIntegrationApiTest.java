@@ -34,7 +34,7 @@ class CropStorageIntegrationApiTest {
     @Test
     void aStorageEntry_isRefusedAtOnce_withA503() throws Exception {
         long start = System.nanoTime();
-        mockMvc.perform(post("/api/crop-storage/entries").contentType(MediaType.APPLICATION_JSON).content(ENTRY))
+        mockMvc.perform(post("/api/product-transformation/crop-storage/entries").contentType(MediaType.APPLICATION_JSON).content(ENTRY))
                 .andExpect(status().isServiceUnavailable());
         // The former HTTP call to the application itself ended on its 5 s read timeout.
         assertThat(System.nanoTime() - start).isLessThan(2_000_000_000L);
@@ -42,7 +42,7 @@ class CropStorageIntegrationApiTest {
 
     @Test
     void theCapacityCheck_answers503() throws Exception {
-        mockMvc.perform(post("/api/crop-storage/entries/check-capacity").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/product-transformation/crop-storage/entries/check-capacity").contentType(MediaType.APPLICATION_JSON)
                         .content(ENTRY))
                 .andExpect(status().isServiceUnavailable());
     }

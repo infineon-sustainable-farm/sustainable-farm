@@ -1,13 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model;
+
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,28 +25,27 @@ import java.time.LocalDateTime;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "qc_checkpoint", indexes = {
+@Table(name = "qc_checkpoint",
+        uniqueConstraints = @UniqueConstraint(name = "uk_qc_checkpoint_code", columnNames = "code"),
+        indexes = {
+        @Index(name = "idx_qc_checkpoint_inspector_id", columnList = "inspector_id"),
         @Index(name = "idx_qc_checkpoint_checkpoint_time", columnList = "checkpoint_time"),
         @Index(name = "idx_qc_checkpoint_batch_id", columnList = "batch_id")
 })
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class QcCheckpoint {
+public class QcCheckpoint extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "checkpoint_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String checkpointId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_batch"), nullable = false, referencedColumnName = "batch_id")
+    // Eager: the responses show its code, read after the transaction (open-in-view is off).
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_batch"), nullable = false)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Batch batch;
 
     @Enumerated(EnumType.STRING)
@@ -63,8 +62,9 @@ public class QcCheckpoint {
     @Column(name = "defects_count", nullable = false)
     private Integer defectsCount = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inspector_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_inspector"), referencedColumnName = "operator_id")
+    // Eager: the responses show its code, read after the transaction (open-in-view is off).
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "inspector_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_inspector"))
     private Operator inspector;
 
     @Column(name = "checkpoint_time", nullable = false)
@@ -73,31 +73,14 @@ public class QcCheckpoint {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-        validateInspector();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-        validateInspector();
-    }
-
     /**
      * Validate inspector is certified
      * Business Rule: QC inspectors must be certified
      */
-    private void validateInspector() {
-        if (inspector != null && inspector.getRole() != Operator.Role.QC_INSPECTOR) {
+    @PrePersist
+    @PreUpdate
+    void validateInspector() {
+        if (inspector != null && inspector.getRole() != Role.QC_INSPECTOR) {
             throw new IllegalArgumentException(
                 "Inspector must have QC_INSPECTOR role. Current role: " + inspector.getRole()
             );
@@ -120,27 +103,4 @@ public class QcCheckpoint {
         return result == QcResult.PASS;
     }
 
-    /**
-     * QcStage Enum
-     * Business Rule: Matches database CHECK constraint
-     */
-    public enum QcStage {
-        INTAKE,
-        WASHING,
-        DRYING,
-        COOLING,
-        PACKAGING,
-        FINAL
-    }
-
-    /**
-     * QcResult Enum
-     * Business Rule: Matches database CHECK constraint
-     */
-    public enum QcResult {
-        PENDING,
-        PASS,
-        FAIL,
-        REWORK
-    }
 }

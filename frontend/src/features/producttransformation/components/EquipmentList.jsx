@@ -1,7 +1,7 @@
 /**
  * Product Transformation - Equipment screen
  * Displays, filters, creates, edits and deletes the processing and drying
- * machines of the farm equipment register (ADR 0004, /api/equipment). A machine
+ * machines of the farm equipment register (ADR 0004, /api/product-transformation/equipment). A machine
  * created from Machinery shows here without type, capacity or energy until it
  * is edited.
  *

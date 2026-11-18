@@ -3,8 +3,8 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.operator;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.service.OperatorService;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
@@ -39,7 +39,7 @@ class OperatorPersonIntegrationTest {
         assertThat(created.getPersonId()).isEqualTo(person);
         assertThat(created.getOperatorName()).isEqualTo("Salif PT-Person");
         assertThat(created.getActiveStatus()).isEqualTo(ActiveStatus.ACTIVE);
-        assertThat(operatorRepository.findById("OP-PERSON-01").orElseThrow().getPersonId()).isEqualTo(person);
+        assertThat(operatorRepository.findByOperatorId("OP-PERSON-01").orElseThrow().getPersonId()).isEqualTo(person);
     }
 
     @Test

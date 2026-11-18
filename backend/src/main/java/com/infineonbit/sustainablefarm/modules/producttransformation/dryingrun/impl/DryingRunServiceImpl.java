@@ -1,5 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
@@ -52,7 +56,7 @@ public class DryingRunServiceImpl implements DryingRunService {
             // Verify equipment exists and is available
             Equipment dbEquipment = equipmentService.getEquipmentByRegisterId(dryingRun.getEquipmentId());
             
-            if (dbEquipment.getMaintenanceStatus() != Equipment.MaintenanceStatus.ACTIVE) {
+            if (dbEquipment.getMaintenanceStatus() != MaintenanceStatus.ACTIVE) {
                 throw new IllegalArgumentException(
                     "Equipment is not available for drying. Equipment ID: " + dbEquipment.getEquipmentId() + 
                     " must be in ACTIVE status. Current status: " + dbEquipment.getMaintenanceStatus()
@@ -67,7 +71,7 @@ public class DryingRunServiceImpl implements DryingRunService {
             Operator dbOperator = operatorService.findOperatorById(operator.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operator.getOperatorId()));
             
-            if (dbOperator.getActiveStatus() != Operator.ActiveStatus.ACTIVE) {
+            if (dbOperator.getActiveStatus() != ActiveStatus.ACTIVE) {
                 throw new IllegalArgumentException(
                     "Operator is not active for drying. Operator ID: " + operator.getOperatorId() + 
                     " must be in ACTIVE status. Current status: " + dbOperator.getActiveStatus()
@@ -75,7 +79,7 @@ public class DryingRunServiceImpl implements DryingRunService {
             }
             
             // Verify operator has appropriate role for drying operations
-            if (dbOperator.getRole() != Operator.Role.DRYER) {
+            if (dbOperator.getRole() != Role.DRYER) {
                 throw new IllegalArgumentException(
                     "Operator must have DRYER role for drying operations. Operator ID: " + operator.getOperatorId() + 
                     ", Current role: " + dbOperator.getRole()
@@ -107,16 +111,16 @@ public class DryingRunServiceImpl implements DryingRunService {
 
     @Override
     public void deleteDryingRun(String runId) {
-        if (!dryingRunRepository.existsById(runId)) {
+        if (!dryingRunRepository.existsByRunId(runId)) {
             throw new IllegalArgumentException("Drying run not found with ID: " + runId);
         }
-        dryingRunRepository.deleteById(runId);
+        dryingRunRepository.deleteByRunId(runId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public DryingRun getDryingRunById(String runId) {
-        return dryingRunRepository.findById(runId)
+        return dryingRunRepository.findByRunId(runId)
                 .orElseThrow(() -> new IllegalArgumentException("Drying run not found with ID: " + runId));
     }
 
@@ -192,9 +196,9 @@ public class DryingRunServiceImpl implements DryingRunService {
     @Override
     @Transactional(readOnly = true)
     public List<DryingRun> getDryingRunsByEquipmentType(String equipmentType) {
-        Equipment.EquipmentType type;
+        EquipmentType type;
         try {
-            type = Equipment.EquipmentType.valueOf(equipmentType);
+            type = EquipmentType.valueOf(equipmentType);
         } catch (IllegalArgumentException | NullPointerException unknownType) {
             return List.of();
         }

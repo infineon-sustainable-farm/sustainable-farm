@@ -39,6 +39,8 @@ import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks.Label;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Component;
@@ -82,6 +84,14 @@ public class DtoMapper {
      */
     public Long blockIdOrNull(String farmText, String blockText) {
         return blocks.resolveOrNull(farmText, blockText);
+    }
+
+    /**
+     * An audit instant of an entity ({@code core.entity.BaseEntity}) as the responses show it: a
+     * {@link Timestamp}, so that the JSON keeps its format (milliseconds, {@code Z}).
+     */
+    private static Timestamp timestamp(Instant instant) {
+        return instant == null ? null : Timestamp.from(instant);
     }
 
     /** The business code of the register equipment with this id, shown as {@code equipmentId}. */
@@ -134,8 +144,8 @@ public class DtoMapper {
                 .currentStatus(entity.getCurrentStatus())
                 .farmId(block.farm())
                 .blockId(block.block())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -175,8 +185,8 @@ public class DtoMapper {
                 .receivedVariety(MangoVarietyCodes.toApi(entity.getReceivedVarietyKey()))
                 .receivedGrade(entity.getReceivedGrade())
                 .intakeOperator(personDirectory.nameOf(entity.getIntakeOperatorId()))
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -209,8 +219,8 @@ public class DtoMapper {
                 .endTime(entity.getEndTime())
                 .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .yieldPercentage(entity.calculateYieldPercentage())
                 .wastePercentage(entity.calculateWastePercentage())
                 .build();
@@ -249,8 +259,8 @@ public class DtoMapper {
                 .endTime(entity.getEndTime())
                 .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .moistureReductionPct(entity.calculateMoistureReductionPct())
                 .energyEfficiencyKwhPerKg(entity.calculateEnergyEfficiencyKwhPerKg())
                 .withinTargetRange(entity.isWithinTargetRange())
@@ -284,8 +294,8 @@ public class DtoMapper {
                 .packagingDate(entity.getPackagingDate())
                 .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -316,8 +326,8 @@ public class DtoMapper {
                 .inspectorId(entity.getInspector() != null ? entity.getInspector().getOperatorId() : null)
                 .checkpointTime(entity.getCheckpointTime())
                 .notes(entity.getNotes())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .mandatory(entity.isMandatory())
                 .passed(entity.hasPassed())
                 .build();
@@ -350,8 +360,8 @@ public class DtoMapper {
                 .auditorId(entity.getAuditor() != null ? entity.getAuditor().getOperatorId() : null)
                 .auditDate(entity.getAuditDate())
                 .nextAuditDate(entity.getNextAuditDate())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .compliant(entity.isCompliant())
                 .auditOverdue(entity.isAuditOverdue())
                 .build();
@@ -408,8 +418,8 @@ public class DtoMapper {
                 .certifications(entity.getCertifications())
                 .activeStatus(entity.getActiveStatus())
                 .hireDate(entity.getHireDate())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -459,8 +469,8 @@ public class DtoMapper {
                 .harvestSupervisor(personDirectory.nameOf(entity.getHarvestSupervisorId()))
                 .weatherConditions(entity.getWeatherConditions())
                 .storageLocation(entity.getStorageLocation())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -495,8 +505,8 @@ public class DtoMapper {
                 .weatherCondition(entity.getWeatherCondition())
                 .rainfallMm(entity.getRainfallMm())
                 .temperatureAvgC(entity.getTemperatureAvgC())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 }

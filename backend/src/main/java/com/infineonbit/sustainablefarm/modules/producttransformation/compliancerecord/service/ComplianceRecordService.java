@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceType;
 
 import java.time.LocalDate;
 import java.util.List;
