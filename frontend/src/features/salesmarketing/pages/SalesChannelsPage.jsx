@@ -152,7 +152,7 @@ export default function SalesChannelsPage() {
     setSavingChannel(true);
     try {
       const res = await api.getSalesChannelById(channel.channelId);
-      const c = res.data || channel;
+      const c = res || channel;
       setChannelForm({ name: c.name || '' });
       setEditingChannelId(channel.channelId);
       setShowChannelModal(true);
@@ -220,7 +220,7 @@ export default function SalesChannelsPage() {
     setSavingTarget(true);
     try {
       const res = await api.getSalesChannelTargetById(target.targetId);
-      const found = res.data || target;
+      const found = res || target;
       setTargetForm({
         channelId: found.channelId,
         periodStart: found.periodStart ? new Date(found.periodStart).toISOString().slice(0, 10) : '',

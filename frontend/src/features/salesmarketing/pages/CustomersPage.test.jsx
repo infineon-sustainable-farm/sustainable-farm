@@ -129,4 +129,38 @@ describe('CustomersPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(api.deleteCustomerContact).toHaveBeenCalledWith(9));
   });
+
+  // The shared client returns the body: these read the response itself, not a .data field.
+  it('shows the linked certifications of the customer and unlinks one on click', async () => {
+    api.getCertifications.mockResolvedValue([{ certificationId: 1, name: 'Organic EU' }]);
+    api.getCustomerCertifications.mockResolvedValue([{ certificationId: 1, name: 'Organic EU' }]);
+    renderPage();
+    const toggle = await screen.findByRole('button', { name: 'Organic EU' }, LOAD);
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-pressed', 'true'));
+    fireEvent.click(toggle);
+    await waitFor(() => expect(api.unlinkCustomerCertification).toHaveBeenCalledWith(3, 1));
+    expect(api.linkCustomerCertification).not.toHaveBeenCalled();
+  });
+
+  it('selects the customer it has just created', async () => {
+    const created = { ...customer, customerId: 5, companyName: 'Mango Export SARL', customerCode: 'CUST-0005' };
+    api.createCustomer.mockResolvedValue(created);
+    renderPage();
+    await screen.findByRole('button', { name: 'Fresh Fruits GmbH' }, LOAD);
+    api.getCustomers.mockResolvedValue([customer, created]);
+    fireEvent.click(screen.getByRole('button', { name: 'ADD CUSTOMER' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add New Customer' });
+    fireEvent.change(within(dialog).getByLabelText(/Company Name/), { target: { value: 'Mango Export SARL' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create Customer' }));
+    expect(await screen.findByRole('heading', { level: 2, name: 'Mango Export SARL' }, LOAD)).toBeInTheDocument();
+  });
+
+  it('fills the edit form from the single customer fetch, not from the list row', async () => {
+    api.getCustomerById.mockResolvedValue({ ...customer, companyName: 'Fresh Fruits AG' });
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Fresh Fruits GmbH' }, LOAD));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit Customer' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Customer #3' });
+    expect(within(dialog).getByLabelText(/Company Name/)).toHaveValue('Fresh Fruits AG');
+  });
 });
