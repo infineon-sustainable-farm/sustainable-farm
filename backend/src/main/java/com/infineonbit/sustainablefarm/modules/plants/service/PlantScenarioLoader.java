@@ -15,8 +15,8 @@ import java.time.Instant;
  * Loads the Zalka 2025 business case as a scenario at startup in the dev
  * profile, so a local database has a plan to analyse from the start.
  *
- * <p>Runs in the dev profile only, like {@link AgronomicReferenceLoader}: no
- * reference data is loaded in production. There, the user enters each scenario
+ * <p>Runs in the dev profile only, like {@link CurrencyRateLoader}: no demo
+ * data is loaded in production. There, the user enters each scenario
  * with {@code POST /api/plants/scenarios}.
  *
  * <p>The values come from the "Plants(Zalka)" tab of

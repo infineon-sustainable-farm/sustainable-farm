@@ -22,9 +22,9 @@ public interface VarietyCatalog {
     int KEY_LENGTH = 40;
 
     /**
-     * Order of the dev loader that fills the catalogue at startup. A seeder of
-     * another module that references the catalogue runs after it (a higher
-     * {@code @Order} value, or none).
+     * Order of the loader that fills the catalogue at startup, in every
+     * profile. A seeder of another module that references the catalogue runs
+     * after it (a higher {@code @Order} value, or none).
      */
     int LOAD_ORDER = 0;
 
