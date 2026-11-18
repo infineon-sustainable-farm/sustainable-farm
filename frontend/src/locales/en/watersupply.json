@@ -15,5 +15,108 @@
     "lots": "Processing lots",
     "visitors": "Visitors",
     "notifications": "Notifications"
+  },
+  "common": {
+    "none": "—",
+    "loading": "Loading…",
+    "error": "Error",
+    "save": "Save",
+    "saving": "...",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "select": "Select",
+    "allFarms": "All farms",
+    "saveError": "Unable to save.",
+    "deleteError": "Unable to delete.",
+    "history": "History"
+  },
+  "units": {
+    "liters": "{{value}} L",
+    "cubicMeters": "{{value}} m³",
+    "mm": "{{value}} mm",
+    "percent": "{{value}}%",
+    "minutes": "{{value}} min",
+    "kmh": "{{value}} km/h",
+    "celsius": "{{value}}°C"
+  },
+  "charts": {
+    "unit": "Unit: {{unit}}",
+    "units": {
+      "liters": "liters",
+      "millimeters": "millimeters",
+      "percent": "%"
+    },
+    "axis": {
+      "liters": "L",
+      "cubicMeters": "m³",
+      "mm": "mm",
+      "percent": "%"
+    },
+    "label": "Chart - in {{unit}}",
+    "exportPng": "Export the chart as a PNG image",
+    "exportCsv": "Export the chart data as CSV",
+    "png": "PNG",
+    "csv": "CSV",
+    "target": "Target {{value}}",
+    "ofTarget": "/ target {{value}}"
+  },
+  "sources": {
+    "title": "Water sources",
+    "subtitle": "Boreholes, rain tanks, rivers: manage abstraction points per farm.",
+    "listTitle": "Source list",
+    "count": "{{count}} source(s)",
+    "farmFilter": "Filter by farm",
+    "search": "Search a source…",
+    "loading": "Loading sources...",
+    "loadError": "Unable to load sources.",
+    "emptyTitle": "No sources",
+    "empty": "Create a water source linked to a farm to get started.",
+    "columns": {
+      "name": "Name",
+      "farm": "Farm",
+      "type": "Type",
+      "capacity": "Capacity",
+      "level": "Level"
+    },
+    "levelValue": "{{level}} ({{pct}})",
+    "farmFallback": "Farm {{id}}",
+    "types": {
+      "borehole": "borehole",
+      "rain": "rain",
+      "river": "river",
+      "well": "well",
+      "municipal": "municipal"
+    },
+    "newTitle": "New source",
+    "editTitle": "Edit source",
+    "fields": {
+      "farm": "Farm",
+      "name": "Name",
+      "type": "Type",
+      "capacity": "Capacity (L)"
+    },
+    "errors": {
+      "farmRequired": "The farm is required.",
+      "nameRequired": "The name is required.",
+      "capacityPositive": "The capacity must be greater than 0.",
+      "levelRange": "The current level must be between 0 and the capacity."
+    },
+    "created": "Source created",
+    "updated": "Source updated",
+    "deleted": "Source deleted",
+    "deleteTitle": "Delete {{name}}",
+    "theSource": "the source",
+    "deleteMessage": "This source will be removed. Related consumption and quality tests could be impacted.",
+    "history": {
+      "title": "Level history - {{name}}",
+      "loading": "Loading the level history…",
+      "loadError": "Unable to load the history.",
+      "emptyTitle": "No level recorded",
+      "empty": "Readings appear here as the level sensor reports them or when the level is edited.",
+      "series": "Level (L)",
+      "capacity": "Capacity"
+    }
   }
 }
