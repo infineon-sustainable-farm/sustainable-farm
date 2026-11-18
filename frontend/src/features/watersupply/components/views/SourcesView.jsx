@@ -12,6 +12,7 @@ import { FormField } from '../../../../shared/components/FormField'
 import { inputStyle } from '../../../../shared/components/formStyles'
 import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
 import { LevelHistoryPanel } from './LevelHistoryPanel'
+import { sameId } from './ids'
 
 const SOURCE_TYPES = ['borehole', 'rain', 'river', 'well', 'municipal']
 
@@ -33,7 +34,7 @@ export function SourcesView({ notify }) {
   const farmName = (farmId) => farms.find((f) => f.id === farmId)?.name || (farmId ? `Farm ${String(farmId).slice(0, 8)}` : '—')
 
   const farmFiltered = useMemo(
-    () => sources.filter((item) => !farmFilter || item.farmId === farmFilter),
+    () => sources.filter((item) => !farmFilter || sameId(item.farmId, farmFilter)),
     [sources, farmFilter],
   )
 

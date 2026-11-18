@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record WaterUnavailabilityRequest(
         @NotNull String scope,
-        @NotNull UUID scopeId,
+        @NotNull Long scopeId,
         @NotNull Instant startAt,
         @NotNull Instant endAt,
         String reason,

@@ -83,7 +83,7 @@ class IotCommandServiceTest {
     void anOpeningIsRefusedDuringAWaterUnavailabilityButAClosingIsNot() {
         stubDeviceSeen(Instant.now());
         when(unavailabilityService.activeAt(any())).thenReturn(List.of(new WaterUnavailabilityResponse(
-                UUID.randomUUID(), "farm", UUID.randomUUID(), Instant.now(), Instant.now().plusSeconds(60), null, "planned", null)));
+                UUID.randomUUID(), "farm", 1L, Instant.now(), Instant.now().plusSeconds(60), null, "planned", null)));
         when(commandRepository.save(any(IotCommand.class))).thenAnswer(call -> call.getArgument(0));
 
         assertThrows(ResponseStatusException.class, () -> service().command(DEVICE, request("OPEN_VALVE", 10)));

@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import org.springframework.stereotype.Service;
 
 /**
@@ -26,20 +26,20 @@ public class WaterNeedService {
     /** 1 hectare = 10 000 m2. */
     private static final double SQUARE_METERS_PER_HECTARE = 10_000d;
 
-    public double cropCoefficient(Zone zone) {
-        if (zone == null || zone.getCropCoefficient() == null || zone.getCropCoefficient() <= 0) {
+    public double cropCoefficient(ZoneDto zone) {
+        if (zone == null || zone.cropCoefficient() == null || zone.cropCoefficient() <= 0) {
             return DEFAULT_CROP_COEFFICIENT;
         }
-        return zone.getCropCoefficient();
+        return zone.cropCoefficient();
     }
 
     /**
      * Application efficiency of the irrigation system (0-1).
      * Drip strongly limits evaporation, sprinkler and gravity much less so.
      */
-    public double systemEfficiency(Zone zone) {
-        String method = zone == null || zone.getIrrigationMethod() == null
-                ? "" : zone.getIrrigationMethod().trim().toLowerCase();
+    public double systemEfficiency(ZoneDto zone) {
+        String method = zone == null || zone.irrigationMethod() == null
+                ? "" : zone.irrigationMethod().trim().toLowerCase();
         return switch (method) {
             case "drip", "goutte-a-goutte", "goutte", "goutte a goutte" -> 0.90;
             case "sprinkler", "aspersion" -> 0.75;
@@ -49,9 +49,9 @@ public class WaterNeedService {
     }
 
     /** Readable label of the irrigation method (used in the UI and messages). */
-    public String methodLabel(Zone zone) {
-        String method = zone == null || zone.getIrrigationMethod() == null
-                ? "" : zone.getIrrigationMethod().trim().toLowerCase();
+    public String methodLabel(ZoneDto zone) {
+        String method = zone == null || zone.irrigationMethod() == null
+                ? "" : zone.irrigationMethod().trim().toLowerCase();
         return switch (method) {
             case "drip", "goutte-a-goutte", "goutte", "goutte a goutte" -> "drip";
             case "sprinkler", "aspersion" -> "sprinkler";
@@ -61,17 +61,17 @@ public class WaterNeedService {
     }
 
     /** Theoretical need in litres for a zone on a given evapotranspiration day. */
-    public double needLiters(Zone zone, double et0Mm) {
-        if (zone == null || zone.getAreaHectares() == null || et0Mm <= 0) {
+    public double needLiters(ZoneDto zone, double et0Mm) {
+        if (zone == null || zone.areaHectares() == null || et0Mm <= 0) {
             return 0d;
         }
-        double areaSquareMeters = zone.getAreaHectares() * SQUARE_METERS_PER_HECTARE;
+        double areaSquareMeters = zone.areaHectares() * SQUARE_METERS_PER_HECTARE;
         double efficiency = systemEfficiency(zone);
         return (areaSquareMeters * et0Mm * cropCoefficient(zone)) / efficiency;
     }
 
     /** Theoretical need accumulated over a period: sum of the daily needs. */
-    public double needLiters(Zone zone, Iterable<Double> dailyEt0Mm) {
+    public double needLiters(ZoneDto zone, Iterable<Double> dailyEt0Mm) {
         double total = 0d;
         for (Double et0 : dailyEt0Mm) {
             total += needLiters(zone, et0 == null ? 0d : et0);

@@ -7,5 +7,5 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DripMaintenanceLogRepository extends JpaRepository<DripMaintenanceLog, UUID> {
-    Page<DripMaintenanceLog> findByZoneId(UUID zoneId, Pageable pageable);
+    Page<DripMaintenanceLog> findByZoneId(Long zoneId, Pageable pageable);
 }

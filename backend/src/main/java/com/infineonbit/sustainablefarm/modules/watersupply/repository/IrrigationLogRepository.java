@@ -25,5 +25,5 @@ public interface IrrigationLogRepository extends JpaRepository<IrrigationLog, UU
 	@Query("select l from IrrigationLog l, IrrigationSchedule s "
 			+ "where l.scheduleId = s.id and s.zoneId = :zoneId "
 			+ "and l.actualStartTime >= :start and l.actualStartTime < :end")
-	List<IrrigationLog> findForZoneBetween(UUID zoneId, Instant start, Instant end);
+	List<IrrigationLog> findForZoneBetween(Long zoneId, Instant start, Instant end);
 }

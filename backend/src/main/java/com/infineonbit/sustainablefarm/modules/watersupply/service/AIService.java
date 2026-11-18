@@ -3,7 +3,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.AlertService;
 import java.time.Instant;
 import java.time.Duration;
@@ -21,16 +21,16 @@ import org.springframework.stereotype.Service;
 public class AIService {
 
     private final WaterSourceRepository waterSourceRepository;
-    private final FieldZoneRepository fieldZoneRepository;
+    private final FarmDirectory farmDirectory;
     private final WaterConsumptionRepository waterConsumptionRepository;
     private final AlertService alertService;
 
     public AIService(WaterSourceRepository waterSourceRepository,
-                     FieldZoneRepository fieldZoneRepository,
+                     FarmDirectory farmDirectory,
                      WaterConsumptionRepository waterConsumptionRepository,
                      AlertService alertService) {
         this.waterSourceRepository = waterSourceRepository;
-        this.fieldZoneRepository = fieldZoneRepository;
+        this.farmDirectory = farmDirectory;
         this.waterConsumptionRepository = waterConsumptionRepository;
         this.alertService = alertService;
     }
@@ -65,10 +65,10 @@ public class AIService {
                     "reservoir_level"));
         }
 
-        long dripZones = fieldZoneRepository.findAll().stream()
-                .filter(z -> "drip".equalsIgnoreCase(z.getIrrigationMethod())
-                        || "goutte-a-goutte".equalsIgnoreCase(z.getIrrigationMethod())
-                        || "goutte".equalsIgnoreCase(z.getIrrigationMethod()))
+        long dripZones = farmDirectory.listZones().stream()
+                .filter(z -> "drip".equalsIgnoreCase(z.irrigationMethod())
+                        || "goutte-a-goutte".equalsIgnoreCase(z.irrigationMethod())
+                        || "goutte".equalsIgnoreCase(z.irrigationMethod()))
                 .count();
         if (dripZones > 0) {
             recommendations.add(rec("info",

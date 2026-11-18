@@ -2,7 +2,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +16,7 @@ class WaterNeedServiceTest {
 
     @Test
     void needIsAreaTimesEt0TimesKcDividedByEfficiency() {
-        Zone zone = zone(1.0, "drip", 1.0);
+        ZoneDto zone = zone(1.0, "drip", 1.0);
 
         // 1 ha = 10,000 m2; 10,000 x 5 mm x 1.0 / 0.90
         assertEquals(55_555.56d, service.needLiters(zone, 5.0), 0.01d);
@@ -24,7 +24,7 @@ class WaterNeedServiceTest {
 
     @Test
     void cropCoefficientIsAppliedWhenSet() {
-        Zone zone = zone(2.0, "sprinkler", 0.8);
+        ZoneDto zone = zone(2.0, "sprinkler", 0.8);
 
         // 20 000 x 5 x 0.8 / 0.75
         assertEquals(106_666.67d, service.needLiters(zone, 5.0), 0.01d);
@@ -52,7 +52,7 @@ class WaterNeedServiceTest {
 
     @Test
     void cumulativeNeedSummsTheDailyNeeds() {
-        Zone zone = zone(1.0, "drip", 1.0);
+        ZoneDto zone = zone(1.0, "drip", 1.0);
 
         // One day without ET0 (null) does not count: 2 days of need instead of 3.
         // Arrays.asList is used because List.of rejects null elements.
@@ -67,12 +67,8 @@ class WaterNeedServiceTest {
         assertEquals("not specified", service.methodLabel(zone(1.0, null, 1.0)));
     }
 
-    private Zone zone(Double areaHectares, String irrigationMethod, Double cropCoefficient) {
-        Zone zone = new Zone();
-        zone.setName("Zone A");
-        zone.setAreaHectares(areaHectares);
-        zone.setIrrigationMethod(irrigationMethod);
-        zone.setCropCoefficient(cropCoefficient);
-        return zone;
+    private ZoneDto zone(Double areaHectares, String irrigationMethod, Double cropCoefficient) {
+        return TestZones.zone().name("Zone A").areaHectares(areaHectares).irrigationMethod(irrigationMethod)
+                .cropCoefficient(cropCoefficient).build();
     }
 }

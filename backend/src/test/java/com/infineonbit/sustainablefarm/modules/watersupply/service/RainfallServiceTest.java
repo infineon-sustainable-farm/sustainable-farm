@@ -32,7 +32,7 @@ class RainfallServiceTest {
 
     @Test
     void twoGaugesOfTheSameFarmGiveTheHighestCumulativeNotTheSum() {
-        UUID farmId = UUID.randomUUID();
+        Long farmId = 142L;
         WaterSource tankA = source(farmId);
         WaterSource tankB = source(farmId);
         when(sourceRepository.findByFarmIdIn(List.of(farmId))).thenReturn(List.of(tankA, tankB));
@@ -49,7 +49,7 @@ class RainfallServiceTest {
 
     @Test
     void aFarmWithoutSourceHasNoRainAndNoGaugeQuery() {
-        UUID farmId = UUID.randomUUID();
+        Long farmId = 143L;
         when(sourceRepository.findByFarmIdIn(List.of(farmId))).thenReturn(List.of());
 
         assertEquals(0d, service().forFarms(List.of(farmId), FROM, TO).rainfallMm());
@@ -62,9 +62,11 @@ class RainfallServiceTest {
         verify(sourceRepository, never()).findByFarmIdIn(any());
     }
 
-    private static WaterSource source(UUID farmId) {
+    private static long nextSourceId = 1L;
+
+    private static WaterSource source(Long farmId) {
         WaterSource source = new WaterSource();
-        source.setId(UUID.randomUUID());
+        source.setId(nextSourceId++);
         source.setFarmId(farmId);
         return source;
     }

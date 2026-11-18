@@ -11,5 +11,5 @@ import java.util.UUID;
 public record VisitorEventRequest(@NotBlank @Size(max = 128) String visitId,
                                   @Size(max = 255) String groupName,
                                   @NotNull Instant expectedAt,
-                                  List<UUID> zones) {
+                                  List<Long> zones) {
 }

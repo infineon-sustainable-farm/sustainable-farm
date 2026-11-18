@@ -4,8 +4,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumpti
 import java.time.Instant;
 import java.util.UUID;
 
-public record WaterConsumptionResponse(UUID id, UUID farmId, UUID sourceId, Double consumptionLiters,
-                                       Instant consumptionDate, UUID irrigationId, UUID zoneId,
+public record WaterConsumptionResponse(UUID id, Long farmId, Long sourceId, Double consumptionLiters,
+                                       Instant consumptionDate, UUID irrigationId, Long zoneId,
                                        String lotId, String activity, String blockCode, Boolean multipleBlockCodes,
                                        Instant createdAt) {
     public static WaterConsumptionResponse from(WaterConsumption consumption) {

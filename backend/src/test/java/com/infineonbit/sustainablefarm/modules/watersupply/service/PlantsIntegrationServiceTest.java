@@ -10,15 +10,14 @@ import static org.mockito.Mockito.when;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.BlockIrrigationNeedRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -30,10 +29,10 @@ class PlantsIntegrationServiceTest {
     private static final LocalDate DAY = LocalDate.of(2026, 10, 13);
 
     @Mock
-    private ZoneBlockMappingService zoneBlockMappingService;
+    private ZoneBlockResolver zoneBlockResolver;
 
     @Mock
-    private FieldZoneRepository zoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private RainfallService rainfallService;
@@ -49,13 +48,13 @@ class PlantsIntegrationServiceTest {
 
     @Test
     void rainfallIsReadOnTheGaugesOfTheFarmsOwningTheBlock() {
-        UUID farmId = UUID.randomUUID();
-        UUID sourceId = UUID.randomUUID();
+        Long farmId = 122L;
+        Long sourceId = 123L;
         RainwaterHarvest reading = new RainwaterHarvest();
         reading.setSourceId(sourceId);
         reading.setRainfallMm(12.34);
         reading.setCaptureDate(Instant.parse("2026-10-12T08:00:00Z"));
-        when(zoneBlockMappingService.farmIdsForBlock(null, "A")).thenReturn(List.of(farmId));
+        when(zoneBlockResolver.farmIdsForBlock(null, "A")).thenReturn(List.of(farmId));
         when(rainfallService.forFarms(eq(List.of(farmId)), eq(Instant.parse("2026-10-01T00:00:00Z")),
                 eq(Instant.parse("2026-10-14T00:00:00Z"))))
                 .thenReturn(new RainfallService.RainfallSummary(12.34, Map.of(sourceId, 12.34), List.of(reading)));
@@ -71,7 +70,7 @@ class PlantsIntegrationServiceTest {
 
     @Test
     void rainfallOfAnUnmappedBlockIsNotFound() {
-        when(zoneBlockMappingService.farmIdsForBlock(null, "Z")).thenReturn(List.of());
+        when(zoneBlockResolver.farmIdsForBlock(null, "Z")).thenReturn(List.of());
 
         assertThrows(NotFoundException.class, () -> service().rainfall("Z", null, DAY, DAY));
     }
@@ -83,7 +82,7 @@ class PlantsIntegrationServiceTest {
 
     @Test
     void irrigationNeedAppliesTheFactorOfTheRequestedPhase() {
-        Zone zone = stubBlockZone("A");
+        ZoneDto zone = stubBlockZone("A");
         when(waterNeedService.needLiters(zone, 4d)).thenReturn(1000d);
 
         Map<String, Object> need = service(factors(0.6, 0.9, 1.1)).irrigationNeed(
@@ -99,7 +98,7 @@ class PlantsIntegrationServiceTest {
 
     @Test
     void irrigationNeedReadsThePhaseFromThePlantsCalendarWhenNotGiven() {
-        Zone zone = stubBlockZone("A");
+        ZoneDto zone = stubBlockZone("A");
         when(waterNeedService.needLiters(zone, 4d)).thenReturn(1000d);
         when(plantsGrowthPort.growthForBlock("A"))
                 .thenReturn(List.of(new PlantsGrowthPort.BlockGrowth("A", "establishment", 1)));
@@ -113,7 +112,7 @@ class PlantsIntegrationServiceTest {
 
     @Test
     void conflictingPhasesInThePlantsCalendarLeaveTheNeedUnadjusted() {
-        Zone zone = stubBlockZone("A");
+        ZoneDto zone = stubBlockZone("A");
         when(waterNeedService.needLiters(zone, 4d)).thenReturn(1000d);
         when(plantsGrowthPort.growthForBlock("A")).thenReturn(List.of(
                 new PlantsGrowthPort.BlockGrowth("A", "establishment", 1),
@@ -129,7 +128,7 @@ class PlantsIntegrationServiceTest {
 
     @Test
     void defaultFactorsAreFlaggedAsNotValidated() {
-        Zone zone = stubBlockZone("A");
+        ZoneDto zone = stubBlockZone("A");
         when(waterNeedService.needLiters(zone, 4d)).thenReturn(1000d);
 
         Map<String, Object> need = service().irrigationNeed(
@@ -149,8 +148,8 @@ class PlantsIntegrationServiceTest {
 
     @Test
     void phaseAdjustmentNeedsExactlyOneBlockOnTheZone() {
-        UUID zoneId = UUID.randomUUID();
-        when(zoneBlockMappingService.blockCodesForZone(zoneId)).thenReturn(List.of("A", "B"));
+        Long zoneId = 124L;
+        when(zoneBlockResolver.blockCodesForZone(zoneId)).thenReturn(List.of("A", "B"));
 
         PlantsIntegrationService.PhaseAdjustment adjustment = service(factors(0.6, 0.9, 1.1)).phaseAdjustmentForZone(zoneId);
 
@@ -158,17 +157,16 @@ class PlantsIntegrationServiceTest {
         assertEquals("unknown", adjustment.source());
     }
 
-    private Zone stubBlockZone(String blockCode) {
-        Zone zone = stubBlockZoneWithoutWeather(blockCode);
+    private ZoneDto stubBlockZone(String blockCode) {
+        ZoneDto zone = stubBlockZoneWithoutWeather(blockCode);
         when(agroWeatherService.et0Between(DAY, DAY)).thenReturn(4d);
-        when(zoneRepository.findById(zone.getId())).thenReturn(Optional.of(zone));
+        when(farmDirectory.findZone(zone.id())).thenReturn(Optional.of(zone));
         return zone;
     }
 
-    private Zone stubBlockZoneWithoutWeather(String blockCode) {
-        Zone zone = new Zone();
-        zone.setId(UUID.randomUUID());
-        when(zoneBlockMappingService.zoneIdsForBlock(any(), eq(blockCode))).thenReturn(List.of(zone.getId()));
+    private ZoneDto stubBlockZoneWithoutWeather(String blockCode) {
+        ZoneDto zone = TestZones.zone().id(9L).blockCode(blockCode).build();
+        when(zoneBlockResolver.zoneIdsForBlock(any(), eq(blockCode))).thenReturn(List.of(zone.id()));
         return zone;
     }
 
@@ -182,7 +180,7 @@ class PlantsIntegrationServiceTest {
     }
 
     private PlantsIntegrationService service(WaterIntegrationProperties properties) {
-        return new PlantsIntegrationService(zoneBlockMappingService, zoneRepository, rainfallService, waterNeedService,
+        return new PlantsIntegrationService(zoneBlockResolver, farmDirectory, rainfallService, waterNeedService,
                 agroWeatherService, plantsGrowthPort, properties);
     }
 }

@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record WaterQualityCreateRequest(
-        @NotNull UUID sourceId,
+        @NotNull Long sourceId,
         Double ph,
         Double temperatureCelsius,
         Double turbidityNtu,

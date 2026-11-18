@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RainfallService {
 
     /** Rainfall over a window: {@code rainfallMm} is the max of the per-gauge totals. */
-    public record RainfallSummary(double rainfallMm, Map<UUID, Double> bySource, List<RainwaterHarvest> readings) {
+    public record RainfallSummary(double rainfallMm, Map<Long, Double> bySource, List<RainwaterHarvest> readings) {
         static final RainfallSummary NONE = new RainfallSummary(0d, Map.of(), List.of());
     }
 
@@ -39,16 +39,16 @@ public class RainfallService {
     }
 
     /** Rainfall of the given farms over [from, to[. */
-    public RainfallSummary forFarms(Collection<UUID> farmIds, Instant from, Instant to) {
+    public RainfallSummary forFarms(Collection<Long> farmIds, Instant from, Instant to) {
         if (farmIds.isEmpty()) {
             return RainfallSummary.NONE;
         }
-        List<UUID> sourceIds = sourceRepository.findByFarmIdIn(farmIds).stream().map(WaterSource::getId).toList();
+        List<Long> sourceIds = sourceRepository.findByFarmIdIn(farmIds).stream().map(WaterSource::getId).toList();
         if (sourceIds.isEmpty()) {
             return RainfallSummary.NONE;
         }
         List<RainwaterHarvest> readings = harvestRepository.findBySourcesBetween(sourceIds, from, to);
-        Map<UUID, Double> bySource = new LinkedHashMap<>();
+        Map<Long, Double> bySource = new LinkedHashMap<>();
         for (RainwaterHarvest reading : readings) {
             bySource.merge(reading.getSourceId(), reading.getRainfallMm() == null ? 0d : reading.getRainfallMm(), Double::sum);
         }

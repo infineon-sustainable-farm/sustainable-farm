@@ -9,7 +9,7 @@ import java.util.UUID;
  * <p>The client provides neither an id nor a creation date: they belong to the server.</p>
  */
 public record DripMaintenanceLogRequest(
-        UUID zoneId,
+        Long zoneId,
         Instant maintenanceDate,
         String maintenanceType,
         Boolean filterCleaned,

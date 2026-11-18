@@ -7,7 +7,7 @@ import java.util.UUID;
 /** API view of a maintenance intervention: stable contract, independent of the JPA entity. */
 public record DripMaintenanceLogResponse(
         UUID id,
-        UUID zoneId,
+        Long zoneId,
         Instant maintenanceDate,
         String maintenanceType,
         Boolean filterCleaned,

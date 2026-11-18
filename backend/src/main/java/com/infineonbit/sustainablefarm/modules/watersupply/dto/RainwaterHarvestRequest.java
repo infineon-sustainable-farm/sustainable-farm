@@ -11,7 +11,7 @@ import java.util.UUID;
  * when it is not provided.</p>
  */
 public record RainwaterHarvestRequest(
-        UUID sourceId,
+        Long sourceId,
         Double catchmentAreaM2,
         Double rainfallMm,
         Double runoffCoefficient,

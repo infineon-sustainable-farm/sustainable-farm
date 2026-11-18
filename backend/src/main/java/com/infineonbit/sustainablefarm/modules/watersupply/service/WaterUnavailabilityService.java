@@ -2,13 +2,10 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Field;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterUnavailability;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterUnavailabilityRepository;
@@ -43,23 +40,19 @@ public class WaterUnavailabilityService {
     private static final List<String> STATUSES = List.of("planned", "active", "cancelled");
 
     private final WaterUnavailabilityRepository outageRepository;
-    private final FarmRepository farmRepository;
     private final WaterSourceRepository sourceRepository;
-    private final FieldZoneRepository zoneRepository;
-    private final FieldRepository fieldRepository;
+    private final FarmDirectory farmDirectory;
     private final IrrigationScheduleRepository scheduleRepository;
     private final IrrigationService irrigationService;
     private final AlertService alertService;
 
-    public WaterUnavailabilityService(WaterUnavailabilityRepository outageRepository, FarmRepository farmRepository,
-                                      WaterSourceRepository sourceRepository, FieldZoneRepository zoneRepository,
-                                      FieldRepository fieldRepository, IrrigationScheduleRepository scheduleRepository,
+    public WaterUnavailabilityService(WaterUnavailabilityRepository outageRepository,
+                                      WaterSourceRepository sourceRepository, FarmDirectory farmDirectory,
+                                      IrrigationScheduleRepository scheduleRepository,
                                       IrrigationService irrigationService, AlertService alertService) {
         this.outageRepository = outageRepository;
-        this.farmRepository = farmRepository;
         this.sourceRepository = sourceRepository;
-        this.zoneRepository = zoneRepository;
-        this.fieldRepository = fieldRepository;
+        this.farmDirectory = farmDirectory;
         this.scheduleRepository = scheduleRepository;
         this.irrigationService = irrigationService;
         this.alertService = alertService;
@@ -69,9 +62,9 @@ public class WaterUnavailabilityService {
      * Periods matching every given filter: overlapping [from, to[, in force at {@code activeOn}
      * (cancelled excluded), concerning a zone or a source (directly or through their farm).
      */
-    public List<WaterUnavailabilityResponse> search(Instant from, Instant to, UUID zoneId, UUID sourceId, Instant activeOn) {
-        UUID zoneFarmId = zoneId == null ? null : farmIdOfZone(zoneId);
-        UUID sourceFarmId = sourceId == null ? null : sourceRepository.findById(sourceId)
+    public List<WaterUnavailabilityResponse> search(Instant from, Instant to, Long zoneId, Long sourceId, Instant activeOn) {
+        Long zoneFarmId = zoneId == null ? null : farmIdOfZone(zoneId);
+        Long sourceFarmId = sourceId == null ? null : sourceRepository.findById(sourceId)
                 .orElseThrow(() -> new NotFoundException("WaterSource")).getFarmId();
         Specification<WaterUnavailability> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -100,7 +93,7 @@ public class WaterUnavailabilityService {
     }
 
     /** True when a non-cancelled period covers the zone (or its farm) at the given instant. */
-    public boolean isZoneUnavailable(UUID zoneId, Instant at) {
+    public boolean isZoneUnavailable(Long zoneId, Instant at) {
         return !search(null, null, zoneId, null, at).isEmpty();
     }
 
@@ -182,18 +175,17 @@ public class WaterUnavailabilityService {
         if ("cancelled".equals(outage.getStatus())) {
             return 0;
         }
-        List<UUID> zoneIds = switch (outage.getScope()) {
+        List<Long> zoneIds = switch (outage.getScope()) {
             case SCOPE_ZONE -> List.of(outage.getScopeId());
-            case SCOPE_FARM -> fieldRepository.findByFarmId(outage.getScopeId()).stream()
-                    .flatMap(field -> zoneRepository.findByFieldId(field.getId()).stream())
-                    .map(Zone::getId)
+            case SCOPE_FARM -> farmDirectory.listZonesOfFarm(outage.getScopeId()).stream()
+                    .map(ZoneDto::id)
                     .toList();
             // A source is not linked to zones in the schema: nothing can be postponed safely.
             default -> List.of();
         };
         String reason = "Water unavailability" + (outage.getReason() == null ? "" : ": " + outage.getReason());
         int count = 0;
-        for (UUID zoneId : zoneIds) {
+        for (Long zoneId : zoneIds) {
             for (var schedule : scheduleRepository.findOpenForZoneBetween(zoneId, outage.getStartAt(), outage.getEndAt())) {
                 irrigationService.postpone(schedule.getId(), reason);
                 count++;
@@ -202,11 +194,11 @@ public class WaterUnavailabilityService {
         return count;
     }
 
-    private void requireTarget(String scope, UUID scopeId) {
+    private void requireTarget(String scope, Long scopeId) {
         boolean exists = switch (scope) {
-            case SCOPE_FARM -> farmRepository.existsById(scopeId);
+            case SCOPE_FARM -> farmDirectory.farmExists(scopeId);
             case SCOPE_SOURCE -> sourceRepository.existsById(scopeId);
-            default -> zoneRepository.existsById(scopeId);
+            default -> farmDirectory.zoneExists(scopeId);
         };
         if (!exists) {
             throw new NotFoundException(switch (scope) {
@@ -217,13 +209,12 @@ public class WaterUnavailabilityService {
         }
     }
 
-    private UUID farmIdOfZone(UUID zoneId) {
-        Zone zone = zoneRepository.findById(zoneId).orElseThrow(() -> new NotFoundException("Zone"));
-        return Optional.ofNullable(zone.getFieldId()).flatMap(fieldRepository::findById).map(Field::getFarmId).orElse(null);
+    private Long farmIdOfZone(Long zoneId) {
+        return farmDirectory.findZone(zoneId).orElseThrow(() -> new NotFoundException("Zone")).farmId();
     }
 
     private static Predicate scopeIs(jakarta.persistence.criteria.Root<WaterUnavailability> root,
-                                     jakarta.persistence.criteria.CriteriaBuilder cb, String scope, UUID scopeId) {
+                                     jakarta.persistence.criteria.CriteriaBuilder cb, String scope, Long scopeId) {
         if (scopeId == null) {
             return cb.disjunction();
         }
