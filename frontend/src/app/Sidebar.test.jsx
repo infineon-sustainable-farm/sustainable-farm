@@ -94,7 +94,8 @@ describe('Sidebar', () => {
     await act(async () => {
       fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'de' } })
     })
-    expect(within(nav).getByRole('link', { name: 'Geräteverzeichnis' })).toBeInTheDocument()
+    // German and French load on demand.
+    expect(await within(nav).findByRole('link', { name: 'Geräteverzeichnis' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Module' })).toBe(nav)
     expect(document.documentElement.lang).toBe('de')
     expect(i18n.resolvedLanguage).toBe('de')
@@ -102,7 +103,7 @@ describe('Sidebar', () => {
     await act(async () => {
       fireEvent.change(screen.getByRole('combobox', { name: 'Sprache' }), { target: { value: 'fr' } })
     })
-    expect(within(nav).getByRole('link', { name: 'Approvisionnement en eau' })).toBeInTheDocument()
+    expect(await within(nav).findByRole('link', { name: 'Approvisionnement en eau' })).toBeInTheDocument()
     expect(document.documentElement.lang).toBe('fr')
   })
 
