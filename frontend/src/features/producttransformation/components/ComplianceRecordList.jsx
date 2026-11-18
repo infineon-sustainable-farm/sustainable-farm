@@ -2,7 +2,7 @@
  * Product Transformation - Compliance screen
  * Displays, filters, creates, edits and deletes HACCP compliance records.
  *
- * Data contract: /api/compliance-records (see ComplianceRecordController).
+ * Data contract: /api/product-transformation/compliance-records (see ComplianceRecordController).
  * Business rule enforced by the backend: the auditor must have the AUDITOR
  * role, which is why the selector only lists those operators.
  *

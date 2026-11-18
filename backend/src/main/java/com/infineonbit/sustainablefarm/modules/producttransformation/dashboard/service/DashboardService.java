@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.dto.response.DashboardKPIResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.dto.response.HarvestQuantityKPI;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.dto.response.ActiveBatchesKPI;
@@ -133,7 +136,7 @@ public class DashboardService {
     public ActiveBatchesKPI calculateActiveBatches() {
         log.debug("Calculating active batches");
         
-        List<Batch.BatchStatus> activeStatuses = List.of(Batch.BatchStatus.DRYING, Batch.BatchStatus.WASHING, Batch.BatchStatus.PACKAGING);
+        List<BatchStatus> activeStatuses = List.of(BatchStatus.DRYING, BatchStatus.WASHING, BatchStatus.PACKAGING);
         long totalBatchCount = batchRepository.count();
         long activeBatchCount = batchRepository.countByCurrentStatusIn(activeStatuses);
 
@@ -175,9 +178,9 @@ public class DashboardService {
         LocalDateTime to = endDate.atTime(23, 59, 59);
 
         long totalCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetween(from, to);
-        long passedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.PASS);
-        long failedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.FAIL);
-        long reworkCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.REWORK);
+        long passedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcResult.PASS);
+        long failedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcResult.FAIL);
+        long reworkCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcResult.REWORK);
 
         BigDecimal passRate = totalCheckpoints == 0
             ? BigDecimal.ZERO
@@ -260,15 +263,15 @@ public class DashboardService {
         int totalEquipment = allEquipment.size();
         
         int activeEquipment = (int) allEquipment.stream()
-            .filter(eq -> eq.getMaintenanceStatus() == Equipment.MaintenanceStatus.ACTIVE)
+            .filter(eq -> eq.getMaintenanceStatus() == MaintenanceStatus.ACTIVE)
             .count();
         
         int maintenanceEquipment = (int) allEquipment.stream()
-            .filter(eq -> eq.getMaintenanceStatus() == Equipment.MaintenanceStatus.MAINTENANCE)
+            .filter(eq -> eq.getMaintenanceStatus() == MaintenanceStatus.MAINTENANCE)
             .count();
         
         int inactiveEquipment = (int) allEquipment.stream()
-            .filter(eq -> eq.getMaintenanceStatus() == Equipment.MaintenanceStatus.RETIRED)
+            .filter(eq -> eq.getMaintenanceStatus() == MaintenanceStatus.RETIRED)
             .count();
         
         BigDecimal utilizationRate = totalEquipment == 0 
@@ -436,7 +439,7 @@ public class DashboardService {
             LocalDate date = checkpoint.getCheckpointTime().toLocalDate();
             int[] counts = dateToCounts.getOrDefault(date, new int[]{0, 0});
             counts[0]++;
-            if (checkpoint.getResult() == QcCheckpoint.QcResult.PASS) {
+            if (checkpoint.getResult() == QcResult.PASS) {
                 counts[1]++;
             }
             dateToCounts.put(date, counts);

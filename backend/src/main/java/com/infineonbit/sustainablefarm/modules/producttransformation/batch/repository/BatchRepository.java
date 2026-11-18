@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +20,17 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Repository
-public interface BatchRepository extends JpaRepository<Batch, String> {
+public interface BatchRepository extends JpaRepository<Batch, Long> {
+
+    /** The Batch of a business code, shown as {@code batchId}. */
+    Optional<Batch> findByBatchId(String batchId);
+
+    /** Whether a Batch has this business code. */
+    boolean existsByBatchId(String batchId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByBatchId(String batchId);
+
 
     /**
      * Find batches by current status

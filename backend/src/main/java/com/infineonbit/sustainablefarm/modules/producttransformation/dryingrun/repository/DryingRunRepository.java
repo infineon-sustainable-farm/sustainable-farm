@@ -2,7 +2,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import org.springframework.data.jpa.repository.EntityGraph;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +21,14 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Repository
-public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
+public interface DryingRunRepository extends JpaRepository<DryingRun, Long> {
+
+    /** Whether a drying run has this business code. */
+    boolean existsByRunId(String runId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByRunId(String runId);
+
 
     /**
      * Find drying runs by batch
@@ -64,7 +71,7 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
     List<DryingRun> findAll();
 
     @EntityGraph(attributePaths = {"batch", "operator"})
-    Optional<DryingRun> findById(String runId);
+    Optional<DryingRun> findByRunId(String runId);
 
     /**
      * Find drying runs with moisture content within target range

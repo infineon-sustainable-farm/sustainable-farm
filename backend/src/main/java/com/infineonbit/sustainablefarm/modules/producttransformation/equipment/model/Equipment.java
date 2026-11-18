@@ -37,26 +37,5 @@ public class Equipment {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
-    /**
-     * Equipment Type Enum
-     */
-    public enum EquipmentType {
-        WASHING,
-        DRYING,
-        PACKAGING,
-        TESTA_DRYER,
-        SOLAR_DRYER,
-        TUNNEL_DRYER
-    }
 
-    /**
-     * Maintenance Status Enum, the register status in product transformation terms
-     * (see {@code EquipmentRegisterMapping}).
-     * Business Rule: Equipment must be ACTIVE for assignment
-     */
-    public enum MaintenanceStatus {
-        ACTIVE,
-        MAINTENANCE,
-        RETIRED
-    }
 }

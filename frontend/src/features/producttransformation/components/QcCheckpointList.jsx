@@ -2,7 +2,7 @@
  * Product Transformation - Quality Control screen
  * Displays, filters, creates, edits and deletes quality control checkpoints.
  *
- * Data contract: /api/qc-checkpoints (see QcCheckpointController).
+ * Data contract: /api/product-transformation/qc-checkpoints (see QcCheckpointController).
  * Business rule enforced by the backend: the inspector must have the
  * QC_INSPECTOR role, which is why the selector only lists those operators.
  *

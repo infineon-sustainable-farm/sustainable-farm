@@ -5,7 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.exception.B
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.InvalidStateException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.service.QcCheckpointService;
@@ -77,16 +77,16 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     public void deleteBatch(String batchId) {
-        if (!batchRepository.existsById(batchId)) {
+        if (!batchRepository.existsByBatchId(batchId)) {
             throw new ResourceNotFoundException("Batch not found with ID: " + batchId);
         }
-        batchRepository.deleteById(batchId);
+        batchRepository.deleteByBatchId(batchId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Batch getBatchById(String batchId) {
-        return batchRepository.findById(batchId)
+        return batchRepository.findByBatchId(batchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Batch not found with ID: " + batchId));
     }
 
@@ -175,7 +175,7 @@ public class BatchServiceImpl implements BatchService {
         // WASHING checkpoint must be completed before advancing from WASHING to DRYING
         if (batch.getCurrentStatus() == BatchStatus.WASHING) {
             long washingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId,
-                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage.WASHING);
+                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage.WASHING);
             if (washingCheckpointCount == 0) {
                 throw new BusinessRuleViolationException(
                     "Cannot advance batch from WASHING: mandatory WASHING QC checkpoint not completed"
@@ -186,7 +186,7 @@ public class BatchServiceImpl implements BatchService {
         // Business Rule: COOLING checkpoint must be completed before advancing from DRYING to PACKAGING
         if (batch.getCurrentStatus() == BatchStatus.DRYING) {
             long coolingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId,
-                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage.COOLING);
+                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage.COOLING);
             if (coolingCheckpointCount == 0) {
                 throw new BusinessRuleViolationException(
                     "Cannot advance batch from DRYING: mandatory COOLING QC checkpoint not completed"

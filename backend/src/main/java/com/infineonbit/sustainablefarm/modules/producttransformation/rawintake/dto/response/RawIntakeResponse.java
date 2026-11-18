@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.response;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

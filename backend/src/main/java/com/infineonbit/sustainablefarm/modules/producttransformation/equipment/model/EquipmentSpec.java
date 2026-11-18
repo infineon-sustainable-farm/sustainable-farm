@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model;
 
 import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

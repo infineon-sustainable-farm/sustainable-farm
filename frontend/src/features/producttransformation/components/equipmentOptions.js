@@ -1,7 +1,7 @@
 import i18n from '../../../shared/i18n/i18n';
 import { formatEnum, notAvailable } from '../utils/format';
 
-// Values accepted by /api/equipment for the PT attributes of a machine.
+// Values accepted by /api/product-transformation/equipment for the PT attributes of a machine.
 export const EQUIPMENT_TYPES = ['WASHING', 'DRYING', 'PACKAGING', 'TESTA_DRYER', 'SOLAR_DRYER', 'TUNNEL_DRYER'];
 export const MAINTENANCE_STATUSES = ['ACTIVE', 'MAINTENANCE', 'RETIRED'];
 

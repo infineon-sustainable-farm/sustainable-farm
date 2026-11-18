@@ -1,4 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.model;
+
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
@@ -7,9 +10,6 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.harvesteven
 
 import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,29 +28,28 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "raw_intake",
-        uniqueConstraints = @UniqueConstraint(name = "uk_raw_intake_batch_id", columnNames = "batch_id"),
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_raw_intake_code", columnNames = "code"),
+                @UniqueConstraint(name = "uk_raw_intake_batch_id", columnNames = "batch_id")
+        },
         indexes = {
                 @Index(name = "idx_raw_intake_received_variety_key", columnList = "received_variety_key"),
                 @Index(name = "idx_raw_intake_source_block_id", columnList = "source_block_id")
         })
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class RawIntake {
+public class RawIntake extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "intake_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String intakeId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_raw_intake_batch"), nullable = false, referencedColumnName = "batch_id")
+    // Eager: the responses show its code, read after the transaction (open-in-view is off).
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_raw_intake_batch"), nullable = false)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Batch batch;
 
     /**
@@ -72,26 +71,10 @@ public class RawIntake {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "received_grade", nullable = false, length = 1)
-    private HarvestEvent.QualityGrade receivedGrade;
+    private QualityGrade receivedGrade;
 
     /** The intake operator, a person of the staff referential ({@code person.id}); the API shows the name. */
     @Column(name = "intake_operator_id")
     private Long intakeOperatorId;
 
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
 }

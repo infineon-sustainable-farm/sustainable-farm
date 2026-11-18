@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

@@ -16,7 +16,12 @@ import java.util.List;
  * @version 1.0.0
  */
 @Repository
-public interface HistoricalHarvestRepository extends JpaRepository<HistoricalHarvest, com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvestId> {
+public interface HistoricalHarvestRepository extends JpaRepository<HistoricalHarvest, Long> {
+
+    /** The row of a period and variety, unique (uk_historical_harvest_period_variety). */
+    java.util.Optional<HistoricalHarvest> findByYearAndMonthAndWeekAndVarietyKey(Integer year, Integer month, Integer week,
+                                                                           String varietyKey);
+
 
     /**
      * Find historical harvest by year

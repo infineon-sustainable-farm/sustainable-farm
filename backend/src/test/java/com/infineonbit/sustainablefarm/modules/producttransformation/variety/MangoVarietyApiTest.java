@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.variety;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
@@ -63,14 +64,14 @@ class MangoVarietyApiTest {
 
     @Test
     void ameliesIsSentBackAsBeforeAndStoredUnderItsCatalogueKey() throws Exception {
-        mockMvc.perform(post("/api/batches").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)
                         .content(batch("B-VAR-AMELIE", "AMÉLIE")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.mangoVariety").value("AMÉLIE"));
 
-        assertThat(batchRepository.findById("B-VAR-AMELIE").orElseThrow().getVarietyKey()).isEqualTo("AMELIE");
+        assertThat(batchRepository.findByBatchId("B-VAR-AMELIE").orElseThrow().getVarietyKey()).isEqualTo("AMELIE");
 
-        mockMvc.perform(get("/api/batches/variety/{variety}", "AMÉLIE"))
+        mockMvc.perform(get("/api/product-transformation/batches/variety/{variety}", "AMÉLIE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].batchId", hasItem("B-VAR-AMELIE")))
                 .andExpect(jsonPath("$[*].mangoVariety", hasItem("AMÉLIE")));
@@ -79,7 +80,7 @@ class MangoVarietyApiTest {
     @Test
     void theOtherFormerValuesAreSentBackUnchanged() throws Exception {
         for (String variety : new String[] {"KEITT", "KENT", "TOMMY", "OTHER"}) {
-            mockMvc.perform(post("/api/batches").contentType(MediaType.APPLICATION_JSON)
+            mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)
                             .content(batch("B-VAR-" + variety, variety)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.mangoVariety").value(variety));
@@ -88,10 +89,10 @@ class MangoVarietyApiTest {
 
     @Test
     void anUnknownVarietyIsRefused() throws Exception {
-        mockMvc.perform(post("/api/batches").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)
                         .content(batch("B-VAR-UNKNOWN", "ALPHONSO")))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(get("/api/batches/variety/{variety}", "ALPHONSO"))
+        mockMvc.perform(get("/api/product-transformation/batches/variety/{variety}", "ALPHONSO"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -102,7 +103,7 @@ class MangoVarietyApiTest {
         batch.setHarvestDate(LocalDate.of(2026, 11, 1));
         batch.setVarietyKey("ALPHONSO");
         batch.setHarvestQuantityKg(new BigDecimal("10.00"));
-        batch.setCurrentStatus(Batch.BatchStatus.CREATED);
+        batch.setCurrentStatus(BatchStatus.CREATED);
         batch.setFarmBlockId(blocks.resolve("F-VAR", "B-VAR"));
 
         assertThatThrownBy(() -> batchRepository.saveAndFlush(batch))

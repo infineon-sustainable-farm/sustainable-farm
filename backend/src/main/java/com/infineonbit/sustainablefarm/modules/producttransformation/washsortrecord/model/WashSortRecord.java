@@ -1,4 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.model;
+
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 
@@ -8,9 +10,6 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.operator.mo
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,28 +28,28 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "wash_sort_record", indexes = {
+@Table(name = "wash_sort_record",
+        uniqueConstraints = @UniqueConstraint(name = "uk_wash_sort_record_code", columnNames = "code"),
+        indexes = {
+        @Index(name = "idx_wash_sort_record_batch_id", columnList = "batch_id"),
+        @Index(name = "idx_wash_sort_record_operator_id", columnList = "operator_id"),
         @Index(name = "idx_wash_sort_record_start_time", columnList = "start_time"),
         @Index(name = "idx_wash_sort_record_equipment_id", columnList = "equipment_id")
 })
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class WashSortRecord {
+public class WashSortRecord extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "record_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String recordId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_batch"), nullable = false, referencedColumnName = "batch_id")
+    // Eager: the responses show its code, read after the transaction (open-in-view is off).
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_batch"), nullable = false)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Batch batch;
 
     @Column(name = "input_quantity_kg", nullable = false, precision = 10, scale = 2)
@@ -75,26 +74,10 @@ public class WashSortRecord {
     @Column(name = "equipment_id")
     private Long equipmentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_operator"), referencedColumnName = "operator_id")
+    // Eager: the responses show its code, read after the transaction (open-in-view is off).
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_operator"))
     private Operator operator;
-
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
 
     /**
      * Calculate yield percentage
