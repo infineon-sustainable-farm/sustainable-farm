@@ -569,5 +569,177 @@
     "dismissTitle": "Écarter l’alerte ?",
     "dismissMessage": "Voulez-vous vraiment écarter l’alerte {{code}} ? Cette action est irréversible.",
     "deleting": "Suppression…"
+  },
+  "customers": {
+    "title": "Clients",
+    "apiNotice": "Avis de connexion à l’API",
+    "actionFailed": "Échec de l’action",
+    "deleting": "Suppression...",
+    "typeFallback": "client",
+    "toolbar": {
+      "search": "Rechercher des clients",
+      "searchPlaceholder": "Rechercher par nom, identifiant ou région...",
+      "statusFilter": "Statut",
+      "allStatuses": "Tous les statuts",
+      "add": "AJOUTER UN CLIENT"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "prospect": "Prospect"
+    },
+    "types": {
+      "distributor": "Distributeur",
+      "retailer": "Détaillant",
+      "direct_export": "Export direct",
+      "other": "Autre"
+    },
+    "paymentTermsOptions": {
+      "net15": "15 jours net",
+      "net30": "30 jours net",
+      "net45": "45 jours net",
+      "net60": "60 jours net",
+      "dueOnReceipt": "Payable à réception",
+      "advancePayment": "Paiement d’avance"
+    },
+    "countries": {
+      "germany": "Allemagne",
+      "burkinaFaso": "Burkina Faso",
+      "france": "France",
+      "netherlands": "Pays-Bas"
+    },
+    "stats": {
+      "totalActive": "Total actifs",
+      "activeTrend": "12 % par rapport au mois dernier",
+      "newOnboarded": "Nouveaux clients",
+      "onboardedTrend": "5 % par rapport au mois dernier",
+      "inactive": "Inactifs",
+      "followUp": "Relance recommandée",
+      "insight": "Analyse IA",
+      "insightEmpty": "Aucun client enregistré pour l’instant. Créez un client pour commencer à gérer la relation client.",
+      "insightSummary": "{{active}} et {{prospects}} dans les données CRM actuelles.",
+      "activeCustomers_one": "{{count}} client actif",
+      "activeCustomers_other": "{{count}} clients actifs",
+      "prospects_one": "{{count}} prospect",
+      "prospects_other": "{{count}} prospects"
+    },
+    "list": {
+      "customerId": "Client / Identifiant",
+      "sortAscending": "Trier par ordre croissant",
+      "sortDescending": "Trier par ordre décroissant",
+      "region": "Région",
+      "orderVolume": "Vol. commandé (année)",
+      "status": "Statut",
+      "action": "Action",
+      "loading": "Chargement des clients...",
+      "emptyTitle": "Aucun client trouvé",
+      "emptyMessage": "Essayez un autre terme de recherche.",
+      "id": "ID : {{code}}",
+      "volume": "{{value}} kg",
+      "ytdVolume": "Volume de l’année",
+      "zeroVolume": "0 kg",
+      "noOrders": "Aucune commande cette année",
+      "actionsFor": "Actions pour {{name}}",
+      "editCustomer": "Modifier le client",
+      "addContact": "Ajouter un contact",
+      "deleteCustomer": "Supprimer le client",
+      "showing": "{{shown}} affichés sur {{matching}} correspondants ({{total}} au total)",
+      "pagination": "Pages des clients"
+    },
+    "detail": {
+      "edit": "MODIFIER",
+      "locationUnavailable": "Localisation indisponible",
+      "certifications": "Certifications",
+      "refreshCertifications": "Actualiser les certifications",
+      "selectPrompt": "Sélectionnez un client pour voir ses détails"
+    },
+    "contacts": {
+      "title": "Contacts ({{count}})",
+      "add": "AJOUTER",
+      "empty": "Aucun contact enregistré.",
+      "primary": "Principal",
+      "roleFallback": "Contact",
+      "edit": "Modifier le contact",
+      "delete": "Supprimer le contact"
+    },
+    "logistics": {
+      "title": "Plateforme logistique"
+    },
+    "form": {
+      "newTitle": "Ajouter un client",
+      "editTitle": "Modifier le client n° {{id}}",
+      "description": "Saisissez les informations du client ci-dessous.",
+      "companyName": "Raison sociale",
+      "companyNamePlaceholder": "ex. AgriTech Solutions GmbH",
+      "customerCode": "Code client",
+      "customerCodePlaceholder": "ex. CUST-0001-GER (généré automatiquement si vide)",
+      "customerType": "Type de client",
+      "country": "Pays",
+      "countryPlaceholder": "ex. Allemagne",
+      "region": "Région / État",
+      "regionPlaceholder": "ex. Bavière",
+      "city": "Ville",
+      "cityPlaceholder": "ex. Munich",
+      "status": "Statut",
+      "paymentTerms": "Conditions de paiement",
+      "select": "Choisir...",
+      "saving": "Enregistrement...",
+      "saveChanges": "Enregistrer les modifications",
+      "create": "Créer le client"
+    },
+    "contactForm": {
+      "newTitle": "Ajouter un contact",
+      "editTitle": "Modifier le contact",
+      "description": "Saisissez les coordonnées du contact ci-dessous.",
+      "fullName": "Nom complet",
+      "role": "Rôle / Fonction",
+      "rolePlaceholder": "ex. Responsable des achats",
+      "email": "E-mail",
+      "emailPlaceholder": "name@company.de",
+      "phone": "Téléphone",
+      "phonePlaceholder": "+49 89 1234 5678",
+      "primary": "Marquer comme contact principal",
+      "add": "Ajouter le contact"
+    },
+    "deleteCustomer": {
+      "title": "Supprimer le client ?",
+      "message": "Voulez-vous vraiment supprimer {{name}} ? Cette action est irréversible.",
+      "noLocation": "Aucune localisation renseignée"
+    },
+    "deleteContact": {
+      "title": "Supprimer le contact ?",
+      "message": "Voulez-vous vraiment supprimer {{name}} ? Cette action est irréversible.",
+      "noDetails": "Aucune information complémentaire"
+    },
+    "messages": {
+      "customerCreated": "Client « {{name}} » créé.",
+      "customerUpdated": "Client « {{name}} » mis à jour.",
+      "customerDeleted": "Client « {{name}} » supprimé.",
+      "contactAdded": "Contact « {{name}} » ajouté.",
+      "contactUpdated": "Contact « {{name}} » mis à jour.",
+      "contactDeleted": "Contact « {{name}} » supprimé.",
+      "certificationLinked": "Certification associée.",
+      "certificationUnlinked": "Certification dissociée."
+    },
+    "errors": {
+      "requestFailed": "Échec de la requête",
+      "customersFailed": "Clients : {{message}}",
+      "ordersFailed": "Commandes : {{message}}",
+      "contactsFailed": "Contacts : {{message}}",
+      "certificationsFailed": "Certifications : {{message}}",
+      "loadFailed": "Impossible de charger les données clients. Veuillez réessayer. {{details}}",
+      "partialLoad": "Chargement partiel - {{details}}",
+      "loadDataFailed": "Impossible de charger les données clients. Veuillez réessayer.",
+      "certificationsLoadFailed": "Échec du chargement des certifications du client",
+      "loadForEditFailed": "Impossible de charger le client n° {{id}} pour le modifier.",
+      "createCustomerFailed": "Échec de la création du client",
+      "updateCustomerFailed": "Échec de la mise à jour du client",
+      "deleteCustomerFailed": "Échec de la suppression du client",
+      "selectCustomerFirst": "Veuillez d’abord sélectionner un client.",
+      "createContactFailed": "Échec de la création du contact",
+      "updateContactFailed": "Échec de la mise à jour du contact",
+      "deleteContactFailed": "Échec de la suppression du contact",
+      "certificationUpdateFailed": "Échec de la mise à jour de la certification"
+    }
   }
 }
