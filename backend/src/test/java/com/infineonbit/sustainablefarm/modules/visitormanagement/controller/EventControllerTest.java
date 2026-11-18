@@ -65,7 +65,7 @@ class EventControllerTest {
     void list_returns200() throws Exception {
         when(eventService.listEvents(null, null)).thenReturn(List.of(buildResponse(eventId)));
 
-        mockMvc.perform(get("/api/v1/events"))
+        mockMvc.perform(get("/api/visitor-management/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(eventId))
                 .andExpect(jsonPath("$[0].status").value("DRAFT"));
@@ -75,7 +75,7 @@ class EventControllerTest {
     void list_withType_filters() throws Exception {
         when(eventService.listEvents(EventType.SCHOOL, null)).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/events").param("type", "SCHOOL"))
+        mockMvc.perform(get("/api/visitor-management/events").param("type", "SCHOOL"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }
@@ -84,7 +84,7 @@ class EventControllerTest {
     void get_returns200() throws Exception {
         when(eventService.getEvent(eventId)).thenReturn(buildResponse(eventId));
 
-        mockMvc.perform(get("/api/v1/events/1"))
+        mockMvc.perform(get("/api/visitor-management/events/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Open Farm Day"));
     }
@@ -93,7 +93,7 @@ class EventControllerTest {
     void get_notFound_returns404() throws Exception {
         when(eventService.getEvent(999L)).thenThrow(new ResourceNotFoundException("not found"));
 
-        mockMvc.perform(get("/api/v1/events/999"))
+        mockMvc.perform(get("/api/visitor-management/events/999"))
                 .andExpect(status().isNotFound());
     }
 
@@ -101,7 +101,7 @@ class EventControllerTest {
     void create_returns201() throws Exception {
         when(eventService.createEvent(any(EventRequest.class))).thenReturn(buildResponse(eventId));
 
-        mockMvc.perform(post("/api/v1/events")
+        mockMvc.perform(post("/api/visitor-management/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Open Farm Day\",\"type\":\"OPEN_DAY\","
                                 + "\"startDateTime\":\"" + start + "\","
@@ -112,7 +112,7 @@ class EventControllerTest {
 
     @Test
     void create_missingTitle_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/events")
+        mockMvc.perform(post("/api/visitor-management/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"OPEN_DAY\","
                                 + "\"startDateTime\":\"" + start + "\","
@@ -125,7 +125,7 @@ class EventControllerTest {
         when(eventService.updateEvent(eq(eventId), any(EventRequest.class)))
                 .thenReturn(buildResponse(eventId));
 
-        mockMvc.perform(put("/api/v1/events/1")
+        mockMvc.perform(put("/api/visitor-management/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Updated\",\"type\":\"OPEN_DAY\","
                                 + "\"startDateTime\":\"" + start + "\","
@@ -135,7 +135,7 @@ class EventControllerTest {
 
     @Test
     void cancel_returns204() throws Exception {
-        mockMvc.perform(delete("/api/v1/events/1"))
+        mockMvc.perform(delete("/api/visitor-management/events/1"))
                 .andExpect(status().isNoContent());
     }
 
@@ -145,7 +145,7 @@ class EventControllerTest {
         published.setStatus(EventStatus.PUBLISHED);
         when(eventService.publishEvent(eventId)).thenReturn(published);
 
-        mockMvc.perform(post("/api/v1/events/1/publish"))
+        mockMvc.perform(post("/api/visitor-management/events/1/publish"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PUBLISHED"));
     }
@@ -155,7 +155,7 @@ class EventControllerTest {
         when(eventService.publishEvent(eventId)).thenThrow(
                 new BusinessRuleException("Only DRAFT events can be published"));
 
-        mockMvc.perform(post("/api/v1/events/1/publish"))
+        mockMvc.perform(post("/api/visitor-management/events/1/publish"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -169,7 +169,7 @@ class EventControllerTest {
         reg.setVisitPurpose(VisitPurpose.PURCHASE);
         when(eventService.getRegistrations(eventId)).thenReturn(List.of(reg));
 
-        mockMvc.perform(get("/api/v1/events/1/registrations"))
+        mockMvc.perform(get("/api/visitor-management/events/1/registrations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].eventId").value(eventId));
     }
@@ -186,7 +186,7 @@ class EventControllerTest {
         when(eventService.registerVisitor(eq(eventId), any(EventRegistrationRequest.class)))
                 .thenReturn(reg);
 
-        mockMvc.perform(post("/api/v1/events/1/register")
+        mockMvc.perform(post("/api/visitor-management/events/1/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"visitorId\":10,\"visitPurpose\":\"PURCHASE\"}"))
                 .andExpect(status().isCreated())
@@ -196,7 +196,7 @@ class EventControllerTest {
 
     @Test
     void register_missingPurpose_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/events/1/register")
+        mockMvc.perform(post("/api/visitor-management/events/1/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"visitorId\":10}"))
                 .andExpect(status().isBadRequest());

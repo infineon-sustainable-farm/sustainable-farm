@@ -39,7 +39,7 @@ class DashboardControllerTest {
 
         when(dashboardService.getDashboard()).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/dashboard"))
+        mockMvc.perform(get("/api/visitor-management/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.visitorsThisWeek").value(5))
                 .andExpect(jsonPath("$.slotsBooked").value(3))

@@ -52,7 +52,7 @@ class RegistrationControllerTest {
     void list_bySlotId() throws Exception {
         when(registrationService.getRegistrationsBySlot(10L)).thenReturn(List.of(buildResponse(1L, RegistrationStatus.PENDING)));
 
-        mockMvc.perform(get("/api/v1/registrations").param("timeSlotId", "10"))
+        mockMvc.perform(get("/api/visitor-management/registrations").param("timeSlotId", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
@@ -62,14 +62,14 @@ class RegistrationControllerTest {
         when(registrationService.getRegistrationsByDate(LocalDate.of(2026, 9, 8)))
                 .thenReturn(List.of(buildResponse(1L, RegistrationStatus.CONFIRMED)));
 
-        mockMvc.perform(get("/api/v1/registrations").param("date", "2026-09-08"))
+        mockMvc.perform(get("/api/visitor-management/registrations").param("date", "2026-09-08"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
     }
 
     @Test
     void list_noFilters_returnsEmpty() throws Exception {
-        mockMvc.perform(get("/api/v1/registrations"))
+        mockMvc.perform(get("/api/visitor-management/registrations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
@@ -79,7 +79,7 @@ class RegistrationControllerTest {
     void approve_notFound_returns404() throws Exception {
         when(registrationService.approve(999L)).thenThrow(new ResourceNotFoundException("not found"));
 
-        mockMvc.perform(patch("/api/v1/registrations/999/approve"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/999/approve"))
                 .andExpect(status().isNotFound());
     }
 
@@ -87,7 +87,7 @@ class RegistrationControllerTest {
     void approve_notPending_returns422() throws Exception {
         when(registrationService.approve(1L)).thenThrow(new BusinessRuleException("Only PENDING"));
 
-        mockMvc.perform(patch("/api/v1/registrations/1/approve"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/1/approve"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -95,7 +95,7 @@ class RegistrationControllerTest {
     void approve_success() throws Exception {
         when(registrationService.approve(1L)).thenReturn(buildResponse(1L, RegistrationStatus.CONFIRMED));
 
-        mockMvc.perform(patch("/api/v1/registrations/1/approve"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/1/approve"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
@@ -104,7 +104,7 @@ class RegistrationControllerTest {
     void reject_success() throws Exception {
         when(registrationService.reject(1L)).thenReturn(buildResponse(1L, RegistrationStatus.REJECTED));
 
-        mockMvc.perform(patch("/api/v1/registrations/1/reject"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/1/reject"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("REJECTED"));
     }
@@ -113,7 +113,7 @@ class RegistrationControllerTest {
     void checkIn_notConfirmed_returns422() throws Exception {
         when(registrationService.checkIn(1L)).thenThrow(new BusinessRuleException("Only CONFIRMED"));
 
-        mockMvc.perform(patch("/api/v1/registrations/1/check-in"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/1/check-in"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -121,7 +121,7 @@ class RegistrationControllerTest {
     void checkIn_success() throws Exception {
         when(registrationService.checkIn(1L)).thenReturn(buildResponse(1L, RegistrationStatus.CHECKED_IN));
 
-        mockMvc.perform(patch("/api/v1/registrations/1/check-in"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/1/check-in"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CHECKED_IN"));
     }
@@ -130,7 +130,7 @@ class RegistrationControllerTest {
     void cancel_checkedIn_returns422() throws Exception {
         when(registrationService.cancel(1L)).thenThrow(new BusinessRuleException("already checked in"));
 
-        mockMvc.perform(patch("/api/v1/registrations/1/cancel"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/1/cancel"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -138,7 +138,7 @@ class RegistrationControllerTest {
     void cancel_success() throws Exception {
         when(registrationService.cancel(1L)).thenReturn(buildResponse(1L, RegistrationStatus.CANCELLED));
 
-        mockMvc.perform(patch("/api/v1/registrations/1/cancel"))
+        mockMvc.perform(patch("/api/visitor-management/registrations/1/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
@@ -150,7 +150,7 @@ class RegistrationControllerTest {
         prospect.setIsProspect(true);
         when(registrationService.getProspects()).thenReturn(List.of(prospect));
 
-        mockMvc.perform(get("/api/v1/registrations").param("prospect", "true"))
+        mockMvc.perform(get("/api/visitor-management/registrations").param("prospect", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].prospect").value(true))
                 .andExpect(jsonPath("$[0].visitPurpose").value("PURCHASE"));

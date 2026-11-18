@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.Money;
 import com.infineonbit.sustainablefarm.core.notification.NotificationService;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.AgriActivity;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Booking;
@@ -7,6 +9,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingP
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BookingRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -41,7 +43,7 @@ class BookingReminderJobTest {
     private Booking buildBooking(BookingStatus status, Instant scheduled) {
         AgriActivity activity = new AgriActivity();
         activity.setName("Solar workshop");
-        activity.setPrice(new BigDecimal("5000"));
+        activity.setPrice(Money.of("5000", CurrencyCode.XOF));
 
         TimeSlot slot = new TimeSlot();
         slot.setDate(LocalDate.of(2026, 8, 26));
@@ -52,8 +54,10 @@ class BookingReminderJobTest {
         b.setId(1L);
         b.setActivity(activity);
         b.setTimeSlot(slot);
-        b.setVisitorFullName("Lucas Weber");
-        b.setVisitorEmail("lucas@example.com");
+        Visitor visitor = new Visitor();
+        visitor.setFullName("Lucas Weber");
+        visitor.setEmail("lucas@example.com");
+        b.setVisitor(visitor);
         b.setPeopleCount(3);
         b.setPaymentStatus(BookingPaymentStatus.PAID);
         b.setStatus(status);

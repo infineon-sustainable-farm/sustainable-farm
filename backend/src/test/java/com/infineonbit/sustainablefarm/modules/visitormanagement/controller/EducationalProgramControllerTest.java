@@ -71,7 +71,7 @@ class EducationalProgramControllerTest {
     void stops_returns200() throws Exception {
         when(programService.listStops()).thenReturn(List.of(buildStopResponse()));
 
-        mockMvc.perform(get("/api/v1/tour-stops"))
+        mockMvc.perform(get("/api/visitor-management/tour-stops"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].position").value(2))
                 .andExpect(jsonPath("$[0].active").value(true));
@@ -81,7 +81,7 @@ class EducationalProgramControllerTest {
     void createStop_returns201() throws Exception {
         when(programService.createStop(any(TourStopRequest.class))).thenReturn(buildStopResponse());
 
-        mockMvc.perform(post("/api/v1/tour-stops")
+        mockMvc.perform(post("/api/visitor-management/tour-stops")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(stopJson()))
                 .andExpect(status().isCreated())
@@ -90,7 +90,7 @@ class EducationalProgramControllerTest {
 
     @Test
     void createStop_missingDuration_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/tour-stops")
+        mockMvc.perform(post("/api/visitor-management/tour-stops")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Mango orchard\",\"position\":2}"))
                 .andExpect(status().isBadRequest());
@@ -101,7 +101,7 @@ class EducationalProgramControllerTest {
         when(programService.createStop(any(TourStopRequest.class)))
                 .thenThrow(new ConflictException("Another active stop already uses position 2"));
 
-        mockMvc.perform(post("/api/v1/tour-stops")
+        mockMvc.perform(post("/api/visitor-management/tour-stops")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(stopJson()))
                 .andExpect(status().isConflict());
@@ -112,7 +112,7 @@ class EducationalProgramControllerTest {
         when(programService.updateStop(eq(1L), any(TourStopRequest.class)))
                 .thenReturn(buildStopResponse());
 
-        mockMvc.perform(put("/api/v1/tour-stops/1")
+        mockMvc.perform(put("/api/visitor-management/tour-stops/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(stopJson()))
                 .andExpect(status().isOk())
@@ -121,7 +121,7 @@ class EducationalProgramControllerTest {
 
     @Test
     void deactivateStop_returns204() throws Exception {
-        mockMvc.perform(delete("/api/v1/tour-stops/1"))
+        mockMvc.perform(delete("/api/visitor-management/tour-stops/1"))
                 .andExpect(status().isNoContent());
     }
 
@@ -129,7 +129,7 @@ class EducationalProgramControllerTest {
     void workshops_returns200() throws Exception {
         when(programService.listWorkshops(isNull())).thenReturn(List.of(buildWorkshopResponse()));
 
-        mockMvc.perform(get("/api/v1/workshops"))
+        mockMvc.perform(get("/api/visitor-management/workshops"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
     }
@@ -138,7 +138,7 @@ class EducationalProgramControllerTest {
     void createWorkshop_returns201() throws Exception {
         when(programService.createWorkshop(any(WorkshopRequest.class))).thenReturn(buildWorkshopResponse());
 
-        mockMvc.perform(post("/api/v1/workshops")
+        mockMvc.perform(post("/api/visitor-management/workshops")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(workshopJson()))
                 .andExpect(status().isCreated())
@@ -147,7 +147,7 @@ class EducationalProgramControllerTest {
 
     @Test
     void createWorkshop_missingTargetGroup_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/workshops")
+        mockMvc.perform(post("/api/visitor-management/workshops")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Standard farm tour\",\"durationMinutes\":100}"))
                 .andExpect(status().isBadRequest());
@@ -157,7 +157,7 @@ class EducationalProgramControllerTest {
     void publishWorkshop_returns200() throws Exception {
         when(programService.publishWorkshop(1L)).thenReturn(buildWorkshopResponse());
 
-        mockMvc.perform(post("/api/v1/workshops/1/publish"))
+        mockMvc.perform(post("/api/visitor-management/workshops/1/publish"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
     }
@@ -167,7 +167,7 @@ class EducationalProgramControllerTest {
         when(programService.publishWorkshop(1L)).thenThrow(
                 new BusinessRuleException("Only DRAFT workshops can be published"));
 
-        mockMvc.perform(post("/api/v1/workshops/1/publish"))
+        mockMvc.perform(post("/api/visitor-management/workshops/1/publish"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -177,7 +177,7 @@ class EducationalProgramControllerTest {
         inactivated.setStatus(WorkshopStatus.INACTIVE);
         when(programService.deactivateWorkshop(1L)).thenReturn(inactivated);
 
-        mockMvc.perform(post("/api/v1/workshops/1/deactivate"))
+        mockMvc.perform(post("/api/visitor-management/workshops/1/deactivate"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("INACTIVE"));
     }
