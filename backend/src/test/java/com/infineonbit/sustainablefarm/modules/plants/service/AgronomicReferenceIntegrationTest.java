@@ -38,9 +38,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The agronomic reference as the user enters it, through the real services,
- * their transactions and the database. Outside the dev profile nothing is
- * loaded at startup: each test starts and ends with no correction of the
- * shares and without the varieties it enters.
+ * their transactions and the database. Outside the dev profile only the
+ * variety catalogue is loaded at startup: each test starts and ends with no
+ * correction of the shares and without the varieties it enters.
  *
  * <p>Farm 6, block R and the varieties "Sensation" and "Race mango" are used
  * by no other test.
@@ -164,8 +164,12 @@ class AgronomicReferenceIntegrationTest {
     }
 
     @Test
-    void startup_shouldLoadNoReference_outsideTheDevProfile() {
-        // Assert: the loader is not even a bean, so no default reference reaches another environment
+    void startup_shouldLoadTheCatalogue_andNoDevData_outsideTheDevProfile() {
+        // Assert: the five varieties the other modules reference are there in every profile
+        for (String key : List.of("KEITT", "KENT", "AMELIE", "TOMMY", "OTHER")) {
+            assertTrue(varietyReferenceRepository.findByVarietyKey(key).isPresent(), key);
+        }
+        // Assert: the dev clean-up of the shares is not even a bean
         assertTrue(applicationContext.getBeansOfType(AgronomicReferenceLoader.class).isEmpty());
     }
 
