@@ -56,6 +56,28 @@ Le champ (`Field`) de watersupply et le bloc de plants désignent la même parce
 | Clés étrangères entre modules | Colonne `Long` simple dans le module consommateur, contrainte déclarée par un bean `core.schema.CrossModuleForeignKey` vers `FarmDirectory.FARM_TABLE`, `BLOCK_TABLE` ou `ZONE_TABLE` ; une ligne encore référencée ne peut pas être supprimée (409) |
 | Attributs d'irrigation | Méthode d'irrigation, coefficient cultural et goutteurs restent sur `Zone` pour ne pas changer le JSON de `/api/zones` ; leur déplacement vers watersupply est à reconsidérer avec T36 |
 
+### Modèle des alertes (T25)
+
+Les trois copies (energysupply `alert`, salesmarketing `alerts`, watersupply `notifications`) deviennent une seule table `alert` du module `notification`. Ses colonnes sont l'union de ce que les trois modules enregistrent ; aucun champ ne reste hors du modèle commun, il n'y a donc pas de table d'extension.
+
+| Colonne | Origine | Décision |
+|---|---|---|
+| `id`, `created_at`, `updated_at` | `core.entity.BaseEntity` | Clé `Long` ; les identifiants d'alerte deviennent des nombres dans le JSON des trois modules |
+| `source_module` | Nouveau | Enum `SourceModule` (`ENERGYSUPPLY`, `SALESMARKETING`, `WATERSUPPLY`) ; chaque méthode de `AlertBoard` est limitée au module appelant, un id d'un autre module est inconnu (404) |
+| `code` | sales `alert_code` | Code métier unique, vide pour les autres modules |
+| `type` | sales `alert_type`, watersupply `type` | Texte libre du module |
+| `severity` | energysupply et sales | Enum `CRITICAL`, `WARNING`, `INFO` ; sales garde ses valeurs en minuscules dans le JSON ; watersupply la déduit de son `type` quand c'est un niveau |
+| `status` | energysupply et sales | Enum `OPEN`, `ACKNOWLEDGED`, `RESOLVED`, `DISMISSED`, obligatoire, `OPEN` par défaut ; energysupply n'expose que `OPEN` et `RESOLVED` |
+| `title`, `message` | watersupply, tous | Message jusqu'à 1000 caractères |
+| `related_entity_type`, `related_entity_id` | sales `related_table`, `related_id` ; energysupply `component_id` | Référence polymorphe sans clé étrangère, id en texte pour accepter les codes de composant (`ENG-002`) comme les ids numériques ; energysupply refuse la suppression d'un composant visé par une alerte (409), comme l'ancienne clé étrangère |
+| `region`, `origin` | sales | Facultatifs |
+| `recipient_person_id` | watersupply `user_id` | Clé étrangère vers `person` (`CrossModuleForeignKey`) |
+| `is_read`, `action_url` | watersupply | Lu ou non, route à ouvrir |
+| `raised_at` | energysupply `timestamp`, sales et watersupply `created_at` | Instant de l'alerte, distinct de l'audit `created_at` ; les modules qui exposaient un `LocalDateTime` le convertissent dans le fuseau du serveur |
+| `resolved_at` | sales | Posé par sales tel que saisi, et par `changeStatus(RESOLVED)` |
+
+`notification.api.AlertBoard` : `raise`, `raiseOnce` (fenêtre anti-doublon : alerte non lue du même module et du même titre), `find`, `list` (par statut), `page` (par destinataire), `update`, `changeStatus`, `markRead`, `markAllRead`, `delete`, `count`, `countByType`, `isAbout`. Le service de courriel `core.notification.NotificationService` reste un concept distinct.
+
 ## Conséquences
 
 | Type | Conséquence |
