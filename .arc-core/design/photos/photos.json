@@ -1,5 +1,89 @@
 {
   "about": "Photos de CONTENU de la marque (humanisation, scènes, objets). Une fiche par photo : licence, auteur, source, date de vérification, statut, usage. Ajouter : déposer dans files/, écrire la fiche, puis arc-design photos --brand-dir <marque> --sync, puis sans --sync.",
-  "statuses": {"validated": "validée par le propriétaire", "candidate": "licence vérifiée, pas encore validée", "rejected": "à ne plus proposer (raison dans notes)"},
-  "photos": []
+  "statuses": {
+    "validated": "validée par le propriétaire",
+    "candidate": "licence vérifiée, pas encore validée",
+    "rejected": "à ne plus proposer (raison dans notes)"
+  },
+  "photos": [
+    {
+      "id": "home-orchard",
+      "kind": "hero",
+      "shows": "Vue aérienne d'un verger en rangs réguliers, bordé d'un canal d'irrigation et de champs nus, sous une lumière d'été",
+      "tags": [
+        "aerial",
+        "orchard",
+        "irrigation",
+        "farmland",
+        "landscape"
+      ],
+      "people": false,
+      "author": {
+        "name": "Scott Blake",
+        "handle": "sunburned_surveyor",
+        "url": "https://unsplash.com/@sunburned_surveyor"
+      },
+      "source_url": "https://unsplash.com/photos/aerial-view-of-green-trees-and-green-grass-field-during-daytime-R_-xG45s4nA",
+      "original": {
+        "url": "https://images.unsplash.com/photo-1607191207761-ab7621ae3db5",
+        "width": 4581,
+        "height": 3436,
+        "published": "2020-12-05"
+      },
+      "checked_on": "2026-11-18",
+      "status": "candidate",
+      "alt": {
+        "fr": "",
+        "en": "",
+        "de": ""
+      },
+      "usage": {
+        "where": "frontend/public/photos/orchard-*.webp, fond plein écran de la page d'accueil (/), sous le voile --color-scrim",
+        "decorative": true,
+        "derivatives": "recadrage centré 16:10, WebP (sharp, effort 6) : 960 q55, 1440 q46, 1600 q38, 1920 q45, 2560 q40",
+        "never_as_member": true
+      },
+      "files": [
+        {
+          "path": "files/home-orchard-960.webp",
+          "width": 960,
+          "height": 600,
+          "kb": 92.4
+        },
+        {
+          "path": "files/home-orchard-1440.webp",
+          "width": 1440,
+          "height": 900,
+          "kb": 186.4
+        },
+        {
+          "path": "files/home-orchard-1600.webp",
+          "width": 1600,
+          "height": 1000,
+          "kb": 190.4
+        },
+        {
+          "path": "files/home-orchard-1920.webp",
+          "width": 1920,
+          "height": 1200,
+          "kb": 316.5
+        },
+        {
+          "path": "files/home-orchard-2560.webp",
+          "width": 2560,
+          "height": 1600,
+          "kb": 465.0
+        }
+      ],
+      "license": {
+        "name": "Unsplash License",
+        "url": "https://unsplash.com/license",
+        "commercial": true,
+        "attribution_required": false
+      },
+      "credit_line": "Photo : Scott Blake sur Unsplash",
+      "notes": "Verger probablement hors Afrique de l'Ouest (lieu non indiqué par la source) ; choisi faute de vue aérienne libre d'un verger de manguiers du Burkina Faso. Image décorative : alt vide dans l'interface.",
+      "max_css_width": 1280
+    }
+  ]
 }
