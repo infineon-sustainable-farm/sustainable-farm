@@ -55,4 +55,21 @@ describe('DeliveryPage', () => {
     const list = screen.getByRole('button', { name: /SHP-B/ });
     expect(within(list).getByText('DELIVERED')).toBeInTheDocument();
   });
+
+  it('shows the empty value, not an invented commodity or condition, when the shipment has none', async () => {
+    renderPage();
+    await screen.findByText('Vessel: Aurora (V12)');
+    const cargo = screen.getByRole('heading', { name: 'Cargo Details' }).parentElement;
+    expect(within(cargo).queryByText('Dried Mango')).not.toBeInTheDocument();
+    expect(within(cargo).queryByText('OPTIMAL')).not.toBeInTheDocument();
+    expect(within(cargo).getAllByText('-')).toHaveLength(2);
+  });
+
+  it('shows the commodity and condition the API gives', async () => {
+    api.getShipments.mockResolvedValue([{ ...shipments[0], commodityDescription: 'Cashew kernels', tempStatus: 'STABLE' }]);
+    renderPage();
+    const cargo = (await screen.findByRole('heading', { name: 'Cargo Details' })).parentElement;
+    expect(await within(cargo).findByText('Cashew kernels')).toBeInTheDocument();
+    expect(within(cargo).getByText('STABLE')).toBeInTheDocument();
+  });
 });

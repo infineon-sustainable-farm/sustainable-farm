@@ -496,9 +496,7 @@
       "baseCase": "Basisszenario",
       "noData": "Keine Daten",
       "activeHint": "{{count}} aktive aktuelle Warnungen",
-      "germanyBaseCase": "Basisszenario Deutschland",
-      "highPriority": "{{count}} mit hoher Priorität",
-      "noHigh": "Keine Warnungen mit hoher Priorität",
+      "highPriorityAlerts": "Warnungen mit hoher Priorität",
       "revenue": "Umsatzpotenzial",
       "revenueHint": "Auf Basis der zuletzt angewandten Preise aus den Nachfrageprognosen"
     },
@@ -610,9 +608,7 @@
     },
     "stats": {
       "totalActive": "Aktiv gesamt",
-      "activeTrend": "12 % ggü. Vormonat",
       "newOnboarded": "Neu gewonnen",
-      "onboardedTrend": "5 % ggü. Vormonat",
       "inactive": "Inaktiv",
       "followUp": "Nachfassen empfohlen",
       "insight": "KI-Hinweis",
@@ -950,14 +946,12 @@
     "timeline": "Sendungsverlauf",
     "cargo": "Ladungsdetails",
     "commodity": "Ware",
-    "defaultCommodity": "Getrocknete Mango",
     "volumeWeight": "Volumen / Gewicht",
     "containers": "{{number}} x {{type}} / {{weight}}",
     "container": "Container",
     "kg": "{{value}} kg",
     "condition": "Zustandsüberwachung",
     "celsius": "{{value}} °C",
-    "optimal": "OPTIMAL",
     "download": "Manifest herunterladen"
   }
 }

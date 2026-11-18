@@ -15,7 +15,7 @@ function CargoDetails({ selected, onDownload }) {
       <dl className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <dt className="text-xs text-text-muted">{t('delivery.commodity')}</dt>
-          <dd>{selected?.commodityDescription || t('delivery.defaultCommodity')}</dd>
+          <dd>{selected?.commodityDescription || format.none}</dd>
         </div>
         <div className="flex flex-col gap-1">
           <dt className="text-xs text-text-muted">{t('delivery.volumeWeight')}</dt>
@@ -40,7 +40,7 @@ function CargoDetails({ selected, onDownload }) {
                   : format.none}
               </span>
             </span>
-            <Badge tone="success">{selected?.tempStatus || t('delivery.optimal')}</Badge>
+            {selected?.tempStatus ? <Badge tone="success">{selected.tempStatus}</Badge> : <span>{format.none}</span>}
           </dd>
         </div>
       </dl>

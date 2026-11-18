@@ -18,7 +18,7 @@ function Shortcuts() {
         <button
           key={key}
           type="button"
-          onClick={() => navigate('/forecasting')}
+          onClick={() => navigate('/salesmarketing/forecasting')}
           className="group flex items-center gap-4 rounded-card border border-border-subtle bg-surface-raised p-4 text-left shadow-raised transition duration-(--duration-fast) ease-standard hover:shadow-overlay"
         >
           <span className="flex h-12 w-12 items-center justify-center rounded-tile bg-neutral-bg text-neutral-fg group-hover:bg-primary-tint group-hover:text-primary">

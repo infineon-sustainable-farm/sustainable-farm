@@ -1,6 +1,8 @@
 // Pure helpers of the demand forecasting screen: error text, month-over-month growth, chart
 // points, scenario totals, actual sales and accuracy, CSV export.
 
+import { todayIsoDate } from '../../../../shared/utils/todayIsoDate';
+
 export const SCENARIOS = ['base', 'optimistic', 'pessimistic'];
 export const RISKS = ['low', 'medium', 'high'];
 
@@ -171,7 +173,7 @@ export function downloadForecastsCsv(rows) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `monthly-forecasts-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `monthly-forecasts-${todayIsoDate()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

@@ -496,9 +496,7 @@
       "baseCase": "Base Case",
       "noData": "No data",
       "activeHint": "{{count}} active current alerts",
-      "germanyBaseCase": "Germany Base Case",
-      "highPriority": "{{count}} High Priority",
-      "noHigh": "No high alerts",
+      "highPriorityAlerts": "High Priority Alerts",
       "revenue": "Revenue Potential",
       "revenueHint": "Based on latest applied pricing from demand forecasts"
     },
@@ -610,9 +608,7 @@
     },
     "stats": {
       "totalActive": "Total Active",
-      "activeTrend": "12% vs last month",
       "newOnboarded": "New Onboarded",
-      "onboardedTrend": "5% vs last month",
       "inactive": "Inactive",
       "followUp": "Follow-up recommended",
       "insight": "AI Insight",
@@ -950,14 +946,12 @@
     "timeline": "Shipment Timeline",
     "cargo": "Cargo Details",
     "commodity": "Commodity",
-    "defaultCommodity": "Dried Mango",
     "volumeWeight": "Volume / Weight",
     "containers": "{{number}} x {{type}} / {{weight}}",
     "container": "container",
     "kg": "{{value}} kg",
     "condition": "Condition Monitoring",
     "celsius": "{{value}}°C",
-    "optimal": "OPTIMAL",
     "download": "Download Manifest"
   }
 }

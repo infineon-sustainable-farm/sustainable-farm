@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { ChartNoAxesCombined, Download, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import AlertsCard from '../components/dashboard/AlertsCard';
 import BatchesCard from '../components/dashboard/BatchesCard';
 import DashboardKpis from '../components/dashboard/DashboardKpis';
@@ -42,10 +44,11 @@ export default function DashboardPage() {
   const [customers, setCustomers] = useState([]);
   const [orders, setOrders] = useState([]);
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (msg) => {
@@ -79,7 +82,7 @@ export default function DashboardPage() {
         }
       });
 
-      if (failures.length === 5) {
+      if (failures.length === LOADS.length) {
         setApiError(failures.join(' · ') || t('dashboard.loadFailed'));
       } else if (failures.length > 0) {
         setApiError(t('dashboard.partialLoad', { failures: failures.join(' · ') }));
@@ -136,7 +139,7 @@ export default function DashboardPage() {
     setForecastForm({
       ...emptyForecastForm,
       productId: products[0]?.productId ? String(products[0].productId) : '',
-      forecastMonth: new Date().toISOString().slice(0, 7) + '-01',
+      forecastMonth: todayIsoDate().slice(0, 7) + '-01',
     });
     setShowForecastModal(true);
     setActionError(null);
@@ -178,7 +181,7 @@ export default function DashboardPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `demand-forecasts-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `demand-forecasts-${todayIsoDate()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     flashSuccess(t('dashboard.exportDone'));
