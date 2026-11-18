@@ -10,15 +10,18 @@ import {
   Truck,
   Waves,
 } from 'lucide-react';
-import Dashboard from './components/Dashboard';
-import RawIntakeList from './components/RawIntakeList';
-import BatchList from './components/BatchList';
-import WashSortRecordList from './components/WashSortRecordList';
-import DryingRunList from './components/DryingRunList';
-import QcCheckpointList from './components/QcCheckpointList';
-import ComplianceScreen from './components/ComplianceScreen';
-import PackagingScreen from './components/PackagingScreen';
-import EquipmentList from './components/EquipmentList';
+import { lazyScreen } from '../../shared/utils/lazyScreen';
+
+// Screens load on first visit, one chunk each.
+const Dashboard = lazyScreen(() => import('./components/Dashboard'));
+const RawIntakeList = lazyScreen(() => import('./components/RawIntakeList'));
+const BatchList = lazyScreen(() => import('./components/BatchList'));
+const WashSortRecordList = lazyScreen(() => import('./components/WashSortRecordList'));
+const DryingRunList = lazyScreen(() => import('./components/DryingRunList'));
+const QcCheckpointList = lazyScreen(() => import('./components/QcCheckpointList'));
+const ComplianceScreen = lazyScreen(() => import('./components/ComplianceScreen'));
+const PackagingScreen = lazyScreen(() => import('./components/PackagingScreen'));
+const EquipmentList = lazyScreen(() => import('./components/EquipmentList'));
 
 /**
  * Product Transformation routes. The screens render inside the application shell

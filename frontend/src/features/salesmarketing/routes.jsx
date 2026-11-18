@@ -9,15 +9,18 @@ import {
   Truck,
   Users,
 } from 'lucide-react';
-import CampaignsPage from './pages/CampaignsPage';
-import CustomersPage from './pages/CustomersPage';
-import DashboardPage from './pages/DashboardPage';
-import DeliveryPage from './pages/DeliveryPage';
-import DemandAlertsPage from './pages/DemandAlertsPage';
-import DemandReportsPage from './pages/DemandReportsPage';
-import ForecastingPage from './pages/ForecastingPage';
-import PricingPage from './pages/PricingPage';
-import SalesChannelsPage from './pages/SalesChannelsPage';
+import { lazyScreen } from '../../shared/utils/lazyScreen';
+
+// Screens load on first visit, one chunk each.
+const CampaignsPage = lazyScreen(() => import('./pages/CampaignsPage'));
+const CustomersPage = lazyScreen(() => import('./pages/CustomersPage'));
+const DashboardPage = lazyScreen(() => import('./pages/DashboardPage'));
+const DeliveryPage = lazyScreen(() => import('./pages/DeliveryPage'));
+const DemandAlertsPage = lazyScreen(() => import('./pages/DemandAlertsPage'));
+const DemandReportsPage = lazyScreen(() => import('./pages/DemandReportsPage'));
+const ForecastingPage = lazyScreen(() => import('./pages/ForecastingPage'));
+const PricingPage = lazyScreen(() => import('./pages/PricingPage'));
+const SalesChannelsPage = lazyScreen(() => import('./pages/SalesChannelsPage'));
 
 // The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below.
 export default [
