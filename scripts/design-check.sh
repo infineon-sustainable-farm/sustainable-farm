@@ -22,6 +22,7 @@ MIGRATED_DIRS=(
   frontend/src/features/energysupply
   frontend/src/features/machinery
   frontend/src/features/plants
+  frontend/src/features/salesmarketing
   frontend/src/features/visitormanagement
 )
 
