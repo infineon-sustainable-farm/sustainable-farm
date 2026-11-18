@@ -17,6 +17,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.EventRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -44,13 +45,16 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final RegistrationRepository registrationRepository;
     private final VisitorRepository visitorRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public EventServiceImpl(EventRepository eventRepository,
                             RegistrationRepository registrationRepository,
-                            VisitorRepository visitorRepository) {
+                            VisitorRepository visitorRepository,
+                            ApplicationEventPublisher eventPublisher) {
         this.eventRepository = eventRepository;
         this.registrationRepository = registrationRepository;
         this.visitorRepository = visitorRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -122,9 +126,17 @@ public class EventServiceImpl implements EventService {
             throw new BusinessRuleException("Cannot update a completed event " + id);
         }
         validateCommon(request);
+        LocalDateTime previousStart = event.getStartDateTime();
         apply(event, request);
         eventRepository.save(event);
         eventRepository.flush();
+        if (!event.getStartDateTime().equals(previousStart)) {
+            // The event moved: its registered visitors are now expected at the new time.
+            for (Registration registration : registrationRepository
+                    .findByEventIdAndStatusIn(id, ACTIVE_STATUSES)) {
+                eventPublisher.publishEvent(VisitEvents.rescheduled(registration, event.getStartDateTime()));
+            }
+        }
         return toResponse(event);
     }
 
@@ -145,6 +157,7 @@ public class EventServiceImpl implements EventService {
                 .findByEventIdAndStatusIn(id, ACTIVE_STATUSES);
         for (Registration registration : registrations) {
             registration.setStatus(RegistrationStatus.CANCELLED);
+            eventPublisher.publishEvent(VisitEvents.cancelled(registration));
         }
         registrationRepository.saveAll(registrations);
     }
@@ -205,7 +218,9 @@ public class EventServiceImpl implements EventService {
         registration.setVisitPurpose(request.getVisitPurpose());
         registration.setProspect(isCommercialPurpose(request.getVisitPurpose()));
         registration.setStatus(RegistrationStatus.PENDING);
-        return RegistrationResponse.from(registrationRepository.save(registration));
+        Registration saved = registrationRepository.save(registration);
+        eventPublisher.publishEvent(VisitEvents.scheduled(saved, event.getStartDateTime()));
+        return RegistrationResponse.from(saved);
     }
 
     private void validateCommon(EventRequest request) {
