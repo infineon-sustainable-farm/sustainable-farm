@@ -146,6 +146,26 @@ class VisitorIntegrationServiceTest {
     }
 
     @Test
+    void withdrawingAVisitRemovesItsAnnouncement() {
+        WaterVisitorEvent existing = new WaterVisitorEvent();
+        existing.setVisitId("booking-3");
+        when(visitorEventRepository.findByVisitId("booking-3")).thenReturn(Optional.of(existing));
+
+        assertTrue(service().withdrawVisit("booking-3"));
+
+        verify(visitorEventRepository).delete(existing);
+    }
+
+    @Test
+    void withdrawingAnUnknownVisitChangesNothing() {
+        when(visitorEventRepository.findByVisitId("booking-4")).thenReturn(Optional.empty());
+
+        assertEquals(false, service().withdrawVisit("booking-4"));
+
+        verify(visitorEventRepository, never()).delete(any(WaterVisitorEvent.class));
+    }
+
+    @Test
     void theDefaultBriefingIsServedButNeverStored() {
         when(safetyRepository.findFirstByOrderByCreatedAtDesc()).thenReturn(Optional.empty());
 
