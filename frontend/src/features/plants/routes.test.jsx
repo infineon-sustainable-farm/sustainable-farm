@@ -47,8 +47,9 @@ describe("plants module routes", () => {
         );
     });
 
-    it.each(SCREENS)("reaches the screen at /plants/%s, titled %s", (path, title) => {
+    it.each(SCREENS)("reaches the screen at /plants/%s, titled %s", async (path, title) => {
         renderAt(path ? `/plants/${path}` : "/plants");
-        expect(screen.getByRole("heading", { level: 1, name: title })).toBeInTheDocument();
+        // The screens load on first visit (React.lazy).
+        expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument();
     });
 });

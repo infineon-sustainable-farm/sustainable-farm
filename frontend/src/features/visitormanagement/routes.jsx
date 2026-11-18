@@ -10,16 +10,19 @@ import {
     UserPlus,
     Users,
 } from "lucide-react";
-import DashboardPage from "./components/Screens/DashboardPage";
-import SchedulingPage from "./components/Screens/SchedulingPage";
-import RegistrationPage from "./components/Screens/RegistrationPage";
-import VisitorsPage from "./components/Screens/VisitorsPage";
-import EducationPage from "./components/Screens/EducationPage";
-import SafetyPage from "./components/Screens/SafetyPage";
-import BookingPage from "./components/Screens/BookingPage";
-import FeedbackPage from "./components/Screens/FeedbackPage";
-import EventsPage from "./components/Screens/EventsPage";
-import StaffPage from "./components/Screens/StaffPage";
+import { lazyScreen } from "../../shared/utils/lazyScreen";
+
+// Screens load on first visit, one chunk each.
+const DashboardPage = lazyScreen(() => import("./components/Screens/DashboardPage"));
+const SchedulingPage = lazyScreen(() => import("./components/Screens/SchedulingPage"));
+const RegistrationPage = lazyScreen(() => import("./components/Screens/RegistrationPage"));
+const VisitorsPage = lazyScreen(() => import("./components/Screens/VisitorsPage"));
+const EducationPage = lazyScreen(() => import("./components/Screens/EducationPage"));
+const SafetyPage = lazyScreen(() => import("./components/Screens/SafetyPage"));
+const BookingPage = lazyScreen(() => import("./components/Screens/BookingPage"));
+const FeedbackPage = lazyScreen(() => import("./components/Screens/FeedbackPage"));
+const EventsPage = lazyScreen(() => import("./components/Screens/EventsPage"));
+const StaffPage = lazyScreen(() => import("./components/Screens/StaffPage"));
 
 // The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below.
 export default [

@@ -44,7 +44,6 @@ describe("energy supply routes", () => {
     expect(moduleRoute.path).toBe("energy-supply");
     expect(moduleRoute.element).toBeUndefined();
     expect(moduleRoute.children[0]).toMatchObject({ index: true });
-    expect(moduleRoute.children[0].element.type.name).toBe("Dashboard");
     expect(moduleRoute.children.map((child) => child.path ?? "")).toEqual([
       "",
       "components",

@@ -46,9 +46,10 @@ describe('product transformation module routes', () => {
     expect(nav.items.some((item) => item.to.endsWith('/settings'))).toBe(false);
   });
 
-  it.each(SCREENS)('reaches the screen at /product-transformation/%s, titled %s', (path, title) => {
+  it.each(SCREENS)('reaches the screen at /product-transformation/%s, titled %s', async (path, title) => {
     renderAt(path ? `/product-transformation/${path}` : '/product-transformation');
-    expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument();
+    // The screens load on first visit (React.lazy).
+    expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument();
   });
 
   it('no longer routes the Settings placeholder', () => {
