@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.plants;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -36,6 +37,6 @@ public final class VarietyCatalogTestData {
     }
 
     private static VarietyReference reference(Long id, String name, String key) {
-        return new VarietyReference(id, name, key, 200.0, "test", 4, 6, "test", Instant.parse("2026-01-01T00:00:00Z"));
+        return new VarietyReference(id, name, key, BigDecimal.valueOf(200.0), "test", 4, 6, "test", Instant.parse("2026-01-01T00:00:00Z"));
     }
 }

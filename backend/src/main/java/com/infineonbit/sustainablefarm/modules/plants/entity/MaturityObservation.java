@@ -1,17 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,7 +22,7 @@ import java.time.LocalDate;
  * day (PL-05-01, "Manual entry"), with how it was seen and by whom.
  *
  * <p>Like {@link HarvestRecord}, the row holds no farm and no block: the
- * {@link Variety} row already stands for one (block, variety) pair, the block giving the farm.
+ * {@link BlockVariety} row already stands for one (block, variety) pair, the block giving the farm.
  * Several observations may share a day.
  *
  * <p>Only the observations are stored, never the status of a variety: the
@@ -40,16 +37,11 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class MaturityObservation {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class MaturityObservation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "variety_id", nullable = false)
-    private Variety variety;
+    @JoinColumn(name = "block_variety_id", nullable = false)
+    private BlockVariety variety;
 
     @Column(name = "observed_on", nullable = false)
     private LocalDate observedOn;
@@ -80,4 +72,25 @@ public class MaturityObservation {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public MaturityObservation(Long id,
+            BlockVariety variety,
+            LocalDate observedOn,
+            MaturityStatus maturityStatus,
+            MaturityMethod method,
+            BigDecimal measuredValue,
+            String observer,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.variety = variety;
+        this.observedOn = observedOn;
+        this.maturityStatus = maturityStatus;
+        this.method = method;
+        this.measuredValue = measuredValue;
+        this.observer = observer;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
 }

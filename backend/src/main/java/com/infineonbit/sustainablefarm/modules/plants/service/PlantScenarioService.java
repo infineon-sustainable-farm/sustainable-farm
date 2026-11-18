@@ -58,9 +58,9 @@ public class PlantScenarioService {
                 scenario.getVarietyName(),
                 scenario.getTreeCount(),
                 scenario.getTreeCountSource(),
-                scenario.getYieldPerTreeKg(),
+                toDouble(scenario.getYieldPerTreeKg()),
                 scenario.getYieldSource(),
-                scenario.getLossRate(),
+                toDouble(scenario.getLossRate()),
                 scenario.getLossRateSource(),
                 toDouble(scenario.getPricePerKg()),
                 scenario.getPriceSource(),
@@ -171,9 +171,9 @@ public class PlantScenarioService {
         scenario.setTreeCountSource(sourceOf(true, request.treeCountSource(),
                 Objects.equals(request.treeCount(), scenario.getTreeCount()), scenario.getTreeCountSource()));
         scenario.setYieldSource(sourceOf(true, request.yieldSource(),
-                Objects.equals(request.yieldPerTreeKg(), scenario.getYieldPerTreeKg()), scenario.getYieldSource()));
+                Decimals.sameValue(request.yieldPerTreeKg(), scenario.getYieldPerTreeKg()), scenario.getYieldSource()));
         scenario.setLossRateSource(sourceOf(request.lossRate() != null, request.lossRateSource(),
-                Objects.equals(request.lossRate(), scenario.getLossRate()), scenario.getLossRateSource()));
+                Decimals.sameValue(request.lossRate(), scenario.getLossRate()), scenario.getLossRateSource()));
         scenario.setPriceSource(sourceOf(price != null, request.priceSource(),
                 sameDecimal(scenario.getPricePerKg(), price), scenario.getPriceSource()));
         scenario.setAnnualFixedCostSource(sourceOf(true, request.annualFixedCostSource(),
@@ -189,8 +189,8 @@ public class PlantScenarioService {
         scenario.setName(name);
         scenario.setVarietyName(normalizeText(request.varietyName()));
         scenario.setTreeCount(request.treeCount());
-        scenario.setYieldPerTreeKg(request.yieldPerTreeKg());
-        scenario.setLossRate(request.lossRate());
+        scenario.setYieldPerTreeKg(Decimals.of(request.yieldPerTreeKg(), PlantScenario.YIELD_SCALE));
+        scenario.setLossRate(Decimals.of(request.lossRate(), PlantScenario.LOSS_RATE_SCALE));
         scenario.setPricePerKg(price);
         scenario.setCurrency(request.currency().trim().toUpperCase(Locale.ROOT));
         scenario.setAnnualFixedCost(fixedCost);

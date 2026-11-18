@@ -1,18 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
@@ -37,23 +35,34 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class GrowthPhaseYieldShare {
+public class GrowthPhaseYieldShare extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    /** Decimals kept of {@code yieldShare}, as the API accepts them. */
+    public static final int SHARE_SCALE = 3;
 
     @Column(name = "growth_phase", nullable = false)
     private String growthPhase;
 
     /** From 0 (no harvest) to 1 (the full yield of the variety). */
-    @Column(name = "yield_share", nullable = false)
-    private Double yieldShare;
+    @Column(name = "yield_share", nullable = false, precision = 4, scale = SHARE_SCALE)
+    private BigDecimal yieldShare;
 
     @Column(name = "source", nullable = false)
     private String source;
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public GrowthPhaseYieldShare(Long id,
+            String growthPhase,
+            BigDecimal yieldShare,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.growthPhase = growthPhase;
+        this.yieldShare = yieldShare;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
 }

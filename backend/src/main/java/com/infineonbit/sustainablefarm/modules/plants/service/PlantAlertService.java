@@ -5,13 +5,13 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYi
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertSeverity;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.HarvestWindow;
 import com.infineonbit.sustainablefarm.modules.plants.service.YieldForecastService.ForecastBasis;
@@ -199,7 +199,7 @@ public class PlantAlertService {
      * "… harvest season in progress, from 1 May 2027 to 31 July 2027".
      */
     private static PlantAlert harvestAlert(PlantedVariety planted, HarvestWindow harvest, int days) {
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         String subject = variety.getName() + " on block " + variety.getBlockCode() + ": harvest season ";
         String message = days > 0
                 ? subject + "starts on " + PlantAlertCalculator.formatDate(harvest.start()) + ", "

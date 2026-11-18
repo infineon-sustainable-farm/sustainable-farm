@@ -1,12 +1,15 @@
 import { Boxes, ClipboardList, Cog, Fuel, LayoutDashboard, Tractor, Users, Wrench } from "lucide-react";
-import Dashboard from "./components/Dashboard";
-import EquipmentRegistry from "./components/EquipmentRegistry";
-import OperatorAssignments from "./components/OperatorAssignments";
-import SpareParts from "./components/SpareParts";
-import MaintenanceSchedule from "./components/MaintenanceSchedule";
-import UsageFuelLog from "./components/UsageFuelLog";
-import RepairLog from "./components/RepairLog";
 import LowStockNotifications from "./components/LowStockNotifications";
+import { lazyScreen } from "../../shared/utils/lazyScreen";
+
+// Screens load on first visit, one chunk each; the sidebar footer loads with the shell.
+const Dashboard = lazyScreen(() => import("./components/Dashboard"));
+const EquipmentRegistry = lazyScreen(() => import("./components/EquipmentRegistry"));
+const OperatorAssignments = lazyScreen(() => import("./components/OperatorAssignments"));
+const SpareParts = lazyScreen(() => import("./components/SpareParts"));
+const MaintenanceSchedule = lazyScreen(() => import("./components/MaintenanceSchedule"));
+const UsageFuelLog = lazyScreen(() => import("./components/UsageFuelLog"));
+const RepairLog = lazyScreen(() => import("./components/RepairLog"));
 
 // The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below.
 export default [

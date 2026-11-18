@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.impl;
 
+import com.infineonbit.sustainablefarm.modules.plants.api.HarvestLookup;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
@@ -30,11 +31,14 @@ public class HarvestEventServiceImpl implements HarvestEventService {
 
     private final HarvestEventRepository harvestEventRepository;
     private final ProductTransformationBlocks blocks;
+    private final HarvestLookup harvestLookup;
 
     @Autowired
-    public HarvestEventServiceImpl(HarvestEventRepository harvestEventRepository, ProductTransformationBlocks blocks) {
+    public HarvestEventServiceImpl(HarvestEventRepository harvestEventRepository, ProductTransformationBlocks blocks,
+                                   HarvestLookup harvestLookup) {
         this.harvestEventRepository = harvestEventRepository;
         this.blocks = blocks;
+        this.harvestLookup = harvestLookup;
     }
 
     @Override
@@ -43,7 +47,12 @@ public class HarvestEventServiceImpl implements HarvestEventService {
         if (harvestEvent.getBatchId() != null && batchIdExists(harvestEvent.getBatchId())) {
             throw new IllegalArgumentException("Batch ID already exists: " + harvestEvent.getBatchId());
         }
-        
+        // The plants harvest the event comes from must exist (fk_harvest_event_plants_harvest).
+        if (harvestEvent.getPlantsHarvestId() != null
+                && harvestLookup.findHarvest(harvestEvent.getPlantsHarvestId()).isEmpty()) {
+            throw new IllegalArgumentException("Plants harvest not found with ID: " + harvestEvent.getPlantsHarvestId());
+        }
+
         return harvestEventRepository.save(harvestEvent);
     }
 

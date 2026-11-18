@@ -9,6 +9,7 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertRes
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.VarietyWithoutReference;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
@@ -21,7 +22,6 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
@@ -33,6 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -98,8 +99,8 @@ public class PlantAlertServiceTest {
                 fertilizerService, nurseryBatchService, clock);
     }
 
-    private static Variety variety(long id, Long farmId, String blockCode, String name) {
-        Variety variety = new Variety();
+    private static BlockVariety variety(long id, Long farmId, String blockCode, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.setFarmId(farmId);
         variety.setBlockCode(blockCode);
@@ -107,7 +108,7 @@ public class PlantAlertServiceTest {
         return variety;
     }
 
-    private static PopulationEvent planting(Variety variety, LocalDate date) {
+    private static PopulationEvent planting(BlockVariety variety, LocalDate date) {
         return new PopulationEvent(
                 variety.getId() + 100, variety, PopulationEventType.PLANTING, date, 40, "user_entry", null);
     }
@@ -137,15 +138,15 @@ public class PlantAlertServiceTest {
 
     private static VarietyReference reference(long id, String name, int harvestStartMonth, int harvestEndMonth,
                                               String seasonSource) {
-        return new VarietyReference(id, name, 220.0, "Zalka_2025", harvestStartMonth, harvestEndMonth,
+        return new VarietyReference(id, name, BigDecimal.valueOf(220.0), "Zalka_2025", harvestStartMonth, harvestEndMonth,
                 seasonSource, null);
     }
 
     private static List<GrowthPhaseYieldShare> shares(double establishment, double gradual, double full) {
         return List.of(
-                new GrowthPhaseYieldShare(1L, "establishment", establishment, "orchard_literature", null),
-                new GrowthPhaseYieldShare(2L, "gradual production", gradual, "assumption_to_validate", null),
-                new GrowthPhaseYieldShare(3L, "full production", full, "by_definition", null));
+                new GrowthPhaseYieldShare(1L, "establishment", BigDecimal.valueOf(establishment), "orchard_literature", null),
+                new GrowthPhaseYieldShare(2L, "gradual production", BigDecimal.valueOf(gradual), "assumption_to_validate", null),
+                new GrowthPhaseYieldShare(3L, "full production", BigDecimal.valueOf(full), "by_definition", null));
     }
 
     /** Stubs the agronomic reference. */
@@ -164,8 +165,8 @@ public class PlantAlertServiceTest {
     }
 
     /** Keitt planted on block C without farm in September 2023, with the default reference. */
-    private Variety keittOnBlockC() {
-        Variety keitt = variety(1L, null, "C", "Keitt");
+    private BlockVariety keittOnBlockC() {
+        BlockVariety keitt = variety(1L, null, "C", "Keitt");
         planted(40, planting(keitt, KEITT_PLANTED_ON));
         defaultReference();
         return keitt;
@@ -299,7 +300,7 @@ public class PlantAlertServiceTest {
     void harvestApproaching_shouldStartOnTheFirstProductiveMonth_whenTheTreesComeOfAgeDuringTheSeason() {
         // Arrange: Keitt planted in June 2024 is 2 years old in May and June 2027, and 3 years old in July
         LocalDate today = LocalDate.of(2027, 6, 15);
-        Variety keitt = variety(1L, null, "C", "Keitt");
+        BlockVariety keitt = variety(1L, null, "C", "Keitt");
         planted(40, planting(keitt, LocalDate.of(2024, 6, 15)));
         defaultReference();
         when(healthTreatmentService.getAllTreatments(null, null, null, today)).thenReturn(List.of(
@@ -326,7 +327,7 @@ public class PlantAlertServiceTest {
     void harvestApproaching_shouldOpenTheBlock_fromTheFirstProductiveMonth() {
         // Arrange: the same trees in July 2027, now in gradual production
         LocalDate today = LocalDate.of(2027, 7, 10);
-        Variety keitt = variety(1L, null, "C", "Keitt");
+        BlockVariety keitt = variety(1L, null, "C", "Keitt");
         planted(40, planting(keitt, LocalDate.of(2024, 6, 15)));
         defaultReference();
         when(healthTreatmentService.getAllTreatments(null, null, null, today)).thenReturn(List.of(
@@ -348,7 +349,7 @@ public class PlantAlertServiceTest {
     @Test
     void harvestApproaching_shouldStaySilent_forTreesPlantedDuringTheSeason() {
         // Arrange: planted on 10 May 2027, after the first day of the season, and in establishment until 2030
-        Variety keitt = variety(1L, null, "C", "Keitt");
+        BlockVariety keitt = variety(1L, null, "C", "Keitt");
         planted(40, planting(keitt, LocalDate.of(2027, 5, 10)));
         defaultReference();
         // Act & Assert
@@ -358,7 +359,7 @@ public class PlantAlertServiceTest {
     @Test
     void harvestApproaching_shouldListAVarietyWithoutReference_insteadOfAnAlert() {
         // Arrange
-        Variety palmer = variety(4L, null, "C", "Palmer");
+        BlockVariety palmer = variety(4L, null, "C", "Palmer");
         planted(10, planting(palmer, LocalDate.of(2020, 1, 10)));
         defaultReference();
         // Act
@@ -372,7 +373,7 @@ public class PlantAlertServiceTest {
     @Test
     void harvestApproaching_shouldIgnoreAVarietyWithNoTreeLeft() {
         // Arrange: every Keitt tree died
-        Variety keitt = variety(1L, null, "C", "Keitt");
+        BlockVariety keitt = variety(1L, null, "C", "Keitt");
         planted(0, planting(keitt, KEITT_PLANTED_ON));
         defaultReference();
         // Act
@@ -385,7 +386,7 @@ public class PlantAlertServiceTest {
     @Test
     void harvestApproaching_shouldFollowASeasonThatRunsOverTheNewYear() {
         // Arrange: a variety harvested from November to February, in full production
-        Variety winter = variety(5L, 2L, "C", "Winter");
+        BlockVariety winter = variety(5L, 2L, "C", "Winter");
         planted(10, planting(winter, LocalDate.of(2015, 1, 1)));
         reference(List.of(reference(9L, "Winter", 11, 2, "test_source")), shares(0.0, 0.5, 1.0));
         // Act
@@ -400,7 +401,7 @@ public class PlantAlertServiceTest {
     @Test
     void harvestApproaching_shouldUseTheDefaultShares_whenNoShareIsCorrected() {
         // Arrange: no share row at all, as outside the dev profile
-        Variety keitt = variety(1L, null, "C", "Keitt");
+        BlockVariety keitt = variety(1L, null, "C", "Keitt");
         planted(40, planting(keitt, KEITT_PLANTED_ON));
         reference(List.of(reference(1L, "Keitt", 5, 7, KEITT_SEASON_SOURCE)), List.of());
         // Act
@@ -449,7 +450,7 @@ public class PlantAlertServiceTest {
     @Test
     void preHarvestInterval_shouldFollowTheSeasonOfTheSameFarm() {
         // Arrange: Keitt is in season on block C of farm 1; block C without farm is another block
-        Variety keitt = variety(1L, 1L, "C", "Keitt");
+        BlockVariety keitt = variety(1L, 1L, "C", "Keitt");
         planted(40, planting(keitt, KEITT_PLANTED_ON));
         defaultReference();
         when(healthTreatmentService.getAllTreatments(null, null, null, MAY_15)).thenReturn(List.of(

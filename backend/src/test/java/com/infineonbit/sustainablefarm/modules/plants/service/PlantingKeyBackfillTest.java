@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ class PlantingKeyBackfillTest {
     private static final Instant WRITTEN = Instant.parse("2026-09-01T08:00:00Z");
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private GrowthCalendarRepository growthCalendarRepository;
@@ -56,7 +56,7 @@ class PlantingKeyBackfillTest {
 
     @BeforeEach
     void setUp() {
-        backfill = new PlantingKeyBackfill(varietyRepository, growthCalendarRepository, transactionManager);
+        backfill = new PlantingKeyBackfill(blockVarietyRepository, growthCalendarRepository, transactionManager);
     }
 
     /** Block ids of the test, out of the range of the other tests: the rows on them are removed afterwards. */
@@ -68,24 +68,26 @@ class PlantingKeyBackfillTest {
 
     @AfterEach
     void removeTheRowsOfTheTest() {
-        jdbc.update("delete from varietes where block_id between 9000 and 9099");
-        jdbc.update("delete from calendrier_croissance where block_id between 9000 and 9099");
+        jdbc.update("delete from block_variety where block_id between 9000 and 9099");
+        jdbc.update("delete from growth_calendar where block_id between 9000 and 9099");
     }
 
     /** A variety row as written before the key existed. */
     private Long insertVarietyWithoutKey(long blockId, String name) {
-        jdbc.update("insert into varietes (block_id, nom, source) values (?, ?, 'Zalka_2025')", blockId, name);
-        return jdbc.queryForObject("select max(id) from varietes", Long.class);
+        jdbc.update("insert into block_variety (block_id, name, source, created_at, updated_at) "
+                + "values (?, ?, 'Zalka_2025', current_timestamp, current_timestamp)", blockId, name);
+        return jdbc.queryForObject("select max(id) from block_variety", Long.class);
     }
 
     /** A calendar row as written before the key existed. */
     private Long insertCalendarWithoutKey(long blockId) {
-        jdbc.update("insert into calendrier_croissance (block_id, source) values (?, 'Zalka_2025')", blockId);
-        return jdbc.queryForObject("select max(id) from calendrier_croissance", Long.class);
+        jdbc.update("insert into growth_calendar (block_id, source, created_at, updated_at) "
+                + "values (?, 'Zalka_2025', current_timestamp, current_timestamp)", blockId);
+        return jdbc.queryForObject("select max(id) from growth_calendar", Long.class);
     }
 
     private String varietyKey(Long id) {
-        return varietyRepository.findById(id).orElseThrow().getVarietyKey();
+        return blockVarietyRepository.findById(id).orElseThrow().getVarietyKey();
     }
 
     private String blockKey(Long id) {
@@ -120,7 +122,7 @@ class PlantingKeyBackfillTest {
         assertNull(varietyKey(sameName));
         assertNull(varietyKey(otherCase));
         assertEquals(List.of(sameName, otherCase), result.varietyDuplicates());
-        assertEquals(3, varietyRepository.findByOptionalFilters(false, List.of(BF2)).size());
+        assertEquals(3, blockVarietyRepository.findByOptionalFilters(false, List.of(BF2)).size());
     }
 
     @Test
@@ -142,26 +144,26 @@ class PlantingKeyBackfillTest {
     @Test
     void fill_shouldChangeNoLastUpdate_andLeaveRowsWithAKeyAlone() {
         // Arrange: a row written through the entity, which has its key, and an older one without
-        Variety current = new Variety();
+        BlockVariety current = new BlockVariety();
         current.setBlockId(BF4);
         current.setName("Kent");
         current.setLastUpdated(WRITTEN);
-        Long withKey = varietyRepository.save(current).getId();
-        Long withoutKey = varietyRepository.save(copyOf(current, "Keitt")).getId();
-        jdbc.update("update varietes set variety_key = null where id = ?", withoutKey);
-        Instant lastUpdateBefore = varietyRepository.findById(withoutKey).orElseThrow().getLastUpdated();
+        Long withKey = blockVarietyRepository.save(current).getId();
+        Long withoutKey = blockVarietyRepository.save(copyOf(current, "Keitt")).getId();
+        jdbc.update("update block_variety set variety_key = null where id = ?", withoutKey);
+        Instant lastUpdateBefore = blockVarietyRepository.findById(withoutKey).orElseThrow().getLastUpdated();
         // Act
         PlantingKeyBackfill.Result result = backfill.fill();
         // Assert
         assertEquals(1, result.varietiesKeyed());
         assertEquals(BF4 + "|keitt", varietyKey(withoutKey));
-        assertEquals(lastUpdateBefore, varietyRepository.findById(withoutKey).orElseThrow().getLastUpdated());
+        assertEquals(lastUpdateBefore, blockVarietyRepository.findById(withoutKey).orElseThrow().getLastUpdated());
         assertEquals(BF4 + "|kent", varietyKey(withKey));
-        assertEquals(WRITTEN, varietyRepository.findById(withKey).orElseThrow().getLastUpdated());
+        assertEquals(WRITTEN, blockVarietyRepository.findById(withKey).orElseThrow().getLastUpdated());
     }
 
-    private static Variety copyOf(Variety variety, String name) {
-        Variety copy = new Variety();
+    private static BlockVariety copyOf(BlockVariety variety, String name) {
+        BlockVariety copy = new BlockVariety();
         copy.setBlockId(variety.getBlockId());
         copy.setName(name);
         copy.setLastUpdated(variety.getLastUpdated());
@@ -171,7 +173,7 @@ class PlantingKeyBackfillTest {
     @Test
     void run_shouldNeverStopTheStartup_whenTheFillingFails() {
         // Arrange: the database cannot be read
-        VarietyRepository unavailable = mock(VarietyRepository.class);
+        BlockVarietyRepository unavailable = mock(BlockVarietyRepository.class);
         when(unavailable.findByVarietyKeyIsNullOrderByIdAsc()).thenThrow(new IllegalStateException("database down"));
         PlantingKeyBackfill failing = new PlantingKeyBackfill(unavailable, growthCalendarRepository,
                 transactionManager);

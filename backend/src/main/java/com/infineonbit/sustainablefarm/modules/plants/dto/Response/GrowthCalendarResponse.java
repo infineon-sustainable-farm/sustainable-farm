@@ -8,12 +8,12 @@ import java.util.List;
  * API representation of a growth calendar entry.
  *
  * <p>Like {@link VarietyResponse}, the component names are English camelCase and
- * are the contract other modules consume, while the physical columns of
- * {@code calendrier_croissance} keep their French snake_case names.
+ * are the contract other modules consume; the columns of {@code growth_calendar}
+ * are mapped explicitly on the entity.
  *
- * <p>These components are not columns of {@code calendrier_croissance}:
+ * <p>These components are not columns of {@code growth_calendar}:
  * <ul>
- *     <li>{@code varieties} — names of the varieties recorded in {@code varietes}
+ *     <li>{@code varieties} — names of the varieties recorded in {@code block_variety}
  *         for the same farm and block. Empty when the block has none; every
  *         variety is listed when it has several, none is picked.</li>
  *     <li>{@code ageYears} and {@code ageMonths} — tree age in completed years

@@ -6,7 +6,7 @@ import { cx } from './cx'
 import { getFocusable } from './focusable'
 import IconButton from './IconButton'
 
-// Machinery modal (shared/components/Modal): black 50 % backdrop, white panel "rounded-lg p-6
+// Machinery modal (former shared/components/Modal): black 50 % backdrop, white panel "rounded-lg p-6
 // w-full max-w-md", title "text-lg font-bold mb-4". The kit adds the dialog semantics, Escape, the
 // focus trap, focus return, a close button, and a 300 ms entrance (off under reduced motion).
 const SIZES = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' }

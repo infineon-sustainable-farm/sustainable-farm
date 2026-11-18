@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class VarietyCatalogLoaderTest {
 
     private static void assertVariety(VarietyReference reference, double yieldPerTreeKg, String yieldSource,
                                       int harvestStartMonth, int harvestEndMonth, String seasonSource) {
-        assertEquals(yieldPerTreeKg, reference.getYieldPerTreeKg());
+        assertEquals(yieldPerTreeKg, reference.getYieldPerTreeKg().doubleValue());
         assertEquals(yieldSource, reference.getYieldSource());
         assertEquals(harvestStartMonth, reference.getHarvestStartMonth());
         assertEquals(harvestEndMonth, reference.getHarvestEndMonth());
@@ -85,13 +86,13 @@ public class VarietyCatalogLoaderTest {
         // Arrange: a mentor lowers the Keitt yield
         loader.load(FIRST_START);
         VarietyReference keitt = varietiesByName().get("Keitt");
-        keitt.setYieldPerTreeKg(80.0);
+        keitt.setYieldPerTreeKg(BigDecimal.valueOf(80.0));
         keitt.setYieldSource("orchard_literature");
         varietyReferenceRepository.save(keitt);
         // Act
         loader.load(SECOND_START);
         // Assert: the changed values stay, nothing is added
-        assertEquals(80.0, varietiesByName().get("Keitt").getYieldPerTreeKg());
+        assertEquals(80.0, varietiesByName().get("Keitt").getYieldPerTreeKg().doubleValue());
         assertEquals("orchard_literature", varietiesByName().get("Keitt").getYieldSource());
         assertEquals(5, varietyReferenceRepository.count());
     }
@@ -112,7 +113,7 @@ public class VarietyCatalogLoaderTest {
     @Test
     void load_shouldNotInsertAVariety_whoseKeyIsTaken() {
         // Arrange: "Tommy" entered by the user before the first start, key TOMMY
-        varietyReferenceRepository.save(new VarietyReference(null, "Tommy", 170.0, "user_entry", 4, 6,
+        varietyReferenceRepository.save(new VarietyReference(null, "Tommy", BigDecimal.valueOf(170.0), "user_entry", 4, 6,
                 "user_entry", FIRST_START));
         // Act
         loader.load(SECOND_START);

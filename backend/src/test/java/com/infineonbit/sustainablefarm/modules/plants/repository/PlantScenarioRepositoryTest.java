@@ -23,8 +23,8 @@ public class PlantScenarioRepositoryTest {
     private PlantScenarioRepository plantScenarioRepository;
 
     private static PlantScenario scenario(String name, int treeCount, Double lossRate) {
-        return new PlantScenario(null, name, null, treeCount, "user_entry", 220.0, "user_entry",
-                lossRate, lossRate == null ? null : "user_entry", new BigDecimal("0.9072"), "user_entry", "EUR",
+        return new PlantScenario(null, name, null, treeCount, "user_entry", BigDecimal.valueOf(220.0), "user_entry",
+                lossRate == null ? null : BigDecimal.valueOf(lossRate), lossRate == null ? null : "user_entry", new BigDecimal("0.9072"), "user_entry", "EUR",
                 new BigDecimal("6707.00"), "user_entry", null, null, new BigDecimal("171512.00"), "user_entry",
                 null, null, NOW);
     }
@@ -36,7 +36,7 @@ public class PlantScenarioRepositoryTest {
         // Assert
         PlantScenario read = plantScenarioRepository.findById(saved.getId()).orElseThrow();
         assertEquals(0, new BigDecimal("0.9072").compareTo(read.getPricePerKg()));
-        assertEquals(0.125, read.getLossRate());
+        assertEquals(0.125, read.getLossRate().doubleValue());
     }
 
     @Test
