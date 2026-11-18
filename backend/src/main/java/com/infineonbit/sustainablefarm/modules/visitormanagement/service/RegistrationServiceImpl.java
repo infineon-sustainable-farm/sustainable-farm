@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BriefingDeliverRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BriefingResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.RegistrationRequest;
@@ -24,6 +25,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.Regi
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.SurveySendRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -48,6 +50,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final FeedbackRepository feedbackRepository;
     private final SurveySendRepository surveySendRepository;
     private final SchedulingService schedulingService;
+    private final PersonDirectory personDirectory;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RegistrationServiceImpl(VisitorRepository visitorRepository,
                                    RegistrationRepository registrationRepository,
@@ -55,7 +59,9 @@ public class RegistrationServiceImpl implements RegistrationService {
                                    BriefingRepository briefingRepository,
                                    FeedbackRepository feedbackRepository,
                                    SurveySendRepository surveySendRepository,
-                                   SchedulingService schedulingService) {
+                                   SchedulingService schedulingService,
+                                   PersonDirectory personDirectory,
+                                   ApplicationEventPublisher eventPublisher) {
         this.visitorRepository = visitorRepository;
         this.registrationRepository = registrationRepository;
         this.timeSlotRepository = timeSlotRepository;
@@ -63,6 +69,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.feedbackRepository = feedbackRepository;
         this.surveySendRepository = surveySendRepository;
         this.schedulingService = schedulingService;
+        this.personDirectory = personDirectory;
+        this.eventPublisher = eventPublisher;
     }
 
     // ---------------- Visitors ----------------
@@ -185,6 +193,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         slot.getRegistrations().add(saved);
         schedulingService.refreshStatus(slot);
         timeSlotRepository.save(slot);
+        eventPublisher.publishEvent(VisitEvents.scheduled(saved, VisitEvents.startOf(slot)));
         return RegistrationResponse.from(saved);
     }
 
@@ -226,6 +235,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         registration.setStatus(RegistrationStatus.REJECTED);
         registrationRepository.save(registration);
         registrationRepository.flush();
+        eventPublisher.publishEvent(VisitEvents.cancelled(registration));
         schedulingService.refreshStatus(registration.getTimeSlot());
         timeSlotRepository.save(registration.getTimeSlot());
         return RegistrationResponse.from(registration);
@@ -256,6 +266,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         registration.setStatus(RegistrationStatus.CANCELLED);
         registrationRepository.save(registration);
         registrationRepository.flush();
+        eventPublisher.publishEvent(VisitEvents.cancelled(registration));
         schedulingService.refreshStatus(registration.getTimeSlot());
         timeSlotRepository.save(registration.getTimeSlot());
         return RegistrationResponse.from(registration);
@@ -301,7 +312,7 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new ResourceNotFoundException(
                     "No briefing for registration " + registrationId + " (not confirmed)");
         }
-        return BriefingResponse.from(briefing);
+        return toResponse(briefing);
     }
 
     @Override
@@ -318,18 +329,22 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new BusinessRuleException("No briefing to deliver for registration " + registrationId);
         }
         if (briefing.getStatus() == BriefingStatus.DONE) {
-            return BriefingResponse.from(briefing);
+            return toResponse(briefing);
         }
-        briefing.setStaffMember(request.getStaffMember());
+        briefing.setStaffMemberPersonId(personDirectory.idOf(request.getStaffMember()));
         briefing.setSignature(request.getSignature());
         briefing.setDeliveredAt(Instant.now());
         briefing.setStatus(BriefingStatus.DONE);
         briefingRepository.save(briefing);
         briefingRepository.flush();
-        return BriefingResponse.from(briefing);
+        return toResponse(briefing);
     }
 
     // ---------------- Helpers ----------------
+
+    private BriefingResponse toResponse(Briefing briefing) {
+        return BriefingResponse.from(briefing, personDirectory.nameOf(briefing.getStaffMemberPersonId()));
+    }
 
     private void apply(Visitor visitor, VisitorRequest request) {
         visitor.setFullName(request.getFullName());

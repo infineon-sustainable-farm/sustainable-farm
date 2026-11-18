@@ -45,6 +45,9 @@ public interface BookingService {
     /** Cancels all active bookings of a time slot (slot cancellation propagation). */
     void cancelBookingsForSlot(Long timeSlotId);
 
+    /** Announces the new time of the active bookings of a slot whose date or start time changed. */
+    void rescheduleBookingsForSlot(Long timeSlotId);
+
     /** Cancels all active bookings of an activity (activity deactivation propagation). */
     void cancelBookingsForActivity(Long activityId);
 

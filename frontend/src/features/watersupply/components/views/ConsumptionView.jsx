@@ -1,16 +1,25 @@
 import { useMemo, useState } from 'react'
+import { Download } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Button, Card, EmptyState, ErrorState, Select, Table } from '../../../../shared/ui'
+import { useListControls } from '../../../../shared/hooks/useListControls'
 import { useFarms } from '../../hooks/useFarms'
 import { useWaterConsumptions, useWaterSources } from '../../hooks/useWaterData'
-import { useListControls } from '../../../../shared/hooks/useListControls'
-import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from './Pagination'
+import { downloadCsv } from '../../api/watersupplyApi'
+import { useWaterFormat } from '../../format'
 import { WsAreaChart } from '../charts'
 import { C } from '../chartUtils'
+import { Filters, Screen, SplitLayout } from '../common/Screen'
+import { ChoiceChips } from '../common/ChoiceChips'
+import { ListPagination } from '../common/ListPagination'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { Stat } from '../common/Stat'
+import { tableSort } from '../common/listSort'
 import { QuotaPanel } from './QuotaPanel'
-import { downloadCsv } from '../../api/watersupplyApi'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
 import { activityLabel } from './lotActivities'
+
+const PERIODS = ['week', 'month', 'all']
 
 function groupDailySeries(consumptions) {
   const map = new Map()
@@ -24,11 +33,13 @@ function groupDailySeries(consumptions) {
 }
 
 /**
- * Consumption tracking — READ-ONLY view.
+ * Consumption tracking, READ-ONLY view.
  * Volumes are measured by IoT sensors and reported automatically:
  * no manual entry (no create/edit/delete in the UI).
  */
 export function ConsumptionView({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { consumptions, loading, error } = useWaterConsumptions()
   const { farms } = useFarms()
   const { sources } = useWaterSources()
@@ -37,12 +48,12 @@ export function ConsumptionView({ notify }) {
   const [sourceFilter, setSourceFilter] = useState('')
   const [exporting, setExporting] = useState(false)
 
-  // Server-side export of the consumption report (CSV, current period) — P10.
+  // Server-side export of the consumption report (CSV, current period), P10.
   const exportReport = () => {
     setExporting(true)
     downloadCsv('consumption', period === 'all' ? 'month' : period)
-      .then(() => notify?.('CSV report downloaded.'))
-      .catch((err) => notify?.(err.message || 'Export failed.'))
+      .then(() => notify?.(t('consumption.exported')))
+      .catch((err) => notify?.(err.message || t('consumption.exportFailed'), 'error'))
       .finally(() => setExporting(false))
   }
 
@@ -82,118 +93,123 @@ export function ConsumptionView({ notify }) {
   const totalLiters = useMemo(() => series.reduce((sum, item) => sum + item.liters, 0), [series])
   const peakDay = useMemo(() => series.reduce((max, item) => (item.liters > (max?.liters ?? -1) ? item : max), null), [series])
 
+  const lotLabel = (item) =>
+    item.lotId
+      ? t('consumption.lotValue', {
+          lot: item.lotId,
+          activity: t(`lots.activities.${item.activity || 'OTHER'}`, { defaultValue: activityLabel(item.activity) }),
+        })
+      : t('common.none')
+
+  const columns = [
+    {
+      key: 'consumptionDate',
+      header: t('consumption.columns.date'),
+      sortable: true,
+      cell: (item) => (item.consumptionDate || item.createdAt || '').slice(0, 10),
+    },
+    {
+      key: 'volume',
+      header: t('consumption.columns.volume'),
+      cell: (item) => <strong className="font-semibold">{format.liters(item.consumptionLiters ?? 0)}</strong>,
+    },
+    // A zone over several blocks cannot attribute its volume to one of them.
+    {
+      key: 'block',
+      header: t('consumption.columns.block'),
+      cell: (item) => item.blockCode || (item.multipleBlockCodes ? t('consumption.severalBlocks') : t('common.none')),
+    },
+    { key: 'lot', header: t('consumption.columns.lot'), cell: lotLabel },
+  ]
+
+  function renderChart() {
+    if (loading) return <LoadingState compact label={t('consumption.chart.loading')} />
+    if (error) return <ErrorState message={error.message || t('consumption.chart.loadError')} />
+    if (series.length === 0) return <EmptyState title={t('consumption.chart.emptyTitle')} message={t('consumption.chart.empty')} />
+    return (
+      <WsAreaChart
+        data={series}
+        xKey="day"
+        series={[{ key: 'liters', name: t('consumption.chart.series'), color: C.primary }]}
+        exportName="water-consumption"
+      />
+    )
+  }
+
+  function renderTable() {
+    if (loading) return <LoadingState compact label={t('consumption.history.loading')} />
+    if (filteredConsumptions.length === 0) {
+      return <EmptyState title={t('consumption.history.emptyTitle')} message={t('consumption.history.empty')} />
+    }
+    return (
+      <>
+        <Table caption={t('consumption.history.title')} columns={columns} rows={tableList.items} {...tableSort(tableList)} />
+        <ListPagination list={tableList} />
+      </>
+    )
+  }
+
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Consumption tracking</h1>
-          <p>Measurements reported automatically by IoT sensors - compared with the theoretical baseline.</p>
-        </div>
+    <Screen title={t('consumption.title')} subtitle={t('consumption.subtitle')}>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label={t('consumption.stats.period')} value={t(`consumption.periodNames.${period}`)} />
+        <Stat label={t('consumption.stats.total')} value={format.liters(totalLiters)} />
+        <Stat
+          label={t('consumption.stats.peak')}
+          value={peakDay ? t('consumption.stats.peakValue', { day: peakDay.day.slice(5), volume: format.liters(peakDay.liters) }) : t('consumption.stats.noPeak')}
+        />
       </div>
 
-      <div className="ws-metric-banner">
-        <div className="ws-metric-pill">
-          <div>
-            <div className="label">Selected period</div>
-            <div className="value">{period === 'all' ? 'All history' : period === 'week' ? 'Last week' : 'Last month'}</div>
-          </div>
-        </div>
-        <div className="ws-metric-pill">
-          <div>
-            <div className="label">Total consumed</div>
-            <div className="value" style={{ color: 'var(--ws-primary-dark)' }}>{totalLiters} L</div>
-          </div>
-        <div className="ws-metric-pill">
-          <div>
-            <div className="label">Peak</div>
-            <div className="value">{peakDay ? `${peakDay.day.slice(5)} - ${peakDay.liters} L` : '-'}</div>
-          </div>
-        </div>
-        </div>
-      </div>
-
-      <div className="ws-layout-2">
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Consumption over time</h2>
-            <div className="ws-switcher">
-              {[['week', 'Week'], ['month', 'Month'], ['all', 'All']].map(([item, label]) => (
-                <button key={item} className={`ws-chip ${period === item ? 'active' : ''}`} onClick={() => setPeriod(item)}>
-                  {label}
-                </button>
-              ))}
-              <button className="ws-chip" onClick={exportReport} disabled={exporting} title="Download the consumption report (CSV)">
-                {exporting ? 'Exporting…' : 'CSV report'}
-              </button>
-            </div>
-          </div>
-          <div className="ws-panel-body">
-            {loading ? (
-              <Spinner label="Loading consumptions…" />
-            ) : error ? (
-              <EmptyState title="Error" description={error.message || 'Unable to load data.'} />
-            ) : series.length === 0 ? (
-              <EmptyState title="No consumption" description="IoT sensor measurements will appear here as soon as they are reported." />
-            ) : (
-              <WsAreaChart
-                data={series}
-                xKey="day"
-                series={[{ key: 'liters', name: 'Volume (L)', color: C.primary }]}
-                exportName="water-consumption"
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="ws-panel">
-          <div className="ws-panel-header"><h2>Measurement history</h2><span>{tableList.total} measurement(s)</span></div>
-          <div className="ws-filters">
-            <select value={farmFilter} onChange={(event) => setFarmFilter(event.target.value)}>
-              <option value="">All farms</option>
-              {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
-            </select>
-            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
-              <option value="">All sources</option>
-              {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
-            </select>
-            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Search by date, lot or block…" />
-          </div>
-          <div className="ws-panel-body">
-            {loading ? (
-              <Spinner label="Loading measurements…" />
-            ) : filteredConsumptions.length === 0 ? (
-              <EmptyState title="No recorded consumption" description="Volumes are measured by IoT sensors and reported automatically - no manual entry." />
-            ) : (
-              <table className="ws-table">
-                <thead>
-                  <tr>
-                    <th onClick={() => tableList.toggleSort('consumptionDate')} style={{ cursor: 'pointer' }}>
-                      Date {tableList.sort && tableList.sort.key === 'consumptionDate' ? (tableList.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                    </th>
-                    <th>Volume</th>
-                    <th>Plants block</th>
-                    <th>Lot</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tableList.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>{(item.consumptionDate || item.createdAt || '').slice(0, 10)}</td>
-                      <td><strong>{item.consumptionLiters ?? 0} L</strong></td>
-                      {/* A zone over several blocks cannot attribute its volume to one of them. */}
-                      <td>{item.blockCode || (item.multipleBlockCodes ? 'Several' : '—')}</td>
-                      <td>{item.lotId ? `${item.lotId} · ${activityLabel(item.activity)}` : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            <Pagination page={tableList.page} pageCount={tableList.pageCount} onPage={tableList.setPage} total={tableList.total} unit="measurement" />
-          </div>
-        </div>
-      </div>
+      <SplitLayout
+        main={
+          <Card
+            title={t('consumption.chart.title')}
+            actions={
+              <>
+                <ChoiceChips
+                  label={t('consumption.periodLabel')}
+                  options={PERIODS.map((value) => ({ value, label: t(`consumption.periods.${value}`) }))}
+                  value={period}
+                  onChange={setPeriod}
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={Download}
+                  loading={exporting}
+                  title={t('consumption.reportHint')}
+                  onClick={exportReport}
+                >
+                  {exporting ? t('consumption.exporting') : t('consumption.report')}
+                </Button>
+              </>
+            }
+          >
+            {renderChart()}
+          </Card>
+        }
+        aside={
+          <Card
+            title={t('consumption.history.title')}
+            actions={<span className="text-sm text-text-muted">{t('consumption.history.count', { count: tableList.total })}</span>}
+          >
+            <Filters>
+              <Select aria-label={t('consumption.farmFilter')} value={farmFilter} onChange={(event) => setFarmFilter(event.target.value)} className="w-auto">
+                <option value="">{t('common.allFarms')}</option>
+                {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name}</option>)}
+              </Select>
+              <Select aria-label={t('consumption.sourceFilter')} value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="w-auto">
+                <option value="">{t('consumption.allSources')}</option>
+                {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
+              </Select>
+              <SearchField value={tableList.query} onChange={tableList.setQuery} placeholder={t('consumption.search')} />
+            </Filters>
+            {renderTable()}
+          </Card>
+        }
+      />
 
       <QuotaPanel notify={notify} />
-    </>
+    </Screen>
   )
 }

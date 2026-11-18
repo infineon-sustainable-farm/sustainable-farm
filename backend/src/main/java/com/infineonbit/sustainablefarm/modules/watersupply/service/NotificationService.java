@@ -6,7 +6,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationRespo
 import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -18,18 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class NotificationService {
     private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository;
+    private final PersonDirectory personDirectory;
 
-    public NotificationService(NotificationRepository notificationRepository, UserRepository userRepository) {
+    public NotificationService(NotificationRepository notificationRepository, PersonDirectory personDirectory) {
         this.notificationRepository = notificationRepository;
-        this.userRepository = userRepository;
+        this.personDirectory = personDirectory;
     }
 
     public List<NotificationResponse> findAll() {
         return notificationRepository.findAll().stream().map(NotificationResponse::from).toList();
     }
 
-    public PageResponse<NotificationResponse> findAll(Pageable pageable, UUID userId) {
+    public PageResponse<NotificationResponse> findAll(Pageable pageable, Long userId) {
         Page<Notification> page = userId == null
                 ? notificationRepository.findAll(pageable)
                 : notificationRepository.findByUserId(userId, pageable);
@@ -78,8 +78,9 @@ public class NotificationService {
                 .orElseThrow(() -> new NotFoundException("Notification"));
     }
 
-    private void requireUser(UUID userId) {
-        if (userId == null || userRepository.findById(userId).isEmpty()) {
+    /** The recipient is a person of the staff referential (docs/adr/0004). */
+    private void requireUser(Long userId) {
+        if (!personDirectory.exists(userId)) {
             throw new NotFoundException("User");
         }
     }

@@ -105,6 +105,12 @@ This is a first version, **to be reviewed soon**:
   phase factor of the zone's block.
 - **Rainfall** of a farm is the highest cumulative value among its gauges, never their sum (two
   tanks record the same rain).
+- **Visit announcements** (`water_visitor_events`) follow Visitor Management in process:
+  `VisitorManagementListener` consumes `VisitScheduled`, `VisitRescheduled` and `VisitCancelled`
+  (`visitormanagement.api`, after commit) for bookings (`booking-<id>`) and registrations
+  (`registration-<id>`), and records them like `POST /api/water/visitor-events`, which stays for
+  external callers. A cancelled visit removes its announcement. Visitor Management knows no farm
+  zone, so these announcements carry no zone and raise no zone conflict.
 - **Plants** is read in a single class, `PlantsGrowthCalendarAdapter`, behind `PlantsGrowthPort`, through
   the public interface `plants.api.BlockGrowthLookup`.
 - **Valve commands** go through `ValveCommandPort`. Its only implementation refuses every command
@@ -217,8 +223,10 @@ React Query client (`components/views/testRender.jsx`).
 ## Open decisions (to settle with the team)
 
 - **Authentication**: out of the module's scope (no `/api/auth` endpoint), it will come from the
-  global platform. Automatic alerts are attached to a technical account
-  (`SystemUsers.IOT_SYSTEM_USER_ID`, with no usable password).
+  global platform. Automatic alerts are attached to a technical person of the staff referential
+  (`SystemUsers.iotSystemUserId()`, email `systeme.iot@watersupply.local`, inactive, with no
+  usable password), created at startup in every profile by `SystemUserSeeder`. Notification
+  recipients, schedule authors and command requesters are `person` ids (docs/adr/0004).
 - **Migration numbers**: `V11` (zone/block mapping) and `V12` (integrations) belong to watersupply;
   the next free number is `V13`.
 - **Fresh PostgreSQL startup**: V1-V12 apply, but `ddl-auto=validate` then fails on tables of other

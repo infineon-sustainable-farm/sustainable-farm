@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -36,6 +37,9 @@ public class RawIntakeIntegrationTest {
     private RawIntakeService rawIntakeService;
 
     @Autowired
+    private PersonDirectory personDirectory;
+
+    @Autowired
     private VarietyReferenceRepository varietyReferenceRepository;
 
     @Test
@@ -62,7 +66,7 @@ public class RawIntakeIntegrationTest {
         intake.setReceivedQuantityKg(new BigDecimal("95.00"));
         intake.setReceivedVarietyKey("KENT");
         intake.setReceivedGrade(HarvestEvent.QualityGrade.A);
-        intake.setIntakeOperator("op-test");
+        intake.setIntakeOperatorId(personDirectory.idOf("op-test"));
         RawIntake savedIntake = rawIntakeService.createRawIntake(intake);
         assertThat(savedIntake.getIntakeId()).isEqualTo("RI-TEST-001");
         assertThat(savedIntake.getBatch()).isNotNull();

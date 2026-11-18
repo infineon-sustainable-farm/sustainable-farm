@@ -16,7 +16,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRep
 import com.infineonbit.sustainablefarm.modules.machinery.repository.OperatorAssignmentRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -46,6 +49,9 @@ public class OperatorAssignmentServiceTest {
 
     @Mock
     private EquipmentRepository equipmentRepository;
+
+    @Spy
+    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
 
     @InjectMocks
     private OperatorAssignmentService operatorAssignmentService;
@@ -169,7 +175,7 @@ public class OperatorAssignmentServiceTest {
         // Arrange
         Equipment equipment = buildEquipment(6L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", equipment, "Operator", START_DATE, END_DATE, null
+                1L, personDirectory.idOf("John Doe"), equipment, "Operator", START_DATE, END_DATE, null
         );
         Pageable pageable = PageRequest.of(0, 10);
         when(operatorAssignmentRepository.findAll(any(Pageable.class)))
@@ -206,7 +212,7 @@ public class OperatorAssignmentServiceTest {
         Equipment oldEquipment = buildEquipment(6L);
         Equipment newEquipment = buildEquipment(7L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", oldEquipment, "Operator", START_DATE, END_DATE, null
+                1L, personDirectory.idOf("John Doe"), oldEquipment, "Operator", START_DATE, END_DATE, null
         );
         LocalDate newStart = LocalDate.of(2027, 2, 1);
         LocalDate newEnd = LocalDate.of(2027, 11, 30);
@@ -232,7 +238,7 @@ public class OperatorAssignmentServiceTest {
         // Arrange
         Equipment equipment = buildEquipment(6L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", equipment, "Operator", START_DATE, null, null
+                1L, personDirectory.idOf("John Doe"), equipment, "Operator", START_DATE, null, null
         );
         OperatorAssignmentUpdateRequest request = new OperatorAssignmentUpdateRequest(
                 null, null, null, null, END_DATE
@@ -252,7 +258,7 @@ public class OperatorAssignmentServiceTest {
         // Arrange
         Equipment equipment = buildEquipment(6L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", equipment, "Operator", START_DATE, END_DATE, null
+                1L, personDirectory.idOf("John Doe"), equipment, "Operator", START_DATE, END_DATE, null
         );
         OperatorAssignmentUpdateRequest request = new OperatorAssignmentUpdateRequest(null, null, null, null, null);
         when(operatorAssignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
@@ -284,7 +290,7 @@ public class OperatorAssignmentServiceTest {
         // Arrange
         Equipment equipment = buildEquipment(6L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", equipment, "Operator", START_DATE, null, null
+                1L, personDirectory.idOf("John Doe"), equipment, "Operator", START_DATE, null, null
         );
         when(operatorAssignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
         when(equipmentRepository.findById(99L)).thenReturn(Optional.empty());
@@ -302,7 +308,7 @@ public class OperatorAssignmentServiceTest {
         Equipment oldEquipment = buildEquipment(6L);
         Equipment newEquipment = buildEquipment(7L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", oldEquipment, "Operator", START_DATE, null, null
+                1L, personDirectory.idOf("John Doe"), oldEquipment, "Operator", START_DATE, null, null
         );
         when(operatorAssignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
         when(equipmentRepository.findById(7L)).thenReturn(Optional.of(newEquipment));
@@ -320,7 +326,7 @@ public class OperatorAssignmentServiceTest {
         // Arrange
         Equipment equipment = buildEquipment(6L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", equipment, "Operator", START_DATE, null, null
+                1L, personDirectory.idOf("John Doe"), equipment, "Operator", START_DATE, null, null
         );
         OperatorAssignmentUpdateRequest request = new OperatorAssignmentUpdateRequest(
                 null, null, null, null, START_DATE.minusDays(1)
@@ -338,7 +344,7 @@ public class OperatorAssignmentServiceTest {
         // Arrange
         Equipment equipment = buildEquipment(6L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", equipment, "Operator", START_DATE, END_DATE, null
+                1L, personDirectory.idOf("John Doe"), equipment, "Operator", START_DATE, END_DATE, null
         );
         OperatorAssignmentUpdateRequest request = new OperatorAssignmentUpdateRequest(
                 null, null, null, END_DATE.plusDays(1), null
@@ -356,7 +362,7 @@ public class OperatorAssignmentServiceTest {
         // Arrange
         Equipment equipment = buildEquipment(6L);
         OperatorAssignment assignment = new OperatorAssignment(
-                1L, "John Doe", equipment, "Operator", START_DATE, null, null
+                1L, personDirectory.idOf("John Doe"), equipment, "Operator", START_DATE, null, null
         );
         OperatorAssignmentUpdateRequest request = new OperatorAssignmentUpdateRequest(
                 "   ", null, null, null, null
@@ -389,5 +395,22 @@ public class OperatorAssignmentServiceTest {
         // Assert
         assertEquals("Operator assignment with ID 99 not found", ex.getMessage());
         verify(operatorAssignmentRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void addOperatorAssignment_shouldReferenceTheSamePerson_whenTheSameNameIsUsedTwice() {
+        when(equipmentRepository.findById(6L)).thenReturn(Optional.of(buildEquipment(6L)));
+        when(equipmentRepository.findById(7L)).thenReturn(Optional.of(buildEquipment(7L)));
+        when(operatorAssignmentRepository.existsByEquipment_Id(anyLong())).thenReturn(false);
+        Long existing = personDirectory.idOf("Awa Traoré");
+
+        operatorAssignmentService.addOperatorAssignment(
+                new OperatorAssignmentCreationRequest("Awa Traoré", 6L, "Driver", START_DATE, null));
+        operatorAssignmentService.addOperatorAssignment(
+                new OperatorAssignmentCreationRequest(" awa traoré ", 7L, "Driver", START_DATE, null));
+
+        org.mockito.ArgumentCaptor<OperatorAssignment> saved = org.mockito.ArgumentCaptor.forClass(OperatorAssignment.class);
+        verify(operatorAssignmentRepository, org.mockito.Mockito.times(2)).save(saved.capture());
+        assertEquals(List.of(existing, existing), saved.getAllValues().stream().map(OperatorAssignment::getPersonId).toList());
     }
 }

@@ -1,28 +1,15 @@
-export const C = {
-  primary: 'var(--ws-primary, #0a8276)',
-  orange: 'var(--ws-orange, #ef6c00)',
-  green: 'var(--ws-green, #4caf50)',
-  red: 'var(--ws-red, #c62828)',
-  blue: 'var(--ws-blue, #1565c0)',
-  line: 'var(--ws-line, #e2e9e7)',
-  muted: 'var(--ws-muted, #6b7a78)',
-}
-
 /**
- * Formats a volume in litres with the matching unit (L, m3 above 10,000 L).
- *
- * @param {number} liters
- * @param {number} [decimals]
+ * Chart colours, from the chart tokens of src/index.css: primary series, warning (orange),
+ * success (green), alert (red) and information (blue), grid and axis text.
  */
-export function formatLiters(liters, decimals = 0) {
-  const value = Number(liters) || 0
-  if (Math.abs(value) >= 10000) return `${(value / 1000).toFixed(1)} m3`
-  return `${value.toFixed(decimals)} L`
-}
-
-/** Formats an amount in millimetres (rainfall, ET0). */
-export function formatMm(mm, decimals = 1) {
-  return `${(Number(mm) || 0).toFixed(decimals)} mm`
+export const C = {
+  primary: 'var(--color-chart-1)',
+  orange: 'var(--color-chart-2)',
+  green: 'var(--color-chart-4)',
+  red: 'var(--color-chart-5)',
+  blue: 'var(--color-chart-6)',
+  line: 'var(--color-chart-grid)',
+  muted: 'var(--color-chart-3)',
 }
 
 /* ==================== Chart exports ==================== */
@@ -39,6 +26,9 @@ export function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url)
 }
 
+const QUOTE = '"'
+const CSV_SPECIALS = [QUOTE, ';', '\r', '\n']
+
 /**
  * Converts data rows to CSV (semicolon separator, UTF-8 BOM).
  * The semicolon and the BOM are required so that Excel displays
@@ -50,7 +40,7 @@ export function downloadBlob(blob, filename) {
 export function toCsv(rows, columns) {
   const escape = (value) => {
     const text = value === null || value === undefined ? '' : String(value)
-    return /[";\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+    return CSV_SPECIALS.some((special) => text.includes(special)) ? QUOTE + text.replaceAll(QUOTE, QUOTE + QUOTE) + QUOTE : text
   }
   const header = columns.map((column) => escape(column.label)).join(';')
   const body = (rows || []).map((row) => columns.map((column) => escape(row[column.key])).join(';'))
@@ -64,7 +54,6 @@ export function exportRowsAsCsv(rows, columns, filename) {
 
 /**
  * Captures the SVG rendered by Recharts and downloads it as PNG.
- * The background is forced to white: a transparent PNG reads poorly in a report.
  *
  * @param {HTMLElement} container - element holding the chart SVG.
  * @param {string} filename
@@ -91,7 +80,8 @@ export function exportChartAsPng(container, filename) {
     canvas.height = height
     const context = canvas.getContext('2d')
     if (!context) return
-    context.fillStyle = '#ffffff'
+    // White background of the surface token: a transparent PNG reads poorly in a report.
+    context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-surface-raised').trim() || 'white'
     context.fillRect(0, 0, width, height)
     context.drawImage(image, 0, 0, width, height)
     canvas.toBlob((blob) => {

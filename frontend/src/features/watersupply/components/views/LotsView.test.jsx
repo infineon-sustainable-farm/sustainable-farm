@@ -133,4 +133,17 @@ describe('LotsView', () => {
     expect(screen.getByText('300 L')).toBeTruthy()
     expect(screen.getByText(/working defaults, to be confirmed/)).toBeTruthy()
   })
+
+  it('adds and removes planned batches, keeping the values of the other rows', () => {
+    render(<LotsView {...props} />)
+    expect(screen.getByRole('button', { name: 'Remove batch' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Batch 1 lot'), { target: { value: 'LOT-A' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add a batch' }))
+    fireEvent.change(screen.getByLabelText('Batch 2 lot'), { target: { value: 'LOT-B' } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove batch' })[0])
+
+    expect(screen.queryByLabelText('Batch 2 lot')).toBeNull()
+    expect(screen.getByLabelText('Batch 1 lot')).toHaveValue('LOT-B')
+  })
 })

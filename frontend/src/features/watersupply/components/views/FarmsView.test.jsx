@@ -2,7 +2,7 @@
 // DOM environment and between-test cleanup declared in the file: the module requires
 // no shared Vitest configuration (see SourcesView.test.jsx).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { controlByLabel, renderView as render } from './testRender'
 import { FarmsView } from './FarmsView'
 import { farmApi, fieldApi, zoneApi } from '../../api/watersupplyApi'
@@ -132,5 +132,46 @@ describe('FarmsView - location', () => {
 
     await waitFor(() => expect(screen.getByText(/Write the location as/)).toBeTruthy())
     expect(fieldApi.createField).not.toHaveBeenCalled()
+  })
+})
+
+describe('FarmsView - dialogs', () => {
+  it('opens the farm form in a dialog and closes it on Cancel without saving', async () => {
+    render(<FarmsView {...props} />)
+    await screen.findByText('North Farm')
+
+    fireEvent.click(screen.getByText('New farm'))
+    const dialog = screen.getByRole('dialog', { name: 'New farm' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(farmApi.createFarm).not.toHaveBeenCalled()
+  })
+
+  it('deletes a farm after confirmation, then reloads the lists', async () => {
+    farmApi.deleteFarm.mockResolvedValue(undefined)
+    render(<FarmsView {...props} />)
+    await screen.findByText('North Farm')
+
+    fireEvent.click(screen.getAllByTitle('Delete')[0])
+    const dialog = await screen.findByRole('dialog', { name: 'Delete North Farm' })
+    expect(dialog).toHaveTextContent('This action cannot be undone.')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(farmApi.deleteFarm).toHaveBeenCalledWith('farm-1'))
+    await waitFor(() => expect(farmApi.getFarms).toHaveBeenCalledTimes(2))
+    expect(props.notify).toHaveBeenCalledWith('Deleted')
+  })
+
+  it('keeps the farm when the deletion is cancelled', async () => {
+    render(<FarmsView {...props} />)
+    await screen.findByText('North Farm')
+
+    fireEvent.click(screen.getAllByTitle('Delete')[0])
+    const dialog = await screen.findByRole('dialog', { name: 'Delete North Farm' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(farmApi.deleteFarm).not.toHaveBeenCalled()
   })
 })

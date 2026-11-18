@@ -23,6 +23,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundExc
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +60,7 @@ class IrrigationServiceTest {
     void createScheduleRejectsUnknownZone() {
         Long zoneId = 101L;
         IrrigationScheduleCreateRequest schedule = new IrrigationScheduleCreateRequest(
-            zoneId, Instant.now(), 10, 20.0, null, UUID.randomUUID());
+            zoneId, Instant.now(), 10, 20.0, null, 7L);
         when(farmDirectory.findZone(zoneId)).thenReturn(Optional.empty());
         IrrigationService service = service();
 
@@ -200,6 +202,6 @@ class IrrigationServiceTest {
 
     private IrrigationService service() {
         return new IrrigationService(scheduleRepository, logRepository, farmDirectory, agroWeatherService,
-                alertService, zoneBlockResolver);
+                alertService, zoneBlockResolver, new SystemUsers(new InMemoryPersonDirectory()));
     }
 }

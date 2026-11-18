@@ -18,10 +18,13 @@ public record DripMaintenanceLogResponse(
         String performedBy,
         Instant createdAt) {
 
-    public static DripMaintenanceLogResponse from(DripMaintenanceLog log) {
+    /**
+     * @param performedBy full name of the person referenced by {@code performedByPersonId}
+     */
+    public static DripMaintenanceLogResponse from(DripMaintenanceLog log, String performedBy) {
         return new DripMaintenanceLogResponse(log.getId(), log.getZoneId(), log.getMaintenanceDate(),
                 log.getMaintenanceType(), log.getFilterCleaned(), log.getCloggingDetected(),
                 log.getCloggingSeverity(), log.getEmitterReplacedCount(), log.getNotes(),
-                log.getPerformedBy(), log.getCreatedAt());
+                performedBy, log.getCreatedAt());
     }
 }

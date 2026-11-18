@@ -6,47 +6,43 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 /**
  * A farm staff member or guide who can be assigned to tour time slots
  * (A5: staff / guides).
+ *
+ * <p>The visitor management extension of a person of the staff referential
+ * ({@code modules.staff.api}, ADR 0004): full name, email and phone belong to the person;
+ * the role and the active flag (a guide can be deactivated without touching the person's other
+ * roles) stay here. One staff row per person; its foreign key
+ * to {@code person} is declared in {@code VisitorStaffForeignKeys}.</p>
  */
 @Entity
-@Table(name = "staff")
+@Table(name = "staff", uniqueConstraints =
+        @UniqueConstraint(name = "staff_person_id_key", columnNames = "person_id"))
 public class Staff extends BaseEntity {
 
-    @NotBlank
-    @Size(max = 150)
-    @Column(name = "full_name", nullable = false, length = 150)
-    private String fullName;
+    /** Id of the person in the staff referential. */
+    @NotNull
+    @Column(name = "person_id", nullable = false)
+    private Long personId;
 
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private StaffRole role = StaffRole.GUIDE;
 
-    @Email
-    @Size(max = 200)
-    @Column(name = "email", length = 200)
-    private String email;
-
-    @Size(max = 30)
-    @Column(name = "phone", length = 30)
-    private String phone;
-
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
-    public String getFullName() {
-        return fullName;
+    public Long getPersonId() {
+        return personId;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setPersonId(Long personId) {
+        this.personId = personId;
     }
 
     public StaffRole getRole() {
@@ -55,22 +51,6 @@ public class Staff extends BaseEntity {
 
     public void setRole(StaffRole role) {
         this.role = role;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     public boolean isActive() {

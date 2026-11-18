@@ -12,7 +12,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.repository.RepairLogRep
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,6 +46,9 @@ class RepairLogServiceTest {
     @Mock
     private EquipmentRepository equipmentRepository;
 
+    @Spy
+    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+
     @InjectMocks
     private RepairLogService repairLogService;
 
@@ -71,7 +77,7 @@ class RepairLogServiceTest {
         testRepairLog.setIssue("Heating element malfunction");
         testRepairLog.setDowntime(new BigDecimal("14.00"));
         testRepairLog.setCost(new BigDecimal("150.00"));
-        testRepairLog.setTechnician("Maintenance Team A");
+        testRepairLog.setTechnicianPersonId(personDirectory.idOf("Maintenance Team A"));
     }
 
     @Test

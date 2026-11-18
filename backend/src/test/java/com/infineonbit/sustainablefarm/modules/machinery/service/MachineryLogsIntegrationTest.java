@@ -1,5 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.modules.machinery.entity.MaintenanceSchedule;
+import com.infineonbit.sustainablefarm.modules.machinery.entity.RepairLog;
+import com.infineonbit.sustainablefarm.modules.machinery.entity.UsageLog;
+import com.infineonbit.sustainablefarm.modules.staff.repository.PersonRepository;
+import com.infineonbit.sustainablefarm.modules.staff.service.PersonDirectoryService;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.FuelLogCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.FuelLogUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleCreationRequest;
@@ -36,7 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
         MaintenanceScheduleService.class,
         UsageLogService.class,
         FuelLogService.class,
-        RepairLogService.class
+        RepairLogService.class,
+        PersonDirectoryService.class
 })
 class MachineryLogsIntegrationTest {
 
@@ -57,6 +63,9 @@ class MachineryLogsIntegrationTest {
 
     @Autowired
     private TestEntityManager entityManager;
+
+    @Autowired
+    private PersonRepository personRepository;
 
     @Test
     void maintenanceScheduleLifecycle() {
@@ -173,6 +182,27 @@ class MachineryLogsIntegrationTest {
 
         assertThrows(RepairLogNotFoundException.class,
                 () -> repairLogService.obtainRepairLogById(created.id()));
+    }
+
+    @Test
+    void theSameOperatorNameInSeveralLogsIsOnePerson() {
+        Equipment equipment = createEquipment("Sprayer");
+
+        var schedule = maintenanceScheduleService.addMaintenanceSchedule(new MaintenanceScheduleCreationRequest(
+                equipment.getId(), MaintenanceType.PREVENTIVE, null,
+                LocalDate.of(2026, 7, 10), LocalDate.of(2026, 8, 5), "Issa K."));
+        var usage = usageLogService.addUsageLog(new UsageLogCreationRequest(
+                equipment.getId(), LocalDate.of(2026, 7, 23), new BigDecimal("2.00"), " issa k. ", null));
+        var repair = repairLogService.addRepairLog(new RepairLogCreationRequest(
+                equipment.getId(), LocalDate.of(2026, 7, 22), "Nozzle clogged", null, null, "Issa K."));
+        entityManager.flush();
+        entityManager.clear();
+
+        Long person = entityManager.find(MaintenanceSchedule.class, schedule.id()).getOperatorPersonId();
+        assertEquals(person, entityManager.find(UsageLog.class, usage.id()).getOperatorPersonId());
+        assertEquals(person, entityManager.find(RepairLog.class, repair.id()).getTechnicianPersonId());
+        assertEquals(1L, personRepository.count());
+        assertEquals("Issa K.", usageLogService.obtainUsageLogById(usage.id()).operator());
     }
 
     private Equipment createEquipment(String name) {

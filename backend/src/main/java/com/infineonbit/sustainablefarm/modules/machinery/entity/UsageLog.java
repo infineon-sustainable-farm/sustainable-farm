@@ -30,8 +30,9 @@ public class UsageLog {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal hoursUsed;
 
-    @Column(name = "operator_name", length = 60)
-    private String operator;
+    /** The operator, a person of the staff referential ({@code person.id}); the API shows the name. */
+    @Column(name = "operator_person_id")
+    private Long operatorPersonId;
 
     @Column(length = 500)
     private String notes;

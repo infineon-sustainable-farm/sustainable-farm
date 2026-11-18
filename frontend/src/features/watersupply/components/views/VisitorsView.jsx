@@ -1,14 +1,16 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { Badge, Button, Card, ErrorState, Field, Input, Select, Textarea } from '../../../../shared/ui'
 import { visitorApi } from '../../api/watersupplyApi'
 import { useZones } from '../../hooks/useFarms'
 import { useWaterSources } from '../../hooks/useWaterData'
 import { useSafetyBriefing, useVisitorSummary } from '../../hooks/useIntegrations'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { EmptyState } from './EmptyState'
+import { useWaterFormat } from '../../format'
+import { Filters, FormActions, Screen, SplitLayout } from '../common/Screen'
+import { FormAlert } from '../common/FormAlert'
+import { LoadingState } from '../common/LoadingState'
+import { Stat } from '../common/Stat'
 import { DemoValvePanel } from './DemoValvePanel'
-import { formatInstant } from './datetime'
 
 /** One entry per line in the form; the API takes lists. */
 const toLines = (list) => (list || []).join('\n')
@@ -21,27 +23,25 @@ const fromLines = (text) => text.split('\n').map((line) => line.trim()).filter(B
  * safety briefing, previews the data a visitor screen receives, and drives the demonstration valve.
  */
 export function VisitorsView({ notify }) {
+  const { t } = useTranslation('watersupply')
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Visitors</h1>
-          <p>Safety rules and live figures shown to visitor groups by Visitor Management.</p>
-        </div>
-      </div>
-
-      <div className="ws-layout-2">
-        <SafetyBriefingPanel notify={notify} />
-        <div className="ws-stack">
-          <VisitorPreviewPanel />
-          <DemoValvePanel notify={notify} />
-        </div>
-      </div>
-    </>
+    <Screen title={t('visitors.title')} subtitle={t('visitors.subtitle')}>
+      <SplitLayout
+        main={<SafetyBriefingPanel notify={notify} />}
+        aside={
+          <>
+            <VisitorPreviewPanel />
+            <DemoValvePanel notify={notify} />
+          </>
+        }
+      />
+    </Screen>
   )
 }
 
 function SafetyBriefingPanel({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { briefing, loading, error, refetch } = useSafetyBriefing()
   const [draft, setDraft] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -68,7 +68,7 @@ function SafetyBriefingPanel({ notify }) {
     event.preventDefault()
     const capacity = draft.maxCapacity === '' ? null : Number(draft.maxCapacity)
     if (capacity !== null && !(capacity >= 1)) {
-      setFormError('The group size is at least 1 visitor.')
+      setFormError(t('visitors.briefing.errors.groupSize'))
       return
     }
     setBusy(true)
@@ -86,90 +86,99 @@ function SafetyBriefingPanel({ notify }) {
       })
       .then(() => refetch())
       .then(() => {
-        notify('Safety briefing published')
+        notify(t('visitors.briefing.published'))
         setDraft(null)
       })
-      .catch((err) => setFormError(err.message || 'Unable to publish.'))
+      .catch((err) => setFormError(err.message || t('visitors.briefing.errors.publishFailed')))
       .finally(() => setBusy(false))
   }
 
-  return (
-    <div className="ws-panel">
-      <div className="ws-panel-header">
-        <h2>Water safety briefing</h2>
-        {briefing && (
-          <span className={`ws-tag ${briefing.validated ? 'green' : 'orange'}`}>
-            {briefing.validated ? `Version ${briefing.version}` : 'Default text, not validated'}
-          </span>
+  function renderContent() {
+    if (loading) return <LoadingState label={t('visitors.briefing.loading')} />
+    if (error) return <ErrorState message={error.message || t('visitors.briefing.loadError')} />
+    if (draft) {
+      return (
+        <>
+          <FormAlert>{formError}</FormAlert>
+          <form className="flex flex-col gap-4" onSubmit={publish}>
+            <Field label={t('visitors.briefing.fields.version')}>
+              <Input value={draft.version} onChange={updateDraft('version')} />
+            </Field>
+            <Field label={t('visitors.briefing.fields.text')}>
+              <Textarea rows={4} value={draft.text} onChange={updateDraft('text')} />
+            </Field>
+            <Field label={t('visitors.briefing.fields.allowed')}>
+              <Textarea value={draft.allowedZones} onChange={updateDraft('allowedZones')} />
+            </Field>
+            <Field label={t('visitors.briefing.fields.forbidden')}>
+              <Textarea value={draft.forbiddenZones} onChange={updateDraft('forbiddenZones')} />
+            </Field>
+            <Field label={t('visitors.briefing.fields.risks')}>
+              <Textarea value={draft.risks} onChange={updateDraft('risks')} />
+            </Field>
+            <Field label={t('visitors.briefing.fields.maxCapacity')}>
+              <Input type="number" min="1" step="1" value={draft.maxCapacity} onChange={updateDraft('maxCapacity')} />
+            </Field>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="size-4 accent-primary" checked={draft.guideRequired} onChange={updateDraft('guideRequired')} />
+              {t('visitors.briefing.fields.guideRequired')}
+            </label>
+            <FormActions>
+              <Button variant="secondary" onClick={() => setDraft(null)}>{t('common.cancel')}</Button>
+              <Button type="submit" loading={busy}>{t('visitors.briefing.publish')}</Button>
+            </FormActions>
+          </form>
+        </>
+      )
+    }
+    if (!briefing) return null
+    return (
+      <div className="flex flex-col gap-4 text-sm">
+        {briefing.text && <p>{briefing.text}</p>}
+        <BriefingList title={t('visitors.briefing.allowed')} items={briefing.allowedZones} tone="success" />
+        <BriefingList title={t('visitors.briefing.forbidden')} items={briefing.forbiddenZones} tone="error" />
+        <BriefingList title={t('visitors.briefing.risks')} items={briefing.risks} tone="warning" />
+        <p>
+          <Trans
+            t={t}
+            i18nKey={briefing.guideRequired ? 'visitors.briefing.maxGroupGuided' : 'visitors.briefing.maxGroup'}
+            values={{ value: briefing.maxCapacity == null ? t('common.none') : format.number(briefing.maxCapacity) }}
+            components={{ strong: <strong /> }}
+          />
+        </p>
+        {briefing.publishedAt && (
+          <p className="text-xs text-text-muted">{t('visitors.briefing.publishedAt', { date: format.instant(briefing.publishedAt) })}</p>
         )}
+        <FormActions>
+          <Button onClick={startEditing}>{t('visitors.briefing.newVersion')}</Button>
+        </FormActions>
       </div>
-      <div className="ws-panel-body">
-        {loading ? (
-          <Spinner label="Loading the briefing…" />
-        ) : error ? (
-          <EmptyState title="Error" description={error.message || 'Unable to load the briefing.'} />
-        ) : draft ? (
-          <>
-            {formError && <div className="ws-inline-error">{formError}</div>}
-            <form className="ws-form-grid" onSubmit={publish}>
-              <FormField label="Version (empty = today's date)">
-                <input style={inputStyle} value={draft.version} onChange={updateDraft('version')} />
-              </FormField>
-              <FormField label="Text read to the group">
-                <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={draft.text} onChange={updateDraft('text')} />
-              </FormField>
-              <FormField label="Allowed areas (one per line)">
-                <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={draft.allowedZones} onChange={updateDraft('allowedZones')} />
-              </FormField>
-              <FormField label="Forbidden areas (one per line)">
-                <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={draft.forbiddenZones} onChange={updateDraft('forbiddenZones')} />
-              </FormField>
-              <FormField label="Risks (one per line)">
-                <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={draft.risks} onChange={updateDraft('risks')} />
-              </FormField>
-              <FormField label="Maximum group size">
-                <input style={inputStyle} type="number" min="1" step="1" value={draft.maxCapacity} onChange={updateDraft('maxCapacity')} />
-              </FormField>
-              <label style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px' }}>
-                <input type="checkbox" checked={draft.guideRequired} onChange={updateDraft('guideRequired')} />
-                A guide must accompany the group
-              </label>
-              <div className="ws-form-actions">
-                <button type="button" className="ws-chip" onClick={() => setDraft(null)}>Cancel</button>
-                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Publish'}</button>
-              </div>
-            </form>
-          </>
-        ) : briefing ? (
-          <>
-            {briefing.text && <p style={{ marginTop: 0, fontSize: '14px' }}>{briefing.text}</p>}
-            <BriefingList title="Allowed areas" items={briefing.allowedZones} tone="green" />
-            <BriefingList title="Forbidden areas" items={briefing.forbiddenZones} tone="red" />
-            <BriefingList title="Risks" items={briefing.risks} tone="orange" />
-            <p style={{ fontSize: '13px' }}>
-              At most <strong>{briefing.maxCapacity ?? '—'}</strong> visitors per group
-              {briefing.guideRequired ? ', always with a guide.' : '.'}
-            </p>
-            {briefing.publishedAt && (
-              <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>Published {formatInstant(briefing.publishedAt)}. Earlier versions are kept.</p>
-            )}
-            <div className="ws-form-actions">
-              <button className="ws-action-btn" onClick={startEditing}>Publish a new version</button>
-            </div>
-          </>
-        ) : null}
-      </div>
-    </div>
+    )
+  }
+
+  return (
+    <Card
+      title={t('visitors.briefing.title')}
+      actions={
+        briefing && (
+          <Badge tone={briefing.validated ? 'success' : 'warning'}>
+            {briefing.validated ? t('visitors.briefing.version', { version: briefing.version }) : t('visitors.briefing.notValidated')}
+          </Badge>
+        )
+      }
+    >
+      {renderContent()}
+    </Card>
   )
 }
 
 function BriefingList({ title, items, tone }) {
   if (!items?.length) return null
   return (
-    <div style={{ marginBottom: '12px' }}>
-      <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>{title}</div>
-      <div className="ws-switcher">
-        {items.map((item) => <span key={item} className={`ws-tag ${tone}`}>{item}</span>)}
+    <div>
+      <p className="mb-2 text-xs font-semibold">{title}</p>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => <Badge key={item} tone={tone}>{item}</Badge>)}
       </div>
     </div>
   )
@@ -177,6 +186,8 @@ function BriefingList({ title, items, tone }) {
 
 /** Exactly what Visitor Management receives from GET /api/water/visitor/summary. */
 function VisitorPreviewPanel() {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { sources } = useWaterSources()
   const { zones } = useZones()
   const [sourceId, setSourceId] = useState('')
@@ -188,61 +199,59 @@ function VisitorPreviewPanel() {
   const live = summary?.liveConsumption
   const outages = summary?.activeUnavailability ?? []
 
+  function renderContent() {
+    if (loading) return <LoadingState compact label={t('visitors.preview.loading')} />
+    if (error) return <ErrorState message={error.message || t('visitors.preview.loadError')} />
+    if (!summary) return null
+    return (
+      <div className="flex flex-col gap-4 text-sm">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat
+            label={level ? t('visitors.preview.level', { name: level.name }) : t('visitors.preview.selectTank')}
+            value={level && level.levelPercentage != null ? format.percent(level.levelPercentage) : t('common.none')}
+          />
+          <Stat
+            label={t('visitors.preview.saved')}
+            value={summary.waterSavingsPercentage == null ? t('common.none') : format.percent(summary.waterSavingsPercentage)}
+          />
+          <Stat
+            label={t('visitors.preview.used', { minutes: format.number(live?.windowMinutes ?? 15) })}
+            value={format.liters(live?.liters ?? 0)}
+          />
+        </div>
+        {irrigation && (
+          <p className="flex flex-wrap items-center gap-2">
+            <Badge tone={irrigation.active ? 'warning' : 'info'}>
+              {irrigation.active ? t('visitors.preview.irrigating') : t('visitors.preview.notIrrigating')}
+            </Badge>
+            {irrigation.lastActivationAt && t('visitors.preview.lastStarted', { date: format.instant(irrigation.lastActivationAt) })}
+          </p>
+        )}
+        {outages.length > 0 && (
+          <FormAlert>
+            {t(zoneId || sourceId ? 'visitors.preview.outagesHere' : 'visitors.preview.outages', { count: format.number(outages.length) })}
+          </FormAlert>
+        )}
+        {summary.waterSavingsPercentage == null && (
+          <p className="text-xs text-text-muted">{t('visitors.preview.savingsUnavailable')}</p>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div className="ws-panel">
-      <div className="ws-panel-header">
-        <h2>Visitor screen preview</h2>
-      </div>
-      <div className="ws-filters">
-        <select value={sourceId} onChange={(event) => setSourceId(event.target.value)} aria-label="Tank shown">
-          <option value="">No tank</option>
+    <Card title={t('visitors.preview.title')}>
+      <Filters>
+        <Select className="w-auto" value={sourceId} onChange={(event) => setSourceId(event.target.value)} aria-label={t('visitors.preview.tankShown')}>
+          <option value="">{t('visitors.preview.noTank')}</option>
           {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
-        </select>
-        <select value={zoneId} onChange={(event) => setZoneId(event.target.value)} aria-label="Zone shown">
-          <option value="">Whole site</option>
+        </Select>
+        <Select className="w-auto" value={zoneId} onChange={(event) => setZoneId(event.target.value)} aria-label={t('visitors.preview.zoneShown')}>
+          <option value="">{t('visitors.preview.wholeSite')}</option>
           {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-        </select>
-      </div>
-      <div className="ws-panel-body">
-        {loading ? (
-          <Spinner label="Loading the preview…" />
-        ) : error ? (
-          <EmptyState title="Error" description={error.message || 'Unable to load the preview.'} />
-        ) : summary ? (
-          <>
-            <div className="ws-layout-3">
-              <div className="ws-row-detail">
-                <strong>{level ? `${level.levelPercentage ?? '—'}%` : '—'}</strong>
-                <small>{level ? `${level.name} level` : 'Select a tank'}</small>
-              </div>
-              <div className="ws-row-detail">
-                <strong>{summary.waterSavingsPercentage == null ? '—' : `${summary.waterSavingsPercentage}%`}</strong>
-                <small>Water saved this month</small>
-              </div>
-              <div className="ws-row-detail">
-                <strong>{live?.liters ?? 0} L</strong>
-                <small>Used in the last {live?.windowMinutes ?? 15} min</small>
-              </div>
-            </div>
-            {irrigation && (
-              <p style={{ fontSize: '13px' }}>
-                <span className={`ws-tag ${irrigation.active ? 'orange' : 'primary'}`}>
-                  {irrigation.active ? 'Irrigating now' : 'Not irrigating'}
-                </span>
-                {irrigation.lastActivationAt && ` Last started ${formatInstant(irrigation.lastActivationAt)}.`}
-              </p>
-            )}
-            {outages.length > 0 && (
-              <div className="ws-inline-error">
-                {outages.length} planned outage(s) in force{zoneId || sourceId ? ' here' : ''}: visitors will be told water is unavailable.
-              </div>
-            )}
-            {summary.waterSavingsPercentage == null && (
-              <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>Savings are unavailable while the weather service is down.</p>
-            )}
-          </>
-        ) : null}
-      </div>
-    </div>
+        </Select>
+      </Filters>
+      {renderContent()}
+    </Card>
   )
 }

@@ -9,10 +9,9 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationCreat
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -23,15 +22,13 @@ class NotificationServiceTest {
     @Mock
     private NotificationRepository notificationRepository;
 
-    @Mock
-    private UserRepository userRepository;
+    private final PersonDirectory personDirectory = new InMemoryPersonDirectory();
 
     @Test
     void createRejectsUnknownUser() {
-        UUID userId = UUID.randomUUID();
+        Long userId = 4_242L;
         NotificationCreateRequest notification = new NotificationCreateRequest(
             userId, "Title", "Message", "warning", false, null);
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
         NotificationService service = service();
 
         assertThrows(NotFoundException.class, () -> service.create(notification));
@@ -56,7 +53,18 @@ class NotificationServiceTest {
         org.junit.jupiter.api.Assertions.assertTrue(second.getRead());
     }
 
+    @Test
+    void createAcceptsAPersonOfTheStaffReferential() {
+        Long userId = personDirectory.idOf("Awa Demo");
+        when(notificationRepository.save(org.mockito.ArgumentMatchers.any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var created = service().create(new NotificationCreateRequest(userId, "Title", "Message", "info", false, null));
+
+        org.junit.jupiter.api.Assertions.assertEquals(userId, created.userId());
+    }
+
     private NotificationService service() {
-        return new NotificationService(notificationRepository, userRepository);
+        return new NotificationService(notificationRepository, personDirectory);
     }
 }

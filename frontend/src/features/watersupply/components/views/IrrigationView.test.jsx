@@ -122,8 +122,7 @@ describe('IrrigationView', () => {
 
     render(<IrrigationView {...props} />)
 
-    await waitFor(() => expect(screen.getByText('Error')).toBeTruthy())
-    expect(screen.getByText(/Backend unreachable/)).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Backend unreachable'))
   })
 
   it('starts a scheduled irrigation and refreshes', async () => {

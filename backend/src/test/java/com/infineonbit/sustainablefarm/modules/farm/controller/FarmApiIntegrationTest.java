@@ -35,6 +35,9 @@ class FarmApiIntegrationTest {
     @Autowired
     private FarmDirectory farmDirectory;
 
+    @Autowired
+    private SystemUsers systemUsers;
+
     @Test
     void zoneIsReadWithItsBlockAndFarmAndTheLinkSetsTheBlockCode() throws Exception {
         long farmId = idOf(post("/api/farms"), "{\"name\":\"Referential Farm\"}");
@@ -72,8 +75,8 @@ class FarmApiIntegrationTest {
         long zoneId = idOf(post("/api/zones"),
                 "{\"fieldId\":%d,\"name\":\"Referenced Zone\",\"areaHectares\":1}".formatted(fieldId));
         mockMvc.perform(post("/api/irrigations").contentType(MediaType.APPLICATION_JSON).content("""
-                {"zoneId":%d,"startTime":"2026-09-16T12:00:00Z","durationMinutes":30,"waterQuantityLiters":900,"createdBy":"%s"}
-                """.formatted(zoneId, SystemUsers.IOT_SYSTEM_USER_ID))).andExpect(status().isCreated());
+                {"zoneId":%d,"startTime":"2026-09-16T12:00:00Z","durationMinutes":30,"waterQuantityLiters":900,"createdBy":%d}
+                """.formatted(zoneId, systemUsers.iotSystemUserId()))).andExpect(status().isCreated());
 
         mockMvc.perform(delete("/api/zones/{id}", zoneId)).andExpect(status().isConflict());
         mockMvc.perform(delete("/api/fields/{id}", fieldId)).andExpect(status().isConflict());

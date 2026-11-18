@@ -63,7 +63,7 @@ public class HarvestEventServiceImpl implements HarvestEventService {
         existingEvent.setQualityGrade(harvestEvent.getQualityGrade());
         existingEvent.setQualityGradeDescription(harvestEvent.getQualityGradeDescription());
         existingEvent.setHarvestTeamId(harvestEvent.getHarvestTeamId());
-        existingEvent.setHarvestSupervisor(harvestEvent.getHarvestSupervisor());
+        existingEvent.setHarvestSupervisorId(harvestEvent.getHarvestSupervisorId());
         existingEvent.setWeatherConditions(harvestEvent.getWeatherConditions());
         existingEvent.setStorageLocation(harvestEvent.getStorageLocation());
         

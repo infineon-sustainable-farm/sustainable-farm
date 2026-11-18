@@ -8,6 +8,7 @@ import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -26,10 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class DripMaintenanceService {
     private final DripMaintenanceLogRepository logRepository;
     private final FarmDirectory farmDirectory;
+    private final PersonDirectory personDirectory;
 
-    public DripMaintenanceService(DripMaintenanceLogRepository logRepository, FarmDirectory farmDirectory) {
+    public DripMaintenanceService(DripMaintenanceLogRepository logRepository, FarmDirectory farmDirectory,
+                                  PersonDirectory personDirectory) {
         this.logRepository = logRepository;
         this.farmDirectory = farmDirectory;
+        this.personDirectory = personDirectory;
     }
 
     /** Recurring drip tasks and their periodicity. */
@@ -46,7 +50,7 @@ public class DripMaintenanceService {
     }
 
     public List<DripMaintenanceLogResponse> findAll() {
-        return logRepository.findAll().stream().map(DripMaintenanceLogResponse::from).toList();
+        return responses(logRepository.findAll());
     }
 
     /** Paginated list, with optional zone filter: same contract as the other module lists. */
@@ -54,7 +58,7 @@ public class DripMaintenanceService {
         Page<DripMaintenanceLog> page = zoneId == null
                 ? logRepository.findAll(pageable)
                 : logRepository.findByZoneId(zoneId, pageable);
-        return new PageResponse<>(page.getContent().stream().map(DripMaintenanceLogResponse::from).toList(),
+        return new PageResponse<>(responses(page.getContent()),
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
 
@@ -73,14 +77,14 @@ public class DripMaintenanceService {
         log.setCloggingSeverity(request.cloggingSeverity());
         log.setEmitterReplacedCount(request.emitterReplacedCount());
         log.setNotes(request.notes());
-        log.setPerformedBy(request.performedBy());
         requireZone(log.getZoneId());
         requireMaintenanceInfo(log.getMaintenanceDate(), log.getMaintenanceType());
-        return DripMaintenanceLogResponse.from(logRepository.save(log));
+        log.setPerformedByPersonId(personDirectory.idOf(request.performedBy()));
+        return response(logRepository.save(log));
     }
 
     public DripMaintenanceLogResponse get(UUID logId) {
-        return DripMaintenanceLogResponse.from(getEntity(logId));
+        return response(getEntity(logId));
     }
 
     @Transactional
@@ -97,14 +101,28 @@ public class DripMaintenanceService {
         log.setCloggingSeverity(request.cloggingSeverity());
         log.setEmitterReplacedCount(request.emitterReplacedCount());
         log.setNotes(request.notes());
-        log.setPerformedBy(request.performedBy());
         requireMaintenanceInfo(log.getMaintenanceDate(), log.getMaintenanceType());
-        return DripMaintenanceLogResponse.from(logRepository.save(log));
+        log.setPerformedByPersonId(personDirectory.idOf(request.performedBy()));
+        return response(logRepository.save(log));
     }
 
     @Transactional
     public void delete(UUID logId) {
         logRepository.delete(getEntity(logId));
+    }
+
+    /** API view; performedBy is the full name of the referenced person. */
+    private DripMaintenanceLogResponse response(DripMaintenanceLog log) {
+        return DripMaintenanceLogResponse.from(log, personDirectory.nameOf(log.getPerformedByPersonId()));
+    }
+
+    /** API views of several logs, with one lookup of the people. */
+    private List<DripMaintenanceLogResponse> responses(List<DripMaintenanceLog> logs) {
+        Map<Long, String> names = personDirectory.namesOf(
+                logs.stream().map(DripMaintenanceLog::getPerformedByPersonId).toList());
+        return logs.stream()
+                .map(log -> DripMaintenanceLogResponse.from(log, names.get(log.getPerformedByPersonId())))
+                .toList();
     }
 
     private DripMaintenanceLog getEntity(UUID logId) {

@@ -9,6 +9,7 @@ import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotF
 import com.infineonbit.sustainablefarm.modules.machinery.exception.UsageLogNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.UsageLogRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class UsageLogService {
     private final UsageLogRepository usageLogRepository;
     private final EquipmentRepository equipmentRepository;
+    private final PersonDirectory personDirectory;
 
     /**
      * Creates a usage log entry for an existing equipment.
@@ -37,7 +39,7 @@ public class UsageLogService {
         usageLog.setEquipment(equipment);
         usageLog.setDate(request.date());
         usageLog.setHoursUsed(request.hoursUsed());
-        usageLog.setOperator(trimToNull(request.operator()));
+        usageLog.setOperatorPersonId(personDirectory.idOf(request.operator()));
         usageLog.setNotes(trimToNull(request.notes()));
 
         try {
@@ -102,7 +104,7 @@ public class UsageLogService {
             usageLog.setHoursUsed(request.hoursUsed());
         }
         if (request.operator() != null) {
-            usageLog.setOperator(trimToNull(request.operator()));
+            usageLog.setOperatorPersonId(personDirectory.idOf(request.operator()));
         }
         if (request.notes() != null) {
             usageLog.setNotes(trimToNull(request.notes()));
@@ -137,7 +139,7 @@ public class UsageLogService {
                 usageLog.getEquipment() != null ? usageLog.getEquipment().getId() : null,
                 usageLog.getDate(),
                 usageLog.getHoursUsed(),
-                usageLog.getOperator(),
+                personDirectory.nameOf(usageLog.getOperatorPersonId()),
                 usageLog.getNotes()
         );
     }
