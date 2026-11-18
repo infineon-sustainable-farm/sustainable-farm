@@ -99,18 +99,24 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO notifications (id, created_at, user_id, title, message, type, is_read, action_url)
-VALUES (
-    'a0000000-0000-0000-0000-000000000001',
+-- The notification of the demo, in the single alert store of the notification module
+-- (docs/adr/0004): no fixed id, the row is found by its source module and title.
+INSERT INTO alert (created_at, updated_at, source_module, type, severity, status, title, message,
+                   recipient_person_id, is_read, action_url, raised_at)
+SELECT
     '2026-01-01T08:45:00Z',
-    (SELECT id FROM person WHERE email = 'demo.admin@sustainable-farm.local'),
+    '2026-01-01T08:45:00Z',
+    'WATERSUPPLY',
+    'info',
+    'INFO',
+    'OPEN',
     'Demo pret',
     'Les donnees de demonstration water supply sont disponibles.',
-    'info',
+    (SELECT id FROM person WHERE email = 'demo.admin@sustainable-farm.local'),
     false,
-    '/api/farms'
-)
-ON CONFLICT (id) DO NOTHING;
+    '/api/farms',
+    '2026-01-01T08:45:00Z'
+WHERE NOT EXISTS (SELECT 1 FROM alert WHERE source_module = 'WATERSUPPLY' AND title = 'Demo pret');
 
 INSERT INTO rainwater_harvests (id, created_at, source_id, catchment_area_m2, rainfall_mm, runoff_coefficient, harvested_liters, capture_date)
 VALUES (

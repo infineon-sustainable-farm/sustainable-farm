@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyAlertResponse;
-import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertSeverity;
-import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertStatus;
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.AlertSeverity;
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.AlertStatus;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.AlertService;
 import org.junit.jupiter.api.Test;
@@ -30,19 +30,20 @@ class AlertControllerTest {
 
     @Test
     void resolveChangesAlertStatus() throws Exception {
-        when(energyAlertService.updateStatus("alert-1", AlertStatus.RESOLVED)).thenReturn(resolvedAlert());
-        mockMvc.perform(patch("/api/energy/alerts/alert-1/status")
+        when(energyAlertService.updateStatus(1L, AlertStatus.RESOLVED)).thenReturn(resolvedAlert());
+        mockMvc.perform(patch("/api/energy/alerts/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"RESOLVED\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("RESOLVED"));
+                .andExpect(jsonPath("$.status").value("RESOLVED"))
+                .andExpect(jsonPath("$.alertId").value(1));
     }
 
     @Test
     void missingAlertReturnsNotFound() throws Exception {
-        when(energyAlertService.updateStatus("missing", AlertStatus.RESOLVED))
-                .thenThrow(new EnergySupplyNotFoundException("Energy alert", "missing"));
-        mockMvc.perform(patch("/api/energy/alerts/missing/status")
+        when(energyAlertService.updateStatus(99L, AlertStatus.RESOLVED))
+                .thenThrow(new EnergySupplyNotFoundException("Energy alert", "99"));
+        mockMvc.perform(patch("/api/energy/alerts/99/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"RESOLVED\"}"))
                 .andExpect(status().isNotFound());
@@ -50,7 +51,7 @@ class AlertControllerTest {
 
     @Test
     void missingStatusReturnsBadRequest() throws Exception {
-        mockMvc.perform(patch("/api/energy/alerts/alert-1/status")
+        mockMvc.perform(patch("/api/energy/alerts/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":null}"))
                 .andExpect(status().isBadRequest());
@@ -58,7 +59,7 @@ class AlertControllerTest {
 
     private EnergyAlertResponse resolvedAlert() {
         return new EnergyAlertResponse(
-                "alert-1", "ENG-002", "Battery", AlertSeverity.WARNING,
+                1L, "ENG-002", "Battery", AlertSeverity.WARNING,
                 "Battery charge is low", LocalDateTime.now(), AlertStatus.RESOLVED);
     }
 }

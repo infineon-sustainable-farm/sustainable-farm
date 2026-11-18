@@ -39,7 +39,7 @@ public class AlertController {
 
     @PatchMapping("/{alertId}/status")
     public ResponseEntity<EnergyAlertResponse> updateStatus(
-            @PathVariable String alertId,
+            @PathVariable Long alertId,
             @Valid @RequestBody AlertStatusRequest request) {
         return ResponseEntity.ok(service.updateStatus(alertId, request.status()));
     }

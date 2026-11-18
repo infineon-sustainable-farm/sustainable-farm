@@ -1,38 +1,43 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertBoard;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertDetails;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertDto;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationResponse;
-import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
-import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * The notification center of Water Supply: the module's alerts in the single alert store of the
+ * notification module (ADR 0004), under the former {@code /api/notifications} JSON.
+ */
 @Service
 @Transactional(readOnly = true)
 public class NotificationService {
-    private final NotificationRepository notificationRepository;
+    private static final String NOTIFICATION = "Notification";
+
+    private final AlertBoard alertBoard;
     private final PersonDirectory personDirectory;
 
-    public NotificationService(NotificationRepository notificationRepository, PersonDirectory personDirectory) {
-        this.notificationRepository = notificationRepository;
+    public NotificationService(AlertBoard alertBoard, PersonDirectory personDirectory) {
+        this.alertBoard = alertBoard;
         this.personDirectory = personDirectory;
     }
 
     public List<NotificationResponse> findAll() {
-        return notificationRepository.findAll().stream().map(NotificationResponse::from).toList();
+        return alertBoard.list(AlertService.SOURCE, null).stream().map(NotificationResponse::from).toList();
     }
 
+    /** A page of the notifications; the sort attributes are those of the alert ({@code raisedAt}). */
     public PageResponse<NotificationResponse> findAll(Pageable pageable, Long userId) {
-        Page<Notification> page = userId == null
-                ? notificationRepository.findAll(pageable)
-                : notificationRepository.findByUserId(userId, pageable);
+        Page<AlertDto> page = alertBoard.page(AlertService.SOURCE, userId, pageable);
         return new PageResponse<>(page.map(NotificationResponse::from).getContent(), page.getNumber(),
                 page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
@@ -40,42 +45,38 @@ public class NotificationService {
     @Transactional
     public NotificationResponse create(NotificationCreateRequest request) {
         requireUser(request.userId());
-        Notification notification = new Notification();
-        notification.setUserId(request.userId());
-        notification.setTitle(request.title());
-        notification.setMessage(request.message());
-        notification.setType(request.type());
-        notification.setRead(request.read() == null ? false : request.read());
-        notification.setActionUrl(request.actionUrl());
-        return NotificationResponse.from(notificationRepository.save(notification));
+        return NotificationResponse.from(alertBoard.raise(AlertService.SOURCE, AlertDetails.builder()
+                .recipientPersonId(request.userId())
+                .title(request.title())
+                .message(request.message())
+                .type(request.type())
+                .severity(AlertService.severityOf(request.type()))
+                .read(request.read() != null && request.read())
+                .actionUrl(request.actionUrl())
+                .build()));
     }
 
-    public NotificationResponse get(UUID notificationId) {
-        return NotificationResponse.from(getEntity(notificationId));
+    public NotificationResponse get(Long notificationId) {
+        return NotificationResponse.from(alertBoard.find(AlertService.SOURCE, notificationId)
+                .orElseThrow(() -> new NotFoundException(NOTIFICATION)));
     }
 
     @Transactional
-    public NotificationResponse markAsRead(UUID notificationId) {
-        Notification notification = getEntity(notificationId);
-        notification.setRead(true);
-        return NotificationResponse.from(notificationRepository.save(notification));
+    public NotificationResponse markAsRead(Long notificationId) {
+        return NotificationResponse.from(alertBoard.markRead(AlertService.SOURCE, notificationId)
+                .orElseThrow(() -> new NotFoundException(NOTIFICATION)));
     }
 
     @Transactional
     public List<NotificationResponse> markAllAsRead() {
-        List<Notification> notifications = notificationRepository.findAll();
-        notifications.forEach(notification -> notification.setRead(true));
-        return notificationRepository.saveAll(notifications).stream().map(NotificationResponse::from).toList();
+        return alertBoard.markAllRead(AlertService.SOURCE).stream().map(NotificationResponse::from).toList();
     }
 
     @Transactional
-    public void delete(UUID notificationId) {
-        notificationRepository.delete(getEntity(notificationId));
-    }
-
-    private Notification getEntity(UUID notificationId) {
-        return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new NotFoundException("Notification"));
+    public void delete(Long notificationId) {
+        if (!alertBoard.delete(AlertService.SOURCE, notificationId)) {
+            throw new NotFoundException(NOTIFICATION);
+        }
     }
 
     /** The recipient is a person of the staff referential (docs/adr/0004). */

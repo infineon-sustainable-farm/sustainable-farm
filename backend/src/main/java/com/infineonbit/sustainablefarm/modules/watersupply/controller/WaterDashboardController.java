@@ -1,14 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.controller;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertBoard;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQualityTestRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.AIService;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.AlertService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.IotDeviceService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.WaterEconomyService;
 import java.time.Instant;
@@ -30,7 +31,7 @@ public class WaterDashboardController {
     private final WaterSourceRepository waterSourceRepository;
     private final IrrigationScheduleRepository irrigationScheduleRepository;
     private final WaterQualityTestRepository waterQualityTestRepository;
-    private final NotificationRepository notificationRepository;
+    private final AlertBoard alertBoard;
     private final WaterEconomyService waterEconomyService;
     private final AIService aiService;
     private final IotDeviceService iotDeviceService;
@@ -40,7 +41,7 @@ public class WaterDashboardController {
             WaterSourceRepository waterSourceRepository,
             IrrigationScheduleRepository irrigationScheduleRepository,
             WaterQualityTestRepository waterQualityTestRepository,
-            NotificationRepository notificationRepository,
+            AlertBoard alertBoard,
             WaterEconomyService waterEconomyService,
             AIService aiService,
             IotDeviceService iotDeviceService) {
@@ -48,7 +49,7 @@ public class WaterDashboardController {
         this.waterSourceRepository = waterSourceRepository;
         this.irrigationScheduleRepository = irrigationScheduleRepository;
         this.waterQualityTestRepository = waterQualityTestRepository;
-        this.notificationRepository = notificationRepository;
+        this.alertBoard = alertBoard;
         this.waterEconomyService = waterEconomyService;
         this.aiService = aiService;
         this.iotDeviceService = iotDeviceService;
@@ -114,7 +115,7 @@ public class WaterDashboardController {
         double tankLevel = capacity == 0 ? 0 : Math.round((level / capacity) * 100);
 
         // Anomalies = critical alerts in the database (computed by the database, no full scan).
-        long anomalyCount = notificationRepository.countByTypeIgnoreCase("critical");
+        long anomalyCount = alertBoard.countByType(AlertService.SOURCE, "critical");
 
         return Map.of(
                 "daily_consumption_liters", dailyConsumption,
@@ -173,15 +174,15 @@ public class WaterDashboardController {
 
     @GetMapping("/alerts")
     public List<Map<String, Object>> alerts() {
-        return notificationRepository.findAll().stream()
-                .filter(notification -> Boolean.FALSE.equals(notification.getRead()))
-                .sorted(Comparator.comparing(Notification::getCreatedAt).reversed())
+        return alertBoard.list(AlertService.SOURCE, null).stream()
+                .filter(alert -> !alert.read())
+                .sorted(Comparator.comparing(AlertDto::raisedAt).reversed())
                 .limit(10)
-                .map(notification -> Map.<String, Object>of(
-                        "type", notification.getType(),
-                        "title", notification.getTitle(),
-                        "message", notification.getMessage(),
-                        "timestamp", notification.getCreatedAt().toString()))
+                .map(alert -> Map.<String, Object>of(
+                        "type", alert.type(),
+                        "title", alert.title(),
+                        "message", alert.message(),
+                        "timestamp", alert.raisedAt().toString()))
                 .toList();
     }
 }
