@@ -11,6 +11,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -23,9 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Creating a component on a real database: its id is a business id assigned by the caller
- * (ENG-001...). With a generated-value strategy on that id, Hibernate 7 refused new components
- * as detached entities, which broke both the create endpoint and the dev seeder.
+ * Creating a component on a real database: its key is a generated Long id, and the business
+ * code assigned by the caller (ENG-001...) is a unique column, the {@code componentId} of the API.
  */
 @DataJpaTest
 @ActiveProfiles("test")
@@ -49,15 +49,19 @@ class EnergyComponentPersistenceTest {
     }
 
     @Test
-    void createStoresTheComponentUnderItsBusinessId() {
-        service.create(request("ENG-101"));
+    void createStoresTheComponentUnderAGeneratedIdWithItsBusinessCode() {
+        assertThat(service.create(request("ENG-101")).componentId()).isEqualTo("ENG-101");
 
-        assertThat(repository.findById("ENG-101"))
-                .hasValueSatisfying(c -> assertThat(c.getName()).isEqualTo("Rooftop array"));
+        assertThat(repository.findByCode("ENG-101")).hasValueSatisfying(component -> {
+            assertThat(component.getId()).isNotNull();
+            assertThat(component.getName()).isEqualTo("Rooftop array");
+            assertThat(component.getCreatedAt()).isNotNull();
+            assertThat(component.getUpdatedAt()).isNotNull();
+        });
     }
 
     @Test
-    void createRefusesAnIdThatAlreadyExists() {
+    void createRefusesACodeThatAlreadyExists() {
         service.create(request("ENG-102"));
 
         assertThatThrownBy(() -> service.create(request("ENG-102")))
@@ -66,20 +70,24 @@ class EnergyComponentPersistenceTest {
     }
 
     @Test
-    void saveOfANewComponentWithItsIdInserts() {
+    void theDatabaseRefusesTwoComponentsWithTheSameCode() {
+        repository.saveAndFlush(component("ENG-103"));
+
+        assertThatThrownBy(() -> repository.saveAndFlush(component("ENG-103")))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private static EnergyComponent component(String code) {
         EnergyComponent component = new EnergyComponent();
-        component.setComponentId("ENG-103");
+        component.setCode(code);
         component.setName("Battery bank");
         component.setCategory(ComponentCategory.BATTERY);
         component.setStatus(ComponentStatus.OPERATIONAL);
-
-        repository.saveAndFlush(component);
-
-        assertThat(repository.existsById("ENG-103")).isTrue();
+        return component;
     }
 
-    private static EnergyComponentRequest request(String id) {
-        return new EnergyComponentRequest(id, "Rooftop array", ComponentCategory.PV_ARRAY,
+    private static EnergyComponentRequest request(String code) {
+        return new EnergyComponentRequest(code, "Rooftop array", ComponentCategory.PV_ARRAY,
                 new BigDecimal("12.50"), ComponentStatus.OPERATIONAL);
     }
 }

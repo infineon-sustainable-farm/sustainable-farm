@@ -1,19 +1,19 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantingResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -62,7 +62,7 @@ class PlantingConcurrencyIntegrationTest {
     private ConcurrentPlantingRetry concurrentPlantingRetry;
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private GrowthCalendarRepository growthCalendarRepository;
@@ -130,10 +130,10 @@ class PlantingConcurrencyIntegrationTest {
                 null, LocalDate.of(2025, 1, 1), 100.0, "READY_TO_TRANSPLANT", LocalDate.of(2026, 6, 1), null)).id();
     }
 
-    /** Variety rows of the block of a code, none when the farm referential has no such block. */
-    private List<Variety> varietiesOf(String blockCode) {
+    /** BlockVariety rows of the block of a code, none when the farm referential has no such block. */
+    private List<BlockVariety> varietiesOf(String blockCode) {
         return plantsBlocks.find(null, blockCode)
-                .map(block -> varietyRepository.findByOptionalFilters(false, List.of(block.id())))
+                .map(block -> blockVarietyRepository.findByOptionalFilters(false, List.of(block.id())))
                 .orElse(List.of());
     }
 
@@ -147,7 +147,7 @@ class PlantingConcurrencyIntegrationTest {
     /** Current number of trees of each variety row of the block, oldest row first. */
     private List<Integer> treeBalances(String blockCode) {
         List<Long> ids = varietiesOf(blockCode).stream()
-                .map(Variety::getId)
+                .map(BlockVariety::getId)
                 .toList();
         return populationEventRepository.findTreeBalances(ids).stream()
                 .map(TreeBalance::getBalance)
@@ -166,13 +166,13 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: a variety row with no planting, like the Zalka 2025 row of the dev profile
             String blockCode = "CE" + trial;
-            Variety keitt = new Variety();
+            BlockVariety keitt = new BlockVariety();
             keitt.setName("Keitt");
             BlockDto block = plantsBlocks.resolve(null, blockCode);
             keitt.assignBlock(block.id(), PlantsBlocks.label(block));
             keitt.setTreeCount(200);
             keitt.setSource("Zalka_2025");
-            varietyRepository.save(keitt);
+            blockVarietyRepository.save(keitt);
             // Act
             List<Object> results = together(List.of(
                     plant(blockCode, "Keitt", "2023-09-24", 150),

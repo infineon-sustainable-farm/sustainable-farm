@@ -42,7 +42,7 @@ public class PlantScenarioServiceTest {
     /** The dev scenario as the loader writes it. */
     private static PlantScenario zalka() {
         return new PlantScenario(1L, "Zalka 2025", "Keitt", 200, "Zalka_2025_C43",
-                220.0, "derived: Zalka_2025 D4 / B4", null, null,
+                BigDecimal.valueOf(220.0), "derived: Zalka_2025 D4 / B4", null, null,
                 new BigDecimal("0.9072"), "derived: Zalka_2025 R19 / D4", "EUR",
                 new BigDecimal("6707.00"), "Zalka_2025_L23", null, null,
                 new BigDecimal("171512.00"), "Zalka_2025_H28", null, null, ENTERED);

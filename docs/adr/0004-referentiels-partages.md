@@ -62,7 +62,7 @@ Plants et Product Transformation désignent un bloc par un code saisi (« A », 
 
 | Élément | Décision |
 |---|---|
-| Colonnes plants | `block_id` sur `varietes`, `calendrier_croissance`, `health_inspection`, `health_treatment`, `fertilizer_movement`, `nursery_event` ; `nursery_batch` garde `farm_id` (FK vers `farm`, la ferme de la pépinière, sans bloc) et `planned_block_id`. `id_ferme`, `bloc_parcelle`, `farm_id Integer` et `block_code` disparaissent |
+| Colonnes plants | `block_id` sur `block_variety` (ex-`varietes`), `growth_calendar` (ex-`calendrier_croissance`), `health_inspection`, `health_treatment`, `fertilizer_movement`, `nursery_event` ; `nursery_batch` garde `farm_id` (FK vers `farm`, la ferme de la pépinière, sans bloc) et `planned_block_id`. `id_ferme`, `bloc_parcelle`, `farm_id Integer` et `block_code` disparaissent |
 | Colonnes Product Transformation | `batch.block_id`, `harvest_event.block_id`, `raw_intake.source_block_id` (Long, non nuls) ; `farm_id String`, `block_id String`, `source_farm` et `source_block` disparaissent |
 | Code inconnu à l'écriture | Le bloc est créé par `farm.api.BlockRegistry.findOrCreateBlock` : nommé d'après son code, 0 ha, sous la ferme demandée, ou sans ferme demandée sous la ferme par défaut (celle du plus petit id, créée sous le nom « Default farm » si le référentiel est vide). Tout code accepté avant reste accepté, aucun écran ne change |
 | Ferme demandée par plants | `farmId` doit exister et posséder le bloc, sinon 400 ; une récolte ou une observation sur un bloc d'une autre ferme reste « aucune plantation » (422 comme avant). Le `farmId` des réponses est la ferme du bloc : il n'est plus `null` pour une ligne saisie sans ferme |
@@ -85,7 +85,7 @@ Les trois copies (energysupply `alert`, salesmarketing `alerts`, watersupply `no
 | `severity` | energysupply et sales | Enum `CRITICAL`, `WARNING`, `INFO` ; sales garde ses valeurs en minuscules dans le JSON ; watersupply la déduit de son `type` quand c'est un niveau |
 | `status` | energysupply et sales | Enum `OPEN`, `ACKNOWLEDGED`, `RESOLVED`, `DISMISSED`, obligatoire, `OPEN` par défaut ; energysupply n'expose que `OPEN` et `RESOLVED` |
 | `title`, `message` | watersupply, tous | Message jusqu'à 1000 caractères |
-| `related_entity_type`, `related_entity_id` | sales `related_table`, `related_id` ; energysupply `component_id` | Référence polymorphe sans clé étrangère, id en texte pour accepter les codes de composant (`ENG-002`) comme les ids numériques ; energysupply refuse la suppression d'un composant visé par une alerte (409), comme l'ancienne clé étrangère |
+| `related_entity_type`, `related_entity_id` | sales `related_table`, `related_id` ; energysupply `component_id` | Référence polymorphe sans clé étrangère, id en texte ; energysupply y range l'id Long du composant (T34) et renvoie son code (`ENG-002`) dans le JSON, et refuse la suppression d'un composant visé par une alerte (409), comme l'ancienne clé étrangère |
 | `region`, `origin` | sales | Facultatifs |
 | `recipient_person_id` | watersupply `user_id` | Clé étrangère vers `person` (`CrossModuleForeignKey`) |
 | `is_read`, `action_url` | watersupply | Lu ou non, route à ouvrir |

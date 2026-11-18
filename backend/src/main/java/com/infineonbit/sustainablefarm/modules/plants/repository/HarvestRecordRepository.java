@@ -19,7 +19,7 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      * Returns the harvests matching the given filters, with their variety row.
      *
      * <p>Every parameter is optional: a {@code null} parameter disables its own
-     * filter, as in {@link VarietyRepository#findByOptionalFilters}. The farm and
+     * filter, as in {@link BlockVarietyRepository#findByOptionalFilters}. The farm and
      * the block are those of the variety row. Both dates are included; a
      * {@code from} after {@code to} matches nothing and is not an error.
      *

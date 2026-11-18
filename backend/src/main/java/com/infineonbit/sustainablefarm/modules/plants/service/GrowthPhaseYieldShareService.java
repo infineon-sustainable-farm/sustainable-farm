@@ -70,7 +70,7 @@ public class GrowthPhaseYieldShareService {
                     shareDefault.yieldShare(), shareDefault.source(), null);
         }
         return new GrowthPhaseYieldShareResponse(phase.code(), phase.label(), phase.yearsBand(),
-                correction.getYieldShare(), correction.getSource(), true,
+                Decimals.toDouble(correction.getYieldShare()), correction.getSource(), true,
                 shareDefault.yieldShare(), shareDefault.source(), correction.getLastUpdated());
     }
 
@@ -131,7 +131,7 @@ public class GrowthPhaseYieldShareService {
         Optional<GrowthPhaseYieldShare> recorded = growthPhaseYieldShareRepository.findByGrowthPhase(phase.label());
         if (recorded.isPresent()) {
             GrowthPhaseYieldShare correction = recorded.get();
-            correction.setYieldShare(request.yieldShare());
+            correction.setYieldShare(Decimals.of(request.yieldShare(), GrowthPhaseYieldShare.SHARE_SCALE));
             correction.setSource(source);
             correction.setLastUpdated(now);
             return toResponse(phase, growthPhaseYieldShareRepository.save(correction));
@@ -139,7 +139,8 @@ public class GrowthPhaseYieldShareService {
         try {
             // Flushed here, so the unique constraint on the phase answers inside this method.
             return toResponse(phase, growthPhaseYieldShareRepository.saveAndFlush(
-                    new GrowthPhaseYieldShare(null, phase.label(), request.yieldShare(), source, now)));
+                    new GrowthPhaseYieldShare(null, phase.label(),
+                            Decimals.of(request.yieldShare(), GrowthPhaseYieldShare.SHARE_SCALE), source, now)));
         } catch (DataIntegrityViolationException concurrentFirstCorrection) {
             throw new ConflictException("Another yield share for the " + phase.label()
                     + " phase was being recorded at the same time. Nothing was saved: please send the request again.");

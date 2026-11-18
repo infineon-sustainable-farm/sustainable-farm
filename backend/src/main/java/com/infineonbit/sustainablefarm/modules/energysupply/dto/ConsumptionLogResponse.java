@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record ConsumptionLogResponse(
-        String logId,
+        Long logId,
         LocalDate date,
         LoadCategory loadCategory,
         BigDecimal kwhConsumed,
@@ -16,7 +16,7 @@ public record ConsumptionLogResponse(
 
     public static ConsumptionLogResponse from(ConsumptionLog log) {
         return new ConsumptionLogResponse(
-                log.getLogId(),
+                log.getId(),
                 log.getDate(),
                 log.getLoadCategory(),
                 log.getKwhConsumed(),

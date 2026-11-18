@@ -21,7 +21,7 @@ import java.util.List;
 
 /** Feeds the "Energy Consumption Tracking" tab of the Energy App. */
 @RestController("energyConsumptionController")
-@RequestMapping("/api/energy/consumption")
+@RequestMapping("/api/energy-supply/consumption")
 public class ConsumptionController {
 
     private final ConsumptionLogService service;
@@ -46,7 +46,7 @@ public class ConsumptionController {
     }
 
     @GetMapping("/{logId}")
-    public ConsumptionLogResponse getById(@PathVariable String logId) {
+    public ConsumptionLogResponse getById(@PathVariable Long logId) {
         return service.findById(logId);
     }
 
@@ -62,13 +62,13 @@ public class ConsumptionController {
 
     @PutMapping("/{logId}")
     public ConsumptionLogResponse update(
-            @PathVariable String logId,
+            @PathVariable Long logId,
             @Valid @RequestBody ConsumptionLogRequest request) {
         return service.update(logId, request);
     }
 
     @DeleteMapping("/{logId}")
-    public ResponseEntity<Void> delete(@PathVariable String logId) {
+    public ResponseEntity<Void> delete(@PathVariable Long logId) {
         service.delete(logId);
         return ResponseEntity.noContent().build();
     }

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.dto;
 
+import com.infineonbit.sustainablefarm.modules.energysupply.entity.EnergyComponent;
 import com.infineonbit.sustainablefarm.modules.notification.api.AlertDto;
 
 import java.time.LocalDateTime;
@@ -15,13 +16,15 @@ public record EnergyAlertResponse(
         AlertStatus status) {
 
     /**
-     * @param alert         an alert of the energy supply module
-     * @param componentName name of the component the alert is about, {@code null} when none
+     * @param alert     an alert of the energy supply module
+     * @param component the component the alert is about, {@code null} when none
      */
-    public static EnergyAlertResponse from(AlertDto alert, String componentName) {
+    public static EnergyAlertResponse from(AlertDto alert, EnergyComponent component) {
+        String componentName = component == null || component.getName() == null || component.getName().isEmpty()
+                ? null : component.getName();
         return new EnergyAlertResponse(
                 alert.id(),
-                alert.relatedEntityId(),
+                component == null ? null : component.getCode(),
                 componentName,
                 alert.severity() == null ? null : AlertSeverity.valueOf(alert.severity().name()),
                 alert.message(),

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -35,13 +36,14 @@ public class AgronomicReferenceLoaderTest {
 
     private List<String> shareRows() {
         return growthPhaseYieldShareRepository.findAll().stream()
-                .map(share -> share.getGrowthPhase() + " " + share.getYieldShare() + " " + share.getSource())
+                .map(share -> share.getGrowthPhase() + " " + share.getYieldShare().doubleValue() + " " + share.getSource())
                 .sorted()
                 .toList();
     }
 
     private void shareRow(String growthPhase, double yieldShare, String source) {
-        growthPhaseYieldShareRepository.save(new GrowthPhaseYieldShare(null, growthPhase, yieldShare, source,
+        growthPhaseYieldShareRepository.save(new GrowthPhaseYieldShare(null, growthPhase,
+                BigDecimal.valueOf(yieldShare), source,
                 FIRST_START));
     }
 

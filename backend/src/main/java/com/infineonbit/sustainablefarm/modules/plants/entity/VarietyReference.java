@@ -1,12 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -14,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.util.Locale;
@@ -59,17 +58,16 @@ import java.util.regex.Pattern;
 @Getter
 @Setter
 @NoArgsConstructor
-public class VarietyReference {
+public class VarietyReference extends BaseEntity {
 
     /** Maximum length of a variety key. */
     public static final int KEY_LENGTH = VarietyCatalog.KEY_LENGTH;
 
+    /** Decimals kept of {@code yieldPerTreeKg}, as the API accepts them. */
+    public static final int YIELD_SCALE = 1;
+
     private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Z0-9]+");
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     /**
      * Variety name as written in the catalogue, for example {@code "Amelie"}. A
@@ -87,8 +85,8 @@ public class VarietyReference {
     private String varietyKey;
 
     /** Yield of one tree in full production, per year, in kg. */
-    @Column(name = "yield_per_tree_kg", nullable = false)
-    private Double yieldPerTreeKg;
+    @Column(name = "yield_per_tree_kg", nullable = false, precision = 5, scale = YIELD_SCALE)
+    private BigDecimal yieldPerTreeKg;
 
     @Column(name = "yield_source", nullable = false)
     private String yieldSource;
@@ -114,7 +112,7 @@ public class VarietyReference {
      * A reference whose key is derived from its name when it is first written
      * (see {@link #keyOf(String)}).
      */
-    public VarietyReference(Long id, String varietyName, Double yieldPerTreeKg, String yieldSource,
+    public VarietyReference(Long id, String varietyName, BigDecimal yieldPerTreeKg, String yieldSource,
                             Integer harvestStartMonth, Integer harvestEndMonth, String seasonSource,
                             Instant lastUpdated) {
         this(id, varietyName, null, yieldPerTreeKg, yieldSource, harvestStartMonth, harvestEndMonth,
@@ -122,10 +120,10 @@ public class VarietyReference {
     }
 
     /** A reference with an explicit catalogue key, or {@code null} to derive it from the name. */
-    public VarietyReference(Long id, String varietyName, String varietyKey, Double yieldPerTreeKg,
+    public VarietyReference(Long id, String varietyName, String varietyKey, BigDecimal yieldPerTreeKg,
                             String yieldSource, Integer harvestStartMonth, Integer harvestEndMonth,
                             String seasonSource, Instant lastUpdated) {
-        this.id = id;
+        setId(id);
         this.varietyName = varietyName;
         this.varietyKey = varietyKey;
         this.yieldPerTreeKg = yieldPerTreeKg;
