@@ -7,7 +7,7 @@ import {
   LANGUAGE_STORAGE_KEY,
   SUPPORTED_LANGUAGES,
 } from './config'
-import { namespaces, resources } from './resources'
+import { localeBackend, namespaces, resources } from './resources'
 
 // Keeps <html lang> in line with the active language (screen readers,
 // hyphenation, spell checking).
@@ -21,9 +21,12 @@ i18n.on('languageChanged', () => syncDocumentLanguage(i18n.resolvedLanguage))
 if (!i18n.isInitialized) {
   i18n
     .use(LanguageDetector)
+    .use(localeBackend)
     .use(initReactI18next)
     .init({
+      // English is bundled, the other languages load on demand (resources.js).
       resources,
+      partialBundledLanguages: true,
       ns: namespaces,
       defaultNS: DEFAULT_NAMESPACE,
       fallbackLng: FALLBACK_LANGUAGE,
@@ -31,7 +34,8 @@ if (!i18n.isInitialized) {
       // "de-CH" from the browser resolves to "de".
       nonExplicitSupportedLngs: true,
       load: 'languageOnly',
-      // Resources are bundled, so initialisation can be synchronous.
+      // English is bundled, so initialisation can be synchronous; a language loaded on demand
+      // suspends the screens (react-i18next useSuspense) until its files arrive.
       initAsync: false,
       interpolation: { escapeValue: false }, // React already escapes
       returnNull: false,

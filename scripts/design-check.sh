@@ -5,28 +5,28 @@
 # against the rules of @arc/design: no hard-coded visual value, one icon set
 # (the brand's, .arc-core/design/brand.json).
 #
-# The modules not migrated yet are not scanned: they still use the legacy tokens
-# of index.css. When a module is migrated, add its folder to MIGRATED_DIRS
-# (machinery since T12). T45 replaces the list by frontend/src.
+# Every folder of frontend/src is scanned except the two excluded modules, not migrated, which
+# still use their own tokens (sitesecurity block of index.css) and libraries.
 #
-# Usage: scripts/design-check.sh [dir...]   (default: MIGRATED_DIRS)
+# Usage: scripts/design-check.sh [dir...]   (default: every folder of frontend/src but EXCLUDED_DIRS)
 
 set -euo pipefail
 
 REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$REPO_ROOT"
 
-MIGRATED_DIRS=(
-  frontend/src/shared/ui
-  frontend/src/app
-  frontend/src/features/energysupply
-  frontend/src/features/machinery
-  frontend/src/features/plants
-  frontend/src/features/producttransformation
-  frontend/src/features/salesmarketing
-  frontend/src/features/visitormanagement
-  frontend/src/features/watersupply
+EXCLUDED_DIRS=(
+  frontend/src/features/sitesecurity
+  frontend/src/features/cropstorage
 )
+
+MIGRATED_DIRS=()
+for dir in frontend/src/*/ frontend/src/features/*/; do
+  dir=${dir%/}
+  [ "$dir" = frontend/src/features ] && continue
+  case " ${EXCLUDED_DIRS[*]} " in *" $dir "*) continue ;; esac
+  MIGRATED_DIRS+=("$dir")
+done
 
 if [ "$#" -gt 0 ]; then
   MIGRATED_DIRS=("$@")

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import i18n from './i18n'
-import { namespaces, resources } from './resources'
+import { availableLanguages, namespaces, resources } from './resources'
 
 const MODULES = [
   'machinery',
@@ -13,9 +13,10 @@ const MODULES = [
 ]
 
 describe('i18n setup', () => {
-  it('loads common and one namespace per module in the three languages', () => {
+  it('has common and one namespace per module in the three languages, English bundled', () => {
     expect(namespaces).toEqual(['common', ...MODULES].sort())
-    expect(Object.keys(resources).sort()).toEqual(['de', 'en', 'fr'])
+    expect(availableLanguages).toEqual(['de', 'en', 'fr'])
+    expect(Object.keys(resources)).toEqual(['en'])
   })
 
   it('translates common keys and falls back to English', async () => {

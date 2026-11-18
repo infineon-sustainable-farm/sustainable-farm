@@ -1,18 +1,21 @@
 import { useOutletContext } from 'react-router-dom'
-import { DashboardView } from './components/views/DashboardView'
-import { FarmsView } from './components/views/FarmsView'
-import { SourcesView } from './components/views/SourcesView'
-import { IrrigationView } from './components/views/IrrigationView'
-import { ConsumptionView } from './components/views/ConsumptionView'
-import { RainwaterView } from './components/views/RainwaterView'
-import { DripView } from './components/views/DripView'
-import { QualityView } from './components/views/QualityView'
-import { DroughtView } from './components/views/DroughtView'
-import { NotificationsView } from './components/views/NotificationsView'
-import { OutagesView } from './components/views/OutagesView'
-import { PlantsBlocksView } from './components/views/PlantsBlocksView'
-import { LotsView } from './components/views/LotsView'
-import { VisitorsView } from './components/views/VisitorsView'
+import { lazyScreen } from '../../shared/utils/lazyScreen'
+
+// Screens load on first visit, one chunk each. The views are named exports.
+const DashboardView = lazyScreen(() => import('./components/views/DashboardView'), 'DashboardView')
+const FarmsView = lazyScreen(() => import('./components/views/FarmsView'), 'FarmsView')
+const SourcesView = lazyScreen(() => import('./components/views/SourcesView'), 'SourcesView')
+const IrrigationView = lazyScreen(() => import('./components/views/IrrigationView'), 'IrrigationView')
+const ConsumptionView = lazyScreen(() => import('./components/views/ConsumptionView'), 'ConsumptionView')
+const RainwaterView = lazyScreen(() => import('./components/views/RainwaterView'), 'RainwaterView')
+const DripView = lazyScreen(() => import('./components/views/DripView'), 'DripView')
+const QualityView = lazyScreen(() => import('./components/views/QualityView'), 'QualityView')
+const DroughtView = lazyScreen(() => import('./components/views/DroughtView'), 'DroughtView')
+const NotificationsView = lazyScreen(() => import('./components/views/NotificationsView'), 'NotificationsView')
+const OutagesView = lazyScreen(() => import('./components/views/OutagesView'), 'OutagesView')
+const PlantsBlocksView = lazyScreen(() => import('./components/views/PlantsBlocksView'), 'PlantsBlocksView')
+const LotsView = lazyScreen(() => import('./components/views/LotsView'), 'LotsView')
+const VisitorsView = lazyScreen(() => import('./components/views/VisitorsView'), 'VisitorsView')
 
 /**
  * Maps a menu view -> screen component.

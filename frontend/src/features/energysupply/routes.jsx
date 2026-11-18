@@ -1,12 +1,15 @@
 import { Fuel, Gauge, LayoutDashboard, Leaf, Settings, SlidersHorizontal, Sun, TriangleAlert, Zap } from "lucide-react";
-import Dashboard from "./components/Dashboard";
-import EnergyComponents from "./components/EnergyComponents";
-import SolarGeneration from "./components/SolarGeneration";
-import ConsumptionTracking from "./components/ConsumptionTracking";
-import GeneratorBackup from "./components/GeneratorBackup";
-import CarbonFootprint from "./components/CarbonFootprint";
-import WhatIfAnalysis from "./components/WhatIfAnalysis";
-import AlertsNotifications from "./components/AlertsNotifications";
+import { lazyScreen } from "../../shared/utils/lazyScreen";
+
+// Screens load on first visit, one chunk each.
+const Dashboard = lazyScreen(() => import("./components/Dashboard"));
+const EnergyComponents = lazyScreen(() => import("./components/EnergyComponents"));
+const SolarGeneration = lazyScreen(() => import("./components/SolarGeneration"));
+const ConsumptionTracking = lazyScreen(() => import("./components/ConsumptionTracking"));
+const GeneratorBackup = lazyScreen(() => import("./components/GeneratorBackup"));
+const CarbonFootprint = lazyScreen(() => import("./components/CarbonFootprint"));
+const WhatIfAnalysis = lazyScreen(() => import("./components/WhatIfAnalysis"));
+const AlertsNotifications = lazyScreen(() => import("./components/AlertsNotifications"));
 
 // The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below. Each
 // former tab of the module has its own URL; the dashboard, the tab opened first, is the index.
