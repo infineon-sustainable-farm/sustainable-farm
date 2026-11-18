@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * The product transformation equipment API on the single equipment register (ADR 0004): the
  * {@code /api/equipment} JSON is unchanged, its equipment is the processing and drying part of
- * machinery's register ({@code /api/equipments}), in both directions.
+ * machinery's register ({@code /api/machinery/equipment}), in both directions.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -52,7 +52,7 @@ class ProductTransformationEquipmentApiTest {
     }
 
     private Number createMachineryEquipment(String name, String category, String stage) throws Exception {
-        String body = mockMvc.perform(post("/api/equipments")
+        String body = mockMvc.perform(post("/api/machinery/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "%s", "category": "%s", "stage": "%s", "status": "OPERATIONAL"}
@@ -114,7 +114,7 @@ class ProductTransformationEquipmentApiTest {
         mockMvc.perform(get("/api/equipment"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].equipmentId", not(hasItem(EQUIPMENT_ID))));
-        mockMvc.perform(get("/api/equipments").param("size", "1000"))
+        mockMvc.perform(get("/api/machinery/equipment").param("size", "1000"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[*].code", not(hasItem(EQUIPMENT_ID))));
     }
@@ -130,7 +130,7 @@ class ProductTransformationEquipmentApiTest {
                         .content(payload("PT-EQ-REG-WASH", "Register washer", "WASHING")))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/equipments").param("size", "1000"))
+        mockMvc.perform(get("/api/machinery/equipment").param("size", "1000"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[?(@.code == 'PT-EQ-REG-DRY')].name").value("Register solar dryer"))
                 .andExpect(jsonPath("$.content[?(@.code == 'PT-EQ-REG-DRY')].category").value("PROCESSING_MACHINERY"))
@@ -144,7 +144,7 @@ class ProductTransformationEquipmentApiTest {
         Number dryerId = createMachineryEquipment("Register drum dryer", "PROCESSING_MACHINERY", "DRYING");
         createMachineryEquipment("Register field tractor", "AGRICULTURAL_MACHINERY", "CULTIVATION");
 
-        List<String> codes = JsonPath.read(mockMvc.perform(get("/api/equipments").param("size", "1000"))
+        List<String> codes = JsonPath.read(mockMvc.perform(get("/api/machinery/equipment").param("size", "1000"))
                 .andReturn().getResponse().getContentAsString(),
                 "$.content[?(@.id == " + dryerId + ")].code");
         String code = codes.get(0);
@@ -172,7 +172,7 @@ class ProductTransformationEquipmentApiTest {
                 .andExpect(jsonPath("$.capacityKgPerHour").value(90.0));
 
         // A status change in machinery is the status seen in product transformation.
-        mockMvc.perform(patch("/api/equipments/{id}", dryerId)
+        mockMvc.perform(patch("/api/machinery/equipment/{id}", dryerId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\": \"OUT_OF_SERVICE\"}"))
                 .andExpect(status().isOk());
@@ -200,7 +200,7 @@ class ProductTransformationEquipmentApiTest {
                         .content(payload("PT-EQ-LONG", name, "PACKAGING")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.equipmentName").value(name));
-        mockMvc.perform(post("/api/equipments")
+        mockMvc.perform(post("/api/machinery/equipment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "%s", "category": "AGRICULTURAL_EQUIPMENT", "stage": "HARVEST",

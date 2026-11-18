@@ -76,6 +76,7 @@ class MoneyTest {
         assertEquals("EUR", CurrencyCode.EUR.name());
         assertEquals(0, CurrencyCode.XOF.fractionDigits());
         assertEquals(2, CurrencyCode.EUR.fractionDigits());
+        assertEquals(2, CurrencyCode.USD.fractionDigits());
         assertEquals("1500.00 XOF", Money.of("1500", CurrencyCode.XOF).toString());
     }
 }

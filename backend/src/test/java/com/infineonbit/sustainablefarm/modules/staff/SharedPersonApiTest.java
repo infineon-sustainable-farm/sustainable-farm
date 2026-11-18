@@ -61,7 +61,7 @@ class SharedPersonApiTest {
         equipment.setCode("EQ-SHARED-PERSON");
         equipment = equipmentRepository.save(equipment);
 
-        mockMvc.perform(post("/api/operator-assignments").contentType(MediaType.APPLICATION_JSON).content("""
+        mockMvc.perform(post("/api/machinery/operator-assignments").contentType(MediaType.APPLICATION_JSON).content("""
                 {"fullName":"%s","equipmentId":%d,"jobTitle":"Driver","startDate":"2026-01-01"}
                 """.formatted(NAME, equipment.getId())))
                 .andExpect(status().isCreated())
