@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake;
 
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
@@ -29,13 +31,18 @@ public class RawIntakeIntegrationTest {
     @Autowired
     private RawIntakeService rawIntakeService;
 
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
+
     @Test
     public void testBusinessJourneyBatchThenRawIntakeThenInitialize() {
+        VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
+
         // 1. Create Batch (precondition for RawIntake per contract)
         Batch batch = new Batch();
         batch.setBatchId("B-TEST-001");
         batch.setHarvestDate(LocalDate.now());
-        batch.setMangoVariety(HarvestEvent.MangoVariety.KENT);
+        batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
         batch.setCurrentStatus(Batch.BatchStatus.CREATED);
         batch.setFarmId("F-TEST");
@@ -51,7 +58,7 @@ public class RawIntakeIntegrationTest {
         intake.setSourceBlock("BL-01");
         intake.setIntakeDate(LocalDate.now());
         intake.setReceivedQuantityKg(new BigDecimal("95.00"));
-        intake.setReceivedVariety(HarvestEvent.MangoVariety.KENT);
+        intake.setReceivedVarietyKey("KENT");
         intake.setReceivedGrade(HarvestEvent.QualityGrade.A);
         intake.setIntakeOperator("op-test");
         RawIntake savedIntake = rawIntakeService.createRawIntake(intake);

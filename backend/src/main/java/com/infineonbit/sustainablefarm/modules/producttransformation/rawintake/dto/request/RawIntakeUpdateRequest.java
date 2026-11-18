@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -30,7 +29,8 @@ public class RawIntakeUpdateRequest {
     @Positive(message = "Received quantity must be positive")
     private BigDecimal receivedQuantityKg;
 
-    private MangoVariety receivedVariety;
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
+    private String receivedVariety;
 
     private QualityGrade receivedGrade;
 

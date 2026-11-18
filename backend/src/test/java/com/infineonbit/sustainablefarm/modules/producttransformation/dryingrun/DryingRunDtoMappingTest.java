@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun;
 
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service.DtoMapper;
@@ -9,7 +11,6 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.r
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.service.DryingRunService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,8 +66,12 @@ class DryingRunDtoMappingTest {
     @Autowired
     private DtoMapper dtoMapper;
 
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
+
     @BeforeEach
     void seedDryingRun() {
+        VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
         if (dryingRunRepository.existsById(RUN_ID)) {
             return;
         }
@@ -74,7 +79,7 @@ class DryingRunDtoMappingTest {
         Batch batch = new Batch();
         batch.setBatchId(BATCH_ID);
         batch.setHarvestDate(LocalDate.now());
-        batch.setMangoVariety(HarvestEvent.MangoVariety.KENT);
+        batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
         batch.setCurrentStatus(Batch.BatchStatus.CREATED);
         batch.setFarmId("F-DTO");

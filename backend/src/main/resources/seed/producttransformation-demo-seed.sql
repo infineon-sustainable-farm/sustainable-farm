@@ -17,6 +17,12 @@
 --
 --       ALTER TABLE harvest_event ADD COLUMN plants_harvest_id bigint;
 --
+--   Les varietes (colonnes variety_key, received_variety_key) sont des cles
+--   du catalogue des varietes de plants (variety_reference.variety_key, cle
+--   etrangere) : KEITT, KENT, AMELIE, TOMMY. Le catalogue est charge avant ce
+--   script en profil dev (AgronomicReferenceLoader). L'API PT renvoie AMELIE
+--   sous sa valeur historique AMÉLIE.
+--
 --   Ce script n'ajoute volontairement aucune colonne, ne cree aucune table,
 --   ne modifie aucune table existante et ne supprime aucune donnee.
 --
@@ -61,11 +67,11 @@ ON CONFLICT DO NOTHING;
 --    Les lots portent le prefixe LOT-DEMO pour etre identifiables.
 -- ---------------------------------------------------------------------------
 INSERT INTO batch (batch_id, block_id, created_at, current_status, farm_id,
-                   harvest_date, harvest_quantity_kg, mango_variety, updated_at)
+                   harvest_date, harvest_quantity_kg, variety_key, updated_at)
 VALUES
     ('LOT-DEMO-001', 'BLOC-A', now(), 'WASHING',   'FERME-DEMO', CURRENT_DATE - 1, 520.00, 'KEITT',   now()),
     ('LOT-DEMO-002', 'BLOC-A', now(), 'DRYING',    'FERME-DEMO', CURRENT_DATE - 2, 480.50, 'KEITT',   now()),
-    ('LOT-DEMO-003', 'BLOC-B', now(), 'PACKAGING', 'FERME-DEMO', CURRENT_DATE - 3, 610.25, 'AMÉLIE',  now()),
+    ('LOT-DEMO-003', 'BLOC-B', now(), 'PACKAGING', 'FERME-DEMO', CURRENT_DATE - 3, 610.25, 'AMELIE',  now()),
     ('LOT-DEMO-004', 'BLOC-B', now(), 'COMPLETED', 'FERME-DEMO', CURRENT_DATE - 5, 395.00, 'KENT',    now()),
     ('LOT-DEMO-005', 'BLOC-C', now(), 'SHIPPED',   'FERME-DEMO', CURRENT_DATE - 6, 275.75, 'TOMMY',   now())
 ON CONFLICT DO NOTHING;
@@ -76,11 +82,11 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 INSERT INTO harvest_event (harvest_id, batch_id, block_id, created_at, farm_id,
                            harvest_date, harvest_quantity_kg, harvest_time,
-                           mango_variety, quality_grade, updated_at)
+                           variety_key, quality_grade, updated_at)
 VALUES
     ('HE-DEMO-001', 'LOT-DEMO-001', 'BLOC-A', now(), 'FERME-DEMO', CURRENT_DATE - 1, 520.00, time '07:30', 'KEITT',  'A', now()),
     ('HE-DEMO-002', 'LOT-DEMO-002', 'BLOC-A', now(), 'FERME-DEMO', CURRENT_DATE - 2, 480.50, time '08:10', 'KEITT',  'A', now()),
-    ('HE-DEMO-003', 'LOT-DEMO-003', 'BLOC-B', now(), 'FERME-DEMO', CURRENT_DATE - 3, 610.25, time '07:45', 'AMÉLIE', 'B', now()),
+    ('HE-DEMO-003', 'LOT-DEMO-003', 'BLOC-B', now(), 'FERME-DEMO', CURRENT_DATE - 3, 610.25, time '07:45', 'AMELIE', 'B', now()),
     ('HE-DEMO-004', 'LOT-DEMO-004', 'BLOC-B', now(), 'FERME-DEMO', CURRENT_DATE - 5, 395.00, time '09:00', 'KENT',   'A', now()),
     ('HE-DEMO-005', 'LOT-DEMO-005', 'BLOC-C', now(), 'FERME-DEMO', CURRENT_DATE - 6, 275.75, time '08:25', 'TOMMY',  'A', now())
 ON CONFLICT DO NOTHING;
@@ -134,12 +140,12 @@ ON CONFLICT DO NOTHING;
 -- 8) Receptions (une par lot, alimente l'ecran de reception)
 -- ---------------------------------------------------------------------------
 INSERT INTO raw_intake (intake_id, created_at, intake_date, intake_operator,
-                        received_grade, received_quantity_kg, received_variety,
+                        received_grade, received_quantity_kg, received_variety_key,
                         source_block, source_farm, updated_at, batch_id)
 VALUES
     ('RI-DEMO-001', now(), CURRENT_DATE - 1, 'Moussa DEMO (Lavage)', 'A', 520.00, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-001'),
     ('RI-DEMO-002', now(), CURRENT_DATE - 2, 'Moussa DEMO (Lavage)', 'A', 480.50, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-002'),
-    ('RI-DEMO-003', now(), CURRENT_DATE - 3, 'Moussa DEMO (Lavage)', 'B', 610.25, 'AMÉLIE',  'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-003'),
+    ('RI-DEMO-003', now(), CURRENT_DATE - 3, 'Moussa DEMO (Lavage)', 'B', 610.25, 'AMELIE',  'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-003'),
     ('RI-DEMO-004', now(), CURRENT_DATE - 5, 'Moussa DEMO (Lavage)', 'A', 395.00, 'KENT',    'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-004'),
     ('RI-DEMO-005', now(), CURRENT_DATE - 6, 'Moussa DEMO (Lavage)', 'A', 275.75, 'TOMMY',   'BLOC-C', 'FERME-DEMO', now(), 'LOT-DEMO-005')
 ON CONFLICT DO NOTHING;
@@ -170,7 +176,7 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 -- 11) Historique de recolte (12 derniers mois, serie du graphique annuel)
 -- ---------------------------------------------------------------------------
-INSERT INTO historical_harvest (mango_variety, month, week, year, created_at,
+INSERT INTO historical_harvest (variety_key, month, week, year, created_at,
                                 harvest_quantity_kg, quality_grade_a_pct,
                                 quality_grade_b_pct, quality_grade_c_pct,
                                 rainfall_mm, temperature_avg_c,

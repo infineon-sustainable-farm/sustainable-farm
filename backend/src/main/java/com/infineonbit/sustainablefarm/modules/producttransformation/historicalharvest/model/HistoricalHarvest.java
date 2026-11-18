@@ -1,7 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -46,9 +44,9 @@ public class HistoricalHarvest {
     private Integer week;
 
     @Id
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mango_variety", nullable = false, length = 20)
-    private HarvestEvent.MangoVariety mangoVariety;
+    /** Catalogue key of the variety, for example {@code KENT}: foreign key to plants {@code variety_reference}. */
+    @Column(name = "variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
+    private String varietyKey;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal harvestQuantityKg;

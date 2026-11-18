@@ -98,8 +98,8 @@ public class HarvestEventController {
     @GetMapping("/variety/{variety}")
     @Operation(summary = "Get harvest events by variety", description = "Retrieves harvest events filtered by mango variety")
     public ResponseEntity<List<HarvestEventResponse>> getHarvestEventsByVariety(
-            @Parameter(description = "Mango variety") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety) {
-        List<HarvestEvent> events = harvestEventService.getHarvestEventsByVariety(variety);
+            @Parameter(description = "Mango variety") @PathVariable String variety) {
+        List<HarvestEvent> events = harvestEventService.getHarvestEventsByVariety(dtoMapper.varietyKey(variety));
         List<HarvestEventResponse> responses = events.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());

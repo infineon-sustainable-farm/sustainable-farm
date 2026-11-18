@@ -1,9 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.config;
 
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import javax.sql.DataSource;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -19,9 +21,13 @@ import org.springframework.stereotype.Component;
  * <p>The script is idempotent: every row has a fixed key and every insert ends with
  * {@code ON CONFLICT DO NOTHING}, so it is replayed at every startup without duplicating
  * rows. It requires PostgreSQL ({@code generate_series}, {@code interval}).</p>
+ *
+ * <p>Its varieties are keys of the plants variety catalogue, with a foreign key to it: it
+ * runs after the plants loader of the catalogue ({@link VarietyCatalog#LOAD_ORDER}).</p>
  */
 @Component
 @Profile("dev")
+@Order(VarietyCatalog.LOAD_ORDER + 10)
 public class ProductTransformationDemoDataSeeder implements ApplicationRunner {
 
     static final Resource SCRIPT = new ClassPathResource("seed/producttransformation-demo-seed.sql");

@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.impl;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.service.HarvestEventService;
@@ -53,7 +52,7 @@ public class HarvestEventServiceImpl implements HarvestEventService {
         existingEvent.setBatchId(harvestEvent.getBatchId());
         existingEvent.setHarvestDate(harvestEvent.getHarvestDate());
         existingEvent.setHarvestTime(harvestEvent.getHarvestTime());
-        existingEvent.setMangoVariety(harvestEvent.getMangoVariety());
+        existingEvent.setVarietyKey(harvestEvent.getVarietyKey());
         existingEvent.setFarmId(harvestEvent.getFarmId());
         existingEvent.setBlockId(harvestEvent.getBlockId());
         existingEvent.setHarvestQuantityKg(harvestEvent.getHarvestQuantityKg());
@@ -104,8 +103,8 @@ public class HarvestEventServiceImpl implements HarvestEventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<HarvestEvent> getHarvestEventsByVariety(MangoVariety variety) {
-        return harvestEventRepository.findByMangoVariety(variety);
+    public List<HarvestEvent> getHarvestEventsByVariety(String variety) {
+        return harvestEventRepository.findByVarietyKey(variety);
     }
 
     @Override
@@ -128,7 +127,7 @@ public class HarvestEventServiceImpl implements HarvestEventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<HarvestEvent> getHarvestEventsByVarietyAndGrade(MangoVariety variety, QualityGrade grade) {
+    public List<HarvestEvent> getHarvestEventsByVarietyAndGrade(String variety, QualityGrade grade) {
         return harvestEventRepository.findByVarietyAndGrade(variety, grade);
     }
 
@@ -141,7 +140,7 @@ public class HarvestEventServiceImpl implements HarvestEventService {
 
     @Override
     @Transactional(readOnly = true)
-    public Double getTotalHarvestQuantityByVariety(MangoVariety variety) {
+    public Double getTotalHarvestQuantityByVariety(String variety) {
         return harvestEventRepository.getTotalHarvestQuantityByVariety(variety);
     }
 
