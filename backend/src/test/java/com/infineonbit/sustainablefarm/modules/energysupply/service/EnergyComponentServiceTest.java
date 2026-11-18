@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyComponentRequest;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentCategory;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentStatus;
@@ -32,6 +33,9 @@ class EnergyComponentServiceTest {
     @Mock
     private EntityManager entityManager;
 
+    @Mock
+    private AlertService alertService;
+
     @InjectMocks
     private EnergyComponentService service;
 
@@ -59,6 +63,30 @@ class EnergyComponentServiceTest {
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
         verifyNoInteractions(entityManager);
         verify(energyComponentRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void deleteRefusesAComponentThatAnAlertIsAbout() {
+        EnergyComponent component = new EnergyComponent();
+        component.setComponentId("ENG-002");
+        when(energyComponentRepository.findById("ENG-002")).thenReturn(java.util.Optional.of(component));
+        when(alertService.isAboutComponent("ENG-002")).thenReturn(true);
+
+        assertThrows(ConflictException.class, () -> service.delete("ENG-002"));
+
+        verify(energyComponentRepository, never()).delete(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void deleteRemovesAComponentWithoutAlerts() {
+        EnergyComponent component = new EnergyComponent();
+        component.setComponentId("ENG-006");
+        when(energyComponentRepository.findById("ENG-006")).thenReturn(java.util.Optional.of(component));
+        when(alertService.isAboutComponent("ENG-006")).thenReturn(false);
+
+        service.delete("ENG-006");
+
+        verify(energyComponentRepository).delete(component);
     }
 
     private EnergyComponentRequest request() {

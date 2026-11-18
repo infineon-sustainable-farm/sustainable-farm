@@ -18,8 +18,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterLevelHist
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterLevelHistoryRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQualityTestRepository;
@@ -49,10 +47,7 @@ class WaterServiceTest {
     private WaterQualityTestRepository waterQualityTestRepository;
 
     @Mock
-    private NotificationRepository notificationRepository;
-
-    @Mock
-    private SystemUsers systemUsers;
+    private AlertService alertService;
 
     @Mock
     private WaterQuotaService waterQuotaService;
@@ -168,8 +163,7 @@ class WaterServiceTest {
                 waterSourceRepository,
                 waterConsumptionRepository,
                 waterQualityTestRepository,
-                notificationRepository,
-                systemUsers,
+                alertService,
                 waterQuotaService,
                 zoneBlockResolver,
                 WaterIntegrationProperties.defaults(),

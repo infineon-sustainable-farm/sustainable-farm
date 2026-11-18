@@ -13,11 +13,6 @@ import org.springframework.context.annotation.Configuration;
 public class WatersupplyPersonForeignKeys {
 
     @Bean
-    CrossModuleForeignKey notificationUserPersonForeignKey() {
-        return toPerson("fk_notifications_user_person", "notifications", "user_id");
-    }
-
-    @Bean
     CrossModuleForeignKey irrigationScheduleCreatedByPersonForeignKey() {
         return toPerson("fk_irrigation_schedules_created_by_person", "irrigation_schedules", "created_by");
     }

@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterLevelHistory;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
@@ -21,8 +20,6 @@ import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ConsumptionCriteria;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterLevelHistoryRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQualityTestRepository;
@@ -47,8 +44,7 @@ public class WaterService {
     private final WaterSourceRepository waterSourceRepository;
     private final WaterConsumptionRepository waterConsumptionRepository;
     private final WaterQualityTestRepository waterQualityTestRepository;
-    private final NotificationRepository notificationRepository;
-    private final SystemUsers systemUsers;
+    private final AlertService alertService;
     private final WaterQuotaService waterQuotaService;
     private final ZoneBlockResolver zoneBlockResolver;
     private final WaterIntegrationProperties properties;
@@ -59,8 +55,7 @@ public class WaterService {
             WaterSourceRepository waterSourceRepository,
             WaterConsumptionRepository waterConsumptionRepository,
             WaterQualityTestRepository waterQualityTestRepository,
-            NotificationRepository notificationRepository,
-            SystemUsers systemUsers,
+            AlertService alertService,
             WaterQuotaService waterQuotaService,
             ZoneBlockResolver zoneBlockResolver,
             WaterIntegrationProperties properties,
@@ -69,8 +64,7 @@ public class WaterService {
         this.waterSourceRepository = waterSourceRepository;
         this.waterConsumptionRepository = waterConsumptionRepository;
         this.waterQualityTestRepository = waterQualityTestRepository;
-        this.notificationRepository = notificationRepository;
-        this.systemUsers = systemUsers;
+        this.alertService = alertService;
         this.waterQuotaService = waterQuotaService;
         this.zoneBlockResolver = zoneBlockResolver;
         this.properties = properties;
@@ -378,16 +372,9 @@ public class WaterService {
             return;
         }
 
-        // Like the other automatic alerts (AlertService), addressed to the IoT system person.
-        Long recipient = systemUsers.iotSystemUserId();
-        Notification notification = new Notification();
-        notification.setUserId(recipient);
-        notification.setTitle("Non-compliant water");
-        notification.setMessage(buildQualityMessage(test, phOutOfRange, turbidityHigh));
-        notification.setType("warning");
-        notification.setRead(false);
-        notification.setActionUrl("/api/water/quality/" + test.getId());
-        notificationRepository.save(notification);
+        // An automatic alert like the others, addressed to the IoT system person.
+        alertService.raise("warning", "Non-compliant water", buildQualityMessage(test, phOutOfRange, turbidityHigh),
+                "/api/water/quality/" + test.getId());
     }
 
     private String buildQualityMessage(WaterQualityTest test, boolean phOut, boolean turbidityHigh) {

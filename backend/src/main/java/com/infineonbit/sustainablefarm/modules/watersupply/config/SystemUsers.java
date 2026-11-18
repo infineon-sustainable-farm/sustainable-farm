@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * credentials, hence no way to log in):</p>
  * <ul>
  *   <li>{@code irrigation_schedules.created_by}: the column is mandatory;</li>
- *   <li>{@code notifications.user_id}: the column is mandatory, alerts coming from the
+ *   <li>{@code alert.recipient_person_id} of the module alerts (notification module): alerts coming from the
  *       IoT sensors (leak, out-of-range quality, rain postponement) must have a
  *       recipient, which the global platform can reassign afterwards.</li>
  * </ul>

@@ -17,7 +17,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.Time
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.service.SchedulingRules;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterVisitorEvent;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertBoard;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterVisitorEventRepository;
 import com.jayway.jsonpath.JsonPath;
 import java.time.Instant;
@@ -52,7 +52,7 @@ class VisitorManagementEventsIntegrationTest {
     @Autowired
     private WaterVisitorEventRepository visitorEventRepository;
     @Autowired
-    private NotificationRepository notificationRepository;
+    private AlertBoard alertBoard;
     @Autowired
     private RegistrationRepository registrationRepository;
     @Autowired
@@ -79,9 +79,9 @@ class VisitorManagementEventsIntegrationTest {
     @AfterEach
     void removeCreatedRows() {
         visitIds.forEach(id -> visitorEventRepository.findByVisitId(id).ifPresent(visitorEventRepository::delete));
-        notificationRepository.findAll().stream()
-                .filter(n -> n.getTitle() != null && n.getTitle().contains(marker))
-                .forEach(notificationRepository::delete);
+        alertBoard.list(AlertService.SOURCE, null).stream()
+                .filter(n -> n.title() != null && n.title().contains(marker))
+                .forEach(n -> alertBoard.delete(AlertService.SOURCE, n.id()));
         registrationIds.forEach(registrationRepository::deleteById);
         bookingIds.forEach(bookingRepository::deleteById);
         if (activityId != null) {

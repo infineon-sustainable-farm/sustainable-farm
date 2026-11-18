@@ -1,8 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.energysupply;
 
-import com.infineonbit.sustainablefarm.modules.energysupply.entity.Alert;
-import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertSeverity;
-import com.infineonbit.sustainablefarm.modules.energysupply.entity.AlertStatus;
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.AlertSeverity;
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.AlertStatus;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.CarbonMetric;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentCategory;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentStatus;
@@ -14,10 +13,10 @@ import com.infineonbit.sustainablefarm.modules.energysupply.entity.LoadCategory;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.SolarGenerationLog;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.CarbonMetricRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.ConsumptionLogRepository;
-import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyAlertRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.EnergyComponentRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.GeneratorEventRepository;
 import com.infineonbit.sustainablefarm.modules.energysupply.repository.SolarGenerationLogRepository;
+import com.infineonbit.sustainablefarm.modules.energysupply.service.AlertService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.CommandLineRunner;
@@ -27,8 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * Loads the "Base scenario" dummy figures from the Energy Supply Systems
@@ -57,20 +57,20 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
     private final CarbonMetricRepository carbonMetricRepository;
     private final GeneratorEventRepository generatorEventRepository;
     private final SolarGenerationLogRepository solarGenerationLogRepository;
-    private final EnergyAlertRepository energyAlertRepository;
+    private final AlertService alertService;
 
     public EnergySupplyDataSeeder(EnergyComponentRepository componentRepository,
                                    ConsumptionLogRepository consumptionLogRepository,
                                    CarbonMetricRepository carbonMetricRepository,
                                    GeneratorEventRepository generatorEventRepository,
                                    SolarGenerationLogRepository solarGenerationLogRepository,
-                                   EnergyAlertRepository energyAlertRepository) {
+                                   AlertService alertService) {
         this.componentRepository = componentRepository;
         this.consumptionLogRepository = consumptionLogRepository;
         this.carbonMetricRepository = carbonMetricRepository;
         this.generatorEventRepository = generatorEventRepository;
         this.solarGenerationLogRepository = solarGenerationLogRepository;
-        this.energyAlertRepository = energyAlertRepository;
+        this.alertService = alertService;
     }
 
     @Override
@@ -92,7 +92,7 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
         if (solarGenerationLogRepository.count() == 0) {
             seedSolarHistory();
         }
-        if (energyAlertRepository.count() == 0) {
+        if (alertService.count() == 0) {
             seedAlerts();
         }
     }
@@ -219,23 +219,14 @@ public class EnergySupplyDataSeeder implements CommandLineRunner {
             return;
         }
 
-        Alert openAlert = new Alert();
-        openAlert.setComponent(battery);
-        openAlert.setSeverity(AlertSeverity.WARNING);
-        openAlert.setMessage("Battery charge is below the recommended reserve. Monitor overnight consumption.");
-        openAlert.setTimestamp(LocalDateTime.now().minusHours(1));
-        openAlert.setStatus(AlertStatus.OPEN);
-        energyAlertRepository.save(openAlert);
+        alertService.raise(battery, AlertSeverity.WARNING,
+                "Battery charge is below the recommended reserve. Monitor overnight consumption.",
+                Instant.now().minus(Duration.ofHours(1)), AlertStatus.OPEN);
 
-        Alert resolvedAlert = new Alert();
-        resolvedAlert.setSeverity(AlertSeverity.INFO);
-        resolvedAlert.setMessage("Routine inverter inspection completed.");
-        resolvedAlert.setTimestamp(LocalDateTime.now().minusDays(1));
-        resolvedAlert.setStatus(AlertStatus.RESOLVED);
         EnergyComponent inverter = findDemoComponent("ENG-003", ComponentCategory.INVERTER);
         if (inverter != null) {
-            resolvedAlert.setComponent(inverter);
-            energyAlertRepository.save(resolvedAlert);
+            alertService.raise(inverter, AlertSeverity.INFO, "Routine inverter inspection completed.",
+                    Instant.now().minus(Duration.ofDays(1)), AlertStatus.RESOLVED);
         } else {
             LOGGER.warn("Skipping resolved Energy Supply demo alert: no inverter component is configured");
         }
