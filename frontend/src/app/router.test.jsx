@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { collectModules } from './modules'
 import { buildAppRoutes } from './routes'
+import { useToast } from '../shared/ui'
 import { fakeFiles, loadRealModuleFiles } from '../test/appFixtures'
 
 const realFiles = await loadRealModuleFiles()
@@ -79,6 +80,32 @@ describe('application router', () => {
     renderAt('/watersupply')
     expect(screen.getByTestId('own-layout')).toHaveTextContent('water home')
     expect(screen.queryByRole('navigation', { name: 'Modules' })).not.toBeInTheDocument()
+  })
+
+  it('provides the kit toasts to every route, a module other than watersupply included', () => {
+    function Notifier() {
+      const toast = useToast()
+      return (
+        <button type="button" onClick={() => toast.success('Part saved')}>
+          notify
+        </button>
+      )
+    }
+    const files = {
+      ...fakeFiles,
+      '../features/machinery/routes.jsx': {
+        ...fakeFiles['../features/machinery/routes.jsx'],
+        default: [{ path: 'machinery', element: <Notifier /> }],
+      },
+    }
+    renderAt('/machinery', files)
+    fireEvent.click(screen.getByRole('button', { name: 'notify' }))
+    expect(screen.getByRole('region', { name: 'Notifications' })).toHaveTextContent('Part saved')
+  })
+
+  it('provides the kit toasts on the launcher', () => {
+    renderAt('/')
+    expect(screen.getByRole('region', { name: 'Notifications' })).toBeInTheDocument()
   })
 
   it('routes modules without nav as before', () => {

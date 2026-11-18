@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation, useOutletContext } from 'react-router-dom'
+import { ToastProvider } from '../../../shared/ui'
 import WaterSupplyLayout from './WaterSupplyLayout'
 
 /**
@@ -21,16 +22,19 @@ function ProbeScreen() {
   )
 }
 
+// The toasts come from the application root (app/RootLayout), provided here the same way.
 function renderModule() {
   return render(
-    <MemoryRouter initialEntries={['/watersupply']}>
-      <Routes>
-        <Route path="watersupply" element={<WaterSupplyLayout />}>
-          <Route index element={<ProbeScreen />} />
-          <Route path="sources" element={<ProbeScreen />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/watersupply']}>
+        <Routes>
+          <Route path="watersupply" element={<WaterSupplyLayout />}>
+            <Route index element={<ProbeScreen />} />
+            <Route path="sources" element={<ProbeScreen />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 
