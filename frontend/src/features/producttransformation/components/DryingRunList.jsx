@@ -2,7 +2,7 @@
  * Product Transformation - Drying screen
  * Displays, filters, creates, edits and deletes drying runs.
  *
- * Data contract: /api/drying-runs (see DryingRunController).
+ * Data contract: /api/product-transformation/drying-runs (see DryingRunController).
  * The backend enforces a 6–18 % end-moisture range for EU compliance, plus
  * active drying equipment and operators with the DRYER role.
  *

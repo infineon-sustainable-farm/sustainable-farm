@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 
-import com.infineonbit.sustainablefarm.modules.energysupply.entity.CarbonMetric;
+import com.infineonbit.sustainablefarm.modules.energysupply.dto.CarbonMetricResponse;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.CarbonMetricService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +11,7 @@ import java.util.List;
 
 /** Feeds the "Carbon Footprint" tab of the Energy App. */
 @RestController
-@RequestMapping("/api/energy/carbon")
+@RequestMapping("/api/energy-supply/carbon")
 public class CarbonController {
 
     private final CarbonMetricService service;
@@ -22,7 +22,7 @@ public class CarbonController {
     }
 
     @GetMapping
-    public List<CarbonMetric> getAll() {
+    public List<CarbonMetricResponse> getAll() {
         return service.findAll();
     }
 }

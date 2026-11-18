@@ -58,7 +58,7 @@ public class AgronomicReferenceLoader implements CommandLineRunner {
         for (GrowthPhaseYieldShare share : growthPhaseYieldShareRepository.findAll()) {
             boolean former = FORMER_SHARE_ROWS.stream()
                     .anyMatch(row -> row.growthPhase().equals(share.getGrowthPhase())
-                            && row.yieldShare() == share.getYieldShare()
+                            && Decimals.sameValue(row.yieldShare(), share.getYieldShare())
                             && row.source().equals(share.getSource()));
             if (former) {
                 growthPhaseYieldShareRepository.delete(share);

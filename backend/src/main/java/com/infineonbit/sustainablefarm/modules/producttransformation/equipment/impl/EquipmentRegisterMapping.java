@@ -2,8 +2,8 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.
 
 import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
 import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
 
 import java.util.EnumSet;
 import java.util.Set;

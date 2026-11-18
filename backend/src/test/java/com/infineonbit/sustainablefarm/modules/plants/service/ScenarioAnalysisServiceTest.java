@@ -3,11 +3,11 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ScenarioVariantParams;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYieldShareResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Amount;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.BenefitLine;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Projection;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Year;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyRate;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantScenario;
 import com.infineonbit.sustainablefarm.modules.plants.exception.PlantScenarioNotFoundException;
@@ -67,7 +67,7 @@ public class ScenarioAnalysisServiceTest {
     /** The dev scenario, in euros, without loss rate, variable cost nor cost per added tree. */
     private static PlantScenario zalka() {
         return new PlantScenario(1L, "Zalka 2025", "Keitt", 200, "Zalka_2025_C43",
-                220.0, "derived: Zalka_2025 D4 / B4", null, null,
+                BigDecimal.valueOf(220.0), "derived: Zalka_2025 D4 / B4", null, null,
                 new BigDecimal("0.9072"), "derived: Zalka_2025 R19 / D4", "EUR",
                 new BigDecimal("6707.00"), "Zalka_2025_L23", null, null,
                 new BigDecimal("171512.00"), "Zalka_2025_H28", null, null, ENTERED);
@@ -170,7 +170,7 @@ public class ScenarioAnalysisServiceTest {
     @Test
     void getAnalysis_shouldConvertAScenarioInFcfaToEuros() {
         // Arrange: 3 trees of 10.5 kg at 333.3333 FCFA, 1,000 FCFA a year plus 2.5 per kg
-        PlantScenario scenario = new PlantScenario(2L, "Small plot", null, 3, "user_entry", 10.5, "user_entry",
+        PlantScenario scenario = new PlantScenario(2L, "Small plot", null, 3, "user_entry", BigDecimal.valueOf(10.5), "user_entry",
                 null, null, new BigDecimal("333.3333"), "market_survey", "XOF", new BigDecimal("1000.00"),
                 "user_entry", new BigDecimal("2.5000"), "user_entry", new BigDecimal("50000.00"), "user_entry",
                 null, null, ENTERED);

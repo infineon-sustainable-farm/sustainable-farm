@@ -1,7 +1,7 @@
 import i18n from '../../../shared/i18n/i18n';
 import { formatEnum } from '../utils/format';
 
-// Values accepted by /api/qc-checkpoints for the stage and the result.
+// Values accepted by /api/product-transformation/qc-checkpoints for the stage and the result.
 export const QC_STAGES = ['INTAKE', 'WASHING', 'DRYING', 'COOLING', 'PACKAGING', 'FINAL'];
 export const QC_RESULTS = ['PENDING', 'PASS', 'FAIL', 'REWORK'];
 

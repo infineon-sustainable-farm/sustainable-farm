@@ -38,25 +38,25 @@ class ProductTransformationBlocksApiTest {
         mockMvc.perform(post("/api/farm/farms").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"%s\"}".formatted(farmName))).andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/batches").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)
                         .content(batch("B-" + suffix + "-1", farmName.toLowerCase(), code.toLowerCase())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.farmId").value(farmName))
                 .andExpect(jsonPath("$.blockId").value(code));
 
-        mockMvc.perform(post("/api/batches").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)
                         .content(batch("B-" + suffix + "-2", "Some other farm text", code)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.farmId").value(farmName))
                 .andExpect(jsonPath("$.blockId").value(code));
 
-        mockMvc.perform(get("/api/batches/farm/{farm}", farmName))
+        mockMvc.perform(get("/api/product-transformation/batches/farm/{farm}", farmName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
-        mockMvc.perform(get("/api/batches/farm/{farm}/block/{block}", farmName, code))
+        mockMvc.perform(get("/api/product-transformation/batches/farm/{farm}/block/{block}", farmName, code))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
-        mockMvc.perform(get("/api/batches/farm/{farm}", "Unknown farm " + suffix))
+        mockMvc.perform(get("/api/product-transformation/batches/farm/{farm}", "Unknown farm " + suffix))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }

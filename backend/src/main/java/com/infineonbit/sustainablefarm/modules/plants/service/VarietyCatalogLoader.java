@@ -79,7 +79,7 @@ public class VarietyCatalogLoader implements CommandLineRunner {
                         null,
                         variety.varietyName(),
                         variety.varietyKey(),
-                        variety.yieldPerTreeKg(),
+                        Decimals.of(variety.yieldPerTreeKg(), VarietyReference.YIELD_SCALE),
                         variety.yieldSource(),
                         variety.harvestStartMonth(),
                         variety.harvestEndMonth(),

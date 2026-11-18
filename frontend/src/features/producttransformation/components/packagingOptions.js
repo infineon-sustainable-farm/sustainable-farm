@@ -2,7 +2,7 @@ import i18n from '../../../shared/i18n/i18n';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 
-// Package types accepted by /api/packaging-records.
+// Package types accepted by /api/product-transformation/packaging-records.
 export const PACKAGE_TYPES = ['ONE_KG_BAG', 'TWO_KG_BAG', 'BULK'];
 
 /** Translated label of a package type; an unknown code keeps a readable label. */

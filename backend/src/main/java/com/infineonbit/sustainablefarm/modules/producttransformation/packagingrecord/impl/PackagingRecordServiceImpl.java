@@ -70,16 +70,16 @@ public class PackagingRecordServiceImpl implements PackagingRecordService {
 
     @Override
     public void deletePackagingRecord(String recordId) {
-        if (!packagingRecordRepository.existsById(recordId)) {
+        if (!packagingRecordRepository.existsByRecordId(recordId)) {
             throw new IllegalArgumentException("Packaging record not found with ID: " + recordId);
         }
-        packagingRecordRepository.deleteById(recordId);
+        packagingRecordRepository.deleteByRecordId(recordId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PackagingRecord getPackagingRecordById(String recordId) {
-        return packagingRecordRepository.findById(recordId)
+        return packagingRecordRepository.findByRecordId(recordId)
                 .orElseThrow(() -> new IllegalArgumentException("Packaging record not found with ID: " + recordId));
     }
 

@@ -16,45 +16,45 @@ export const equipmentApi = {
   /**
    * Get all PT equipment
    */
-  getAllEquipment: () => apiClient.get('/api/equipment'),
+  getAllEquipment: () => apiClient.get('/api/product-transformation/equipment'),
 
   /**
    * Get PT equipment by ID
    */
-  getEquipmentById: (equipmentId) => apiClient.get(`/api/equipment/${equipmentId}`),
+  getEquipmentById: (equipmentId) => apiClient.get(`/api/product-transformation/equipment/${equipmentId}`),
 
   /**
    * Get available PT equipment
    */
-  getAvailableEquipment: () => apiClient.get('/api/equipment/available'),
+  getAvailableEquipment: () => apiClient.get('/api/product-transformation/equipment/available'),
 
   /**
    * Get PT equipment by type
    */
   getEquipmentByType: (equipmentType) =>
-    apiClient.get(`/api/equipment/type/${equipmentType}`),
+    apiClient.get(`/api/product-transformation/equipment/type/${equipmentType}`),
 
   /**
    * Get PT equipment by maintenance status
    */
   getEquipmentByStatus: (maintenanceStatus) =>
-    apiClient.get(`/api/equipment/status/${maintenanceStatus}`),
+    apiClient.get(`/api/product-transformation/equipment/status/${maintenanceStatus}`),
 
   /**
    * Create PT equipment
    */
-  createEquipment: (equipmentData) => apiClient.post('/api/equipment', equipmentData),
+  createEquipment: (equipmentData) => apiClient.post('/api/product-transformation/equipment', equipmentData),
 
   /**
    * Update PT equipment
    */
   updateEquipment: (equipmentId, equipmentData) =>
-    apiClient.put(`/api/equipment/${equipmentId}`, equipmentData),
+    apiClient.put(`/api/product-transformation/equipment/${equipmentId}`, equipmentData),
 
   /**
    * Delete PT equipment
    */
-  deleteEquipment: (equipmentId) => apiClient.delete(`/api/equipment/${equipmentId}`),
+  deleteEquipment: (equipmentId) => apiClient.delete(`/api/product-transformation/equipment/${equipmentId}`),
 };
 
 export default equipmentApi;

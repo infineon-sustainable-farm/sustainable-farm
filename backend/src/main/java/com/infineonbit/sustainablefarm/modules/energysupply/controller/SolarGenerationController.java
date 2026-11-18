@@ -20,7 +20,7 @@ import java.util.List;
 
 /** Feeds the "Solar & Generation Monitoring" tab of the Energy App. */
 @RestController("energySolarGenerationController")
-@RequestMapping("/api/energy/solar")
+@RequestMapping("/api/energy-supply/solar")
 public class SolarGenerationController {
 
     private final SolarGenerationLogService service;
@@ -40,7 +40,7 @@ public class SolarGenerationController {
     }
 
     @GetMapping("/{logId}")
-    public SolarGenerationLogResponse getById(@PathVariable String logId) {
+    public SolarGenerationLogResponse getById(@PathVariable Long logId) {
         return service.findById(logId);
     }
 
@@ -57,13 +57,13 @@ public class SolarGenerationController {
 
     @PutMapping("/{logId}")
     public SolarGenerationLogResponse update(
-            @PathVariable String logId,
+            @PathVariable Long logId,
             @Valid @RequestBody SolarGenerationLogRequest request) {
         return service.update(logId, request);
     }
 
     @DeleteMapping("/{logId}")
-    public ResponseEntity<Void> delete(@PathVariable String logId) {
+    public ResponseEntity<Void> delete(@PathVariable Long logId) {
         service.delete(logId);
         return ResponseEntity.noContent().build();
     }

@@ -1,12 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model;
+
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 
-
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -33,7 +31,10 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "harvest_event",
-        uniqueConstraints = @UniqueConstraint(name = "uk_harvest_event_batch_id", columnNames = "batch_id"),
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_harvest_event_code", columnNames = "code"),
+                @UniqueConstraint(name = "uk_harvest_event_batch_code", columnNames = "batch_code")
+        },
         indexes = {
                 @Index(name = "idx_harvest_event_harvest_date", columnList = "harvest_date"),
                 @Index(name = "idx_harvest_event_block_id", columnList = "block_id"),
@@ -42,16 +43,12 @@ import java.math.BigDecimal;
         })
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class HarvestEvent {
+public class HarvestEvent extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "harvest_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String harvestId;
 
     /**
@@ -62,13 +59,13 @@ public class HarvestEvent {
     @Column(name = "plants_harvest_id")
     private Long plantsHarvestId;
 
-    @Column(name = "batch_id", nullable = false, length = 50)
+    /**
+     * Code of the processing batch the harvest creates, for example {@code LOT-DEMO-001}, shown as
+     * {@code batchId}. A code, not a foreign key: the event is recorded before its batch exists
+     * (MCD: "HARVEST_EVENT '1' -- '1' BATCH : creates_batch").
+     */
+    @Column(name = "batch_code", nullable = false, length = 50)
     private String batchId;
-
-    // Note: No @OneToOne relationship to Batch entity
-    // Reason: Database schema has batch_id as VARCHAR foreign key without explicit FK constraint
-    // Relationship is maintained through batch_id field for Plants integration
-    // Per MCD: "HARVEST_EVENT '1' -- '1' BATCH : creates_batch"
 
     @Column(name = "harvest_date", nullable = false)
     private LocalDate harvestDate;
@@ -110,31 +107,4 @@ public class HarvestEvent {
     @Column(name = "storage_location", length = 50)
     private String storageLocation;
 
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    /**
-     * Quality Grade Enum
-     * Business Rule: Matches database CHECK constraint
-     */
-    public enum QualityGrade {
-        A,    // Premium - No defects
-        B,    // Standard - Minor defects
-        C,    // Processing - Visible defects
-        D     // Reject - Significant defects
-    }
 }

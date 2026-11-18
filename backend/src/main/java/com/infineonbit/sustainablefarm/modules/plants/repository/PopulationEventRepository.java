@@ -71,7 +71,7 @@ public interface PopulationEventRepository extends JpaRepository<PopulationEvent
      *
      * <p>Only the variety rows that were planted are returned: a row without a
      * PLANTING event, such as the Zalka 2025 row of the dev profile, is not. Both
-     * filters work as in {@link VarietyRepository#findByOptionalFilters}: a
+     * filters work as in {@link BlockVarietyRepository#findByOptionalFilters}: a
      * {@code null} parameter disables its own filter.
      *
      * @param allBlocks   {@code true} for every block, then {@code blockIds} is ignored

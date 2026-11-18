@@ -31,11 +31,18 @@
 --   les montre sous leur code (blockId, sourceBlock) et le nom de leur ferme
 --   (farmId, sourceFarm).
 --
---   Les lots LOT-DEMO-* (batch.batch_id) sont aussi ceux que designe la
+--   Chaque table a une cle Long (id, IDENTITY, ADR 0002) et garde l'identifiant
+--   lisible de la ligne dans sa colonne unique code (LOT-DEMO-001, OP-DEMO-01...),
+--   celui que l'API montre. Les cles etrangeres internes (batch_id, operator_id,
+--   inspector_id, auditor_id) sont ces id, retrouves ici par sous-requete sur le
+--   code. historical_harvest est unique par (year, month, week, variety_key).
+--
+--   Les lots LOT-DEMO-* (batch.code) sont aussi ceux que designe la
 --   consommation d'eau de lavage du jeu water supply (water_consumption.lot_id
---   et sa cle etrangere processing_batch_id, seed/watersupply-demo-data.sql,
---   charge apres ce script) ; les lots emballes (packaging_record) referencent
---   leur lot par la cle etrangere fk_packaging_record_batch.
+--   et sa cle etrangere processing_batch_id vers batch.id,
+--   seed/watersupply-demo-data.sql, charge apres ce script) ; les lots emballes
+--   (packaging_record) referencent leur lot par la cle etrangere
+--   fk_packaging_record_batch.
 --
 --   Ce script n'ajoute volontairement aucune colonne, ne cree aucune table,
 --   ne modifie aucune table existante et ne supprime aucune donnee.
@@ -63,7 +70,7 @@ SELECT now(), now(), demo.full_name, true
 FROM (VALUES ('Awa DEMO (QC)'), ('Issa DEMO (Sechage)'), ('Moussa DEMO (Lavage)')) AS demo (full_name)
 WHERE NOT EXISTS (SELECT 1 FROM person p WHERE lower(p.full_name) = lower(demo.full_name));
 
-INSERT INTO operator (operator_id, person_id, active_status, certifications, created_at,
+INSERT INTO operator (code, person_id, active_status, certifications, created_at,
                       hire_date, role, updated_at)
 SELECT demo.operator_id, (SELECT min(p.id) FROM person p WHERE lower(p.full_name) = lower(demo.full_name)),
        'ACTIVE', demo.certifications, now(), demo.hire_date, demo.role, now()
@@ -104,7 +111,7 @@ ON CONFLICT DO NOTHING;
 -- 3) Lots (3 actifs : WASHING / DRYING / PACKAGING, 1 termine, 1 expedie)
 --    Les lots portent le prefixe LOT-DEMO pour etre identifiables.
 -- ---------------------------------------------------------------------------
-INSERT INTO batch (batch_id, block_id, created_at, current_status,
+INSERT INTO batch (code, block_id, created_at, current_status,
                    harvest_date, harvest_quantity_kg, variety_key, updated_at)
 VALUES
     ('LOT-DEMO-001', (SELECT id FROM block WHERE code = 'A'), now(), 'WASHING',   CURRENT_DATE - 1, 520.00, 'KEITT',   now()),
@@ -120,7 +127,7 @@ ON CONFLICT DO NOTHING;
 --    ces recoltes sont synthetiques et le profil dev ne charge aucune recolte
 --    plants a laquelle les rattacher.
 -- ---------------------------------------------------------------------------
-INSERT INTO harvest_event (harvest_id, batch_id, block_id, created_at,
+INSERT INTO harvest_event (code, batch_code, block_id, created_at,
                            harvest_date, harvest_quantity_kg, harvest_time,
                            variety_key, quality_grade, updated_at)
 VALUES
@@ -134,83 +141,83 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 -- 5) Controles qualite (4 PASS, 1 FAIL, 1 REWORK -> taux ~67 %)
 -- ---------------------------------------------------------------------------
-INSERT INTO qc_checkpoint (checkpoint_id, checkpoint_time, created_at, defects,
+INSERT INTO qc_checkpoint (code, checkpoint_time, created_at, defects,
                            defects_count, notes, result, stage, updated_at,
                            batch_id, inspector_id)
 VALUES
-    ('QC-DEMO-001', (CURRENT_DATE - 1) + time '10:00', now(), NULL, 0, 'Conforme', 'PASS',   'INTAKE',    now(), 'LOT-DEMO-001', 'OP-DEMO-01'),
-    ('QC-DEMO-002', (CURRENT_DATE - 2) + time '11:00', now(), '2 fruits meurtris', 2, 'Ecart mineur', 'PASS', 'WASHING', now(), 'LOT-DEMO-002', 'OP-DEMO-01'),
-    ('QC-DEMO-003', (CURRENT_DATE - 3) + time '09:30', now(), 'Humidite trop elevee', 5, 'Retour sechoir', 'REWORK', 'DRYING', now(), 'LOT-DEMO-003', 'OP-DEMO-01'),
-    ('QC-DEMO-004', (CURRENT_DATE - 4) + time '14:00', now(), NULL, 0, 'Conforme', 'PASS',   'DRYING',    now(), 'LOT-DEMO-003', 'OP-DEMO-01'),
-    ('QC-DEMO-005', (CURRENT_DATE - 5) + time '15:30', now(), 'Moisissure', 3, 'Lot ecarte', 'FAIL',  'FINAL',     now(), 'LOT-DEMO-004', 'OP-DEMO-01'),
-    ('QC-DEMO-006', (CURRENT_DATE - 6) + time '16:00', now(), NULL, 0, 'Conforme', 'PASS',   'PACKAGING', now(), 'LOT-DEMO-005', 'OP-DEMO-01')
+    ('QC-DEMO-001', (CURRENT_DATE - 1) + time '10:00', now(), NULL, 0, 'Conforme', 'PASS',   'INTAKE',    now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-001'), (SELECT id FROM operator WHERE code = 'OP-DEMO-01')),
+    ('QC-DEMO-002', (CURRENT_DATE - 2) + time '11:00', now(), '2 fruits meurtris', 2, 'Ecart mineur', 'PASS', 'WASHING', now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-002'), (SELECT id FROM operator WHERE code = 'OP-DEMO-01')),
+    ('QC-DEMO-003', (CURRENT_DATE - 3) + time '09:30', now(), 'Humidite trop elevee', 5, 'Retour sechoir', 'REWORK', 'DRYING', now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-003'), (SELECT id FROM operator WHERE code = 'OP-DEMO-01')),
+    ('QC-DEMO-004', (CURRENT_DATE - 4) + time '14:00', now(), NULL, 0, 'Conforme', 'PASS',   'DRYING',    now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-003'), (SELECT id FROM operator WHERE code = 'OP-DEMO-01')),
+    ('QC-DEMO-005', (CURRENT_DATE - 5) + time '15:30', now(), 'Moisissure', 3, 'Lot ecarte', 'FAIL',  'FINAL',     now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-004'), (SELECT id FROM operator WHERE code = 'OP-DEMO-01')),
+    ('QC-DEMO-006', (CURRENT_DATE - 6) + time '16:00', now(), NULL, 0, 'Conforme', 'PASS',   'PACKAGING', now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-005'), (SELECT id FROM operator WHERE code = 'OP-DEMO-01'))
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 6) Sechages (alimente l'energie, la production et le graphique hebdomadaire)
 -- ---------------------------------------------------------------------------
-INSERT INTO drying_run (run_id, actual_temperature_c, created_at, duration_hours,
+INSERT INTO drying_run (code, actual_temperature_c, created_at, duration_hours,
                         end_moisture_pct, end_time, energy_usage_kwh,
                         start_moisture_pct, start_time, target_temperature_c,
                         updated_at, batch_id, equipment_id, operator_id)
 VALUES
     ('DR-DEMO-001', 54.50, now(), 6.50, 12.00, (CURRENT_DATE - 1) + time '14:30', 118.40,
-     78.00, (CURRENT_DATE - 1) + time '08:00', 55.00, now(), 'LOT-DEMO-001', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), 'OP-DEMO-02'),
+     78.00, (CURRENT_DATE - 1) + time '08:00', 55.00, now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-001'), (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), (SELECT id FROM operator WHERE code = 'OP-DEMO-02')),
     ('DR-DEMO-002', 55.20, now(), 5.00, 11.50, (CURRENT_DATE - 2) + time '13:00', 96.75,
-     76.00, (CURRENT_DATE - 2) + time '08:00', 55.00, now(), 'LOT-DEMO-002', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), 'OP-DEMO-02'),
+     76.00, (CURRENT_DATE - 2) + time '08:00', 55.00, now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-002'), (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), (SELECT id FROM operator WHERE code = 'OP-DEMO-02')),
     ('DR-DEMO-003', 54.80, now(), 7.00, 13.00, (CURRENT_DATE - 3) + time '15:00', 142.10,
-     80.00, (CURRENT_DATE - 3) + time '08:00', 55.00, now(), 'LOT-DEMO-003', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), 'OP-DEMO-02')
+     80.00, (CURRENT_DATE - 3) + time '08:00', 55.00, now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-003'), (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), (SELECT id FROM operator WHERE code = 'OP-DEMO-02'))
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 7) Lavage / tri (alimente la consommation d'eau : 1 380 L / 575 kg = 2.40)
 -- ---------------------------------------------------------------------------
-INSERT INTO wash_sort_record (record_id, created_at, end_time, input_quantity_kg,
+INSERT INTO wash_sort_record (code, created_at, end_time, input_quantity_kg,
                               output_quantity_kg, start_time, updated_at,
                               waste_quantity_kg, water_usage_liters, batch_id,
                               equipment_id, operator_id)
 VALUES
     ('WS-DEMO-001', now(), (CURRENT_DATE - 1) + time '09:30', 520.00, 480.00,
-     (CURRENT_DATE - 1) + time '07:45', now(), 40.00, 1250.00, 'LOT-DEMO-001', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-02'), 'OP-DEMO-02'),
+     (CURRENT_DATE - 1) + time '07:45', now(), 40.00, 1250.00, (SELECT id FROM batch WHERE code = 'LOT-DEMO-001'), (SELECT id FROM equipment WHERE code = 'EQ-DEMO-02'), (SELECT id FROM operator WHERE code = 'OP-DEMO-02')),
     ('WS-DEMO-002', now(), (CURRENT_DATE - 3) + time '10:15', 610.25, 565.00,
-     (CURRENT_DATE - 3) + time '08:15', now(), 45.25, 1380.00, 'LOT-DEMO-003', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-02'), 'OP-DEMO-02')
+     (CURRENT_DATE - 3) + time '08:15', now(), 45.25, 1380.00, (SELECT id FROM batch WHERE code = 'LOT-DEMO-003'), (SELECT id FROM equipment WHERE code = 'EQ-DEMO-02'), (SELECT id FROM operator WHERE code = 'OP-DEMO-02'))
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 8) Receptions (une par lot, alimente l'ecran de reception)
 -- ---------------------------------------------------------------------------
-INSERT INTO raw_intake (intake_id, created_at, intake_date, intake_operator_id,
+INSERT INTO raw_intake (code, created_at, intake_date, intake_operator_id,
                         received_grade, received_quantity_kg, received_variety_key,
                         source_block_id, updated_at, batch_id)
 VALUES
-    ('RI-DEMO-001', now(), CURRENT_DATE - 1, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 520.00, 'KEITT',   (SELECT id FROM block WHERE code = 'A'), now(), 'LOT-DEMO-001'),
-    ('RI-DEMO-002', now(), CURRENT_DATE - 2, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 480.50, 'KEITT',   (SELECT id FROM block WHERE code = 'A'), now(), 'LOT-DEMO-002'),
-    ('RI-DEMO-003', now(), CURRENT_DATE - 3, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'B', 610.25, 'AMELIE',  (SELECT id FROM block WHERE code = 'B'), now(), 'LOT-DEMO-003'),
-    ('RI-DEMO-004', now(), CURRENT_DATE - 5, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 395.00, 'KENT',    (SELECT id FROM block WHERE code = 'B'), now(), 'LOT-DEMO-004'),
-    ('RI-DEMO-005', now(), CURRENT_DATE - 6, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 275.75, 'TOMMY',   (SELECT id FROM block WHERE code = 'C'), now(), 'LOT-DEMO-005')
+    ('RI-DEMO-001', now(), CURRENT_DATE - 1, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 520.00, 'KEITT',   (SELECT id FROM block WHERE code = 'A'), now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-001')),
+    ('RI-DEMO-002', now(), CURRENT_DATE - 2, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 480.50, 'KEITT',   (SELECT id FROM block WHERE code = 'A'), now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-002')),
+    ('RI-DEMO-003', now(), CURRENT_DATE - 3, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'B', 610.25, 'AMELIE',  (SELECT id FROM block WHERE code = 'B'), now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-003')),
+    ('RI-DEMO-004', now(), CURRENT_DATE - 5, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 395.00, 'KENT',    (SELECT id FROM block WHERE code = 'B'), now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-004')),
+    ('RI-DEMO-005', now(), CURRENT_DATE - 6, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 275.75, 'TOMMY',   (SELECT id FROM block WHERE code = 'C'), now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-005'))
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 9) Conditionnement (1 lot export-ready, 1 lot en attente)
 -- ---------------------------------------------------------------------------
-INSERT INTO packaging_record (record_id, created_at, export_ready, lot_code,
+INSERT INTO packaging_record (code, created_at, export_ready, lot_code,
                               package_quantity_kg, package_type, packaging_date,
                               updated_at, batch_id, equipment_id, operator_id)
 VALUES
-    ('PKG-DEMO-001', now(), TRUE,  'LOT-DEMO-003-PKG', 565.00, '2KG_BAG', CURRENT_DATE - 3, now(), 'LOT-DEMO-003', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-03'), 'OP-DEMO-02'),
-    ('PKG-DEMO-002', now(), FALSE, 'LOT-DEMO-004-PKG', 360.00, 'BULK',    CURRENT_DATE - 5, now(), 'LOT-DEMO-004', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-03'), 'OP-DEMO-02')
+    ('PKG-DEMO-001', now(), TRUE,  'LOT-DEMO-003-PKG', 565.00, '2KG_BAG', CURRENT_DATE - 3, now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-003'), (SELECT id FROM equipment WHERE code = 'EQ-DEMO-03'), (SELECT id FROM operator WHERE code = 'OP-DEMO-02')),
+    ('PKG-DEMO-002', now(), FALSE, 'LOT-DEMO-004-PKG', 360.00, 'BULK',    CURRENT_DATE - 5, now(), (SELECT id FROM batch WHERE code = 'LOT-DEMO-004'), (SELECT id FROM equipment WHERE code = 'EQ-DEMO-03'), (SELECT id FROM operator WHERE code = 'OP-DEMO-02'))
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 10) Conformite (HACCP / export UE / tracabilite)
 -- ---------------------------------------------------------------------------
-INSERT INTO compliance_record (record_id, audit_date, compliance_type, created_at,
+INSERT INTO compliance_record (code, audit_date, compliance_type, created_at,
                                evidence, next_audit_date, requirement, result,
                                updated_at, auditor_id, batch_id)
 VALUES
-    ('CR-DEMO-001', CURRENT_DATE - 5, 'HACCP',        now(), 'Plan HACCP 2026', CURRENT_DATE + 85,  'Maitrise des points critiques', 'COMPLIANT',     now(), 'OP-DEMO-01', 'LOT-DEMO-004'),
-    ('CR-DEMO-002', CURRENT_DATE - 6, 'EU_EXPORT',    now(), 'Certificat phytosanitaire', CURRENT_DATE + 55, 'Exigences export UE', 'COMPLIANT',     now(), 'OP-DEMO-01', 'LOT-DEMO-005'),
-    ('CR-DEMO-003', CURRENT_DATE - 3, 'TRACEABILITY', now(), NULL, NULL, 'Tracabilite amont/aval', 'PENDING', now(), 'OP-DEMO-01', 'LOT-DEMO-003')
+    ('CR-DEMO-001', CURRENT_DATE - 5, 'HACCP',        now(), 'Plan HACCP 2026', CURRENT_DATE + 85,  'Maitrise des points critiques', 'COMPLIANT',     now(), (SELECT id FROM operator WHERE code = 'OP-DEMO-01'), (SELECT id FROM batch WHERE code = 'LOT-DEMO-004')),
+    ('CR-DEMO-002', CURRENT_DATE - 6, 'EU_EXPORT',    now(), 'Certificat phytosanitaire', CURRENT_DATE + 55, 'Exigences export UE', 'COMPLIANT',     now(), (SELECT id FROM operator WHERE code = 'OP-DEMO-01'), (SELECT id FROM batch WHERE code = 'LOT-DEMO-005')),
+    ('CR-DEMO-003', CURRENT_DATE - 3, 'TRACEABILITY', now(), NULL, NULL, 'Tracabilite amont/aval', 'PENDING', now(), (SELECT id FROM operator WHERE code = 'OP-DEMO-01'), (SELECT id FROM batch WHERE code = 'LOT-DEMO-003'))
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------

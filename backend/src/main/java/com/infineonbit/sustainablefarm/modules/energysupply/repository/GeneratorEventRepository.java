@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface GeneratorEventRepository extends JpaRepository<GeneratorEvent, String> {
+public interface GeneratorEventRepository extends JpaRepository<GeneratorEvent, Long> {
 
     List<GeneratorEvent> findAllByOrderByDateDesc();
 

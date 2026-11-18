@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/qc-checkpoints")
+@RequestMapping("/api/product-transformation/qc-checkpoints")
 @Tag(name = "Quality Control Management", description = "APIs for managing quality control checkpoints")
 public class QcCheckpointController {
 
@@ -53,12 +53,12 @@ public class QcCheckpointController {
     @PostMapping
     @Operation(summary = "Create a new QC checkpoint", description = "Creates a new quality control checkpoint")
     public ResponseEntity<QcCheckpointResponse> createQcCheckpoint(@Valid @RequestBody QcCheckpointCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Operator inspector = null;
         if (request.getInspectorId() != null) {
-            inspector = operatorRepository.findById(request.getInspectorId())
+            inspector = operatorRepository.findByOperatorId(request.getInspectorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getInspectorId()));
         }
         
@@ -118,7 +118,7 @@ public class QcCheckpointController {
             existingCheckpoint.setDefectsCount(request.getDefectsCount());
         }
         if (request.getInspectorId() != null) {
-            Operator inspector = operatorRepository.findById(request.getInspectorId())
+            Operator inspector = operatorRepository.findByOperatorId(request.getInspectorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getInspectorId()));
             existingCheckpoint.setInspector(inspector);
         }
@@ -146,7 +146,7 @@ public class QcCheckpointController {
     @Operation(summary = "Get QC checkpoints by batch and stage", description = "Retrieves QC checkpoints for a specific batch and stage")
     public ResponseEntity<List<QcCheckpointResponse>> getQcCheckpointsByBatchAndStage(
             @Parameter(description = "Batch ID") @PathVariable String batchId,
-            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage stage) {
+            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage stage) {
         List<QcCheckpoint> checkpoints = qcCheckpointService.getQcCheckpointsByBatchAndStage(batchId, stage);
         List<QcCheckpointResponse> responses = checkpoints.stream()
                 .map(dtoMapper::toResponse)
@@ -167,7 +167,7 @@ public class QcCheckpointController {
     @Operation(summary = "Count QC checkpoints by batch and stage", description = "Counts QC checkpoints for a specific batch and stage")
     public ResponseEntity<Long> countQcCheckpointsByBatchAndStage(
             @Parameter(description = "Batch ID") @PathVariable String batchId,
-            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage stage) {
+            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage stage) {
         long count = qcCheckpointService.countByBatchAndStage(batchId, stage);
         return ResponseEntity.ok(count);
     }

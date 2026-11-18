@@ -32,7 +32,7 @@ public class ProductTransformationLots implements PackagedLotLookup, ProcessingB
         // lot_code is unique (uk_packaging_record_lot_code): at most one record.
         return packagingRecords.findByLotCode(lotCode.trim()).stream()
                 .findFirst()
-                .map(record -> new PackagedLot(record.getRecordId(), record.getLotCode(),
+                .map(record -> new PackagedLot(record.getId(), record.getRecordId(), record.getLotCode(),
                         record.getBatch() != null ? record.getBatch().getBatchId() : null));
     }
 
@@ -41,7 +41,7 @@ public class ProductTransformationLots implements PackagedLotLookup, ProcessingB
         if (batchId == null || batchId.isBlank()) {
             return Optional.empty();
         }
-        return batches.findById(batchId.trim())
-                .map(batch -> new ProcessingBatch(batch.getBatchId(), batch.getHarvestDate(), batch.getVarietyKey()));
+        return batches.findByBatchId(batchId.trim())
+                .map(batch -> new ProcessingBatch(batch.getId(), batch.getBatchId(), batch.getHarvestDate(), batch.getVarietyKey()));
     }
 }
