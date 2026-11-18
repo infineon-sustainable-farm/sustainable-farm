@@ -1,74 +1,107 @@
+---
+title: Contributing
+status: accepted
+version: 2.0.0
+owner: PANK4SS (admin)
+last_updated: 2026-11-18
+related: [ARCHITECTURE.md, SETUP.md, CI-AUTO-REVIEW.md]
+---
+
 # Contributing
 
-## Git Workflow
+The rules for changing sustainable-farm: branches and pull requests, who may change which folder, commit messages and the checks every commit and PR goes through.
 
-The repository uses a three-level branch model:
+## Related documents
 
-```
-main (protected)
-  └── develop (protected; force-push and deletion blocked)
-        └── feature/<module-name>/<short-description>
-```
+| Document | Relationship |
+|---|---|
+| [Architecture](ARCHITECTURE.md) | The module boundaries that the ownership rules mirror |
+| [Setup](SETUP.md) | How to run the checks locally |
+| [CI auto-review](CI-AUTO-REVIEW.md) | The PR pipeline and its required checks |
+| [ADR index](adr/README.md) | Conventions a change must follow |
 
-- **`main`** — protected branch. Receives finished work only. Do not push to it directly.
-- **`develop`** — protected branch. Force-push and deletion are blocked. This is the integration branch; all pull requests target `develop`.
-- **Feature branches** — created from `develop` for every piece of work.
+## 1. Branches and pull requests
 
-### Branch Naming Convention
+| Branch | Rule |
+|---|---|
+| `main` | Protected; receives finished work only |
+| `develop` | Protected, no force-push, no deletion; target of every pull request |
+| `feature/<module>/init` | The branch assigned to each module owner, created from `develop` |
 
-```
-feature/<module-name>/<short-description>
-```
+| Rule | Detail |
+|---|---|
+| Branch policy | `.github/workflows/branch-policy.yml` closes a PR to `develop` or `main` whose branch does not end in `/init`, unless the admin (PANK4SS) opened it or it carries the `policy-exception` label |
+| Approval | 1 approval required; self-approval does not count; new commits dismiss earlier approvals |
+| Scope | One focused change per PR; backend and frontend of the same module change together when an API changes |
+| Required checks | "Backend tests (PostgreSQL)", "Frontend build", "Quality gate (auto-review)", "Module ownership" ([CI auto-review](CI-AUTO-REVIEW.md)) |
 
-- `<module-name>` must match one of the nine module folders exactly:
-  `cropstorage`, `energysupply`, `machinery`, `plants`, `producttransformation`, `salesmarketing`, `sitesecurity`, `visitormanagement`, `watersupply`
-- `<short-description>` is a short kebab-case summary of the change.
+## 2. Module ownership
 
-Example branch name: `feature/plants/add-plant-endpoints`
+Owners are listed in `.github/module-owners.conf`. A module owner changes only the folders of their module; the admin changes anything, including the shared folders.
 
-## Pull Requests
+| Folder | Owner |
+|---|---|
+| `backend/.../modules/<module>/`, `backend/src/test/java/.../modules/<module>/` | The module owner |
+| `backend/src/main/resources/<module>/`, `backend/src/test/resources/<module>/` | The module owner |
+| `backend/src/main/resources/seed/<module>-*` | The module owner (demo data, `dev` profile only) |
+| `frontend/src/features/<module>/` | The module owner |
+| New migration `backend/src/main/resources/db/migration/V<n>__<module>_<description>.sql` | The module owner; existing migrations, the baseline included, are never edited |
+| `backend/.../core/` | Admin |
+| `backend/.../modules/farm/`, `modules/staff/`, `modules/notification/` (shared referentials) | Admin (listed with owner PANK4SS) |
+| `frontend/src/app/` (shell, router, launcher) | Admin |
+| `frontend/src/shared/` (`ui`, `api`, `i18n`, `hooks`, `utils`) and `frontend/src/index.css` | Admin |
+| `frontend/src/locales/<language>/common.json` | Admin |
+| `frontend/src/locales/<language>/<module>.json` | Changed with the module's screens; outside `features/<module>/`, so through the admin for a non-admin author |
+| `docs/`, `scripts/`, `.github/`, `.arc-core/`, build and Docker files, root files | Admin |
 
-- Pull requests are opened **against `develop`**.
-- **1 approval is required** before merging.
-- **Self-approval does not count** — the author cannot satisfy the approval requirement with their own review.
-- **Stale approvals are dismissed** when new commits are pushed to the PR: the required approval must be given again after the latest changes.
-
-### PR Scope and Sequencing
-
-- The first PR in a schema/data change sequence must be limited to the schema and baseline data. Preserve V1–V3 unchanged; do not include business-behavior changes in this PR.
-- Follow-up PRs may introduce business behavior, but must separate it feature by feature so each PR has a focused, reviewable scope.
-
-## Module Ownership
-
-Each module has an assigned owner, and contributors must work within their own module:
-
-- Backend module code lives in `backend/src/main/java/com/infineonbit/sustainablefarm/modules/<module>/` (folder shorthand: `modules/<module>/`).
-- Frontend module code lives in `frontend/src/features/<module>/` (folder shorthand: `features/<module>/`).
+| Owner | Modules |
+|---|---|
+| PANK4SS (admin) | `machinery`, `farm`, `staff`, `notification` |
+| wangredelwende-spec | `plants` |
+| SABF226 | `producttransformation` |
+| nishe956 | `salesmarketing` |
+| ALIX6S | `visitormanagement` |
+| brecheyn | `watersupply` |
+| Dark1920 | `energysupply` |
+| TaniaW777 | `sitesecurity` (excluded module) |
+| christelle-dehoumon | `cropstorage` (excluded module) |
 
 Rules:
 
-1. **Only modify files inside your assigned module folder** (`modules/<module>/` on the backend, `features/<module>/` on the frontend). Do not touch another module's folder in a PR.
-2. **Cross-module changes are made by the module's owner.** If your work needs a change in a module you do not own, ask its owner to make it from their own `/init` branch.
-3. **Shared locations and the repository layout are reserved to the project admin.** This covers the backend `core/` package, the frontend `frontend/src/shared/` folder, build and Docker files, `docs/`, `scripts/`, `.github/`, and any new folder at the root of the repository. Ask the admin for these changes.
-
-4. **`docs/` is the general project documentation, not a per-module documentation.** It only holds the documents listed as `doc` in `.github/module-owners.conf`, with no sub-folder. Module documentation (integration contracts, audits, notes) lives in the module folder, for example `modules/<module>/README.md`.
-5. **The repository layout is fixed.** Only the entries listed as `root` in `.github/module-owners.conf` may exist at the root of the repository. This applies to everyone, admins included: a new root entry or general document is first added to that list.
+1. Change only the folders of your module. A change needed in another module is made by its owner.
+2. Another module is used only through its `modules.<x>.api` package or its events; a shared concept (farm, block, zone, person, alert, equipment, variety) is referenced by foreign key to its owner, never copied ([ADR 0003](adr/0003-communication-entre-modules.md), [ADR 0004](adr/0004-referentiels-partages.md)). A new method in a shared referential's `api` is asked from the admin.
+3. Follow the database and API conventions of [ADR 0002](adr/0002-conventions-base-de-donnees-et-api.md): `BaseEntity`, enums as strings, `Money`, `/api/<module-kebab>/...`, record DTOs, the exceptions of `core.exception`, no module `@RestControllerAdvice`.
+4. Screens use the shell (`nav` in `routes.jsx`), the kit of `shared/ui` and the tokens, and every text goes through i18n in English, German and French ([ADR 0001](adr/0001-app-shell-et-design-system.md)).
+5. `docs/` is the general documentation only: the files listed as `doc` in `module-owners.conf`, no per-module document. Module documentation lives in the module folder (for example `modules/watersupply/README.md`).
+6. The repository layout is fixed: only the entries listed as `root` in `module-owners.conf` may exist at the root, for everyone, admins included.
 
 ### Enforcement
 
-The `Module ownership` check (`.github/workflows/module-ownership.yml`, running `scripts/module-ownership-guard.sh`) blocks any PR that breaks these rules. Owners are listed in `.github/module-owners.conf`. For a non-admin author, the PR must come from `feature/<module>/init` for a module they own, and every changed path must be one of:
-
-| Allowed path | Notes |
-|---|---|
-| `backend/src/main/java/.../modules/<module>/` | Module backend code |
-| `backend/src/test/java/.../modules/<module>/` | Module backend tests |
-| `backend/src/main/resources/<module>/`, `backend/src/test/resources/<module>/` | Module resources |
-| `backend/src/main/resources/seed/<module>-*` | Module seed data (loaded under the `dev` profile only) |
-| `backend/src/main/resources/db/migration/V<n>__<module>_<description>.sql` | New migrations only, after the integration baseline; existing migrations are never edited |
-| `frontend/src/features/<module>/` | Module frontend code |
-
-Run the check locally before opening a PR:
+`.github/workflows/module-ownership.yml` runs `scripts/module-ownership-guard.sh` on every PR, with the script and the owners file of the base branch. It checks the layout (`root` and `doc` lists) for every author and, for a non-admin author, that the PR comes from `feature/<module>/init` of an owned module and changes only that module's folders. Run it locally before opening a PR:
 
 ```bash
-scripts/module-ownership-guard.sh <your-github-login> feature/<module>/init
+scripts/module-ownership-guard.sh <github-login> feature/<module>/init HEAD origin/develop
 ```
+
+## 3. Before a commit
+
+Run the checks of your change ([Setup](SETUP.md#4-run-the-checks)), then the gate:
+
+```bash
+arc-core gate
+```
+
+The Git hooks run the same gate on every commit. A refused commit is fixed, never forced: do not use `--no-verify`. The checks are declared in `.arc-core/proof.json` and `.arc-core/config.json`; both are committed.
+
+## 4. Commits
+
+Header: `<type>(<scope>): <subject>`, in lower case.
+
+| Part | Rule |
+|---|---|
+| `type` | One of `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`, `style`, `revert` |
+| `scope` | The module (`plants`, `watersupply`, ...) or `core`, `app`, `ui`, `i18n` |
+| `subject` | What the commit does, imperative, no final period |
+| Attribution | No AI attribution line of any kind (refused by `arc-core commit-msg`) |
+
+Examples: `fix(api): keep the sort order after an edit`, `docs(adr): update the alert model`.
