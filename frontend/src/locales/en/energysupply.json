@@ -175,8 +175,7 @@
     "deleteMessage": "Delete the backup event from {{date}}?",
     "dateNotFuture": "Date must be today or in the past.",
     "valueNonNegative": "Enter a value greater than or equal to 0.",
-    "reasonTooLong": "Trigger reason must be {{max}} characters or fewer.",
-    "mockupNote": "Note: the \"Critical Loads Covered\" and \"Payback vs Full Diesel\" panels from the original mock-up aren't included here — there's no backing table for them in the current data model (Generator Event only tracks trigger, duration, fuel, cost)."
+    "reasonTooLong": "Trigger reason must be {{max}} characters or fewer."
   },
   "carbon": {
     "title": "Carbon Footprint",

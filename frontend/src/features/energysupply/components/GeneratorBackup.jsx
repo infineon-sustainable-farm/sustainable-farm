@@ -159,7 +159,6 @@ export default function GeneratorBackup() {
           )}
         />
       </Card>
-      <p className="text-xs text-text-muted">{t("generator.mockupNote")}</p>
 
       {formOpen && (
         <GeneratorEventFormModal
