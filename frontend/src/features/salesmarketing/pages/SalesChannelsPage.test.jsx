@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { justAfterLocalMidnight } from '../testing/nearMidnight';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SalesChannelsPage from './SalesChannelsPage';
@@ -110,5 +111,24 @@ describe('SalesChannelsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit target' }));
     const dialog = await screen.findByRole('dialog', { name: 'Edit Target #9' });
     expect(within(dialog).getByLabelText(/Revenue Target/)).toHaveValue(500000);
+  });
+
+  it('defaults the target period to local dates just after midnight', async () => {
+    const restore = justAfterLocalMidnight();
+    try {
+      renderPage();
+      fireEvent.click(await screen.findByRole('button', { name: 'Actions for Online Store' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Add Target' }));
+      const dialog = screen.getByRole('dialog', { name: 'New Sales Target' });
+      fireEvent.change(within(dialog).getByLabelText(/Revenue Target/), { target: { value: '1000' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Create Target' }));
+      await waitFor(() =>
+        expect(api.createSalesChannelTarget).toHaveBeenCalledWith(
+          expect.objectContaining({ periodStart: '2026-04-01', periodEnd: '2026-07-01' })
+        )
+      );
+    } finally {
+      restore();
+    }
   });
 });
