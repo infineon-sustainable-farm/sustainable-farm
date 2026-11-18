@@ -9,7 +9,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.service.DryingRunService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,19 +38,19 @@ public class DryingRunController {
 
     private final DryingRunService dryingRunService;
     private final BatchRepository batchRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final OperatorRepository operatorRepository;
     private final DtoMapper dtoMapper;
 
     @Autowired
     public DryingRunController(DryingRunService dryingRunService,
                              BatchRepository batchRepository,
-                             EquipmentRepository equipmentRepository,
+                             EquipmentService equipmentService,
                              OperatorRepository operatorRepository,
                              DtoMapper dtoMapper) {
         this.dryingRunService = dryingRunService;
         this.batchRepository = batchRepository;
-        this.equipmentRepository = equipmentRepository;
+        this.equipmentService = equipmentService;
         this.operatorRepository = operatorRepository;
         this.dtoMapper = dtoMapper;
     }
@@ -63,7 +63,7 @@ public class DryingRunController {
         
         Equipment equipment = null;
         if (request.getEquipmentId() != null) {
-            equipment = equipmentRepository.findById(request.getEquipmentId())
+            equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
         }
         
@@ -141,9 +141,9 @@ public class DryingRunController {
             existingRun.setEndTime(request.getEndTime());
         }
         if (request.getEquipmentId() != null) {
-            Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
+            Equipment equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
-            existingRun.setEquipment(equipment);
+            existingRun.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
             Operator operator = operatorRepository.findById(request.getOperatorId())

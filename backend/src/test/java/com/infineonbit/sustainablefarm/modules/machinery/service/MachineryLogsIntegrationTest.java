@@ -9,10 +9,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogUp
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.UsageLogCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.UsageLogUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
 import com.infineonbit.sustainablefarm.modules.machinery.enums.MaintenanceType;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.FuelLogNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.MaintenanceScheduleNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.RepairLogNotFoundException;
@@ -178,6 +178,7 @@ class MachineryLogsIntegrationTest {
     private Equipment createEquipment(String name) {
         Equipment equipment = new Equipment();
         equipment.setName(name);
+        equipment.setCode("EQ-TEST-" + name);
         equipment.setCategory(Category.PROCESSING_MACHINERY);
         equipment.setStage(Stage.PROCESSING);
         equipment.setStatus(Status.OPERATIONAL);

@@ -6,10 +6,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.entity.MaintenanceSched
 import com.infineonbit.sustainablefarm.modules.machinery.entity.RepairLog;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.SparePart;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.UsageLog;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
 import com.infineonbit.sustainablefarm.modules.machinery.enums.MaintenanceType;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.FuelLogRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceScheduleRepository;
@@ -62,6 +62,7 @@ class EquipmentDeletionIntegrationTest {
     void deletingEquipment_shouldPreserveItsSpareParts() {
         Equipment equipment = new Equipment();
         equipment.setName("Tractor");
+        equipment.setCode("EQ-TEST-" + "Tractor");
         equipment.setCategory(Category.AGRICULTURAL_MACHINERY);
         equipment.setStage(Stage.CULTIVATION);
         equipment.setStatus(Status.OPERATIONAL);
@@ -98,6 +99,7 @@ class EquipmentDeletionIntegrationTest {
 
         Equipment equipment = new Equipment();
         equipment.setName("Harvester");
+        equipment.setCode("EQ-TEST-" + "Harvester");
         equipment.setCategory(Category.AGRICULTURAL_MACHINERY);
         equipment.setStage(Stage.HARVEST);
         equipment.setStatus(Status.OPERATIONAL);
@@ -117,6 +119,7 @@ class EquipmentDeletionIntegrationTest {
     void deletingEquipment_shouldPreserveMaintenanceUsageFuelAndRepairLogs() {
         Equipment equipment = new Equipment();
         equipment.setName("Dryer");
+        equipment.setCode("EQ-TEST-" + "Dryer");
         equipment.setCategory(Category.PROCESSING_MACHINERY);
         equipment.setStage(Stage.DRYING);
         equipment.setStatus(Status.UNDER_MAINTENANCE);

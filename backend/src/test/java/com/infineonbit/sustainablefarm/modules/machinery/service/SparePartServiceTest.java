@@ -5,9 +5,9 @@ import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartCr
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.SparePart;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Category;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.SparePartNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.SparePartRepository;

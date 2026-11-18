@@ -38,7 +38,7 @@ public interface PackagingRecordRepository extends JpaRepository<PackagingRecord
     /**
      * Find packaging records by equipment
      */
-    List<PackagingRecord> findByEquipmentEquipmentId(String equipmentId);
+    List<PackagingRecord> findByEquipmentId(Long equipmentId);
 
     /**
      * Find packaging records by operator

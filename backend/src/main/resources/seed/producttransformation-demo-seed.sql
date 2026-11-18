@@ -49,17 +49,29 @@ ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 2) Equipements (2 actifs, 1 en maintenance -> utilisation = 67 %)
+--    Registre unique des equipements, detenu par machinery (table equipment,
+--    ADR 0004) : categorie PROCESSING_MACHINERY, etape DRYING pour les sechoirs,
+--    PROCESSING pour le lavage et le conditionnement ; statut ACTIVE ->
+--    OPERATIONAL, MAINTENANCE -> UNDER_MAINTENANCE. Les attributs propres a la
+--    transformation sont dans l'extension 1:1 pt_equipment_spec.
 -- ---------------------------------------------------------------------------
-INSERT INTO pt_equipment (equipment_id, capacity_kg_per_hour, created_at,
-                       energy_consumption_kwh_per_kg, equipment_name, equipment_type,
-                       last_maintenance_date, location, maintenance_status, updated_at)
+INSERT INTO equipment (code, name, category, stage, status, created_at, updated_at)
 VALUES
-    ('EQ-DEMO-01', 120.00, now(), 0.8500, 'Sechoir solaire DEMO 1', 'SOLAR_DRYER',
-     CURRENT_DATE - 20, 'Unite PT', 'ACTIVE', now()),
-    ('EQ-DEMO-02', 80.00, now(), 1.1000, 'Laveuse DEMO 1', 'WASHING',
-     CURRENT_DATE - 35, 'Unite PT', 'ACTIVE', now()),
-    ('EQ-DEMO-03', 60.00, now(), 0.9500, 'Conditionneuse DEMO 1', 'PACKAGING',
-     CURRENT_DATE - 5, 'Unite PT', 'MAINTENANCE', now())
+    ('EQ-DEMO-01', 'Sechoir solaire DEMO 1', 'PROCESSING_MACHINERY', 'DRYING',     'OPERATIONAL',       now(), now()),
+    ('EQ-DEMO-02', 'Laveuse DEMO 1',         'PROCESSING_MACHINERY', 'PROCESSING', 'OPERATIONAL',       now(), now()),
+    ('EQ-DEMO-03', 'Conditionneuse DEMO 1',  'PROCESSING_MACHINERY', 'PROCESSING', 'UNDER_MAINTENANCE', now(), now())
+ON CONFLICT DO NOTHING;
+
+INSERT INTO pt_equipment_spec (equipment_id, equipment_type, capacity_kg_per_hour,
+                               energy_consumption_kwh_per_kg, location,
+                               last_maintenance_date, created_at, updated_at)
+SELECT e.id, s.equipment_type, s.capacity, s.energy, 'Unite PT', CURRENT_DATE - s.days_since_maintenance, now(), now()
+FROM (VALUES
+    ('EQ-DEMO-01', 'SOLAR_DRYER', 120.00, 0.8500, 20),
+    ('EQ-DEMO-02', 'WASHING',      80.00, 1.1000, 35),
+    ('EQ-DEMO-03', 'PACKAGING',    60.00, 0.9500,  5)
+) AS s (code, equipment_type, capacity, energy, days_since_maintenance)
+JOIN equipment e ON e.code = s.code
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -115,11 +127,11 @@ INSERT INTO drying_run (run_id, actual_temperature_c, created_at, duration_hours
                         updated_at, batch_id, equipment_id, operator_id)
 VALUES
     ('DR-DEMO-001', 54.50, now(), 6.50, 12.00, (CURRENT_DATE - 1) + time '14:30', 118.40,
-     78.00, (CURRENT_DATE - 1) + time '08:00', 55.00, now(), 'LOT-DEMO-001', 'EQ-DEMO-01', 'OP-DEMO-02'),
+     78.00, (CURRENT_DATE - 1) + time '08:00', 55.00, now(), 'LOT-DEMO-001', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), 'OP-DEMO-02'),
     ('DR-DEMO-002', 55.20, now(), 5.00, 11.50, (CURRENT_DATE - 2) + time '13:00', 96.75,
-     76.00, (CURRENT_DATE - 2) + time '08:00', 55.00, now(), 'LOT-DEMO-002', 'EQ-DEMO-01', 'OP-DEMO-02'),
+     76.00, (CURRENT_DATE - 2) + time '08:00', 55.00, now(), 'LOT-DEMO-002', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), 'OP-DEMO-02'),
     ('DR-DEMO-003', 54.80, now(), 7.00, 13.00, (CURRENT_DATE - 3) + time '15:00', 142.10,
-     80.00, (CURRENT_DATE - 3) + time '08:00', 55.00, now(), 'LOT-DEMO-003', 'EQ-DEMO-01', 'OP-DEMO-02')
+     80.00, (CURRENT_DATE - 3) + time '08:00', 55.00, now(), 'LOT-DEMO-003', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-01'), 'OP-DEMO-02')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -131,9 +143,9 @@ INSERT INTO wash_sort_record (record_id, created_at, end_time, input_quantity_kg
                               equipment_id, operator_id)
 VALUES
     ('WS-DEMO-001', now(), (CURRENT_DATE - 1) + time '09:30', 520.00, 480.00,
-     (CURRENT_DATE - 1) + time '07:45', now(), 40.00, 1250.00, 'LOT-DEMO-001', 'EQ-DEMO-02', 'OP-DEMO-02'),
+     (CURRENT_DATE - 1) + time '07:45', now(), 40.00, 1250.00, 'LOT-DEMO-001', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-02'), 'OP-DEMO-02'),
     ('WS-DEMO-002', now(), (CURRENT_DATE - 3) + time '10:15', 610.25, 565.00,
-     (CURRENT_DATE - 3) + time '08:15', now(), 45.25, 1380.00, 'LOT-DEMO-003', 'EQ-DEMO-02', 'OP-DEMO-02')
+     (CURRENT_DATE - 3) + time '08:15', now(), 45.25, 1380.00, 'LOT-DEMO-003', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-02'), 'OP-DEMO-02')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -157,8 +169,8 @@ INSERT INTO packaging_record (record_id, created_at, export_ready, lot_code,
                               package_quantity_kg, package_type, packaging_date,
                               updated_at, batch_id, equipment_id, operator_id)
 VALUES
-    ('PKG-DEMO-001', now(), TRUE,  'LOT-DEMO-003-PKG', 565.00, '2KG_BAG', CURRENT_DATE - 3, now(), 'LOT-DEMO-003', 'EQ-DEMO-03', 'OP-DEMO-02'),
-    ('PKG-DEMO-002', now(), FALSE, 'LOT-DEMO-004-PKG', 360.00, 'BULK',    CURRENT_DATE - 5, now(), 'LOT-DEMO-004', 'EQ-DEMO-03', 'OP-DEMO-02')
+    ('PKG-DEMO-001', now(), TRUE,  'LOT-DEMO-003-PKG', 565.00, '2KG_BAG', CURRENT_DATE - 3, now(), 'LOT-DEMO-003', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-03'), 'OP-DEMO-02'),
+    ('PKG-DEMO-002', now(), FALSE, 'LOT-DEMO-004-PKG', 360.00, 'BULK',    CURRENT_DATE - 5, now(), 'LOT-DEMO-004', (SELECT id FROM equipment WHERE code = 'EQ-DEMO-03'), 'OP-DEMO-02')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -206,6 +218,8 @@ COMMIT;
 
 -- ---------------------------------------------------------------------------
 -- Verification attendue apres execution (information seulement) :
+--   equipment       : 3 equipements de transformation (EQ-DEMO-01 a 03)
+--   pt_equipment_spec: 3 extensions
 --   harvest_event   : 5 lignes
 --   batch           : 5 lots (3 actifs)
 --   raw_intake      : 5 receptions

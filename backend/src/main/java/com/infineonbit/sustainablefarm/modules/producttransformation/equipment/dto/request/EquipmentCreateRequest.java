@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,9 +25,11 @@ import java.time.LocalDate;
 public class EquipmentCreateRequest {
 
     @NotBlank(message = "Equipment ID is required")
+    @Size(max = 50, message = "Equipment ID must be 50 characters or fewer")
     private String equipmentId;
 
     @NotBlank(message = "Equipment name is required")
+    @Size(max = 100, message = "Equipment name must be 100 characters or fewer")
     private String equipmentName;
 
     @NotNull(message = "Equipment type is required")
@@ -40,6 +43,7 @@ public class EquipmentCreateRequest {
     @Positive(message = "Energy consumption must be positive")
     private BigDecimal energyConsumptionKwhPerKg;
 
+    @Size(max = 100, message = "Location must be 100 characters or fewer")
     private String location;
 
     private MaintenanceStatus maintenanceStatus;

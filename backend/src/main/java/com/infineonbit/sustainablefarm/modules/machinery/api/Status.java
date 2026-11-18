@@ -1,4 +1,4 @@
-package com.infineonbit.sustainablefarm.modules.machinery.enums;
+package com.infineonbit.sustainablefarm.modules.machinery.api;
 
 public enum Status {
     OPERATIONAL,

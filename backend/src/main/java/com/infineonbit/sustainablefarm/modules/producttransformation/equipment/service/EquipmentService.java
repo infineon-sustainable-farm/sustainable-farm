@@ -7,8 +7,9 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import java.util.List;
 
 /**
- * Service Interface for Equipment Entity
- * Machinery and equipment data - Supporting Entity
+ * Service Interface for the product transformation equipment: the processing and drying
+ * machines of the farm register owned by machinery, with their product transformation
+ * attributes. {@code equipmentId} is the register business code.
  * 
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
@@ -34,6 +35,21 @@ public interface EquipmentService {
      * Get equipment by ID
      */
     Equipment getEquipmentById(String equipmentId);
+
+    /**
+     * Find equipment by ID (business code), empty when no processing or drying machine has it
+     */
+    java.util.Optional<Equipment> findEquipmentById(String equipmentId);
+
+    /**
+     * Find equipment by its register id, empty when no processing or drying machine has it
+     */
+    java.util.Optional<Equipment> findEquipmentByRegisterId(Long id);
+
+    /**
+     * Get equipment by its register id (the Long id stored in the equipment_id columns)
+     */
+    Equipment getEquipmentByRegisterId(Long id);
 
     /**
      * Get all equipment
