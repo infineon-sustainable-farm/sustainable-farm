@@ -127,15 +127,25 @@ class WatersupplySchemaIntegrationTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    // One insert per test: on PostgreSQL a failed statement aborts the test transaction, so a second
+    // insert in the same test would fail with "current transaction is aborted" instead of the FK error.
     @Test
-    void measurementsMustReferenceAnExistingSource() {
+    void aQualityTestMustReferenceAnExistingSource() {
         assertThatThrownBy(() -> jdbc.update("insert into water_quality_tests (created_at, updated_at, source_id) "
                 + "values (current_timestamp, current_timestamp, 987654321)"))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void aRainwaterHarvestMustReferenceAnExistingSource() {
         assertThatThrownBy(() -> jdbc.update("insert into rainwater_harvests (created_at, updated_at, source_id, "
                 + "catchment_area_m2, rainfall_mm, runoff_coefficient, capture_date) values (current_timestamp, "
                 + "current_timestamp, 987654321, 1, 1, 1, current_timestamp)"))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void aConsumptionMustReferenceAnExistingSource() {
         assertThatThrownBy(() -> jdbc.update("insert into water_consumption (created_at, updated_at, farm_id, "
                 + "source_id, consumption_liters, consumption_date) values (current_timestamp, current_timestamp, ?, "
                 + "987654321, 1, current_timestamp)", farmId))
