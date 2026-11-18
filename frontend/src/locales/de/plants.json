@@ -51,6 +51,17 @@
     "comparisonReason": {
       "NO_REFERENCE": "kein Referenzwert",
       "NO_TREE_LEFT": "kein Baum mehr"
+    },
+    "fertilizerType": {
+      "MINERAL": "Mineralisch",
+      "ORGANIC": "Organisch"
+    },
+    "movementType": {
+      "PURCHASE": "Zukauf",
+      "APPLICATION": "Ausbringung",
+      "LOSS": "Verlust",
+      "ADJUSTMENT_IN": "Korrektur (Zugang)",
+      "ADJUSTMENT_OUT": "Korrektur (Abgang)"
     }
   },
   "blockFilter": {
@@ -170,6 +181,137 @@
       "seasonSource": "Saison: {{source}}",
       "phase": "{{phase}} {{share}} ({{source}})",
       "phaseSeparator": ", "
+    }
+  },
+  "fertilizer": {
+    "pageTitle": "Düngemittelbestand — Pflanzen",
+    "title": "Düngemittelbestand",
+    "subtitle": "Bestand, Zukäufe, Ausbringungen und Verluste.",
+    "addFertilizer": "Düngemittel hinzufügen",
+    "recordMovement": "Bewegung erfassen",
+    "lowStock": "Niedriger Bestand",
+    "serverFailed": "Die Anfrage an den Server ist fehlgeschlagen.",
+    "rate": {
+      "title": "Wechselkurs",
+      "loading": "Wechselkurs wird geladen…",
+      "loadError": "Der Wechselkurs konnte nicht geladen werden",
+      "value": "1 € = {{rate}} FCFA",
+      "meta": "Quelle: {{source}} · Aktualisiert am {{updated}}",
+      "none": "Noch kein Wechselkurs erfasst",
+      "noneHint": "Bis ein Kurs eingegeben ist, wird jeder Betrag nur in der Zahlungswährung angezeigt.",
+      "edit": "Bearbeiten",
+      "editLabel": "Wechselkurs bearbeiten",
+      "fieldLabel": "1 € =",
+      "unit": "FCFA",
+      "saving": "Wird gespeichert…",
+      "required": "Der Kurs ist erforderlich.",
+      "invalid": "Der Kurs muss eine Zahl größer als 0 und kleiner als 1.000.000 mit höchstens 6 Dezimalstellen sein."
+    },
+    "stock": {
+      "title": "Aktueller Bestand",
+      "loading": "Düngemittel werden geladen…",
+      "loadError": "Die Düngemittel konnten nicht geladen werden",
+      "empty": "Noch kein Düngemittel im Katalog",
+      "columns": {
+        "fertilizer": "Düngemittel",
+        "type": "Typ",
+        "composition": "Zusammensetzung",
+        "stock": "Bestand",
+        "threshold": "Warnschwelle",
+        "status": "Status",
+        "lastRestock": "Letzte Auffüllung"
+      }
+    },
+    "movements": {
+      "title": "Bewegungsverlauf",
+      "filters": {
+        "fertilizer": "Düngemittel",
+        "type": "Typ",
+        "block": "Block (nur Ausbringungen)",
+        "from": "Von",
+        "to": "Bis",
+        "allFertilizers": "Alle Düngemittel",
+        "allTypes": "Alle Typen",
+        "allBlocks": "Alle Blöcke"
+      },
+      "loading": "Bewegungen werden geladen…",
+      "loadError": "Die Bewegungen konnten nicht geladen werden",
+      "noMatch": "Keine Bewegung entspricht diesen Filtern",
+      "noMatchHint": "Versuchen Sie ein anderes Düngemittel, einen anderen Typ, Block oder Zeitraum.",
+      "empty": "Noch keine Bewegung erfasst",
+      "details": "{{applicator}} · {{method}}",
+      "columns": {
+        "date": "Datum",
+        "fertilizer": "Düngemittel",
+        "type": "Typ",
+        "quantity": "Menge",
+        "block": "Block",
+        "details": "Details",
+        "costXof": "Kosten (FCFA)",
+        "costEur": "Kosten (EUR)",
+        "source": "Quelle"
+      }
+    },
+    "addForm": {
+      "title": "Düngemittel hinzufügen",
+      "name": "Name",
+      "type": "Typ",
+      "selectType": "Typ auswählen",
+      "composition": "Zusammensetzung",
+      "compositionPlaceholder": "z. B. 15-15-15",
+      "unit": "Einheit",
+      "selectUnit": "Einheit auswählen",
+      "threshold": "Warnschwelle",
+      "thresholdNote": "Optional. Sie kann später nicht geändert werden.",
+      "submit": "Düngemittel hinzufügen",
+      "submitting": "Wird hinzugefügt…",
+      "errors": {
+        "nameRequired": "Der Name ist erforderlich.",
+        "nameTooLong": "Der Name darf höchstens 255 Zeichen lang sein.",
+        "typeRequired": "Der Typ ist erforderlich.",
+        "compositionTooLong": "Die Zusammensetzung darf höchstens 100 Zeichen lang sein.",
+        "unitRequired": "Die Einheit ist erforderlich.",
+        "thresholdInvalid": "Die Warnschwelle muss 0 oder größer sein, mit höchstens 3 Dezimalstellen."
+      }
+    },
+    "movementForm": {
+      "title": "Bewegung erfassen",
+      "type": "Bewegungsart",
+      "fertilizer": "Düngemittel",
+      "selectFertilizer": "Düngemittel auswählen",
+      "date": "Datum",
+      "quantity": "Menge",
+      "quantityWithUnit": "Menge ({{unit}})",
+      "inStock": "Auf Lager: {{quantity}}",
+      "supplier": "Lieferant",
+      "totalCost": "Gesamtkosten",
+      "currency": "Währung",
+      "block": "Block",
+      "applicator": "Ausbringer",
+      "method": "Methode",
+      "reason": "Grund",
+      "submit": {
+        "PURCHASE": "Zukauf erfassen",
+        "APPLICATION": "Ausbringung erfassen",
+        "LOSS": "Verlust erfassen"
+      },
+      "submitting": "Wird erfasst…",
+      "errors": {
+        "fertilizerRequired": "Das Düngemittel ist erforderlich.",
+        "dateRequired": "Das Datum ist erforderlich.",
+        "dateFuture": "Das Datum darf nicht in der Zukunft liegen.",
+        "quantityInvalid": "Die Menge muss eine Zahl größer als 0 mit höchstens 3 Dezimalstellen sein.",
+        "supplierRequired": "Der Lieferant ist erforderlich.",
+        "supplierTooLong": "Der Lieferant darf höchstens 255 Zeichen lang sein.",
+        "totalCostInvalid": "Die Gesamtkosten müssen eine Zahl größer als 0 mit höchstens 2 Dezimalstellen sein.",
+        "blockRequired": "Der Block ist erforderlich.",
+        "blockInvalid": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix oder Leerzeichen.",
+        "applicatorRequired": "Der Ausbringer ist erforderlich.",
+        "applicatorTooLong": "Der Ausbringer darf höchstens 255 Zeichen lang sein.",
+        "methodTooLong": "Die Methode darf höchstens 255 Zeichen lang sein.",
+        "reasonRequired": "Der Grund ist erforderlich.",
+        "reasonTooLong": "Der Grund darf höchstens 255 Zeichen lang sein."
+      }
     }
   }
 }

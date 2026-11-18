@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, EmptyState, Input, Select } from "../../../shared/ui";
 import { useFertilizers } from "../hooks/useFertilizers";
 import { useFertilizerMovementBlocks, useFertilizerMovements } from "../hooks/useFertilizerMovements";
-import { formatBlock, formatCode } from "../utils/format";
+import { formatBlock, formatEnum } from "../utils/format";
 import FertilizerMovementsTable from "./FertilizerMovementsTable";
-import PlantsEmptyState from "./PlantsEmptyState";
-import { FIELD_INPUT, PRIMARY_BUTTON } from "./plantsStyles";
+import { SectionLoadError, SectionLoading } from "./FertilizerSectionStatus";
 
 // The movement types the API records through its routes.
 const MOVEMENT_TYPES = ["PURCHASE", "APPLICATION", "LOSS"];
-
-const LABEL_CLASS = "text-xs font-semibold text-gray-500";
-const CONTROL_CLASS = `min-w-0 max-w-full ${FIELD_INPUT}`;
 
 /**
  * One filter of the history. Its accessible name joins the section title and
@@ -20,10 +17,10 @@ const CONTROL_CLASS = `min-w-0 max-w-full ${FIELD_INPUT}`;
 function FilterField({ id, label, children }) {
     return (
         <div className="flex max-w-full min-w-0 items-center gap-3">
-            <label id={`${id}-label`} htmlFor={id} className={`${LABEL_CLASS} shrink-0`}>
+            <label id={`${id}-label`} htmlFor={id} className="shrink-0 text-sm font-medium">
                 {label}
             </label>
-            {children}
+            <div className="min-w-0 max-w-full">{children}</div>
         </div>
     );
 }
@@ -38,6 +35,7 @@ function FilterField({ id, label, children }) {
  * no movement is recorded at all.
  */
 export default function FertilizerMovementsSection({ recordAction }) {
+    const { t } = useTranslation("plants");
     // Raw values as the API takes them; an empty string means "no filter".
     const [fertilizerId, setFertilizerId] = useState("");
     const [movementType, setMovementType] = useState("");
@@ -47,136 +45,112 @@ export default function FertilizerMovementsSection({ recordAction }) {
 
     const { data: fertilizers } = useFertilizers();
     const { data: blocks } = useFertilizerMovementBlocks();
-    const { data: movements, isPending, isError, refetch, isFetching } = useFertilizerMovements({
+    const query = useFertilizerMovements({
         fertilizerId: fertilizerId ? Number(fertilizerId) : null,
         movementType: movementType || null,
         blockCode: blockCode || null,
         from: from || null,
         to: to || null,
     });
+    const { data: movements, isPending, isError } = query;
     const isFiltered = Boolean(fertilizerId || movementType || blockCode || from || to);
     const labelledBy = (id) => `movement-history-title ${id}-label`;
+    const typeLabel = (type) => formatEnum("movementType", type);
 
     return (
         <section aria-labelledby="movement-history-title" className="flex flex-col gap-4">
-            <h2 id="movement-history-title" className="font-heading text-lg font-bold text-on-background">
-                Movement history
+            <h2 id="movement-history-title" className="text-lg font-semibold">
+                {t("fertilizer.movements.title")}
             </h2>
 
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
-                <FilterField id="movement-history-fertilizer" label="Fertilizer">
-                    <select
-                        id="movement-history-fertilizer"
-                        value={fertilizerId}
-                        onChange={(event) => setFertilizerId(event.target.value)}
-                        aria-labelledby={labelledBy("movement-history-fertilizer")}
-                        className={CONTROL_CLASS}
-                    >
-                        <option value="">All fertilizers</option>
-                        {(fertilizers ?? []).map((fertilizer) => (
-                            <option key={fertilizer.id} value={fertilizer.id}>
-                                {fertilizer.name}
-                            </option>
-                        ))}
-                    </select>
-                </FilterField>
+            <Card>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <FilterField id="movement-history-fertilizer" label={t("fertilizer.movements.filters.fertilizer")}>
+                        <Select
+                            id="movement-history-fertilizer"
+                            value={fertilizerId}
+                            onChange={(event) => setFertilizerId(event.target.value)}
+                            aria-labelledby={labelledBy("movement-history-fertilizer")}
+                        >
+                            <option value="">{t("fertilizer.movements.filters.allFertilizers")}</option>
+                            {(fertilizers ?? []).map((fertilizer) => (
+                                <option key={fertilizer.id} value={fertilizer.id}>
+                                    {fertilizer.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </FilterField>
 
-                <FilterField id="movement-history-type" label="Type">
-                    <select
-                        id="movement-history-type"
-                        value={movementType}
-                        onChange={(event) => setMovementType(event.target.value)}
-                        aria-labelledby={labelledBy("movement-history-type")}
-                        className={CONTROL_CLASS}
-                    >
-                        <option value="">All types</option>
-                        {MOVEMENT_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                                {formatCode(type)}
-                            </option>
-                        ))}
-                    </select>
-                </FilterField>
+                    <FilterField id="movement-history-type" label={t("fertilizer.movements.filters.type")}>
+                        <Select
+                            id="movement-history-type"
+                            value={movementType}
+                            onChange={(event) => setMovementType(event.target.value)}
+                            aria-labelledby={labelledBy("movement-history-type")}
+                        >
+                            <option value="">{t("fertilizer.movements.filters.allTypes")}</option>
+                            {MOVEMENT_TYPES.map((type) => (
+                                <option key={type} value={type}>
+                                    {typeLabel(type)}
+                                </option>
+                            ))}
+                        </Select>
+                    </FilterField>
 
-                <FilterField id="movement-history-block" label="Block (applications only)">
-                    <select
-                        id="movement-history-block"
-                        value={blockCode}
-                        onChange={(event) => setBlockCode(event.target.value)}
-                        aria-labelledby={labelledBy("movement-history-block")}
-                        className={CONTROL_CLASS}
-                    >
-                        <option value="">All blocks</option>
-                        {(blocks ?? []).map((block) => (
-                            <option key={block} value={block}>
-                                {formatBlock(block)}
-                            </option>
-                        ))}
-                    </select>
-                </FilterField>
+                    <FilterField id="movement-history-block" label={t("fertilizer.movements.filters.block")}>
+                        <Select
+                            id="movement-history-block"
+                            value={blockCode}
+                            onChange={(event) => setBlockCode(event.target.value)}
+                            aria-labelledby={labelledBy("movement-history-block")}
+                        >
+                            <option value="">{t("fertilizer.movements.filters.allBlocks")}</option>
+                            {(blocks ?? []).map((block) => (
+                                <option key={block} value={block}>
+                                    {formatBlock(block)}
+                                </option>
+                            ))}
+                        </Select>
+                    </FilterField>
 
-                <FilterField id="movement-history-from" label="From">
-                    <input
-                        id="movement-history-from"
-                        type="date"
-                        value={from}
-                        onChange={(event) => setFrom(event.target.value)}
-                        aria-labelledby={labelledBy("movement-history-from")}
-                        className={CONTROL_CLASS}
-                    />
-                </FilterField>
+                    <FilterField id="movement-history-from" label={t("fertilizer.movements.filters.from")}>
+                        <Input
+                            id="movement-history-from"
+                            type="date"
+                            value={from}
+                            onChange={(event) => setFrom(event.target.value)}
+                            aria-labelledby={labelledBy("movement-history-from")}
+                        />
+                    </FilterField>
 
-                <FilterField id="movement-history-to" label="To">
-                    <input
-                        id="movement-history-to"
-                        type="date"
-                        value={to}
-                        onChange={(event) => setTo(event.target.value)}
-                        aria-labelledby={labelledBy("movement-history-to")}
-                        className={CONTROL_CLASS}
-                    />
-                </FilterField>
-            </div>
-
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-16 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading movements…
+                    <FilterField id="movement-history-to" label={t("fertilizer.movements.filters.to")}>
+                        <Input
+                            id="movement-history-to"
+                            type="date"
+                            value={to}
+                            onChange={(event) => setTo(event.target.value)}
+                            aria-labelledby={labelledBy("movement-history-to")}
+                        />
+                    </FilterField>
                 </div>
-            )}
+            </Card>
 
-            {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-on-background">
-                            Movements could not be loaded
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
-            )}
+            {isPending && <SectionLoading>{t("fertilizer.movements.loading")}</SectionLoading>}
+
+            {isError && <SectionLoadError title={t("fertilizer.movements.loadError")} query={query} />}
 
             {!isPending && !isError && movements.length === 0 && (
-                isFiltered ? (
-                    <PlantsEmptyState
-                        title="No movement matches these filters"
-                        hint="Try another fertilizer, type, block or date range."
-                    />
-                ) : (
-                    <PlantsEmptyState title="No movement recorded yet" action={recordAction} />
-                )
+                <Card>
+                    {isFiltered ? (
+                        <EmptyState
+                            className="py-8"
+                            title={t("fertilizer.movements.noMatch")}
+                            message={t("fertilizer.movements.noMatchHint")}
+                        />
+                    ) : (
+                        <EmptyState className="py-8" message={t("fertilizer.movements.empty")} action={recordAction} />
+                    )}
+                </Card>
             )}
 
             {!isPending && !isError && movements.length > 0 && <FertilizerMovementsTable movements={movements} />}

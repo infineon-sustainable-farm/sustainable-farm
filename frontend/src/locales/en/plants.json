@@ -51,6 +51,17 @@
     "comparisonReason": {
       "NO_REFERENCE": "no reference value",
       "NO_TREE_LEFT": "no tree left"
+    },
+    "fertilizerType": {
+      "MINERAL": "Mineral",
+      "ORGANIC": "Organic"
+    },
+    "movementType": {
+      "PURCHASE": "Purchase",
+      "APPLICATION": "Application",
+      "LOSS": "Loss",
+      "ADJUSTMENT_IN": "Adjustment in",
+      "ADJUSTMENT_OUT": "Adjustment out"
     }
   },
   "blockFilter": {
@@ -170,6 +181,137 @@
       "seasonSource": "Season: {{source}}",
       "phase": "{{phase}} {{share}} ({{source}})",
       "phaseSeparator": ", "
+    }
+  },
+  "fertilizer": {
+    "pageTitle": "Fertilizer Inventory — Plants",
+    "title": "Fertilizer Inventory",
+    "subtitle": "Stock, purchases, applications and losses.",
+    "addFertilizer": "Add a fertilizer",
+    "recordMovement": "Record a movement",
+    "lowStock": "Low stock",
+    "serverFailed": "The request to the server did not succeed.",
+    "rate": {
+      "title": "Exchange rate",
+      "loading": "Loading the exchange rate…",
+      "loadError": "The exchange rate could not be loaded",
+      "value": "1 € = {{rate}} FCFA",
+      "meta": "Source: {{source}} · Updated {{updated}}",
+      "none": "No exchange rate recorded yet",
+      "noneHint": "Until one is entered, each cost is shown only in the currency it was paid in.",
+      "edit": "Edit",
+      "editLabel": "Edit the exchange rate",
+      "fieldLabel": "1 € =",
+      "unit": "FCFA",
+      "saving": "Saving…",
+      "required": "Rate is required.",
+      "invalid": "Rate must be a number greater than 0 and less than 1,000,000, with at most 6 decimals."
+    },
+    "stock": {
+      "title": "Current stock",
+      "loading": "Loading fertilizers…",
+      "loadError": "Fertilizers could not be loaded",
+      "empty": "No fertilizer in the catalogue yet",
+      "columns": {
+        "fertilizer": "Fertilizer",
+        "type": "Type",
+        "composition": "Composition",
+        "stock": "Stock",
+        "threshold": "Alert threshold",
+        "status": "Status",
+        "lastRestock": "Last restock"
+      }
+    },
+    "movements": {
+      "title": "Movement history",
+      "filters": {
+        "fertilizer": "Fertilizer",
+        "type": "Type",
+        "block": "Block (applications only)",
+        "from": "From",
+        "to": "To",
+        "allFertilizers": "All fertilizers",
+        "allTypes": "All types",
+        "allBlocks": "All blocks"
+      },
+      "loading": "Loading movements…",
+      "loadError": "Movements could not be loaded",
+      "noMatch": "No movement matches these filters",
+      "noMatchHint": "Try another fertilizer, type, block or date range.",
+      "empty": "No movement recorded yet",
+      "details": "{{applicator}} · {{method}}",
+      "columns": {
+        "date": "Date",
+        "fertilizer": "Fertilizer",
+        "type": "Type",
+        "quantity": "Quantity",
+        "block": "Block",
+        "details": "Details",
+        "costXof": "Cost (FCFA)",
+        "costEur": "Cost (EUR)",
+        "source": "Source"
+      }
+    },
+    "addForm": {
+      "title": "Add a fertilizer",
+      "name": "Name",
+      "type": "Type",
+      "selectType": "Select a type",
+      "composition": "Composition",
+      "compositionPlaceholder": "e.g. 15-15-15",
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "threshold": "Alert threshold",
+      "thresholdNote": "Optional. It cannot be changed later.",
+      "submit": "Add fertilizer",
+      "submitting": "Adding…",
+      "errors": {
+        "nameRequired": "Name is required.",
+        "nameTooLong": "Name must be at most 255 characters.",
+        "typeRequired": "Type is required.",
+        "compositionTooLong": "Composition must be at most 100 characters.",
+        "unitRequired": "Unit is required.",
+        "thresholdInvalid": "Alert threshold must be 0 or more, with at most 3 decimals."
+      }
+    },
+    "movementForm": {
+      "title": "Record a movement",
+      "type": "Movement type",
+      "fertilizer": "Fertilizer",
+      "selectFertilizer": "Select a fertilizer",
+      "date": "Date",
+      "quantity": "Quantity",
+      "quantityWithUnit": "Quantity ({{unit}})",
+      "inStock": "In stock: {{quantity}}",
+      "supplier": "Supplier",
+      "totalCost": "Total cost",
+      "currency": "Currency",
+      "block": "Block",
+      "applicator": "Applicator",
+      "method": "Method",
+      "reason": "Reason",
+      "submit": {
+        "PURCHASE": "Record purchase",
+        "APPLICATION": "Record application",
+        "LOSS": "Record loss"
+      },
+      "submitting": "Recording…",
+      "errors": {
+        "fertilizerRequired": "Fertilizer is required.",
+        "dateRequired": "Date is required.",
+        "dateFuture": "Date cannot be in the future.",
+        "quantityInvalid": "Quantity must be a number greater than 0, with at most 3 decimals.",
+        "supplierRequired": "Supplier is required.",
+        "supplierTooLong": "Supplier must be at most 255 characters.",
+        "totalCostInvalid": "Total cost must be a number greater than 0, with at most 2 decimals.",
+        "blockRequired": "Block is required.",
+        "blockInvalid": "Block must be a short code such as A or B2, without prefix or space.",
+        "applicatorRequired": "Applicator is required.",
+        "applicatorTooLong": "Applicator must be at most 255 characters.",
+        "methodTooLong": "Method must be at most 255 characters.",
+        "reasonRequired": "Reason is required.",
+        "reasonTooLong": "Reason must be at most 255 characters."
+      }
     }
   }
 }
