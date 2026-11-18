@@ -32,14 +32,4 @@ public interface SparePartRepository extends JpaRepository<SparePart, Long> {
     @Transactional
     @Query("UPDATE SparePart s SET s.equipment = null WHERE s.equipment.id = :equipmentId")
     int detachAllFromEquipment(@Param("equipmentId") Long equipmentId);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE SparePart s SET s.quantity = :quantity WHERE s.id = :id")
-    int updateSparePartQuantityById(@Param("id") Long id, @Param("quantity") Integer quantity);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE SparePart s SET s.unitCost = :unitCost WHERE s.id = :id")
-    int updateSparePartUnitCostById(@Param("id") Long id, @Param("unitCost") java.math.BigDecimal unitCost);
 }

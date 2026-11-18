@@ -42,7 +42,7 @@ public class RepairLogService {
         repairLog.setDate(request.date());
         repairLog.setIssue(trimRequired(request.issue(), "Issue description is required."));
         repairLog.setDowntime(request.downtime());
-        repairLog.setCost(request.cost());
+        repairLog.setCost(MachineryMoney.of(request.cost()));
         repairLog.setTechnicianPersonId(personDirectory.idOf(request.technician()));
 
         try {
@@ -111,7 +111,7 @@ public class RepairLogService {
             repairLog.setDowntime(request.downtime());
         }
         if (request.cost() != null) {
-            repairLog.setCost(request.cost());
+            repairLog.setCost(MachineryMoney.of(request.cost()));
         }
         if (request.technician() != null) {
             repairLog.setTechnicianPersonId(personDirectory.idOf(request.technician()));
@@ -148,7 +148,7 @@ public class RepairLogService {
                 repairLog.getDate(),
                 repairLog.getIssue(),
                 repairLog.getDowntime(),
-                repairLog.getCost(),
+                MachineryMoney.amountOf(repairLog.getCost()),
                 personDirectory.nameOf(repairLog.getTechnicianPersonId())
         );
     }

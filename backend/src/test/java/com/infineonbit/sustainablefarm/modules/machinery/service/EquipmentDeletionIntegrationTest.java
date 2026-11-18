@@ -77,7 +77,7 @@ class EquipmentDeletionIntegrationTest {
         attached.setName("Air Filter");
         attached.setQuantity(10);
         attached.setReorderThreshold(2);
-        attached.setUnitCost(new BigDecimal("25.99"));
+        attached.setUnitCost(MachineryMoney.of(new BigDecimal("25.99")));
         attached.setEquipment(equipment);
         attached = sparePartRepository.save(attached);
 
@@ -99,7 +99,7 @@ class EquipmentDeletionIntegrationTest {
         standalone.setName("General Bolt");
         standalone.setQuantity(100);
         standalone.setReorderThreshold(20);
-        standalone.setUnitCost(new BigDecimal("0.50"));
+        standalone.setUnitCost(MachineryMoney.of(new BigDecimal("0.50")));
         standalone = sparePartRepository.save(standalone);
 
         Equipment equipment = new Equipment();
@@ -151,7 +151,7 @@ class EquipmentDeletionIntegrationTest {
         fuelLog.setEquipment(equipment);
         fuelLog.setDate(LocalDate.of(2026, 7, 22));
         fuelLog.setLiters(new BigDecimal("25.00"));
-        fuelLog.setCost(new BigDecimal("37.50"));
+        fuelLog.setCost(MachineryMoney.of(new BigDecimal("37.50")));
         fuelLog = fuelLogRepository.save(fuelLog);
 
         RepairLog repairLog = new RepairLog();
@@ -159,7 +159,7 @@ class EquipmentDeletionIntegrationTest {
         repairLog.setDate(LocalDate.of(2026, 7, 22));
         repairLog.setIssue("Heating element malfunction");
         repairLog.setDowntime(new BigDecimal("14.00"));
-        repairLog.setCost(new BigDecimal("150.00"));
+        repairLog.setCost(MachineryMoney.of(new BigDecimal("150.00")));
         repairLog.setTechnicianPersonId(personDirectory.idOf("Maintenance Team A"));
         repairLog = repairLogRepository.save(repairLog);
 
@@ -184,7 +184,7 @@ class EquipmentDeletionIntegrationTest {
         assertNull(detachedUsageLog.getEquipment());
 
         FuelLog detachedFuelLog = fuelLogRepository.findById(fuelLogId).orElseThrow();
-        assertEquals(new BigDecimal("37.50"), detachedFuelLog.getCost());
+        assertEquals(MachineryMoney.of(new BigDecimal("37.50")), detachedFuelLog.getCost());
         assertNull(detachedFuelLog.getEquipment());
 
         RepairLog detachedRepairLog = repairLogRepository.findById(repairLogId).orElseThrow();

@@ -22,6 +22,13 @@ public class CurrencyConverterTest {
     }
 
     @Test
+    void conversions_shouldGiveNoAmount_forADollarAmount() {
+        // Act & Assert: no rate is recorded for the dollar of the machinery costs
+        assertNull(CurrencyConverter.toXof(new BigDecimal("12.50"), CurrencyCode.USD, PARITY));
+        assertNull(CurrencyConverter.toEur(new BigDecimal("12.50"), CurrencyCode.USD, PARITY));
+    }
+
+    @Test
     void toEur_shouldDivideAnXofAmountByTheRate_roundedToTheCent() {
         // Act & Assert: 150000 / 655.957 = 228.6735...
         assertEquals(new BigDecimal("228.67"),

@@ -12,7 +12,8 @@ import java.math.RoundingMode;
  * caller, or {@code null} while no rate is recorded: an amount that needs the
  * rate is then {@code null}, and an amount already in the asked currency is
  * still given. Amounts in FCFA are rounded to the franc, amounts in euros to
- * the cent, both to the nearest with halves rounded up.
+ * the cent, both to the nearest with halves rounded up. No rate is recorded
+ * for the US dollar, so an amount in dollars always gives {@code null}.
  */
 final class CurrencyConverter {
 
@@ -32,6 +33,7 @@ final class CurrencyConverter {
         BigDecimal xof = switch (currency) {
             case XOF -> amount;
             case EUR -> eurToXof == null ? null : amount.multiply(eurToXof);
+            case USD -> null;
         };
         return xof == null ? null : CurrencyCode.XOF.round(xof).longValueExact();
     }
@@ -49,6 +51,7 @@ final class CurrencyConverter {
         return switch (currency) {
             case EUR -> CurrencyCode.EUR.round(amount);
             case XOF -> eurToXof == null ? null : amount.divide(eurToXof, CurrencyCode.EUR.fractionDigits(), RoundingMode.HALF_UP);
+            case USD -> null;
         };
     }
 }

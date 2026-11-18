@@ -47,7 +47,7 @@ public class SparePartService {
         sparePart.setName(request.name());
         sparePart.setQuantity(request.quantity());
         sparePart.setReorderThreshold(request.reorderThreshold());
-        sparePart.setUnitCost(request.unitCost());
+        sparePart.setUnitCost(MachineryMoney.of(request.unitCost()));
         sparePart.setEquipment(equipment);
 
         try {
@@ -121,7 +121,7 @@ public class SparePartService {
         }
 
         if (request.unitCost() != null) {
-            sparePart.setUnitCost(request.unitCost());
+            sparePart.setUnitCost(MachineryMoney.of(request.unitCost()));
         }
 
         if (request.equipmentId() != null) {
@@ -156,15 +156,11 @@ public class SparePartService {
      */
     @Transactional
     public SparePartObtainingResponse updateSparePartQuantity(Long id, Integer quantity) {
-        int affectedRows = sparePartRepository.updateSparePartQuantityById(id, quantity);
-        if (affectedRows == 0) {
-            throw new SparePartNotFoundException(id);
-        }
-
         SparePart sparePart = sparePartRepository.findById(id)
                 .orElseThrow(() -> new SparePartNotFoundException(id));
+        sparePart.setQuantity(quantity);
 
-        return toResponse(sparePart);
+        return toResponse(sparePartRepository.saveAndFlush(sparePart));
     }
 
     /**
@@ -177,15 +173,11 @@ public class SparePartService {
      */
     @Transactional
     public SparePartObtainingResponse updateSparePartUnitCost(Long id, java.math.BigDecimal unitCost) {
-        int affectedRows = sparePartRepository.updateSparePartUnitCostById(id, unitCost);
-        if (affectedRows == 0) {
-            throw new SparePartNotFoundException(id);
-        }
-
         SparePart sparePart = sparePartRepository.findById(id)
                 .orElseThrow(() -> new SparePartNotFoundException(id));
+        sparePart.setUnitCost(MachineryMoney.of(unitCost));
 
-        return toResponse(sparePart);
+        return toResponse(sparePartRepository.saveAndFlush(sparePart));
     }
 
     /**
@@ -231,7 +223,7 @@ public class SparePartService {
                 sparePart.getName(),
                 sparePart.getQuantity(),
                 sparePart.getReorderThreshold(),
-                sparePart.getUnitCost(),
+                MachineryMoney.amountOf(sparePart.getUnitCost()),
                 sparePart.getEquipment() != null ? sparePart.getEquipment().getId() : null
         );
     }

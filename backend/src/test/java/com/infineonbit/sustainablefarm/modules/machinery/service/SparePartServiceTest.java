@@ -65,7 +65,7 @@ class SparePartServiceTest {
         testSparePart.setName("Air Filter");
         testSparePart.setQuantity(50);
         testSparePart.setReorderThreshold(10);
-        testSparePart.setUnitCost(new BigDecimal("25.99"));
+        testSparePart.setUnitCost(MachineryMoney.of(new BigDecimal("25.99")));
         testSparePart.setEquipment(testEquipment);
     }
 
@@ -176,12 +176,11 @@ class SparePartServiceTest {
         updatedSparePart.setName("Air Filter");
         updatedSparePart.setQuantity(45);
         updatedSparePart.setReorderThreshold(10);
-        updatedSparePart.setUnitCost(new BigDecimal("25.99"));
+        updatedSparePart.setUnitCost(MachineryMoney.of(new BigDecimal("25.99")));
         updatedSparePart.setEquipment(testSparePart.getEquipment());
 
         when(sparePartRepository.findById(1L)).thenReturn(Optional.of(testSparePart));
-        when(sparePartRepository.updateSparePartQuantityById(1L, 45)).thenReturn(1);
-        when(sparePartRepository.findById(1L)).thenReturn(Optional.of(updatedSparePart));
+        when(sparePartRepository.saveAndFlush(testSparePart)).thenReturn(updatedSparePart);
 
         var result = sparePartService.updateSparePartQuantity(1L, 45);
 
@@ -196,12 +195,11 @@ class SparePartServiceTest {
         updatedSparePart.setName("Air Filter");
         updatedSparePart.setQuantity(50);
         updatedSparePart.setReorderThreshold(10);
-        updatedSparePart.setUnitCost(new BigDecimal("24.99"));
+        updatedSparePart.setUnitCost(MachineryMoney.of(new BigDecimal("24.99")));
         updatedSparePart.setEquipment(testSparePart.getEquipment());
 
         when(sparePartRepository.findById(1L)).thenReturn(Optional.of(testSparePart));
-        when(sparePartRepository.updateSparePartUnitCostById(1L, new BigDecimal("24.99"))).thenReturn(1);
-        when(sparePartRepository.findById(1L)).thenReturn(Optional.of(updatedSparePart));
+        when(sparePartRepository.saveAndFlush(testSparePart)).thenReturn(updatedSparePart);
 
         var result = sparePartService.updateSparePartUnitCost(1L, new BigDecimal("24.99"));
 

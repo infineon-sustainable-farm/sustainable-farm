@@ -76,7 +76,7 @@ class RepairLogServiceTest {
         testRepairLog.setDate(LocalDate.of(2026, 7, 22));
         testRepairLog.setIssue("Heating element malfunction");
         testRepairLog.setDowntime(new BigDecimal("14.00"));
-        testRepairLog.setCost(new BigDecimal("150.00"));
+        testRepairLog.setCost(MachineryMoney.of(new BigDecimal("150.00")));
         testRepairLog.setTechnicianPersonId(personDirectory.idOf("Maintenance Team A"));
     }
 

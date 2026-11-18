@@ -46,7 +46,7 @@ Le support monétaire commun est dans `core.money` :
 
 | Élément | Rôle |
 |---|---|
-| `CurrencyCode` | Enum des devises (`XOF`, `EUR`), stockée par son nom ; connaît son unité mineure (0 décimale pour le franc, 2 pour l'euro) |
+| `CurrencyCode` | Enum des devises (`XOF`, `EUR`, `USD`), stockée par son nom ; connaît son unité mineure (0 décimale pour le franc, 2 pour l'euro et le dollar). `USD` est la devise des coûts de machinery (T33), sans taux de change enregistré |
 | `Money` | Record `@Embeddable` : `amount` en `BigDecimal` toujours à l'échelle 2, arrondi au plus proche avec demi vers le haut (`HALF_UP`), et `currency`. Égalité par devise et valeur ; additionner ou soustraire deux devises différentes lève une `IllegalArgumentException` |
 | `CurrencyConversion` | Port de conversion `convert(Money, CurrencyCode, LocalDate)` ; résultat arrondi à l'unité mineure de la devise cible ; `ExchangeRateNotFoundException` (404) si aucun taux n'est enregistré |
 
@@ -61,7 +61,7 @@ Un module déclare un champ monétaire ainsi, avec les colonnes `<prefix>_amount
 private Money price;
 ```
 
-Les deux colonnes vides donnent un champ `null`. Les colonnes existantes sans devise (machinery, visitormanagement) ou avec la devise dans le nom (`*_eur` d'energysupply et salesmarketing) passent à ce modèle module par module au Lot 3.
+Les deux colonnes vides donnent un champ `null`. Machinery y est passé avec T33 : coûts du carburant, des réparations et des pièces en `USD`, la devise que son interface affiche, l'API gardant des nombres. Les colonnes existantes sans devise (visitormanagement) ou avec la devise dans le nom (`*_eur` d'energysupply et salesmarketing) passent à ce modèle module par module au Lot 3.
 
 ### API (A5)
 

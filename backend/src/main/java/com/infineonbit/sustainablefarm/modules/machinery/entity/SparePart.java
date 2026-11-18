@@ -1,21 +1,22 @@
 package com.infineonbit.sustainablefarm.modules.machinery.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name = "spare_part")
+@Table(name = "spare_part", indexes = {
+        @Index(name = "idx_spare_part_equipment_id", columnList = "equipment_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class SparePart {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+public class SparePart extends BaseEntity {
     @Column(length = 255, nullable = false, unique = true)
     private String name;
 
@@ -25,8 +26,10 @@ public class SparePart {
     @Column(nullable = false)
     private Integer reorderThreshold;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private java.math.BigDecimal unitCost;
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "unit_cost_amount", precision = 14, scale = 2, nullable = false))
+    @AttributeOverride(name = "currency", column = @Column(name = "unit_cost_currency", length = 3, nullable = false))
+    private Money unitCost;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "equipment_id", nullable = true)
