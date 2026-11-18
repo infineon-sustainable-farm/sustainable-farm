@@ -8,6 +8,7 @@ import { FormField } from '../../../../shared/components/FormField'
 import { inputStyle } from '../../../../shared/components/formStyles'
 import { EmptyState } from './EmptyState'
 import { isoDay, monthStartDay } from './datetime'
+import { sameId } from './ids'
 
 const PHASES = [
   ['', 'From the Plants calendar'],
@@ -29,8 +30,10 @@ const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
  * Plants blocks: links Water Supply zones to the Plants blocks they water, then shows what Plants
  * reads per block (rain gauge rainfall of the month, irrigation need of the day).
  *
- * Backend contract: ZoneBlockMapping { zoneId, blockCode, farmId }. The farm is derived from the
- * zone (zone -> field -> farm) because the API refuses a farm that does not own the zone.
+ * Backend contract: ZoneBlockMapping { id (= zoneId), zoneId, blockCode, farmId }, read from the zone's
+ * field (a block of the farm referential): linking gives the field its Plants code, unlinking clears it.
+ * The farm is derived from the zone (zone -> field -> farm) because the API refuses a farm that does
+ * not own the zone.
  */
 export function PlantsBlocksView({ notify }) {
   const { mappings, loading, error, refetch } = useZoneBlockMappings()
@@ -45,8 +48,8 @@ export function PlantsBlocksView({ notify }) {
   const zoneNames = useMemo(() => new Map(zones.map((zone) => [zone.id, zone.name])), [zones])
   const zoneName = (zoneId) => zoneNames.get(zoneId) || `Zone ${String(zoneId).slice(0, 8)}`
   const farmIdOfZone = (zoneId) => {
-    const fieldId = zones.find((zone) => zone.id === zoneId)?.fieldId
-    return fields.find((field) => field.id === fieldId)?.farmId
+    const fieldId = zones.find((zone) => sameId(zone.id, zoneId))?.fieldId
+    return fields.find((field) => sameId(field.id, fieldId))?.farmId
   }
   const farmName = (farmId) => farms.find((farm) => farm.id === farmId)?.name || (farmId ? `Farm ${String(farmId).slice(0, 8)}` : '—')
 
@@ -84,13 +87,13 @@ export function PlantsBlocksView({ notify }) {
     setBusy(true)
     setFormError(null)
     zoneBlockMappingApi
-      .createMapping({ zoneId: form.zoneId, blockCode: form.blockCode.trim(), farmId })
+      .createMapping({ zoneId: zones.find((zone) => sameId(zone.id, form.zoneId))?.id ?? form.zoneId, blockCode: form.blockCode.trim(), farmId })
       .then((created) => refetch().then(() => created))
       .then((created) => {
         notify(`Zone linked to block ${created?.blockCode ?? form.blockCode.trim().toUpperCase()}`)
         setForm({ zoneId: '', blockCode: '' })
       })
-      .catch((err) => setFormError(err.status === 409 ? 'This zone is already linked to this block.' : err.message || 'Unable to save.'))
+      .catch((err) => setFormError(err.status === 409 ? err.message || 'This zone is already linked to a block.' : err.message || 'Unable to save.'))
       .finally(() => setBusy(false))
   }
 
@@ -186,7 +189,7 @@ export function PlantsBlocksView({ notify }) {
                 <input style={inputStyle} value={form.blockCode} onChange={updateForm('blockCode')} placeholder="A, B2…" />
               </FormField>
               <p style={{ margin: 0, fontSize: '12px', color: 'var(--ws-muted)' }}>
-                Codes are stored in upper case. A zone watering two blocks can be linked to both.
+                Codes are stored in upper case. The code belongs to the field of the zone: every zone of that field is linked to the block.
               </p>
               <div className="ws-form-actions">
                 <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Link'}</button>
@@ -246,7 +249,7 @@ function BlockDetails({ blockCodes, activeBlock, onSelect }) {
         </div>
         {need?.warnings?.includes('phase_factors_not_validated') && (
           <p style={{ margin: '10px 0 0', fontSize: '12px', color: 'var(--ws-muted)' }}>
-            Phase factors are still 1.0: they wait for the agronomists' validation, the need is the plain FAO-56 one
+            Phase factors are still 1.0: they wait for the agronomists&apos; validation, the need is the plain FAO-56 one
             (base {need.baseNeedLiters} L, ET0 {need.et0Mm} mm).
           </p>
         )}

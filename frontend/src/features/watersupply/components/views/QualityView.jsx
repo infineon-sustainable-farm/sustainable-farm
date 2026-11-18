@@ -5,6 +5,7 @@ import { SearchInput } from '../../../../shared/components/SearchInput'
 import { Pagination } from './Pagination'
 import { Spinner } from '../../../../shared/components/Spinner'
 import { EmptyState } from './EmptyState'
+import { sameId } from './ids'
 
 function isOutOfRange(test) {
   return (test.ph != null && (test.ph < 6 || test.ph > 7.5)) || (test.turbidityNtu != null && test.turbidityNtu > 5)
@@ -23,7 +24,7 @@ export function QualityView() {
 
   const sourceFiltered = useMemo(
     () => tests
-      .filter((test) => !sourceFilter || test.sourceId === sourceFilter)
+      .filter((test) => !sourceFilter || sameId(test.sourceId, sourceFilter))
       .sort((a, b) => Number(isOutOfRange(b)) - Number(isOutOfRange(a))),
     [tests, sourceFilter],
   )
@@ -80,7 +81,7 @@ export function QualityView() {
                     return (
                       <tr key={test.id}>
                         <td>{(test.testDate || '').replace('T', ' ').slice(0, 16)}</td>
-                        <td>{sources.find((source) => source.id === test.sourceId)?.name || test.sourceId?.slice(0, 8) || '-'}</td>
+                        <td>{sources.find((source) => source.id === test.sourceId)?.name || (test.sourceId != null ? String(test.sourceId).slice(0, 8) : null) || '-'}</td>
                         <td><strong style={{ color: test.ph < 6 || test.ph > 7.5 ? 'var(--ws-red)' : undefined }}>{test.ph ?? '-'}</strong></td>
                         <td><strong style={{ color: test.turbidityNtu > 5 ? 'var(--ws-orange)' : undefined }}>{test.turbidityNtu ?? '-'} NTU</strong></td>
                         <td><span className={`ws-tag ${out ? 'red' : 'green'}`}>{out ? 'Alert' : 'Compliant'}</span></td>
