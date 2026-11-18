@@ -132,7 +132,7 @@ export default function SchedulingPage() {
             />
 
             <div className="flex flex-wrap items-end gap-4">
-                <div className="flex items-center gap-2">
+                <div className="flex w-full items-center gap-2 sm:w-auto">
                     <Button
                         variant="secondary"
                         size="sm"
@@ -143,7 +143,7 @@ export default function SchedulingPage() {
                     >
                         {t("scheduling.prev")}
                     </Button>
-                    <span className="min-w-44 text-center text-sm font-semibold text-text">
+                    <span className="min-w-0 flex-1 text-center text-sm font-semibold text-text sm:min-w-44 sm:flex-none">
                         {format.weekLabel(weekStart)}
                     </span>
                     <Button variant="secondary" size="sm" onClick={() => changeWeek(1)}>

@@ -44,8 +44,16 @@ function CargoDetails({ selected, onDownload }) {
           </dd>
         </div>
       </dl>
-      <Button className="mt-auto" fullWidth icon={Download} onClick={onDownload}>
-        {t('delivery.download')}
+      {/* Narrow column: a short label; the full action is the accessible name and the tooltip. */}
+      <Button
+        className="mt-auto"
+        fullWidth
+        icon={Download}
+        onClick={onDownload}
+        aria-label={t('delivery.download')}
+        title={t('delivery.download')}
+      >
+        {t('delivery.downloadShort')}
       </Button>
     </div>
   );
