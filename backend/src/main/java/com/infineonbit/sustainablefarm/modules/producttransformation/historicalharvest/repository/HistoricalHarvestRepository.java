@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvest;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,14 +36,14 @@ public interface HistoricalHarvestRepository extends JpaRepository<HistoricalHar
     /**
      * Find historical harvest by variety
      */
-    List<HistoricalHarvest> findByMangoVariety(MangoVariety mangoVariety);
+    List<HistoricalHarvest> findByVarietyKey(String varietyKey);
 
     /**
      * Find historical harvest by year and variety
      */
-    @Query("SELECT h FROM HistoricalHarvest h WHERE h.year = :year AND h.mangoVariety = :variety")
+    @Query("SELECT h FROM HistoricalHarvest h WHERE h.year = :year AND h.varietyKey = :variety")
     List<HistoricalHarvest> findByYearAndVariety(@Param("year") Integer year, 
-                                          @Param("variety") MangoVariety variety);
+                                          @Param("variety") String variety);
 
     /**
      * Get total harvest quantity by year

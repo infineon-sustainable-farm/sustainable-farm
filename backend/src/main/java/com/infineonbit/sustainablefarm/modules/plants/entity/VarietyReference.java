@@ -1,19 +1,23 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.text.Normalizer;
 import java.time.Instant;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Agronomic reference of a mango variety: what one tree yields in full
@@ -25,14 +29,25 @@ import java.time.Instant;
  * {@code /api/plants/variety-references}; the yield forecast reads it on every
  * request and keeps no copy of it in code.
  *
+ * <p>It is also the variety catalogue of the application, exposed to the other
+ * modules by {@code plants.api.VarietyCatalog}: producttransformation and
+ * salesmarketing reference a row by its {@code variety_key}, a stable code such
+ * as {@code KEITT}, through a foreign key. The key is set once, when the row is
+ * written, and never changes, even when the name is corrected.
+ *
  * <p>The table and its columns follow the naming of the other modules: English
  * snake_case and a singular table name.
  */
 @Entity
 @Table(name = "variety_reference",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_variety_reference_variety_name",
-                columnNames = "variety_name"),
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_variety_reference_variety_name",
+                        columnNames = "variety_name"),
+                @UniqueConstraint(
+                        name = "uk_variety_reference_variety_key",
+                        columnNames = "variety_key")
+        },
         check = {
                 @CheckConstraint(
                         name = "ck_variety_reference_harvest_start_month",
@@ -44,8 +59,13 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class VarietyReference {
+
+    /** Maximum length of a variety key. */
+    public static final int KEY_LENGTH = VarietyCatalog.KEY_LENGTH;
+
+    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
+    private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Z0-9]+");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,6 +77,14 @@ public class VarietyReference {
      */
     @Column(name = "variety_name", nullable = false)
     private String varietyName;
+
+    /**
+     * Stable code of the variety in the catalogue, for example {@code KEITT}:
+     * upper case, without accents, words joined by {@code _}. Derived from the
+     * name when the row is first written without one, and never updated.
+     */
+    @Column(name = "variety_key", nullable = false, updatable = false, length = KEY_LENGTH)
+    private String varietyKey;
 
     /** Yield of one tree in full production, per year, in kg. */
     @Column(name = "yield_per_tree_kg", nullable = false)
@@ -81,4 +109,53 @@ public class VarietyReference {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /**
+     * A reference whose key is derived from its name when it is first written
+     * (see {@link #keyOf(String)}).
+     */
+    public VarietyReference(Long id, String varietyName, Double yieldPerTreeKg, String yieldSource,
+                            Integer harvestStartMonth, Integer harvestEndMonth, String seasonSource,
+                            Instant lastUpdated) {
+        this(id, varietyName, null, yieldPerTreeKg, yieldSource, harvestStartMonth, harvestEndMonth,
+                seasonSource, lastUpdated);
+    }
+
+    /** A reference with an explicit catalogue key, or {@code null} to derive it from the name. */
+    public VarietyReference(Long id, String varietyName, String varietyKey, Double yieldPerTreeKg,
+                            String yieldSource, Integer harvestStartMonth, Integer harvestEndMonth,
+                            String seasonSource, Instant lastUpdated) {
+        this.id = id;
+        this.varietyName = varietyName;
+        this.varietyKey = varietyKey;
+        this.yieldPerTreeKg = yieldPerTreeKg;
+        this.yieldSource = yieldSource;
+        this.harvestStartMonth = harvestStartMonth;
+        this.harvestEndMonth = harvestEndMonth;
+        this.seasonSource = seasonSource;
+        this.lastUpdated = lastUpdated;
+    }
+
+    /** Derives the key from the name when none was given. */
+    @PrePersist
+    void deriveKey() {
+        if (varietyKey == null || varietyKey.isBlank()) {
+            varietyKey = keyOf(varietyName);
+        }
+    }
+
+    /**
+     * The catalogue key of a variety name: without accents, in upper case,
+     * every run of other characters than letters and digits replaced by
+     * {@code _}, for example {@code TOMMY_ATKINS} for {@code " Tommy Atkins "}.
+     *
+     * @param name a variety name, not {@code null}
+     * @return the key, cut to {@link #KEY_LENGTH} characters
+     */
+    public static String keyOf(String name) {
+        String decomposed = Normalizer.normalize(name.strip(), Normalizer.Form.NFD);
+        String upper = COMBINING_MARKS.matcher(decomposed).replaceAll("").toUpperCase(Locale.ROOT);
+        String key = NOT_ALPHANUMERIC.matcher(upper).replaceAll("_").replaceAll("^_+|_+$", "");
+        return key.length() > KEY_LENGTH ? key.substring(0, KEY_LENGTH) : key;
+    }
 }

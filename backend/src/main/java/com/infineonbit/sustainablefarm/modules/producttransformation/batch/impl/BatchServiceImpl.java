@@ -5,7 +5,6 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.exception.I
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.service.QcCheckpointService;
@@ -58,7 +57,7 @@ public class BatchServiceImpl implements BatchService {
         
         // Update fields
         existingBatch.setHarvestDate(batch.getHarvestDate());
-        existingBatch.setMangoVariety(batch.getMangoVariety());
+        existingBatch.setVarietyKey(batch.getVarietyKey());
         existingBatch.setHarvestQuantityKg(batch.getHarvestQuantityKg());
         existingBatch.setFarmId(batch.getFarmId());
         existingBatch.setBlockId(batch.getBlockId());
@@ -106,8 +105,8 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Batch> getBatchesByVariety(MangoVariety variety) {
-        return batchRepository.findByMangoVariety(variety);
+    public List<Batch> getBatchesByVariety(String variety) {
+        return batchRepository.findByVarietyKey(variety);
     }
 
     @Override
@@ -124,7 +123,7 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Batch> getBatchesByVarietyAndStatus(MangoVariety variety, BatchStatus status) {
+    public List<Batch> getBatchesByVarietyAndStatus(String variety, BatchStatus status) {
         return batchRepository.findByVarietyAndStatus(variety, status);
     }
 
@@ -136,7 +135,7 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     @Transactional(readOnly = true)
-    public Double getTotalHarvestQuantityByVariety(MangoVariety variety) {
+    public Double getTotalHarvestQuantityByVariety(String variety) {
         return batchRepository.getTotalHarvestQuantityByVariety(variety);
     }
 

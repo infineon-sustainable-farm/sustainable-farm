@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.dto.response;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +23,8 @@ public class HistoricalHarvestResponse {
     private Integer year;
     private Integer month;
     private Integer week;
-    private MangoVariety mangoVariety;
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
+    private String mangoVariety;
     private BigDecimal harvestQuantityKg;
     private BigDecimal qualityGradeAPct;
     private BigDecimal qualityGradeBPct;

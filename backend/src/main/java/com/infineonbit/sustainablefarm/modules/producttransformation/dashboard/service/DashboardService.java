@@ -22,6 +22,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.r
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.repository.QcCheckpointRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.repository.WashSortRecordRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -611,7 +612,7 @@ public class DashboardService {
     private ActiveBatchesKPI.BatchSummary mapToBatchSummary(Batch batch) {
         return ActiveBatchesKPI.BatchSummary.builder()
             .batchId(batch.getBatchId())
-            .productName(batch.getMangoVariety() != null ? batch.getMangoVariety().name() : "unknown")
+            .productName(batch.getVarietyKey() != null ? MangoVarietyCodes.toApi(batch.getVarietyKey()) : "unknown")
             .currentStage(batch.getCurrentStatus() != null ? batch.getCurrentStatus().name() : "unknown")
             .quantity(batch.getHarvestQuantityKg())
             .startDate(batch.getHarvestDate())

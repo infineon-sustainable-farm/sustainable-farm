@@ -58,7 +58,7 @@ public interface RawIntakeService {
     /**
      * Get raw intakes by variety
      */
-    List<RawIntake> getRawIntakesByVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety);
+    List<RawIntake> getRawIntakesByVariety(String variety);
 
     /**
      * Get raw intakes by quality grade
@@ -73,7 +73,7 @@ public interface RawIntakeService {
     /**
      * Get total received quantity by variety
      */
-    Double getTotalReceivedQuantityByVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety);
+    Double getTotalReceivedQuantityByVariety(String variety);
 
     /**
      * Get average quality grade distribution

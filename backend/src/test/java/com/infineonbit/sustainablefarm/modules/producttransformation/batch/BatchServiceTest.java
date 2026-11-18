@@ -23,7 +23,8 @@ import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -34,8 +35,12 @@ class BatchServiceTest {
     @Autowired
     private BatchRepository batchRepository;
 
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
+
     @BeforeEach
     void setUp() {
+        VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
         // Clean up any existing test batches before each test
         batchRepository.deleteAll();
     }
@@ -47,7 +52,7 @@ class BatchServiceTest {
         Batch batch = new Batch();
         batch.setBatchId("TEST-BATCH-001");
         batch.setHarvestDate(LocalDate.of(2026, 10, 1));
-        batch.setMangoVariety(MangoVariety.TOMMY);
+        batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
         batch.setFarmId("FARM-001");
         batch.setBlockId("BLOCK-A");
@@ -80,7 +85,7 @@ class BatchServiceTest {
         Batch batch = new Batch();
         batch.setBatchId("TEST-BATCH-002");
         batch.setHarvestDate(LocalDate.of(2026, 10, 2));
-        batch.setMangoVariety(MangoVariety.TOMMY);
+        batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("300.00"));
         batch.setFarmId("FARM-002");
         batch.setBlockId("BLOCK-B");
@@ -110,7 +115,7 @@ class BatchServiceTest {
         Batch batch = new Batch();
         batch.setBatchId("TEST-BATCH-003");
         batch.setHarvestDate(LocalDate.of(2026, 10, 3));
-        batch.setMangoVariety(MangoVariety.TOMMY);
+        batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("200.00"));
         batch.setFarmId("FARM-003");
         batch.setBlockId("BLOCK-C");
@@ -143,7 +148,7 @@ class BatchServiceTest {
         Batch batch = new Batch();
         batch.setBatchId("TEST-BATCH-004");
         batch.setHarvestDate(LocalDate.of(2026, 10, 4));
-        batch.setMangoVariety(MangoVariety.TOMMY);
+        batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
         batch.setFarmId("FARM-004");
         batch.setBlockId("BLOCK-D");
@@ -161,7 +166,7 @@ class BatchServiceTest {
             Batch batch = new Batch();
             batch.setBatchId("TEST-BATCH-" + String.format("%03d", i));
             batch.setHarvestDate(LocalDate.of(2026, 10, i));
-            batch.setMangoVariety(MangoVariety.TOMMY);
+            batch.setVarietyKey("TOMMY");
             batch.setHarvestQuantityKg(new BigDecimal(String.format("%.2f", 100.0 * i)));
             batch.setFarmId("FARM-00" + i);
             batch.setBlockId("BLOCK-" + i);
@@ -182,7 +187,7 @@ class BatchServiceTest {
             Batch batch = new Batch();
             batch.setBatchId("TEST-BATCH-COUNT-" + i);
             batch.setHarvestDate(LocalDate.of(2026, 10, i));
-            batch.setMangoVariety(MangoVariety.TOMMY);
+            batch.setVarietyKey("TOMMY");
             batch.setHarvestQuantityKg(new BigDecimal("100.00"));
             batch.setFarmId("FARM-00" + i);
             batch.setBlockId("BLOCK-" + i);
@@ -194,7 +199,7 @@ class BatchServiceTest {
         Batch completedBatch = new Batch();
         completedBatch.setBatchId("TEST-BATCH-COUNT-COMP");
         completedBatch.setHarvestDate(LocalDate.of(2026, 10, 3));
-        completedBatch.setMangoVariety(MangoVariety.TOMMY);
+        completedBatch.setVarietyKey("TOMMY");
         completedBatch.setHarvestQuantityKg(new BigDecimal("200.00"));
         completedBatch.setFarmId("FARM-003");
         completedBatch.setBlockId("BLOCK-3");
@@ -216,7 +221,7 @@ class BatchServiceTest {
         Batch batch = new Batch();
         batch.setBatchId("TEST-BATCH-001");
         batch.setHarvestDate(LocalDate.of(2026, 10, 1));
-        batch.setMangoVariety(MangoVariety.TOMMY);
+        batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
         batch.setFarmId("FARM-001");
         batch.setBlockId("BLOCK-A");
@@ -233,7 +238,7 @@ class BatchServiceTest {
         Batch batch = new Batch();
         batch.setBatchId("TEST-BATCH-005");
         batch.setHarvestDate(LocalDate.of(2026, 10, 5));
-        batch.setMangoVariety(MangoVariety.TOMMY);
+        batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
         batch.setFarmId("FARM-005");
         batch.setBlockId("BLOCK-E");

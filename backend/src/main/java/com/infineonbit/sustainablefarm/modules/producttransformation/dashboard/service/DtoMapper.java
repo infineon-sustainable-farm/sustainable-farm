@@ -33,6 +33,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrec
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.*;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.*;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.*;
+import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,13 +45,28 @@ import org.springframework.stereotype.Component;
 @Component
 public class DtoMapper {
 
+    private final MangoVarietyCodes mangoVarietyCodes;
+
+    public DtoMapper(MangoVarietyCodes mangoVarietyCodes) {
+        this.mangoVarietyCodes = mangoVarietyCodes;
+    }
+
+    /**
+     * The catalogue key of a variety sent to the API, for a path variable or an update.
+     *
+     * @see MangoVarietyCodes#toKey(String)
+     */
+    public String varietyKey(String apiValue) {
+        return mangoVarietyCodes.toKey(apiValue);
+    }
+
     // ===== BATCH MAPPERS =====
 
     public Batch toEntity(BatchCreateRequest request) {
         Batch batch = new Batch();
         batch.setBatchId(request.getBatchId());
         batch.setHarvestDate(request.getHarvestDate());
-        batch.setMangoVariety(request.getMangoVariety());
+        batch.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
         batch.setHarvestQuantityKg(request.getHarvestQuantityKg());
         batch.setFarmId(request.getFarmId());
         batch.setBlockId(request.getBlockId());
@@ -62,7 +78,7 @@ public class DtoMapper {
         return BatchResponse.builder()
                 .batchId(entity.getBatchId())
                 .harvestDate(entity.getHarvestDate())
-                .mangoVariety(entity.getMangoVariety())
+                .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
                 .currentStatus(entity.getCurrentStatus())
                 .farmId(entity.getFarmId())
@@ -82,7 +98,7 @@ public class DtoMapper {
         intake.setSourceBlock(request.getSourceBlock());
         intake.setIntakeDate(request.getIntakeDate());
         intake.setReceivedQuantityKg(request.getReceivedQuantityKg());
-        intake.setReceivedVariety(request.getReceivedVariety());
+        intake.setReceivedVarietyKey(mangoVarietyCodes.toKey(request.getReceivedVariety()));
         intake.setReceivedGrade(request.getReceivedGrade());
         intake.setIntakeOperator(request.getIntakeOperator());
         return intake;
@@ -96,7 +112,7 @@ public class DtoMapper {
                 .sourceBlock(entity.getSourceBlock())
                 .intakeDate(entity.getIntakeDate())
                 .receivedQuantityKg(entity.getReceivedQuantityKg())
-                .receivedVariety(entity.getReceivedVariety())
+                .receivedVariety(MangoVarietyCodes.toApi(entity.getReceivedVarietyKey()))
                 .receivedGrade(entity.getReceivedGrade())
                 .intakeOperator(entity.getIntakeOperator())
                 .createdAt(entity.getCreatedAt())
@@ -345,7 +361,7 @@ public class DtoMapper {
         event.setBatchId(request.getBatchId());
         event.setHarvestDate(request.getHarvestDate());
         event.setHarvestTime(request.getHarvestTime());
-        event.setMangoVariety(request.getMangoVariety());
+        event.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
         event.setFarmId(request.getFarmId());
         event.setBlockId(request.getBlockId());
         event.setHarvestQuantityKg(request.getHarvestQuantityKg());
@@ -364,7 +380,7 @@ public class DtoMapper {
                 .batchId(entity.getBatchId())
                 .harvestDate(entity.getHarvestDate())
                 .harvestTime(entity.getHarvestTime())
-                .mangoVariety(entity.getMangoVariety())
+                .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
                 .farmId(entity.getFarmId())
                 .blockId(entity.getBlockId())
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
@@ -386,7 +402,7 @@ public class DtoMapper {
         historical.setYear(request.getYear());
         historical.setMonth(request.getMonth());
         historical.setWeek(request.getWeek());
-        historical.setMangoVariety(request.getMangoVariety());
+        historical.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
         historical.setHarvestQuantityKg(request.getHarvestQuantityKg());
         historical.setQualityGradeAPct(request.getQualityGradeAPct());
         historical.setQualityGradeBPct(request.getQualityGradeBPct());
@@ -402,7 +418,7 @@ public class DtoMapper {
                 .year(entity.getYear())
                 .month(entity.getMonth())
                 .week(entity.getWeek())
-                .mangoVariety(entity.getMangoVariety())
+                .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
                 .qualityGradeAPct(entity.getQualityGradeAPct())
                 .qualityGradeBPct(entity.getQualityGradeBPct())

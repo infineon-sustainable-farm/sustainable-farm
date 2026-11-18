@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.operator.mo
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,8 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "raw_intake",
-        uniqueConstraints = @UniqueConstraint(name = "uk_raw_intake_batch_id", columnNames = "batch_id"))
+        uniqueConstraints = @UniqueConstraint(name = "uk_raw_intake_batch_id", columnNames = "batch_id"),
+        indexes = @Index(name = "idx_raw_intake_received_variety_key", columnList = "received_variety_key"))
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -60,9 +62,9 @@ public class RawIntake {
     @Column(name = "received_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal receivedQuantityKg;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "received_variety", nullable = false, length = 20)
-    private HarvestEvent.MangoVariety receivedVariety;
+    /** Catalogue key of the variety received, for example {@code KENT}: foreign key to plants {@code variety_reference}. */
+    @Column(name = "received_variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
+    private String receivedVarietyKey;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "received_grade", nullable = false, length = 1)

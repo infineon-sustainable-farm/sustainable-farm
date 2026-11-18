@@ -2,7 +2,6 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.batch.repo
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,7 +35,7 @@ public interface BatchRepository extends JpaRepository<Batch, String> {
     /**
      * Find batches by mango variety
      */
-    List<Batch> findByMangoVariety(MangoVariety mangoVariety);
+    List<Batch> findByVarietyKey(String varietyKey);
 
     /**
      * Find batches by farm
@@ -52,8 +51,8 @@ public interface BatchRepository extends JpaRepository<Batch, String> {
     /**
      * Find batches by variety and status
      */
-    @Query("SELECT b FROM Batch b WHERE b.mangoVariety = :variety AND b.currentStatus = :status")
-    List<Batch> findByVarietyAndStatus(@Param("variety") MangoVariety variety, @Param("status") BatchStatus status);
+    @Query("SELECT b FROM Batch b WHERE b.varietyKey = :variety AND b.currentStatus = :status")
+    List<Batch> findByVarietyAndStatus(@Param("variety") String variety, @Param("status") BatchStatus status);
 
     /**
      * Count batches by status
@@ -64,8 +63,8 @@ public interface BatchRepository extends JpaRepository<Batch, String> {
     /**
      * Get total harvest quantity by variety
      */
-    @Query("SELECT SUM(b.harvestQuantityKg) FROM Batch b WHERE b.mangoVariety = :variety")
-    Double getTotalHarvestQuantityByVariety(@Param("variety") MangoVariety variety);
+    @Query("SELECT SUM(b.harvestQuantityKg) FROM Batch b WHERE b.varietyKey = :variety")
+    Double getTotalHarvestQuantityByVariety(@Param("variety") String variety);
 
     /**
      * Find batches ready for shipping

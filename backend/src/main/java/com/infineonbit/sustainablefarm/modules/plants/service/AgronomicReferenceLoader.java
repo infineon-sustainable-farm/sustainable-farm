@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +26,17 @@ import java.util.List;
  * with {@code POST /api/plants/variety-references}; until then, a planted
  * variety is listed apart by the forecast.
  *
+ * <p>These rows are also the variety catalogue ({@link VarietyCatalog}) that
+ * producttransformation and salesmarketing reference by key. The loader runs
+ * first ({@link VarietyCatalog#LOAD_ORDER}), so that their demo seeds find the
+ * keys they reference. Besides the three varieties of the orchard, it loads
+ * Tommy Atkins (key {@code TOMMY}) and the catch-all {@code OTHER}, which
+ * producttransformation records for a mango of a variety outside the
+ * catalogue; their values are placeholders to validate, flagged by their source.
+ *
  * <p>A variety is inserted only when its name is missing, ignoring case,
- * accents and surrounding spaces (see {@link VarietyReferenceMatcher}). An
+ * accents and surrounding spaces (see {@link VarietyReferenceMatcher}), and its
+ * key too. An
  * existing row is never overwritten, even when its value differs from the
  * default below: a value corrected since is the one that counts. Restarting
  * the application therefore never duplicates nor resets a row.
@@ -39,12 +50,13 @@ import java.util.List;
  */
 @Component
 @Profile("dev")
+@Order(VarietyCatalog.LOAD_ORDER)
 public class AgronomicReferenceLoader implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AgronomicReferenceLoader.class);
 
     /** Default yield and harvest season of a variety, with their sources. */
-    private record VarietyDefault(String varietyName, double yieldPerTreeKg, String yieldSource,
+    private record VarietyDefault(String varietyName, String varietyKey, double yieldPerTreeKg, String yieldSource,
                                   int harvestStartMonth, int harvestEndMonth, String seasonSource) {
     }
 
@@ -52,10 +64,15 @@ public class AgronomicReferenceLoader implements CommandLineRunner {
     private record FormerShareRow(String growthPhase, double yieldShare, String source) {
     }
 
+    /** Source of a placeholder value, to replace by a sourced one. */
+    private static final String ASSUMPTION = "assumption_to_validate";
+
     private static final List<VarietyDefault> VARIETY_DEFAULTS = List.of(
-            new VarietyDefault("Keitt", 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa"),
-            new VarietyDefault("Kent", 200.0, "Zalka_2025", 4, 5, "FAO_mango_burkina"),
-            new VarietyDefault("Amelie", 160.0, "Zalka_2025", 2, 4, "FAO_mango_burkina"));
+            new VarietyDefault("Keitt", "KEITT", 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa"),
+            new VarietyDefault("Kent", "KENT", 200.0, "Zalka_2025", 4, 5, "FAO_mango_burkina"),
+            new VarietyDefault("Amelie", "AMELIE", 160.0, "Zalka_2025", 2, 4, "FAO_mango_burkina"),
+            new VarietyDefault("Tommy Atkins", "TOMMY", 180.0, ASSUMPTION, 4, 6, ASSUMPTION),
+            new VarietyDefault("Other", "OTHER", 160.0, ASSUMPTION, 4, 6, ASSUMPTION));
 
     private static final List<FormerShareRow> FORMER_SHARE_ROWS = List.of(
             new FormerShareRow(GrowthPhaseCalculator.ESTABLISHMENT, 0.0, "orchard_literature"),
@@ -87,10 +104,13 @@ public class AgronomicReferenceLoader implements CommandLineRunner {
     void load(Instant now) {
         List<VarietyReference> references = varietyReferenceRepository.findAll();
         for (VarietyDefault variety : VARIETY_DEFAULTS) {
-            if (VarietyReferenceMatcher.find(variety.varietyName(), references).isEmpty()) {
+            boolean present = VarietyReferenceMatcher.find(variety.varietyName(), references).isPresent()
+                    || references.stream().anyMatch(reference -> variety.varietyKey().equals(reference.getVarietyKey()));
+            if (!present) {
                 varietyReferenceRepository.save(new VarietyReference(
                         null,
                         variety.varietyName(),
+                        variety.varietyKey(),
                         variety.yieldPerTreeKg(),
                         variety.yieldSource(),
                         variety.harvestStartMonth(),

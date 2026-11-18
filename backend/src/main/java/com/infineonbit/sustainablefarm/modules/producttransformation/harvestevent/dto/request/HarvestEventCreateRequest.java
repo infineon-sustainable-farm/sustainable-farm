@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -35,8 +34,9 @@ public class HarvestEventCreateRequest {
 
     private LocalTime harvestTime;
 
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
     @NotNull(message = "Mango variety is required")
-    private MangoVariety mangoVariety;
+    private String mangoVariety;
 
     @NotBlank(message = "Farm ID is required")
     private String farmId;

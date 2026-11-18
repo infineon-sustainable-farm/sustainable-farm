@@ -5,7 +5,6 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.d
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.request.RawIntakeUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.response.RawIntakeResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.model.RawIntake;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
@@ -98,7 +97,7 @@ public class RawIntakeController {
         existingIntake.setSourceBlock(request.getSourceBlock());
         existingIntake.setIntakeDate(request.getIntakeDate());
         existingIntake.setReceivedQuantityKg(request.getReceivedQuantityKg());
-        existingIntake.setReceivedVariety(request.getReceivedVariety());
+        existingIntake.setReceivedVarietyKey(dtoMapper.varietyKey(request.getReceivedVariety()));
         existingIntake.setReceivedGrade(request.getReceivedGrade());
         existingIntake.setIntakeOperator(request.getIntakeOperator());
         
@@ -150,8 +149,8 @@ public class RawIntakeController {
     @GetMapping("/variety/{variety}")
     @Operation(summary = "Get raw intakes by variety", description = "Retrieves raw intakes filtered by mango variety")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByVariety(
-            @Parameter(description = "Mango variety") @PathVariable MangoVariety variety) {
-        List<RawIntake> intakes = rawIntakeService.getRawIntakesByVariety(variety);
+            @Parameter(description = "Mango variety") @PathVariable String variety) {
+        List<RawIntake> intakes = rawIntakeService.getRawIntakesByVariety(dtoMapper.varietyKey(variety));
         List<RawIntakeResponse> responses = intakes.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());

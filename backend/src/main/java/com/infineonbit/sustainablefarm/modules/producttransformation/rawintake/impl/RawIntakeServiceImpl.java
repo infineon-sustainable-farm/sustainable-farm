@@ -68,7 +68,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
         existingIntake.setSourceBlock(rawIntake.getSourceBlock());
         existingIntake.setIntakeDate(rawIntake.getIntakeDate());
         existingIntake.setReceivedQuantityKg(rawIntake.getReceivedQuantityKg());
-        existingIntake.setReceivedVariety(rawIntake.getReceivedVariety());
+        existingIntake.setReceivedVarietyKey(rawIntake.getReceivedVarietyKey());
         existingIntake.setReceivedGrade(rawIntake.getReceivedGrade());
         existingIntake.setIntakeOperator(rawIntake.getIntakeOperator());
         
@@ -118,8 +118,8 @@ public class RawIntakeServiceImpl implements RawIntakeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RawIntake> getRawIntakesByVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety) {
-        return rawIntakeRepository.findByReceivedVariety(variety);
+    public List<RawIntake> getRawIntakesByVariety(String variety) {
+        return rawIntakeRepository.findByReceivedVarietyKey(variety);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
 
     @Override
     @Transactional(readOnly = true)
-    public Double getTotalReceivedQuantityByVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety) {
+    public Double getTotalReceivedQuantityByVariety(String variety) {
         return rawIntakeRepository.getTotalReceivedQuantityByVariety(variety);
     }
 
