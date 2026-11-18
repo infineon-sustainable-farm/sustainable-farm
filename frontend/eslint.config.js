@@ -13,7 +13,10 @@ const I18N_MIGRATED_FILES = [
   'src/features/energysupply/**/*.{js,jsx}',
   'src/features/machinery/**/*.{js,jsx}',
   'src/features/plants/**/*.{js,jsx}',
+  'src/features/producttransformation/**/*.{js,jsx}',
+  'src/features/salesmarketing/**/*.{js,jsx}',
   'src/features/visitormanagement/**/*.{js,jsx}',
+  'src/features/watersupply/**/*.{js,jsx}',
 ]
 
 export default defineConfig([

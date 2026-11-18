@@ -2,7 +2,6 @@ package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 public record IrrigationScheduleCreateRequest(
         @NotNull Long zoneId,
@@ -10,5 +9,5 @@ public record IrrigationScheduleCreateRequest(
         @NotNull Integer durationMinutes,
         @NotNull Double waterQuantityLiters,
         String status,
-        UUID createdBy) {
+        Long createdBy) {
 }

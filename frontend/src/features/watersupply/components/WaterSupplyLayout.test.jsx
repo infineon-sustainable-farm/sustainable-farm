@@ -1,38 +1,40 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes, useOutletContext } from 'react-router-dom'
+import { describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes, useLocation, useOutletContext } from 'react-router-dom'
+import { ToastProvider } from '../../../shared/ui'
 import WaterSupplyLayout from './WaterSupplyLayout'
 
-afterEach(cleanup)
-
 /**
- * Test screen: it consumes the context provided by the shell (notify / onNavigate),
- * exactly like the routes.jsx adapter does, and without depending on a real view
- * (hence no API call).
+ * Test screen: it consumes the context provided by the module route (notify / onNavigate),
+ * exactly like the withModuleUi adapter does, without depending on a real view (no API call).
  */
 function ProbeScreen() {
   const { notify, onNavigate } = useOutletContext()
+  const { pathname } = useLocation()
   return (
     <>
       <p data-testid="probe-props">{`notify:${typeof notify}|onNavigate:${typeof onNavigate}`}</p>
+      <p data-testid="probe-path">{pathname}</p>
       <button type="button" onClick={() => notify('Source saved')}>call-notify</button>
       <button type="button" onClick={() => onNavigate('sources')}>go-to-sources</button>
-      <p>probe screen</p>
     </>
   )
 }
 
+// The toasts come from the application root (app/RootLayout), provided here the same way.
 function renderModule() {
   return render(
-    <MemoryRouter initialEntries={['/watersupply']}>
-      <Routes>
-        <Route path="watersupply" element={<WaterSupplyLayout />}>
-          <Route index element={<ProbeScreen />} />
-          <Route path="sources" element={<ProbeScreen />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/watersupply']}>
+        <Routes>
+          <Route path="watersupply" element={<WaterSupplyLayout />}>
+            <Route index element={<ProbeScreen />} />
+            <Route path="sources" element={<ProbeScreen />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 
@@ -40,31 +42,28 @@ describe('WaterSupplyLayout', () => {
   it('injects notify and onNavigate into the active screen', () => {
     renderModule()
 
-    expect(screen.getByTestId('probe-props').textContent)
-      .toBe('notify:function|onNavigate:function')
+    expect(screen.getByTestId('probe-props').textContent).toBe('notify:function|onNavigate:function')
   })
 
-  it('shows the module menu and the active screen', () => {
+  it('renders no menu of its own: the application shell carries the navigation', () => {
     renderModule()
 
-    expect(screen.getByRole('navigation', { name: 'Water supply module' })).toBeTruthy()
-    expect(screen.getByText('probe screen')).toBeTruthy()
+    expect(screen.queryByRole('navigation')).toBeNull()
   })
 
-  it('passes notify to the screens and shows the confirmation banner', () => {
+  it('shows the confirmation passed to notify as a kit toast', () => {
     renderModule()
 
     fireEvent.click(screen.getByText('call-notify'))
 
-    expect(screen.getByRole('status').textContent).toBe('Source saved')
-    expect(screen.getByRole('status').className).toContain('show')
+    expect(screen.getByRole('region', { name: 'Notifications' })).toHaveTextContent('Source saved')
   })
 
-  it('transmet onNavigate aux ecrans (raccourcis du dashboard)', () => {
+  it('opens another screen of the module with onNavigate (dashboard shortcuts)', () => {
     renderModule()
 
     fireEvent.click(screen.getByText('go-to-sources'))
 
-    expect(screen.getByRole('link', { name: /Water sources/ }).className).toContain('active')
+    expect(screen.getByTestId('probe-path').textContent).toBe('/watersupply/sources')
   })
 })

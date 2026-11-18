@@ -20,11 +20,6 @@ export function fromLocalInput(value) {
   return value ? new Date(value).toISOString() : null
 }
 
-/** Short display of an instant: "2026-10-20 08:00" (UTC, like the rest of the module). */
-export function formatInstant(iso) {
-  return iso ? String(iso).replace('T', ' ').slice(0, 16) : '—'
-}
-
 /** Day in yyyy-MM-dd, UTC (the API's format for day parameters). */
 export function isoDay(date = new Date()) {
   return date.toISOString().slice(0, 10)

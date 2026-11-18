@@ -23,8 +23,69 @@ const LINK_BASE = [
 const itemClass = ({ isActive }) =>
   `${LINK_BASE} ${isActive ? 'bg-primary-active' : 'hover:bg-primary-hover'}`
 
+// Section heading of the current module's links: small, semibold, uppercase, in the sidebar
+// colours. It stays on-primary (a lighter tint would drop under 4.5:1 on primary).
+const SECTION_HEADING = 'px-3 pt-3 pb-1 text-xs font-semibold tracking-wider text-on-primary uppercase'
+
 function isWithin(pathname, basePath) {
   return pathname === basePath || pathname.startsWith(`${basePath}/`)
+}
+
+/**
+ * Splits the items of a module into runs of consecutive items sharing the same `sectionKey`
+ * (undefined for the items outside any section), in their order.
+ *
+ * @param {object[]} items
+ * @returns {{ sectionKey?: string, items: object[] }[]}
+ */
+function groupBySection(items) {
+  const groups = []
+  for (const item of items) {
+    const last = groups[groups.length - 1]
+    if (last && last.sectionKey === item.sectionKey) last.items.push(item)
+    else groups.push({ sectionKey: item.sectionKey, items: [item] })
+  }
+  return groups
+}
+
+function NavItem({ item, onNavigate }) {
+  const ItemIcon = item.icon
+  return (
+    <li>
+      <NavLink to={item.to} end={item.end} onClick={onNavigate} className={itemClass}>
+        <ItemIcon size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
+        {item.label}
+      </NavLink>
+    </li>
+  )
+}
+
+/**
+ * Links of the current module. Items without `sectionKey` are listed flat; a run of items with
+ * the same `sectionKey` becomes a group labelled by its heading (role group + aria-labelledby).
+ */
+function ModuleItems({ items, onNavigate }) {
+  const { t } = useTranslation('common')
+  const baseId = useId()
+  return (
+    <ul className="mt-1 flex flex-col gap-1 pl-3">
+      {groupBySection(items).map((group, index) => {
+        const links = group.items.map((item) => (
+          <NavItem key={item.to} item={{ ...item, label: t(item.labelKey) }} onNavigate={onNavigate} />
+        ))
+        if (!group.sectionKey) return links
+        const headingId = `${baseId}-section-${index}`
+        return (
+          <li key={`${group.sectionKey}-${index}`} role="group" aria-labelledby={headingId}>
+            <p id={headingId} className={SECTION_HEADING}>
+              {t(group.sectionKey)}
+            </p>
+            <ul className="flex flex-col gap-1">{links}</ul>
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 /**
@@ -144,21 +205,7 @@ export default function Sidebar({ navs }) {
                   <ModuleIcon size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
                   {t(nav.nameKey)}
                 </Link>
-                {expanded && (
-                  <ul className="mt-1 flex flex-col gap-1 pl-3">
-                    {nav.items.map((item) => {
-                      const ItemIcon = item.icon
-                      return (
-                        <li key={item.to}>
-                          <NavLink to={item.to} end={item.end} onClick={closeOnNavigate} className={itemClass}>
-                            <ItemIcon size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
-                            {t(item.labelKey)}
-                          </NavLink>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
+                {expanded && <ModuleItems items={nav.items} onNavigate={closeOnNavigate} />}
               </li>
             )
           })}

@@ -96,8 +96,9 @@ public class HarvestEvent {
     @Column(name = "harvest_team_id", length = 50)
     private String harvestTeamId;
 
-    @Column(name = "harvest_supervisor", length = 100)
-    private String harvestSupervisor;
+    /** The harvest supervisor, a person of the staff referential ({@code person.id}); the API shows the name. */
+    @Column(name = "harvest_supervisor_id")
+    private Long harvestSupervisorId;
 
     @Column(name = "weather_conditions", length = 200)
     private String weatherConditions;

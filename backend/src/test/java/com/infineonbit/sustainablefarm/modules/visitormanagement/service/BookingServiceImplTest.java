@@ -1,6 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitCancelled;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitRescheduled;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitScheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingOccupancyResponse;
@@ -36,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -354,5 +358,104 @@ class BookingServiceImplTest {
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).getOccupancyPercent()).isEqualTo(100);
+    }
+
+    // --- Visit events (consumed by watersupply) ---
+
+    @Test
+    void createBooking_publishesVisitScheduled() {
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(buildActivity(10)));
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(buildSlot()));
+        when(bookingRepository.sumPeopleCountByActivityAndSlot(eq(activityId), eq(slotId), anyList()))
+                .thenReturn(0L);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
+            Booking b = inv.getArgument(0);
+            b.setId(bookingId);
+            return b;
+        });
+
+        service.createBooking(buildBookingRequest(3));
+
+        verify(eventPublisher).publishEvent(new VisitScheduled("booking-3", "Lucas Weber",
+                Instant.parse("2026-08-26T14:00:00Z"), 3));
+    }
+
+    @Test
+    void updateBooking_movedToAnotherSlot_publishesVisitRescheduled() {
+        Booking booking = buildBooking(BookingStatus.PENDING, BookingPaymentStatus.UNPAID, 2);
+        TimeSlot other = buildSlot();
+        other.setId(7L);
+        other.setDate(LocalDate.of(2026, 8, 27));
+        other.setStartTime(LocalTime.of(9, 0));
+        other.setEndTime(LocalTime.of(11, 0));
+        BookingRequest request = buildBookingRequest(4);
+        request.setTimeSlotId(7L);
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(buildActivity(10)));
+        when(timeSlotRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(other));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.updateBooking(bookingId, request);
+
+        verify(eventPublisher).publishEvent(new VisitRescheduled("booking-3", "Lucas Weber",
+                Instant.parse("2026-08-27T09:00:00Z"), 4));
+    }
+
+    @Test
+    void updateBooking_sameVisit_publishesNothing() {
+        Booking booking = buildBooking(BookingStatus.PENDING, BookingPaymentStatus.UNPAID, 2);
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(activityRepository.findByIdForUpdate(activityId)).thenReturn(Optional.of(buildActivity(10)));
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(buildSlot()));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Only the phone number changes: the visit itself (time, group, size) stays the same.
+        service.updateBooking(bookingId, buildBookingRequest(2));
+
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void cancelBooking_publishesVisitCancelled() {
+        Booking booking = buildBooking(BookingStatus.CONFIRMED, BookingPaymentStatus.PAID, 2);
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.cancelBooking(bookingId);
+
+        verify(eventPublisher).publishEvent(new VisitCancelled("booking-3"));
+    }
+
+    @Test
+    void cancelBookingsForSlot_publishesVisitCancelledForEachBooking() {
+        Booking booking = buildBooking(BookingStatus.PENDING, BookingPaymentStatus.UNPAID, 2);
+        when(bookingRepository.findByTimeSlotIdAndStatusIn(eq(slotId), any())).thenReturn(List.of(booking));
+
+        service.cancelBookingsForSlot(slotId);
+
+        verify(eventPublisher).publishEvent(new VisitCancelled("booking-3"));
+    }
+
+    @Test
+    void rescheduleBookingsForSlot_publishesTheNewTime() {
+        Booking booking = buildBooking(BookingStatus.CONFIRMED, BookingPaymentStatus.PAID, 2);
+        booking.getTimeSlot().setStartTime(LocalTime.of(15, 0));
+        when(bookingRepository.findByTimeSlotIdAndStatusIn(eq(slotId), any())).thenReturn(List.of(booking));
+
+        service.rescheduleBookingsForSlot(slotId);
+
+        verify(eventPublisher).publishEvent(new VisitRescheduled("booking-3", "Lucas Weber",
+                Instant.parse("2026-08-26T15:00:00Z"), 2));
+    }
+
+    @Test
+    void markPaid_publishesNoVisitEvent() {
+        when(bookingRepository.findById(bookingId))
+                .thenReturn(Optional.of(buildBooking(BookingStatus.PENDING, BookingPaymentStatus.UNPAID, 2)));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.markPaid(bookingId);
+
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 }

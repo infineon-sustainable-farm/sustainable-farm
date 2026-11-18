@@ -22,7 +22,10 @@ MIGRATED_DIRS=(
   frontend/src/features/energysupply
   frontend/src/features/machinery
   frontend/src/features/plants
+  frontend/src/features/producttransformation
+  frontend/src/features/salesmarketing
   frontend/src/features/visitormanagement
+  frontend/src/features/watersupply
 )
 
 if [ "$#" -gt 0 ]; then

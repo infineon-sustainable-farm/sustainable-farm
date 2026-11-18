@@ -13,6 +13,9 @@ import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogResponse;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -31,6 +34,29 @@ class DripMaintenanceServiceTest {
 
     @Mock
     private FarmDirectory farmDirectory;
+
+    private final PersonDirectory personDirectory = new InMemoryPersonDirectory();
+
+    @Test
+    void theSamePerformedByNameReferencesTheSamePerson() {
+        Long zoneId = 5L;
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().id(zoneId).build()));
+        when(logRepository.save(org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        org.mockito.ArgumentCaptor<DripMaintenanceLog> saved = org.mockito.ArgumentCaptor.forClass(DripMaintenanceLog.class);
+
+        DripMaintenanceLogResponse first = service().create(new DripMaintenanceLogRequest(
+                zoneId, Instant.now(), "inspection", null, null, null, null, null, "Technicien Demo"));
+        DripMaintenanceLogResponse second = service().create(new DripMaintenanceLogRequest(
+                zoneId, Instant.now(), "flush", null, null, null, null, null, " technicien demo "));
+
+        verify(logRepository, org.mockito.Mockito.times(2)).save(saved.capture());
+        Long personId = saved.getAllValues().get(0).getPerformedByPersonId();
+        assertEquals(personId, saved.getAllValues().get(1).getPerformedByPersonId());
+        assertEquals("Technicien Demo", first.performedBy());
+        assertEquals("Technicien Demo", second.performedBy());
+        assertEquals("Technicien Demo", personDirectory.nameOf(personId));
+    }
 
     @Test
     void createRejectsUnknownZone() {
@@ -118,6 +144,6 @@ class DripMaintenanceServiceTest {
     }
 
     private DripMaintenanceService service() {
-        return new DripMaintenanceService(logRepository, farmDirectory);
+        return new DripMaintenanceService(logRepository, farmDirectory, personDirectory);
     }
 }

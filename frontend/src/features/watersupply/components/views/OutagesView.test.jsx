@@ -131,4 +131,18 @@ describe('OutagesView', () => {
       scope: 'zone', scopeId: 'zone-1', status: 'cancelled', postponeIrrigations: false,
     })))
   })
+
+  it('deletes a period after confirmation in the dialog', async () => {
+    outageApi.deleteOutage.mockResolvedValue(undefined)
+    render(<OutagesView {...props} />)
+    await screen.findByText('Filter cleaning')
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0])
+    const dialog = await screen.findByRole('dialog', { name: 'Delete this unavailability' })
+    expect(dialog).toHaveTextContent('To keep a trace, cancel it instead.')
+
+    fireEvent.click(screen.getByText('Delete', { selector: 'div[role="dialog"] button' }))
+    await waitFor(() => expect(outageApi.deleteOutage).toHaveBeenCalledWith('out-1'))
+    await waitFor(() => expect(props.notify).toHaveBeenCalledWith('Unavailability deleted'))
+  })
 })

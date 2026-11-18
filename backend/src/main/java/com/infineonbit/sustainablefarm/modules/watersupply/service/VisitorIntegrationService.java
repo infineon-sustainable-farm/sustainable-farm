@@ -33,7 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Read models and events for Visitor Management (V1-V8 of the integration audit).
  *
  * <p>Visitor Management reads (level, savings, irrigation status, live consumption, planned
- * unavailability, safety briefing) and pushes visit announcements. Nothing here commands equipment:
+ * unavailability, safety briefing); its visit announcements arrive as events
+ * ({@link VisitorManagementListener}) or through {@code POST /api/water/visitor-events}. Nothing here commands equipment:
  * the demo valve goes through {@link IotCommandService}.</p>
  */
 @Service
@@ -165,6 +166,22 @@ public class VisitorIntegrationService {
         response.put("conflictingZones", conflictingZones);
         response.put("notificationTitle", title);
         return response;
+    }
+
+    /**
+     * Withdraws a visit announcement: the visit will not take place. Idempotent: an unknown or
+     * already withdrawn {@code visitId} changes nothing.
+     *
+     * @return {@code true} when an announcement was removed
+     */
+    @Transactional
+    public boolean withdrawVisit(String visitId) {
+        return visitorEventRepository.findByVisitId(visitId.trim())
+                .map(event -> {
+                    visitorEventRepository.delete(event);
+                    return true;
+                })
+                .orElse(false);
     }
 
     /** Current safety briefing (V8); a default text is returned (not stored) until one is published. */

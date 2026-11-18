@@ -11,6 +11,7 @@ import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotF
 import com.infineonbit.sustainablefarm.modules.machinery.exception.OperatorAssignmentNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.OperatorAssignmentRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,12 +19,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
 public class OperatorAssignmentService {
     private final OperatorAssignmentRepository operatorAssignmentRepository;
     private final EquipmentRepository equipmentRepository;
+    private final PersonDirectory personDirectory;
 
     /**
      * Creates a new operator assignment after checking the equipment exists
@@ -47,7 +50,7 @@ public class OperatorAssignmentService {
         }
 
         OperatorAssignment operatorAssignment = new OperatorAssignment();
-        operatorAssignment.setFullName(operatorAssignmentCreationRequest.fullName().trim());
+        operatorAssignment.setPersonId(personDirectory.findOrCreateByName(operatorAssignmentCreationRequest.fullName()).id());
         operatorAssignment.setEquipment(equipment);
         operatorAssignment.setJobTitle(operatorAssignmentCreationRequest.jobTitle().trim());
         operatorAssignment.setStartDate(operatorAssignmentCreationRequest.startDate());
@@ -61,13 +64,7 @@ public class OperatorAssignmentService {
             throw e;
         }
 
-        return new OperatorAssignmentObtainingResponse(
-                operatorAssignment.getId(),
-                operatorAssignment.getFullName(),
-                operatorAssignment.getEquipment().getId(),
-                operatorAssignment.getJobTitle(),
-                operatorAssignment.getStartDate(),
-                operatorAssignment.getEndDate());
+        return toResponse(operatorAssignment, personDirectory.nameOf(operatorAssignment.getPersonId()));
     }
 
     /**
@@ -153,7 +150,7 @@ public class OperatorAssignmentService {
             if (fullName.isEmpty()) {
                 throw new ConflictException("Full name cannot be blank.");
             }
-            assignment.setFullName(fullName);
+            assignment.setPersonId(personDirectory.findOrCreateByName(fullName).id());
         }
 
         if (operatorAssignmentUpdateRequest.jobTitle() != null) {
@@ -190,13 +187,7 @@ public class OperatorAssignmentService {
             throw e;
         }
 
-        return new OperatorAssignmentObtainingResponse(
-                assignment.getId(),
-                assignment.getFullName(),
-                assignment.getEquipment().getId(),
-                assignment.getJobTitle(),
-                assignment.getStartDate(),
-                assignment.getEndDate());
+        return toResponse(assignment, personDirectory.nameOf(assignment.getPersonId()));
     }
 
     /**
@@ -209,13 +200,20 @@ public class OperatorAssignmentService {
      */
     public Page<OperatorAssignmentObtainingResponse> obtainAllOperatorAssignments(Pageable pageable) {
         Page<OperatorAssignment> pageOfOperatorAssignments = operatorAssignmentRepository.findAll(pageable);
-        return pageOfOperatorAssignments.map(operatorAssignment -> new OperatorAssignmentObtainingResponse(
-                operatorAssignment.getId(),
-                operatorAssignment.getFullName(),
-                operatorAssignment.getEquipment().getId(),
-                operatorAssignment.getJobTitle(),
-                operatorAssignment.getStartDate(),
-                operatorAssignment.getEndDate()));
+        Map<Long, String> names = personDirectory.namesOf(
+                pageOfOperatorAssignments.map(OperatorAssignment::getPersonId).getContent());
+        return pageOfOperatorAssignments.map(operatorAssignment ->
+                toResponse(operatorAssignment, names.get(operatorAssignment.getPersonId())));
+    }
+
+    private static OperatorAssignmentObtainingResponse toResponse(OperatorAssignment assignment, String fullName) {
+        return new OperatorAssignmentObtainingResponse(
+                assignment.getId(),
+                fullName,
+                assignment.getEquipment().getId(),
+                assignment.getJobTitle(),
+                assignment.getStartDate(),
+                assignment.getEndDate());
     }
 
     /**

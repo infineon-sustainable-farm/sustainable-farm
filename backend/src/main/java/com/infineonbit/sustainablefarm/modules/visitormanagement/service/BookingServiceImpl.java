@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitRescheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.BookingOccupancyResponse;
@@ -137,7 +138,9 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = new Booking();
         apply(booking, request, activity, slot);
-        return BookingResponse.from(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        eventPublisher.publishEvent(VisitEvents.scheduled(saved));
+        return BookingResponse.from(saved);
     }
 
     @Override
@@ -159,9 +162,14 @@ public class BookingServiceImpl implements BookingService {
                 - booking.getPeopleCount();
         validateCapacity(activity, slot.getMaxCapacity(), occupied, slotBooked, request.getPeopleCount());
 
+        VisitRescheduled before = VisitEvents.rescheduled(booking);
         apply(booking, request, activity, slot);
         bookingRepository.save(booking);
         bookingRepository.flush();
+        VisitRescheduled after = VisitEvents.rescheduled(booking);
+        if (!after.equals(before)) {
+            eventPublisher.publishEvent(after);
+        }
         return BookingResponse.from(booking);
     }
 
@@ -241,6 +249,14 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
+    public void rescheduleBookingsForSlot(Long timeSlotId) {
+        for (Booking booking : bookingRepository.findByTimeSlotIdAndStatusIn(timeSlotId, ACTIVE_STATUSES)) {
+            eventPublisher.publishEvent(VisitEvents.rescheduled(booking));
+        }
+    }
+
+    @Override
+    @Transactional
     public void cancelBookingsForActivity(Long activityId) {
         for (Booking booking : bookingRepository.findByActivityIdAndStatusIn(activityId, ACTIVE_STATUSES)) {
             cancel(booking);
@@ -252,6 +268,7 @@ public class BookingServiceImpl implements BookingService {
             booking.setPaymentStatus(BookingPaymentStatus.REFUNDED);
         }
         booking.setStatus(BookingStatus.CANCELLED);
+        eventPublisher.publishEvent(VisitEvents.cancelled(booking));
     }
 
     @Override

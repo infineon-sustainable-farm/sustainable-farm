@@ -74,8 +74,9 @@ public class RawIntake {
     @Column(name = "received_grade", nullable = false, length = 1)
     private HarvestEvent.QualityGrade receivedGrade;
 
-    @Column(name = "intake_operator", length = 100)
-    private String intakeOperator;
+    /** The intake operator, a person of the staff referential ({@code person.id}); the API shows the name. */
+    @Column(name = "intake_operator_id")
+    private Long intakeOperatorId;
 
     @Column(name = "created_at", updatable = false)
     private java.sql.Timestamp createdAt;
