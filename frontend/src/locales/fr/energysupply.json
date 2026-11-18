@@ -1,6 +1,13 @@
 {
   "name": "Approvisionnement en énergie",
   "nav": {
-    "dashboard": "Tableau de bord"
+    "dashboard": "Tableau de bord",
+    "components": "Composants",
+    "solar": "Solaire et production",
+    "consumption": "Suivi de la consommation",
+    "generator": "Groupe électrogène de secours",
+    "carbon": "Empreinte carbone",
+    "scenario": "Analyse de scénarios",
+    "alerts": "Alertes et notifications"
   }
 }

@@ -1,6 +1,13 @@
 {
   "name": "Energy supply",
   "nav": {
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "components": "Components",
+    "solar": "Solar & Generation",
+    "consumption": "Consumption Tracking",
+    "generator": "Generator Backup",
+    "carbon": "Carbon Footprint",
+    "scenario": "What-If Analysis",
+    "alerts": "Alerts & Notifications"
   }
 }
