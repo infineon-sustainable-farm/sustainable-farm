@@ -95,7 +95,7 @@ export default function CustomersPage() {
       .getCustomerCertifications(effectiveSelectedId)
       .then((res) => {
         if (!active) return;
-        setCustomerCerts((prev) => ({ ...prev, [effectiveSelectedId]: Array.isArray(res.data) ? res.data : [] }));
+        setCustomerCerts((prev) => ({ ...prev, [effectiveSelectedId]: Array.isArray(res) ? res : [] }));
       })
       .catch((err) => {
         if (!active) return;
@@ -128,7 +128,7 @@ export default function CustomersPage() {
     setSavingCustomer(true);
     try {
       const res = await api.getCustomerById(customer.customerId);
-      const c = res.data || customer;
+      const c = res || customer;
       setCustomerForm({
         companyName: c.companyName || '',
         customerCode: c.customerCode || '',
@@ -169,7 +169,7 @@ export default function CustomersPage() {
       } else {
         const created = await api.createCustomer(payload);
         flashSuccess(t('customers.messages.customerCreated', { name: payload.companyName }));
-        if (created.data?.customerId) setSelectedId(created.data.customerId);
+        if (created?.customerId) setSelectedId(created.customerId);
       }
       setShowCustomerModal(false);
       await fetchCustomersData();

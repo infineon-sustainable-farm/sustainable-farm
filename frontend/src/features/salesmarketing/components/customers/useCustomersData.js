@@ -82,7 +82,7 @@ export function useCustomersData({ statusFilter, setSelectedId, flashError }) {
     async (customerId) => {
       try {
         const res = await api.getCustomerCertifications(customerId);
-        setCustomerCerts((prev) => ({ ...prev, [customerId]: Array.isArray(res.data) ? res.data : [] }));
+        setCustomerCerts((prev) => ({ ...prev, [customerId]: Array.isArray(res) ? res : [] }));
       } catch (err) {
         setCustomerCerts((prev) => ({ ...prev, [customerId]: [] }));
         flashError(getErrorMessage(err, t('customers.errors.certificationsLoadFailed')));

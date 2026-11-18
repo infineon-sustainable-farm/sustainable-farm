@@ -127,7 +127,7 @@ export default function DemandReportsPage() {
     setSavingReport(true);
     try {
       const res = await api.getDemandReportById(report.reportId);
-      const r = res.data || report;
+      const r = res || report;
       setReportForm({
         reportType: r.reportType || 'Forecasting',
         periodStart: r.periodStart ? new Date(r.periodStart).toISOString().slice(0, 10) : '',
@@ -177,7 +177,7 @@ export default function DemandReportsPage() {
         flashSuccess(t('reports.updated', { id: editingReportId }));
       } else {
         const created = await api.createDemandReport(payload);
-        flashSuccess(t('reports.created', { id: created.data?.reportId || t('reports.newId') }));
+        flashSuccess(t('reports.created', { id: created?.reportId || t('reports.newId') }));
       }
 
       setShowReportModal(false);

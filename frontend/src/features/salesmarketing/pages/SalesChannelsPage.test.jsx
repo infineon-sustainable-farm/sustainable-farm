@@ -93,4 +93,22 @@ describe('SalesChannelsPage', () => {
     await waitFor(() => expect(api.deleteSalesChannel).toHaveBeenCalledWith(3));
     expect(await screen.findByText('Sales channel "Online Store" deleted successfully.')).toBeInTheDocument();
   });
+
+  it('fills the channel edit form from the single channel fetch', async () => {
+    api.getSalesChannelById.mockResolvedValue({ channelId: 3, name: 'Online Shop' });
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Actions for Online Store' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit Channel' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Sales Channel #3' });
+    expect(within(dialog).getByLabelText(/Channel Name/)).toHaveValue('Online Shop');
+  });
+
+  it('fills the target edit form from the single target fetch', async () => {
+    api.getSalesChannelTargetById.mockResolvedValue({ ...target, revenueTargetEur: 500000 });
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Manage Targets' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit target' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Target #9' });
+    expect(within(dialog).getByLabelText(/Revenue Target/)).toHaveValue(500000);
+  });
 });
