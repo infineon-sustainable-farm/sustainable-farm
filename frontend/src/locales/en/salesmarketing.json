@@ -952,6 +952,7 @@
     "kg": "{{value}} kg",
     "condition": "Condition Monitoring",
     "celsius": "{{value}}°C",
-    "download": "Download Manifest"
+    "download": "Download Manifest",
+    "downloadShort": "Manifest"
   }
 }
