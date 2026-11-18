@@ -8,14 +8,14 @@ import java.util.List;
 
 /**
  * The variety catalogue rows that the tests of the other modules reference by
- * key, as the dev loader writes them: their tables have a foreign key to it.
+ * key, as the catalogue loader writes them: their tables have a foreign key to it.
  */
 public final class VarietyCatalogTestData {
 
     private VarietyCatalogTestData() {
     }
 
-    /** The catalogue of the dev loader: Keitt, Kent, Amelie, Tommy Atkins and Other. */
+    /** The catalogue of the loader: Keitt, Kent, Amelie, Tommy Atkins and Other. */
     public static List<VarietyReference> defaults() {
         return List.of(
                 reference(1L, "Keitt", "KEITT"),

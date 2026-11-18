@@ -1,9 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
-import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +10,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -26,10 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AgronomicReferenceLoaderTest {
 
     private static final Instant FIRST_START = Instant.parse("2026-09-24T10:00:00Z");
-    private static final Instant SECOND_START = Instant.parse("2026-10-01T08:00:00Z");
-
-    @Autowired
-    private VarietyReferenceRepository varietyReferenceRepository;
 
     @Autowired
     private GrowthPhaseYieldShareRepository growthPhaseYieldShareRepository;
@@ -38,12 +30,7 @@ public class AgronomicReferenceLoaderTest {
 
     @BeforeEach
     void setUp() {
-        loader = new AgronomicReferenceLoader(varietyReferenceRepository, growthPhaseYieldShareRepository);
-    }
-
-    private Map<String, VarietyReference> varietiesByName() {
-        return varietyReferenceRepository.findAll().stream()
-                .collect(Collectors.toMap(VarietyReference::getVarietyName, reference -> reference));
+        loader = new AgronomicReferenceLoader(growthPhaseYieldShareRepository);
     }
 
     private List<String> shareRows() {
@@ -58,121 +45,26 @@ public class AgronomicReferenceLoaderTest {
                 FIRST_START));
     }
 
-    private static void assertVariety(VarietyReference reference, double yieldPerTreeKg, String yieldSource,
-                                      int harvestStartMonth, int harvestEndMonth, String seasonSource) {
-        assertEquals(yieldPerTreeKg, reference.getYieldPerTreeKg());
-        assertEquals(yieldSource, reference.getYieldSource());
-        assertEquals(harvestStartMonth, reference.getHarvestStartMonth());
-        assertEquals(harvestEndMonth, reference.getHarvestEndMonth());
-        assertEquals(seasonSource, reference.getSeasonSource());
-        assertEquals(FIRST_START, reference.getLastUpdated());
-    }
-
     @Test
-    void load_shouldInsertTheCatalogue_andNoShare_whenTablesAreEmpty() {
-        // Act
-        loader.load(FIRST_START);
-        // Assert: the five varieties of the catalogue, with their keys, values and sources
-        Map<String, VarietyReference> varieties = varietiesByName();
-        assertEquals(5, varieties.size());
-        assertVariety(varieties.get("Keitt"), 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa");
-        assertVariety(varieties.get("Kent"), 200.0, "Zalka_2025", 4, 5, "FAO_mango_burkina");
-        assertVariety(varieties.get("Amelie"), 160.0, "Zalka_2025", 2, 4, "FAO_mango_burkina");
-        assertVariety(varieties.get("Tommy Atkins"), 180.0, "assumption_to_validate", 4, 6, "assumption_to_validate");
-        assertVariety(varieties.get("Other"), 160.0, "assumption_to_validate", 4, 6, "assumption_to_validate");
-        assertEquals(Map.of("Keitt", "KEITT", "Kent", "KENT", "Amelie", "AMELIE", "Tommy Atkins", "TOMMY",
-                        "Other", "OTHER"),
-                varieties.values().stream().collect(Collectors.toMap(VarietyReference::getVarietyName,
-                        VarietyReference::getVarietyKey)));
-        // Assert: the shares keep their defaults, so no row is written
-        assertEquals(List.of(), shareRows());
-    }
-
-    @Test
-    void load_shouldNotDuplicateRows_whenRunTwice() {
-        // Act
-        loader.load(FIRST_START);
-        loader.load(SECOND_START);
-        // Assert: same rows, still dated from the first start
-        assertEquals(5, varietyReferenceRepository.count());
-        varietyReferenceRepository.findAll()
-                .forEach(reference -> assertEquals(FIRST_START, reference.getLastUpdated()));
-    }
-
-    @Test
-    void load_shouldKeepAValueChangedInTheDatabase() {
-        // Arrange: a mentor lowers the Keitt yield
-        loader.load(FIRST_START);
-        VarietyReference keitt = varietiesByName().get("Keitt");
-        keitt.setYieldPerTreeKg(80.0);
-        keitt.setYieldSource("orchard_literature");
-        varietyReferenceRepository.save(keitt);
-        // Act
-        loader.load(SECOND_START);
-        // Assert: the changed values stay, nothing is added
-        assertEquals(80.0, varietiesByName().get("Keitt").getYieldPerTreeKg());
-        assertEquals("orchard_literature", varietiesByName().get("Keitt").getYieldSource());
-        assertEquals(5, varietyReferenceRepository.count());
-    }
-
-    @Test
-    void load_shouldNotReinsertAVariety_whenItsNameWasRewrittenWithAccents() {
-        // Arrange: the Amelie row renamed "Amélie" by hand
-        loader.load(FIRST_START);
-        VarietyReference amelie = varietiesByName().get("Amelie");
-        amelie.setVarietyName("Amélie");
-        varietyReferenceRepository.save(amelie);
-        // Act
-        loader.load(SECOND_START);
-        // Assert: no second "Amelie" row
-        assertEquals(List.of("Amélie", "Keitt", "Kent", "Other", "Tommy Atkins"), varietiesByName().keySet().stream().sorted().toList());
-    }
-
-    @Test
-    void load_shouldNotInsertAVariety_whoseKeyIsTaken() {
-        // Arrange: "Tommy" entered by the user before the first start, key TOMMY
-        varietyReferenceRepository.save(new VarietyReference(null, "Tommy", 170.0, "user_entry", 4, 6,
-                "user_entry", FIRST_START));
-        // Act
-        loader.load(SECOND_START);
-        // Assert: no "Tommy Atkins" row under the same key
-        assertEquals(List.of("Amelie", "Keitt", "Kent", "Other", "Tommy"),
-                varietiesByName().keySet().stream().sorted().toList());
-    }
-
-    @Test
-    void load_shouldInsertOnlyTheMissingVarieties() {
-        // Arrange: a variety deleted by hand
-        loader.load(FIRST_START);
-        varietyReferenceRepository.delete(varietiesByName().get("Kent"));
-        // Act
-        loader.load(SECOND_START);
-        // Assert: it is back, dated from the second start; the others are untouched
-        assertEquals(SECOND_START, varietiesByName().get("Kent").getLastUpdated());
-        assertEquals(FIRST_START, varietiesByName().get("Keitt").getLastUpdated());
-        assertEquals(5, varietyReferenceRepository.count());
-    }
-
-    @Test
-    void load_shouldRemoveTheShareRows_writtenByEarlierVersions() {
+    void removeFormerShareRows_shouldRemoveTheShareRows_writtenByEarlierVersions() {
         // Arrange: a dev database started before the shares had defaults in code
         shareRow("establishment", 0.0, "orchard_literature");
         shareRow("gradual production", 0.5, "assumption_to_validate");
         shareRow("full production", 1.0, "by_definition");
         // Act
-        loader.load(FIRST_START);
+        loader.removeFormerShareRows();
         // Assert: the defaults apply, gradual production at 0.25
         assertEquals(List.of(), shareRows());
     }
 
     @Test
-    void load_shouldKeepEveryShareRow_thatDiffersFromAnEarlierVersion() {
+    void removeFormerShareRows_shouldKeepEveryShareRow_thatDiffersFromAnEarlierVersion() {
         // Arrange: gradual production corrected, full production re-sourced, establishment as written before
         shareRow("establishment", 0.0, "orchard_literature");
         shareRow("gradual production", 0.3, "assumption_to_validate");
         shareRow("full production", 1.0, "user_entry");
         // Act
-        loader.load(FIRST_START);
+        loader.removeFormerShareRows();
         // Assert: only the row identical to an earlier version is removed
         assertEquals(List.of("full production 1.0 user_entry", "gradual production 0.3 assumption_to_validate"),
                 shareRows());

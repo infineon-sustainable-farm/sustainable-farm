@@ -21,9 +21,9 @@ import java.util.Objects;
  * it: the yield of one tree in full production and the harvest season, each
  * with its source.
  *
- * <p>Outside the dev profile no reference is loaded at startup: a planted
- * variety stays out of the yield forecast, listed apart, until its reference
- * is entered here. The forecast and the plant alerts read the table on every
+ * <p>At startup only the five varieties of the catalogue are loaded, in every
+ * profile ({@link VarietyCatalogLoader}): another planted variety stays out of
+ * the yield forecast, listed apart, until its reference is entered here. The forecast and the plant alerts read the table on every
  * request, so an entry or a correction counts at once.
  *
  * <p>The reference holds a handful of rows, read whole: names are compared in
