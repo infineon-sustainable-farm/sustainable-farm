@@ -50,7 +50,7 @@ function AlertsCard({ alerts, onSelect }) {
         )}
       </ul>
       <Link
-        to="/demand-alerts"
+        to="/salesmarketing/demand-alerts"
         className="mt-4 block rounded-control py-2 text-center text-sm font-medium text-text-accent transition duration-(--duration-fast) ease-standard hover:bg-primary-tint"
       >
         {t('dashboard.alerts.viewAll')}
