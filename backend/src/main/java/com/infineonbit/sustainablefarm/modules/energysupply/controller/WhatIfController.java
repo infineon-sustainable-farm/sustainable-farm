@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** Feeds the "What-If Scenario Analysis" tab of the Energy App. */
 
 @RestController
-@RequestMapping("/api/energy/whatif")
+@RequestMapping("/api/energy-supply/whatif")
 public class WhatIfController {
 
     private final WhatIfService whatIfService;

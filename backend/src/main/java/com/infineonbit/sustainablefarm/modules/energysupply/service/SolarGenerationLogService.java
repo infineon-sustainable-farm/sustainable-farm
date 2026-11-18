@@ -37,7 +37,7 @@ public class SolarGenerationLogService {
                 .stream().map(SolarGenerationLogResponse::from).toList();
     }
 
-    public SolarGenerationLogResponse findById(String logId) {
+    public SolarGenerationLogResponse findById(Long logId) {
         return SolarGenerationLogResponse.from(findEntity(logId));
     }
 
@@ -49,24 +49,24 @@ public class SolarGenerationLogService {
     }
 
     @Transactional
-    public SolarGenerationLogResponse update(String logId, SolarGenerationLogRequest request) {
+    public SolarGenerationLogResponse update(Long logId, SolarGenerationLogRequest request) {
         SolarGenerationLog log = findEntity(logId);
         applyRequest(log, request);
         return SolarGenerationLogResponse.from(solarGenerationLogRepository.save(log));
     }
 
     @Transactional
-    public void delete(String logId) {
+    public void delete(Long logId) {
         solarGenerationLogRepository.delete(findEntity(logId));
     }
 
-    private SolarGenerationLog findEntity(String logId) {
+    private SolarGenerationLog findEntity(Long logId) {
         return solarGenerationLogRepository.findById(logId)
-                .orElseThrow(() -> new EnergySupplyNotFoundException("Solar generation log", logId));
+                .orElseThrow(() -> new EnergySupplyNotFoundException("Solar generation log", String.valueOf(logId)));
     }
 
     private void applyRequest(SolarGenerationLog log, SolarGenerationLogRequest request) {
-        EnergyComponent component = energyComponentRepository.findById(request.componentId())
+        EnergyComponent component = energyComponentRepository.findByCode(request.componentId())
                 .orElseThrow(() -> new EnergySupplyNotFoundException("Energy component", request.componentId()));
         log.setComponent(component);
         log.setDate(request.date());

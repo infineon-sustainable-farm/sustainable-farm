@@ -31,7 +31,7 @@ class AlertControllerTest {
     @Test
     void resolveChangesAlertStatus() throws Exception {
         when(energyAlertService.updateStatus(1L, AlertStatus.RESOLVED)).thenReturn(resolvedAlert());
-        mockMvc.perform(patch("/api/energy/alerts/1/status")
+        mockMvc.perform(patch("/api/energy-supply/alerts/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"RESOLVED\"}"))
                 .andExpect(status().isOk())
@@ -43,7 +43,7 @@ class AlertControllerTest {
     void missingAlertReturnsNotFound() throws Exception {
         when(energyAlertService.updateStatus(99L, AlertStatus.RESOLVED))
                 .thenThrow(new EnergySupplyNotFoundException("Energy alert", "99"));
-        mockMvc.perform(patch("/api/energy/alerts/99/status")
+        mockMvc.perform(patch("/api/energy-supply/alerts/99/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"RESOLVED\"}"))
                 .andExpect(status().isNotFound());
@@ -51,7 +51,7 @@ class AlertControllerTest {
 
     @Test
     void missingStatusReturnsBadRequest() throws Exception {
-        mockMvc.perform(patch("/api/energy/alerts/1/status")
+        mockMvc.perform(patch("/api/energy-supply/alerts/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":null}"))
                 .andExpect(status().isBadRequest());

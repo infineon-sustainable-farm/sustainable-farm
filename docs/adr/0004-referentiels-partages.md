@@ -85,7 +85,7 @@ Les trois copies (energysupply `alert`, salesmarketing `alerts`, watersupply `no
 | `severity` | energysupply et sales | Enum `CRITICAL`, `WARNING`, `INFO` ; sales garde ses valeurs en minuscules dans le JSON ; watersupply la déduit de son `type` quand c'est un niveau |
 | `status` | energysupply et sales | Enum `OPEN`, `ACKNOWLEDGED`, `RESOLVED`, `DISMISSED`, obligatoire, `OPEN` par défaut ; energysupply n'expose que `OPEN` et `RESOLVED` |
 | `title`, `message` | watersupply, tous | Message jusqu'à 1000 caractères |
-| `related_entity_type`, `related_entity_id` | sales `related_table`, `related_id` ; energysupply `component_id` | Référence polymorphe sans clé étrangère, id en texte pour accepter les codes de composant (`ENG-002`) comme les ids numériques ; energysupply refuse la suppression d'un composant visé par une alerte (409), comme l'ancienne clé étrangère |
+| `related_entity_type`, `related_entity_id` | sales `related_table`, `related_id` ; energysupply `component_id` | Référence polymorphe sans clé étrangère, id en texte ; energysupply y range l'id Long du composant (T34) et renvoie son code (`ENG-002`) dans le JSON, et refuse la suppression d'un composant visé par une alerte (409), comme l'ancienne clé étrangère |
 | `region`, `origin` | sales | Facultatifs |
 | `recipient_person_id` | watersupply `user_id` | Clé étrangère vers `person` (`CrossModuleForeignKey`) |
 | `is_read`, `action_url` | watersupply | Lu ou non, route à ouvrir |
