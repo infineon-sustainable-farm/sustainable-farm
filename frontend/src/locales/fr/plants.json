@@ -51,6 +51,17 @@
     "comparisonReason": {
       "NO_REFERENCE": "aucune valeur de référence",
       "NO_TREE_LEFT": "plus aucun arbre"
+    },
+    "fertilizerType": {
+      "MINERAL": "Minéral",
+      "ORGANIC": "Organique"
+    },
+    "movementType": {
+      "PURCHASE": "Achat",
+      "APPLICATION": "Application",
+      "LOSS": "Perte",
+      "ADJUSTMENT_IN": "Ajustement entrant",
+      "ADJUSTMENT_OUT": "Ajustement sortant"
     }
   },
   "blockFilter": {
@@ -170,6 +181,137 @@
       "seasonSource": "Saison : {{source}}",
       "phase": "{{phase}} {{share}} ({{source}})",
       "phaseSeparator": ", "
+    }
+  },
+  "fertilizer": {
+    "pageTitle": "Stock d’engrais — Plantes",
+    "title": "Stock d’engrais",
+    "subtitle": "Stock, achats, applications et pertes.",
+    "addFertilizer": "Ajouter un engrais",
+    "recordMovement": "Enregistrer un mouvement",
+    "lowStock": "Stock bas",
+    "serverFailed": "La requête au serveur n’a pas abouti.",
+    "rate": {
+      "title": "Taux de change",
+      "loading": "Chargement du taux de change…",
+      "loadError": "Le taux de change n’a pas pu être chargé",
+      "value": "1 € = {{rate}} FCFA",
+      "meta": "Source : {{source}} · Mis à jour le {{updated}}",
+      "none": "Aucun taux de change enregistré pour l’instant",
+      "noneHint": "Tant qu’aucun taux n’est saisi, chaque coût est affiché uniquement dans la devise de paiement.",
+      "edit": "Modifier",
+      "editLabel": "Modifier le taux de change",
+      "fieldLabel": "1 € =",
+      "unit": "FCFA",
+      "saving": "Enregistrement…",
+      "required": "Le taux est obligatoire.",
+      "invalid": "Le taux doit être un nombre supérieur à 0 et inférieur à 1 000 000, avec au plus 6 décimales."
+    },
+    "stock": {
+      "title": "Stock actuel",
+      "loading": "Chargement des engrais…",
+      "loadError": "Les engrais n’ont pas pu être chargés",
+      "empty": "Aucun engrais dans le catalogue pour l’instant",
+      "columns": {
+        "fertilizer": "Engrais",
+        "type": "Type",
+        "composition": "Composition",
+        "stock": "Stock",
+        "threshold": "Seuil d’alerte",
+        "status": "Statut",
+        "lastRestock": "Dernier réapprovisionnement"
+      }
+    },
+    "movements": {
+      "title": "Historique des mouvements",
+      "filters": {
+        "fertilizer": "Engrais",
+        "type": "Type",
+        "block": "Bloc (applications uniquement)",
+        "from": "Du",
+        "to": "Au",
+        "allFertilizers": "Tous les engrais",
+        "allTypes": "Tous les types",
+        "allBlocks": "Tous les blocs"
+      },
+      "loading": "Chargement des mouvements…",
+      "loadError": "Les mouvements n’ont pas pu être chargés",
+      "noMatch": "Aucun mouvement ne correspond à ces filtres",
+      "noMatchHint": "Essayez un autre engrais, type, bloc ou une autre période.",
+      "empty": "Aucun mouvement enregistré pour l’instant",
+      "details": "{{applicator}} · {{method}}",
+      "columns": {
+        "date": "Date",
+        "fertilizer": "Engrais",
+        "type": "Type",
+        "quantity": "Quantité",
+        "block": "Bloc",
+        "details": "Détails",
+        "costXof": "Coût (FCFA)",
+        "costEur": "Coût (EUR)",
+        "source": "Source"
+      }
+    },
+    "addForm": {
+      "title": "Ajouter un engrais",
+      "name": "Nom",
+      "type": "Type",
+      "selectType": "Choisir un type",
+      "composition": "Composition",
+      "compositionPlaceholder": "p. ex. 15-15-15",
+      "unit": "Unité",
+      "selectUnit": "Choisir une unité",
+      "threshold": "Seuil d’alerte",
+      "thresholdNote": "Facultatif. Il ne pourra pas être modifié par la suite.",
+      "submit": "Ajouter l’engrais",
+      "submitting": "Ajout…",
+      "errors": {
+        "nameRequired": "Le nom est obligatoire.",
+        "nameTooLong": "Le nom doit comporter au plus 255 caractères.",
+        "typeRequired": "Le type est obligatoire.",
+        "compositionTooLong": "La composition doit comporter au plus 100 caractères.",
+        "unitRequired": "L’unité est obligatoire.",
+        "thresholdInvalid": "Le seuil d’alerte doit être supérieur ou égal à 0, avec au plus 3 décimales."
+      }
+    },
+    "movementForm": {
+      "title": "Enregistrer un mouvement",
+      "type": "Type de mouvement",
+      "fertilizer": "Engrais",
+      "selectFertilizer": "Choisir un engrais",
+      "date": "Date",
+      "quantity": "Quantité",
+      "quantityWithUnit": "Quantité ({{unit}})",
+      "inStock": "En stock : {{quantity}}",
+      "supplier": "Fournisseur",
+      "totalCost": "Coût total",
+      "currency": "Devise",
+      "block": "Bloc",
+      "applicator": "Applicateur",
+      "method": "Méthode",
+      "reason": "Motif",
+      "submit": {
+        "PURCHASE": "Enregistrer l’achat",
+        "APPLICATION": "Enregistrer l’application",
+        "LOSS": "Enregistrer la perte"
+      },
+      "submitting": "Enregistrement…",
+      "errors": {
+        "fertilizerRequired": "L’engrais est obligatoire.",
+        "dateRequired": "La date est obligatoire.",
+        "dateFuture": "La date ne peut pas être dans le futur.",
+        "quantityInvalid": "La quantité doit être un nombre supérieur à 0, avec au plus 3 décimales.",
+        "supplierRequired": "Le fournisseur est obligatoire.",
+        "supplierTooLong": "Le fournisseur doit comporter au plus 255 caractères.",
+        "totalCostInvalid": "Le coût total doit être un nombre supérieur à 0, avec au plus 2 décimales.",
+        "blockRequired": "Le bloc est obligatoire.",
+        "blockInvalid": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace.",
+        "applicatorRequired": "L’applicateur est obligatoire.",
+        "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères.",
+        "methodTooLong": "La méthode doit comporter au plus 255 caractères.",
+        "reasonRequired": "Le motif est obligatoire.",
+        "reasonTooLong": "Le motif doit comporter au plus 255 caractères."
+      }
     }
   }
 }
