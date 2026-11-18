@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import EquipmentTable from "./EquipmentTable";
 import EquipmentFormModal from "./EquipmentFormModal";
 import StatusUpdateModal from "./StatusUpdateModal";
-import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
-import EmptyState from "../../../shared/components/EmptyState";
-import Pagination from "../../../shared/components/Pagination";
+import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader, Pagination } from "../../../shared/ui";
 import { useEquipments } from "../hooks/useEquipments";
 import { useCreateEquipment, useUpdateEquipmentStatus, useDeleteEquipment } from "../hooks/useEquipmentMutations";
 
 const PAGE_SIZE = 10;
 
 function EquipmentRegistry() {
+  const { t } = useTranslation("machinery");
   const [page, setPage] = useState(0);
   const { data, isLoading, isError } = useEquipments(page);
 
@@ -45,37 +45,35 @@ function EquipmentRegistry() {
     });
   }
 
-  if (isLoading) return <div className="p-6 text-gray-500">Loading equipment…</div>;
-  if (isError) return <div className="p-6 text-red-600">Failed to load equipment. Please try again.</div>;
-
-  const equipments = data.content;
+  function renderContent() {
+    if (isLoading) return <EquipmentTable loading />;
+    if (isError) return <ErrorState message={t("equipment.loadError")} />;
+    if (data.content.length === 0) return <EmptyState message={t("equipment.empty")} />;
+    return (
+      <>
+        <EquipmentTable
+          equipments={data.content}
+          onEditStatus={setStatusTarget}
+          onDelete={setDeleteTarget}
+        />
+        <Pagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
+      </>
+    );
+  }
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Equipment Registry</h1>
-        <button
-          type="button"
-          onClick={() => { createMutation.reset(); setIsFormOpen(true); }}
-          className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2"
-        >
-          <Plus size={16} />
-          Add equipment
-        </button>
-      </div>
+      <PageHeader
+        className="mb-4"
+        title={t("equipment.title")}
+        actions={
+          <Button icon={Plus} onClick={() => { createMutation.reset(); setIsFormOpen(true); }}>
+            {t("equipment.add")}
+          </Button>
+        }
+      />
 
-      {equipments.length === 0 ? (
-        <EmptyState message="No equipment registered yet. Click “Add equipment” to get started." />
-      ) : (
-        <>
-          <EquipmentTable
-            equipments={equipments}
-            onEditStatus={setStatusTarget}
-            onDelete={setDeleteTarget}
-          />
-          <Pagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
-        </>
-      )}
+      {renderContent()}
 
       <EquipmentFormModal
         key={isFormOpen ? "open" : "closed"}
@@ -86,15 +84,19 @@ function EquipmentRegistry() {
       />
 
       <StatusUpdateModal
+        key={statusTarget?.id ?? "none"}
         equipment={statusTarget}
         onClose={() => setStatusTarget(null)}
         onSubmit={handleUpdateStatus}
       />
 
-      <ConfirmDeleteDialog
-        equipment={deleteTarget}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("equipment.deleteTitle")}
+        message={deleteTarget ? t("equipment.deleteMessage", { name: deleteTarget.name }) : ""}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
+        onConfirm={() => handleDelete(deleteTarget.id)}
+        loading={deleteMutation.isPending}
       />
     </div>
   );

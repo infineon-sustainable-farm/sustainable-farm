@@ -38,8 +38,27 @@ describe('application router', () => {
     expect(navs).toHaveLength(7)
   })
 
-  it('opts no real module into the shell yet', () => {
-    expect(collectModules(realFiles).filter((module) => module.shell)).toEqual([])
+  it('opts machinery, the reference module, into the shell, the others not yet', () => {
+    const shellIds = collectModules(realFiles)
+      .filter((module) => module.shell)
+      .map((module) => module.nav?.id)
+    expect(shellIds).toEqual(['machinery'])
+  })
+
+  it('renders the sidebar footer of the current shell module', () => {
+    function Footer() {
+      return <p>module footer</p>
+    }
+    const files = {
+      ...fakeFiles,
+      '../features/machinery/routes.jsx': {
+        ...fakeFiles['../features/machinery/routes.jsx'],
+        nav: { ...fakeFiles['../features/machinery/routes.jsx'].nav, sidebarFooter: Footer },
+      },
+    }
+    renderAt('/machinery/spare-parts', files)
+    const sidebar = screen.getByRole('navigation', { name: 'Modules' })
+    expect(within(sidebar).getByText('module footer')).toBeInTheDocument()
   })
 
   it('shows the 404 page inside the shell for an unknown URL', () => {

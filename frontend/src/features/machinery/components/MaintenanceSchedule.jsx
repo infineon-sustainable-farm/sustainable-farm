@@ -1,26 +1,24 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import MaintenanceScheduleTable from "./MaintenanceScheduleTable";
 import MaintenanceScheduleFormModal from "./MaintenanceScheduleFormModal";
-import ConfirmDeleteRecordDialog from "./ConfirmDeleteRecordDialog";
-import EmptyState from "../../../shared/components/EmptyState";
-import ErrorState from "../../../shared/components/ErrorState";
-import Pagination from "../../../shared/components/Pagination";
+import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader, Pagination } from "../../../shared/ui";
 import { useMaintenanceSchedules } from "../hooks/useMaintenanceSchedules";
-import { useEquipmentOptions } from "../hooks/useEquipmentOptions";
+import { useEquipmentLookup } from "../hooks/useEquipmentLookup";
 import {
   useCreateMaintenanceSchedule,
   useUpdateMaintenanceSchedule,
   useDeleteMaintenanceSchedule,
 } from "../hooks/useMaintenanceScheduleMutations";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
 
 const PAGE_SIZE = 10;
 
 function MaintenanceSchedule() {
+  const { t } = useTranslation("machinery");
   const [page, setPage] = useState(0);
   const { data, isLoading, isError, refetch } = useMaintenanceSchedules(page, PAGE_SIZE);
-  const equipmentOptions = useEquipmentOptions();
+  const { equipments, isEquipmentLoading, getEquipmentName } = useEquipmentLookup();
 
   const createMutation = useCreateMaintenanceSchedule();
   const updateMutation = useUpdateMaintenanceSchedule();
@@ -30,22 +28,8 @@ function MaintenanceSchedule() {
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const equipments = useMemo(
-    () => equipmentOptions.data?.content ?? [],
-    [equipmentOptions.data]
-  );
-  const equipmentNames = useMemo(
-    () => new Map(equipments.map((equipment) => [equipment.id, equipment.name])),
-    [equipments]
-  );
-
   const activeFormMutation = editingSchedule ? updateMutation : createMutation;
   const formServerError = activeFormMutation.isError ? activeFormMutation.error.message : null;
-
-  function getEquipmentName(equipmentId) {
-    if (equipmentId == null) return "—";
-    return equipmentNames.get(equipmentId) ?? `#${equipmentId}`;
-  }
 
   function openCreateForm() {
     createMutation.reset();
@@ -87,68 +71,60 @@ function MaintenanceSchedule() {
     setDeleteTarget(null);
   }
 
-  if (isLoading) return <div className="p-6 text-gray-500">Loading maintenance schedule…</div>;
-  if (isError) {
+  function renderContent() {
+    if (isLoading) return <MaintenanceScheduleTable loading getEquipmentName={getEquipmentName} />;
+    if (isError) {
+      return <ErrorState message={t("maintenance.loadError")} onRetry={refetch} retryLabel={t("common.tryAgain")} />;
+    }
+    if (data.content.length === 0) return <EmptyState message={t("maintenance.empty")} />;
     return (
-      <ErrorState
-        message="Failed to load the maintenance schedule. Please try again."
-        onRetry={refetch}
-      />
+      <>
+        <MaintenanceScheduleTable
+          schedules={data.content}
+          getEquipmentName={getEquipmentName}
+          onEdit={openEditForm}
+          onDelete={setDeleteTarget}
+        />
+        <Pagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
+      </>
     );
   }
 
-  const schedules = data.content;
-
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Maintenance Schedule</h1>
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2"
-        >
-          <Plus size={16} />
-          Add maintenance schedule
-        </button>
-      </div>
+      <PageHeader
+        className="mb-4"
+        title={t("maintenance.title")}
+        actions={<Button icon={Plus} onClick={openCreateForm}>{t("maintenance.add")}</Button>}
+      />
 
-      {schedules.length === 0 ? (
-        <EmptyState message="No maintenance scheduled yet. Click “Add maintenance schedule” to get started." />
-      ) : (
-        <>
-          <MaintenanceScheduleTable
-            schedules={schedules}
-            getEquipmentName={getEquipmentName}
-            onEdit={openEditForm}
-            onDelete={setDeleteTarget}
-          />
-          <Pagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
-        </>
-      )}
+      {renderContent()}
 
       <MaintenanceScheduleFormModal
         key={isFormOpen ? (editingSchedule?.id ?? "create") : "closed"}
         isOpen={isFormOpen}
         schedule={editingSchedule}
         equipments={equipments}
-        isEquipmentLoading={equipmentOptions.isLoading}
+        isEquipmentLoading={isEquipmentLoading}
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleSubmit}
         serverError={formServerError}
       />
 
-      <ConfirmDeleteRecordDialog
-        isOpen={Boolean(deleteTarget)}
-        title="Delete maintenance schedule"
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("maintenance.deleteTitle")}
         message={
           deleteTarget
-            ? `Are you sure you want to delete the ${formatEnumLabel(deleteTarget.type).toLowerCase()} maintenance schedule for ${getEquipmentName(deleteTarget.equipmentId)}? This cannot be undone.`
+            ? t(`maintenance.deleteMessage.${deleteTarget.type}`, {
+                equipment: getEquipmentName(deleteTarget.equipmentId),
+              })
             : ""
         }
         onClose={closeDeleteDialog}
         onConfirm={handleDelete}
-        serverError={deleteMutation.isError ? deleteMutation.error.message : null}
+        loading={deleteMutation.isPending}
+        error={deleteMutation.isError ? deleteMutation.error.message : null}
       />
     </div>
   );

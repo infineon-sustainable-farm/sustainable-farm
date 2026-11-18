@@ -6,9 +6,12 @@ import i18next from 'eslint-plugin-i18next'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 // Folders whose interface text goes through i18next (t('...')). Hard-coded text in
-// their JSX is refused. Add a module here once it is migrated, e.g.
-// 'src/features/machinery/**/*.{js,jsx}'.
-const I18N_MIGRATED_FILES = ['src/shared/ui/**/*.{js,jsx}', 'src/app/**/*.{js,jsx}']
+// their JSX is refused. Add a module here once it is migrated.
+const I18N_MIGRATED_FILES = [
+  'src/shared/ui/**/*.{js,jsx}',
+  'src/app/**/*.{js,jsx}',
+  'src/features/machinery/**/*.{js,jsx}',
+]
 
 export default defineConfig([
   globalIgnores(['dist']),
