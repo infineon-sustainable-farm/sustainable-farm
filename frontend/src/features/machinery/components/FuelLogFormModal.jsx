@@ -1,7 +1,11 @@
 import { useState } from "react";
-import Modal from "../../../shared/components/Modal";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal } from "../../../shared/ui";
 import { NON_NEGATIVE_DECIMAL } from "../../../shared/utils/validation";
 import { todayIsoDate } from "../../../shared/utils/todayIsoDate";
+import EquipmentField from "./EquipmentField";
+import FormActions from "./FormActions";
+import FormAlert from "./FormAlert";
 
 const initialForm = {
   equipmentId: "",
@@ -32,6 +36,7 @@ function FuelLogFormModal({
   onSubmit,
   serverError,
 }) {
+  const { t } = useTranslation("machinery");
   const [form, setForm] = useState(() => toFormState(fuelLog));
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -47,17 +52,17 @@ function FuelLogFormModal({
   function validate() {
     const errors = {};
 
-    if (!form.equipmentId && !isEditing) errors.equipmentId = "Equipment is required.";
-    if (!form.date) errors.date = "Date is required.";
+    if (!form.equipmentId && !isEditing) errors.equipmentId = t("validation.equipmentRequired");
+    if (!form.date) errors.date = t("validation.dateRequired");
 
-    if (!form.liters.trim()) errors.liters = "Liters is required.";
+    if (!form.liters.trim()) errors.liters = t("fuel.litersRequired");
     else if (!NON_NEGATIVE_DECIMAL.test(form.liters.trim())) {
-      errors.liters = "Liters must be 0 or more with up to 2 decimals.";
+      errors.liters = t("fuel.litersInvalid");
     }
 
-    if (!form.cost.trim()) errors.cost = "Cost is required.";
+    if (!form.cost.trim()) errors.cost = t("validation.costRequired");
     else if (!NON_NEGATIVE_DECIMAL.test(form.cost.trim())) {
-      errors.cost = "Cost must be 0 or more with up to 2 decimals.";
+      errors.cost = t("validation.costInvalid");
     }
 
     return errors;
@@ -84,93 +89,36 @@ function FuelLogFormModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <h2 className="text-lg font-bold mb-4">
-        {isEditing ? "Edit fuel log" : "Add fuel log"}
-      </h2>
+    <Modal open={isOpen} onClose={handleClose} title={isEditing ? t("fuel.edit") : t("fuel.add")}>
+      {serverError && <FormAlert>{serverError}</FormAlert>}
 
-      {serverError && (
-        <p className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded mb-4">{serverError}</p>
-      )}
-
-      {!hasEquipment && !isEquipmentLoading && (
-        <p className="bg-amber-50 text-amber-700 text-sm px-3 py-2 rounded mb-4">
-          No equipment available. Add equipment before logging fuel.
-        </p>
-      )}
+      {!hasEquipment && !isEquipmentLoading && <FormAlert tone="warning">{t("fuel.noEquipment")}</FormAlert>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div>
-          <label className="text-sm font-medium">Equipment</label>
-          <select
-            name="equipmentId"
-            value={form.equipmentId}
-            onChange={handleChange}
-            disabled={isEquipmentLoading}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1 disabled:bg-gray-50"
-          >
-            {canLeaveEquipmentEmpty && (
-              <option value="">
-                {isEquipmentLoading ? "Loading equipment…" : "No equipment (detached)"}
-              </option>
-            )}
-            {equipments.map((equipment) => (
-              <option key={equipment.id} value={equipment.id}>{equipment.name}</option>
-            ))}
-          </select>
-          {fieldErrors.equipmentId && <p className="text-red-600 text-xs mt-1">{fieldErrors.equipmentId}</p>}
-        </div>
+        <EquipmentField
+          value={form.equipmentId}
+          onChange={handleChange}
+          error={fieldErrors.equipmentId}
+          equipments={equipments}
+          isEquipmentLoading={isEquipmentLoading}
+          emptyOptionLabel={canLeaveEquipmentEmpty ? t("common.noEquipmentDetached") : null}
+        />
 
         <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="text-sm font-medium">Date</label>
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-            />
-            {fieldErrors.date && <p className="text-red-600 text-xs mt-1">{fieldErrors.date}</p>}
-          </div>
+          <Field className="flex-1" label={t("fields.date")} error={fieldErrors.date}>
+            <Input type="date" name="date" value={form.date} onChange={handleChange} />
+          </Field>
 
-          <div className="flex-1">
-            <label className="text-sm font-medium">Liters</label>
-            <input
-              type="number"
-              name="liters"
-              min="0"
-              step="0.01"
-              value={form.liters}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-            />
-            {fieldErrors.liters && <p className="text-red-600 text-xs mt-1">{fieldErrors.liters}</p>}
-          </div>
+          <Field className="flex-1" label={t("fuel.liters")} error={fieldErrors.liters}>
+            <Input type="number" name="liters" min="0" step="0.01" value={form.liters} onChange={handleChange} />
+          </Field>
         </div>
 
-        <div>
-          <label className="text-sm font-medium">Cost</label>
-          <input
-            type="number"
-            name="cost"
-            min="0"
-            step="0.01"
-            value={form.cost}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-          />
-          {fieldErrors.cost && <p className="text-red-600 text-xs mt-1">{fieldErrors.cost}</p>}
-        </div>
+        <Field label={t("fields.cost")} error={fieldErrors.cost}>
+          <Input type="number" name="cost" min="0" step="0.01" value={form.cost} onChange={handleChange} />
+        </Field>
 
-        <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-300">
-            Cancel
-          </button>
-          <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white">
-            Save
-          </button>
-        </div>
+        <FormActions onCancel={handleClose} />
       </form>
     </Modal>
   );

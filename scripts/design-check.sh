@@ -7,8 +7,7 @@
 #
 # The modules not migrated yet are not scanned: they still use the legacy tokens
 # of index.css. When a module is migrated, add its folder to MIGRATED_DIRS
-# (T12 adds frontend/src/features/machinery). T45 replaces the list by
-# frontend/src.
+# (machinery since T12). T45 replaces the list by frontend/src.
 #
 # Usage: scripts/design-check.sh [dir...]   (default: MIGRATED_DIRS)
 
@@ -20,6 +19,7 @@ cd "$REPO_ROOT"
 MIGRATED_DIRS=(
   frontend/src/shared/ui
   frontend/src/app
+  frontend/src/features/machinery
 )
 
 if [ "$#" -gt 0 ]; then

@@ -21,3 +21,10 @@ export const MAINTENANCE_TYPE = {
   PREVENTIVE: "PREVENTIVE",
   CORRECTIVE: "CORRECTIVE",
 };
+
+/** Tone of the kit StatusBadge for each equipment status. */
+export const STATUS_TONES = {
+  [STATUS.OPERATIONAL]: "success",
+  [STATUS.UNDER_MAINTENANCE]: "warning",
+  [STATUS.OUT_OF_SERVICE]: "error",
+};
