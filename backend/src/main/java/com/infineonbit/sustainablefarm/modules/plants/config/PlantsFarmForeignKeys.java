@@ -15,12 +15,12 @@ public class PlantsFarmForeignKeys {
 
     @Bean
     CrossModuleForeignKey varietyBlockForeignKey() {
-        return toBlock("fk_varietes_block", "varietes", "block_id");
+        return toBlock("fk_block_variety_block", "block_variety", "block_id");
     }
 
     @Bean
     CrossModuleForeignKey growthCalendarBlockForeignKey() {
-        return toBlock("fk_calendrier_croissance_block", "calendrier_croissance", "block_id");
+        return toBlock("fk_growth_calendar_block", "growth_calendar", "block_id");
     }
 
     @Bean

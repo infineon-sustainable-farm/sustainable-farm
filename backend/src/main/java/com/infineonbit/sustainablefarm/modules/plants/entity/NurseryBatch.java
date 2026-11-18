@@ -1,13 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -46,11 +44,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-public class NurseryBatch implements BlockRow {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class NurseryBatch extends BaseEntity implements BlockRow {
 
     /** Farm of the nursery, a {@code farm} row (foreign key {@code fk_nursery_batch_farm}), or NULL. */
     @Column(name = "farm_id")

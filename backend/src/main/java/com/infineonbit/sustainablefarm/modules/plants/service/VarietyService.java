@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.VarietyResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.exception.VarietyNotFoundException;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class VarietyService {
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final PopulationEventRepository populationEventRepository;
     private final PlantsBlocks plantsBlocks;
 
@@ -32,16 +32,16 @@ public class VarietyService {
      *                         {@code null} if it has none
      * @return the API representation of that variety
      */
-    private static VarietyResponse toResponse(Variety variety, Integer currentTreeCount) {
+    private static VarietyResponse toResponse(BlockVariety variety, Integer currentTreeCount) {
         return new VarietyResponse(
                 variety.getId(),
                 variety.getFarmId(),
                 variety.getName(),
                 variety.getTreeCount(),
                 currentTreeCount,
-                variety.getRowSpacingM(),
-                variety.getTreeSpacingM(),
-                variety.getTreeDensityPerHa(),
+                Decimals.toDouble(variety.getRowSpacingM()),
+                Decimals.toDouble(variety.getTreeSpacingM()),
+                Decimals.toDouble(variety.getTreeDensityPerHa()),
                 variety.getVigor(),
                 variety.getBlockCode(),
                 variety.getPlantOrigin(),
@@ -62,8 +62,8 @@ public class VarietyService {
      */
     public List<VarietyResponse> getAllVarieties(Long farmId, String blockCode) {
         PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
-        List<Variety> varieties = PlantsBlocks.sortedByBlockCode(
-                varietyRepository.findByOptionalFilters(blocks.all(), blocks.ids()), Variety::getBlockCode);
+        List<BlockVariety> varieties = PlantsBlocks.sortedByBlockCode(
+                blockVarietyRepository.findByOptionalFilters(blocks.all(), blocks.ids()), BlockVariety::getBlockCode);
         Map<Long, Integer> currentTreeCounts = currentTreeCounts(varieties);
         return varieties.stream()
                 .map(variety -> toResponse(variety, currentTreeCounts.get(variety.getId())))
@@ -78,7 +78,7 @@ public class VarietyService {
      * @throws VarietyNotFoundException if no variety exists with this ID
      */
     public VarietyResponse getVarietyById(Long id) {
-        Variety variety = varietyRepository.findById(id)
+        BlockVariety variety = blockVarietyRepository.findById(id)
                 .orElseThrow(() -> new VarietyNotFoundException(id));
         return toResponse(variety, currentTreeCounts(List.of(variety)).get(variety.getId()));
     }
@@ -93,11 +93,11 @@ public class VarietyService {
      * @param varieties the varieties about to be returned
      * @return the balance of each variety that has at least one event, by variety ID
      */
-    private Map<Long, Integer> currentTreeCounts(List<Variety> varieties) {
+    private Map<Long, Integer> currentTreeCounts(List<BlockVariety> varieties) {
         if (varieties.isEmpty()) {
             return Map.of();
         }
-        List<Long> ids = varieties.stream().map(Variety::getId).toList();
+        List<Long> ids = varieties.stream().map(BlockVariety::getId).toList();
         return populationEventRepository.findTreeBalances(ids).stream()
                 .collect(Collectors.toMap(
                         TreeBalance::getVarietyId,

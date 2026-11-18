@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.support.MapBlockLabelSource;
 import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +20,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -48,7 +49,7 @@ class HarvestLotNumberBackfillTest {
     private static final Instant WRITTEN = Instant.parse("2026-09-01T08:00:00Z");
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private PopulationEventRepository populationEventRepository;
@@ -70,35 +71,35 @@ class HarvestLotNumberBackfillTest {
 
     @BeforeEach
     void setUp() {
-        HarvestService harvestService = new HarvestService(varietyRepository, populationEventRepository,
+        HarvestService harvestService = new HarvestService(blockVarietyRepository, populationEventRepository,
                 harvestRecordRepository, TestBlocks.plantsBlocks());
         backfill = new HarvestLotNumberBackfill(harvestRecordRepository, harvestService, transactionManager);
     }
 
     @AfterEach
     void removeTheRowsOfTheTest() {
-        jdbc.update("delete from harvest_record where variety_id in "
-                + "(select id from varietes where block_id between 9100 and 9199)");
-        jdbc.update("delete from varietes where block_id between 9100 and 9199");
+        jdbc.update("delete from harvest_record where block_variety_id in "
+                + "(select id from block_variety where block_id between 9100 and 9199)");
+        jdbc.update("delete from block_variety where block_id between 9100 and 9199");
     }
 
     /** A variety row on the block LF{n}, of id 9100 + n, out of the range of the other tests. */
-    private Variety variety(String blockCode, String name) {
+    private BlockVariety variety(String blockCode, String name) {
         long blockId = 9100L + Long.parseLong(blockCode.substring(2));
         blockLabels.put(blockId, new BlockLabel(1L, blockCode));
-        Variety variety = new Variety();
+        BlockVariety variety = new BlockVariety();
         variety.assignBlock(blockId, new BlockLabel(1L, blockCode));
         variety.setName(name);
-        return varietyRepository.save(variety);
+        return blockVarietyRepository.save(variety);
     }
 
     /** A harvest as recorded before lot numbers existed, or with the given lot number. */
-    private Long harvest(Variety variety, LocalDate harvestDate, String lotNumber) {
+    private Long harvest(BlockVariety variety, LocalDate harvestDate, String lotNumber) {
         HarvestRecord harvest = new HarvestRecord();
         harvest.setLotNumber(lotNumber);
         harvest.setVariety(variety);
         harvest.setHarvestDate(harvestDate);
-        harvest.setQuantityKg(100.0);
+        harvest.setQuantityKg(BigDecimal.valueOf(100.0));
         harvest.setSource("user_entry");
         harvest.setLastUpdated(WRITTEN);
         return harvestRecordRepository.save(harvest).getId();
@@ -111,7 +112,7 @@ class HarvestLotNumberBackfillTest {
     @Test
     void fill_shouldNumberTheEarlierHarvestsOldestFirst_byBlockAndYear() {
         // Arrange: two varieties of block LF1 over two years, and block LF2
-        Variety keitt = variety("LF1", "Keitt");
+        BlockVariety keitt = variety("LF1", "Keitt");
         Long first = harvest(keitt, LocalDate.of(2026, 6, 10), null);
         Long secondDatedEarlier = harvest(variety("LF1", "Kent"), LocalDate.of(2026, 5, 1), null);
         Long lastYear = harvest(keitt, LocalDate.of(2025, 7, 1), null);
@@ -129,7 +130,7 @@ class HarvestLotNumberBackfillTest {
     @Test
     void fill_shouldGoOnAfterTheLotsAlreadyGiven_andLeaveThemAlone() {
         // Arrange: an earlier harvest without a lot, then a harvest recorded with lot 005
-        Variety keitt = variety("LF3", "Keitt");
+        BlockVariety keitt = variety("LF3", "Keitt");
         Long earlier = harvest(keitt, LocalDate.of(2026, 6, 1), null);
         Long numbered = harvest(keitt, LocalDate.of(2026, 6, 10), "LOT-2026-LF3-005");
         // Act
@@ -155,7 +156,7 @@ class HarvestLotNumberBackfillTest {
     @Test
     void fill_shouldLeaveAHarvestWithoutLot_whenItsNumberIsTakenAtTheSameMoment() {
         // Arrange: a harvest recorded meanwhile took the number the filling computed
-        Variety keitt = variety("LF5", "Keitt");
+        BlockVariety keitt = variety("LF5", "Keitt");
         Long earlier = harvest(keitt, LocalDate.of(2026, 6, 1), null);
         harvest(keitt, LocalDate.of(2026, 6, 10), "LOT-2026-LF5-001");
         HarvestService staleNumbers = mock(HarvestService.class);

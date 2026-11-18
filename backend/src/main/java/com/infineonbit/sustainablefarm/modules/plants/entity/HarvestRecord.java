@@ -1,20 +1,18 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -23,7 +21,7 @@ import java.util.Locale;
  * A quantity of mangoes picked from a variety row on a given day.
  *
  * <p>Like {@link PopulationEvent}, the record holds no farm and no block: the
- * {@link Variety} row already stands for one (block, variety) pair, the block giving the farm.
+ * {@link BlockVariety} row already stands for one (block, variety) pair, the block giving the farm.
  * Several records may share a day, one per picking.
  *
  * <p>Each record gets a lot number when it is recorded (PL-05-05 "Batch
@@ -39,15 +37,13 @@ import java.util.Locale;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class HarvestRecord {
+public class HarvestRecord extends BaseEntity {
 
     /** Name of the unique constraint on {@code lot_number}. */
     public static final String LOT_NUMBER_CONSTRAINT = "uk_harvest_record_lot_number";
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    /** Decimals kept of {@code quantityKg}. */
+    public static final int QUANTITY_SCALE = 3;
 
     /**
      * Lot number given when the harvest is recorded, for example
@@ -62,14 +58,15 @@ public class HarvestRecord {
     private String lotNumber;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "variety_id", nullable = false)
-    private Variety variety;
+    @JoinColumn(name = "block_variety_id", nullable = false)
+    private BlockVariety variety;
 
     @Column(name = "harvest_date", nullable = false)
     private LocalDate harvestDate;
 
-    @Column(name = "quantity_kg", nullable = false)
-    private Double quantityKg;
+    /** Weight picked, in kg, kept to the gram: {@value #QUANTITY_SCALE} decimals. */
+    @Column(name = "quantity_kg", nullable = false, precision = 12, scale = QUANTITY_SCALE)
+    private BigDecimal quantityKg;
 
     /** Where the record comes from, for example {@code "user_entry"} for the harvest route. */
     @Column(name = "source", nullable = false)
@@ -108,5 +105,22 @@ public class HarvestRecord {
      */
     public static String lotPrefixOf(int year, String blockCode) {
         return String.format(Locale.ROOT, "LOT-%04d-%s-", year, blockCode);
+    }
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public HarvestRecord(Long id,
+            String lotNumber,
+            BlockVariety variety,
+            LocalDate harvestDate,
+            BigDecimal quantityKg,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.lotNumber = lotNumber;
+        this.variety = variety;
+        this.harvestDate = harvestDate;
+        this.quantityKg = quantityKg;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
     }
 }

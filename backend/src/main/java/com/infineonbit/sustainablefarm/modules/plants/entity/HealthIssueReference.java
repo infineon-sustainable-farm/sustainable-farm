@@ -1,15 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -49,8 +46,7 @@ import java.util.regex.Pattern;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class HealthIssueReference {
+public class HealthIssueReference extends BaseEntity {
 
     /** Code of "Other", the row that stands for any problem the catalogue does not name. */
     public static final String OTHER_CODE = "OTHER";
@@ -61,10 +57,6 @@ public class HealthIssueReference {
     private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
     private static final Pattern OTHER_CHARACTERS = Pattern.compile("[^A-Z0-9]+");
     private static final Pattern EDGE_UNDERSCORES = Pattern.compile("^_|_$");
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Column(name = "code", nullable = false, length = CODE_MAX_LENGTH)
     private String code;
@@ -113,5 +105,24 @@ public class HealthIssueReference {
             code = EDGE_UNDERSCORES.matcher(code.substring(0, CODE_MAX_LENGTH)).replaceAll("");
         }
         return code;
+    }
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public HealthIssueReference(Long id,
+            String code,
+            String name,
+            HealthIssueKind kind,
+            String scientificName,
+            String eppoCode,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.code = code;
+        this.name = name;
+        this.kind = kind;
+        this.scientificName = scientificName;
+        this.eppoCode = eppoCode;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
     }
 }

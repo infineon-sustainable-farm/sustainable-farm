@@ -1,11 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -17,15 +15,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
 
 /**
- * A mango variety planted on a given block of the farm.
+ * A mango variety planted on a given block of the farm: one row per (block,
+ * variety name), with its trees and their spacing. Not the variety catalogue,
+ * which is {@link VarietyReference}.
  *
- * <p>Column names are the domain names used by the Zalka 2025 study and are
- * mapped explicitly, so the snake_case schema stays stable no matter what the
- * Java field naming strategy does.
+ * <p>The table and its columns follow the naming of the other modules: English
+ * snake_case and a singular table name, mapped explicitly.
  *
  * <p>Nullable on purpose: {@code treeDensityPerHa}, {@code vigor} and
  * {@code plantOrigin} have no source data yet. They stay NULL rather than
@@ -41,42 +41,43 @@ import java.util.Locale;
  */
 @Entity
 @EntityListeners(BlockLabelListener.class)
-@Table(name = "varietes",
-        uniqueConstraints = @UniqueConstraint(name = Variety.KEY_CONSTRAINT, columnNames = "variety_key"),
-        indexes = @Index(name = "idx_varietes_block_id", columnList = "block_id"))
+@Table(name = "block_variety",
+        uniqueConstraints = @UniqueConstraint(name = BlockVariety.KEY_CONSTRAINT, columnNames = "variety_key"),
+        indexes = @Index(name = "idx_block_variety_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-public class Variety implements BlockRow {
+public class BlockVariety extends BaseEntity implements BlockRow {
 
     /** Name of the unique constraint on {@code variety_key}. */
-    public static final String KEY_CONSTRAINT = "uk_varietes_variety_key";
+    public static final String KEY_CONSTRAINT = "uk_block_variety_variety_key";
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    /** Decimals kept of the spacings, as the planting form accepts them. */
+    public static final int SPACING_SCALE = 1;
 
-    @Column(name = "nom", nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "nombre_arbres")
+    @Column(name = "tree_count")
     private Integer treeCount;
 
-    @Column(name = "espacement_inter_rang_m")
-    private Double rowSpacingM;
+    /** Distance between two rows, in m, with at most 1 decimal (the planting form checks it). */
+    @Column(name = "row_spacing_m", precision = 4, scale = SPACING_SCALE)
+    private BigDecimal rowSpacingM;
 
-    @Column(name = "espacement_intra_rang_m")
-    private Double treeSpacingM;
+    /** Distance between two trees of a row, in m, with at most 1 decimal. */
+    @Column(name = "tree_spacing_m", precision = 4, scale = SPACING_SCALE)
+    private BigDecimal treeSpacingM;
 
     /** Not available in the source study. Stays NULL until measured. */
-    @Column(name = "densite_arbres_ha")
-    private Double treeDensityPerHa;
+    @Column(name = "tree_density_per_ha", precision = 8, scale = 2)
+    private BigDecimal treeDensityPerHa;
 
     /** Not assessed yet. Stays NULL until an agronomist rates it. */
-    @Column(name = "vigueur")
+    @Column(name = "vigor")
     private String vigor;
 
-    /** Block of the variety row, a {@code farm.block} row (foreign key {@code fk_varietes_block}). */
+    /** Block of the variety row, a {@code farm.block} row (foreign key {@code fk_block_variety_block}). */
     @Column(name = "block_id")
     private Long blockId;
 
@@ -86,13 +87,13 @@ public class Variety implements BlockRow {
     private final BlockLink block = new BlockLink();
 
     /** Not documented in the source study. Stays NULL. */
-    @Column(name = "origine_plant")
+    @Column(name = "plant_origin")
     private String plantOrigin;
 
     @Column(name = "source")
     private String source;
 
-    @Column(name = "date_maj")
+    @Column(name = "last_updated")
     private Instant lastUpdated;
 
     /**
@@ -112,7 +113,7 @@ public class Variety implements BlockRow {
      * joined by {@code "|"}. For example {@code "3|kent"}.
      *
      * <p>It follows the rule of the planting lookup
-     * ({@code VarietyRepository.findByBlockAndName}): the name ignores case,
+     * ({@code BlockVarietyRepository.findByBlockAndName}): the name ignores case,
      * and the stored name is taken as it is, accents and spaces included,
      * without trimming. The block gives the farm, so the farm is not part of
      * the key.
