@@ -148,8 +148,7 @@ describe('ConsumptionView (read-only - IoT sensors)', () => {
     render(<ConsumptionView {...props} />)
     await screen.findByTestId('area-chart')
 
-    const filterSelects = document.querySelectorAll('.ws-filters select')
-    fireEvent.change(filterSelects[0], { target: { value: 'farm-1' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by farm' }), { target: { value: 'farm-1' } })
 
     await waitFor(() => expect(screen.queryByText('90 L')).toBeNull())
     expect(screen.getAllByText('150 L').length).toBeGreaterThan(0)

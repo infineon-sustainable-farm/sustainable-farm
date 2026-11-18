@@ -101,7 +101,7 @@ describe('SourcesView', () => {
     await screen.findByText('Main borehole')
     expect(waterSourceApi.getLevelHistory).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByText('History'))
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
 
     await waitFor(() => expect(screen.getByTestId('level-chart').textContent).toBe('2500,1800'))
     expect(waterSourceApi.getLevelHistory).toHaveBeenCalledWith('src-1')
