@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
 import { PageHeader } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import ContactFormModal from '../components/customers/ContactFormModal';
 import { useContactActions } from '../components/customers/useContactActions';
 import CustomerDeleteDialogs from '../components/customers/CustomerDeleteDialogs';
@@ -49,17 +50,18 @@ export default function CustomersPage() {
     }
   }, [openMenuCustomerId]);
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = useCallback((msg) => {
     setActionError(msg);
     setActionSuccess(null);
-    window.setTimeout(() => setActionError(null), 6000);
-  }, []);
+    later(() => setActionError(null), 6000);
+  }, [later]);
 
   const {
     loading,
@@ -95,7 +97,7 @@ export default function CustomersPage() {
       .getCustomerCertifications(effectiveSelectedId)
       .then((res) => {
         if (!active) return;
-        setCustomerCerts((prev) => ({ ...prev, [effectiveSelectedId]: Array.isArray(res.data) ? res.data : [] }));
+        setCustomerCerts((prev) => ({ ...prev, [effectiveSelectedId]: Array.isArray(res) ? res : [] }));
       })
       .catch((err) => {
         if (!active) return;
@@ -128,7 +130,7 @@ export default function CustomersPage() {
     setSavingCustomer(true);
     try {
       const res = await api.getCustomerById(customer.customerId);
-      const c = res.data || customer;
+      const c = res || customer;
       setCustomerForm({
         companyName: c.companyName || '',
         customerCode: c.customerCode || '',
@@ -169,7 +171,7 @@ export default function CustomersPage() {
       } else {
         const created = await api.createCustomer(payload);
         flashSuccess(t('customers.messages.customerCreated', { name: payload.companyName }));
-        if (created.data?.customerId) setSelectedId(created.data.customerId);
+        if (created?.customerId) setSelectedId(created.customerId);
       }
       setShowCustomerModal(false);
       await fetchCustomersData();
@@ -298,7 +300,7 @@ export default function CustomersPage() {
           onAddContact={(customer) => {
             setOpenMenuCustomerId(null);
             setSelectedId(customer.customerId);
-            openCreateContact();
+            openCreateContact(customer.customerId);
           }}
           onDelete={(customer) => {
             setOpenMenuCustomerId(null);
@@ -314,7 +316,7 @@ export default function CustomersPage() {
             onEdit={openEditCustomer}
             onRefreshCertifications={fetchCustomerCertifications}
             onToggleCertification={toggleCertification}
-            onAddContact={openCreateContact}
+            onAddContact={() => openCreateContact()}
             onEditContact={openEditContact}
             onDeleteContact={setPendingDeleteContact}
           />

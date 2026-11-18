@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { justAfterLocalMidnight } from '../testing/nearMidnight';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ForecastingPage from './ForecastingPage';
@@ -79,5 +80,22 @@ describe('ForecastingPage', () => {
 
     await waitFor(() => expect(api.deleteDemandForecast).toHaveBeenCalledWith(1));
     expect(await screen.findByText('Forecast #1 deleted.')).toBeInTheDocument();
+  });
+
+  it('defaults the forecast month to the local month just after midnight', async () => {
+    const restore = justAfterLocalMidnight();
+    try {
+      renderPage();
+      await screen.findByRole('table', { name: 'Monthly Forecast Data' });
+      fireEvent.click(screen.getByRole('button', { name: 'Add Forecast' }));
+      const dialog = screen.getByRole('dialog', { name: 'Add Forecast' });
+      fireEvent.change(within(dialog).getByLabelText(/Volume \(t\)/), { target: { value: '30' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
+      await waitFor(() =>
+        expect(api.createDemandForecast).toHaveBeenCalledWith(expect.objectContaining({ forecastMonth: '2026-04-01' }))
+      );
+    } finally {
+      restore();
+    }
   });
 });

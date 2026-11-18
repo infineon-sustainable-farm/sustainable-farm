@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
 import { Button, ConfirmDialog, EmptyState, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import AlertCard from '../components/alerts/AlertCard';
 import AlertControls from '../components/alerts/AlertControls';
 import AlertFormModal from '../components/alerts/AlertFormModal';
@@ -55,10 +56,11 @@ export default function DemandAlertsPage() {
   const [deleting, setDeleting] = useState(false);
   const [resolvingId, setResolvingId] = useState(null);
 
+  const later = useLater();
   const flashSuccess = (msg) => {
     setActionSuccess(msg);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (msg) => {

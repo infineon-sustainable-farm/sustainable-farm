@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { PageHeader } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
+import { useLater } from '../components/common/useLater';
 import CurrentPriceCard from '../components/pricing/CurrentPriceCard';
 import PriceTrendChart from '../components/pricing/PriceTrendChart';
 import PricingVariables from '../components/pricing/PricingVariables';
@@ -28,10 +30,11 @@ export default function PricingPage() {
   const [stock, setStock] = useState(1000);
   const [demand, setDemand] = useState(50);
 
+  const later = useLater();
   const flashSuccess = (message) => {
     setActionSuccess(message);
     setActionError(null);
-    window.setTimeout(() => setActionSuccess(null), 4000);
+    later(() => setActionSuccess(null), 4000);
   };
 
   const flashError = (message) => {
@@ -150,7 +153,7 @@ export default function PricingPage() {
     try {
       await api.createPricingHistory({
         productId: pricingProductId,
-        priceDate: new Date().toISOString().slice(0, 10),
+        priceDate: todayIsoDate(),
         priceEurPerKg: proposed,
         harvestSeasonFactor: harvest / 100,
         seasonLabel: seasonFromValue(harvest),

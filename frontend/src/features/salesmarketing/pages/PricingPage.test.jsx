@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { justAfterLocalMidnight } from '../testing/nearMidnight';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import PricingPage from './PricingPage';
@@ -65,5 +66,20 @@ describe('PricingPage', () => {
       )
     );
     expect(await screen.findByText('New pricing applied successfully.')).toBeInTheDocument();
+  });
+
+  it('dates an applied price with the local day just after midnight', async () => {
+    const restore = justAfterLocalMidnight();
+    try {
+      renderPage();
+      const apply = await screen.findByRole('button', { name: 'Apply New Pricing' });
+      await waitFor(() => expect(apply).not.toBeDisabled());
+      fireEvent.click(apply);
+      await waitFor(() =>
+        expect(api.createPricingHistory).toHaveBeenCalledWith(expect.objectContaining({ priceDate: '2026-04-01' }))
+      );
+    } finally {
+      restore();
+    }
   });
 });
