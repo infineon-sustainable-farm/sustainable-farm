@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -51,6 +51,7 @@ describe("visitormanagement module routes", () => {
         );
         const heading = await screen.findByRole("heading", { level: 1 });
         expect(heading).toHaveTextContent(title);
-        expect(document.title).toMatch(/Visitor Management$/);
+        // The screen loads on first visit (React.lazy): its title effect may run after the heading.
+        await waitFor(() => expect(document.title).toMatch(/Visitor Management$/));
     });
 });

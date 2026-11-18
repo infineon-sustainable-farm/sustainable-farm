@@ -1,12 +1,15 @@
 import { Apple, Bug, CalendarDays, FlaskConical, Home, Leaf, Sprout, TrendingUp } from "lucide-react";
-import OverviewPage from "./components/OverviewPage";
-import VarietiesPage from "./components/VarietiesPage";
-import GrowthCalendarPage from "./components/GrowthCalendarPage";
-import HarvestMaturityPage from "./components/HarvestMaturityPage";
-import FertilizerInventoryPage from "./components/FertilizerInventoryPage";
-import DiseasesAlertsPage from "./components/DiseasesAlertsPage";
-import NurseryPage from "./components/NurseryPage";
-import ScenarioAnalysisPage from "./components/ScenarioAnalysisPage";
+import { lazyScreen } from "../../shared/utils/lazyScreen";
+
+// Screens load on first visit, one chunk each.
+const OverviewPage = lazyScreen(() => import("./components/OverviewPage"));
+const VarietiesPage = lazyScreen(() => import("./components/VarietiesPage"));
+const GrowthCalendarPage = lazyScreen(() => import("./components/GrowthCalendarPage"));
+const HarvestMaturityPage = lazyScreen(() => import("./components/HarvestMaturityPage"));
+const FertilizerInventoryPage = lazyScreen(() => import("./components/FertilizerInventoryPage"));
+const DiseasesAlertsPage = lazyScreen(() => import("./components/DiseasesAlertsPage"));
+const NurseryPage = lazyScreen(() => import("./components/NurseryPage"));
+const ScenarioAnalysisPage = lazyScreen(() => import("./components/ScenarioAnalysisPage"));
 
 // The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below.
 export default [
