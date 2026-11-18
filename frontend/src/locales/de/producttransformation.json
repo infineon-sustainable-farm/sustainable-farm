@@ -526,7 +526,6 @@
   },
   "batches": {
     "title": "Chargenverwaltung",
-    "new": "Neue Charge",
     "advance": "Weiter",
     "filterStatus": "Nach Status filtern",
     "allStatuses": "Alle Status",

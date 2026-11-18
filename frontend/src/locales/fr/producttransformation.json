@@ -526,7 +526,6 @@
   },
   "batches": {
     "title": "Gestion des lots",
-    "new": "Nouveau lot",
     "advance": "Avancer",
     "filterStatus": "Filtrer par statut",
     "allStatuses": "Tous les statuts",
