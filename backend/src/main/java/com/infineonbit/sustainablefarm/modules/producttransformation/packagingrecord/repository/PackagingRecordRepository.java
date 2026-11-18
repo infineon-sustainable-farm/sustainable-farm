@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.packagingr
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,7 +18,17 @@ import java.util.List;
  * @version 1.0.0
  */
 @Repository
-public interface PackagingRecordRepository extends JpaRepository<PackagingRecord, String> {
+public interface PackagingRecordRepository extends JpaRepository<PackagingRecord, Long> {
+
+    /** The PackagingRecord of a business code, shown as {@code recordId}. */
+    Optional<PackagingRecord> findByRecordId(String recordId);
+
+    /** Whether a PackagingRecord has this business code. */
+    boolean existsByRecordId(String recordId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByRecordId(String recordId);
+
 
     /**
      * Find packaging records by batch

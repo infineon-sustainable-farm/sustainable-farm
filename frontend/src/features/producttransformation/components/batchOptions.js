@@ -1,6 +1,6 @@
 import i18n from '../../../shared/i18n/i18n';
 
-// Statuses of a batch along the processing line, as /api/batches sends them.
+// Statuses of a batch along the processing line, as /api/product-transformation/batches sends them.
 export const BATCH_STATUSES = [
   'CREATED',
   'INTAKE',

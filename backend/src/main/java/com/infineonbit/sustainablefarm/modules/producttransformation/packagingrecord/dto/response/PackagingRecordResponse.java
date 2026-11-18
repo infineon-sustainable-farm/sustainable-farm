@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.dto.response;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord.PackageType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

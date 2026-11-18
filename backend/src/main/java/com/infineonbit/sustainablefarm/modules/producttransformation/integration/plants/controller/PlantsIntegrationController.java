@@ -19,7 +19,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/harvest-events/plants")
+@RequestMapping("/api/product-transformation/harvest-events/plants")
 @Tag(name = "Plants Integration", description = "APIs for integrating with Plants module harvest data")
 public class PlantsIntegrationController {
 

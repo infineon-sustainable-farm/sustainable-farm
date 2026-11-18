@@ -3,7 +3,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.harvesteve
 import com.infineonbit.sustainablefarm.modules.plants.api.HarvestLookup;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.service.HarvestEventService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,16 +81,16 @@ public class HarvestEventServiceImpl implements HarvestEventService {
 
     @Override
     public void deleteHarvestEvent(String harvestId) {
-        if (!harvestEventRepository.existsById(harvestId)) {
+        if (!harvestEventRepository.existsByHarvestId(harvestId)) {
             throw new IllegalArgumentException("Harvest event not found with ID: " + harvestId);
         }
-        harvestEventRepository.deleteById(harvestId);
+        harvestEventRepository.deleteByHarvestId(harvestId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public HarvestEvent getHarvestEventById(String harvestId) {
-        return harvestEventRepository.findById(harvestId)
+        return harvestEventRepository.findByHarvestId(harvestId)
                 .orElseThrow(() -> new IllegalArgumentException("Harvest event not found with ID: " + harvestId));
     }
 

@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;

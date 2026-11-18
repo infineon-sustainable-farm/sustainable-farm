@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +20,17 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Repository
-public interface HarvestEventRepository extends JpaRepository<HarvestEvent, String> {
+public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Long> {
+
+    /** The harvest event of a business code, shown as {@code harvestId}. */
+    Optional<HarvestEvent> findByHarvestId(String harvestId);
+
+    /** Whether a harvest event has this business code. */
+    boolean existsByHarvestId(String harvestId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByHarvestId(String harvestId);
+
 
     /**
      * Find harvest event by batch ID
