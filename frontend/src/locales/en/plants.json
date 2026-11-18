@@ -1001,5 +1001,303 @@
       "rainfall": "Rainfall",
       "source": "Source"
     }
+  },
+  "scenarios": {
+    "documentTitle": "Scenario Analysis — Plants",
+    "title": "Scenario Analysis",
+    "subtitle": "Costs and benefits of growing mango output.",
+    "loading": "Loading the scenarios…",
+    "loadError": "The scenarios could not be loaded",
+    "requestFailed": "The request to the server did not succeed.",
+    "emptyTitle": "No baseline scenario entered yet",
+    "emptyHint": "Enter the assumptions of a planting plan: trees, yield per tree, costs and investment. The server computes every result from them.",
+    "enterBaseline": "Enter baseline",
+    "unknownTitle": "This scenario cannot be shown",
+    "unknownLooking": "Looking for the scenario…",
+    "showScenario": "Show {{name}}",
+    "editName": "Edit {{name}}",
+    "notRecovered": "Not recovered",
+    "enterPriceRevenue": "Enter a price per kg to compute revenue.",
+    "enterCostPerTree": "Enter a cost per added tree in the baseline to compute it.",
+    "optionalSuffix": " (optional)",
+    "currencies": {
+      "XOF": "XOF (FCFA)",
+      "EUR": "EUR (€)"
+    },
+    "baseline": {
+      "title": "Baseline — {{name}}",
+      "scenarioLabel": "Scenario:",
+      "edit": "Edit",
+      "add": "Add a scenario",
+      "computing": "Computing the baseline…",
+      "error": "The baseline could not be computed",
+      "payback": "Payback",
+      "year": "Year {{year}}",
+      "notWithin": "Not within {{years}} years",
+      "simplePayback": "Simple payback (full production from year 1)",
+      "phasesPayback": "Payback with growth phases",
+      "beforeLosses": "Before losses (no loss rate entered)",
+      "soldAfterLosses": "{{sold}} sold after {{lost}} of losses",
+      "totalTrees": "Total Trees",
+      "annualYield": "Annual Yield",
+      "annualRevenue": "Annual Revenue",
+      "annualNetBenefit": "Annual Net Benefit",
+      "operatingCost": "Operating cost {{amount}}",
+      "roi": "ROI",
+      "roiNote": "Net benefit of a year in full production, as a share of the investment.",
+      "investment": "Total investment {{amount}}",
+      "investmentWithOther": "Total investment {{amount}} ({{other}})",
+      "noPrice": "No price per kg entered",
+      "price": "Price {{price}} per kg",
+      "investmentLine": "{{investment}} · {{price}}",
+      "paybackExplained": "Simple payback (full production from year 1): the investment divided by the net benefit of a year in full production, as if the trees gave their full yield from year 1. Payback with growth phases: the first year whose net benefits, added up year by year with the yield share of each growth phase, cover the investment."
+    },
+    "assumptions": {
+      "title": "Assumptions",
+      "intro": "As entered, each with its source. Last updated {{date}}. A dash means not entered: the results that need the value are not computed.",
+      "assumption": "Assumption",
+      "value": "Value",
+      "source": "Source",
+      "rows": {
+        "variety": "Variety",
+        "trees": "Trees",
+        "yieldPerTree": "Yield per tree",
+        "lossRate": "Loss rate",
+        "pricePerKg": "Price per kg",
+        "currency": "Currency",
+        "fixedCost": "Fixed operating cost",
+        "variableCost": "Variable operating cost",
+        "investment": "Investment",
+        "costPerTree": "Cost per added tree"
+      },
+      "units": {
+        "perYearFull": "{{value}} per year in full production",
+        "ofHarvest": "{{value}} of the harvest",
+        "perYear": "{{value}} per year",
+        "perKgSold": "{{value}} per kg sold"
+      },
+      "sharesTitle": "Yield share by growth phase",
+      "growthPhase": "Growth phase",
+      "age": "Age",
+      "share": "Share of the full yield",
+      "sharesPending": "The shares come with the analysis of the scenario.",
+      "sharesNote": "The yield forecast uses the same shares. They are corrected on <page>Harvest & Maturity</page>; a correction counts here at once."
+    },
+    "simulator": {
+      "title": "Yield Increase Simulator",
+      "yieldIncrease": "Yield increase",
+      "baselineStep": "Baseline (0%)",
+      "step": "+{{value}}%",
+      "computedNote": "Computed by the server from the baseline assumptions.",
+      "additionalInvestment": "Additional investment ({{unit}})",
+      "investmentAdded": "Added to the investment of the baseline.",
+      "investmentNone": "No additional investment entered",
+      "computing": "Computing the variant…",
+      "error": "The variant could not be computed",
+      "updating": "Updating…",
+      "results": "Results for {{increase}}, {{investment}}",
+      "resultsBaseline": "the baseline yield (0%)",
+      "resultsIncrease": "+{{value}}% yield per tree",
+      "resultsNoInvestment": "no additional investment",
+      "resultsInvestment": "{{amount}} of additional investment",
+      "projectedYield": "Projected Yield",
+      "projectedRevenue": "Projected Revenue",
+      "annualBenefit": "Annual Benefit",
+      "resultingRoi": "Resulting ROI",
+      "netBenefit": "Net benefit {{amount}}",
+      "investmentBaseline": "Investment {{amount}}, the baseline's",
+      "investmentAdditional": "Investment {{amount}} ({{additional}} additional)"
+    },
+    "chart": {
+      "title": "Yield Growth Projection",
+      "caption": "Annual yield in full production, at the baseline and with 10, 20 and 30% more yield per tree.",
+      "computing": "Computing the projection…",
+      "error": "The projection could not be computed",
+      "description": "Annual yield in full production: {{values}}.",
+      "unit": "kg",
+      "baseline": "Baseline",
+      "step": "+{{value}}%",
+      "legendYield": "Projected yield (kg)",
+      "legendBaseline": "Baseline reference"
+    },
+    "levers": {
+      "title": "Production Increase Scenarios",
+      "intro": "Each lever on its own, against the baseline. A variant is another plan, planted before year 1 like the baseline; removed trees save no investment.",
+      "trees": {
+        "title": "More or fewer trees",
+        "input": "Trees added (negative to remove)"
+      },
+      "yieldPct": {
+        "title": "Yield per tree",
+        "input": "Change of the yield per tree (%)"
+      },
+      "loss": {
+        "title": "Lower losses",
+        "input": "Loss rate (0 to 1)"
+      },
+      "lossDisabled": "Enter the loss rate of the baseline first: a lower rate needs one to compare with.",
+      "lossNote": "The baseline loses {{rate}} of its harvest. Enter a lower rate to see its effect.",
+      "enterValue": "Enter a value to see its effect.",
+      "computing": "Computing…",
+      "noAdditional": "No additional investment",
+      "yield": "Yield",
+      "revenue": "Revenue",
+      "annualBenefit": "Annual benefit",
+      "additionalInvestment": "Add'l investment",
+      "roi": "ROI",
+      "additionalPayback": "Payback of add'l investment",
+      "noPrice": "Enter a price per kg in the baseline to compute revenue."
+    },
+    "benefit": {
+      "title": "Annual Benefit",
+      "intro": "The levers entered above, applied together, in a year of full production. Each line is what one lever adds, in this order: trees, yield per tree, losses, then the variable cost of what is sold in addition. The lines add up to the total.",
+      "noLever": "Enter at least one lever above to see the annual benefit of the levers together.",
+      "computing": "Computing the annual benefit…",
+      "error": "The annual benefit could not be computed",
+      "noPrice": "Enter a price per kg in the baseline to compute the annual benefit.",
+      "conversionNote": "In {{unit}}, each amount is converted on its own: the total may differ by one unit from the sum of the lines.",
+      "additionalInvestment": "Additional investment",
+      "additionalPayback": "Payback of the additional investment",
+      "assumptions": "Assumptions",
+      "typeColumn": "Benefit type",
+      "amountColumn": "Amount ({{unit}})",
+      "detailsColumn": "Details",
+      "total": "TOTAL ANNUAL BENEFIT",
+      "totalDetails": "The lines above, added up.",
+      "sourced": "{{value}} ({{source}})",
+      "perKg": "{{value}} per kg",
+      "trees": "Trees: {{value}}",
+      "yieldPerTree": "Yield per tree: {{value}}",
+      "pricePerKg": "Price per kg: {{value}}",
+      "lossRateMissing": "Loss rate: not entered, so the quantities are before losses",
+      "lossRate": "Loss rate: {{value}}",
+      "variableCostMissing": "Variable operating cost: not entered",
+      "variableCost": "Variable operating cost: {{value}}",
+      "costPerTreeMissing": "Cost per added tree: not entered",
+      "costPerTree": "Cost per added tree: {{value}}",
+      "treesAdded": "Trees added: {{value}} (entered above)",
+      "yieldChange": "Change of the yield per tree: {{value}} (entered above)",
+      "variantLossRate": "Loss rate of the variant: {{value}} (entered above)",
+      "treeCountMore": "Additional trees",
+      "treeCountLess": "Fewer trees",
+      "yieldPerTreeMore": "Higher yield per tree",
+      "yieldPerTreeLess": "Lower yield per tree",
+      "lossRateMore": "Loss reduction",
+      "lossRateLess": "Higher losses",
+      "variableCostMore": "Additional operating cost",
+      "variableCostLess": "Operating cost saved",
+      "factors": "{{quantity}} × {{price}}/kg",
+      "variableCostFactors": "{{quantity}} × {{price}}/kg variable cost"
+    },
+    "cashFlow": {
+      "title": "Cash Flow by Year",
+      "yearsShown": "Years shown:",
+      "computing": "Computing the years…",
+      "error": "The years could not be computed",
+      "paybackYear": "Payback with growth phases: year {{year}}",
+      "enterPrice": "Enter a price per kg to compute the payback.",
+      "paybackNotWithin": "Payback with growth phases: not within {{years}} years",
+      "payback": "Payback",
+      "age_one": "{{count}} yr",
+      "age_other": "{{count}} yrs",
+      "columns": {
+        "year": "Year",
+        "age": "Age",
+        "growthPhase": "Growth phase",
+        "yieldShare": "Yield share",
+        "harvest": "Harvest (kg)",
+        "sellable": "Sellable (kg)",
+        "revenue": "Revenue ({{unit}})",
+        "operatingCost": "Operating cost ({{unit}})",
+        "netBenefit": "Net benefit ({{unit}})",
+        "cumulative": "Cumulative ({{unit}})"
+      },
+      "note": "The trees are all planted before year 1, so in year n they are n − 1 years old and give the share of the full yield of their growth phase. The investment is spent before year 1, and the fixed cost runs from year 1, harvest or not."
+    },
+    "form": {
+      "newTitle": "Enter a scenario",
+      "intro": "Every result is computed by the server from these values. A source is optional: left empty, user_entry is recorded for a new value, and the recorded source stays while its value does not change.",
+      "name": "Name",
+      "variety": "Variety",
+      "currency": "Currency",
+      "currencyNote": "Every amount below is in this currency.",
+      "reference": "Reference of {{variety}}: {{yield}} ({{source}}).",
+      "useReference": "Use this value",
+      "recorded": "Recorded: {{source}}",
+      "cancel": "Cancel",
+      "save": "Save scenario",
+      "saving": "Saving…",
+      "fields": {
+        "treeCount": {
+          "label": "Trees",
+          "note": "All planted before year 1.",
+          "source": "Source of trees"
+        },
+        "yieldPerTreeKg": {
+          "label": "Yield per tree (kg per year, full production)",
+          "source": "Source of yield per tree"
+        },
+        "lossRate": {
+          "label": "Loss rate (0 to 1)",
+          "note": "Share of the harvest lost before sale, 0.15 for 15%. Empty: the figures are before losses.",
+          "source": "Source of loss rate"
+        },
+        "pricePerKg": {
+          "label": "Price per kg",
+          "note": "Selling price of fresh mangoes. Empty: no revenue is computed.",
+          "source": "Source of price per kg"
+        },
+        "annualFixedCost": {
+          "label": "Fixed operating cost (per year)",
+          "source": "Source of fixed operating cost"
+        },
+        "variableCostPerKg": {
+          "label": "Variable operating cost (per kg sold)",
+          "note": "Such as packaging or transport. Empty: the operating cost is the fixed cost alone.",
+          "source": "Source of variable operating cost"
+        },
+        "initialInvestment": {
+          "label": "Investment",
+          "source": "Source of investment"
+        },
+        "costPerAdditionalTree": {
+          "label": "Cost per added tree",
+          "note": "Plant and planting, for a variant with more trees.",
+          "source": "Source of cost per added tree"
+        }
+      }
+    },
+    "messages": {
+      "nameRequired": "Name is required.",
+      "nameTooLong": "Name must be at most {{max}} characters.",
+      "varietyTooLong": "Variety must be at most {{max}} characters.",
+      "treeCount": "Trees must be a whole number from 1 to 1,000,000.",
+      "yieldPerTreeKg": "Yield per tree must be greater than 0 and at most 1,000 kg, with at most 1 decimal.",
+      "lossRate": "Loss rate must be between 0 and 1, with at most 3 decimals.",
+      "pricePerKg": "Price per kg must be greater than 0, with at most 4 decimals.",
+      "currency": "Currency is required.",
+      "annualFixedCostRequired": "Fixed operating cost is required.",
+      "annualFixedCost": "Fixed operating cost must be 0 or more, with at most 2 decimals.",
+      "variableCostPerKg": "Variable operating cost must be 0 or more, with at most 4 decimals.",
+      "initialInvestmentRequired": "Investment is required.",
+      "initialInvestment": "Investment must be greater than 0, with at most 2 decimals.",
+      "costPerAdditionalTree": "Cost per added tree must be 0 or more, with at most 2 decimals.",
+      "source": "Source must be at most {{max}} characters."
+    },
+    "variantMessages": {
+      "treeCountChange": "Trees added must be a whole number from -1,000,000 to 1,000,000.",
+      "yieldPerTreeChangePct": "Change must be above -100% and at most 1,000%, with at most 1 decimal.",
+      "lossRate": "Loss rate must be between 0 and 1, with at most 3 decimals.",
+      "additionalInvestment": "Additional investment must be 0 or more, with at most 2 decimals."
+    },
+    "format": {
+      "percent": "{{value}}%",
+      "points": "{{value}} pts",
+      "xof": "{{value}} FCFA",
+      "years_one": "{{value}} year",
+      "years_other": "{{value}} years",
+      "trees_one": "{{value}} tree",
+      "trees_other": "{{value}} trees"
+    }
   }
 }

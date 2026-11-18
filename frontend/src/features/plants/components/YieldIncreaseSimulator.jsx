@@ -1,4 +1,6 @@
-import { Loader2, TriangleAlert } from "lucide-react";
+import { CircleAlert, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, Input } from "../../../shared/ui";
 import { useDebouncedValue, useScenarioAnalysis } from "../hooks/useScenarioAnalysis";
 import {
     analysisParams,
@@ -14,44 +16,34 @@ import {
     MAX_YIELD_INCREASE,
     parseAdditionalInvestment,
 } from "../utils/scenarioRequests";
-
-const CARD_LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const NOTE_CLASS = "text-xs text-gray-600";
-const INPUT_CLASS =
-    "mt-1 w-full max-w-56 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
-
-/*
- * A gain in the module's green and a loss in its red, both darkened for text
- * on white: #257e55 -> 4.96:1 and #9a3f32 -> 7.03:1. The sign says it too.
- */
-function toneOf(value) {
-    if (value === null || value === undefined || value === 0) return "text-gray-700";
-    return value > 0 ? "text-[#257e55]" : "text-[#9a3f32]";
-}
+import { ErrorBox, LoadingBox, RetryButton } from "./ScenarioStatus";
+import { FIGURE_LABEL_CLASS, NOTE_CLASS, toneOf } from "./scenarioStyles";
 
 function amountValue(amount, currency) {
     return amount?.[currency === "XOF" ? "xof" : "eur"];
 }
 
 /** The slider as it reads: "Baseline (0%)", "+10%". */
-function increaseLabel(increase) {
-    return increase === 0 ? "Baseline (0%)" : `+${increase}%`;
+function increaseLabel(t, increase) {
+    return increase === 0 ? t("scenarios.simulator.baselineStep") : t("scenarios.simulator.step", { value: increase });
 }
 
 /** Which variant the figures shown are for, from the parameters the API computed them with. */
-function resultsLabel(params, currency) {
-    const increase = params.yieldPerTreeChangePct === 0 ? "the baseline yield (0%)" : `+${params.yieldPerTreeChangePct}% yield per tree`;
+function resultsLabel(t, params, currency) {
+    const increase = params.yieldPerTreeChangePct === 0
+        ? t("scenarios.simulator.resultsBaseline")
+        : t("scenarios.simulator.resultsIncrease", { value: params.yieldPerTreeChangePct });
     const investment = params.additionalInvestment === undefined
-        ? "no additional investment"
-        : `${formatMoney(params.additionalInvestment, currency)} of additional investment`;
-    return `Results for ${increase}, ${investment}`;
+        ? t("scenarios.simulator.resultsNoInvestment")
+        : t("scenarios.simulator.resultsInvestment", { amount: formatMoney(params.additionalInvestment, currency) });
+    return t("scenarios.simulator.results", { increase, investment });
 }
 
-function ResultCard({ label, value, valueTone = "text-gray-900", change, changeTone, notes = [] }) {
+function ResultCard({ label, value, valueTone = "text-text", change, changeTone, notes = [] }) {
     return (
-        <li className="flex min-w-0 flex-col gap-1 rounded-xl border border-gray-200 bg-white px-4 py-4">
-            <p className={CARD_LABEL_CLASS}>{label}</p>
-            <p className={`font-heading text-lg font-bold break-words ${valueTone}`}>{value}</p>
+        <li className="flex min-w-0 flex-col gap-1 rounded-tile border border-border-subtle bg-surface-raised p-4">
+            <p className={FIGURE_LABEL_CLASS}>{label}</p>
+            <p className={`text-lg font-bold break-words ${valueTone}`}>{value}</p>
             {change && <p className={`text-sm font-semibold ${changeTone}`}>{change}</p>}
             {notes.filter(Boolean).map((note) => (
                 <p key={note} className={NOTE_CLASS}>
@@ -63,43 +55,47 @@ function ResultCard({ label, value, valueTone = "text-gray-900", change, changeT
 }
 
 function Results({ analysis, params }) {
+    const { t } = useTranslation("plants");
     const { variant, change, currency } = analysis;
-    const noPrice = variant.revenue === null ? "Enter a price per kg to compute revenue." : null;
+    const noPrice = variant.revenue === null ? t("scenarios.enterPriceRevenue") : null;
     const additional = change.additionalInvestment;
+    const investment = formatAmount(variant.investment, currency);
     return (
         <div className="flex flex-col gap-2">
-            <ul className="grid grid-cols-2 gap-3 min-[900px]:grid-cols-4">
+            <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <ResultCard
-                    label="Projected Yield"
+                    label={t("scenarios.simulator.projectedYield")}
                     value={formatMass(variant.harvestKg)}
                     change={formatSignedKilograms(change.harvestKg)}
-                    changeTone={toneOf(change.harvestKg)}
+                    changeTone={toneOf(change.harvestKg, "text-text-muted")}
                 />
                 <ResultCard
-                    label="Projected Revenue"
+                    label={t("scenarios.simulator.projectedRevenue")}
                     value={formatAmount(variant.revenue, currency)}
                     change={variant.revenue === null ? null : formatSignedAmount(change.revenue, currency)}
-                    changeTone={toneOf(amountValue(change.revenue, currency))}
+                    changeTone={toneOf(amountValue(change.revenue, currency), "text-text-muted")}
                     notes={[formatOtherAmount(variant.revenue, currency), noPrice]}
                 />
                 <ResultCard
-                    label="Annual Benefit"
+                    label={t("scenarios.simulator.annualBenefit")}
                     value={formatSignedAmount(change.annualBenefit, currency)}
-                    valueTone={toneOf(amountValue(change.annualBenefit, currency))}
-                    notes={[`Net benefit ${formatAmount(variant.netBenefit, currency)}`, noPrice]}
+                    valueTone={toneOf(amountValue(change.annualBenefit, currency), "text-text-muted")}
+                    notes={[t("scenarios.simulator.netBenefit", { amount: formatAmount(variant.netBenefit, currency) }), noPrice]}
                 />
                 <ResultCard
-                    label="Resulting ROI"
+                    label={t("scenarios.simulator.resultingRoi")}
                     value={formatReturn(variant.roiPct)}
                     change={variant.roiPct === null ? null : formatSignedPoints(change.roiPctPoints)}
-                    changeTone={toneOf(change.roiPctPoints)}
+                    changeTone={toneOf(change.roiPctPoints, "text-text-muted")}
                 />
             </ul>
-            <p className="px-1 text-xs text-gray-600">
-                {`Investment ${formatAmount(variant.investment, currency)}`
-                    + (params.additionalInvestment === undefined
-                        ? ", the baseline's"
-                        : ` (${formatSignedAmount(additional, currency)} additional)`)}
+            <p className={`px-1 ${NOTE_CLASS}`}>
+                {params.additionalInvestment === undefined
+                    ? t("scenarios.simulator.investmentBaseline", { amount: investment })
+                    : t("scenarios.simulator.investmentAdditional", {
+                        amount: investment,
+                        additional: formatSignedAmount(additional, currency),
+                    })}
             </p>
         </div>
     );
@@ -113,6 +109,7 @@ function Results({ analysis, params }) {
  * come from the API with their sign.
  */
 export default function YieldIncreaseSimulator({ scenario, yieldIncrease, onYieldIncreaseChange, investmentText, onInvestmentChange }) {
+    const { t } = useTranslation("plants");
     const settledIncrease = useDebouncedValue(yieldIncrease);
     const settledInvestmentText = useDebouncedValue(investmentText);
     const settledInvestment = parseAdditionalInvestment(settledInvestmentText);
@@ -125,17 +122,17 @@ export default function YieldIncreaseSimulator({ scenario, yieldIncrease, onYiel
     const { data, isPending, isError, error, refetch, isFetching, isPlaceholderData } = query;
     const serverError = isError && error.status === 400 ? error.data?.fieldErrors?.additionalInvestment : null;
     const investmentError = typedInvestment.error ?? serverError;
-    const label = increaseLabel(yieldIncrease);
+    const label = increaseLabel(t, yieldIncrease);
 
     return (
-        <section aria-labelledby="yield-simulator-title" className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5">
-            <h2 id="yield-simulator-title" className="font-heading text-lg font-bold text-gray-900">
-                Yield Increase Simulator
-            </h2>
-
+        <Card
+            aria-labelledby="yield-simulator-title"
+            title={<span id="yield-simulator-title">{t("scenarios.simulator.title")}</span>}
+            className="flex flex-col gap-4"
+        >
             <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3 text-sm font-semibold text-gray-800">
-                    <label htmlFor="yield-increase">Yield increase</label>
+                <div className="flex items-center justify-between gap-3 text-sm font-semibold text-text">
+                    <label htmlFor="yield-increase">{t("scenarios.simulator.yieldIncrease")}</label>
                     <span id="yield-increase-value">{label}</span>
                 </div>
                 <input
@@ -149,77 +146,63 @@ export default function YieldIncreaseSimulator({ scenario, yieldIncrease, onYiel
                     aria-valuetext={label}
                     className="w-full accent-primary"
                 />
-                <p className={NOTE_CLASS}>Computed by the server from the baseline assumptions.</p>
+                <p className={NOTE_CLASS}>{t("scenarios.simulator.computedNote")}</p>
             </div>
 
             <div>
-                <label htmlFor="additional-investment" className={`block ${CARD_LABEL_CLASS}`}>
-                    {`Additional investment (${currencyUnit(scenario.currency)})`}
-                    <span className="font-normal normal-case"> (optional)</span>
+                <label htmlFor="additional-investment" className="block text-sm font-medium">
+                    {t("scenarios.simulator.additionalInvestment", { unit: currencyUnit(scenario.currency) })}
+                    <span className="font-normal text-text-muted">{t("scenarios.optionalSuffix")}</span>
                 </label>
-                <input
-                    id="additional-investment"
-                    type="text"
-                    inputMode="decimal"
-                    value={investmentText}
-                    onChange={(event) => onInvestmentChange(event.target.value)}
-                    className={INPUT_CLASS}
-                    aria-invalid={investmentError ? true : undefined}
-                    aria-describedby={investmentError ? "additional-investment-error" : "additional-investment-note"}
-                />
+                <div className="mt-1 max-w-56">
+                    <Input
+                        id="additional-investment"
+                        type="text"
+                        inputMode="decimal"
+                        value={investmentText}
+                        onChange={(event) => onInvestmentChange(event.target.value)}
+                        aria-invalid={investmentError ? true : undefined}
+                        aria-describedby={investmentError ? "additional-investment-error" : "additional-investment-note"}
+                    />
+                </div>
                 {investmentError ? (
-                    <p id="additional-investment-error" className="mt-1 text-xs text-error">
-                        {investmentError}
+                    <p id="additional-investment-error" className="mt-1 flex items-center gap-1 text-xs text-error-fg">
+                        <CircleAlert size={14} aria-hidden="true" className="shrink-0" />
+                        <span>{investmentError}</span>
                     </p>
                 ) : (
                     <p id="additional-investment-note" className={`mt-1 ${NOTE_CLASS}`}>
-                        {investmentText.trim() ? "Added to the investment of the baseline." : "No additional investment entered"}
+                        {investmentText.trim()
+                            ? t("scenarios.simulator.investmentAdded")
+                            : t("scenarios.simulator.investmentNone")}
                     </p>
                 )}
             </div>
 
-            {isPending && (
-                <div className="flex items-center gap-3 py-4 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Computing the variant…
-                </div>
-            )}
+            {isPending && <LoadingBox bare label={t("scenarios.simulator.computing")} />}
 
             {isError && !serverError && (
-                <div className="flex flex-col items-start gap-3 rounded-lg border border-error/30 bg-error/5 px-4 py-4">
-                    <div className="flex items-start gap-3">
-                        <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
-                        <div>
-                            <p className="text-sm font-bold text-gray-900">The variant could not be computed</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
-                            <p className="mt-0.5 text-sm text-gray-600">{error.message || "The request to the server did not succeed."}</p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <ErrorBox
+                    title={t("scenarios.simulator.error")}
+                    message={error.message || t("scenarios.requestFailed")}
+                    action={<RetryButton onClick={() => refetch()} isFetching={isFetching} />}
+                />
             )}
 
             {data && !isError && (
                 <div className="flex flex-col gap-3">
-                    <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-800" aria-live="polite">
-                        <span id="simulator-results-label">{resultsLabel(data.params, scenario.currency)}</span>
+                    <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-text" aria-live="polite">
+                        <span id="simulator-results-label">{resultsLabel(t, data.params, scenario.currency)}</span>
                         {isPlaceholderData && isFetching && (
-                            <span className="inline-flex items-center gap-1 font-normal text-gray-500">
-                                <Loader2 size={14} className="animate-spin" />
-                                Updating…
+                            <span className="inline-flex items-center gap-1 font-normal text-text-muted">
+                                <Loader2 size={14} aria-hidden="true" className="animate-spin motion-reduce:animate-none" />
+                                {t("scenarios.simulator.updating")}
                             </span>
                         )}
                     </p>
                     <Results analysis={data.analysis} params={data.params} />
                 </div>
             )}
-        </section>
+        </Card>
     );
 }

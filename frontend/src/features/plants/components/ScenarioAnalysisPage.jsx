@@ -1,57 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Plus, TriangleAlert } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import { Button, Card, EmptyState, PageHeader } from "../../../shared/ui";
 import { useSaveScenario } from "../hooks/useSaveScenario";
 import { useScenarioAnalysis } from "../hooks/useScenarioAnalysis";
 import { useScenarios } from "../hooks/useScenarios";
 import { analysisParams, readScenarioView, scenarioViewSearch } from "../utils/scenarioRequests";
 import AnnualBenefitTable from "./AnnualBenefitTable";
 import CashFlowByYearTable from "./CashFlowByYearTable";
-import PlantsEmptyState from "./PlantsEmptyState";
 import ScenarioAssumptionsTable from "./ScenarioAssumptionsTable";
 import ScenarioBaselineSection from "./ScenarioBaselineSection";
 import ScenarioFormModal from "./ScenarioFormModal";
 import ScenarioLeverCards from "./ScenarioLeverCards";
+import { ErrorBox, LoadingBox, RetryButton } from "./ScenarioStatus";
 import ScenarioYieldChart from "./ScenarioYieldChart";
 import YieldIncreaseSimulator from "./YieldIncreaseSimulator";
-
-function LoadingBox({ label }) {
-    return (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
-            <Loader2 size={18} className="animate-spin" />
-            {label}
-        </div>
-    );
-}
-
-function ErrorBox({ title, message, action }) {
-    return (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
-            <div className="flex items-start gap-3">
-                <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
-                <div>
-                    <p className="text-sm font-bold text-gray-900">{title}</p>
-                    {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
-                    <p className="mt-0.5 text-sm text-gray-600">{message}</p>
-                </div>
-            </div>
-            {action}
-        </div>
-    );
-}
-
-function ActionButton({ onClick, disabled, children }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-        >
-            {children}
-        </button>
-    );
-}
 
 /**
  * Scenario Analysis: a planting plan entered by the user, what it gives in a
@@ -65,6 +29,7 @@ function ActionButton({ onClick, disabled, children }) {
  * other screens: the sidebar leads to the Overview.
  */
 export default function ScenarioAnalysisPage() {
+    const { t } = useTranslation("plants");
     const [searchParams, setSearchParams] = useSearchParams();
     const scenarios = useScenarios();
     const saveScenario = useSaveScenario();
@@ -77,8 +42,8 @@ export default function ScenarioAnalysisPage() {
     const openedFrom = useRef(null);
 
     useEffect(() => {
-        document.title = "Scenario Analysis — Plants";
-    }, []);
+        document.title = t("scenarios.documentTitle");
+    }, [t]);
 
     // The view lives in the page, read once from the address and copied back to it whole: an input
     // driven by the address alone would lag behind the router, and two changes in a row would race.
@@ -130,108 +95,88 @@ export default function ScenarioAnalysisPage() {
     }
 
     return (
-        <div className="min-h-dvh bg-gray-50">
-            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
-            <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
-                <header>
-                    {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
-                    <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
-                        Strategic Planning
-                    </p>
-                    <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">Scenario Analysis</h1>
-                    <p className="mt-2 max-w-xl text-sm text-gray-500">
-                        Costs and benefits of growing mango output.
-                    </p>
-                </header>
+        <div className="p-6 space-y-6">
+            <PageHeader title={t("scenarios.title")} subtitle={t("scenarios.subtitle")} />
 
-                {scenarios.isPending && <LoadingBox label="Loading the scenarios…" />}
+            {scenarios.isPending && <LoadingBox label={t("scenarios.loading")} />}
 
-                {scenarios.isError && (
-                    <ErrorBox
-                        title="The scenarios could not be loaded"
-                        message="The request to the server did not succeed."
+            {scenarios.isError && (
+                <ErrorBox
+                    title={t("scenarios.loadError")}
+                    message={t("scenarios.requestFailed")}
+                    action={<RetryButton onClick={() => scenarios.refetch()} isFetching={scenarios.isFetching} />}
+                />
+            )}
+
+            {scenarios.isSuccess && list.length === 0 && (
+                <Card>
+                    <EmptyState
+                        title={t("scenarios.emptyTitle")}
+                        message={t("scenarios.emptyHint")}
                         action={(
-                            <ActionButton onClick={() => scenarios.refetch()} disabled={scenarios.isFetching}>
-                                {scenarios.isFetching ? "Retrying…" : "Retry"}
-                            </ActionButton>
+                            <Button ref={enterButtonRef} icon={Plus} onClick={() => openForm(null, "enter")}>
+                                {t("scenarios.enterBaseline")}
+                            </Button>
                         )}
                     />
-                )}
+                </Card>
+            )}
 
-                {scenarios.isSuccess && list.length === 0 && (
-                    <PlantsEmptyState
-                        title="No baseline scenario entered yet"
-                        hint="Enter the assumptions of a planting plan: trees, yield per tree, costs and investment. The server computes every result from them."
-                        action={(
-                            <button
-                                ref={enterButtonRef}
-                                type="button"
-                                onClick={() => openForm(null, "enter")}
-                                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-                            >
-                                <Plus size={16} />
-                                Enter baseline
-                            </button>
-                        )}
+            {isUnknown && (
+                <ErrorBox
+                    title={t("scenarios.unknownTitle")}
+                    message={unknown.isError ? unknown.error.message : t("scenarios.unknownLooking")}
+                    action={list.length > 0 && (
+                        <Button onClick={() => changeView({ scenarioId: null })}>
+                            {t("scenarios.showScenario", { name: list[0].name })}
+                        </Button>
+                    )}
+                />
+            )}
+
+            {scenario && (
+                <>
+                    <ScenarioBaselineSection
+                        scenarios={list}
+                        scenario={scenario}
+                        query={baseline}
+                        onSelect={(id) => changeView({ scenarioId: id })}
+                        onEdit={() => openForm(scenario, "edit")}
+                        onAdd={() => openForm(null, "add")}
+                        editButtonRef={editButtonRef}
+                        addButtonRef={addButtonRef}
                     />
-                )}
 
-                {isUnknown && (
-                    <ErrorBox
-                        title="This scenario cannot be shown"
-                        message={unknown.isError ? unknown.error.message : "Looking for the scenario…"}
-                        action={list.length > 0 && (
-                            <ActionButton onClick={() => changeView({ scenarioId: null })}>
-                                {`Show ${list[0].name}`}
-                            </ActionButton>
-                        )}
+                    <ScenarioAssumptionsTable
+                        scenario={scenario}
+                        phaseShares={baseline.data?.analysis.phaseShares ?? null}
                     />
-                )}
 
-                {scenario && (
-                    <>
-                        <ScenarioBaselineSection
-                            scenarios={list}
-                            scenario={scenario}
-                            query={baseline}
-                            onSelect={(id) => changeView({ scenarioId: id })}
-                            onEdit={() => openForm(scenario, "edit")}
-                            onAdd={() => openForm(null, "add")}
-                            editButtonRef={editButtonRef}
-                            addButtonRef={addButtonRef}
-                        />
+                    <YieldIncreaseSimulator
+                        scenario={scenario}
+                        yieldIncrease={view.yieldIncrease}
+                        onYieldIncreaseChange={(value) => changeView({ yieldIncrease: value })}
+                        investmentText={view.investment}
+                        onInvestmentChange={(text) => changeView({ investment: text })}
+                    />
 
-                        <ScenarioAssumptionsTable
-                            scenario={scenario}
-                            phaseShares={baseline.data?.analysis.phaseShares ?? null}
-                        />
+                    <ScenarioYieldChart scenario={scenario} />
 
-                        <YieldIncreaseSimulator
-                            scenario={scenario}
-                            yieldIncrease={view.yieldIncrease}
-                            onYieldIncreaseChange={(value) => changeView({ yieldIncrease: value })}
-                            investmentText={view.investment}
-                            onInvestmentChange={(text) => changeView({ investment: text })}
-                        />
+                    <ScenarioLeverCards
+                        scenario={scenario}
+                        levers={levers}
+                        onChange={(key, text) => changeView({ [key]: text })}
+                    />
 
-                        <ScenarioYieldChart scenario={scenario} />
+                    <AnnualBenefitTable scenario={scenario} levers={levers} />
 
-                        <ScenarioLeverCards
-                            scenario={scenario}
-                            levers={levers}
-                            onChange={(key, text) => changeView({ [key]: text })}
-                        />
-
-                        <AnnualBenefitTable scenario={scenario} levers={levers} />
-
-                        <CashFlowByYearTable
-                            query={baseline}
-                            horizonYears={view.horizonYears}
-                            onHorizonChange={(years) => changeView({ horizonYears: years })}
-                        />
-                    </>
-                )}
-            </div>
+                    <CashFlowByYearTable
+                        query={baseline}
+                        horizonYears={view.horizonYears}
+                        onHorizonChange={(years) => changeView({ horizonYears: years })}
+                    />
+                </>
+            )}
 
             {formScenario !== undefined && (
                 <ScenarioFormModal

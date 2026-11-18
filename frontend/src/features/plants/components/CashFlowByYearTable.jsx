@@ -1,52 +1,63 @@
-import { Loader2, TriangleAlert } from "lucide-react";
-import { formatCode, formatNumber, formatShare } from "../utils/format";
+import { useTranslation } from "react-i18next";
+import { Badge, Select } from "../../../shared/ui";
+import { formatEnum, formatNumber, formatShare } from "../utils/format";
 import { currencyUnit, formatAmountFigure, MAX_HORIZON_YEARS } from "../utils/scenarioRequests";
+import { ErrorBox, LoadingBox, RetryButton, SectionHeading } from "./ScenarioStatus";
+import { HEAD_ROW_CLASS, NOTE_CLASS, ROW_CLASS } from "./scenarioStyles";
 
 /*
  * Narrower cells than the other tables, headers that may wrap, and the units
  * in the headers rather than in every cell: the ten columns then fit a desktop
  * screen, Cumulative included.
  */
-const TH_CLASS =
-    "border-b border-gray-200 bg-gray-50 px-3 py-3 text-left align-bottom text-xs font-semibold tracking-wide whitespace-normal text-gray-500 uppercase";
-const TD_CLASS = "px-3 py-3 text-gray-700";
+const TH_CLASS = "py-2 pr-3 text-left align-bottom text-sm font-normal whitespace-normal text-text-muted";
+const TD_CLASS = "py-2 pr-3 text-text";
 
-function columns(currency) {
-    const unit = currencyUnit(currency);
-    return [
-        "Year",
-        "Age",
-        "Growth phase",
-        "Yield share",
-        "Harvest (kg)",
-        "Sellable (kg)",
-        `Revenue (${unit})`,
-        `Operating cost (${unit})`,
-        `Net benefit (${unit})`,
-        `Cumulative (${unit})`,
-    ];
-}
+/** The column headers, in the order of the cells; the amount columns name their unit. */
+const COLUMN_KEYS = [
+    "year",
+    "age",
+    "growthPhase",
+    "yieldShare",
+    "harvest",
+    "sellable",
+    "revenue",
+    "operatingCost",
+    "netBenefit",
+    "cumulative",
+];
 
 const HORIZONS = Array.from({ length: MAX_HORIZON_YEARS }, (_, index) => index + 1);
 
+/** Growth phase code of a year, as an enum key ("full production" or "FULL_PRODUCTION"). */
+function phaseCode(phase) {
+    return phase === null || phase === undefined ? phase : String(phase).trim().toUpperCase().replaceAll(" ", "_");
+}
+
+/** Translated growth phase of a year. */
+function phaseLabel(phase) {
+    return formatEnum("growthPhase", phaseCode(phase));
+}
+
 /** What the payback of the plan is, as the API found it within the years shown. */
-function paybackText(baseline, horizonYears) {
-    if (baseline.paybackYear !== null) return `Payback with growth phases: year ${baseline.paybackYear}`;
-    if (baseline.netBenefit === null) return "Enter a price per kg to compute the payback.";
-    return `Payback with growth phases: not within ${horizonYears} years`;
+function paybackText(t, baseline, horizonYears) {
+    if (baseline.paybackYear !== null) return t("scenarios.cashFlow.paybackYear", { year: baseline.paybackYear });
+    if (baseline.netBenefit === null) return t("scenarios.cashFlow.enterPrice");
+    return t("scenarios.cashFlow.paybackNotWithin", { years: horizonYears });
 }
 
 function YearsTable({ analysis }) {
+    const { t } = useTranslation("plants");
     const { baseline, currency } = analysis;
+    const unit = currencyUnit(currency);
     return (
-        // relative: keeps the scrolling inside the card on a phone, as in the other tables of the module.
-        <div className="relative overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-tile border border-border-subtle bg-surface-raised px-4 py-2">
             <table className="w-full border-collapse text-sm whitespace-nowrap">
                 <thead>
-                    <tr>
-                        {columns(currency).map((column) => (
-                            <th key={column} scope="col" className={TH_CLASS}>
-                                {column}
+                    <tr className={HEAD_ROW_CLASS}>
+                        {COLUMN_KEYS.map((key) => (
+                            <th key={key} scope="col" className={TH_CLASS}>
+                                {t(`scenarios.cashFlow.columns.${key}`, { unit })}
                             </th>
                         ))}
                     </tr>
@@ -54,28 +65,26 @@ function YearsTable({ analysis }) {
                 <tbody>
                     {baseline.years.map((year) => {
                         const isPayback = year.year === baseline.paybackYear;
+                        const phase = phaseLabel(year.growthPhase);
                         return (
-                            <tr
-                                key={year.year}
-                                className={`border-b border-gray-100 last:border-b-0 ${isPayback ? "bg-[#e5f7ef]" : ""}`}
-                            >
-                                <th scope="row" className="px-3 py-3 text-left font-semibold text-gray-800">
+                            <tr key={year.year} className={`${ROW_CLASS} ${isPayback ? "bg-success-bg" : ""}`}>
+                                <th scope="row" className="py-2 pr-3 text-left font-medium text-text">
                                     {year.year}
                                     {isPayback && (
-                                        <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[#257e55]">
-                                            Payback
-                                        </span>
+                                        <Badge tone="success" className="ml-2">
+                                            {t("scenarios.cashFlow.payback")}
+                                        </Badge>
                                     )}
                                 </th>
-                                <td className={TD_CLASS}>{`${year.ageYears} ${year.ageYears === 1 ? "yr" : "yrs"}`}</td>
-                                <td className={TD_CLASS}>{formatCode(year.growthPhase)}</td>
+                                <td className={TD_CLASS}>{t("scenarios.cashFlow.age", { count: year.ageYears })}</td>
+                                <td className={TD_CLASS}>{phase}</td>
                                 <td className={TD_CLASS}>{formatShare(year.yieldShare)}</td>
                                 <td className={TD_CLASS}>{formatNumber(year.harvestKg)}</td>
                                 <td className={TD_CLASS}>{formatNumber(year.sellableKg)}</td>
                                 <td className={TD_CLASS}>{formatAmountFigure(year.revenue, currency)}</td>
                                 <td className={TD_CLASS}>{formatAmountFigure(year.operatingCost, currency)}</td>
                                 <td className={TD_CLASS}>{formatAmountFigure(year.netBenefit, currency)}</td>
-                                <td className="px-3 py-3 font-semibold text-gray-800">
+                                <td className={`${TD_CLASS} font-semibold`}>
                                     {formatAmountFigure(year.cumulativeNetBenefit, currency)}
                                 </td>
                             </tr>
@@ -95,75 +104,53 @@ function YearsTable({ analysis }) {
  * payback of the baseline cards.
  */
 export default function CashFlowByYearTable({ query, horizonYears, onHorizonChange }) {
+    const { t } = useTranslation("plants");
     const { data, isPending, isError, refetch, isFetching } = query;
 
     return (
         <section aria-labelledby="cash-flow-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 id="cash-flow-title" className="font-heading text-lg font-bold text-gray-900">
-                        Cash Flow by Year
-                    </h2>
+                    <SectionHeading id="cash-flow-title" title={t("scenarios.cashFlow.title")} />
                     {data && !isError && (
-                        <p className="mt-1 text-sm font-semibold text-gray-800">
-                            {paybackText(data.analysis.baseline, data.analysis.horizonYears)}
+                        <p className="mt-1 text-sm font-semibold text-text">
+                            {paybackText(t, data.analysis.baseline, data.analysis.horizonYears)}
                         </p>
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    <label htmlFor="cash-flow-years" className="text-xs font-semibold text-gray-500">
-                        Years shown:
+                    <label htmlFor="cash-flow-years" className="text-sm font-medium">
+                        {t("scenarios.cashFlow.yearsShown")}
                     </label>
-                    <select
-                        id="cash-flow-years"
-                        value={horizonYears}
-                        onChange={(event) => onHorizonChange(Number(event.target.value))}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-primary focus:outline-none"
-                    >
-                        {HORIZONS.map((years) => (
-                            <option key={years} value={years}>
-                                {years}
-                            </option>
-                        ))}
-                    </select>
+                    <div>
+                        <Select
+                            id="cash-flow-years"
+                            value={horizonYears}
+                            onChange={(event) => onHorizonChange(Number(event.target.value))}
+                        >
+                            {HORIZONS.map((years) => (
+                                <option key={years} value={years}>
+                                    {years}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
                 </div>
             </div>
 
-            {isPending && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Computing the years…
-                </div>
-            )}
+            {isPending && <LoadingBox label={t("scenarios.cashFlow.computing")} />}
 
             {isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
-                    <div className="flex items-start gap-3">
-                        <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
-                        <div>
-                            <p className="text-sm font-bold text-gray-900">The years could not be computed</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
-                            <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <ErrorBox
+                    title={t("scenarios.cashFlow.error")}
+                    message={t("scenarios.requestFailed")}
+                    action={<RetryButton onClick={() => refetch()} isFetching={isFetching} />}
+                />
             )}
 
             {data && !isError && <YearsTable analysis={data.analysis} />}
 
-            <p className="text-xs text-gray-600">
-                The trees are all planted before year 1, so in year n they are n − 1 years old and give the share of
-                the full yield of their growth phase. The investment is spent before year 1, and the fixed cost runs
-                from year 1, harvest or not.
-            </p>
+            <p className={NOTE_CLASS}>{t("scenarios.cashFlow.note")}</p>
         </section>
     );
 }
