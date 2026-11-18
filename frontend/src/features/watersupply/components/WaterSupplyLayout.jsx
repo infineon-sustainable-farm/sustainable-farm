@@ -2,8 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { ToastProvider, useToast } from '../../../shared/ui'
 import { viewUrl } from '../paths'
-// Styles of the screens not migrated to the kit yet; removed with the last of them.
-import '../watersupply.css'
 
 /**
  * Hands the active screen its two module props through the Outlet context: `notify` shows a

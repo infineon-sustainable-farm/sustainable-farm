@@ -32,6 +32,10 @@ const TOOLTIP_STYLE = {
   fontSize: 'var(--text-xs)',
 }
 const LEGEND_STYLE = { fontSize: 'var(--text-xs)' }
+// Recharts label positions (not user text).
+const TOP_LEFT = 'insideTopLeft'
+const TOP_RIGHT = 'insideTopRight'
+const BOTTOM_RIGHT = 'insideBottomRight'
 const AREA_OPACITY = 0.15
 const BAND_OPACITY = 0.08
 const BAR_RADIUS = [4, 4, 0, 0]
@@ -136,7 +140,7 @@ export function WsAreaChart({ data, xKey, series, unitKind = 'liters', reference
             tickLine={false}
             width={48}
             tickFormatter={tickFormatter}
-            label={{ value: t(`charts.axis.${unit.key}`), angle: 0, position: 'insideTopLeft', offset: 8, ...AXIS_LABEL }}
+            label={{ value: t(`charts.axis.${unit.key}`), angle: 0, position: TOP_LEFT, offset: 8, ...AXIS_LABEL }}
           />
           <Tooltip contentStyle={TOOLTIP_STYLE} />
           {legend && <Legend wrapperStyle={LEGEND_STYLE} iconType="plainline" />}
@@ -147,7 +151,7 @@ export function WsAreaChart({ data, xKey, series, unitKind = 'liters', reference
               fill={band.color || C.green}
               fillOpacity={BAND_OPACITY}
               stroke="none"
-              label={{ value: band.label, position: 'insideTopRight', ...AXIS_LABEL }}
+              label={{ value: band.label, position: TOP_RIGHT, ...AXIS_LABEL }}
             />
           )}
           {referenceLines.map((ref) => (
@@ -157,7 +161,7 @@ export function WsAreaChart({ data, xKey, series, unitKind = 'liters', reference
               stroke={ref.color || C.muted}
               strokeDasharray="5 4"
               strokeWidth={1.5}
-              label={{ value: ref.label, position: 'insideBottomRight', fill: ref.color || C.muted, fontSize: TEXT_XS }}
+              label={{ value: ref.label, position: BOTTOM_RIGHT, fill: ref.color || C.muted, fontSize: TEXT_XS }}
             />
           ))}
           {series.map((s) => (
@@ -206,7 +210,7 @@ export function WsBarChart({ data, xKey, bars, unitKind = 'liters', referenceLin
             tickLine={false}
             width={48}
             tickFormatter={tickFormatter}
-            label={{ value: t(`charts.axis.${unit.key}`), angle: 0, position: 'insideTopLeft', offset: 8, ...AXIS_LABEL }}
+            label={{ value: t(`charts.axis.${unit.key}`), angle: 0, position: TOP_LEFT, offset: 8, ...AXIS_LABEL }}
           />
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: C.line }} />
           {bars.length > 1 && <Legend wrapperStyle={LEGEND_STYLE} iconType="square" />}
@@ -215,7 +219,7 @@ export function WsBarChart({ data, xKey, bars, unitKind = 'liters', referenceLin
               y={referenceLine.value}
               stroke={referenceLine.color || C.orange}
               strokeDasharray="5 4"
-              label={{ value: referenceLine.label, position: 'insideTopRight', fill: referenceLine.color || C.orange, fontSize: TEXT_XS }}
+              label={{ value: referenceLine.label, position: TOP_RIGHT, fill: referenceLine.color || C.orange, fontSize: TEXT_XS }}
             />
           )}
           {bars.map((b) => (
