@@ -976,5 +976,30 @@
       "lot": "N° de lot",
       "source": "Source"
     }
+  },
+  "calendar": {
+    "documentTitle": "Calendrier de croissance — Plantes",
+    "title": "Calendrier de plantation et stades de croissance",
+    "subtitle": "Âge des arbres et stade de croissance, à partir de la date de plantation.",
+    "loading": "Chargement du calendrier de croissance…",
+    "loadError": "Le calendrier de croissance n’a pas pu être chargé.",
+    "loadErrorHint": "La requête au serveur a échoué.",
+    "emptyFilteredTitle": "Aucun enregistrement du calendrier ne correspond à ce filtre",
+    "emptyFilteredHint": "Essayez un autre bloc, ou sélectionnez « Tous les blocs ».",
+    "emptyTitle": "Aucune plantation enregistrée pour l’instant",
+    "emptyHint": "Enregistrez une plantation depuis l’écran Variétés.",
+    "missingDateZalka": "Date de plantation non indiquée dans l’étude de référence (Zalka 2025 indique seulement « début de la saison des pluies »). L’âge des arbres et la phase de croissance sont calculés à partir de la date de plantation et ne peuvent pas être affichés tant qu’elle n’est pas enregistrée.",
+    "missingDate": "Date de plantation pas encore saisie. L’âge des arbres et la phase de croissance sont calculés à partir de la date de plantation et apparaissent dès qu’elle est saisie.",
+    "legend": "Tranches d’âge des phases de croissance, d’après l’étude Zalka 2025 : 0–2 ans installation · 3–5 ans production progressive · 6+ ans pleine production. L’étude indique « années 5 à 7 » pour la pleine production : l’année 5 est comptée en production progressive, et la pleine production continue après l’année 7. La part du plein rendement de chaque phase, avec sa source, se trouve sous Valeurs de référence sur <page>Récolte et maturité</page>.",
+    "columns": {
+      "block": "Bloc",
+      "variety": "Variété",
+      "plantingDate": "Date de plantation",
+      "precision": "Précision",
+      "age": "Âge",
+      "phase": "Phase",
+      "rainfall": "Pluviométrie",
+      "source": "Source"
+    }
   }
 }

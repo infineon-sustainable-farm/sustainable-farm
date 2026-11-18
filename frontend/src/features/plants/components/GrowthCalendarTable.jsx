@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { Card, Table } from "../../../shared/ui";
 import {
     formatAge,
     formatBlock,
@@ -7,69 +9,30 @@ import {
     formatMillimeters,
     formatText,
 } from "../utils/format";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
 // Mockup order, with Precision after Planting Date and Source last. The mockup's
 // Stage is left out: no screen records it, so it could only show a dash.
 const COLUMNS = [
-    "Block",
-    "Variety",
-    "Planting Date",
-    "Precision",
-    "Age",
-    "Phase",
-    "Rainfall",
-    "Source",
+    { key: "block", cell: (entry) => formatBlock(entry.blockCode) },
+    { key: "variety", cell: (entry) => formatList(entry.varieties) },
+    { key: "plantingDate", cell: (entry) => formatDate(entry.plantingDate) },
+    { key: "precision", cell: (entry) => formatText(entry.datePrecision) },
+    { key: "age", cell: (entry) => formatAge(entry.ageYears, entry.ageMonths) },
+    { key: "phase", cell: (entry) => formatPhaseBand(entry.growthPhase, entry.phaseYearsBand) },
+    { key: "rainfall", cell: (entry) => formatMillimeters(entry.localRainfallMm) },
+    { key: "source", cell: (entry) => formatText(entry.source) },
 ];
 
 export default function GrowthCalendarTable({ entries }) {
+    const { t } = useTranslation("plants");
+    const columns = COLUMNS.map((column) => ({
+        ...column,
+        header: t(`calendar.columns.${column.key}`),
+        className: "whitespace-nowrap",
+    }));
     return (
-        <div className={TABLE_CARD}>
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className={TABLE_HEAD}
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {entries.map((entry) => (
-                        <tr key={entry.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-semibold text-gray-800">
-                                {formatBlock(entry.blockCode)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatList(entry.varieties)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatDate(entry.plantingDate)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.datePrecision)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatAge(entry.ageYears, entry.ageMonths)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatPhaseBand(entry.growthPhase, entry.phaseYearsBand)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatMillimeters(entry.localRainfallMm)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.source)}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Card>
+            <Table columns={columns} rows={entries} caption={t("calendar.title")} />
+        </Card>
     );
 }
