@@ -20,7 +20,7 @@ import java.util.List;
 
 /** Feeds the "Generator Backup Management" tab of the Energy App. */
 @RestController("energyGeneratorController")
-@RequestMapping("/api/energy/generator-events")
+@RequestMapping("/api/energy-supply/generator-events")
 public class GeneratorController {
 
     private final GeneratorEventService service;
@@ -35,7 +35,7 @@ public class GeneratorController {
     }
 
     @GetMapping("/{eventId}")
-    public GeneratorEventResponseDto getEvent(@PathVariable String eventId) {
+    public GeneratorEventResponseDto getEvent(@PathVariable Long eventId) {
         return service.findById(eventId);
     }
 
@@ -52,13 +52,13 @@ public class GeneratorController {
 
     @PutMapping("/{eventId}")
     public GeneratorEventResponseDto updateEvent(
-            @PathVariable String eventId,
+            @PathVariable Long eventId,
             @Valid @RequestBody GeneratorEventRequest request) {
         return service.update(eventId, request);
     }
 
     @DeleteMapping("/{eventId}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable String eventId) {
+    public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
         service.delete(eventId);
         return ResponseEntity.noContent().build();
     }

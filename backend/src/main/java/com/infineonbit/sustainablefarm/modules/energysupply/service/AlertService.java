@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
 /**
  * The alerts of the Energy App, kept in the single alert store of the notification module
  * (ADR 0004). An alert about a component references it as the related entity
- * {@link #COMPONENT_ENTITY} with the component id.
+ * {@link #COMPONENT_ENTITY} with the component's Long id; the API shows the component's
+ * business code as {@code componentId}.
  */
 @Service("energyAlertService")
 @Transactional(readOnly = true)
@@ -70,13 +71,13 @@ public class AlertService {
                                      Instant timestamp, AlertStatus status) {
         AlertDto alert = alertBoard.raise(SOURCE, AlertDetails.builder()
                 .relatedEntity(component == null ? null : COMPONENT_ENTITY,
-                        component == null ? null : component.getComponentId())
+                        component == null ? null : relatedId(component))
                 .severity(com.infineonbit.sustainablefarm.modules.notification.api.AlertSeverity.valueOf(severity.name()))
                 .message(message)
                 .raisedAt(timestamp)
                 .status(com.infineonbit.sustainablefarm.modules.notification.api.AlertStatus.valueOf(status.name()))
                 .build());
-        return EnergyAlertResponse.from(alert, component == null ? null : component.getName());
+        return EnergyAlertResponse.from(alert, component);
     }
 
     public long count() {
@@ -84,25 +85,37 @@ public class AlertService {
     }
 
     /** Whether an alert is about this component. */
-    public boolean isAboutComponent(String componentId) {
-        return alertBoard.isAbout(SOURCE, COMPONENT_ENTITY, componentId);
+    public boolean isAboutComponent(EnergyComponent component) {
+        return alertBoard.isAbout(SOURCE, COMPONENT_ENTITY, relatedId(component));
     }
 
     private List<EnergyAlertResponse> toResponses(List<AlertDto> alerts) {
-        List<String> componentIds = alerts.stream()
-                .filter(alert -> COMPONENT_ENTITY.equals(alert.relatedEntityType()))
-                .map(AlertDto::relatedEntityId)
+        List<Long> componentIds = alerts.stream()
+                .map(AlertService::componentIdOf)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        Map<String, String> names = componentRepository.findAllById(componentIds).stream()
-                .collect(Collectors.toMap(EnergyComponent::getComponentId,
-                        component -> component.getName() == null ? "" : component.getName()));
-        Function<AlertDto, String> nameOf = alert -> {
-            String name = names.get(alert.relatedEntityId());
-            return name == null || name.isEmpty() ? null : name;
-        };
-        return alerts.stream().map(alert -> EnergyAlertResponse.from(alert, nameOf.apply(alert))).toList();
+        Map<Long, EnergyComponent> components = componentRepository.findAllById(componentIds).stream()
+                .collect(Collectors.toMap(EnergyComponent::getId, Function.identity()));
+        return alerts.stream()
+                .map(alert -> EnergyAlertResponse.from(alert, components.get(componentIdOf(alert))))
+                .toList();
+    }
+
+    private static String relatedId(EnergyComponent component) {
+        return String.valueOf(component.getId());
+    }
+
+    /** The Long id of the component an alert is about, {@code null} when none. */
+    private static Long componentIdOf(AlertDto alert) {
+        if (!COMPONENT_ENTITY.equals(alert.relatedEntityType()) || alert.relatedEntityId() == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(alert.relatedEntityId());
+        } catch (NumberFormatException notAnId) {
+            return null;
+        }
     }
 
     private static EnergySupplyNotFoundException notFound(Long alertId) {
