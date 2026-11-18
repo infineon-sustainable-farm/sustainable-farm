@@ -1,9 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.model;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,20 +25,18 @@ import java.time.LocalDate;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "operator", uniqueConstraints =
-        @UniqueConstraint(name = "operator_person_id_key", columnNames = "person_id"))
+@Table(name = "operator", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_operator_code", columnNames = "code"),
+        @UniqueConstraint(name = "operator_person_id_key", columnNames = "person_id")
+})
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class Operator {
+public class Operator extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "operator_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String operatorId;
 
     /** The person of the staff referential ({@code person.id}). */
@@ -65,42 +61,4 @@ public class Operator {
     @Column(name = "hire_date", nullable = false)
     private LocalDate hireDate;
 
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    /**
-     * Role Enum
-     * Business Rule: Matches database CHECK constraint
-     */
-    public enum Role {
-        WASHER,
-        DRYER,
-        PACKAGER,
-        QC_INSPECTOR,
-        SUPERVISOR,
-        AUDITOR
-    }
-
-    /**
-     * Active Status Enum
-     * Business Rule: Only ACTIVE operators can be assigned
-     */
-    public enum ActiveStatus {
-        ACTIVE,
-        INACTIVE
-    }
 }

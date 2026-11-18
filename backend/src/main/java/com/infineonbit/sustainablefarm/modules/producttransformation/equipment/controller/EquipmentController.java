@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 // @RestController classes with the same simple name make the Spring context
 // fail (ConflictingBeanDefinitionException).
 @RestController("prodTransEquipmentController")
-@RequestMapping("/api/equipment")
+@RequestMapping("/api/product-transformation/equipment")
 @Tag(name = "Equipment Management", description = "APIs for managing equipment and machinery")
 public class EquipmentController {
 
@@ -116,7 +116,7 @@ public class EquipmentController {
     @GetMapping("/type/{equipmentType}")
     @Operation(summary = "Get equipment by type", description = "Retrieves equipment filtered by type")
     public ResponseEntity<List<EquipmentResponse>> getEquipmentByType(
-            @Parameter(description = "Equipment type") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType equipmentType) {
+            @Parameter(description = "Equipment type") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType equipmentType) {
         List<Equipment> equipmentList = equipmentService.getEquipmentByType(equipmentType);
         List<EquipmentResponse> responses = equipmentList.stream()
                 .map(dtoMapper::toResponse)
@@ -127,7 +127,7 @@ public class EquipmentController {
     @GetMapping("/status/{maintenanceStatus}")
     @Operation(summary = "Get equipment by maintenance status", description = "Retrieves equipment filtered by maintenance status")
     public ResponseEntity<List<EquipmentResponse>> getEquipmentByStatus(
-            @Parameter(description = "Maintenance status") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus maintenanceStatus) {
+            @Parameter(description = "Maintenance status") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus maintenanceStatus) {
         List<Equipment> equipmentList = equipmentService.getEquipmentByStatus(maintenanceStatus);
         List<EquipmentResponse> responses = equipmentList.stream()
                 .map(dtoMapper::toResponse)
@@ -138,7 +138,7 @@ public class EquipmentController {
     @GetMapping("/available")
     @Operation(summary = "Get available equipment", description = "Retrieves equipment with ACTIVE maintenance status")
     public ResponseEntity<List<EquipmentResponse>> getAvailableEquipment() {
-        List<Equipment> equipmentList = equipmentService.getEquipmentByStatus(com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus.ACTIVE);
+        List<Equipment> equipmentList = equipmentService.getEquipmentByStatus(com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus.ACTIVE);
         List<EquipmentResponse> responses = equipmentList.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());

@@ -2,7 +2,7 @@
  * Product Transformation - Washing & Sorting screen
  * Displays, filters, creates, edits and deletes washing/sorting records.
  *
- * Data contract: /api/wash-sort-records (see WashSortRecordController).
+ * Data contract: /api/product-transformation/wash-sort-records (see WashSortRecordController).
  * The backend rejects non-positive input/output quantities, negative waste or
  * water usage, inactive equipment and operators without the WASHER role.
  *

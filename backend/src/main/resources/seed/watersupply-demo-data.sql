@@ -64,7 +64,7 @@ VALUES (
     null,
     'LOT-DEMO-001',
     'WASHING',
-    (SELECT batch_id FROM batch WHERE batch_id = 'LOT-DEMO-001')
+    (SELECT id FROM batch WHERE code = 'LOT-DEMO-001')
 )
 ON CONFLICT (id) DO NOTHING;
 

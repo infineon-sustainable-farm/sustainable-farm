@@ -2,7 +2,7 @@
  * Product Transformation - Packaging screen
  * Displays, filters, creates, edits and deletes packaging records.
  *
- * Data contract: /api/packaging-records (see PackagingRecordController).
+ * Data contract: /api/product-transformation/packaging-records (see PackagingRecordController).
  * Business rules enforced by the backend: lot codes are mandatory and unique,
  * quantity must be positive, and export readiness is tracked per record.
  *

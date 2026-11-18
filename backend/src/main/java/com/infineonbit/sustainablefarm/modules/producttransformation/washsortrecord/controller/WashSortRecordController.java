@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/wash-sort-records")
+@RequestMapping("/api/product-transformation/wash-sort-records")
 @Tag(name = "Wash & Sort Management", description = "APIs for managing washing and sorting records")
 public class WashSortRecordController {
 
@@ -59,7 +59,7 @@ public class WashSortRecordController {
     @PostMapping
     @Operation(summary = "Create a new wash sort record", description = "Creates a new washing and sorting record")
     public ResponseEntity<WashSortRecordResponse> createWashSortRecord(@Valid @RequestBody WashSortRecordCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Equipment equipment = null;
@@ -70,7 +70,7 @@ public class WashSortRecordController {
         
         Operator operator = null;
         if (request.getOperatorId() != null) {
-            operator = operatorRepository.findById(request.getOperatorId())
+            operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
         }
         
@@ -141,7 +141,7 @@ public class WashSortRecordController {
             existingRecord.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
-            Operator operator = operatorRepository.findById(request.getOperatorId())
+            Operator operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
             existingRecord.setOperator(operator);
         }

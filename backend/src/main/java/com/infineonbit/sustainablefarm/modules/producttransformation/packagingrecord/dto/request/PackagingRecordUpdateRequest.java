@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord.PackageType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackageType;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;

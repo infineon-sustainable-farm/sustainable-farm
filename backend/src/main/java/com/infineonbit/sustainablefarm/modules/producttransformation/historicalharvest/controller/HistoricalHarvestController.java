@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/historical-harvests")
+@RequestMapping("/api/product-transformation/historical-harvests")
 @Tag(name = "Historical Harvest Management", description = "APIs for managing historical harvest data for forecasting")
 public class HistoricalHarvestController {
 

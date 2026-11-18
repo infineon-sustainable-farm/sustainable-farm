@@ -76,7 +76,7 @@ public class ProductTransformationIntegrationService {
         }
         String lotId = request.lotId().trim();
         String activity = ConsumptionActivity.normalize(request.activity());
-        String processingBatchId = processingBatches.findBatch(lotId).map(ProcessingBatch::batchId).orElse(null);
+        Long processingBatchId = processingBatches.findBatch(lotId).map(ProcessingBatch::id).orElse(null);
         List<WaterConsumption> inWindow = consumptionRepository.findAll(
                 ConsumptionCriteria.window(request.sourceId(), request.zoneId(), request.startAt(), request.endAt())
                         .toSpecification(), Sort.by("consumptionDate"));

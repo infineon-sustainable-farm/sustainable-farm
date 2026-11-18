@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.response;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

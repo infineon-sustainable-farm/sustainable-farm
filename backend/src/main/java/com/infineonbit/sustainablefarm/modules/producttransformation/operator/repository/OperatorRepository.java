@@ -1,8 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,7 +21,17 @@ import java.util.List;
  * @version 1.0.0
  */
 @Repository
-public interface OperatorRepository extends JpaRepository<Operator, String> {
+public interface OperatorRepository extends JpaRepository<Operator, Long> {
+
+    /** The Operator of a business code, shown as {@code operatorId}. */
+    Optional<Operator> findByOperatorId(String operatorId);
+
+    /** Whether a Operator has this business code. */
+    boolean existsByOperatorId(String operatorId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByOperatorId(String operatorId);
+
 
     /**
      * Find operators by role

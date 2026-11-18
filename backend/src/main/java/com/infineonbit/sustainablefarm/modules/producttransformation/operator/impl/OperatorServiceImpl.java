@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.impl;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.service.OperatorService;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDetails;
@@ -65,7 +65,7 @@ public class OperatorServiceImpl implements OperatorService {
     /** Updates the role attributes here and the name on the person. */
     @Override
     public Operator updateOperator(String operatorId, Operator operator) {
-        Operator existingOperator = operatorRepository.findById(operatorId)
+        Operator existingOperator = operatorRepository.findByOperatorId(operatorId)
                 .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operatorId));
 
         // Update fields
@@ -84,16 +84,16 @@ public class OperatorServiceImpl implements OperatorService {
     /** Deletes the operator role; the person stays in the staff referential. */
     @Override
     public void deleteOperator(String operatorId) {
-        if (!operatorRepository.existsById(operatorId)) {
+        if (!operatorRepository.existsByOperatorId(operatorId)) {
             throw new IllegalArgumentException("Operator not found with ID: " + operatorId);
         }
-        operatorRepository.deleteById(operatorId);
+        operatorRepository.deleteByOperatorId(operatorId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Operator getOperatorById(String operatorId) {
-        return operatorRepository.findById(operatorId)
+        return operatorRepository.findByOperatorId(operatorId)
                 .map(this::withPerson)
                 .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operatorId));
     }
@@ -101,7 +101,7 @@ public class OperatorServiceImpl implements OperatorService {
     @Override
     @Transactional(readOnly = true)
     public java.util.Optional<Operator> findOperatorById(String operatorId) {
-        return operatorRepository.findById(operatorId).map(this::withPerson);
+        return operatorRepository.findByOperatorId(operatorId).map(this::withPerson);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class OperatorServiceImpl implements OperatorService {
     @Override
     @Transactional(readOnly = true)
     public boolean isOperatorActive(String operatorId) {
-        return operatorRepository.findById(operatorId)
+        return operatorRepository.findByOperatorId(operatorId)
                 .map(operator -> operator.getActiveStatus() == ActiveStatus.ACTIVE)
                 .orElse(false);
     }
