@@ -62,7 +62,9 @@ describe('RawIntakeList', () => {
   it('renders intakes with source, quantity and grade', async () => {
     render(<RawIntakeList />);
 
-    const table = await screen.findByRole('table');
+    // The loading state is a skeleton table: wait for the rows before reading the table.
+    await screen.findByText('RI-1');
+    const table = screen.getByRole('table');
     expect(within(table).getByText('RI-1')).toBeTruthy();
     expect(within(table).getByText('RI-2')).toBeTruthy();
     expect(within(table).getByText('520.00 kg')).toBeTruthy();
