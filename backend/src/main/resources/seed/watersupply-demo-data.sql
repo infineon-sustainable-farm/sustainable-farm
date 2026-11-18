@@ -48,7 +48,12 @@ ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('zone', 'id'), GREATEST((SELECT MAX(id) FROM zone), 1));
 SELECT setval(pg_get_serial_sequence('water_sources', 'id'), GREATEST((SELECT MAX(id) FROM water_sources), 1));
 
-INSERT INTO water_consumption (id, created_at, farm_id, source_id, consumption_liters, consumption_date, irrigation_id)
+-- The washing water of the Product Transformation lot LOT-DEMO-001 (wash_sort_record WS-DEMO-001,
+-- 1 250 L, seed/producttransformation-demo-seed.sql, run before this script by
+-- ProductTransformationDemoDataSeeder): lot_id keeps the lot as sent, processing_batch_id is the
+-- foreign key to that batch, NULL when the batch is absent.
+INSERT INTO water_consumption (id, created_at, farm_id, source_id, consumption_liters, consumption_date, irrigation_id,
+                               lot_id, activity, processing_batch_id)
 VALUES (
     '60000000-0000-0000-0000-000000000001',
     '2026-01-01T08:25:00Z',
@@ -56,7 +61,10 @@ VALUES (
     1,
     1250,
     '2026-01-01T09:00:00Z',
-    null
+    null,
+    'LOT-DEMO-001',
+    'WASHING',
+    (SELECT batch_id FROM batch WHERE batch_id = 'LOT-DEMO-001')
 )
 ON CONFLICT (id) DO NOTHING;
 

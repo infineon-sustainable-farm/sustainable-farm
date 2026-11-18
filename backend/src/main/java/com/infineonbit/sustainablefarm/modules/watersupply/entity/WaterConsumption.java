@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -14,7 +15,8 @@ import java.util.UUID;
         @Index(name = "idx_water_consumption_source_id", columnList = "source_id"),
         @Index(name = "idx_water_consumption_date", columnList = "consumption_date"),
         @Index(name = "idx_water_consumption_zone_date", columnList = "zone_id, consumption_date"),
-        @Index(name = "idx_water_consumption_lot_id", columnList = "lot_id")
+        @Index(name = "idx_water_consumption_lot_id", columnList = "lot_id"),
+        @Index(name = "idx_water_consumption_processing_batch_id", columnList = "processing_batch_id")
 })
 public class WaterConsumption extends BaseEntity {
     @NotNull
@@ -43,8 +45,17 @@ public class WaterConsumption extends BaseEntity {
     @Column(name = "zone_id")
     private Long zoneId;
 
+    /** Lot the consumption is attributed to, as sent: a product transformation batch id or any other lot. */
     @Column(name = "lot_id", length = 128)
     private String lotId;
+
+    /**
+     * The product transformation batch whose id is {@link #lotId}, or {@code null}: foreign key to
+     * {@code batch} ({@code fk_water_consumption_processing_batch}), resolved when the lot is
+     * written through {@code producttransformation.api.ProcessingBatchLookup}. Not part of the JSON.
+     */
+    @Column(name = "processing_batch_id", length = ProcessingBatchLookup.KEY_LENGTH)
+    private String processingBatchId;
 
     @Column(name = "activity", length = 32)
     private String activity;
@@ -103,6 +114,14 @@ public class WaterConsumption extends BaseEntity {
 
     public void setLotId(String lotId) {
         this.lotId = lotId;
+    }
+
+    public String getProcessingBatchId() {
+        return processingBatchId;
+    }
+
+    public void setProcessingBatchId(String processingBatchId) {
+        this.processingBatchId = processingBatchId;
     }
 
     public String getActivity() {

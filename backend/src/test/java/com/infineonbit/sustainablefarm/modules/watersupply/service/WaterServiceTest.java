@@ -173,6 +173,7 @@ class WaterServiceTest {
                 waterQuotaService,
                 zoneBlockResolver,
                 WaterIntegrationProperties.defaults(),
-                levelHistoryRepository);
+                levelHistoryRepository,
+                batchId -> java.util.Optional.empty());
     }
 }

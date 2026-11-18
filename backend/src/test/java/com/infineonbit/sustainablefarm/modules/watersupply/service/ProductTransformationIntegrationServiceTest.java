@@ -11,6 +11,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.AvailabilityForecastRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.LotUsageRequest;
@@ -59,6 +61,28 @@ class ProductTransformationIntegrationServiceTest {
     @Mock
     private AlertService alertService;
 
+    /** The product transformation batches: only {@code LOT-PT-1} is one. */
+    private final ProcessingBatchLookup processingBatches = batchId -> "LOT-PT-1".equals(batchId)
+            ? Optional.of(new ProcessingBatch("LOT-PT-1", null, "KEITT"))
+            : Optional.empty();
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void lotUsageLinksTheConsumptionsToTheProductTransformationBatchOfTheLot() {
+        Long sourceId = 145L;
+        WaterConsumption first = consumption(sourceId, 100.0, null);
+        WaterConsumption second = consumption(sourceId, 40.0, null);
+        when(consumptionRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(first, second));
+
+        Map<String, Object> response = service().attachLotUsage(
+                new LotUsageRequest(" LOT-PT-1 ", "washing", START, END, sourceId, null));
+
+        assertEquals("LOT-PT-1", response.get("lotId"));
+        assertEquals("LOT-PT-1", first.getProcessingBatchId());
+        assertEquals("LOT-PT-1", second.getProcessingBatchId());
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     void lotUsageNeverTakesOverAConsumptionOfAnotherLot() {
@@ -78,6 +102,7 @@ class ProductTransformationIntegrationServiceTest {
         assertEquals(List.of("window_overlaps_other_lot"), response.get("warnings"));
         assertEquals("LOT-1", free.getLotId());
         assertEquals("WASHING", free.getActivity());
+        assertNull(free.getProcessingBatchId(), "LOT-1 is not a product transformation batch");
         assertEquals("LOT-9", otherLot.getLotId());
         ArgumentCaptor<List<WaterConsumption>> saved = ArgumentCaptor.forClass(List.class);
         verify(consumptionRepository).saveAll(saved.capture());
@@ -225,6 +250,6 @@ class ProductTransformationIntegrationServiceTest {
 
     private ProductTransformationIntegrationService service() {
         return new ProductTransformationIntegrationService(consumptionRepository, qualityRepository, sourceRepository,
-                scheduleRepository, alertService, WaterIntegrationProperties.defaults(), farmDirectory);
+                scheduleRepository, alertService, WaterIntegrationProperties.defaults(), farmDirectory, processingBatches);
     }
 }
