@@ -2,7 +2,7 @@
  * Paths of the watersupply module, defined in a single place.
  *
  * The module is mounted under this prefix (see routes.jsx), like machinery and plants;
- * the menu (WaterSupplySidebar) and the router both read these values, so they can no
+ * the menu (nav in routes.jsx) and the router both read these values, so they can no
  * longer drift apart. Changing the prefix takes a single edit here.
  */
 export const WATERSUPPLY_BASE = '/watersupply'

@@ -38,7 +38,7 @@ export const VIEW_COMPONENTS = {
 }
 
 /**
- * The views expect notify / onNavigate; the shell provides them through the Outlet context
+ * The views expect notify / onNavigate; the module route provides them through the Outlet context
  * (<Outlet context={...}> in WaterSupplyLayout). This adapter forwards them as props, which
  * avoids changing the views and their tests, which still receive them directly.
  *
