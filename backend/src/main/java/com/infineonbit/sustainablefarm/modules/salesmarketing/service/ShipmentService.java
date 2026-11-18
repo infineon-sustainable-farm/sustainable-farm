@@ -1,65 +1,56 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
-
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.ShipmentRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.ShipmentResponse;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.Shipment;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.ShipmentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class ShipmentService {
 
     private final ShipmentRepository repository;
+    private final SalesMarketingRequestMapper mapper;
 
-    public ShipmentService(ShipmentRepository repository) {
+    public ShipmentService(ShipmentRepository repository, SalesMarketingRequestMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public List<Shipment> getAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<ShipmentResponse> getAll() {
+        return repository.findAll().stream().map(ShipmentResponse::of).toList();
     }
 
-    public Shipment getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Shipment not found with id: " + id));
+    @Transactional(readOnly = true)
+    public ShipmentResponse getById(Long id) {
+        return ShipmentResponse.of(find(id));
     }
 
-    public Shipment create(Shipment item) {
-        return repository.save(item);
+    public ShipmentResponse create(ShipmentRequest request) {
+        return ShipmentResponse.of(repository.save(mapper.apply(request, new Shipment())));
     }
 
-    public Shipment update(Integer id, Shipment updatedData) {
-        Shipment existing = getById(id);
-
-        existing.setShipmentCode(updatedData.getShipmentCode());
-        existing.setOrderId(updatedData.getOrderId());
-        existing.setOrigin(updatedData.getOrigin());
-        existing.setDestination(updatedData.getDestination());
-        existing.setStatus(updatedData.getStatus());
-        existing.setEta(updatedData.getEta());
-        existing.setVesselName(updatedData.getVesselName());
-        existing.setVoyageNumber(updatedData.getVoyageNumber());
-        existing.setDelayReason(updatedData.getDelayReason());
-        existing.setCurrentLat(updatedData.getCurrentLat());
-        existing.setCurrentLon(updatedData.getCurrentLon());
-        existing.setSpeedKnots(updatedData.getSpeedKnots());
-        existing.setCurrentLocationLabel(updatedData.getCurrentLocationLabel());
-        existing.setDistanceRemainingNm(updatedData.getDistanceRemainingNm());
-        existing.setCommodityDescription(updatedData.getCommodityDescription());
-        existing.setContainerCount(updatedData.getContainerCount());
-        existing.setContainerType(updatedData.getContainerType());
-        existing.setCargoWeightKg(updatedData.getCargoWeightKg());
-        existing.setCurrentTempC(updatedData.getCurrentTempC());
-        existing.setTempStatus(updatedData.getTempStatus());
-        existing.setManifestUrl(updatedData.getManifestUrl());
-
-        return repository.save(existing);
+    /** Replaces every field of the request; the id and the creation time stay. */
+    public ShipmentResponse update(Long id, ShipmentRequest request) {
+        return ShipmentResponse.of(repository.save(mapper.apply(request, find(id))));
     }
 
-    public void delete(Integer id) {
+    public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    /**
+     * @throws ResourceNotFoundException if no row has this id
+     */
+    private Shipment find(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipment not found with id: " + id));
     }
 }

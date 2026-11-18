@@ -256,7 +256,7 @@ class LotChainForeignKeyTest {
     }
 
     private String packagingRecordIdOfSalesBatch(int batchId) {
-        return jdbc.queryForObject("select packaging_record_id from product_batches where batch_id = ?",
+        return jdbc.queryForObject("select packaging_record_id from product_batches where id = ?",
                 String.class, batchId);
     }
 

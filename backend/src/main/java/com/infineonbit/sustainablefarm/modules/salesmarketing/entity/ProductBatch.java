@@ -1,18 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import com.infineonbit.sustainablefarm.modules.producttransformation.api.PackagedLotLookup;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.ColumnDefault;
 
 /**
- * Maps to the "product_batches" table.
- * Foreign keys are kept as plain Integer id fields.
+ * A stock batch of a product. The status is the free label the API keeps.
  *
  * <p>A sales batch whose code is the lot code of a product transformation packaged lot is linked
  * to it: {@code packaging_record_id}, foreign key to {@code packaging_record}
@@ -25,29 +23,24 @@ import org.hibernate.annotations.ColumnDefault;
                 @Index(name = "idx_product_batches_status", columnList = "status"),
                 @Index(name = "idx_product_batches_packaging_record_id", columnList = "packaging_record_id")
         })
-public class ProductBatch {
+public class ProductBatch extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "batch_id")
-    private Integer batchId;
-
-    @NotBlank(message = "batchCode is required")
     @Column(name = "batch_code", nullable = false, length = 20)
     private String batchCode;
 
-    @Column(name = "product_id")
-    private Integer productId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "product_batches_product_id_fkey"))
+    private Product product;
 
-    @PositiveOrZero(message = "stockT cannot be negative")
     @Column(name = "stock_t", precision = 10, scale = 2)
     private BigDecimal stockT;
 
     @Column(name = "status", length = 20)
     private String status;
 
+    /** The time of the last write. */
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "synced_at")
+    @Column(name = "synced_at", nullable = false)
     private LocalDateTime syncedAt;
 
     /** Record id of the packaged lot whose lot code is {@link #batchCode}, or {@code null}. */
@@ -57,14 +50,11 @@ public class ProductBatch {
 
     // ---- Getters and setters ----
 
-    public Integer getBatchId() { return batchId; }
-    public void setBatchId(Integer batchId) { this.batchId = batchId; }
-
     public String getBatchCode() { return batchCode; }
     public void setBatchCode(String batchCode) { this.batchCode = batchCode; }
 
-    public Integer getProductId() { return productId; }
-    public void setProductId(Integer productId) { this.productId = productId; }
+    public Product getProduct() { return product; }
+    public void setProduct(Product product) { this.product = product; }
 
     public BigDecimal getStockT() { return stockT; }
     public void setStockT(BigDecimal stockT) { this.stockT = stockT; }

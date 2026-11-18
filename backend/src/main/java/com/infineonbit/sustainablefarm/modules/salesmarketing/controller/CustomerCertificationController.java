@@ -1,10 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.controller;
 
-import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.CustomerCertification;
-import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.CustomerCertificationId;
-import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.CustomerCertificationRepository;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.CustomerCertificationResponse;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.service.CustomerCertificationService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -12,37 +17,26 @@ import java.util.List;
 @RequestMapping("/api/customers/{customerId}/certifications")
 public class CustomerCertificationController {
 
-    private final CustomerCertificationRepository repository;
+    private final CustomerCertificationService service;
 
-    public CustomerCertificationController(CustomerCertificationRepository repository) {
-        this.repository = repository;
+    public CustomerCertificationController(CustomerCertificationService service) {
+        this.service = service;
     }
 
     @GetMapping
-    public List<CustomerCertification> getForCustomer(
-            @PathVariable Integer customerId) {
-        return repository.findByCustomerId(customerId);
+    public List<CustomerCertificationResponse> getForCustomer(@PathVariable Long customerId) {
+        return service.getForCustomer(customerId);
     }
 
     @PostMapping("/{certificationId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public CustomerCertification link(
-            @PathVariable Integer customerId,
-            @PathVariable Integer certificationId) {
-
-        return repository.save(
-                new CustomerCertification(customerId, certificationId)
-        );
+    public CustomerCertificationResponse link(@PathVariable Long customerId, @PathVariable Long certificationId) {
+        return service.link(customerId, certificationId);
     }
 
     @DeleteMapping("/{certificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void unlink(
-            @PathVariable Integer customerId,
-            @PathVariable Integer certificationId) {
-
-        repository.deleteById(
-                new CustomerCertificationId(customerId, certificationId)
-        );
+    public void unlink(@PathVariable Long customerId, @PathVariable Long certificationId) {
+        service.unlink(customerId, certificationId);
     }
 }

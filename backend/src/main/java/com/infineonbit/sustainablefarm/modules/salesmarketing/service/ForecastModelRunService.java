@@ -1,55 +1,56 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
-
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.ForecastModelRunRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.ForecastModelRunResponse;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.ForecastModelRun;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.ForecastModelRunRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class ForecastModelRunService {
 
     private final ForecastModelRunRepository repository;
+    private final SalesMarketingRequestMapper mapper;
 
-    public ForecastModelRunService(ForecastModelRunRepository repository) {
+    public ForecastModelRunService(ForecastModelRunRepository repository, SalesMarketingRequestMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public List<ForecastModelRun> getAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<ForecastModelRunResponse> getAll() {
+        return repository.findAll().stream().map(ForecastModelRunResponse::of).toList();
     }
 
-    public ForecastModelRun getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "ForecastModelRun not found with id: " + id));
+    @Transactional(readOnly = true)
+    public ForecastModelRunResponse getById(Long id) {
+        return ForecastModelRunResponse.of(find(id));
     }
 
-    public ForecastModelRun create(ForecastModelRun item) {
-        return repository.save(item);
+    public ForecastModelRunResponse create(ForecastModelRunRequest request) {
+        return ForecastModelRunResponse.of(repository.save(mapper.apply(request, new ForecastModelRun())));
+    }
+
+    /** Replaces every field of the request; the id and the creation time stay. */
+    public ForecastModelRunResponse update(Long id, ForecastModelRunRequest request) {
+        return ForecastModelRunResponse.of(repository.save(mapper.apply(request, find(id))));
+    }
+
+    public void delete(Long id) {
+        repository.deleteById(id);
     }
 
     /**
-     * Copies every editable field from updatedData onto the existing
-     * row, then saves it. The id and created_at are left untouched.
+     * @throws ResourceNotFoundException if no row has this id
      */
-    public ForecastModelRun update(Integer id, ForecastModelRun updatedData) {
-        ForecastModelRun existing = getById(id);
-
-        existing.setCropVariety(updatedData.getCropVariety());
-        existing.setRegion(updatedData.getRegion());
-        existing.setConfidenceIntervalPct(updatedData.getConfidenceIntervalPct());
-        existing.setUseWeatherData(updatedData.getUseWeatherData());
-        existing.setUseCommodityPrices(updatedData.getUseCommodityPrices());
-        existing.setUseGeopoliticalIndex(updatedData.getUseGeopoliticalIndex());
-        existing.setModelStatus(updatedData.getModelStatus());
-
-        return repository.save(existing);
-    }
-
-    public void delete(Integer id) {
-        repository.deleteById(id);
+    private ForecastModelRun find(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ForecastModelRun not found with id: " + id));
     }
 }
