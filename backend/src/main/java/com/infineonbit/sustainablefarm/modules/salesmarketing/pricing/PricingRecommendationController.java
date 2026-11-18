@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pricing-recommendations")
+@RequestMapping("/api/sales-marketing/pricing-recommendations")
 public class PricingRecommendationController {
 
     private final PricingRecommendationService service;

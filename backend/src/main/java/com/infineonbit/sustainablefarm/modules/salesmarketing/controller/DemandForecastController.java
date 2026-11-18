@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/demand-forecasts")
+@RequestMapping("/api/sales-marketing/demand-forecasts")
 public class DemandForecastController {
 
     private final DemandForecastService service;

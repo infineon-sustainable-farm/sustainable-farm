@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/alerts")
+@RequestMapping("/api/sales-marketing/alerts")
 public class AlertController {
 
     private final AlertService service;

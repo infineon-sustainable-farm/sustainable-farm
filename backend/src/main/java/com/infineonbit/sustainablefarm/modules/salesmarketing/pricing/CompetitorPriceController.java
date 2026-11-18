@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/competitor-prices")
+@RequestMapping("/api/sales-marketing/competitor-prices")
 public class CompetitorPriceController {
 
     private final CompetitorPriceService service;

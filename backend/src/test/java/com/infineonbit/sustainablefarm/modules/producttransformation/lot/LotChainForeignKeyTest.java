@@ -190,14 +190,14 @@ class LotChainForeignKeyTest {
     void salesBatchIsLinkedToThePackagedLotOfItsCode() throws Exception {
         long packagedLotId = packagedLot("PKG-LC-5", batch("LOT-LC-5"), "LOT-LC-5-PKG").getId();
 
-        String linked = mockMvc.perform(post("/api/product-batches").contentType(MediaType.APPLICATION_JSON)
+        String linked = mockMvc.perform(post("/api/sales-marketing/product-batches").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"batchCode\":\"LOT-LC-5-PKG\",\"stockT\":0.28,\"status\":\"AVAILABLE\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.batchCode").value("LOT-LC-5-PKG"))
                 .andExpect(jsonPath("$.packagingRecordId").doesNotExist())
                 .andReturn().getResponse().getContentAsString();
         int linkedId = objectMapper.readTree(linked).get("batchId").asInt();
-        String other = mockMvc.perform(post("/api/product-batches").contentType(MediaType.APPLICATION_JSON)
+        String other = mockMvc.perform(post("/api/sales-marketing/product-batches").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"batchCode\":\"SALES-ONLY-1\",\"stockT\":1,\"status\":\"AVAILABLE\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
@@ -206,7 +206,7 @@ class LotChainForeignKeyTest {
 
         assertThat(packagingRecordIdOfSalesBatch(linkedId)).isEqualTo(packagedLotId);
         assertThat(packagingRecordIdOfSalesBatch(otherId)).isNull();
-        mockMvc.perform(get("/api/product-batches/{id}", linkedId))
+        mockMvc.perform(get("/api/sales-marketing/product-batches/{id}", linkedId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stockT").value(0.28))
                 .andExpect(jsonPath("$.packagingRecordId").doesNotExist());

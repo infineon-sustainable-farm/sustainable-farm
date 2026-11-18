@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/shipments")
+@RequestMapping("/api/sales-marketing/shipments")
 public class ShipmentController {
 
     private final ShipmentService service;

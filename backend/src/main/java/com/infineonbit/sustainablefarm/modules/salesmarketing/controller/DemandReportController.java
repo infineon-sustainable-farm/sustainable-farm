@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/demand-reports")
+@RequestMapping("/api/sales-marketing/demand-reports")
 public class DemandReportController {
 
     private final DemandReportService service;

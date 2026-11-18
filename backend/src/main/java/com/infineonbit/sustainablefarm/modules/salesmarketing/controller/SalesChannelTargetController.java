@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/sales-channel-targets")
+@RequestMapping("/api/sales-marketing/sales-channel-targets")
 public class SalesChannelTargetController {
 
     private final SalesChannelTargetService service;

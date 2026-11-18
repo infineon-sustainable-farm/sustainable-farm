@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/forecast-model-runs")
+@RequestMapping("/api/sales-marketing/forecast-model-runs")
 public class ForecastModelRunController {
 
     private final ForecastModelRunService service;

@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class SalesMarketingApiTest {
 
-    private static final String API = "/api";
+    private static final String API = "/api/sales-marketing";
 
     @Autowired
     private MockMvc mockMvc;
