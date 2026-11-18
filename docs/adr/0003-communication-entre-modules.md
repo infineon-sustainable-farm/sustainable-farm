@@ -9,13 +9,13 @@
 
 ## Contexte
 
-Le backend est un monolithe modulaire : une seule application Spring Boot, un seul processus, une seule base PostgreSQL. Chaque module est un package sous `com.infineonbit.sustainablefarm.modules`, le code partagé est sous `com.infineonbit.sustainablefarm.core`. Rien ne vérifie aujourd'hui les frontières :
+Le backend est un monolithe modulaire : une seule application Spring Boot, un seul processus, une seule base PostgreSQL. Chaque module est un package sous `com.infineonbit.sustainablefarm.modules`, le code partagé est sous `com.infineonbit.sustainablefarm.core`. Au moment de la décision, rien ne vérifiait les frontières (constats du 2026-11-17, tous traités depuis, voir Mise en œuvre) :
 
 | Constat | Détail |
 |---|---|
 | Import direct | watersupply `PlantsGrowthCalendarAdapter` importe `plants.service.GrowthCalendarService`, une classe interne de plants |
 | HTTP vers soi-même | producttransformation appelle plants en HTTP sur sa propre application (`RestTemplate`, `plants.api.base-url`) et un faux contrôleur crop-storage en boucle |
-| Données recopiées | watersupply reçoit les visiteurs par un endpoint d'entrée `/api/water/visitor-events` au lieu de réagir à visitormanagement |
+| Données recopiées | watersupply reçoit les visiteurs par un endpoint d'entrée `/api/water/visitor-events` au lieu de réagir à visitormanagement (traité par T24, voir Mise en œuvre) |
 | Gestionnaire d'erreurs | sitesecurity garde son propre `@ControllerAdvice` (`SiteSecurityExceptionHandler`) |
 
 ## Décision
@@ -37,6 +37,19 @@ Ces règles sont vérifiées par le test ArchUnit `backend/src/test/java/com/inf
 | Erreurs | Aucune classe hors de `core` n'est annotée `@ControllerAdvice` ou `@RestControllerAdvice`, ni nommée `*ExceptionHandler` |
 
 Les violations existantes sont gelées (`FreezingArchRule`, store versionné sous `backend/src/test/resources/archunit_store`) : le test passe aujourd'hui et toute nouvelle violation le fait échouer. Les tâches T15 à T25 suppriment les violations gelées, T47 retire le gel.
+
+## Mise en œuvre
+
+État du code à la fin du Lot 3 :
+
+| Constat de départ | État final |
+|---|---|
+| Import direct de `plants.service.GrowthCalendarService` par watersupply | Remplacé par `plants.api.BlockGrowthLookup` (T16) ; violation retirée du store de gel |
+| HTTP vers soi-même dans producttransformation | `RestTemplate` et `plants.api.base-url` supprimés ; les récoltes sont lues par `plants.api.HarvestLookup`, le stub crop-storage est appelé en mémoire (T22) |
+| Visiteurs recopiés dans watersupply | visitormanagement publie `VisitScheduled`, `VisitRescheduled` et `VisitCancelled` (package `visitormanagement.api`) ; `VisitorManagementListener` de watersupply les consomme en `@TransactionalEventListener(phase = AFTER_COMMIT)` et enregistre les annonces de visite (T24). L'endpoint d'entrée est gardé pour les appelants externes (fonctionnalités gelées), sous le chemin du module : `POST /api/water-supply/visitor-events` (T36) |
+| Gestionnaire d'erreurs de sitesecurity | Gardé tant que le module est exclu : c'est la seule violation gelée restante (règle des erreurs) ; le store de la règle des frontières est vide |
+
+Packages `api` publiés : `farm.api`, `staff.api`, `notification.api`, `machinery.api`, `plants.api`, `producttransformation.api` (interfaces et records), `visitormanagement.api` (événements). salesmarketing, watersupply et energysupply n'exposent rien et ne sont lus par aucun autre module. Le graphe des dépendances est dans [ARCHITECTURE.md](../ARCHITECTURE.md#24-module-communication).
 
 ## Conséquences
 

@@ -61,7 +61,7 @@ Un module déclare un champ monétaire ainsi, avec les colonnes `<prefix>_amount
 private Money price;
 ```
 
-Les deux colonnes vides donnent un champ `null`. Machinery y est passé avec T33 : coûts du carburant, des réparations et des pièces en `USD`, la devise que son interface affiche, l'API gardant des nombres. Energysupply y est passé avec T34 : coût unitaire des composants et coût des marches du groupe électrogène en `EUR` (anciennes colonnes `unit_cost_eur` et `cost_eur`), l'API gardant `costEur` en nombre. Les colonnes existantes sans devise (visitormanagement) ou avec la devise dans le nom (`*_eur` de salesmarketing) passent à ce modèle module par module au Lot 3.
+Les deux colonnes vides donnent un champ `null`. Machinery y est passé avec T33 : coûts du carburant, des réparations et des pièces en `USD`, la devise que son interface affiche, l'API gardant des nombres. Energysupply y est passé avec T34 : coût unitaire des composants et coût des marches du groupe électrogène en `EUR` (anciennes colonnes `unit_cost_eur` et `cost_eur`), l'API gardant `costEur` en nombre. Les colonnes sans devise de visitormanagement et les colonnes `*_eur` de salesmarketing sont passées à ce modèle au Lot 3.
 
 ### API (A5)
 
@@ -73,6 +73,21 @@ Les deux colonnes vides donnent un champ `null`. Machinery y est passé avec T33
 | Pagination | `core.web.PageResponse` |
 | Erreurs | Un seul format, `core.exception.ApiError` (`timestamp`, `status`, `code`, `error`, `message`, `path`, `fieldErrors`), produit uniquement par `core.exception.CoreExceptionHandler` |
 | Exceptions | Les modules lèvent les exceptions de `core.exception` (`ResourceNotFoundException`, `ConflictException`, `BadRequestException`, `BusinessRuleException`) ; aucun module n'a son propre `@RestControllerAdvice` |
+
+### Mise en œuvre
+
+État du code à la fin du Lot 3, là où il précise la décision :
+
+| Sujet | État final |
+|---|---|
+| Clés primaires | `Long` IDENTITY dans tous les modules intégrés ; seul sitesecurity, exclu, garde ses identifiants |
+| Noms de tables | salesmarketing (`customers`, `orders`, `product_batches`...) et watersupply (`water_sources`, `irrigation_logs`...) gardent des noms au pluriel ; sitesecurity garde `site_security_*`. Les autres modules suivent la convention |
+| Clés étrangères entre modules | Colonne simple du module consommateur et bean `core.schema.CrossModuleForeignKey` vers la table du propriétaire, nommée par une constante de son package `api` ; 14 classes `*ForeignKeys` les déclarent |
+| URL | Tous les modules intégrés sont sous `/api/<module-kebab>` : `/api/farm`, `/api/machinery`, `/api/plants`, `/api/product-transformation`, `/api/energy-supply`, `/api/water-supply`, `/api/sales-marketing`, `/api/visitor-management`. `staff` et `notification` n'ont pas de contrôleur. Seul sitesecurity, exclu, reste sous `/api/v1/sitesecurity` |
+| Réponses | salesmarketing répond par des records (`SalesMarketingResponses`) construits par un mapper explicite, plus aucune entité (T40) |
+| Erreurs | Un seul `@RestControllerAdvice`, `CoreExceptionHandler` ; l'exception gelée de sitesecurity reste (ADR 0003) |
+
+La table complète des chemins est dans [ARCHITECTURE.md](../ARCHITECTURE.md#27-api-conventions).
 
 ## Conséquences
 

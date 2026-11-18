@@ -153,14 +153,14 @@ This is a first version, **to be reviewed soon**:
 
 | Rule | Reference |
 |---|---|
-| Water need of a zone | `need = area x ET0 x Kc / efficiency` (FAO-56) — `WaterNeedService` |
+| Water need of a zone | `need = area x ET0 x Kc / efficiency` (FAO-56), `WaterNeedService` |
 | System efficiency | drip 0.90 · sprinkler 0.75 · gravity 0.60 |
-| Automatic control by soil moisture | seasonal thresholds **40 / 45 / 50 / 55%** (rain, transition, fresh dry, hot dry) + guard "last watering > 24 h" — `IrrigationAutomationService` |
-| Irrigation postponement because of rain | probability >= 60% and rain >= 5 mm — `IrrigationService` |
-| Monthly quota | alert at 80% then 100% — `WaterQuotaService` (evaluation throttled to 1x/60 s) |
-| Drip clogging / leak | measured volume < 90% (clogging) or > 110% (leak) of the expected volume — `DripFlowCheckService` |
-| Rainwater tank | >= 95% likely overflow, >= 50% use the rain first — `RainwaterTankMonitor` |
-| Recurring alert | same title unread and less than 12 h apart: no duplicate — `AlertService` |
+| Automatic control by soil moisture | seasonal thresholds **40 / 45 / 50 / 55%** (rain, transition, fresh dry, hot dry) + guard "last watering > 24 h", `IrrigationAutomationService` |
+| Irrigation postponement because of rain | probability >= 60% and rain >= 5 mm, `IrrigationService` |
+| Monthly quota | alert at 80% then 100%, `WaterQuotaService` (evaluation throttled to 1x/60 s) |
+| Drip clogging / leak | measured volume < 90% (clogging) or > 110% (leak) of the expected volume, `DripFlowCheckService` |
+| Rainwater tank | >= 95% likely overflow, >= 50% use the rain first, `RainwaterTankMonitor` |
+| Recurring alert | same title unread and less than 12 h apart: no duplicate, `AlertService` |
 
 ## Configuration (environment variables)
 
@@ -181,11 +181,11 @@ This is a first version, **to be reviewed soon**:
 | `app.water.iot.valve-max-duration-seconds` / `offline-threshold-minutes` | 30 / 15 | Valve opening cap, device offline delay |
 
 Every `app.water.*` value has an environment variable (see `application.properties`); the
-integration values are working defaults listed as open questions in `docs/integrations/`.
+integration values are working defaults, still to be validated with the modules concerned.
 
 ## IoT ingestion contract
 
-`POST /api/water-supply/iot/telemetry` (single object or batch, 202, status per measurement) — types
+`POST /api/water-supply/iot/telemetry` (single object or batch, 202, status per measurement). Types
 `level`, `flow`, `quality`, `rain`, `clogging`, `soil`. Two things to know:
 
 - **`flow` can carry `zone_id`**: this link is what allows comparing the measured volume to the
@@ -196,19 +196,18 @@ integration values are working defaults listed as open questions in `docs/integr
 ## Tests
 
 ```bash
-cd backend && ./mvnw test     # whole backend: 664 tests, of which 168 for watersupply
-cd frontend && npm test       # 79 tests, of which 72 for watersupply (views, hooks, wiring, menu)
-cd frontend && npm run lint && npm run build
+scripts/backend-test.sh -q -B test -Dtest='*watersupply*,*Watersupply*'   # module tests (H2)
+SF_TEST_PG=1 scripts/backend-test.sh                                      # whole backend on PostgreSQL
+cd frontend && npm test -- watersupply && npm run lint && npm run build
 ```
 
 Watersupply tests: unit tests per service (Mockito) and three HTTP integration classes on the full
-context — `WatersupplyApiIntegrationTest`, `WatersupplyIntegrationsApiTest` (every integration
+context: `WatersupplyApiIntegrationTest`, `WatersupplyIntegrationsApiTest` (every integration
 endpoint, weather and Plants calendar mocked) and `IotTelemetryIntegrationTest`. The defaults run on
 H2; the CI overrides the datasource to PostgreSQL, and the suite passes on both.
 
-The module's tests declare their own DOM environment (`// @vitest-environment jsdom`):
-the project has no global Vitest configuration, and the view tests provide a brand-new
-React Query client (`components/views/testRender.jsx`).
+The module's tests declare their own DOM environment (`// @vitest-environment jsdom`), and the
+view tests provide a brand-new React Query client (`components/views/testRender.jsx`).
 
 ## Integrating this module into another one (or the reverse)
 
@@ -216,9 +215,12 @@ React Query client (`components/views/testRender.jsx`).
    (`/api/water-supply/sources/{id}/level`, `/api/water-supply/zones/{id}/flow-check`, `/api/water-supply/dashboard/water-balance`)
    rather than through direct table access.
 2. API responses are DTOs (`dto/`), never JPA entities.
-3. The schema only evolves through versioned migrations: **announce the number** before writing
-   the next one (folder shared between modules).
-4. The module never modifies another module's files nor `frontend/src/shared/`.
+3. Another module reads Water Supply through events or a `watersupply.api` package, never its
+   internal classes; Water Supply reads the others through their `api` packages
+   ([docs/ARCHITECTURE.md](../../../../../../../../../docs/ARCHITECTURE.md#24-module-communication)).
+4. After the baseline, the schema only evolves through new migrations named
+   `V<n>__watersupply_<description>.sql`; existing migrations are never edited.
+5. The module never modifies another module's files nor `frontend/src/shared/`.
 
 ## Open decisions (to settle with the team)
 
@@ -227,14 +229,8 @@ React Query client (`components/views/testRender.jsx`).
   (`SystemUsers.iotSystemUserId()`, email `systeme.iot@watersupply.local`, inactive, with no
   usable password), created at startup in every profile by `SystemUserSeeder`. Notification
   recipients, schedule authors and command requesters are `person` ids (docs/adr/0004).
-- **Migration numbers**: `V11` (zone/block mapping) and `V12` (integrations) belong to watersupply;
-  the next free number is `V13`.
-- **Fresh PostgreSQL startup**: V1-V12 apply, but `ddl-auto=validate` then fails on tables of other
-  modules that have no migration (list in `docs/integrations/README.md`).
 - **Farm and field location**: first version from the device geolocation, to be reviewed (see
   "Farm and field location" above).
-- **Integration answers** expected from Plants, Visitor Management, Product Transformation, IoT and
-  Site Security: see the "What we need from you" section of each page in `docs/integrations/`.
-- **`shared/hooks/useAuth.js`**: dead code outside the module importing `getToken`/`setToken` from
-  `shared/api/client.js` — those functions do not exist; to fix in coordination or remove.
+- **Integration values** (`app.water.pt.*`, `app.water.plants.phase-factor.*`): working defaults
+  to validate with Product Transformation and Plants.
 
