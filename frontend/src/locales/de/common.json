@@ -44,7 +44,8 @@
   "shell": {
     "navigation": "Module",
     "openMenu": "Navigation öffnen",
-    "closeMenu": "Navigation schließen"
+    "closeMenu": "Navigation schließen",
+    "allModules": "Alle Module"
   },
   "launcher": {
     "modules": "Module"

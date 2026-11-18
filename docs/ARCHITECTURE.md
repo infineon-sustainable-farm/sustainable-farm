@@ -295,7 +295,7 @@ The router (`src/app/router.jsx`) discovers the modules with `import.meta.glob('
 |---|---|
 | `id` | Module folder name |
 | `basePath` | URL of the module home |
-| `icon` | lucide component used by the launcher tile and the sidebar group |
+| `icon` | lucide component used by the launcher tile |
 | `nameKey` | Translation key of the module name |
 | `items` | Sidebar links: `{ to, labelKey, icon, end, sectionKey }`; consecutive items with the same `sectionKey` are grouped under that heading (used by watersupply) |
 | `shell` | `true`: the module renders inside `AppLayout` |
@@ -304,7 +304,7 @@ The router (`src/app/router.jsx`) discovers the modules with `import.meta.glob('
 | URL | Renders |
 |---|---|
 | `/` | `LauncherPage`: full screen, no sidebar, logo, language switcher, one tile per module with a `nav` |
-| A module path | `AppLayout`: the global sidebar (one group per module, links of the current module unfolded, drawer with overlay on small screens), the language switcher and the screen |
+| A module path | `AppLayout`: the sidebar of that module only (same design for every module: logo back to `/`, module name, the module's links and sections, its `sidebarFooter`, a link to all modules, the language switcher; drawer with overlay on small screens) and the screen. Other modules are reached from the launcher |
 | Any unknown URL | `NotFoundPage` inside the shell; render errors go to `RouteError` |
 
 `RootLayout` mounts the toast provider once for the whole application. The sidebar logo leads back to `/`.

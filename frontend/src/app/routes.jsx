@@ -8,7 +8,7 @@ import RouteError from './RouteError'
  * Route tree of the application, built from the modules (see modules.js):
  *
  * - `/`: the launcher, full screen, one tile per integrated module;
- * - modules that opted into the shell: under AppLayout (global sidebar);
+ * - modules that opted into the shell: under AppLayout (the module's own sidebar);
  * - the other modules: as before, each with its own layout;
  * - any unknown URL: the 404 page inside the shell.
  *

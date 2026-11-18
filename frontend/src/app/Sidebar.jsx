@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { LayoutGrid, Menu, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -68,7 +68,7 @@ function ModuleItems({ items, onNavigate }) {
   const { t } = useTranslation('common')
   const baseId = useId()
   return (
-    <ul className="mt-1 flex flex-col gap-1 pl-3">
+    <ul className="flex flex-col gap-1">
       {groupBySection(items).map((group, index) => {
         const links = group.items.map((item) => (
           <NavItem key={item.to} item={{ ...item, label: t(item.labelKey) }} onNavigate={onNavigate} />
@@ -89,9 +89,10 @@ function ModuleItems({ items, onNavigate }) {
 }
 
 /**
- * Global sidebar, machinery's rendering for every module: logo back to the launcher, one group
- * per integrated module (the current one expanded with its links, the others as a link to their
- * home), the current module's `sidebarFooter` (if any) and the language switcher at the bottom.
+ * Sidebar of the current module, machinery's rendering for every module: logo back to the
+ * launcher with the module name under it, the module's own links (and section headings), a link
+ * back to all modules, the module's `sidebarFooter` (if any) and the language switcher at the
+ * bottom. Each module has its own sidebar: the other modules are reached from the launcher.
  *
  * Under md it is a drawer behind a menu button, as the plants sidebar: overlay, closes on a link,
  * on Escape and on the overlay, focus moved into it on open and back to the button on close,
@@ -188,28 +189,22 @@ export default function Sidebar({ navs }) {
           className={`flex flex-col items-center gap-2 rounded-control px-2 py-1 ${focusOnPrimary}`}
         >
           <img src="/logo.webp" alt="" className="h-auto w-20" />
-          <span className="text-center text-xs font-semibold tracking-widest uppercase">{t('appName')}</span>
+          <span className="text-center text-xs font-semibold tracking-widest uppercase">
+            {activeNav ? t(activeNav.nameKey) : t('appName')}
+          </span>
         </Link>
 
-        <ul className="mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-          {navs.map((nav) => {
-            const expanded = nav === activeNav
-            const ModuleIcon = nav.icon
-            return (
-              <li key={nav.id}>
-                <Link
-                  to={nav.basePath}
-                  onClick={closeOnNavigate}
-                  className={`${LINK_BASE} hover:bg-primary-hover ${expanded ? 'font-semibold' : ''}`}
-                >
-                  <ModuleIcon size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
-                  {t(nav.nameKey)}
-                </Link>
-                {expanded && <ModuleItems items={nav.items} onNavigate={closeOnNavigate} />}
-              </li>
-            )
-          })}
-        </ul>
+        <div className="mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+          {activeNav && <ModuleItems items={activeNav.items} onNavigate={closeOnNavigate} />}
+          <Link
+            to="/"
+            onClick={closeOnNavigate}
+            className={`${LINK_BASE} mt-4 hover:bg-primary-hover`}
+          >
+            <LayoutGrid size={ICON_SIZE} aria-hidden="true" className="shrink-0" />
+            {t('shell.allModules')}
+          </Link>
+        </div>
 
         <div className="mt-auto flex flex-col gap-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           {ModuleFooter && (
