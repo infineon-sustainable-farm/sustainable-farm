@@ -30,9 +30,9 @@ public class Briefing extends BaseEntity {
     @Column(name = "delivered_at")
     private Instant deliveredAt;
 
-    @Size(max = 150)
-    @Column(name = "staff_member", length = 150)
-    private String staffMember;
+    /** Person of the staff referential who delivered the briefing. */
+    @Column(name = "staff_member_person_id")
+    private Long staffMemberPersonId;
 
     @Size(max = 500)
     @Column(name = "signature", length = 500)
@@ -59,12 +59,12 @@ public class Briefing extends BaseEntity {
         this.deliveredAt = deliveredAt;
     }
 
-    public String getStaffMember() {
-        return staffMember;
+    public Long getStaffMemberPersonId() {
+        return staffMemberPersonId;
     }
 
-    public void setStaffMember(String staffMember) {
-        this.staffMember = staffMember;
+    public void setStaffMemberPersonId(Long staffMemberPersonId) {
+        this.staffMemberPersonId = staffMemberPersonId;
     }
 
     public String getSignature() {

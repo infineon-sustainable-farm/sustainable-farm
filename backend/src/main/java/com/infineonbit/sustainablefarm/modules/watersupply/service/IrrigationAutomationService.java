@@ -66,6 +66,7 @@ public class IrrigationAutomationService {
     private final WaterUnavailabilityService unavailabilityService;
     private final PlantsIntegrationService plantsIntegrationService;
     private final WaterIntegrationProperties properties;
+    private final SystemUsers systemUsers;
 
     public IrrigationAutomationService(
             FarmDirectory farmDirectory,
@@ -77,7 +78,8 @@ public class IrrigationAutomationService {
             RainfallService rainfallService,
             WaterUnavailabilityService unavailabilityService,
             PlantsIntegrationService plantsIntegrationService,
-            WaterIntegrationProperties properties) {
+            WaterIntegrationProperties properties,
+            SystemUsers systemUsers) {
         this.farmDirectory = farmDirectory;
         this.soilMoistureRepository = soilMoistureRepository;
         this.scheduleRepository = scheduleRepository;
@@ -88,6 +90,7 @@ public class IrrigationAutomationService {
         this.unavailabilityService = unavailabilityService;
         this.plantsIntegrationService = plantsIntegrationService;
         this.properties = properties;
+        this.systemUsers = systemUsers;
     }
 
     /**
@@ -192,7 +195,7 @@ public class IrrigationAutomationService {
         schedule.setWaterQuantityLiters(liters);
         schedule.setStatus("scheduled");
         schedule.setTriggerSource(TRIGGER_SOURCE_AUTO);
-        schedule.setCreatedBy(SystemUsers.IOT_SYSTEM_USER_ID);
+        schedule.setCreatedBy(systemUsers.iotSystemUserId());
         IrrigationSchedule saved = scheduleRepository.save(schedule);
 
         alertService.raiseOnce("info", "Automatic irrigation planned - " + zone.name(),

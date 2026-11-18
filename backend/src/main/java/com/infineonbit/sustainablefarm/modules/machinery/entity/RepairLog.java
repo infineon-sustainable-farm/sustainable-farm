@@ -36,8 +36,9 @@ public class RepairLog {
     @Column(precision = 10, scale = 2)
     private BigDecimal cost;
 
-    @Column(length = 60)
-    private String technician;
+    /** The technician, a person of the staff referential ({@code person.id}); the API shows the name. */
+    @Column(name = "technician_person_id")
+    private Long technicianPersonId;
 
     @Version
     private Long version;

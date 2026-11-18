@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record IrrigationScheduleResponse(UUID id, Long zoneId, Instant startTime, Integer durationMinutes,
-                                         Double waterQuantityLiters, String status, UUID createdBy, Instant createdAt,
+                                         Double waterQuantityLiters, String status, Long createdBy, Instant createdAt,
                                          String postponeReason, String blockCode, Boolean multipleBlockCodes) {
     public static IrrigationScheduleResponse from(IrrigationSchedule schedule) {
         return from(schedule, null, false);

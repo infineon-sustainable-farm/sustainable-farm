@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -59,6 +60,9 @@ class DryingRunDtoMappingTest {
     private OperatorRepository operatorRepository;
 
     @Autowired
+    private PersonDirectory personDirectory;
+
+    @Autowired
     private DryingRunRepository dryingRunRepository;
 
     @Autowired
@@ -99,9 +103,8 @@ class DryingRunDtoMappingTest {
 
         Operator operator = new Operator();
         operator.setOperatorId(OPERATOR_ID);
-        operator.setOperatorName("DTO operator");
+        operator.setPersonId(personDirectory.idOf("DTO operator"));
         operator.setRole(Operator.Role.DRYER);
-        operator.setActiveStatus(Operator.ActiveStatus.ACTIVE);
         operator.setHireDate(LocalDate.now());
         operatorRepository.saveAndFlush(operator);
 

@@ -70,7 +70,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
         existingIntake.setReceivedQuantityKg(rawIntake.getReceivedQuantityKg());
         existingIntake.setReceivedVarietyKey(rawIntake.getReceivedVarietyKey());
         existingIntake.setReceivedGrade(rawIntake.getReceivedGrade());
-        existingIntake.setIntakeOperator(rawIntake.getIntakeOperator());
+        existingIntake.setIntakeOperatorId(rawIntake.getIntakeOperatorId());
         
         return rawIntakeRepository.save(existingIntake);
     }

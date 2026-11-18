@@ -6,7 +6,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 import org.hibernate.annotations.ColumnDefault;
 
 @Entity
@@ -36,7 +35,7 @@ public class IrrigationSchedule extends BaseEntity {
 
     @NotNull
     @Column(nullable = false)
-    private UUID createdBy;
+    private Long createdBy;
 
     @Column(name = "postpone_reason", length = 120)
     private String postponeReason;
@@ -89,11 +88,11 @@ public class IrrigationSchedule extends BaseEntity {
         this.status = status;
     }
 
-    public UUID getCreatedBy() {
+    public Long getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(UUID createdBy) {
+    public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
     }
 

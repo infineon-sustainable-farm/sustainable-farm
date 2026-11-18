@@ -36,6 +36,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentLookup;
 import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -49,10 +50,22 @@ public class DtoMapper {
 
     private final MangoVarietyCodes mangoVarietyCodes;
     private final EquipmentLookup equipmentLookup;
+    private final PersonDirectory personDirectory;
 
-    public DtoMapper(MangoVarietyCodes mangoVarietyCodes, EquipmentLookup equipmentLookup) {
+    public DtoMapper(MangoVarietyCodes mangoVarietyCodes, EquipmentLookup equipmentLookup,
+                     PersonDirectory personDirectory) {
         this.mangoVarietyCodes = mangoVarietyCodes;
         this.equipmentLookup = equipmentLookup;
+        this.personDirectory = personDirectory;
+    }
+
+    /**
+     * The person of the staff referential named by a free-text field of the API (intake
+     * operator, harvest supervisor), created when nobody carries the name; {@code null} for a
+     * blank name.
+     */
+    public Long personId(String fullName) {
+        return personDirectory.idOf(fullName);
     }
 
     /** The business code of the register equipment with this id, shown as {@code equipmentId}. */
@@ -109,7 +122,7 @@ public class DtoMapper {
         intake.setReceivedQuantityKg(request.getReceivedQuantityKg());
         intake.setReceivedVarietyKey(mangoVarietyCodes.toKey(request.getReceivedVariety()));
         intake.setReceivedGrade(request.getReceivedGrade());
-        intake.setIntakeOperator(request.getIntakeOperator());
+        intake.setIntakeOperatorId(personId(request.getIntakeOperator()));
         return intake;
     }
 
@@ -123,7 +136,7 @@ public class DtoMapper {
                 .receivedQuantityKg(entity.getReceivedQuantityKg())
                 .receivedVariety(MangoVarietyCodes.toApi(entity.getReceivedVarietyKey()))
                 .receivedGrade(entity.getReceivedGrade())
-                .intakeOperator(entity.getIntakeOperator())
+                .intakeOperator(personDirectory.nameOf(entity.getIntakeOperatorId()))
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -377,7 +390,7 @@ public class DtoMapper {
         event.setQualityGrade(request.getQualityGrade());
         event.setQualityGradeDescription(request.getQualityGradeDescription());
         event.setHarvestTeamId(request.getHarvestTeamId());
-        event.setHarvestSupervisor(request.getHarvestSupervisor());
+        event.setHarvestSupervisorId(personId(request.getHarvestSupervisor()));
         event.setWeatherConditions(request.getWeatherConditions());
         event.setStorageLocation(request.getStorageLocation());
         return event;
@@ -396,7 +409,7 @@ public class DtoMapper {
                 .qualityGrade(entity.getQualityGrade())
                 .qualityGradeDescription(entity.getQualityGradeDescription())
                 .harvestTeamId(entity.getHarvestTeamId())
-                .harvestSupervisor(entity.getHarvestSupervisor())
+                .harvestSupervisor(personDirectory.nameOf(entity.getHarvestSupervisorId()))
                 .weatherConditions(entity.getWeatherConditions())
                 .storageLocation(entity.getStorageLocation())
                 .createdAt(entity.getCreatedAt())

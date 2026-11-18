@@ -13,7 +13,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceS
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,6 +46,9 @@ class MaintenanceScheduleServiceTest {
     @Mock
     private EquipmentRepository equipmentRepository;
 
+    @Spy
+    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+
     @InjectMocks
     private MaintenanceScheduleService maintenanceScheduleService;
 
@@ -71,7 +77,7 @@ class MaintenanceScheduleServiceTest {
         testSchedule.setFrequency("Every 250 hours");
         testSchedule.setLastCompleted(LocalDate.of(2026, 7, 10));
         testSchedule.setNextDue(LocalDate.of(2026, 8, 5));
-        testSchedule.setOperator("Wilfried Y.");
+        testSchedule.setOperatorPersonId(personDirectory.idOf("Wilfried Y."));
     }
 
     @Test

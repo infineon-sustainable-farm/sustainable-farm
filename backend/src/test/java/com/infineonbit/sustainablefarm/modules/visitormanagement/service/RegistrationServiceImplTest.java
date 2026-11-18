@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import org.mockito.Spy;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
@@ -41,6 +44,8 @@ class RegistrationServiceImplTest {
     private BriefingRepository briefingRepository;
     @Mock
     private SchedulingService schedulingService;
+    @Spy
+    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
     @InjectMocks
     private RegistrationServiceImpl service;
 
@@ -424,6 +429,7 @@ class RegistrationServiceImplTest {
         BriefingResponse resp = service.deliverBriefing(100L, req);
         assertThat(resp.getStatus()).isEqualTo(BriefingStatus.DONE);
         assertThat(resp.getStaffMember()).isEqualTo("Guard Camille");
+        assertThat(briefing.getStaffMemberPersonId()).isEqualTo(personDirectory.idOf("guard camille"));
     }
 
     @Test
@@ -433,7 +439,7 @@ class RegistrationServiceImplTest {
         briefing.setId(200L);
         briefing.setRegistration(registration);
         briefing.setStatus(BriefingStatus.DONE);
-        briefing.setStaffMember("Guard Camille");
+        briefing.setStaffMemberPersonId(personDirectory.idOf("Guard Camille"));
         briefing.setDeliveredAt(java.time.Instant.parse("2026-09-08T09:00:00Z"));
         registration.setBriefing(briefing);
 

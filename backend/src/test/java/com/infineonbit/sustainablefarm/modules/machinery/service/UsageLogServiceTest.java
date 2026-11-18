@@ -11,7 +11,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.repository.UsageLogRepo
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,6 +46,9 @@ class UsageLogServiceTest {
     @Mock
     private EquipmentRepository equipmentRepository;
 
+    @Spy
+    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+
     @InjectMocks
     private UsageLogService usageLogService;
 
@@ -68,7 +74,7 @@ class UsageLogServiceTest {
         testUsageLog.setEquipment(testEquipment);
         testUsageLog.setDate(LocalDate.of(2026, 7, 23));
         testUsageLog.setHoursUsed(new BigDecimal("6.50"));
-        testUsageLog.setOperator("Wilfried Y.");
+        testUsageLog.setOperatorPersonId(personDirectory.idOf("Wilfried Y."));
         testUsageLog.setNotes("Plowing field section B");
     }
 

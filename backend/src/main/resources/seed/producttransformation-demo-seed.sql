@@ -39,12 +39,24 @@ BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- 1) Operateurs (drying et controle qualite)
+--    Une personne n'est saisie qu'une fois, dans le referentiel staff (table
+--    person, ADR 0004) : l'operateur PT est son role (role, certifications,
+--    date d'embauche), le nom et le statut actif sont ceux de la personne.
+--    Le receptionnaire des lots (section 8) est aussi une personne.
 -- ---------------------------------------------------------------------------
-INSERT INTO operator (operator_id, active_status, certifications, created_at,
-                      hire_date, operator_name, role, updated_at)
-VALUES
-    ('OP-DEMO-01', 'ACTIVE', 'HACCP', now(), CURRENT_DATE - 400, 'Awa DEMO (QC)', 'QC_INSPECTOR', now()),
-    ('OP-DEMO-02', 'ACTIVE', 'Sechage solaire', now(), CURRENT_DATE - 300, 'Issa DEMO (Sechage)', 'DRYER', now())
+INSERT INTO person (created_at, updated_at, full_name, active)
+SELECT now(), now(), demo.full_name, true
+FROM (VALUES ('Awa DEMO (QC)'), ('Issa DEMO (Sechage)'), ('Moussa DEMO (Lavage)')) AS demo (full_name)
+WHERE NOT EXISTS (SELECT 1 FROM person p WHERE lower(p.full_name) = lower(demo.full_name));
+
+INSERT INTO operator (operator_id, person_id, certifications, created_at,
+                      hire_date, role, updated_at)
+SELECT demo.operator_id, (SELECT min(p.id) FROM person p WHERE lower(p.full_name) = lower(demo.full_name)),
+       demo.certifications, now(), demo.hire_date, demo.role, now()
+FROM (VALUES
+    ('OP-DEMO-01', 'Awa DEMO (QC)', 'HACCP', CURRENT_DATE - 400, 'QC_INSPECTOR'),
+    ('OP-DEMO-02', 'Issa DEMO (Sechage)', 'Sechage solaire', CURRENT_DATE - 300, 'DRYER')
+) AS demo (operator_id, full_name, certifications, hire_date, role)
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -151,15 +163,15 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 -- 8) Receptions (une par lot, alimente l'ecran de reception)
 -- ---------------------------------------------------------------------------
-INSERT INTO raw_intake (intake_id, created_at, intake_date, intake_operator,
+INSERT INTO raw_intake (intake_id, created_at, intake_date, intake_operator_id,
                         received_grade, received_quantity_kg, received_variety_key,
                         source_block, source_farm, updated_at, batch_id)
 VALUES
-    ('RI-DEMO-001', now(), CURRENT_DATE - 1, 'Moussa DEMO (Lavage)', 'A', 520.00, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-001'),
-    ('RI-DEMO-002', now(), CURRENT_DATE - 2, 'Moussa DEMO (Lavage)', 'A', 480.50, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-002'),
-    ('RI-DEMO-003', now(), CURRENT_DATE - 3, 'Moussa DEMO (Lavage)', 'B', 610.25, 'AMELIE',  'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-003'),
-    ('RI-DEMO-004', now(), CURRENT_DATE - 5, 'Moussa DEMO (Lavage)', 'A', 395.00, 'KENT',    'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-004'),
-    ('RI-DEMO-005', now(), CURRENT_DATE - 6, 'Moussa DEMO (Lavage)', 'A', 275.75, 'TOMMY',   'BLOC-C', 'FERME-DEMO', now(), 'LOT-DEMO-005')
+    ('RI-DEMO-001', now(), CURRENT_DATE - 1, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 520.00, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-001'),
+    ('RI-DEMO-002', now(), CURRENT_DATE - 2, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 480.50, 'KEITT',   'BLOC-A', 'FERME-DEMO', now(), 'LOT-DEMO-002'),
+    ('RI-DEMO-003', now(), CURRENT_DATE - 3, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'B', 610.25, 'AMELIE',  'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-003'),
+    ('RI-DEMO-004', now(), CURRENT_DATE - 5, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 395.00, 'KENT',    'BLOC-B', 'FERME-DEMO', now(), 'LOT-DEMO-004'),
+    ('RI-DEMO-005', now(), CURRENT_DATE - 6, (SELECT min(id) FROM person WHERE lower(full_name) = lower('Moussa DEMO (Lavage)')), 'A', 275.75, 'TOMMY',   'BLOC-C', 'FERME-DEMO', now(), 'LOT-DEMO-005')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
