@@ -10,6 +10,9 @@
  *     nameKey: 'machinery:name',            // translated module name
  *     items: [{ to, labelKey, icon, end }], // sidebar links of the module, `end` for its home
  *     shell: true,                          // optional: render the module inside AppLayout
+ *     sidebarFooter: LowStockNotifications, // optional: component rendered at the bottom of the
+ *                                           // sidebar, above the language switcher, while the
+ *                                           // module is the current one (shell modules only)
  *   }
  *
  * A module opts into the shared shell with `nav.shell = true` or `export const useAppShell = true`.

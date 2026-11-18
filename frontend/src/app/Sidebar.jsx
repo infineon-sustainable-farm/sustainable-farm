@@ -30,7 +30,7 @@ function isWithin(pathname, basePath) {
 /**
  * Global sidebar, machinery's rendering for every module: logo back to the launcher, one group
  * per integrated module (the current one expanded with its links, the others as a link to their
- * home), the language switcher at the bottom.
+ * home), the current module's `sidebarFooter` (if any) and the language switcher at the bottom.
  *
  * Under md it is a drawer behind a menu button, as the plants sidebar: overlay, closes on a link,
  * on Escape and on the overlay, focus moved into it on open and back to the button on close,
@@ -87,6 +87,7 @@ export default function Sidebar({ navs }) {
 
   const drawerHidden = !isDesktop && !open
   const ToggleIcon = open ? X : Menu
+  const ModuleFooter = activeNav?.sidebarFooter
 
   return (
     <div ref={containerRef} className="contents">
@@ -163,7 +164,14 @@ export default function Sidebar({ navs }) {
           })}
         </ul>
 
-        <LanguageSwitcher className="mt-auto pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]" />
+        <div className="mt-auto flex flex-col gap-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          {ModuleFooter && (
+            <div data-testid="sidebar-module-footer">
+              <ModuleFooter />
+            </div>
+          )}
+          <LanguageSwitcher />
+        </div>
       </nav>
     </div>
   )
