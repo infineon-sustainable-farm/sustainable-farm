@@ -2,9 +2,9 @@
   "name": "Machines",
   "nav": {
     "dashboard": "Tableau de bord",
-    "equipmentRegistry": "Registre des équipements",
+    "equipmentRegistry": "Équipements",
     "maintenance": "Maintenance",
-    "usageFuelLog": "Journal d’utilisation et de carburant",
+    "usageFuelLog": "Utilisation et carburant",
     "repairLog": "Journal des réparations",
     "operators": "Opérateurs",
     "spareParts": "Pièces détachées"

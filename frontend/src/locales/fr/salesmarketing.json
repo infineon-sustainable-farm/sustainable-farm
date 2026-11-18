@@ -2,7 +2,7 @@
   "name": "Ventes et marketing",
   "nav": {
     "dashboard": "Tableau de bord",
-    "forecasting": "Prévision de la demande",
+    "forecasting": "Prévisions de demande",
     "demandAlerts": "Alertes de demande",
     "reports": "Rapports de demande",
     "customers": "Clients",
@@ -125,7 +125,7 @@
       "activeCount": "{{number}} actives",
       "degraded": "Connexion dégradée",
       "operational": "Système opérationnel",
-      "revenue": "Potentiel de chiffre d’affaires",
+      "revenue": "Potentiel de revenus",
       "latestPrice": "Dernier prix : {{price}} EUR/kg",
       "noPricing": "Aucune donnée de prix chargée"
     },
@@ -452,7 +452,7 @@
     },
     "selectPlaceholder": "Choisir...",
     "saving": "Enregistrement...",
-    "saveChanges": "Enregistrer les modifications",
+    "saveChanges": "Enregistrer",
     "createReport": "Créer le rapport",
     "deleteTitle": "Supprimer le rapport ?",
     "deleteMessage": "Voulez-vous vraiment supprimer {{title}} ? Cette action est irréversible.",
@@ -680,7 +680,7 @@
       "paymentTerms": "Conditions de paiement",
       "select": "Choisir...",
       "saving": "Enregistrement...",
-      "saveChanges": "Enregistrer les modifications",
+      "saveChanges": "Enregistrer",
       "create": "Créer le client"
     },
     "contactForm": {
@@ -742,7 +742,7 @@
     "title": "Canaux de vente",
     "subtitle": "Indicateurs de performance en temps réel sur tous les réseaux de distribution.",
     "offline": "Mode hors ligne",
-    "liveSync": "Synchronisation en direct active",
+    "liveSync": "Synchro en direct active",
     "hideTargets": "Masquer les objectifs",
     "manageTargets": "Gérer les objectifs",
     "addTarget": "Ajouter un objectif",
@@ -814,7 +814,7 @@
       "revenuePlaceholder": "p. ex. 4500000"
     },
     "saving": "Enregistrement…",
-    "saveChanges": "Enregistrer les modifications",
+    "saveChanges": "Enregistrer",
     "createChannel": "Créer le canal",
     "createTarget": "Créer l’objectif",
     "deleting": "Suppression…",
@@ -892,7 +892,7 @@
     "proposed": "Prix proposé",
     "awaitingRecommendation": "Recommandation en attente",
     "applying": "Application…",
-    "apply": "Appliquer la nouvelle tarification",
+    "apply": "Appliquer les nouveaux prix",
     "none": "-",
     "price": "{{value}} €",
     "delta": "{{sign}}{{value}} ({{pct}} %)",
