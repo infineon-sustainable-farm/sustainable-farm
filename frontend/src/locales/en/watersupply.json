@@ -118,5 +118,215 @@
       "series": "Level (L)",
       "capacity": "Capacity"
     }
+  },
+  "dashboard": {
+    "title": "Water dashboard",
+    "subtitle": "Operational view: irrigation, tanks, quality and drought risk.",
+    "health": {
+      "checking": "Checking backend…",
+      "connected": "Backend connected",
+      "disconnected": "Backend disconnected"
+    },
+    "loading": "Loading dashboard…",
+    "loadErrorTitle": "Unable to load data",
+    "loadError": "Make sure the backend is running, then try again.",
+    "emptyTitle": "No data",
+    "empty": "Add data to visualize the dashboard.",
+    "kpis": {
+      "daily": "Daily consumption",
+      "monthly": "Monthly consumption",
+      "tankLevel": "Tank level",
+      "savings": "Water savings",
+      "irrigations": "Irrigations today",
+      "anomalies": "Anomalies",
+      "quality": "Water quality",
+      "sensors": "Sensors available"
+    },
+    "weather": {
+      "title": "Current weather",
+      "provider": "Open-Meteo",
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "wind": "Wind",
+      "condition": "Condition"
+    },
+    "recommendations": {
+      "loading": "Recommendations…",
+      "title": "Recommendations",
+      "note": "Priority-ordered",
+      "emptyTitle": "No recommendations",
+      "empty": "Nothing to display right now."
+    },
+    "priorities": {
+      "critical": "critical",
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "activity": {
+      "loading": "Activities…",
+      "title": "Recent activity",
+      "note": "History",
+      "emptyTitle": "No activity",
+      "empty": "Recorded consumptions will appear here."
+    },
+    "drought": {
+      "title": "Drought forecast",
+      "note": "Outlook"
+    },
+    "alerts": {
+      "loading": "Alerts…",
+      "title": "Recent alerts",
+      "note": "Unread",
+      "emptyTitle": "No alerts",
+      "empty": "Everything is nominal."
+    },
+    "actions": {
+      "title": "Actions",
+      "irrigation": "Manage irrigation",
+      "consumption": "View consumption",
+      "quality": "View water quality",
+      "outage": "Plan an outage",
+      "droughtPlan": "Drought plan",
+      "droughtPlanNotice": "See the Drought view for the plan.",
+      "carryOver": "Prepared carry-over plan",
+      "carryOverNotice": "Demo: report prepared."
+    },
+    "balance": {
+      "title": "Water balance",
+      "status": {
+        "deficit": "Deficit",
+        "unknown": "No tank capacity",
+        "balanced": "Balanced"
+      },
+      "rain": "Rain harvested this month",
+      "irrigation": "Irrigation this month",
+      "tanks": "In the tanks now",
+      "tanksDetail": "{{level}} of {{capacity}} ({{pct}})",
+      "forecast": "After the next 7 days of scheduled irrigation",
+      "forecastDetail": "{{planned}} planned, {{left}} left"
+    }
+  },
+  "drought": {
+    "title": "Drought alerts",
+    "subtitle": "Risk level based on reservoir levels, season and operational demand.",
+    "loadError": "Unable to load.",
+    "empty": "No prediction",
+    "levels": {
+      "normal": "Normal",
+      "vigilance": "Vigilance",
+      "alert": "Alert",
+      "critical": "Critical"
+    },
+    "stepsLabel": "Risk levels",
+    "gaugeTitle": "Current risk gauge",
+    "recommendationTitle": "Recommendation",
+    "reserveDays": "Reserve days",
+    "days": "{{value}} j",
+    "notAvailable": "n/d",
+    "averageConsumption": "Avg. consumption (7 d)",
+    "litersPerDay": "{{value}} L/j",
+    "reserve": "Reserve",
+    "reserveValue": "{{reserve}} / {{capacity}} L",
+    "defaultRecommendation": "Reserve water for priority crops.",
+    "prediction": "Prediction from {{date}} · confidence {{confidence}}",
+    "automationTitle": "Critical automation",
+    "ifCritical": "If critical",
+    "automationText": "Proposes postponing non-essential irrigation until the reservoir recovers.",
+    "preparePlan": "Prepare postponement plan",
+    "planPrepared": "Postponement plan prepared (demo)."
+  },
+  "notifications": {
+    "title": "Notification center",
+    "subtitle": "Operational alerts from quality, irrigation and storage checks.",
+    "listTitle": "Notifications",
+    "markAllRead": "Mark all as read",
+    "allMarkedRead": "Notifications marked as read",
+    "markRead": "Mark as read",
+    "markedRead": "Notification marked as read",
+    "deleted": "Notification deleted",
+    "actionFailed": "Action failed.",
+    "levelFilter": "Filter by level",
+    "allLevels": "All levels",
+    "search": "Search a notification…",
+    "loading": "Loading notifications...",
+    "loadError": "Unable to load.",
+    "emptyTitle": "No notifications",
+    "empty": "Alerts will appear here.",
+    "types": {
+      "critical": "critical",
+      "warning": "warning",
+      "info": "info",
+      "success": "success"
+    },
+    "deleteTitle": "Delete notification",
+    "deleteMessage": "This notification will be removed from the notification center."
+  },
+  "quality": {
+    "title": "Water quality",
+    "subtitle": "IoT probe measurements - automatic out-of-range alerts: pH 6-7.5 - turbidity < 5 NTU.",
+    "listTitle": "Measurement history",
+    "alertsCount": "{{count}} alert(s)",
+    "sourceFilter": "Filter by source",
+    "allSources": "All sources",
+    "search": "Search by date...",
+    "loading": "Loading measurements...",
+    "loadError": "Unable to load measurements.",
+    "emptyTitle": "No measurements",
+    "empty": "IoT probe measurements (pH, turbidity) will appear here as soon as they are reported.",
+    "columns": {
+      "date": "Date",
+      "source": "Source",
+      "ph": "pH",
+      "turbidity": "Turbidity",
+      "status": "Status"
+    },
+    "unknown": "-",
+    "ntu": "{{value}} NTU",
+    "alert": "Alert",
+    "compliant": "Compliant",
+    "thresholdsTitle": "Reference thresholds",
+    "compliantPh": "Compliant pH",
+    "phRange": "6.0 - 7.5",
+    "maxTurbidity": "Maximum turbidity",
+    "outOfRange": "Out of range",
+    "outOfRangeAction": "Alert + automatic notification",
+    "dataSourceTitle": "Data source",
+    "dataSourceText": "Measurements come from IoT probes installed on the sources. They are reported automatically via the ingestion endpoint - no manual entry."
+  },
+  "rainwater": {
+    "title": "Rainwater harvesting",
+    "subtitle": "Rainfall measured by IoT sensor - harvest volumes computed automatically.",
+    "period": "Period",
+    "periodValues": {
+      "all": "All history",
+      "week": "Last week",
+      "month": "Last month"
+    },
+    "totalCollected": "Total collected",
+    "coverage": "Coverage rate",
+    "coverageValue": "{{value}} %",
+    "tankTitle": "Tank level",
+    "noSource": "-",
+    "tankNote": "Level measured by IoT sensor - orange alert above 90 percent (SC-06).",
+    "harvestTitle": "Harvest per rain event",
+    "periodLabel": "Period",
+    "periods": {
+      "week": "Week",
+      "month": "Month",
+      "all": "All"
+    },
+    "sourceFilter": "Filter by source",
+    "allSources": "All sources",
+    "search": "Search by date...",
+    "loading": "Loading harvests...",
+    "loadError": "Unable to load harvests.",
+    "emptyTitle": "No harvest",
+    "empty": "Rainfall measured by the IoT rain gauge will appear here - volumes computed automatically.",
+    "series": "Collected volume (L)",
+    "columns": {
+      "date": "Date",
+      "volume": "Collected volume"
+    }
   }
 }
