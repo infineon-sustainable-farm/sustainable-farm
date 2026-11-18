@@ -123,7 +123,7 @@ class VisitorManagementEventsIntegrationTest {
         assertThat(announced.getGroupName()).isEqualTo(group);
         assertThat(announced.getExpectedAt()).isEqualTo(day.atTime(9, 0).toInstant(ZoneOffset.UTC));
         assertThat(announced.getConflict()).isFalse();
-        mockMvc.perform(get("/api/notifications"))
+        mockMvc.perform(get("/api/water-supply/notifications"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].title", hasItem("Visitor group near water facilities - " + group)));
 
@@ -168,7 +168,7 @@ class VisitorManagementEventsIntegrationTest {
         WaterVisitorEvent announced = visitorEventRepository.findByVisitId(visitId).orElseThrow();
         assertThat(announced.getGroupName()).isEqualTo(group);
         assertThat(announced.getExpectedAt()).isEqualTo(day.atTime(9, 0).toInstant(ZoneOffset.UTC));
-        mockMvc.perform(get("/api/notifications"))
+        mockMvc.perform(get("/api/water-supply/notifications"))
                 .andExpect(jsonPath("$[*].title", hasItem("Visitor group near water facilities - " + group)));
 
         mockMvc.perform(post("/api/visitor-management/bookings/{id}/cancel", bookingId)).andExpect(status().isOk());

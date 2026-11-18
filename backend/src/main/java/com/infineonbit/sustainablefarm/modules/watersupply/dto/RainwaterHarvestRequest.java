@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Rainwater harvest sent by a client (module 5.1).

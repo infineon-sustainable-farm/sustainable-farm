@@ -1,11 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
@@ -21,10 +22,12 @@ import org.hibernate.annotations.Check;
 @Check(name = "chk_water_quotas_target_type", constraints = "target_type IN ('farm', 'zone')")
 @Check(name = "chk_water_quotas_positive", constraints = "quota_liters > 0")
 public class WaterQuota extends BaseEntity {
-    @NotBlank
+    @NotNull
+    @Convert(converter = QuotaTargetType.Converter.class)
     @Column(name = "target_type", nullable = false, length = 20)
-    private String targetType;
+    private QuotaTargetType targetType;
 
+    /** Id of the farm or zone named by {@link #targetType}: polymorphic, so no foreign key; checked on write. */
     @NotNull
     @Column(name = "target_id", nullable = false)
     private Long targetId;
@@ -40,11 +43,11 @@ public class WaterQuota extends BaseEntity {
     @Column(length = 120)
     private String label;
 
-    public String getTargetType() {
+    public QuotaTargetType getTargetType() {
         return targetType;
     }
 
-    public void setTargetType(String targetType) {
+    public void setTargetType(QuotaTargetType targetType) {
         this.targetType = targetType;
     }
 

@@ -1,6 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -30,8 +32,9 @@ public class IrrigationSchedule extends BaseEntity {
     @Column(nullable = false)
     private Double waterQuantityLiters;
 
+    @Convert(converter = IrrigationStatus.Converter.class)
     @Column(length = 20)
-    private String status = "scheduled";
+    private IrrigationStatus status = IrrigationStatus.SCHEDULED;
 
     @NotNull
     @Column(nullable = false)
@@ -44,9 +47,10 @@ public class IrrigationSchedule extends BaseEntity {
      * Origin of the schedule: {@code manual} (entered by a user) or {@code auto}
      * (created by the soil moisture rule, see IrrigationAutomationService).
      */
+    @Convert(converter = IrrigationTrigger.Converter.class)
     @ColumnDefault("'manual'")
     @Column(name = "trigger_source", nullable = false, length = 20)
-    private String triggerSource = "manual";
+    private IrrigationTrigger triggerSource = IrrigationTrigger.MANUAL;
 
     public Long getZoneId() {
         return zoneId;
@@ -80,11 +84,11 @@ public class IrrigationSchedule extends BaseEntity {
         this.waterQuantityLiters = waterQuantityLiters;
     }
 
-    public String getStatus() {
+    public IrrigationStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(IrrigationStatus status) {
         this.status = status;
     }
 
@@ -104,11 +108,11 @@ public class IrrigationSchedule extends BaseEntity {
         this.postponeReason = postponeReason;
     }
 
-    public String getTriggerSource() {
+    public IrrigationTrigger getTriggerSource() {
         return triggerSource;
     }
 
-    public void setTriggerSource(String triggerSource) {
+    public void setTriggerSource(IrrigationTrigger triggerSource) {
         this.triggerSource = triggerSource;
     }
 }

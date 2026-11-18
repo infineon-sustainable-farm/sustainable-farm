@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/api/water-supply/dashboard")
 public class WaterDashboardController {
     private final WaterConsumptionRepository waterConsumptionRepository;
     private final WaterSourceRepository waterSourceRepository;

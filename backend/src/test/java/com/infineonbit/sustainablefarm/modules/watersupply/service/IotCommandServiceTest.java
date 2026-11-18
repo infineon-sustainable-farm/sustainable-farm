@@ -20,7 +20,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.IotCommand
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IotDeviceRepository;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -83,7 +82,7 @@ class IotCommandServiceTest {
     void anOpeningIsRefusedDuringAWaterUnavailabilityButAClosingIsNot() {
         stubDeviceSeen(Instant.now());
         when(unavailabilityService.activeAt(any())).thenReturn(List.of(new WaterUnavailabilityResponse(
-                UUID.randomUUID(), "farm", 1L, Instant.now(), Instant.now().plusSeconds(60), null, "planned", null)));
+                1L, "farm", 1L, Instant.now(), Instant.now().plusSeconds(60), null, "planned", null)));
         when(commandRepository.save(any(IotCommand.class))).thenAnswer(call -> call.getArgument(0));
 
         assertThrows(ResponseStatusException.class, () -> service().command(DEVICE, request("OPEN_VALVE", 10)));
@@ -120,8 +119,8 @@ class IotCommandServiceTest {
 
         // Saved once as queued before dispatch, then again with its final status.
         assertEquals(2, journal.size());
-        assertEquals("rejected", journal.get(1).getStatus());
-        assertEquals("OPEN_VALVE", journal.get(1).getCommandType());
+        assertEquals("rejected", journal.get(1).getStatus().value());
+        assertEquals("OPEN_VALVE", journal.get(1).getCommandType().name());
     }
 
     private void stubDeviceSeen(Instant lastSeen) {

@@ -4,13 +4,12 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarve
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface RainwaterHarvestRepository extends JpaRepository<RainwaterHarvest, UUID> {
+public interface RainwaterHarvestRepository extends JpaRepository<RainwaterHarvest, Long> {
     Page<RainwaterHarvest> findBySourceId(Long sourceId, Pageable pageable);
 
     /**

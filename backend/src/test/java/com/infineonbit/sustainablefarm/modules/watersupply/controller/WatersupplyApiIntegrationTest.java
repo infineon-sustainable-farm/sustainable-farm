@@ -39,14 +39,14 @@ class WatersupplyApiIntegrationTest {
 
     @Test
     void healthEndpointReturnsStableContract() throws Exception {
-        mockMvc.perform(get("/api/health"))
+        mockMvc.perform(get("/api/water-supply/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));
     }
 
     @Test
     void farmsPaginationReturnsPageMetadata() throws Exception {
-        mockMvc.perform(get("/api/farms").param("page", "0").param("size", "5"))
+        mockMvc.perform(get("/api/farm/farms").param("page", "0").param("size", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.page").value(0))
@@ -57,7 +57,7 @@ class WatersupplyApiIntegrationTest {
 
     @Test
     void missingFarmReturnsNormalizedNotFoundError() throws Exception {
-        mockMvc.perform(get("/api/farms/{farmId}", 999999L))
+        mockMvc.perform(get("/api/farm/farms/{farmId}", 999999L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
@@ -67,13 +67,13 @@ class WatersupplyApiIntegrationTest {
         @Test
         @Transactional
         void farmFieldZoneCrudPreservesParentRelations() throws Exception {
-        MvcResult farmResult = mockMvc.perform(get("/api/health"))
+        MvcResult farmResult = mockMvc.perform(get("/api/water-supply/health"))
             .andExpect(status().isOk())
             .andReturn();
         org.junit.jupiter.api.Assertions.assertNotNull(farmResult.getResponse().getContentAsString());
 
         MvcResult createdFarm = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                .post("/api/farms")
+                .post("/api/farm/farms")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"name":"Integration Farm","description":"API test","areaHectares":12.5}
@@ -85,7 +85,7 @@ class WatersupplyApiIntegrationTest {
         String farmId = String.valueOf((Object) JsonPath.read(createdFarm.getResponse().getContentAsString(), "$.id"));
 
         MvcResult createdField = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                .post("/api/fields")
+                .post("/api/farm/fields")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"farmId":"%s","name":"Integration Field","areaHectares":2.5}
@@ -96,7 +96,7 @@ class WatersupplyApiIntegrationTest {
         String fieldId = String.valueOf((Object) JsonPath.read(createdField.getResponse().getContentAsString(), "$.id"));
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                .post("/api/zones")
+                .post("/api/farm/zones")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"fieldId":"%s","name":"Integration Zone","areaHectares":1.0}
@@ -108,7 +108,7 @@ class WatersupplyApiIntegrationTest {
         @Test
         void creatingFieldWithUnknownFarmReturnsNotFound() throws Exception {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                .post("/api/fields")
+                .post("/api/farm/fields")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"farmId":"999999","name":"Invalid Field","areaHectares":1.0}
@@ -123,7 +123,7 @@ class WatersupplyApiIntegrationTest {
         String farmId = createFarm("Water Farm");
         String otherFarmId = createFarm("Other Water Farm");
 
-        MvcResult createdSource = mockMvc.perform(post("/api/water/sources")
+        MvcResult createdSource = mockMvc.perform(post("/api/water-supply/sources")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"farmId":"%s","name":"Integration Tank","type":"tank","capacityLiters":10000,"currentLevelLiters":7500}
@@ -133,7 +133,7 @@ class WatersupplyApiIntegrationTest {
             .andReturn();
         String sourceId = String.valueOf((Object) JsonPath.read(createdSource.getResponse().getContentAsString(), "$.id"));
 
-        MvcResult consumption = mockMvc.perform(post("/api/water/consumption")
+        MvcResult consumption = mockMvc.perform(post("/api/water-supply/consumption")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"farmId":"%s","sourceId":"%s","consumptionLiters":450,"consumptionDate":"2026-09-16T09:00:00Z"}
@@ -143,7 +143,7 @@ class WatersupplyApiIntegrationTest {
             .andReturn();
         String consumptionId = String.valueOf((Object) JsonPath.read(consumption.getResponse().getContentAsString(), "$.id"));
 
-        mockMvc.perform(put("/api/water/consumption/{consumptionId}", consumptionId)
+        mockMvc.perform(put("/api/water-supply/consumption/{consumptionId}", consumptionId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"consumptionLiters":500}
@@ -151,7 +151,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.consumptionLiters").value(500.0));
 
-        mockMvc.perform(post("/api/water/consumption")
+        mockMvc.perform(post("/api/water-supply/consumption")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"farmId":"%s","sourceId":"%s","consumptionLiters":250,"consumptionDate":"2026-09-16T10:00:00Z"}
@@ -159,7 +159,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
-        mockMvc.perform(delete("/api/water/consumption/{consumptionId}", consumptionId))
+        mockMvc.perform(delete("/api/water-supply/consumption/{consumptionId}", consumptionId))
             .andExpect(status().isNoContent());
         }
 
@@ -171,7 +171,7 @@ class WatersupplyApiIntegrationTest {
         String fieldId = createField(farmId, "Irrigation Field");
         String zoneId = createZone(fieldId, "Irrigation Zone");
 
-        MvcResult schedule = mockMvc.perform(post("/api/irrigations")
+        MvcResult schedule = mockMvc.perform(post("/api/water-supply/irrigations")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"zoneId":"%s","startTime":"2026-09-16T12:00:00Z","durationMinutes":30,"waterQuantityLiters":900,"createdBy":%d}
@@ -181,12 +181,12 @@ class WatersupplyApiIntegrationTest {
             .andReturn();
         String scheduleId = String.valueOf((Object) JsonPath.read(schedule.getResponse().getContentAsString(), "$.id"));
 
-        mockMvc.perform(post("/api/irrigations/{scheduleId}/start", scheduleId))
+        mockMvc.perform(post("/api/water-supply/irrigations/{scheduleId}/start", scheduleId))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.scheduleId").value(scheduleId))
             .andExpect(jsonPath("$.status").value("started"));
 
-        mockMvc.perform(post("/api/irrigations/{scheduleId}/stop", scheduleId))
+        mockMvc.perform(post("/api/water-supply/irrigations/{scheduleId}/stop", scheduleId))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.scheduleId").value(scheduleId))
             .andExpect(jsonPath("$.status").value("completed"))
@@ -202,7 +202,7 @@ class WatersupplyApiIntegrationTest {
         org.junit.jupiter.api.Assertions.assertEquals(iot.id(), systemUsers.iotSystemUserId());
         org.junit.jupiter.api.Assertions.assertFalse(iot.active());
 
-        MvcResult result = mockMvc.perform(post("/api/notifications")
+        MvcResult result = mockMvc.perform(post("/api/water-supply/notifications")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"userId":%d,"title":"Sensor alert","message":"Integration test","type":"warning"}
@@ -212,7 +212,7 @@ class WatersupplyApiIntegrationTest {
             .andReturn();
 
         String notificationId = String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
-        mockMvc.perform(delete("/api/notifications/{notificationId}", notificationId))
+        mockMvc.perform(delete("/api/water-supply/notifications/{notificationId}", notificationId))
             .andExpect(status().isNoContent());
         }
 
@@ -225,14 +225,14 @@ class WatersupplyApiIntegrationTest {
 
         @Test
         void unsupportedHttpMethodReturnsMethodNotAllowed() throws Exception {
-        mockMvc.perform(patch("/api/farms"))
+        mockMvc.perform(patch("/api/farm/farms"))
             .andExpect(status().isMethodNotAllowed())
             .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
         }
 
         @Test
         void telemetryWithoutDeviceIdIsRejectedWithoutFailingTheRequest() throws Exception {
-        mockMvc.perform(post("/api/iot/telemetry")
+        mockMvc.perform(post("/api/water-supply/iot/telemetry")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
             .andExpect(status().isAccepted())
@@ -247,7 +247,7 @@ class WatersupplyApiIntegrationTest {
         String farmId = createFarm("Telemetry Batch Farm");
         String sourceId = createSource(farmId, "Telemetry Batch Tank");
         try {
-            mockMvc.perform(post("/api/iot/telemetry")
+            mockMvc.perform(post("/api/water-supply/iot/telemetry")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
                         [{},
@@ -258,8 +258,8 @@ class WatersupplyApiIntegrationTest {
                 .andExpect(jsonPath("$[1].status").value("processed"))
                 .andExpect(jsonPath("$[1].sourceId").value(sourceId));
         } finally {
-            mockMvc.perform(delete("/api/water/sources/{sourceId}", sourceId));
-            mockMvc.perform(delete("/api/farms/{farmId}", farmId));
+            mockMvc.perform(delete("/api/water-supply/sources/{sourceId}", sourceId));
+            mockMvc.perform(delete("/api/farm/farms/{farmId}", farmId));
         }
         }
 
@@ -270,7 +270,7 @@ class WatersupplyApiIntegrationTest {
         String fieldId = createField(farmId, "Block Mapping Field");
         String zoneId = createZone(fieldId, "Block Mapping Zone");
 
-        MvcResult created = mockMvc.perform(post("/api/water/zone-block-mappings")
+        MvcResult created = mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"zoneId":"%s","blockCode":"a","farmId":"%s"}
@@ -282,17 +282,17 @@ class WatersupplyApiIntegrationTest {
             .andReturn();
         String mappingId = String.valueOf((Object) JsonPath.read(created.getResponse().getContentAsString(), "$.id"));
 
-        mockMvc.perform(get("/api/water/zone-block-mappings")
+        mockMvc.perform(get("/api/farm/zone-block-mappings")
                 .param("farmId", farmId)
                 .param("blockCode", "A"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(mappingId));
 
-        mockMvc.perform(get("/api/water/zone-block-mappings/{mappingId}", mappingId))
+        mockMvc.perform(get("/api/farm/zone-block-mappings/{mappingId}", mappingId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.zoneId").value(zoneId));
 
-        mockMvc.perform(put("/api/water/zone-block-mappings/{mappingId}", mappingId)
+        mockMvc.perform(put("/api/farm/zone-block-mappings/{mappingId}", mappingId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"blockCode":"B"}
@@ -300,10 +300,10 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.blockCode").value("B"));
 
-        mockMvc.perform(delete("/api/water/zone-block-mappings/{mappingId}", mappingId))
+        mockMvc.perform(delete("/api/farm/zone-block-mappings/{mappingId}", mappingId))
             .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/water/zone-block-mappings/{mappingId}", mappingId))
+        mockMvc.perform(get("/api/farm/zone-block-mappings/{mappingId}", mappingId))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("NOT_FOUND"));
         }
@@ -316,7 +316,7 @@ class WatersupplyApiIntegrationTest {
         String zoneId = createZone(fieldId, "Invalid Mapping Zone");
         String otherFarmId = createFarm("Other Mapping Farm");
 
-        mockMvc.perform(post("/api/water/zone-block-mappings")
+        mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"zoneId":"%s","blockCode":"C","farmId":"%s"}
@@ -324,7 +324,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
-        mockMvc.perform(post("/api/water/zone-block-mappings")
+        mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"zoneId":"999999","blockCode":"C","farmId":"%s"}
@@ -332,14 +332,14 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("NOT_FOUND"));
 
-        mockMvc.perform(post("/api/water/zone-block-mappings")
+        mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"zoneId":"%s","blockCode":"C","farmId":"%s"}
                     """.formatted(zoneId, farmId)))
             .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/water/zone-block-mappings")
+        mockMvc.perform(post("/api/farm/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"zoneId":"%s","blockCode":"C","farmId":"%s"}
@@ -349,7 +349,7 @@ class WatersupplyApiIntegrationTest {
         }
 
         private String createSource(String farmId, String name) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/water/sources")
+        MvcResult result = mockMvc.perform(post("/api/water-supply/sources")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"farmId":"%s","name":"%s","type":"tank","capacityLiters":5000,"currentLevelLiters":2500}
@@ -360,7 +360,7 @@ class WatersupplyApiIntegrationTest {
         }
 
         private String createFarm(String name) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/farms")
+        MvcResult result = mockMvc.perform(post("/api/farm/farms")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"name":"%s","areaHectares":12.5}
@@ -371,7 +371,7 @@ class WatersupplyApiIntegrationTest {
         }
 
         private String createField(String farmId, String name) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/fields")
+        MvcResult result = mockMvc.perform(post("/api/farm/fields")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"farmId":"%s","name":"%s","areaHectares":3.5}
@@ -382,7 +382,7 @@ class WatersupplyApiIntegrationTest {
         }
 
         private String createZone(String fieldId, String name) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/zones")
+        MvcResult result = mockMvc.perform(post("/api/farm/zones")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"fieldId":"%s","name":"%s","areaHectares":1.5}

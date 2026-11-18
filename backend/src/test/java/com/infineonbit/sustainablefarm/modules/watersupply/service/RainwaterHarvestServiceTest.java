@@ -15,7 +15,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundExc
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.RainwaterHarvestRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -43,7 +42,7 @@ class RainwaterHarvestServiceTest {
     @Test
     void updateRecalculatesUsingExistingValuesWhenPayloadIsPartial() {
         Long sourceId = 140L;
-        UUID harvestId = UUID.randomUUID();
+        Long harvestId = 41L;
         RainwaterHarvest existing = harvest(sourceId, 10.0, 20.0, 0.5);
         existing.setHarvestedLiters(100.0);
         when(harvestRepository.findById(harvestId)).thenReturn(Optional.of(existing));

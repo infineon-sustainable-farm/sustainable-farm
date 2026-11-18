@@ -1,13 +1,21 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "water_consumption", indexes = {
@@ -24,8 +32,14 @@ public class WaterConsumption extends BaseEntity {
     private Long farmId;
 
     @NotNull
-    @Column(nullable = false)
+    @Column(name = "source_id", nullable = false)
     private Long sourceId;
+
+    /** Read-only link that declares the foreign key fk_water_consumption_source; the code writes the source_id column. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_water_consumption_source"))
+    private WaterSource source;
 
     @NotNull
     @Column(nullable = false)
@@ -35,7 +49,15 @@ public class WaterConsumption extends BaseEntity {
     @Column(nullable = false)
     private Instant consumptionDate;
 
-    private UUID irrigationId;
+    @Column(name = "irrigation_id")
+    private Long irrigationId;
+
+    /** Read-only link that declares the foreign key fk_water_consumption_irrigation; the code writes the irrigation_id column. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @JoinColumn(name = "irrigation_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_water_consumption_irrigation"))
+    private IrrigationSchedule irrigation;
 
     /**
      * Zone concerned by the measurement, when the flow meter is installed on a
@@ -57,8 +79,9 @@ public class WaterConsumption extends BaseEntity {
     @Column(name = "processing_batch_id", length = ProcessingBatchLookup.KEY_LENGTH)
     private String processingBatchId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "activity", length = 32)
-    private String activity;
+    private ConsumptionActivity activity;
 
     public Long getFarmId() {
         return farmId;
@@ -92,11 +115,11 @@ public class WaterConsumption extends BaseEntity {
         this.consumptionDate = consumptionDate;
     }
 
-    public UUID getIrrigationId() {
+    public Long getIrrigationId() {
         return irrigationId;
     }
 
-    public void setIrrigationId(UUID irrigationId) {
+    public void setIrrigationId(Long irrigationId) {
         this.irrigationId = irrigationId;
     }
 
@@ -124,11 +147,11 @@ public class WaterConsumption extends BaseEntity {
         this.processingBatchId = processingBatchId;
     }
 
-    public String getActivity() {
+    public ConsumptionActivity getActivity() {
         return activity;
     }
 
-    public void setActivity(String activity) {
+    public void setActivity(ConsumptionActivity activity) {
         this.activity = activity;
     }
 }

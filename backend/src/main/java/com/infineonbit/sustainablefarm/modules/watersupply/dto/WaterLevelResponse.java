@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Level of a water source, read in real time for the interface and the other modules

@@ -31,7 +31,7 @@ public class MiscController {
         this.dataSource = dataSource;
     }
 
-    @GetMapping("/api/health")
+    @GetMapping("/api/water-supply/health")
     public ResponseEntity<Map<String, Object>> health() {
         boolean databaseUp = databaseIsUp();
         Map<String, Object> body = new LinkedHashMap<>();

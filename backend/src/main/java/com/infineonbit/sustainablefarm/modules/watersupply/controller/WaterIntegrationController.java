@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Device commands are in {@code iot.IotCommandController}.
  */
 @RestController
-@RequestMapping("/api/water")
+@RequestMapping("/api/water-supply")
 @Tag(name = "Water Supply - Integrations", description = "Read models and events for Plants, Visitor Management and Product Transformation")
 public class WaterIntegrationController {
     private final PlantsIntegrationService plantsService;
@@ -137,19 +136,19 @@ public class WaterIntegrationController {
     }
 
     @GetMapping("/outages/{outageId}")
-    public WaterUnavailabilityResponse outage(@PathVariable UUID outageId) {
+    public WaterUnavailabilityResponse outage(@PathVariable Long outageId) {
         return unavailabilityService.get(outageId);
     }
 
     @PutMapping("/outages/{outageId}")
-    public WaterUnavailabilityResponse updateOutage(@PathVariable UUID outageId,
+    public WaterUnavailabilityResponse updateOutage(@PathVariable Long outageId,
                                                     @Valid @RequestBody WaterUnavailabilityRequest request) {
         return unavailabilityService.update(outageId, request);
     }
 
     @DeleteMapping("/outages/{outageId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteOutage(@PathVariable UUID outageId) {
+    public void deleteOutage(@PathVariable Long outageId) {
         unavailabilityService.delete(outageId);
     }
 
