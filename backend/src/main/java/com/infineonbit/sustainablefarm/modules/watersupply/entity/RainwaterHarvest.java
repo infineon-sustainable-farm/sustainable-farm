@@ -7,7 +7,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "rainwater_harvests", indexes = {
@@ -17,7 +16,7 @@ import java.util.UUID;
 public class RainwaterHarvest extends BaseEntity {
     @NotNull
     @Column(nullable = false)
-    private UUID sourceId;
+    private Long sourceId;
 
     @NotNull
     @Column(name = "catchment_area_m2", nullable = false)
@@ -45,11 +44,11 @@ public class RainwaterHarvest extends BaseEntity {
         }
     }
 
-    public UUID getSourceId() {
+    public Long getSourceId() {
         return sourceId;
     }
 
-    public void setSourceId(UUID sourceId) {
+    public void setSourceId(Long sourceId) {
         this.sourceId = sourceId;
     }
 

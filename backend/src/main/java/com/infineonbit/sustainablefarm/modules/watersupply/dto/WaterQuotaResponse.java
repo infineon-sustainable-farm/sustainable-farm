@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * View of a monthly quota as exposed by the API.
  */
-public record WaterQuotaResponse(UUID id, String targetType, UUID targetId, LocalDate quotaMonth,
+public record WaterQuotaResponse(UUID id, String targetType, Long targetId, LocalDate quotaMonth,
                                  Double quotaLiters, String label) {
     public static WaterQuotaResponse from(WaterQuota quota) {
         return new WaterQuotaResponse(quota.getId(), quota.getTargetType(), quota.getTargetId(),

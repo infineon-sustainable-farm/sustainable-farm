@@ -8,7 +8,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSafetyBri
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterVisitorEvent;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ConsumptionCriteria;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSafetyBriefingRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
@@ -48,7 +48,7 @@ public class VisitorIntegrationService {
     private final WaterSafetyBriefingRepository safetyRepository;
     private final WaterConsumptionRepository consumptionRepository;
     private final WaterSourceRepository sourceRepository;
-    private final FieldZoneRepository zoneRepository;
+    private final FarmDirectory farmDirectory;
     private final WaterService waterService;
     private final IrrigationService irrigationService;
     private final WaterEconomyService economyService;
@@ -60,7 +60,7 @@ public class VisitorIntegrationService {
                                      WaterSafetyBriefingRepository safetyRepository,
                                      WaterConsumptionRepository consumptionRepository,
                                      WaterSourceRepository sourceRepository,
-                                     FieldZoneRepository zoneRepository,
+                                     FarmDirectory farmDirectory,
                                      WaterService waterService,
                                      IrrigationService irrigationService,
                                      WaterEconomyService economyService,
@@ -71,7 +71,7 @@ public class VisitorIntegrationService {
         this.safetyRepository = safetyRepository;
         this.consumptionRepository = consumptionRepository;
         this.sourceRepository = sourceRepository;
-        this.zoneRepository = zoneRepository;
+        this.farmDirectory = farmDirectory;
         this.waterService = waterService;
         this.irrigationService = irrigationService;
         this.economyService = economyService;
@@ -85,11 +85,11 @@ public class VisitorIntegrationService {
      * {@code app.water.visitor.live-window-minutes}), for a source and/or a zone or the whole site.
      * "Live" is bounded by the sensors' sending period: no streaming, the client polls.
      */
-    public Map<String, Object> liveConsumption(UUID sourceId, UUID zoneId, Integer windowMinutes) {
+    public Map<String, Object> liveConsumption(Long sourceId, Long zoneId, Integer windowMinutes) {
         if (sourceId != null && !sourceRepository.existsById(sourceId)) {
             throw new NotFoundException("WaterSource");
         }
-        if (zoneId != null && !zoneRepository.existsById(zoneId)) {
+        if (zoneId != null && !farmDirectory.zoneExists(zoneId)) {
             throw new NotFoundException("Zone");
         }
         int window = windowMinutes == null ? properties.visitorLiveWindowMinutes
@@ -111,7 +111,7 @@ public class VisitorIntegrationService {
     }
 
     /** Everything a visitor screen shows, in one call (V1 + V2 + V3 + V4 + V6). */
-    public Map<String, Object> summary(UUID sourceId, UUID zoneId) {
+    public Map<String, Object> summary(Long sourceId, Long zoneId) {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("sourceLevel", sourceId == null ? null : waterService.sourceLevel(sourceId));
         response.put("waterSavingsPercentage", savingsPercentage());
@@ -129,8 +129,8 @@ public class VisitorIntegrationService {
     @Transactional
     public Map<String, Object> visitorEvent(VisitorEventRequest request) {
         String visitId = request.visitId().trim();
-        List<UUID> zones = request.zones() == null ? List.of() : request.zones().stream().distinct().toList();
-        List<UUID> conflictingZones = zones.stream()
+        List<Long> zones = request.zones() == null ? List.of() : request.zones().stream().distinct().toList();
+        List<Long> conflictingZones = zones.stream()
                 .filter(zone -> unavailabilityService.isZoneUnavailable(zone, request.expectedAt()))
                 .toList();
 
@@ -139,7 +139,7 @@ public class VisitorIntegrationService {
         event.setVisitId(visitId);
         event.setGroupName(request.groupName());
         event.setExpectedAt(request.expectedAt());
-        event.setZones(zones.stream().map(UUID::toString).collect(Collectors.joining(LIST_SEPARATOR)));
+        event.setZones(zones.stream().map(String::valueOf).collect(Collectors.joining(LIST_SEPARATOR)));
         event.setConflict(!conflictingZones.isEmpty());
         WaterVisitorEvent saved = visitorEventRepository.save(event);
 

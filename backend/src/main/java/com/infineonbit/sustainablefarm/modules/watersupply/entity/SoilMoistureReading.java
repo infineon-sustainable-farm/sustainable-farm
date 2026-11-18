@@ -6,7 +6,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 import org.hibernate.annotations.ColumnDefault;
 
 /**
@@ -20,7 +19,7 @@ public class SoilMoistureReading extends BaseEntity {
 
     @NotNull
     @Column(name = "zone_id", nullable = false)
-    private UUID zoneId;
+    private Long zoneId;
 
     /** Measurement depth (cm). Default value 10 cm when not specified. */
     @ColumnDefault("10")
@@ -35,11 +34,11 @@ public class SoilMoistureReading extends BaseEntity {
     @Column(name = "measured_at", nullable = false)
     private Instant measuredAt;
 
-    public UUID getZoneId() {
+    public Long getZoneId() {
         return zoneId;
     }
 
-    public void setZoneId(UUID zoneId) {
+    public void setZoneId(Long zoneId) {
         this.zoneId = zoneId;
     }
 

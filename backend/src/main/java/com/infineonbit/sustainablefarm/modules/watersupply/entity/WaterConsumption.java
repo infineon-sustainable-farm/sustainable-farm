@@ -18,12 +18,12 @@ import java.util.UUID;
 })
 public class WaterConsumption extends BaseEntity {
     @NotNull
-    @Column(nullable = false)
-    private UUID farmId;
+    @Column(name = "farm_id", nullable = false)
+    private Long farmId;
 
     @NotNull
     @Column(nullable = false)
-    private UUID sourceId;
+    private Long sourceId;
 
     @NotNull
     @Column(nullable = false)
@@ -40,7 +40,8 @@ public class WaterConsumption extends BaseEntity {
      * specific zone: this link allows comparing the actually measured volume to the theoretical
      * volume of the drip network (clogging / leak detection).
      */
-    private UUID zoneId;
+    @Column(name = "zone_id")
+    private Long zoneId;
 
     @Column(name = "lot_id", length = 128)
     private String lotId;
@@ -48,19 +49,19 @@ public class WaterConsumption extends BaseEntity {
     @Column(name = "activity", length = 32)
     private String activity;
 
-    public UUID getFarmId() {
+    public Long getFarmId() {
         return farmId;
     }
 
-    public void setFarmId(UUID farmId) {
+    public void setFarmId(Long farmId) {
         this.farmId = farmId;
     }
 
-    public UUID getSourceId() {
+    public Long getSourceId() {
         return sourceId;
     }
 
-    public void setSourceId(UUID sourceId) {
+    public void setSourceId(Long sourceId) {
         this.sourceId = sourceId;
     }
 
@@ -88,11 +89,11 @@ public class WaterConsumption extends BaseEntity {
         this.irrigationId = irrigationId;
     }
 
-    public UUID getZoneId() {
+    public Long getZoneId() {
         return zoneId;
     }
 
-    public void setZoneId(UUID zoneId) {
+    public void setZoneId(Long zoneId) {
         this.zoneId = zoneId;
     }
 

@@ -53,7 +53,7 @@ class WatersupplyApiIntegrationTest {
 
     @Test
     void missingFarmReturnsNormalizedNotFoundError() throws Exception {
-        mockMvc.perform(get("/api/farms/{farmId}", UUID.randomUUID()))
+        mockMvc.perform(get("/api/farms/{farmId}", 999999L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
@@ -78,7 +78,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.name").value("Integration Farm"))
             .andReturn();
-        String farmId = JsonPath.read(createdFarm.getResponse().getContentAsString(), "$.id");
+        String farmId = String.valueOf((Object) JsonPath.read(createdFarm.getResponse().getContentAsString(), "$.id"));
 
         MvcResult createdField = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
                 .post("/api/fields")
@@ -89,7 +89,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.farmId").value(farmId))
             .andReturn();
-        String fieldId = JsonPath.read(createdField.getResponse().getContentAsString(), "$.id");
+        String fieldId = String.valueOf((Object) JsonPath.read(createdField.getResponse().getContentAsString(), "$.id"));
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
                 .post("/api/zones")
@@ -107,7 +107,7 @@ class WatersupplyApiIntegrationTest {
                 .post("/api/fields")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"farmId":"00000000-0000-0000-0000-000000000000","name":"Invalid Field","areaHectares":1.0}
+                    {"farmId":"999999","name":"Invalid Field","areaHectares":1.0}
                     """))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("NOT_FOUND"));
@@ -127,7 +127,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.farmId").value(farmId))
             .andReturn();
-        String sourceId = JsonPath.read(createdSource.getResponse().getContentAsString(), "$.id");
+        String sourceId = String.valueOf((Object) JsonPath.read(createdSource.getResponse().getContentAsString(), "$.id"));
 
         MvcResult consumption = mockMvc.perform(post("/api/water/consumption")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -137,7 +137,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.sourceId").value(sourceId))
             .andReturn();
-        String consumptionId = JsonPath.read(consumption.getResponse().getContentAsString(), "$.id");
+        String consumptionId = String.valueOf((Object) JsonPath.read(consumption.getResponse().getContentAsString(), "$.id"));
 
         mockMvc.perform(put("/api/water/consumption/{consumptionId}", consumptionId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -175,7 +175,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.zoneId").value(zoneId))
             .andReturn();
-        String scheduleId = JsonPath.read(schedule.getResponse().getContentAsString(), "$.id");
+        String scheduleId = String.valueOf((Object) JsonPath.read(schedule.getResponse().getContentAsString(), "$.id"));
 
         mockMvc.perform(post("/api/irrigations/{scheduleId}/start", scheduleId))
             .andExpect(status().isCreated())
@@ -206,7 +206,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(jsonPath("$.userId").value(SystemUsers.IOT_SYSTEM_USER_ID.toString()))
             .andReturn();
 
-        String notificationId = JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        String notificationId = String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
         mockMvc.perform(delete("/api/notifications/{notificationId}", notificationId))
             .andExpect(status().isNoContent());
         }
@@ -275,7 +275,7 @@ class WatersupplyApiIntegrationTest {
             .andExpect(jsonPath("$.blockCode").value("A"))
             .andExpect(jsonPath("$.farmId").value(farmId))
             .andReturn();
-        String mappingId = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
+        String mappingId = String.valueOf((Object) JsonPath.read(created.getResponse().getContentAsString(), "$.id"));
 
         mockMvc.perform(get("/api/water/zone-block-mappings")
                 .param("farmId", farmId)
@@ -322,7 +322,7 @@ class WatersupplyApiIntegrationTest {
         mockMvc.perform(post("/api/water/zone-block-mappings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"zoneId":"00000000-0000-0000-0000-000000000000","blockCode":"C","farmId":"%s"}
+                    {"zoneId":"999999","blockCode":"C","farmId":"%s"}
                     """.formatted(farmId)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("NOT_FOUND"));
@@ -351,7 +351,7 @@ class WatersupplyApiIntegrationTest {
                     """.formatted(farmId, name)))
             .andExpect(status().isCreated())
             .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
         }
 
         private String createFarm(String name) throws Exception {
@@ -362,7 +362,7 @@ class WatersupplyApiIntegrationTest {
                     """.formatted(name)))
             .andExpect(status().isCreated())
             .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
         }
 
         private String createField(String farmId, String name) throws Exception {
@@ -373,7 +373,7 @@ class WatersupplyApiIntegrationTest {
                     """.formatted(farmId, name)))
             .andExpect(status().isCreated())
             .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
         }
 
         private String createZone(String fieldId, String name) throws Exception {
@@ -384,7 +384,7 @@ class WatersupplyApiIntegrationTest {
                     """.formatted(fieldId, name)))
             .andExpect(status().isCreated())
             .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
         }
 
         private UUID createUser() {

@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 public record BlockIrrigationNeedRequest(
         @NotBlank String blockCode,
-        UUID farmId,
+        Long farmId,
         @PositiveOrZero Integer treeCount,
         String growthPhase,
         @PositiveOrZero Integer ageYears,

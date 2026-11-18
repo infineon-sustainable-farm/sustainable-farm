@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 public record WaterQuotaCreateRequest(
         @NotBlank String targetType,
-        @NotNull UUID targetId,
+        @NotNull Long targetId,
         @NotNull LocalDate quotaMonth,
         @NotNull @Positive Double quotaLiters,
         String label) {

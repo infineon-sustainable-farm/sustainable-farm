@@ -9,11 +9,11 @@ import java.util.UUID;
 
 public interface SoilMoistureReadingRepository extends JpaRepository<SoilMoistureReading, UUID> {
 
-    List<SoilMoistureReading> findByZoneIdOrderByMeasuredAtDesc(UUID zoneId);
+    List<SoilMoistureReading> findByZoneIdOrderByMeasuredAtDesc(Long zoneId);
 
     @Query("select sr from SoilMoistureReading sr where sr.zoneId = :zoneId and sr.measuredAt <= :at order by sr.measuredAt desc")
-    List<SoilMoistureReading> findLatestBefore(UUID zoneId, Instant at);
+    List<SoilMoistureReading> findLatestBefore(Long zoneId, Instant at);
 
     @Query("select sr.moisturePercent from SoilMoistureReading sr where sr.zoneId = :zoneId and sr.measuredAt <= :at order by sr.measuredAt desc")
-    Double findLatestMoisturePercentBefore(UUID zoneId, Instant at);
+    Double findLatestMoisturePercentBefore(Long zoneId, Instant at);
 }

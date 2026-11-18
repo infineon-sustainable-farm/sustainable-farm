@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -43,17 +43,17 @@ public class DripFlowCheckService {
     /** Above 110 %, a leak is likely. */
     public static final double HIGH_FLOW_RATIO = 1.10d;
 
-    private final FieldZoneRepository fieldZoneRepository;
+    private final FarmDirectory farmDirectory;
     private final WaterConsumptionRepository consumptionRepository;
     private final IrrigationLogRepository logRepository;
     private final AlertService alertService;
 
     public DripFlowCheckService(
-            FieldZoneRepository fieldZoneRepository,
+            FarmDirectory farmDirectory,
             WaterConsumptionRepository consumptionRepository,
             IrrigationLogRepository logRepository,
             AlertService alertService) {
-        this.fieldZoneRepository = fieldZoneRepository;
+        this.farmDirectory = farmDirectory;
         this.consumptionRepository = consumptionRepository;
         this.logRepository = logRepository;
         this.alertService = alertService;
@@ -65,8 +65,8 @@ public class DripFlowCheckService {
      * @throws NotFoundException if the zone does not exist
      */
     @Transactional
-    public Map<String, Object> check(UUID zoneId) {
-        Zone zone = fieldZoneRepository.findById(zoneId)
+    public Map<String, Object> check(Long zoneId) {
+        ZoneDto zone = farmDirectory.findZone(zoneId)
                 .orElseThrow(() -> new NotFoundException("Zone"));
 
         Instant now = Instant.now();
@@ -82,14 +82,14 @@ public class DripFlowCheckService {
         Double ratio = theoreticalLiters != null && theoreticalLiters > 0 ? measuredLiters / theoreticalLiters : null;
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("zone_id", zone.getId());
-        response.put("zone_name", zone.getName());
-        response.put("irrigation_method", zone.getIrrigationMethod());
+        response.put("zone_id", zone.id());
+        response.put("zone_name", zone.name());
+        response.put("irrigation_method", zone.irrigationMethod());
         response.put("window_start", windowStart.toString());
         response.put("window_end", now.toString());
         response.put("observation_hours", OBSERVATION_HOURS);
-        response.put("emitter_count", zone.getEmitterCount());
-        response.put("emitter_nominal_flow_lh", zone.getEmitterNominalFlowLh());
+        response.put("emitter_count", zone.emitterCount());
+        response.put("emitter_nominal_flow_lh", zone.emitterNominalFlowLh());
         response.put("theoretical_flow_lh", round(theoreticalFlow));
         response.put("measured_flow_lh", round(measuredFlow));
         response.put("running_hours", round(runningHours));
@@ -140,8 +140,8 @@ public class DripFlowCheckService {
         return value == null ? null : Math.round(value * 10d) / 10d;
     }
 
-    private String message(String status, Zone zone, Double measuredFlow, Double theoreticalFlow) {
-        String name = zone.getName() == null ? "zone" : zone.getName();
+    private String message(String status, ZoneDto zone, Double measuredFlow, Double theoreticalFlow) {
+        String name = zone.name() == null ? "zone" : zone.name();
         return switch (status) {
             case "network_not_described" -> "Zone \"" + name + "\" has no emitter data: record the emitter count "
                     + "and the nominal flow per emitter to enable the flow check.";
@@ -165,8 +165,8 @@ public class DripFlowCheckService {
         };
     }
 
-    private boolean raiseAlert(String status, Zone zone, Double ratio) {
-        String name = zone.getName() == null ? "zone" : zone.getName();
+    private boolean raiseAlert(String status, ZoneDto zone, Double ratio) {
+        String name = zone.name() == null ? "zone" : zone.name();
         String detail = String.format(
                 "Zone \"%s\": measured flow is %.0f%% of the network rating over the last %d hours.",
                 name, (ratio == null ? 0d : ratio) * 100d, OBSERVATION_HOURS);

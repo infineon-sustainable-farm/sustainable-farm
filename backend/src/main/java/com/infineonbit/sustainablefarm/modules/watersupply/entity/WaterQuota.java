@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
-import java.util.UUID;
 import org.hibernate.annotations.Check;
 
 @Entity
@@ -28,7 +27,7 @@ public class WaterQuota extends BaseEntity {
 
     @NotNull
     @Column(name = "target_id", nullable = false)
-    private UUID targetId;
+    private Long targetId;
 
     @NotNull
     @Column(name = "quota_month", nullable = false)
@@ -49,11 +48,11 @@ public class WaterQuota extends BaseEntity {
         this.targetType = targetType;
     }
 
-    public UUID getTargetId() {
+    public Long getTargetId() {
         return targetId;
     }
 
-    public void setTargetId(UUID targetId) {
+    public void setTargetId(Long targetId) {
         this.targetId = targetId;
     }
 

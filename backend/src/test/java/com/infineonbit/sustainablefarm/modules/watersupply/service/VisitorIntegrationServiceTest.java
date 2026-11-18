@@ -20,7 +20,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSafetyBri
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterVisitorEvent;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.ExternalServiceException;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSafetyBriefingRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
@@ -53,7 +53,7 @@ class VisitorIntegrationServiceTest {
     private WaterSourceRepository sourceRepository;
 
     @Mock
-    private FieldZoneRepository zoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private WaterService waterService;
@@ -73,7 +73,7 @@ class VisitorIntegrationServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void liveConsumptionSumsTheWindowAndReportsTheLastMeasurement() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 108L;
         when(sourceRepository.existsById(sourceId)).thenReturn(true);
         when(consumptionRepository.findAll(any(Specification.class))).thenReturn(List.of(
                 consumption(12.5, Instant.parse("2026-10-13T10:01:00Z")),
@@ -95,8 +95,8 @@ class VisitorIntegrationServiceTest {
 
     @Test
     void liveConsumptionRejectsAnUnknownZone() {
-        UUID zoneId = UUID.randomUUID();
-        when(zoneRepository.existsById(zoneId)).thenReturn(false);
+        Long zoneId = 109L;
+        when(farmDirectory.zoneExists(zoneId)).thenReturn(false);
 
         assertThrows(NotFoundException.class, () -> service().liveConsumption(null, zoneId, null));
     }
@@ -130,7 +130,7 @@ class VisitorIntegrationServiceTest {
 
     @Test
     void aVisitOnAZoneUnderUnavailabilityIsFlaggedAsAConflict() {
-        UUID zoneId = UUID.randomUUID();
+        Long zoneId = 110L;
         Instant expectedAt = Instant.parse("2026-10-20T09:00:00Z");
         when(visitorEventRepository.findByVisitId("VIS-2")).thenReturn(Optional.empty());
         when(visitorEventRepository.save(any(WaterVisitorEvent.class))).thenAnswer(call -> call.getArgument(0));
@@ -198,7 +198,7 @@ class VisitorIntegrationServiceTest {
 
     private VisitorIntegrationService service() {
         return new VisitorIntegrationService(visitorEventRepository, safetyRepository, consumptionRepository,
-                sourceRepository, zoneRepository, waterService, irrigationService, economyService,
+                sourceRepository, farmDirectory, waterService, irrigationService, economyService,
                 unavailabilityService, alertService, WaterIntegrationProperties.defaults());
     }
 }

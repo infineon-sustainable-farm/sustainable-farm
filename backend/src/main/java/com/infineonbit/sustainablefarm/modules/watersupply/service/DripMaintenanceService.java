@@ -1,13 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogResponse;
 import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.DripMaintenanceLogRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -25,11 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class DripMaintenanceService {
     private final DripMaintenanceLogRepository logRepository;
-    private final FieldZoneRepository fieldZoneRepository;
+    private final FarmDirectory farmDirectory;
 
-    public DripMaintenanceService(DripMaintenanceLogRepository logRepository, FieldZoneRepository fieldZoneRepository) {
+    public DripMaintenanceService(DripMaintenanceLogRepository logRepository, FarmDirectory farmDirectory) {
         this.logRepository = logRepository;
-        this.fieldZoneRepository = fieldZoneRepository;
+        this.farmDirectory = farmDirectory;
     }
 
     /** Recurring drip tasks and their periodicity. */
@@ -50,7 +50,7 @@ public class DripMaintenanceService {
     }
 
     /** Paginated list, with optional zone filter: same contract as the other module lists. */
-    public PageResponse<DripMaintenanceLogResponse> findAll(Pageable pageable, UUID zoneId) {
+    public PageResponse<DripMaintenanceLogResponse> findAll(Pageable pageable, Long zoneId) {
         Page<DripMaintenanceLog> page = zoneId == null
                 ? logRepository.findAll(pageable)
                 : logRepository.findByZoneId(zoneId, pageable);
@@ -134,16 +134,16 @@ public class DripMaintenanceService {
         List<DripMaintenanceLog> logs = logRepository.findAll();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         List<Map<String, Object>> calendar = new ArrayList<>();
-        for (Zone zone : fieldZoneRepository.findAll()) {
+        for (ZoneDto zone : farmDirectory.listZones()) {
             for (PreventiveTask task : PREVENTIVE_TASKS) {
-                calendar.add(taskEntry(zone, task, lastDone(logs, zone.getId(), task.type()), today));
+                calendar.add(taskEntry(zone, task, lastDone(logs, zone.id(), task.type()), today));
             }
         }
         return calendar;
     }
 
     /** Last intervention of a given type for a zone, or null if it never happened. */
-    private LocalDate lastDone(List<DripMaintenanceLog> logs, UUID zoneId, String taskType) {
+    private LocalDate lastDone(List<DripMaintenanceLog> logs, Long zoneId, String taskType) {
         LocalDate last = null;
         for (DripMaintenanceLog log : logs) {
             if (log.getMaintenanceDate() == null || !zoneId.equals(log.getZoneId())
@@ -169,12 +169,12 @@ public class DripMaintenanceService {
         };
     }
 
-    private Map<String, Object> taskEntry(Zone zone, PreventiveTask task, LocalDate lastDone, LocalDate today) {
+    private Map<String, Object> taskEntry(ZoneDto zone, PreventiveTask task, LocalDate lastDone, LocalDate today) {
         LocalDate nextDue = lastDone == null ? today : lastDone.plusDays(task.intervalDays());
         long daysRemaining = ChronoUnit.DAYS.between(today, nextDue);
         Map<String, Object> entry = new LinkedHashMap<>();
-        entry.put("zone_id", zone.getId());
-        entry.put("zone_name", zone.getName());
+        entry.put("zone_id", zone.id());
+        entry.put("zone_name", zone.name());
         entry.put("task_type", task.type());
         entry.put("frequency", task.frequency());
         entry.put("interval_days", task.intervalDays());
@@ -195,8 +195,8 @@ public class DripMaintenanceService {
         return daysRemaining <= DUE_SOON_DAYS ? "due_soon" : "planned";
     }
 
-    private void requireZone(UUID zoneId) {
-        if (zoneId == null || fieldZoneRepository.findById(zoneId).isEmpty()) {
+    private void requireZone(Long zoneId) {
+        if (zoneId == null || farmDirectory.findZone(zoneId).isEmpty()) {
             throw new NotFoundException("Zone");
         }
     }

@@ -3,7 +3,7 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogUpdateRequest;
@@ -14,7 +14,7 @@ import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -56,7 +56,7 @@ public class IrrigationService {
 
     private final IrrigationScheduleRepository scheduleRepository;
     private final IrrigationLogRepository logRepository;
-    private final FieldZoneRepository fieldZoneRepository;
+    private final FarmDirectory farmDirectory;
     private final AgroWeatherService agroWeatherService;
     private final AlertService alertService;
     private final ZoneBlockResolver zoneBlockResolver;
@@ -64,13 +64,13 @@ public class IrrigationService {
     public IrrigationService(
             IrrigationScheduleRepository scheduleRepository,
             IrrigationLogRepository logRepository,
-            FieldZoneRepository fieldZoneRepository,
+            FarmDirectory farmDirectory,
             AgroWeatherService agroWeatherService,
             AlertService alertService,
             ZoneBlockResolver zoneBlockResolver) {
         this.scheduleRepository = scheduleRepository;
         this.logRepository = logRepository;
-        this.fieldZoneRepository = fieldZoneRepository;
+        this.farmDirectory = farmDirectory;
         this.agroWeatherService = agroWeatherService;
         this.alertService = alertService;
         this.zoneBlockResolver = zoneBlockResolver;
@@ -80,7 +80,7 @@ public class IrrigationService {
         return scheduleResponses(scheduleRepository.findAll());
     }
 
-    public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, UUID zoneId) {
+    public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, Long zoneId) {
         return findSchedules(pageable, zoneId, null, null);
     }
 
@@ -88,12 +88,12 @@ public class IrrigationService {
      * Paginated schedules, optionally restricted to a zone and/or to the zones of a Plants block
      * ({@code farmId} narrows the block lookup when the same code exists on several farms).
      */
-    public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, UUID zoneId, UUID farmId, String blockCode) {
+    public PageResponse<IrrigationScheduleResponse> findSchedules(Pageable pageable, Long zoneId, Long farmId, String blockCode) {
         Page<IrrigationSchedule> page;
         if (blockCode == null || blockCode.isBlank()) {
             page = zoneId == null ? scheduleRepository.findAll(pageable) : scheduleRepository.findByZoneId(zoneId, pageable);
         } else {
-            List<UUID> blockZones = zoneBlockResolver.zoneIdsForBlock(farmId, blockCode);
+            List<Long> blockZones = zoneBlockResolver.zoneIdsForBlock(farmId, blockCode);
             if (zoneId != null) {
                 blockZones = blockZones.contains(zoneId) ? List.of(zoneId) : List.of();
             }
@@ -276,8 +276,8 @@ public class IrrigationService {
 
     private Map<String, Object> suggestion(IrrigationSchedule schedule, double probability, double rainMm) {
         double planned = schedule.getWaterQuantityLiters() == null ? 0d : schedule.getWaterQuantityLiters();
-        String zoneName = fieldZoneRepository.findById(schedule.getZoneId())
-                .map(Zone::getName).orElse("Unknown zone");
+        String zoneName = farmDirectory.findZone(schedule.getZoneId())
+                .map(ZoneDto::name).orElse("Unknown zone");
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("schedule_id", schedule.getId());
@@ -320,8 +320,8 @@ public class IrrigationService {
         return response;
     }
 
-    private void requireZone(UUID zoneId) {
-        if (zoneId == null || fieldZoneRepository.findById(zoneId).isEmpty()) {
+    private void requireZone(Long zoneId) {
+        if (zoneId == null || farmDirectory.findZone(zoneId).isEmpty()) {
             throw new NotFoundException("Zone");
         }
     }
@@ -353,7 +353,7 @@ public class IrrigationService {
      * is {@code running}; otherwise the most recent schedule is reported. {@code lastActivationAt} is
      * the actual start of its last log, or the planned start when it never ran.
      */
-    public Map<String, Object> irrigationStatus(UUID zoneId) {
+    public Map<String, Object> irrigationStatus(Long zoneId) {
         requireZone(zoneId);
         List<IrrigationSchedule> running = scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running");
         IrrigationSchedule active = running.stream()
@@ -380,7 +380,7 @@ public class IrrigationService {
 
     /** Batch variant: one mapping lookup for the whole page instead of one per schedule. */
     private List<IrrigationScheduleResponse> scheduleResponses(List<IrrigationSchedule> schedules) {
-        Map<UUID, List<String>> blocks = zoneBlockResolver.blockCodesForZones(
+        Map<Long, List<String>> blocks = zoneBlockResolver.blockCodesForZones(
                 schedules.stream().map(IrrigationSchedule::getZoneId).toList());
         return schedules.stream()
                 .map(s -> scheduleResponse(s, s.getZoneId() == null ? List.of() : blocks.getOrDefault(s.getZoneId(), List.of())))

@@ -57,7 +57,7 @@ class IotTelemetryIntegrationTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
     }
 
     private String createSource(String farmId) throws Exception {
@@ -68,6 +68,6 @@ class IotTelemetryIntegrationTest {
                                 """.formatted(farmId)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
     }
 }

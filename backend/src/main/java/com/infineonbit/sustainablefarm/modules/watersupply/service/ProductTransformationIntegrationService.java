@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.AvailabilityForecastRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.LotUsageRequest;
@@ -20,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,19 +45,22 @@ public class ProductTransformationIntegrationService {
     private final IrrigationScheduleRepository scheduleRepository;
     private final AlertService alertService;
     private final WaterIntegrationProperties properties;
+    private final FarmDirectory farmDirectory;
 
     public ProductTransformationIntegrationService(WaterConsumptionRepository consumptionRepository,
                                                    WaterQualityTestRepository qualityRepository,
                                                    WaterSourceRepository sourceRepository,
                                                    IrrigationScheduleRepository scheduleRepository,
                                                    AlertService alertService,
-                                                   WaterIntegrationProperties properties) {
+                                                   WaterIntegrationProperties properties,
+                                                   FarmDirectory farmDirectory) {
         this.consumptionRepository = consumptionRepository;
         this.qualityRepository = qualityRepository;
         this.sourceRepository = sourceRepository;
         this.scheduleRepository = scheduleRepository;
         this.alertService = alertService;
         this.properties = properties;
+        this.farmDirectory = farmDirectory;
     }
 
     /** Attributes the consumptions of a time window to a lot (T1). Re-sending the same window is harmless. */
@@ -144,7 +148,7 @@ public class ProductTransformationIntegrationService {
         if (end.isBefore(start)) {
             throw new IllegalArgumentException("to must be after from");
         }
-        List<UUID> sourceIds = lotItems.stream().map(WaterConsumption::getSourceId).filter(Objects::nonNull).distinct().toList();
+        List<Long> sourceIds = lotItems.stream().map(WaterConsumption::getSourceId).filter(Objects::nonNull).distinct().toList();
         List<WaterQualityTest> tests = sourceIds.isEmpty()
                 ? qualityRepository.findBetween(start, end)
                 : qualityRepository.findBySourcesBetween(sourceIds, start, end);
@@ -198,7 +202,7 @@ public class ProductTransformationIntegrationService {
         }
         boolean includeIrrigation = request.includeIrrigation() == null || request.includeIrrigation();
         double irrigationDemand = includeIrrigation && source.getFarmId() != null
-                ? scheduleRepository.sumPlannedDemandForFarmBetween(source.getFarmId(), now, end) : 0d;
+                ? plannedDemandOfFarm(source.getFarmId(), now, end) : 0d;
         double forecastDemand = batchDemand + irrigationDemand;
         double current = source.getCurrentLevelLiters() == null ? 0d : source.getCurrentLevelLiters();
         double available = current - forecastDemand;
@@ -279,5 +283,11 @@ public class ProductTransformationIntegrationService {
             throw new IllegalArgumentException("lotId must not be blank");
         }
         return lotId.trim();
+    }
+
+    /** Irrigation volume still to deliver on the zones of a farm over [start, end[. */
+    private double plannedDemandOfFarm(Long farmId, Instant start, Instant end) {
+        List<Long> zoneIds = farmDirectory.listZonesOfFarm(farmId).stream().map(ZoneDto::id).toList();
+        return zoneIds.isEmpty() ? 0d : scheduleRepository.sumPlannedDemandForZonesBetween(zoneIds, start, end);
     }
 }

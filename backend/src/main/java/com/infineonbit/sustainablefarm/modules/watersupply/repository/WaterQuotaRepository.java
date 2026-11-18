@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WaterQuotaRepository extends JpaRepository<WaterQuota, UUID> {
 
-    List<WaterQuota> findByTargetTypeAndTargetIdOrderByQuotaMonthDesc(String targetType, UUID targetId);
+    List<WaterQuota> findByTargetTypeAndTargetIdOrderByQuotaMonthDesc(String targetType, Long targetId);
 
     Optional<WaterQuota> findFirstByTargetTypeAndTargetIdAndQuotaMonthBetweenOrderByQuotaMonthDesc(
-            String targetType, UUID targetId, LocalDate monthStart, LocalDate monthEnd);
+            String targetType, Long targetId, LocalDate monthStart, LocalDate monthEnd);
 }

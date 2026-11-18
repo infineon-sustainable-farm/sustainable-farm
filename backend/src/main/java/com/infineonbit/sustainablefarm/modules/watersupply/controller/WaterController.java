@@ -51,7 +51,7 @@ public class WaterController {
     public Object sources(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID farmId) {
+            @RequestParam(required = false) Long farmId) {
         if (page == null && size == null && farmId == null) return waterService.findSources();
         return waterService.findSources(pageRequest(page, size), farmId);
     }
@@ -63,7 +63,7 @@ public class WaterController {
     }
 
     @GetMapping("/sources/{sourceId}")
-    public WaterSourceResponse source(@PathVariable UUID sourceId) {
+    public WaterSourceResponse source(@PathVariable Long sourceId) {
         return waterService.getSource(sourceId);
     }
 
@@ -73,13 +73,13 @@ public class WaterController {
      */
     @Operation(summary = "Real-time level of a water source (percentage, status, rainwater tank flag)")
     @GetMapping("/sources/{sourceId}/level")
-    public WaterLevelResponse sourceLevel(@PathVariable UUID sourceId) {
+    public WaterLevelResponse sourceLevel(@PathVariable Long sourceId) {
         return waterService.sourceLevel(sourceId);
     }
 
     /** Level readings of a source over [from, to] (default: everything up to now), oldest first. */
     @GetMapping("/sources/{sourceId}/level-history")
-    public List<WaterLevelHistoryResponse> sourceLevelHistory(@PathVariable UUID sourceId,
+    public List<WaterLevelHistoryResponse> sourceLevelHistory(@PathVariable Long sourceId,
                                                               @RequestParam(required = false) Instant from,
                                                               @RequestParam(required = false) Instant to) {
         return waterService.sourceLevelHistory(sourceId, from, to);
@@ -91,18 +91,18 @@ public class WaterController {
      */
     @Operation(summary = "Drip flow check of a zone: measured volume versus network rating (clogging or leak)")
     @GetMapping("/zones/{zoneId}/flow-check")
-    public Map<String, Object> zoneFlowCheck(@PathVariable UUID zoneId) {
+    public Map<String, Object> zoneFlowCheck(@PathVariable Long zoneId) {
         return dripFlowCheckService.check(zoneId);
     }
 
     @PutMapping("/sources/{sourceId}")
-    public WaterSourceResponse updateSource(@PathVariable UUID sourceId, @RequestBody WaterSourceUpdateRequest request) {
+    public WaterSourceResponse updateSource(@PathVariable Long sourceId, @RequestBody WaterSourceUpdateRequest request) {
         return waterService.updateSource(sourceId, request);
     }
 
     @DeleteMapping("/sources/{sourceId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteSource(@PathVariable UUID sourceId) {
+    public void deleteSource(@PathVariable Long sourceId) {
         waterService.deleteSource(sourceId);
     }
 
@@ -110,9 +110,9 @@ public class WaterController {
     public Object consumption(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID farmId,
-            @RequestParam(required = false) UUID sourceId,
-            @RequestParam(required = false) UUID zoneId,
+            @RequestParam(required = false) Long farmId,
+            @RequestParam(required = false) Long sourceId,
+            @RequestParam(required = false) Long zoneId,
             @RequestParam(required = false) String lotId,
             @RequestParam(required = false) String blockCode) {
         if (page == null && size == null && farmId == null && sourceId == null && zoneId == null
@@ -146,7 +146,7 @@ public class WaterController {
     public Object quality(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID sourceId) {
+            @RequestParam(required = false) Long sourceId) {
         if (page == null && size == null && sourceId == null) return waterService.findQualityTests();
         return waterService.findQualityTests(pageRequest(page, size), sourceId);
     }
