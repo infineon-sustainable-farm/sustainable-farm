@@ -1,14 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -48,12 +45,13 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class PlantScenario {
+public class PlantScenario extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    /** Decimals kept of {@code yieldPerTreeKg}, as the API accepts them. */
+    public static final int YIELD_SCALE = 1;
+
+    /** Decimals kept of {@code lossRate}, as the API accepts them. */
+    public static final int LOSS_RATE_SCALE = 3;
 
     /** Name of the scenario, unique ignoring case, accents and surrounding spaces. */
     @Column(name = "name", nullable = false)
@@ -71,15 +69,15 @@ public class PlantScenario {
     private String treeCountSource;
 
     /** Yield of one tree in full production, per year, in kg. */
-    @Column(name = "yield_per_tree_kg", nullable = false)
-    private Double yieldPerTreeKg;
+    @Column(name = "yield_per_tree_kg", nullable = false, precision = 5, scale = YIELD_SCALE)
+    private BigDecimal yieldPerTreeKg;
 
     @Column(name = "yield_source", nullable = false)
     private String yieldSource;
 
     /** Share of the harvest that is lost before sale, from 0 to 1; {@code null} until entered. */
-    @Column(name = "loss_rate")
-    private Double lossRate;
+    @Column(name = "loss_rate", precision = 4, scale = LOSS_RATE_SCALE)
+    private BigDecimal lossRate;
 
     @Column(name = "loss_rate_source")
     private String lossRateSource;
@@ -129,4 +127,49 @@ public class PlantScenario {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public PlantScenario(Long id,
+            String name,
+            String varietyName,
+            Integer treeCount,
+            String treeCountSource,
+            BigDecimal yieldPerTreeKg,
+            String yieldSource,
+            BigDecimal lossRate,
+            String lossRateSource,
+            BigDecimal pricePerKg,
+            String priceSource,
+            String currency,
+            BigDecimal annualFixedCost,
+            String annualFixedCostSource,
+            BigDecimal variableCostPerKg,
+            String variableCostSource,
+            BigDecimal initialInvestment,
+            String investmentSource,
+            BigDecimal costPerAdditionalTree,
+            String costPerAdditionalTreeSource,
+            Instant lastUpdated) {
+        setId(id);
+        this.name = name;
+        this.varietyName = varietyName;
+        this.treeCount = treeCount;
+        this.treeCountSource = treeCountSource;
+        this.yieldPerTreeKg = yieldPerTreeKg;
+        this.yieldSource = yieldSource;
+        this.lossRate = lossRate;
+        this.lossRateSource = lossRateSource;
+        this.pricePerKg = pricePerKg;
+        this.priceSource = priceSource;
+        this.currency = currency;
+        this.annualFixedCost = annualFixedCost;
+        this.annualFixedCostSource = annualFixedCostSource;
+        this.variableCostPerKg = variableCostPerKg;
+        this.variableCostSource = variableCostSource;
+        this.initialInvestment = initialInvestment;
+        this.investmentSource = investmentSource;
+        this.costPerAdditionalTree = costPerAdditionalTree;
+        this.costPerAdditionalTreeSource = costPerAdditionalTreeSource;
+        this.lastUpdated = lastUpdated;
+    }
 }

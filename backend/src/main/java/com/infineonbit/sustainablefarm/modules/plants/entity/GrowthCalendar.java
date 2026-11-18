@@ -1,11 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -17,14 +15,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
 /**
  * Planting calendar of a block of the farm.
  *
- * <p>Column names are the domain names of the schema and are mapped explicitly,
- * like {@link Variety}.
+ * <p>The table and its columns follow the naming of the other modules: English
+ * snake_case and a singular table name, mapped explicitly like {@link BlockVariety}.
  *
  * <p>There is deliberately no tree-age column. The age of the trees is never
  * stored nor entered: it is computed from {@code plantingDate} and the
@@ -39,22 +38,18 @@ import java.time.LocalDate;
  */
 @Entity
 @EntityListeners(BlockLabelListener.class)
-@Table(name = "calendrier_croissance",
+@Table(name = "growth_calendar",
         uniqueConstraints = @UniqueConstraint(name = GrowthCalendar.KEY_CONSTRAINT, columnNames = "block_key"),
-        indexes = @Index(name = "idx_calendrier_croissance_block_id", columnList = "block_id"))
+        indexes = @Index(name = "idx_growth_calendar_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-public class GrowthCalendar implements BlockRow {
+public class GrowthCalendar extends BaseEntity implements BlockRow {
 
     /** Name of the unique constraint on {@code block_key}. */
-    public static final String KEY_CONSTRAINT = "uk_calendrier_croissance_block_key";
+    public static final String KEY_CONSTRAINT = "uk_growth_calendar_block_key";
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    /** Block of the calendar, a {@code farm.block} row (foreign key {@code fk_calendrier_croissance_block}). */
+    /** Block of the calendar, a {@code farm.block} row (foreign key {@code fk_growth_calendar_block}). */
     @Column(name = "block_id", nullable = false)
     private Long blockId;
 
@@ -64,28 +59,28 @@ public class GrowthCalendar implements BlockRow {
     private final BlockLink block = new BlockLink();
 
     /** Not provided by the source study. Stays NULL until recorded. */
-    @Column(name = "date_plantation")
+    @Column(name = "planting_date")
     private LocalDate plantingDate;
 
     /** How precise the planting date is, in the words the source allows. */
-    @Column(name = "precision_date")
+    @Column(name = "date_precision")
     private String datePrecision;
 
     /** Observed growth stage. Not the computed phase. Stays NULL until observed. */
-    @Column(name = "stade_actuel")
+    @Column(name = "current_stage")
     private String currentStage;
 
-    @Column(name = "phase_annees")
+    @Column(name = "phase_years")
     private String phaseYears;
 
     /** Local rainfall for this block. The source only gives a farm-wide range. */
-    @Column(name = "pluviometrie_locale_mm")
-    private Double localRainfallMm;
+    @Column(name = "local_rainfall_mm", precision = 7, scale = 1)
+    private BigDecimal localRainfallMm;
 
     @Column(name = "source")
     private String source;
 
-    @Column(name = "date_maj")
+    @Column(name = "last_updated")
     private Instant lastUpdated;
 
     /**
