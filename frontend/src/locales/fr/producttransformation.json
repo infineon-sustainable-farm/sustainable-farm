@@ -2,7 +2,7 @@
   "name": "Transformation des produits",
   "nav": {
     "dashboard": "Tableau de bord",
-    "rawIntake": "Réception des matières premières",
+    "rawIntake": "Réception matières",
     "batches": "Lots",
     "washingSorting": "Lavage et tri",
     "drying": "Séchage",
@@ -387,7 +387,7 @@
   "compliance": {
     "title": "Conformité",
     "subtitle": "Suivez les enregistrements de conformité HACCP, sécurité alimentaire et export de chaque lot.",
-    "new": "Nouvel enregistrement de conformité",
+    "new": "Nouvelle fiche de conformité",
     "newTitle": "Nouvel enregistrement de conformité",
     "editTitle": "Modifier l’enregistrement de conformité",
     "exportCsv": "Exporter en CSV",
@@ -546,8 +546,8 @@
     "title": "Tableau de bord de la transformation",
     "period": "Période : {{period}} ({{start}} → {{end}})",
     "naShort": "n.d.",
-    "sourceDemo": "Source des données : jeu de DÉMO (format Plants)",
-    "sourcePlants": "Source des données : récoltes de Plants",
+    "sourceDemo": "Source : données DÉMO (format Plants)",
+    "sourcePlants": "Source : récoltes de Plants",
     "demoNotice": "Jeu de démonstration : enregistrements de transformation synthétiques (lots LOT-DEMO), pas de vraies récoltes de Plants. Voir backend/src/main/resources/seed/producttransformation-demo-seed.sql.",
     "loadError": "Impossible de charger les indicateurs du tableau de bord. Réessayez plus tard.",
     "pieLabel": "{{name}} {{value}} %",
