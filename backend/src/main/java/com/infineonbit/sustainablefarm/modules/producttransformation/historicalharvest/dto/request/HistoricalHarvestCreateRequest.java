@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -35,8 +34,9 @@ public class HistoricalHarvestCreateRequest {
     @Max(value = 53, message = "Week must be between 1 and 53")
     private Integer week;
 
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
     @NotNull(message = "Mango variety is required")
-    private MangoVariety mangoVariety;
+    private String mangoVariety;
 
     @NotNull(message = "Harvest quantity is required")
     @Positive(message = "Harvest quantity must be positive")

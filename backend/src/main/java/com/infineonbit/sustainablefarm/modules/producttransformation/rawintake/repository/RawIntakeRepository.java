@@ -39,7 +39,7 @@ public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
     /**
      * Find raw intake by variety
      */
-    List<RawIntake> findByReceivedVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety receivedVariety);
+    List<RawIntake> findByReceivedVarietyKey(String receivedVarietyKey);
 
     /**
      * Find raw intake by quality grade
@@ -57,8 +57,8 @@ public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
     /**
      * Get total received quantity by variety
      */
-    @Query("SELECT SUM(r.receivedQuantityKg) FROM RawIntake r WHERE r.receivedVariety = :variety")
-    Double getTotalReceivedQuantityByVariety(@Param("variety") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety);
+    @Query("SELECT SUM(r.receivedQuantityKg) FROM RawIntake r WHERE r.receivedVarietyKey = :variety")
+    Double getTotalReceivedQuantityByVariety(@Param("variety") String variety);
 
     /**
      * Get average quality grade distribution

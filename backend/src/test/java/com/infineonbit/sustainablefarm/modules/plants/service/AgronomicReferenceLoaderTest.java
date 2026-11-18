@@ -69,15 +69,21 @@ public class AgronomicReferenceLoaderTest {
     }
 
     @Test
-    void load_shouldInsertTheThreeVarieties_andNoShare_whenTablesAreEmpty() {
+    void load_shouldInsertTheCatalogue_andNoShare_whenTablesAreEmpty() {
         // Act
         loader.load(FIRST_START);
-        // Assert: the three varieties, with their values and sources
+        // Assert: the five varieties of the catalogue, with their keys, values and sources
         Map<String, VarietyReference> varieties = varietiesByName();
-        assertEquals(3, varieties.size());
+        assertEquals(5, varieties.size());
         assertVariety(varieties.get("Keitt"), 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa");
         assertVariety(varieties.get("Kent"), 200.0, "Zalka_2025", 4, 5, "FAO_mango_burkina");
         assertVariety(varieties.get("Amelie"), 160.0, "Zalka_2025", 2, 4, "FAO_mango_burkina");
+        assertVariety(varieties.get("Tommy Atkins"), 180.0, "assumption_to_validate", 4, 6, "assumption_to_validate");
+        assertVariety(varieties.get("Other"), 160.0, "assumption_to_validate", 4, 6, "assumption_to_validate");
+        assertEquals(Map.of("Keitt", "KEITT", "Kent", "KENT", "Amelie", "AMELIE", "Tommy Atkins", "TOMMY",
+                        "Other", "OTHER"),
+                varieties.values().stream().collect(Collectors.toMap(VarietyReference::getVarietyName,
+                        VarietyReference::getVarietyKey)));
         // Assert: the shares keep their defaults, so no row is written
         assertEquals(List.of(), shareRows());
     }
@@ -88,7 +94,7 @@ public class AgronomicReferenceLoaderTest {
         loader.load(FIRST_START);
         loader.load(SECOND_START);
         // Assert: same rows, still dated from the first start
-        assertEquals(3, varietyReferenceRepository.count());
+        assertEquals(5, varietyReferenceRepository.count());
         varietyReferenceRepository.findAll()
                 .forEach(reference -> assertEquals(FIRST_START, reference.getLastUpdated()));
     }
@@ -106,7 +112,7 @@ public class AgronomicReferenceLoaderTest {
         // Assert: the changed values stay, nothing is added
         assertEquals(80.0, varietiesByName().get("Keitt").getYieldPerTreeKg());
         assertEquals("orchard_literature", varietiesByName().get("Keitt").getYieldSource());
-        assertEquals(3, varietyReferenceRepository.count());
+        assertEquals(5, varietyReferenceRepository.count());
     }
 
     @Test
@@ -119,7 +125,19 @@ public class AgronomicReferenceLoaderTest {
         // Act
         loader.load(SECOND_START);
         // Assert: no second "Amelie" row
-        assertEquals(List.of("Amélie", "Keitt", "Kent"), varietiesByName().keySet().stream().sorted().toList());
+        assertEquals(List.of("Amélie", "Keitt", "Kent", "Other", "Tommy Atkins"), varietiesByName().keySet().stream().sorted().toList());
+    }
+
+    @Test
+    void load_shouldNotInsertAVariety_whoseKeyIsTaken() {
+        // Arrange: "Tommy" entered by the user before the first start, key TOMMY
+        varietyReferenceRepository.save(new VarietyReference(null, "Tommy", 170.0, "user_entry", 4, 6,
+                "user_entry", FIRST_START));
+        // Act
+        loader.load(SECOND_START);
+        // Assert: no "Tommy Atkins" row under the same key
+        assertEquals(List.of("Amelie", "Keitt", "Kent", "Other", "Tommy"),
+                varietiesByName().keySet().stream().sorted().toList());
     }
 
     @Test
@@ -132,7 +150,7 @@ public class AgronomicReferenceLoaderTest {
         // Assert: it is back, dated from the second start; the others are untouched
         assertEquals(SECOND_START, varietiesByName().get("Kent").getLastUpdated());
         assertEquals(FIRST_START, varietiesByName().get("Keitt").getLastUpdated());
-        assertEquals(3, varietyReferenceRepository.count());
+        assertEquals(5, varietyReferenceRepository.count());
     }
 
     @Test

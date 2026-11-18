@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.dto.PlantsHarvestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,13 +34,15 @@ import java.util.List;
 public class PlantsIntegrationService {
 
     private final RestTemplate restTemplate;
+    private final MangoVarietyCodes mangoVarietyCodes;
 
     @Value("${plants.api.base-url:http://localhost:8080}")
     private String plantsApiBaseUrl;
 
     @Autowired
-    public PlantsIntegrationService(RestTemplate restTemplate) {
+    public PlantsIntegrationService(RestTemplate restTemplate, MangoVarietyCodes mangoVarietyCodes) {
         this.restTemplate = restTemplate;
+        this.mangoVarietyCodes = mangoVarietyCodes;
     }
 
     /**
@@ -99,8 +101,10 @@ public class PlantsIntegrationService {
      * {@code plantsHarvestId} to keep the cross-module link.
      *
      * <p>The variety name comes back from Plants as the planted name
-     * ("Keitt", "keitt", "Amélie"...), so it is resolved through
-     * {@link MangoVariety#fromPlants(String)}.
+     * ("Keitt", "keitt", "Amélie"...), so it is resolved to a catalogue key
+     * through the plants variety catalogue
+     * ({@link MangoVarietyCodes#keyOfPlantsName(String)}); an unknown name gives
+     * {@code OTHER}.
      *
      * <p>The quality grade is not part of the Plants harvest contract: the
      * caller remains responsible for it and must set it before persisting.
@@ -128,7 +132,7 @@ public class PlantsIntegrationService {
         event.setPlantsHarvestId(harvest.getId());
         event.setBatchId(originalBatchId.trim());
         event.setHarvestDate(LocalDate.parse(harvest.getHarvestDate()));
-        event.setMangoVariety(MangoVariety.fromPlants(harvest.getVarietyName()));
+        event.setVarietyKey(mangoVarietyCodes.keyOfPlantsName(harvest.getVarietyName()));
         event.setFarmId(harvest.getFarmId() != null ? String.valueOf(harvest.getFarmId()) : null);
         event.setBlockId(harvest.getBlockCode());
         event.setHarvestQuantityKg(harvest.getQuantityKg() != null

@@ -1,8 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.service.VarietyCatalogService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.dto.PlantsHarvestResponse;
+import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -10,33 +13,45 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for the Plants -> Product Transformation harvest mapping.
  */
 class PlantsIntegrationServiceTest {
 
-    private final PlantsIntegrationService service = new PlantsIntegrationService(null);
+    private final MangoVarietyCodes codes = codes();
+    private final PlantsIntegrationService service = new PlantsIntegrationService(null, codes);
+
+    private static MangoVarietyCodes codes() {
+        VarietyReferenceRepository repository = mock(VarietyReferenceRepository.class);
+        when(repository.findAll()).thenReturn(VarietyCatalogTestData.defaults());
+        return new MangoVarietyCodes(new VarietyCatalogService(repository));
+    }
 
     @Test
     void resolvesKeittCaseInsensitively() {
-        assertEquals(MangoVariety.KEITT, MangoVariety.fromPlants("Keitt"));
-        assertEquals(MangoVariety.KEITT, MangoVariety.fromPlants("keitt"));
-        assertEquals(MangoVariety.KEITT, MangoVariety.fromPlants("KEITT"));
+        assertEquals("KEITT", codes.keyOfPlantsName("Keitt"));
+        assertEquals("KEITT", codes.keyOfPlantsName("keitt"));
+        assertEquals("KEITT", codes.keyOfPlantsName("KEITT"));
     }
 
     @Test
     void resolvesAccentedAndMixedCaseVarieties() {
-        assertEquals(MangoVariety.AMÉLIE, MangoVariety.fromPlants("Amélie"));
-        assertEquals(MangoVariety.AMÉLIE, MangoVariety.fromPlants("Amelie"));
-        assertEquals(MangoVariety.KENT, MangoVariety.fromPlants("kent"));
-        assertEquals(MangoVariety.TOMMY, MangoVariety.fromPlants("Tommy Atkins"));
+        assertEquals("AMELIE", codes.keyOfPlantsName("Amélie"));
+        assertEquals("AMELIE", codes.keyOfPlantsName("Amelie"));
+        assertEquals("KENT", codes.keyOfPlantsName("kent"));
+        assertEquals("TOMMY", codes.keyOfPlantsName("Tommy Atkins"));
+        assertEquals("TOMMY", codes.keyOfPlantsName("Tommy"));
     }
 
     @Test
     void unknownVarietyFallsBackToOther() {
-        assertEquals(MangoVariety.OTHER, MangoVariety.fromPlants(null));
-        assertEquals(MangoVariety.OTHER, MangoVariety.fromPlants("Alphonso"));
+        assertEquals("OTHER", codes.keyOfPlantsName(null));
+        assertEquals("OTHER", codes.keyOfPlantsName("Alphonso"));
     }
 
     @Test
@@ -57,7 +72,7 @@ class PlantsIntegrationServiceTest {
         assertEquals("LOT-2026-0001", event.getBatchId(), "original lot must be preserved");
         assertNull(event.getHarvestId(), "harvestId must stay a Product Transformation identifier");
         assertEquals(42L, event.getPlantsHarvestId());
-        assertEquals(MangoVariety.KEITT, event.getMangoVariety());
+        assertEquals("KEITT", event.getVarietyKey());
         assertEquals(LocalDate.of(2026, 11, 5), event.getHarvestDate());
         assertEquals("7", event.getFarmId());
         assertEquals("A", event.getBlockId());

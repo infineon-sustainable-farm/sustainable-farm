@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvest;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 
 import java.util.List;
 
@@ -22,17 +21,17 @@ public interface HistoricalHarvestService {
     /**
      * Update historical harvest record
      */
-    HistoricalHarvest updateHistoricalHarvest(Integer year, Integer month, Integer week, MangoVariety variety, HistoricalHarvest historicalHarvest);
+    HistoricalHarvest updateHistoricalHarvest(Integer year, Integer month, Integer week, String variety, HistoricalHarvest historicalHarvest);
 
     /**
      * Delete historical harvest record
      */
-    void deleteHistoricalHarvest(Integer year, Integer month, Integer week, MangoVariety variety);
+    void deleteHistoricalHarvest(Integer year, Integer month, Integer week, String variety);
 
     /**
      * Get historical harvest by composite key
      */
-    HistoricalHarvest getHistoricalHarvestById(Integer year, Integer month, Integer week, MangoVariety variety);
+    HistoricalHarvest getHistoricalHarvestById(Integer year, Integer month, Integer week, String variety);
 
     /**
      * Get all historical harvest records
@@ -57,12 +56,12 @@ public interface HistoricalHarvestService {
     /**
      * Get historical harvest by variety
      */
-    List<HistoricalHarvest> getHistoricalHarvestByVariety(MangoVariety variety);
+    List<HistoricalHarvest> getHistoricalHarvestByVariety(String variety);
 
     /**
      * Get historical harvest by year and variety
      */
-    List<HistoricalHarvest> getHistoricalHarvestByYearAndVariety(Integer year, MangoVariety variety);
+    List<HistoricalHarvest> getHistoricalHarvestByYearAndVariety(Integer year, String variety);
 
     /**
      * Get total harvest quantity by year
@@ -89,5 +88,5 @@ public interface HistoricalHarvestService {
      * Aggregate harvest data from events
      * Business Rule: Historical data aggregated from harvest events for forecasting
      */
-    HistoricalHarvest aggregateFromHarvestEvents(Integer year, Integer month, Integer week, MangoVariety variety);
+    HistoricalHarvest aggregateFromHarvestEvents(Integer year, Integer month, Integer week, String variety);
 }

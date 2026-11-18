@@ -7,7 +7,6 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.r
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.response.BatchResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -77,7 +76,7 @@ public class BatchController {
             @Valid @RequestBody BatchUpdateRequest request) {
         Batch batch = new Batch();
         batch.setHarvestDate(request.getHarvestDate());
-        batch.setMangoVariety(request.getMangoVariety());
+        batch.setVarietyKey(dtoMapper.varietyKey(request.getMangoVariety()));
         batch.setHarvestQuantityKg(request.getHarvestQuantityKg());
         batch.setFarmId(request.getFarmId());
         batch.setBlockId(request.getBlockId());
@@ -141,8 +140,8 @@ public class BatchController {
     @GetMapping("/variety/{variety}")
     @Operation(summary = "Get batches by variety", description = "Retrieves batches filtered by mango variety")
     public ResponseEntity<List<BatchResponse>> getBatchesByVariety(
-            @Parameter(description = "Mango variety") @PathVariable MangoVariety variety) {
-        List<Batch> batches = batchService.getBatchesByVariety(variety);
+            @Parameter(description = "Mango variety") @PathVariable String variety) {
+        List<Batch> batches = batchService.getBatchesByVariety(dtoMapper.varietyKey(variety));
         List<BatchResponse> responses = batches.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());

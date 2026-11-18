@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 
 
 import jakarta.persistence.*;
@@ -35,7 +36,8 @@ import java.math.BigDecimal;
         uniqueConstraints = @UniqueConstraint(name = "uk_harvest_event_batch_id", columnNames = "batch_id"),
         indexes = {
                 @Index(name = "idx_harvest_event_harvest_date", columnList = "harvest_date"),
-                @Index(name = "idx_harvest_event_farm_id", columnList = "farm_id")
+                @Index(name = "idx_harvest_event_farm_id", columnList = "farm_id"),
+                @Index(name = "idx_harvest_event_variety_key", columnList = "variety_key")
         })
 @Getter
 @Setter
@@ -70,9 +72,9 @@ public class HarvestEvent {
     @Column(name = "harvest_time")
     private LocalTime harvestTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mango_variety", nullable = false, length = 20)
-    private MangoVariety mangoVariety;
+    /** Catalogue key of the variety, for example {@code KENT}: foreign key to plants {@code variety_reference}. */
+    @Column(name = "variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
+    private String varietyKey;
 
     @Column(name = "farm_id", nullable = false, length = 50)
     private String farmId;
@@ -117,50 +119,6 @@ public class HarvestEvent {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    /**
-     * Mango Variety Enum
-     * Business Rule: Matches database CHECK constraint
-     */
-    public enum MangoVariety {
-        KEITT,
-        KENT,
-        TOMMY,
-        AMÉLIE,
-        OTHER;
-
-        /**
-         * Resolve a variety name coming from the Plants module (for example
-         * {@code "Keitt"}, {@code "keitt"} or {@code "Amelie"}) to this enum.
-         *
-         * <p>Plants returns the planted name as stored, so it can differ in case
-         * and accents from the enum constants ({@code KEITT}, {@code AMÉLIE}).
-         * The comparison is therefore case-insensitive and accent-insensitive.
-         * Unknown or missing names map to {@link #OTHER} instead of failing the
-         * whole harvest import.
-         */
-        public static MangoVariety fromPlants(String varietyName) {
-            if (varietyName == null) {
-                return OTHER;
-            }
-            String normalized = java.text.Normalizer.normalize(varietyName.trim(), java.text.Normalizer.Form.NFD)
-                    .replaceAll("\\p{M}", "")
-                    .toUpperCase(java.util.Locale.ROOT);
-            switch (normalized) {
-                case "KEITT":
-                    return KEITT;
-                case "KENT":
-                    return KENT;
-                case "TOMMY":
-                case "TOMMY ATKINS":
-                    return TOMMY;
-                case "AMELIE":
-                    return AMÉLIE;
-                default:
-                    return OTHER;
-            }
-        }
     }
 
     /**

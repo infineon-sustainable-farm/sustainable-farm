@@ -3,7 +3,6 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.historical
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service.DtoMapper;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.dto.request.HistoricalHarvestCreateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.dto.response.HistoricalHarvestResponse;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.service.HistoricalHarvestService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -71,8 +70,8 @@ public class HistoricalHarvestController {
     @GetMapping("/variety/{variety}")
     @Operation(summary = "Get historical harvests by variety", description = "Retrieves historical harvest records filtered by mango variety")
     public ResponseEntity<List<HistoricalHarvestResponse>> getHistoricalHarvestsByVariety(
-            @Parameter(description = "Mango variety") @PathVariable MangoVariety variety) {
-        List<HistoricalHarvest> historicalList = historicalHarvestService.getHistoricalHarvestByVariety(variety);
+            @Parameter(description = "Mango variety") @PathVariable String variety) {
+        List<HistoricalHarvest> historicalList = historicalHarvestService.getHistoricalHarvestByVariety(dtoMapper.varietyKey(variety));
         List<HistoricalHarvestResponse> responses = historicalList.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
@@ -94,9 +93,9 @@ public class HistoricalHarvestController {
     @GetMapping("/variety/{variety}/year/{year}")
     @Operation(summary = "Get historical harvests by variety and year", description = "Retrieves historical harvest records filtered by variety and year")
     public ResponseEntity<List<HistoricalHarvestResponse>> getHistoricalHarvestsByVarietyAndYear(
-            @Parameter(description = "Mango variety") @PathVariable MangoVariety variety,
+            @Parameter(description = "Mango variety") @PathVariable String variety,
             @Parameter(description = "Year") @PathVariable Integer year) {
-        List<HistoricalHarvest> historicalList = historicalHarvestService.getHistoricalHarvestByYearAndVariety(year, variety);
+        List<HistoricalHarvest> historicalList = historicalHarvestService.getHistoricalHarvestByYearAndVariety(year, dtoMapper.varietyKey(variety));
         List<HistoricalHarvestResponse> responses = historicalList.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
@@ -117,8 +116,8 @@ public class HistoricalHarvestController {
             @Parameter(description = "Year") @PathVariable Integer year,
             @Parameter(description = "Month") @PathVariable Integer month,
             @Parameter(description = "Week") @PathVariable Integer week,
-            @Parameter(description = "Mango variety") @PathVariable MangoVariety variety) {
-        historicalHarvestService.deleteHistoricalHarvest(year, month, week, variety);
+            @Parameter(description = "Mango variety") @PathVariable String variety) {
+        historicalHarvestService.deleteHistoricalHarvest(year, month, week, dtoMapper.varietyKey(variety));
         return ResponseEntity.noContent().build();
     }
 }
