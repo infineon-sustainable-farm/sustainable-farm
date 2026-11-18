@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.cropstorage.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.cropstorage.dto.CropStorageEntryRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.cropstorage.dto.CropStorageEntryResponse;
 import org.springframework.stereotype.Service;
@@ -34,10 +36,10 @@ public class CropStorageIntegrationService {
      *
      * @param request Storage entry request
      * @return never: no module receives a storage entry yet
-     * @throws IllegalStateException always, answered as a 500 error, until Crop Storage exists
+     * @throws ResponseStatusException always, 503, until Crop Storage exists
      */
     public CropStorageEntryResponse createStorageEntry(CropStorageEntryRequest request) {
-        throw new IllegalStateException("Crop Storage is not available: no storage entry was created for batch "
+        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Crop Storage is not available: no storage entry was created for batch "
                 + (request == null ? null : request.getBatchId()));
     }
 
