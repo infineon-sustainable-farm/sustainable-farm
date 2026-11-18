@@ -77,6 +77,9 @@
   --color-chart-1: #0a8276;
   --color-chart-2: #d9a441;
   --color-chart-3: #94a3b8; /* also axis ticks */
+  --color-chart-4: #4caf50; /* charts with more than three series (energy consumption breakdown) */
+  --color-chart-5: #c1503f;
+  --color-chart-6: #3a7ca5;
   --color-chart-grid: #eef2f1;
 
   /* Radii */
