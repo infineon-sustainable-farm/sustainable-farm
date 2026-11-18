@@ -89,4 +89,11 @@ describe('DemandAlertsPage', () => {
     await waitFor(() => expect(api.deleteAlert).toHaveBeenCalledWith(3));
     expect(await screen.findByText('ALT-0003 deleted.')).toBeInTheDocument();
   });
+
+  it('shows the count of active high priority alerts, not a Germany base case it has no data for', async () => {
+    renderPage();
+    await screen.findByRole('heading', { name: 'Dried Mango - Germany' });
+    expect(screen.queryByText('Germany Base Case')).not.toBeInTheDocument();
+    expect(screen.getByText('High Priority Alerts').previousElementSibling).toHaveTextContent(/^1$/);
+  });
 });
