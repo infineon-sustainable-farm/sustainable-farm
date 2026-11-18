@@ -5,18 +5,14 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import i18next from 'eslint-plugin-i18next'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-// Folders whose interface text goes through i18next (t('...')). Hard-coded text in
-// their JSX is refused. Add a module here once it is migrated.
-const I18N_MIGRATED_FILES = [
-  'src/shared/ui/**/*.{js,jsx}',
-  'src/app/**/*.{js,jsx}',
-  'src/features/energysupply/**/*.{js,jsx}',
-  'src/features/machinery/**/*.{js,jsx}',
-  'src/features/plants/**/*.{js,jsx}',
-  'src/features/producttransformation/**/*.{js,jsx}',
-  'src/features/salesmarketing/**/*.{js,jsx}',
-  'src/features/visitormanagement/**/*.{js,jsx}',
-  'src/features/watersupply/**/*.{js,jsx}',
+// Interface text goes through i18next (t('...')) everywhere: hard-coded text in JSX is refused,
+// except in tests and test fixtures and in the two excluded modules, not migrated (ADR 0001).
+const I18N_FILES = ['src/**/*.{js,jsx}']
+const I18N_EXCLUDED = [
+  '**/*.test.{js,jsx}',
+  'src/test/**',
+  'src/features/sitesecurity/**',
+  'src/features/cropstorage/**',
 ]
 
 export default defineConfig([
@@ -46,8 +42,8 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
   {
-    files: I18N_MIGRATED_FILES,
-    ignores: ['**/*.test.{js,jsx}'],
+    files: I18N_FILES,
+    ignores: I18N_EXCLUDED,
     plugins: { i18next },
     rules: {
       // jsx-only: text between tags and string literals inside JSX expressions,
