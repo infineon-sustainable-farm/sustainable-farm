@@ -15,5 +15,949 @@
     "lots": "Processing lots",
     "visitors": "Visitors",
     "notifications": "Notifications"
+  },
+  "common": {
+    "none": "—",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "select": "Select",
+    "allFarms": "All farms",
+    "saveError": "Unable to save.",
+    "deleteError": "Unable to delete.",
+    "history": "History"
+  },
+  "units": {
+    "liters": "{{value}} L",
+    "cubicMeters": "{{value}} m³",
+    "mm": "{{value}} mm",
+    "percent": "{{value}}%",
+    "minutes": "{{value}} min",
+    "kmh": "{{value}} km/h",
+    "celsius": "{{value}}°C"
+  },
+  "charts": {
+    "unit": "Unit: {{unit}}",
+    "units": {
+      "liters": "liters",
+      "millimeters": "millimeters",
+      "percent": "%"
+    },
+    "axis": {
+      "liters": "L",
+      "cubicMeters": "m³",
+      "mm": "mm",
+      "percent": "%"
+    },
+    "label": "Chart - in {{unit}}",
+    "exportPng": "Export the chart as a PNG image",
+    "exportCsv": "Export the chart data as CSV",
+    "png": "PNG",
+    "csv": "CSV",
+    "target": "Target {{value}}",
+    "ofTarget": "/ target {{value}}"
+  },
+  "sources": {
+    "title": "Water sources",
+    "subtitle": "Boreholes, rain tanks, rivers: manage abstraction points per farm.",
+    "listTitle": "Source list",
+    "count": "{{count}} source(s)",
+    "farmFilter": "Filter by farm",
+    "search": "Search a source…",
+    "loading": "Loading sources...",
+    "loadError": "Unable to load sources.",
+    "emptyTitle": "No sources",
+    "empty": "Create a water source linked to a farm to get started.",
+    "columns": {
+      "name": "Name",
+      "farm": "Farm",
+      "type": "Type",
+      "capacity": "Capacity",
+      "level": "Level"
+    },
+    "levelValue": "{{level}} ({{pct}})",
+    "farmFallback": "Farm {{id}}",
+    "types": {
+      "borehole": "borehole",
+      "rain": "rain",
+      "river": "river",
+      "well": "well",
+      "municipal": "municipal"
+    },
+    "newTitle": "New source",
+    "editTitle": "Edit source",
+    "fields": {
+      "farm": "Farm",
+      "name": "Name",
+      "type": "Type",
+      "capacity": "Capacity (L)"
+    },
+    "errors": {
+      "farmRequired": "The farm is required.",
+      "nameRequired": "The name is required.",
+      "capacityPositive": "The capacity must be greater than 0.",
+      "levelRange": "The current level must be between 0 and the capacity."
+    },
+    "created": "Source created",
+    "updated": "Source updated",
+    "deleted": "Source deleted",
+    "deleteTitle": "Delete {{name}}",
+    "theSource": "the source",
+    "deleteMessage": "This source will be removed. Related consumption and quality tests could be impacted.",
+    "history": {
+      "title": "Level history - {{name}}",
+      "loading": "Loading the level history…",
+      "loadError": "Unable to load the history.",
+      "emptyTitle": "No level recorded",
+      "empty": "Readings appear here as the level sensor reports them or when the level is edited.",
+      "series": "Level (L)",
+      "capacity": "Capacity"
+    }
+  },
+  "outages": {
+    "title": "Planned outages",
+    "subtitle": "Maintenance or cuts announced in advance: visitors are warned, valves and automatic irrigation stay off.",
+    "inForceNow": "In force now",
+    "plannedPeriods": "Planned periods",
+    "listTitle": "Unavailability periods",
+    "filterLabel": "Show periods",
+    "filters": {
+      "current": "Current & upcoming",
+      "past": "Finished",
+      "cancelled": "Cancelled",
+      "all": "All"
+    },
+    "phases": {
+      "cancelled": "Cancelled",
+      "active": "In force",
+      "upcoming": "Upcoming",
+      "past": "Finished"
+    },
+    "scopes": {
+      "zone": "Zone",
+      "source": "Water source",
+      "farm": "Whole farm"
+    },
+    "statuses": {
+      "planned": "Planned",
+      "active": "Active",
+      "cancelled": "Cancelled"
+    },
+    "columns": {
+      "what": "What",
+      "from": "From",
+      "to": "To",
+      "reason": "Reason",
+      "status": "Status"
+    },
+    "loading": "Loading planned outages…",
+    "loadError": "Unable to load planned outages.",
+    "emptyTitle": "No planned outage",
+    "empty": "Plan a maintenance or a cut on the right: visitors and automatic irrigation will take it into account.",
+    "newTitle": "Plan an unavailability",
+    "editTitle": "Edit unavailability",
+    "fields": {
+      "scope": "Unavailable",
+      "start": "Start",
+      "end": "End",
+      "reason": "Reason",
+      "reasonPlaceholder": "Filter cleaning, pump repair…",
+      "status": "Status",
+      "postpone": "Postpone the irrigations planned during this period"
+    },
+    "sourceNoPostpone": "A source is not linked to zones: its irrigations cannot be postponed automatically.",
+    "errors": {
+      "targetRequired": "Select what is unavailable.",
+      "periodRequired": "Start and end are required.",
+      "endAfterStart": "The end must be after the start."
+    },
+    "planned": "Unavailability planned",
+    "updated": "Unavailability updated",
+    "cancelled": "Unavailability cancelled",
+    "deleted": "Unavailability deleted",
+    "cancelError": "Unable to cancel.",
+    "deleteTitle": "Delete this unavailability",
+    "deleteMessage": "The period is removed from the history. To keep a trace, cancel it instead."
+  },
+  "plantsBlocks": {
+    "title": "Plants blocks",
+    "subtitle": "Link each irrigated zone to the Plants block it waters: Plants then reads its water per block.",
+    "listTitle": "Zone ↔ block links",
+    "count": "{{blocks}} block(s), {{links}} link(s)",
+    "columns": {
+      "block": "Block",
+      "zone": "Zone",
+      "farm": "Farm"
+    },
+    "zoneFallback": "Zone {{id}}",
+    "farmFallback": "Farm {{id}}",
+    "severalBlocks": "several blocks",
+    "severalBlocksHint": "Its volumes cannot be attributed to a single block",
+    "unlink": "Unlink",
+    "loading": "Loading links…",
+    "loadError": "Unable to load the links.",
+    "emptyTitle": "No zone linked yet",
+    "empty": "Link a zone to its Plants block with the form on the right.",
+    "formTitle": "Link a zone",
+    "fields": {
+      "zone": "Zone",
+      "blockCode": "Plants block code",
+      "blockCodePlaceholder": "A, B2…"
+    },
+    "codeHint": "Codes are stored in upper case. The code belongs to the field of the zone: every zone of that field is linked to the block.",
+    "link": "Link",
+    "errors": {
+      "zoneRequired": "Select a zone.",
+      "codeFormat": "The block code is a short code such as A or B2, without prefix or space.",
+      "farmUnknown": "The farm of this zone is unknown: check its field in Farms & Fields.",
+      "alreadyLinked": "This zone is already linked to a block."
+    },
+    "linked": "Zone linked to block {{code}}",
+    "unlinked": "Zone unlinked from block {{code}}",
+    "details": {
+      "title": "Block {{code}}",
+      "blockChoice": "Block shown",
+      "pending": "…",
+      "rainfall": "Rainfall this month",
+      "rainfallWithGauges": "Rainfall this month · {{count}} gauge(s) of the farm",
+      "need": "Irrigation need today",
+      "phaseValue": "{{phase}} × {{factor}}",
+      "unknownPhase": "unknown",
+      "phase": "Growth phase ({{source}})",
+      "phaseSources": {
+        "request": "chosen here",
+        "plants_calendar": "Plants calendar",
+        "unknown": "unknown, no adjustment"
+      },
+      "phaseField": "Growth phase used for the need",
+      "phases": {
+        "calendar": "From the Plants calendar",
+        "establishment": "Establishment (0–2 yrs)",
+        "gradual": "Gradual production (3–5 yrs)",
+        "full": "Full production (6+ yrs)"
+      },
+      "factorsNotValidated": "Phase factors are still 1.0: they wait for the agronomists' validation, the need is the plain FAO-56 one (base {{base}}, ET0 {{et0}}).",
+      "gaugesPerFarm": "Rain gauges belong to the farm, not to the block: two gauges of the same farm are never added up."
+    }
+  },
+  "farms": {
+    "title": "Farms, fields & zones",
+    "subtitle": "Manage production sites, their fields and irrigation zones.",
+    "search": "Search a farm, a field, a zone…",
+    "loading": "Loading data…",
+    "loadError": "Loading error",
+    "saveError": "Save error",
+    "deleteError": "Delete error",
+    "farmsTitle": "Farms",
+    "fieldsTitle": "Fields",
+    "fieldsFilteredTitle": "Fields (filtered)",
+    "zonesTitle": "Zones",
+    "newFarm": "New farm",
+    "editFarm": "Edit farm",
+    "newField": "New field",
+    "newZone": "New zone",
+    "noFarmsTitle": "No farms",
+    "noFarms": "Create your first farm.",
+    "noFieldsTitle": "No fields",
+    "noFields": "Add a field to a farm.",
+    "noZonesTitle": "No zones",
+    "noZones": "Add irrigation zones.",
+    "showFields": "Fields",
+    "showAll": "All",
+    "columns": {
+      "name": "Name",
+      "address": "Address",
+      "area": "Area (ha)",
+      "description": "Description",
+      "location": "Location",
+      "crop": "Crop",
+      "soil": "Soil",
+      "irrigationMethod": "Irrigation method"
+    },
+    "hectares": "{{value}} ha",
+    "coordinates": "{{latitude}}, {{longitude}}",
+    "openMap": "Open on OpenStreetMap",
+    "farmCreated": "Farm created",
+    "farmUpdated": "Farm updated",
+    "fieldCreated": "Field created",
+    "zoneCreated": "Zone created",
+    "deleted": "Deleted",
+    "deleteTitle": "Delete {{name}}",
+    "deleteMessage": "Do you really want to delete this item? This action cannot be undone.",
+    "fields": {
+      "name": "Name",
+      "address": "Address",
+      "area": "Area (ha)",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "description": "Description",
+      "parentFarm": "Parent farm",
+      "parentField": "Parent field",
+      "irrigationMethod": "Irrigation method",
+      "cropType": "Crop type",
+      "location": "Location (latitude, longitude)"
+    },
+    "selectOption": "-- Select --",
+    "locationPlaceholder": "10.633100, -4.761200",
+    "methods": {
+      "drip": "Drip",
+      "sprinkler": "Sprinkler",
+      "surface": "Surface"
+    },
+    "locating": "Locating…",
+    "useMyPosition": "Use my position",
+    "accuracy": "Position of this device, accurate to about {{accuracy}} m: correct it if you are not on site.",
+    "errors": {
+      "locationFormat": "Write the location as \"latitude, longitude\"."
+    },
+    "geo": {
+      "refused": "Location access refused (or page not served over HTTPS): allow it in the browser, or type the coordinates.",
+      "unavailable": "Position unavailable on this device: type the coordinates.",
+      "timeout": "Location took too long: try again or type the coordinates.",
+      "unsupported": "This browser cannot give a location: type the coordinates.",
+      "failed": "Location failed.",
+      "bothOrNeither": "Give both latitude and longitude, or neither.",
+      "latitudeRange": "The latitude is between -90 and 90.",
+      "longitudeRange": "The longitude is between -180 and 180."
+    }
+  },
+  "dashboard": {
+    "title": "Water dashboard",
+    "subtitle": "Operational view: irrigation, tanks, quality and drought risk.",
+    "health": {
+      "checking": "Checking backend…",
+      "connected": "Backend connected",
+      "disconnected": "Backend disconnected"
+    },
+    "loading": "Loading dashboard…",
+    "loadErrorTitle": "Unable to load data",
+    "loadError": "Make sure the backend is running, then try again.",
+    "emptyTitle": "No data",
+    "empty": "Add data to visualize the dashboard.",
+    "kpis": {
+      "daily": "Daily consumption",
+      "monthly": "Monthly consumption",
+      "tankLevel": "Tank level",
+      "savings": "Water savings",
+      "irrigations": "Irrigations today",
+      "anomalies": "Anomalies",
+      "quality": "Water quality",
+      "sensors": "Sensors available"
+    },
+    "weather": {
+      "title": "Current weather",
+      "provider": "Open-Meteo",
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "wind": "Wind",
+      "condition": "Condition"
+    },
+    "recommendations": {
+      "loading": "Recommendations…",
+      "title": "Recommendations",
+      "note": "Priority-ordered",
+      "emptyTitle": "No recommendations",
+      "empty": "Nothing to display right now."
+    },
+    "priorities": {
+      "critical": "critical",
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "activity": {
+      "loading": "Activities…",
+      "title": "Recent activity",
+      "note": "History",
+      "emptyTitle": "No activity",
+      "empty": "Recorded consumptions will appear here."
+    },
+    "drought": {
+      "title": "Drought forecast",
+      "note": "Outlook"
+    },
+    "alerts": {
+      "loading": "Alerts…",
+      "title": "Recent alerts",
+      "note": "Unread",
+      "emptyTitle": "No alerts",
+      "empty": "Everything is nominal."
+    },
+    "actions": {
+      "title": "Actions",
+      "irrigation": "Manage irrigation",
+      "consumption": "View consumption",
+      "quality": "View water quality",
+      "outage": "Plan an outage",
+      "droughtPlan": "Drought plan",
+      "droughtPlanNotice": "See the Drought view for the plan.",
+      "carryOver": "Prepared carry-over plan",
+      "carryOverNotice": "Demo: report prepared."
+    },
+    "balance": {
+      "title": "Water balance",
+      "status": {
+        "deficit": "Deficit",
+        "unknown": "No tank capacity",
+        "balanced": "Balanced"
+      },
+      "rain": "Rain harvested this month",
+      "irrigation": "Irrigation this month",
+      "tanks": "In the tanks now",
+      "tanksDetail": "{{level}} of {{capacity}} ({{pct}})",
+      "forecast": "After the next 7 days of scheduled irrigation",
+      "forecastDetail": "{{planned}} planned, {{left}} left"
+    }
+  },
+  "drought": {
+    "title": "Drought alerts",
+    "subtitle": "Risk level based on reservoir levels, season and operational demand.",
+    "loadError": "Unable to load.",
+    "empty": "No prediction",
+    "levels": {
+      "normal": "Normal",
+      "vigilance": "Vigilance",
+      "alert": "Alert",
+      "critical": "Critical"
+    },
+    "stepsLabel": "Risk levels",
+    "gaugeTitle": "Current risk gauge",
+    "recommendationTitle": "Recommendation",
+    "reserveDays": "Reserve days",
+    "days": "{{value}} j",
+    "notAvailable": "n/d",
+    "averageConsumption": "Avg. consumption (7 d)",
+    "litersPerDay": "{{value}} L/j",
+    "reserve": "Reserve",
+    "reserveValue": "{{reserve}} / {{capacity}} L",
+    "defaultRecommendation": "Reserve water for priority crops.",
+    "prediction": "Prediction from {{date}} · confidence {{confidence}}",
+    "automationTitle": "Critical automation",
+    "ifCritical": "If critical",
+    "automationText": "Proposes postponing non-essential irrigation until the reservoir recovers.",
+    "preparePlan": "Prepare postponement plan",
+    "planPrepared": "Postponement plan prepared (demo)."
+  },
+  "notifications": {
+    "title": "Notification center",
+    "subtitle": "Operational alerts from quality, irrigation and storage checks.",
+    "listTitle": "Notifications",
+    "markAllRead": "Mark all as read",
+    "allMarkedRead": "Notifications marked as read",
+    "markRead": "Mark as read",
+    "markedRead": "Notification marked as read",
+    "deleted": "Notification deleted",
+    "actionFailed": "Action failed.",
+    "levelFilter": "Filter by level",
+    "allLevels": "All levels",
+    "search": "Search a notification…",
+    "loading": "Loading notifications...",
+    "loadError": "Unable to load.",
+    "emptyTitle": "No notifications",
+    "empty": "Alerts will appear here.",
+    "types": {
+      "critical": "critical",
+      "warning": "warning",
+      "info": "info",
+      "success": "success"
+    },
+    "deleteTitle": "Delete notification",
+    "deleteMessage": "This notification will be removed from the notification center."
+  },
+  "quality": {
+    "title": "Water quality",
+    "subtitle": "IoT probe measurements - automatic out-of-range alerts: pH 6-7.5 - turbidity < 5 NTU.",
+    "listTitle": "Measurement history",
+    "alertsCount": "{{count}} alert(s)",
+    "sourceFilter": "Filter by source",
+    "allSources": "All sources",
+    "search": "Search by date...",
+    "loading": "Loading measurements...",
+    "loadError": "Unable to load measurements.",
+    "emptyTitle": "No measurements",
+    "empty": "IoT probe measurements (pH, turbidity) will appear here as soon as they are reported.",
+    "columns": {
+      "date": "Date",
+      "source": "Source",
+      "ph": "pH",
+      "turbidity": "Turbidity",
+      "status": "Status"
+    },
+    "unknown": "-",
+    "ntu": "{{value}} NTU",
+    "alert": "Alert",
+    "compliant": "Compliant",
+    "thresholdsTitle": "Reference thresholds",
+    "compliantPh": "Compliant pH",
+    "phRange": "6.0 - 7.5",
+    "maxTurbidity": "Maximum turbidity",
+    "outOfRange": "Out of range",
+    "outOfRangeAction": "Alert + automatic notification",
+    "dataSourceTitle": "Data source",
+    "dataSourceText": "Measurements come from IoT probes installed on the sources. They are reported automatically via the ingestion endpoint - no manual entry."
+  },
+  "rainwater": {
+    "title": "Rainwater harvesting",
+    "subtitle": "Rainfall measured by IoT sensor - harvest volumes computed automatically.",
+    "period": "Period",
+    "periodValues": {
+      "all": "All history",
+      "week": "Last week",
+      "month": "Last month"
+    },
+    "totalCollected": "Total collected",
+    "coverage": "Coverage rate",
+    "coverageValue": "{{value}} %",
+    "tankTitle": "Tank level",
+    "noSource": "-",
+    "tankNote": "Level measured by IoT sensor - orange alert above 90 percent (SC-06).",
+    "harvestTitle": "Harvest per rain event",
+    "periodLabel": "Period",
+    "periods": {
+      "week": "Week",
+      "month": "Month",
+      "all": "All"
+    },
+    "sourceFilter": "Filter by source",
+    "allSources": "All sources",
+    "search": "Search by date...",
+    "loading": "Loading harvests...",
+    "loadError": "Unable to load harvests.",
+    "emptyTitle": "No harvest",
+    "empty": "Rainfall measured by the IoT rain gauge will appear here - volumes computed automatically.",
+    "series": "Collected volume (L)",
+    "columns": {
+      "date": "Date",
+      "volume": "Collected volume"
+    }
+  },
+  "lots": {
+    "title": "Processing lots",
+    "subtitle": "Water used by each Product Transformation lot, its quality, and what the tanks can still supply.",
+    "lookupTitle": "Lot lookup",
+    "lookupPlaceholder": "Lot identifier, e.g. LOT-2026-0142",
+    "lookupLabel": "Lot identifier",
+    "lookup": "Look up",
+    "noLotTitle": "No lot selected",
+    "noLot": "Enter a lot identifier to see its water consumption and quality.",
+    "loading": "Loading the lot…",
+    "loadError": "Unable to load the lot.",
+    "sourceFallback": "Source {{id}}",
+    "waterUsed": "Water used by {{lotId}}",
+    "quality": "Washing water quality",
+    "verdictLoading": "…",
+    "compliance": {
+      "compliant": "Compliant",
+      "non_compliant": "Not compliant",
+      "no_test": "No test in the window"
+    },
+    "noVerdict": "No quality verdict: {{message}}",
+    "complianceDetail": "{{tests}} test(s) of the lot's sources between {{from}} and {{to}} · pH {{phMin}}–{{phMax}}, turbidity ≤ {{turbidity}} NTU.",
+    "noTestWarning": "Without a test, the water of this lot cannot be declared compliant.",
+    "emptyTitle": "No consumption for this lot",
+    "empty": "Attribute a metering window to this lot with the form on the right.",
+    "byActivity": "{{activity}}: {{volume}}",
+    "consumptionsCaption": "Consumptions of the lot",
+    "columns": {
+      "date": "Date",
+      "activity": "Activity",
+      "source": "Source",
+      "volume": "Volume"
+    },
+    "attachTitle": "Attribute a metering window",
+    "fields": {
+      "lot": "Lot",
+      "lotPlaceholder": "LOT-2026-0142",
+      "activity": "Activity",
+      "source": "Source",
+      "from": "From",
+      "to": "To"
+    },
+    "attach": "Attribute",
+    "attached": "{{count}} consumption(s) attributed to {{lotId}}",
+    "attachedSummary": "<strong>{{count}} consumption(s), {{volume}}</strong> attributed to {{lotId}}.",
+    "warnings": {
+      "no_consumption_found": "No metered consumption in this window.",
+      "window_overlaps_other_lot": "Some consumptions already belong to another lot: they were left untouched.",
+      "no_source_or_zone_filter": "No source given: every meter of the site was considered."
+    },
+    "errors": {
+      "lotRequired": "The lot identifier is required.",
+      "sourceRequired": "Select the source used by the lot.",
+      "window": "Give a start and an end after the start.",
+      "attachFailed": "Unable to attribute the window."
+    },
+    "activities": {
+      "WASHING": "Washing",
+      "CUTTING": "Cutting",
+      "DRYER_CLEANING": "Dryer cleaning",
+      "IRRIGATION": "Irrigation",
+      "OTHER": "Other"
+    },
+    "forecast": {
+      "title": "Availability forecast",
+      "subtitle": "Can the tank supply the planned batches?",
+      "fields": {
+        "source": "Source",
+        "horizon": "Horizon (days)",
+        "includeIrrigation": "Include the farm's scheduled irrigations"
+      },
+      "batchesCaption": "Planned batches",
+      "columns": {
+        "lot": "Lot",
+        "activity": "Activity",
+        "size": "Size (kg)",
+        "plannedAt": "Planned at"
+      },
+      "batchLot": "Batch {{number}} lot",
+      "batchActivity": "Batch {{number}} activity",
+      "batchSize": "Batch {{number}} size",
+      "batchDate": "Batch {{number}} date",
+      "removeBatch": "Remove batch",
+      "addBatch": "Add a batch",
+      "submit": "Forecast",
+      "buffer": {
+        "ok": "Enough water",
+        "tight": "Below the minimum buffer",
+        "insufficient": "Not enough water"
+      },
+      "result": {
+        "current": "In the tank now",
+        "batches": "Batches",
+        "irrigations": "Irrigations",
+        "left": "Left after {{days}} day(s)",
+        "buffer": "Minimum buffer {{value}}.",
+        "noCoefficient": "Some activities have no water coefficient and count for 0 L: {{activities}}.",
+        "defaults": "Litres per kg and the minimum buffer are working defaults, to be confirmed by Product Transformation."
+      },
+      "errors": {
+        "sourceRequired": "Select the source to forecast.",
+        "horizonRange": "The horizon is between 1 and 90 days.",
+        "failed": "Unable to compute the forecast."
+      }
+    }
+  },
+  "visitors": {
+    "title": "Visitors",
+    "subtitle": "Safety rules and live figures shown to visitor groups by Visitor Management.",
+    "briefing": {
+      "title": "Water safety briefing",
+      "version": "Version {{version}}",
+      "notValidated": "Default text, not validated",
+      "loading": "Loading the briefing…",
+      "loadError": "Unable to load the briefing.",
+      "fields": {
+        "version": "Version (empty = today's date)",
+        "text": "Text read to the group",
+        "allowed": "Allowed areas (one per line)",
+        "forbidden": "Forbidden areas (one per line)",
+        "risks": "Risks (one per line)",
+        "maxCapacity": "Maximum group size",
+        "guideRequired": "A guide must accompany the group"
+      },
+      "publish": "Publish",
+      "published": "Safety briefing published",
+      "allowed": "Allowed areas",
+      "forbidden": "Forbidden areas",
+      "risks": "Risks",
+      "maxGroup": "At most <strong>{{value}}</strong> visitors per group.",
+      "maxGroupGuided": "At most <strong>{{value}}</strong> visitors per group, always with a guide.",
+      "publishedAt": "Published {{date}}. Earlier versions are kept.",
+      "newVersion": "Publish a new version",
+      "errors": {
+        "groupSize": "The group size is at least 1 visitor.",
+        "publishFailed": "Unable to publish."
+      }
+    },
+    "preview": {
+      "title": "Visitor screen preview",
+      "tankShown": "Tank shown",
+      "noTank": "No tank",
+      "zoneShown": "Zone shown",
+      "wholeSite": "Whole site",
+      "loading": "Loading the preview…",
+      "loadError": "Unable to load the preview.",
+      "level": "{{name}} level",
+      "selectTank": "Select a tank",
+      "saved": "Water saved this month",
+      "used": "Used in the last {{minutes}} min",
+      "irrigating": "Irrigating now",
+      "notIrrigating": "Not irrigating",
+      "lastStarted": "Last started {{date}}.",
+      "outages": "{{count}} planned outage(s) in force: visitors will be told water is unavailable.",
+      "outagesHere": "{{count}} planned outage(s) in force here: visitors will be told water is unavailable.",
+      "savingsUnavailable": "Savings are unavailable while the weather service is down."
+    }
+  },
+  "valves": {
+    "title": "Demonstration valve",
+    "gatewayMissing": "Gateway not configured",
+    "devicePlaceholder": "Device id, e.g. valve-demo-01",
+    "deviceLabel": "Valve device id",
+    "open": "Open {{seconds}} s",
+    "close": "Close",
+    "showJournal": "Show journal",
+    "explanation": "Openings are refused while a planned outage is in force; closing is always allowed. Until IoT connects a gateway, commands are journaled but never reach the valve.",
+    "noDeviceTitle": "No device selected",
+    "noDevice": "Enter the valve's device id to see its command journal.",
+    "loading": "Loading the journal…",
+    "loadError": "Unable to load the journal.",
+    "emptyTitle": "No command yet",
+    "empty": "Nothing was ever sent to {{deviceId}}.",
+    "journalCaption": "Command journal",
+    "columns": {
+      "requested": "Requested",
+      "command": "Command",
+      "status": "Status"
+    },
+    "commands": {
+      "open": "Open",
+      "close": "Close"
+    },
+    "status": {
+      "dispatched": "Sent",
+      "queued": "Queued",
+      "rejected": "Not sent"
+    },
+    "opened": "Valve opened for {{seconds}} s",
+    "closed": "Valve closed",
+    "errors": {
+      "noGateway": "No device gateway yet: the command was recorded but not sent.",
+      "offline": "The device is offline or a water outage is in force.",
+      "unknownDevice": "Unknown device: it registers itself with its first telemetry.",
+      "failed": "Command failed."
+    }
+  },
+  "irrigation": {
+    "title": "Irrigation scheduling",
+    "subtitle": "Irrigation starts when the soil needs it, not just because the clock says so.",
+    "zoneFallback": "Zone {{id}}",
+    "status": {
+      "running": "Running",
+      "completed": "Completed",
+      "postponed": "Postponed",
+      "scheduled": "Scheduled"
+    },
+    "schedules": {
+      "title": "Irrigation schedules",
+      "count": "{{count}} active schedule(s)",
+      "loading": "Loading schedules…",
+      "loadError": "Unable to load.",
+      "emptyTitle": "No running or scheduled plans",
+      "empty": "Create an irrigation schedule on the right. Completed schedules are listed in the Irrigation journal.",
+      "block": "Block {{code}}",
+      "severalBlocks": "Several blocks",
+      "planned": "{{volume}} planned",
+      "start": "Start now",
+      "stop": "Stop irrigation",
+      "archived": "Completed schedules are archived in the Irrigation journal below."
+    },
+    "journal": {
+      "title": "Irrigation journal",
+      "count": "{{count}} completed cycle(s)",
+      "search": "Search by date (YYYY-MM-DD)…",
+      "loading": "Loading journal…",
+      "emptyTitle": "No completed cycles",
+      "empty": "Start then stop an irrigation: each closed cycle is added to the journal automatically.",
+      "scheduleRef": "#{{id}}",
+      "columns": {
+        "schedule": "Schedule",
+        "start": "Start",
+        "stop": "Stop",
+        "duration": "Actual duration",
+        "volume": "Actual volume",
+        "status": "Status"
+      },
+      "limit": "Only the last {{count}} completed cycles are shown here.",
+      "olderStored": "Older cycles remain stored in the database.",
+      "moreStored": "Additional cycles will also remain stored in the database."
+    },
+    "form": {
+      "newTitle": "Create a schedule",
+      "editTitle": "Edit schedule",
+      "zone": "Zone",
+      "start": "Start",
+      "duration": "Duration (min)",
+      "volume": "Planned volume (L)",
+      "status": "Status"
+    },
+    "errors": {
+      "zoneRequired": "Zone is required.",
+      "startRequired": "Start date is required.",
+      "durationPositive": "Duration must be greater than 0.",
+      "volumePositive": "Planned volume must be greater than 0."
+    },
+    "created": "Schedule created",
+    "updated": "Schedule updated",
+    "started": "Irrigation started for {{zone}}.",
+    "stopped": "Irrigation stopped for {{zone}}.",
+    "actionFailed": "Action failed."
+  },
+  "consumption": {
+    "title": "Consumption tracking",
+    "subtitle": "Measurements reported automatically by IoT sensors - compared with the theoretical baseline.",
+    "stats": {
+      "period": "Selected period",
+      "total": "Total consumed",
+      "peak": "Peak",
+      "peakValue": "{{day}} - {{volume}}",
+      "noPeak": "-"
+    },
+    "periodNames": {
+      "all": "All history",
+      "week": "Last week",
+      "month": "Last month"
+    },
+    "periodLabel": "Period",
+    "periods": {
+      "week": "Week",
+      "month": "Month",
+      "all": "All"
+    },
+    "report": "CSV report",
+    "exporting": "Exporting…",
+    "reportHint": "Download the consumption report (CSV)",
+    "exported": "CSV report downloaded.",
+    "exportFailed": "Export failed.",
+    "chart": {
+      "title": "Consumption over time",
+      "loading": "Loading consumptions…",
+      "loadError": "Unable to load data.",
+      "emptyTitle": "No consumption",
+      "empty": "IoT sensor measurements will appear here as soon as they are reported.",
+      "series": "Volume (L)"
+    },
+    "history": {
+      "title": "Measurement history",
+      "count": "{{count}} measurement(s)",
+      "loading": "Loading measurements…",
+      "emptyTitle": "No recorded consumption",
+      "empty": "Volumes are measured by IoT sensors and reported automatically - no manual entry."
+    },
+    "farmFilter": "Filter by farm",
+    "sourceFilter": "Filter by source",
+    "allSources": "All sources",
+    "search": "Search by date, lot or block…",
+    "columns": {
+      "date": "Date",
+      "volume": "Volume",
+      "block": "Plants block",
+      "lot": "Lot"
+    },
+    "severalBlocks": "Several",
+    "lotValue": "{{lot}} · {{activity}}"
+  },
+  "quota": {
+    "title": "Monthly water quotas",
+    "status": {
+      "exceeded": "Quota exceeded",
+      "warning": "80% of quota reached",
+      "ok": "Under quota",
+      "none": "No baseline"
+    },
+    "targetTypes": {
+      "farm": "Farm",
+      "zone": "Zone"
+    },
+    "chooseFarm": "Choose a farm…",
+    "chooseZone": "Choose a zone…",
+    "fields": {
+      "targetType": "Quota target type",
+      "target": "Quota target",
+      "month": "Quota month",
+      "liters": "Monthly quota (L)"
+    },
+    "submit": "Set quota",
+    "saving": "Saving…",
+    "errors": {
+      "chooseFarm": "Choose a farm.",
+      "chooseZone": "Choose a zone.",
+      "positive": "Quota must be a positive volume (liters).",
+      "save": "Unable to save the quota.",
+      "delete": "Unable to delete the quota."
+    },
+    "saved": "Quota saved.",
+    "deleted": "Quota deleted.",
+    "loading": "Loading quotas…",
+    "loadError": "Unable to load quotas.",
+    "emptyTitle": "No quota defined",
+    "empty": "Set a monthly quota per farm or per zone: sensor consumption will be compared with this target, with an automatic alert at 80% then 100%.",
+    "unknownTarget": "Unknown target",
+    "used": "{{pct}} of quota used",
+    "over": "over by {{volume}}",
+    "left": "{{volume}} left",
+    "usageLine": "{{used}} — {{rest}}"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "subtitle": "Track interventions and plan emitter upkeep.",
+    "historyTitle": "Intervention history",
+    "periodLabel": "Period",
+    "periods": {
+      "week": "week",
+      "month": "month",
+      "all": "all"
+    },
+    "zoneFilter": "Filter by zone",
+    "allZones": "All zones",
+    "search": "Search an intervention…",
+    "loading": "Loading interventions...",
+    "loadError": "Unable to load interventions.",
+    "emptyTitle": "No interventions",
+    "empty": "Record a maintenance intervention to start the history.",
+    "zoneFallback": "Zone {{id}}",
+    "columns": {
+      "date": "Date",
+      "zone": "Zone",
+      "type": "Type",
+      "state": "State",
+      "emitters": "Emitters"
+    },
+    "types": {
+      "cleaning": "cleaning",
+      "filter_change": "filter_change",
+      "repair": "repair",
+      "inspection": "inspection"
+    },
+    "clogging": "Clogging {{severity}}",
+    "ok": "OK",
+    "severityInline": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    },
+    "severities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "planningTitle": "Maintenance planning",
+    "planning": "Recommended: check filters weekly and replace clogged emitters.",
+    "recent": "{{count}} intervention(s) in the last 7 days (relative to the latest data).",
+    "form": {
+      "newTitle": "New intervention",
+      "editTitle": "Edit intervention",
+      "zone": "Zone",
+      "type": "Intervention type",
+      "date": "Intervention date",
+      "filterCleaned": "Filter cleaned",
+      "cloggingDetected": "Clogging detected",
+      "severity": "Clogging severity",
+      "emitters": "Emitters replaced",
+      "performedBy": "Performed by",
+      "notes": "Notes"
+    },
+    "errors": {
+      "zoneRequired": "The zone is required.",
+      "dateRequired": "The intervention date is required."
+    },
+    "saved": "Intervention saved",
+    "updated": "Intervention updated",
+    "deleted": "Intervention deleted",
+    "deleteTitle": "Delete intervention",
+    "deleteMessage": "This intervention will be removed from the maintenance history."
   }
 }

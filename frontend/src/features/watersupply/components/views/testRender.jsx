@@ -2,6 +2,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 
 /**
+ * Control (input / select / textarea) of the field whose label starts with `label`. The match on
+ * the start of the text lets a test name a field without its unit or hint.
+ */
+export function controlByLabel(container, label) {
+  const labelElement = [...container.querySelectorAll('label')].find((element) => element.textContent.trim().startsWith(label))
+  if (!labelElement) throw new Error(`No field labelled "${label}"`)
+  return labelElement.parentElement.querySelector('input, select, textarea')
+}
+
+/**
  * Renders a module view with a brand-new React Query client.
  *
  * Why a client per test: the application's shared client keeps its cache between tests
@@ -10,17 +20,6 @@ import { render } from '@testing-library/react'
  *
  * Tests import this function under the name `render`: `import { renderView as render }`.
  */
-/**
- * Control (input / select / textarea) of the FormField whose label starts with `label`.
- * FormField renders its label next to the control without `htmlFor`, so testing-library's
- * getByLabelText cannot find it.
- */
-export function controlByLabel(container, label) {
-  const labelElement = [...container.querySelectorAll('label')].find((element) => element.textContent.trim().startsWith(label))
-  if (!labelElement) throw new Error(`No field labelled "${label}"`)
-  return labelElement.parentElement.querySelector('input, select, textarea')
-}
-
 export function renderView(ui) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 0, gcTime: 0 } },

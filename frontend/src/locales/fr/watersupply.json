@@ -15,5 +15,949 @@
     "lots": "Lots de transformation",
     "visitors": "Visiteurs",
     "notifications": "Notifications"
+  },
+  "common": {
+    "none": "—",
+    "loading": "Chargement…",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "select": "Sélectionner",
+    "allFarms": "Toutes les fermes",
+    "saveError": "Enregistrement impossible.",
+    "deleteError": "Suppression impossible.",
+    "history": "Historique"
+  },
+  "units": {
+    "liters": "{{value}} L",
+    "cubicMeters": "{{value}} m³",
+    "mm": "{{value}} mm",
+    "percent": "{{value}} %",
+    "minutes": "{{value}} min",
+    "kmh": "{{value}} km/h",
+    "celsius": "{{value}} °C"
+  },
+  "charts": {
+    "unit": "Unité : {{unit}}",
+    "units": {
+      "liters": "litres",
+      "millimeters": "millimètres",
+      "percent": "%"
+    },
+    "axis": {
+      "liters": "L",
+      "cubicMeters": "m³",
+      "mm": "mm",
+      "percent": "%"
+    },
+    "label": "Graphique en {{unit}}",
+    "exportPng": "Exporter le graphique en image PNG",
+    "exportCsv": "Exporter les données du graphique en CSV",
+    "png": "PNG",
+    "csv": "CSV",
+    "target": "Objectif {{value}}",
+    "ofTarget": "/ objectif {{value}}"
+  },
+  "sources": {
+    "title": "Sources d’eau",
+    "subtitle": "Forages, cuves de pluie, rivières : gérez les points de prélèvement par ferme.",
+    "listTitle": "Liste des sources",
+    "count": "{{count}} source(s)",
+    "farmFilter": "Filtrer par ferme",
+    "search": "Rechercher une source…",
+    "loading": "Chargement des sources...",
+    "loadError": "Impossible de charger les sources.",
+    "emptyTitle": "Aucune source",
+    "empty": "Créez une source d’eau rattachée à une ferme pour commencer.",
+    "columns": {
+      "name": "Nom",
+      "farm": "Ferme",
+      "type": "Type",
+      "capacity": "Capacité",
+      "level": "Niveau"
+    },
+    "levelValue": "{{level}} ({{pct}})",
+    "farmFallback": "Ferme {{id}}",
+    "types": {
+      "borehole": "forage",
+      "rain": "pluie",
+      "river": "rivière",
+      "well": "puits",
+      "municipal": "réseau public"
+    },
+    "newTitle": "Nouvelle source",
+    "editTitle": "Modifier la source",
+    "fields": {
+      "farm": "Ferme",
+      "name": "Nom",
+      "type": "Type",
+      "capacity": "Capacité (L)"
+    },
+    "errors": {
+      "farmRequired": "La ferme est obligatoire.",
+      "nameRequired": "Le nom est obligatoire.",
+      "capacityPositive": "La capacité doit être supérieure à 0.",
+      "levelRange": "Le niveau actuel doit être compris entre 0 et la capacité."
+    },
+    "created": "Source créée",
+    "updated": "Source mise à jour",
+    "deleted": "Source supprimée",
+    "deleteTitle": "Supprimer {{name}}",
+    "theSource": "la source",
+    "deleteMessage": "Cette source sera supprimée. Les consommations et tests de qualité associés peuvent être affectés.",
+    "history": {
+      "title": "Historique du niveau - {{name}}",
+      "loading": "Chargement de l’historique du niveau…",
+      "loadError": "Impossible de charger l’historique.",
+      "emptyTitle": "Aucun niveau enregistré",
+      "empty": "Les relevés apparaissent ici dès que le capteur de niveau les transmet ou que le niveau est modifié.",
+      "series": "Niveau (L)",
+      "capacity": "Capacité"
+    }
+  },
+  "outages": {
+    "title": "Coupures planifiées",
+    "subtitle": "Maintenances ou coupures annoncées à l’avance : les visiteurs sont prévenus, les vannes et l’irrigation automatique restent fermées.",
+    "inForceNow": "En cours",
+    "plannedPeriods": "Périodes planifiées",
+    "listTitle": "Périodes d’indisponibilité",
+    "filterLabel": "Périodes affichées",
+    "filters": {
+      "current": "En cours et à venir",
+      "past": "Terminées",
+      "cancelled": "Annulées",
+      "all": "Toutes"
+    },
+    "phases": {
+      "cancelled": "Annulée",
+      "active": "En cours",
+      "upcoming": "À venir",
+      "past": "Terminée"
+    },
+    "scopes": {
+      "zone": "Zone",
+      "source": "Source d’eau",
+      "farm": "Ferme entière"
+    },
+    "statuses": {
+      "planned": "Planifiée",
+      "active": "Active",
+      "cancelled": "Annulée"
+    },
+    "columns": {
+      "what": "Quoi",
+      "from": "Du",
+      "to": "Au",
+      "reason": "Motif",
+      "status": "Statut"
+    },
+    "loading": "Chargement des coupures planifiées…",
+    "loadError": "Impossible de charger les coupures planifiées.",
+    "emptyTitle": "Aucune coupure planifiée",
+    "empty": "Planifiez une maintenance ou une coupure à droite : les visiteurs et l’irrigation automatique en tiendront compte.",
+    "newTitle": "Planifier une indisponibilité",
+    "editTitle": "Modifier l’indisponibilité",
+    "fields": {
+      "scope": "Indisponible",
+      "start": "Début",
+      "end": "Fin",
+      "reason": "Motif",
+      "reasonPlaceholder": "Nettoyage du filtre, réparation de pompe…",
+      "status": "Statut",
+      "postpone": "Reporter les irrigations prévues pendant cette période"
+    },
+    "sourceNoPostpone": "Une source n’est rattachée à aucune zone : ses irrigations ne peuvent pas être reportées automatiquement.",
+    "errors": {
+      "targetRequired": "Choisissez ce qui est indisponible.",
+      "periodRequired": "Le début et la fin sont obligatoires.",
+      "endAfterStart": "La fin doit être postérieure au début."
+    },
+    "planned": "Indisponibilité planifiée",
+    "updated": "Indisponibilité mise à jour",
+    "cancelled": "Indisponibilité annulée",
+    "deleted": "Indisponibilité supprimée",
+    "cancelError": "Annulation impossible.",
+    "deleteTitle": "Supprimer cette indisponibilité",
+    "deleteMessage": "La période est retirée de l’historique. Pour en garder une trace, annulez-la plutôt."
+  },
+  "plantsBlocks": {
+    "title": "Blocs de cultures",
+    "subtitle": "Reliez chaque zone irriguée au bloc Plants qu’elle arrose : Plants lit alors son eau par bloc.",
+    "listTitle": "Liens zone ↔ bloc",
+    "count": "{{blocks}} bloc(s), {{links}} lien(s)",
+    "columns": {
+      "block": "Bloc",
+      "zone": "Zone",
+      "farm": "Ferme"
+    },
+    "zoneFallback": "Zone {{id}}",
+    "farmFallback": "Ferme {{id}}",
+    "severalBlocks": "plusieurs blocs",
+    "severalBlocksHint": "Ses volumes ne peuvent pas être attribués à un seul bloc",
+    "unlink": "Délier",
+    "loading": "Chargement des liens…",
+    "loadError": "Impossible de charger les liens.",
+    "emptyTitle": "Aucune zone liée pour l’instant",
+    "empty": "Reliez une zone à son bloc Plants avec le formulaire de droite.",
+    "formTitle": "Relier une zone",
+    "fields": {
+      "zone": "Zone",
+      "blockCode": "Code du bloc Plants",
+      "blockCodePlaceholder": "A, B2…"
+    },
+    "codeHint": "Les codes sont enregistrés en majuscules. Le code appartient à la parcelle de la zone : toutes les zones de cette parcelle sont reliées au bloc.",
+    "link": "Relier",
+    "errors": {
+      "zoneRequired": "Choisissez une zone.",
+      "codeFormat": "Le code de bloc est un code court comme A ou B2, sans préfixe ni espace.",
+      "farmUnknown": "La ferme de cette zone est inconnue : vérifiez sa parcelle dans Fermes et parcelles.",
+      "alreadyLinked": "Cette zone est déjà reliée à un bloc."
+    },
+    "linked": "Zone reliée au bloc {{code}}",
+    "unlinked": "Zone déliée du bloc {{code}}",
+    "details": {
+      "title": "Bloc {{code}}",
+      "blockChoice": "Bloc affiché",
+      "pending": "…",
+      "rainfall": "Pluie ce mois-ci",
+      "rainfallWithGauges": "Pluie ce mois-ci · {{count}} pluviomètre(s) de la ferme",
+      "need": "Besoin d’irrigation aujourd’hui",
+      "phaseValue": "{{phase}} × {{factor}}",
+      "unknownPhase": "inconnue",
+      "phase": "Phase de croissance ({{source}})",
+      "phaseSources": {
+        "request": "choisie ici",
+        "plants_calendar": "calendrier Plants",
+        "unknown": "inconnue, sans ajustement"
+      },
+      "phaseField": "Phase de croissance utilisée pour le besoin",
+      "phases": {
+        "calendar": "Selon le calendrier Plants",
+        "establishment": "Installation (0–2 ans)",
+        "gradual": "Entrée en production (3–5 ans)",
+        "full": "Pleine production (6 ans et plus)"
+      },
+      "factorsNotValidated": "Les facteurs de phase valent encore 1,0 : ils attendent la validation des agronomes, le besoin est le besoin FAO-56 simple (base {{base}}, ET0 {{et0}}).",
+      "gaugesPerFarm": "Les pluviomètres appartiennent à la ferme, pas au bloc : deux pluviomètres d’une même ferme ne sont jamais additionnés."
+    }
+  },
+  "farms": {
+    "title": "Fermes, parcelles et zones",
+    "subtitle": "Gérez les sites de production, leurs parcelles et leurs zones d’irrigation.",
+    "search": "Rechercher une ferme, une parcelle, une zone…",
+    "loading": "Chargement des données…",
+    "loadError": "Erreur de chargement",
+    "saveError": "Erreur d’enregistrement",
+    "deleteError": "Erreur de suppression",
+    "farmsTitle": "Fermes",
+    "fieldsTitle": "Parcelles",
+    "fieldsFilteredTitle": "Parcelles (filtrées)",
+    "zonesTitle": "Zones",
+    "newFarm": "Nouvelle ferme",
+    "editFarm": "Modifier la ferme",
+    "newField": "Nouvelle parcelle",
+    "newZone": "Nouvelle zone",
+    "noFarmsTitle": "Aucune ferme",
+    "noFarms": "Créez votre première ferme.",
+    "noFieldsTitle": "Aucune parcelle",
+    "noFields": "Ajoutez une parcelle à une ferme.",
+    "noZonesTitle": "Aucune zone",
+    "noZones": "Ajoutez des zones d’irrigation.",
+    "showFields": "Parcelles",
+    "showAll": "Toutes",
+    "columns": {
+      "name": "Nom",
+      "address": "Adresse",
+      "area": "Surface (ha)",
+      "description": "Description",
+      "location": "Position",
+      "crop": "Culture",
+      "soil": "Sol",
+      "irrigationMethod": "Mode d’irrigation"
+    },
+    "hectares": "{{value}} ha",
+    "coordinates": "{{latitude}} ; {{longitude}}",
+    "openMap": "Ouvrir dans OpenStreetMap",
+    "farmCreated": "Ferme créée",
+    "farmUpdated": "Ferme mise à jour",
+    "fieldCreated": "Parcelle créée",
+    "zoneCreated": "Zone créée",
+    "deleted": "Supprimé",
+    "deleteTitle": "Supprimer {{name}}",
+    "deleteMessage": "Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible.",
+    "fields": {
+      "name": "Nom",
+      "address": "Adresse",
+      "area": "Surface (ha)",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "description": "Description",
+      "parentFarm": "Ferme de rattachement",
+      "parentField": "Parcelle de rattachement",
+      "irrigationMethod": "Mode d’irrigation",
+      "cropType": "Type de culture",
+      "location": "Position (latitude, longitude)"
+    },
+    "selectOption": "-- Sélectionner --",
+    "locationPlaceholder": "10.633100, -4.761200",
+    "methods": {
+      "drip": "Goutte-à-goutte",
+      "sprinkler": "Aspersion",
+      "surface": "Gravitaire"
+    },
+    "locating": "Localisation…",
+    "useMyPosition": "Utiliser ma position",
+    "accuracy": "Position de cet appareil, précise à environ {{accuracy}} m : corrigez-la si vous n’êtes pas sur place.",
+    "errors": {
+      "locationFormat": "Saisissez la position sous la forme « latitude, longitude »."
+    },
+    "geo": {
+      "refused": "Accès à la position refusé (ou page non servie en HTTPS) : autorisez-le dans le navigateur ou saisissez les coordonnées.",
+      "unavailable": "Position indisponible sur cet appareil : saisissez les coordonnées.",
+      "timeout": "La localisation a pris trop de temps : réessayez ou saisissez les coordonnées.",
+      "unsupported": "Ce navigateur ne peut pas fournir de position : saisissez les coordonnées.",
+      "failed": "La localisation a échoué.",
+      "bothOrNeither": "Indiquez la latitude et la longitude, ou aucune des deux.",
+      "latitudeRange": "La latitude est comprise entre -90 et 90.",
+      "longitudeRange": "La longitude est comprise entre -180 et 180."
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord de l’eau",
+    "subtitle": "Vue opérationnelle : irrigation, cuves, qualité et risque de sécheresse.",
+    "health": {
+      "checking": "Vérification du serveur…",
+      "connected": "Serveur connecté",
+      "disconnected": "Serveur déconnecté"
+    },
+    "loading": "Chargement du tableau de bord…",
+    "loadErrorTitle": "Impossible de charger les données",
+    "loadError": "Vérifiez que le serveur est démarré, puis réessayez.",
+    "emptyTitle": "Aucune donnée",
+    "empty": "Ajoutez des données pour afficher le tableau de bord.",
+    "kpis": {
+      "daily": "Consommation du jour",
+      "monthly": "Consommation du mois",
+      "tankLevel": "Niveau des cuves",
+      "savings": "Économies d’eau",
+      "irrigations": "Irrigations du jour",
+      "anomalies": "Anomalies",
+      "quality": "Qualité de l’eau",
+      "sensors": "Capteurs disponibles"
+    },
+    "weather": {
+      "title": "Météo actuelle",
+      "provider": "Open-Meteo",
+      "temperature": "Température",
+      "humidity": "Humidité",
+      "wind": "Vent",
+      "condition": "Conditions"
+    },
+    "recommendations": {
+      "loading": "Recommandations…",
+      "title": "Recommandations",
+      "note": "Par ordre de priorité",
+      "emptyTitle": "Aucune recommandation",
+      "empty": "Rien à afficher pour le moment."
+    },
+    "priorities": {
+      "critical": "critique",
+      "high": "haute",
+      "medium": "moyenne",
+      "low": "basse"
+    },
+    "activity": {
+      "loading": "Activités…",
+      "title": "Activité récente",
+      "note": "Historique",
+      "emptyTitle": "Aucune activité",
+      "empty": "Les consommations enregistrées apparaîtront ici."
+    },
+    "drought": {
+      "title": "Prévision de sécheresse",
+      "note": "Tendance"
+    },
+    "alerts": {
+      "loading": "Alertes…",
+      "title": "Alertes récentes",
+      "note": "Non lues",
+      "emptyTitle": "Aucune alerte",
+      "empty": "Tout est normal."
+    },
+    "actions": {
+      "title": "Actions",
+      "irrigation": "Gérer l’irrigation",
+      "consumption": "Voir la consommation",
+      "quality": "Voir la qualité de l’eau",
+      "outage": "Planifier une coupure",
+      "droughtPlan": "Plan sécheresse",
+      "droughtPlanNotice": "Consultez la vue Sécheresse pour le plan.",
+      "carryOver": "Plan de report préparé",
+      "carryOverNotice": "Démo : rapport préparé."
+    },
+    "balance": {
+      "title": "Bilan hydrique",
+      "status": {
+        "deficit": "Déficit",
+        "unknown": "Aucune capacité de cuve",
+        "balanced": "Équilibré"
+      },
+      "rain": "Pluie récupérée ce mois-ci",
+      "irrigation": "Irrigation ce mois-ci",
+      "tanks": "Dans les cuves actuellement",
+      "tanksDetail": "{{level}} sur {{capacity}} ({{pct}})",
+      "forecast": "Après les irrigations planifiées des 7 prochains jours",
+      "forecastDetail": "{{planned}} prévus, {{left}} restants"
+    }
+  },
+  "drought": {
+    "title": "Alertes sécheresse",
+    "subtitle": "Niveau de risque selon le niveau des réserves, la saison et les besoins d’exploitation.",
+    "loadError": "Chargement impossible.",
+    "empty": "Aucune prévision",
+    "levels": {
+      "normal": "Normal",
+      "vigilance": "Vigilance",
+      "alert": "Alerte",
+      "critical": "Critique"
+    },
+    "stepsLabel": "Niveaux de risque",
+    "gaugeTitle": "Jauge de risque actuelle",
+    "recommendationTitle": "Recommandation",
+    "reserveDays": "Jours de réserve",
+    "days": "{{value}} j",
+    "notAvailable": "n/d",
+    "averageConsumption": "Conso. moyenne (7 j)",
+    "litersPerDay": "{{value}} L/j",
+    "reserve": "Réserve",
+    "reserveValue": "{{reserve}} / {{capacity}} L",
+    "defaultRecommendation": "Réservez l’eau aux cultures prioritaires.",
+    "prediction": "Prévision du {{date}} · confiance {{confidence}}",
+    "automationTitle": "Automatisation en cas critique",
+    "ifCritical": "Si critique",
+    "automationText": "Propose de reporter les irrigations non essentielles jusqu’à ce que la réserve se reconstitue.",
+    "preparePlan": "Préparer le plan de report",
+    "planPrepared": "Plan de report préparé (démo)."
+  },
+  "notifications": {
+    "title": "Centre de notifications",
+    "subtitle": "Alertes d’exploitation issues des contrôles de qualité, d’irrigation et de stockage.",
+    "listTitle": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "allMarkedRead": "Notifications marquées comme lues",
+    "markRead": "Marquer comme lue",
+    "markedRead": "Notification marquée comme lue",
+    "deleted": "Notification supprimée",
+    "actionFailed": "L’action a échoué.",
+    "levelFilter": "Filtrer par niveau",
+    "allLevels": "Tous les niveaux",
+    "search": "Rechercher une notification…",
+    "loading": "Chargement des notifications...",
+    "loadError": "Chargement impossible.",
+    "emptyTitle": "Aucune notification",
+    "empty": "Les alertes apparaîtront ici.",
+    "types": {
+      "critical": "critique",
+      "warning": "avertissement",
+      "info": "info",
+      "success": "succès"
+    },
+    "deleteTitle": "Supprimer la notification",
+    "deleteMessage": "Cette notification sera retirée du centre de notifications."
+  },
+  "quality": {
+    "title": "Qualité de l’eau",
+    "subtitle": "Mesures des sondes IoT - alertes automatiques hors seuils : pH 6-7,5 - turbidité < 5 NTU.",
+    "listTitle": "Historique des mesures",
+    "alertsCount": "{{count}} alerte(s)",
+    "sourceFilter": "Filtrer par source",
+    "allSources": "Toutes les sources",
+    "search": "Rechercher par date...",
+    "loading": "Chargement des mesures...",
+    "loadError": "Impossible de charger les mesures.",
+    "emptyTitle": "Aucune mesure",
+    "empty": "Les mesures des sondes IoT (pH, turbidité) apparaîtront ici dès leur transmission.",
+    "columns": {
+      "date": "Date",
+      "source": "Source",
+      "ph": "pH",
+      "turbidity": "Turbidité",
+      "status": "État"
+    },
+    "unknown": "-",
+    "ntu": "{{value}} NTU",
+    "alert": "Alerte",
+    "compliant": "Conforme",
+    "thresholdsTitle": "Seuils de référence",
+    "compliantPh": "pH conforme",
+    "phRange": "6,0 - 7,5",
+    "maxTurbidity": "Turbidité maximale",
+    "outOfRange": "Hors seuils",
+    "outOfRangeAction": "Alerte + notification automatique",
+    "dataSourceTitle": "Source des données",
+    "dataSourceText": "Les mesures proviennent des sondes IoT installées sur les sources. Elles sont transmises automatiquement par le point d’ingestion - aucune saisie manuelle."
+  },
+  "rainwater": {
+    "title": "Récupération de l’eau de pluie",
+    "subtitle": "Pluviométrie mesurée par capteur IoT - volumes récupérés calculés automatiquement.",
+    "period": "Période",
+    "periodValues": {
+      "all": "Tout l’historique",
+      "week": "Semaine dernière",
+      "month": "Mois dernier"
+    },
+    "totalCollected": "Total récupéré",
+    "coverage": "Taux de couverture",
+    "coverageValue": "{{value}} %",
+    "tankTitle": "Niveau de la cuve",
+    "noSource": "-",
+    "tankNote": "Niveau mesuré par capteur IoT - alerte orange au-delà de 90 pour cent (SC-06).",
+    "harvestTitle": "Récupération par épisode de pluie",
+    "periodLabel": "Période",
+    "periods": {
+      "week": "Semaine",
+      "month": "Mois",
+      "all": "Tout"
+    },
+    "sourceFilter": "Filtrer par source",
+    "allSources": "Toutes les sources",
+    "search": "Rechercher par date...",
+    "loading": "Chargement des récupérations...",
+    "loadError": "Impossible de charger les récupérations.",
+    "emptyTitle": "Aucune récupération",
+    "empty": "La pluviométrie mesurée par le pluviomètre IoT apparaîtra ici - volumes calculés automatiquement.",
+    "series": "Volume récupéré (L)",
+    "columns": {
+      "date": "Date",
+      "volume": "Volume récupéré"
+    }
+  },
+  "lots": {
+    "title": "Lots de transformation",
+    "subtitle": "Eau utilisée par chaque lot de la transformation des produits, sa qualité et ce que les cuves peuvent encore fournir.",
+    "lookupTitle": "Recherche de lot",
+    "lookupPlaceholder": "Identifiant du lot, par ex. LOT-2026-0142",
+    "lookupLabel": "Identifiant du lot",
+    "lookup": "Rechercher",
+    "noLotTitle": "Aucun lot sélectionné",
+    "noLot": "Saisissez un identifiant de lot pour voir sa consommation d’eau et sa qualité.",
+    "loading": "Chargement du lot…",
+    "loadError": "Impossible de charger le lot.",
+    "sourceFallback": "Source {{id}}",
+    "waterUsed": "Eau utilisée par {{lotId}}",
+    "quality": "Qualité de l’eau de lavage",
+    "verdictLoading": "…",
+    "compliance": {
+      "compliant": "Conforme",
+      "non_compliant": "Non conforme",
+      "no_test": "Aucun test dans la période"
+    },
+    "noVerdict": "Pas de verdict qualité : {{message}}",
+    "complianceDetail": "{{tests}} test(s) des sources du lot entre {{from}} et {{to}} · pH {{phMin}}–{{phMax}}, turbidité ≤ {{turbidity}} NTU.",
+    "noTestWarning": "Sans test, l’eau de ce lot ne peut pas être déclarée conforme.",
+    "emptyTitle": "Aucune consommation pour ce lot",
+    "empty": "Attribuez une période de comptage à ce lot avec le formulaire de droite.",
+    "byActivity": "{{activity}} : {{volume}}",
+    "consumptionsCaption": "Consommations du lot",
+    "columns": {
+      "date": "Date",
+      "activity": "Activité",
+      "source": "Source",
+      "volume": "Volume"
+    },
+    "attachTitle": "Attribuer une période de comptage",
+    "fields": {
+      "lot": "Lot",
+      "lotPlaceholder": "LOT-2026-0142",
+      "activity": "Activité",
+      "source": "Source",
+      "from": "Du",
+      "to": "Au"
+    },
+    "attach": "Attribuer",
+    "attached": "{{count}} consommation(s) attribuée(s) à {{lotId}}",
+    "attachedSummary": "<strong>{{count}} consommation(s), {{volume}}</strong> attribuée(s) à {{lotId}}.",
+    "warnings": {
+      "no_consumption_found": "Aucune consommation comptée dans cette période.",
+      "window_overlaps_other_lot": "Certaines consommations appartiennent déjà à un autre lot : elles n’ont pas été modifiées.",
+      "no_source_or_zone_filter": "Aucune source indiquée : tous les compteurs du site ont été pris en compte."
+    },
+    "errors": {
+      "lotRequired": "L’identifiant du lot est obligatoire.",
+      "sourceRequired": "Sélectionnez la source utilisée par le lot.",
+      "window": "Indiquez un début et une fin postérieure au début.",
+      "attachFailed": "Impossible d’attribuer la période."
+    },
+    "activities": {
+      "WASHING": "Lavage",
+      "CUTTING": "Découpe",
+      "DRYER_CLEANING": "Nettoyage du séchoir",
+      "IRRIGATION": "Irrigation",
+      "OTHER": "Autre"
+    },
+    "forecast": {
+      "title": "Prévision de disponibilité",
+      "subtitle": "La cuve peut-elle alimenter les lots prévus ?",
+      "fields": {
+        "source": "Source",
+        "horizon": "Horizon (jours)",
+        "includeIrrigation": "Inclure les irrigations planifiées de la ferme"
+      },
+      "batchesCaption": "Lots prévus",
+      "columns": {
+        "lot": "Lot",
+        "activity": "Activité",
+        "size": "Taille (kg)",
+        "plannedAt": "Prévu le"
+      },
+      "batchLot": "Lot de la charge {{number}}",
+      "batchActivity": "Activité de la charge {{number}}",
+      "batchSize": "Taille de la charge {{number}}",
+      "batchDate": "Date de la charge {{number}}",
+      "removeBatch": "Retirer la charge",
+      "addBatch": "Ajouter une charge",
+      "submit": "Prévoir",
+      "buffer": {
+        "ok": "Assez d’eau",
+        "tight": "Sous la réserve minimale",
+        "insufficient": "Pas assez d’eau"
+      },
+      "result": {
+        "current": "Dans la cuve actuellement",
+        "batches": "Charges",
+        "irrigations": "Irrigations",
+        "left": "Reste après {{days}} jour(s)",
+        "buffer": "Réserve minimale {{value}}.",
+        "noCoefficient": "Certaines activités n’ont pas de coefficient d’eau et comptent pour 0 L : {{activities}}.",
+        "defaults": "Les litres par kg et la réserve minimale sont des valeurs provisoires, à confirmer par la transformation des produits."
+      },
+      "errors": {
+        "sourceRequired": "Sélectionnez la source à prévoir.",
+        "horizonRange": "L’horizon est compris entre 1 et 90 jours.",
+        "failed": "Impossible de calculer la prévision."
+      }
+    }
+  },
+  "visitors": {
+    "title": "Visiteurs",
+    "subtitle": "Règles de sécurité et chiffres en direct montrés aux groupes de visiteurs par la gestion des visiteurs.",
+    "briefing": {
+      "title": "Consignes de sécurité liées à l’eau",
+      "version": "Version {{version}}",
+      "notValidated": "Texte par défaut, non validé",
+      "loading": "Chargement des consignes…",
+      "loadError": "Impossible de charger les consignes.",
+      "fields": {
+        "version": "Version (vide = date du jour)",
+        "text": "Texte lu au groupe",
+        "allowed": "Zones autorisées (une par ligne)",
+        "forbidden": "Zones interdites (une par ligne)",
+        "risks": "Risques (un par ligne)",
+        "maxCapacity": "Taille maximale du groupe",
+        "guideRequired": "Un guide doit accompagner le groupe"
+      },
+      "publish": "Publier",
+      "published": "Consignes de sécurité publiées",
+      "allowed": "Zones autorisées",
+      "forbidden": "Zones interdites",
+      "risks": "Risques",
+      "maxGroup": "Au plus <strong>{{value}}</strong> visiteurs par groupe.",
+      "maxGroupGuided": "Au plus <strong>{{value}}</strong> visiteurs par groupe, toujours avec un guide.",
+      "publishedAt": "Publiées le {{date}}. Les versions précédentes sont conservées.",
+      "newVersion": "Publier une nouvelle version",
+      "errors": {
+        "groupSize": "Le groupe compte au moins 1 visiteur.",
+        "publishFailed": "Publication impossible."
+      }
+    },
+    "preview": {
+      "title": "Aperçu de l’écran visiteurs",
+      "tankShown": "Cuve affichée",
+      "noTank": "Aucune cuve",
+      "zoneShown": "Zone affichée",
+      "wholeSite": "Tout le site",
+      "loading": "Chargement de l’aperçu…",
+      "loadError": "Impossible de charger l’aperçu.",
+      "level": "Niveau de {{name}}",
+      "selectTank": "Sélectionnez une cuve",
+      "saved": "Eau économisée ce mois-ci",
+      "used": "Consommée sur les {{minutes}} dernières min",
+      "irrigating": "Irrigation en cours",
+      "notIrrigating": "Pas d’irrigation",
+      "lastStarted": "Dernier démarrage le {{date}}.",
+      "outages": "{{count}} coupure(s) planifiée(s) en vigueur : les visiteurs seront informés que l’eau est indisponible.",
+      "outagesHere": "{{count}} coupure(s) planifiée(s) en vigueur ici : les visiteurs seront informés que l’eau est indisponible.",
+      "savingsUnavailable": "Les économies sont indisponibles tant que le service météo est hors service."
+    }
+  },
+  "valves": {
+    "title": "Vanne de démonstration",
+    "gatewayMissing": "Passerelle non configurée",
+    "devicePlaceholder": "Identifiant de l’appareil, par ex. valve-demo-01",
+    "deviceLabel": "Identifiant de la vanne",
+    "open": "Ouvrir {{seconds}} s",
+    "close": "Fermer",
+    "showJournal": "Afficher le journal",
+    "explanation": "Les ouvertures sont refusées pendant une coupure planifiée ; la fermeture est toujours autorisée. Tant que l’IoT ne raccorde pas de passerelle, les commandes sont journalisées mais n’atteignent jamais la vanne.",
+    "noDeviceTitle": "Aucun appareil sélectionné",
+    "noDevice": "Saisissez l’identifiant de la vanne pour voir son journal de commandes.",
+    "loading": "Chargement du journal…",
+    "loadError": "Impossible de charger le journal.",
+    "emptyTitle": "Aucune commande pour l’instant",
+    "empty": "Rien n’a jamais été envoyé à {{deviceId}}.",
+    "journalCaption": "Journal des commandes",
+    "columns": {
+      "requested": "Demandée le",
+      "command": "Commande",
+      "status": "Statut"
+    },
+    "commands": {
+      "open": "Ouvrir",
+      "close": "Fermer"
+    },
+    "status": {
+      "dispatched": "Envoyée",
+      "queued": "En file d’attente",
+      "rejected": "Non envoyée"
+    },
+    "opened": "Vanne ouverte pour {{seconds}} s",
+    "closed": "Vanne fermée",
+    "errors": {
+      "noGateway": "Pas encore de passerelle : la commande a été enregistrée mais pas envoyée.",
+      "offline": "L’appareil est hors ligne ou une coupure d’eau est en vigueur.",
+      "unknownDevice": "Appareil inconnu : il s’enregistre lors de sa première télémesure.",
+      "failed": "Échec de la commande."
+    }
+  },
+  "irrigation": {
+    "title": "Planification de l’irrigation",
+    "subtitle": "L’irrigation démarre quand le sol en a besoin, pas seulement parce que l’horloge le dit.",
+    "zoneFallback": "Zone {{id}}",
+    "status": {
+      "running": "En cours",
+      "completed": "Terminé",
+      "postponed": "Reporté",
+      "scheduled": "Planifié"
+    },
+    "schedules": {
+      "title": "Plans d’irrigation",
+      "count": "{{count}} plan(s) actif(s)",
+      "loading": "Chargement des plans…",
+      "loadError": "Chargement impossible.",
+      "emptyTitle": "Aucun plan en cours ou planifié",
+      "empty": "Créez un plan d’irrigation à droite. Les plans terminés figurent dans le journal d’irrigation.",
+      "block": "Bloc {{code}}",
+      "severalBlocks": "Plusieurs blocs",
+      "planned": "{{volume}} prévus",
+      "start": "Démarrer maintenant",
+      "stop": "Arrêter l’irrigation",
+      "archived": "Les plans terminés sont archivés dans le journal d’irrigation ci-dessous."
+    },
+    "journal": {
+      "title": "Journal d’irrigation",
+      "count": "{{count}} cycle(s) terminé(s)",
+      "search": "Rechercher par date (AAAA-MM-JJ)…",
+      "loading": "Chargement du journal…",
+      "emptyTitle": "Aucun cycle terminé",
+      "empty": "Démarrez puis arrêtez une irrigation : chaque cycle clos est ajouté automatiquement au journal.",
+      "scheduleRef": "#{{id}}",
+      "columns": {
+        "schedule": "Plan",
+        "start": "Début",
+        "stop": "Arrêt",
+        "duration": "Durée réelle",
+        "volume": "Volume réel",
+        "status": "Statut"
+      },
+      "limit": "Seuls les {{count}} derniers cycles terminés sont affichés ici.",
+      "olderStored": "Les cycles plus anciens restent enregistrés dans la base de données.",
+      "moreStored": "Les cycles supplémentaires resteront aussi enregistrés dans la base de données."
+    },
+    "form": {
+      "newTitle": "Créer un plan",
+      "editTitle": "Modifier le plan",
+      "zone": "Zone",
+      "start": "Début",
+      "duration": "Durée (min)",
+      "volume": "Volume prévu (L)",
+      "status": "Statut"
+    },
+    "errors": {
+      "zoneRequired": "La zone est obligatoire.",
+      "startRequired": "La date de début est obligatoire.",
+      "durationPositive": "La durée doit être supérieure à 0.",
+      "volumePositive": "Le volume prévu doit être supérieur à 0."
+    },
+    "created": "Plan créé",
+    "updated": "Plan mis à jour",
+    "started": "Irrigation démarrée pour {{zone}}.",
+    "stopped": "Irrigation arrêtée pour {{zone}}.",
+    "actionFailed": "L’action a échoué."
+  },
+  "consumption": {
+    "title": "Suivi de la consommation",
+    "subtitle": "Mesures transmises automatiquement par les capteurs IoT, comparées au besoin théorique.",
+    "stats": {
+      "period": "Période choisie",
+      "total": "Total consommé",
+      "peak": "Pic",
+      "peakValue": "{{day}} - {{volume}}",
+      "noPeak": "-"
+    },
+    "periodNames": {
+      "all": "Tout l’historique",
+      "week": "Semaine dernière",
+      "month": "Mois dernier"
+    },
+    "periodLabel": "Période",
+    "periods": {
+      "week": "Semaine",
+      "month": "Mois",
+      "all": "Tout"
+    },
+    "report": "Rapport CSV",
+    "exporting": "Export en cours…",
+    "reportHint": "Télécharger le rapport de consommation (CSV)",
+    "exported": "Rapport CSV téléchargé.",
+    "exportFailed": "L’export a échoué.",
+    "chart": {
+      "title": "Consommation dans le temps",
+      "loading": "Chargement des consommations…",
+      "loadError": "Impossible de charger les données.",
+      "emptyTitle": "Aucune consommation",
+      "empty": "Les mesures des capteurs IoT apparaîtront ici dès leur transmission.",
+      "series": "Volume (L)"
+    },
+    "history": {
+      "title": "Historique des mesures",
+      "count": "{{count}} mesure(s)",
+      "loading": "Chargement des mesures…",
+      "emptyTitle": "Aucune consommation enregistrée",
+      "empty": "Les volumes sont mesurés par les capteurs IoT et transmis automatiquement, sans saisie manuelle."
+    },
+    "farmFilter": "Filtrer par ferme",
+    "sourceFilter": "Filtrer par source",
+    "allSources": "Toutes les sources",
+    "search": "Rechercher par date, lot ou bloc…",
+    "columns": {
+      "date": "Date",
+      "volume": "Volume",
+      "block": "Bloc de cultures",
+      "lot": "Lot"
+    },
+    "severalBlocks": "Plusieurs",
+    "lotValue": "{{lot}} · {{activity}}"
+  },
+  "quota": {
+    "title": "Quotas d’eau mensuels",
+    "status": {
+      "exceeded": "Quota dépassé",
+      "warning": "80 % du quota atteint",
+      "ok": "Sous le quota",
+      "none": "Aucune référence"
+    },
+    "targetTypes": {
+      "farm": "Ferme",
+      "zone": "Zone"
+    },
+    "chooseFarm": "Choisir une ferme…",
+    "chooseZone": "Choisir une zone…",
+    "fields": {
+      "targetType": "Type de cible du quota",
+      "target": "Cible du quota",
+      "month": "Mois du quota",
+      "liters": "Quota mensuel (L)"
+    },
+    "submit": "Définir le quota",
+    "saving": "Enregistrement…",
+    "errors": {
+      "chooseFarm": "Choisissez une ferme.",
+      "chooseZone": "Choisissez une zone.",
+      "positive": "Le quota doit être un volume positif (litres).",
+      "save": "Impossible d’enregistrer le quota.",
+      "delete": "Impossible de supprimer le quota."
+    },
+    "saved": "Quota enregistré.",
+    "deleted": "Quota supprimé.",
+    "loading": "Chargement des quotas…",
+    "loadError": "Impossible de charger les quotas.",
+    "emptyTitle": "Aucun quota défini",
+    "empty": "Définissez un quota mensuel par ferme ou par zone : la consommation des capteurs sera comparée à cet objectif, avec une alerte automatique à 80 % puis 100 %.",
+    "unknownTarget": "Cible inconnue",
+    "used": "{{pct}} du quota utilisé",
+    "over": "dépassé de {{volume}}",
+    "left": "{{volume}} restants",
+    "usageLine": "{{used}} — {{rest}}"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "subtitle": "Suivez les interventions et planifiez l’entretien des goutteurs.",
+    "historyTitle": "Historique des interventions",
+    "periodLabel": "Période",
+    "periods": {
+      "week": "semaine",
+      "month": "mois",
+      "all": "tout"
+    },
+    "zoneFilter": "Filtrer par zone",
+    "allZones": "Toutes les zones",
+    "search": "Rechercher une intervention…",
+    "loading": "Chargement des interventions...",
+    "loadError": "Impossible de charger les interventions.",
+    "emptyTitle": "Aucune intervention",
+    "empty": "Enregistrez une intervention de maintenance pour démarrer l’historique.",
+    "zoneFallback": "Zone {{id}}",
+    "columns": {
+      "date": "Date",
+      "zone": "Zone",
+      "type": "Type",
+      "state": "État",
+      "emitters": "Goutteurs"
+    },
+    "types": {
+      "cleaning": "nettoyage",
+      "filter_change": "changement de filtre",
+      "repair": "réparation",
+      "inspection": "inspection"
+    },
+    "clogging": "Colmatage {{severity}}",
+    "ok": "OK",
+    "severityInline": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé"
+    },
+    "severities": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé"
+    },
+    "planningTitle": "Planification de la maintenance",
+    "planning": "Recommandé : contrôler les filtres chaque semaine et remplacer les goutteurs colmatés.",
+    "recent": "{{count}} intervention(s) sur les 7 derniers jours (par rapport aux données les plus récentes).",
+    "form": {
+      "newTitle": "Nouvelle intervention",
+      "editTitle": "Modifier l’intervention",
+      "zone": "Zone",
+      "type": "Type d’intervention",
+      "date": "Date de l’intervention",
+      "filterCleaned": "Filtre nettoyé",
+      "cloggingDetected": "Colmatage détecté",
+      "severity": "Gravité du colmatage",
+      "emitters": "Goutteurs remplacés",
+      "performedBy": "Réalisée par",
+      "notes": "Notes"
+    },
+    "errors": {
+      "zoneRequired": "La zone est obligatoire.",
+      "dateRequired": "La date de l’intervention est obligatoire."
+    },
+    "saved": "Intervention enregistrée",
+    "updated": "Intervention mise à jour",
+    "deleted": "Intervention supprimée",
+    "deleteTitle": "Supprimer l’intervention",
+    "deleteMessage": "Cette intervention sera retirée de l’historique de maintenance."
   }
 }
