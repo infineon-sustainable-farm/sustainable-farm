@@ -1,4 +1,4 @@
-import { ArrowUp, ChartLine, Info, UserPlus, UserX, Users } from 'lucide-react';
+import { ChartLine, Info, UserPlus, UserX, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { KpiCard } from '../../../../shared/ui';
 import { useSalesFormat } from '../../format';
@@ -22,14 +22,12 @@ function CustomerStats({ activeCount, prospectCount, inactiveCount, totalCount }
         icon={Users}
         label={t('customers.stats.totalActive')}
         value={format.number(activeCount)}
-        hint={<Trend icon={ArrowUp}>{t('customers.stats.activeTrend')}</Trend>}
       />
       <KpiCard
         icon={UserPlus}
         tone="warning"
         label={t('customers.stats.newOnboarded')}
         value={format.number(prospectCount)}
-        hint={<Trend icon={ArrowUp}>{t('customers.stats.onboardedTrend')}</Trend>}
       />
       <KpiCard
         icon={UserX}

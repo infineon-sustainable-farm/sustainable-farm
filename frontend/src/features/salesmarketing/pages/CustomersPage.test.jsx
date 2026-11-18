@@ -177,4 +177,11 @@ describe('CustomersPage', () => {
       expect(api.createCustomerContact).toHaveBeenCalledWith(expect.objectContaining({ customerId: 8, fullName: 'Import desk' }))
     );
   });
+
+  it('shows no month-over-month trend the API does not provide', async () => {
+    renderPage();
+    await screen.findByRole('button', { name: 'Fresh Fruits GmbH' }, LOAD);
+    expect(screen.getByText('Total Active')).toBeInTheDocument();
+    expect(screen.queryByText(/vs last month/)).not.toBeInTheDocument();
+  });
 });
