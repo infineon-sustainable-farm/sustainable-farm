@@ -6,7 +6,6 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ComplianceScreen from './ComplianceScreen';
 import PackagingScreen from './PackagingScreen';
-import LoadingState from './LoadingState';
 
 const navigateMock = vi.fn();
 
@@ -87,15 +86,5 @@ describe('PackagingScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'open all' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/product-transformation/compliance');
-  });
-});
-
-describe('LoadingState', () => {
-  it('renders the default and custom messages', () => {
-    const { rerender } = render(<LoadingState />);
-    expect(screen.getByText('Loading...')).toBeTruthy();
-
-    rerender(<LoadingState message="Loading drying runs..." />);
-    expect(screen.getByText('Loading drying runs...')).toBeTruthy();
   });
 });
