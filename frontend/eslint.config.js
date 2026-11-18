@@ -11,6 +11,7 @@ const I18N_MIGRATED_FILES = [
   'src/shared/ui/**/*.{js,jsx}',
   'src/app/**/*.{js,jsx}',
   'src/features/machinery/**/*.{js,jsx}',
+  'src/features/visitormanagement/**/*.{js,jsx}',
 ]
 
 export default defineConfig([
