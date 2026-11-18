@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
@@ -48,12 +49,12 @@ public class RawIntakeServiceImpl implements RawIntakeService {
     public RawIntake createRawIntake(RawIntake rawIntake) {
         // Business Rule: Validate batch exists
         if (rawIntake.getBatch() != null) {
-            Batch batch = batchRepository.findById(rawIntake.getBatch().getBatchId())
+            Batch batch = batchRepository.findByBatchId(rawIntake.getBatch().getBatchId())
                     .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
             
             // Business Rule: Validate batch is in appropriate status for intake
-            if (batch.getCurrentStatus() != Batch.BatchStatus.CREATED && 
-                batch.getCurrentStatus() != Batch.BatchStatus.INTAKE) {
+            if (batch.getCurrentStatus() != BatchStatus.CREATED && 
+                batch.getCurrentStatus() != BatchStatus.INTAKE) {
                 throw new BusinessRuleViolationException(
                     "Batch must be in CREATED or INTAKE status for raw intake. Current: " + batch.getCurrentStatus()
                 );
@@ -82,16 +83,16 @@ public class RawIntakeServiceImpl implements RawIntakeService {
 
     @Override
     public void deleteRawIntake(String intakeId) {
-        if (!rawIntakeRepository.existsById(intakeId)) {
+        if (!rawIntakeRepository.existsByIntakeId(intakeId)) {
             throw new ResourceNotFoundException("Raw intake not found with ID: " + intakeId);
         }
-        rawIntakeRepository.deleteById(intakeId);
+        rawIntakeRepository.deleteByIntakeId(intakeId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public RawIntake getRawIntakeById(String intakeId) {
-        return rawIntakeRepository.findById(intakeId)
+        return rawIntakeRepository.findByIntakeId(intakeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Raw intake not found with ID: " + intakeId));
     }
 
@@ -130,7 +131,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RawIntake> getRawIntakesByGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade) {
+    public List<RawIntake> getRawIntakesByGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade) {
         return rawIntakeRepository.findByReceivedGrade(grade);
     }
 
@@ -150,7 +151,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
 
     @Override
     @Transactional(readOnly = true)
-    public long countByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade) {
+    public long countByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade) {
         return rawIntakeRepository.countByReceivedGrade(grade);
     }
 
@@ -161,7 +162,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
         
         // Business Rule: One intake initializes exactly one batch
         // Update batch status to INTAKE
-        batch.setCurrentStatus(Batch.BatchStatus.INTAKE);
+        batch.setCurrentStatus(BatchStatus.INTAKE);
         batchRepository.save(batch);
         
         return intake;

@@ -2,7 +2,6 @@ package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
-import com.infineonbit.sustainablefarm.modules.producttransformation.api.PackagedLotLookup;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -43,10 +42,10 @@ public class ProductBatch extends BaseEntity {
     @Column(name = "synced_at", nullable = false)
     private LocalDateTime syncedAt;
 
-    /** Record id of the packaged lot whose lot code is {@link #batchCode}, or {@code null}. */
+    /** Id of the packaged lot whose lot code is {@link #batchCode}, or {@code null}. */
     @JsonIgnore
-    @Column(name = "packaging_record_id", length = PackagedLotLookup.KEY_LENGTH)
-    private String packagingRecordId;
+    @Column(name = "packaging_record_id")
+    private Long packagingRecordId;
 
     // ---- Getters and setters ----
 
@@ -66,7 +65,7 @@ public class ProductBatch extends BaseEntity {
     public void setSyncedAt(LocalDateTime syncedAt) { this.syncedAt = syncedAt; }
 
     @JsonIgnore
-    public String getPackagingRecordId() { return packagingRecordId; }
+    public Long getPackagingRecordId() { return packagingRecordId; }
     @JsonIgnore
-    public void setPackagingRecordId(String packagingRecordId) { this.packagingRecordId = packagingRecordId; }
+    public void setPackagingRecordId(Long packagingRecordId) { this.packagingRecordId = packagingRecordId; }
 }

@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,7 +66,7 @@ class EquipmentRegisterForeignKeyTest {
         Equipment equipment = new Equipment();
         equipment.setEquipmentId(code);
         equipment.setEquipmentName("FK dryer " + code);
-        equipment.setEquipmentType(Equipment.EquipmentType.SOLAR_DRYER);
+        equipment.setEquipmentType(EquipmentType.SOLAR_DRYER);
         equipment.setCapacityKgPerHour(new BigDecimal("100.00"));
         equipment.setEnergyConsumptionKwhPerKg(new BigDecimal("0.5000"));
         return productTransformationEquipment.createEquipment(equipment);
@@ -77,7 +79,7 @@ class EquipmentRegisterForeignKeyTest {
         batch.setHarvestDate(LocalDate.now());
         batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
-        batch.setCurrentStatus(Batch.BatchStatus.CREATED);
+        batch.setCurrentStatus(BatchStatus.CREATED);
         batch.setFarmBlockId(blocks.resolve("F-FK", "BL-FK"));
         batchRepository.saveAndFlush(batch);
 

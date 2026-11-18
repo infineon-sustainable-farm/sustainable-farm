@@ -1,9 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,7 +20,17 @@ import java.util.List;
  * @version 1.0.0
  */
 @Repository
-public interface ComplianceRecordRepository extends JpaRepository<ComplianceRecord, String> {
+public interface ComplianceRecordRepository extends JpaRepository<ComplianceRecord, Long> {
+
+    /** The ComplianceRecord of a business code, shown as {@code recordId}. */
+    Optional<ComplianceRecord> findByRecordId(String recordId);
+
+    /** Whether a ComplianceRecord has this business code. */
+    boolean existsByRecordId(String recordId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByRecordId(String recordId);
+
 
     /**
      * Find compliance records by batch

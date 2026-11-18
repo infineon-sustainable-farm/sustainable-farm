@@ -1,7 +1,7 @@
 import i18n from '../../../shared/i18n/i18n';
 import { formatEnum, formatIsoDate } from '../utils/format';
 
-// Values accepted by /api/compliance-records for the type and the result.
+// Values accepted by /api/product-transformation/compliance-records for the type and the result.
 export const COMPLIANCE_TYPES = ['HACCP', 'FOOD_SAFETY', 'EU_EXPORT', 'HYGIENE', 'TRACEABILITY'];
 export const COMPLIANCE_RESULTS = ['COMPLIANT', 'NON_COMPLIANT', 'PENDING'];
 

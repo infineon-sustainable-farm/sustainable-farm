@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

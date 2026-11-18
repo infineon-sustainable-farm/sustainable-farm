@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * The Plants harvests read by Product Transformation under
- * {@code /api/harvest-events/plants}, now in the same process: the same fields
+ * {@code /api/product-transformation/harvest-events/plants}, now in the same process: the same fields
  * as {@code GET /api/plants/harvests} without the lot number, and the same
  * errors as when Plants was called over HTTP.
  *
@@ -84,7 +84,7 @@ class PlantsHarvestApiTest {
 
     @Test
     void oneHarvest_isSentBackWithTheFieldsOfPlants() throws Exception {
-        mockMvc.perform(get("/api/harvest-events/plants/{id}", harvestId))
+        mockMvc.perform(get("/api/product-transformation/harvest-events/plants/{id}", harvestId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(harvestId))
                 .andExpect(jsonPath("$.farmId").value(farm))
@@ -100,32 +100,32 @@ class PlantsHarvestApiTest {
 
     @Test
     void theLists_filterByFarmAndBlock() throws Exception {
-        mockMvc.perform(get("/api/harvest-events/plants/all"))
+        mockMvc.perform(get("/api/product-transformation/harvest-events/plants/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id", hasItem((int) harvestId)));
-        mockMvc.perform(get("/api/harvest-events/plants/farm/{farmId}", farm))
+        mockMvc.perform(get("/api/product-transformation/harvest-events/plants/farm/{farmId}", farm))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(harvestId));
-        mockMvc.perform(get("/api/harvest-events/plants/block/{blockCode}", BLOCK))
+        mockMvc.perform(get("/api/product-transformation/harvest-events/plants/block/{blockCode}", BLOCK))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].blockCode").value(BLOCK));
-        mockMvc.perform(get("/api/harvest-events/plants/farm/{farmId}", 9_999))
+        mockMvc.perform(get("/api/product-transformation/harvest-events/plants/farm/{farmId}", 9_999))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
     void anUnknownHarvest_isA404() throws Exception {
-        mockMvc.perform(get("/api/harvest-events/plants/{id}", 987_654_321L))
+        mockMvc.perform(get("/api/product-transformation/harvest-events/plants/{id}", 987_654_321L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Plants harvest 987654321 not found"));
     }
 
     @Test
     void anUnknownLongFarmId_hasNoHarvest() throws Exception {
-        mockMvc.perform(get("/api/harvest-events/plants/farm/{farmId}", 99_999_999_999L))
+        mockMvc.perform(get("/api/product-transformation/harvest-events/plants/farm/{farmId}", 99_999_999_999L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }

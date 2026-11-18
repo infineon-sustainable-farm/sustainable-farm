@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
@@ -52,7 +54,7 @@ public class RawIntakeIntegrationTest {
         batch.setHarvestDate(LocalDate.now());
         batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
-        batch.setCurrentStatus(Batch.BatchStatus.CREATED);
+        batch.setCurrentStatus(BatchStatus.CREATED);
         batch.setFarmBlockId(blocks.resolve("F-TEST", "BL-TEST"));
         Batch savedBatch = batchRepository.save(batch);
         assertThat(savedBatch.getBatchId()).isEqualTo("B-TEST-001");
@@ -65,7 +67,7 @@ public class RawIntakeIntegrationTest {
         intake.setIntakeDate(LocalDate.now());
         intake.setReceivedQuantityKg(new BigDecimal("95.00"));
         intake.setReceivedVarietyKey("KENT");
-        intake.setReceivedGrade(HarvestEvent.QualityGrade.A);
+        intake.setReceivedGrade(QualityGrade.A);
         intake.setIntakeOperatorId(personDirectory.idOf("op-test"));
         RawIntake savedIntake = rawIntakeService.createRawIntake(intake);
         assertThat(savedIntake.getIntakeId()).isEqualTo("RI-TEST-001");
@@ -77,10 +79,10 @@ public class RawIntakeIntegrationTest {
         assertThat(initialized.getBatch()).isNotNull();
 
         // 4. Verify persistence link
-        RawIntake readIntake = rawIntakeRepository.findById("RI-TEST-001").orElseThrow();
+        RawIntake readIntake = rawIntakeRepository.findByIntakeId("RI-TEST-001").orElseThrow();
         assertThat(readIntake.getBatch().getBatchId()).isEqualTo("B-TEST-001");
 
-        Batch readBatch = batchRepository.findById("B-TEST-001").orElseThrow();
-        assertThat(readBatch.getCurrentStatus()).isEqualTo(Batch.BatchStatus.INTAKE);
+        Batch readBatch = batchRepository.findByBatchId("B-TEST-001").orElseThrow();
+        assertThat(readBatch.getCurrentStatus()).isEqualTo(BatchStatus.INTAKE);
     }
 }

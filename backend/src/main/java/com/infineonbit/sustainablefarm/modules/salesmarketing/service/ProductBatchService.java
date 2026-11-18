@@ -64,7 +64,7 @@ public class ProductBatchService {
      */
     private void linkPackagedLot(ProductBatch batch) {
         batch.setPackagingRecordId(packagedLots.findByLotCode(batch.getBatchCode())
-                .map(PackagedLot::recordId)
+                .map(PackagedLot::id)
                 .orElse(null));
     }
 

@@ -2,7 +2,7 @@
  * Product Transformation - Raw Intake screen
  * Displays, filters, creates, edits and deletes raw intake (reception) records.
  *
- * Data contract: /api/raw-intakes (see RawIntakeController).
+ * Data contract: /api/product-transformation/raw-intakes (see RawIntakeController).
  * The backend enforces positive received quantities; IDs and batch links are
  * immutable after creation.
  *

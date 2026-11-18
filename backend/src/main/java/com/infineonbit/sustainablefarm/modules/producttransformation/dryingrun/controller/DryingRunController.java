@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/drying-runs")
+@RequestMapping("/api/product-transformation/drying-runs")
 @Tag(name = "Drying Management", description = "APIs for managing drying process records")
 public class DryingRunController {
 
@@ -58,7 +58,7 @@ public class DryingRunController {
     @PostMapping
     @Operation(summary = "Create a new drying run", description = "Creates a new drying process record")
     public ResponseEntity<DryingRunResponse> createDryingRun(@Valid @RequestBody DryingRunCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Equipment equipment = null;
@@ -69,7 +69,7 @@ public class DryingRunController {
         
         Operator operator = null;
         if (request.getOperatorId() != null) {
-            operator = operatorRepository.findById(request.getOperatorId())
+            operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
         }
         
@@ -146,7 +146,7 @@ public class DryingRunController {
             existingRun.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
-            Operator operator = operatorRepository.findById(request.getOperatorId())
+            Operator operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
             existingRun.setOperator(operator);
         }

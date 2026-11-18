@@ -63,7 +63,7 @@ class ProductTransformationIntegrationServiceTest {
 
     /** The product transformation batches: only {@code LOT-PT-1} is one. */
     private final ProcessingBatchLookup processingBatches = batchId -> "LOT-PT-1".equals(batchId)
-            ? Optional.of(new ProcessingBatch("LOT-PT-1", null, "KEITT"))
+            ? Optional.of(new ProcessingBatch(41L, "LOT-PT-1", null, "KEITT"))
             : Optional.empty();
 
     @Test
@@ -79,8 +79,8 @@ class ProductTransformationIntegrationServiceTest {
                 new LotUsageRequest(" LOT-PT-1 ", "washing", START, END, sourceId, null));
 
         assertEquals("LOT-PT-1", response.get("lotId"));
-        assertEquals("LOT-PT-1", first.getProcessingBatchId());
-        assertEquals("LOT-PT-1", second.getProcessingBatchId());
+        assertEquals(41L, first.getProcessingBatchId());
+        assertEquals(41L, second.getProcessingBatchId());
     }
 
     @Test
