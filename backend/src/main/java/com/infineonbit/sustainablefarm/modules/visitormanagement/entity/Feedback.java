@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -27,7 +28,8 @@ import java.time.Instant;
  * registration flow.
  */
 @Entity
-@Table(name = "feedback")
+@Table(name = "feedback",
+        indexes = @Index(name = "idx_feedback_visitor_id", columnList = "visitor_id"))
 public class Feedback extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

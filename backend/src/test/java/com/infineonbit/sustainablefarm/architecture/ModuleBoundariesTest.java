@@ -26,29 +26,13 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
  *       {@code @RestControllerAdvice}, and no class named {@code *ExceptionHandler}, elsewhere.</li>
  * </ul>
  *
- * <p>Only production classes are checked. The violations that existed when the rules were
- * introduced are frozen in {@code src/test/resources/archunit_store} ({@link FreezingArchRule},
- * configured by {@code src/test/resources/archunit.properties}): they are tolerated, any new
- * violation fails the test. The store is never updated silently:</p>
- *
- * <ul>
- *   <li>a new violation fails: fix the code, do not add it to the store;</li>
- *   <li>a fixed violation also fails, with "Updating frozen violations is not allowed": remove
- *       it from the store, either by hand or by running the test once with
- *       {@code -Darchunit.freeze.store.default.allowStoreUpdate=true}, and commit the store.</li>
- * </ul>
- *
- * <p>Frozen violations, removed by the tasks of the integration plan:</p>
- *
- * <ul>
- *   <li>watersupply {@code PlantsGrowthCalendarAdapter} uses plants {@code GrowthCalendarService}
- *       and its response DTO instead of a {@code plants.api} interface (T15, T16);</li>
- *   <li>sitesecurity {@code SiteSecurityExceptionHandler}, kept while the module is excluded (Q6,
- *       T43).</li>
- * </ul>
- *
- * <p>Tasks T15 to T25 remove the frozen violations, T47 removes the freeze: the rules then
- * apply without exception.</p>
+ * <p>Only production classes are checked. The first two rules are strict. The third one is
+ * frozen ({@link FreezingArchRule}, store in {@code src/test/resources/archunit_store},
+ * configured by {@code src/test/resources/archunit.properties}) for one class only: the
+ * {@code SiteSecurityExceptionHandler} of the sitesecurity module, excluded from the
+ * integration (plan Q6, T43). The freeze is lifted, and its store entry removed, when
+ * sitesecurity is integrated. The store is never updated silently: a new violation fails, and
+ * so does a fixed one until its entry is removed from the store.</p>
  */
 @AnalyzeClasses(
         packages = ModuleBoundariesTest.ROOT,
@@ -60,10 +44,10 @@ class ModuleBoundariesTest {
     private static final String CORE = ROOT + ".core..";
 
     @ArchTest
-    static final ArchRule modules_depend_on_other_modules_only_through_their_api = FreezingArchRule.freeze(
+    static final ArchRule modules_depend_on_other_modules_only_through_their_api =
             classes().that().resideInAPackage(ROOT + ".modules..")
                     .should(dependOnOtherModulesOnlyThroughTheirApi())
-                    .as("modules depend on other modules only through their api package"));
+                    .as("modules depend on other modules only through their api package");
 
     @ArchTest
     static final ArchRule core_depends_on_no_module =
@@ -71,6 +55,7 @@ class ModuleBoundariesTest {
                     .should().dependOnClassesThat().resideInAPackage(ROOT + ".modules..")
                     .as("core depends on no module");
 
+    /** Frozen for sitesecurity SiteSecurityExceptionHandler only, until sitesecurity is integrated. */
     @ArchTest
     static final ArchRule errors_are_handled_only_in_core = FreezingArchRule.freeze(
             noClasses().that().resideOutsideOfPackage(CORE)

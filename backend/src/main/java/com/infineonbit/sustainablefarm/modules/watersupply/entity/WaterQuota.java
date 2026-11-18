@@ -16,7 +16,6 @@ import org.hibernate.annotations.Check;
 @Table(name = "water_quotas", uniqueConstraints = {
         @UniqueConstraint(name = "uk_water_quotas_target_month", columnNames = {"target_type", "target_id", "quota_month"})
 }, indexes = {
-        @Index(name = "idx_water_quotas_target", columnList = "target_type, target_id"),
         @Index(name = "idx_water_quotas_month", columnList = "quota_month")
 })
 @Check(name = "chk_water_quotas_target_type", constraints = "target_type IN ('farm', 'zone')")

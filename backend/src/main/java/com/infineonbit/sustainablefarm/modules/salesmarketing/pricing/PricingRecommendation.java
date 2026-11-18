@@ -8,6 +8,7 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -16,7 +17,8 @@ import lombok.Setter;
 
 /** A pricing advice for a product, with a suggested price in euros. */
 @Entity
-@Table(name = "pricing_recommendations")
+@Table(name = "pricing_recommendations",
+        indexes = @Index(name = "idx_pricing_recommendations_product_id", columnList = "product_id"))
 @Getter
 @Setter
 public class PricingRecommendation extends BaseEntity {

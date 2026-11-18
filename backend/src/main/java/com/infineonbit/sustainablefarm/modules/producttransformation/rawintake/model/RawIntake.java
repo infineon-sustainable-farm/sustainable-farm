@@ -34,8 +34,8 @@ import java.math.BigDecimal;
         },
         indexes = {
                 @Index(name = "idx_raw_intake_received_variety_key", columnList = "received_variety_key"),
-                @Index(name = "idx_raw_intake_source_block_id", columnList = "source_block_id")
-        })
+                @Index(name = "idx_raw_intake_source_block_id", columnList = "source_block_id"),
+                @Index(name = "idx_raw_intake_intake_operator_id", columnList = "intake_operator_id")})
 @Getter
 @Setter
 @ToString
