@@ -1,85 +1,44 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import java.time.LocalDate;
+
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 
 /**
- * Equipment Entity
- * Machinery and equipment data - Supporting Entity
- * 
- * Business Rule: Equipment must be available before assignment
- * 
- * @author Abdoul Ben Fatao SANON
- * @version 1.0.0
+ * A processing or drying machine as product transformation sees it: the equipment of the farm
+ * register owned by machinery ({@code modules.machinery.api}) joined with its product
+ * transformation attributes ({@link EquipmentSpec}). Not an entity: there is a single
+ * {@code equipment} table (ADR 0004).
+ *
+ * <p>{@code equipmentId} is the business code of the register, {@code id} its Long id, the
+ * value stored in the {@code equipment_id} columns of the product transformation tables.
+ * {@code maintenanceStatus} is the register status read in product transformation terms. A
+ * machine registered from the machinery screens has no attributes yet: type, capacity, energy,
+ * location and last maintenance date are {@code null} until it is edited here.</p>
  */
-@Entity(name = "ProdTransEquipment")
-// Table dedicated to Product Transformation: machinery already owns "equipment".
-@Table(name = "pt_equipment")
-@Getter
-@Setter
-@EqualsAndHashCode
-@ToString
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Equipment {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "equipment_id", length = 50)
+    private Long id;
     private String equipmentId;
-
-    @Column(name = "equipment_name", nullable = false, length = 100)
     private String equipmentName;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "equipment_type", nullable = false, length = 50)
     private EquipmentType equipmentType;
-
-    @Column(name = "capacity_kg_per_hour", nullable = false, precision = 10, scale = 2)
     private BigDecimal capacityKgPerHour;
-
-    @Column(name = "energy_consumption_kwh_per_kg", nullable = false, precision = 10, scale = 4)
     private BigDecimal energyConsumptionKwhPerKg;
-
-    @Column(name = "location", length = 100)
     private String location;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "maintenance_status", nullable = false, length = 20)
-    private MaintenanceStatus maintenanceStatus = MaintenanceStatus.ACTIVE;
-
-    @Column(name = "last_maintenance_date")
+    private MaintenanceStatus maintenanceStatus;
     private LocalDate lastMaintenanceDate;
-
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 
     /**
      * Equipment Type Enum
-     * Business Rule: Matches database CHECK constraint
      */
     public enum EquipmentType {
         WASHING,
@@ -91,7 +50,8 @@ public class Equipment {
     }
 
     /**
-     * Maintenance Status Enum
+     * Maintenance Status Enum, the register status in product transformation terms
+     * (see {@code EquipmentRegisterMapping}).
      * Business Rule: Equipment must be ACTIVE for assignment
      */
     public enum MaintenanceStatus {

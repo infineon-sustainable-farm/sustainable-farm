@@ -5,9 +5,9 @@ import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.EquipmentCr
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.EquipmentStatusUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.EquipmentObtainingResponse;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Category;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.FuelLogRepository;
@@ -71,6 +71,25 @@ public class EquipmentServiceTest {
         EquipmentObtainingResponse equipmentObtainingResponse = equipmentService.addEquipment(equipmentCreationRequest);
         // Assert
         assertEquals("Tractor",equipmentObtainingResponse.name());
+        assertEquals("EQ-00001", equipmentObtainingResponse.code());
+    }
+
+    @Test
+    void addEquipment_shouldSkipACodeAlreadyTaken(){
+        // Arrange: a code chosen by product transformation already holds EQ-00005
+        EquipmentCreationRequest equipmentCreationRequest = new EquipmentCreationRequest(
+                "Tractor",
+                Category.AGRICULTURAL_MACHINERY,
+                Stage.CULTIVATION,
+                Status.OPERATIONAL
+        );
+        when(equipmentRepository.existsByName("Tractor")).thenReturn(false);
+        when(equipmentRepository.findMaxId()).thenReturn(4L);
+        when(equipmentRepository.existsByCode("EQ-00005")).thenReturn(true);
+        // Act
+        EquipmentObtainingResponse equipmentObtainingResponse = equipmentService.addEquipment(equipmentCreationRequest);
+        // Assert
+        assertEquals("EQ-00006", equipmentObtainingResponse.code());
     }
 
     @Test

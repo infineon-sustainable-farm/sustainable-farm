@@ -32,7 +32,7 @@ public interface WashSortRecordRepository extends JpaRepository<WashSortRecord, 
     /**
      * Find wash sort records by equipment
      */
-    List<WashSortRecord> findByEquipmentEquipmentId(String equipmentId);
+    List<WashSortRecord> findByEquipmentId(Long equipmentId);
 
     /**
      * Find wash sort records by operator

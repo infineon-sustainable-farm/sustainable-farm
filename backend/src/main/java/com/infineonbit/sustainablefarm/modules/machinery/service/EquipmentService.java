@@ -57,7 +57,7 @@ public class EquipmentService {
      * case-insensitive uniqueness (e.g., "tRactor" → "Tractor").
      *
      * @param request the creation data (name, category, stage, status)
-     * @return the representation of the created equipment, including its generated ID
+     * @return the representation of the created equipment, including its generated ID and code
      * @throws ConflictException if a piece of equipment with the same name (case-insensitive) already exists
      */
     public EquipmentObtainingResponse addEquipment(EquipmentCreationRequest equipmentCreationRequest) {
@@ -67,6 +67,7 @@ public class EquipmentService {
             throw new ConflictException(clientSendingEquipmentName+" already exists.");
         }
         Equipment equipment = new Equipment();
+        equipment.setCode(nextCode());
         equipment.setName(clientSendingEquipmentName);
         equipment.setCategory(equipmentCreationRequest.category());
         equipment.setStage(equipmentCreationRequest.stage());
@@ -79,12 +80,32 @@ public class EquipmentService {
             }
             throw e;
         }
+        return toResponse(equipment);
+    }
+
+    /**
+     * The business code of a piece of equipment created from the machinery screens:
+     * {@code EQ-} and a five-digit number, the first one after the highest id that no other
+     * equipment uses yet (a code chosen by product transformation may already hold it).
+     */
+    String nextCode() {
+        long number = equipmentRepository.findMaxId() + 1;
+        String code = String.format("EQ-%05d", number);
+        while (equipmentRepository.existsByCode(code)) {
+            number++;
+            code = String.format("EQ-%05d", number);
+        }
+        return code;
+    }
+
+    static EquipmentObtainingResponse toResponse(Equipment equipment) {
         return new EquipmentObtainingResponse(
                 equipment.getId(),
                 equipment.getName(),
                 equipment.getCategory(),
                 equipment.getStage(),
-                equipment.getStatus());
+                equipment.getStatus(),
+                equipment.getCode());
     }
 
     /**
@@ -97,13 +118,7 @@ public class EquipmentService {
      */
     public Page<EquipmentObtainingResponse> obtainAllEquipments(Pageable pageable) {
         Page<Equipment> pageOfEquipments = equipmentRepository.findAll(pageable);
-        return pageOfEquipments.map(equipment -> new EquipmentObtainingResponse(
-                equipment.getId(),
-                equipment.getName(),
-                equipment.getCategory(),
-                equipment.getStage(),
-                equipment.getStatus()
-        ));
+        return pageOfEquipments.map(EquipmentService::toResponse);
     }
 
     /**
@@ -125,7 +140,7 @@ public class EquipmentService {
          }
         Equipment equipment = equipmentRepository.findById(equipmentToUpdateId)
                 .orElseThrow(() -> new EquipmentNotFoundException(equipmentToUpdateId));
-        return new EquipmentObtainingResponse(equipment.getId(), equipment.getName(), equipment.getCategory(), equipment.getStage(), equipment.getStatus() );
+        return toResponse(equipment);
     }
 
     /**
@@ -136,8 +151,13 @@ public class EquipmentService {
      * piece of equipment never removes or corrupts its maintenance, usage,
      * fuel or repair history.
      *
+     * <p>A machine still referenced by product transformation records (drying runs,
+     * wash and sort records, packaging records) is not deleted: the database foreign keys
+     * refuse it and the call fails with a conflict, the whole deletion rolled back.
+     *
      * @param id the ID of the equipment to delete
      * @throws EquipmentNotFoundException if no equipment exists with this ID
+     * @throws ConflictException if product transformation records still use it
      */
     @Transactional
     public void deleteEquipment(Long id){
@@ -149,7 +169,14 @@ public class EquipmentService {
         usageLogRepository.detachAllFromEquipment(id);
         fuelLogRepository.detachAllFromEquipment(id);
         repairLogRepository.detachAllFromEquipment(id);
-        int affectedRows = equipmentRepository.deleteEquipmentById(id);
+        int affectedRows;
+        try {
+            affectedRows = equipmentRepository.deleteEquipmentById(id);
+        } catch (DataIntegrityViolationException stillUsed) {
+            // Product transformation records (drying, washing, packaging) still reference it.
+            throw new ConflictException("Equipment with ID " + id
+                    + " is still used by processing records and cannot be deleted.", stillUsed);
+        }
         if (affectedRows == 0) {
             throw new EquipmentNotFoundException(id);
         }

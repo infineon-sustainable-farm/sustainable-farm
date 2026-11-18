@@ -1,11 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import jakarta.persistence.Convert;
@@ -30,7 +28,8 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(name = "packaging_record",
-        uniqueConstraints = @UniqueConstraint(name = "uk_packaging_record_lot_code", columnNames = "lot_code"))
+        uniqueConstraints = @UniqueConstraint(name = "uk_packaging_record_lot_code", columnNames = "lot_code"),
+        indexes = @Index(name = "idx_packaging_record_equipment_id", columnList = "equipment_id"))
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -67,9 +66,9 @@ public class PackagingRecord {
     @Column(name = "packaging_date", nullable = false)
     private LocalDate packagingDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipment_id", foreignKey = @ForeignKey(name = "fk_packaging_record_equipment"), referencedColumnName = "equipment_id")
-    private Equipment equipment;
+    /** The register id of the equipment used (machinery {@code equipment}); the equipment cannot be deleted while used. */
+    @Column(name = "equipment_id")
+    private Long equipmentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_packaging_record_operator"), referencedColumnName = "operator_id")

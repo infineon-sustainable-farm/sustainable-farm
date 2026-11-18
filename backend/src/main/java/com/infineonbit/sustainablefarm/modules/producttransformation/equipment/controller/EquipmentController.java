@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller for Equipment operations
+ * REST Controller for Equipment operations: the processing and drying machines of the farm
+ * equipment register owned by machinery, with their product transformation attributes
+ * (rules in {@code EquipmentRegisterMapping}; a duplicate code or name answers 409).
  * 
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
