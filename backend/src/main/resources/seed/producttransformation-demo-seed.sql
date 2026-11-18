@@ -31,6 +31,12 @@
 --   les montre sous leur code (blockId, sourceBlock) et le nom de leur ferme
 --   (farmId, sourceFarm).
 --
+--   Les lots LOT-DEMO-* (batch.batch_id) sont aussi ceux que designe la
+--   consommation d'eau de lavage du jeu water supply (water_consumption.lot_id
+--   et sa cle etrangere processing_batch_id, seed/watersupply-demo-data.sql,
+--   charge apres ce script) ; les lots emballes (packaging_record) referencent
+--   leur lot par la cle etrangere fk_packaging_record_batch.
+--
 --   Ce script n'ajoute volontairement aucune colonne, ne cree aucune table,
 --   ne modifie aucune table existante et ne supprime aucune donnee.
 --
@@ -110,7 +116,9 @@ ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 4) Recoltes (1 evenement par lot, conserve le numero de lot d'origine)
---    plants_harvest_id est volontairement omis : la colonne peut ne pas exister.
+--    plants_harvest_id (cle etrangere vers plants harvest_record.id) reste NULL :
+--    ces recoltes sont synthetiques et le profil dev ne charge aucune recolte
+--    plants a laquelle les rattacher.
 -- ---------------------------------------------------------------------------
 INSERT INTO harvest_event (harvest_id, batch_id, block_id, created_at,
                            harvest_date, harvest_quantity_kg, harvest_time,
