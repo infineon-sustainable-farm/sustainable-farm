@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { cx } from './cx'
 import { focusRing, transition } from './styles'
 
-// Machinery pagination (shared/components/Pagination): right aligned, "Page x of y" in gray, then
+// Machinery pagination (former shared/components/Pagination): right aligned, "Page x of y" in gray, then
 // Previous and Next "px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50", 40 % opacity
 // when disabled. The kit adds a named navigation landmark, the focus mark and 44 px targets on
 // touch screens.
