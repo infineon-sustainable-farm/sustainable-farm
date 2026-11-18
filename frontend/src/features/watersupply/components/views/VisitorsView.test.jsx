@@ -102,7 +102,7 @@ describe('VisitorsView', () => {
 
     await waitFor(() => expect(iotCommandApi.sendCommand).toHaveBeenCalledWith('valve-demo-01',
       { command: 'OPEN_VALVE', durationSeconds: 10, reason: 'visitor_demo' }))
-    await waitFor(() => expect(props.notify).toHaveBeenCalledWith('No device gateway yet: the command was recorded but not sent.'))
+    await waitFor(() => expect(props.notify).toHaveBeenCalledWith('No device gateway yet: the command was recorded but not sent.', 'warning'))
     await waitFor(() => expect(screen.getByText('Not sent')).toBeTruthy())
   })
 })

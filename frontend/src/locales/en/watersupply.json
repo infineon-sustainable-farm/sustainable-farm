@@ -536,6 +536,203 @@
       "volume": "Collected volume"
     }
   },
+  "lots": {
+    "title": "Processing lots",
+    "subtitle": "Water used by each Product Transformation lot, its quality, and what the tanks can still supply.",
+    "lookupTitle": "Lot lookup",
+    "lookupPlaceholder": "Lot identifier, e.g. LOT-2026-0142",
+    "lookupLabel": "Lot identifier",
+    "lookup": "Look up",
+    "noLotTitle": "No lot selected",
+    "noLot": "Enter a lot identifier to see its water consumption and quality.",
+    "loading": "Loading the lot…",
+    "loadError": "Unable to load the lot.",
+    "sourceFallback": "Source {{id}}",
+    "waterUsed": "Water used by {{lotId}}",
+    "quality": "Washing water quality",
+    "verdictLoading": "…",
+    "compliance": {
+      "compliant": "Compliant",
+      "non_compliant": "Not compliant",
+      "no_test": "No test in the window"
+    },
+    "noVerdict": "No quality verdict: {{message}}",
+    "complianceDetail": "{{tests}} test(s) of the lot's sources between {{from}} and {{to}} · pH {{phMin}}–{{phMax}}, turbidity ≤ {{turbidity}} NTU.",
+    "noTestWarning": "Without a test, the water of this lot cannot be declared compliant.",
+    "emptyTitle": "No consumption for this lot",
+    "empty": "Attribute a metering window to this lot with the form on the right.",
+    "byActivity": "{{activity}}: {{volume}}",
+    "consumptionsCaption": "Consumptions of the lot",
+    "columns": {
+      "date": "Date",
+      "activity": "Activity",
+      "source": "Source",
+      "volume": "Volume"
+    },
+    "attachTitle": "Attribute a metering window",
+    "fields": {
+      "lot": "Lot",
+      "lotPlaceholder": "LOT-2026-0142",
+      "activity": "Activity",
+      "source": "Source",
+      "from": "From",
+      "to": "To"
+    },
+    "attach": "Attribute",
+    "attached": "{{count}} consumption(s) attributed to {{lotId}}",
+    "attachedSummary": "<strong>{{count}} consumption(s), {{volume}}</strong> attributed to {{lotId}}.",
+    "warnings": {
+      "no_consumption_found": "No metered consumption in this window.",
+      "window_overlaps_other_lot": "Some consumptions already belong to another lot: they were left untouched.",
+      "no_source_or_zone_filter": "No source given: every meter of the site was considered."
+    },
+    "errors": {
+      "lotRequired": "The lot identifier is required.",
+      "sourceRequired": "Select the source used by the lot.",
+      "window": "Give a start and an end after the start.",
+      "attachFailed": "Unable to attribute the window."
+    },
+    "activities": {
+      "WASHING": "Washing",
+      "CUTTING": "Cutting",
+      "DRYER_CLEANING": "Dryer cleaning",
+      "IRRIGATION": "Irrigation",
+      "OTHER": "Other"
+    },
+    "forecast": {
+      "title": "Availability forecast",
+      "subtitle": "Can the tank supply the planned batches?",
+      "fields": {
+        "source": "Source",
+        "horizon": "Horizon (days)",
+        "includeIrrigation": "Include the farm's scheduled irrigations"
+      },
+      "batchesCaption": "Planned batches",
+      "columns": {
+        "lot": "Lot",
+        "activity": "Activity",
+        "size": "Size (kg)",
+        "plannedAt": "Planned at"
+      },
+      "batchLot": "Batch {{number}} lot",
+      "batchActivity": "Batch {{number}} activity",
+      "batchSize": "Batch {{number}} size",
+      "batchDate": "Batch {{number}} date",
+      "removeBatch": "Remove batch",
+      "addBatch": "Add a batch",
+      "submit": "Forecast",
+      "buffer": {
+        "ok": "Enough water",
+        "tight": "Below the minimum buffer",
+        "insufficient": "Not enough water"
+      },
+      "result": {
+        "current": "In the tank now",
+        "batches": "Batches",
+        "irrigations": "Irrigations",
+        "left": "Left after {{days}} day(s)",
+        "buffer": "Minimum buffer {{value}}.",
+        "noCoefficient": "Some activities have no water coefficient and count for 0 L: {{activities}}.",
+        "defaults": "Litres per kg and the minimum buffer are working defaults, to be confirmed by Product Transformation."
+      },
+      "errors": {
+        "sourceRequired": "Select the source to forecast.",
+        "horizonRange": "The horizon is between 1 and 90 days.",
+        "failed": "Unable to compute the forecast."
+      }
+    }
+  },
+  "visitors": {
+    "title": "Visitors",
+    "subtitle": "Safety rules and live figures shown to visitor groups by Visitor Management.",
+    "briefing": {
+      "title": "Water safety briefing",
+      "version": "Version {{version}}",
+      "notValidated": "Default text, not validated",
+      "loading": "Loading the briefing…",
+      "loadError": "Unable to load the briefing.",
+      "fields": {
+        "version": "Version (empty = today's date)",
+        "text": "Text read to the group",
+        "allowed": "Allowed areas (one per line)",
+        "forbidden": "Forbidden areas (one per line)",
+        "risks": "Risks (one per line)",
+        "maxCapacity": "Maximum group size",
+        "guideRequired": "A guide must accompany the group"
+      },
+      "publish": "Publish",
+      "published": "Safety briefing published",
+      "allowed": "Allowed areas",
+      "forbidden": "Forbidden areas",
+      "risks": "Risks",
+      "maxGroup": "At most <strong>{{value}}</strong> visitors per group.",
+      "maxGroupGuided": "At most <strong>{{value}}</strong> visitors per group, always with a guide.",
+      "publishedAt": "Published {{date}}. Earlier versions are kept.",
+      "newVersion": "Publish a new version",
+      "errors": {
+        "groupSize": "The group size is at least 1 visitor.",
+        "publishFailed": "Unable to publish."
+      }
+    },
+    "preview": {
+      "title": "Visitor screen preview",
+      "tankShown": "Tank shown",
+      "noTank": "No tank",
+      "zoneShown": "Zone shown",
+      "wholeSite": "Whole site",
+      "loading": "Loading the preview…",
+      "loadError": "Unable to load the preview.",
+      "level": "{{name}} level",
+      "selectTank": "Select a tank",
+      "saved": "Water saved this month",
+      "used": "Used in the last {{minutes}} min",
+      "irrigating": "Irrigating now",
+      "notIrrigating": "Not irrigating",
+      "lastStarted": "Last started {{date}}.",
+      "outages": "{{count}} planned outage(s) in force: visitors will be told water is unavailable.",
+      "outagesHere": "{{count}} planned outage(s) in force here: visitors will be told water is unavailable.",
+      "savingsUnavailable": "Savings are unavailable while the weather service is down."
+    }
+  },
+  "valves": {
+    "title": "Demonstration valve",
+    "gatewayMissing": "Gateway not configured",
+    "devicePlaceholder": "Device id, e.g. valve-demo-01",
+    "deviceLabel": "Valve device id",
+    "open": "Open {{seconds}} s",
+    "close": "Close",
+    "showJournal": "Show journal",
+    "explanation": "Openings are refused while a planned outage is in force; closing is always allowed. Until IoT connects a gateway, commands are journaled but never reach the valve.",
+    "noDeviceTitle": "No device selected",
+    "noDevice": "Enter the valve's device id to see its command journal.",
+    "loading": "Loading the journal…",
+    "loadError": "Unable to load the journal.",
+    "emptyTitle": "No command yet",
+    "empty": "Nothing was ever sent to {{deviceId}}.",
+    "journalCaption": "Command journal",
+    "columns": {
+      "requested": "Requested",
+      "command": "Command",
+      "status": "Status"
+    },
+    "commands": {
+      "open": "Open",
+      "close": "Close"
+    },
+    "status": {
+      "dispatched": "Sent",
+      "queued": "Queued",
+      "rejected": "Not sent"
+    },
+    "opened": "Valve opened for {{seconds}} s",
+    "closed": "Valve closed",
+    "errors": {
+      "noGateway": "No device gateway yet: the command was recorded but not sent.",
+      "offline": "The device is offline or a water outage is in force.",
+      "unknownDevice": "Unknown device: it registers itself with its first telemetry.",
+      "failed": "Command failed."
+    }
+  },
   "irrigation": {
     "title": "Irrigation scheduling",
     "subtitle": "Irrigation starts when the soil needs it, not just because the clock says so.",

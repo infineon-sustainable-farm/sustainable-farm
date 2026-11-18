@@ -536,6 +536,203 @@
       "volume": "Volume récupéré"
     }
   },
+  "lots": {
+    "title": "Lots de transformation",
+    "subtitle": "Eau utilisée par chaque lot de la transformation des produits, sa qualité et ce que les cuves peuvent encore fournir.",
+    "lookupTitle": "Recherche de lot",
+    "lookupPlaceholder": "Identifiant du lot, par ex. LOT-2026-0142",
+    "lookupLabel": "Identifiant du lot",
+    "lookup": "Rechercher",
+    "noLotTitle": "Aucun lot sélectionné",
+    "noLot": "Saisissez un identifiant de lot pour voir sa consommation d’eau et sa qualité.",
+    "loading": "Chargement du lot…",
+    "loadError": "Impossible de charger le lot.",
+    "sourceFallback": "Source {{id}}",
+    "waterUsed": "Eau utilisée par {{lotId}}",
+    "quality": "Qualité de l’eau de lavage",
+    "verdictLoading": "…",
+    "compliance": {
+      "compliant": "Conforme",
+      "non_compliant": "Non conforme",
+      "no_test": "Aucun test dans la période"
+    },
+    "noVerdict": "Pas de verdict qualité : {{message}}",
+    "complianceDetail": "{{tests}} test(s) des sources du lot entre {{from}} et {{to}} · pH {{phMin}}–{{phMax}}, turbidité ≤ {{turbidity}} NTU.",
+    "noTestWarning": "Sans test, l’eau de ce lot ne peut pas être déclarée conforme.",
+    "emptyTitle": "Aucune consommation pour ce lot",
+    "empty": "Attribuez une période de comptage à ce lot avec le formulaire de droite.",
+    "byActivity": "{{activity}} : {{volume}}",
+    "consumptionsCaption": "Consommations du lot",
+    "columns": {
+      "date": "Date",
+      "activity": "Activité",
+      "source": "Source",
+      "volume": "Volume"
+    },
+    "attachTitle": "Attribuer une période de comptage",
+    "fields": {
+      "lot": "Lot",
+      "lotPlaceholder": "LOT-2026-0142",
+      "activity": "Activité",
+      "source": "Source",
+      "from": "Du",
+      "to": "Au"
+    },
+    "attach": "Attribuer",
+    "attached": "{{count}} consommation(s) attribuée(s) à {{lotId}}",
+    "attachedSummary": "<strong>{{count}} consommation(s), {{volume}}</strong> attribuée(s) à {{lotId}}.",
+    "warnings": {
+      "no_consumption_found": "Aucune consommation comptée dans cette période.",
+      "window_overlaps_other_lot": "Certaines consommations appartiennent déjà à un autre lot : elles n’ont pas été modifiées.",
+      "no_source_or_zone_filter": "Aucune source indiquée : tous les compteurs du site ont été pris en compte."
+    },
+    "errors": {
+      "lotRequired": "L’identifiant du lot est obligatoire.",
+      "sourceRequired": "Sélectionnez la source utilisée par le lot.",
+      "window": "Indiquez un début et une fin postérieure au début.",
+      "attachFailed": "Impossible d’attribuer la période."
+    },
+    "activities": {
+      "WASHING": "Lavage",
+      "CUTTING": "Découpe",
+      "DRYER_CLEANING": "Nettoyage du séchoir",
+      "IRRIGATION": "Irrigation",
+      "OTHER": "Autre"
+    },
+    "forecast": {
+      "title": "Prévision de disponibilité",
+      "subtitle": "La cuve peut-elle alimenter les lots prévus ?",
+      "fields": {
+        "source": "Source",
+        "horizon": "Horizon (jours)",
+        "includeIrrigation": "Inclure les irrigations planifiées de la ferme"
+      },
+      "batchesCaption": "Lots prévus",
+      "columns": {
+        "lot": "Lot",
+        "activity": "Activité",
+        "size": "Taille (kg)",
+        "plannedAt": "Prévu le"
+      },
+      "batchLot": "Lot de la charge {{number}}",
+      "batchActivity": "Activité de la charge {{number}}",
+      "batchSize": "Taille de la charge {{number}}",
+      "batchDate": "Date de la charge {{number}}",
+      "removeBatch": "Retirer la charge",
+      "addBatch": "Ajouter une charge",
+      "submit": "Prévoir",
+      "buffer": {
+        "ok": "Assez d’eau",
+        "tight": "Sous la réserve minimale",
+        "insufficient": "Pas assez d’eau"
+      },
+      "result": {
+        "current": "Dans la cuve actuellement",
+        "batches": "Charges",
+        "irrigations": "Irrigations",
+        "left": "Reste après {{days}} jour(s)",
+        "buffer": "Réserve minimale {{value}}.",
+        "noCoefficient": "Certaines activités n’ont pas de coefficient d’eau et comptent pour 0 L : {{activities}}.",
+        "defaults": "Les litres par kg et la réserve minimale sont des valeurs provisoires, à confirmer par la transformation des produits."
+      },
+      "errors": {
+        "sourceRequired": "Sélectionnez la source à prévoir.",
+        "horizonRange": "L’horizon est compris entre 1 et 90 jours.",
+        "failed": "Impossible de calculer la prévision."
+      }
+    }
+  },
+  "visitors": {
+    "title": "Visiteurs",
+    "subtitle": "Règles de sécurité et chiffres en direct montrés aux groupes de visiteurs par la gestion des visiteurs.",
+    "briefing": {
+      "title": "Consignes de sécurité liées à l’eau",
+      "version": "Version {{version}}",
+      "notValidated": "Texte par défaut, non validé",
+      "loading": "Chargement des consignes…",
+      "loadError": "Impossible de charger les consignes.",
+      "fields": {
+        "version": "Version (vide = date du jour)",
+        "text": "Texte lu au groupe",
+        "allowed": "Zones autorisées (une par ligne)",
+        "forbidden": "Zones interdites (une par ligne)",
+        "risks": "Risques (un par ligne)",
+        "maxCapacity": "Taille maximale du groupe",
+        "guideRequired": "Un guide doit accompagner le groupe"
+      },
+      "publish": "Publier",
+      "published": "Consignes de sécurité publiées",
+      "allowed": "Zones autorisées",
+      "forbidden": "Zones interdites",
+      "risks": "Risques",
+      "maxGroup": "Au plus <strong>{{value}}</strong> visiteurs par groupe.",
+      "maxGroupGuided": "Au plus <strong>{{value}}</strong> visiteurs par groupe, toujours avec un guide.",
+      "publishedAt": "Publiées le {{date}}. Les versions précédentes sont conservées.",
+      "newVersion": "Publier une nouvelle version",
+      "errors": {
+        "groupSize": "Le groupe compte au moins 1 visiteur.",
+        "publishFailed": "Publication impossible."
+      }
+    },
+    "preview": {
+      "title": "Aperçu de l’écran visiteurs",
+      "tankShown": "Cuve affichée",
+      "noTank": "Aucune cuve",
+      "zoneShown": "Zone affichée",
+      "wholeSite": "Tout le site",
+      "loading": "Chargement de l’aperçu…",
+      "loadError": "Impossible de charger l’aperçu.",
+      "level": "Niveau de {{name}}",
+      "selectTank": "Sélectionnez une cuve",
+      "saved": "Eau économisée ce mois-ci",
+      "used": "Consommée sur les {{minutes}} dernières min",
+      "irrigating": "Irrigation en cours",
+      "notIrrigating": "Pas d’irrigation",
+      "lastStarted": "Dernier démarrage le {{date}}.",
+      "outages": "{{count}} coupure(s) planifiée(s) en vigueur : les visiteurs seront informés que l’eau est indisponible.",
+      "outagesHere": "{{count}} coupure(s) planifiée(s) en vigueur ici : les visiteurs seront informés que l’eau est indisponible.",
+      "savingsUnavailable": "Les économies sont indisponibles tant que le service météo est hors service."
+    }
+  },
+  "valves": {
+    "title": "Vanne de démonstration",
+    "gatewayMissing": "Passerelle non configurée",
+    "devicePlaceholder": "Identifiant de l’appareil, par ex. valve-demo-01",
+    "deviceLabel": "Identifiant de la vanne",
+    "open": "Ouvrir {{seconds}} s",
+    "close": "Fermer",
+    "showJournal": "Afficher le journal",
+    "explanation": "Les ouvertures sont refusées pendant une coupure planifiée ; la fermeture est toujours autorisée. Tant que l’IoT ne raccorde pas de passerelle, les commandes sont journalisées mais n’atteignent jamais la vanne.",
+    "noDeviceTitle": "Aucun appareil sélectionné",
+    "noDevice": "Saisissez l’identifiant de la vanne pour voir son journal de commandes.",
+    "loading": "Chargement du journal…",
+    "loadError": "Impossible de charger le journal.",
+    "emptyTitle": "Aucune commande pour l’instant",
+    "empty": "Rien n’a jamais été envoyé à {{deviceId}}.",
+    "journalCaption": "Journal des commandes",
+    "columns": {
+      "requested": "Demandée le",
+      "command": "Commande",
+      "status": "Statut"
+    },
+    "commands": {
+      "open": "Ouvrir",
+      "close": "Fermer"
+    },
+    "status": {
+      "dispatched": "Envoyée",
+      "queued": "En file d’attente",
+      "rejected": "Non envoyée"
+    },
+    "opened": "Vanne ouverte pour {{seconds}} s",
+    "closed": "Vanne fermée",
+    "errors": {
+      "noGateway": "Pas encore de passerelle : la commande a été enregistrée mais pas envoyée.",
+      "offline": "L’appareil est hors ligne ou une coupure d’eau est en vigueur.",
+      "unknownDevice": "Appareil inconnu : il s’enregistre lors de sa première télémesure.",
+      "failed": "Échec de la commande."
+    }
+  },
   "irrigation": {
     "title": "Planification de l’irrigation",
     "subtitle": "L’irrigation démarre quand le sol en a besoin, pas seulement parce que l’horloge le dit.",
