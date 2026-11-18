@@ -61,7 +61,7 @@ public record YieldForecastResponse(
      */
     public record Entry(
             YearMonth month,
-            Integer farmId,
+            Long farmId,
             String blockCode,
             Long varietyId,
             String varietyName,
@@ -86,6 +86,6 @@ public record YieldForecastResponse(
      * @param varietyName name of the variety row, as planted
      * @param treeCount   current number of trees of the variety row
      */
-    public record VarietyWithoutReference(Integer farmId, String blockCode, String varietyName, Integer treeCount) {
+    public record VarietyWithoutReference(Long farmId, String blockCode, String varietyName, Integer treeCount) {
     }
 }

@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
+import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
@@ -48,6 +50,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * comparison, the harvest status and the overview. The expected values were
  * written before the code.
  *
+ * <p>Blocks OA, OB and OC are used by no other test.
+ *
  * <p>Keitt is planted on block A in September 2023 (40 trees, in gradual
  * production in 2027) and on block B in March 2026 (100 trees, in
  * establishment until 2029); Brooks, absent from the reference, on block C in
@@ -68,7 +72,21 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @ActiveProfiles("test")
 class OverviewScenarioIntegrationTest {
 
-    private static final int FARM = 7;
+    /**
+     * Farm of this test class, created once: block codes are unique across the farms of the
+     * referential, and a requested farm must exist.
+     */
+    private static Long FARM;
+
+    @Autowired
+    private FarmService farmService;
+
+    @BeforeEach
+    void createTheFarmOfTheTestOnce() {
+        if (FARM == null) {
+            FARM = farmService.createFarm(new FarmCreateRequest("OverviewScenario test farm", null, null, null, null, null)).id();
+        }
+    }
     private static final String STEM_END_ROT = "STEM_END_ROT";
     private static final String KEITT_SEASON_SOURCE = "varietal_guide_west_africa";
     private static final Instant NOW = Instant.parse("2026-10-20T10:00:00Z");
@@ -169,13 +187,13 @@ class OverviewScenarioIntegrationTest {
     @Test
     void reads_shouldGiveTheValuesOfTheScenario_on15June2027() {
         // Arrange: the plantings, the harvests and the treatment
-        Long keittA = plant("A", "Keitt", LocalDate.of(2023, 9, 15), 40);
-        Long keittB = plant("B", "Keitt", LocalDate.of(2026, 3, 1), 100);
-        Long brooksC = plant("C", "Brooks", LocalDate.of(2020, 1, 10), 30);
-        harvest("A", "Keitt", LocalDate.of(2027, 5, 20), 300.0);
-        harvest("A", "Keitt", LocalDate.of(2027, 6, 10), 250.5);
-        harvest("C", "Brooks", LocalDate.of(2027, 6, 5), 120.0);
-        Long treatment = healthTreatmentService.recordPreventiveTreatment(new PreventiveTreatmentRequest(FARM, "A",
+        Long keittA = plant("OA", "Keitt", LocalDate.of(2023, 9, 15), 40);
+        Long keittB = plant("OB", "Keitt", LocalDate.of(2026, 3, 1), 100);
+        Long brooksC = plant("OC", "Brooks", LocalDate.of(2020, 1, 10), 30);
+        harvest("OA", "Keitt", LocalDate.of(2027, 5, 20), 300.0);
+        harvest("OA", "Keitt", LocalDate.of(2027, 6, 10), 250.5);
+        harvest("OC", "Brooks", LocalDate.of(2027, 6, 5), 120.0);
+        Long treatment = healthTreatmentService.recordPreventiveTreatment(new PreventiveTreatmentRequest(FARM, "OA",
                 STEM_END_ROT, null, LocalDate.of(2027, 6, 10), "Copper fungicide A", "copper oxychloride", 2.0,
                 "KG", 14.0, "Awa", null)).id();
         // Arrange: the NPK bought twice, applied, then bought again with a late entry dated in March
@@ -188,7 +206,7 @@ class OverviewScenarioIntegrationTest {
         fertilizerMovementService.recordPurchase(npk,
                 new PurchaseRequest(LocalDate.of(2027, 4, 12), 100.0, "Supplier A", null, null));
         fertilizerMovementService.recordApplication(npk,
-                new ApplicationRequest(LocalDate.of(2027, 5, 2), 160.0, FARM, "A", "Awa", null));
+                new ApplicationRequest(LocalDate.of(2027, 5, 2), 160.0, FARM, "OA", "Awa", null));
         fertilizerMovementService.recordPurchase(npk,
                 new PurchaseRequest(LocalDate.of(2027, 3, 1), 50.0, "Supplier B", null, null));
 
@@ -203,36 +221,36 @@ class OverviewScenarioIntegrationTest {
         assertEquals(YearMonth.of(2027, 1), comparison.from());
         assertEquals(12, comparison.months());
         assertEquals(List.of(
-                new VarietyComparison(FARM, "A", keittA, "Keitt", 40, 2200.0, 550.5, 2, 25.0, 220.0, "Zalka_2025",
+                new VarietyComparison(FARM, "OA", keittA, "Keitt", 40, 2200.0, 550.5, 2, 25.0, 220.0, "Zalka_2025",
                         KEITT_SEASON_SOURCE, List.of(new PhaseShare("gradual production", 0.25, "Bally_2002"))),
-                new VarietyComparison(FARM, "B", keittB, "Keitt", 100, 0.0, null, 0, null, 220.0, "Zalka_2025",
+                new VarietyComparison(FARM, "OB", keittB, "Keitt", 100, 0.0, null, 0, null, 220.0, "Zalka_2025",
                         KEITT_SEASON_SOURCE, List.of(new PhaseShare("establishment", 0.0, "orchard_literature")))),
                 comparison.varieties());
-        assertEquals(List.of(new BlockComparison(FARM, "A", 2200.0, 550.5, 25.0),
-                new BlockComparison(FARM, "B", 0.0, null, null)), comparison.blocks());
+        assertEquals(List.of(new BlockComparison(FARM, "OA", 2200.0, 550.5, 25.0),
+                new BlockComparison(FARM, "OB", 0.0, null, null)), comparison.blocks());
         assertEquals(new Comparison(2200.0, 550.5, 25.0), comparison.total());
-        assertEquals(List.of(new NotCompared(FARM, "C", brooksC, "Brooks", 30, 120.0, 1, "NO_REFERENCE")),
+        assertEquals(List.of(new NotCompared(FARM, "OC", brooksC, "Brooks", 30, 120.0, 1, "NO_REFERENCE")),
                 comparison.notCompared());
 
         // 3. Harvest status: A ripe while the interval runs, B in 686 days, no status for Brooks; nothing is
         // observed, so the estimate holds
         HarvestStatusResponse status = statusOn(JUNE_15).getHarvestStatus(FARM, null, null);
         assertEquals(List.of(
-                new VarietyHarvestStatus(FARM, "A", keittA, "Keitt", 40, MaturityStatus.RIPE, "estimate",
+                new VarietyHarvestStatus(FARM, "OA", keittA, "Keitt", 40, MaturityStatus.RIPE, "estimate",
                         MaturityStatus.RIPE, null, LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45, JUNE_24,
                         treatment, LocalDate.of(2027, 5, 20), KEITT_SEASON_SOURCE, "Bally_2002"),
-                new VarietyHarvestStatus(FARM, "B", keittB, "Keitt", 100, MaturityStatus.IMMATURE, "estimate",
+                new VarietyHarvestStatus(FARM, "OB", keittB, "Keitt", 100, MaturityStatus.IMMATURE, "estimate",
                         MaturityStatus.IMMATURE, null, LocalDate.of(2029, 5, 1), LocalDate.of(2029, 7, 31), 686,
                         null, null, null, KEITT_SEASON_SOURCE, "Bally_2002"),
-                new VarietyHarvestStatus(FARM, "C", brooksC, "Brooks", 30, null, null, null, null, null, null,
+                new VarietyHarvestStatus(FARM, "OC", brooksC, "Brooks", 30, null, null, null, null, null, null,
                         null, null, null, null, null, null)), status.varieties());
 
-        // 4. Overview: 170 trees, 100 in growth stage, none ready, the 2 alerts of farm 7, and the trees of
+        // 4. Overview: 170 trees, 100 in growth stage, none ready, the 2 alerts of the farm, and the trees of
         // the harvest status by maturity status
         List<PlantAlert> alerts = alertsOn(JUNE_15).getAlerts(FARM, null, null).alerts();
-        assertEquals(List.of("CRITICAL PRE_HARVEST_INTERVAL A", "WARNING HARVEST_APPROACHING A"),
+        assertEquals(List.of("CRITICAL PRE_HARVEST_INTERVAL OA", "WARNING HARVEST_APPROACHING OA"),
                 alerts.stream()
-                        .filter(alert -> Integer.valueOf(FARM).equals(alert.farmId()))
+                        .filter(alert -> FARM.equals(alert.farmId()))
                         .map(alert -> alert.severity() + " " + alert.type() + " " + alert.blockCode())
                         .toList());
         List<PlantAlert> stockAlertsOfOtherTests = alerts.stream()
@@ -250,7 +268,7 @@ class OverviewScenarioIntegrationTest {
                 overviewOn(JUNE_15).getOverview(FARM, null));
 
         // On 24 June 2027 the interval is over: A is ready, as it would be without the treatment
-        VarietyHarvestStatus keittAOnJune24 = statusOn(JUNE_24).getHarvestStatus(FARM, "A", null).varieties().get(0);
+        VarietyHarvestStatus keittAOnJune24 = statusOn(JUNE_24).getHarvestStatus(FARM, "OA", null).varieties().get(0);
         assertEquals(MaturityStatus.READY_FOR_HARVEST, keittAOnJune24.maturityStatus());
         assertNull(keittAOnJune24.harvestAllowedFrom());
         PlantsOverviewResponse overviewOnJune24 = overviewOn(JUNE_24).getOverview(FARM, null);

@@ -48,6 +48,9 @@ class HealthIssueCatalogueIntegrationTest {
     private static final int TRIALS = 10;
 
     @Autowired
+    private PlantsBlocks plantsBlocks;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     @Autowired
@@ -159,6 +162,7 @@ class HealthIssueCatalogueIntegrationTest {
             // Arrange: no "Other" row yet
             removeTheInspections();
             removeTheIssue(HealthIssueReference.OTHER_CODE);
+            // A new block code on each trial: the block is created by the race as well
             String blockCode = "HO" + trial;
             // Act
             List<Object> results = together(List.of(
@@ -180,6 +184,33 @@ class HealthIssueCatalogueIntegrationTest {
             assertEquals(2, findings.size(), "trial " + trial);
             for (HealthFinding finding : findings) {
                 assertEquals(other.getId(), finding.getIssue().getId(), "trial " + trial);
+            }
+        }
+    }
+
+    @Test
+    void twoFirstInspectionsOfANewBlockSentTogether_shouldCreateOneBlock_andStoreBoth() throws Exception {
+        HealthIssueResponse issue = healthIssueService.createIssue(
+                new HealthIssueRequest("Leaf spot race", "disease", null, null, null));
+        addedCodes.add(issue.code());
+        for (int trial = 1; trial <= TRIALS; trial++) {
+            removeTheInspections();
+            String blockCode = "HN" + trial;
+            // Act: the block code is new to the farm referential
+            List<Object> results = together(List.of(
+                    () -> healthInspectionService.recordInspection(
+                            inspection(blockCode, new HealthFindingRequest(issue.code(), null, null))),
+                    () -> healthInspectionService.recordInspection(
+                            inspection(blockCode, new HealthFindingRequest(issue.code(), null, null)))));
+            results.stream()
+                    .filter(HealthInspectionResponse.class::isInstance)
+                    .forEach(result -> inspectionIds.add(((HealthInspectionResponse) result).id()));
+            // Assert: both stored (201 as before the farm referential), on the same single block
+            assertEquals(2, inspectionIds.size(), "trial " + trial + ": " + results);
+            Long blockId = plantsBlocks.find(null, blockCode).orElseThrow().id();
+            for (Long id : inspectionIds) {
+                assertEquals(blockId, healthInspectionRepository.findById(id).orElseThrow().getBlockId(),
+                        "trial " + trial);
             }
         }
     }

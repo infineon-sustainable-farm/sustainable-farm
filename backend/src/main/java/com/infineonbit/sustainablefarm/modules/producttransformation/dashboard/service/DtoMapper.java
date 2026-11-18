@@ -36,7 +36,11 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentLookup;
 import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks.Label;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Component;
 
 /**
@@ -50,12 +54,14 @@ public class DtoMapper {
 
     private final MangoVarietyCodes mangoVarietyCodes;
     private final EquipmentLookup equipmentLookup;
+    private final ProductTransformationBlocks blocks;
     private final PersonDirectory personDirectory;
 
     public DtoMapper(MangoVarietyCodes mangoVarietyCodes, EquipmentLookup equipmentLookup,
-                     PersonDirectory personDirectory) {
+                     ProductTransformationBlocks blocks, PersonDirectory personDirectory) {
         this.mangoVarietyCodes = mangoVarietyCodes;
         this.equipmentLookup = equipmentLookup;
+        this.blocks = blocks;
         this.personDirectory = personDirectory;
     }
 
@@ -66,6 +72,16 @@ public class DtoMapper {
      */
     public Long personId(String fullName) {
         return personDirectory.idOf(fullName);
+    }
+
+    /**
+     * The block a farm text and a block text designate, for an update: {@code null} when the block
+     * text is blank, so that the update keeps the current block.
+     *
+     * @see ProductTransformationBlocks#resolve(String, String)
+     */
+    public Long blockIdOrNull(String farmText, String blockText) {
+        return blocks.resolveOrNull(farmText, blockText);
     }
 
     /** The business code of the register equipment with this id, shown as {@code equipmentId}. */
@@ -90,21 +106,34 @@ public class DtoMapper {
         batch.setHarvestDate(request.getHarvestDate());
         batch.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
         batch.setHarvestQuantityKg(request.getHarvestQuantityKg());
-        batch.setFarmId(request.getFarmId());
-        batch.setBlockId(request.getBlockId());
+        batch.setFarmBlockId(blocks.resolve(request.getFarmId(), request.getBlockId()));
         batch.setCurrentStatus(request.getCurrentStatus());
         return batch;
     }
 
     public BatchResponse toResponse(Batch entity) {
+        return toResponse(entity, blocks.label(entity.getFarmBlockId()));
+    }
+
+    /** The responses of several lots, with one lookup of their blocks. */
+    public List<BatchResponse> toBatchResponses(List<Batch> entities) {
+        Map<Long, Label> labels = blocks.labelsOf(entities, Batch::getFarmBlockId);
+        return entities.stream().map(entity -> toResponse(entity, labelOf(labels, entity.getFarmBlockId()))).toList();
+    }
+
+    private static Label labelOf(Map<Long, Label> labels, Long blockId) {
+        return blockId == null ? new Label(null, null) : labels.getOrDefault(blockId, new Label(null, null));
+    }
+
+    private BatchResponse toResponse(Batch entity, Label block) {
         return BatchResponse.builder()
                 .batchId(entity.getBatchId())
                 .harvestDate(entity.getHarvestDate())
                 .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
                 .currentStatus(entity.getCurrentStatus())
-                .farmId(entity.getFarmId())
-                .blockId(entity.getBlockId())
+                .farmId(block.farm())
+                .blockId(block.block())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -116,8 +145,7 @@ public class DtoMapper {
         RawIntake intake = new RawIntake();
         intake.setIntakeId(request.getIntakeId());
         intake.setBatch(batch);
-        intake.setSourceFarm(request.getSourceFarm());
-        intake.setSourceBlock(request.getSourceBlock());
+        intake.setSourceBlockId(blocks.resolve(request.getSourceFarm(), request.getSourceBlock()));
         intake.setIntakeDate(request.getIntakeDate());
         intake.setReceivedQuantityKg(request.getReceivedQuantityKg());
         intake.setReceivedVarietyKey(mangoVarietyCodes.toKey(request.getReceivedVariety()));
@@ -127,11 +155,21 @@ public class DtoMapper {
     }
 
     public RawIntakeResponse toResponse(RawIntake entity) {
+        return toResponse(entity, blocks.label(entity.getSourceBlockId()));
+    }
+
+    /** The responses of several raw intakes, with one lookup of their blocks. */
+    public List<RawIntakeResponse> toRawIntakeResponses(List<RawIntake> entities) {
+        Map<Long, Label> labels = blocks.labelsOf(entities, RawIntake::getSourceBlockId);
+        return entities.stream().map(entity -> toResponse(entity, labelOf(labels, entity.getSourceBlockId()))).toList();
+    }
+
+    private RawIntakeResponse toResponse(RawIntake entity, Label block) {
         return RawIntakeResponse.builder()
                 .intakeId(entity.getIntakeId())
                 .batchId(entity.getBatch() != null ? entity.getBatch().getBatchId() : null)
-                .sourceFarm(entity.getSourceFarm())
-                .sourceBlock(entity.getSourceBlock())
+                .sourceFarm(block.farm())
+                .sourceBlock(block.block())
                 .intakeDate(entity.getIntakeDate())
                 .receivedQuantityKg(entity.getReceivedQuantityKg())
                 .receivedVariety(MangoVarietyCodes.toApi(entity.getReceivedVarietyKey()))
@@ -384,8 +422,7 @@ public class DtoMapper {
         event.setHarvestDate(request.getHarvestDate());
         event.setHarvestTime(request.getHarvestTime());
         event.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
-        event.setFarmId(request.getFarmId());
-        event.setBlockId(request.getBlockId());
+        event.setFarmBlockId(blocks.resolve(request.getFarmId(), request.getBlockId()));
         event.setHarvestQuantityKg(request.getHarvestQuantityKg());
         event.setQualityGrade(request.getQualityGrade());
         event.setQualityGradeDescription(request.getQualityGradeDescription());
@@ -397,14 +434,24 @@ public class DtoMapper {
     }
 
     public HarvestEventResponse toResponse(HarvestEvent entity) {
+        return toResponse(entity, blocks.label(entity.getFarmBlockId()));
+    }
+
+    /** The responses of several harvest events, with one lookup of their blocks. */
+    public List<HarvestEventResponse> toHarvestEventResponses(List<HarvestEvent> entities) {
+        Map<Long, Label> labels = blocks.labelsOf(entities, HarvestEvent::getFarmBlockId);
+        return entities.stream().map(entity -> toResponse(entity, labelOf(labels, entity.getFarmBlockId()))).toList();
+    }
+
+    private HarvestEventResponse toResponse(HarvestEvent entity, Label block) {
         return HarvestEventResponse.builder()
                 .harvestId(entity.getHarvestId())
                 .batchId(entity.getBatchId())
                 .harvestDate(entity.getHarvestDate())
                 .harvestTime(entity.getHarvestTime())
                 .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
-                .farmId(entity.getFarmId())
-                .blockId(entity.getBlockId())
+                .farmId(block.farm())
+                .blockId(block.block())
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
                 .qualityGrade(entity.getQualityGrade())
                 .qualityGradeDescription(entity.getQualityGradeDescription())

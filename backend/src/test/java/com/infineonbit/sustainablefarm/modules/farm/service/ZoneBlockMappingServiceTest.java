@@ -39,6 +39,9 @@ class ZoneBlockMappingServiceTest {
     @Mock
     private FarmRepository farmRepository;
 
+    @Mock
+    private BlockReferences blockReferences;
+
     @Test
     void createGivesTheNormalizedCodeToTheZoneBlock() {
         Zone zone = zone(10L, block(20L, farm(1L), null));
@@ -108,6 +111,18 @@ class ZoneBlockMappingServiceTest {
     }
 
     @Test
+    void deleteKeepsTheCodeOfABlockThatOtherModulesReference() {
+        Block block = block(20L, farm(1L), "A");
+        when(zoneRepository.findById(10L)).thenReturn(Optional.of(zone(10L, block)));
+        when(blockReferences.isReferenced(20L)).thenReturn(true);
+
+        assertThrows(ConflictException.class, () -> service().delete(10L));
+
+        assertEquals("A", block.getCode());
+        verify(blockRepository, never()).save(any());
+    }
+
+    @Test
     void getOfAnUnlinkedZoneIsNotFound() {
         when(zoneRepository.findById(10L)).thenReturn(Optional.of(zone(10L, block(20L, farm(1L), null))));
 
@@ -144,6 +159,6 @@ class ZoneBlockMappingServiceTest {
     }
 
     private ZoneBlockMappingService service() {
-        return new ZoneBlockMappingService(zoneRepository, blockRepository, farmRepository);
+        return new ZoneBlockMappingService(zoneRepository, blockRepository, farmRepository, blockReferences);
     }
 }

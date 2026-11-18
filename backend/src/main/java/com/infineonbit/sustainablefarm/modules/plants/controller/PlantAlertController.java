@@ -54,7 +54,7 @@ public class PlantAlertController {
          @ApiResponse(responseCode = "400", description = "withinDays outside 1 to 90, or a non-numeric parameter")
    })
    public ResponseEntity<PlantAlertResponse> getAlerts(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"C\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Valid @ParameterObject PlantAlertWithinDays window) {
       PlantAlertResponse plantAlertResponse = plantAlertService.getAlerts(farmId, blockCode, window.withinDays());

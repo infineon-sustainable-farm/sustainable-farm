@@ -53,7 +53,7 @@ public class PlantsOverviewController {
          @ApiResponse(responseCode = "400", description = "A non-numeric farm identifier")
    })
    public ResponseEntity<PlantsOverviewResponse> getOverview(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode) {
       PlantsOverviewResponse plantsOverviewResponse = plantsOverviewService.getOverview(farmId, blockCode);
       return ResponseEntity.status(HttpStatus.OK).body(plantsOverviewResponse);

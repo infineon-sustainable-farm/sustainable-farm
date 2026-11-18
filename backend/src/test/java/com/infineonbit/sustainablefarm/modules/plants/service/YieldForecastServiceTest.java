@@ -1,18 +1,19 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.MonthlyTotal;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.VarietyWithoutReference;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,14 +49,17 @@ public class YieldForecastServiceTest {
 
     private YieldForecastService yieldForecastService;
 
+    /** Blocks A to E of farm 1 in the farm referential. */
+    private static final PlantsBlocks PLANTS_BLOCKS = TestBlocks.onFarm(1L, "A", "B", "C", "D", "E").asPlantsBlocks();
+
     /** The real shares on the mocked repository: a row is a correction, a missing row its default. */
     @BeforeEach
     void setUp() {
         yieldForecastService = new YieldForecastService(populationEventRepository, varietyReferenceRepository,
-                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository), PLANTS_BLOCKS);
     }
 
-    private static Variety variety(long id, Integer farmId, String blockCode, String name) {
+    private static Variety variety(long id, Long farmId, String blockCode, String name) {
         Variety variety = new Variety();
         variety.setId(id);
         variety.setFarmId(farmId);
@@ -105,8 +109,9 @@ public class YieldForecastServiceTest {
     }
 
     /** Stubs the plantings and the balance of each, one balance per planting, in the same order. */
-    private void plantings(Integer farmId, String blockCode, List<PopulationEvent> plantings, long... balances) {
-        when(populationEventRepository.findPlantingsByOptionalFilters(farmId, blockCode)).thenReturn(plantings);
+    private void plantings(Long farmId, String blockCode, List<PopulationEvent> plantings, long... balances) {
+        PlantsBlocks.BlockFilter blocks = PLANTS_BLOCKS.filter(farmId, blockCode);
+        when(populationEventRepository.findPlantingsByOptionalFilters(blocks.all(), blocks.ids())).thenReturn(plantings);
         TreeBalance[] rows = new TreeBalance[balances.length];
         for (int i = 0; i < balances.length; i++) {
             rows[i] = balance(plantings.get(i).getVariety().getId(), balances[i]);
@@ -174,7 +179,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldDefaultToTheCurrentMonthAndSixMonths() {
         // Arrange
-        when(populationEventRepository.findPlantingsByOptionalFilters(null, null)).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS)).thenReturn(List.of());
         // Act
         YieldForecastResponse forecast = yieldForecastService.getYieldForecast(null, null, null, null, TODAY);
         // Assert: September 2026 to February 2027, all at zero
@@ -191,14 +196,14 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldPassTheFiltersAndTurnABlankBlockIntoNoFilter() {
         // Arrange
-        when(populationEventRepository.findPlantingsByOptionalFilters(1, "B")).thenReturn(List.of());
-        when(populationEventRepository.findPlantingsByOptionalFilters(null, null)).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, TestBlocks.idsOf("B"))).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS)).thenReturn(List.of());
         // Act
-        yieldForecastService.getYieldForecast(1, " B ", JANUARY_2027, 12, TODAY);
+        yieldForecastService.getYieldForecast(1L, " B ", JANUARY_2027, 12, TODAY);
         yieldForecastService.getYieldForecast(null, "  ", JANUARY_2027, 12, TODAY);
         // Assert
-        verify(populationEventRepository).findPlantingsByOptionalFilters(1, "B");
-        verify(populationEventRepository).findPlantingsByOptionalFilters(null, null);
+        verify(populationEventRepository).findPlantingsByOptionalFilters(false, TestBlocks.idsOf("B"));
+        verify(populationEventRepository).findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS);
     }
 
     @Test
@@ -280,7 +285,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldAddUpTheSeasonToItsExactTotal_byLargestRemainder() {
         // Arrange: 40 Keitt in full production, 8,800 kg a year over May to July
-        Variety keitt = variety(1L, 7, "A", "Keitt");
+        Variety keitt = variety(1L, 7L, "A", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2019, 9, 15), 40)), 40);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.25, 1.0));
@@ -294,7 +299,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldGiveAMonthTheSameValue_whenTheWindowCutsTheSeason() {
         // Arrange: the same 40 Keitt
-        Variety keitt = variety(1L, 7, "A", "Keitt");
+        Variety keitt = variety(1L, 7L, "A", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2019, 9, 15), 40)), 40);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.25, 1.0));
@@ -323,7 +328,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldGiveTheTenthToTheLargestRemainder_whenThePhaseChangesInTheSeason() {
         // Arrange: 40 Keitt planted on 15/05/2024: 2 years on 01/05/2027, 3 years on 01/06/2027
-        Variety keitt = variety(1L, 7, "A", "Keitt");
+        Variety keitt = variety(1L, 7L, "A", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2024, 5, 15), 40)), 40);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.5, 1.0));

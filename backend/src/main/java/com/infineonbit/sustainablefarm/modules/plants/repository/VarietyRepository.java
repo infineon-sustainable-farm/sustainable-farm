@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,49 +24,40 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      * and "one block of one farm". A filter that matches nothing yields an empty
      * list, never an error.
      *
-     * @param farmId    farm identifier, or {@code null} to ignore the farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} to ignore the block
+     * @param allBlocks   {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds  ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @return the matching varieties, ordered by block, then name, then id
      */
     @Query("""
             SELECT v FROM Variety v
-            WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
-            ORDER BY v.blockCode ASC, v.name ASC, v.id ASC
+            WHERE (:allBlocks = true OR v.blockId IN :blockIds)
+            ORDER BY v.blockId ASC, v.name ASC, v.id ASC
             """)
-    List<Variety> findByOptionalFilters(@Param("farmId") Integer farmId,
-                                        @Param("blockCode") String blockCode);
+    List<Variety> findByOptionalFilters(@Param("allBlocks") boolean allBlocks,
+                                        @Param("blockIds") Collection<Long> blockIds);
 
     /**
-     * Returns the variety rows of one (farm, block, name) triple, oldest first.
+     * Returns the variety rows of one (block, name) pair, oldest first. The
+     * block gives the farm, so a row of one farm is never taken for a row of
+     * another.
      *
-     * <p>Unlike {@link #findByOptionalFilters}, a {@code null} farm is a value
-     * here, not a missing filter: it matches only the rows without a farm, so a
-     * row of farm 1 is never taken for a row without a farm. This is the
-     * NULL-safe comparison {@code GrowthCalendarService} applies in memory.
+     * <p>The name comparison ignores case, so "keitt" finds "Keitt".
      *
-     * <p>The name comparison ignores case, so "keitt" finds "Keitt". The block
-     * must match exactly; it is stored normalized ({@code "A"}).
-     *
-     * @param farmId    farm identifier, or {@code null} for the rows without a farm
-     * @param blockCode block code as stored, for example {@code "A"}
+     * @param blockId   id of the block, a {@code farm.block} row
      * @param name      variety name, compared ignoring case
      * @return the matching rows, oldest first, possibly empty
      */
     @Query("""
             SELECT v FROM Variety v
-            WHERE ((CAST(:farmId AS Integer) IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
-              AND v.blockCode = :blockCode
+            WHERE v.blockId = :blockId
               AND LOWER(v.name) = LOWER(:name)
             ORDER BY v.id ASC
             """)
-    List<Variety> findByFarmBlockAndName(@Param("farmId") Integer farmId,
-                                         @Param("blockCode") String blockCode,
-                                         @Param("name") String name);
+    List<Variety> findByBlockAndName(@Param("blockId") Long blockId,
+                                     @Param("name") String name);
 
     /**
-     * Same rows as {@link #findByFarmBlockAndName}, each locked until the end
+     * Same rows as {@link #findByBlockAndName}, each locked until the end
      * of the transaction.
      *
      * <p>Reserved to the planting service: a second planting of an existing
@@ -74,22 +66,19 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
      * outside a transaction keep working as before. Must run inside a
      * transaction.
      *
-     * @param farmId    farm identifier, or {@code null} for the rows without a farm
-     * @param blockCode block code as stored, for example {@code "A"}
+     * @param blockId   id of the block, a {@code farm.block} row
      * @param name      variety name, compared ignoring case
      * @return the matching rows, oldest first, locked, possibly empty
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT v FROM Variety v
-            WHERE ((CAST(:farmId AS Integer) IS NULL AND v.farmId IS NULL) OR v.farmId = :farmId)
-              AND v.blockCode = :blockCode
+            WHERE v.blockId = :blockId
               AND LOWER(v.name) = LOWER(:name)
             ORDER BY v.id ASC
             """)
-    List<Variety> findByFarmBlockAndNameForUpdate(@Param("farmId") Integer farmId,
-                                                  @Param("blockCode") String blockCode,
-                                                  @Param("name") String name);
+    List<Variety> findByBlockAndNameForUpdate(@Param("blockId") Long blockId,
+                                              @Param("name") String name);
 
     /**
      * The rows without a natural key, oldest first: rows written before

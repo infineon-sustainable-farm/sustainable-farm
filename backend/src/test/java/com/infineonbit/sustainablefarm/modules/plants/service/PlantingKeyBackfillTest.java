@@ -59,23 +59,28 @@ class PlantingKeyBackfillTest {
         backfill = new PlantingKeyBackfill(varietyRepository, growthCalendarRepository, transactionManager);
     }
 
+    /** Block ids of the test, out of the range of the other tests: the rows on them are removed afterwards. */
+    private static final long BF1 = 9001L;
+    private static final long BF2 = 9002L;
+    private static final long BF3 = 9003L;
+    private static final long BF3_OTHER_FARM = 9013L;
+    private static final long BF4 = 9004L;
+
     @AfterEach
     void removeTheRowsOfTheTest() {
-        jdbc.update("delete from varietes where bloc_parcelle like 'BF%'");
-        jdbc.update("delete from calendrier_croissance where bloc_parcelle like 'BF%'");
+        jdbc.update("delete from varietes where block_id between 9000 and 9099");
+        jdbc.update("delete from calendrier_croissance where block_id between 9000 and 9099");
     }
 
     /** A variety row as written before the key existed. */
-    private Long insertVarietyWithoutKey(Integer farmId, String blockCode, String name) {
-        jdbc.update("insert into varietes (id_ferme, bloc_parcelle, nom, source) values (?, ?, ?, 'Zalka_2025')",
-                farmId, blockCode, name);
+    private Long insertVarietyWithoutKey(long blockId, String name) {
+        jdbc.update("insert into varietes (block_id, nom, source) values (?, ?, 'Zalka_2025')", blockId, name);
         return jdbc.queryForObject("select max(id) from varietes", Long.class);
     }
 
     /** A calendar row as written before the key existed. */
-    private Long insertCalendarWithoutKey(Integer farmId, String blockCode) {
-        jdbc.update("insert into calendrier_croissance (id_ferme, bloc_parcelle, source) values (?, ?, 'Zalka_2025')",
-                farmId, blockCode);
+    private Long insertCalendarWithoutKey(long blockId) {
+        jdbc.update("insert into calendrier_croissance (block_id, source) values (?, 'Zalka_2025')", blockId);
         return jdbc.queryForObject("select max(id) from calendrier_croissance", Long.class);
     }
 
@@ -90,55 +95,55 @@ class PlantingKeyBackfillTest {
     @Test
     void fill_shouldWriteTheKeyOfEveryRowWithoutOne() {
         // Arrange
-        Long keitt = insertVarietyWithoutKey(null, "BF1", "Keitt");
-        Long kent = insertVarietyWithoutKey(1, "BF1", "Kent");
-        Long calendar = insertCalendarWithoutKey(null, "BF1");
+        Long keitt = insertVarietyWithoutKey(BF1, "Keitt");
+        Long kent = insertVarietyWithoutKey(BF1, "Kent");
+        Long calendar = insertCalendarWithoutKey(BF1);
         // Act
         PlantingKeyBackfill.Result result = backfill.fill();
         // Assert
-        assertEquals("0|BF1|keitt", varietyKey(keitt));
-        assertEquals("1|BF1|kent", varietyKey(kent));
-        assertEquals("0|BF1", blockKey(calendar));
+        assertEquals(BF1 + "|keitt", varietyKey(keitt));
+        assertEquals(BF1 + "|kent", varietyKey(kent));
+        assertEquals(String.valueOf(BF1), blockKey(calendar));
         assertEquals(new PlantingKeyBackfill.Result(2, List.of(), 1, List.of()), result);
     }
 
     @Test
     void fill_shouldLeaveTheLaterVarietyDuplicatesWithoutKey_andDeleteNothing() {
-        // Arrange: three rows of one triple, the name in two cases
-        Long oldest = insertVarietyWithoutKey(null, "BF2", "Keitt");
-        Long sameName = insertVarietyWithoutKey(null, "BF2", "Keitt");
-        Long otherCase = insertVarietyWithoutKey(null, "BF2", "keitt");
+        // Arrange: three rows of one (block, name) pair, the name in two cases
+        Long oldest = insertVarietyWithoutKey(BF2, "Keitt");
+        Long sameName = insertVarietyWithoutKey(BF2, "Keitt");
+        Long otherCase = insertVarietyWithoutKey(BF2, "keitt");
         // Act
         PlantingKeyBackfill.Result result = backfill.fill();
         // Assert: the oldest row keeps the key, the other two are reported and kept
-        assertEquals("0|BF2|keitt", varietyKey(oldest));
+        assertEquals(BF2 + "|keitt", varietyKey(oldest));
         assertNull(varietyKey(sameName));
         assertNull(varietyKey(otherCase));
         assertEquals(List.of(sameName, otherCase), result.varietyDuplicates());
-        assertEquals(3, varietyRepository.findByOptionalFilters(null, "BF2").size());
+        assertEquals(3, varietyRepository.findByOptionalFilters(false, List.of(BF2)).size());
     }
 
     @Test
     void fill_shouldLeaveTheLaterCalendarDuplicateWithoutKey_andDeleteNothing() {
         // Arrange
-        Long oldest = insertCalendarWithoutKey(null, "BF3");
-        Long duplicate = insertCalendarWithoutKey(null, "BF3");
-        Long otherFarm = insertCalendarWithoutKey(1, "BF3");
+        Long oldest = insertCalendarWithoutKey(BF3);
+        Long duplicate = insertCalendarWithoutKey(BF3);
+        Long otherBlock = insertCalendarWithoutKey(BF3_OTHER_FARM);
         // Act
         PlantingKeyBackfill.Result result = backfill.fill();
-        // Assert: farm NULL and farm 1 are two blocks; only the true duplicate is left out
-        assertEquals("0|BF3", blockKey(oldest));
+        // Assert: two block ids are two blocks; only the true duplicate is left out
+        assertEquals(String.valueOf(BF3), blockKey(oldest));
         assertNull(blockKey(duplicate));
-        assertEquals("1|BF3", blockKey(otherFarm));
+        assertEquals(String.valueOf(BF3_OTHER_FARM), blockKey(otherBlock));
         assertEquals(List.of(duplicate), result.calendarDuplicates());
-        assertEquals(3, growthCalendarRepository.findByOptionalFilters(null, "BF3").size());
+        assertEquals(3, growthCalendarRepository.findByOptionalFilters(false, List.of(BF3, BF3_OTHER_FARM)).size());
     }
 
     @Test
     void fill_shouldChangeNoLastUpdate_andLeaveRowsWithAKeyAlone() {
         // Arrange: a row written through the entity, which has its key, and an older one without
         Variety current = new Variety();
-        current.setBlockCode("BF4");
+        current.setBlockId(BF4);
         current.setName("Kent");
         current.setLastUpdated(WRITTEN);
         Long withKey = varietyRepository.save(current).getId();
@@ -149,15 +154,15 @@ class PlantingKeyBackfillTest {
         PlantingKeyBackfill.Result result = backfill.fill();
         // Assert
         assertEquals(1, result.varietiesKeyed());
-        assertEquals("0|BF4|keitt", varietyKey(withoutKey));
+        assertEquals(BF4 + "|keitt", varietyKey(withoutKey));
         assertEquals(lastUpdateBefore, varietyRepository.findById(withoutKey).orElseThrow().getLastUpdated());
-        assertEquals("0|BF4|kent", varietyKey(withKey));
+        assertEquals(BF4 + "|kent", varietyKey(withKey));
         assertEquals(WRITTEN, varietyRepository.findById(withKey).orElseThrow().getLastUpdated());
     }
 
     private static Variety copyOf(Variety variety, String name) {
         Variety copy = new Variety();
-        copy.setBlockCode(variety.getBlockCode());
+        copy.setBlockId(variety.getBlockId());
         copy.setName(name);
         copy.setLastUpdated(variety.getLastUpdated());
         return copy;

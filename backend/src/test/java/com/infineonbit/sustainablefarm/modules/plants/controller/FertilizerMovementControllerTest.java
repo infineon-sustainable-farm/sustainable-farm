@@ -58,7 +58,7 @@ public class FertilizerMovementControllerTest {
     @Test
     void getAllMovements_shouldPassEveryFilter() throws Exception {
         // Arrange
-        when(fertilizerMovementService.getAllMovements(1L, FertilizerMovementType.APPLICATION, 2, "B",
+        when(fertilizerMovementService.getAllMovements(1L, FertilizerMovementType.APPLICATION, 2L, "B",
                 LocalDate.of(2026, 6, 2), LocalDate.of(2026, 6, 30))).thenReturn(List.of(application()));
         // Act
         ResultActions result = mockMvc.perform(get(URL)

@@ -18,7 +18,7 @@ import java.time.LocalDate;
  */
 public record HarvestSummary(
         Long id,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         Long varietyId,
         String varietyName,

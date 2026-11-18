@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller for HarvestEvent operations (from Plants workstream)
@@ -69,9 +68,7 @@ public class HarvestEventController {
     @Operation(summary = "Get all harvest events", description = "Retrieves all harvest event records")
     public ResponseEntity<List<HarvestEventResponse>> getAllHarvestEvents() {
         List<HarvestEvent> events = harvestEventService.getAllHarvestEvents();
-        List<HarvestEventResponse> responses = events.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<HarvestEventResponse> responses = dtoMapper.toHarvestEventResponses(events);
         return ResponseEntity.ok(responses);
     }
 
@@ -89,9 +86,7 @@ public class HarvestEventController {
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,
             @Parameter(description = "End date") @RequestParam LocalDate endDate) {
         List<HarvestEvent> events = harvestEventService.getHarvestEventsByDateRange(startDate, endDate);
-        List<HarvestEventResponse> responses = events.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<HarvestEventResponse> responses = dtoMapper.toHarvestEventResponses(events);
         return ResponseEntity.ok(responses);
     }
 
@@ -100,9 +95,7 @@ public class HarvestEventController {
     public ResponseEntity<List<HarvestEventResponse>> getHarvestEventsByVariety(
             @Parameter(description = "Mango variety") @PathVariable String variety) {
         List<HarvestEvent> events = harvestEventService.getHarvestEventsByVariety(dtoMapper.varietyKey(variety));
-        List<HarvestEventResponse> responses = events.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<HarvestEventResponse> responses = dtoMapper.toHarvestEventResponses(events);
         return ResponseEntity.ok(responses);
     }
 
@@ -111,9 +104,7 @@ public class HarvestEventController {
     public ResponseEntity<List<HarvestEventResponse>> getHarvestEventsByGrade(
             @Parameter(description = "Quality grade") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade) {
         List<HarvestEvent> events = harvestEventService.getHarvestEventsByQualityGrade(grade);
-        List<HarvestEventResponse> responses = events.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<HarvestEventResponse> responses = dtoMapper.toHarvestEventResponses(events);
         return ResponseEntity.ok(responses);
     }
 
@@ -122,9 +113,7 @@ public class HarvestEventController {
     public ResponseEntity<List<HarvestEventResponse>> getHarvestEventsByFarm(
             @Parameter(description = "Farm ID") @PathVariable String farmId) {
         List<HarvestEvent> events = harvestEventService.getHarvestEventsByFarm(farmId);
-        List<HarvestEventResponse> responses = events.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<HarvestEventResponse> responses = dtoMapper.toHarvestEventResponses(events);
         return ResponseEntity.ok(responses);
     }
 }

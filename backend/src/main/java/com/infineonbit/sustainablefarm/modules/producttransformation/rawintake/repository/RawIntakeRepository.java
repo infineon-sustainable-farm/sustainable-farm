@@ -32,9 +32,9 @@ public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
     List<RawIntake> findByIntakeDateBetween(LocalDate startDate, LocalDate endDate);
 
     /**
-     * Find raw intake by source farm
+     * Find raw intake of several source blocks (the blocks of a farm)
      */
-    List<RawIntake> findBySourceFarm(String sourceFarm);
+    List<RawIntake> findBySourceBlockIdIn(java.util.Collection<Long> sourceBlockIds);
 
     /**
      * Find raw intake by variety
@@ -49,10 +49,8 @@ public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
     /**
      * Find raw intake by farm and date range
      */
-    @Query("SELECT r FROM RawIntake r WHERE r.sourceFarm = :farm AND r.intakeDate BETWEEN :startDate AND :endDate")
-    List<RawIntake> findBySourceFarmAndDateRange(@Param("farm") String farm,
-                                                 @Param("startDate") LocalDate startDate,
-                                                 @Param("endDate") LocalDate endDate);
+    List<RawIntake> findBySourceBlockIdInAndIntakeDateBetween(java.util.Collection<Long> sourceBlockIds,
+                                                              LocalDate startDate, LocalDate endDate);
 
     /**
      * Get total received quantity by variety

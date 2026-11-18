@@ -193,13 +193,13 @@ public class HealthTreatmentControllerTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        when(healthTreatmentService.getAllTreatments(1, "D", from, to)).thenReturn(List.of(bait()));
+        when(healthTreatmentService.getAllTreatments(1L, "D", from, to)).thenReturn(List.of(bait()));
         // Act & Assert
         mockMvc.perform(get(URL).param("farmId", "1").param("blockCode", "D")
                         .param("from", "2026-09-01").param("to", "2026-09-30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].targetIssueCode").value("FRUIT_FLY"));
-        verify(healthTreatmentService).getAllTreatments(eq(1), eq("D"), eq(from), eq(to));
+        verify(healthTreatmentService).getAllTreatments(eq(1L), eq("D"), eq(from), eq(to));
     }
 }

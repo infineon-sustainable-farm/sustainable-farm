@@ -71,8 +71,8 @@ public class PlantAlertService {
         this.clock = clock;
     }
 
-    /** A block, as the (farm, block) pair: a {@code null} farm is a farm of its own. */
-    private record BlockKey(Integer farmId, String blockCode) {
+    /** A block, by its farm and code: a code designates one {@code farm.block} row. */
+    private record BlockKey(Long farmId, String blockCode) {
     }
 
     /**
@@ -121,7 +121,7 @@ public class PlantAlertService {
      *                   announced, from 1 to 90, or {@code null} for 30
      * @return the alerts of today, CRITICAL first, then by date
      */
-    public PlantAlertResponse getAlerts(Integer farmId, String blockCode, Integer withinDays) {
+    public PlantAlertResponse getAlerts(Long farmId, String blockCode, Integer withinDays) {
         return getAlerts(farmId, blockCode, withinDays, LocalDate.now(clock));
     }
 
@@ -129,7 +129,7 @@ public class PlantAlertService {
      * Same as {@link #getAlerts(Integer, String, Integer)} on an explicit day,
      * so that the overview reads every figure on the same day.
      */
-    PlantAlertResponse getAlerts(Integer farmId, String blockCode, Integer withinDays, LocalDate today) {
+    PlantAlertResponse getAlerts(Long farmId, String blockCode, Integer withinDays, LocalDate today) {
         int window = withinDays == null ? DEFAULT_WITHIN_DAYS : withinDays;
         String block = normalizeFilter(blockCode);
 

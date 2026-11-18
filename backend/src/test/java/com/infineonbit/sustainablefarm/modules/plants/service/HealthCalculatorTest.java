@@ -5,6 +5,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
 import com.infineonbit.sustainablefarm.modules.plants.service.HealthCalculator.TreatmentSummary;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestRows;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -90,8 +91,9 @@ public class HealthCalculatorTest {
         assertEquals(new TreatmentSummary(0, null, null), HealthCalculator.summarize(List.of()));
     }
 
-    private static HealthInspection inspection(long id, Integer farmId, String blockCode, LocalDate inspectedOn) {
-        return new HealthInspection(id, farmId, blockCode, inspectedOn, 60, null, null, "user_entry", null);
+    private static HealthInspection inspection(long id, Long farmId, String blockCode, LocalDate inspectedOn) {
+        return TestRows.inspection(id, farmId == null ? null : farmId.intValue(), blockCode, inspectedOn, 60, null, null,
+                "user_entry", null);
     }
 
     private static List<Long> ids(List<HealthInspection> inspections) {
@@ -115,10 +117,10 @@ public class HealthCalculatorTest {
     void latestByBlock_shouldTellANullFarmFromFarm1_andSortByBlockThenFarm() {
         // Arrange: block C with no farm and block C of farm 1 are two blocks
         List<HealthInspection> inspections = List.of(
-                inspection(1, 1, "C", LocalDate.of(2026, 9, 1)),
+                inspection(1, 1L, "C", LocalDate.of(2026, 9, 1)),
                 inspection(2, null, "D", LocalDate.of(2026, 9, 2)),
                 inspection(3, null, "C", LocalDate.of(2026, 9, 3)),
-                inspection(4, 1, "C", LocalDate.of(2026, 8, 1)));
+                inspection(4, 1L, "C", LocalDate.of(2026, 8, 1)));
         // Act & Assert: by block code, then farm with no farm first
         assertEquals(List.of(3L, 1L, 2L), ids(HealthCalculator.latestByBlock(inspections)));
     }

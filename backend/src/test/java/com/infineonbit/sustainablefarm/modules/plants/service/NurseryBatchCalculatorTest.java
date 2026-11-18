@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryEventType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.service.NurseryBatchCalculator.BatchSummary;
+import com.infineonbit.sustainablefarm.modules.plants.support.NurseryRows;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -21,17 +22,17 @@ public class NurseryBatchCalculatorTest {
     private static final LocalDate SEPTEMBER_20 = LocalDate.of(2026, 9, 20);
 
     private static NurseryEvent stageChange(long id, LocalDate date, NurseryStage stage) {
-        return new NurseryEvent(id, null, NurseryEventType.STAGE_CHANGE, date, stage, null, null, null, null,
+        return NurseryRows.event(id, null, NurseryEventType.STAGE_CHANGE, date, stage, null, null, null, null,
                 "user_entry", null);
     }
 
     private static NurseryEvent loss(long id, LocalDate date, int quantity) {
-        return new NurseryEvent(id, null, NurseryEventType.LOSS, date, null, quantity, "Graft failure", null, null,
+        return NurseryRows.event(id, null, NurseryEventType.LOSS, date, null, quantity, "Graft failure", null, null,
                 "user_entry", null);
     }
 
     private static NurseryEvent transplant(long id, LocalDate date, int quantity) {
-        return new NurseryEvent(id, null, NurseryEventType.TRANSPLANT, date, null, quantity, null, "E", null,
+        return NurseryRows.event(id, null, NurseryEventType.TRANSPLANT, date, null, quantity, null, "E", null,
                 "user_entry", null);
     }
 

@@ -30,7 +30,7 @@ public record FertilizerMovementResponse(
         LocalDate movementDate,
         Double quantity,
         FertilizerUnit unit,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         String applicator,
         String method,

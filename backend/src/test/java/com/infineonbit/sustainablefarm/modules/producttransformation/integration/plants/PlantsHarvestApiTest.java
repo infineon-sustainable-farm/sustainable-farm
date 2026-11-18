@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,43 +28,55 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * as {@code GET /api/plants/harvests} without the lot number, and the same
  * errors as when Plants was called over HTTP.
  *
- * <p>Farm 31 and block P22 are used by no other test.
+ * <p>Block P22 is used by no other test; its farm is created by the first test
+ * that runs, and found again through the farm referential by the next ones.
  */
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class PlantsHarvestApiTest {
 
-    private static final int FARM = 31;
     private static final String BLOCK = "P22";
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private FarmDirectory farmDirectory;
+
+    private long farm;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private long harvestId;
 
     @BeforeEach
-    void harvestOfFarm31() throws Exception {
-        String existing = mockMvc.perform(get("/api/plants/harvests").param("farmId", String.valueOf(FARM)))
-                .andReturn().getResponse().getContentAsString();
-        JsonNode harvests = objectMapper.readTree(existing);
-        if (!harvests.isEmpty()) {
+    void harvestOfBlockP22() throws Exception {
+        Optional<BlockDto> block = farmDirectory.findBlockByCode(BLOCK);
+        if (block.isPresent()) {
+            farm = block.get().farmId();
+            String existing = mockMvc.perform(get("/api/plants/harvests").param("blockCode", BLOCK))
+                    .andReturn().getResponse().getContentAsString();
+            JsonNode harvests = objectMapper.readTree(existing);
             harvestId = harvests.get(0).get("id").asLong();
             return;
         }
+        String createdFarm = mockMvc.perform(post("/api/farms").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Plants Harvest API Farm\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        farm = objectMapper.readTree(createdFarm).get("id").asLong();
         mockMvc.perform(post("/api/plants/plantings").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId": %d, "blockCode": "%s", "varietyName": "Keitt",
                                  "plantingDate": "2020-01-10", "treeCount": 10}
-                                """.formatted(FARM, BLOCK)))
+                                """.formatted(farm, BLOCK)))
                 .andExpect(status().isCreated());
         String created = mockMvc.perform(post("/api/plants/harvests").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId": %d, "blockCode": "%s", "varietyName": "keitt",
                                  "harvestDate": "2026-06-01", "quantityKg": 120.5}
-                                """.formatted(FARM, BLOCK)))
+                                """.formatted(farm, BLOCK)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         harvestId = objectMapper.readTree(created).get("id").asLong();
@@ -72,7 +87,7 @@ class PlantsHarvestApiTest {
         mockMvc.perform(get("/api/harvest-events/plants/{id}", harvestId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(harvestId))
-                .andExpect(jsonPath("$.farmId").value(FARM))
+                .andExpect(jsonPath("$.farmId").value(farm))
                 .andExpect(jsonPath("$.blockCode").value(BLOCK))
                 .andExpect(jsonPath("$.varietyId").isNumber())
                 .andExpect(jsonPath("$.varietyName").value("Keitt"))
@@ -88,7 +103,7 @@ class PlantsHarvestApiTest {
         mockMvc.perform(get("/api/harvest-events/plants/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id", hasItem((int) harvestId)));
-        mockMvc.perform(get("/api/harvest-events/plants/farm/{farmId}", FARM))
+        mockMvc.perform(get("/api/harvest-events/plants/farm/{farmId}", farm))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(harvestId));
@@ -109,8 +124,9 @@ class PlantsHarvestApiTest {
     }
 
     @Test
-    void aFarmIdBeyondTheRangeOfPlants_isA400() throws Exception {
+    void anUnknownLongFarmId_hasNoHarvest() throws Exception {
         mockMvc.perform(get("/api/harvest-events/plants/farm/{farmId}", 99_999_999_999L))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 }

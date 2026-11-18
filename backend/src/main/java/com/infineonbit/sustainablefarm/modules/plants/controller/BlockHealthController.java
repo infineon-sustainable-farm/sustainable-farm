@@ -49,7 +49,7 @@ public class BlockHealthController {
          @ApiResponse(responseCode = "200", description = "Each inspected block, possibly an empty list")
    })
    public ResponseEntity<List<BlockHealthResponse>> getBlockHealth(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId) {
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId) {
       List<BlockHealthResponse> blockHealthResponses = healthInspectionService.getBlockHealth(farmId);
       return ResponseEntity.status(HttpStatus.OK).body(blockHealthResponses);
    }

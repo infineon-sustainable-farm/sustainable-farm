@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
@@ -44,6 +45,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class PlantingConcurrencyIntegrationTest {
 
     private static final int TRIALS = 10;
+
+    @Autowired
+    private PlantsBlocks plantsBlocks;
 
     @Autowired
     private PlantingService plantingService;
@@ -126,9 +130,23 @@ class PlantingConcurrencyIntegrationTest {
                 null, LocalDate.of(2025, 1, 1), 100.0, "READY_TO_TRANSPLANT", LocalDate.of(2026, 6, 1), null)).id();
     }
 
+    /** Variety rows of the block of a code, none when the farm referential has no such block. */
+    private List<Variety> varietiesOf(String blockCode) {
+        return plantsBlocks.find(null, blockCode)
+                .map(block -> varietyRepository.findByOptionalFilters(false, List.of(block.id())))
+                .orElse(List.of());
+    }
+
+    /** Calendar rows of the block of a code, none when the farm referential has no such block. */
+    private List<GrowthCalendar> calendarsOf(String blockCode) {
+        return plantsBlocks.find(null, blockCode)
+                .map(block -> growthCalendarRepository.findByBlock(block.id()))
+                .orElse(List.of());
+    }
+
     /** Current number of trees of each variety row of the block, oldest row first. */
     private List<Integer> treeBalances(String blockCode) {
-        List<Long> ids = varietyRepository.findByOptionalFilters(null, blockCode).stream()
+        List<Long> ids = varietiesOf(blockCode).stream()
                 .map(Variety::getId)
                 .toList();
         return populationEventRepository.findTreeBalances(ids).stream()
@@ -138,7 +156,7 @@ class PlantingConcurrencyIntegrationTest {
     }
 
     private List<LocalDate> calendarDates(String blockCode) {
-        return growthCalendarRepository.findByFarmAndBlock(null, blockCode).stream()
+        return calendarsOf(blockCode).stream()
                 .map(GrowthCalendar::getPlantingDate)
                 .toList();
     }
@@ -150,7 +168,8 @@ class PlantingConcurrencyIntegrationTest {
             String blockCode = "CE" + trial;
             Variety keitt = new Variety();
             keitt.setName("Keitt");
-            keitt.setBlockCode(blockCode);
+            BlockDto block = plantsBlocks.resolve(null, blockCode);
+            keitt.assignBlock(block.id(), PlantsBlocks.label(block));
             keitt.setTreeCount(200);
             keitt.setSource("Zalka_2025");
             varietyRepository.save(keitt);
@@ -211,7 +230,7 @@ class PlantingConcurrencyIntegrationTest {
             // Assert: one 201 and four 409, one row with one planting of 50 trees
             assertEquals(1, count(results, PlantingResponse.class), "trial " + trial);
             assertEquals(4, count(results, ConflictException.class), "trial " + trial);
-            assertEquals(1, varietyRepository.findByOptionalFilters(null, blockCode).size(), "trial " + trial);
+            assertEquals(1, varietiesOf(blockCode).size(), "trial " + trial);
             assertEquals(List.of(50), treeBalances(blockCode), "trial " + trial);
         }
     }

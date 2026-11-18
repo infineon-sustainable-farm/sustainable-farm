@@ -36,7 +36,7 @@ import java.math.BigDecimal;
         uniqueConstraints = @UniqueConstraint(name = "uk_harvest_event_batch_id", columnNames = "batch_id"),
         indexes = {
                 @Index(name = "idx_harvest_event_harvest_date", columnList = "harvest_date"),
-                @Index(name = "idx_harvest_event_farm_id", columnList = "farm_id"),
+                @Index(name = "idx_harvest_event_block_id", columnList = "block_id"),
                 @Index(name = "idx_harvest_event_variety_key", columnList = "variety_key")
         })
 @Getter
@@ -76,11 +76,12 @@ public class HarvestEvent {
     @Column(name = "variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
     private String varietyKey;
 
-    @Column(name = "farm_id", nullable = false, length = 50)
-    private String farmId;
-
-    @Column(name = "block_id", nullable = false, length = 50)
-    private String blockId;
+    /**
+     * Block of the farm the harvest comes from: foreign key to {@code farm.block} (ADR 0004). The
+     * API shows it as {@code blockId} (the block code) and {@code farmId} (the name of its farm).
+     */
+    @Column(name = "block_id", nullable = false)
+    private Long farmBlockId;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal harvestQuantityKg;

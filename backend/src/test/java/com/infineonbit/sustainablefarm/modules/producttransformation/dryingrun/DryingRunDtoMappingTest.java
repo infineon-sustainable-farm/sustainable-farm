@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
@@ -54,6 +55,9 @@ class DryingRunDtoMappingTest {
     private BatchRepository batchRepository;
 
     @Autowired
+    private ProductTransformationBlocks blocks;
+
+    @Autowired
     private EquipmentService equipmentService;
 
     @Autowired
@@ -87,8 +91,7 @@ class DryingRunDtoMappingTest {
         batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
         batch.setCurrentStatus(Batch.BatchStatus.CREATED);
-        batch.setFarmId("F-DTO");
-        batch.setBlockId("BL-DTO");
+        batch.setFarmBlockId(blocks.resolve("F-DTO", "BL-DTO"));
         batchRepository.saveAndFlush(batch);
 
         Equipment equipment = new Equipment();

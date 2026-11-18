@@ -20,7 +20,7 @@ public interface HarvestLookup {
      *                  {@code null} or blank for every block
      * @return the matching harvests, ordered by date then identifier; possibly empty
      */
-    List<HarvestSummary> listHarvests(Integer farmId, String blockCode);
+    List<HarvestSummary> listHarvests(Long farmId, String blockCode);
 
     /**
      * Finds one harvest.

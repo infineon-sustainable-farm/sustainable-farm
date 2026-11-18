@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.LastPurchase;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.MovementTotal;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -51,23 +52,24 @@ public class FertilizerMovementRepositoryTest {
         return fertilizerMovementRepository.save(movement);
     }
 
-    private FertilizerMovement application(FertilizerProduct product, LocalDate date, Integer farmId,
-                                           String blockCode) {
+    /** An application on the block of a code, by its stable test id ({@link TestBlocks#idOf}). */
+    private FertilizerMovement application(FertilizerProduct product, LocalDate date, String blockCode) {
         FertilizerMovement application = new FertilizerMovement();
         application.setProduct(product);
         application.setMovementType(FertilizerMovementType.APPLICATION);
         application.setMovementDate(date);
         application.setQuantity(new BigDecimal("10"));
-        application.setFarmId(farmId);
-        application.setBlockCode(blockCode);
+        application.setBlockId(TestBlocks.idOf(blockCode));
         application.setApplicator("Team A");
         application.setSource("user_entry");
         return fertilizerMovementRepository.save(application);
     }
 
-    private List<Long> find(Long fertilizerId, FertilizerMovementType type, Integer farmId, String blockCode,
+    /** @param blockIds the blocks to keep, or {@code null} for every block */
+    private List<Long> find(Long fertilizerId, FertilizerMovementType type, List<Long> blockIds,
                             LocalDate from, LocalDate to) {
-        return fertilizerMovementRepository.findByOptionalFilters(fertilizerId, type, farmId, blockCode, from, to)
+        return fertilizerMovementRepository.findByOptionalFilters(fertilizerId, type, blockIds == null,
+                        blockIds == null ? List.of(-1L) : blockIds, from, to)
                 .stream()
                 .map(FertilizerMovement::getId)
                 .toList();
@@ -155,7 +157,7 @@ public class FertilizerMovementRepositoryTest {
         // Arrange: every other type dated after the purchase
         FertilizerProduct npk = product("NPK 15-15-15");
         movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2027, 4, 12), "300");
-        application(npk, LocalDate.of(2027, 5, 2), 1, "A");
+        application(npk, LocalDate.of(2027, 5, 2), "A");
         movement(npk, FertilizerMovementType.LOSS, LocalDate.of(2027, 5, 3), "10");
         movement(npk, FertilizerMovementType.ADJUSTMENT_IN, LocalDate.of(2027, 5, 4), "5");
         movement(npk, FertilizerMovementType.ADJUSTMENT_OUT, LocalDate.of(2027, 5, 5), "5");
@@ -169,7 +171,7 @@ public class FertilizerMovementRepositoryTest {
         FertilizerProduct npk = product("NPK 15-15-15");
         FertilizerProduct compost = product("Compost");
         FertilizerProduct urea = product("Urea");
-        application(compost, LocalDate.of(2027, 5, 2), 1, "A");
+        application(compost, LocalDate.of(2027, 5, 2), "A");
         movement(urea, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "50");
         // Act & Assert
         assertTrue(lastPurchaseDates(npk.getId(), compost.getId()).isEmpty());
@@ -183,10 +185,10 @@ public class FertilizerMovementRepositoryTest {
         FertilizerMovement purchase = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
         FertilizerMovement secondPurchase =
                 movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "100");
-        FertilizerMovement application = application(npk, LocalDate.of(2026, 6, 15), null, "B");
+        FertilizerMovement application = application(npk, LocalDate.of(2026, 6, 15), "B");
         // Act & Assert
         assertEquals(List.of(purchase.getId(), secondPurchase.getId(), application.getId(), loss.getId()),
-                find(null, null, null, null, null, null));
+                find(null, null, null, null, null));
     }
 
     @Test
@@ -195,32 +197,32 @@ public class FertilizerMovementRepositoryTest {
         FertilizerProduct npk = product("NPK 15-15-15");
         FertilizerProduct compost = product("Compost");
         FertilizerMovement npkPurchase = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
-        FertilizerMovement npkApplication = application(npk, LocalDate.of(2026, 6, 15), null, "B");
+        FertilizerMovement npkApplication = application(npk, LocalDate.of(2026, 6, 15), "B");
         FertilizerMovement compostPurchase =
                 movement(compost, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 2), "40");
         // Act & Assert
-        assertEquals(List.of(npkPurchase.getId(), npkApplication.getId()), find(npk.getId(), null, null, null, null, null));
+        assertEquals(List.of(npkPurchase.getId(), npkApplication.getId()), find(npk.getId(), null, null, null, null));
         assertEquals(List.of(npkPurchase.getId(), compostPurchase.getId()),
-                find(null, FertilizerMovementType.PURCHASE, null, null, null, null));
+                find(null, FertilizerMovementType.PURCHASE, null, null, null));
         assertEquals(List.of(npkApplication.getId()),
-                find(npk.getId(), FertilizerMovementType.APPLICATION, null, null, null, null));
-        assertTrue(find(compost.getId(), FertilizerMovementType.LOSS, null, null, null, null).isEmpty());
+                find(npk.getId(), FertilizerMovementType.APPLICATION, null, null, null));
+        assertTrue(find(compost.getId(), FertilizerMovementType.LOSS, null, null, null).isEmpty());
     }
 
     @Test
-    void findByOptionalFilters_shouldFilterOnTheFarmAndBlockOfTheApplications() {
-        // Arrange: a purchase has no farm nor block
+    void findByOptionalFilters_shouldFilterOnTheBlocksOfTheApplications() {
+        // Arrange: a purchase has no block
         FertilizerProduct npk = product("NPK 15-15-15");
         movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
-        FertilizerMovement noFarmB = application(npk, LocalDate.of(2026, 6, 15), null, "B");
-        FertilizerMovement farm1B = application(npk, LocalDate.of(2026, 6, 16), 1, "B");
-        FertilizerMovement farm1A = application(npk, LocalDate.of(2026, 6, 17), 1, "A");
-        // Act & Assert: farm 1 excludes the rows without a farm, and a block filter every purchase
-        assertEquals(List.of(farm1B.getId(), farm1A.getId()), find(null, null, 1, null, null, null));
-        assertEquals(List.of(noFarmB.getId(), farm1B.getId()), find(null, null, null, "B", null, null));
-        assertEquals(List.of(farm1A.getId()), find(null, null, 1, "A", null, null));
-        assertTrue(find(null, null, 2, null, null, null).isEmpty());
-        assertTrue(find(null, null, null, "C", null, null).isEmpty());
+        FertilizerMovement firstB = application(npk, LocalDate.of(2026, 6, 15), "B");
+        FertilizerMovement secondB = application(npk, LocalDate.of(2026, 6, 16), "B");
+        FertilizerMovement onA = application(npk, LocalDate.of(2026, 6, 17), "A");
+        // Act & Assert: the blocks of a farm, one block, and a block filter leaves every purchase out
+        assertEquals(List.of(firstB.getId(), secondB.getId(), onA.getId()),
+                find(null, null, List.of(TestBlocks.idOf("A"), TestBlocks.idOf("B")), null, null));
+        assertEquals(List.of(firstB.getId(), secondB.getId()), find(null, null, List.of(TestBlocks.idOf("B")), null, null));
+        assertTrue(find(null, null, List.of(-1L), null, null).isEmpty());
+        assertTrue(find(null, null, List.of(TestBlocks.idOf("C")), null, null).isEmpty());
     }
 
     @Test
@@ -229,17 +231,17 @@ public class FertilizerMovementRepositoryTest {
         FertilizerProduct npk = product("NPK 15-15-15");
         FertilizerMovement june1 = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
         FertilizerMovement june5 = movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 5), "100");
-        FertilizerMovement june15 = application(npk, LocalDate.of(2026, 6, 15), null, "B");
+        FertilizerMovement june15 = application(npk, LocalDate.of(2026, 6, 15), "B");
         FertilizerMovement july1 = movement(npk, FertilizerMovementType.LOSS, LocalDate.of(2026, 7, 1), "10");
         // Act & Assert
         assertEquals(List.of(june5.getId(), june15.getId()),
-                find(null, null, null, null, LocalDate.of(2026, 6, 2), LocalDate.of(2026, 6, 30)));
+                find(null, null, null, LocalDate.of(2026, 6, 2), LocalDate.of(2026, 6, 30)));
         assertEquals(List.of(june5.getId(), june15.getId()),
-                find(null, null, null, null, LocalDate.of(2026, 6, 5), LocalDate.of(2026, 6, 15)));
+                find(null, null, null, LocalDate.of(2026, 6, 5), LocalDate.of(2026, 6, 15)));
         assertEquals(List.of(june15.getId(), july1.getId()),
-                find(null, null, null, null, LocalDate.of(2026, 6, 15), null));
+                find(null, null, null, LocalDate.of(2026, 6, 15), null));
         assertEquals(List.of(june1.getId()),
-                find(null, null, null, null, null, LocalDate.of(2026, 6, 1)));
+                find(null, null, null, null, LocalDate.of(2026, 6, 1)));
     }
 
     @Test
@@ -248,7 +250,7 @@ public class FertilizerMovementRepositoryTest {
         FertilizerProduct npk = product("NPK 15-15-15");
         movement(npk, FertilizerMovementType.PURCHASE, LocalDate.of(2026, 6, 1), "200");
         // Act & Assert
-        assertTrue(find(null, null, null, null, LocalDate.of(2026, 6, 30), LocalDate.of(2026, 6, 2)).isEmpty());
+        assertTrue(find(null, null, null, LocalDate.of(2026, 6, 30), LocalDate.of(2026, 6, 2)).isEmpty());
     }
 
     @Test

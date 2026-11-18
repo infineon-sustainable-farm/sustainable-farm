@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -32,12 +33,15 @@ public class RawIntakeServiceImpl implements RawIntakeService {
 
     private final RawIntakeRepository rawIntakeRepository;
     private final BatchRepository batchRepository;
+    private final ProductTransformationBlocks blocks;
 
     @Autowired
     public RawIntakeServiceImpl(RawIntakeRepository rawIntakeRepository,
-                              BatchRepository batchRepository) {
+                              BatchRepository batchRepository,
+                              ProductTransformationBlocks blocks) {
         this.rawIntakeRepository = rawIntakeRepository;
         this.batchRepository = batchRepository;
+        this.blocks = blocks;
     }
 
     @Override
@@ -64,8 +68,9 @@ public class RawIntakeServiceImpl implements RawIntakeService {
         RawIntake existingIntake = getRawIntakeById(intakeId);
         
         // Update fields
-        existingIntake.setSourceFarm(rawIntake.getSourceFarm());
-        existingIntake.setSourceBlock(rawIntake.getSourceBlock());
+        if (rawIntake.getSourceBlockId() != null) {
+            existingIntake.setSourceBlockId(rawIntake.getSourceBlockId());
+        }
         existingIntake.setIntakeDate(rawIntake.getIntakeDate());
         existingIntake.setReceivedQuantityKg(rawIntake.getReceivedQuantityKg());
         existingIntake.setReceivedVarietyKey(rawIntake.getReceivedVarietyKey());
@@ -113,7 +118,8 @@ public class RawIntakeServiceImpl implements RawIntakeService {
     @Override
     @Transactional(readOnly = true)
     public List<RawIntake> getRawIntakesBySourceFarm(String sourceFarm) {
-        return rawIntakeRepository.findBySourceFarm(sourceFarm);
+        List<Long> blockIds = blocks.blockIdsOfFarm(sourceFarm);
+        return blockIds.isEmpty() ? List.of() : rawIntakeRepository.findBySourceBlockIdIn(blockIds);
     }
 
     @Override
@@ -131,7 +137,9 @@ public class RawIntakeServiceImpl implements RawIntakeService {
     @Override
     @Transactional(readOnly = true)
     public List<RawIntake> getRawIntakesBySourceFarmAndDateRange(String farm, LocalDate startDate, LocalDate endDate) {
-        return rawIntakeRepository.findBySourceFarmAndDateRange(farm, startDate, endDate);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farm);
+        return blockIds.isEmpty() ? List.of()
+                : rawIntakeRepository.findBySourceBlockIdInAndIntakeDateBetween(blockIds, startDate, endDate);
     }
 
     @Override
