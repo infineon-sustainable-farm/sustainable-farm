@@ -214,4 +214,43 @@ describe('QcCheckpointList', () => {
 
     expect(await screen.findByText('QC-1')).toBeTruthy();
   });
+  it('closes the form on Cancel without calling the API', async () => {
+    render(<QcCheckpointList />);
+    await screen.findByText('QC-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New QC Checkpoint/i }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(qcApi.createQcCheckpoint).not.toHaveBeenCalled();
+  });
+
+  it('shows a server error inside the form and keeps it open', async () => {
+    qcApi.createQcCheckpoint.mockRejectedValueOnce(new Error('Inspector must be QC_INSPECTOR'));
+    render(<QcCheckpointList />);
+    await screen.findByText('QC-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New QC Checkpoint/i }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Checkpoint ID'), { target: { value: 'QC-3' } });
+    fireEvent.change(within(dialog).getByLabelText('Batch'), { target: { value: 'B-001' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
+
+    expect(await within(dialog).findByText('Inspector must be QC_INSPECTOR')).toBeTruthy();
+    expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+
+  it('keeps the delete dialog open with the error when the deletion fails', async () => {
+    qcApi.deleteQcCheckpoint.mockRejectedValueOnce(new Error('Checkpoint locked'));
+    render(<QcCheckpointList />);
+    await screen.findByText('QC-1');
+
+    const row = screen.getByText('QC-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(await within(dialog).findByText('Checkpoint locked')).toBeTruthy();
+    expect(qcApi.getAllQcCheckpoints).toHaveBeenCalledTimes(1);
+  });
 });
