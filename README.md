@@ -4,37 +4,54 @@
 
 # sustainable-farm
 
-Digital twin & AI-powered decision system for a sustainable dried mango supply chain from Burkina Faso to Germany, developed under the Infineon/BIT Excellence Program.
+Digital twin and decision system for a sustainable dried mango supply chain from Burkina Faso to Germany, developed under the Infineon/BIT Excellence Program.
 
-The system is built as a modular monolith: a Spring Boot backend with one Java package per business module, a React single-page application mirroring those modules as feature folders, and PostgreSQL for persistence — all orchestrated with Docker Compose.
+One web application with one module per domain: machinery, plants, product transformation, sales and marketing, visitor management, water supply and energy supply, on shared referentials for farms, people and alerts. The backend is a modular monolith (Spring Boot, one PostgreSQL database); the frontend is a React single-page application with one shell, one component kit and three languages (English, German, French).
 
-## Tech Stack
+## Tech stack
 
-Backend (from `backend/pom.xml`):
+Backend (`backend/pom.xml`):
 
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.0-6DB33F?style=flat&logo=springboot&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9-C71A36?style=flat&logo=apachemaven&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat&logo=postgresql&logoColor=white)
-![SpringDoc OpenAPI](https://img.shields.io/badge/SpringDoc_OpenAPI-2.8.5-6BA639?style=flat&logo=openapiinitiative&logoColor=white)
-![Lombok](https://img.shields.io/badge/Lombok-annotated-D2000F?style=flat&logo=lombok&logoColor=white)
+![Flyway](https://img.shields.io/badge/Flyway-baseline-CC0200?style=flat&logo=flyway&logoColor=white)
+![springdoc-openapi](https://img.shields.io/badge/springdoc--openapi-3.1.1-6BA639?style=flat&logo=openapiinitiative&logoColor=white)
+![ArchUnit](https://img.shields.io/badge/ArchUnit-1.5.1-444444?style=flat)
 
-Frontend (from `frontend/package.json`):
+Frontend (`frontend/package.json`):
 
 ![React](https://img.shields.io/badge/React-19-20232A?style=flat&logo=react&logoColor=61DAFB)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
-![Lucide React](https://img.shields.io/badge/Lucide_React-1-F96854?style=flat&logo=lucide&logoColor=white)
-![Recharts](https://img.shields.io/badge/Recharts-3-444?style=flat)
-![ESLint](https://img.shields.io/badge/ESLint-10-4B32C3?style=flat&logo=eslint&logoColor=white)
+![React Router](https://img.shields.io/badge/React_Router-7-CA4245?style=flat&logo=reactrouter&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat&logo=reactquery&logoColor=white)
+![i18next](https://img.shields.io/badge/react--i18next-18-26A69A?style=flat&logo=i18next&logoColor=white)
+![Lucide](https://img.shields.io/badge/Lucide_React-1-F56565?style=flat&logo=lucide&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-5-6E9F18?style=flat&logo=vitest&logoColor=white)
 
 Infrastructure:
 
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=flat&logo=docker&logoColor=white)
 ![Nginx](https://img.shields.io/badge/Nginx-009639?style=flat&logo=nginx&logoColor=white)
+![Node](https://img.shields.io/badge/Node-22-339933?style=flat&logo=nodedotjs&logoColor=white)
+
+## Quick start
+
+```bash
+cp .env.example .env    # set SPRING_PROFILES_ACTIVE=dev for demo data
+docker compose up -d --build
+```
+
+Then open http://localhost:3000. Details, ports and tests: [Setup](docs/SETUP.md).
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md) — modular monolith structure, module layering, backend and frontend layout
-- [Setup](docs/SETUP.md) — prerequisites, Docker Compose startup, service verification
-- [Contributing](docs/CONTRIBUTING.md) — git workflow, branch naming, PR rules, module ownership
+| Document | Content |
+|---|---|
+| [Docs index](docs/README.md) | Every document and the reading order |
+| [Architecture](docs/ARCHITECTURE.md) | Modules, shared referentials, module rules, database, API, frontend shell |
+| [Setup](docs/SETUP.md) | Prerequisites, configuration, start, tests, the ARC Core gate |
+| [Contributing](docs/CONTRIBUTING.md) | Branches, module ownership, commits |
+| [Decision records](docs/adr/README.md) | Why the architecture is what it is |

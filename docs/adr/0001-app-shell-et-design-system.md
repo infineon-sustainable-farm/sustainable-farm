@@ -30,7 +30,7 @@ Les règles ARC Core (`get_design_brief`, `arc-design check`) imposent des token
 | Kit | Un kit `frontend/src/shared/ui` au look machinery : Button, IconButton, Card, KpiCard, PageHeader, Field, Input, Select, Textarea, Badge, StatusBadge, Modal accessible (Escape, `role="dialog"`, focus piégé), ConfirmDialog, Table, Pagination, Tabs, EmptyState, ErrorState, Skeleton, Toast. Aucun module ne garde ses propres versions |
 | Shell | Un seul `app/AppLayout` : une sidebar globale au style machinery (w-60, bg-primary, lucide 18), un groupe par module construit depuis le `nav` exporté par chaque `routes.jsx`, sous-liens du module actif dépliés, drawer avec overlay sous `md`, en-tête de page commun, page 404 et `errorElement` |
 | Lanceur | `/` est une page plein écran sans sidebar : logo, sélecteur de langue, une tuile par module intégré (carré arrondi couleur primaire, icône lucide blanche, nom traduit dessous). Le logo de la sidebar ramène à `/` (A4, Q7) |
-| Routes | Kebab-case : `/energy-supply`, `/machinery`, `/plants`, `/product-transformation`, `/sales-marketing`, `/visitor-management`, `/water-supply`. Chaque écran a sa propre URL |
+| Routes | Kebab-case pour les nouveaux chemins : `/energy-supply`, `/machinery`, `/plants`, `/product-transformation`. sales, visitor et water gardent leur URL d'origine (`/salesmarketing`, `/visitormanagement`, `/watersupply`, voir Mise en œuvre). Chaque écran a sa propre URL |
 | Icônes | lucide uniquement, une seule épaisseur de trait |
 | Thème | Clair partout, le thème sombre FenceLine disparaît (A1) |
 | i18n | react-i18next en anglais, allemand et français (Q3). Fichiers rangés par module et par langue (`src/locales/<en,de,fr>/<module>.json`, A13), un script vérifie la parité des clés, une règle ESLint refuse le texte en dur dans le JSX des dossiers migrés. La langue choisie est mémorisée |
@@ -57,3 +57,19 @@ Les règles ARC Core (`get_design_brief`, `arc-design check`) imposent des token
 | Prendre le look de plants comme référence | Rejetée | machinery est la référence visuelle retenue (Q5) ; seules les implémentations accessibles de plants sont reprises |
 | Une bibliothèque de composants externe (shadcn, MUI) | Rejetée | Ajoute une dépendance et un style étranger ; les classes shadcn d'energysupply ne sont même pas générées |
 | Redirection de `/` vers le tableau de bord machinery | Rejetée | Choix de l'utilisateur : une page lanceur qui ne contient que de la navigation (Q7) |
+
+## Mise en œuvre
+
+État du code à la fin de l'intégration (T45, T53), là où il précise ou corrige la décision ci-dessus :
+
+| Sujet | État final |
+|---|---|
+| Routes | `/sales-marketing`, `/visitor-management` et `/water-supply` n'ont pas été adoptés : la migration de leurs écrans a gardé les mêmes entrées, le même ordre et les mêmes cibles que leur ancienne sidebar, donc `/salesmarketing`, `/visitormanagement` et `/watersupply`. Les renommer reste possible : chemin de la route et `basePath` du `nav` dans `routes.jsx` (`paths.js` pour watersupply). Les chemins d'API, eux, suivent l'ADR 0002 (`/api/sales-marketing`, `/api/visitor-management`, `/api/water-supply`) |
+| Tokens | Le bloc `legacy` est supprimé (T45). `index.css` garde un seul bloc séparé, les tokens FenceLine de sitesecurity, module exclu ; rien d'autre ne doit les utiliser |
+| Contrat `nav` | En plus de `id`, `basePath`, `icon`, `nameKey`, `items` et `shell`, un lien peut porter un `sectionKey` (intertitre de la sidebar, utilisé par watersupply) et un module un `sidebarFooter` (composant en bas de la sidebar quand le module est courant, utilisé par machinery pour les stocks bas) (T53) |
+| Toasts | Le fournisseur de toasts est monté une seule fois dans `app/RootLayout.jsx` (T53) |
+| i18n | La règle ESLint anti-texte-en-dur couvre tout `src`, sauf les tests et les deux modules exclus (T45). L'anglais est embarqué ; l'allemand et le français sont chargés à la demande, un fichier par module et par langue. La langue est mémorisée sous la clé `sf.lang` |
+| Écrans | Chaque écran de module est chargé à sa première visite (`shared/utils/lazyScreen`) |
+| Marque | Les tokens et la marque d'ARC Core sont dans `.arc-core/design` ; `scripts/design-check.sh` et `arc-design check tokens` sont joués par le gate |
+
+La description complète est dans [ARCHITECTURE.md](../ARCHITECTURE.md#3-frontend).
