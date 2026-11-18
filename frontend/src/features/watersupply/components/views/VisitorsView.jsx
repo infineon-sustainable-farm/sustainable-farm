@@ -184,7 +184,7 @@ function BriefingList({ title, items, tone }) {
   )
 }
 
-/** Exactly what Visitor Management receives from GET /api/water/visitor/summary. */
+/** Exactly what Visitor Management receives from GET /api/water-supply/visitor/summary. */
 function VisitorPreviewPanel() {
   const { t } = useTranslation('watersupply')
   const format = useWaterFormat()

@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLogStatus;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,7 +31,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -70,7 +71,7 @@ class IrrigationServiceTest {
 
     @Test
     void createLogRejectsUnknownSchedule() {
-        UUID scheduleId = UUID.randomUUID();
+        Long scheduleId = 73L;
         IrrigationLogCreateRequest log = new IrrigationLogCreateRequest(
             scheduleId, Instant.now(), null, 0.0, "started");
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.empty());
@@ -82,22 +83,22 @@ class IrrigationServiceTest {
 
     @Test
     void stopCompletesMostRecentStartedLog() {
-        UUID scheduleId = UUID.randomUUID();
+        Long scheduleId = 85L;
         IrrigationSchedule schedule = new IrrigationSchedule();
         schedule.setWaterQuantityLiters(42.0);
         IrrigationLog started = new IrrigationLog();
         started.setScheduleId(scheduleId);
         started.setActualStartTime(Instant.parse("2026-01-01T10:00:00Z"));
-        started.setStatus("started");
+        started.setStatus(IrrigationLogStatus.STARTED);
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
-        when(logRepository.findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(scheduleId, "started"))
+        when(logRepository.findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(scheduleId, IrrigationLogStatus.STARTED))
                 .thenReturn(Optional.of(started));
         when(logRepository.save(started)).thenReturn(started);
         IrrigationService service = service();
 
         IrrigationLogResponse completed = service.stop(scheduleId);
 
-        assertEquals("completed", schedule.getStatus());
+        assertEquals("completed", schedule.getStatus().value());
         assertEquals("completed", completed.status());
         assertEquals(42.0, completed.waterUsedLiters());
         assertNotNull(completed.actualEndTime());
@@ -112,7 +113,7 @@ class IrrigationServiceTest {
         IrrigationLog log = new IrrigationLog();
         log.setActualStartTime(Instant.parse("2026-10-13T10:02:00Z"));
         when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().build()));
-        when(scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running")).thenReturn(List.of(running));
+        when(scheduleRepository.findByZoneIdAndStatus(zoneId, IrrigationStatus.RUNNING)).thenReturn(List.of(running));
         when(logRepository.findFirstByScheduleIdOrderByActualStartTimeDesc(running.getId())).thenReturn(Optional.of(log));
 
         Map<String, Object> status = service().irrigationStatus(zoneId);
@@ -130,7 +131,7 @@ class IrrigationServiceTest {
         IrrigationSchedule older = schedule(zoneId, "completed", Instant.parse("2026-10-10T06:00:00Z"));
         IrrigationSchedule latest = schedule(zoneId, "scheduled", Instant.parse("2026-10-14T06:00:00Z"));
         when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().build()));
-        when(scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running")).thenReturn(List.of());
+        when(scheduleRepository.findByZoneIdAndStatus(zoneId, IrrigationStatus.RUNNING)).thenReturn(List.of());
         when(scheduleRepository.findByZoneId(zoneId)).thenReturn(List.of(older, latest));
         when(logRepository.findFirstByScheduleIdOrderByActualStartTimeDesc(latest.getId())).thenReturn(Optional.empty());
 
@@ -146,7 +147,7 @@ class IrrigationServiceTest {
     void irrigationStatusOfAZoneWithoutScheduleIsNone() {
         Long zoneId = 104L;
         when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().build()));
-        when(scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running")).thenReturn(List.of());
+        when(scheduleRepository.findByZoneIdAndStatus(zoneId, IrrigationStatus.RUNNING)).thenReturn(List.of());
         when(scheduleRepository.findByZoneId(zoneId)).thenReturn(List.of());
 
         Map<String, Object> status = service().irrigationStatus(zoneId);
@@ -190,11 +191,13 @@ class IrrigationServiceTest {
         assertTrue(schedules.get(1).multipleBlockCodes());
     }
 
+    private static long nextScheduleId = 1L;
+
     private static IrrigationSchedule schedule(Long zoneId, String status, Instant start) {
         IrrigationSchedule schedule = new IrrigationSchedule();
-        schedule.setId(UUID.randomUUID());
+        schedule.setId(nextScheduleId++);
         schedule.setZoneId(zoneId);
-        schedule.setStatus(status);
+        schedule.setStatus(IrrigationStatus.of(status));
         schedule.setStartTime(start);
         schedule.setWaterQuantityLiters(300.0);
         return schedule;

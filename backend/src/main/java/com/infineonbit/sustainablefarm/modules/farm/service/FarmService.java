@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Farms and zones of the site referential, served under {@code /api/farms} and {@code /api/zones}. */
+/** Farms and zones of the site referential, served under {@code /api/farm/farms} and {@code /api/farm/zones}. */
 @Service
 @Transactional(readOnly = true)
 public class FarmService {

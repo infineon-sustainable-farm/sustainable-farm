@@ -7,6 +7,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.api.Process
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.AvailabilityForecastRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.LotUsageRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.ConsumptionActivity;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
@@ -90,7 +91,7 @@ public class ProductTransformationIntegrationService {
             item.setLotId(lotId);
             item.setProcessingBatchId(processingBatchId);
             if (activity != null) {
-                item.setActivity(activity);
+                item.setActivity(ConsumptionActivity.valueOf(activity));
             }
             attached.add(item);
         }
@@ -124,7 +125,7 @@ public class ProductTransformationIntegrationService {
         List<WaterConsumption> items = consumptionRepository.findByLotIdOrderByConsumptionDateAsc(lot);
         Map<String, Double> byActivity = new LinkedHashMap<>();
         for (WaterConsumption item : items) {
-            byActivity.merge(item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity(),
+            byActivity.merge(item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity().name(),
                     item.getConsumptionLiters() == null ? 0d : item.getConsumptionLiters(), Double::sum);
         }
         Map<String, Object> response = new LinkedHashMap<>();
@@ -261,7 +262,7 @@ public class ProductTransformationIntegrationService {
     private Map<String, Object> consumptionItem(WaterConsumption item) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("consumptionId", item.getId());
-        map.put("activity", item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity());
+        map.put("activity", item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity().name());
         map.put("sourceId", item.getSourceId());
         map.put("zoneId", item.getZoneId());
         map.put("liters", item.getConsumptionLiters());

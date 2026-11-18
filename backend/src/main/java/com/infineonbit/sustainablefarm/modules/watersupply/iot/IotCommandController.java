@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * handed to the gateway, 503 {@code VALVE_GATEWAY_UNAVAILABLE} while no gateway is configured.
  */
 @RestController
-@RequestMapping("/api/iot/devices")
+@RequestMapping("/api/water-supply/iot/devices")
 public class IotCommandController {
     private final IotCommandService commandService;
 

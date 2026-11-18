@@ -88,7 +88,7 @@ class LotChainForeignKeyTest {
     @BeforeEach
     void farmOfBlockLc1() throws Exception {
         VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
-        String createdFarm = mockMvc.perform(post("/api/farms").contentType(MediaType.APPLICATION_JSON)
+        String createdFarm = mockMvc.perform(post("/api/farm/farms").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Lot Chain Farm\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
@@ -220,7 +220,7 @@ class LotChainForeignKeyTest {
     @DisplayName("A water consumption whose lot is a processing batch is linked to it, with the same JSON")
     void waterConsumptionIsLinkedToTheProcessingBatchOfItsLot() throws Exception {
         long batchId = batch("LOT-LC-6").getId();
-        String source = mockMvc.perform(post("/api/water/sources").contentType(MediaType.APPLICATION_JSON)
+        String source = mockMvc.perform(post("/api/water-supply/sources").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%d","name":"Lot Chain Tank","type":"tank","capacityLiters":5000,"currentLevelLiters":2500}
                                 """.formatted(farm)))
@@ -228,7 +228,7 @@ class LotChainForeignKeyTest {
                 .andReturn().getResponse().getContentAsString();
         String sourceId = objectMapper.readTree(source).get("id").asText();
 
-        String linked = mockMvc.perform(post("/api/water/consumption").contentType(MediaType.APPLICATION_JSON)
+        String linked = mockMvc.perform(post("/api/water-supply/consumption").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%d","sourceId":"%s","consumptionLiters":120,
                                  "consumptionDate":"2026-06-02T09:00:00Z","lotId":" LOT-LC-6 ","activity":"washing"}
@@ -238,7 +238,7 @@ class LotChainForeignKeyTest {
                 .andExpect(jsonPath("$.processingBatchId").doesNotExist())
                 .andReturn().getResponse().getContentAsString();
         String linkedId = objectMapper.readTree(linked).get("id").asText();
-        String free = mockMvc.perform(post("/api/water/consumption").contentType(MediaType.APPLICATION_JSON)
+        String free = mockMvc.perform(post("/api/water-supply/consumption").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%d","sourceId":"%s","consumptionLiters":80,
                                  "consumptionDate":"2026-06-02T10:00:00Z","lotId":"EXTERNAL-LOT"}
@@ -256,7 +256,7 @@ class LotChainForeignKeyTest {
         jdbc.update("delete from batch where code = 'LOT-LC-6'");
         assertThat(processingBatchIdOfConsumption(linkedId)).isNull();
         assertThat(jdbc.queryForObject("select lot_id from water_consumption where id = ?", String.class,
-                java.util.UUID.fromString(linkedId))).isEqualTo("LOT-LC-6");
+                Long.valueOf(linkedId))).isEqualTo("LOT-LC-6");
     }
 
     private Long packagingRecordIdOfSalesBatch(int batchId) {
@@ -266,6 +266,6 @@ class LotChainForeignKeyTest {
 
     private Long processingBatchIdOfConsumption(String consumptionId) {
         return jdbc.queryForObject("select processing_batch_id from water_consumption where id = ?",
-                Long.class, java.util.UUID.fromString(consumptionId));
+                Long.class, Long.valueOf(consumptionId));
     }
 }

@@ -12,10 +12,9 @@ import com.infineonbit.sustainablefarm.modules.watersupply.service.IrrigationSer
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -32,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Water supply - irrigation", description = "Schedules, journal, weather-based postponement and automatic soil-moisture piloting")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/water-supply")
 public class IrrigationController {
     private final IrrigationService irrigationService;
     private final IrrigationAutomationService automationService;
@@ -60,18 +59,18 @@ public class IrrigationController {
     }
 
     @GetMapping("/irrigations/{scheduleId}")
-    public IrrigationScheduleResponse irrigation(@PathVariable UUID scheduleId) {
+    public IrrigationScheduleResponse irrigation(@PathVariable Long scheduleId) {
         return irrigationService.getSchedule(scheduleId);
     }
 
     @PutMapping("/irrigations/{scheduleId}")
-    public IrrigationScheduleResponse updateIrrigation(@PathVariable UUID scheduleId, @RequestBody IrrigationScheduleUpdateRequest request) {
+    public IrrigationScheduleResponse updateIrrigation(@PathVariable Long scheduleId, @RequestBody IrrigationScheduleUpdateRequest request) {
         return irrigationService.updateSchedule(scheduleId, request);
     }
 
     @DeleteMapping("/irrigations/{scheduleId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteIrrigation(@PathVariable UUID scheduleId) {
+    public void deleteIrrigation(@PathVariable Long scheduleId) {
         irrigationService.deleteSchedule(scheduleId);
     }
 
@@ -100,7 +99,7 @@ public class IrrigationController {
      */
     @PostMapping("/irrigations/{scheduleId}/postpone")
     public IrrigationScheduleResponse postpone(
-            @PathVariable UUID scheduleId,
+            @PathVariable Long scheduleId,
             @RequestBody(required = false) IrrigationPostponeRequest request) {
         return irrigationService.postpone(scheduleId, request == null ? null : request.reason());
     }
@@ -109,7 +108,7 @@ public class IrrigationController {
     public Object logs(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID scheduleId) {
+            @RequestParam(required = false) Long scheduleId) {
         if (page == null && size == null && scheduleId == null) return irrigationService.findLogs();
         return irrigationService.findLogs(pageRequest(page, size), scheduleId);
     }
@@ -125,30 +124,30 @@ public class IrrigationController {
     }
 
     @GetMapping("/irrigation-logs/{logId}")
-    public IrrigationLogResponse log(@PathVariable UUID logId) {
+    public IrrigationLogResponse log(@PathVariable Long logId) {
         return irrigationService.getLog(logId);
     }
 
     @PutMapping("/irrigation-logs/{logId}")
-    public IrrigationLogResponse updateLog(@PathVariable UUID logId, @RequestBody IrrigationLogUpdateRequest request) {
+    public IrrigationLogResponse updateLog(@PathVariable Long logId, @RequestBody IrrigationLogUpdateRequest request) {
         return irrigationService.updateLog(logId, request);
     }
 
     @DeleteMapping("/irrigation-logs/{logId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteLog(@PathVariable UUID logId) {
+    public void deleteLog(@PathVariable Long logId) {
         irrigationService.deleteLog(logId);
     }
 
     @PostMapping("/irrigations/{scheduleId}/start")
     @ResponseStatus(HttpStatus.CREATED)
-    public IrrigationLogResponse start(@PathVariable UUID scheduleId) {
+    public IrrigationLogResponse start(@PathVariable Long scheduleId) {
         return irrigationService.start(scheduleId);
     }
 
     @PostMapping("/irrigations/{scheduleId}/stop")
     @ResponseStatus(HttpStatus.CREATED)
-    public IrrigationLogResponse stop(@PathVariable UUID scheduleId) {
+    public IrrigationLogResponse stop(@PathVariable Long scheduleId) {
         return irrigationService.stop(scheduleId);
     }
 

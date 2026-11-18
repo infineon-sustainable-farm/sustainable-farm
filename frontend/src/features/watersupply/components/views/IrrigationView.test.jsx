@@ -25,21 +25,21 @@ vi.mock('../../api/watersupplyApi', () => ({
 }))
 
 vi.mock('../../hooks/useFarms', () => ({
-  useZones: () => ({ zones: [{ id: 'zone-1', name: 'Zone A', fieldId: 'f1', areaHectares: 2 }] }),
+  useZones: () => ({ zones: [{ id: 1, name: 'Zone A', fieldId: 'f1', areaHectares: 2 }] }),
 }))
 
 const SCHEDULES = [
-  { id: 'sch-1', zoneId: 'zone-1', startTime: '2026-09-01T06:00:00Z', durationMinutes: 45, waterQuantityLiters: 1200, status: 'scheduled' },
-  { id: 'sch-2', zoneId: 'zone-1', startTime: '2026-09-01T08:00:00Z', durationMinutes: 30, waterQuantityLiters: 800, status: 'running' },
+  { id: 1, zoneId: 1, startTime: '2026-09-01T06:00:00Z', durationMinutes: 45, waterQuantityLiters: 1200, status: 'scheduled' },
+  { id: 2, zoneId: 1, startTime: '2026-09-01T08:00:00Z', durationMinutes: 30, waterQuantityLiters: 800, status: 'running' },
   // Completed schedule: archived in the journal, it must no longer appear in the active schedules.
-  { id: 'sch-3', zoneId: 'zone-1', startTime: '2026-08-30T06:00:00Z', durationMinutes: 20, waterQuantityLiters: 900, status: 'completed' },
+  { id: 3, zoneId: 1, startTime: '2026-08-30T06:00:00Z', durationMinutes: 20, waterQuantityLiters: 900, status: 'completed' },
 ]
 
 const LOGS = [
   // Completed cycle: visible in the journal.
-  { id: 'log-1', scheduleId: 'sch-3', actualStartTime: '2026-08-30T06:00:00Z', actualEndTime: '2026-08-30T06:20:00Z', waterUsedLiters: 300, status: 'completed' },
+  { id: 101, scheduleId: 3, actualStartTime: '2026-08-30T06:00:00Z', actualEndTime: '2026-08-30T06:20:00Z', waterUsedLiters: 300, status: 'completed' },
   // Cycle still running: it must NOT appear in the journal.
-  { id: 'log-2', scheduleId: 'sch-2', actualStartTime: '2026-09-01T08:00:00Z', actualEndTime: null, waterUsedLiters: 120, status: 'in_progress' },
+  { id: 102, scheduleId: 2, actualStartTime: '2026-09-01T08:00:00Z', actualEndTime: null, waterUsedLiters: 120, status: 'in_progress' },
 ]
 
 function setupApi() {
@@ -74,7 +74,7 @@ describe('IrrigationView', () => {
   it('shows the Plants block watered by the zone of a schedule', async () => {
     irrigationApi.getSchedules.mockResolvedValue([
       { ...SCHEDULES[0], blockCode: 'A', multipleBlockCodes: false },
-      { ...SCHEDULES[1], id: 'sch-9', blockCode: null, multipleBlockCodes: true },
+      { ...SCHEDULES[1], id: 9, blockCode: null, multipleBlockCodes: true },
     ])
 
     render(<IrrigationView {...props} />)
@@ -97,8 +97,8 @@ describe('IrrigationView', () => {
     const many = Array.from({ length: 12 }, (_, i) => {
       const day = String(20 - i).padStart(2, '0')
       return {
-        id: `log-${i}`,
-        scheduleId: 'sch-3',
+        id: 300 + i,
+        scheduleId: 3,
         actualStartTime: `2026-08-${day}T06:00:00Z`,
         actualEndTime: `2026-08-${day}T06:30:00Z`,
         waterUsedLiters: 100 + i,
@@ -126,31 +126,31 @@ describe('IrrigationView', () => {
   })
 
   it('starts a scheduled irrigation and refreshes', async () => {
-    irrigationApi.startIrrigation.mockResolvedValue({ id: 'log-new' })
+    irrigationApi.startIrrigation.mockResolvedValue({ id: 201 })
 
     render(<IrrigationView {...props} />)
     const startButtons = await screen.findAllByTitle('Start now')
     fireEvent.click(startButtons[0])
 
-    await waitFor(() => expect(irrigationApi.startIrrigation).toHaveBeenCalledWith('sch-1'))
+    await waitFor(() => expect(irrigationApi.startIrrigation).toHaveBeenCalledWith(1))
     // refetch: getSchedules called again after the action
     await waitFor(() => expect(irrigationApi.getSchedules).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(props.notify).toHaveBeenCalledWith(expect.stringContaining('started')))
   })
 
   it('stops a running irrigation', async () => {
-    irrigationApi.stopIrrigation.mockResolvedValue({ id: 'log-closed' })
+    irrigationApi.stopIrrigation.mockResolvedValue({ id: 202 })
 
     render(<IrrigationView {...props} />)
     const stopButtons = await screen.findAllByTitle('Stop irrigation')
     fireEvent.click(stopButtons[0])
 
-    await waitFor(() => expect(irrigationApi.stopIrrigation).toHaveBeenCalledWith('sch-2'))
+    await waitFor(() => expect(irrigationApi.stopIrrigation).toHaveBeenCalledWith(2))
     await waitFor(() => expect(irrigationApi.getLogs).toHaveBeenCalledTimes(2))
   })
 
   it('creates a schedule manually and refreshes', async () => {
-    irrigationApi.createSchedule.mockResolvedValue({ id: 'sch-new' })
+    irrigationApi.createSchedule.mockResolvedValue({ id: 9 })
 
     render(<IrrigationView {...props} />)
     await screen.findByText('Zone A')
@@ -158,7 +158,7 @@ describe('IrrigationView', () => {
     const scheduleForm = document.querySelector('form')
 
     const selects = scheduleForm.querySelectorAll('select')
-    fireEvent.change(selects[0], { target: { value: 'zone-1' } })
+    fireEvent.change(selects[0], { target: { value: '1' } })
     const inputs = scheduleForm.querySelectorAll('input')
     fireEvent.change(inputs[0], { target: { value: '2026-09-05T06:00' } }) // datetime-local
     fireEvent.change(inputs[1], { target: { value: '30' } }) // duration
@@ -167,7 +167,7 @@ describe('IrrigationView', () => {
 
     await waitFor(() =>
       expect(irrigationApi.createSchedule).toHaveBeenCalledWith(
-        expect.objectContaining({ zoneId: 'zone-1', durationMinutes: 30, waterQuantityLiters: 500 }),
+        expect.objectContaining({ zoneId: '1', durationMinutes: 30, waterQuantityLiters: 500 }),
       ),
     )
     await waitFor(() => expect(irrigationApi.getSchedules).toHaveBeenCalledTimes(2))
@@ -179,7 +179,7 @@ describe('IrrigationView', () => {
 
     const scheduleForm = document.querySelector('form')
     const selects = scheduleForm.querySelectorAll('select')
-    fireEvent.change(selects[0], { target: { value: 'zone-1' } })
+    fireEvent.change(selects[0], { target: { value: '1' } })
     const inputs = scheduleForm.querySelectorAll('input')
     fireEvent.change(inputs[0], { target: { value: '2026-09-05T06:00' } })
     fireEvent.change(inputs[1], { target: { value: '0' } })

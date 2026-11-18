@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.iot;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.SoilMoistureReading;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

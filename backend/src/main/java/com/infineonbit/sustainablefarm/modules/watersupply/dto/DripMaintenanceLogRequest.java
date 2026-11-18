@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Drip maintenance intervention sent by a client (module 6.1).

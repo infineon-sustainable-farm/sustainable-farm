@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
-import java.util.UUID;
 
 public record WaterSourceUpdateRequest(
         Long farmId,

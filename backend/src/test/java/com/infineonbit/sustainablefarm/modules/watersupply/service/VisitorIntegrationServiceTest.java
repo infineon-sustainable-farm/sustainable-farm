@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -114,7 +113,7 @@ class VisitorIntegrationServiceTest {
     @Test
     void reSendingAVisitUpdatesItInsteadOfCreatingADuplicate() {
         WaterVisitorEvent existing = new WaterVisitorEvent();
-        existing.setId(UUID.randomUUID());
+        existing.setId(11L);
         existing.setVisitId("VIS-1");
         when(visitorEventRepository.findByVisitId("VIS-1")).thenReturn(Optional.of(existing));
         when(visitorEventRepository.save(existing)).thenReturn(existing);
@@ -180,7 +179,7 @@ class VisitorIntegrationServiceTest {
     @Test
     void publishingABriefingCreatesANewVersionAndKeepsTheOmittedFields() {
         WaterSafetyBriefing current = new WaterSafetyBriefing();
-        current.setId(UUID.randomUUID());
+        current.setId(12L);
         current.setVersion("v1");
         current.setAllowedZones("demo path");
         current.setText("old text");

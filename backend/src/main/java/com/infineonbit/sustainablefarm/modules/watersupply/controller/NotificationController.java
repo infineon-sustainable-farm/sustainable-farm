@@ -4,8 +4,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationCreat
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.NotificationService;
 import jakarta.validation.Valid;
-import java.util.List;
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/water-supply/notifications")
 public class NotificationController {
     private final NotificationService notificationService;
 

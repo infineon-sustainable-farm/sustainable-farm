@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterLevelHistory;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionResponse;
@@ -16,12 +16,13 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityUpdat
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceUpdateRequest;
-import com.infineonbit.sustainablefarm.core.web.PageResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.ConsumptionActivity;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterLevelHistory;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ConsumptionCriteria;
-import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
-import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterLevelHistoryRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQualityTestRepository;
@@ -29,7 +30,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourc
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -219,19 +219,19 @@ public class WaterService {
         consumption.setZoneId(request.zoneId());
         consumption.setLotId(normalizeLotId(request.lotId()));
         consumption.setProcessingBatchId(processingBatchIdOf(consumption.getLotId()));
-        consumption.setActivity(ConsumptionActivity.normalize(request.activity()));
+        consumption.setActivity(ConsumptionActivity.of(request.activity()));
         validateConsumptionReferences(consumption);
         WaterConsumption saved = waterConsumptionRepository.save(consumption);
         checkQuotaThresholds(consumption);
         return consumptionResponse(saved);
     }
 
-    public WaterConsumptionResponse getConsumption(UUID consumptionId) {
+    public WaterConsumptionResponse getConsumption(Long consumptionId) {
         return consumptionResponse(getConsumptionEntity(consumptionId));
     }
 
     @Transactional
-    public WaterConsumptionResponse updateConsumption(UUID consumptionId, WaterConsumptionUpdateRequest request) {
+    public WaterConsumptionResponse updateConsumption(Long consumptionId, WaterConsumptionUpdateRequest request) {
         WaterConsumption consumption = getConsumptionEntity(consumptionId);
         if (request.farmId() != null) {
             consumption.setFarmId(request.farmId());
@@ -249,7 +249,7 @@ public class WaterService {
             consumption.setProcessingBatchId(processingBatchIdOf(consumption.getLotId()));
         }
         if (request.activity() != null) {
-            consumption.setActivity(ConsumptionActivity.normalize(request.activity()));
+            consumption.setActivity(ConsumptionActivity.of(request.activity()));
         }
         WaterConsumption updated = waterConsumptionRepository.save(consumption);
         checkQuotaThresholds(consumption);
@@ -271,7 +271,7 @@ public class WaterService {
     }
 
     @Transactional
-    public void deleteConsumption(UUID consumptionId) {
+    public void deleteConsumption(Long consumptionId) {
         waterConsumptionRepository.delete(getConsumptionEntity(consumptionId));
     }
 
@@ -302,12 +302,12 @@ public class WaterService {
         return WaterQualityResponse.from(saved);
     }
 
-    public WaterQualityResponse getQualityTest(UUID qualityTestId) {
+    public WaterQualityResponse getQualityTest(Long qualityTestId) {
         return WaterQualityResponse.from(getQualityTestEntity(qualityTestId));
     }
 
     @Transactional
-    public WaterQualityResponse updateQualityTest(UUID qualityTestId, WaterQualityUpdateRequest request) {
+    public WaterQualityResponse updateQualityTest(Long qualityTestId, WaterQualityUpdateRequest request) {
         WaterQualityTest test = getQualityTestEntity(qualityTestId);
         if (request.sourceId() != null) {
             requireSource(request.sourceId());
@@ -325,7 +325,7 @@ public class WaterService {
     }
 
     @Transactional
-    public void deleteQualityTest(UUID qualityTestId) {
+    public void deleteQualityTest(Long qualityTestId) {
         waterQualityTestRepository.delete(getQualityTestEntity(qualityTestId));
     }
 
@@ -355,12 +355,12 @@ public class WaterService {
                 .orElseThrow(() -> new NotFoundException("WaterSource"));
     }
 
-    private WaterConsumption getConsumptionEntity(UUID consumptionId) {
+    private WaterConsumption getConsumptionEntity(Long consumptionId) {
         return waterConsumptionRepository.findById(consumptionId)
                 .orElseThrow(() -> new NotFoundException("WaterConsumption"));
     }
 
-    private WaterQualityTest getQualityTestEntity(UUID qualityTestId) {
+    private WaterQualityTest getQualityTestEntity(Long qualityTestId) {
         return waterQualityTestRepository.findById(qualityTestId)
                 .orElseThrow(() -> new NotFoundException("WaterQualityTest"));
     }
@@ -381,7 +381,7 @@ public class WaterService {
 
         // An automatic alert like the others, addressed to the IoT system person.
         alertService.raise("warning", "Non-compliant water", buildQualityMessage(test, phOutOfRange, turbidityHigh),
-                "/api/water/quality/" + test.getId());
+                "/api/water-supply/quality/" + test.getId());
     }
 
     private String buildQualityMessage(WaterQualityTest test, boolean phOut, boolean turbidityHigh) {

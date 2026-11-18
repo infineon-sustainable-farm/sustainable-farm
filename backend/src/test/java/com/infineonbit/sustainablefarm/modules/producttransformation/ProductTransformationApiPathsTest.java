@@ -76,7 +76,7 @@ class ProductTransformationApiPathsTest {
         String suffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         String farm = "Paths Farm " + suffix;
         String code = "LOT-PATHS-" + suffix;
-        mockMvc.perform(post("/api/farms").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/farm/farms").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"%s\"}".formatted(farm))).andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)

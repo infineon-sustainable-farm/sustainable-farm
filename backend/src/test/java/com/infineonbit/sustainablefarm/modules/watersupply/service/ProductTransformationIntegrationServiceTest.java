@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.ConsumptionActivity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,7 +29,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -101,7 +101,7 @@ class ProductTransformationIntegrationServiceTest {
         assertEquals(1, response.get("skippedOtherLotCount"));
         assertEquals(List.of("window_overlaps_other_lot"), response.get("warnings"));
         assertEquals("LOT-1", free.getLotId());
-        assertEquals("WASHING", free.getActivity());
+        assertEquals("WASHING", free.getActivity().name());
         assertNull(free.getProcessingBatchId(), "LOT-1 is not a product transformation batch");
         assertEquals("LOT-9", otherLot.getLotId());
         ArgumentCaptor<List<WaterConsumption>> saved = ArgumentCaptor.forClass(List.class);
@@ -128,7 +128,7 @@ class ProductTransformationIntegrationServiceTest {
     @Test
     void byLotAggregatesPerActivity() {
         WaterConsumption washing = consumption(901L, 250.0, "LOT-1");
-        washing.setActivity("WASHING");
+        washing.setActivity(ConsumptionActivity.WASHING);
         WaterConsumption unknown = consumption(902L, 20.0, "LOT-1");
         when(consumptionRepository.findByLotIdOrderByConsumptionDateAsc("LOT-1")).thenReturn(List.of(washing, unknown));
 
@@ -222,7 +222,7 @@ class ProductTransformationIntegrationServiceTest {
 
     private static WaterConsumption consumption(Long sourceId, double liters, String lotId) {
         WaterConsumption consumption = new WaterConsumption();
-        consumption.setId(UUID.randomUUID());
+        consumption.setId(701L);
         consumption.setSourceId(sourceId);
         consumption.setConsumptionLiters(liters);
         consumption.setConsumptionDate(START);
