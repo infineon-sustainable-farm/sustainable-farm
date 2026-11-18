@@ -1,20 +1,16 @@
 import { useState } from "react";
-import StatusBadge from "./StatusBadge";
-import { formatDateShort, formatTime, formatTimeRange } from "../utils/format";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
-
-const TINY_BUTTON =
-    "rounded border border-[#C3D8D4] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-[#ECFAF7] disabled:opacity-60";
-const TINY_DANGER =
-    "rounded border border-[#EDC9C9] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-error hover:bg-[#FBEAEA] disabled:opacity-60";
-
-const COLUMNS = ["Name", "Group", "Date / Slot", "Language", "Type", "Status", "Actions"];
+import { Ban, Check, CircleCheck, Pencil, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, ConfirmDialog, Table } from "../../../shared/ui";
+import { useVisitorFormat } from "../utils/format";
+import { useLabels } from "../utils/labels";
+import StatusTag from "./StatusTag";
 
 /*
- * Which transitions the backend accepts, per current status: approve and
- * reject only from PENDING, check-in only from CONFIRMED, and cancel while the
- * registration is still active (the API refuses after check-in). Showing any
- * other button would guarantee a 422, so the table never offers it.
+ * Which transitions the backend accepts, per current status: approve and reject only from
+ * PENDING, check-in only from CONFIRMED, and cancel while the registration is still active (the
+ * API refuses after check-in). Showing any other button would guarantee a 422, so the table never
+ * offers it.
  */
 function rowActions(status) {
     if (status === "PENDING") return ["approve", "reject", "cancel"];
@@ -22,67 +18,17 @@ function rowActions(status) {
     return [];
 }
 
-function ActionButtons({ registration, pendingAction, onAction }) {
-    const [confirmingCancel, setConfirmingCancel] = useState(false);
-    const actions = rowActions(registration.status);
-    const isPending = pendingAction?.id === registration.id;
-
-    if (confirmingCancel) {
-        return (
-            <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[11px] text-error">Cancel registration?</span>
-                <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => {
-                        setConfirmingCancel(false);
-                        onAction(registration, "cancel");
-                    }}
-                    className={TINY_DANGER}
-                >
-                    {isPending ? "…" : "Yes"}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setConfirmingCancel(false)}
-                    className={TINY_BUTTON}
-                >
-                    No
-                </button>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex flex-wrap gap-1.5">
-            {actions.map((action) => (
-                <button
-                    key={action}
-                    type="button"
-                    disabled={isPending}
-                    onClick={() =>
-                        action === "cancel"
-                            ? setConfirmingCancel(true)
-                            : onAction(registration, action)
-                    }
-                    className={
-                        action === "reject" || action === "cancel" ? TINY_DANGER : TINY_BUTTON
-                    }
-                >
-                    {action === "approve" && "✓ approve"}
-                    {action === "reject" && "✗ reject"}
-                    {action === "check-in" && "☑ check-in"}
-                    {action === "cancel" && "✕ cancel"}
-                </button>
-            ))}
-        </div>
-    );
-}
+const ACTIONS = {
+    approve: { icon: Check, labelKey: "registration.actions.approve" },
+    reject: { icon: X, labelKey: "registration.actions.reject" },
+    "check-in": { icon: CircleCheck, labelKey: "registration.actions.checkIn" },
+    cancel: { icon: Ban, labelKey: "registration.actions.cancel" },
+};
 
 /**
- * The mockup's "Registered visitors" table. Language and type are not part of
- * a registration payload, so they are joined from the visitors list by id; a
- * registration without a visitor (the API allows it) shows dashes.
+ * The "Registered visitors" table. Language and type are not part of a registration payload, so
+ * they are joined from the visitors list by id; a registration without a visitor (the API allows
+ * it) shows dashes.
  */
 export default function RegistrationsTable({
     registrations,
@@ -94,92 +40,125 @@ export default function RegistrationsTable({
     onAction,
     onEdit,
 }) {
-    return (
-        <div className="overflow-x-auto">
-            <table className="vm-table w-full border-collapse text-sm">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className="border-b-2 border-line bg-[#F4F8F8] px-3 py-2.5 text-left text-xs font-semibold tracking-wide whitespace-nowrap text-ink uppercase"
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {registrations.length === 0 && (
-                        <tr>
-                            <td colSpan={COLUMNS.length} className="px-3 py-8 text-center text-muted">
-                                No registrations yet.
-                            </td>
-                        </tr>
-                    )}
-                    {registrations.map((registration) => {
-                        const visitor = visitorsById.get(registration.visitorId);
-                        const slot = slotsById.get(registration.timeSlotId);
-                        const isPending = pendingAction?.id === registration.id;
-                        const failed = actionError?.id === registration.id;
+    const { t } = useTranslation("visitormanagement");
+    const format = useVisitorFormat();
+    const labels = useLabels();
+    const [cancelTarget, setCancelTarget] = useState(null);
+
+    function slotCell(registration) {
+        if (registration.eventId) {
+            return t("registration.eventCell", {
+                title: eventsById?.get(registration.eventId)?.title ?? `#${registration.eventId}`,
+            });
+        }
+        const slot = slotsById.get(registration.timeSlotId);
+        return t("registration.slotCell", {
+            date: format.dateShort(registration.slotDate),
+            time: slot ? format.timeRange(slot.startTime, slot.endTime) : format.time(registration.slotStart),
+        });
+    }
+
+    const columns = [
+        {
+            key: "visitorName",
+            header: t("registration.columns.name"),
+            cell: (registration) => registration.visitorName ?? format.none,
+        },
+        {
+            key: "groupSize",
+            header: t("registration.columns.group"),
+            cell: (registration) => registration.groupSize ?? format.none,
+        },
+        { key: "slot", header: t("registration.columns.dateSlot"), className: "whitespace-nowrap", cell: slotCell },
+        {
+            key: "language",
+            header: t("registration.columns.language"),
+            cell: (registration) => {
+                const language = visitorsById.get(registration.visitorId)?.language;
+                return language ? labels.language(language) : format.none;
+            },
+        },
+        {
+            key: "type",
+            header: t("registration.columns.type"),
+            cell: (registration) => {
+                const type = visitorsById.get(registration.visitorId)?.type;
+                return type ? labels.enum(type) : format.none;
+            },
+        },
+        {
+            key: "status",
+            header: t("registration.columns.status"),
+            cell: (registration) => <StatusTag value={registration.status} />,
+        },
+    ];
+
+    function renderActions(registration) {
+        const isPending = pendingAction?.id === registration.id;
+        const failed = actionError?.id === registration.id;
+        return (
+            <div className="flex flex-col items-start gap-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {rowActions(registration.status).map((action) => {
+                        const { icon, labelKey } = ACTIONS[action];
                         return (
-                            <tr key={registration.id} className="border-b border-line align-top">
-                                <td className="px-3 py-2.5 font-medium text-ink">
-                                    {registration.visitorName ?? "—"}
-                                </td>
-                                <td className="px-3 py-2.5 text-ink">{registration.groupSize ?? "—"}</td>
-                                <td className="px-3 py-2.5 whitespace-nowrap text-ink">
-                                    {registration.eventId ? (
-                                        <>
-                                            Event ·{" "}
-                                            {eventsById?.get(registration.eventId)?.title ??
-                                                `#${registration.eventId}`}
-                                        </>
-                                    ) : (
-                                        <>
-                                            {formatDateShort(registration.slotDate)}
-                                            {" · "}
-                                            {slot
-                                                ? formatTimeRange(slot.startTime, slot.endTime)
-                                                : formatTime(registration.slotStart)}
-                                        </>
-                                    )}
-                                </td>
-                                <td className="px-3 py-2.5 text-ink">{visitor?.language ?? "—"}</td>
-                                <td className="px-3 py-2.5 text-ink">
-                                    {visitor?.type ? formatEnumLabel(visitor.type) : "—"}
-                                </td>
-                                <td className="px-3 py-2.5">
-                                    <StatusBadge value={registration.status} />
-                                </td>
-                                <td className="px-3 py-2.5">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                        <ActionButtons
-                                            registration={registration}
-                                            pendingAction={pendingAction}
-                                            onAction={onAction}
-                                        />
-                                        <button
-                                            type="button"
-                                            disabled={isPending || !registration.visitorId}
-                                            onClick={() => onEdit(registration)}
-                                            className={TINY_BUTTON}
-                                        >
-                                            ✎ edit
-                                        </button>
-                                    </div>
-                                    {failed && (
-                                        <p className="mt-1 max-w-[260px] text-[11px] text-error">
-                                            {actionError.message}
-                                        </p>
-                                    )}
-                                </td>
-                            </tr>
+                            <Button
+                                key={action}
+                                size="sm"
+                                variant="secondary"
+                                icon={icon}
+                                disabled={isPending}
+                                onClick={() =>
+                                    action === "cancel" ? setCancelTarget(registration) : onAction(registration, action)
+                                }
+                            >
+                                {t(labelKey)}
+                            </Button>
                         );
                     })}
-                </tbody>
-            </table>
-        </div>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={Pencil}
+                        disabled={isPending || !registration.visitorId}
+                        onClick={() => onEdit(registration)}
+                    >
+                        {t("registration.actions.edit")}
+                    </Button>
+                </div>
+                {failed && <p className="max-w-64 text-xs text-error-fg">{actionError.message}</p>}
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <Table
+                caption={t("registration.tableTitle")}
+                columns={columns}
+                rows={registrations}
+                emptyMessage={t("registration.empty")}
+                rowActions={renderActions}
+            />
+            <ConfirmDialog
+                open={Boolean(cancelTarget)}
+                title={t("registration.cancelTitle")}
+                message={
+                    cancelTarget
+                        ? t("registration.cancelMessage", {
+                              name: cancelTarget.visitorName ?? format.none,
+                          })
+                        : ""
+                }
+                confirmLabel={t("registration.confirmYes")}
+                cancelLabel={t("registration.confirmNo")}
+                onClose={() => setCancelTarget(null)}
+                onConfirm={() => {
+                    const target = cancelTarget;
+                    setCancelTarget(null);
+                    onAction(target, "cancel");
+                }}
+            />
+        </>
     );
 }

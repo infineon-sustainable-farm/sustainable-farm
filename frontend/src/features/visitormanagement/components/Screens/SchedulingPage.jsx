@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
     useCancelTimeSlot,
     useCreateTimeSlot,
@@ -7,16 +8,16 @@ import {
     useTimeSlots,
     useUpdateTimeSlot,
 } from "../../hooks/useScheduling";
-import { addDays, formatWeekLabel, startOfWeek, toIsoDate } from "../../utils/format";
+import { addDays, startOfWeek, toIsoDate, useVisitorFormat } from "../../utils/format";
 import { SLOT_PRESETS } from "../../utils/scheduling";
+import { Button, ConfirmDialog, Field, Modal, PageHeader, Select } from "../../../../shared/ui";
 import SchedulingGrid from "../SchedulingGrid";
-import Modal from "../Modal";
 import SlotForm from "../Forms/SlotForm";
+import { LoadError, LoadingBlock } from "../LoadState";
 
 /*
- * Rows of the grid: the two canonical farm slots always show, and any slot
- * stored with a different range adds its own row, so the calendar never hides
- * data the API returned.
+ * Rows of the grid: the two canonical farm slots always show, and any slot stored with a
+ * different range adds its own row, so the calendar never hides data the API returned.
  */
 function buildRows(slots) {
     const rows = new Map(SLOT_PRESETS.map((preset) => [preset.key, preset]));
@@ -30,14 +31,17 @@ function buildRows(slots) {
 }
 
 export default function SchedulingPage() {
+    const { t } = useTranslation("visitormanagement");
+    const format = useVisitorFormat();
+    const [cancelTarget, setCancelTarget] = useState(null);
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
     const [guideFilter, setGuideFilter] = useState("");
     const [formState, setFormState] = useState({ open: false, slot: null });
     const currentWeekStart = startOfWeek(new Date());
 
     useEffect(() => {
-        document.title = "Farm Tour Scheduling — Visitor Management";
-    }, []);
+        document.title = t("scheduling.documentTitle");
+    }, [t]);
 
     const { data: slots, isPending, isError, refetch, isFetching } = useTimeSlots();
     const { data: guides, isError: guidesError } = useGuides();
@@ -100,152 +104,119 @@ export default function SchedulingPage() {
         }
     }
 
-    function handleCancelSlot(slot) {
-        cancelMutation.mutate(slot.id);
+    function requestCancel(slot) {
+        cancelMutation.reset();
+        setCancelTarget(slot);
     }
 
-    const cancelError = cancelMutation.isError
-        ? { slotId: cancelMutation.variables, message: cancelMutation.error.message }
-        : null;
+    function closeCancelDialog() {
+        cancelMutation.reset();
+        setCancelTarget(null);
+    }
+
+    function confirmCancel() {
+        cancelMutation.mutate(cancelTarget.id, { onSuccess: () => setCancelTarget(null) });
+    }
+
+    const isCurrentWeek = weekStart <= currentWeekStart;
 
     return (
-        <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
-                <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
-                    Farm tour scheduling
-                </h2>
+        <div className="space-y-4 p-6">
+            <PageHeader
+                title={t("scheduling.title")}
+                actions={
+                    <Button icon={Plus} onClick={openCreate}>
+                        {t("scheduling.newSlot")}
+                    </Button>
+                }
+            />
 
-                <div className="mb-4.5 flex flex-wrap items-center gap-3.5">
-                    <div className="flex items-center gap-2 rounded-md border border-line bg-[#F2FBF9] px-2.5 py-1.5">
-                        <button
-                            type="button"
-                            onClick={() => changeWeek(-1)}
-                            disabled={weekStart <= currentWeekStart}
-                            title={
-                                weekStart <= currentWeekStart
-                                    ? "Past weeks are read-only"
-                                    : "Previous week"
-                            }
-                            className="rounded border border-line bg-white px-3.5 py-1.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            ‹ Prev
-                        </button>
-                        <span className="min-w-[170px] text-center text-[13px] font-semibold text-primary-dark">
-                            {formatWeekLabel(weekStart)}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => changeWeek(1)}
-                            className="rounded border border-line bg-white px-3.5 py-1.5 text-xs text-primary hover:bg-[#F2FBF9]"
-                        >
-                            Next ›
-                        </button>
-                    </div>
-
-                    <div className="flex items-end gap-2.5">
-                        <div>
-                            <label
-                                htmlFor="guide-filter"
-                                className="mb-1 block text-xs tracking-wide text-primary uppercase"
-                            >
-                                Guide
-                            </label>
-                            <select
-                                id="guide-filter"
-                                value={guideFilter}
-                                onChange={(event) => setGuideFilter(event.target.value)}
-                                disabled={Boolean(guidesError)}
-                                className="min-w-[150px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm disabled:opacity-60"
-                            >
-                                <option value="">All guides</option>
-                                {(guides ?? []).map((guide) => (
-                                    <option key={guide.id} value={guide.id}>
-                                        {guide.fullName}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={openCreate}
-                        className="ml-auto rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
+            <div className="flex flex-wrap items-end gap-4">
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={ChevronLeft}
+                        onClick={() => changeWeek(-1)}
+                        disabled={isCurrentWeek}
+                        title={isCurrentWeek ? t("scheduling.pastWeeksReadOnly") : t("scheduling.previousWeek")}
                     >
-                        + New slot
-                    </button>
+                        {t("scheduling.prev")}
+                    </Button>
+                    <span className="min-w-44 text-center text-sm font-semibold text-text">
+                        {format.weekLabel(weekStart)}
+                    </span>
+                    <Button variant="secondary" size="sm" onClick={() => changeWeek(1)}>
+                        {t("scheduling.next")}
+                        <ChevronRight size={16} aria-hidden="true" />
+                    </Button>
                 </div>
 
+                <Field className="min-w-40" label={t("scheduling.guide")} disabled={Boolean(guidesError)}>
+                    <Select value={guideFilter} onChange={(event) => setGuideFilter(event.target.value)}>
+                        <option value="">{t("scheduling.allGuides")}</option>
+                        {(guides ?? []).map((guide) => (
+                            <option key={guide.id} value={guide.id}>
+                                {guide.fullName}
+                            </option>
+                        ))}
+                    </Select>
+                </Field>
+            </div>
+
+            {isPending && <LoadingBlock label={t("scheduling.loading")} />}
+
+            {isError && (
+                <LoadError title={t("scheduling.loadError")} onRetry={() => refetch()} retrying={isFetching} />
+            )}
+
+            {!isPending && !isError && (
+                <>
+                    <SchedulingGrid
+                        rows={rows}
+                        days={days}
+                        slotsByCell={slotsByCell}
+                        onEdit={openEdit}
+                        onCancel={requestCancel}
+                        cancelPendingId={cancelMutation.isPending ? cancelMutation.variables : null}
+                    />
+                    <p className="text-xs text-text-muted">{t("scheduling.footnote")}</p>
+                </>
+            )}
+
+            <Modal
+                open={formState.open}
+                onClose={closeForm}
+                size="xl"
+                dismissible={!formMutation.isPending}
+                title={formSlot ? t("scheduling.editSlot") : t("scheduling.newSlot")}
+            >
                 {formState.open && (
-                    <Modal
-                        title={formSlot ? "Edit slot" : "New slot"}
-                        onClose={closeForm}
-                    >
-                        <SlotForm
-                            key={`${toIsoDate(weekStart)}-${formSlot?.id ?? "new"}`}
-                            weekStart={weekStart}
-                            guides={guides ?? []}
-                            guidesError={guidesError}
-                            slot={formSlot}
-                            isSubmitting={formMutation.isPending}
-                            submitError={formMutation.error?.message}
-                            onSubmit={handleSubmit}
-                            onCancel={closeForm}
-                        />
-                    </Modal>
+                    <SlotForm
+                        key={`${toIsoDate(weekStart)}-${formSlot?.id ?? "new"}`}
+                        weekStart={weekStart}
+                        guides={guides ?? []}
+                        guidesError={guidesError}
+                        slot={formSlot}
+                        isSubmitting={formMutation.isPending}
+                        submitError={formMutation.error?.message}
+                        onSubmit={handleSubmit}
+                        onCancel={closeForm}
+                    />
                 )}
+            </Modal>
 
-                {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading time slots…
-                    </div>
-                )}
-
-                {isError && (
-                    <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
-                        <TriangleAlert size={28} className="text-error" />
-                        <div>
-                            <p className="font-heading text-base font-bold text-ink">
-                                Time slots could not be loaded
-                            </p>
-                            <p className="mt-1 text-sm text-muted">
-                                The request to the server did not succeed.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
-                        >
-                            {isFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
-                )}
-
-                {!isPending && !isError && (
-                    <>
-                        <SchedulingGrid
-                            rows={rows}
-                            days={days}
-                            slotsByCell={slotsByCell}
-                            onEdit={openEdit}
-                            onCancel={handleCancelSlot}
-                            cancelPendingId={
-                                cancelMutation.isPending ? cancelMutation.variables : null
-                            }
-                            cancelError={cancelError}
-                        />
-                        <p className="mt-6 text-[11px] text-muted">
-                            2 slots per day · closed on Sundays. Past weeks are read-only. The
-                            capacity is set per slot in the form, so a school group can get a
-                            dedicated slot. Cancelling a slot also cancels its registrations and
-                            bookings.
-                        </p>
-                    </>
-                )}
-            </section>
+            <ConfirmDialog
+                open={Boolean(cancelTarget)}
+                title={t("scheduling.cancelTitle")}
+                message={t("scheduling.cancelMessage")}
+                confirmLabel={t("scheduling.yes")}
+                cancelLabel={t("scheduling.no")}
+                onClose={closeCancelDialog}
+                onConfirm={confirmCancel}
+                loading={cancelMutation.isPending}
+                error={cancelMutation.isError ? cancelMutation.error.message : null}
+            />
         </div>
     );
 }

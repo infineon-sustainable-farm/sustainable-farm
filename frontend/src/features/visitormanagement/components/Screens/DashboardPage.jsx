@@ -1,116 +1,37 @@
 import { useEffect } from "react";
 import {
+    ArrowRight,
     CalendarDays,
+    ChevronRight,
     ClipboardList,
-    Loader2,
     PartyPopper,
     ShieldCheck,
     Star,
-    TriangleAlert,
     Users,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "../../hooks/useDashboard";
-import { useCountUp } from "../../animations/useCountUp";
 import heroCard from "../../../../assets/visitor-dashboard-hero-card.jpeg";
-import {
-    formatDateTime,
-    formatDayMonth,
-    formatNumber,
-    formatSatisfaction,
-    formatWeekRange,
-    getIsoWeekNumber,
-    startOfWeek,
-} from "../../utils/format";
+import { getIsoWeekNumber, startOfWeek, useVisitorFormat } from "../../utils/format";
+import { Button, Card, EmptyState, KpiCard, PageHeader, Skeleton } from "../../../../shared/ui";
+import { LoadError } from "../LoadState";
 
 /*
- * The five counters of the mockup, each with the trend label and caption the
- * reference spells out. The figures come live from the API; the trend text is
- * the mockup wording — the API does not compute week-over-week deltas.
+ * The five counters of the dashboard. The figures come live from the API and show their final
+ * value at once.
  */
 const COUNTERS = [
-    {
-        label: "Visitors this week",
-        key: "visitorsThisWeek",
-        format: formatNumber,
-        icon: Users,
-        trend: "↑ +20%",
-        neutral: false,
-    },
-    {
-        label: "Slots booked",
-        key: "slotsBooked",
-        format: formatNumber,
-        icon: CalendarDays,
-        trend: "↑ +33%",
-        neutral: false,
-    },
-    {
-        label: "Safety briefings pending",
-        key: "pendingBriefings",
-        format: formatNumber,
-        icon: ShieldCheck,
-        trend: "No change",
-        neutral: true,
-    },
-    {
-        label: "Avg. satisfaction",
-        key: "averageSatisfaction",
-        format: formatSatisfaction,
-        icon: Star,
-        trend: "↑ +0.2",
-        neutral: false,
-    },
-    {
-        label: "Upcoming events",
-        key: "upcomingEvents",
-        format: null,
-        icon: PartyPopper,
-        trend: "↑ +1",
-        neutral: false,
-    },
+    { key: "visitorsThisWeek", labelKey: "dashboard.visitorsThisWeek", icon: Users, kind: "number" },
+    { key: "slotsBooked", labelKey: "dashboard.slotsBooked", icon: CalendarDays, kind: "number" },
+    { key: "pendingBriefings", labelKey: "dashboard.pendingBriefings", icon: ShieldCheck, kind: "number" },
+    { key: "averageSatisfaction", labelKey: "dashboard.averageSatisfaction", icon: Star, kind: "satisfaction" },
+    { key: "upcomingEvents", labelKey: "dashboard.upcomingEvents", icon: PartyPopper, kind: "count" },
 ];
 
 /*
- * A KPI card: small icon in a pale mint square, muted label, large dark value
- * and the trend line below it. The value counts up from 0 on first display,
- * then keeps the exact formatted figure; the whole card fades in with the
- * others, one after another (stagger handled by the delay prop).
- */
-function KpiCard({ label, value, format, icon: Icon, trend, neutral, delay }) {
-    const finalValue = format === null ? (value?.length ?? 0) : Number(value) || 0;
-    const animated = useCountUp(finalValue);
-    const isWholeNumber = Number.isInteger(finalValue);
-    const displayValue = isWholeNumber ? Math.round(animated) : animated;
-    const display = format === null ? formatNumber(displayValue) : format(displayValue);
-    return (
-        <div
-            className="flex min-w-0 items-center gap-3.5 rounded-xl border border-line bg-white p-4 shadow-sm animate-fade-up"
-            style={{ animationDelay: `${delay}ms` }}
-        >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E7F7F4] text-primary">
-                <Icon size={20} strokeWidth={2} />
-            </span>
-            <span className="min-w-0">
-                <span className="block truncate text-xs text-muted">{label}</span>
-                <span className="font-heading block text-[24px] leading-tight font-bold text-primary-dark tabular-nums">
-                    {display}
-                </span>
-                <span className="mt-0.5 flex items-baseline gap-1.5 text-xs">
-                    <span className={neutral ? "font-medium text-muted" : "font-semibold text-primary"}>
-                        {trend}
-                    </span>
-                    <span className="text-muted">vs last week</span>
-                </span>
-            </span>
-        </div>
-    );
-}
-
-/*
- * Where each staff task type leads. The API task carries no entity id — only a
- * type, a label and a due date — so the click opens the screen that owns the
- * task rather than the exact record.
+ * Where each staff task type leads. The API task carries no entity id, only a type, a label and a
+ * due date, so the click opens the screen that owns the task rather than the exact record.
  */
 const TASK_TARGETS = {
     CONFIRM_BOOKING: "/visitormanagement/booking",
@@ -118,202 +39,172 @@ const TASK_TARGETS = {
     DELIVER_BRIEFING: "/visitormanagement/safety",
 };
 
-/*
- * The upcoming tasks of the mockup's side panel. Due timestamps are shown next
- * to each task; the label itself comes from the API. Each task is a button
- * that opens the screen owning that kind of work. The empty state matches the
- * reference: a clipboard icon in a pale mint circle with a single cheer.
- */
+function counterValue(counter, dashboard, format) {
+    const value = dashboard[counter.key];
+    if (counter.kind === "count") return format.number(value?.length ?? 0);
+    if (counter.kind === "satisfaction") return format.satisfaction(Number(value) || 0);
+    return format.number(Number(value) || 0);
+}
+
+/** The upcoming tasks; each one opens the screen that owns that kind of work. */
 function TasksPanel({ tasks }) {
+    const { t } = useTranslation("visitormanagement");
     const navigate = useNavigate();
     return (
-        <aside className="flex flex-col gap-3.5 rounded-xl border border-line bg-white p-4.5 shadow-sm">
-            <h3 className="flex items-center gap-2 font-heading text-[16px] font-bold text-ink">
-                <ClipboardList size={18} className="text-primary" />
-                Upcoming tasks
-            </h3>
+        <Card
+            as="aside"
+            title={
+                <span className="flex items-center gap-2">
+                    <ClipboardList size={18} aria-hidden="true" className="text-primary" />
+                    {t("dashboard.upcomingTasks")}
+                </span>
+            }
+        >
             {tasks.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 py-5 text-center">
-                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E7F7F4] text-primary">
-                        <ClipboardList size={26} strokeWidth={2} />
-                    </span>
-                    <p className="mt-1 text-sm font-semibold text-ink">No pending tasks.</p>
-                    <p className="-mt-1 text-xs text-muted">You’re all caught up!</p>
-                </div>
+                <EmptyState
+                    className="py-6"
+                    icon={ClipboardList}
+                    title={t("dashboard.noTasks")}
+                    message={t("dashboard.allCaughtUp")}
+                />
             ) : (
                 <ul className="flex flex-col gap-2">
                     {tasks.map((task, index) => (
                         <li key={`${task.type}-${index}`}>
                             <button
                                 type="button"
-                                onClick={() =>
-                                    navigate(TASK_TARGETS[task.type] ?? "/visitormanagement")
-                                }
-                                title="Open the screen for this task"
-                                className="flex w-full items-center justify-between gap-2 rounded-md border-l-[3px] border-primary bg-[#F2FBF9] px-2.5 py-2 text-left text-[13px] text-ink hover:bg-[#E7F7F4]"
+                                onClick={() => navigate(TASK_TARGETS[task.type] ?? "/visitormanagement")}
+                                title={t("dashboard.openTask")}
+                                className="flex w-full items-center justify-between gap-2 rounded-control border-l-4 border-primary bg-primary-tint px-3 py-2 text-left text-sm text-text transition duration-(--duration-fast) ease-standard hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring motion-reduce:transition-none"
                             >
                                 <span>{task.label}</span>
-                                <span aria-hidden="true" className="text-primary">
-                                    ›
-                                </span>
+                                <ChevronRight size={16} aria-hidden="true" className="shrink-0 text-primary" />
                             </button>
                         </li>
                     ))}
                 </ul>
             )}
-        </aside>
+        </Card>
     );
 }
 
-/*
- * A single upcoming event in the dashboard list, following the mockup's row:
- * calendar icon, compact date, title and time, and the booked/capacity figure
- * on the right.
- */
+/** A single upcoming event: date, title and time, and the booked over capacity figure. */
 function UpcomingEventRow({ event }) {
+    const { t } = useTranslation("visitormanagement");
+    const format = useVisitorFormat();
     const navigate = useNavigate();
     return (
         <button
             type="button"
             onClick={() => navigate("/visitormanagement/events")}
-            title="Open the Events screen"
-            className="flex w-full items-center gap-3 rounded-lg border border-line bg-white px-3.5 py-3 text-left transition-shadow duration-150 hover:shadow-[0_4px_14px_rgba(10,130,118,0.15)]"
+            title={t("dashboard.openEvents")}
+            className="flex w-full items-center gap-3 rounded-tile border border-border-subtle bg-surface-raised px-4 py-3 text-left transition duration-(--duration-fast) ease-standard hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring motion-reduce:transition-none"
         >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E7F7F4] text-primary">
-                <CalendarDays size={17} strokeWidth={2} />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-tile bg-primary-tint text-primary">
+                <CalendarDays size={18} aria-hidden="true" />
             </span>
-            <span className="font-heading w-14 shrink-0 text-sm font-bold text-primary-dark">
-                {formatDayMonth(event.startDateTime)}
-            </span>
+            <span className="w-14 shrink-0 text-sm font-bold text-text">{format.dayMonth(event.startDateTime)}</span>
             <span className="min-w-0 flex-1">
-                <span className="font-heading block truncate text-[14px] font-bold text-ink">
-                    {event.title}
-                </span>
-                <span className="mt-0.5 block text-xs text-muted">
-                    {formatDateTime(event.startDateTime)}
-                </span>
+                <span className="block truncate text-sm font-semibold text-text">{event.title}</span>
+                <span className="mt-0.5 block text-xs text-text-muted">{format.dateTime(event.startDateTime)}</span>
             </span>
-            <span className="shrink-0 text-right text-sm font-bold text-primary">
-                {event.booked}/{event.maxCapacity}
-                <span className="block text-[10px] font-semibold tracking-widest uppercase">
-                    booked
-                </span>
+            <span className="shrink-0 text-right text-sm font-bold text-text-accent">
+                {t("dashboard.bookedRatio", { booked: event.booked, capacity: event.maxCapacity })}
+                <span className="block text-xs font-semibold uppercase">{t("dashboard.booked")}</span>
             </span>
         </button>
     );
 }
 
-export default function DashboardPage() {
-    useEffect(() => {
-        document.title = "Dashboard Overview — Visitor Management";
-    }, []);
+function DashboardSkeleton() {
+    const { t } = useTranslation("visitormanagement");
+    return (
+        <div className="flex flex-col gap-5" aria-busy="true">
+            <p role="status" className="sr-only">
+                {t("dashboard.loading")}
+            </p>
+            <Skeleton radius="card" className="h-44" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                {[0, 1, 2, 3, 4].map((index) => (
+                    <Skeleton key={index} radius="card" className="h-40" />
+                ))}
+            </div>
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+                <Skeleton radius="card" className="h-64 xl:col-span-2" />
+                <Skeleton radius="card" className="h-64" />
+            </div>
+        </div>
+    );
+}
 
+export default function DashboardPage() {
+    const { t } = useTranslation("visitormanagement");
+    const format = useVisitorFormat();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        document.title = t("dashboard.documentTitle");
+    }, [t]);
+
     const weekStart = startOfWeek(new Date());
     const { data: dashboard, isPending, isError, refetch, isFetching } = useDashboard();
 
     return (
-        <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <div className="mb-5 flex items-start justify-between gap-4 animate-fade-up">
-                <div>
-                    <h1 className="font-heading text-[22px] font-bold text-ink">Dashboard Overview</h1>
-                    <p className="mt-0.5 text-sm text-muted">
-                        Welcome back! Here’s what’s happening at your visitor center this week.
-                    </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-line bg-white px-3.5 py-2.5 shadow-sm">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E7F7F4] text-primary">
-                        <CalendarDays size={17} strokeWidth={2} />
-                    </span>
-                    <span className="leading-tight">
-                        <span className="block text-sm font-semibold text-ink">
-                            Week {getIsoWeekNumber(weekStart)}
+        <div className="space-y-6 p-6">
+            <PageHeader
+                title={t("dashboard.title")}
+                subtitle={t("dashboard.subtitle")}
+                meta={
+                    <span className="flex items-center gap-2">
+                        <CalendarDays size={16} aria-hidden="true" className="text-primary" />
+                        <span className="font-semibold text-text">
+                            {t("dashboard.week", { week: getIsoWeekNumber(weekStart) })}
                         </span>
-                        <span className="block text-xs text-muted">{formatWeekRange(weekStart)}</span>
+                        <span>{format.weekRange(weekStart)}</span>
                     </span>
-                    {/* A future week selector would go here. For now the label
-                        shows the current week and follows it automatically. */}
-                </div>
-            </div>
+                }
+            />
 
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading dashboard…
-                </div>
-            )}
+            {isPending && <DashboardSkeleton />}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-base font-bold text-ink">
-                            Dashboard could not be loaded
-                        </p>
-                        <p className="mt-1 text-sm text-muted">
-                            The request to the server did not succeed.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <LoadError title={t("dashboard.loadError")} onRetry={() => refetch()} retrying={isFetching} />
             )}
 
             {!isPending && !isError && dashboard && (
-                <div className="flex flex-col gap-5">
-                    <section
-                        className="overflow-hidden rounded-xl shadow-sm animate-fade-up"
-                        style={{ animationDelay: "60ms" }}
-                    >
-                        <img
-                            src={heroCard}
-                            alt="Track visits, schedule activities and ensure a safe, welcoming environment for the farm’s visitors."
-                            className="block h-auto w-full"
-                        />
+                <>
+                    <section className="overflow-hidden rounded-card border border-border-subtle shadow-raised">
+                        <img src={heroCard} alt={t("dashboard.heroAlt")} className="block h-auto w-full" />
                     </section>
 
-                    <div className="animate-fade-up" style={{ animationDelay: "60ms" }}>
-                        <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-5">
-                            {COUNTERS.map(({ label, key, format, icon, trend, neutral }, index) => (
-                                <KpiCard
-                                    key={key}
-                                    label={label}
-                                    value={dashboard[key]}
-                                    format={format}
-                                    icon={icon}
-                                    trend={trend}
-                                    neutral={neutral}
-                                    delay={80 + index * 50}
-                                />
-                            ))}
-                        </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                        {COUNTERS.map((counter) => (
+                            <KpiCard
+                                key={counter.key}
+                                icon={counter.icon}
+                                label={t(counter.labelKey)}
+                                value={counterValue(counter, dashboard, format)}
+                            />
+                        ))}
                     </div>
 
-                    <div
-                        className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px] animate-fade-up"
-                        style={{ animationDelay: "360ms" }}
-                    >
-                        <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-4.5 shadow-sm">
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-heading text-[16px] font-bold text-ink">
-                                    Upcoming events
-                                </h3>
-                                <button
-                                    type="button"
+                    <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+                        <Card
+                            className="xl:col-span-2"
+                            title={t("dashboard.upcomingEvents")}
+                            actions={
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => navigate("/visitormanagement/events")}
-                                    className="text-xs font-semibold text-primary hover:text-primary-dark"
                                 >
-                                    View all →
-                                </button>
-                            </div>
+                                    {t("dashboard.viewAll")}
+                                    <ArrowRight size={16} aria-hidden="true" />
+                                </Button>
+                            }
+                        >
                             {(dashboard.upcomingEvents ?? []).length === 0 ? (
-                                <p className="text-sm text-muted">No upcoming events.</p>
+                                <p className="text-sm text-text-muted">{t("dashboard.noEvents")}</p>
                             ) : (
                                 <ul className="flex flex-col gap-2">
                                     {dashboard.upcomingEvents.map((event) => (
@@ -323,10 +214,10 @@ export default function DashboardPage() {
                                     ))}
                                 </ul>
                             )}
-                        </section>
+                        </Card>
                         <TasksPanel tasks={dashboard.upcomingTasks ?? []} />
                     </div>
-                </div>
+                </>
             )}
         </div>
     );
