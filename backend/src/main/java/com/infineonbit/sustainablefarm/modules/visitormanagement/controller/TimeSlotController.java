@@ -21,7 +21,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/time-slots")
+@RequestMapping("/api/visitor-management/time-slots")
 public class TimeSlotController {
 
     private final SchedulingService schedulingService;

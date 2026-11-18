@@ -98,19 +98,19 @@ class VisitorManagementEventsIntegrationTest {
     @Test
     void aRegistrationIsAnnouncedToWaterSupplyMovedWithItsSlotAndWithdrawnOnCancel() throws Exception {
         LocalDate day = freeOpenDay();
-        slotId = id(mockMvc.perform(post("/api/v1/time-slots").contentType(MediaType.APPLICATION_JSON)
+        slotId = id(mockMvc.perform(post("/api/visitor-management/time-slots").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"date":"%s","startTime":"09:00","endTime":"11:00","maxCapacity":10}
                                 """.formatted(day)))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
         String group = "School " + marker;
-        visitorId = id(mockMvc.perform(post("/api/v1/visitors").contentType(MediaType.APPLICATION_JSON)
+        visitorId = id(mockMvc.perform(post("/api/visitor-management/visitors").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"fullName":"%s","groupSize":4,"type":"GROUP"}
                                 """.formatted(group)))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
 
-        Long registrationId = id(mockMvc.perform(post("/api/v1/registrations").contentType(MediaType.APPLICATION_JSON)
+        Long registrationId = id(mockMvc.perform(post("/api/visitor-management/registrations").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"visitorId":%d,"timeSlotId":%d,"visitPurpose":"TOURISM"}
                                 """.formatted(visitorId, slotId)))
@@ -127,7 +127,7 @@ class VisitorManagementEventsIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].title", hasItem("Visitor group near water facilities - " + group)));
 
-        mockMvc.perform(put("/api/v1/time-slots/{id}", slotId).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/visitor-management/time-slots/{id}", slotId).contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"date":"%s","startTime":"14:00","endTime":"16:00","maxCapacity":10}
                                 """.formatted(day)))
@@ -136,26 +136,26 @@ class VisitorManagementEventsIntegrationTest {
         assertThat(moved.getId()).isEqualTo(announced.getId());
         assertThat(moved.getExpectedAt()).isEqualTo(day.atTime(14, 0).toInstant(ZoneOffset.UTC));
 
-        mockMvc.perform(patch("/api/v1/registrations/{id}/cancel", registrationId)).andExpect(status().isOk());
+        mockMvc.perform(patch("/api/visitor-management/registrations/{id}/cancel", registrationId)).andExpect(status().isOk());
         assertThat(visitorEventRepository.findByVisitId(visitId)).isEmpty();
     }
 
     @Test
     void aBookingIsAnnouncedToWaterSupplyAndWithdrawnOnCancel() throws Exception {
         LocalDate day = freeOpenDay();
-        slotId = id(mockMvc.perform(post("/api/v1/time-slots").contentType(MediaType.APPLICATION_JSON)
+        slotId = id(mockMvc.perform(post("/api/visitor-management/time-slots").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"date":"%s","startTime":"09:00","endTime":"11:00","maxCapacity":10}
                                 """.formatted(day)))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
-        activityId = id(mockMvc.perform(post("/api/v1/activities").contentType(MediaType.APPLICATION_JSON)
+        activityId = id(mockMvc.perform(post("/api/visitor-management/activities").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Tour %s","price":10,"capacity":10,"durationMinutes":60}
                                 """.formatted(marker)))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
         String group = "Family " + marker;
 
-        Long bookingId = id(mockMvc.perform(post("/api/v1/bookings").contentType(MediaType.APPLICATION_JSON)
+        Long bookingId = id(mockMvc.perform(post("/api/visitor-management/bookings").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"activityId":%d,"timeSlotId":%d,"visitorFullName":"%s",
                                  "visitorEmail":"family@example.com","peopleCount":3}
@@ -171,7 +171,7 @@ class VisitorManagementEventsIntegrationTest {
         mockMvc.perform(get("/api/notifications"))
                 .andExpect(jsonPath("$[*].title", hasItem("Visitor group near water facilities - " + group)));
 
-        mockMvc.perform(post("/api/v1/bookings/{id}/cancel", bookingId)).andExpect(status().isOk());
+        mockMvc.perform(post("/api/visitor-management/bookings/{id}/cancel", bookingId)).andExpect(status().isOk());
         assertThat(visitorEventRepository.findByVisitId(visitId)).isEmpty();
     }
 

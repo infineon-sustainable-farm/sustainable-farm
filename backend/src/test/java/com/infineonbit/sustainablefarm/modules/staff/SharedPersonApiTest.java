@@ -73,7 +73,7 @@ class SharedPersonApiTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.operatorName").value(NAME))
                 .andExpect(jsonPath("$.activeStatus").value("ACTIVE"));
-        mockMvc.perform(post("/api/v1/staff").contentType(MediaType.APPLICATION_JSON).content("""
+        mockMvc.perform(post("/api/visitor-management/staff").contentType(MediaType.APPLICATION_JSON).content("""
                 {"fullName":"%s","role":"GUIDE"}
                 """.formatted(NAME)))
                 .andExpect(status().isCreated())
@@ -94,9 +94,9 @@ class SharedPersonApiTest {
         createOperator("OP-ACTIVE-FLAG-1", name);
         long staffId = createGuide(name);
 
-        mockMvc.perform(delete("/api/v1/staff/" + staffId)).andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/visitor-management/staff/" + staffId)).andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/v1/staff/" + staffId)).andExpect(jsonPath("$.active").value(false));
+        mockMvc.perform(get("/api/visitor-management/staff/" + staffId)).andExpect(jsonPath("$.active").value(false));
         mockMvc.perform(get("/api/operators/OP-ACTIVE-FLAG-1")).andExpect(jsonPath("$.activeStatus").value("ACTIVE"));
         assertThat(personRepository.findAllByFullNameIgnoreCaseOrderByIdAsc(name)).singleElement()
                 .satisfies(person -> assertThat(person.isActive()).isTrue());
@@ -113,7 +113,7 @@ class SharedPersonApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activeStatus").value("INACTIVE"));
 
-        mockMvc.perform(get("/api/v1/staff/" + staffId)).andExpect(jsonPath("$.active").value(true));
+        mockMvc.perform(get("/api/visitor-management/staff/" + staffId)).andExpect(jsonPath("$.active").value(true));
         assertThat(personRepository.findAllByFullNameIgnoreCaseOrderByIdAsc(name)).singleElement()
                 .satisfies(person -> assertThat(person.isActive()).isTrue());
     }
@@ -126,7 +126,7 @@ class SharedPersonApiTest {
     }
 
     private long createGuide(String name) throws Exception {
-        String body = mockMvc.perform(post("/api/v1/staff").contentType(MediaType.APPLICATION_JSON).content("""
+        String body = mockMvc.perform(post("/api/visitor-management/staff").contentType(MediaType.APPLICATION_JSON).content("""
                 {"fullName":"%s","role":"GUIDE"}
                 """.formatted(name)))
                 .andExpect(status().isCreated())

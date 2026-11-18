@@ -73,7 +73,9 @@ class DashboardServiceImplTest {
         Booking b = new Booking();
         b.setId(id);
         b.setTimeSlot(slot);
-        b.setVisitorFullName(name);
+        Visitor visitor = new Visitor();
+        visitor.setFullName(name);
+        b.setVisitor(visitor);
         b.setPeopleCount(3);
         b.setReminderScheduledAt(reminderAt);
         return b;
