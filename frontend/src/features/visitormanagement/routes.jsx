@@ -10,7 +10,6 @@ import {
     UserPlus,
     Users,
 } from "lucide-react";
-import VisitorManagementLayout from "./components/VisitorManagementLayout";
 import DashboardPage from "./components/Screens/DashboardPage";
 import SchedulingPage from "./components/Screens/SchedulingPage";
 import RegistrationPage from "./components/Screens/RegistrationPage";
@@ -22,10 +21,10 @@ import FeedbackPage from "./components/Screens/FeedbackPage";
 import EventsPage from "./components/Screens/EventsPage";
 import StaffPage from "./components/Screens/StaffPage";
 
+// The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below.
 export default [
     {
         path: "visitormanagement",
-        element: <VisitorManagementLayout />,
         children: [
             { index: true, element: <DashboardPage /> },
             { path: "scheduling", element: <SchedulingPage /> },
@@ -43,13 +42,14 @@ export default [
 
 /**
  * Navigation of the module, read by the application shell (app/Sidebar.jsx) and the launcher
- * page (app/LauncherPage.jsx). Same entries, order and targets as the module's own sidebar.
+ * page (app/LauncherPage.jsx). Visitor management renders inside the shell.
  */
 export const nav = {
     id: "visitormanagement",
     basePath: "/visitormanagement",
     icon: Users,
     nameKey: "visitormanagement:name",
+    shell: true,
     items: [
         { to: "/visitormanagement", labelKey: "visitormanagement:nav.dashboard", icon: LayoutDashboard, end: true },
         { to: "/visitormanagement/scheduling", labelKey: "visitormanagement:nav.scheduling", icon: Calendar },
