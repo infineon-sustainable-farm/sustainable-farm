@@ -63,10 +63,27 @@ const NAV_ICONS = {
   notifications: ClipboardList,
 }
 
+// Section heading of each entry, as in the module's former sidebar (the dashboard has none).
+const NAV_SECTIONS = {
+  farms: 'dataManagement',
+  sources: 'dataManagement',
+  irrigation: 'waterPlanning',
+  consumption: 'waterPlanning',
+  rainwater: 'waterPlanning',
+  maintenance: 'waterPlanning',
+  quality: 'waterPlanning',
+  drought: 'waterPlanning',
+  outages: 'waterPlanning',
+  plants: 'integrations',
+  lots: 'integrations',
+  visitors: 'integrations',
+  notifications: 'operations',
+}
+
 /**
  * Navigation of the module, read by the application shell (app/Sidebar.jsx) and the launcher
- * page (app/LauncherPage.jsx). Same entries, order and targets as the module's former sidebar;
- * the shell has no section headings, so the list is flat.
+ * page (app/LauncherPage.jsx). Same entries, order, targets and section headings as the module's
+ * former sidebar.
  */
 export const nav = {
   id: 'watersupply',
@@ -79,5 +96,6 @@ export const nav = {
     labelKey: `watersupply:nav.${viewId}`,
     icon: NAV_ICONS[viewId],
     end: viewId === 'dashboard',
+    sectionKey: NAV_SECTIONS[viewId] && `watersupply:navSections.${NAV_SECTIONS[viewId]}`,
   })),
 }
