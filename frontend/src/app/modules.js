@@ -8,12 +8,18 @@
  *     basePath: '/machinery',               // URL of the module home
  *     icon: Tractor,                        // lucide component, launcher tile and sidebar group
  *     nameKey: 'machinery:name',            // translated module name
- *     items: [{ to, labelKey, icon, end }], // sidebar links of the module, `end` for its home
+ *     items: [{ to, labelKey, icon, end, sectionKey }], // sidebar links of the module, `end`
+ *                                           // for its home, `sectionKey` optional (see below)
  *     shell: true,                          // optional: render the module inside AppLayout
  *     sidebarFooter: LowStockNotifications, // optional: component rendered at the bottom of the
  *                                           // sidebar, above the language switcher, while the
  *                                           // module is the current one (shell modules only)
  *   }
+ *
+ * Sections: an item may carry a `sectionKey` (translation key of a heading). Consecutive items
+ * with the same `sectionKey` are grouped under that heading in the sidebar, in the order of
+ * `items`; items without one stay flat. A module whose items have no `sectionKey` renders as a
+ * flat list, as before. Headings show only for the current module.
  *
  * A module opts into the shared shell with `nav.shell = true` or `export const useAppShell = true`.
  * Until then it keeps its own layout. Modules without `nav` (sitesecurity, cropstorage, A12) are

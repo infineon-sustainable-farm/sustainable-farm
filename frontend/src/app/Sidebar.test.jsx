@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { Cog } from 'lucide-react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import i18n from '../shared/i18n/i18n'
@@ -136,6 +137,52 @@ describe('Sidebar', () => {
       expect(nav).not.toHaveAttribute('inert')
       footerButton.focus()
       expect(document.activeElement).toBe(footerButton)
+    })
+  })
+
+  describe('sections of the nav contract', () => {
+    const sectionedNav = {
+      ...otherModuleNav,
+      items: [
+        { to: '/watersupply', labelKey: 'watersupply:nav.dashboard', icon: Cog, end: true },
+        { to: '/watersupply/farms', labelKey: 'watersupply:nav.farms', icon: Cog, sectionKey: 'watersupply:navSections.dataManagement' },
+        { to: '/watersupply/sources', labelKey: 'watersupply:nav.sources', icon: Cog, sectionKey: 'watersupply:navSections.dataManagement' },
+        { to: '/watersupply/irrigation', labelKey: 'watersupply:nav.irrigation', icon: Cog, sectionKey: 'watersupply:navSections.waterPlanning' },
+      ],
+    }
+    const navs = [shellModuleNav, sectionedNav]
+
+    it('groups the items of the current module under their headings, in order', () => {
+      const nav = renderSidebar('/watersupply/farms', navs)
+      const data = within(nav).getByRole('group', { name: 'Data management' })
+      expect(within(data).getAllByRole('link').map((link) => link.textContent)).toEqual(['Farms & Fields', 'Water sources'])
+      const planning = within(nav).getByRole('group', { name: 'Water planning' })
+      expect(within(planning).getAllByRole('link').map((link) => link.textContent)).toEqual(['Irrigation planning'])
+      const dashboard = within(nav).getByRole('link', { name: 'Dashboard' })
+      expect(data.contains(dashboard)).toBe(false)
+      expect(dashboard.compareDocumentPosition(data) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
+
+    it('shows no heading for another module, and a module without sections stays flat', () => {
+      const nav = renderSidebar('/machinery', navs)
+      expect(within(nav).queryByText('Data management')).not.toBeInTheDocument()
+      expect(within(nav).queryByRole('group')).not.toBeInTheDocument()
+      expect(within(nav).getByRole('link', { name: 'Equipment Registry' })).toBeInTheDocument()
+    })
+
+    it('translates the headings', async () => {
+      const nav = renderSidebar('/watersupply', navs)
+      await act(async () => {
+        await i18n.changeLanguage('de')
+      })
+      expect(within(nav).getByRole('group', { name: 'Datenverwaltung' })).toBeInTheDocument()
+      await act(async () => {
+        await i18n.changeLanguage('fr')
+      })
+      expect(within(nav).getByRole('group', { name: 'Planification de l’eau' })).toBeInTheDocument()
+      await act(async () => {
+        await i18n.changeLanguage('en')
+      })
     })
   })
 })
