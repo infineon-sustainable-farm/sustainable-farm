@@ -9,5 +9,48 @@
     "harvestMaturity": "Harvest & Maturity",
     "nursery": "Nursery",
     "scenarioAnalysis": "Scenario Analysis"
+  },
+  "common": {
+    "none": "—",
+    "retry": "Retry",
+    "retrying": "Retrying…",
+    "checkConnection": "Check your connection, then try again."
+  },
+  "format": {
+    "kilograms": "{{value}} kg",
+    "meters": "{{value}} m",
+    "millimeters": "{{value}} mm",
+    "density": "{{value}} trees/ha",
+    "spacing": "{{interRow}} × {{intraRow}} m",
+    "block": "Block {{block}}",
+    "quantity": "{{value}} {{unit}}",
+    "xof": "{{value}} FCFA",
+    "percent": "{{value}}%",
+    "listSeparator": ", ",
+    "range": "{{start}} – {{end}}",
+    "daysAhead_one": "in {{days}} day",
+    "daysAhead_other": "in {{days}} days",
+    "age_one": "{{years}} yr {{months}} mo",
+    "age_other": "{{years}} yrs {{months}} mo",
+    "phaseBand": "{{phase}} · {{band}}"
+  },
+  "enums": {
+    "origin": {
+      "IN_HOUSE": "In-house production",
+      "PURCHASED": "External purchase"
+    },
+    "severity": {
+      "CRITICAL": "Critical",
+      "WARNING": "Warning"
+    }
+  },
+  "blockFilter": {
+    "label": "Block / Plot:",
+    "all": "All blocks"
+  },
+  "period": {
+    "from": "From",
+    "months": "Months",
+    "fromFormat": "Use the format YYYY-MM."
   }
 }

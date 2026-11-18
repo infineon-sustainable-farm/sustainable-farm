@@ -9,5 +9,48 @@
     "harvestMaturity": "Ernte und Reife",
     "nursery": "Anzucht",
     "scenarioAnalysis": "Szenarioanalyse"
+  },
+  "common": {
+    "none": "—",
+    "retry": "Erneut versuchen",
+    "retrying": "Wird erneut versucht…",
+    "checkConnection": "Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+  },
+  "format": {
+    "kilograms": "{{value}} kg",
+    "meters": "{{value}} m",
+    "millimeters": "{{value}} mm",
+    "density": "{{value}} Bäume/ha",
+    "spacing": "{{interRow}} × {{intraRow}} m",
+    "block": "Block {{block}}",
+    "quantity": "{{value}} {{unit}}",
+    "xof": "{{value}} FCFA",
+    "percent": "{{value}} %",
+    "listSeparator": ", ",
+    "range": "{{start}} – {{end}}",
+    "daysAhead_one": "in {{days}} Tag",
+    "daysAhead_other": "in {{days}} Tagen",
+    "age_one": "{{years}} J. {{months}} Mon.",
+    "age_other": "{{years}} J. {{months}} Mon.",
+    "phaseBand": "{{phase}} · {{band}}"
+  },
+  "enums": {
+    "origin": {
+      "IN_HOUSE": "Eigene Anzucht",
+      "PURCHASED": "Externer Zukauf"
+    },
+    "severity": {
+      "CRITICAL": "Kritisch",
+      "WARNING": "Warnung"
+    }
+  },
+  "blockFilter": {
+    "label": "Block / Parzelle:",
+    "all": "Alle Blöcke"
+  },
+  "period": {
+    "from": "Ab",
+    "months": "Monate",
+    "fromFormat": "Verwenden Sie das Format JJJJ-MM."
   }
 }
