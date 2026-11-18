@@ -22,21 +22,21 @@ vi.mock('../../api/watersupplyApi', () => ({
 }))
 
 vi.mock('../../hooks/useFarms', () => ({
-  useFarms: () => ({ farms: [{ id: 'farm-1', name: 'North Farm' }] }),
-  useFields: () => ({ fields: [{ id: 'field-1', farmId: 'farm-1' }] }),
+  useFarms: () => ({ farms: [{ id: 1, name: 'North Farm' }] }),
+  useFields: () => ({ fields: [{ id: 10, farmId: 1 }] }),
   useZones: () => ({ zones: [
-    { id: 'zone-1', name: 'Drip Zone A', fieldId: 'field-1' },
-    { id: 'zone-2', name: 'Drip Zone B', fieldId: 'field-1' },
-    { id: 'zone-orphan', name: 'Orphan zone', fieldId: 'field-unknown' },
+    { id: 100, name: 'Drip Zone A', fieldId: 10 },
+    { id: 101, name: 'Drip Zone B', fieldId: 10 },
+    { id: 102, name: 'Orphan zone', fieldId: 99 },
   ] }),
 }))
 
 beforeEach(() => {
   vi.clearAllMocks()
   zoneBlockMappingApi.getMappings.mockResolvedValue([
-    { id: 'map-1', zoneId: 'zone-1', blockCode: 'A', farmId: 'farm-1' },
-    { id: 'map-2', zoneId: 'zone-2', blockCode: 'B', farmId: 'farm-1' },
-    { id: 'map-3', zoneId: 'zone-2', blockCode: 'C', farmId: 'farm-1' },
+    { id: 100, zoneId: 100, blockCode: 'A', farmId: 1 },
+    { id: 101, zoneId: 101, blockCode: 'B', farmId: 1 },
+    { id: 1010, zoneId: 101, blockCode: 'C', farmId: 1 },
   ])
   plantsIntegrationApi.getRainfall.mockResolvedValue({ blockCode: 'A', rainfallMm: 15, gaugeCount: 2 })
   plantsIntegrationApi.getIrrigationNeed.mockResolvedValue({
@@ -74,17 +74,17 @@ describe('PlantsBlocksView', () => {
   })
 
   it('links a zone with the farm of its field', async () => {
-    zoneBlockMappingApi.createMapping.mockResolvedValue({ id: 'map-4', blockCode: 'D1' })
+    zoneBlockMappingApi.createMapping.mockResolvedValue({ id: 100, blockCode: 'D1' })
     render(<PlantsBlocksView {...props} />)
     await screen.findByText('3 block(s), 3 link(s)')
     const form = document.querySelector('form')
 
-    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: 'zone-1' } })
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
     fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: ' d1 ' } })
     fireEvent.submit(form)
 
     await waitFor(() => expect(zoneBlockMappingApi.createMapping)
-      .toHaveBeenCalledWith({ zoneId: 'zone-1', blockCode: 'd1', farmId: 'farm-1' }))
+      .toHaveBeenCalledWith({ zoneId: 100, blockCode: 'd1', farmId: 1 }))
     await waitFor(() => expect(props.notify).toHaveBeenCalledWith('Zone linked to block D1'))
   })
 
@@ -93,7 +93,7 @@ describe('PlantsBlocksView', () => {
     await screen.findByText('3 block(s), 3 link(s)')
     const form = document.querySelector('form')
 
-    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: 'zone-1' } })
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
     fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'Block A' } })
     fireEvent.submit(form)
 
@@ -102,18 +102,18 @@ describe('PlantsBlocksView', () => {
   })
 
   it('explains a zone whose farm cannot be resolved and a duplicate link', async () => {
-    zoneBlockMappingApi.createMapping.mockRejectedValue(Object.assign(new Error('conflict'), { status: 409 }))
+    zoneBlockMappingApi.createMapping.mockRejectedValue(Object.assign(new Error('This zone is already linked to block A'), { status: 409 }))
     render(<PlantsBlocksView {...props} />)
     await screen.findByText('3 block(s), 3 link(s)')
     const form = document.querySelector('form')
 
-    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: 'zone-orphan' } })
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '102' } })
     fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'A' } })
     fireEvent.submit(form)
     await waitFor(() => expect(screen.getByText(/farm of this zone is unknown/)).toBeTruthy())
 
-    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: 'zone-1' } })
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
     fireEvent.submit(form)
-    await waitFor(() => expect(screen.getByText('This zone is already linked to this block.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('This zone is already linked to block A')).toBeTruthy())
   })
 })

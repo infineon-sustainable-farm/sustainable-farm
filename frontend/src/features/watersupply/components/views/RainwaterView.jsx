@@ -6,6 +6,7 @@ import { Pagination } from './Pagination'
 import { WsRadialGauge, WsBarChart } from '../charts'
 import { Spinner } from '../../../../shared/components/Spinner'
 import { EmptyState } from './EmptyState'
+import { sameId } from './ids'
 
 const DAY_MS = 24 * 3600 * 1000
 
@@ -30,7 +31,7 @@ export function RainwaterView() {
   }, [harvests])
 
   const filtered = useMemo(() => {
-    let list = harvests.filter((item) => !sourceFilter || item.sourceId === sourceFilter)
+    let list = harvests.filter((item) => !sourceFilter || sameId(item.sourceId, sourceFilter))
     if (period !== 'all') {
       const days = period === 'week' ? 7 : 30
       const cutoff = maxDateMs - days * DAY_MS

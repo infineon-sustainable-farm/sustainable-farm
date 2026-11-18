@@ -11,6 +11,7 @@ import { EmptyState } from './EmptyState'
 import { FormField } from '../../../../shared/components/FormField'
 import { inputStyle } from '../../../../shared/components/formStyles'
 import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
+import { sameId } from './ids'
 
 const DAY_MS = 24 * 3600 * 1000
 const MAINTENANCE_TYPES = ['cleaning', 'filter_change', 'repair', 'inspection']
@@ -60,7 +61,7 @@ export function DripView({ notify }) {
   }, [logs])
 
   const zoneFiltered = useMemo(() => {
-    let list = logs.filter((item) => !zoneFilter || item.zoneId === zoneFilter)
+    let list = logs.filter((item) => !zoneFilter || sameId(item.zoneId, zoneFilter))
     if (period !== 'all') {
       const days = period === 'week' ? 7 : 30
       const cutoff = maxDateMs - days * DAY_MS
