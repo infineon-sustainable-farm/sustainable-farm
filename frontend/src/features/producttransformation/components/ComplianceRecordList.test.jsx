@@ -220,7 +220,8 @@ describe('ComplianceRecordList', () => {
     const row = screen.getByText('CR-1').closest('tr');
     fireEvent.click(within(row).getByRole('button', { name: 'View' }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Compliance record details' });
+    // The details dialog is titled with the record ID.
+    const dialog = screen.getByRole('dialog', { name: 'CR-1' });
     expect(within(dialog).getByText('HACCP plan in place')).toBeTruthy();
     expect(within(dialog).getByText('Plan v2')).toBeTruthy();
     expect(within(dialog).getByText('Awa Diop')).toBeTruthy();
@@ -252,5 +253,53 @@ describe('ComplianceRecordList', () => {
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 
     expect(await screen.findByText('CR-1')).toBeTruthy();
+  });
+  it('shows the batch, type and status in the details and closes them', async () => {
+    render(<ComplianceRecordList />);
+    await screen.findByText('CR-2');
+
+    const row = screen.getByText('CR-2').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'View' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'CR-2' });
+    expect(within(dialog).getByText('Batch B-002 · EU Export')).toBeTruthy();
+    expect(within(dialog).getByText('Overdue')).toBeTruthy();
+    expect(within(dialog).getByText('No evidence recorded')).toBeTruthy();
+
+    fireEvent.click(within(dialog).getAllByRole('button', { name: 'Close' }).at(-1));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('keeps the delete dialog open with the error when the deletion fails', async () => {
+    complianceApi.deleteComplianceRecord.mockRejectedValueOnce(new Error('Record locked'));
+    render(<ComplianceRecordList />);
+    await screen.findByText('CR-1');
+
+    const row = screen.getByText('CR-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(await within(dialog).findByText('Record locked')).toBeTruthy();
+    expect(complianceApi.getAllComplianceRecords).toHaveBeenCalledTimes(1);
+  });
+
+  it('exports the filtered records as CSV', async () => {
+    const clicks = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function click() {
+      clicks.push({ href: this.href, download: this.download });
+    });
+    render(<ComplianceRecordList initialBatchId="B-001" />);
+    await screen.findByText('CR-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /Export CSV/i }));
+
+    expect(clicks).toHaveLength(1);
+    expect(clicks[0].download).toBe('compliance-records.csv');
+    const csv = decodeURIComponent(clicks[0].href.split(',').slice(1).join(','));
+    expect(csv.split('\n')).toEqual([
+      '"Record ID","Batch ID","Compliance Type","Requirement","Result","Evidence","Auditor","Audit Date","Next Audit Date","Compliant","Audit Overdue"',
+      '"CR-1","B-001","HACCP","HACCP plan in place","COMPLIANT","Plan v2","Awa Diop","2026-10-01","2027-04-01","Yes","No"',
+    ]);
   });
 });
