@@ -21,6 +21,8 @@ import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ConsumptionCriteria;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
@@ -53,6 +55,7 @@ public class WaterService {
     private final ZoneBlockResolver zoneBlockResolver;
     private final WaterIntegrationProperties properties;
     private final WaterLevelHistoryRepository levelHistoryRepository;
+    private final ProcessingBatchLookup processingBatches;
 
     public WaterService(
             FarmDirectory farmDirectory,
@@ -64,7 +67,8 @@ public class WaterService {
             WaterQuotaService waterQuotaService,
             ZoneBlockResolver zoneBlockResolver,
             WaterIntegrationProperties properties,
-            WaterLevelHistoryRepository levelHistoryRepository) {
+            WaterLevelHistoryRepository levelHistoryRepository,
+            ProcessingBatchLookup processingBatches) {
         this.farmDirectory = farmDirectory;
         this.waterSourceRepository = waterSourceRepository;
         this.waterConsumptionRepository = waterConsumptionRepository;
@@ -75,6 +79,7 @@ public class WaterService {
         this.zoneBlockResolver = zoneBlockResolver;
         this.properties = properties;
         this.levelHistoryRepository = levelHistoryRepository;
+        this.processingBatches = processingBatches;
     }
 
     public List<WaterSourceResponse> findSources() {
@@ -219,6 +224,7 @@ public class WaterService {
         consumption.setIrrigationId(request.irrigationId());
         consumption.setZoneId(request.zoneId());
         consumption.setLotId(normalizeLotId(request.lotId()));
+        consumption.setProcessingBatchId(processingBatchIdOf(consumption.getLotId()));
         consumption.setActivity(ConsumptionActivity.normalize(request.activity()));
         validateConsumptionReferences(consumption);
         WaterConsumption saved = waterConsumptionRepository.save(consumption);
@@ -246,6 +252,7 @@ public class WaterService {
         consumption.setZoneId(request.zoneId() == null ? consumption.getZoneId() : request.zoneId());
         if (request.lotId() != null) {
             consumption.setLotId(normalizeLotId(request.lotId()));
+            consumption.setProcessingBatchId(processingBatchIdOf(consumption.getLotId()));
         }
         if (request.activity() != null) {
             consumption.setActivity(ConsumptionActivity.normalize(request.activity()));
@@ -423,6 +430,11 @@ public class WaterService {
      */
     private static WaterConsumptionResponse consumptionResponse(WaterConsumption consumption, List<String> blocks) {
         return WaterConsumptionResponse.from(consumption, blocks.size() == 1 ? blocks.get(0) : null, blocks.size() > 1);
+    }
+
+    /** The product transformation batch a lot designates, or {@code null} when the lot is not one. */
+    private String processingBatchIdOf(String lotId) {
+        return processingBatches.findBatch(lotId).map(ProcessingBatch::batchId).orElse(null);
     }
 
     static String normalizeLotId(String lotId) {

@@ -13,6 +13,16 @@ import java.util.Optional;
 public interface HarvestLookup {
 
     /**
+     * Table of the harvest records, the target of the foreign keys of the other
+     * modules: a module that keeps the {@link HarvestSummary#id() id} of a harvest
+     * declares a foreign key to {@link #TABLE}({@link #KEY_COLUMN}).
+     */
+    String TABLE = "harvest_record";
+
+    /** Primary key column of {@link #TABLE}, referenced by the other modules. */
+    String KEY_COLUMN = "id";
+
+    /**
      * Lists the harvests, optionally of one farm and one block.
      *
      * @param farmId    farm identifier, or {@code null} for every farm

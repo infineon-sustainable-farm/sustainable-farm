@@ -37,7 +37,8 @@ import java.math.BigDecimal;
         indexes = {
                 @Index(name = "idx_harvest_event_harvest_date", columnList = "harvest_date"),
                 @Index(name = "idx_harvest_event_block_id", columnList = "block_id"),
-                @Index(name = "idx_harvest_event_variety_key", columnList = "variety_key")
+                @Index(name = "idx_harvest_event_variety_key", columnList = "variety_key"),
+                @Index(name = "idx_harvest_event_plants_harvest_id", columnList = "plants_harvest_id")
         })
 @Getter
 @Setter
@@ -53,8 +54,11 @@ public class HarvestEvent {
     @Column(name = "harvest_id", length = 50)
     private String harvestId;
 
-    // Reference to Plants harvest ID for cross-module integration
-    // Allows Product Transformation to reference Plants harvest data without duplication
+    /**
+     * The plants harvest record the event was imported from, when there is one: foreign key to
+     * plants {@code harvest_record.id} ({@code fk_harvest_event_plants_harvest}), checked on write
+     * through {@code plants.api.HarvestLookup}.
+     */
     @Column(name = "plants_harvest_id")
     private Long plantsHarvestId;
 

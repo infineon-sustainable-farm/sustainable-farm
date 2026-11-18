@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.AvailabilityForecastRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.LotUsageRequest;
@@ -46,6 +48,7 @@ public class ProductTransformationIntegrationService {
     private final AlertService alertService;
     private final WaterIntegrationProperties properties;
     private final FarmDirectory farmDirectory;
+    private final ProcessingBatchLookup processingBatches;
 
     public ProductTransformationIntegrationService(WaterConsumptionRepository consumptionRepository,
                                                    WaterQualityTestRepository qualityRepository,
@@ -53,7 +56,8 @@ public class ProductTransformationIntegrationService {
                                                    IrrigationScheduleRepository scheduleRepository,
                                                    AlertService alertService,
                                                    WaterIntegrationProperties properties,
-                                                   FarmDirectory farmDirectory) {
+                                                   FarmDirectory farmDirectory,
+                                                   ProcessingBatchLookup processingBatches) {
         this.consumptionRepository = consumptionRepository;
         this.qualityRepository = qualityRepository;
         this.sourceRepository = sourceRepository;
@@ -61,6 +65,7 @@ public class ProductTransformationIntegrationService {
         this.alertService = alertService;
         this.properties = properties;
         this.farmDirectory = farmDirectory;
+        this.processingBatches = processingBatches;
     }
 
     /** Attributes the consumptions of a time window to a lot (T1). Re-sending the same window is harmless. */
@@ -71,6 +76,7 @@ public class ProductTransformationIntegrationService {
         }
         String lotId = request.lotId().trim();
         String activity = ConsumptionActivity.normalize(request.activity());
+        String processingBatchId = processingBatches.findBatch(lotId).map(ProcessingBatch::batchId).orElse(null);
         List<WaterConsumption> inWindow = consumptionRepository.findAll(
                 ConsumptionCriteria.window(request.sourceId(), request.zoneId(), request.startAt(), request.endAt())
                         .toSpecification(), Sort.by("consumptionDate"));
@@ -82,6 +88,7 @@ public class ProductTransformationIntegrationService {
                 continue;
             }
             item.setLotId(lotId);
+            item.setProcessingBatchId(processingBatchId);
             if (activity != null) {
                 item.setActivity(activity);
             }
