@@ -62,6 +62,18 @@
       "LOSS": "Loss",
       "ADJUSTMENT_IN": "Adjustment in",
       "ADJUSTMENT_OUT": "Adjustment out"
+    },
+    "nurseryStage": {
+      "GERMINATION": "Germination",
+      "ROOTSTOCK_GROWTH": "Rootstock growth",
+      "GRAFTED": "Grafted",
+      "HARDENING": "Hardening",
+      "READY_TO_TRANSPLANT": "Ready to transplant"
+    },
+    "nurseryEvent": {
+      "STAGE_CHANGE": "Stage change",
+      "LOSS": "Loss",
+      "TRANSPLANT": "Transplant"
     }
   },
   "blockFilter": {
@@ -311,6 +323,154 @@
         "methodTooLong": "Method must be at most 255 characters.",
         "reasonRequired": "Reason is required.",
         "reasonTooLong": "Reason must be at most 255 characters."
+      }
+    }
+  },
+  "nursery": {
+    "documentTitle": "Nursery — Plants",
+    "title": "Nursery",
+    "subtitle": "Seedling batches until they are transplanted.",
+    "addBatch": "Add a batch",
+    "recordEvent": "Record an event",
+    "destinationBlock": "Destination block:",
+    "alerts": {
+      "title": "Transplant alerts",
+      "subtitle": "All batches.",
+      "loading": "Loading transplant alerts…",
+      "error": "Alerts are unavailable.",
+      "empty": "No batch to transplant today.",
+      "itemTitle": "Batch to transplant",
+      "dateLabel": "Planned transplant"
+    },
+    "batches": {
+      "title": "Nursery batches",
+      "loading": "Loading batches…",
+      "error": "Batches could not be loaded",
+      "errorHint": "The request to the server did not succeed.",
+      "empty": "No nursery batch yet",
+      "emptyForBlock": "No batch is planned for this block",
+      "emptyForBlockHint": "Select “All blocks”.",
+      "caption": "Nursery batches",
+      "columns": {
+        "batch": "Batch",
+        "variety": "Variety",
+        "inNursery": "In nursery",
+        "destBlock": "Dest. block",
+        "stage": "Stage",
+        "plannedTransplant": "Planned transplant",
+        "survivalRate": "Survival rate",
+        "origin": "Origin"
+      },
+      "noPlantsLeft": "No plants left",
+      "since": "since {{date}}",
+      "supplierLot": "{{supplier}} · lot {{lot}}",
+      "batchOption": "{{code}} · {{variety}}"
+    },
+    "survival": {
+      "title": "Survival rate by batch",
+      "cardTitle": "{{code}} · {{variety}}",
+      "cardTitleWithBlock": "{{code}} · {{variety}} ({{block}})",
+      "survived": "{{survived}} of {{initial}} survived",
+      "lostTransplanted": "{{lost}} lost · {{transplanted}} transplanted"
+    },
+    "history": {
+      "title": "Nursery history",
+      "subtitle": "The destination block filter does not apply here.",
+      "batch": "Batch",
+      "event": "Event",
+      "from": "From",
+      "to": "To",
+      "allBatches": "All batches",
+      "allEvents": "All events",
+      "error": "Nursery events could not be loaded",
+      "emptyFiltered": "No event matches these filters",
+      "emptyFilteredHint": "Try another batch, event or date range.",
+      "empty": "No nursery event recorded yet",
+      "caption": "Nursery history",
+      "columns": {
+        "date": "Date",
+        "batch": "Batch",
+        "event": "Event",
+        "stage": "Stage",
+        "quantity": "Quantity",
+        "block": "Block",
+        "reason": "Reason",
+        "source": "Source"
+      }
+    },
+    "addForm": {
+      "title": "Add a nursery batch",
+      "batchCode": "Batch code",
+      "variety": "Variety",
+      "origin": "Origin",
+      "supplier": "Supplier",
+      "supplierLot": "Supplier lot number",
+      "startDate": "Start date",
+      "initialCount": "Initial count",
+      "initialStage": "Initial stage",
+      "selectStage": "Select a stage",
+      "plannedDate": "Planned transplant date",
+      "plannedBlock": "Planned block",
+      "submit": "Add batch",
+      "submitting": "Adding…",
+      "notes": {
+        "batchCode": "Letters are saved in capitals: p1 becomes P1.",
+        "varietyName": "The transplant plants this variety. The forecast uses the reference of the same name.",
+        "startedOn": "Day of sowing, or of reception for a purchase.",
+        "plannedBlockCode": "Optional. The transplant alerts name it."
+      },
+      "errors": {
+        "batchCodeRequired": "Batch code is required.",
+        "batchCodeFormat": "Batch code must be up to 20 letters, digits or hyphens, such as P1 or KEITT-2026-01.",
+        "varietyRequired": "Variety is required.",
+        "varietyTooLong": "Variety must be at most {{max}} characters.",
+        "originRequired": "Origin is required.",
+        "supplierRequired": "Supplier is required for an external purchase.",
+        "supplierTooLong": "Supplier must be at most {{max}} characters.",
+        "lotTooLong": "Supplier lot number must be at most {{max}} characters.",
+        "startRequired": "Start date is required.",
+        "startFuture": "Start date cannot be in the future.",
+        "countInvalid": "Initial count must be a whole number, 1 or more.",
+        "stageRequired": "Initial stage is required.",
+        "plannedDateRequired": "Planned transplant date is required.",
+        "plannedBlockFormat": "Planned block must be a short code such as E or B2, without prefix or space."
+      }
+    },
+    "eventForm": {
+      "title": "Record a nursery event",
+      "event": "Event",
+      "batch": "Batch",
+      "date": "Date",
+      "stage": "Stage",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "block": "Block",
+      "selectBatch": "Select a batch",
+      "selectStage": "Select a stage",
+      "submitting": "Recording…",
+      "submit": {
+        "STAGE_CHANGE": "Record stage change",
+        "LOSS": "Record loss",
+        "TRANSPLANT": "Record transplant"
+      },
+      "notes": {
+        "currentStage": "Current stage: {{stage}}, since {{date}}.",
+        "inNursery": "In nursery: {{count}}",
+        "plannedBlock": "Planned block: {{block}}. ",
+        "oncePerBlock": "A variety can be planted only once on a block.",
+        "transplant": "The transplant also records the planting of {{variety}} on this block: it then appears in Varieties, Growth Calendar and the forecast.",
+        "batchVariety": "the batch's variety"
+      },
+      "errors": {
+        "batchRequired": "Batch is required.",
+        "dateRequired": "Date is required.",
+        "dateFuture": "Date cannot be in the future.",
+        "stageRequired": "Stage is required.",
+        "quantityInvalid": "Quantity must be a whole number, 1 or more.",
+        "reasonRequired": "Reason is required.",
+        "reasonTooLong": "Reason must be at most {{max}} characters.",
+        "blockRequired": "Block is required.",
+        "blockFormat": "Block must be a short code such as A or B2, without prefix or space."
       }
     }
   }

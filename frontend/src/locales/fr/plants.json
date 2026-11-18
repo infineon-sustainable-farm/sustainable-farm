@@ -62,6 +62,18 @@
       "LOSS": "Perte",
       "ADJUSTMENT_IN": "Ajustement entrant",
       "ADJUSTMENT_OUT": "Ajustement sortant"
+    },
+    "nurseryStage": {
+      "GERMINATION": "Germination",
+      "ROOTSTOCK_GROWTH": "Croissance du porte-greffe",
+      "GRAFTED": "Greffé",
+      "HARDENING": "Endurcissement",
+      "READY_TO_TRANSPLANT": "Prêt à transplanter"
+    },
+    "nurseryEvent": {
+      "STAGE_CHANGE": "Changement de stade",
+      "LOSS": "Perte",
+      "TRANSPLANT": "Transplantation"
     }
   },
   "blockFilter": {
@@ -311,6 +323,154 @@
         "methodTooLong": "La méthode doit comporter au plus 255 caractères.",
         "reasonRequired": "Le motif est obligatoire.",
         "reasonTooLong": "Le motif doit comporter au plus 255 caractères."
+      }
+    }
+  },
+  "nursery": {
+    "documentTitle": "Pépinière — Plantes",
+    "title": "Pépinière",
+    "subtitle": "Les lots de plants jusqu’à leur transplantation.",
+    "addBatch": "Ajouter un lot",
+    "recordEvent": "Enregistrer un événement",
+    "destinationBlock": "Bloc de destination :",
+    "alerts": {
+      "title": "Alertes de transplantation",
+      "subtitle": "Tous les lots.",
+      "loading": "Chargement des alertes de transplantation…",
+      "error": "Les alertes sont indisponibles.",
+      "empty": "Aucun lot à transplanter aujourd’hui.",
+      "itemTitle": "Lot à transplanter",
+      "dateLabel": "Transplantation prévue"
+    },
+    "batches": {
+      "title": "Lots de pépinière",
+      "loading": "Chargement des lots…",
+      "error": "Les lots n’ont pas pu être chargés",
+      "errorHint": "La requête au serveur a échoué.",
+      "empty": "Aucun lot de pépinière pour l’instant",
+      "emptyForBlock": "Aucun lot n’est prévu pour ce bloc",
+      "emptyForBlockHint": "Sélectionnez « Tous les blocs ».",
+      "caption": "Lots de pépinière",
+      "columns": {
+        "batch": "Lot",
+        "variety": "Variété",
+        "inNursery": "En pépinière",
+        "destBlock": "Bloc de dest.",
+        "stage": "Stade",
+        "plannedTransplant": "Transplantation prévue",
+        "survivalRate": "Taux de survie",
+        "origin": "Origine"
+      },
+      "noPlantsLeft": "Plus aucun plant",
+      "since": "depuis le {{date}}",
+      "supplierLot": "{{supplier}} · lot {{lot}}",
+      "batchOption": "{{code}} · {{variety}}"
+    },
+    "survival": {
+      "title": "Taux de survie par lot",
+      "cardTitle": "{{code}} · {{variety}}",
+      "cardTitleWithBlock": "{{code}} · {{variety}} ({{block}})",
+      "survived": "{{survived}} sur {{initial}} ont survécu",
+      "lostTransplanted": "{{lost}} perdus · {{transplanted}} transplantés"
+    },
+    "history": {
+      "title": "Historique de la pépinière",
+      "subtitle": "Le filtre du bloc de destination ne s’applique pas ici.",
+      "batch": "Lot",
+      "event": "Événement",
+      "from": "Du",
+      "to": "Au",
+      "allBatches": "Tous les lots",
+      "allEvents": "Tous les événements",
+      "error": "Les événements de pépinière n’ont pas pu être chargés",
+      "emptyFiltered": "Aucun événement ne correspond à ces filtres",
+      "emptyFilteredHint": "Essayez un autre lot, un autre événement ou une autre période.",
+      "empty": "Aucun événement de pépinière enregistré pour l’instant",
+      "caption": "Historique de la pépinière",
+      "columns": {
+        "date": "Date",
+        "batch": "Lot",
+        "event": "Événement",
+        "stage": "Stade",
+        "quantity": "Quantité",
+        "block": "Bloc",
+        "reason": "Motif",
+        "source": "Source"
+      }
+    },
+    "addForm": {
+      "title": "Ajouter un lot de pépinière",
+      "batchCode": "Code du lot",
+      "variety": "Variété",
+      "origin": "Origine",
+      "supplier": "Fournisseur",
+      "supplierLot": "Numéro de lot du fournisseur",
+      "startDate": "Date de début",
+      "initialCount": "Effectif initial",
+      "initialStage": "Stade initial",
+      "selectStage": "Choisir un stade",
+      "plannedDate": "Date de transplantation prévue",
+      "plannedBlock": "Bloc prévu",
+      "submit": "Ajouter le lot",
+      "submitting": "Ajout…",
+      "notes": {
+        "batchCode": "Les lettres sont enregistrées en majuscules : p1 devient P1.",
+        "varietyName": "La transplantation plante cette variété. La prévision utilise la référence du même nom.",
+        "startedOn": "Jour du semis, ou de la réception pour un achat.",
+        "plannedBlockCode": "Facultatif. Les alertes de transplantation le citent."
+      },
+      "errors": {
+        "batchCodeRequired": "Le code du lot est obligatoire.",
+        "batchCodeFormat": "Le code du lot doit compter au plus 20 lettres, chiffres ou tirets, comme P1 ou KEITT-2026-01.",
+        "varietyRequired": "La variété est obligatoire.",
+        "varietyTooLong": "La variété doit compter au plus {{max}} caractères.",
+        "originRequired": "L’origine est obligatoire.",
+        "supplierRequired": "Le fournisseur est obligatoire pour un achat externe.",
+        "supplierTooLong": "Le fournisseur doit compter au plus {{max}} caractères.",
+        "lotTooLong": "Le numéro de lot du fournisseur doit compter au plus {{max}} caractères.",
+        "startRequired": "La date de début est obligatoire.",
+        "startFuture": "La date de début ne peut pas être dans le futur.",
+        "countInvalid": "L’effectif initial doit être un nombre entier, 1 ou plus.",
+        "stageRequired": "Le stade initial est obligatoire.",
+        "plannedDateRequired": "La date de transplantation prévue est obligatoire.",
+        "plannedBlockFormat": "Le bloc prévu doit être un code court comme E ou B2, sans préfixe ni espace."
+      }
+    },
+    "eventForm": {
+      "title": "Enregistrer un événement de pépinière",
+      "event": "Événement",
+      "batch": "Lot",
+      "date": "Date",
+      "stage": "Stade",
+      "quantity": "Quantité",
+      "reason": "Motif",
+      "block": "Bloc",
+      "selectBatch": "Choisir un lot",
+      "selectStage": "Choisir un stade",
+      "submitting": "Enregistrement…",
+      "submit": {
+        "STAGE_CHANGE": "Enregistrer le changement de stade",
+        "LOSS": "Enregistrer la perte",
+        "TRANSPLANT": "Enregistrer la transplantation"
+      },
+      "notes": {
+        "currentStage": "Stade actuel : {{stage}}, depuis le {{date}}.",
+        "inNursery": "En pépinière : {{count}}",
+        "plannedBlock": "Bloc prévu : {{block}}. ",
+        "oncePerBlock": "Une variété ne peut être plantée qu’une fois sur un bloc.",
+        "transplant": "La transplantation enregistre aussi la plantation de {{variety}} sur ce bloc : elle apparaît alors dans Variétés, Calendrier de croissance et la prévision.",
+        "batchVariety": "la variété du lot"
+      },
+      "errors": {
+        "batchRequired": "Le lot est obligatoire.",
+        "dateRequired": "La date est obligatoire.",
+        "dateFuture": "La date ne peut pas être dans le futur.",
+        "stageRequired": "Le stade est obligatoire.",
+        "quantityInvalid": "La quantité doit être un nombre entier, 1 ou plus.",
+        "reasonRequired": "Le motif est obligatoire.",
+        "reasonTooLong": "Le motif doit compter au plus {{max}} caractères.",
+        "blockRequired": "Le bloc est obligatoire.",
+        "blockFormat": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace."
       }
     }
   }
