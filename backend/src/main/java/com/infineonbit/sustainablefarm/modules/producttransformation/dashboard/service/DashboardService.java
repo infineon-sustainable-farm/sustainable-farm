@@ -16,7 +16,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.harvesteven
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.repository.DryingRunRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
@@ -51,7 +51,7 @@ public class DashboardService {
     private final BatchRepository batchRepository;
     private final QcCheckpointRepository qcCheckpointRepository;
     private final DryingRunRepository dryingRunRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final WashSortRecordRepository washSortRecordRepository;
     
     /**
@@ -256,7 +256,7 @@ public class DashboardService {
     public EquipmentUtilizationKPI calculateEquipmentUtilization() {
         log.debug("Calculating equipment utilization");
         
-        List<Equipment> allEquipment = equipmentRepository.findAll();
+        List<Equipment> allEquipment = equipmentService.getAllEquipment();
         int totalEquipment = allEquipment.size();
         
         int activeEquipment = (int) allEquipment.stream()
@@ -400,7 +400,7 @@ public class DashboardService {
     public List<EquipmentUtilizationChartData> getEquipmentUtilizationChartData() {
         log.debug("Calculating equipment utilization chart data");
         
-        List<Equipment> allEquipment = equipmentRepository.findAll();
+        List<Equipment> allEquipment = equipmentService.getAllEquipment();
         int totalEquipment = allEquipment.size();
         
         List<EquipmentUtilizationChartData> utilizationData = new java.util.ArrayList<>();

@@ -6,7 +6,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrec
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.repository.WashSortRecordRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.service.WashSortRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,30 +34,29 @@ import java.util.List;
 public class WashSortRecordServiceImpl implements WashSortRecordService {
 
     private final WashSortRecordRepository washSortRecordRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final OperatorRepository operatorRepository;
 
     @Autowired
     public WashSortRecordServiceImpl(WashSortRecordRepository washSortRecordRepository,
-                                     EquipmentRepository equipmentRepository,
+                                     EquipmentService equipmentService,
                                      OperatorRepository operatorRepository) {
         this.washSortRecordRepository = washSortRecordRepository;
-        this.equipmentRepository = equipmentRepository;
+        this.equipmentService = equipmentService;
         this.operatorRepository = operatorRepository;
     }
 
     @Override
     public WashSortRecord createWashSortRecord(WashSortRecord washSortRecord) {
         // Business Rule: Validate equipment availability
-        if (washSortRecord.getEquipment() != null) {
-            Equipment equipment = washSortRecord.getEquipment();
+        if (washSortRecord.getEquipmentId() != null) {
             // Verify equipment exists and is available
-            Equipment dbEquipment = equipmentRepository.findById(equipment.getEquipmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with ID: " + equipment.getEquipmentId()));
+            Equipment dbEquipment = equipmentService.findEquipmentByRegisterId(washSortRecord.getEquipmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with ID: " + washSortRecord.getEquipmentId()));
             
             if (dbEquipment.getMaintenanceStatus() != Equipment.MaintenanceStatus.ACTIVE) {
                 throw new BusinessRuleViolationException(
-                    "Equipment is not available for washing. Equipment ID: " + equipment.getEquipmentId() + 
+                    "Equipment is not available for washing. Equipment ID: " + dbEquipment.getEquipmentId() + 
                     " must be in ACTIVE status. Current status: " + dbEquipment.getMaintenanceStatus()
                 );
             }
@@ -100,7 +99,7 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
         existingRecord.setWaterUsageLiters(washSortRecord.getWaterUsageLiters());
         existingRecord.setStartTime(washSortRecord.getStartTime());
         existingRecord.setEndTime(washSortRecord.getEndTime());
-        existingRecord.setEquipment(washSortRecord.getEquipment());
+        existingRecord.setEquipmentId(washSortRecord.getEquipmentId());
         existingRecord.setOperator(washSortRecord.getOperator());
         
         return washSortRecordRepository.save(existingRecord);
@@ -142,7 +141,9 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
     @Override
     @Transactional(readOnly = true)
     public List<WashSortRecord> getWashSortRecordsByEquipment(String equipmentId) {
-        return washSortRecordRepository.findByEquipmentEquipmentId(equipmentId);
+        return equipmentService.findEquipmentById(equipmentId)
+                .map(equipment -> washSortRecordRepository.findByEquipmentId(equipment.getId()))
+                .orElse(List.of());
     }
 
     @Override

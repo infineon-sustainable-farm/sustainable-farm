@@ -1,0 +1,20 @@
+package com.infineonbit.sustainablefarm.modules.machinery.api;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Read access to the farm equipment register owned by machinery (ADR 0004).
+ */
+public interface EquipmentLookup {
+
+    /** The equipment with this register id, if any. */
+    Optional<EquipmentView> findById(Long id);
+
+    /** The equipment with this business code, if any. */
+    Optional<EquipmentView> findByCode(String code);
+
+    /** Every piece of equipment that serves one of these stages, ordered by id. */
+    List<EquipmentView> findByStages(Collection<Stage> stages);
+}

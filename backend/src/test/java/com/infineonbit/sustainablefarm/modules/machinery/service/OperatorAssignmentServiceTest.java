@@ -6,9 +6,9 @@ import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.OperatorAss
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.OperatorAssignmentObtainingResponse;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.OperatorAssignment;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Category;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentAlreadyAssignedException;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.OperatorAssignmentNotFoundException;

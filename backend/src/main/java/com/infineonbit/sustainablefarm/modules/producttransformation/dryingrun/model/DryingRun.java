@@ -1,11 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import lombok.AllArgsConstructor;
@@ -30,7 +28,8 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "drying_run", indexes = {
         @Index(name = "idx_drying_run_batch_id", columnList = "batch_id"),
-        @Index(name = "idx_drying_run_start_time", columnList = "start_time")
+        @Index(name = "idx_drying_run_start_time", columnList = "start_time"),
+        @Index(name = "idx_drying_run_equipment_id", columnList = "equipment_id")
 })
 @Getter
 @Setter
@@ -76,9 +75,9 @@ public class DryingRun {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipment_id", foreignKey = @ForeignKey(name = "fk_drying_run_equipment"), referencedColumnName = "equipment_id")
-    private Equipment equipment;
+    /** The register id of the equipment used (machinery {@code equipment}); the equipment cannot be deleted while used. */
+    @Column(name = "equipment_id")
+    private Long equipmentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_drying_run_operator"), referencedColumnName = "operator_id")

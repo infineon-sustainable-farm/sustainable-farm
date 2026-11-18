@@ -76,7 +76,8 @@ public class CrossModuleForeignKeyInstaller implements SmartInitializingSingleto
         jdbc.execute("ALTER TABLE " + foreignKey.table()
                 + " ADD CONSTRAINT " + foreignKey.name()
                 + " FOREIGN KEY (" + foreignKey.column() + ")"
-                + " REFERENCES " + foreignKey.referencedTable() + " (" + foreignKey.referencedColumn() + ")");
+                + " REFERENCES " + foreignKey.referencedTable() + " (" + foreignKey.referencedColumn() + ")"
+                + " ON DELETE " + foreignKey.onDelete().sql());
         log.info("Added the foreign key {} on {}({}) to {}({})", foreignKey.name(), foreignKey.table(),
                 foreignKey.column(), foreignKey.referencedTable(), foreignKey.referencedColumn());
     }
