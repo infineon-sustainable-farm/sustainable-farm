@@ -20,8 +20,8 @@ import org.hibernate.annotations.ColumnDefault;
 @Table(name = "product_batches", uniqueConstraints = @UniqueConstraint(name = "product_batches_batch_code_key", columnNames = "batch_code"),
         indexes = {
                 @Index(name = "idx_product_batches_status", columnList = "status"),
-                @Index(name = "idx_product_batches_packaging_record_id", columnList = "packaging_record_id")
-        })
+                @Index(name = "idx_product_batches_packaging_record_id", columnList = "packaging_record_id"),
+                @Index(name = "idx_product_batches_product_id", columnList = "product_id")})
 public class ProductBatch extends BaseEntity {
 
     @Column(name = "batch_code", nullable = false, length = 20)

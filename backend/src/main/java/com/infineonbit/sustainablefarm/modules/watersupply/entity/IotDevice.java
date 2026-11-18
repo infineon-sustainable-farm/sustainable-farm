@@ -17,10 +17,7 @@ import java.time.Instant;
 @Entity
 @Table(name = "iot_devices",
         uniqueConstraints = @UniqueConstraint(name = "iot_devices_device_id_key", columnNames = "device_id"),
-        indexes = {
-                @Index(name = "idx_iot_device_uid", columnList = "device_id"),
-                @Index(name = "idx_iot_last_seen", columnList = "last_seen")
-        })
+        indexes = @Index(name = "idx_iot_last_seen", columnList = "last_seen"))
 public class IotDevice extends BaseEntity {
 
     @NotBlank

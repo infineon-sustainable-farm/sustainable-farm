@@ -52,7 +52,9 @@ import java.time.LocalDate;
  */
 @Entity
 @EntityListeners(BlockLabelListener.class)
-@Table(name = "fertilizer_movement", indexes = @Index(name = "idx_fertilizer_movement_block_id", columnList = "block_id"))
+@Table(name = "fertilizer_movement", indexes = {
+                @Index(name = "idx_fertilizer_movement_block_id", columnList = "block_id"),
+                @Index(name = "idx_fertilizer_movement_product_id", columnList = "product_id")})
 @Getter
 @Setter
 @NoArgsConstructor

@@ -19,7 +19,9 @@ import java.time.LocalDate;
 
 /** The demand forecast of a month for a product and a scenario. */
 @Entity
-@Table(name = "demand_forecasts", indexes = @Index(name = "idx_forecasts_month", columnList = "forecast_month, scenario"))
+@Table(name = "demand_forecasts", indexes = {
+                @Index(name = "idx_forecasts_month", columnList = "forecast_month, scenario"),
+                @Index(name = "idx_demand_forecasts_product_id", columnList = "product_id")})
 @Getter
 @Setter
 public class DemandForecast extends BaseEntity {

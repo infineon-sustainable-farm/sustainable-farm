@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -22,7 +23,8 @@ import java.time.Instant;
  * to the submitted Feedback.
  */
 @Entity
-@Table(name = "survey_send")
+@Table(name = "survey_send",
+        indexes = @Index(name = "idx_survey_send_visitor_id", columnList = "visitor_id"))
 public class SurveySend extends BaseEntity {
 
     @NotNull

@@ -13,7 +13,8 @@ import org.hibernate.annotations.ColumnDefault;
 @Entity
 @Table(name = "irrigation_schedules", indexes = {
         @Index(name = "idx_irrigation_schedules_zone_id", columnList = "zone_id"),
-        @Index(name = "idx_irrigation_schedules_start_time", columnList = "start_time")
+        @Index(name = "idx_irrigation_schedules_start_time", columnList = "start_time"),
+        @Index(name = "idx_irrigation_schedules_created_by", columnList = "created_by")
 })
 public class IrrigationSchedule extends BaseEntity {
     @NotNull

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -32,7 +33,8 @@ import java.time.LocalDate;
  * snake_case and a singular table name.
  */
 @Entity
-@Table(name = "population_event")
+@Table(name = "population_event",
+        indexes = @Index(name = "idx_population_event_block_variety_id", columnList = "block_variety_id"))
 @Getter
 @Setter
 @NoArgsConstructor

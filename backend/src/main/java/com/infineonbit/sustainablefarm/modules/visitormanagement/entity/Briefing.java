@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -19,7 +20,8 @@ import java.time.Instant;
  * before site access; gates access strictly per the Site Security module.
  */
 @Entity
-@Table(name = "briefing")
+@Table(name = "briefing",
+        indexes = @Index(name = "idx_briefing_staff_member_person_id", columnList = "staff_member_person_id"))
 public class Briefing extends BaseEntity {
 
     @NotNull

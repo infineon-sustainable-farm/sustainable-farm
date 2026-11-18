@@ -16,7 +16,9 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "iot_commands",
-        indexes = @Index(name = "idx_iot_commands_device_requested", columnList = "device_id, requested_at"))
+        indexes = {
+                @Index(name = "idx_iot_commands_device_requested", columnList = "device_id, requested_at"),
+                @Index(name = "idx_iot_commands_requested_by", columnList = "requested_by")})
 public class IotCommand extends BaseEntity {
     @Column(name = "device_id", nullable = false, length = 64)
     private String deviceId;
