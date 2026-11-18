@@ -1,43 +1,34 @@
 import { Pencil, Trash2 } from "lucide-react";
-import { formatDate } from "../../../shared/utils/formatDate";
+import { useTranslation } from "react-i18next";
+import { IconButton, Table } from "../../../shared/ui";
+import { useMachineryFormat } from "../format";
 
-function OperatorAssignmentTable({ assignments, getEquipmentName, onEdit, onDelete }) {
+function OperatorAssignmentTable({ assignments = [], getEquipmentName, onEdit, onDelete, loading = false }) {
+  const { t } = useTranslation("machinery");
+  const { t: tCommon } = useTranslation("common");
+  const format = useMachineryFormat();
+
+  const columns = [
+    { key: "fullName", header: t("fields.operator") },
+    { key: "jobTitle", header: t("operators.jobTitle") },
+    { key: "equipment", header: t("fields.equipment"), cell: (row) => getEquipmentName(row.equipmentId) },
+    { key: "startDate", header: t("operators.startDate"), cell: (row) => format.date(row.startDate) },
+    { key: "endDate", header: t("operators.endDate"), cell: (row) => format.date(row.endDate) },
+  ];
+
   return (
-    <table className="w-full text-left border-collapse">
-      <thead>
-        <tr className="border-b border-gray-200 text-sm text-gray-500">
-          <th className="py-2">Operator</th>
-          <th className="py-2">Job title</th>
-          <th className="py-2">Equipment</th>
-          <th className="py-2">Start date</th>
-          <th className="py-2">End date</th>
-          <th className="py-2">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {assignments.map((assignment, index) => (
-          <tr
-            key={assignment.id}
-            className="border-b border-gray-100 animate-fade-up-sm"
-            style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
-          >
-            <td className="py-2 font-medium">{assignment.fullName}</td>
-            <td className="py-2">{assignment.jobTitle}</td>
-            <td className="py-2">{getEquipmentName(assignment.equipmentId)}</td>
-            <td className="py-2">{formatDate(assignment.startDate)}</td>
-            <td className="py-2">{formatDate(assignment.endDate)}</td>
-            <td className="py-2 space-x-2">
-              <button type="button" onClick={() => onEdit(assignment)} className="text-primary hover:opacity-70" title="Edit assignment">
-                <Pencil size={16} />
-              </button>
-              <button type="button" onClick={() => onDelete(assignment)} className="text-red-600 hover:opacity-70" title="Delete">
-                <Trash2 size={16} />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <Table
+      caption={t("operators.title")}
+      columns={columns}
+      rows={assignments}
+      loading={loading}
+      rowActions={(assignment) => (
+        <>
+          <IconButton icon={Pencil} label={t("operators.edit")} onClick={() => onEdit(assignment)} />
+          <IconButton icon={Trash2} label={tCommon("actions.delete")} tone="danger" onClick={() => onDelete(assignment)} />
+        </>
+      )}
+    />
   );
 }
 export default OperatorAssignmentTable;

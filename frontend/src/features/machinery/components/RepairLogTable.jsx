@@ -1,50 +1,51 @@
 import { Pencil, Trash2 } from "lucide-react";
-import { formatDate } from "../../../shared/utils/formatDate";
-import { formatCurrency, formatDecimal } from "../../../shared/utils/formatDecimal";
+import { useTranslation } from "react-i18next";
+import { IconButton, Table } from "../../../shared/ui";
+import { useMachineryFormat } from "../format";
 
-function RepairLogTable({ repairLogs, getEquipmentName, onEdit, onDelete }) {
+function RepairLogTable({ repairLogs = [], getEquipmentName, onEdit, onDelete, loading = false }) {
+  const { t } = useTranslation("machinery");
+  const { t: tCommon } = useTranslation("common");
+  const format = useMachineryFormat();
+
+  const columns = [
+    {
+      key: "date",
+      header: t("fields.date"),
+      className: "whitespace-nowrap",
+      // The kit sets the first column in medium weight; this list keeps regular text.
+      cell: (row) => <span className="font-normal">{format.date(row.date)}</span>,
+    },
+    { key: "equipment", header: t("fields.equipment"), cell: (row) => getEquipmentName(row.equipmentId) },
+    {
+      key: "issue",
+      header: t("repair.issue"),
+      className: "max-w-xs truncate",
+      cell: (row) => <span title={row.issue}>{row.issue}</span>,
+    },
+    {
+      key: "downtime",
+      header: t("repair.downtime"),
+      className: "whitespace-nowrap",
+      cell: (row) => t("units.hours", { value: format.decimal(row.downtime) }),
+    },
+    { key: "cost", header: t("fields.cost"), cell: (row) => format.currency(row.cost) },
+    { key: "technician", header: t("repair.technician"), cell: (row) => row.technician ?? format.none },
+  ];
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="border-b border-gray-200 text-sm text-gray-500">
-            <th className="py-2">Date</th>
-            <th className="py-2">Equipment</th>
-            <th className="py-2">Issue</th>
-            <th className="py-2">Downtime</th>
-            <th className="py-2">Cost</th>
-            <th className="py-2">Technician</th>
-            <th className="py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {repairLogs.map((repairLog, index) => (
-            <tr
-              key={repairLog.id}
-              className="border-b border-gray-100 animate-fade-up-sm"
-              style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
-            >
-              <td className="py-2 whitespace-nowrap">{formatDate(repairLog.date)}</td>
-              <td className="py-2">{getEquipmentName(repairLog.equipmentId)}</td>
-              <td className="py-2 max-w-xs truncate" title={repairLog.issue}>
-                {repairLog.issue}
-              </td>
-              <td className="py-2 whitespace-nowrap">{formatDecimal(repairLog.downtime)} h</td>
-              <td className="py-2">{formatCurrency(repairLog.cost)}</td>
-              <td className="py-2">{repairLog.technician ?? "—"}</td>
-              <td className="py-2 space-x-2">
-                <button type="button" onClick={() => onEdit(repairLog)} className="text-primary hover:opacity-70" title="Edit repair log">
-                  <Pencil size={16} />
-                </button>
-                <button type="button" onClick={() => onDelete(repairLog)} className="text-red-600 hover:opacity-70" title="Delete">
-                  <Trash2 size={16} />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table
+      caption={t("repair.title")}
+      columns={columns}
+      rows={repairLogs}
+      loading={loading}
+      rowActions={(repairLog) => (
+        <>
+          <IconButton icon={Pencil} label={t("repair.edit")} onClick={() => onEdit(repairLog)} />
+          <IconButton icon={Trash2} label={tCommon("actions.delete")} tone="danger" onClick={() => onDelete(repairLog)} />
+        </>
+      )}
+    />
   );
 }
 export default RepairLogTable;

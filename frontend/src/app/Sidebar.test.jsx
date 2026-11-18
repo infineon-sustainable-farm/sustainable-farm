@@ -1,19 +1,32 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import i18n from '../shared/i18n/i18n'
 import Sidebar from './Sidebar'
 import { otherModuleNav, shellModuleNav } from '../test/appFixtures'
 
-function renderSidebar(path = '/machinery/equipment-registry') {
+function renderSidebar(path = '/machinery/equipment-registry', navs = [shellModuleNav, otherModuleNav]) {
   render(
     <MemoryRouter initialEntries={[path]}>
-      <Sidebar navs={[shellModuleNav, otherModuleNav]} />
+      <Sidebar navs={navs} />
     </MemoryRouter>,
   )
   return screen.getByRole('navigation', { name: 'Modules' })
 }
+
+function MachineryFooter() {
+  return <button type="button">machinery footer</button>
+}
+
+function WaterFooter() {
+  return <p>water footer</p>
+}
+
+const navsWithFooters = [
+  { ...shellModuleNav, sidebarFooter: MachineryFooter },
+  { ...otherModuleNav, sidebarFooter: WaterFooter },
+]
 
 describe('Sidebar', () => {
   it('shows one group per module, the current one expanded with its links', () => {
@@ -90,5 +103,39 @@ describe('Sidebar', () => {
     })
     expect(within(nav).getByRole('link', { name: 'Approvisionnement en eau' })).toBeInTheDocument()
     expect(document.documentElement.lang).toBe('fr')
+  })
+
+  describe('sidebarFooter of the nav contract', () => {
+    it('renders the footer of the current module only, inside the navigation above the language', () => {
+      const nav = renderSidebar('/machinery/spare-parts', navsWithFooters)
+      const footer = within(nav).getByRole('button', { name: 'machinery footer' })
+      expect(within(nav).queryByText('water footer')).not.toBeInTheDocument()
+      const language = within(nav).getByRole('combobox', { name: 'Language' })
+      expect(footer.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
+
+    it('switches the footer with the current module', () => {
+      const nav = renderSidebar('/watersupply/farms', navsWithFooters)
+      expect(within(nav).getByText('water footer')).toBeInTheDocument()
+      expect(within(nav).queryByRole('button', { name: 'machinery footer' })).not.toBeInTheDocument()
+    })
+
+    it('renders no footer outside a module or for a module without one', () => {
+      renderSidebar('/unknown', navsWithFooters)
+      expect(screen.queryByTestId('sidebar-module-footer')).not.toBeInTheDocument()
+      cleanup()
+      renderSidebar('/machinery')
+      expect(screen.queryByTestId('sidebar-module-footer')).not.toBeInTheDocument()
+    })
+
+    it('puts the footer in the drawer: inert while closed, reachable once opened', () => {
+      const nav = renderSidebar('/machinery', navsWithFooters)
+      const footerButton = within(nav).getByRole('button', { name: 'machinery footer' })
+      expect(nav).toHaveAttribute('inert')
+      fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }))
+      expect(nav).not.toHaveAttribute('inert')
+      footerButton.focus()
+      expect(document.activeElement).toBe(footerButton)
+    })
   })
 })

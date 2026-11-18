@@ -1,8 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Bell, Trash2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { IconButton } from "../../../shared/ui";
 import { useLowStockSpareParts } from "../hooks/useLowStockSpareParts";
 
 const STORAGE_KEY = "machinery.dismissed-low-stock";
+
+// Sidebar link look of the shell (app/Sidebar.jsx): white text on primary, hover on primary-hover,
+// white focus outline inside the button.
+const TOGGLE_CLASS = [
+  "flex min-h-9 w-full cursor-pointer items-center gap-3 rounded-control px-3 py-2 text-sm text-on-primary",
+  "hover:bg-primary-hover pointer-coarse:min-h-11",
+  "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-on-primary",
+  "transition duration-(--duration-fast) ease-standard motion-reduce:transition-none",
+].join(" ");
 
 function readDismissedQuantities() {
   try {
@@ -14,11 +25,18 @@ function readDismissedQuantities() {
   }
 }
 
+/**
+ * Low stock popover of the machinery sidebar footer (nav.sidebarFooter): a Notifications button
+ * with the count of parts at or below their reorder threshold, and a panel listing them, each
+ * dismissible until its quantity changes.
+ */
 function LowStockNotifications() {
+  const { t } = useTranslation("machinery");
   const { data } = useLowStockSpareParts();
   const [dismissed, setDismissed] = useState(readDismissedQuantities);
   const [panelState, setPanelState] = useState(null);
   const containerRef = useRef(null);
+  const panelId = useId();
 
   const lowStockParts = data ?? [];
   const notifications = lowStockParts.filter(
@@ -63,53 +81,64 @@ function LowStockNotifications() {
       <button
         type="button"
         onClick={() => setPanelState(!isOpen)}
-        className="flex items-center gap-3 h-9 w-full px-3 rounded-lg cursor-pointer text-sm text-white transition-colors hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,white_15%)]"
-        title="Low stock notifications"
+        className={TOGGLE_CLASS}
+        title={t("notifications.title")}
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? panelId : undefined}
       >
-        <Bell size={18} />
-        Notifications
+        <Bell size={18} aria-hidden="true" className="shrink-0" />
+        {t("notifications.button")}
         {notifications.length > 0 && (
-          <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
+          <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-pill bg-danger px-1 text-xs font-bold text-on-primary">
             {notifications.length}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 bottom-full mb-2 w-72 max-h-80 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-800">Low stock notifications</h2>
+        <div
+          id={panelId}
+          className="absolute bottom-full left-0 z-(--z-overlay) mb-2 max-h-80 w-72 overflow-y-auto rounded-control border border-border-divider bg-surface-raised text-text shadow-overlay"
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-border-subtle px-4 py-3">
+            <h2 className="text-sm font-bold">{t("notifications.title")}</h2>
             {notifications.length > 0 && (
-              <button type="button" onClick={dismissAll} className="text-xs text-gray-500 hover:text-gray-700">
-                Delete all
+              <button
+                type="button"
+                onClick={dismissAll}
+                className="cursor-pointer rounded-control text-xs text-text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring pointer-coarse:min-h-11"
+              >
+                {t("notifications.deleteAll")}
               </button>
             )}
           </div>
 
           {notifications.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-gray-500 text-center">No low stock notifications.</p>
+            <p className="px-4 py-6 text-center text-sm text-text-muted">{t("notifications.empty")}</p>
           ) : (
             <ul>
               {notifications.map((sparePart) => (
                 <li
                   key={sparePart.id}
-                  className="flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-b-0"
+                  className="flex items-start gap-3 border-b border-border-subtle px-4 py-3 last:border-b-0"
                 >
-                  <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-500" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 break-words">{sparePart.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {sparePart.quantity} in stock — reorder threshold {sparePart.reorderThreshold}
+                  <TriangleAlert size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-warning-fg" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium break-words">{sparePart.name}</p>
+                    <p className="text-xs text-text-muted">
+                      {t("notifications.item", {
+                        quantity: sparePart.quantity,
+                        threshold: sparePart.reorderThreshold,
+                      })}
                     </p>
                   </div>
-                  <button
-                    type="button"
+                  <IconButton
+                    icon={Trash2}
+                    label={t("notifications.deleteOne")}
+                    tone="neutral"
                     onClick={() => dismissNotification(sparePart)}
-                    className="text-gray-400 hover:text-red-600"
-                    title="Delete notification"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                    className="-my-1.5 -mr-2"
+                  />
                 </li>
               ))}
             </ul>

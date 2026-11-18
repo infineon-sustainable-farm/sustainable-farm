@@ -1,26 +1,26 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import RepairLogTable from "./RepairLogTable";
 import RepairLogFormModal from "./RepairLogFormModal";
-import ConfirmDeleteRecordDialog from "./ConfirmDeleteRecordDialog";
-import EmptyState from "../../../shared/components/EmptyState";
-import ErrorState from "../../../shared/components/ErrorState";
-import Pagination from "../../../shared/components/Pagination";
+import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader, Pagination } from "../../../shared/ui";
 import { useRepairLogs } from "../hooks/useRepairLogs";
-import { useEquipmentOptions } from "../hooks/useEquipmentOptions";
+import { useEquipmentLookup } from "../hooks/useEquipmentLookup";
 import {
   useCreateRepairLog,
   useUpdateRepairLog,
   useDeleteRepairLog,
 } from "../hooks/useRepairLogMutations";
-import { formatDate } from "../../../shared/utils/formatDate";
+import { useMachineryFormat } from "../format";
 
 const PAGE_SIZE = 10;
 
 function RepairLog() {
+  const { t } = useTranslation("machinery");
+  const format = useMachineryFormat();
   const [page, setPage] = useState(0);
   const { data, isLoading, isError, refetch } = useRepairLogs(page, PAGE_SIZE);
-  const equipmentOptions = useEquipmentOptions();
+  const { equipments, isEquipmentLoading, getEquipmentName } = useEquipmentLookup();
 
   const createMutation = useCreateRepairLog();
   const updateMutation = useUpdateRepairLog();
@@ -30,22 +30,8 @@ function RepairLog() {
   const [editingRepairLog, setEditingRepairLog] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const equipments = useMemo(
-    () => equipmentOptions.data?.content ?? [],
-    [equipmentOptions.data]
-  );
-  const equipmentNames = useMemo(
-    () => new Map(equipments.map((equipment) => [equipment.id, equipment.name])),
-    [equipments]
-  );
-
   const activeFormMutation = editingRepairLog ? updateMutation : createMutation;
   const formServerError = activeFormMutation.isError ? activeFormMutation.error.message : null;
-
-  function getEquipmentName(equipmentId) {
-    if (equipmentId == null) return "—";
-    return equipmentNames.get(equipmentId) ?? `#${equipmentId}`;
-  }
 
   function openCreateForm() {
     createMutation.reset();
@@ -87,68 +73,61 @@ function RepairLog() {
     setDeleteTarget(null);
   }
 
-  if (isLoading) return <div className="p-6 text-gray-500">Loading repair log…</div>;
-  if (isError) {
+  function renderContent() {
+    if (isLoading) return <RepairLogTable loading getEquipmentName={getEquipmentName} />;
+    if (isError) {
+      return <ErrorState message={t("repair.loadError")} onRetry={refetch} retryLabel={t("common.tryAgain")} />;
+    }
+    if (data.content.length === 0) return <EmptyState message={t("repair.empty")} />;
     return (
-      <ErrorState
-        message="Failed to load the repair log. Please try again."
-        onRetry={refetch}
-      />
+      <>
+        <RepairLogTable
+          repairLogs={data.content}
+          getEquipmentName={getEquipmentName}
+          onEdit={openEditForm}
+          onDelete={setDeleteTarget}
+        />
+        <Pagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
+      </>
     );
   }
 
-  const repairLogs = data.content;
-
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Repair Log</h1>
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2"
-        >
-          <Plus size={16} />
-          Add repair log
-        </button>
-      </div>
+      <PageHeader
+        className="mb-4"
+        title={t("repair.title")}
+        actions={<Button icon={Plus} onClick={openCreateForm}>{t("repair.add")}</Button>}
+      />
 
-      {repairLogs.length === 0 ? (
-        <EmptyState message="No repairs logged yet. Click “Add repair log” to get started." />
-      ) : (
-        <>
-          <RepairLogTable
-            repairLogs={repairLogs}
-            getEquipmentName={getEquipmentName}
-            onEdit={openEditForm}
-            onDelete={setDeleteTarget}
-          />
-          <Pagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
-        </>
-      )}
+      {renderContent()}
 
       <RepairLogFormModal
         key={isFormOpen ? (editingRepairLog?.id ?? "create") : "closed"}
         isOpen={isFormOpen}
         repairLog={editingRepairLog}
         equipments={equipments}
-        isEquipmentLoading={equipmentOptions.isLoading}
+        isEquipmentLoading={isEquipmentLoading}
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleSubmit}
         serverError={formServerError}
       />
 
-      <ConfirmDeleteRecordDialog
-        isOpen={Boolean(deleteTarget)}
-        title="Delete repair log"
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t("repair.deleteTitle")}
         message={
           deleteTarget
-            ? `Are you sure you want to delete the repair log of ${formatDate(deleteTarget.date)} for ${getEquipmentName(deleteTarget.equipmentId)}? This cannot be undone.`
+            ? t("repair.deleteMessage", {
+                date: format.date(deleteTarget.date),
+                equipment: getEquipmentName(deleteTarget.equipmentId),
+              })
             : ""
         }
         onClose={closeDeleteDialog}
         onConfirm={handleDelete}
-        serverError={deleteMutation.isError ? deleteMutation.error.message : null}
+        loading={deleteMutation.isPending}
+        error={deleteMutation.isError ? deleteMutation.error.message : null}
       />
     </div>
   );
