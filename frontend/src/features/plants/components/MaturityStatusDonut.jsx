@@ -1,23 +1,23 @@
+import { useTranslation } from "react-i18next";
 import { formatCode, formatNumber, formatPercent } from "../utils/format";
-import { MATURITY_MEANINGS } from "../utils/overviewLabels";
+import { MATURITY_STATUSES, maturityMeaning } from "../utils/overviewLabels";
 import OverviewCard from "./OverviewCard";
-import { CARD_CAPTION } from "./plantsStyles";
 
 /*
- * One hue per status, each at 3:1 or more on the white card: immature
- * #7d8a86 -> 3.59:1 (the mock-up's #c9d2cf gave 1.6:1), ripe #a87a1e -> 3.84:1,
- * ready for harvest #2e9e6b -> 3.38:1, no reference #3a7ca5 -> 4.56:1. The
- * words are those of the maturity badges. A status the API adds later is
- * shown in sentence case, in neutral #4a5565 -> 7.56:1.
+ * One colour per status, from the chart and state tokens: immature in the neutral chart colour,
+ * ripe in the second chart colour, ready for harvest in the success colour, no reference in the
+ * info colour. `stroke` paints the ring (an SVG attribute), `dot` the legend. A status the API adds
+ * later is shown in sentence case, in the muted text colour.
  */
 const SEGMENTS = {
-    IMMATURE: { label: "Immature", colour: "#7d8a86" },
-    RIPE: { label: "Ripe", colour: "#a87a1e" },
-    READY_FOR_HARVEST: { label: "Ready for harvest", colour: "#2e9e6b" },
+    IMMATURE: { stroke: "var(--color-chart-3)", dot: "bg-chart-3" },
+    RIPE: { stroke: "var(--color-chart-2)", dot: "bg-chart-2" },
+    READY_FOR_HARVEST: { stroke: "var(--color-success-fg)", dot: "bg-success-fg" },
 };
-const NO_REFERENCE = { label: "No reference", colour: "#3a7ca5" };
-const OTHER_COLOUR = "#4a5565";
+const NO_REFERENCE = { stroke: "var(--color-info-fg)", dot: "bg-info-fg" };
+const OTHER = { stroke: "var(--color-text-muted)", dot: "bg-text-muted" };
 
+// The ring is drawn in SVG units: a 112 unit square, shown at size-28.
 const SIZE = 112;
 const RADIUS = 44;
 const STROKE = 16;
@@ -25,13 +25,15 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 // White space left between two arcs, so that neighbouring hues stay apart.
 const GAP = 2;
 
-function segmentOf(entry) {
+function segmentStyle(entry) {
     if (entry.maturityStatus === null) return NO_REFERENCE;
-    return SEGMENTS[entry.maturityStatus] ?? { label: formatCode(entry.maturityStatus), colour: OTHER_COLOUR };
+    return SEGMENTS[entry.maturityStatus] ?? OTHER;
 }
 
-function treesOf(count) {
-    return Number(count) === 1 ? "tree" : "trees";
+function segmentLabel(t, entry) {
+    if (entry.maturityStatus === null) return t("overview.maturity.labels.NO_REFERENCE");
+    if (SEGMENTS[entry.maturityStatus]) return t(`overview.maturity.labels.${entry.maturityStatus}`);
+    return formatCode(entry.maturityStatus);
 }
 
 /**
@@ -50,10 +52,17 @@ function Ring({ entries }) {
     const gap = arcs.length > 1 ? GAP : 0;
 
     return (
-        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
+        <svg className="size-28" viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
             {/* Arcs start at the top and run clockwise. */}
             <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
-                <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="#eef2f1" strokeWidth={STROKE} />
+                <circle
+                    cx={SIZE / 2}
+                    cy={SIZE / 2}
+                    r={RADIUS}
+                    fill="none"
+                    stroke="var(--color-chart-grid)"
+                    strokeWidth={STROKE}
+                />
                 {arcs.map(({ entry, start, length }) => (
                     <circle
                         key={entry.maturityStatus ?? "NO_REFERENCE"}
@@ -61,7 +70,7 @@ function Ring({ entries }) {
                         cy={SIZE / 2}
                         r={RADIUS}
                         fill="none"
-                        stroke={segmentOf(entry).colour}
+                        stroke={segmentStyle(entry).stroke}
                         strokeWidth={STROKE}
                         strokeDasharray={`${Math.max(length - gap, 0)} ${CIRCUMFERENCE}`}
                         strokeDashoffset={-start}
@@ -73,72 +82,73 @@ function Ring({ entries }) {
 }
 
 /**
- * The mock-up's "Harvest Maturity Status": the trees of each maturity status
- * of the day, and those whose variety has no reference value, with the shares
- * the API computes. Every entry is listed beside the ring, with no tree if
- * need be. Under them, what each status means, in the words of the server's
+ * Harvest Maturity Status: the trees of each maturity status of the day, and
+ * those whose variety has no reference value, with the shares the API
+ * computes. Every entry is listed beside the ring, with no tree if need be.
+ * Under them, what each status means, in the words of the server's
  * definitions: Ripe holds the trees whose harvest is near or on hold, so it
- * can count trees while Ready for Harvest counts none. The mock-up's
- * "Harvested" has no status yet: the entries follow the API.
+ * can count trees while Ready for Harvest counts none.
  */
 export default function MaturityStatusDonut({ query }) {
+    const { t } = useTranslation("plants");
     const overview = query.data;
 
     return (
         <OverviewCard
             titleId="overview-maturity-title"
-            className="lg:row-span-2 lg:grid lg:grid-rows-subgrid"
-            title="Harvest Maturity Status"
-            caption="Trees by maturity today."
+            title={t("overview.maturity.title")}
+            caption={t("overview.maturity.caption")}
             query={query}
-            loadingText="Loading the maturity status…"
-            errorText="Maturity is unavailable."
+            loadingText={t("overview.maturity.loading")}
+            errorText={t("overview.maturity.error")}
         >
             {overview && overview.totalPlants === 0 && (
-                <p className="text-sm text-gray-700">No planted tree to show.</p>
+                <p className="text-sm text-text">{t("overview.maturity.empty")}</p>
             )}
 
             {overview && overview.totalPlants > 0 && (
                 <>
                     <div className="flex items-center gap-4">
-                        <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
+                        <div className="relative size-28 shrink-0">
                             <Ring entries={overview.maturity} />
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="font-heading text-lg font-bold text-on-background">
-                                    {formatNumber(overview.totalPlants)}
+                                <span className="text-lg font-bold text-text">{formatNumber(overview.totalPlants)}</span>
+                                <span className="text-xs text-text-muted">
+                                    {t("overview.maturity.trees", { count: Number(overview.totalPlants) })}
                                 </span>
-                                <span className="text-xs text-gray-600">{treesOf(overview.totalPlants)}</span>
                             </div>
                         </div>
                         <ul className="flex min-w-0 flex-1 flex-col gap-2">
                             {overview.maturity.map((entry) => {
-                                const segment = segmentOf(entry);
+                                const share = ` ${t("overview.maturity.share", {
+                                    trees: t("overview.maturity.trees", { count: Number(entry.treeCount) }),
+                                    percent: formatPercent(entry.sharePct),
+                                })}`;
                                 return (
                                     <li key={entry.maturityStatus ?? "NO_REFERENCE"} className="min-w-0">
-                                        <span className="flex items-center gap-2 text-sm text-on-background">
+                                        <span className="flex items-center gap-2 text-sm text-text">
                                             <span
                                                 aria-hidden="true"
-                                                className="size-2.5 shrink-0 rounded-full"
-                                                style={{ backgroundColor: segment.colour }}
+                                                className={`size-2.5 shrink-0 rounded-pill ${segmentStyle(entry).dot}`}
                                             />
-                                            {segment.label}
+                                            {segmentLabel(t, entry)}
                                         </span>
-                                        <span className="block pl-4.5 text-xs text-gray-600">
-                                            <span className="font-semibold text-on-background">
-                                                {formatNumber(entry.treeCount)}
-                                            </span>
-                                            {` ${treesOf(entry.treeCount)} · ${formatPercent(entry.sharePct)}`}
+                                        <span className="block pl-4.5 text-xs text-text-muted">
+                                            <span className="font-semibold text-text">{formatNumber(entry.treeCount)}</span>
+                                            {share}
                                         </span>
                                     </li>
                                 );
                             })}
                         </ul>
                     </div>
-                    <ul className={`flex flex-col gap-1 ${CARD_CAPTION}`}>
-                        {Object.entries(MATURITY_MEANINGS).map(([status, meaning]) => (
+                    <ul className="flex flex-col gap-1 text-xs text-text-muted">
+                        {MATURITY_STATUSES.map((status) => (
                             <li key={status}>
-                                <span className="font-semibold text-gray-700">{`${SEGMENTS[status].label}: `}</span>
-                                {meaning}.
+                                <span className="font-semibold text-text">
+                                    {t("overview.maturity.meaningLabel", { label: t(`overview.maturity.labels.${status}`) })}
+                                </span>
+                                {t("overview.maturity.meaningSentence", { meaning: maturityMeaning(status) })}
                             </li>
                         ))}
                     </ul>

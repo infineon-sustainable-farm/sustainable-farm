@@ -1299,5 +1299,124 @@
       "trees_one": "{{value}} tree",
       "trees_other": "{{value}} trees"
     }
+  },
+  "overview": {
+    "title": "Overview",
+    "documentTitle": "Overview — Plants",
+    "subtitle": "Your orchard today.",
+    "asOf": "As of {{date}}",
+    "kpi": {
+      "region": "Figures of the day",
+      "loading": "Loading the figures of the day…",
+      "error": "Today's figures are unavailable.",
+      "totalPlants": "Total Plants",
+      "totalPlantsNote": "Field trees, nursery excluded",
+      "inGrowthStage": "In Growth Stage",
+      "inGrowthStageNote": "Establishment, 0–2 years",
+      "readyForHarvest": "Ready for Harvest",
+      "activeAlerts": "Active Alerts",
+      "criticalNote": "{{count}} critical"
+    },
+    "alerts": {
+      "title": "Alerts",
+      "scopeBlock": "{{block}}. Stock alerts show under All blocks.",
+      "scopeAll": "Most urgent first.",
+      "loading": "Loading alerts…",
+      "error": "Alerts are unavailable.",
+      "empty": "Nothing needs attention today.",
+      "priority": "Priority",
+      "where": "Where",
+      "issue": "Issue",
+      "when": "When",
+      "noDate": "No date",
+      "view": "View",
+      "viewLabel": "View: {{issue}}, {{place}}, on {{screen}}"
+    },
+    "alertTypes": {
+      "OPEN_HEALTH_ISSUE": "Health issue still open",
+      "PRE_HARVEST_INTERVAL": "Pre-harvest interval running",
+      "LOW_STOCK": "Low stock",
+      "NURSERY_READY": "Ready to transplant",
+      "HARVEST_APPROACHING": "Harvest season approaching",
+      "now": "Now"
+    },
+    "places": {
+      "inventory": "Inventory",
+      "batch": "Batch {{code}}",
+      "nursery": "Nursery",
+      "allBlocks": "All blocks",
+      "blockTree": "{{block}} · Tree {{tree}}"
+    },
+    "relative": {
+      "today": "today",
+      "ahead_one": "in {{days}} day",
+      "ahead_other": "in {{days}} days",
+      "ago_one": "{{days}} day ago",
+      "ago_other": "{{days}} days ago"
+    },
+    "yield": {
+      "title": "Expected vs Actual Yield by Block",
+      "caption_one": "Expected and harvested over {{months}} month from {{from}}.",
+      "caption_other": "Expected and harvested over {{months}} months from {{from}}.",
+      "loading": "Loading the yield by block…",
+      "error": "Yield is unavailable.",
+      "empty": "No planted variety with a reference value over this period.",
+      "expected": "Expected",
+      "actual": "Actual",
+      "noHarvestExpected": "No harvest expected over this period",
+      "noHarvestRecorded": "No harvest recorded yet",
+      "notCompared": "Planted varieties without a reference value are not compared.",
+      "link": "See Harvest & Maturity"
+    },
+    "maturity": {
+      "title": "Harvest Maturity Status",
+      "caption": "Trees by maturity today.",
+      "loading": "Loading the maturity status…",
+      "error": "Maturity is unavailable.",
+      "empty": "No planted tree to show.",
+      "trees_one": "tree",
+      "trees_other": "trees",
+      "share": "{{trees}} · {{percent}}",
+      "meaningLabel": "{{label}}: ",
+      "meaningSentence": "{{meaning}}.",
+      "labels": {
+        "IMMATURE": "Immature",
+        "RIPE": "Ripe",
+        "READY_FOR_HARVEST": "Ready for harvest",
+        "NO_REFERENCE": "No reference"
+      },
+      "meanings": {
+        "IMMATURE": "Harvest not near yet, young trees included",
+        "RIPE": "Harvest near, or on hold for a pre-harvest interval",
+        "READY_FOR_HARVEST": "Can be picked today"
+      }
+    },
+    "nursery": {
+      "title": "Nursery Survival Rate by Batch",
+      "caption": "All nursery batches.",
+      "loading": "Loading the nursery batches…",
+      "error": "Nursery batches are unavailable.",
+      "empty": "No nursery batch yet.",
+      "batch": "Batch {{code}}",
+      "destination": " · to {{block}}",
+      "survivedOf": "{{survived}} of {{initial}}",
+      "survived_one": " plant survived ({{percent}})",
+      "survived_other": " plants survived ({{percent}})",
+      "lost": " · {{lost}} lost",
+      "transplanted": "{{transplanted}} transplanted · {{current}} still in the nursery"
+    },
+    "fertilizer": {
+      "title": "Fertilizer Stock vs Alert Threshold",
+      "caption": "Stock for the whole farm, by unit.",
+      "loading": "Loading the fertilizer stock…",
+      "error": "Fertilizer stock is unavailable.",
+      "empty": "No fertilizer in the catalogue yet.",
+      "stockIn": "Stock in {{unit}}",
+      "currentStock": "Current stock",
+      "alertThreshold": "Alert threshold",
+      "stock": "Stock {{quantity}}",
+      "noThreshold": " · No threshold",
+      "threshold": " · Threshold {{quantity}}"
+    }
   }
 }

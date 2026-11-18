@@ -1299,5 +1299,124 @@
       "trees_one": "{{value}} arbre",
       "trees_other": "{{value}} arbres"
     }
+  },
+  "overview": {
+    "title": "Vue d’ensemble",
+    "documentTitle": "Vue d’ensemble — Plantes",
+    "subtitle": "Votre verger aujourd’hui.",
+    "asOf": "Au {{date}}",
+    "kpi": {
+      "region": "Chiffres du jour",
+      "loading": "Chargement des chiffres du jour…",
+      "error": "Les chiffres du jour sont indisponibles.",
+      "totalPlants": "Plants au total",
+      "totalPlantsNote": "Arbres au champ, pépinière exclue",
+      "inGrowthStage": "En croissance",
+      "inGrowthStageNote": "Installation, 0–2 ans",
+      "readyForHarvest": "Prêts à récolter",
+      "activeAlerts": "Alertes actives",
+      "criticalNote": "{{count}} critiques"
+    },
+    "alerts": {
+      "title": "Alertes",
+      "scopeBlock": "{{block}}. Les alertes de stock figurent sous Tous les blocs.",
+      "scopeAll": "Les plus urgentes d’abord.",
+      "loading": "Chargement des alertes…",
+      "error": "Les alertes sont indisponibles.",
+      "empty": "Rien à signaler aujourd’hui.",
+      "priority": "Priorité",
+      "where": "Où",
+      "issue": "Problème",
+      "when": "Quand",
+      "noDate": "Sans date",
+      "view": "Voir",
+      "viewLabel": "Voir : {{issue}}, {{place}}, dans {{screen}}"
+    },
+    "alertTypes": {
+      "OPEN_HEALTH_ISSUE": "Problème sanitaire encore ouvert",
+      "PRE_HARVEST_INTERVAL": "Délai avant récolte en cours",
+      "LOW_STOCK": "Stock bas",
+      "NURSERY_READY": "Prêt à transplanter",
+      "HARVEST_APPROACHING": "Saison de récolte proche",
+      "now": "Maintenant"
+    },
+    "places": {
+      "inventory": "Stock",
+      "batch": "Lot {{code}}",
+      "nursery": "Pépinière",
+      "allBlocks": "Tous les blocs",
+      "blockTree": "{{block}} · Arbre {{tree}}"
+    },
+    "relative": {
+      "today": "aujourd’hui",
+      "ahead_one": "dans {{days}} jour",
+      "ahead_other": "dans {{days}} jours",
+      "ago_one": "il y a {{days}} jour",
+      "ago_other": "il y a {{days}} jours"
+    },
+    "yield": {
+      "title": "Rendement prévu et réel par bloc",
+      "caption_one": "Prévu et récolté sur {{months}} mois à partir de {{from}}.",
+      "caption_other": "Prévu et récolté sur {{months}} mois à partir de {{from}}.",
+      "loading": "Chargement du rendement par bloc…",
+      "error": "Le rendement est indisponible.",
+      "empty": "Aucune variété plantée avec une valeur de référence sur cette période.",
+      "expected": "Prévu",
+      "actual": "Réel",
+      "noHarvestExpected": "Aucune récolte prévue sur cette période",
+      "noHarvestRecorded": "Aucune récolte enregistrée pour l’instant",
+      "notCompared": "Les variétés plantées sans valeur de référence ne sont pas comparées.",
+      "link": "Voir Récolte et maturité"
+    },
+    "maturity": {
+      "title": "Maturité de la récolte",
+      "caption": "Arbres par maturité aujourd’hui.",
+      "loading": "Chargement de la maturité…",
+      "error": "La maturité est indisponible.",
+      "empty": "Aucun arbre planté à afficher.",
+      "trees_one": "arbre",
+      "trees_other": "arbres",
+      "share": "{{trees}} · {{percent}}",
+      "meaningLabel": "{{label}} : ",
+      "meaningSentence": "{{meaning}}.",
+      "labels": {
+        "IMMATURE": "Immature",
+        "RIPE": "Mûr",
+        "READY_FOR_HARVEST": "Prêt à récolter",
+        "NO_REFERENCE": "Sans référence"
+      },
+      "meanings": {
+        "IMMATURE": "Récolte encore lointaine, jeunes arbres compris",
+        "RIPE": "Récolte proche, ou suspendue par un délai avant récolte",
+        "READY_FOR_HARVEST": "Peut être cueilli aujourd’hui"
+      }
+    },
+    "nursery": {
+      "title": "Taux de survie en pépinière par lot",
+      "caption": "Tous les lots de pépinière.",
+      "loading": "Chargement des lots de pépinière…",
+      "error": "Les lots de pépinière sont indisponibles.",
+      "empty": "Aucun lot de pépinière pour l’instant.",
+      "batch": "Lot {{code}}",
+      "destination": " · vers {{block}}",
+      "survivedOf": "{{survived}} sur {{initial}}",
+      "survived_one": " plant a survécu ({{percent}})",
+      "survived_other": " plants ont survécu ({{percent}})",
+      "lost": " · {{lost}} perdus",
+      "transplanted": "{{transplanted}} transplantés · {{current}} encore en pépinière"
+    },
+    "fertilizer": {
+      "title": "Stock d’engrais et seuil d’alerte",
+      "caption": "Stock de toute l’exploitation, par unité.",
+      "loading": "Chargement du stock d’engrais…",
+      "error": "Le stock d’engrais est indisponible.",
+      "empty": "Aucun engrais au catalogue pour l’instant.",
+      "stockIn": "Stock en {{unit}}",
+      "currentStock": "Stock actuel",
+      "alertThreshold": "Seuil d’alerte",
+      "stock": "Stock {{quantity}}",
+      "noThreshold": " · Sans seuil",
+      "threshold": " · Seuil {{quantity}}"
+    }
   }
 }
