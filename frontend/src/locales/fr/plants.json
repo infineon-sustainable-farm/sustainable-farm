@@ -96,6 +96,16 @@
     "inspectionMethod": {
       "VISUAL": "Visuelle",
       "TRAP": "Piège"
+    },
+    "maturityStatus": {
+      "IMMATURE": "Immature",
+      "RIPE": "Mûr",
+      "READY_FOR_HARVEST": "Prêt à récolter"
+    },
+    "growthPhase": {
+      "ESTABLISHMENT": "Installation",
+      "GRADUAL_PRODUCTION": "Production progressive",
+      "FULL_PRODUCTION": "Pleine production"
     }
   },
   "blockFilter": {
@@ -726,6 +736,245 @@
         "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères.",
         "equipmentTooLong": "Le matériel doit comporter au plus 255 caractères."
       }
+    }
+  },
+  "harvest": {
+    "page": {
+      "title": "Récolte et maturité",
+      "subtitle": "Maturité, dates de récolte et rendement, par bloc.",
+      "documentTitle": "Récolte et maturité — Plantes",
+      "recordHarvest": "Enregistrer une récolte",
+      "recorded": "Récolte enregistrée",
+      "recordedLot": "Récolte enregistrée — lot <lot>{{lot}}</lot>"
+    },
+    "status": {
+      "title": "État de maturité",
+      "subtitle": "Maturité du jour, estimée et observée.",
+      "record": "Enregistrer une observation",
+      "loading": "Chargement de l’état de maturité…",
+      "error": "La maturité est indisponible.",
+      "emptyBlockTitle": "Aucune variété plantée sur ce bloc",
+      "emptyBlockHint": "Choisissez un autre bloc, ou « Tous les blocs ».",
+      "emptyTitle": "Aucune variété plantée pour l’instant",
+      "emptyHint": "Enregistrez une plantation depuis l’écran Variétés.",
+      "rulesToggle": "Comment est-ce estimé ?",
+      "rulesEstimated": "Au {{date}}. Estimé — Prêt à récolter : la fenêtre de récolte est ouverte et aucun délai avant récolte ne court sur le bloc. Mûr : la fenêtre s’ouvre dans les {{days}} jours, ou elle est ouverte pendant qu’un délai court. Immature : la fenêtre s’ouvre plus tard.",
+      "rulesObserved": "Observé : la dernière observation de terrain de la saison en cours. Une observation faite entre deux saisons compte pour la suivante. Elle prime sur l’estimation jusqu’au dernier jour de cette saison, indiqué par « Compte jusqu’au » sous l’observation. Un délai avant récolte en cours ramène Prêt à récolter à Mûr, observé ou estimé.",
+      "rulesWindow": "Fenêtre de récolte : du premier mois de la saison où les arbres donnent un rendement jusqu’à la fin de la saison, comme dans la prévision. Première récolte : la première récolte enregistrée dans la fenêtre ouverte ; les cueillettes antérieures figurent sous Récoltes enregistrées. Un tiret signifie aucune valeur."
+    },
+    "statusTable": {
+      "block": "Bloc",
+      "variety": "Variété",
+      "estimated": "Estimé",
+      "observed": "Observé",
+      "harvestWindow": "Fenêtre de récolte",
+      "harvestAllowedFrom": "Récolte autorisée à partir du",
+      "firstHarvest": "Première récolte",
+      "sources": "Sources",
+      "noReference": "Aucune valeur de référence",
+      "notCounted": "Non pris en compte : aucune valeur de référence",
+      "countsUntil": "Compte jusqu’au {{date}}",
+      "heldAt": "Maintenu à {{status}} : délai avant récolte",
+      "observationLine": "{{date}} · {{method}}",
+      "season": "Saison : {{value}}",
+      "share": "Part : {{value}}",
+      "observation": "Observation : {{value}}"
+    },
+    "deadlines": {
+      "title": "Échéances à venir",
+      "subtitle": "Saisons de récolte et délais d’attente dans les {{days}} prochains jours.",
+      "loading": "Chargement des échéances à venir…",
+      "error": "Les dates à venir sont indisponibles.",
+      "empty": "Rien dans les {{days}} prochains jours.",
+      "otherDate": "Date :",
+      "types": {
+        "HARVEST_APPROACHING": {
+          "title": "Saison de récolte",
+          "date": "Fenêtre à partir du"
+        },
+        "PRE_HARVEST_INTERVAL": {
+          "title": "Délai avant récolte",
+          "date": "Récolte autorisée à partir du"
+        }
+      }
+    },
+    "forecast": {
+      "title": "Rendement attendu par mois",
+      "loading": "Chargement de la prévision de rendement…",
+      "error": "La prévision est indisponible.",
+      "emptyTitle": "Aucun rendement attendu sur cette période",
+      "emptyHint": "La prévision ne compte que les plantations enregistrées. Enregistrez une plantation depuis l’écran Variétés, ou choisissez une autre période.",
+      "totalOverPeriod": "Total sur la période :",
+      "basedOn": "D’après les plantations enregistrées et les valeurs de référence ci-dessous.",
+      "showTable": "Afficher les totaux mensuels sous forme de tableau",
+      "month": "Mois",
+      "expectedYield": "Rendement attendu",
+      "total": "Total",
+      "trees_one": "{{value}} arbre",
+      "trees_other": "{{value}} arbres",
+      "listedVariety": "{{variety}} ({{block}}, {{trees}})",
+      "notInForecast_one": "Hors prévision : {{list}}. Aucune valeur de référence n’est encore saisie pour cette variété : ajoutez-la sous Valeurs de référence ci-dessous.",
+      "notInForecast_other": "Hors prévision : {{list}}. Aucune valeur de référence n’est encore saisie pour ces variétés : ajoutez-la sous Valeurs de référence ci-dessous."
+    },
+    "chart": {
+      "unit": "kg",
+      "monthValue": "{{month}} {{value}}",
+      "zeroMonths": " ; 0 kg les autres mois",
+      "description": "Rendement attendu par mois, de {{first}} à {{last}} : {{months}}{{zeroMonths}}. Total {{total}}."
+    },
+    "forecastTable": {
+      "month": "Mois",
+      "block": "Bloc",
+      "variety": "Variété",
+      "trees": "Arbres",
+      "phase": "Phase",
+      "expectedYield": "Rendement attendu",
+      "sources": "Sources",
+      "sourcesValue": "Rendement : {{yield}} · Saison : {{season}} · Part de la phase : {{share}}"
+    },
+    "references": {
+      "title": "Valeurs de référence",
+      "subtitle": "Valeurs utilisées pour les prévisions et les alertes. Les modifications s’appliquent immédiatement.",
+      "varieties": "Variétés",
+      "add": "Ajouter une variété",
+      "loading": "Chargement des valeurs de référence…",
+      "error": "Les valeurs de référence sont indisponibles.",
+      "emptyTitle": "Aucune valeur de référence pour l’instant",
+      "emptyHint": "Ajoutez le rendement et les mois de récolte d’une variété.",
+      "sharesTitle": "Part du rendement par phase de croissance",
+      "sharesLoading": "Chargement des parts de rendement…",
+      "variety": "Variété",
+      "yieldPerTree": "Rendement par arbre",
+      "harvestSeason": "Saison de récolte",
+      "sources": "Sources",
+      "sourcesValue": "Rendement : {{yield}} · Saison : {{season}}",
+      "editVariety": "Modifier {{name}}",
+      "ofFullYield": "du rendement complet",
+      "sourceCorrected": "Source : {{source}} · Mis à jour le {{updated}} · Par défaut : {{defaultShare}} ({{defaultSource}})",
+      "sourceDefault": "Source : {{source}} · Valeur par défaut",
+      "editShare": "Modifier la part de la phase {{phase}}",
+      "shareLabel": "Part du rendement complet (0 à 1)",
+      "sourceLabel": "Source",
+      "userEntry": "user_entry",
+      "sourceNote": "Facultatif. user_entry est enregistré si le champ reste vide.",
+      "saving": "Enregistrement…",
+      "shareRequired": "La part est obligatoire.",
+      "shareInvalid": "La part doit être comprise entre 0 et 1, avec 3 décimales au plus.",
+      "sourceTooLong": "La source doit compter 255 caractères au plus."
+    },
+    "referenceForm": {
+      "editTitle": "Modifier {{name}}",
+      "variety": "Variété",
+      "varietyHint": "Ses plantations la retrouvent sans tenir compte de la casse ni des accents.",
+      "yield": "Rendement par arbre (kg)",
+      "yieldHint": "En pleine production, par an.",
+      "yieldSource": "Source du rendement",
+      "startMonth": "Premier mois de récolte",
+      "endMonth": "Dernier mois de récolte",
+      "endMonthHint": "Avant le premier mois pour une saison à cheval sur le nouvel an.",
+      "seasonSource": "Source de la saison",
+      "selectMonth": "Choisir un mois",
+      "keepSource": "Laissez vide pour conserver « {{source}} » si {{condition}} ; sinon user_entry est enregistré.",
+      "yieldUnchanged": "le rendement ne change pas",
+      "monthsUnchanged": "les mois ne changent pas",
+      "adding": "Ajout…",
+      "addVariety": "Ajouter la variété",
+      "errors": {
+        "varietyRequired": "La variété est obligatoire.",
+        "varietyTooLong": "La variété doit compter 255 caractères au plus.",
+        "yieldRequired": "Le rendement par arbre est obligatoire.",
+        "yieldInvalid": "Le rendement par arbre doit être supérieur à 0 et au plus de 1 000 kg, avec 1 décimale au plus.",
+        "startRequired": "Le premier mois de récolte est obligatoire.",
+        "endRequired": "Le dernier mois de récolte est obligatoire.",
+        "yieldSourceTooLong": "La source du rendement doit compter 255 caractères au plus.",
+        "seasonSourceTooLong": "La source de la saison doit compter 255 caractères au plus."
+      }
+    },
+    "form": {
+      "block": "Bloc",
+      "selectBlock": "Choisir un bloc",
+      "variety": "Variété",
+      "selectVariety": "Choisir une variété",
+      "varietiesError": "Les variétés n’ont pas pu être chargées",
+      "noPlanted": "Aucune variété plantée sur ce bloc",
+      "blockRequired": "Le bloc est obligatoire.",
+      "varietyRequired": "La variété est obligatoire.",
+      "recording": "Enregistrement…"
+    },
+    "recordHarvest": {
+      "title": "Enregistrer une récolte",
+      "date": "Date de récolte",
+      "quantity": "Quantité (kg)",
+      "submit": "Enregistrer la récolte",
+      "errors": {
+        "dateRequired": "La date de récolte est obligatoire.",
+        "dateFuture": "La date de récolte ne peut pas être dans le futur.",
+        "quantity": "La quantité doit être un nombre supérieur à 0."
+      }
+    },
+    "observation": {
+      "title": "Enregistrer une observation de maturité",
+      "date": "Date d’observation",
+      "status": "État de maturité",
+      "selectStatus": "Choisir un état",
+      "method": "Méthode",
+      "selectMethod": "Choisir une méthode",
+      "measuredValue": "Valeur mesurée",
+      "measuredValueUnit": "Valeur mesurée ({{unit}})",
+      "valueHint": "Facultatif. Supérieure à 0 et jusqu’à 100, une décimale au plus.",
+      "valueDisabledHint": "Avec Brix ou matière sèche uniquement.",
+      "observer": "Observateur",
+      "optional": "Facultatif.",
+      "submit": "Enregistrer l’observation",
+      "errors": {
+        "dateRequired": "La date d’observation est obligatoire.",
+        "dateFuture": "La date d’observation ne peut pas être dans le futur.",
+        "statusRequired": "L’état de maturité est obligatoire.",
+        "methodRequired": "La méthode est obligatoire.",
+        "observerTooLong": "L’observateur doit compter 255 caractères au plus.",
+        "measuredValue": "La valeur mesurée doit être supérieure à 0 et au plus de 100, avec une décimale au plus."
+      }
+    },
+    "methods": {
+      "FLESH_COLOR": {
+        "label": "Couleur de la chair près du noyau",
+        "name": "Couleur de la chair"
+      },
+      "BRIX": {
+        "label": "Brix (°Bx)",
+        "name": "Brix"
+      },
+      "DRY_MATTER": {
+        "label": "Matière sèche (%)",
+        "name": "Matière sèche"
+      },
+      "VISUAL": {
+        "label": "Visuel (épaules, peau)",
+        "name": "Visuel"
+      }
+    },
+    "methodValue": {
+      "plain": "{{name}} {{value}}",
+      "percent": "{{name}} {{value}} %",
+      "unit": "{{name}} {{value}} {{unit}}"
+    },
+    "harvests": {
+      "title": "Récoltes enregistrées",
+      "from": "Du",
+      "to": "Au",
+      "loading": "Chargement des récoltes…",
+      "error": "Les récoltes sont indisponibles.",
+      "filteredTitle": "Aucune récolte ne correspond à ces filtres",
+      "filteredHint": "Essayez un autre bloc ou une autre période, ou choisissez « Tous les blocs ».",
+      "emptyTitle": "Aucune récolte enregistrée pour l’instant"
+    },
+    "harvestsTable": {
+      "block": "Bloc",
+      "variety": "Variété",
+      "harvestDate": "Date de récolte",
+      "quantity": "Quantité (kg)",
+      "lot": "N° de lot",
+      "source": "Source"
     }
   }
 }

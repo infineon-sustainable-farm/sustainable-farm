@@ -96,6 +96,16 @@
     "inspectionMethod": {
       "VISUAL": "Visuell",
       "TRAP": "Falle"
+    },
+    "maturityStatus": {
+      "IMMATURE": "Unreif",
+      "RIPE": "Reif",
+      "READY_FOR_HARVEST": "Erntereif"
+    },
+    "growthPhase": {
+      "ESTABLISHMENT": "Etablierung",
+      "GRADUAL_PRODUCTION": "Ansteigende Produktion",
+      "FULL_PRODUCTION": "Volle Produktion"
     }
   },
   "blockFilter": {
@@ -726,6 +736,245 @@
         "applicatorTooLong": "Der Anwender darf höchstens 255 Zeichen lang sein.",
         "equipmentTooLong": "Das Gerät darf höchstens 255 Zeichen lang sein."
       }
+    }
+  },
+  "harvest": {
+    "page": {
+      "title": "Ernte und Reife",
+      "subtitle": "Reife, Erntetermine und Ertrag, nach Block.",
+      "documentTitle": "Ernte und Reife — Pflanzen",
+      "recordHarvest": "Ernte erfassen",
+      "recorded": "Ernte erfasst",
+      "recordedLot": "Ernte erfasst — Charge <lot>{{lot}}</lot>"
+    },
+    "status": {
+      "title": "Reifestatus",
+      "subtitle": "Reife heute, geschätzt und beobachtet.",
+      "record": "Beobachtung erfassen",
+      "loading": "Reifestatus wird geladen…",
+      "error": "Der Reifestatus ist nicht verfügbar.",
+      "emptyBlockTitle": "Keine gepflanzte Sorte in diesem Block",
+      "emptyBlockHint": "Wählen Sie einen anderen Block oder „Alle Blöcke“.",
+      "emptyTitle": "Noch keine gepflanzte Sorte",
+      "emptyHint": "Erfassen Sie eine Pflanzung im Bereich Sorten.",
+      "rulesToggle": "Wie wird das geschätzt?",
+      "rulesEstimated": "Stand {{date}}. Geschätzt — Erntereif: Das Erntefenster ist offen und im Block läuft keine Wartezeit vor der Ernte. Reif: Das Fenster öffnet sich innerhalb von {{days}} Tagen oder ist offen, während eine Wartezeit läuft. Unreif: Das Fenster öffnet sich später.",
+      "rulesObserved": "Beobachtet: die letzte Feldbeobachtung der laufenden Saison. Eine Beobachtung zwischen zwei Saisons zählt für die nächste. Sie hat bis zum letzten Tag dieser Saison Vorrang vor der Schätzung, angegeben als „Gilt bis“ unter der Beobachtung. Eine laufende Wartezeit vor der Ernte stuft Erntereif auf Reif zurück, beobachtet oder geschätzt.",
+      "rulesWindow": "Erntefenster: vom ersten Monat der Saison, in der die Bäume Ertrag bringen, bis zum Ende der Saison, wie in der Prognose. Erste Ernte: die erste im offenen Fenster erfasste Ernte; frühere Pflücken stehen unter Erfasste Ernten. Ein Strich bedeutet keinen Wert."
+    },
+    "statusTable": {
+      "block": "Block",
+      "variety": "Sorte",
+      "estimated": "Geschätzt",
+      "observed": "Beobachtet",
+      "harvestWindow": "Erntefenster",
+      "harvestAllowedFrom": "Ernte erlaubt ab",
+      "firstHarvest": "Erste Ernte",
+      "sources": "Quellen",
+      "noReference": "Kein Referenzwert",
+      "notCounted": "Nicht gezählt: kein Referenzwert",
+      "countsUntil": "Gilt bis {{date}}",
+      "heldAt": "Gehalten bei {{status}}: Wartezeit vor der Ernte",
+      "observationLine": "{{date}} · {{method}}",
+      "season": "Saison: {{value}}",
+      "share": "Anteil: {{value}}",
+      "observation": "Beobachtung: {{value}}"
+    },
+    "deadlines": {
+      "title": "Anstehende Fristen",
+      "subtitle": "Erntesaisons und Wartezeiten in den nächsten {{days}} Tagen.",
+      "loading": "Anstehende Fristen werden geladen…",
+      "error": "Die anstehenden Termine sind nicht verfügbar.",
+      "empty": "Nichts in den nächsten {{days}} Tagen.",
+      "otherDate": "Datum:",
+      "types": {
+        "HARVEST_APPROACHING": {
+          "title": "Erntesaison",
+          "date": "Fenster ab"
+        },
+        "PRE_HARVEST_INTERVAL": {
+          "title": "Wartezeit vor der Ernte",
+          "date": "Ernte erlaubt ab"
+        }
+      }
+    },
+    "forecast": {
+      "title": "Erwarteter Ertrag pro Monat",
+      "loading": "Ertragsprognose wird geladen…",
+      "error": "Die Prognose ist nicht verfügbar.",
+      "emptyTitle": "In diesem Zeitraum wird kein Ertrag erwartet",
+      "emptyHint": "Die Prognose berücksichtigt nur erfasste Pflanzungen. Erfassen Sie eine Pflanzung im Bereich Sorten oder wählen Sie einen anderen Zeitraum.",
+      "totalOverPeriod": "Summe im Zeitraum:",
+      "basedOn": "Auf Grundlage der erfassten Pflanzungen und der Referenzwerte unten.",
+      "showTable": "Monatssummen als Tabelle anzeigen",
+      "month": "Monat",
+      "expectedYield": "Erwarteter Ertrag",
+      "total": "Summe",
+      "trees_one": "{{value}} Baum",
+      "trees_other": "{{value}} Bäume",
+      "listedVariety": "{{variety}} ({{block}}, {{trees}})",
+      "notInForecast_one": "Nicht in der Prognose: {{list}}. Für diese Sorte ist noch kein Referenzwert erfasst: Fügen Sie ihn unten unter Referenzwerte hinzu.",
+      "notInForecast_other": "Nicht in der Prognose: {{list}}. Für diese Sorten ist noch kein Referenzwert erfasst: Fügen Sie ihn unten unter Referenzwerte hinzu."
+    },
+    "chart": {
+      "unit": "kg",
+      "monthValue": "{{month}} {{value}}",
+      "zeroMonths": "; 0 kg in den übrigen Monaten",
+      "description": "Erwarteter Ertrag pro Monat, {{first}} bis {{last}}: {{months}}{{zeroMonths}}. Summe {{total}}."
+    },
+    "forecastTable": {
+      "month": "Monat",
+      "block": "Block",
+      "variety": "Sorte",
+      "trees": "Bäume",
+      "phase": "Phase",
+      "expectedYield": "Erwarteter Ertrag",
+      "sources": "Quellen",
+      "sourcesValue": "Ertrag: {{yield}} · Saison: {{season}} · Phasenanteil: {{share}}"
+    },
+    "references": {
+      "title": "Referenzwerte",
+      "subtitle": "Werte für Prognosen und Warnungen. Änderungen gelten sofort.",
+      "varieties": "Sorten",
+      "add": "Sorte hinzufügen",
+      "loading": "Referenzwerte werden geladen…",
+      "error": "Die Referenzwerte sind nicht verfügbar.",
+      "emptyTitle": "Noch keine Referenzwerte",
+      "emptyHint": "Fügen Sie Ertrag und Erntemonate für eine Sorte hinzu.",
+      "sharesTitle": "Ertragsanteil nach Wachstumsphase",
+      "sharesLoading": "Ertragsanteile werden geladen…",
+      "variety": "Sorte",
+      "yieldPerTree": "Ertrag pro Baum",
+      "harvestSeason": "Erntesaison",
+      "sources": "Quellen",
+      "sourcesValue": "Ertrag: {{yield}} · Saison: {{season}}",
+      "editVariety": "{{name}} bearbeiten",
+      "ofFullYield": "des vollen Ertrags",
+      "sourceCorrected": "Quelle: {{source}} · Aktualisiert {{updated}} · Standard: {{defaultShare}} ({{defaultSource}})",
+      "sourceDefault": "Quelle: {{source}} · Standardwert",
+      "editShare": "Anteil der Phase {{phase}} bearbeiten",
+      "shareLabel": "Anteil am vollen Ertrag (0 bis 1)",
+      "sourceLabel": "Quelle",
+      "userEntry": "user_entry",
+      "sourceNote": "Optional. Leer gelassen wird user_entry erfasst.",
+      "saving": "Wird gespeichert…",
+      "shareRequired": "Der Anteil ist erforderlich.",
+      "shareInvalid": "Der Anteil muss zwischen 0 und 1 liegen, mit höchstens 3 Dezimalstellen.",
+      "sourceTooLong": "Die Quelle darf höchstens 255 Zeichen lang sein."
+    },
+    "referenceForm": {
+      "editTitle": "{{name}} bearbeiten",
+      "variety": "Sorte",
+      "varietyHint": "Ihre Pflanzungen finden sie unabhängig von Groß- und Kleinschreibung und Akzenten.",
+      "yield": "Ertrag pro Baum (kg)",
+      "yieldHint": "In voller Produktion, pro Jahr.",
+      "yieldSource": "Ertragsquelle",
+      "startMonth": "Erster Erntemonat",
+      "endMonth": "Letzter Erntemonat",
+      "endMonthHint": "Vor dem ersten Monat bei einer Saison über den Jahreswechsel.",
+      "seasonSource": "Saisonquelle",
+      "selectMonth": "Monat auswählen",
+      "keepSource": "Leer lassen, um „{{source}}“ zu behalten, wenn {{condition}}; sonst wird user_entry erfasst.",
+      "yieldUnchanged": "der Ertrag sich nicht ändert",
+      "monthsUnchanged": "die Monate sich nicht ändern",
+      "adding": "Wird hinzugefügt…",
+      "addVariety": "Sorte hinzufügen",
+      "errors": {
+        "varietyRequired": "Die Sorte ist erforderlich.",
+        "varietyTooLong": "Die Sorte darf höchstens 255 Zeichen lang sein.",
+        "yieldRequired": "Der Ertrag pro Baum ist erforderlich.",
+        "yieldInvalid": "Der Ertrag pro Baum muss größer als 0 und höchstens 1.000 kg sein, mit höchstens 1 Dezimalstelle.",
+        "startRequired": "Der erste Erntemonat ist erforderlich.",
+        "endRequired": "Der letzte Erntemonat ist erforderlich.",
+        "yieldSourceTooLong": "Die Ertragsquelle darf höchstens 255 Zeichen lang sein.",
+        "seasonSourceTooLong": "Die Saisonquelle darf höchstens 255 Zeichen lang sein."
+      }
+    },
+    "form": {
+      "block": "Block",
+      "selectBlock": "Block auswählen",
+      "variety": "Sorte",
+      "selectVariety": "Sorte auswählen",
+      "varietiesError": "Die Sorten konnten nicht geladen werden",
+      "noPlanted": "Keine gepflanzte Sorte in diesem Block",
+      "blockRequired": "Der Block ist erforderlich.",
+      "varietyRequired": "Die Sorte ist erforderlich.",
+      "recording": "Wird erfasst…"
+    },
+    "recordHarvest": {
+      "title": "Ernte erfassen",
+      "date": "Erntedatum",
+      "quantity": "Menge (kg)",
+      "submit": "Ernte erfassen",
+      "errors": {
+        "dateRequired": "Das Erntedatum ist erforderlich.",
+        "dateFuture": "Das Erntedatum darf nicht in der Zukunft liegen.",
+        "quantity": "Die Menge muss eine Zahl größer als 0 sein."
+      }
+    },
+    "observation": {
+      "title": "Reifebeobachtung erfassen",
+      "date": "Beobachtungsdatum",
+      "status": "Reifestatus",
+      "selectStatus": "Status auswählen",
+      "method": "Methode",
+      "selectMethod": "Methode auswählen",
+      "measuredValue": "Messwert",
+      "measuredValueUnit": "Messwert ({{unit}})",
+      "valueHint": "Optional. Über 0 und bis 100, höchstens eine Dezimalstelle.",
+      "valueDisabledHint": "Nur mit Brix oder Trockenmasse.",
+      "observer": "Beobachter",
+      "optional": "Optional.",
+      "submit": "Beobachtung erfassen",
+      "errors": {
+        "dateRequired": "Das Beobachtungsdatum ist erforderlich.",
+        "dateFuture": "Das Beobachtungsdatum darf nicht in der Zukunft liegen.",
+        "statusRequired": "Der Reifestatus ist erforderlich.",
+        "methodRequired": "Die Methode ist erforderlich.",
+        "observerTooLong": "Der Beobachter darf höchstens 255 Zeichen lang sein.",
+        "measuredValue": "Der Messwert muss über 0 und höchstens 100 liegen, mit höchstens einer Dezimalstelle."
+      }
+    },
+    "methods": {
+      "FLESH_COLOR": {
+        "label": "Fruchtfleischfarbe am Kern",
+        "name": "Fruchtfleischfarbe"
+      },
+      "BRIX": {
+        "label": "Brix (°Bx)",
+        "name": "Brix"
+      },
+      "DRY_MATTER": {
+        "label": "Trockenmasse (%)",
+        "name": "Trockenmasse"
+      },
+      "VISUAL": {
+        "label": "Visuell (Schultern, Schale)",
+        "name": "Visuell"
+      }
+    },
+    "methodValue": {
+      "plain": "{{name}} {{value}}",
+      "percent": "{{name}} {{value}} %",
+      "unit": "{{name}} {{value}} {{unit}}"
+    },
+    "harvests": {
+      "title": "Erfasste Ernten",
+      "from": "Von",
+      "to": "Bis",
+      "loading": "Ernten werden geladen…",
+      "error": "Die Ernten sind nicht verfügbar.",
+      "filteredTitle": "Keine Ernte entspricht diesen Filtern",
+      "filteredHint": "Versuchen Sie einen anderen Block oder Zeitraum oder wählen Sie „Alle Blöcke“.",
+      "emptyTitle": "Noch keine Ernte erfasst"
+    },
+    "harvestsTable": {
+      "block": "Block",
+      "variety": "Sorte",
+      "harvestDate": "Erntedatum",
+      "quantity": "Menge (kg)",
+      "lot": "Charge",
+      "source": "Quelle"
     }
   }
 }
