@@ -1,59 +1,30 @@
 import { useState } from "react";
-import { Loader2, Plus, TriangleAlert } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Card, EmptyState, Table } from "../../../shared/ui";
 import { useAddHealthIssue } from "../hooks/useAddHealthIssue";
 import { useHealthIssues } from "../hooks/useHealthIssues";
-import { formatCode, formatText } from "../utils/format";
+import { formatEnum, formatText } from "../utils/format";
 import AddHealthIssueModal from "./AddHealthIssueModal";
-import PlantsEmptyState from "./PlantsEmptyState";
-
-const COLUMNS = ["Name", "Kind", "Code", "Scientific name", "EPPO code", "Source"];
-
-function AddHealthIssueButton({ onClick }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-        >
-            <Plus size={16} />
-            Add a pest or disease
-        </button>
-    );
-}
+import { HealthSectionError, HealthSectionLoading } from "./HealthSectionStates";
 
 /** The catalogue, in the order the API sends it: pests, diseases, then "Other". */
 function HealthIssuesTable({ issues }) {
-    return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {issues.map((issue) => (
-                        <tr key={issue.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-semibold text-gray-800">{formatText(issue.name)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatCode(issue.kind)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatText(issue.code)}</td>
-                            <td className="px-4 py-3 text-gray-700 italic">{formatText(issue.scientificName)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatText(issue.eppoCode)}</td>
-                            <td className="px-4 py-3 text-gray-700">{formatText(issue.source)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+    const { t } = useTranslation("plants");
+    const columns = [
+        { key: "name", header: t("health.issues.columns.name"), cell: (issue) => formatText(issue.name) },
+        { key: "kind", header: t("health.issues.columns.kind"), cell: (issue) => formatEnum("issueKind", issue.kind) },
+        { key: "code", header: t("health.issues.columns.code"), cell: (issue) => formatText(issue.code) },
+        {
+            key: "scientificName",
+            header: t("health.issues.columns.scientificName"),
+            className: "italic",
+            cell: (issue) => formatText(issue.scientificName),
+        },
+        { key: "eppoCode", header: t("health.issues.columns.eppoCode"), cell: (issue) => formatText(issue.eppoCode) },
+        { key: "source", header: t("health.issues.columns.source"), cell: (issue) => formatText(issue.source) },
+    ];
+    return <Table caption={t("health.issues.title")} columns={columns} rows={issues} />;
 }
 
 /**
@@ -66,6 +37,7 @@ function HealthIssuesTable({ issues }) {
  * an inspection has used it: the API adds it then.
  */
 export default function HealthIssuesSection() {
+    const { t } = useTranslation("plants");
     const issues = useHealthIssues();
     const addIssue = useAddHealthIssue();
     const [isAdding, setIsAdding] = useState(false);
@@ -85,52 +57,31 @@ export default function HealthIssuesSection() {
     }
 
     return (
-        <section aria-labelledby="health-issues-title" className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h2 id="health-issues-title" className="font-heading text-lg font-bold text-gray-900">
-                        Pests and diseases
-                    </h2>
-                    <p className="mt-1 max-w-2xl text-sm text-gray-600">
-                        The problems an inspection can report, for every block. “Other” covers a problem outside
-                        this list; it is listed here once an inspection has used it.
-                    </p>
-                </div>
-                <AddHealthIssueButton onClick={openForm} />
-            </div>
-
-            {issues.isPending && (
-                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading the pests and diseases…
-                </div>
-            )}
+        <Card
+            aria-labelledby="health-issues-title"
+            title={<span id="health-issues-title">{t("health.issues.title")}</span>}
+            subtitle={t("health.issues.subtitle")}
+            actions={
+                <Button variant="secondary" icon={Plus} onClick={openForm}>
+                    {t("health.issues.add")}
+                </Button>
+            }
+        >
+            {issues.isPending && <HealthSectionLoading>{t("health.issues.loading")}</HealthSectionLoading>}
 
             {issues.isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-error/30 bg-error/5 px-5 py-4">
-                    <div className="flex items-start gap-3">
-                        <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
-                        <div>
-                            <p className="text-sm font-bold text-gray-900">The pests and diseases could not be loaded</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f6f1f1) -> 6.76:1, as in the other sections. */}
-                            <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => issues.refetch()}
-                        disabled={issues.isFetching}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {issues.isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <HealthSectionError
+                    title={t("health.issues.loadError")}
+                    detail={t("health.requestFailed")}
+                    query={issues}
+                />
             )}
 
             {!issues.isPending && !issues.isError && issues.data.length === 0 && (
-                <PlantsEmptyState
-                    title="No pest or disease in the catalogue yet"
-                    hint="Until one is added, an inspection can report “Other” only."
+                <EmptyState
+                    className="py-8"
+                    title={t("health.issues.emptyTitle")}
+                    message={t("health.issues.emptyHint")}
                 />
             )}
 
@@ -146,6 +97,6 @@ export default function HealthIssuesSection() {
                     onClose={closeForm}
                 />
             )}
-        </section>
+        </Card>
     );
 }

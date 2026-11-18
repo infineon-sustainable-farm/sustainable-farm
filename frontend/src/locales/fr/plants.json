@@ -74,6 +74,28 @@
       "STAGE_CHANGE": "Changement de stade",
       "LOSS": "Perte",
       "TRANSPLANT": "Transplantation"
+    },
+    "findingStatus": {
+      "UNTREATED": "Non traité",
+      "IN_PROGRESS": "En cours",
+      "TREATED": "Traité",
+      "CLOSED_WITHOUT_TREATMENT": "Clos sans traitement"
+    },
+    "healthCategory": {
+      "VERY_HEALTHY": "Très sain",
+      "HEALTHY": "Sain",
+      "MODERATE": "Moyen",
+      "WEAKENED": "Affaibli",
+      "SEVERE_STRESS": "Stress sévère"
+    },
+    "issueKind": {
+      "PEST": "Ravageur",
+      "DISEASE": "Maladie",
+      "OTHER": "Autre"
+    },
+    "inspectionMethod": {
+      "VISUAL": "Visuelle",
+      "TRAP": "Piège"
     }
   },
   "blockFilter": {
@@ -471,6 +493,238 @@
         "reasonTooLong": "Le motif doit compter au plus {{max}} caractères.",
         "blockRequired": "Le bloc est obligatoire.",
         "blockFormat": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace."
+      }
+    }
+  },
+  "health": {
+    "title": "Maladies et alertes",
+    "subtitle": "Santé des blocs, constats et traitements.",
+    "documentTitle": "Maladies et alertes — Plantes",
+    "recordInspection": "Enregistrer une inspection",
+    "recordPreventiveTreatment": "Enregistrer un traitement préventif",
+    "requestFailed": "La requête au serveur n’a pas abouti.",
+    "selectAllBlocks": "Sélectionnez « Tous les blocs » pour voir les blocs inspectés.",
+    "optional": "Facultatif.",
+    "block": "Bloc",
+    "blockNote": "Par exemple A ou B2. Le bloc n’a pas besoin de plantation.",
+    "selectProblem": "Choisir un problème",
+    "otherLabel": "Nom du problème",
+    "place": {
+      "withTree": "{{block}}, arbre {{tree}}"
+    },
+    "summary": {
+      "details": " · {{problem}} · constaté le {{date}}"
+    },
+    "errors": {
+      "blockRequired": "Le bloc est obligatoire.",
+      "blockFormat": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace.",
+      "otherLabelRequired": "Le nom du problème est obligatoire avec « Autre ».",
+      "otherLabelTooLong": "Le nom du problème doit comporter au plus {{max}} caractères."
+    },
+    "catalogue": {
+      "loadError": "Les ravageurs et maladies n’ont pas pu être chargés : seul « Autre » peut être choisi.",
+      "empty": "Seul « Autre » peut être choisi tant qu’aucun ravageur ni maladie n’est ajouté au catalogue."
+    },
+    "alerts": {
+      "title": "Alertes sanitaires",
+      "allBlocks": "Tous les blocs.",
+      "loading": "Chargement des alertes sanitaires…",
+      "loadError": "Les alertes sont indisponibles.",
+      "empty": "Aucune alerte sanitaire aujourd’hui.",
+      "types": {
+        "OPEN_HEALTH_ISSUE": "Problème sanitaire en cours",
+        "PRE_HARVEST_INTERVAL": "Délai avant récolte"
+      },
+      "seenOn": "Constaté le",
+      "harvestAllowedFrom": "Récolte autorisée à partir du",
+      "date": "Date :"
+    },
+    "blocks": {
+      "title": "Santé par bloc",
+      "loading": "Chargement de la santé des blocs…",
+      "loadError": "La santé des blocs n’a pas pu être chargée",
+      "emptyForBlock": "{{block}} n’a pas encore été inspecté",
+      "emptyTitle": "Aucun bloc inspecté pour l’instant",
+      "emptyHint": "La santé d’un bloc provient de sa dernière inspection.",
+      "inspectedOn": "Inspecté le {{date}}"
+    },
+    "findings": {
+      "title": "Constats",
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "loading": "Chargement des constats…",
+      "loadError": "Les constats n’ont pas pu être chargés",
+      "emptyFilteredTitle": "Aucun constat ne correspond à ces filtres",
+      "emptyFilteredHint": "Essayez un autre bloc ou statut, ou sélectionnez « Tous les blocs ».",
+      "emptyTitle": "Aucun constat enregistré pour l’instant",
+      "emptyHint": "Les constats sont enregistrés avec une inspection.",
+      "columns": {
+        "block": "Bloc",
+        "tree": "Arbre",
+        "problem": "Maladie / ravageur",
+        "observedOn": "Observé le",
+        "status": "Statut",
+        "harvestAllowedFrom": "Récolte autorisée à partir du",
+        "resolvedOn": "Résolu le"
+      },
+      "describe": "{{problem}} sur {{place}}",
+      "treat": "Traiter",
+      "resolve": "Résoudre",
+      "treatLabel": "Traiter {{finding}}",
+      "resolveLabel": "Résoudre {{finding}}"
+    },
+    "treatments": {
+      "title": "Registre des traitements",
+      "subtitle": "Chaque traitement, avec la date à laquelle la récolte est de nouveau autorisée.",
+      "loading": "Chargement des traitements…",
+      "loadError": "Les traitements sont indisponibles.",
+      "emptyForBlock": "Aucun traitement sur ce bloc",
+      "emptyForBlockHint": "Sélectionnez « Tous les blocs » pour voir tout le registre.",
+      "emptyTitle": "Aucun traitement enregistré pour l’instant",
+      "emptyHint": "Un traitement est enregistré pour un constat, ou comme traitement préventif.",
+      "columns": {
+        "date": "Date",
+        "block": "Bloc",
+        "problem": "Problème ciblé",
+        "product": "Produit",
+        "interval": "Délai avant récolte",
+        "harvestAllowedFrom": "Récolte autorisée à partir du",
+        "type": "Type",
+        "ingredient": "Substance active",
+        "quantity": "Quantité",
+        "applicator": "Applicateur",
+        "equipment": "Matériel",
+        "source": "Source"
+      },
+      "days_one": "{{days}} jour",
+      "days_other": "{{days}} jours",
+      "preventive": "Préventif",
+      "finding": "Constat"
+    },
+    "issues": {
+      "title": "Ravageurs et maladies",
+      "subtitle": "Les problèmes qu’une inspection peut signaler, pour chaque bloc. « Autre » couvre un problème hors de cette liste ; il y figure dès qu’une inspection l’a utilisé.",
+      "add": "Ajouter un ravageur ou une maladie",
+      "loading": "Chargement des ravageurs et maladies…",
+      "loadError": "Les ravageurs et maladies n’ont pas pu être chargés",
+      "emptyTitle": "Aucun ravageur ni maladie dans le catalogue pour l’instant",
+      "emptyHint": "Tant qu’aucun n’est ajouté, une inspection ne peut signaler que « Autre ».",
+      "columns": {
+        "name": "Nom",
+        "kind": "Type",
+        "code": "Code",
+        "scientificName": "Nom scientifique",
+        "eppoCode": "Code OEPP",
+        "source": "Source"
+      },
+      "groups": {
+        "PEST": "Ravageurs",
+        "DISEASE": "Maladies"
+      },
+      "other": "Autre"
+    },
+    "issueForm": {
+      "title": "Ajouter un ravageur ou une maladie",
+      "name": "Nom",
+      "nameNote": "Son code vient du nom : « Powdery mildew » donne POWDERY_MILDEW.",
+      "kind": "Type",
+      "selectKind": "Choisir un type",
+      "scientificName": "Nom scientifique",
+      "eppoCode": "Code OEPP",
+      "eppoCodeNote": "Facultatif, 1 à 10 lettres ou chiffres.",
+      "source": "Source",
+      "sourceNote": "Facultatif. user_entry est enregistré si le champ reste vide.",
+      "sourcePlaceholder": "user_entry",
+      "submit": "Ajouter au catalogue",
+      "submitting": "Ajout…",
+      "errors": {
+        "nameRequired": "Le nom est obligatoire.",
+        "nameTooLong": "Le nom doit comporter au plus {{max}} caractères.",
+        "kindRequired": "Le type est obligatoire.",
+        "scientificNameTooLong": "Le nom scientifique doit comporter au plus 255 caractères.",
+        "eppoCode": "Le code OEPP doit comporter 1 à 10 lettres ou chiffres.",
+        "sourceTooLong": "La source doit comporter au plus 255 caractères."
+      }
+    },
+    "inspectionForm": {
+      "title": "Enregistrer une inspection",
+      "date": "Date d’inspection",
+      "score": "Score de santé (%)",
+      "scoreNote": "Un nombre entier de 0 à 100.",
+      "method": "Méthode",
+      "notSpecified": "Non précisée",
+      "observer": "Observateur",
+      "findings": "Constats",
+      "noFindings": "Aucun : l’inspection enregistre une visite sans rien de constaté.",
+      "findingsNote": "Chaque problème constaté, sur tout le bloc ou sur un arbre.",
+      "addFinding": "Ajouter un constat",
+      "findingNumber": "Constat {{number}}",
+      "problem": "Problème",
+      "tree": "Arbre",
+      "treeNote": "Facultatif, par exemple 42 ou R3-12. Vide pour tout le bloc.",
+      "remove": "Retirer",
+      "removeFinding": "Retirer le constat {{number}}",
+      "submit": "Enregistrer l’inspection",
+      "submitting": "Enregistrement…",
+      "errors": {
+        "dateRequired": "La date d’inspection est obligatoire.",
+        "dateInFuture": "La date d’inspection ne peut pas être dans le futur.",
+        "scoreRequired": "Le score de santé est obligatoire.",
+        "scoreFormat": "Le score de santé doit être un nombre entier de 0 à 100.",
+        "observerTooLong": "L’observateur doit comporter au plus 255 caractères.",
+        "problemRequired": "Le problème est obligatoire.",
+        "treeFormat": "L’arbre doit comporter jusqu’à 20 lettres, chiffres ou traits d’union, par exemple 42 ou R3-12."
+      }
+    },
+    "resolveForm": {
+      "title": "Résoudre un constat",
+      "date": "Date de résolution",
+      "dateNote": "Pas avant l’inspection, le {{inspection}}.",
+      "dateNoteWithTreatment": "Ni avant l’inspection ({{inspection}}) ni avant le dernier traitement ({{treatment}}).",
+      "note": "Note",
+      "noteHint": "Facultatif, par exemple comment le problème a été réglé.",
+      "submit": "Résoudre le constat",
+      "submitting": "Résolution…",
+      "errors": {
+        "dateRequired": "La date de résolution est obligatoire.",
+        "dateInFuture": "La date de résolution ne peut pas être dans le futur.",
+        "beforeInspection": "La date de résolution ne peut pas précéder l’inspection, le {{date}}.",
+        "beforeTreatment": "La date de résolution ne peut pas précéder le dernier traitement, le {{date}}.",
+        "noteTooLong": "La note doit comporter au plus 255 caractères."
+      }
+    },
+    "treatmentForm": {
+      "preventiveTitle": "Enregistrer un traitement préventif",
+      "findingTitle": "Traiter un constat",
+      "target": "Problème ciblé",
+      "date": "Date du traitement",
+      "interval": "Délai avant récolte (jours)",
+      "intervalNote": "Jours entiers avant que le bloc puisse de nouveau être récolté.",
+      "product": "Produit",
+      "productNote": "Nom commercial.",
+      "ingredient": "Substance active",
+      "quantity": "Quantité",
+      "unit": "Unité",
+      "selectUnit": "Choisir une unité",
+      "applicator": "Applicateur",
+      "equipment": "Matériel",
+      "submit": "Enregistrer le traitement",
+      "errors": {
+        "targetRequired": "Le problème ciblé est obligatoire.",
+        "dateRequired": "La date du traitement est obligatoire.",
+        "dateInFuture": "La date du traitement ne peut pas être dans le futur.",
+        "beforeInspection": "La date du traitement ne peut pas précéder l’inspection, le {{date}}.",
+        "intervalRequired": "Le délai avant récolte est obligatoire.",
+        "intervalFormat": "Le délai avant récolte doit être un nombre entier de jours, 0 ou plus.",
+        "productRequired": "Le produit est obligatoire.",
+        "productTooLong": "Le produit doit comporter au plus 255 caractères.",
+        "ingredientRequired": "La substance active est obligatoire.",
+        "ingredientTooLong": "La substance active doit comporter au plus 255 caractères.",
+        "quantityFormat": "La quantité doit être un nombre supérieur à 0, avec au plus 3 décimales.",
+        "unitRequired": "L’unité est obligatoire.",
+        "applicatorRequired": "L’applicateur est obligatoire.",
+        "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères.",
+        "equipmentTooLong": "Le matériel doit comporter au plus 255 caractères."
       }
     }
   }
