@@ -1,8 +1,8 @@
-import { formatCode, NO_VALUE } from "../utils/format";
-import PlantsBadge from "./PlantsBadge";
+import { Badge } from "../../../shared/ui";
+import { formatEnum, formatCode, NO_VALUE } from "../utils/format";
 import Value from "./Value";
 
-/* The tone of each rating; the colours and their contrast are in PlantsBadge. */
+/* The tone of each rating, keyed by the code in lower case. */
 const VIGOR_TONES = {
     good: "success",
     strong: "success",
@@ -16,17 +16,16 @@ const VIGOR_TONES = {
 };
 
 /**
- * Vigor of a variety row. The API codes read in sentence case ("GOOD" as
- * "Good"); a rating written otherwise is still shown, never dropped.
+ * Vigor of a variety row, in the active language ("GOOD" as "Good"); a rating
+ * the module does not know is still shown in sentence case, never dropped. The
+ * label always says what the colour says.
  */
 export default function VigorBadge({ value }) {
-    const label = formatCode(value);
-    if (label === NO_VALUE) {
+    if (formatCode(value) === NO_VALUE) {
         // Same dash, same colour as every other missing value in the module.
         return <Value>{NO_VALUE}</Value>;
     }
-
-    // An unrecognised rating is still shown, in neutral styling — the value is
-    // never dropped or reinterpreted.
-    return <PlantsBadge tone={VIGOR_TONES[label.toLowerCase()]}>{label}</PlantsBadge>;
+    const code = String(value).trim();
+    const label = formatEnum("vigor", code.toUpperCase());
+    return <Badge tone={VIGOR_TONES[code.toLowerCase()] ?? "neutral"}>{label}</Badge>;
 }

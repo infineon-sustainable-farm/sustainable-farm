@@ -1,35 +1,22 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Input, Modal, Select } from "../../../shared/ui";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { useVarietyReferences } from "../hooks/useVarietyReferences";
-import { formatCode, formatOrigin } from "../utils/format";
-import { batchRequestBody, NURSERY_ORIGINS, NURSERY_STAGES, PURCHASED } from "../utils/nurseryRequests";
-import PlantsModal from "./PlantsModal";
+import { formatEnum } from "../utils/format";
+import { batchRequestBody, NURSERY_STAGES, PURCHASED } from "../utils/nurseryRequests";
+import { todayAsIsoDate, validateBatch } from "../utils/nurseryValidation";
+import FormAlert from "./FormAlert";
+import NurseryField from "./NurseryField";
+import { noteId } from "./nurseryForm";
+import NurseryOriginField from "./NurseryOriginField";
 
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
-
-/**
- * Same rules as the API: a batch code of up to 20 letters, digits or hyphens,
- * a block as for a planting, a whole count of up to 9 digits, and the lengths
- * of the supplier and its lot number. Spaces around a code are removed by the
- * API.
- */
-const BATCH_CODE_PATTERN = /^\s*[A-Za-z0-9-]{1,20}\s*$/;
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
-const COUNT_PATTERN = /^\d{1,9}$/;
-const TEXT_MAX_LENGTH = 255;
-const LOT_NUMBER_MAX_LENGTH = 50;
-
-// The notes under the fields, by field.
-const NOTES = {
-    batchCode: "Letters are saved in capitals: p1 becomes P1.",
-    varietyName: "The transplant plants this variety. The forecast uses the reference of the same name.",
-    startedOn: "Day of sowing, or of reception for a purchase.",
-    plannedBlockCode: "Optional. The transplant alerts name it.",
+// The fields that carry a note under them, with the id of their control.
+const NOTE_FIELD_IDS = {
+    batchCode: "batch-code",
+    varietyName: "batch-variety",
+    startedOn: "batch-start",
+    plannedBlockCode: "batch-planned-block",
 };
 
 // The fields of a purchase only.
@@ -48,35 +35,6 @@ const INITIAL_VALUES = {
     plannedBlockCode: "",
 };
 
-/** Today as "YYYY-MM-DD", in local time: the latest start date the form accepts. */
-function todayAsIsoDate() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${now.getFullYear()}-${month}-${day}`;
-}
-
-function FormField({ id, label, error, note, children }) {
-    return (
-        <div>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
-
 /**
  * Form of a new nursery batch: its code, variety and origin, its start date,
  * count and stage, and when and where it is planned to be transplanted.
@@ -87,12 +45,13 @@ function FormField({ id, label, error, note, children }) {
  * included. The variety names of the reference and the blocks of the recorded
  * varieties are offered as suggestions; both stay free text.
  *
- * The checks mirror the API's 400 rules; what the API still refuses is shown
- * under its field, as for the reference of a variety: a 400 under each field
- * it names, a 409 (the code is taken) under the code. A 422 (the planned date
- * is before the start date), or any other error, is shown above the form.
+ * The checks mirror the API's 400 rules (utils/nurseryValidation); what the API
+ * still refuses is shown under its field: a 400 under each field it names, a
+ * 409 (the code is taken) under the code. A 422 (the planned date is before the
+ * start date), or any other error, is shown above the form.
  */
 export default function AddNurseryBatchModal({ isSubmitting, error, onSubmit, onResetError, onClose }) {
+    const { t } = useTranslation("plants");
     const [values, setValues] = useState(INITIAL_VALUES);
     // A number field holds "" for text it cannot read, such as "1e"; this
     // keeps such a value from passing as an empty one.
@@ -108,12 +67,9 @@ export default function AddNurseryBatchModal({ isSubmitting, error, onSubmit, on
     const formError = error && !serverFieldErrors && !codeConflict ? error.message : null;
     const fieldError = (field) =>
         fieldErrors[field] ?? serverFieldErrors?.[field] ?? (field === "batchCode" ? codeConflict : null);
-    const fieldProps = (field, id) => ({
-        "aria-invalid": fieldError(field) ? true : undefined,
-        "aria-describedby":
-            [fieldError(field) ? `${id}-error` : null, NOTES[field] ? `${id}-note` : null].filter(Boolean).join(" ")
-            || undefined,
-    });
+    const notes = Object.fromEntries(Object.keys(NOTE_FIELD_IDS).map((field) => [field, t(`nursery.addForm.notes.${field}`)]));
+    const describedBy = Object.fromEntries(Object.entries(NOTE_FIELD_IDS).map(([field, id]) => [field, noteId(id)]));
+    const stageOptions = NURSERY_STAGES.map((stage) => ({ value: stage, label: formatEnum("nurseryStage", stage) }));
     const isPurchase = values.origin === PURCHASED;
 
     function setValue(field, value) {
@@ -137,278 +93,175 @@ export default function AddNurseryBatchModal({ isSubmitting, error, onSubmit, on
         onResetError();
     }
 
-    function validate() {
-        const errors = {};
-        if (!values.batchCode.trim()) {
-            errors.batchCode = "Batch code is required.";
-        } else if (!BATCH_CODE_PATTERN.test(values.batchCode)) {
-            errors.batchCode = "Batch code must be up to 20 letters, digits or hyphens, such as P1 or KEITT-2026-01.";
-        }
-        if (!values.varietyName.trim()) {
-            errors.varietyName = "Variety is required.";
-        } else if (values.varietyName.length > TEXT_MAX_LENGTH) {
-            errors.varietyName = `Variety must be at most ${TEXT_MAX_LENGTH} characters.`;
-        }
-        if (!values.origin) {
-            errors.origin = "Origin is required.";
-        }
-        if (isPurchase) {
-            if (!values.supplier.trim()) {
-                errors.supplier = "Supplier is required for an external purchase.";
-            } else if (values.supplier.length > TEXT_MAX_LENGTH) {
-                errors.supplier = `Supplier must be at most ${TEXT_MAX_LENGTH} characters.`;
-            }
-            if (values.supplierLotNumber.trim() && values.supplierLotNumber.length > LOT_NUMBER_MAX_LENGTH) {
-                errors.supplierLotNumber = `Supplier lot number must be at most ${LOT_NUMBER_MAX_LENGTH} characters.`;
-            }
-        }
-        if (!values.startedOn) {
-            errors.startedOn = "Start date is required.";
-        } else if (values.startedOn > today) {
-            errors.startedOn = "Start date cannot be in the future.";
-        }
-        const count = values.initialCount.trim();
-        if (isCountUnreadable || !COUNT_PATTERN.test(count) || Number(count) < 1) {
-            errors.initialCount = "Initial count must be a whole number, 1 or more.";
-        }
-        if (!values.initialStage) {
-            errors.initialStage = "Initial stage is required.";
-        }
-        if (!values.plannedTransplantOn) {
-            errors.plannedTransplantOn = "Planned transplant date is required.";
-        }
-        if (values.plannedBlockCode.trim() && !BLOCK_CODE_PATTERN.test(values.plannedBlockCode)) {
-            errors.plannedBlockCode = "Planned block must be a short code such as E or B2, without prefix or space.";
-        }
-        return errors;
-    }
-
     function handleSubmit(event) {
         event.preventDefault();
-        const errors = validate();
+        const errors = validateBatch(values, { today, isCountUnreadable });
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
         onSubmit(batchRequestBody(values));
     }
 
     return (
-        <PlantsModal labelledBy="add-batch-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2 id="add-batch-title" className="font-heading text-lg font-bold text-gray-900">
-                    Add a nursery batch
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
-
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of the dialogs: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+        <Modal open onClose={onClose} title={t("nursery.addForm.title")} size="xl">
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="batch-code" label="Batch code" error={fieldError("batchCode")} note={NOTES.batchCode}>
-                        <input
-                            id="batch-code"
+                    <NurseryField
+                        id="batch-code"
+                        label={t("nursery.addForm.batchCode")}
+                        error={fieldError("batchCode")}
+                        note={notes.batchCode}
+                    >
+                        <Input
                             type="text"
-                            autoFocus
                             value={values.batchCode}
                             onChange={(event) => setValue("batchCode", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("batchCode", "batch-code")}
+                            aria-describedby={describedBy.batchCode}
                         />
-                    </FormField>
+                    </NurseryField>
 
-                    <FormField
+                    <NurseryField
                         id="batch-variety"
-                        label="Variety"
+                        label={t("nursery.addForm.variety")}
                         error={fieldError("varietyName")}
-                        note={NOTES.varietyName}
+                        note={notes.varietyName}
                     >
-                        <input
-                            id="batch-variety"
+                        <Input
                             type="text"
                             list="batch-variety-options"
                             value={values.varietyName}
                             onChange={(event) => setValue("varietyName", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("varietyName", "batch-variety")}
+                            aria-describedby={describedBy.varietyName}
                         />
                         <datalist id="batch-variety-options">
                             {(references ?? []).map((reference) => (
                                 <option key={reference.id} value={reference.varietyName} />
                             ))}
                         </datalist>
-                    </FormField>
+                    </NurseryField>
 
-                    <fieldset className="sm:col-span-2">
-                        <legend className={LABEL_CLASS}>Origin</legend>
-                        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
-                            {NURSERY_ORIGINS.map((origin) => (
-                                <label key={origin} className="flex items-center gap-2 text-sm text-gray-800">
-                                    <input
-                                        type="radio"
-                                        name="batch-origin"
-                                        value={origin}
-                                        checked={values.origin === origin}
-                                        onChange={() => changeOrigin(origin)}
-                                        aria-invalid={fieldError("origin") ? true : undefined}
-                                        aria-describedby={fieldError("origin") ? "batch-origin-error" : undefined}
-                                        className="accent-primary"
-                                    />
-                                    {formatOrigin(origin)}
-                                </label>
-                            ))}
-                        </div>
-                        {fieldError("origin") && (
-                            <p id="batch-origin-error" className={ERROR_CLASS}>
-                                {fieldError("origin")}
-                            </p>
-                        )}
-                    </fieldset>
+                    <NurseryOriginField value={values.origin} error={fieldError("origin")} onChange={changeOrigin} />
 
                     {isPurchase && (
                         <>
-                            <FormField id="batch-supplier" label="Supplier" error={fieldError("supplier")}>
-                                <input
-                                    id="batch-supplier"
+                            <NurseryField
+                                id="batch-supplier"
+                                label={t("nursery.addForm.supplier")}
+                                error={fieldError("supplier")}
+                            >
+                                <Input
                                     type="text"
                                     value={values.supplier}
                                     onChange={(event) => setValue("supplier", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("supplier", "batch-supplier")}
                                 />
-                            </FormField>
+                            </NurseryField>
 
-                            <FormField
+                            <NurseryField
                                 id="batch-supplier-lot"
-                                label="Supplier lot number"
+                                label={t("nursery.addForm.supplierLot")}
                                 error={fieldError("supplierLotNumber")}
                             >
-                                <input
-                                    id="batch-supplier-lot"
+                                <Input
                                     type="text"
                                     value={values.supplierLotNumber}
                                     onChange={(event) => setValue("supplierLotNumber", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("supplierLotNumber", "batch-supplier-lot")}
                                 />
-                            </FormField>
+                            </NurseryField>
                         </>
                     )}
 
-                    <FormField id="batch-start" label="Start date" error={fieldError("startedOn")} note={NOTES.startedOn}>
-                        <input
-                            id="batch-start"
+                    <NurseryField
+                        id="batch-start"
+                        label={t("nursery.addForm.startDate")}
+                        error={fieldError("startedOn")}
+                        note={notes.startedOn}
+                    >
+                        <Input
                             type="date"
                             max={today}
                             value={values.startedOn}
                             onChange={(event) => setValue("startedOn", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("startedOn", "batch-start")}
+                            aria-describedby={describedBy.startedOn}
                         />
-                    </FormField>
+                    </NurseryField>
 
-                    <FormField id="batch-count" label="Initial count" error={fieldError("initialCount")}>
-                        <input
-                            id="batch-count"
+                    <NurseryField
+                        id="batch-count"
+                        label={t("nursery.addForm.initialCount")}
+                        error={fieldError("initialCount")}
+                    >
+                        <Input
                             type="number"
                             min="1"
                             step="1"
                             inputMode="numeric"
                             value={values.initialCount}
                             onChange={changeCount}
-                            className={INPUT_CLASS}
-                            {...fieldProps("initialCount", "batch-count")}
                         />
-                    </FormField>
+                    </NurseryField>
 
-                    <FormField id="batch-stage" label="Initial stage" error={fieldError("initialStage")}>
-                        <select
-                            id="batch-stage"
+                    <NurseryField
+                        id="batch-stage"
+                        label={t("nursery.addForm.initialStage")}
+                        error={fieldError("initialStage")}
+                    >
+                        <Select
                             value={values.initialStage}
                             onChange={(event) => setValue("initialStage", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("initialStage", "batch-stage")}
                         >
                             {/* Empty value: sending without a choice gives "Initial stage is required." */}
-                            <option value="">Select a stage</option>
-                            {NURSERY_STAGES.map((stage) => (
-                                <option key={stage} value={stage}>
-                                    {formatCode(stage)}
+                            <option value="">{t("nursery.addForm.selectStage")}</option>
+                            {stageOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </NurseryField>
 
-                    <FormField
+                    <NurseryField
                         id="batch-planned-date"
-                        label="Planned transplant date"
+                        label={t("nursery.addForm.plannedDate")}
                         error={fieldError("plannedTransplantOn")}
                     >
-                        <input
-                            id="batch-planned-date"
+                        <Input
                             type="date"
                             value={values.plannedTransplantOn}
                             onChange={(event) => setValue("plannedTransplantOn", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("plannedTransplantOn", "batch-planned-date")}
                         />
-                    </FormField>
+                    </NurseryField>
 
-                    <FormField
+                    <NurseryField
                         id="batch-planned-block"
-                        label="Planned block"
+                        label={t("nursery.addForm.plannedBlock")}
                         error={fieldError("plannedBlockCode")}
-                        note={NOTES.plannedBlockCode}
+                        note={notes.plannedBlockCode}
                     >
-                        <input
-                            id="batch-planned-block"
+                        <Input
                             type="text"
                             list="batch-block-options"
                             value={values.plannedBlockCode}
                             onChange={(event) => setValue("plannedBlockCode", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("plannedBlockCode", "batch-planned-block")}
+                            aria-describedby={describedBy.plannedBlockCode}
                         />
                         <datalist id="batch-block-options">
                             {(blocks ?? []).map((block) => (
                                 <option key={block} value={block} />
                             ))}
                         </datalist>
-                    </FormField>
+                    </NurseryField>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isSubmitting ? "Adding…" : "Add batch"}
-                    </button>
+                    <Button variant="secondary" onClick={onClose}>
+                        {t("common:actions.cancel")}
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? t("nursery.addForm.submitting") : t("nursery.addForm.submit")}
+                    </Button>
                 </div>
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

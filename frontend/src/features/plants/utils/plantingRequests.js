@@ -1,14 +1,19 @@
+import i18n from "../../../shared/i18n/i18n";
+
 /**
  * Optional details of a planting: the two spacings and the vigor, checked with
  * the rules of the API so that most mistakes are caught before sending.
  */
 
-/** The vigor ratings of the API, as the form offers them; "" is no rating. */
+/**
+ * The vigor ratings of the API, as the form offers them; "" is no rating. `labelKey` is the
+ * translation key of the label, in the plants namespace.
+ */
 export const VIGOR_OPTIONS = [
-    { code: "", label: "Not assessed" },
-    { code: "GOOD", label: "Good" },
-    { code: "AVERAGE", label: "Average" },
-    { code: "POOR", label: "Poor" },
+    { code: "", labelKey: "varieties.planting.notAssessed" },
+    { code: "GOOD", labelKey: "enums.vigor.GOOD" },
+    { code: "AVERAGE", labelKey: "enums.vigor.AVERAGE" },
+    { code: "POOR", labelKey: "enums.vigor.POOR" },
 ];
 
 /** Largest spacing the API accepts, in metres. */
@@ -17,10 +22,15 @@ const SPACING_MAX_M = 30;
 /** A decimal number with at most one decimal, such as 8, 7.5 or .5. */
 const ONE_DECIMAL_PATTERN = /^(\d+(\.\d)?|\.\d)$/;
 
+// Messages in the active language, from plants.json (varieties.validation).
 const SPACINGS = [
-    { field: "rowSpacingM", key: "rowSpacing", label: "Inter-row spacing" },
-    { field: "treeSpacingM", key: "treeSpacing", label: "Intra-row spacing" },
+    { field: "rowSpacingM", key: "rowSpacing", bounds: "rowSpacingBounds", required: "rowSpacingRequired" },
+    { field: "treeSpacingM", key: "treeSpacing", bounds: "treeSpacingBounds", required: "treeSpacingRequired" },
 ];
+
+function message(key, options) {
+    return i18n.t(`varieties.validation.${key}`, { ns: "plants", ...options });
+}
 
 function isBlank(value) {
     return value === undefined || value === null || String(value).trim() === "";
@@ -42,9 +52,9 @@ function isValidSpacing(value) {
  */
 export function spacingErrors(values) {
     const errors = {};
-    for (const { field, key, label } of SPACINGS) {
+    for (const { field, key, bounds } of SPACINGS) {
         if (!isBlank(values[key]) && !isValidSpacing(values[key])) {
-            errors[field] = `${label} must be above 0 and at most ${SPACING_MAX_M} m, with at most 1 decimal.`;
+            errors[field] = message(bounds, { max: SPACING_MAX_M });
         }
     }
     const [row, tree] = SPACINGS;
@@ -52,8 +62,7 @@ export function spacingErrors(values) {
     const treeBlank = isBlank(values[tree.key]);
     if (rowBlank !== treeBlank) {
         const missing = rowBlank ? row : tree;
-        const given = rowBlank ? tree : row;
-        errors[missing.field] = `${missing.label} is required when the ${given.label.toLowerCase()} is given.`;
+        errors[missing.field] = message(missing.required);
     }
     return errors;
 }

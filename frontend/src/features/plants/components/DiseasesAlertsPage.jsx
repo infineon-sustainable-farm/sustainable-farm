@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, PageHeader } from "../../../shared/ui";
 import { useInspectedBlocks } from "../hooks/useBlockHealth";
 import { useRecordInspection } from "../hooks/useRecordInspection";
 import { useRecordTreatment } from "../hooks/useRecordTreatment";
@@ -17,28 +19,20 @@ import TreatmentModal from "./TreatmentModal";
 import TreatmentsSection from "./TreatmentsSection";
 
 function RecordInspectionButton({ onClick }) {
+    const { t } = useTranslation("plants");
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-        >
-            <Plus size={16} />
-            Record an inspection
-        </button>
+        <Button icon={Plus} onClick={onClick}>
+            {t("health.recordInspection")}
+        </Button>
     );
 }
 
 function RecordPreventiveTreatmentButton({ onClick }) {
+    const { t } = useTranslation("plants");
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-        >
-            <Plus size={16} />
-            Record a preventive treatment
-        </button>
+        <Button variant="secondary" icon={Plus} onClick={onClick}>
+            {t("health.recordPreventiveTreatment")}
+        </Button>
     );
 }
 
@@ -58,6 +52,7 @@ function RecordPreventiveTreatmentButton({ onClick }) {
  * carries no score, the API gives no band, and there is no detail view.
  */
 export default function DiseasesAlertsPage() {
+    const { t } = useTranslation("plants");
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
     const [isRecordingInspection, setIsRecordingInspection] = useState(false);
@@ -65,9 +60,10 @@ export default function DiseasesAlertsPage() {
     const [treatedFinding, setTreatedFinding] = useState(undefined);
     const [resolvedFinding, setResolvedFinding] = useState(null);
 
+    const documentTitle = t("health.documentTitle");
     useEffect(() => {
-        document.title = "Diseases & Alerts — Plants";
-    }, []);
+        document.title = documentTitle;
+    }, [documentTitle]);
 
     const { data: varietyBlocks } = useVarietyBlocks();
     const { data: inspectedBlocks } = useInspectedBlocks();
@@ -123,51 +119,40 @@ export default function DiseasesAlertsPage() {
     }
 
     return (
-        <div className="min-h-dvh bg-gray-50">
-            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
-                <header className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        {/* A gray 12 px overline: #4a5565 on the gray-50 page -> 7.23:1. */}
-                        <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
-                            Task 4
-                        </p>
-                        <h1 className="font-heading mt-1 text-2xl font-bold text-gray-900">
-                            Diseases &amp; Alerts
-                        </h1>
-                        <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Block health, findings and treatments.
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
+        <div className="p-6 space-y-6">
+            <PageHeader
+                title={t("health.title")}
+                subtitle={t("health.subtitle")}
+                actions={
+                    <>
                         <RecordPreventiveTreatmentButton onClick={() => openTreatmentForm(null)} />
                         <RecordInspectionButton onClick={openInspectionForm} />
-                    </div>
-                </header>
+                    </>
+                }
+            />
 
-                <HealthAlertsSection />
+            <HealthAlertsSection />
 
-                <BlockFilter blocks={blocks} value={selectedBlock} onChange={setSelectedBlock} />
+            <BlockFilter blocks={blocks} value={selectedBlock} onChange={setSelectedBlock} />
 
-                <BlockHealthSection
-                    blockCode={selectedBlock || null}
-                    recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
-                />
+            <BlockHealthSection
+                blockCode={selectedBlock || null}
+                recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
+            />
 
-                <FindingsSection
-                    blockCode={selectedBlock || null}
-                    recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
-                    onTreat={openTreatmentForm}
-                    onResolve={openResolutionForm}
-                />
+            <FindingsSection
+                blockCode={selectedBlock || null}
+                recordAction={<RecordInspectionButton onClick={openInspectionForm} />}
+                onTreat={openTreatmentForm}
+                onResolve={openResolutionForm}
+            />
 
-                <TreatmentsSection
-                    blockCode={selectedBlock || null}
-                    recordAction={<RecordPreventiveTreatmentButton onClick={() => openTreatmentForm(null)} />}
-                />
+            <TreatmentsSection
+                blockCode={selectedBlock || null}
+                recordAction={<RecordPreventiveTreatmentButton onClick={() => openTreatmentForm(null)} />}
+            />
 
-                <HealthIssuesSection />
-            </div>
+            <HealthIssuesSection />
 
             {isRecordingInspection && (
                 <RecordInspectionModal
