@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ChartNoAxesCombined, Download, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
 import AlertsCard from '../components/dashboard/AlertsCard';
@@ -136,7 +137,7 @@ export default function DashboardPage() {
     setForecastForm({
       ...emptyForecastForm,
       productId: products[0]?.productId ? String(products[0].productId) : '',
-      forecastMonth: new Date().toISOString().slice(0, 7) + '-01',
+      forecastMonth: todayIsoDate().slice(0, 7) + '-01',
     });
     setShowForecastModal(true);
     setActionError(null);
@@ -178,7 +179,7 @@ export default function DashboardPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `demand-forecasts-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `demand-forecasts-${todayIsoDate()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     flashSuccess(t('dashboard.exportDone'));

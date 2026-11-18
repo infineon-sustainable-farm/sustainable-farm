@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSalesFormat } from '../../format';
+import { todayIsoDate } from '../../../../shared/utils/todayIsoDate';
+import { localIsoDate, useSalesFormat } from '../../format';
 
 export const REPORT_TYPES = ['Forecasting', 'Regional', 'Risk Analysis', 'Sales Performance', 'Inventory'];
 // Translation keys of the report types, whose English names are the values sent to the API.
@@ -35,8 +36,8 @@ export function emptyReportForm() {
   nextMonth.setMonth(nextMonth.getMonth() + 1);
   return {
     reportType: 'Forecasting',
-    periodStart: today.toISOString().slice(0, 10),
-    periodEnd: nextMonth.toISOString().slice(0, 10),
+    periodStart: localIsoDate(today),
+    periodEnd: localIsoDate(nextMonth),
     totalForecastedVolumeT: '',
     totalActualVolumeT: '',
     variancePct: '',
@@ -130,7 +131,7 @@ export function downloadReportCsv(report) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `report-${report.reportId || 'export'}-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `report-${report.reportId || 'export'}-${todayIsoDate()}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }

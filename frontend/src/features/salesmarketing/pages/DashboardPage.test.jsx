@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { justAfterLocalMidnight } from '../testing/nearMidnight';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import DashboardPage from './DashboardPage';
@@ -115,5 +116,21 @@ describe('DashboardPage', () => {
     api.getCustomers.mockRejectedValue(new Error('offline'));
     renderPage();
     expect(await screen.findByText(/Partial load - Customers: offline/)).toBeInTheDocument();
+  });
+
+  it('defaults the forecast month to the local month just after midnight', async () => {
+    const restore = justAfterLocalMidnight();
+    try {
+      renderPage();
+      fireEvent.click(await screen.findByRole('button', { name: 'NEW FORECAST' }));
+      const dialog = screen.getByRole('dialog', { name: 'New Forecast' });
+      fireEvent.change(within(dialog).getByLabelText(/Volume \(t\)/), { target: { value: '800' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
+      await waitFor(() =>
+        expect(api.createDemandForecast).toHaveBeenCalledWith(expect.objectContaining({ forecastMonth: '2026-04-01' }))
+      );
+    } finally {
+      restore();
+    }
   });
 });

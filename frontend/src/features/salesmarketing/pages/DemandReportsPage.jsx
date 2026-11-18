@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CalendarDays, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { localIsoDateTime } from '../format';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
 import ReportActivityTable from '../components/reports/ReportActivityTable';
@@ -113,7 +114,7 @@ export default function DemandReportsPage() {
       const nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
       nextWeek.setHours(8, 0, 0, 0);
-      form.nextRunAt = nextWeek.toISOString().slice(0, 16);
+      form.nextRunAt = localIsoDateTime(nextWeek);
       form.scheduleFrequency = 'Weekly';
     }
     setReportForm(form);
@@ -137,7 +138,7 @@ export default function DemandReportsPage() {
         variancePct: r.variancePct != null ? String(r.variancePct) : '',
         status: r.status || 'ready',
         isScheduled: !!r.isScheduled,
-        nextRunAt: r.nextRunAt ? new Date(r.nextRunAt).toISOString().slice(0, 16) : '',
+        nextRunAt: r.nextRunAt ? localIsoDateTime(new Date(r.nextRunAt)) : '',
         scheduleFrequency: r.scheduleFrequency || '',
         summary: r.summary || '',
         generatedBy: r.generatedBy || '',

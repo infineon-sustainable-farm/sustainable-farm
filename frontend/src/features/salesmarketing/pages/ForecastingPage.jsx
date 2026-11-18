@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { BrainCircuit, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
 import AccuracyTable from '../components/forecasting/AccuracyTable';
@@ -126,7 +127,7 @@ export default function ForecastingPage() {
     setForecastForm({
       ...emptyForecastForm,
       productId: selectedProductId || (products[0] ? String(products[0].productId) : ''),
-      forecastMonth: new Date().toISOString().slice(0, 7) + '-01',
+      forecastMonth: todayIsoDate().slice(0, 7) + '-01',
     });
     setShowForecastModal(true);
   };
