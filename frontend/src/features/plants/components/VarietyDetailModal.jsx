@@ -1,5 +1,5 @@
-import { X } from "lucide-react";
-import PlantsModal from "./PlantsModal";
+import { useTranslation } from "react-i18next";
+import { Modal } from "../../../shared/ui";
 import VigorBadge from "./VigorBadge";
 import Value from "./Value";
 import {
@@ -12,13 +12,11 @@ import {
     formatTimestamp,
 } from "../utils/format";
 
-function Field({ label, children }) {
+function DetailField({ label, children }) {
     return (
         <div className="flex flex-col gap-1">
-            <dt className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                {label}
-            </dt>
-            <dd className="text-sm text-gray-800">
+            <dt className="text-sm text-text-muted">{label}</dt>
+            <dd className="text-sm text-text">
                 <Value>{children}</Value>
             </dd>
         </div>
@@ -26,58 +24,28 @@ function Field({ label, children }) {
 }
 
 export default function VarietyDetailModal({ variety, onClose }) {
+    const { t } = useTranslation("plants");
     return (
-        <PlantsModal labelledBy="variety-detail-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <div>
-                    <h2
-                        id="variety-detail-title"
-                        className="font-heading text-lg font-bold text-gray-900"
-                    >
-                        {formatText(variety.name)}
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-500">
-                        {formatBlock(variety.blockCode)}
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
-
-            <dl className="grid grid-cols-1 gap-5 px-6 py-5 sm:grid-cols-2">
-                <Field label="Trees planted">{formatNumber(variety.treeCount)}</Field>
-                <Field label="Trees now">{formatNumber(variety.currentTreeCount)}</Field>
-                <Field label="Spacing">
-                    {formatSpacing(
-                        variety.rowSpacingM,
-                        variety.treeSpacingM,
-                    )}
-                </Field>
-                <Field label="Inter-row spacing">
-                    {formatMeters(variety.rowSpacingM)}
-                </Field>
-                <Field label="Intra-row spacing">
-                    {formatMeters(variety.treeSpacingM)}
-                </Field>
-                <Field label="Tree density">{formatDensity(variety.treeDensityPerHa)}</Field>
-                <Field label="Vigor">
+        <Modal open onClose={onClose} size="xl" title={formatText(variety.name)} description={formatBlock(variety.blockCode)}>
+            <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <DetailField label={t("varieties.detail.treesPlanted")}>{formatNumber(variety.treeCount)}</DetailField>
+                <DetailField label={t("varieties.detail.treesNow")}>{formatNumber(variety.currentTreeCount)}</DetailField>
+                <DetailField label={t("varieties.detail.spacing")}>
+                    {formatSpacing(variety.rowSpacingM, variety.treeSpacingM)}
+                </DetailField>
+                <DetailField label={t("varieties.detail.interRowSpacing")}>{formatMeters(variety.rowSpacingM)}</DetailField>
+                <DetailField label={t("varieties.detail.intraRowSpacing")}>{formatMeters(variety.treeSpacingM)}</DetailField>
+                <DetailField label={t("varieties.detail.treeDensity")}>{formatDensity(variety.treeDensityPerHa)}</DetailField>
+                <DetailField label={t("varieties.detail.vigor")}>
                     <VigorBadge value={variety.vigor} />
-                </Field>
-                <Field label="Plant origin">{formatText(variety.plantOrigin)}</Field>
-                <Field label="Farm ID">{formatNumber(variety.farmId)}</Field>
-                <Field label="Source">{formatText(variety.source)}</Field>
-                <Field label="Last updated">{formatTimestamp(variety.lastUpdated)}</Field>
+                </DetailField>
+                <DetailField label={t("varieties.detail.plantOrigin")}>{formatText(variety.plantOrigin)}</DetailField>
+                <DetailField label={t("varieties.detail.farmId")}>{formatNumber(variety.farmId)}</DetailField>
+                <DetailField label={t("varieties.detail.source")}>{formatText(variety.source)}</DetailField>
+                <DetailField label={t("varieties.detail.lastUpdated")}>{formatTimestamp(variety.lastUpdated)}</DetailField>
             </dl>
 
-            <p className="border-t border-gray-200 px-6 py-3 text-xs text-gray-500">
-                A dash means no value has been recorded for this field yet.
-            </p>
-        </PlantsModal>
+            <p className="mt-5 text-xs text-text-muted">{t("varieties.detail.dashNote")}</p>
+        </Modal>
     );
 }
