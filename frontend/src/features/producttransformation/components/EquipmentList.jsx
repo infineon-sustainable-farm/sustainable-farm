@@ -1,9 +1,9 @@
 /**
  * Product Transformation - Equipment List Component
- * Displays, filters, creates, edits and deletes PT-only equipment.
- *
- * Equipment collision rule (Option A): this screen manages `pt_equipment`
- * (/api/equipment), not the Machinery module's `equipment`.
+ * Displays, filters, creates, edits and deletes the processing and drying
+ * machines of the farm equipment register (ADR 0004, /api/equipment). A machine
+ * created from Machinery shows here without type, capacity or energy until it
+ * is edited.
  *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
@@ -29,6 +29,9 @@ const EQUIPMENT_TYPES = [
 ];
 
 const MAINTENANCE_STATUSES = ['ACTIVE', 'MAINTENANCE', 'RETIRED'];
+
+/** Same maximum as the Machinery equipment form: one register, one name length. */
+const EQUIPMENT_NAME_MAX_LENGTH = 100;
 
 const EQUIPMENT_TYPE_LABELS = {
   WASHING: 'Washing',
@@ -479,6 +482,7 @@ const EquipmentList = () => {
                   <input
                     type="text"
                     value={form.equipmentName}
+                    maxLength={EQUIPMENT_NAME_MAX_LENGTH}
                     onChange={updateForm('equipmentName')}
                     className="border border-gray-300 rounded-lg px-3 py-2"
                   />
