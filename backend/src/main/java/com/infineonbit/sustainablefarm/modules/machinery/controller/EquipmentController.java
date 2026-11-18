@@ -20,17 +20,17 @@ import org.springframework.web.bind.annotation.*;
  * <p>
  * Available Endpoints :
  * <ul>
- * <li>{@code POST /api/equipments} — equipment creation</li>
- * <li>{@code GET /api/equipments} — list of equipments</li>
- * <li>{@code PATCH /api/equipments/{id}} — equipment status update</li>
- * <li>{@code DELETE /api/equipments/{id}} — equipment deleting</li>
+ * <li>{@code POST /api/machinery/equipment} — equipment creation</li>
+ * <li>{@code GET /api/machinery/equipment} — list of equipments</li>
+ * <li>{@code PATCH /api/machinery/equipment/{id}} — equipment status update</li>
+ * <li>{@code DELETE /api/machinery/equipment/{id}} — equipment deleting</li>
  * </ul>
  *
  * @since 1.0
  */
 
 @RestController
-@RequestMapping("/api/equipments")
+@RequestMapping("/api/machinery/equipment")
 @AllArgsConstructor
 public class EquipmentController {
    private final EquipmentService equipmentService;
