@@ -13,6 +13,12 @@ describe('Pagination', () => {
     expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
   })
 
+  it('keeps the button labels on one line and wraps the row on narrow screens', () => {
+    render(<Pagination page={1} totalPages={4} onPageChange={() => {}} />)
+    expect(screen.getByRole('navigation')).toHaveClass('flex-wrap')
+    expect(screen.getByRole('button', { name: 'Previous' })).toHaveClass('whitespace-nowrap')
+  })
+
   it('moves to the previous and next pages', () => {
     const onPageChange = vi.fn()
     render(<Pagination page={1} totalPages={4} onPageChange={onPageChange} />)
