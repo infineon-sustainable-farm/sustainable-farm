@@ -9,7 +9,6 @@ import {
   Truck,
   Users,
 } from 'lucide-react';
-import MainLayout from './components/layout/MainLayout';
 import CampaignsPage from './pages/CampaignsPage';
 import CustomersPage from './pages/CustomersPage';
 import DashboardPage from './pages/DashboardPage';
@@ -20,10 +19,10 @@ import ForecastingPage from './pages/ForecastingPage';
 import PricingPage from './pages/PricingPage';
 import SalesChannelsPage from './pages/SalesChannelsPage';
 
+// The screens render inside the application shell (app/AppLayout.jsx), see nav.shell below.
 export default [
   {
     path: 'salesmarketing',
-    element: <MainLayout />,
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'forecasting', element: <ForecastingPage /> },
@@ -40,14 +39,15 @@ export default [
 
 /**
  * Navigation of the module, read by the application shell (app/Sidebar.jsx) and the launcher
- * page (app/LauncherPage.jsx). Same entries, order and targets as the module's own sidebar; its Material Symbols are
- * replaced by the closest lucide icons.
+ * page (app/LauncherPage.jsx). Sales and marketing renders inside the shell, with the same entries,
+ * order and targets as the module's former sidebar.
  */
 export const nav = {
   id: 'salesmarketing',
   basePath: '/salesmarketing',
   icon: ShoppingCart,
   nameKey: 'salesmarketing:name',
+  shell: true,
   items: [
     { to: '/salesmarketing', labelKey: 'salesmarketing:nav.dashboard', icon: LayoutGrid, end: true },
     { to: '/salesmarketing/forecasting', labelKey: 'salesmarketing:nav.forecasting', icon: TrendingUp },
