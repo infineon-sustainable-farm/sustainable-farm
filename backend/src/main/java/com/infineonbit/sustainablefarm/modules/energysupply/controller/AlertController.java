@@ -17,7 +17,7 @@ import java.util.List;
 
 /** Feeds the "Alerts & Notifications" tab of the Energy App. */
 @RestController("energyAlertController")
-@RequestMapping("/api/energy/alerts")
+@RequestMapping("/api/energy-supply/alerts")
 public class AlertController {
 
     private final AlertService service;

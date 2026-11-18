@@ -61,7 +61,7 @@ Un module déclare un champ monétaire ainsi, avec les colonnes `<prefix>_amount
 private Money price;
 ```
 
-Les deux colonnes vides donnent un champ `null`. Machinery y est passé avec T33 : coûts du carburant, des réparations et des pièces en `USD`, la devise que son interface affiche, l'API gardant des nombres. Les colonnes existantes sans devise (visitormanagement) ou avec la devise dans le nom (`*_eur` d'energysupply et salesmarketing) passent à ce modèle module par module au Lot 3.
+Les deux colonnes vides donnent un champ `null`. Machinery y est passé avec T33 : coûts du carburant, des réparations et des pièces en `USD`, la devise que son interface affiche, l'API gardant des nombres. Energysupply y est passé avec T34 : coût unitaire des composants et coût des marches du groupe électrogène en `EUR` (anciennes colonnes `unit_cost_eur` et `cost_eur`), l'API gardant `costEur` en nombre. Les colonnes existantes sans devise (visitormanagement) ou avec la devise dans le nom (`*_eur` de salesmarketing) passent à ce modèle module par module au Lot 3.
 
 ### API (A5)
 

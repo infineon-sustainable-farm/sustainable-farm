@@ -1,12 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,15 +15,9 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name = "carbon_metric")
-public class CarbonMetric {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "metric_id")
-    private String metricId;
+@Table(name = "carbon_metric", indexes = @Index(name = "idx_carbon_metric_period", columnList = "period"))
+public class CarbonMetric extends BaseEntity {
 
     @Column(nullable = false)
     private LocalDate period;
@@ -36,5 +28,6 @@ public class CarbonMetric {
     @Column(name = "emission_factor_used", precision = 6, scale = 3)
     private BigDecimal emissionFactorUsed;
 
+    @Column(length = 100)
     private String scenario;
 }

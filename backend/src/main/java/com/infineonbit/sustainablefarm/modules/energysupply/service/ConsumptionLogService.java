@@ -34,7 +34,7 @@ public class ConsumptionLogService {
         return repository.findByLoadCategory(category).stream().map(ConsumptionLogResponse::from).toList();
     }
 
-    public ConsumptionLogResponse findById(String logId) {
+    public ConsumptionLogResponse findById(Long logId) {
         return ConsumptionLogResponse.from(findEntity(logId));
     }
 
@@ -46,20 +46,20 @@ public class ConsumptionLogService {
     }
 
     @Transactional
-    public ConsumptionLogResponse update(String logId, ConsumptionLogRequest request) {
+    public ConsumptionLogResponse update(Long logId, ConsumptionLogRequest request) {
         ConsumptionLog log = findEntity(logId);
         applyRequest(log, request);
         return ConsumptionLogResponse.from(repository.save(log));
     }
 
     @Transactional
-    public void delete(String logId) {
+    public void delete(Long logId) {
         repository.delete(findEntity(logId));
     }
 
-    private ConsumptionLog findEntity(String logId) {
+    private ConsumptionLog findEntity(Long logId) {
         return repository.findById(logId)
-                .orElseThrow(() -> new EnergySupplyNotFoundException("Consumption log", logId));
+                .orElseThrow(() -> new EnergySupplyNotFoundException("Consumption log", String.valueOf(logId)));
     }
 
     private void applyRequest(ConsumptionLog log, ConsumptionLogRequest request) {
