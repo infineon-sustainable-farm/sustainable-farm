@@ -1,54 +1,34 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
-import '../watersupply.css'
-import WaterSupplySidebar from './WaterSupplySidebar'
+import { ToastProvider, useToast } from '../../../shared/ui'
 import { viewUrl } from '../paths'
-
-/** How long the confirmation banner stays on screen (ms). */
-const TOAST_DURATION_MS = 2400
+// Styles of the screens not migrated to the kit yet; removed with the last of them.
+import '../watersupply.css'
 
 /**
- * Shell of the watersupply module: menu on the left, active screen on the right,
- * notifications at the bottom.
- *
- * Same structure as MachineryLayout / PlantsLayout (sidebar + content), except that screens
- * render through <Outlet />: so the URLs are real (/watersupply, /watersupply/farms, ...)
- * and no longer internal component state.
- *
- * The views expect two props (`notify` for the confirmation banner, `onNavigate`
- * for the dashboard shortcuts): they are provided by the Outlet context and
- * passed by the routes.jsx adapter. The views and their tests therefore stay unchanged.
+ * Hands the active screen its two module props through the Outlet context: `notify` shows a
+ * confirmation as a kit toast, `onNavigate` opens another water supply screen by its view id
+ * (dashboard shortcuts). The screens are wrapped by withModuleUi (ModuleScreen.jsx).
  */
-export default function WaterSupplyLayout() {
+function ModuleOutlet() {
   const navigate = useNavigate()
-  const [toast, setToast] = useState(null)
+  const toast = useToast()
 
-  const notify = useCallback((message) => setToast(message), [])
+  const notify = useCallback((message, tone = 'success') => toast.show({ message, tone }), [toast])
   const goToView = useCallback((viewId) => navigate(viewUrl(viewId)), [navigate])
   const moduleUi = useMemo(() => ({ notify, onNavigate: goToView }), [notify, goToView])
 
-  // The banner fades away on its own; the cleanup avoids leaving a timer behind
-  // when the user leaves the module or triggers a new confirmation.
-  useEffect(() => {
-    if (!toast) return undefined
-    const timer = setTimeout(() => setToast(null), TOAST_DURATION_MS)
-    return () => clearTimeout(timer)
-  }, [toast])
+  return <Outlet context={moduleUi} />
+}
 
+/**
+ * Route element of the module, inside the application shell (global sidebar from app/AppLayout).
+ * It renders no chrome of its own: it only provides the kit toasts to the water supply screens.
+ */
+export default function WaterSupplyLayout() {
   return (
-    <div className="ws-app">
-      <WaterSupplySidebar />
-
-      <main className="ws-main">
-        <div className="ws-view active">
-          {/* The active screen comes from the URL (see routes.jsx), which passes it the module context. */}
-          <Outlet context={moduleUi} />
-        </div>
-      </main>
-
-      <div className={`ws-toast ${toast ? 'show' : ''}`} role="status" aria-live="polite">
-        {toast}
-      </div>
-    </div>
+    <ToastProvider>
+      <ModuleOutlet />
+    </ToastProvider>
   )
 }
