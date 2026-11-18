@@ -7,6 +7,10 @@ export const shellTransition = 'transition duration-(--duration-fast) ease-stand
 export const focusOnPrimary =
   'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-on-primary'
 
+/** Keyboard focus over the photo scrim of the home page: a white outline outside the element. */
+export const focusOnImage =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-scrim'
+
 /** Keyboard focus on the page background: the kit's 2 px primary outline. */
 export const focusOnSurface =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring'

@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { useLanguage } from '../shared/i18n'
-import { focusOnPrimary, focusOnSurface, shellTransition } from './styles'
+import { focusOnImage, focusOnPrimary, focusOnSurface, shellTransition } from './styles'
 
-// Two tones: on the primary sidebar, and on the page background (launcher).
+// Three tones: on the primary sidebar, on the page background, and over the photo scrim (home page).
 const TONES = {
   onPrimary: {
     group: 'bg-primary-hover',
@@ -16,6 +16,12 @@ const TONES = {
     idle: 'text-text hover:bg-neutral-bg',
     focus: focusOnSurface,
   },
+  onImage: {
+    group: 'border border-on-scrim',
+    active: 'bg-on-scrim text-text',
+    idle: 'text-on-scrim hover:bg-scrim',
+    focus: focusOnImage,
+  },
 }
 
 /**
@@ -24,7 +30,7 @@ const TONES = {
  * own language (aria-label, lang) and marked with aria-pressed; the group is labelled. The choice
  * is remembered by the language detector and mirrored on <html lang>.
  *
- * @param {{ tone?: 'onPrimary' | 'onSurface', className?: string }} props
+ * @param {{ tone?: 'onPrimary' | 'onSurface' | 'onImage', className?: string }} props
  */
 export default function LanguageSwitcher({ tone = 'onPrimary', className = '' }) {
   const { t } = useTranslation('common')

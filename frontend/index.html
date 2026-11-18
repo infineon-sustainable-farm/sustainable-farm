@@ -22,6 +22,21 @@
       rel="stylesheet"
     />
     <title>Sustainable Farm</title>
+    <script>
+      // Home page: fetch its landscape photo (the LCP image) while the application script loads.
+      // Same srcset and sizes as src/app/homePhoto.js (checked by LauncherPage.test.jsx).
+      if (location.pathname === '/') {
+        const link = document.createElement('link')
+        link.rel = 'preload'
+        link.as = 'image'
+        link.fetchPriority = 'high'
+        link.imageSrcset =
+          '/photos/orchard-960.webp 960w, /photos/orchard-1440.webp 1440w, /photos/orchard-1600.webp 1600w, /photos/orchard-1920.webp 1920w, /photos/orchard-2560.webp 2560w'
+        link.imageSizes =
+          '(min-width: 64rem) max(100vw, 160vh), (min-width: 40rem) max(100vw, 160vh - 22rem), max(100vw, 50rem)'
+        document.head.appendChild(link)
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -49,5 +49,10 @@
   },
   "launcher": {
     "modules": "Modules"
+  },
+  "home": {
+    "eyebrow": "From Banfora, Burkina Faso, to Germany",
+    "hero": "From orchard to export, one farm platform.",
+    "lede": "Record farm operations and decide with shared data at every step of the dried mango chain."
   }
 }
