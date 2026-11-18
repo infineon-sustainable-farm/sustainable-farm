@@ -65,9 +65,6 @@ KEY_FILES=(
     frontend/src/shared/api/endpoints.js
     frontend/src/shared/api/queryClient.js
     frontend/src/shared/utils/formatEnumLabel.js
-    frontend/src/shared/components/EmptyState.jsx
-    frontend/src/shared/components/Modal.jsx
-    frontend/src/shared/components/Pagination.jsx
     frontend/package.json
     frontend/vite.config.js
     # Backend: configuration and build

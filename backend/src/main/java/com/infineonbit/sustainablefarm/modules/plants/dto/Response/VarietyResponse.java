@@ -9,10 +9,9 @@ import java.time.Instant;
  * project (machinery, visitor management). They are the JSON contract other
  * modules consume.
  *
- * <p>The physical table keeps its snake_case French column names
- * ({@code nombre_arbres}, {@code bloc_parcelle}, ...): the mapping lives in the
- * explicit {@code @Column} annotations of
- * {@link com.infineonbit.sustainablefarm.modules.plants.entity.Variety}, so the
+ * <p>The rows are those of the {@code block_variety} table, one per block and
+ * variety name; the mapping lives in the explicit {@code @Column} annotations of
+ * {@link com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety}, so the
  * schema is untouched by this naming and the two can differ without either
  * side moving.
  *

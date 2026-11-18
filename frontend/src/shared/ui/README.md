@@ -8,7 +8,7 @@ ARIA, état chargement, état désactivé, mouvement réduit.
 | Règle | Application |
 |---|---|
 | Import | Toujours depuis `src/shared/ui` (fichier `index.js`), jamais un fichier du kit directement |
-| Valeurs visuelles | Uniquement les tokens de la section principale de [`src/index.css`](../../index.css) ; jamais de hex, de px, de ms ni de z-index en dur ; jamais les tokens de la section LEGACY |
+| Valeurs visuelles | Uniquement les tokens de la section principale de [`src/index.css`](../../index.css) ; jamais de hex, de px, de ms ni de z-index en dur ; jamais les tokens du bloc sitesecurity (module exclu, non migré) |
 | Textes | Aucun texte en dur. Les textes par défaut (Fermer, Annuler, Supprimer, Réessayer, Aucun résultat, Chargement, pagination) viennent de l'espace de noms `common` ; les textes métier sont passés en props, déjà traduits avec `t()` |
 | Focus | Contour de 2 px couleur primaire sur `:focus-visible` uniquement, jamais au clic |
 | Cibles tactiles | Taille machinery sur ordinateur, 44 px sur écran tactile (`pointer-coarse:`) |
@@ -16,10 +16,8 @@ ARIA, état chargement, état désactivé, mouvement réduit.
 | État | Jamais porté par la couleur seule : un mot ou une icône l'accompagne |
 | Vérification | `npm run lint` (texte en dur, parité des langues), `npm test -- shared/ui`, `scripts/design-check.sh` |
 
-Les anciens composants de `shared/components` (Modal, ConfirmDialog, EmptyState, ErrorState,
-Pagination, DataTable, FormField, formStyles, SearchInput, Spinner) restent en place tant que des
-modules les importent. Chaque migration de module remplace ses imports par ce kit, et T45 supprime
-ceux qui ne servent plus.
+Les anciens composants de `shared/components` ont été supprimés en T45 : tous les modules intégrés
+utilisent ce kit.
 
 ## Correspondance des classes machinery
 
@@ -215,7 +213,7 @@ de sens.
 
 ### Pagination
 
-Rendu de `shared/components/Pagination` : à droite, Page x sur y, puis Précédent et Suivant
+Rendu de l’ancienne pagination machinery : à droite, Page x sur y, puis Précédent et Suivant
 `px-3 py-1 rounded-lg border border-gray-200`. Le kit ajoute un repère de navigation nommé, le focus
 et 44 px au toucher. Pages numérotées à partir de 0, comme l'API.
 

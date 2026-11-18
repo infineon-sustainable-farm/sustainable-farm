@@ -52,7 +52,7 @@ public class PlantScenarioLoaderTest {
         assertEquals("Keitt", zalka.getVarietyName());
         assertEquals(200, zalka.getTreeCount());
         assertEquals("Zalka_2025_C43", zalka.getTreeCountSource());
-        assertEquals(220.0, zalka.getYieldPerTreeKg());
+        assertEquals(220.0, zalka.getYieldPerTreeKg().doubleValue());
         assertEquals("derived: Zalka_2025 D4 / B4", zalka.getYieldSource());
         assertEquals(0, new BigDecimal("0.9072").compareTo(zalka.getPricePerKg()));
         assertEquals("derived: Zalka_2025 R19 / D4", zalka.getPriceSource());
