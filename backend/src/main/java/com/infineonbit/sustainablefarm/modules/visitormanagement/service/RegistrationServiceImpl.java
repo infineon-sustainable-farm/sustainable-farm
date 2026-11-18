@@ -19,6 +19,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitorType;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.VisitPurpose;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BookingRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BriefingRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.FeedbackRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
@@ -49,6 +50,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final BriefingRepository briefingRepository;
     private final FeedbackRepository feedbackRepository;
     private final SurveySendRepository surveySendRepository;
+    private final BookingRepository bookingRepository;
     private final SchedulingService schedulingService;
     private final PersonDirectory personDirectory;
     private final ApplicationEventPublisher eventPublisher;
@@ -59,6 +61,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                                    BriefingRepository briefingRepository,
                                    FeedbackRepository feedbackRepository,
                                    SurveySendRepository surveySendRepository,
+                                   BookingRepository bookingRepository,
                                    SchedulingService schedulingService,
                                    PersonDirectory personDirectory,
                                    ApplicationEventPublisher eventPublisher) {
@@ -68,6 +71,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.briefingRepository = briefingRepository;
         this.feedbackRepository = feedbackRepository;
         this.surveySendRepository = surveySendRepository;
+        this.bookingRepository = bookingRepository;
         this.schedulingService = schedulingService;
         this.personDirectory = personDirectory;
         this.eventPublisher = eventPublisher;
@@ -125,6 +129,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         if (surveySendRepository.existsByVisitorId(id)) {
             throw new BusinessRuleException("Visitor " + id
                     + " cannot be deleted: surveys still reference it");
+        }
+        if (bookingRepository.existsByVisitorId(id)) {
+            throw new BusinessRuleException("Visitor " + id
+                    + " cannot be deleted: bookings still reference it");
         }
         visitorRepository.deleteById(id);
     }

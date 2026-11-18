@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.config;
 
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.Money;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.AgriActivity;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Event;
@@ -29,7 +31,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -165,7 +166,7 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
     private AgriActivity activity(String name, String price, int capacity, int duration, String description) {
         AgriActivity activity = new AgriActivity();
         activity.setName(name);
-        activity.setPrice(new BigDecimal(price));
+        activity.setPrice(Money.of(price, CurrencyCode.XOF));
         activity.setCapacity(capacity);
         activity.setDurationMinutes(duration);
         activity.setDescription(description);

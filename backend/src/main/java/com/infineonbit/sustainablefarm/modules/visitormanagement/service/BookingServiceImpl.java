@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.Money;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitRescheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.AgriActivityResponse;
@@ -14,9 +16,11 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingP
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.AgriActivityRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BookingRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,15 +49,18 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final AgriActivityRepository activityRepository;
     private final TimeSlotRepository timeSlotRepository;
+    private final VisitorRepository visitorRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public BookingServiceImpl(BookingRepository bookingRepository,
                               AgriActivityRepository activityRepository,
                               TimeSlotRepository timeSlotRepository,
+                              VisitorRepository visitorRepository,
                               ApplicationEventPublisher eventPublisher) {
         this.bookingRepository = bookingRepository;
         this.activityRepository = activityRepository;
         this.timeSlotRepository = timeSlotRepository;
+        this.visitorRepository = visitorRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -296,7 +303,7 @@ public class BookingServiceImpl implements BookingService {
 
     private void apply(AgriActivity activity, AgriActivityRequest request) {
         activity.setName(request.getName());
-        activity.setPrice(request.getPrice());
+        activity.setPrice(request.getPrice() == null ? null : Money.of(request.getPrice(), CurrencyCode.XOF));
         activity.setCapacity(request.getCapacity());
         activity.setDurationMinutes(request.getDurationMinutes());
         activity.setDescription(request.getDescription());
@@ -306,13 +313,40 @@ public class BookingServiceImpl implements BookingService {
                        AgriActivity activity, TimeSlot slot) {
         booking.setActivity(activity);
         booking.setTimeSlot(slot);
-        booking.setVisitorFullName(request.getVisitorFullName());
-        booking.setVisitorEmail(request.getVisitorEmail());
-        booking.setVisitorPhone(request.getVisitorPhone());
+        booking.setVisitor(findOrCreateVisitor(request));
         booking.setPeopleCount(request.getPeopleCount());
-        booking.setTotalAmount(activity.getPrice()
+        booking.setTotal(activity.getPrice()
                 .multiply(BigDecimal.valueOf(request.getPeopleCount())));
         booking.setPaymentMethod(request.getPaymentMethod());
+    }
+
+    /**
+     * The visitor of a booking: the one with the booking email (ignoring case), else, without
+     * email, the one with the same name and no email; created when there is none. The name and
+     * phone of the booking are the latest the visitor gave, so they update the visitor row.
+     */
+    private Visitor findOrCreateVisitor(BookingRequest request) {
+        String email = blankToNull(request.getVisitorEmail());
+        String fullName = request.getVisitorFullName() == null ? null : request.getVisitorFullName().trim();
+        Visitor visitor = (email != null
+                ? visitorRepository.findFirstByEmailIgnoreCaseOrderByIdAsc(email)
+                : visitorRepository.findFirstByFullNameIgnoreCaseAndEmailIsNullOrderByIdAsc(fullName))
+                .orElseGet(() -> {
+                    Visitor created = new Visitor();
+                    created.setEmail(email);
+                    created.setGroupSize(Math.max(1, request.getPeopleCount() == null ? 1 : request.getPeopleCount()));
+                    return created;
+                });
+        visitor.setFullName(fullName);
+        String phone = blankToNull(request.getVisitorPhone());
+        if (phone != null) {
+            visitor.setPhone(phone);
+        }
+        return visitorRepository.save(visitor);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private AgriActivity getActivityEntity(Long id) {

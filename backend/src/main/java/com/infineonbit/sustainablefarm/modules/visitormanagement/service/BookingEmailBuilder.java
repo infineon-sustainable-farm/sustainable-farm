@@ -50,7 +50,7 @@ public final class BookingEmailBuilder {
                 .append(row("Créneau", booking.getTimeSlot().getStartTime().format(TIME)
                         + " - " + booking.getTimeSlot().getEndTime().format(TIME)))
                 .append(row("Personnes", String.valueOf(booking.getPeopleCount())))
-                .append(row("Total", booking.getActivity().getPrice()
+                .append(row("Total", booking.getActivity().getPrice().amount()
                         .multiply(java.math.BigDecimal.valueOf(booking.getPeopleCount()))
                         .toPlainString() + " FCFA"))
                 .append("</table>");

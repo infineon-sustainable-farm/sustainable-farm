@@ -30,8 +30,8 @@ public class Visitor extends BaseEntity {
     private int groupSize = 1;
 
     @Email
-    @Size(max = 200)
-    @Column(name = "email", length = 200)
+    @Size(max = 255)
+    @Column(name = "email", length = 255)
     private String email;
 
     @Size(max = 30)

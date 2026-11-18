@@ -24,7 +24,7 @@ public class AgriActivityResponse {
         AgriActivityResponse r = new AgriActivityResponse();
         r.id = activity.getId();
         r.name = activity.getName();
-        r.price = activity.getPrice();
+        r.price = activity.getPrice() == null ? null : activity.getPrice().amount();
         r.capacity = activity.getCapacity();
         r.durationMinutes = activity.getDurationMinutes();
         r.description = activity.getDescription();
