@@ -544,9 +544,7 @@
     "title": "Product Transformation Dashboard",
     "period": "Period: {{period}} ({{start}} → {{end}})",
     "naShort": "n/a",
-    "sourceDemo": "Data source: DEMO dataset (Plants format)",
     "sourcePlants": "Data source: Plants harvest events",
-    "demoNotice": "Demo dataset: synthetic Product Transformation records (LOT-DEMO batches), not real Plants harvests. See backend/src/main/resources/seed/producttransformation-demo-seed.sql.",
     "loadError": "Failed to load dashboard KPIs. Please try again later.",
     "pieLabel": "{{name}} {{value}}%",
     "kpis": {

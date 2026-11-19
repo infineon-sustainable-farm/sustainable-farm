@@ -98,7 +98,8 @@
       "products": "Produits : {{message}}",
       "pricing": "Prix : {{message}}",
       "customers": "Clients : {{message}}",
-      "orders": "Commandes : {{message}}"
+      "orders": "Commandes : {{message}}",
+      "varieties": "Variétés : {{message}}"
     },
     "forecastCreated": "Prévision créée.",
     "forecastCreateFailed": "Échec de la création de la prévision",
@@ -142,7 +143,8 @@
     },
     "harvest": {
       "title": "Pic de récolte",
-      "months": "Mars - juillet"
+      "range": "{{from}} - {{to}}",
+      "none": "Aucun mois de récolte connu pour les produits pour l’instant."
     },
     "batches": {
       "title": "Transformation des produits",

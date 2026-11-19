@@ -69,6 +69,17 @@ describe('DemandAlertsPage', () => {
     expect(await screen.findByText('Alert created.')).toBeInTheDocument();
   });
 
+  it('invents no region nor origin for an alert that has none', async () => {
+    api.getAlerts.mockResolvedValue([{ ...alert, region: null, origin: null }]);
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit Alert #3' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Update' }));
+
+    await waitFor(() => expect(api.updateAlert).toHaveBeenCalledTimes(1));
+    expect(api.updateAlert).toHaveBeenCalledWith(3, expect.objectContaining({ region: null, origin: null }));
+  });
+
   it('marks an alert resolved', async () => {
     renderPage();
     fireEvent.click(await screen.findByRole('button', { name: 'Review Production' }));

@@ -207,8 +207,8 @@ export default function DemandAlertsPage() {
       alertType: alert.alertType || '',
       severity: alert.severity || 'critical',
       message: alert.message || '',
-      region: alert.region || 'Germany',
-      origin: alert.origin || 'Burkina Faso',
+      region: alert.region || '',
+      origin: alert.origin || '',
       status: alert.status || 'open',
     });
     setShowModal(true);
