@@ -718,6 +718,7 @@
       "selectUnit": "Choisir une unité",
       "applicator": "Applicateur",
       "equipment": "Matériel",
+      "noEquipment": "Aucun matériel",
       "submit": "Enregistrer le traitement",
       "errors": {
         "targetRequired": "Le problème ciblé est obligatoire.",
@@ -733,8 +734,7 @@
         "quantityFormat": "La quantité doit être un nombre supérieur à 0, avec au plus 3 décimales.",
         "unitRequired": "L’unité est obligatoire.",
         "applicatorRequired": "L’applicateur est obligatoire.",
-        "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères.",
-        "equipmentTooLong": "Le matériel doit comporter au plus 255 caractères."
+        "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères."
       }
     }
   },

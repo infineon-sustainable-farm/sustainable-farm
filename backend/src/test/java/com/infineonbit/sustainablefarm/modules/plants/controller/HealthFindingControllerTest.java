@@ -33,6 +33,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.mockito.ArgumentCaptor;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -49,7 +52,7 @@ public class HealthFindingControllerTest {
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
     private static final String COPPER = """
             {"treatedOn":"2026-09-04","productName":"Copper fungicide A","activeIngredient":"copper hydroxide",
-             "quantity":2.5,"unit":"KG","preHarvestIntervalDays":14,"applicator":"Awa","equipment":"knapsack sprayer"}
+             "quantity":2.5,"unit":"KG","preHarvestIntervalDays":14,"applicator":"Awa","equipmentId":7}
             """;
 
     @Autowired
@@ -80,7 +83,7 @@ public class HealthFindingControllerTest {
     private static HealthTreatmentResponse copper() {
         return new HealthTreatmentResponse(20L, null, "C", "ANTHRACNOSE", "Anthracnose", null, 1L,
                 LocalDate.of(2026, 9, 4), "Copper fungicide A", "copper hydroxide", 2.5, TreatmentUnit.KG, 14,
-                LocalDate.of(2026, 9, 18), "Awa", "knapsack sprayer", "user_entry", NOW);
+                LocalDate.of(2026, 9, 18), "Awa", 7L, "Knapsack sprayer", "user_entry", NOW);
     }
 
     @Test
@@ -101,7 +104,11 @@ public class HealthFindingControllerTest {
                 .andExpect(jsonPath("$.unit").value("KG"))
                 .andExpect(jsonPath("$.preHarvestIntervalDays").value(14))
                 .andExpect(jsonPath("$.harvestAllowedFrom").value("2026-09-18"))
-                .andExpect(jsonPath("$.equipment").value("knapsack sprayer"));
+                .andExpect(jsonPath("$.equipmentId").value(7))
+                .andExpect(jsonPath("$.equipment").value("Knapsack sprayer"));
+        ArgumentCaptor<FindingTreatmentRequest> captor = ArgumentCaptor.forClass(FindingTreatmentRequest.class);
+        verify(healthTreatmentService).recordFindingTreatment(eq(1L), captor.capture());
+        assertEquals(7L, captor.getValue().equipmentId());
     }
 
     @Test
@@ -109,8 +116,8 @@ public class HealthFindingControllerTest {
         // Act
         ResultActions result = postTreatment(1L, """
                 {"activeIngredient":"%s","quantity":2.5555,"unit":"g","preHarvestIntervalDays":1.5,
-                 "equipment":"%s"}
-                """.formatted("x".repeat(256), "x".repeat(256)));
+                 "equipmentId":0}
+                """.formatted("x".repeat(256)));
         // Assert
         assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/1/treatments");
         result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(8)))
@@ -124,7 +131,7 @@ public class HealthFindingControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.preHarvestIntervalDays")
                         .value("preHarvestIntervalDays must be a whole number, 0 or more"))
                 .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"))
-                .andExpect(jsonPath("$.fieldErrors.equipment").value("equipment must be at most 255 characters"));
+                .andExpect(jsonPath("$.fieldErrors.equipmentId").value("equipmentId must be at least 1"));
         verify(healthTreatmentService, never()).recordFindingTreatment(any(), any());
     }
 

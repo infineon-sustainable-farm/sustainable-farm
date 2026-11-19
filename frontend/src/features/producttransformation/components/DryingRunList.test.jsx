@@ -3,6 +3,7 @@
 // extra Vitest configuration (same approach as the Water Supply view tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import DryingRunList from './DryingRunList';
 import { dryingApi } from '../api/dryingApi';
 import { batchApi } from '../api/batchApi';
@@ -98,7 +99,7 @@ beforeEach(() => {
 
 describe('DryingRunList', () => {
   it('renders duration, moisture, energy and resolved equipment/operator', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
 
     // The loading state is a skeleton table: wait for the rows before reading the table.
     await screen.findByText('DR-1');
@@ -114,7 +115,7 @@ describe('DryingRunList', () => {
   });
 
   it('filters by batch and start date', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
 
     fireEvent.change(screen.getByLabelText('Filter by batch'), { target: { value: 'B-002' } });
@@ -130,7 +131,7 @@ describe('DryingRunList', () => {
   });
 
   it('creates a drying run through the API and reloads the list', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Drying Run/i }));
@@ -187,7 +188,7 @@ describe('DryingRunList', () => {
   });
 
   it('rejects an end moisture outside the 6–18% EU range', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Drying Run/i }));
@@ -230,7 +231,7 @@ describe('DryingRunList', () => {
   });
 
   it('edits a run, keeping identity fields read-only', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
 
     const row = screen.getByText('DR-1').closest('tr');
@@ -265,7 +266,7 @@ describe('DryingRunList', () => {
   });
 
   it('deletes a run after confirmation', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
 
     const row = screen.getByText('DR-1').closest('tr');
@@ -284,7 +285,7 @@ describe('DryingRunList', () => {
       Object.assign(new Error('Forbidden'), { status: 403 }),
     );
 
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText('Forbidden')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Try again/i })).toBeTruthy();
@@ -293,7 +294,7 @@ describe('DryingRunList', () => {
   it('shows an error state and retries the load', async () => {
     dryingApi.getAllDryingRuns.mockRejectedValueOnce(new Error('Network down'));
 
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText('Network down')).toBeTruthy();
 
@@ -303,7 +304,7 @@ describe('DryingRunList', () => {
   });
 
   it('offers only dryers and dryer operators in the form', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Drying Run/i }));
@@ -311,6 +312,10 @@ describe('DryingRunList', () => {
 
     const equipmentOptions = within(within(dialog).getByLabelText('Equipment')).getAllByRole('option');
     expect(equipmentOptions.map((option) => option.textContent)).toEqual(['No equipment', 'Solar dryer 1 · Active']);
+    // Machinery owns the machines: a missing one is added there, through its create form.
+    expect(within(dialog).getByRole('link', { name: 'Add it in Machinery' }).getAttribute('href')).toBe(
+      '/machinery/equipment-registry?create=1',
+    );
     const operatorOptions = within(within(dialog).getByLabelText('Operator')).getAllByRole('option');
     expect(operatorOptions.map((option) => option.textContent)).toEqual(['No operator', 'Issa']);
   });
@@ -318,7 +323,7 @@ describe('DryingRunList', () => {
   it('keeps the delete dialog open with the server error when the deletion fails', async () => {
     dryingApi.deleteDryingRun.mockRejectedValueOnce(new Error('Run is locked'));
 
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
 
     const row = screen.getByText('DR-1').closest('tr');
@@ -331,7 +336,7 @@ describe('DryingRunList', () => {
   });
 
   it('shows the run count and the empty state of a filter without match', async () => {
-    render(<DryingRunList />);
+    render(<DryingRunList />, { wrapper: MemoryRouter });
     await screen.findByText('DR-1');
     expect(screen.getByText('2 runs')).toBeTruthy();
 

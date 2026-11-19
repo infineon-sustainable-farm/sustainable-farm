@@ -10,6 +10,9 @@ import java.util.List;
  * Service Interface for the product transformation equipment: the processing and drying
  * machines of the farm register owned by machinery, with their product transformation
  * attributes. {@code equipmentId} is the register business code.
+ *
+ * <p>Machinery owns the machines: this service never creates, renames, changes the status of or
+ * deletes one; it writes only the product transformation attributes.</p>
  * 
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
@@ -17,19 +20,12 @@ import java.util.List;
 public interface EquipmentService {
 
     /**
-     * Create new equipment
+     * Saves the product transformation attributes of a machine (type, capacity, energy, location,
+     * last maintenance date) from {@code spec}; the machine itself is left as machinery has it.
+     * A machine registered without attributes gets them here, type, capacity and energy being
+     * required.
      */
-    Equipment createEquipment(Equipment equipment);
-
-    /**
-     * Update equipment
-     */
-    Equipment updateEquipment(String equipmentId, Equipment equipment);
-
-    /**
-     * Delete equipment
-     */
-    void deleteEquipment(String equipmentId);
+    Equipment updateSpec(String equipmentId, Equipment spec);
 
     /**
      * Get equipment by ID
@@ -81,14 +77,4 @@ public interface EquipmentService {
      * Get equipment requiring maintenance
      */
     List<Equipment> getEquipmentNeedingMaintenance(java.time.LocalDate date);
-
-    /**
-     * Update equipment maintenance status
-     */
-    Equipment updateMaintenanceStatus(String equipmentId, MaintenanceStatus status);
-
-    /**
-     * Schedule maintenance for equipment
-     */
-    Equipment scheduleMaintenance(String equipmentId, java.time.LocalDate maintenanceDate);
 }
