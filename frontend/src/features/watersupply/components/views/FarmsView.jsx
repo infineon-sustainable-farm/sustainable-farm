@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button, Card, ConfirmDialog, EmptyState } from '../../../../shared/ui'
+import { useCreateParam } from '../../../../shared/hooks/useCreateParam'
 import { farmApi, fieldApi, zoneApi } from '../../api/watersupplyApi'
 import { coordinatesError, useGeolocation } from '../../hooks/useGeolocation'
 import { Filters, Screen } from '../common/Screen'
@@ -47,6 +48,27 @@ export function FarmsView({ notify }) {
   const [zoneForm, setZoneForm] = useState({ fieldId: '', name: '', areaHectares: '', irrigationMethod: '' })
   const [query, setQuery] = useState('')
 
+  // Links from other modules open a create form on arrival (app/ownerLinks.js): "?create=1" the
+  // farm form, "?create=field" the field form, "?create=zone" the zone form.
+  const [createFarmRequested, clearCreateRequest] = useCreateParam()
+  const [createFieldRequested] = useCreateParam('field')
+  const [createZoneRequested] = useCreateParam('zone')
+  const farmFormOpen = showFarmForm || createFarmRequested
+  const fieldFormOpen = showFieldForm || createFieldRequested
+  const zoneFormOpen = showZoneForm || createZoneRequested
+  const closeFarmForm = () => {
+    setShowFarmForm(false)
+    clearCreateRequest()
+  }
+  const closeFieldForm = () => {
+    setShowFieldForm(false)
+    clearCreateRequest()
+  }
+  const closeZoneForm = () => {
+    setShowZoneForm(false)
+    clearCreateRequest()
+  }
+
   const loadAll = useCallback(() => {
     setLoading(true)
     setError(null)
@@ -79,19 +101,33 @@ export function FarmsView({ notify }) {
   const visibleZones = useMemo(() => zones.filter(matchesQuery), [zones, matchesQuery])
 
   /** Fills the position from the device, unless the user already typed one meanwhile. */
-  const locateFarm = () => geo.locate().then((position) => {
+  const { locate } = geo
+  const locateFarm = useCallback(() => locate().then((position) => {
     if (!position) return
     setFarmForm((current) => (current.latitude === '' && current.longitude === ''
       ? { ...current, latitude: String(position.latitude), longitude: String(position.longitude) }
       : current))
-  })
+  }), [locate])
 
-  const locateField = () => geo.locate().then((position) => {
+  const locateField = useCallback(() => locate().then((position) => {
     if (!position) return
     setFieldForm((current) => (current.coordinates === ''
       ? { ...current, coordinates: formatFieldCoordinates(position.latitude, position.longitude) }
       : current))
-  })
+  }), [locate])
+
+  // A farm or a field opened from a link is created on site too: its position is asked for at once.
+  useEffect(() => {
+    if (!createFarmRequested) return undefined
+    const timeoutId = window.setTimeout(locateFarm, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [createFarmRequested, locateFarm])
+
+  useEffect(() => {
+    if (!createFieldRequested) return undefined
+    const timeoutId = window.setTimeout(locateField, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [createFieldRequested, locateField])
 
   const openFarmForm = (farm) => {
     setFormError(null)
@@ -144,7 +180,7 @@ export function FarmsView({ notify }) {
     req
       .then(() => {
         notify(editingFarm ? t('farms.farmUpdated') : t('farms.farmCreated'))
-        setShowFarmForm(false)
+        closeFarmForm()
         loadAll()
       })
       .catch((err) => setError(err.message || t('farms.saveError')))
@@ -174,7 +210,7 @@ export function FarmsView({ notify }) {
       .createField(payload)
       .then(() => {
         notify(t('farms.fieldCreated'))
-        setShowFieldForm(false)
+        closeFieldForm()
         setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '' }))
         loadAll()
       })
@@ -195,7 +231,7 @@ export function FarmsView({ notify }) {
       .createZone(payload)
       .then(() => {
         notify(t('farms.zoneCreated'))
-        setShowZoneForm(false)
+        closeZoneForm()
         setZoneForm((p) => ({ ...p, name: '', areaHectares: '', irrigationMethod: '' }))
         loadAll()
       })
@@ -272,12 +308,12 @@ export function FarmsView({ notify }) {
         </>
       )}
 
-      {showFarmForm && (
+      {farmFormOpen && (
         <FarmFormModal
           editing={editingFarm}
           form={farmForm}
           setForm={setFarmForm}
-          onCancel={() => setShowFarmForm(false)}
+          onCancel={closeFarmForm}
           onSave={saveFarm}
           busy={busy}
           geo={geo}
@@ -289,14 +325,14 @@ export function FarmsView({ notify }) {
         />
       )}
 
-      {showFieldForm && (
+      {fieldFormOpen && (
         <ChildFormModal
           title={t('farms.newField')}
           farms={farms}
           fields={[]}
           form={fieldForm}
           setForm={setFieldForm}
-          onCancel={() => setShowFieldForm(false)}
+          onCancel={closeFieldForm}
           onSave={saveField}
           busy={busy}
           geo={geo}
@@ -308,14 +344,14 @@ export function FarmsView({ notify }) {
         />
       )}
 
-      {showZoneForm && (
+      {zoneFormOpen && (
         <ChildFormModal
           title={t('farms.newZone')}
           farms={farms}
           fields={fields}
           form={zoneForm}
           setForm={setZoneForm}
-          onCancel={() => setShowZoneForm(false)}
+          onCancel={closeZoneForm}
           onSave={saveZone}
           busy={busy}
         />

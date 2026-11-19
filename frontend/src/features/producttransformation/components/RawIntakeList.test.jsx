@@ -3,7 +3,9 @@
 // extra Vitest configuration (same approach as the Water Supply view tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import RawIntakeList from './RawIntakeList';
+import { LocationProbe } from '../../../test/LocationProbe';
 import { rawIntakeApi } from '../api/rawIntakeApi';
 import { batchApi } from '../api/batchApi';
 
@@ -60,7 +62,7 @@ beforeEach(() => {
 
 describe('RawIntakeList', () => {
   it('renders intakes with source, quantity and grade', async () => {
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
 
     // The loading state is a skeleton table: wait for the rows before reading the table.
     await screen.findByText('RI-1');
@@ -75,7 +77,7 @@ describe('RawIntakeList', () => {
   });
 
   it('filters by batch and grade', async () => {
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
     await screen.findByText('RI-1');
 
     fireEvent.change(screen.getByLabelText('Filter by batch'), { target: { value: 'B-002' } });
@@ -89,7 +91,7 @@ describe('RawIntakeList', () => {
   });
 
   it('creates an intake through the API and reloads the list', async () => {
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
     await screen.findByText('RI-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Raw Intake/i }));
@@ -134,7 +136,7 @@ describe('RawIntakeList', () => {
   });
 
   it('blocks creation when required fields are missing', async () => {
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
     await screen.findByText('RI-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Raw Intake/i }));
@@ -145,7 +147,7 @@ describe('RawIntakeList', () => {
   });
 
   it('rejects a non-positive received quantity', async () => {
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
     await screen.findByText('RI-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Raw Intake/i }));
@@ -169,7 +171,7 @@ describe('RawIntakeList', () => {
   });
 
   it('edits an intake, keeping identity fields read-only', async () => {
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
     await screen.findByText('RI-1');
 
     const row = screen.getByText('RI-1').closest('tr');
@@ -203,7 +205,7 @@ describe('RawIntakeList', () => {
   });
 
   it('deletes an intake after confirmation', async () => {
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
     await screen.findByText('RI-1');
 
     const row = screen.getByText('RI-1').closest('tr');
@@ -220,12 +222,26 @@ describe('RawIntakeList', () => {
   it('shows an error state and retries the load', async () => {
     rawIntakeApi.getAllRawIntakes.mockRejectedValueOnce(new Error('Network down'));
 
-    render(<RawIntakeList />);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText('Network down')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 
     expect(await screen.findByText('RI-1')).toBeTruthy();
+  });
+
+  it('opens the new raw intake dialog from a create link and removes the link on close', async () => {
+    render(
+      <MemoryRouter initialEntries={['/product-transformation/raw-intake?create=1']}>
+        <RawIntakeList />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'New Raw Intake' });
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByTestId('location').textContent).toBe('/product-transformation/raw-intake');
   });
 });

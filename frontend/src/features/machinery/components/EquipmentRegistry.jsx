@@ -5,6 +5,7 @@ import EquipmentTable from "./EquipmentTable";
 import EquipmentFormModal from "./EquipmentFormModal";
 import StatusUpdateModal from "./StatusUpdateModal";
 import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader, Pagination } from "../../../shared/ui";
+import { useCreateParam } from "../../../shared/hooks/useCreateParam";
 import { useEquipments } from "../hooks/useEquipments";
 import { useCreateEquipment, useUpdateEquipmentStatus, useDeleteEquipment } from "../hooks/useEquipmentMutations";
 
@@ -20,13 +21,21 @@ function EquipmentRegistry() {
   const deleteMutation = useDeleteEquipment();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  // "?create=1": another module sent the user here to add a machine (app/ownerLinks.js).
+  const [createRequested, clearCreateRequest] = useCreateParam();
+  const formOpen = isFormOpen || createRequested;
   const [statusTarget, setStatusTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   function handleCreate(newEquipment) {
     createMutation.mutate(newEquipment, {
-      onSuccess: () => setIsFormOpen(false),
+      onSuccess: closeForm,
     });
+  }
+
+  function closeForm() {
+    setIsFormOpen(false);
+    clearCreateRequest();
   }
 
   function handleUpdateStatus(id, status) {
@@ -76,9 +85,9 @@ function EquipmentRegistry() {
       {renderContent()}
 
       <EquipmentFormModal
-        key={isFormOpen ? "open" : "closed"}
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        key={formOpen ? "open" : "closed"}
+        isOpen={formOpen}
+        onClose={closeForm}
         onSubmit={handleCreate}
         serverError={createMutation.isError ? createMutation.error.message : null}
       />
