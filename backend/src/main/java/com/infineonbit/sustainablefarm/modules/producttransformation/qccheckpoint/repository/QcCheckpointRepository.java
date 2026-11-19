@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoi
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcResult;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +25,7 @@ import java.util.List;
 public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Long> {
 
     /** The QcCheckpoint of a business code, shown as {@code checkpointId}. */
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     Optional<QcCheckpoint> findByCheckpointId(String checkpointId);
 
     /** Whether a QcCheckpoint has this business code. */
@@ -36,21 +38,25 @@ public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Long
     /**
      * Find QC checkpoints by batch
      */
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByBatchBatchId(String batchId);
 
     /**
      * Find QC checkpoints by stage
      */
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByStage(QcStage stage);
 
     /**
      * Find QC checkpoints by result
      */
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByResult(QcResult result);
 
     /**
      * Find QC checkpoints by inspector
      */
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByInspectorOperatorId(String inspectorId);
 
     /**
@@ -70,24 +76,28 @@ public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Long
     /**
      * Find QC checkpoints by date range
      */
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByCheckpointTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     /**
      * Find QC checkpoints by checkpoint date range (LocalDate)
      */
     @Query("SELECT q FROM QcCheckpoint q WHERE DATE(q.checkpointTime) BETWEEN :startDate AND :endDate")
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByCheckpointDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     /**
      * Find QC checkpoints by batch and stage
      */
     @Query("SELECT q FROM QcCheckpoint q WHERE q.batch.batchId = :batchId AND q.stage = :stage")
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByBatchAndStage(@Param("batchId") String batchId, @Param("stage") QcStage stage);
 
     /**
      * Find QC checkpoints by batch and result
      */
     @Query("SELECT q FROM QcCheckpoint q WHERE q.batch.batchId = :batchId AND q.result = :result")
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByBatchAndResult(@Param("batchId") String batchId, @Param("result") QcResult result);
 
     /**
@@ -95,12 +105,14 @@ public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Long
      * Business Rule: Mandatory at washing (Phase 2) and cooling (Phase 5) stages
      */
     @Query("SELECT q FROM QcCheckpoint q WHERE q.stage IN ('WASHING', 'COOLING')")
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findMandatoryCheckpoints();
 
     /**
      * Find failed QC checkpoints
      */
     @Query("SELECT q FROM QcCheckpoint q WHERE q.result = 'FAIL'")
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findFailedCheckpoints();
 
     /**
@@ -119,6 +131,7 @@ public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Long
      * Find QC checkpoints by batch and date range
      */
     @Query("SELECT q FROM QcCheckpoint q WHERE q.batch.batchId = :batchId AND q.checkpointTime BETWEEN :startDate AND :endDate")
+    @EntityGraph(attributePaths = {"batch", "inspector"})
     List<QcCheckpoint> findByBatchAndDateRange(@Param("batchId") String batchId,
                                             @Param("startDate") LocalDateTime startDate,
                                             @Param("endDate") LocalDateTime endDate);
@@ -134,4 +147,9 @@ public interface QcCheckpointRepository extends JpaRepository<QcCheckpoint, Long
      */
     @Query("SELECT COUNT(q) FROM QcCheckpoint q WHERE q.stage = :stage")
     long countTotalByStage(@Param("stage") QcStage stage);
+
+    /** Every row, with what the responses show fetched in the same query (no N+1). */
+    @Override
+    @EntityGraph(attributePaths = {"batch", "inspector"})
+    List<QcCheckpoint> findAll();
 }

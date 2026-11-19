@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -80,6 +81,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/{runId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying run by ID", description = "Retrieves a specific drying run by its ID")
     public ResponseEntity<DryingRunResponse> getDryingRunById(
             @Parameter(description = "Run ID") @PathVariable String runId) {
@@ -89,6 +91,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by batch", description = "Retrieves drying runs for a specific batch")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -100,6 +103,7 @@ public class DryingRunController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all drying runs", description = "Retrieves all drying run records")
     public ResponseEntity<List<DryingRunResponse>> getAllDryingRuns() {
         List<DryingRun> runs = dryingRunService.getAllDryingRuns();
@@ -165,6 +169,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by date range", description = "Retrieves drying runs within a date range")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDateTime startDate,
@@ -177,6 +182,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/equipment/{equipmentId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by equipment", description = "Retrieves drying runs filtered by equipment")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByEquipment(
             @Parameter(description = "Equipment ID") @PathVariable String equipmentId) {
@@ -188,6 +194,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/operator/{operatorId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by operator", description = "Retrieves drying runs filtered by operator")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByOperator(
             @Parameter(description = "Operator ID") @PathVariable String operatorId) {

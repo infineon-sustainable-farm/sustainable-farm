@@ -46,8 +46,8 @@ public class RawIntake extends BaseEntity {
     @Column(name = "code", nullable = false, length = 50)
     private String intakeId;
 
-    // Eager: the responses show its code, read after the transaction (open-in-view is off).
-    @OneToOne(fetch = FetchType.EAGER)
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_raw_intake_batch"), nullable = false)
     @ToString.Exclude
     private Batch batch;

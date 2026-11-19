@@ -23,6 +23,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.s
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  *
  * <p>{@code DryingRunResponse.energyEfficiencyKwhPerKg} is derived from
  * {@code batch.harvestQuantityKg}, so the batch association must be fetched by
- * the repository. With {@code spring.jpa.open-in-view=false} the entities are
+ * the repository (lazy association, entity graph). With {@code spring.jpa.open-in-view=false} the entities are
  * detached when the service transaction ends: if the adapter only relies on
  * lazy loading, the DTO mapping throws {@code LazyInitializationException} and
  * the endpoint answers 500. This test maps detached entities on purpose, which
@@ -139,6 +140,9 @@ class DryingRunDtoMappingTest {
     void detailedResponseMapsDetachedDryingRun() {
         DryingRun run = dryingRunService.getDryingRunById(RUN_ID);
 
+        // Lazy associations, fetched by the query (entity graph), not one select per row.
+        assertThat(Hibernate.isInitialized(run.getBatch())).isTrue();
+        assertThat(Hibernate.isInitialized(run.getOperator())).isTrue();
         assertThatCode(() -> dtoMapper.toResponse(run)).doesNotThrowAnyException();
 
         DryingRunResponse response = dtoMapper.toResponse(run);
@@ -160,6 +164,7 @@ class DryingRunDtoMappingTest {
     @DisplayName("GET /api/product-transformation/drying-runs: the list response maps detached runs")
     void listResponseMapsDetachedDryingRuns() {
         List<DryingRun> runs = dryingRunService.getAllDryingRuns();
+        assertThat(runs).allSatisfy(run -> assertThat(Hibernate.isInitialized(run.getBatch())).isTrue());
 
         DryingRunResponse response = runs.stream()
                 .filter(run -> RUN_ID.equals(run.getRunId()))

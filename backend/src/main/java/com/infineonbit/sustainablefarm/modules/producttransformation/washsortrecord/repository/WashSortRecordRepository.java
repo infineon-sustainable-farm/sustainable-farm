@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.model.WashSortRecord;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,7 @@ import java.util.List;
 public interface WashSortRecordRepository extends JpaRepository<WashSortRecord, Long> {
 
     /** The WashSortRecord of a business code, shown as {@code recordId}. */
+    @EntityGraph(attributePaths = {"batch", "operator"})
     Optional<WashSortRecord> findByRecordId(String recordId);
 
     /** Whether a WashSortRecord has this business code. */
@@ -33,27 +35,32 @@ public interface WashSortRecordRepository extends JpaRepository<WashSortRecord, 
     /**
      * Find wash sort records by batch
      */
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<WashSortRecord> findByBatchBatchId(String batchId);
 
     /**
      * Find wash sort records by date range
      */
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<WashSortRecord> findByStartTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     /**
      * Find wash sort records by equipment
      */
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<WashSortRecord> findByEquipmentId(Long equipmentId);
 
     /**
      * Find wash sort records by operator
      */
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<WashSortRecord> findByOperatorOperatorId(String operatorId);
 
     /**
      * Find wash sort records by batch and date range
      */
     @Query("SELECT w FROM WashSortRecord w WHERE w.batch.batchId = :batchId AND w.startTime BETWEEN :startDate AND :endDate")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<WashSortRecord> findByBatchAndDateRange(@Param("batchId") String batchId,
                                                @Param("startDate") LocalDateTime startDate,
                                                @Param("endDate") LocalDateTime endDate);
@@ -88,5 +95,11 @@ public interface WashSortRecordRepository extends JpaRepository<WashSortRecord, 
      * Find wash sort records with yield below threshold
      */
     @Query("SELECT w FROM WashSortRecord w WHERE (w.outputQuantityKg / w.inputQuantityKg) * 100 < :threshold")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<WashSortRecord> findLowYieldRecords(@Param("threshold") Double threshold);
+
+    /** Every row, with what the responses show fetched in the same query (no N+1). */
+    @Override
+    @EntityGraph(attributePaths = {"batch", "operator"})
+    List<WashSortRecord> findAll();
 }

@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -81,6 +82,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/{recordId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort record by ID", description = "Retrieves a specific wash sort record by its ID")
     public ResponseEntity<WashSortRecordResponse> getWashSortRecordById(
             @Parameter(description = "Record ID") @PathVariable String recordId) {
@@ -90,6 +92,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by batch", description = "Retrieves wash sort records for a specific batch")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -101,6 +104,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all wash sort records", description = "Retrieves all wash sort records")
     public ResponseEntity<List<WashSortRecordResponse>> getAllWashSortRecords() {
         List<WashSortRecord> records = washSortRecordService.getAllWashSortRecords();
@@ -171,6 +175,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by date range", description = "Retrieves wash sort records within a date range")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDateTime startDate,
@@ -183,6 +188,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/equipment/{equipmentId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by equipment", description = "Retrieves wash sort records filtered by equipment")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByEquipment(
             @Parameter(description = "Equipment ID") @PathVariable String equipmentId) {
@@ -194,6 +200,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/operator/{operatorId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by operator", description = "Retrieves wash sort records filtered by operator")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByOperator(
             @Parameter(description = "Operator ID") @PathVariable String operatorId) {

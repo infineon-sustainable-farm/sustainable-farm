@@ -58,6 +58,7 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, Long> {
      * Find drying runs by batch and date range
      */
     @Query("SELECT d FROM DryingRun d WHERE d.batch.batchId = :batchId AND d.startTime BETWEEN :startDate AND :endDate")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findByBatchAndDateRange(@Param("batchId") String batchId,
                                           @Param("startDate") LocalDateTime startDate,
                                           @Param("endDate") LocalDateTime endDate);
@@ -78,18 +79,21 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, Long> {
      * Business Rule: Target moisture 12-18% for EU compliance
      */
     @Query("SELECT d FROM DryingRun d WHERE d.endMoisturePct BETWEEN 12 AND 18")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findWithinTargetMoistureRange();
 
     /**
      * Find drying runs with moisture content below minimum
      */
     @Query("SELECT d FROM DryingRun d WHERE d.endMoisturePct < 6")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findBelowMinimumMoisture();
 
     /**
      * Find drying runs with moisture content above maximum
      */
     @Query("SELECT d FROM DryingRun d WHERE d.endMoisturePct > 18")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findAboveMaximumMoisture();
 
     /**
@@ -142,5 +146,6 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, Long> {
      * Find drying runs by drying method (equipment type)
      */
     @Query("SELECT d FROM DryingRun d JOIN EquipmentSpec s ON s.equipmentId = d.equipmentId WHERE s.equipmentType = :equipmentType")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findByEquipmentType(@Param("equipmentType") EquipmentType equipmentType);
 }

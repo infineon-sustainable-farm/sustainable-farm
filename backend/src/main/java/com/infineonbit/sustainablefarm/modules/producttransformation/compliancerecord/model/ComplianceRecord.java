@@ -40,8 +40,8 @@ public class ComplianceRecord extends BaseEntity {
     @Column(name = "code", nullable = false, length = 50)
     private String recordId;
 
-    // Eager: the responses show its code, read after the transaction (open-in-view is off).
-    @ManyToOne(fetch = FetchType.EAGER)
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_compliance_record_batch"), nullable = false)
     @ToString.Exclude
     private Batch batch;
@@ -60,9 +60,10 @@ public class ComplianceRecord extends BaseEntity {
     @Column(name = "evidence", columnDefinition = "TEXT")
     private String evidence;
 
-    // Eager: the responses show its code, read after the transaction (open-in-view is off).
-    @ManyToOne(fetch = FetchType.EAGER)
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auditor_id", foreignKey = @ForeignKey(name = "fk_compliance_record_auditor"))
+    @ToString.Exclude
     private Operator auditor;
 
     @Column(name = "audit_date", nullable = false)

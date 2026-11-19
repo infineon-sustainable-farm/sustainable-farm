@@ -43,8 +43,8 @@ public class DryingRun extends BaseEntity {
     @Column(name = "code", nullable = false, length = 50)
     private String runId;
 
-    // Eager: the responses show its code, read after the transaction (open-in-view is off).
-    @ManyToOne(fetch = FetchType.EAGER)
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_drying_run_batch"), nullable = false)
     @ToString.Exclude
     private Batch batch;
@@ -77,9 +77,10 @@ public class DryingRun extends BaseEntity {
     @Column(name = "equipment_id")
     private Long equipmentId;
 
-    // Eager: the responses show its code, read after the transaction (open-in-view is off).
-    @ManyToOne(fetch = FetchType.EAGER)
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_drying_run_operator"))
+    @ToString.Exclude
     private Operator operator;
 
     /**

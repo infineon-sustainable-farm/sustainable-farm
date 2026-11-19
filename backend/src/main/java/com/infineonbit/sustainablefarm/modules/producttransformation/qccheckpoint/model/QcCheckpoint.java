@@ -42,8 +42,8 @@ public class QcCheckpoint extends BaseEntity {
     @Column(name = "code", nullable = false, length = 50)
     private String checkpointId;
 
-    // Eager: the responses show its code, read after the transaction (open-in-view is off).
-    @ManyToOne(fetch = FetchType.EAGER)
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_batch"), nullable = false)
     @ToString.Exclude
     private Batch batch;
@@ -62,9 +62,10 @@ public class QcCheckpoint extends BaseEntity {
     @Column(name = "defects_count", nullable = false)
     private Integer defectsCount = 0;
 
-    // Eager: the responses show its code, read after the transaction (open-in-view is off).
-    @ManyToOne(fetch = FetchType.EAGER)
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inspector_id", foreignKey = @ForeignKey(name = "fk_qc_checkpoint_inspector"))
+    @ToString.Exclude
     private Operator inspector;
 
     @Column(name = "checkpoint_time", nullable = false)
