@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  * profile the catalogue starts empty: the user adds the pests and diseases with
  * {@code POST /api/plants/health-issues}, and the service adds "Other" the first
  * time an inspection or a treatment uses it. In the dev profile,
- * {@code HealthIssueReferenceLoader} loads a default catalogue at startup. The
+ * the demo data set ({@code seed/demo-data.sql}) holds a default catalogue. The
  * catalogue is a table and not a Java enum: an enum stored as text gets a CHECK
  * constraint that {@code ddl-auto=update} never widens, so a new issue would
  * need a migration. Here a new issue is one more row, and the code column has
