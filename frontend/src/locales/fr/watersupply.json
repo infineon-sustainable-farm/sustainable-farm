@@ -583,7 +583,6 @@
     "attachTitle": "Attribuer une période de comptage",
     "fields": {
       "lot": "Lot",
-      "lotPlaceholder": "LOT-2026-0142",
       "activity": "Activité",
       "source": "Source",
       "from": "Du",
@@ -626,6 +625,8 @@
         "plannedAt": "Prévu le"
       },
       "batchLot": "Lot de la charge {{number}}",
+      "noLot": "Aucun lot",
+      "lotsLoadError": "Les lots de la transformation n’ont pas pu être chargés.",
       "batchActivity": "Activité de la charge {{number}}",
       "batchSize": "Taille de la charge {{number}}",
       "batchDate": "Date de la charge {{number}}",

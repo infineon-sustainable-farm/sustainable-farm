@@ -61,10 +61,13 @@ class ProductTransformationIntegrationServiceTest {
     @Mock
     private AlertService alertService;
 
-    /** The product transformation batches: only {@code LOT-PT-1} is one. */
-    private final ProcessingBatchLookup processingBatches = batchId -> "LOT-PT-1".equals(batchId)
-            ? Optional.of(new ProcessingBatch(41L, "LOT-PT-1", null, "KEITT"))
-            : Optional.empty();
+    /** The product transformation batches, by code; any other lot is unknown. */
+    private static final Map<String, Long> BATCH_IDS = Map.of("LOT-PT-1", 41L, "LOT-1", 42L, "LOT-2", 43L, "LOT-3", 44L);
+
+    private final ProcessingBatchLookup processingBatches = batchId -> batchId == null
+            ? Optional.empty()
+            : Optional.ofNullable(BATCH_IDS.get(batchId.trim()))
+                    .map(id -> new ProcessingBatch(id, batchId.trim(), null, "KEITT"));
 
     @Test
     @SuppressWarnings("unchecked")
@@ -102,7 +105,7 @@ class ProductTransformationIntegrationServiceTest {
         assertEquals(List.of("window_overlaps_other_lot"), response.get("warnings"));
         assertEquals("LOT-1", free.getLotId());
         assertEquals("WASHING", free.getActivity().name());
-        assertNull(free.getProcessingBatchId(), "LOT-1 is not a product transformation batch");
+        assertEquals(42L, free.getProcessingBatchId());
         assertEquals("LOT-9", otherLot.getLotId());
         ArgumentCaptor<List<WaterConsumption>> saved = ArgumentCaptor.forClass(List.class);
         verify(consumptionRepository).saveAll(saved.capture());
@@ -123,6 +126,27 @@ class ProductTransformationIntegrationServiceTest {
                 () -> service().attachLotUsage(new LotUsageRequest("LOT-3", null, END, START, null, null)));
         assertThrows(IllegalArgumentException.class,
                 () -> service().attachLotUsage(new LotUsageRequest("LOT-3", "painting", START, END, null, null)));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void lotUsageRejectsALotThatIsNotAProductTransformationBatch() {
+        IllegalArgumentException refused = assertThrows(IllegalArgumentException.class,
+                () -> service().attachLotUsage(new LotUsageRequest(" EXTERNAL-LOT ", "washing", START, END, 145L, null)));
+
+        assertEquals("Unknown lot, not a processing batch of Product Transformation: EXTERNAL-LOT", refused.getMessage());
+        verify(consumptionRepository, never()).findAll(any(Specification.class), any(Sort.class));
+        verify(consumptionRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void forecastRejectsAPlannedBatchWhoseLotIsUnknown() {
+        WaterSource source = source(2000.0);
+        when(sourceRepository.findById(source.getId())).thenReturn(Optional.of(source));
+
+        assertThrows(IllegalArgumentException.class, () -> service().forecast(new AvailabilityForecastRequest(
+                source.getId(), 7, false, List.of(new AvailabilityForecastRequest.Batch("LOT-UNKNOWN", "washing", null, 10.0)))));
+        verify(alertService, never()).raiseOnce(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test

@@ -19,6 +19,8 @@ import java.time.Instant;
  *                          the start month for a season over the new year
  * @param seasonSource      source of the harvest season
  * @param lastUpdated       when the reference was entered or last corrected
+ * @param varietyKey        stable catalogue key of the variety, for example {@code KEITT}: the
+ *                          value the other modules store when they pick the variety
  */
 public record VarietyReferenceResponse(
         Long id,
@@ -28,5 +30,6 @@ public record VarietyReferenceResponse(
         Integer harvestStartMonth,
         Integer harvestEndMonth,
         String seasonSource,
-        Instant lastUpdated) {
+        Instant lastUpdated,
+        String varietyKey) {
 }

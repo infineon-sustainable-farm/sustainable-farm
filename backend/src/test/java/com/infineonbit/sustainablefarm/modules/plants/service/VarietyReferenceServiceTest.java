@@ -109,7 +109,7 @@ public class VarietyReferenceServiceTest {
         assertEquals("Keitt", inserted.getVarietyName());
         assertEquals("user_entry", inserted.getYieldSource());
         assertEquals("user_entry", inserted.getSeasonSource());
-        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "user_entry", 5, 7, "user_entry", NOW),
+        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "user_entry", 5, 7, "user_entry", NOW, null),
                 created);
     }
 
@@ -122,7 +122,7 @@ public class VarietyReferenceServiceTest {
         VarietyReferenceResponse created = varietyReferenceService.createReference(new VarietyReferenceRequest(
                 "Keitt", 220.0, " Zalka_2025 ", 5, 7, " " + KEITT_SEASON_SOURCE + " "), NOW);
         // Assert
-        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, NOW),
+        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, NOW, null),
                 created);
     }
 
@@ -163,7 +163,7 @@ public class VarietyReferenceServiceTest {
         // Assert
         assertSame(recorded, writtenRow());
         assertEquals(new VarietyReferenceResponse(1L, "Keitt", 230.0, "farm_records_2026", 4, 7,
-                "farm_records_2026", NOW), corrected);
+                "farm_records_2026", NOW, null), corrected);
     }
 
     @Test

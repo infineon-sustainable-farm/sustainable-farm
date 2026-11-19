@@ -148,7 +148,8 @@
       "dateRequired": "Intake date is required",
       "sourceFarmRequired": "Source farm is required",
       "sourceBlockRequired": "Source block is required",
-      "quantityPositive": "Received quantity must be greater than 0"
+      "quantityPositive": "Received quantity must be greater than 0",
+      "varietyRequired": "Variety is required"
     },
     "saveError": "Failed to save the raw intake",
     "deleteError": "Failed to delete the raw intake",

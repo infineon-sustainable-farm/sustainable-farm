@@ -22,9 +22,9 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO block (id, created_at, updated_at, farm_id, code, name, area_hectares, crop_type, soil_type, coordinates)
 VALUES
-    (1, '2026-01-01T08:10:00Z', '2026-01-01T08:10:00Z', 1, 'A', 'Bloc A', 6.8, 'mangue', 'limon', '48.8566,2.3522'),
-    (2, '2026-01-01T08:10:00Z', '2026-01-01T08:10:00Z', 1, 'B', 'Bloc B', 5.2, 'mangue', 'limon', NULL),
-    (3, '2026-01-01T08:10:00Z', '2026-01-01T08:10:00Z', 1, 'C', 'Bloc C', 4.1, 'mangue', 'sableux', NULL)
+    (1, '2026-01-01T08:10:00Z', '2026-01-01T08:10:00Z', 1, 'A', 'Bloc A', 6.8, 'KEITT', 'limon', '48.8566,2.3522'),
+    (2, '2026-01-01T08:10:00Z', '2026-01-01T08:10:00Z', 1, 'B', 'Bloc B', 5.2, 'KENT', 'limon', NULL),
+    (3, '2026-01-01T08:10:00Z', '2026-01-01T08:10:00Z', 1, 'C', 'Bloc C', 4.1, 'AMELIE', 'sableux', NULL)
 ON CONFLICT DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('farm', 'id'), GREATEST((SELECT MAX(id) FROM farm), 1));

@@ -69,15 +69,20 @@ public class ProductTransformationIntegrationService {
         this.processingBatches = processingBatches;
     }
 
-    /** Attributes the consumptions of a time window to a lot (T1). Re-sending the same window is harmless. */
+    /**
+     * Attributes the consumptions of a time window to a lot (T1). Re-sending the same window is harmless.
+     * The lot is a processing batch of Product Transformation, which owns them: an unknown lot is
+     * refused with 400.
+     */
     @Transactional
     public Map<String, Object> attachLotUsage(LotUsageRequest request) {
         if (!request.endAt().isAfter(request.startAt())) {
             throw new IllegalArgumentException("endAt must be after startAt");
         }
-        String lotId = request.lotId().trim();
+        ProcessingBatch batch = processingBatch(request.lotId());
+        String lotId = batch.batchId();
         String activity = ConsumptionActivity.normalize(request.activity());
-        Long processingBatchId = processingBatches.findBatch(lotId).map(ProcessingBatch::id).orElse(null);
+        Long processingBatchId = batch.id();
         List<WaterConsumption> inWindow = consumptionRepository.findAll(
                 ConsumptionCriteria.window(request.sourceId(), request.zoneId(), request.startAt(), request.endAt())
                         .toSpecification(), Sort.by("consumptionDate"));
@@ -195,7 +200,12 @@ public class ProductTransformationIntegrationService {
         List<String> warnings = new ArrayList<>();
         List<Map<String, Object>> batches = new ArrayList<>();
         double batchDemand = 0d;
-        for (AvailabilityForecastRequest.Batch batch : request.batches() == null ? List.<AvailabilityForecastRequest.Batch>of() : request.batches()) {
+        List<AvailabilityForecastRequest.Batch> planned = request.batches() == null ? List.of() : request.batches();
+        // A planned batch names an existing processing batch of Product Transformation, or none.
+        planned.stream().map(AvailabilityForecastRequest.Batch::lotId)
+                .filter(lotId -> lotId != null && !lotId.isBlank())
+                .forEach(this::processingBatch);
+        for (AvailabilityForecastRequest.Batch batch : planned) {
             String activity = ConsumptionActivity.normalize(batch.activity());
             boolean inHorizon = batch.plannedAt() == null || (!batch.plannedAt().isBefore(now) && batch.plannedAt().isBefore(end));
             double demand = inHorizon ? batchDemand(activity, batch.sizeKg(), warnings) : 0d;
@@ -236,6 +246,16 @@ public class ProductTransformationIntegrationService {
         response.put("warnings", warnings.stream().distinct().toList());
         response.put("parametersStatus", "unvalidated_defaults");
         return response;
+    }
+
+    /**
+     * The processing batch of Product Transformation a lot id designates.
+     *
+     * @throws IllegalArgumentException (400) when Product Transformation has no batch with this code
+     */
+    private ProcessingBatch processingBatch(String lotId) {
+        return processingBatches.findBatch(lotId).orElseThrow(() -> new IllegalArgumentException(
+                "Unknown lot, not a processing batch of Product Transformation: " + lotId.trim()));
     }
 
     private double batchDemand(String activity, Double sizeKg, List<String> warnings) {

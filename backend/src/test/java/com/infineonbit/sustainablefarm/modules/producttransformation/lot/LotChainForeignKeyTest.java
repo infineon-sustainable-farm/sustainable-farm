@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -175,6 +176,53 @@ class LotChainForeignKeyTest {
     }
 
     @Test
+    @DisplayName("A harvest event is created from a plants harvest, whose date, variety, block and quantity it copies")
+    void harvestEventApiCopiesThePlantsHarvest() throws Exception {
+        long harvestId = plantsHarvest();
+
+        mockMvc.perform(post("/api/product-transformation/harvest-events").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"harvestId": "HE-LC-API", "batchId": "LOT-LC-API", "plantsHarvestId": %d,
+                                 "qualityGrade": "B", "weatherConditions": "Dry",
+                                 "harvestDate": "2020-01-01", "mangoVariety": "KENT", "blockId": "ZZ9",
+                                 "harvestQuantityKg": 1}
+                                """.formatted(harvestId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.harvestDate").value("2026-06-01"))
+                .andExpect(jsonPath("$.mangoVariety").value("KEITT"))
+                .andExpect(jsonPath("$.blockId").value(BLOCK))
+                .andExpect(jsonPath("$.farmId").value("Lot Chain Farm"))
+                .andExpect(jsonPath("$.harvestQuantityKg").value(300.0))
+                .andExpect(jsonPath("$.qualityGrade").value("B"))
+                .andExpect(jsonPath("$.weatherConditions").value("Dry"));
+
+        assertThat(jdbc.queryForObject("select plants_harvest_id from harvest_event where code = 'HE-LC-API'",
+                Long.class)).isEqualTo(harvestId);
+        assertThat(jdbc.queryForObject("select count(*) from block where code = 'ZZ9'", Integer.class)).isZero();
+    }
+
+    @Test
+    @DisplayName("A harvest event without a plants harvest, or with an unknown one, is refused with 400")
+    void harvestEventApiRequiresAKnownPlantsHarvest() throws Exception {
+        mockMvc.perform(post("/api/product-transformation/harvest-events").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"harvestId": "HE-LC-NONE", "batchId": "LOT-LC-NONE", "qualityGrade": "A",
+                                 "harvestDate": "2026-06-01", "mangoVariety": "KEITT", "farmId": "Lot Chain Farm",
+                                 "blockId": "LC1", "harvestQuantityKg": 300}
+                                """))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/product-transformation/harvest-events").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"harvestId": "HE-LC-UNKNOWN", "batchId": "LOT-LC-UNKNOWN", "qualityGrade": "A",
+                                 "plantsHarvestId": 987654321}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        assertThat(jdbc.queryForObject("select count(*) from harvest_event where code like 'HE-LC-%'",
+                Integer.class)).isZero();
+    }
+
+    @Test
     @DisplayName("A plants harvest still referenced by a harvest event cannot be deleted")
     void referencedPlantsHarvestCannotBeDeleted() throws Exception {
         long harvestId = plantsHarvest();
@@ -195,7 +243,7 @@ class LotChainForeignKeyTest {
     }
 
     @Test
-    @DisplayName("A sales batch with the code of a packaged lot is linked to it, with the same JSON")
+    @DisplayName("A sales batch picks a packaged lot by its code, is linked to it, with the same JSON")
     void salesBatchIsLinkedToThePackagedLotOfItsCode() throws Exception {
         long packagedLotId = packagedLot("PKG-LC-5", batch("LOT-LC-5"), "LOT-LC-5-PKG").getId();
 
@@ -204,17 +252,21 @@ class LotChainForeignKeyTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.batchCode").value("LOT-LC-5-PKG"))
                 .andExpect(jsonPath("$.packagingRecordId").doesNotExist())
+                .andExpect(jsonPath("$.syncedAt").exists())
                 .andReturn().getResponse().getContentAsString();
         int linkedId = objectMapper.readTree(linked).get("batchId").asInt();
-        String other = mockMvc.perform(post("/api/sales-marketing/product-batches").contentType(MediaType.APPLICATION_JSON)
+        // Product transformation owns the packaged lots: a code it does not have is refused.
+        mockMvc.perform(post("/api/sales-marketing/product-batches").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"batchCode\":\"SALES-ONLY-1\",\"stockT\":1,\"status\":\"AVAILABLE\"}"))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        int otherId = objectMapper.readTree(other).get("batchId").asInt();
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/sales-marketing/product-batches/{id}", linkedId).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"batchCode\":\"SALES-ONLY-2\",\"stockT\":1,\"status\":\"AVAILABLE\"}"))
+                .andExpect(status().isBadRequest());
         entityManager.flush();
 
         assertThat(packagingRecordIdOfSalesBatch(linkedId)).isEqualTo(packagedLotId);
-        assertThat(packagingRecordIdOfSalesBatch(otherId)).isNull();
+        assertThat(jdbc.queryForObject("select count(*) from product_batches where batch_code like 'SALES-ONLY-%'",
+                Integer.class)).isZero();
         mockMvc.perform(get("/api/sales-marketing/product-batches/{id}", linkedId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stockT").value(0.28))

@@ -1,8 +1,12 @@
-import { formatEnum } from '../utils/format';
-
-// Values accepted by /api/product-transformation/raw-intakes for the received variety and grade.
-export const MANGO_VARIETIES = ['KEITT', 'KENT', 'TOMMY', 'AMÉLIE', 'OTHER'];
+// Grades accepted by /api/product-transformation/raw-intakes. The varieties come from the plants
+// catalogue (api/varietyApi.js), picked by their key.
 export const QUALITY_GRADES = ['A', 'B', 'C', 'D'];
 
-/** Translated label of a received variety. */
-export const varietyLabel = (variety) => formatEnum('variety', variety);
+/**
+ * Catalogue key of a variety as the API returns it: the API sends `AMÉLIE` for the key `AMELIE`,
+ * the key itself for every other variety.
+ */
+export const varietyKeyOf = (variety) =>
+  variety
+    ? String(variety).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+    : '';

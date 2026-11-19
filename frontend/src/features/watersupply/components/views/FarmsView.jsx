@@ -5,6 +5,7 @@ import { Button, Card, ConfirmDialog, EmptyState } from '../../../../shared/ui'
 import { useCreateParam } from '../../../../shared/hooks/useCreateParam'
 import { farmApi, fieldApi, zoneApi } from '../../api/watersupplyApi'
 import { coordinatesError, useGeolocation } from '../../hooks/useGeolocation'
+import { useVarietyCatalog } from '../../hooks/useIntegrations'
 import { Filters, Screen } from '../common/Screen'
 import { FormAlert } from '../common/FormAlert'
 import { LoadingState } from '../common/LoadingState'
@@ -21,7 +22,8 @@ const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
 
 /**
  * CRUD view for Farms / Fields / Zones (Task 4.1). The tables, the forms and the coordinate
- * helpers live in ./farms.
+ * helpers live in ./farms. The crop type of a field is a variety of the Plants catalogue, picked by
+ * its key (OWNER_LINKS.variety).
  *
  * Location: when a farm or a field is created, its position is taken from the device's
  * geolocation (the person is expected to be on site) and can be corrected by hand. TO BE
@@ -30,6 +32,7 @@ const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
 export function FarmsView({ notify }) {
   const { t } = useTranslation('watersupply')
   const geoMessage = useGeoMessage()
+  const varietyCatalog = useVarietyCatalog()
   const [farms, setFarms] = useState([])
   const [fields, setFields] = useState([])
   const [zones, setZones] = useState([])
@@ -323,7 +326,7 @@ export function FarmsView({ notify }) {
             {visibleFields.length === 0 ? (
               <EmptyState title={t('farms.noFieldsTitle')} message={t('farms.noFields')} />
             ) : (
-              <FieldsTable rows={visibleFields} onEdit={editField} onDelete={(row) => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })} />
+              <FieldsTable rows={visibleFields} varieties={varietyCatalog.varieties} onEdit={editField} onDelete={(row) => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })} />
             )}
           </Card>
 
@@ -359,6 +362,7 @@ export function FarmsView({ notify }) {
           title={editingField ? t('farms.editField') : t('farms.newField')}
           farms={farms}
           fields={[]}
+          varietyCatalog={varietyCatalog}
           form={fieldForm}
           setForm={setFieldForm}
           onCancel={closeFieldForm}
