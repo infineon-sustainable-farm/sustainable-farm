@@ -5,7 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.operator.mo
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
@@ -60,7 +60,7 @@ class DryingRunDtoMappingTest {
     private BatchRepository batchRepository;
 
     @Autowired
-    private ProductTransformationBlocks blocks;
+    private SiteTestBlocks siteTestBlocks;
 
     @Autowired
     private EquipmentService equipmentService;
@@ -96,7 +96,7 @@ class DryingRunDtoMappingTest {
         batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
         batch.setCurrentStatus(BatchStatus.CREATED);
-        batch.setFarmBlockId(blocks.resolve("F-DTO", "BL-DTO"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("BL-DTO").id());
         batchRepository.saveAndFlush(batch);
 
         Equipment equipment = new Equipment();

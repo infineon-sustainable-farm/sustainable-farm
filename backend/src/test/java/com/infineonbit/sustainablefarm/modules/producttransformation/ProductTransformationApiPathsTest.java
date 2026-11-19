@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,9 @@ class ProductTransformationApiPathsTest {
     @Autowired
     private HistoricalHarvestRepository historicalHarvestRepository;
 
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
     @Test
     @DisplayName("Every resource answers under the module prefix, no longer without it")
     void resourcesLiveUnderTheModulePrefix() throws Exception {
@@ -76,14 +80,14 @@ class ProductTransformationApiPathsTest {
         String suffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         String farm = "Paths Farm " + suffix;
         String code = "LOT-PATHS-" + suffix;
-        mockMvc.perform(post("/api/farm/farms").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"%s\"}".formatted(farm))).andExpect(status().isCreated());
+        String block = "PP" + suffix;
+        siteTestBlocks.ensure(siteTestBlocks.newFarm(farm), block);
 
         mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"batchId": "%s", "harvestDate": "2026-11-01", "mangoVariety": "KENT",
-                                 "harvestQuantityKg": 120.50, "farmId": "%s", "blockId": "P1"}
-                                """.formatted(code, farm)))
+                                 "harvestQuantityKg": 120.50, "farmId": "%s", "blockId": "%s"}
+                                """.formatted(code, farm, block)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.batchId").value(code))
                 .andExpect(jsonPath("$.id").doesNotExist());
@@ -99,8 +103,8 @@ class ProductTransformationApiPathsTest {
         mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"batchId": "%s", "harvestDate": "2026-11-01", "mangoVariety": "KENT",
-                                 "harvestQuantityKg": 1, "farmId": "%s", "blockId": "P1"}
-                                """.formatted(code, farm)))
+                                 "harvestQuantityKg": 1, "farmId": "%s", "blockId": "%s"}
+                                """.formatted(code, farm, block)))
                 .andExpect(status().is4xxClientError());
     }
 

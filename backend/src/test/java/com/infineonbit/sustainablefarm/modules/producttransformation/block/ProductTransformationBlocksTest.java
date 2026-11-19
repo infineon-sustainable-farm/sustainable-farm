@@ -4,16 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
-import com.infineonbit.sustainablefarm.modules.farm.api.BlockRegistry;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDto;
 import java.util.List;
@@ -24,43 +19,54 @@ import org.junit.jupiter.api.Test;
 class ProductTransformationBlocksTest {
 
     private final FarmDirectory farmDirectory = mock(FarmDirectory.class);
-    private final BlockRegistry blockRegistry = mock(BlockRegistry.class);
-    private final ProductTransformationBlocks blocks = new ProductTransformationBlocks(farmDirectory, blockRegistry);
+    private final ProductTransformationBlocks blocks = new ProductTransformationBlocks(farmDirectory);
 
     @Test
-    void anExistingCodeIsUsedWhateverTheFarmText() {
+    void anExistingCodeWithoutFarmTextIsUsed() {
         when(farmDirectory.findBlockByCode("A")).thenReturn(Optional.of(block(1L, 1L, "A")));
 
-        assertEquals(1L, blocks.resolve("Another farm", " a "));
-
-        verify(blockRegistry, never()).findOrCreateBlock(any(), anyString());
+        assertEquals(1L, blocks.resolve(null, " a "));
     }
 
     @Test
-    void aNewCodeGoesToTheFarmOfANumericFarmText() {
-        when(farmDirectory.findBlockByCode("Q1")).thenReturn(Optional.empty());
+    void anExistingCodeOfTheFarmOfANumericFarmTextIsUsed() {
+        when(farmDirectory.findBlockByCode("Q1")).thenReturn(Optional.of(block(9L, 2L, "Q1")));
         when(farmDirectory.findFarm(2L)).thenReturn(Optional.of(farm(2L, "North")));
-        when(blockRegistry.findOrCreateBlock(2L, "Q1")).thenReturn(block(9L, 2L, "Q1"));
 
         assertEquals(9L, blocks.resolve("2", "q1"));
     }
 
     @Test
-    void aNewCodeGoesToTheFarmOfThatName() {
-        when(farmDirectory.findBlockByCode("Q1")).thenReturn(Optional.empty());
+    void anExistingCodeOfTheFarmOfThatNameIsUsed() {
+        when(farmDirectory.findBlockByCode("Q1")).thenReturn(Optional.of(block(9L, 1L, "Q1")));
         when(farmDirectory.findFarmByName("ferme demo nord")).thenReturn(Optional.of(farm(1L, "Ferme Demo Nord")));
-        when(blockRegistry.findOrCreateBlock(1L, "Q1")).thenReturn(block(9L, 1L, "Q1"));
 
         assertEquals(9L, blocks.resolve(" ferme demo nord ", "Q1"));
     }
 
     @Test
-    void aNewCodeOfAnUnknownFarmGoesToTheDefaultFarm() {
+    void anUnknownCodeIsRefusedAndNoBlockIsCreated() {
         when(farmDirectory.findBlockByCode("Q1")).thenReturn(Optional.empty());
-        when(farmDirectory.findFarmByName("FERME-DEMO")).thenReturn(Optional.empty());
-        when(blockRegistry.findOrCreateBlock(null, "Q1")).thenReturn(block(9L, 1L, "Q1"));
 
-        assertEquals(9L, blocks.resolve("FERME-DEMO", "Q1"));
+        BadRequestException refused = assertThrows(BadRequestException.class, () -> blocks.resolve("1", "Q1"));
+
+        assertTrue(refused.getMessage().contains("Unknown block Q1"));
+    }
+
+    @Test
+    void anUnknownFarmTextIsRefused() {
+        when(farmDirectory.findBlockByCode("A")).thenReturn(Optional.of(block(1L, 1L, "A")));
+        when(farmDirectory.findFarmByName("FERME-DEMO")).thenReturn(Optional.empty());
+
+        assertThrows(BadRequestException.class, () -> blocks.resolve("FERME-DEMO", "A"));
+    }
+
+    @Test
+    void aBlockOfAnotherFarmIsRefused() {
+        when(farmDirectory.findBlockByCode("A")).thenReturn(Optional.of(block(1L, 1L, "A")));
+        when(farmDirectory.findFarm(2L)).thenReturn(Optional.of(farm(2L, "North")));
+
+        assertThrows(BadRequestException.class, () -> blocks.resolve("2", "A"));
     }
 
     @Test

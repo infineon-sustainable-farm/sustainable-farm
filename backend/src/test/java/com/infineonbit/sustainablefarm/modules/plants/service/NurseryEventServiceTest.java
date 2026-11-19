@@ -67,7 +67,7 @@ public class NurseryEventServiceTest {
     private PlantingService plantingService;
 
     @Spy
-    private PlantsBlocks plantsBlocks = TestBlocks.plantsBlocks();
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("E", 2L).with("G", 2L).asPlantsBlocks();
 
     @InjectMocks
     private NurseryEventService nurseryEventService;

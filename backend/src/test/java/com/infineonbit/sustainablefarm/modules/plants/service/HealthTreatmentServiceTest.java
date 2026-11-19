@@ -66,7 +66,7 @@ public class HealthTreatmentServiceTest {
     private HealthTreatmentService healthTreatmentService;
 
     @Spy
-    private PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).asPlantsBlocks();
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).with("D", 1L).asPlantsBlocks();
 
     private static HealthInspection blockC(Integer farmId) {
         return TestRows.inspection(1L, farmId, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,

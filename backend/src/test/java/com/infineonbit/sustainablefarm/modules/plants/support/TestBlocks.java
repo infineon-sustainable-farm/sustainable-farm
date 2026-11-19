@@ -1,8 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.support;
 
-import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
-import com.infineonbit.sustainablefarm.modules.farm.api.BlockRegistry;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDto;
 import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
@@ -15,16 +13,16 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * In-memory farm referential for the plants unit tests: {@link FarmDirectory} and
- * {@link BlockRegistry} with the rule of the farm module (a code is unique, a new code is created
- * under the requested farm or farm {@link #DEFAULT_FARM}).
+ * In-memory farm referential for the plants unit tests: a {@link FarmDirectory} whose blocks are
+ * added by the test ({@link #with}, {@link #onFarm}), as the farm module would have them; plants
+ * never creates a block.
  *
  * <p>Ids are stable: block {@code "A"} is {@code idOf("A")} in every test, so a repository stub
  * can name the block of a code before any write.</p>
  */
-public final class TestBlocks implements FarmDirectory, BlockRegistry {
+public final class TestBlocks implements FarmDirectory {
 
-    /** Farm of the blocks created without a farm. */
+    /** Farm of the test blocks added without a farm. */
     public static final long DEFAULT_FARM = 1L;
 
     private final Map<String, BlockDto> byCode = new LinkedHashMap<>();
@@ -59,12 +57,12 @@ public final class TestBlocks implements FarmDirectory, BlockRegistry {
     /** A {@link PlantsBlocks} on a new empty referential. */
     public static PlantsBlocks plantsBlocks() {
         TestBlocks blocks = new TestBlocks();
-        return new PlantsBlocks(blocks, blocks);
+        return new PlantsBlocks(blocks);
     }
 
     /** A {@link PlantsBlocks} on this referential. */
     public PlantsBlocks asPlantsBlocks() {
-        return new PlantsBlocks(this, this);
+        return new PlantsBlocks(this);
     }
 
     /** Adds the block of a code to a farm, as if the farm module had it already. */
@@ -79,26 +77,6 @@ public final class TestBlocks implements FarmDirectory, BlockRegistry {
     /** Label of the block of a code under the default farm. */
     public static BlockLabel label(String code) {
         return new BlockLabel(DEFAULT_FARM, FarmDirectory.normalizeBlockCode(code));
-    }
-
-    @Override
-    public BlockDto findOrCreateBlock(Long farmId, String code) {
-        String normalized = FarmDirectory.normalizeBlockCode(code);
-        if (normalized == null) {
-            throw new BadRequestException("blockCode must not be blank");
-        }
-        BlockDto existing = byCode.get(normalized);
-        if (existing != null) {
-            if (farmId != null && !farmId.equals(existing.farmId())) {
-                throw new BadRequestException("Block " + normalized + " belongs to farm " + existing.farmId());
-            }
-            return existing;
-        }
-        if (farmId != null && !farms.contains(farmId)) {
-            throw new BadRequestException("Farm " + farmId + " not found");
-        }
-        with(normalized, farmId == null ? DEFAULT_FARM : farmId);
-        return byCode.get(normalized);
     }
 
     @Override

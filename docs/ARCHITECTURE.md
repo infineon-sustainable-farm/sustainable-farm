@@ -73,7 +73,7 @@ The backend starts once PostgreSQL passes `pg_isready`; the frontend starts once
 
 | Module | Purpose | Public `api` package | Owner (`.github/module-owners.conf`) |
 |---|---|---|---|
-| `farm` | Shared site referential: farms, blocks (fields), zones | `FarmDirectory`, `BlockRegistry`, `FarmDto`, `BlockDto`, `ZoneDto` | PANK4SS (admin, shared) |
+| `farm` | Shared site referential: farms, blocks (fields), zones | `FarmDirectory`, `FarmDto`, `BlockDto`, `ZoneDto` | PANK4SS (admin, shared) |
 | `staff` | Shared people referential: one `person` row per person | `PersonDirectory`, `PersonDto`, `PersonDetails` | PANK4SS (admin, shared) |
 | `notification` | Shared alert store: one `alert` table for the modules that raise alerts | `AlertBoard`, `AlertDto`, `AlertDetails`, `AlertSeverity`, `AlertStatus`, `SourceModule` | PANK4SS (admin, shared) |
 | `machinery` | Equipment register, operator assignments, spare parts, maintenance, usage and fuel logs, repairs | `EquipmentLookup`, `ProcessingEquipmentRegistry`, `EquipmentView` and its enums | PANK4SS |
@@ -94,7 +94,7 @@ Each concept has exactly one owner module; the others reference its rows by fore
 
 | Concept | Owner | Table referenced | Read through | Referenced by |
 |---|---|---|---|---|
-| Farm, block, zone | `farm` | `farm`, `block`, `zone` (`id`) | `farm.api.FarmDirectory`, `BlockRegistry` | plants, producttransformation, watersupply |
+| Farm, block, zone | `farm` | `farm`, `block`, `zone` (`id`) | `farm.api.FarmDirectory` | plants, producttransformation, watersupply |
 | Person | `staff` | `person` (`id`) | `staff.api.PersonDirectory` | machinery, producttransformation (`operator` extension), visitormanagement (`staff` guides), watersupply, notification (alert recipient) |
 | Alert | `notification` | `alert` | `notification.api.AlertBoard`, scoped by `SourceModule` | energysupply, salesmarketing, watersupply |
 | Equipment | `machinery` | `equipment` | `machinery.api.EquipmentLookup`, `ProcessingEquipmentRegistry` | producttransformation (1:1 extension `pt_equipment_spec`) |
