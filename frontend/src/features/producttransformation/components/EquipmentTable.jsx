@@ -1,14 +1,15 @@
+import { Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { StatusBadge, Table } from '../../../shared/ui';
+import { IconButton, StatusBadge, Table } from '../../../shared/ui';
 import { formatIsoDate, formatNumber, notAvailable } from '../utils/format';
 import { equipmentTypeLabel, maintenanceStatusLabel, maintenanceStatusTone } from './equipmentOptions';
-import RowActions from './RowActions';
 
 /**
  * Table of the PT equipment. A machine registered from Machinery without its PT attributes shows
- * N/A for its type, capacity, energy and location.
+ * N/A for its type, capacity, energy and location. The only row action edits the PT specs: the
+ * machine itself is managed in Machinery.
  */
-export default function EquipmentTable({ equipment = [], onEdit, onDelete, loading = false }) {
+export default function EquipmentTable({ equipment = [], onEdit, loading = false }) {
   const { t } = useTranslation('producttransformation');
 
   const columns = [
@@ -63,7 +64,9 @@ export default function EquipmentTable({ equipment = [], onEdit, onDelete, loadi
       rows={equipment}
       getRowKey={(row) => row.equipmentId}
       loading={loading}
-      rowActions={(item) => <RowActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} />}
+      rowActions={(item) => (
+        <IconButton icon={Pencil} label={t('equipment.editSpecs')} onClick={() => onEdit(item)} />
+      )}
     />
   );
 }

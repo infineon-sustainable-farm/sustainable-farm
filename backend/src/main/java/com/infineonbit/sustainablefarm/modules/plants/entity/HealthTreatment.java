@@ -49,7 +49,8 @@ import java.time.LocalDate;
 @Table(name = "health_treatment", indexes = {
                 @Index(name = "idx_health_treatment_block_id", columnList = "block_id"),
                 @Index(name = "idx_health_treatment_target_issue_id", columnList = "target_issue_id"),
-                @Index(name = "idx_health_treatment_finding_id", columnList = "finding_id")})
+                @Index(name = "idx_health_treatment_finding_id", columnList = "finding_id"),
+                @Index(name = "idx_health_treatment_equipment_id", columnList = "equipment_id")})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -100,6 +101,18 @@ public class HealthTreatment extends BaseEntity implements BlockRow {
     @Column(name = "applicator", nullable = false)
     private String applicator;
 
+    /**
+     * The machine used, an {@code equipment} row of the machinery register (foreign key
+     * {@code fk_health_treatment_equipment}, emptied if machinery deletes the machine), or
+     * {@code null}: none given, or a treatment recorded before the machines were picked.
+     */
+    @Column(name = "equipment_id")
+    private Long equipmentId;
+
+    /**
+     * Name of the machine as machinery had it when the treatment was recorded, kept with the
+     * treatment record; free text on the treatments recorded before the machines were picked.
+     */
     @Column(name = "equipment")
     private String equipment;
 
