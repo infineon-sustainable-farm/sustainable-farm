@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Field, Input, Modal, Select } from "../../../shared/ui";
+import { OWNER_LINKS } from "../../../app/ownerLinks";
+import { Field, Input, Modal, OwnedResourceSelect, Select } from "../../../shared/ui";
 import { useHealthIssues } from "../hooks/useHealthIssues";
+import { useMachineryEquipment } from "../hooks/useMachineryEquipment";
 import { formatDate, formatUnit } from "../utils/format";
 import { issueOptions, OTHER_ISSUE_CODE, todayAsIsoDate } from "../utils/healthIssues";
 import FindingSummary from "./FindingSummary";
@@ -34,7 +36,7 @@ const INITIAL_VALUES = {
     quantity: "",
     unit: "",
     applicator: "",
-    equipment: "",
+    equipmentId: "",
 };
 
 /**
@@ -56,6 +58,8 @@ function checkText(value, messages, t) {
  * preventive treatment names its block, typed as for an inspection, and its
  * problem: the catalogue, then "Other" once and last, with the name of the
  * problem. The date from which harvesting is allowed is computed by the API.
+ * The equipment, optional, is a machine of the machinery register, which owns
+ * the machines: the form sends its id, never a typed name.
  *
  * The checks mirror the API rules; what the API still refuses is shown the
  * same way as for a planting:
@@ -74,6 +78,7 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
     const [today] = useState(todayAsIsoDate);
 
     const issues = useHealthIssues();
+    const machines = useMachineryEquipment();
     const options = issueOptions(issues.data);
     let catalogueNote = null;
     if (isPreventive && issues.isPending) {
@@ -159,9 +164,6 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
         }
         const applicatorError = checkText(values.applicator, "applicator", t);
         if (applicatorError) errors.applicator = applicatorError;
-        if (values.equipment.length > TEXT_MAX_LENGTH) {
-            errors.equipment = t("health.treatmentForm.errors.equipmentTooLong");
-        }
         return errors;
     }
 
@@ -180,7 +182,7 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
             preHarvestIntervalDays: Number(values.preHarvestIntervalDays.trim()),
             applicator: values.applicator,
         };
-        if (values.equipment.trim()) treatment.equipment = values.equipment;
+        if (values.equipmentId) treatment.equipmentId = Number(values.equipmentId);
         if (isPreventive) {
             treatment.blockCode = values.blockCode;
             treatment.targetIssueCode = values.targetIssueCode;
@@ -193,7 +195,7 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
     const unitOptions = UNITS.map((code) => ({ value: code, label: formatUnit(code) }));
     // Props of the plain text fields, by field name.
     const textInputs = Object.fromEntries(
-        ["productName", "activeIngredient", "applicator", "equipment"].map((field) => [
+        ["productName", "activeIngredient", "applicator"].map((field) => [
             field,
             { type: "text", value: values[field], onChange: (event) => setValue(field, event.target.value) },
         ]),
@@ -299,14 +301,22 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
                         <Input {...textInputs.applicator} />
                     </Field>
 
-                    <Field
+                    {/* Machinery owns the machines: the treatment picks one, a missing one is added there. */}
+                    <OwnedResourceSelect
                         id="treatment-equipment"
                         label={t("health.treatmentForm.equipment")}
-                        error={fieldError("equipment")}
+                        value={values.equipmentId}
+                        onChange={(id) => setValue("equipmentId", id)}
+                        options={machines.data ?? []}
+                        loading={machines.isPending}
+                        loadError={machines.isError}
+                        onRetry={machines.refetch}
+                        placeholder={t("health.treatmentForm.noEquipment")}
+                        owner={OWNER_LINKS.equipment}
+                        showOwnerLinkAlways
+                        error={fieldError("equipmentId")}
                         hint={t("health.optional")}
-                    >
-                        <Input {...textInputs.equipment} />
-                    </Field>
+                    />
                 </div>
 
                 <HealthFormActions
