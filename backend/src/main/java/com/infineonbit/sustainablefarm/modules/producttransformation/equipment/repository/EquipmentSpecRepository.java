@@ -17,6 +17,4 @@ public interface EquipmentSpecRepository extends JpaRepository<EquipmentSpec, Lo
     Optional<EquipmentSpec> findByEquipmentId(Long equipmentId);
 
     List<EquipmentSpec> findByEquipmentIdIn(Collection<Long> equipmentIds);
-
-    void deleteByEquipmentId(Long equipmentId);
 }

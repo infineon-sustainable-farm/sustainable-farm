@@ -3,9 +3,6 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.
 import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentLookup;
 import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
-import com.infineonbit.sustainablefarm.modules.machinery.api.ProcessingEquipmentChange;
-import com.infineonbit.sustainablefarm.modules.machinery.api.ProcessingEquipmentRegistration;
-import com.infineonbit.sustainablefarm.modules.machinery.api.ProcessingEquipmentRegistry;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
@@ -29,6 +26,8 @@ import java.util.stream.Collectors;
  * Product transformation equipment on the farm equipment register (ADR 0004): machinery owns
  * the equipment ({@code modules.machinery.api}), product transformation its attributes
  * ({@link EquipmentSpec}). The mapping rules are in {@link EquipmentRegisterMapping}.
+ * Product transformation only reads the machines and writes their attributes: creating,
+ * renaming, changing the status of and deleting a machine is done in machinery.
  *
  * Business Rules:
  * - Equipment must be ACTIVE for assignment
@@ -41,66 +40,26 @@ import java.util.stream.Collectors;
 public class EquipmentServiceImpl implements EquipmentService {
 
     private final EquipmentLookup equipmentLookup;
-    private final ProcessingEquipmentRegistry equipmentRegistry;
     private final EquipmentSpecRepository specRepository;
 
-    public EquipmentServiceImpl(EquipmentLookup equipmentLookup,
-                                ProcessingEquipmentRegistry equipmentRegistry,
-                                EquipmentSpecRepository specRepository) {
+    public EquipmentServiceImpl(EquipmentLookup equipmentLookup, EquipmentSpecRepository specRepository) {
         this.equipmentLookup = equipmentLookup;
-        this.equipmentRegistry = equipmentRegistry;
         this.specRepository = specRepository;
     }
 
     @Override
-    public Equipment createEquipment(Equipment equipment) {
-        // Business Rule: Default to ACTIVE status if not set
-        if (equipment.getMaintenanceStatus() == null) {
-            equipment.setMaintenanceStatus(MaintenanceStatus.ACTIVE);
-        }
-        if (equipment.getEquipmentType() == null) {
-            throw new BadRequestException("Equipment type is required");
-        }
-        EquipmentView registered = equipmentRegistry.register(new ProcessingEquipmentRegistration(
-                equipment.getEquipmentId(),
-                equipment.getEquipmentName(),
-                EquipmentRegisterMapping.stageOf(equipment.getEquipmentType()),
-                EquipmentRegisterMapping.statusOf(equipment.getMaintenanceStatus())));
-        EquipmentSpec spec = new EquipmentSpec();
-        spec.setEquipmentId(registered.id());
-        applyAttributes(spec, equipment);
-        return toEquipment(registered, specRepository.save(spec));
-    }
-
-    @Override
-    public Equipment updateEquipment(String equipmentId, Equipment equipment) {
-        Equipment existing = getEquipmentById(equipmentId);
-        EquipmentView changed = equipmentRegistry.change(existing.getId(), new ProcessingEquipmentChange(
-                equipment.getEquipmentName(),
-                equipment.getEquipmentType() == null ? null
-                        : EquipmentRegisterMapping.stageOf(equipment.getEquipmentType()),
-                equipment.getMaintenanceStatus() == null ? null
-                        : EquipmentRegisterMapping.statusOf(equipment.getMaintenanceStatus())));
-
-        EquipmentSpec spec = specRepository.findByEquipmentId(existing.getId()).orElse(null);
-        if (spec == null && hasAttributes(equipment)) {
-            // A machine registered from machinery gets its attributes on its first edit here.
-            spec = new EquipmentSpec();
-            spec.setEquipmentId(existing.getId());
-        }
-        if (spec != null) {
-            applyAttributes(spec, equipment);
-            spec = specRepository.save(spec);
-        }
-        return toEquipment(changed, spec);
-    }
-
-    @Override
-    public void deleteEquipment(String equipmentId) {
-        Equipment existing = getEquipmentById(equipmentId);
-        specRepository.deleteByEquipmentId(existing.getId());
-        specRepository.flush();
-        equipmentRegistry.delete(existing.getId());
+    public Equipment updateSpec(String equipmentId, Equipment attributes) {
+        EquipmentView view = equipmentLookup.findByCode(equipmentId)
+                .filter(EquipmentServiceImpl::isProcessing)
+                .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + equipmentId));
+        EquipmentSpec spec = specRepository.findByEquipmentId(view.id()).orElseGet(() -> {
+            // A machine registered in machinery gets its attributes on its first edit here.
+            EquipmentSpec created = new EquipmentSpec();
+            created.setEquipmentId(view.id());
+            return created;
+        });
+        applyAttributes(spec, attributes);
+        return toEquipment(view, specRepository.save(spec));
     }
 
     @Override
@@ -186,41 +145,12 @@ public class EquipmentServiceImpl implements EquipmentService {
                 .toList();
     }
 
-    @Override
-    public Equipment updateMaintenanceStatus(String equipmentId, MaintenanceStatus status) {
-        Equipment equipment = getEquipmentById(equipmentId);
-        equipment.setMaintenanceStatus(status);
-
-        // If setting to ACTIVE, update last maintenance date
-        if (status == MaintenanceStatus.ACTIVE) {
-            equipment.setLastMaintenanceDate(LocalDate.now());
-        }
-
-        return updateEquipment(equipmentId, equipment);
-    }
-
-    @Override
-    public Equipment scheduleMaintenance(String equipmentId, LocalDate maintenanceDate) {
-        Equipment equipment = getEquipmentById(equipmentId);
-        equipment.setMaintenanceStatus(MaintenanceStatus.MAINTENANCE);
-        equipment.setLastMaintenanceDate(maintenanceDate);
-        return updateEquipment(equipmentId, equipment);
-    }
-
     private static boolean isProcessing(EquipmentView view) {
         return EquipmentRegisterMapping.PROCESSING_STAGES.contains(view.stage());
     }
 
     private Equipment withSpec(EquipmentView view) {
         return toEquipment(view, specRepository.findByEquipmentId(view.id()).orElse(null));
-    }
-
-    private static boolean hasAttributes(Equipment equipment) {
-        return equipment.getEquipmentType() != null
-                || equipment.getCapacityKgPerHour() != null
-                || equipment.getEnergyConsumptionKwhPerKg() != null
-                || equipment.getLocation() != null
-                || equipment.getLastMaintenanceDate() != null;
     }
 
     private static void applyAttributes(EquipmentSpec spec, Equipment equipment) {

@@ -4,7 +4,9 @@
  *
  * Single equipment register (ADR 0004): `equipmentId` is the business code of
  * a processing or drying machine of the farm register owned by Machinery
- * (`equipment`); its PT attributes live in `pt_equipment_spec`.
+ * (`equipment`); its PT attributes live in `pt_equipment_spec`. Machinery alone creates,
+ * renames, changes the status of and deletes a machine: this client only reads the machines
+ * and updates their PT attributes.
  *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
@@ -41,20 +43,10 @@ export const equipmentApi = {
     apiClient.get(`/api/product-transformation/equipment/status/${maintenanceStatus}`),
 
   /**
-   * Create PT equipment
-   */
-  createEquipment: (equipmentData) => apiClient.post('/api/product-transformation/equipment', equipmentData),
-
-  /**
-   * Update PT equipment
+   * Update the PT attributes of a machine (type, capacity, energy, location, last maintenance)
    */
   updateEquipment: (equipmentId, equipmentData) =>
     apiClient.put(`/api/product-transformation/equipment/${equipmentId}`, equipmentData),
-
-  /**
-   * Delete PT equipment
-   */
-  deleteEquipment: (equipmentId) => apiClient.delete(`/api/product-transformation/equipment/${equipmentId}`),
 };
 
 export default equipmentApi;
