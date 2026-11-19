@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
@@ -41,6 +42,14 @@ class HealthInspectionTransactionIntegrationTest {
 
 
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("C");
+    }
 
     @Autowired
     private HealthInspectionService healthInspectionService;

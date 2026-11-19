@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.integratio
 
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,8 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * as {@code GET /api/plants/harvests} without the lot number, and the same
  * errors as when Plants was called over HTTP.
  *
- * <p>Block P22 is used by no other test; its farm is created by the first test
- * that runs, and found again through the farm referential by the next ones.
+ * <p>Block P22 is used by no other test; its farm and the block (owned by the
+ * farm module) are created by the first test that runs, and found again through the farm referential by the next ones.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,6 +44,9 @@ class PlantsHarvestApiTest {
 
     @Autowired
     private FarmDirectory farmDirectory;
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
 
     private long farm;
 
@@ -66,6 +70,7 @@ class PlantsHarvestApiTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         farm = objectMapper.readTree(createdFarm).get("id").asLong();
+        siteTestBlocks.ensure(farm, BLOCK);
         mockMvc.perform(post("/api/plants/plantings").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId": %d, "blockCode": "%s", "varietyName": "Keitt",

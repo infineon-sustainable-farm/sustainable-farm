@@ -54,7 +54,7 @@ public class NurseryBatchServiceTest {
     private NurseryEventRepository nurseryEventRepository;
 
     @Spy
-    private PlantsBlocks plantsBlocks = TestBlocks.plantsBlocks();
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("E", 1L).with("F", 2L).asPlantsBlocks();
 
     @InjectMocks
     private NurseryBatchService nurseryBatchService;

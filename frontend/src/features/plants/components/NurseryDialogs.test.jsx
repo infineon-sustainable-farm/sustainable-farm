@@ -1,10 +1,23 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import AddNurseryBatchModal from "./AddNurseryBatchModal";
 import RecordNurseryEventModal from "./RecordNurseryEventModal";
 
-vi.mock("../hooks/useVarieties", () => ({ useVarietyBlocks: () => ({ data: ["E"] }) }));
+vi.mock("../hooks/useFarmBlocks", () => ({
+    useFarmBlocks: () => ({
+        data: [
+            { id: 1, farmId: 1, code: "A", name: "North block" },
+            { id: 2, farmId: 1, code: "B2", name: "B2" },
+            { id: 3, farmId: 1, code: "E", name: "East" },
+        ],
+        isPending: false,
+        isError: false,
+        refetch: () => {},
+    }),
+}));
+
 vi.mock("../hooks/useVarietyReferences", () => ({
     useVarietyReferences: () => ({ data: [{ id: 1, varietyName: "Keitt" }] }),
 }));
@@ -35,7 +48,8 @@ function renderAdd(props = {}) {
     const onSubmit = vi.fn();
     const onClose = vi.fn();
     render(
-        <AddNurseryBatchModal isSubmitting={false} error={null} onSubmit={onSubmit} onResetError={vi.fn()} onClose={onClose} {...props} />
+        <AddNurseryBatchModal isSubmitting={false} error={null} onSubmit={onSubmit} onResetError={vi.fn()} onClose={onClose} {...props} />,
+        { wrapper: MemoryRouter }
     );
     return { onSubmit, onClose };
 }
@@ -43,7 +57,8 @@ function renderAdd(props = {}) {
 function renderEvent(props = {}) {
     const onSubmit = vi.fn();
     render(
-        <RecordNurseryEventModal isSubmitting={false} error={null} onSubmit={onSubmit} onResetError={vi.fn()} onClose={vi.fn()} {...props} />
+        <RecordNurseryEventModal isSubmitting={false} error={null} onSubmit={onSubmit} onResetError={vi.fn()} onClose={vi.fn()} {...props} />,
+        { wrapper: MemoryRouter }
     );
     return { onSubmit };
 }

@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
@@ -16,6 +17,7 @@ import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRe
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthInspectionRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthIssueReferenceRepository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +54,14 @@ class HealthIssueCatalogueIntegrationTest {
 
     /** Each race runs this many times, since H2 does not reproduce it on every trial. */
     private static final int TRIALS = 10;
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("HP");
+    }
 
     @Autowired
     private PlantsBlocks plantsBlocks;
@@ -170,6 +180,7 @@ class HealthIssueCatalogueIntegrationTest {
             removeTheIssue(HealthIssueReference.OTHER_CODE);
             // A new block code on each trial: the block is created by the race as well
             String blockCode = "HO" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act
             List<Object> results = together(List.of(
                     () -> healthInspectionService.recordInspection(
@@ -202,6 +213,7 @@ class HealthIssueCatalogueIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             removeTheInspections();
             String blockCode = "HN" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act: the block code is new to the farm referential
             List<Object> results = together(List.of(
                     () -> healthInspectionService.recordInspection(

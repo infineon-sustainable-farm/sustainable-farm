@@ -514,3 +514,11 @@ export function updateScenario(id, body) {
 export function fetchScenarioAnalysis(id, params = {}) {
     return apiClient.get(`${PLANTS_ENDPOINTS.SCENARIOS}/${id}/analysis`, { params });
 }
+
+/**
+ * Fetches the fields (blocks) of the farm referential, owned by the Farms & fields screen of
+ * Water Supply. Plants only picks one of them by its block code; it never creates a block.
+ */
+export function fetchFarmFields() {
+    return apiClient.get(PLANTS_ENDPOINTS.FARM_FIELDS);
+}

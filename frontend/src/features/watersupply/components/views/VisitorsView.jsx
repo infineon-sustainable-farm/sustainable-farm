@@ -17,6 +17,16 @@ const toLines = (list) => (list || []).join('\n')
 const fromLines = (text) => text.split('\n').map((line) => line.trim()).filter(Boolean)
 
 /**
+ * Area choices of the briefing: the zone names of Farms, fields & zones, then the names already
+ * published that are not a zone (kept so a new version does not lose them). The API stores names.
+ */
+function areaChoices(zones, ...published) {
+  const names = zones.map((zone) => zone.name).filter(Boolean)
+  const extra = published.flat().filter((name) => name && !names.includes(name))
+  return [...new Set([...names, ...extra])]
+}
+
+/**
  * Visitors: what the water team publishes for Visitor Management and what it shows.
  *
  * The visitor screens themselves belong to Visitor Management: here the water team writes the
@@ -43,6 +53,7 @@ function SafetyBriefingPanel({ notify }) {
   const { t } = useTranslation('watersupply')
   const format = useWaterFormat()
   const { briefing, loading, error, refetch } = useSafetyBriefing()
+  const { zones } = useZones()
   const [draft, setDraft] = useState(null)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
@@ -51,13 +62,20 @@ function SafetyBriefingPanel({ notify }) {
     setDraft({
       version: '',
       text: briefing?.text || '',
-      allowedZones: toLines(briefing?.allowedZones),
-      forbiddenZones: toLines(briefing?.forbiddenZones),
+      allowedZones: [...(briefing?.allowedZones || [])],
+      forbiddenZones: [...(briefing?.forbiddenZones || [])],
       risks: toLines(briefing?.risks),
       maxCapacity: briefing?.maxCapacity ?? '',
       guideRequired: briefing?.guideRequired ?? true,
     })
     setFormError(null)
+  }
+  const toggleArea = (key, name) => (event) => {
+    const { checked } = event.target
+    setDraft((current) => ({
+      ...current,
+      [key]: checked ? [...current[key], name] : current[key].filter((item) => item !== name),
+    }))
   }
   const updateDraft = (key) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
@@ -78,8 +96,8 @@ function SafetyBriefingPanel({ notify }) {
         // Empty version: the backend dates the new version itself.
         version: draft.version.trim() || null,
         text: draft.text,
-        allowedZones: fromLines(draft.allowedZones),
-        forbiddenZones: fromLines(draft.forbiddenZones),
+        allowedZones: draft.allowedZones,
+        forbiddenZones: draft.forbiddenZones,
         risks: fromLines(draft.risks),
         maxCapacity: capacity,
         guideRequired: draft.guideRequired,
@@ -107,12 +125,18 @@ function SafetyBriefingPanel({ notify }) {
             <Field label={t('visitors.briefing.fields.text')}>
               <Textarea rows={4} value={draft.text} onChange={updateDraft('text')} />
             </Field>
-            <Field label={t('visitors.briefing.fields.allowed')}>
-              <Textarea value={draft.allowedZones} onChange={updateDraft('allowedZones')} />
-            </Field>
-            <Field label={t('visitors.briefing.fields.forbidden')}>
-              <Textarea value={draft.forbiddenZones} onChange={updateDraft('forbiddenZones')} />
-            </Field>
+            <AreaChoice
+              legend={t('visitors.briefing.fields.allowed')}
+              choices={areaChoices(zones, briefing?.allowedZones || [], briefing?.forbiddenZones || [])}
+              selected={draft.allowedZones}
+              onToggle={(name) => toggleArea('allowedZones', name)}
+            />
+            <AreaChoice
+              legend={t('visitors.briefing.fields.forbidden')}
+              choices={areaChoices(zones, briefing?.allowedZones || [], briefing?.forbiddenZones || [])}
+              selected={draft.forbiddenZones}
+              onToggle={(name) => toggleArea('forbiddenZones', name)}
+            />
             <Field label={t('visitors.briefing.fields.risks')}>
               <Textarea value={draft.risks} onChange={updateDraft('risks')} />
             </Field>
@@ -169,6 +193,23 @@ function SafetyBriefingPanel({ notify }) {
     >
       {renderContent()}
     </Card>
+  )
+}
+
+/** Several areas picked among the zones (checkboxes); the zones are managed in Farms, fields & zones. */
+function AreaChoice({ legend, choices, selected, onToggle }) {
+  const { t } = useTranslation('watersupply')
+  return (
+    <fieldset className="flex flex-col">
+      <legend className="mb-1 text-sm font-medium">{legend}</legend>
+      {choices.length === 0 && <p className="text-xs text-text-muted">{t('visitors.briefing.noZones')}</p>}
+      {choices.map((name) => (
+        <label key={name} className="flex min-h-11 items-center gap-2 text-sm">
+          <input type="checkbox" className="size-4 accent-primary" checked={selected.includes(name)} onChange={onToggle(name)} />
+          {name}
+        </label>
+      ))}
+    </fieldset>
   )
 }
 

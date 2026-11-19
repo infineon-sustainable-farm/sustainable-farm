@@ -154,7 +154,6 @@
       "title": "Record a planting",
       "plantingDate": "Planting date",
       "block": "Block",
-      "blockPlaceholder": "e.g. A",
       "variety": "Variety",
       "varietyPlaceholder": "e.g. Keitt",
       "treeCount": "Number of trees",
@@ -171,7 +170,6 @@
       "plantingDateRequired": "Planting date is required.",
       "plantingDateFuture": "Planting date cannot be in the future.",
       "blockRequired": "Block is required.",
-      "blockFormat": "Block must be a short code such as A or B2, without prefix or space.",
       "varietyRequired": "Variety is required.",
       "varietyTooLong": "Variety must be at most {{max}} characters.",
       "treeCount": "Number of trees must be a whole number of at least 1.",
@@ -349,7 +347,6 @@
         "supplierTooLong": "Supplier must be at most 255 characters.",
         "totalCostInvalid": "Total cost must be a number greater than 0, with at most 2 decimals.",
         "blockRequired": "Block is required.",
-        "blockInvalid": "Block must be a short code such as A or B2, without prefix or space.",
         "applicatorRequired": "Applicator is required.",
         "methodTooLong": "Method must be at most 255 characters.",
         "reasonRequired": "Reason is required.",
@@ -463,8 +460,7 @@
         "startFuture": "Start date cannot be in the future.",
         "countInvalid": "Initial count must be a whole number, 1 or more.",
         "stageRequired": "Initial stage is required.",
-        "plannedDateRequired": "Planned transplant date is required.",
-        "plannedBlockFormat": "Planned block must be a short code such as E or B2, without prefix or space."
+        "plannedDateRequired": "Planned transplant date is required."
       }
     },
     "eventForm": {
@@ -500,8 +496,7 @@
         "quantityInvalid": "Quantity must be a whole number, 1 or more.",
         "reasonRequired": "Reason is required.",
         "reasonTooLong": "Reason must be at most {{max}} characters.",
-        "blockRequired": "Block is required.",
-        "blockFormat": "Block must be a short code such as A or B2, without prefix or space."
+        "blockRequired": "Block is required."
       }
     }
   },
@@ -515,7 +510,7 @@
     "selectAllBlocks": "Select “All blocks” to see the inspected blocks.",
     "optional": "Optional.",
     "block": "Block",
-    "blockNote": "Such as A or B2. The block needs no planting.",
+    "blockNote": "The block needs no planting.",
     "selectProblem": "Select a problem",
     "otherLabel": "Name of the problem",
     "place": {
@@ -526,7 +521,6 @@
     },
     "errors": {
       "blockRequired": "Block is required.",
-      "blockFormat": "Block must be a short code such as A or B2, without prefix or space.",
       "otherLabelRequired": "Name of the problem is required with “Other”.",
       "otherLabelTooLong": "Name of the problem must be at most {{max}} characters."
     },

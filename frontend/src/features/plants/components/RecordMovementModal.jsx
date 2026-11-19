@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Modal, Select } from "../../../shared/ui";
 import { useFertilizers } from "../hooks/useFertilizers";
-import { useVarietyBlocks } from "../hooks/useVarieties";
 import {
     DATE_FIELDS,
     INITIAL_VALUES,
@@ -48,7 +47,6 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
     const typeLabel = (type) => formatEnum("movementType", type);
 
     const fertilizers = useFertilizers();
-    const { data: blocks } = useVarietyBlocks();
     const catalogue = fertilizers.data ?? [];
     const fertilizer = catalogue.find((item) => String(item.id) === values.fertilizerId) ?? null;
 
@@ -183,7 +181,6 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
                         setValue={setValue}
                         setNumber={setNumber}
                         fieldError={fieldError}
-                        blocks={blocks}
                     />
                 </div>
 

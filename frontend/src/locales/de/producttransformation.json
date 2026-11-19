@@ -129,6 +129,7 @@
     "selectBatch": "Charge auswählen",
     "sourceFarm": "Herkunftsbetrieb",
     "sourceBlock": "Herkunftsblock",
+    "chooseFarmFirst": "Wählen Sie zuerst den Betrieb.",
     "quantityKg": "Menge (kg)",
     "intakeOperator": "Annehmende Person",
     "noOperator": "Nicht erfasst",

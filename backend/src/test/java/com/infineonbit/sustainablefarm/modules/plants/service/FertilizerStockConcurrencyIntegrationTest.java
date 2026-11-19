@@ -2,12 +2,14 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,6 +45,14 @@ class FertilizerStockConcurrencyIntegrationTest {
     private static final int TRIALS = 10;
     private static final LocalDate JUNE_1 = LocalDate.of(2026, 6, 1);
     private static final LocalDate JUNE_15 = LocalDate.of(2026, 6, 15);
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("B");
+    }
 
     @Autowired
     private FertilizerService fertilizerService;

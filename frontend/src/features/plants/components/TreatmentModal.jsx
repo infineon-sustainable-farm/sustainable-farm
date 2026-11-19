@@ -16,11 +16,9 @@ import TreatmentTargetFields from "./TreatmentTargetFields";
 const UNITS = ["KG", "L"];
 
 /**
- * Same rules as the API: a block as for a planting, a quantity above 0 with at
- * most 3 decimals, a whole number of days, and a name of at most 60 characters
+ * Same rules as the API: a quantity above 0 with at most 3 decimals, a whole number of days, and a name of at most 60 characters
  * for "Other".
  */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
 const QUANTITY_PATTERN = /^\d{1,9}(\.\d{1,3})?$/;
 const DAYS_PATTERN = /^\d{1,9}$/;
 const OTHER_LABEL_MAX_LENGTH = 60;
@@ -68,7 +66,7 @@ function checkText(value, messages, t) {
  * - a 404 or a 422 (the finding is resolved, or the treatment predates its
  *   inspection), or any other error: one message above the form.
  */
-export default function TreatmentModal({ finding, blocks, isSubmitting, error, onSubmit, onClose }) {
+export default function TreatmentModal({ finding, isSubmitting, error, onSubmit, onClose }) {
     const { t } = useTranslation("plants");
     const isPreventive = finding === null;
     const [values, setValues] = useState(INITIAL_VALUES);
@@ -122,10 +120,8 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
     function validate() {
         const errors = {};
         if (isPreventive) {
-            if (!values.blockCode.trim()) {
+            if (!values.blockCode) {
                 errors.blockCode = t("health.errors.blockRequired");
-            } else if (!BLOCK_CODE_PATTERN.test(values.blockCode)) {
-                errors.blockCode = t("health.errors.blockFormat");
             }
             if (!values.targetIssueCode) {
                 errors.targetIssueCode = t("health.treatmentForm.errors.targetRequired");
@@ -214,7 +210,6 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
                     {isPreventive && (
                         <TreatmentTargetFields
                             values={values}
-                            blocks={blocks}
                             options={options}
                             catalogueNote={catalogueNote}
                             fieldError={fieldError}

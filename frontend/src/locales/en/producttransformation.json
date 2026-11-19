@@ -129,6 +129,7 @@
     "selectBatch": "Select a batch",
     "sourceFarm": "Source Farm",
     "sourceBlock": "Source Block",
+    "chooseFarmFirst": "Choose the farm first.",
     "quantityKg": "Quantity (kg)",
     "intakeOperator": "Intake Operator",
     "noOperator": "Not recorded",

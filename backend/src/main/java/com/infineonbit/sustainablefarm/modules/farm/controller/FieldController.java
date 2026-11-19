@@ -64,7 +64,7 @@ public class FieldController {
     }
 
     @PutMapping("/fields/{fieldId}")
-    public FieldResponse updateField(@PathVariable Long fieldId, @RequestBody FieldUpdateRequest request) {
+    public FieldResponse updateField(@PathVariable Long fieldId, @Valid @RequestBody FieldUpdateRequest request) {
         return fieldService.updateField(fieldId, request);
     }
 

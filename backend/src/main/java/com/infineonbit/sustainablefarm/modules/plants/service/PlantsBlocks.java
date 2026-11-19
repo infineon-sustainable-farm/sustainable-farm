@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
-import com.infineonbit.sustainablefarm.modules.farm.api.BlockRegistry;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabelSource;
@@ -13,13 +13,13 @@ import java.util.function.Function;
 import org.springframework.stereotype.Component;
 
 /**
- * The blocks of plants, read and created through {@code farm.api} (docs/adr/0004).
+ * The blocks of plants, read through {@code farm.api} (docs/adr/0004).
  *
- * <p>A plants block code designates the {@code farm.block} row of that code. Writing a row on a
- * code that no block has yet creates the block ({@link BlockRegistry}), under the requested farm or,
- * without one, the default farm, so every code accepted before the farm referential is still
- * accepted. A requested farm must exist and own the block (400 otherwise). Reading with a code or
- * a farm that does not exist finds nothing, as before.</p>
+ * <p>A plants block code designates the {@code farm.block} row of that code. Plants never creates
+ * a block: blocks and their codes are owned by the Farms &amp; fields screen of Water Supply (farm
+ * module). Writing a row on a code that no block has, or with a requested farm that does not exist
+ * or does not own the block, is refused with a 400. Reading with a code or a farm that does not
+ * exist finds nothing, as before.</p>
  */
 @Component
 public class PlantsBlocks implements BlockLabelSource {
@@ -28,11 +28,9 @@ public class PlantsBlocks implements BlockLabelSource {
     static final Long NO_BLOCK = -1L;
 
     private final FarmDirectory farmDirectory;
-    private final BlockRegistry blockRegistry;
 
-    public PlantsBlocks(FarmDirectory farmDirectory, BlockRegistry blockRegistry) {
+    public PlantsBlocks(FarmDirectory farmDirectory) {
         this.farmDirectory = farmDirectory;
-        this.blockRegistry = blockRegistry;
     }
 
     /**
@@ -50,14 +48,29 @@ public class PlantsBlocks implements BlockLabelSource {
     }
 
     /**
-     * The block a row is written on, created when no block has the code.
+     * The existing block a row is written on.
      *
      * @param farmId    requested farm, or {@code null} for any
-     * @param blockCode block code, trimmed and upper-cased by the farm referential
+     * @param blockCode block code, compared after trimming and upper-casing
      * @return the block
+     * @throws BadRequestException (400) when the code is blank, no block has it, the farm does not
+     *         exist, or the block belongs to another farm
      */
     public BlockDto resolve(Long farmId, String blockCode) {
-        return blockRegistry.findOrCreateBlock(farmId, blockCode);
+        String code = FarmDirectory.normalizeBlockCode(blockCode);
+        if (code == null) {
+            throw new BadRequestException("blockCode must not be blank");
+        }
+        if (farmId != null && !farmDirectory.farmExists(farmId)) {
+            throw new BadRequestException("Farm " + farmId + " not found");
+        }
+        BlockDto block = farmDirectory.findBlockByCode(code).orElseThrow(() -> new BadRequestException(
+                "Unknown block " + code + ": pick a field of the Farms & fields screen (Water Supply)"));
+        if (farmId != null && !farmId.equals(block.farmId())) {
+            throw new BadRequestException("Block " + code + " belongs to farm " + block.farmId()
+                    + ", not to farm " + farmId);
+        }
+        return block;
     }
 
     /**

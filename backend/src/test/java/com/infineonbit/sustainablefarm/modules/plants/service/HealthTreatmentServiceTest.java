@@ -87,7 +87,7 @@ public class HealthTreatmentServiceTest {
     private HealthTreatmentService healthTreatmentService;
 
     @Spy
-    private PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).asPlantsBlocks();
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).with("D", 1L).asPlantsBlocks();
 
     @BeforeEach
     void sprayerInTheMachineryRegister() {

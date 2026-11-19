@@ -1,12 +1,25 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RecordMovementModal from "./RecordMovementModal";
 
 const fertilizersQuery = vi.hoisted(() => ({ current: null }));
 
 vi.mock("../hooks/useFertilizers", () => ({ useFertilizers: () => fertilizersQuery.current }));
-vi.mock("../hooks/useVarieties", () => ({ useVarietyBlocks: () => ({ data: ["A", "B"] }) }));
+
+vi.mock("../hooks/useFarmBlocks", () => ({
+    useFarmBlocks: () => ({
+        data: [
+            { id: 1, farmId: 1, code: "A", name: "North block" },
+            { id: 2, farmId: 1, code: "B2", name: "B2" },
+            { id: 3, farmId: 1, code: "E", name: "East" },
+        ],
+        isPending: false,
+        isError: false,
+        refetch: () => {},
+    }),
+}));
 
 vi.mock("../../../shared/api/persons", () => ({
     fetchPersons: vi.fn(() => Promise.resolve([{ id: 4, fullName: "Field team" }])),
@@ -16,7 +29,7 @@ const CATALOGUE = [{ id: 7, name: "NPK 15-15-15", unit: "KG", currentStock: 1000
 
 function renderModal(props = {}) {
     const handlers = { onSubmit: vi.fn(), onClose: vi.fn(), onResetError: vi.fn() };
-    render(<RecordMovementModal isSubmitting={false} error={null} {...handlers} {...props} />);
+    render(<RecordMovementModal isSubmitting={false} error={null} {...handlers} {...props} />, { wrapper: MemoryRouter });
     return handlers;
 }
 
@@ -66,12 +79,11 @@ describe("the Record a movement dialog", () => {
         expect(screen.getByLabelText("Quantity (kg)")).toHaveAccessibleDescription("In stock: 1,000 kg");
         fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-01-05" } });
         fireEvent.change(screen.getByLabelText("Quantity (kg)"), { target: { value: "2" } });
-        fireEvent.change(screen.getByLabelText("Block"), { target: { value: "B2 x" } });
         await screen.findByRole("option", { name: "Field team" });
         fireEvent.change(screen.getByLabelText(/^Applicator/), { target: { value: "4" } });
         fireEvent.click(screen.getByRole("button", { name: "Record application" }));
         expect(onSubmit).not.toHaveBeenCalled();
-        expect(screen.getByText("Block must be a short code such as A or B2, without prefix or space.")).toBeInTheDocument();
+        expect(screen.getByText("Block is required.")).toBeInTheDocument();
         fireEvent.change(screen.getByLabelText("Block"), { target: { value: "B2" } });
         fireEvent.click(screen.getByRole("button", { name: "Record application" }));
         expect(onSubmit).toHaveBeenCalledWith({
