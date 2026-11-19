@@ -24,12 +24,6 @@ public interface FarmDirectory {
     /** Primary key column of {@link #FARM_TABLE}, {@link #BLOCK_TABLE} and {@link #ZONE_TABLE}. */
     String KEY_COLUMN = "id";
 
-    /**
-     * Order of the {@code dev} seeder of the demo farm and blocks. A seeder of another module that
-     * references them runs after it (a higher {@code @Order} value, or none).
-     */
-    int DEMO_SEED_ORDER = -100;
-
     Optional<FarmDto> findFarm(Long farmId);
 
     boolean farmExists(Long farmId);

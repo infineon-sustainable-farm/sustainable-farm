@@ -25,11 +25,6 @@ import { Badge, Card, ErrorState, PageHeader, Skeleton } from '../../../shared/u
 import { dashboardApi } from '../api/dashboardApi';
 import DashboardCharts from './DashboardCharts';
 import DashboardKpis from './DashboardKpis';
-import FormAlert from './FormAlert';
-
-// Build-time flag. When enabled, the dashboard says out loud that it displays a
-// synthetic data set (backend/src/main/resources/seed/producttransformation-demo-seed.sql) instead of real Plants harvests.
-const DEMO_DATA_ENABLED = import.meta.env.VITE_DEMO_DATA === 'true';
 
 const SKELETON_TILES = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -135,17 +130,11 @@ const Dashboard = () => {
           end: kpis?.endDate ?? '?',
         })}
         actions={
-          <Badge tone={DEMO_DATA_ENABLED ? 'warning' : 'success'} size="md">
-            {DEMO_DATA_ENABLED ? t('dashboard.sourceDemo') : t('dashboard.sourcePlants')}
+          <Badge tone="success" size="md">
+            {t('dashboard.sourcePlants')}
           </Badge>
         }
       />
-
-      {DEMO_DATA_ENABLED ? (
-        <FormAlert tone="warning" className="mb-6">
-          {t('dashboard.demoNotice')}
-        </FormAlert>
-      ) : null}
 
       <DashboardKpis kpis={kpis} />
       <DashboardCharts charts={charts} />

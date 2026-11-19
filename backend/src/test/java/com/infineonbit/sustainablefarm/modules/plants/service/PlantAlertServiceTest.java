@@ -155,7 +155,7 @@ public class PlantAlertServiceTest {
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares);
     }
 
-    /** Stubs the varieties of AgronomicReferenceLoader, Keitt from May to July, and share rows 0, 0.5 and 1. */
+    /** Stubs the reference varieties, Keitt from May to July, and share rows 0, 0.5 and 1. */
     private void defaultReference() {
         reference(List.of(
                         reference(1L, "Keitt", 5, 7, KEITT_SEASON_SOURCE),

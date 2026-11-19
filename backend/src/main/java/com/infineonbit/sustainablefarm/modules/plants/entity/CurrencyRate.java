@@ -19,8 +19,8 @@ import java.time.Instant;
  * <p>A reference row, sourced, that the user enters and replaces through
  * {@code PUT /api/plants/currency-rates/EUR/XOF}. The EUR-XOF parity has been
  * fixed since 1999, but a reform is announced: the rate is read from this table
- * on every conversion and never written in the code, except as the default
- * that {@code CurrencyRateLoader} inserts in the dev profile.
+ * on every conversion and never written in the code, except as the row of the
+ * demo data set ({@code seed/demo-data.sql}) in the dev profile.
  *
  * <p>The currency codes are plain text without a CHECK constraint, like
  * {@link FertilizerMovement#getCurrency()}: a new currency must not need a

@@ -544,9 +544,7 @@
     "title": "Übersicht Produktverarbeitung",
     "period": "Zeitraum: {{period}} ({{start}} → {{end}})",
     "naShort": "k. A.",
-    "sourceDemo": "Quelle: DEMO-Daten (Plants-Format)",
     "sourcePlants": "Quelle: Ernten aus Plants",
-    "demoNotice": "Demo-Datensatz: synthetische Datensätze der Produktverarbeitung (Chargen LOT-DEMO), keine echten Ernten aus Plants. Siehe backend/src/main/resources/seed/producttransformation-demo-seed.sql.",
     "loadError": "Die Kennzahlen der Übersicht konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
     "pieLabel": "{{name}} {{value}} %",
     "kpis": {

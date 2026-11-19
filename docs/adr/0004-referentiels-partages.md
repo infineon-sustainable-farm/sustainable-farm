@@ -69,7 +69,7 @@ Plants et Product Transformation désignent un bloc par un code saisi (« A », 
 | Ferme demandée par Product Transformation | Texte : vide, ou une ferme existante par id numérique ou par nom, qui doit posséder le bloc ; sinon 400. L'écran envoie l'id de la ferme choisie. Les réponses donnent le code du bloc et le nom de sa ferme |
 | Lecture et filtres | Un filtre sur un code ou une ferme inconnus renvoie une liste vide ; le code est comparé après passage en majuscules. Plants lit le code et la ferme de ses lignes par `farm.api` (`FarmDirectory`) au premier usage ; un code renommé dans le référentiel apparaît à la lecture suivante |
 | Délier une zone | Refusé (409) quand des lignes d'un autre module référencent son bloc (lu depuis les `CrossModuleForeignKey` vers `block`) : le bloc garde son code, sinon plants et Product Transformation perdraient le bloc qu'ils affichent |
-| Données de démonstration | `seed/farm-demo-data.sql` (profil dev, joué en premier, `FarmDirectory.DEMO_SEED_ORDER`) crée la ferme 1 et les blocs A, B, C ; la variété Keitt de plants, la zone Water Supply « Zone Goutte A » et les lots de Product Transformation désignent les mêmes lignes |
+| Données de démonstration | Un seul jeu, `seed/demo-data.sql` (profil dev, `core.config.DemoDataSeeder`), crée la « Ferme de Banfora » et ses champs A, B, C ; les plantations de plants, les zones de Water Supply et les lots de Product Transformation désignent les mêmes lignes |
 | Water Supply | Lit la croissance d'un bloc par `plants.api.BlockGrowthLookup` ; l'import gelé de `plants.service.GrowthCalendarService` disparaît |
 
 ### Modèle des alertes (T25)

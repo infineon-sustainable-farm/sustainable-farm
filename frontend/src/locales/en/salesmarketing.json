@@ -98,7 +98,8 @@
       "products": "Products: {{message}}",
       "pricing": "Pricing: {{message}}",
       "customers": "Customers: {{message}}",
-      "orders": "Orders: {{message}}"
+      "orders": "Orders: {{message}}",
+      "varieties": "Varieties: {{message}}"
     },
     "forecastCreated": "Forecast created successfully.",
     "forecastCreateFailed": "Failed to create forecast",
@@ -142,7 +143,8 @@
     },
     "harvest": {
       "title": "Peak Harvest Window",
-      "months": "March - July"
+      "range": "{{from}} - {{to}}",
+      "none": "No harvest months known for the products yet."
     },
     "batches": {
       "title": "Prod. Transformation",
