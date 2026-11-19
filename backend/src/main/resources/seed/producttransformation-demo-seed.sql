@@ -48,6 +48,7 @@
 --   ne modifie aucune table existante et ne supprime aucune donnee.
 --
 -- UTILISATION (a executer uniquement sur une base de demonstration) :
+--   (seed/machinery-demo-data.sql d abord : il cree les machines EQ-DEMO-*)
 --   docker exec -i sustainable-farm-db \
 --     psql -U postgres -d sustainable_farm < backend/src/main/resources/seed/producttransformation-demo-seed.sql
 --
@@ -82,19 +83,12 @@ ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 2) Equipements (2 actifs, 1 en maintenance -> utilisation = 67 %)
---    Registre unique des equipements, detenu par machinery (table equipment,
---    ADR 0004) : categorie PROCESSING_MACHINERY, etape DRYING pour les sechoirs,
---    PROCESSING pour le lavage et le conditionnement ; statut ACTIVE ->
---    OPERATIONAL, MAINTENANCE -> UNDER_MAINTENANCE. Les attributs propres a la
---    transformation sont dans l'extension 1:1 pt_equipment_spec.
+--    Les machines sont celles du registre unique des equipements, detenu par
+--    machinery (table equipment, ADR 0004) : elles sont creees par
+--    seed/machinery-demo-data.sql (MachineryDemoDataSeeder, charge avant ce
+--    script). Ce script n'ajoute que leurs attributs propres a la
+--    transformation, dans l'extension 1:1 pt_equipment_spec.
 -- ---------------------------------------------------------------------------
-INSERT INTO equipment (code, name, category, stage, status, created_at, updated_at)
-VALUES
-    ('EQ-DEMO-01', 'Sechoir solaire DEMO 1', 'PROCESSING_MACHINERY', 'DRYING',     'OPERATIONAL',       now(), now()),
-    ('EQ-DEMO-02', 'Laveuse DEMO 1',         'PROCESSING_MACHINERY', 'PROCESSING', 'OPERATIONAL',       now(), now()),
-    ('EQ-DEMO-03', 'Conditionneuse DEMO 1',  'PROCESSING_MACHINERY', 'PROCESSING', 'UNDER_MAINTENANCE', now(), now())
-ON CONFLICT DO NOTHING;
-
 INSERT INTO pt_equipment_spec (equipment_id, equipment_type, capacity_kg_per_hour,
                                energy_consumption_kwh_per_kg, location,
                                last_maintenance_date, created_at, updated_at)
@@ -253,7 +247,7 @@ COMMIT;
 
 -- ---------------------------------------------------------------------------
 -- Verification attendue apres execution (information seulement) :
---   equipment       : 3 equipements de transformation (EQ-DEMO-01 a 03)
+--   equipment       : 3 equipements de transformation (EQ-DEMO-01 a 03, crees par machinery)
 --   pt_equipment_spec: 3 extensions
 --   harvest_event   : 5 lignes
 --   batch           : 5 lots (3 actifs)

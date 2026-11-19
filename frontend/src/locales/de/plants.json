@@ -712,6 +712,7 @@
       "selectUnit": "Einheit auswählen",
       "applicator": "Anwender",
       "equipment": "Gerät",
+      "noEquipment": "Kein Gerät",
       "submit": "Behandlung erfassen",
       "errors": {
         "targetRequired": "Das behandelte Problem ist erforderlich.",
@@ -727,8 +728,7 @@
         "quantityFormat": "Die Menge muss eine Zahl größer als 0 mit höchstens 3 Dezimalstellen sein.",
         "unitRequired": "Die Einheit ist erforderlich.",
         "applicatorRequired": "Der Anwender ist erforderlich.",
-        "applicatorTooLong": "Der Anwender darf höchstens 255 Zeichen lang sein.",
-        "equipmentTooLong": "Das Gerät darf höchstens 255 Zeichen lang sein."
+        "applicatorTooLong": "Der Anwender darf höchstens 255 Zeichen lang sein."
       }
     }
   },

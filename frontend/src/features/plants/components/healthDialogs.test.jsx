@@ -32,6 +32,18 @@ vi.mock("../hooks/useFarmBlocks", () => ({
     }),
 }));
 
+// The machines of the machinery register, without a request.
+vi.mock("../hooks/useMachineryEquipment", () => ({
+    useMachineryEquipment: () => ({
+        isPending: false,
+        isError: false,
+        data: [
+            { id: 3, code: "EQ-00003", name: "Knapsack sprayer" },
+            { id: 4, code: "EQ-00004", name: "Tractor sprayer" },
+        ],
+    }),
+}));
+
 const FINDING = {
     id: 7,
     blockCode: "A",
@@ -239,5 +251,30 @@ describe("the dialog recording a treatment", () => {
         expect(onSubmit).toHaveBeenCalledWith(
             expect.objectContaining({ blockCode: "A", targetIssueCode: "FRUIT_FLY", productName: "Copper" })
         );
+    });
+
+    it("picks the equipment among the machines of Machinery and sends its id", () => {
+        const onSubmit = vi.fn();
+        render(<TreatmentModal finding={FINDING} blocks={[]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />, { wrapper: MemoryRouter });
+
+        const equipment = screen.getByLabelText("Equipment");
+        expect(equipment.tagName).toBe("SELECT");
+        expect(within(equipment).getAllByRole("option").map((option) => option.textContent)).toEqual([
+            "No equipment",
+            "Knapsack sprayer",
+            "Tractor sprayer",
+        ]);
+        // Machinery owns the machines: a missing one is added there.
+        expect(screen.getByRole("link", { name: "Add it in Machinery" })).toHaveAttribute(
+            "href",
+            "/machinery/equipment-registry?create=1"
+        );
+
+        fillCommonFields();
+        change("Equipment", "4");
+        submit("Record treatment");
+
+        expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ equipmentId: 4 }));
+        expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("equipment");
     });
 });

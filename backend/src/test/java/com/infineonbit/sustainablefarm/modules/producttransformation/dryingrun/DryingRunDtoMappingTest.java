@@ -2,7 +2,8 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.ProcessingMachines;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
@@ -52,7 +53,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 class DryingRunDtoMappingTest {
 
     private static final String BATCH_ID = "B-DRY-DTO-001";
-    private static final String EQUIPMENT_ID = "EQ-DRY-DTO-001";
+    private static final String EQUIPMENT_NAME = "DTO dryer";
     private static final String OPERATOR_ID = "OP-DRY-DTO-001";
     private static final String RUN_ID = "DR-DRY-DTO-001";
 
@@ -64,6 +65,9 @@ class DryingRunDtoMappingTest {
 
     @Autowired
     private EquipmentService equipmentService;
+
+    @Autowired
+    private com.infineonbit.sustainablefarm.modules.machinery.service.EquipmentService machineryEquipment;
 
     @Autowired
     private OperatorRepository operatorRepository;
@@ -99,15 +103,11 @@ class DryingRunDtoMappingTest {
         batch.setFarmBlockId(siteTestBlocks.ensure("BL-DTO").id());
         batchRepository.saveAndFlush(batch);
 
-        Equipment equipment = new Equipment();
-        equipment.setEquipmentId(EQUIPMENT_ID);
-        equipment.setEquipmentName("DTO dryer");
-        equipment.setEquipmentType(EquipmentType.DRYING);
-        equipment.setCapacityKgPerHour(new BigDecimal("250.00"));
-        equipment.setEnergyConsumptionKwhPerKg(new BigDecimal("0.2500"));
-        equipment.setMaintenanceStatus(MaintenanceStatus.ACTIVE);
-        Equipment registered = equipmentService.findEquipmentById(EQUIPMENT_ID)
-                .orElseGet(() -> equipmentService.createEquipment(equipment));
+        Equipment registered = equipmentService.getAllEquipment().stream()
+                .filter(machine -> EQUIPMENT_NAME.equals(machine.getEquipmentName()))
+                .findFirst()
+                .orElseGet(() -> ProcessingMachines.register(machineryEquipment, equipmentService,
+                        EQUIPMENT_NAME, Stage.DRYING, EquipmentType.DRYING, "250.00", "0.2500"));
 
         Operator operator = new Operator();
         operator.setOperatorId(OPERATOR_ID);
@@ -142,7 +142,9 @@ class DryingRunDtoMappingTest {
 
         DryingRunResponse response = dtoMapper.toResponse(run);
         assertThat(response.getBatchId()).isEqualTo(BATCH_ID);
-        assertThat(response.getEquipmentId()).isEqualTo(EQUIPMENT_ID);
+        assertThat(response.getEquipmentId()).isEqualTo(equipmentService.getEquipmentByRegisterId(run.getEquipmentId())
+                .getEquipmentId());
+        assertThat(response.getEquipmentId()).startsWith("EQ-");
         assertThat(response.getOperatorId()).isEqualTo(OPERATOR_ID);
         // 118.40 kWh / 500 kg, computed from the batch association.
         assertThat(response.getEnergyEfficiencyKwhPerKg()).isCloseTo(0.2368,

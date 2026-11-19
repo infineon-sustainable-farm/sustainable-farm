@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
 import com.infineonbit.sustainablefarm.modules.machinery.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
@@ -62,14 +63,9 @@ class EquipmentRegisterForeignKeyTest {
     @Autowired
     private VarietyReferenceRepository varietyReferenceRepository;
 
-    private Equipment createDryer(String code) {
-        Equipment equipment = new Equipment();
-        equipment.setEquipmentId(code);
-        equipment.setEquipmentName("FK dryer " + code);
-        equipment.setEquipmentType(EquipmentType.SOLAR_DRYER);
-        equipment.setCapacityKgPerHour(new BigDecimal("100.00"));
-        equipment.setEnergyConsumptionKwhPerKg(new BigDecimal("0.5000"));
-        return productTransformationEquipment.createEquipment(equipment);
+    private Equipment createDryer(String name) {
+        return ProcessingMachines.register(machineryEquipment, productTransformationEquipment,
+                "FK dryer " + name, Stage.DRYING, EquipmentType.SOLAR_DRYER, "100.00", "0.5000");
     }
 
     private DryingRun dryingRun(String runId, Long equipmentId) {
@@ -101,7 +97,7 @@ class EquipmentRegisterForeignKeyTest {
     @Test
     @DisplayName("Deleting an unused equipment deletes its attributes")
     void deletingAnUnusedEquipmentCascadesToTheSpec() {
-        Equipment dryer = createDryer("EQ-FK-CASCADE");
+        Equipment dryer = createDryer("cascade");
 
         machineryEquipment.deleteEquipment(dryer.getId());
 
@@ -113,20 +109,10 @@ class EquipmentRegisterForeignKeyTest {
     @Test
     @DisplayName("An equipment still used by a drying run cannot be deleted")
     void deletingAnEquipmentStillUsedIsRefused() {
-        Equipment dryer = createDryer("EQ-FK-USED");
+        Equipment dryer = createDryer("used");
         dryingRunRepository.saveAndFlush(dryingRun("DR-FK-USED", dryer.getId()));
 
         assertThatThrownBy(() -> machineryEquipment.deleteEquipment(dryer.getId()))
-                .isInstanceOf(ConflictException.class);
-    }
-
-    @Test
-    @DisplayName("Product transformation cannot delete an equipment still used by a drying run")
-    void productTransformationDeletionOfAnEquipmentStillUsedIsRefused() {
-        Equipment dryer = createDryer("EQ-FK-USED-PT");
-        dryingRunRepository.saveAndFlush(dryingRun("DR-FK-USED-PT", dryer.getId()));
-
-        assertThatThrownBy(() -> productTransformationEquipment.deleteEquipment("EQ-FK-USED-PT"))
                 .isInstanceOf(ConflictException.class);
     }
 
