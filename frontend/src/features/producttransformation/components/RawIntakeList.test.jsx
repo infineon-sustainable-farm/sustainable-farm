@@ -8,6 +8,7 @@ import RawIntakeList from './RawIntakeList';
 import { LocationProbe } from '../../../test/LocationProbe';
 import { rawIntakeApi } from '../api/rawIntakeApi';
 import { batchApi } from '../api/batchApi';
+import { varietyApi } from '../api/varietyApi';
 
 vi.mock('../api/rawIntakeApi', () => ({
   rawIntakeApi: {
@@ -24,7 +25,21 @@ vi.mock('../api/batchApi', () => ({
   },
 }));
 
+vi.mock('../api/varietyApi', () => ({
+  varietyApi: {
+    getVarieties: vi.fn(),
+  },
+}));
+
 afterEach(cleanup);
+
+// The plants variety catalogue, as GET /api/plants/variety-references serves it.
+const VARIETIES = [
+  { id: 3, varietyKey: 'AMELIE', varietyName: 'Amelie' },
+  { id: 1, varietyKey: 'KEITT', varietyName: 'Keitt' },
+  { id: 2, varietyKey: 'KENT', varietyName: 'Kent' },
+  { id: 4, varietyKey: 'TOMMY', varietyName: 'Tommy Atkins' },
+];
 
 const INTAKES = [
   {
@@ -58,6 +73,7 @@ beforeEach(() => {
   rawIntakeApi.updateRawIntake.mockResolvedValue({});
   rawIntakeApi.deleteRawIntake.mockResolvedValue(undefined);
   batchApi.getAllBatches.mockResolvedValue([{ batchId: 'B-001' }, { batchId: 'B-002' }]);
+  varietyApi.getVarieties.mockResolvedValue(VARIETIES.map((item) => ({ ...item })));
 });
 
 describe('RawIntakeList', () => {
@@ -111,7 +127,8 @@ describe('RawIntakeList', () => {
     fireEvent.change(within(dialog).getByLabelText('Quantity (kg)'), {
       target: { value: '150.25' },
     });
-    fireEvent.change(within(dialog).getByLabelText('Variety'), { target: { value: 'TOMMY' } });
+    await within(dialog).findByRole('option', { name: 'Tommy Atkins' });
+    fireEvent.change(within(dialog).getByLabelText(/^Variety/), { target: { value: 'TOMMY' } });
     fireEvent.change(within(dialog).getByLabelText('Grade'), { target: { value: 'C' } });
     fireEvent.change(within(dialog).getByLabelText('Intake Operator'), {
       target: { value: 'Issa' },
@@ -133,6 +150,56 @@ describe('RawIntakeList', () => {
       }),
     );
     await waitFor(() => expect(rawIntakeApi.getAllRawIntakes).toHaveBeenCalledTimes(2));
+  });
+
+  it('filters by a variety of the plants catalogue', async () => {
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
+    await screen.findByText('RI-1');
+    await screen.findByRole('option', { name: 'Kent' });
+
+    fireEvent.change(screen.getByLabelText('Filter by variety'), { target: { value: 'KENT' } });
+    expect(screen.queryByText('RI-1')).toBeNull();
+    expect(screen.getByText('RI-2')).toBeTruthy();
+  });
+
+  it('picks the variety in the plants catalogue and requires one', async () => {
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
+    await screen.findByText('RI-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Raw Intake/i }));
+    const dialog = screen.getByRole('dialog');
+    const variety = within(dialog).getByLabelText(/^Variety/);
+    await within(dialog).findByRole('option', { name: 'Amelie' });
+    expect(within(variety).getAllByRole('option').map((option) => option.value)).toEqual([
+      '',
+      'AMELIE',
+      'KEITT',
+      'KENT',
+      'TOMMY',
+    ]);
+
+    fireEvent.change(within(dialog).getByLabelText('Intake ID'), { target: { value: 'RI-3' } });
+    fireEvent.change(within(dialog).getByLabelText('Batch'), { target: { value: 'B-001' } });
+    fireEvent.change(within(dialog).getByLabelText('Source Farm'), { target: { value: 'Farm C' } });
+    fireEvent.change(within(dialog).getByLabelText('Source Block'), { target: { value: 'Block C' } });
+    fireEvent.change(within(dialog).getByLabelText('Quantity (kg)'), { target: { value: '10' } });
+    fireEvent.submit(dialog.querySelector('form'));
+
+    expect(screen.getByText('Variety is required')).toBeTruthy();
+    expect(rawIntakeApi.createRawIntake).not.toHaveBeenCalled();
+  });
+
+  it('sends the user to plants when the variety catalogue is empty', async () => {
+    varietyApi.getVarieties.mockResolvedValue([]);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
+    await screen.findByText('RI-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Raw Intake/i }));
+    const dialog = screen.getByRole('dialog');
+
+    const link = await within(dialog).findByRole('link');
+    expect(link.getAttribute('href')).toBe('/plants/harvest-maturity?create=variety');
+    expect(within(dialog).getByLabelText(/^Variety/).disabled).toBe(true);
   });
 
   it('blocks creation when required fields are missing', async () => {
