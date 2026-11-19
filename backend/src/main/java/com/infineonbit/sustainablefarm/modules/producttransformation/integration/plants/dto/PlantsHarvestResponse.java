@@ -29,6 +29,17 @@ public class PlantsHarvestResponse {
     @JsonProperty("id")
     private Long id;
 
+    /**
+     * Lot number assigned by Plants (for example {@code LOT-2026-A-001}).
+     *
+     * <p>It identifies the harvest through the following operations, so it must be
+     * carried over by Product Transformation. Declared explicitly: Jackson drops
+     * every field the target type does not declare, which is why the lot number
+     * used to disappear from this proxy.
+     */
+    @JsonProperty("lotNumber")
+    private String lotNumber;
+
     @JsonProperty("farmId")
     private Long farmId;
 

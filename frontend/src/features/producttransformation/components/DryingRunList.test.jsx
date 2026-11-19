@@ -102,9 +102,9 @@ describe('DryingRunList', () => {
 
     const table = await screen.findByRole('table');
     expect(within(table).getByText('DR-1')).toBeTruthy();
-    expect(within(table).getByText('6.50 h')).toBeTruthy();
-    expect(within(table).getByText('118.40 kWh')).toBeTruthy();
-    expect(within(table).getByText(/78.0% → 12.0%/)).toBeTruthy();
+    expect(within(table).getByText('6.5 h')).toBeTruthy();
+    expect(within(table).getByText('118.4 kWh')).toBeTruthy();
+    expect(within(table).getByText(/78% → 12%/)).toBeTruthy();
     expect(within(table).getAllByText('Solar dryer 1').length).toBeGreaterThan(0);
     expect(within(table).getAllByText('Issa').length).toBeGreaterThan(0);
     // Names are resolved from all operators, not just the assignable role.
@@ -294,6 +294,7 @@ describe('DryingRunList', () => {
     render(<DryingRunList />);
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Drying' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

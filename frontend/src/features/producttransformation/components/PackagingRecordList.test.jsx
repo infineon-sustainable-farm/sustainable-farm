@@ -87,14 +87,14 @@ describe('PackagingRecordList', () => {
     const table = await screen.findByRole('table');
     expect(within(table).getByText('PK-1')).toBeTruthy();
     expect(within(table).getByText('PK-2')).toBeTruthy();
-    expect(within(table).getByText('100.00 kg')).toBeTruthy();
-    expect(within(table).getByText('250.50 kg')).toBeTruthy();
+    expect(within(table).getByText('100 kg')).toBeTruthy();
+    expect(within(table).getByText('250.5 kg')).toBeTruthy();
     expect(within(table).getByText('Export ready')).toBeTruthy();
     expect(within(table).getByText('Domestic')).toBeTruthy();
     // Only packagers are requested for the operator selector.
     expect(operatorApi.getOperatorsByRole).toHaveBeenCalledWith('PACKAGER');
     // Quantities are aggregated per package type (including empty types).
-    expect(screen.getByText('0.00 kg')).toBeTruthy();
+    expect(screen.getByText('0 kg')).toBeTruthy();
     expect(screen.getByText('0 records')).toBeTruthy();
   });
 
@@ -307,6 +307,7 @@ describe('PackagingRecordList', () => {
     render(<PackagingRecordList />);
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Packaging' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

@@ -209,6 +209,7 @@ describe('QcCheckpointList', () => {
     render(<QcCheckpointList />);
 
     expect(await screen.findByText('Network down')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Quality Control' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 

@@ -1,11 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.dto.PlantsHarvestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
 
@@ -62,8 +64,15 @@ public class PlantsIntegrationService {
      */
     public PlantsHarvestResponse getHarvestById(Long harvestId) {
         String url = plantsApiBaseUrl + "/api/plants/harvests/" + harvestId;
-        ResponseEntity<PlantsHarvestResponse> response = restTemplate.getForEntity(url, PlantsHarvestResponse.class);
-        return response.getBody();
+        try {
+            ResponseEntity<PlantsHarvestResponse> response =
+                    restTemplate.getForEntity(url, PlantsHarvestResponse.class);
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound ex) {
+            // Plants answers 404 for an unknown harvest. Left as-is, the client
+            // exception would bubble up as a 500 and look like an outage here.
+            throw new ResourceNotFoundException("Plants harvest not found: " + harvestId);
+        }
     }
 
     /**
@@ -93,14 +102,19 @@ public class PlantsIntegrationService {
     /**
      * Map a Plants harvest to the Product Transformation HarvestEvent.
      *
-     * <p>The batch/lot identifier is supplied by the caller and is stored
-     * as-is: this method never regenerates it, so the original lot number of
-     * the harvest is preserved across imports. The Plants record id is kept in
-     * {@code plantsHarvestId} to keep the cross-module link.
+     * <p><strong>Identity convention (agreed with the Plants team, option B):</strong>
+     * a harvest lot and a transformation lot are not the same thing — one harvest
+     * can be split into several drying lots, and several harvests can be merged
+     * into one transformation lot. Product Transformation therefore keeps its own
+     * {@code batchId} (supplied by the caller), and stores the Plants identity in
+     * two dedicated fields: {@code lotNumber} and {@code plantsHarvestId}. Both are
+     * returned by the API, so a transformation lot can always be traced back to
+     * the farm harvest and block it came from.
      *
      * <p>The variety name comes back from Plants as the planted name
      * ("Keitt", "keitt", "Amélie"...), so it is resolved through
-     * {@link MangoVariety#fromPlants(String)}.
+     * {@link MangoVariety#fromPlants(String)} — the lenient resolver: an unmapped
+     * variety must not refuse a whole harvest.
      *
      * <p>The quality grade is not part of the Plants harvest contract: the
      * caller remains responsible for it and must set it before persisting.
@@ -109,16 +123,16 @@ public class PlantsIntegrationService {
      * from the batch id (see {@code DtoMapper}), and remains the caller's
      * responsibility.
      *
-     * @param harvest          harvest returned by the Plants module
-     * @param originalBatchId  original lot/batch identifier to preserve
+     * @param harvest  harvest returned by the Plants module
+     * @param batchId  Product Transformation batch identifier (not the Plants lot)
      * @return a HarvestEvent carrying the Plants identity and values
      */
-    public HarvestEvent toHarvestEvent(PlantsHarvestResponse harvest, String originalBatchId) {
+    public HarvestEvent toHarvestEvent(PlantsHarvestResponse harvest, String batchId) {
         if (harvest == null) {
             throw new IllegalArgumentException("Plants harvest must not be null");
         }
-        if (originalBatchId == null || originalBatchId.isBlank()) {
-            throw new IllegalArgumentException("originalBatchId (Plants lot/batch) is required");
+        if (batchId == null || batchId.isBlank()) {
+            throw new IllegalArgumentException("batchId (Product Transformation lot) is required");
         }
         if (harvest.getHarvestDate() == null || harvest.getHarvestDate().isBlank()) {
             throw new IllegalArgumentException("Plants harvest date is required");
@@ -126,7 +140,8 @@ public class PlantsIntegrationService {
 
         HarvestEvent event = new HarvestEvent();
         event.setPlantsHarvestId(harvest.getId());
-        event.setBatchId(originalBatchId.trim());
+        event.setLotNumber(harvest.getLotNumber());
+        event.setBatchId(batchId.trim());
         event.setHarvestDate(LocalDate.parse(harvest.getHarvestDate()));
         event.setMangoVariety(MangoVariety.fromPlants(harvest.getVarietyName()));
         event.setFarmId(harvest.getFarmId() != null ? String.valueOf(harvest.getFarmId()) : null);

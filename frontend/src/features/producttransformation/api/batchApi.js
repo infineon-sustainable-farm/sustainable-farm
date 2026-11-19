@@ -39,8 +39,11 @@ export const batchApi = {
 
   /**
    * Advance batch status to next stage
+   *
+   * <p>An empty JSON body is sent explicitly: the backend endpoint declares a
+   * request body, and a body-less POST is rejected before reaching the controller.
    */
-  advanceBatchStatus: (batchId) => apiClient.post(`/api/batches/${batchId}/advance-status`),
+  advanceBatchStatus: (batchId) => apiClient.post(`/api/batches/${batchId}/advance-status`, {}),
 
   /**
    * Set batch status manually (for operations like REJECTED)

@@ -29,7 +29,9 @@ describe('format utilities', () => {
     expect(formatNumber(12.345, 1)).toBe('12.3');
 
     expect(formatWeight(null)).toBe('N/A');
-    expect(formatWeight(480.5)).toBe('480.50 kg');
+    expect(formatWeight(480.5)).toBe('480.5 kg');
+    expect(formatWeight(12500.5)).toBe('12,500.5 kg');
+    expect(formatNumber(12500.5)).toBe('12,500.5');
 
     expect(formatPercentage(null)).toBe('N/A');
     expect(formatPercentage(92.346)).toBe('92.35%');

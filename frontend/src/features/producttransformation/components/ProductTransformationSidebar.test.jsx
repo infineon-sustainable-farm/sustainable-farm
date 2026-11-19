@@ -32,7 +32,7 @@ describe('ProductTransformationSidebar', () => {
       'Compliance',
       'Packaging',
       'Equipment',
-      'Settings',
+      'Operators',
     ]);
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/product-transformation',
@@ -44,8 +44,26 @@ describe('ProductTransformationSidebar', () => {
       '/product-transformation/compliance',
       '/product-transformation/packaging',
       '/product-transformation/equipment',
-      '/product-transformation/settings',
+      '/product-transformation/operators',
     ]);
+  });
+
+  it('no longer exposes the dead Settings screen', () => {
+    renderSidebar();
+
+    expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull();
+  });
+
+  it('states the demo limitation when Log out is clicked', () => {
+    renderSidebar();
+
+    expect(screen.queryByRole('status')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+
+    expect(screen.getByRole('status').textContent).toBe(
+      'Authentication is not enabled in this demo.',
+    );
   });
 
   it('marks the current route as active', () => {

@@ -38,6 +38,8 @@ public class HarvestEventResponse {
     private String harvestSupervisor;
     private String weatherConditions;
     private String storageLocation;
+    private String lotNumber;
+    private Long plantsHarvestId;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

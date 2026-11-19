@@ -17,10 +17,14 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { formatWeight } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Plus, Filter, Pencil, Trash2 } from 'lucide-react';
+
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
 
 const MANGO_VARIETIES = ['KEITT', 'KENT', 'TOMMY', 'AMÉLIE', 'OTHER'];
 const QUALITY_GRADES = ['A', 'B', 'C', 'D'];
@@ -145,6 +149,13 @@ const RawIntakeList = () => {
     setFormError('');
   };
 
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
   const updateForm = (key) => (event) => {
     setForm((current) => ({ ...current, [key]: event.target.value }));
   };
@@ -217,28 +228,30 @@ const RawIntakeList = () => {
     }
   };
 
+  const header = (
+    <PTListHeader
+      title="Raw Intake"
+      subtitle="Record mango receptions, their source and the quantity entering the line."
+    >
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New Raw Intake
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading raw intakes..." />;
   if (error)
-    return <ErrorState message={error?.message || 'Failed to load raw intakes'} onRetry={load} />;
+    return (
+      <div className="p-6">
+        {header}
+        <ErrorState message={error?.message || 'Failed to load raw intakes'} onRetry={load} />
+      </div>
+    );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Raw Intake</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Record mango receptions, their source and the quantity entering the line.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Raw Intake
-        </button>
-      </div>
+      {header}
 
       {actionError && (
         <div
@@ -250,20 +263,20 @@ const RawIntakeList = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500">
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filters</span>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Batch
             <select
               aria-label="Filter by batch"
               value={filters.batchId}
               onChange={updateFilter('batchId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All batches</option>
               {batches.map((batch) => (
@@ -274,13 +287,13 @@ const RawIntakeList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Variety
             <select
               aria-label="Filter by variety"
               value={filters.variety}
               onChange={updateFilter('variety')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All varieties</option>
               {MANGO_VARIETIES.map((variety) => (
@@ -291,13 +304,13 @@ const RawIntakeList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Grade
             <select
               aria-label="Filter by grade"
               value={filters.grade}
               onChange={updateFilter('grade')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All grades</option>
               {QUALITY_GRADES.map((grade) => (
@@ -308,14 +321,14 @@ const RawIntakeList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Intake Date
             <input
               type="date"
               aria-label="Filter by intake date"
               value={filters.date}
               onChange={updateFilter('date')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             />
           </label>
 
@@ -327,7 +340,7 @@ const RawIntakeList = () => {
 
       {/* Table */}
       {filteredIntakes.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className={CARD_FRAME}>
           <EmptyState
             message={intakes.length === 0 ? 'No raw intakes found' : 'No records match the filters'}
             actionLabel={intakes.length === 0 ? 'New Raw Intake' : undefined}
@@ -335,9 +348,9 @@ const RawIntakeList = () => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 {[
                   'Intake',
@@ -352,9 +365,7 @@ const RawIntakeList = () => {
                 ].map((label) => (
                   <th
                     key={label}
-                    className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                      label === 'Actions' ? 'text-right' : 'text-left'
-                    }`}
+                    className={`${TABLE_HEAD_BASE} ${label === 'Actions' ? 'text-right' : 'text-left'}`}
                   >
                     {label}
                   </th>
@@ -424,15 +435,16 @@ const RawIntakeList = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={editing ? 'Edit raw intake' : 'New raw intake'}
+          aria-labelledby={titleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={panelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 id={titleId} className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Raw Intake' : 'New Raw Intake'}
             </h2>
 
@@ -447,24 +459,24 @@ const RawIntakeList = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Intake ID
                   <input
                     type="text"
                     value={form.intakeId}
                     onChange={updateForm('intakeId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Batch
                   <select
                     value={form.batchId}
                     onChange={updateForm('batchId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   >
                     <option value="">Select a batch</option>
                     {batches.map((batch) => (
@@ -477,39 +489,39 @@ const RawIntakeList = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Source Farm
                   <input
                     type="text"
                     value={form.sourceFarm}
                     onChange={updateForm('sourceFarm')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Source Block
                   <input
                     type="text"
                     value={form.sourceBlock}
                     onChange={updateForm('sourceBlock')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Intake Date
                   <input
                     type="date"
                     value={form.intakeDate}
                     onChange={updateForm('intakeDate')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Quantity (kg)
                   <input
                     type="number"
@@ -517,18 +529,18 @@ const RawIntakeList = () => {
                     step="0.01"
                     value={form.receivedQuantityKg}
                     onChange={updateForm('receivedQuantityKg')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Variety
                   <select
                     value={form.receivedVariety}
                     onChange={updateForm('receivedVariety')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {MANGO_VARIETIES.map((variety) => (
                       <option key={variety} value={variety}>
@@ -538,12 +550,12 @@ const RawIntakeList = () => {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Grade
                   <select
                     value={form.receivedGrade}
                     onChange={updateForm('receivedGrade')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     {QUALITY_GRADES.map((grade) => (
                       <option key={grade} value={grade}>
@@ -554,13 +566,13 @@ const RawIntakeList = () => {
                 </label>
               </div>
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                 Intake Operator
                 <input
                   type="text"
                   value={form.intakeOperator}
                   onChange={updateForm('intakeOperator')}
-                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  className={FIELD_INPUT}
                 />
               </label>
 
@@ -569,14 +581,14 @@ const RawIntakeList = () => {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className={SECONDARY_BUTTON}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-60"
+                  className={PRIMARY_BUTTON}
                 >
                   {saving ? 'Saving...' : editing ? 'Save' : 'Create'}
                 </button>

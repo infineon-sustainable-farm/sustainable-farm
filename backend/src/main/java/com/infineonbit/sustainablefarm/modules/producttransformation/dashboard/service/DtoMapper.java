@@ -58,7 +58,20 @@ public class DtoMapper {
         return batch;
     }
 
+    /**
+     * Batch response without the Plants identity resolved.
+     * lotNumber and plantsHarvestId are left null.
+     */
     public BatchResponse toResponse(Batch entity) {
+        return toResponse(entity, null);
+    }
+
+    /**
+     * Batch response including the Plants identity of the linked harvest
+     * event, when one exists (option B: the harvest_event remains the
+     * source of truth, joined by batch_id).
+     */
+    public BatchResponse toResponse(Batch entity, HarvestEvent harvestEvent) {
         return BatchResponse.builder()
                 .batchId(entity.getBatchId())
                 .harvestDate(entity.getHarvestDate())
@@ -69,6 +82,8 @@ public class DtoMapper {
                 .blockId(entity.getBlockId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .lotNumber(harvestEvent != null ? harvestEvent.getLotNumber() : null)
+                .plantsHarvestId(harvestEvent != null ? harvestEvent.getPlantsHarvestId() : null)
                 .build();
     }
 
@@ -355,6 +370,8 @@ public class DtoMapper {
         event.setHarvestSupervisor(request.getHarvestSupervisor());
         event.setWeatherConditions(request.getWeatherConditions());
         event.setStorageLocation(request.getStorageLocation());
+        event.setLotNumber(request.getLotNumber());
+        event.setPlantsHarvestId(request.getPlantsHarvestId());
         return event;
     }
 
@@ -374,6 +391,8 @@ public class DtoMapper {
                 .harvestSupervisor(entity.getHarvestSupervisor())
                 .weatherConditions(entity.getWeatherConditions())
                 .storageLocation(entity.getStorageLocation())
+                .lotNumber(entity.getLotNumber())
+                .plantsHarvestId(entity.getPlantsHarvestId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

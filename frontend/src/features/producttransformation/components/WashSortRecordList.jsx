@@ -19,9 +19,13 @@ import LoadingState from './LoadingState';
 import ErrorState from '../../../shared/components/ErrorState';
 import EmptyState from '../../../shared/components/EmptyState';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useAccessibleDialog } from '../../../shared/hooks/useAccessibleDialog';
 import { formatWeight, formatNumber, formatDateTime } from '../utils/format';
 import { formatEnumLabel } from '../../../shared/utils/formatEnumLabel';
 import { Plus, Filter, Pencil, Trash2 } from 'lucide-react';
+
+import PTListHeader from './PTListHeader';
+import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, FILTER_INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_CARD, TABLE_CARD, TABLE_HEAD_BASE } from '../styles/ptStyles';
 
 const EQUIPMENT_TYPE = 'WASHING';
 
@@ -164,6 +168,13 @@ const WashSortRecordList = () => {
     setFormError('');
   };
 
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    open: showForm,
+    onClose: closeForm,
+    closeOnBackdrop: !saving,
+    closeOnEscape: !saving,
+  });
+
   const updateForm = (key) => (event) => {
     setForm((current) => ({ ...current, [key]: event.target.value }));
   };
@@ -248,33 +259,33 @@ const WashSortRecordList = () => {
     }
   };
 
+  const header = (
+    <PTListHeader
+      title="Washing &amp; Sorting"
+      subtitle="Track washing yields, waste and water usage per batch."
+    >
+      <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
+        <Plus className="w-4 h-4" />
+        New Wash Record
+      </button>
+    </PTListHeader>
+  );
+
   if (loading) return <LoadingState message="Loading wash & sort records..." />;
   if (error)
     return (
-      <ErrorState
-        message={error?.message || 'Failed to load wash & sort records'}
-        onRetry={load}
-      />
+      <div className="p-6">
+        {header}
+        <ErrorState
+          message={error?.message || 'Failed to load wash & sort records'}
+          onRetry={load}
+        />
+      </div>
     );
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Washing &amp; Sorting</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Track washing yields, waste and water usage per batch.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Wash Record
-        </button>
-      </div>
+      {header}
 
       {actionError && (
         <div
@@ -286,20 +297,20 @@ const WashSortRecordList = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className={`${SECTION_CARD} mb-6`}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500">
             <Filter className="w-5 h-5" />
             <span className="text-sm font-medium">Filters</span>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Batch
             <select
               aria-label="Filter by batch"
               value={filters.batchId}
               onChange={updateFilter('batchId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All batches</option>
               {batches.map((batch) => (
@@ -310,13 +321,13 @@ const WashSortRecordList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Equipment
             <select
               aria-label="Filter by equipment"
               value={filters.equipmentId}
               onChange={updateFilter('equipmentId')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             >
               <option value="all">All equipment</option>
               {washEquipment.map((item) => (
@@ -327,14 +338,14 @@ const WashSortRecordList = () => {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
             Start Date
             <input
               type="date"
               aria-label="Filter by start date"
               value={filters.date}
               onChange={updateFilter('date')}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={FILTER_INPUT}
             />
           </label>
 
@@ -346,7 +357,7 @@ const WashSortRecordList = () => {
 
       {/* Table */}
       {filteredRecords.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className={CARD_FRAME}>
           <EmptyState
             message={records.length === 0 ? 'No wash & sort records found' : 'No records match the filters'}
             actionLabel={records.length === 0 ? 'New Wash Record' : undefined}
@@ -354,9 +365,9 @@ const WashSortRecordList = () => {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+        <div className={TABLE_CARD}>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 {[
                   'Record',
@@ -370,9 +381,7 @@ const WashSortRecordList = () => {
                 ].map((label) => (
                   <th
                     key={label}
-                    className={`px-3 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                      label === 'Actions' ? 'text-right' : 'text-left'
-                    }`}
+                    className={`${TABLE_HEAD_BASE} ${label === 'Actions' ? 'text-right' : 'text-left'}`}
                   >
                     {label}
                   </th>
@@ -457,15 +466,16 @@ const WashSortRecordList = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={editing ? 'Edit wash & sort record' : 'New wash & sort record'}
+          aria-labelledby={titleId}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={closeForm}
+          onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
+            ref={panelRef}
+            tabIndex={-1}
+            className="bg-white rounded-2xl p-6 shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 id={titleId} className="font-heading text-xl font-bold text-on-background mb-4">
               {editing ? 'Edit Wash & Sort Record' : 'New Wash & Sort Record'}
             </h2>
 
@@ -480,24 +490,24 @@ const WashSortRecordList = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Record ID
                   <input
                     type="text"
                     value={form.recordId}
                     onChange={updateForm('recordId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Batch
                   <select
                     value={form.batchId}
                     onChange={updateForm('batchId')}
                     disabled={Boolean(editing)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 disabled:bg-gray-100"
+                    className={`${FIELD_INPUT} disabled:bg-gray-100`}
                   >
                     <option value="">Select a batch</option>
                     {batches.map((batch) => (
@@ -510,7 +520,7 @@ const WashSortRecordList = () => {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Input (kg)
                   <input
                     type="number"
@@ -518,11 +528,11 @@ const WashSortRecordList = () => {
                     step="0.01"
                     value={form.inputQuantityKg}
                     onChange={updateForm('inputQuantityKg')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Output (kg)
                   <input
                     type="number"
@@ -530,11 +540,11 @@ const WashSortRecordList = () => {
                     step="0.01"
                     value={form.outputQuantityKg}
                     onChange={updateForm('outputQuantityKg')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Waste (kg)
                   <input
                     type="number"
@@ -542,11 +552,11 @@ const WashSortRecordList = () => {
                     step="0.01"
                     value={form.wasteQuantityKg}
                     onChange={updateForm('wasteQuantityKg')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Water (L)
                   <input
                     type="number"
@@ -554,40 +564,40 @@ const WashSortRecordList = () => {
                     step="0.01"
                     value={form.waterUsageLiters}
                     onChange={updateForm('waterUsageLiters')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Start Time
                   <input
                     type="datetime-local"
                     value={form.startTime}
                     onChange={updateForm('startTime')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   End Time
                   <input
                     type="datetime-local"
                     value={form.endTime}
                     onChange={updateForm('endTime')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Equipment
                   <select
                     value={form.equipmentId}
                     onChange={updateForm('equipmentId')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     <option value="">No equipment</option>
                     {washEquipment.map((item) => (
@@ -598,12 +608,12 @@ const WashSortRecordList = () => {
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                <label className={`flex flex-col gap-1 ${FIELD_LABEL}`}>
                   Operator
                   <select
                     value={form.operatorId}
                     onChange={updateForm('operatorId')}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    className={FIELD_INPUT}
                   >
                     <option value="">No operator</option>
                     {washOperators.map((operator) => (
@@ -620,14 +630,14 @@ const WashSortRecordList = () => {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className={SECONDARY_BUTTON}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-60"
+                  className={PRIMARY_BUTTON}
                 >
                   {saving ? 'Saving...' : editing ? 'Save' : 'Create'}
                 </button>

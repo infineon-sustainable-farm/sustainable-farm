@@ -30,6 +30,23 @@ public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Stri
     Optional<HarvestEvent> findByBatchId(String batchId);
 
     /**
+     * Find harvest events for a set of batch IDs
+     * Business Rule: One harvest event creates exactly one batch
+     * Used by list endpoints to avoid N+1 lookups when resolving the
+     * Plants identity (lot_number, plants_harvest_id) for many batches.
+     */
+    List<HarvestEvent> findByBatchIdIn(java.util.Collection<String> batchIds);
+
+    /**
+     * Find the harvest event imported from a given Plants harvest.
+     *
+     * <p>Used to make the import idempotent: re-importing the same harvest must
+     * return the existing event instead of creating a duplicate. Backed by the
+     * unique index added in V16.
+     */
+    Optional<HarvestEvent> findByPlantsHarvestId(Long plantsHarvestId);
+
+    /**
      * Find harvest events by date range
      */
     List<HarvestEvent> findByHarvestDateBetween(LocalDate startDate, LocalDate endDate);

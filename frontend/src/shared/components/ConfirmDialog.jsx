@@ -1,7 +1,18 @@
+import { useId, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react'
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 /**
  * Confirmation modal before deletion (ws-* design system).
+ *
+ * The dialog uses the shared `useAccessibleDialog` behaviour: the title names
+ * it (`aria-labelledby`), the message is announced as its description, focus
+ * starts on Cancel, Escape cancels, and focus returns to the delete button
+ * when the dialog closes.
+ *
+ * The message colour is `#55635f` rather than `--ws-muted` (#6b7a78, 4.49:1 on
+ * white): at 14 px the text must reach 4.5:1, and #55635f gives 6.30:1.
+ *
  * @param {object} props
  * @param {string} [props.title] - dialog title.
  * @param {string} props.message - warning/consequence text.
@@ -11,10 +22,22 @@ import { AlertTriangle } from 'lucide-react'
  * @param {boolean} [props.busy] - disables the buttons while the API call runs.
  */
 export function ConfirmDialog({ title = 'Confirm deletion', message, confirmLabel = 'Delete', onConfirm, onCancel, busy = false }) {
+  const messageId = useId();
+  const cancelRef = useRef(null);
+
+  const { titleId, panelRef, handleBackdropClick } = useAccessibleDialog({
+    onClose: busy ? undefined : onCancel,
+    closeOnBackdrop: !busy,
+    closeOnEscape: !busy,
+    initialFocusRef: cancelRef,
+  });
+
   return (
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={messageId}
       style={{
         position: 'fixed',
         inset: 0,
@@ -25,9 +48,11 @@ export function ConfirmDialog({ title = 'Confirm deletion', message, confirmLabe
         padding: '20px',
         fontFamily: "'Inter', Arial, sans-serif",
       }}
-      onClick={busy ? undefined : onCancel}
+      onClick={handleBackdropClick}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         style={{
           width: '100%',
           maxWidth: '420px',
@@ -36,10 +61,11 @@ export function ConfirmDialog({ title = 'Confirm deletion', message, confirmLabe
           borderRadius: '12px',
           padding: '24px',
           boxShadow: '0 16px 40px rgba(0,0,0,.18)',
+          outline: 'none',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div
+          aria-hidden="true"
           style={{
             width: '44px',
             height: '44px',
@@ -53,14 +79,15 @@ export function ConfirmDialog({ title = 'Confirm deletion', message, confirmLabe
         >
           <AlertTriangle size={22} />
         </div>
-        <h3 style={{ margin: '0 0 6px', fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 600, fontSize: '17px', color: 'var(--ws-ink, #1c2b29)' }}>
+        <h2 id={titleId} style={{ margin: '0 0 6px', fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 600, fontSize: '17px', color: 'var(--ws-ink, #1c2b29)' }}>
           {title}
-        </h3>
-        <p style={{ margin: '0 0 20px', fontSize: '14px', color: 'var(--ws-muted, #6b7a78)', lineHeight: 1.5 }}>
+        </h2>
+        <p id={messageId} style={{ margin: '0 0 20px', fontSize: '14px', color: '#55635f', lineHeight: 1.5 }}>
           {message}
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
           <button
+            ref={cancelRef}
             type="button"
             disabled={busy}
             onClick={onCancel}
