@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.config.DemoDataSeeder;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.CurrencyRateRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.GrowthPhaseYieldShareRequest;
@@ -138,8 +139,8 @@ class ScenarioAnalysisIntegrationTest {
 
     @Test
     void startup_shouldLoadNoScenario_outsideTheDevProfile() {
-        // Assert: the loader is not even a bean, so the Zalka figures reach no other environment
-        assertTrue(applicationContext.getBeansOfType(PlantScenarioLoader.class).isEmpty());
+        // Assert: the demo data seeder is not even a bean, so the Zalka figures reach no other environment
+        assertTrue(applicationContext.getBeansOfType(DemoDataSeeder.class).isEmpty());
     }
 
     @Test

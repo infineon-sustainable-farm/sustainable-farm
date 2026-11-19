@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.config.DemoDataSeeder;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
@@ -149,8 +150,8 @@ class HealthIssueCatalogueIntegrationTest {
 
     @Test
     void startup_shouldLoadNoCatalogue_outsideTheDevProfile() {
-        // Assert: the loader is not even a bean, so no default catalogue reaches another environment
-        assertTrue(applicationContext.getBeansOfType(HealthIssueReferenceLoader.class).isEmpty());
+        // Assert: the demo data seeder is not even a bean, so no default catalogue reaches another environment
+        assertTrue(applicationContext.getBeansOfType(DemoDataSeeder.class).isEmpty());
     }
 
     @Test

@@ -86,7 +86,7 @@ The backend starts once PostgreSQL passes `pg_isready`; the frontend starts once
 | `sitesecurity` | Excluded (section 6) | none | TaniaW777 |
 | `cropstorage` | Excluded, empty (section 6) | none | christelle-dehoumon |
 
-Inside a module the layers are `controller`, `service`, `repository`, `entity` and `dto`, plus `config` for its beans and seeders. producttransformation groups the same layers by feature (`batch/controller`, `batch/model`, ...).
+Inside a module the layers are `controller`, `service`, `repository`, `entity` and `dto`, plus `config` for its beans. producttransformation groups the same layers by feature (`batch/controller`, `batch/model`, ...).
 
 ### 2.3 Owner of each shared referential
 
@@ -196,7 +196,7 @@ flowchart LR
 
 | Topic | Rule | Where |
 |---|---|---|
-| Schema | Flyway is on and applies a single baseline migration, `V1__baseline.sql`, written from the consolidated model; Hibernate runs with `spring.jpa.hibernate.ddl-auto=validate` and only checks the schema. A later change is a new migration `V<n>__<module>_<description>.sql`; an applied migration is never edited | `backend/src/main/resources/db/migration`, `application.properties` (task T46) |
+| Schema | Flyway is on and applies a single baseline migration, `V1__baseline.sql`, generated from the final entity model (Hibernate schema plus the cross-module foreign keys, dumped with `pg_dump --schema-only` and ordered: tables, keys, indexes, foreign keys; its header gives the method); Hibernate runs with `spring.jpa.hibernate.ddl-auto=validate` and only checks the schema. A later change is a new migration `V<n>__<module>_<description>.sql`; an applied migration is never edited | `backend/src/main/resources/db/migration`, `application.properties` (task T46) |
 | Schema in CI | The CI replays the migrations on a fresh PostgreSQL 17 and validates the schema on every PR (task T47) | `.github/workflows/ci.yml` |
 | Primary keys | `Long`, `GenerationType.IDENTITY`, from `core.entity.BaseEntity`; a unique business code next to it when one exists (lot code, block code, equipment code) | every entity |
 | Audit columns | `created_at`, `updated_at` as `Instant`, set by `@PrePersist` and `@PreUpdate` | `BaseEntity` |
@@ -207,7 +207,8 @@ flowchart LR
 | Constraints | Unique keys, nullability, lengths and indexes are declared on the entities | |
 | Foreign keys inside a module | JPA associations with a named `@ForeignKey` | |
 | Foreign keys between modules | A plain `Long` (or key) column in the referencing module, plus a `core.schema.CrossModuleForeignKey` bean naming the target table and column, taken from the owner's `api` constants (`FarmDirectory.BLOCK_TABLE`, `PersonDirectory.TABLE`, ...). A module never maps another module's entity | 14 `*ForeignKeys` configuration classes in the modules |
-| Demo data | Seeders and SQL seeds annotated `@Profile("dev")` (`SPRING_PROFILES_ACTIVE=dev`); `seed/farm-demo-data.sql` runs first so the other seeds find farm 1 and blocks A, B, C | `config/*Seeder.java`, `backend/src/main/resources/seed` |
+| Reference data | Loaded at startup in every profile, idempotent: the variety catalogue (`VarietyCatalogLoader`) and the IoT system person (`SystemUserSeeder`) | plants, watersupply |
+| Demo data | One data set for every module, `seed/demo-data.sql`, loaded by `core.config.DemoDataSeeder` (`@Profile("dev")`, `SPRING_PROFILES_ACTIVE=dev`) after the reference data, in one transaction, only when the `farm` table is empty. Fictitious and small: one farm with fields A, B, C, the same people, machines and lots in every module, dates relative to the current date. PostgreSQL SQL, checked by `DemoDataSetTest`. sitesecurity keeps its own dev seeder | `core/config/DemoDataSeeder.java`, `backend/src/main/resources/seed/demo-data.sql` |
 | Tests | H2 in memory by default (`application-test.properties`, `ddl-auto=create`); the CI overrides the datasource with PostgreSQL 17 | `backend/src/test/resources` |
 
 The database is disposable: there is no production data, and a model change is applied by recreating the database (`docker compose down -v`).
