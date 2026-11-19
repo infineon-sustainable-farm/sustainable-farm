@@ -78,7 +78,7 @@ public class HealthTreatmentRepositoryTest {
         treatment.setQuantity(new BigDecimal(quantity));
         treatment.setUnit(TreatmentUnit.KG);
         treatment.setPreHarvestIntervalDays(14);
-        treatment.setApplicator("Awa");
+        treatment.setApplicatorPersonId(7L);
         treatment.setSource("user_entry");
         return healthTreatmentRepository.save(treatment);
     }

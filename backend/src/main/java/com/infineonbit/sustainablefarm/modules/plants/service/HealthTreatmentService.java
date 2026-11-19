@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingTreatmentRequest;
@@ -35,6 +36,7 @@ public class HealthTreatmentService {
     private final HealthFindingRepository healthFindingRepository;
     private final HealthIssueService healthIssueService;
     private final PlantsBlocks plantsBlocks;
+    private final PersonDirectory personDirectory;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " kg "} becomes
@@ -67,7 +69,7 @@ public class HealthTreatmentService {
      * @param treatment the stored treatment, with its targeted issue loaded
      * @return the API representation of that treatment
      */
-    private static HealthTreatmentResponse toResponse(HealthTreatment treatment) {
+    private HealthTreatmentResponse toResponse(HealthTreatment treatment) {
         HealthIssueReference target = treatment.getTargetIssue();
         HealthFinding finding = treatment.getFinding();
         return new HealthTreatmentResponse(
@@ -85,7 +87,8 @@ public class HealthTreatmentService {
                 treatment.getUnit(),
                 treatment.getPreHarvestIntervalDays(),
                 HealthCalculator.harvestAllowedFrom(treatment.getTreatedOn(), treatment.getPreHarvestIntervalDays()),
-                treatment.getApplicator(),
+                personDirectory.nameOf(treatment.getApplicatorPersonId()),
+                treatment.getApplicatorPersonId(),
                 treatment.getEquipment(),
                 treatment.getSource(),
                 treatment.getLastUpdated());
@@ -96,9 +99,9 @@ public class HealthTreatmentService {
      * at most 3 decimals and the interval is a whole number, as the request
      * validation guarantees, so both conversions are exact.
      */
-    private static HealthTreatment newTreatment(LocalDate treatedOn, String productName, String activeIngredient,
+    private HealthTreatment newTreatment(LocalDate treatedOn, String productName, String activeIngredient,
                                                 Double quantity, String unit, Double preHarvestIntervalDays,
-                                                String applicator, String equipment, Instant now) {
+                                                Long applicatorPersonId, String equipment, Instant now) {
         HealthTreatment treatment = new HealthTreatment();
         treatment.setTreatedOn(treatedOn);
         treatment.setProductName(productName.trim());
@@ -106,7 +109,7 @@ public class HealthTreatmentService {
         treatment.setQuantity(BigDecimal.valueOf(quantity));
         treatment.setUnit(TreatmentUnit.valueOf(normalizeCode(unit)));
         treatment.setPreHarvestIntervalDays(preHarvestIntervalDays.intValue());
-        treatment.setApplicator(applicator.trim());
+        treatment.setApplicatorPersonId(personDirectory.requireExisting(applicatorPersonId));
         treatment.setEquipment(normalizeOptionalText(equipment));
         treatment.setSource(USER_ENTRY_SOURCE);
         treatment.setLastUpdated(now);
@@ -152,7 +155,7 @@ public class HealthTreatmentService {
 
         HealthTreatment treatment = newTreatment(request.treatedOn(), request.productName(),
                 request.activeIngredient(), request.quantity(), request.unit(), request.preHarvestIntervalDays(),
-                request.applicator(), request.equipment(), now);
+                request.applicatorPersonId(), request.equipment(), now);
         treatment.assignBlock(inspection.getBlockId(),
                 new BlockLabel(inspection.getFarmId(), inspection.getBlockCode()));
         treatment.setTargetIssue(finding.getIssue());
@@ -187,7 +190,7 @@ public class HealthTreatmentService {
 
         HealthTreatment treatment = newTreatment(request.treatedOn(), request.productName(),
                 request.activeIngredient(), request.quantity(), request.unit(), request.preHarvestIntervalDays(),
-                request.applicator(), request.equipment(), now);
+                request.applicatorPersonId(), request.equipment(), now);
         BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeCode(request.blockCode()));
         treatment.assignBlock(block.id(), PlantsBlocks.label(block));
         treatment.setTargetIssue(target);
@@ -213,7 +216,7 @@ public class HealthTreatmentService {
         PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
         return healthTreatmentRepository.findByOptionalFilters(blocks.all(), blocks.ids(), from, to)
                 .stream()
-                .map(HealthTreatmentService::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 }

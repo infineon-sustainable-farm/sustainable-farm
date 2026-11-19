@@ -401,7 +401,7 @@ class WatersupplyApiIntegrationTest {
         }
 
         private Long createUser() {
-        return personDirectory.findOrCreate(new PersonDetails("Integration User",
-                "integration-" + UUID.randomUUID() + "@example.test", null, null), id -> true).id();
+        return personDirectory.create(new PersonDetails("Integration User",
+                "integration-" + UUID.randomUUID() + "@example.test", null, null)).id();
         }
 }

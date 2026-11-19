@@ -30,6 +30,7 @@ public record MaturityObservationResponse(
         Double measuredValue,
         String measuredUnit,
         String observer,
+        Long observerPersonId,
         String source,
         Instant lastUpdated) {
 }

@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
@@ -23,7 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@org.springframework.context.annotation.Import(com.infineonbit.sustainablefarm.modules.staff.service.PersonDirectoryService.class)
 public class MaturityObservationRepositoryTest {
+
+    @Autowired
+    private PersonDirectory personDirectory;
+
 
     private final TestBlockIds blocks = new TestBlockIds();
 
@@ -118,7 +125,7 @@ public class MaturityObservationRepositoryTest {
         Instant now = Instant.parse("2026-10-25T10:00:00Z");
         Long brix = maturityObservationRepository.save(new MaturityObservation(null, keitt,
                 LocalDate.of(2026, 10, 12), MaturityStatus.READY_FOR_HARVEST, MaturityMethod.BRIX,
-                new BigDecimal("14.2"), "Awa", "user_entry", now)).getId();
+                new BigDecimal("14.2"), TestPeople.idOf(personDirectory, "Awa"), "user_entry", now)).getId();
         Long visual = observation(keitt, LocalDate.of(2026, 10, 13)).getId();
         entityManager.flush();
         entityManager.clear();
@@ -131,11 +138,11 @@ public class MaturityObservationRepositoryTest {
         assertEquals(MaturityStatus.READY_FOR_HARVEST, storedBrix.getMaturityStatus());
         assertEquals(MaturityMethod.BRIX, storedBrix.getMethod());
         assertEquals(new BigDecimal("14.2"), storedBrix.getMeasuredValue());
-        assertEquals("Awa", storedBrix.getObserver());
+        assertEquals(TestPeople.idOf(personDirectory, "Awa"), storedBrix.getObserverPersonId());
         assertEquals("user_entry", storedBrix.getSource());
         assertEquals(now, storedBrix.getLastUpdated());
         assertEquals(MaturityMethod.VISUAL, storedVisual.getMethod());
         assertNull(storedVisual.getMeasuredValue());
-        assertNull(storedVisual.getObserver());
+        assertNull(storedVisual.getObserverPersonId());
     }
 }

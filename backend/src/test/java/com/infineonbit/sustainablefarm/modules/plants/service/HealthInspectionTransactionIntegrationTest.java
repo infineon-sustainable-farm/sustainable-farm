@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
@@ -33,6 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 @ActiveProfiles("test")
 class HealthInspectionTransactionIntegrationTest {
+
+    @Autowired
+    private PersonDirectory personDirectory;
+
 
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
 
@@ -71,8 +77,8 @@ class HealthInspectionTransactionIntegrationTest {
         addedIssues.clear();
     }
 
-    private static HealthInspectionRequest blockC(List<HealthFindingRequest> findings) {
-        return new HealthInspectionRequest(null, "C", LocalDate.of(2026, 9, 1), 48.0, "Awa", "VISUAL", findings);
+    private HealthInspectionRequest blockC(List<HealthFindingRequest> findings) {
+        return new HealthInspectionRequest(null, "C", LocalDate.of(2026, 9, 1), 48.0, TestPeople.idOf(personDirectory, "Awa"), "VISUAL", findings);
     }
 
     @Test

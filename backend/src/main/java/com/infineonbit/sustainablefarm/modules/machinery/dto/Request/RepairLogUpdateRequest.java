@@ -20,6 +20,6 @@ public record RepairLogUpdateRequest(
         @DecimalMin(value = "0.0", message = "Cost must be 0 or more")
         BigDecimal cost,
 
-        @Size(max = 60, message = "Technician must be 60 characters or fewer")
-        String technician
+        /** Person of the people directory (GET /api/staff/persons); {@code null} for none (update: kept). */
+        Long technicianPersonId
 ) {}

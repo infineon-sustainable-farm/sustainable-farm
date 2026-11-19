@@ -20,11 +20,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Staff members and guides: the visitor management role of a person of the staff
- * referential ({@link PersonDirectory}). Full name, email and phone are read from and written
- * to the person, so a guide named like a machinery or product transformation operator is the
- * same person. The active flag is the guide's own: deactivating a guide leaves the person's
- * other roles as they are.
+ * The farm people directory (Staff screen): the only place that creates, edits and deactivates
+ * the people of the staff referential ({@link PersonDirectory}), each with an optional visitor
+ * management role (guide, reception, manager). The other modules pick these people by id.
+ * Deactivating an entry deactivates the person; the roles other modules give it (PT operator
+ * status, machinery assignment) keep their own state.
  */
 @Service
 public class StaffServiceImpl implements StaffService {
@@ -73,24 +73,25 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional
     public StaffResponse create(StaffRequest request) {
-        PersonDto person = personDirectory.findOrCreate(
-                new PersonDetails(request.getFullName(), request.getEmail(), request.getPhone(), null),
-                personId -> !staffRepository.existsByPersonId(personId));
-        staffRepository.findByPersonId(person.id()).ifPresent(existing -> {
-            throw new ConflictException("Email already used by staff member " + existing.getId());
-        });
-        if (person.phone() == null && request.getPhone() != null && !request.getPhone().isBlank()) {
-            person = personDirectory.update(person.id(), new PersonDetails(null, null, request.getPhone(), null));
+        boolean active = request.getActive() == null || request.getActive();
+        PersonDto person;
+        try {
+            person = personDirectory.create(new PersonDetails(request.getFullName(), request.getEmail(),
+                    request.getPhone(), active));
+        } catch (ConflictException e) {
+            throw emailTaken(request.getEmail());
         }
         Staff staff = new Staff();
         staff.setPersonId(person.id());
         staff.setRole(request.getRole());
-        if (request.getActive() != null) {
-            staff.setActive(request.getActive());
-        }
+        staff.setActive(active);
         return StaffResponse.from(staffRepository.save(staff), person);
     }
 
+    /**
+     * Updates the person and the role. An email or phone left out of the request is kept; sent
+     * empty, it is cleared (the Staff form sends the full record).
+     */
     @Override
     @Transactional
     public StaffResponse update(Long id, StaffRequest request) {
@@ -98,14 +99,11 @@ public class StaffServiceImpl implements StaffService {
         PersonDto person;
         try {
             person = personDirectory.update(staff.getPersonId(), new PersonDetails(request.getFullName(),
-                    request.getEmail() == null ? "" : request.getEmail(),
-                    request.getPhone() == null ? "" : request.getPhone(),
-                    null));
+                    sentValue(request.isEmailSent(), request.getEmail()),
+                    sentValue(request.isPhoneSent(), request.getPhone()),
+                    request.getActive()));
         } catch (ConflictException e) {
-            throw new ConflictException(staffRepository.findByPersonId(
-                            personDirectory.findByEmail(request.getEmail()).map(PersonDto::id).orElse(null))
-                    .map(existing -> "Email already used by staff member " + existing.getId())
-                    .orElse("Email already used by another person"));
+            throw emailTaken(request.getEmail());
         }
         staff.setRole(request.getRole());
         if (request.getActive() != null) {
@@ -116,12 +114,29 @@ public class StaffServiceImpl implements StaffService {
         return StaffResponse.from(staff, person);
     }
 
+    /** Deactivates the person in the people directory: the other modules no longer list it. */
     @Override
     @Transactional
     public void deactivate(Long id) {
         Staff staff = getEntity(id);
         staff.setActive(false);
         staffRepository.save(staff);
+        personDirectory.update(staff.getPersonId(), new PersonDetails(null, null, null, false));
+    }
+
+    /** {@code null} (keep) for a key the request left out, {@code ""} (clear) for a key sent empty. */
+    private static String sentValue(boolean sent, String value) {
+        if (!sent) {
+            return null;
+        }
+        return value == null ? "" : value;
+    }
+
+    private ConflictException emailTaken(String email) {
+        return new ConflictException(staffRepository.findByPersonId(
+                        personDirectory.findByEmail(email).map(PersonDto::id).orElse(null))
+                .map(existing -> "Email already used by staff member " + existing.getId())
+                .orElse("Email already used by another person"));
     }
 
     private PersonDto person(Staff staff) {

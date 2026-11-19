@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.LongPredicate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,39 +67,25 @@ public class PersonDirectoryService implements PersonDirectory {
     }
 
     @Override
-    public PersonDto findOrCreateByName(String fullName) {
-        return findOrCreate(PersonDetails.named(fullName), id -> true);
+    @Transactional(readOnly = true)
+    public List<PersonDto> searchActive(String search) {
+        String term = normalize(search);
+        if (term == null) {
+            return listActive();
+        }
+        return personRepository.searchActive(term).stream().map(PersonDirectoryService::toDto).toList();
     }
 
     @Override
-    public PersonDto findOrCreate(PersonDetails details, LongPredicate eligible) {
-        String fullName = requireName(details.fullName());
+    public PersonDto create(PersonDetails details) {
         String email = normalize(details.email());
-        String phone = normalize(details.phone());
-        if (email != null) {
-            Optional<Person> byEmail = personRepository.findFirstByEmailIgnoreCaseOrderByIdAsc(email);
-            if (byEmail.isPresent()) {
-                return toDto(byEmail.get());
-            }
-        }
-        for (Person candidate : personRepository.findAllByFullNameIgnoreCaseOrderByIdAsc(fullName)) {
-            boolean sameEmail = candidate.getEmail() == null || email == null || candidate.getEmail().equalsIgnoreCase(email);
-            if (sameEmail && eligible.test(candidate.getId())) {
-                if (candidate.getEmail() == null && email != null) {
-                    candidate.setEmail(email);
-                }
-                if (candidate.getPhone() == null && phone != null) {
-                    candidate.setPhone(phone);
-                }
-                return toDto(personRepository.save(candidate));
-            }
-        }
+        requireFreeEmail(email, null);
         Person person = new Person();
-        person.setFullName(fullName);
+        person.setFullName(requireName(details.fullName()));
         person.setEmail(email);
-        person.setPhone(phone);
+        person.setPhone(normalize(details.phone()));
         person.setActive(details.active() == null || details.active());
-        return toDto(personRepository.save(person));
+        return toDto(personRepository.saveAndFlush(person));
     }
 
     @Override
@@ -114,13 +99,7 @@ public class PersonDirectoryService implements PersonDirectory {
         }
         if (details.email() != null) {
             String email = normalize(details.email());
-            if (email != null) {
-                personRepository.findFirstByEmailIgnoreCaseOrderByIdAsc(email)
-                        .filter(other -> !other.getId().equals(personId))
-                        .ifPresent(other -> {
-                            throw new ConflictException("Email already used by another person");
-                        });
-            }
+            requireFreeEmail(email, personId);
             person.setEmail(email);
         }
         if (details.phone() != null) {
@@ -130,6 +109,17 @@ public class PersonDirectoryService implements PersonDirectory {
             person.setActive(details.active());
         }
         return toDto(personRepository.saveAndFlush(person));
+    }
+
+    private void requireFreeEmail(String email, Long personId) {
+        if (email == null) {
+            return;
+        }
+        personRepository.findFirstByEmailIgnoreCaseOrderByIdAsc(email)
+                .filter(other -> !other.getId().equals(personId))
+                .ifPresent(other -> {
+                    throw new ConflictException("Email already used by another person");
+                });
     }
 
     private static String requireName(String fullName) {

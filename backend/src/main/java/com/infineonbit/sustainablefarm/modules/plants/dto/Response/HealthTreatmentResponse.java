@@ -30,6 +30,7 @@ public record HealthTreatmentResponse(
         Integer preHarvestIntervalDays,
         LocalDate harvestAllowedFrom,
         String applicator,
+        Long applicatorPersonId,
         String equipment,
         String source,
         Instant lastUpdated) {

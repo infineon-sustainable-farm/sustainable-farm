@@ -48,5 +48,6 @@ public class RawIntakeCreateRequest {
     @NotNull(message = "Received grade is required")
     private QualityGrade receivedGrade;
 
-    private String intakeOperator;
+    /** Person of the people directory (GET /api/staff/persons) who received the lot, or {@code null}. */
+    private Long intakeOperatorPersonId;
 }

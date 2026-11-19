@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
@@ -45,6 +47,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class FertilizerMovementServiceTest {
+
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+
 
     private static final Instant NOW = Instant.parse("2026-09-24T10:00:00Z");
     private static final LocalDate JUNE_1 = LocalDate.of(2026, 6, 1);
@@ -128,8 +134,8 @@ public class FertilizerMovementServiceTest {
         when(fertilizerMovementRepository.findMovementTotals(List.of(1L))).thenReturn(List.of(totals));
     }
 
-    private static ApplicationRequest application(double quantity) {
-        return new ApplicationRequest(LocalDate.of(2026, 6, 15), quantity, null, " b ", " Team A ",
+    private ApplicationRequest application(double quantity) {
+        return new ApplicationRequest(LocalDate.of(2026, 6, 15), quantity, null, " b ", personDirectory.idOf(" Team A "),
                 " around the tree base ");
     }
 
@@ -173,13 +179,13 @@ public class FertilizerMovementServiceTest {
         assertEquals(0, new BigDecimal("150000").compareTo(saved.getTotalCost()));
         assertEquals("XOF", saved.getCurrency());
         assertNull(saved.getBlockCode());
-        assertNull(saved.getApplicator());
+        assertNull(saved.getApplicatorPersonId());
         assertNull(saved.getReason());
         assertEquals("user_entry", saved.getSource());
         assertEquals(NOW, saved.getLastUpdated());
         // Assert: the cost in both currencies
         assertEquals(new FertilizerMovementResponse(10L, 1L, "NPK 15-15-15", FertilizerMovementType.PURCHASE, JUNE_1,
-                200.0, FertilizerUnit.KG, null, null, null, null, "Supplier A", 150000.0, "XOF", 150000L, 228.67,
+                200.0, FertilizerUnit.KG, null, null, null, null, null, "Supplier A", 150000.0, "XOF", 150000L, 228.67,
                 null, "user_entry", NOW), response);
     }
 
@@ -293,7 +299,7 @@ public class FertilizerMovementServiceTest {
         assertEquals(TestBlocks.idOf("B"), saved.getBlockId());
         assertEquals(2L, saved.getFarmId());
         assertEquals("B", saved.getBlockCode());
-        assertEquals("Team A", saved.getApplicator());
+        assertEquals(personDirectory.idOf("Team A"), saved.getApplicatorPersonId());
         assertEquals("around the tree base", saved.getMethod());
         assertNull(saved.getSupplier());
         assertNull(saved.getTotalCost());
@@ -302,7 +308,7 @@ public class FertilizerMovementServiceTest {
         assertEquals("user_entry", saved.getSource());
         assertEquals(NOW, saved.getLastUpdated());
         assertEquals(new FertilizerMovementResponse(13L, 1L, "NPK 15-15-15", FertilizerMovementType.APPLICATION,
-                LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, 2L, "B", "Team A", "around the tree base",
+                LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, 2L, "B", "Team A", personDirectory.idOf("Team A"), "around the tree base",
                 null, null, null, null, null, null, "user_entry", NOW), response);
         verifyNoInteractions(currencyRateRepository);
     }
@@ -315,7 +321,7 @@ public class FertilizerMovementServiceTest {
         movementSaveAssignsId(14L);
         // Act
         fertilizerMovementService.recordApplication(1L,
-                new ApplicationRequest(LocalDate.of(2026, 6, 15), 10.0, 1L, "A", "Team A", "  "), NOW);
+                new ApplicationRequest(LocalDate.of(2026, 6, 15), 10.0, 1L, "A", personDirectory.idOf("Team A"), "  "), NOW);
         // Assert
         FertilizerMovement saved = savedMovement();
         assertEquals(1L, saved.getFarmId());
@@ -386,7 +392,7 @@ public class FertilizerMovementServiceTest {
         assertEquals(0, new BigDecimal("10").compareTo(saved.getQuantity()));
         assertEquals("expired", saved.getReason());
         assertNull(saved.getBlockCode());
-        assertNull(saved.getApplicator());
+        assertNull(saved.getApplicatorPersonId());
         assertNull(saved.getSupplier());
         assertEquals(NOW, saved.getLastUpdated());
         assertEquals("expired", response.reason());

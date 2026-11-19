@@ -58,7 +58,7 @@ class RegistrationServiceImplTest {
     @Mock
     private SchedulingService schedulingService;
     @Spy
-    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
     @Mock
     private ApplicationEventPublisher eventPublisher;
     @InjectMocks
@@ -411,7 +411,7 @@ class RegistrationServiceImplTest {
         when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Staff");
+        req.setStaffMemberPersonId(personDirectory.idOf("Staff"));
 
         assertThatThrownBy(() -> service.deliverBriefing(100L, req))
                 .isInstanceOf(BusinessRuleException.class)
@@ -424,7 +424,7 @@ class RegistrationServiceImplTest {
         when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Staff");
+        req.setStaffMemberPersonId(personDirectory.idOf("Staff"));
 
         assertThatThrownBy(() -> service.deliverBriefing(100L, req))
                 .isInstanceOf(BusinessRuleException.class)
@@ -444,13 +444,32 @@ class RegistrationServiceImplTest {
         when(briefingRepository.save(any(Briefing.class))).thenAnswer(inv -> inv.getArgument(0));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Guard Camille");
+        req.setStaffMemberPersonId(personDirectory.idOf("Guard Camille"));
         req.setSignature("sig123");
 
         BriefingResponse resp = service.deliverBriefing(100L, req);
         assertThat(resp.getStatus()).isEqualTo(BriefingStatus.DONE);
         assertThat(resp.getStaffMember()).isEqualTo("Guard Camille");
         assertThat(briefing.getStaffMemberPersonId()).isEqualTo(personDirectory.idOf("guard camille"));
+    }
+
+    @Test
+    void deliverBriefing_unknownPerson_isRefusedAndNothingSaved() {
+        registration.setStatus(RegistrationStatus.CONFIRMED);
+        Briefing briefing = new Briefing();
+        briefing.setId(200L);
+        briefing.setRegistration(registration);
+        briefing.setStatus(BriefingStatus.PENDING);
+        registration.setBriefing(briefing);
+        when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
+
+        BriefingDeliverRequest req = new BriefingDeliverRequest();
+        req.setStaffMemberPersonId(999L);
+
+        assertThatThrownBy(() -> service.deliverBriefing(100L, req))
+                .isInstanceOf(com.infineonbit.sustainablefarm.core.exception.BadRequestException.class);
+        assertThat(briefing.getStatus()).isEqualTo(BriefingStatus.PENDING);
+        verify(briefingRepository, never()).save(any(Briefing.class));
     }
 
     @Test
@@ -467,7 +486,7 @@ class RegistrationServiceImplTest {
         when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Someone Else");
+        req.setStaffMemberPersonId(personDirectory.idOf("Someone Else"));
 
         BriefingResponse resp = service.deliverBriefing(100L, req);
         assertThat(resp.getStaffMember()).isEqualTo("Guard Camille");

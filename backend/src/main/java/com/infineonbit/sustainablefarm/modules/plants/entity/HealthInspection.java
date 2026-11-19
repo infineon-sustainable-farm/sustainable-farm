@@ -57,8 +57,9 @@ public class HealthInspection extends BaseEntity implements BlockRow {
     @Column(name = "health_score_pct", nullable = false)
     private Integer healthScorePct;
 
-    @Column(name = "observer")
-    private String observer;
+    /** Person of the people directory who inspected (staff module), or {@code null}. */
+    @Column(name = "observer_person_id")
+    private Long observerPersonId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "method", length = 30)

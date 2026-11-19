@@ -14,8 +14,8 @@ public record UsageLogUpdateRequest(
         @DecimalMin(value = "0.0", message = "Hours used must be 0 or more")
         BigDecimal hoursUsed,
 
-        @Size(max = 60, message = "Operator must be 60 characters or fewer")
-        String operator,
+        /** Person of the people directory (GET /api/staff/persons); {@code null} for none (update: kept). */
+        Long operatorPersonId,
 
         @Size(max = 500, message = "Notes must be 500 characters or fewer")
         String notes

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingResolutionRequest;
@@ -53,7 +54,7 @@ public class HealthFindingServiceTest {
     private static final HealthIssueReference OTHER = new HealthIssueReference(8L, "OTHER", "Other",
             HealthIssueKind.OTHER, null, null, "by_definition", NOW);
 
-    private static final HealthInspection BLOCK_C = TestRows.inspection(1L, null, "C", SEPTEMBER_1, 48, "Awa",
+    private static final HealthInspection BLOCK_C = TestRows.inspection(1L, null, "C", SEPTEMBER_1, 48, 7L,
             InspectionMethod.VISUAL, "user_entry", NOW);
 
     @Mock
@@ -74,7 +75,7 @@ public class HealthFindingServiceTest {
 
     private static HealthTreatment treatment(HealthFinding finding, LocalDate treatedOn, int interval) {
         return TestRows.treatment(null, null, "C", finding.getIssue(), null, finding, treatedOn, "Product",
-                "ingredient", BigDecimal.ONE, TreatmentUnit.KG, interval, "Awa", null, "user_entry", NOW);
+                "ingredient", BigDecimal.ONE, TreatmentUnit.KG, interval, 7L, null, "user_entry", NOW);
     }
 
     /**

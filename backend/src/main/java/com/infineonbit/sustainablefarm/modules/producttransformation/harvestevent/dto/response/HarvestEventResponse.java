@@ -36,6 +36,7 @@ public class HarvestEventResponse {
     private String qualityGradeDescription;
     private String harvestTeamId;
     private String harvestSupervisor;
+    private Long harvestSupervisorPersonId;
     private String weatherConditions;
     private String storageLocation;
     private Timestamp createdAt;

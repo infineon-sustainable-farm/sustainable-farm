@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.plants.dto.Request;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
@@ -45,9 +46,9 @@ public record ApplicationRequest(
                 message = "blockCode must be a short code such as A or B2, without prefix or space")
         String blockCode,
 
-        @NotBlank(message = "applicator is required")
-        @Size(max = 255, message = "applicator must be at most 255 characters")
-        String applicator,
+        @Schema(description = "Person of the people directory (GET /api/staff/persons) who applied it")
+        @NotNull(message = "applicatorPersonId is required")
+        Long applicatorPersonId,
 
         @Size(max = 255, message = "method must be at most 255 characters")
         String method) {

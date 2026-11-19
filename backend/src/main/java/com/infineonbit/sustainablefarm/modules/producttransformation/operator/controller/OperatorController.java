@@ -73,9 +73,6 @@ public class OperatorController {
             @Valid @RequestBody OperatorUpdateRequest request) {
         Operator existingOperator = operatorService.getOperatorById(operatorId);
         
-        if (request.getOperatorName() != null) {
-            existingOperator.setOperatorName(request.getOperatorName());
-        }
         if (request.getRole() != null) {
             existingOperator.setRole(request.getRole());
         }
