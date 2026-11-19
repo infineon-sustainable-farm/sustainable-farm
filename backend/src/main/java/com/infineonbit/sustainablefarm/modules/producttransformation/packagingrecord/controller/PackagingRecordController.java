@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -80,6 +81,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping("/{recordId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get packaging record by ID", description = "Retrieves a specific packaging record by its ID")
     public ResponseEntity<PackagingRecordResponse> getPackagingRecordById(
             @Parameter(description = "Record ID") @PathVariable String recordId) {
@@ -89,6 +91,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get packaging records by batch", description = "Retrieves packaging records for a specific batch")
     public ResponseEntity<List<PackagingRecordResponse>> getPackagingRecordsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -100,6 +103,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all packaging records", description = "Retrieves all packaging records")
     public ResponseEntity<List<PackagingRecordResponse>> getAllPackagingRecords() {
         List<PackagingRecord> records = packagingRecordService.getAllPackagingRecords();
@@ -165,6 +169,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping("/export-ready")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get export ready packaging records", description = "Retrieves packaging records marked as export ready")
     public ResponseEntity<List<PackagingRecordResponse>> getExportReadyPackagingRecords() {
         List<PackagingRecord> records = packagingRecordService.getExportReadyPackagingRecords();

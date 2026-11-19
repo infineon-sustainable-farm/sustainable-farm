@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -58,6 +59,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/{intakeId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intake by ID", description = "Retrieves a specific raw intake by its ID")
     public ResponseEntity<RawIntakeResponse> getRawIntakeById(
             @Parameter(description = "Intake ID") @PathVariable String intakeId) {
@@ -67,6 +69,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intake by batch ID", description = "Retrieves raw intake for a specific batch")
     public ResponseEntity<RawIntakeResponse> getRawIntakeByBatchId(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -76,6 +79,7 @@ public class RawIntakeController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all raw intakes", description = "Retrieves all raw intake records")
     public ResponseEntity<List<RawIntakeResponse>> getAllRawIntakes() {
         List<RawIntake> intakes = rawIntakeService.getAllRawIntakes();
@@ -123,6 +127,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by date range", description = "Retrieves raw intakes within a date range")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,
@@ -133,6 +138,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/farm/{sourceFarm}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by source farm", description = "Retrieves raw intakes filtered by source farm")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesBySourceFarm(
             @Parameter(description = "Source farm") @PathVariable String sourceFarm) {
@@ -142,6 +148,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/variety/{variety}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by variety", description = "Retrieves raw intakes filtered by mango variety")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByVariety(
             @Parameter(description = "Mango variety") @PathVariable String variety) {
@@ -151,6 +158,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/grade/{grade}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by grade", description = "Retrieves raw intakes filtered by quality grade")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByGrade(
             @Parameter(description = "Quality grade") @PathVariable QualityGrade grade) {

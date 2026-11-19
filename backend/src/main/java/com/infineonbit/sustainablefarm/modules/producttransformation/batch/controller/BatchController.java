@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -50,6 +51,7 @@ public class BatchController {
     }
 
     @GetMapping("/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get batch by ID", description = "Retrieves a specific batch by its ID")
     public ResponseEntity<BatchResponse> getBatchById(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -59,6 +61,7 @@ public class BatchController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all batches", description = "Retrieves all batches")
     public ResponseEntity<List<BatchResponse>> getAllBatches() {
         List<Batch> batches = batchService.getAllBatches();
@@ -112,6 +115,7 @@ public class BatchController {
     }
 
     @GetMapping("/status/{status}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get batches by status", description = "Retrieves batches filtered by status")
     public ResponseEntity<List<BatchResponse>> getBatchesByStatus(
             @Parameter(description = "Batch status") @PathVariable BatchStatus status) {
@@ -121,6 +125,7 @@ public class BatchController {
     }
 
     @GetMapping("/farm/{farmId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get batches by farm", description = "Retrieves batches filtered by farm ID")
     public ResponseEntity<List<BatchResponse>> getBatchesByFarm(
             @Parameter(description = "Farm ID") @PathVariable String farmId) {
@@ -130,6 +135,7 @@ public class BatchController {
     }
 
     @GetMapping("/variety/{variety}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get batches by variety", description = "Retrieves batches filtered by mango variety")
     public ResponseEntity<List<BatchResponse>> getBatchesByVariety(
             @Parameter(description = "Mango variety") @PathVariable String variety) {
@@ -139,6 +145,7 @@ public class BatchController {
     }
 
     @GetMapping("/ready-for-shipping")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get batches ready for shipping", description = "Retrieves batches that are ready for shipping")
     public ResponseEntity<List<BatchResponse>> getBatchesReadyForShipping() {
         List<Batch> batches = batchService.getBatchesReadyForShipping();
@@ -147,6 +154,7 @@ public class BatchController {
     }
 
     @GetMapping("/farm/{farmId}/block/{blockId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get batches by farm and block", description = "Retrieves batches filtered by farm and block ID")
     public ResponseEntity<List<BatchResponse>> getBatchesByFarmAndBlock(
             @Parameter(description = "Farm ID") @PathVariable String farmId,
@@ -157,6 +165,7 @@ public class BatchController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get batches by harvest date range", description = "Retrieves batches within a harvest date range")
     public ResponseEntity<List<BatchResponse>> getBatchesByHarvestDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,
