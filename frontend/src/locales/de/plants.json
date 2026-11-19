@@ -154,7 +154,6 @@
       "title": "Pflanzung erfassen",
       "plantingDate": "Pflanzdatum",
       "block": "Block",
-      "blockPlaceholder": "z. B. A",
       "variety": "Sorte",
       "varietyPlaceholder": "z. B. Keitt",
       "treeCount": "Anzahl der Bäume",
@@ -171,7 +170,6 @@
       "plantingDateRequired": "Das Pflanzdatum ist erforderlich.",
       "plantingDateFuture": "Das Pflanzdatum darf nicht in der Zukunft liegen.",
       "blockRequired": "Der Block ist erforderlich.",
-      "blockFormat": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix und ohne Leerzeichen.",
       "varietyRequired": "Die Sorte ist erforderlich.",
       "varietyTooLong": "Die Sorte darf höchstens {{max}} Zeichen lang sein.",
       "treeCount": "Die Anzahl der Bäume muss eine ganze Zahl von mindestens 1 sein.",
@@ -349,7 +347,6 @@
         "supplierTooLong": "Der Lieferant darf höchstens 255 Zeichen lang sein.",
         "totalCostInvalid": "Die Gesamtkosten müssen eine Zahl größer als 0 mit höchstens 2 Dezimalstellen sein.",
         "blockRequired": "Der Block ist erforderlich.",
-        "blockInvalid": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix oder Leerzeichen.",
         "applicatorRequired": "Der Ausbringer ist erforderlich.",
         "applicatorTooLong": "Der Ausbringer darf höchstens 255 Zeichen lang sein.",
         "methodTooLong": "Die Methode darf höchstens 255 Zeichen lang sein.",
@@ -464,8 +461,7 @@
         "startFuture": "Das Startdatum darf nicht in der Zukunft liegen.",
         "countInvalid": "Der Anfangsbestand muss eine ganze Zahl ab 1 sein.",
         "stageRequired": "Das Anfangsstadium ist erforderlich.",
-        "plannedDateRequired": "Das geplante Auspflanzdatum ist erforderlich.",
-        "plannedBlockFormat": "Der geplante Block muss ein kurzer Code wie E oder B2 sein, ohne Präfix und ohne Leerzeichen."
+        "plannedDateRequired": "Das geplante Auspflanzdatum ist erforderlich."
       }
     },
     "eventForm": {
@@ -501,8 +497,7 @@
         "quantityInvalid": "Die Menge muss eine ganze Zahl ab 1 sein.",
         "reasonRequired": "Der Grund ist erforderlich.",
         "reasonTooLong": "Der Grund darf höchstens {{max}} Zeichen lang sein.",
-        "blockRequired": "Der Block ist erforderlich.",
-        "blockFormat": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix und ohne Leerzeichen."
+        "blockRequired": "Der Block ist erforderlich."
       }
     }
   },
@@ -516,7 +511,7 @@
     "selectAllBlocks": "Wählen Sie „Alle Blöcke“, um die inspizierten Blöcke zu sehen.",
     "optional": "Optional.",
     "block": "Block",
-    "blockNote": "Zum Beispiel A oder B2. Der Block braucht keine Pflanzung.",
+    "blockNote": "Der Block braucht keine Pflanzung.",
     "selectProblem": "Problem auswählen",
     "otherLabel": "Name des Problems",
     "place": {
@@ -527,7 +522,6 @@
     },
     "errors": {
       "blockRequired": "Der Block ist erforderlich.",
-      "blockFormat": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix oder Leerzeichen.",
       "otherLabelRequired": "Bei „Sonstiges“ ist der Name des Problems erforderlich.",
       "otherLabelTooLong": "Der Name des Problems darf höchstens {{max}} Zeichen lang sein."
     },

@@ -1,12 +1,28 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import RecordPlantingModal from "./RecordPlantingModal";
+
+vi.mock("../hooks/useFarmBlocks", () => ({
+    useFarmBlocks: () => ({
+        data: [
+            { id: 1, farmId: 1, code: "A", name: "North block" },
+            { id: 2, farmId: 1, code: "B2", name: "B2" },
+            { id: 3, farmId: 1, code: "E", name: "East" },
+        ],
+        isPending: false,
+        isError: false,
+        refetch: () => {},
+    }),
+}));
 
 function renderModal(props = {}) {
     const onSubmit = vi.fn();
     const onClose = vi.fn();
-    render(<RecordPlantingModal isSubmitting={false} error={null} onSubmit={onSubmit} onClose={onClose} {...props} />);
+    render(<RecordPlantingModal isSubmitting={false} error={null} onSubmit={onSubmit} onClose={onClose} {...props} />, {
+        wrapper: MemoryRouter,
+    });
     return { onSubmit, onClose };
 }
 
@@ -38,18 +54,25 @@ describe("the record a planting dialog", () => {
         expect(screen.getByLabelText("Block")).toHaveAttribute("aria-invalid", "true");
     });
 
-    it("refuses a block code with a prefix, and one spacing without the other", () => {
+    it("offers the blocks of the farm referential, with a link to the owner screen", () => {
+        renderModal();
+        const options = Array.from(screen.getByLabelText("Block").querySelectorAll("option")).map((o) => o.textContent);
+        expect(options).toEqual(["Choose…", "A · North block", "B2", "E · East"]);
+        expect(screen.getByRole("link", { name: "Add it in Water supply" })).toHaveAttribute(
+            "href",
+            "/watersupply/farms?create=field"
+        );
+    });
+
+    it("refuses one spacing without the other", () => {
         const { onSubmit } = renderModal();
         type("Planting date", "2019-09-15");
-        type("Block", "Block A");
+        type("Block", "A");
         type("Variety", "Keitt");
         type("Number of trees", "40");
         type("Inter-row spacing (m)", "8");
         fireEvent.click(screen.getByRole("button", { name: "Record planting" }));
         expect(onSubmit).not.toHaveBeenCalled();
-        expect(
-            screen.getByText("Block must be a short code such as A or B2, without prefix or space.")
-        ).toBeInTheDocument();
         expect(
             screen.getByText("Intra-row spacing is required when the inter-row spacing is given.")
         ).toBeInTheDocument();
@@ -79,7 +102,8 @@ describe("the record a planting dialog", () => {
     it("shows the API's field errors under their fields and other errors above the form", () => {
         const fieldError = { status: 400, message: "Bad request", data: { fieldErrors: { blockCode: "Unknown block." } } };
         const { unmount } = render(
-            <RecordPlantingModal isSubmitting={false} error={fieldError} onSubmit={vi.fn()} onClose={vi.fn()} />
+            <RecordPlantingModal isSubmitting={false} error={fieldError} onSubmit={vi.fn()} onClose={vi.fn()} />,
+            { wrapper: MemoryRouter }
         );
         expect(screen.getByText("Unknown block.")).toBeInTheDocument();
         expect(screen.queryByRole("alert")).not.toBeInTheDocument();

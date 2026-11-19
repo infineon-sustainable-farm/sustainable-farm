@@ -51,7 +51,7 @@ public class PlantingServiceTest {
     private PopulationEventRepository populationEventRepository;
 
     @Spy
-    private PlantsBlocks plantsBlocks = new TestBlocks().with("A", 1L).asPlantsBlocks();
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("A", 1L).with("B", 1L).with("C", 2L).asPlantsBlocks();
 
     @InjectMocks
     private PlantingService plantingService;
@@ -390,8 +390,8 @@ public class PlantingServiceTest {
     }
 
     @Test
-    void recordPlanting_shouldCreateANewBlockUnderTheRequestedFarm() {
-        // Arrange
+    void recordPlanting_shouldPlantOnABlockOfTheRequestedFarm() {
+        // Arrange: block C belongs to farm 2 in the farm referential
         long c = TestBlocks.idOf("C");
         when(blockVarietyRepository.findByBlockAndNameForUpdate(c, "Keitt")).thenReturn(List.of());
         when(growthCalendarRepository.findByBlockForUpdate(c)).thenReturn(List.of());
@@ -403,6 +403,17 @@ public class PlantingServiceTest {
         // Assert
         assertEquals(2L, response.farmId());
         assertEquals("C", response.blockCode());
+    }
+
+    @Test
+    void recordPlanting_shouldRefuseAnUnknownBlockCode_andCreateNoBlock() {
+        // Act & Assert: no block has code Q; plants never creates one
+        assertThrows(BadRequestException.class,
+                () -> plantingService.recordPlanting(request(null, "Q", "Keitt", PLANTING_DATE, 80), NOW));
+        assertThrows(BadRequestException.class,
+                () -> plantingService.recordPlanting(request(1L, "Q", "Keitt", PLANTING_DATE, 80), NOW));
+        verify(blockVarietyRepository, never()).save(any(BlockVariety.class));
+        verify(populationEventRepository, never()).save(any(PopulationEvent.class));
     }
 
     @Test

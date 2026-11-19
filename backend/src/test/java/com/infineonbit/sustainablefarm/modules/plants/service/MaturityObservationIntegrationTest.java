@@ -14,6 +14,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.repository.MaturityObservationRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import org.junit.jupiter.api.AfterEach;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,11 +58,18 @@ class MaturityObservationIntegrationTest {
     @Autowired
     private FarmService farmService;
 
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
     @BeforeEach
     void createTheFarmOfTheTestOnce() {
         if (FARM == null) {
             FARM = farmService.createFarm(new FarmCreateRequest("MaturityObservation test farm", null, null, null, null, null)).id();
         }
+        siteTestBlocks.ensure(FARM, "MO1");
+        siteTestBlocks.ensure(FARM, "MO2");
+        siteTestBlocks.ensure(FARM, "MO3");
+        siteTestBlocks.ensure(FARM, "MO4");
     }
     private static final String KEITT_SEASON_SOURCE = "varietal_guide_west_africa";
 

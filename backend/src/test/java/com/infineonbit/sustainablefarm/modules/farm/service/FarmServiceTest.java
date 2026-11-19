@@ -51,9 +51,9 @@ class FarmServiceTest {
 
     @Test
     void createFieldRejectsUnknownFarm() {
-        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, null, null, null);
+        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, null, null, null, null);
         when(farmRepository.findById(3L)).thenReturn(Optional.empty());
-        BlockService service = new BlockService(farmRepository, blockRepository, varietyCatalog);
+        BlockService service = new BlockService(farmRepository, blockRepository, varietyCatalog, null);
 
         assertThrows(ResourceNotFoundException.class, () -> service.createField(request));
         verify(blockRepository, never()).save(any());
@@ -61,11 +61,11 @@ class FarmServiceTest {
 
     @Test
     void createFieldStoresTheCatalogueKeyOfItsCropType() {
-        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, "Amélie", null, null);
+        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, "Amélie", null, null, null);
         when(farmRepository.findById(3L)).thenReturn(Optional.of(new Farm()));
         when(varietyCatalog.resolve("Amélie")).thenReturn(Optional.of(new CatalogVariety("AMELIE", "Amelie")));
         when(blockRepository.save(any(Block.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        BlockService service = new BlockService(farmRepository, blockRepository, varietyCatalog);
+        BlockService service = new BlockService(farmRepository, blockRepository, varietyCatalog, null);
 
         service.createField(request);
 
@@ -76,10 +76,10 @@ class FarmServiceTest {
 
     @Test
     void createFieldRejectsACropTypeOutsideThePlantsCatalogue() {
-        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, "mangue", null, null);
+        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, "mangue", null, null, null);
         when(farmRepository.findById(3L)).thenReturn(Optional.of(new Farm()));
         when(varietyCatalog.resolve("mangue")).thenReturn(Optional.empty());
-        BlockService service = new BlockService(farmRepository, blockRepository, varietyCatalog);
+        BlockService service = new BlockService(farmRepository, blockRepository, varietyCatalog, null);
 
         assertThrows(BadRequestException.class, () -> service.createField(request));
         verify(blockRepository, never()).save(any());

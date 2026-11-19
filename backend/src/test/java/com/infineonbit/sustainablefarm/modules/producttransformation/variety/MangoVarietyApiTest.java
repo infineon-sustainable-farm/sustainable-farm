@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.variety;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -45,7 +45,7 @@ class MangoVarietyApiTest {
     private BatchRepository batchRepository;
 
     @Autowired
-    private ProductTransformationBlocks blocks;
+    private SiteTestBlocks siteTestBlocks;
 
     @Autowired
     private VarietyReferenceRepository varietyReferenceRepository;
@@ -53,13 +53,14 @@ class MangoVarietyApiTest {
     @BeforeEach
     void catalogue() {
         VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
+        siteTestBlocks.ensure("B-VAR");
     }
 
     private static String batch(String id, String variety) {
         return """
                 {"batchId": "%s", "harvestDate": "2026-11-01", "mangoVariety": "%s",
-                 "harvestQuantityKg": 120.50, "farmId": "F-VAR", "blockId": "B-VAR"}
-                """.formatted(id, variety);
+                 "harvestQuantityKg": 120.50, "farmId": "%s", "blockId": "B-VAR"}
+                """.formatted(id, variety, SiteTestBlocks.TEST_FARM_NAME);
     }
 
     @Test
@@ -104,7 +105,7 @@ class MangoVarietyApiTest {
         batch.setVarietyKey("ALPHONSO");
         batch.setHarvestQuantityKg(new BigDecimal("10.00"));
         batch.setCurrentStatus(BatchStatus.CREATED);
-        batch.setFarmBlockId(blocks.resolve("F-VAR", "B-VAR"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("B-VAR").id());
 
         assertThatThrownBy(() -> batchRepository.saveAndFlush(batch))
                 .isInstanceOf(DataIntegrityViolationException.class);

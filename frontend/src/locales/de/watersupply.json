@@ -210,16 +210,16 @@
     "formTitle": "Zone verknüpfen",
     "fields": {
       "zone": "Zone",
-      "blockCode": "Code des Pflanzenblocks",
-      "blockCodePlaceholder": "A, B2…"
+      "block": "Pflanzenblock",
+      "noBlock": "Kein Feld mit Pflanzen-Code"
     },
-    "codeHint": "Codes werden in Großbuchstaben gespeichert. Der Code gehört zum Feld der Zone: Jede Zone dieses Felds wird mit dem Block verknüpft.",
+    "codeHint": "Die Liste zeigt die Felder des Betriebs der Zone, die einen Pflanzen-Code haben; ein Feld erhält seinen Code unter Betriebe, Felder und Zonen. Beim Verknüpfen wird die Zone in dieses Feld verschoben.",
     "link": "Verknüpfen",
     "errors": {
       "zoneRequired": "Wählen Sie eine Zone.",
-      "codeFormat": "Der Blockcode ist ein kurzer Code wie A oder B2, ohne Präfix und Leerzeichen.",
       "farmUnknown": "Der Betrieb dieser Zone ist unbekannt: Prüfen Sie ihr Feld unter Betriebe und Felder.",
-      "alreadyLinked": "Diese Zone ist bereits mit einem Block verknüpft."
+      "blockRequired": "Wählen Sie einen Pflanzenblock.",
+      "alreadyLinkedTo": "Diese Zone ist bereits mit Block {{code}} verknüpft."
     },
     "linked": "Zone mit Block {{code}} verknüpft",
     "unlinked": "Zone von Block {{code}} gelöst",
@@ -281,7 +281,8 @@
       "location": "Standort",
       "crop": "Kultur",
       "soil": "Boden",
-      "irrigationMethod": "Bewässerungsart"
+      "irrigationMethod": "Bewässerungsart",
+      "code": "Pflanzen-Code"
     },
     "hectares": "{{value}} ha",
     "coordinates": "{{latitude}}; {{longitude}}",
@@ -304,7 +305,8 @@
       "parentField": "Zugehöriges Feld",
       "irrigationMethod": "Bewässerungsart",
       "cropType": "Kulturart",
-      "location": "Standort (Breitengrad, Längengrad)"
+      "location": "Standort (Breitengrad, Längengrad)",
+      "code": "Code des Pflanzenblocks"
     },
     "selectOption": "-- Auswählen --",
     "locationPlaceholder": "10.633100, -4.761200",
@@ -317,7 +319,8 @@
     "useMyPosition": "Meinen Standort nutzen",
     "accuracy": "Standort dieses Geräts, auf etwa {{accuracy}} m genau: korrigieren Sie ihn, wenn Sie nicht vor Ort sind.",
     "errors": {
-      "locationFormat": "Geben Sie den Standort als „Breitengrad, Längengrad“ ein."
+      "locationFormat": "Geben Sie den Standort als „Breitengrad, Längengrad“ ein.",
+      "codeFormat": "Der Code des Pflanzenblocks ist ein kurzer Code wie A oder B2, ohne Präfix und Leerzeichen."
     },
     "geo": {
       "refused": "Standortzugriff verweigert (oder Seite nicht über HTTPS geladen): erlauben Sie ihn im Browser oder geben Sie die Koordinaten ein.",
@@ -328,7 +331,11 @@
       "bothOrNeither": "Geben Sie Breiten- und Längengrad an oder keinen von beiden.",
       "latitudeRange": "Der Breitengrad liegt zwischen -90 und 90.",
       "longitudeRange": "Der Längengrad liegt zwischen -180 und 180."
-    }
+    },
+    "codePlaceholder": "A, B2…",
+    "codeHint": "Buchstaben und Ziffern, in Großbuchstaben gespeichert. Pflanzen und Produktverarbeitung wählen das Feld über diesen Code.",
+    "editField": "Feld bearbeiten",
+    "fieldUpdated": "Feld aktualisiert"
   },
   "dashboard": {
     "title": "Wasser-Dashboard",
@@ -659,8 +666,8 @@
       "fields": {
         "version": "Version (leer = heutiges Datum)",
         "text": "Text, der der Gruppe vorgelesen wird",
-        "allowed": "Erlaubte Bereiche (einer pro Zeile)",
-        "forbidden": "Verbotene Bereiche (einer pro Zeile)",
+        "allowed": "Erlaubte Bereiche",
+        "forbidden": "Verbotene Bereiche",
         "risks": "Risiken (eines pro Zeile)",
         "maxCapacity": "Maximale Gruppengröße",
         "guideRequired": "Ein Führer muss die Gruppe begleiten"
@@ -677,7 +684,8 @@
       "errors": {
         "groupSize": "Die Gruppe umfasst mindestens 1 Besucher.",
         "publishFailed": "Veröffentlichen nicht möglich."
-      }
+      },
+      "noZones": "Noch keine Zone: Legen Sie die Zonen unter Betriebe, Felder und Zonen an."
     },
     "preview": {
       "title": "Vorschau des Besucherbildschirms",

@@ -2,7 +2,6 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.block;
 
 import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
-import com.infineonbit.sustainablefarm.modules.farm.api.BlockRegistry;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDto;
 import java.util.Collection;
@@ -23,10 +22,11 @@ import org.springframework.stereotype.Component;
  * farm text is the name of the block's farm. A row stores only the id of the block, which gives
  * the farm.</p>
  *
- * <p>Write rule ({@link #resolve}): the block text is normalized (trimmed, upper case). A block
- * that has this code is used as it is, whatever the farm text says. A new code creates the block
- * ({@link BlockRegistry#findOrCreateBlock}) under the farm the farm text designates, a farm id or
- * a farm name ignoring case, or under the default farm when the text designates no farm.</p>
+ * <p>Write rule ({@link #resolve}): the block text is normalized (trimmed, upper case) and must be
+ * the code of an existing block; Product Transformation never creates a farm or a block, they are
+ * owned by the Farms &amp; fields screen of Water Supply (farm module). A non-blank farm text must
+ * designate an existing farm (a farm id or a farm name ignoring case) that owns the block. Anything
+ * else is refused with a 400.</p>
  */
 @Component
 public class ProductTransformationBlocks {
@@ -36,29 +36,32 @@ public class ProductTransformationBlocks {
     }
 
     private final FarmDirectory farmDirectory;
-    private final BlockRegistry blockRegistry;
 
-    public ProductTransformationBlocks(FarmDirectory farmDirectory, BlockRegistry blockRegistry) {
+    public ProductTransformationBlocks(FarmDirectory farmDirectory) {
         this.farmDirectory = farmDirectory;
-        this.blockRegistry = blockRegistry;
     }
 
     /**
-     * The id of the block a farm text and a block text designate, created when the code is new.
+     * The id of the existing block a farm text and a block text designate.
      *
-     * @throws BadRequestException (400) when the block text is blank
+     * @throws BadRequestException (400) when the block text is blank, no block has the code, the
+     *         farm text designates no farm, or the block belongs to another farm
      */
     public Long resolve(String farmText, String blockText) {
         String code = FarmDirectory.normalizeBlockCode(blockText);
         if (code == null) {
             throw new BadRequestException("Block ID is required");
         }
-        Optional<BlockDto> existing = farmDirectory.findBlockByCode(code);
-        if (existing.isPresent()) {
-            return existing.get().id();
+        BlockDto block = farmDirectory.findBlockByCode(code).orElseThrow(() -> new BadRequestException(
+                "Unknown block " + code + ": pick a field of the Farms & fields screen (Water Supply)"));
+        if (farmText != null && !farmText.isBlank()) {
+            FarmDto farm = findFarm(farmText).orElseThrow(() -> new BadRequestException(
+                    "Unknown farm " + farmText.trim() + ": pick a farm of the Farms & fields screen (Water Supply)"));
+            if (!farm.id().equals(block.farmId())) {
+                throw new BadRequestException("Block " + code + " does not belong to farm " + farm.name());
+            }
         }
-        Long farmId = findFarm(farmText).map(FarmDto::id).orElse(null);
-        return blockRegistry.findOrCreateBlock(farmId, code).id();
+        return block.id();
     }
 
     /** Like {@link #resolve}, but {@code null} for a blank block text, for the updates that keep the block. */

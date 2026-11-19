@@ -156,7 +156,6 @@ export default function DiseasesAlertsPage() {
 
             {isRecordingInspection && (
                 <RecordInspectionModal
-                    blocks={blocks}
                     isSubmitting={recordInspection.isPending}
                     error={recordInspection.error}
                     onSubmit={submitInspection}
@@ -168,7 +167,6 @@ export default function DiseasesAlertsPage() {
             {treatedFinding !== undefined && (
                 <TreatmentModal
                     finding={treatedFinding}
-                    blocks={blocks}
                     isSubmitting={recordTreatment.isPending}
                     error={recordTreatment.error}
                     onSubmit={submitTreatment}

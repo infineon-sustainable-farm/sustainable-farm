@@ -1,30 +1,25 @@
 import { useTranslation } from "react-i18next";
 import { Field, Input, Select } from "../../../shared/ui";
 import { OTHER_ISSUE_CODE } from "../utils/healthIssues";
+import BlockSelect from "./BlockSelect";
 
 /**
- * Where and against what a preventive treatment is applied: its block, typed
- * as for an inspection with the known blocks as suggestions, and its problem,
+ * Where and against what a preventive treatment is applied: its block, picked
+ * among the blocks of the farm referential as for an inspection, and its problem,
  * the catalogue then "Other" once and last, with the name of the problem.
  */
-export default function TreatmentTargetFields({ values, blocks, options, catalogueNote, fieldError, onChange, onTargetChange }) {
+export default function TreatmentTargetFields({ values, options, catalogueNote, fieldError, onChange, onTargetChange }) {
     const { t } = useTranslation("plants");
     return (
         <>
-            <Field id="treatment-block" label={t("health.block")} error={fieldError("blockCode")} hint={t("health.blockNote")}>
-                <Input
-                    type="text"
-                    autoFocus
-                    list="treatment-block-options"
-                    value={values.blockCode}
-                    onChange={(event) => onChange("blockCode", event.target.value)}
-                />
-            </Field>
-            <datalist id="treatment-block-options">
-                {blocks.map((block) => (
-                    <option key={block} value={block} />
-                ))}
-            </datalist>
+            <BlockSelect
+                id="treatment-block"
+                label={t("health.block")}
+                value={values.blockCode}
+                onChange={(code) => onChange("blockCode", code)}
+                error={fieldError("blockCode")}
+                hint={t("health.blockNote")}
+            />
 
             <Field
                 id="treatment-target"

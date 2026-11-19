@@ -129,6 +129,7 @@
     "selectBatch": "Choisir un lot",
     "sourceFarm": "Exploitation d’origine",
     "sourceBlock": "Bloc d’origine",
+    "chooseFarmFirst": "Choisissez d’abord l’exploitation.",
     "quantityKg": "Quantité (kg)",
     "intakeOperator": "Opérateur de réception",
     "columns": {

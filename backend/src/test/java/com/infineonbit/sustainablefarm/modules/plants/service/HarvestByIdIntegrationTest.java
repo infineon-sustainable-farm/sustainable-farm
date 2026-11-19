@@ -1,10 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,6 +34,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HarvestByIdIntegrationTest {
 
     private static final LocalDate HARVESTED_ON = LocalDate.of(2026, 6, 10);
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("HR1", "HR2");
+    }
 
     @Autowired
     private PlantingService plantingService;

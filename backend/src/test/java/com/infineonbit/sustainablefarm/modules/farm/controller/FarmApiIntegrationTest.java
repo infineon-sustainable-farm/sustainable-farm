@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
@@ -84,21 +84,72 @@ class FarmApiIntegrationTest {
     }
 
     @Test
-    void aPlantingOnANewCodeCreatesTheBlockUnderTheRequestedFarm() throws Exception {
+    void aPlantingOnAnUnknownCodeIsRefusedAndCreatesNoBlock() throws Exception {
         long farmId = idOf(post("/api/farm/farms"), "{\"name\":\"Planting Farm\"}");
         String code = "N" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        assertTrue(farmDirectory.findBlockByCode(code).isEmpty());
 
         mockMvc.perform(post("/api/plants/plantings").contentType(MediaType.APPLICATION_JSON).content("""
                         {"farmId":%d,"blockCode":"%s","varietyName":"Keitt","plantingDate":"2023-09-15","treeCount":10}
                         """.formatted(farmId, code.toLowerCase())))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/product-transformation/batches").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"batchId":"LOT-%s","farmId":"%d","blockId":"%s","harvestDate":"2026-01-02","mangoVariety":"KEITT","harvestQuantityKg":10}
+                        """.formatted(code, farmId, code)))
+                .andExpect(status().isBadRequest());
+
+        assertTrue(farmDirectory.findBlockByCode(code).isEmpty());
+        assertTrue(farmDirectory.listBlocksOfFarm(farmId).isEmpty());
+    }
+
+    @Test
+    void aFieldGetsItsPlantsCodeFromTheFieldFormAndPlantsPicksIt() throws Exception {
+        long farmId = idOf(post("/api/farm/farms"), "{\"name\":\"Coded Farm\"}");
+        String code = "F" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        long fieldId = idOf(post("/api/farm/fields"),
+                "{\"farmId\":%d,\"name\":\"Coded Field\",\"areaHectares\":2,\"code\":\" %s \"}"
+                        .formatted(farmId, code.toLowerCase()));
+
+        mockMvc.perform(get("/api/farm/fields/{id}", fieldId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(code));
+        mockMvc.perform(post("/api/farm/fields").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"farmId\":%d,\"name\":\"Twin\",\"areaHectares\":1,\"code\":\"%s\"}".formatted(farmId, code)))
+                .andExpect(status().isConflict());
+        mockMvc.perform(post("/api/farm/fields").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"farmId\":%d,\"name\":\"Bad\",\"areaHectares\":1,\"code\":\"A-1\"}".formatted(farmId)))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/plants/plantings").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"farmId":%d,"blockCode":"%s","varietyName":"Keitt","plantingDate":"2023-09-15","treeCount":10}
+                        """.formatted(farmId, code)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.farmId").value(farmId))
                 .andExpect(jsonPath("$.blockCode").value(code));
 
-        BlockDto block = farmDirectory.findBlockByCode(code).orElseThrow();
-        assertEquals(farmId, block.farmId());
-        assertEquals(code, block.name());
+        mockMvc.perform(put("/api/farm/fields/{id}", fieldId).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Coded Field\",\"code\":\"\"}"))
+                .andExpect(status().isConflict());
+        assertEquals(code, farmDirectory.findBlock(fieldId).orElseThrow().code());
+    }
+
+    @Test
+    void aFieldCodeIsSetAndClearedByAnUpdate() throws Exception {
+        long farmId = idOf(post("/api/farm/farms"), "{\"name\":\"Recoded Farm\"}");
+        long fieldId = idOf(post("/api/farm/fields"),
+                "{\"farmId\":%d,\"name\":\"Plain Field\",\"areaHectares\":2}".formatted(farmId));
+        String code = "G" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
+        mockMvc.perform(put("/api/farm/fields/{id}", fieldId).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Plain Field\",\"code\":\"%s\"}".formatted(code)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(code));
+        mockMvc.perform(put("/api/farm/fields/{id}", fieldId).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Plain Field\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(code));
+        mockMvc.perform(put("/api/farm/fields/{id}", fieldId).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Plain Field\",\"code\":\" \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").doesNotExist());
     }
 
     @Test

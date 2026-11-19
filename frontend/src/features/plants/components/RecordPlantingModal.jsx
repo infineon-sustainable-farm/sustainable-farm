@@ -2,10 +2,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Field, Input, Modal, Select } from "../../../shared/ui";
 import { plantingBody, spacingErrors, VIGOR_OPTIONS } from "../utils/plantingRequests";
+import BlockSelect from "./BlockSelect";
 import FormAlert from "./FormAlert";
-
-/** Same rule as the API: a short code such as "A" or "B2"; spaces around it are removed. */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
 
 /** Longest variety name the API accepts. */
 const VARIETY_MAX_LENGTH = 255;
@@ -53,10 +51,8 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
         } else if (plantingDate > today) {
             errors.plantingDate = message("plantingDateFuture");
         }
-        if (!blockCode.trim()) {
+        if (!blockCode) {
             errors.blockCode = message("blockRequired");
-        } else if (!BLOCK_CODE_PATTERN.test(blockCode)) {
-            errors.blockCode = message("blockFormat");
         }
         if (!varietyName.trim()) {
             errors.varietyName = message("varietyRequired");
@@ -93,14 +89,13 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
                         />
                     </Field>
 
-                    <Field id="planting-block" label={t("varieties.planting.block")} error={fieldError("blockCode")}>
-                        <Input
-                            type="text"
-                            value={blockCode}
-                            onChange={(event) => setBlockCode(event.target.value)}
-                            placeholder={t("varieties.planting.blockPlaceholder")}
-                        />
-                    </Field>
+                    <BlockSelect
+                        id="planting-block"
+                        label={t("varieties.planting.block")}
+                        value={blockCode}
+                        onChange={setBlockCode}
+                        error={fieldError("blockCode")}
+                    />
 
                     <Field id="planting-variety" label={t("varieties.planting.variety")} error={fieldError("varietyName")}>
                         <Input
