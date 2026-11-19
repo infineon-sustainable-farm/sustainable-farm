@@ -107,10 +107,11 @@ class SalesMarketingApiTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.unit").value("kg"))
                 .andExpect(jsonPath("$.createdAt").exists());
+        // A sales batch picks a packaged lot of product transformation (its sync time is checked by
+        // LotChainForeignKeyTest): a code product transformation does not have is refused.
         mockMvc.perform(post(API + "/product-batches").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"batchCode\":\"M" + run + "\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.syncedAt").exists());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

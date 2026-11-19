@@ -14,6 +14,11 @@ import { apiClient } from '../../../shared/api/client.js'
 import * as api from './watersupplyApi.js'
 
 const FARM_CLIENTS = ['farmApi', 'fieldApi', 'zoneApi', 'zoneBlockMappingApi']
+// Resources picked from their owner module (app/ownerLinks.js), read only.
+const OWNER_CLIENTS = {
+  processingBatchApi: /^\/api\/product-transformation\/batches$/,
+  varietyCatalogApi: /^\/api\/plants\/variety-references$/,
+}
 
 function calledPaths() {
   return Object.values(apiClient).flatMap((method) => method.mock.calls.map((call) => call[0]))
@@ -30,7 +35,7 @@ afterEach(() => {
 describe('watersupply api paths', () => {
   it('serves every water supply endpoint under /api/water-supply', () => {
     for (const [name, client] of Object.entries(api)) {
-      if (typeof client !== 'object' || FARM_CLIENTS.includes(name)) continue
+      if (typeof client !== 'object' || FARM_CLIENTS.includes(name) || name in OWNER_CLIENTS) continue
       for (const call of Object.values(client)) call(7, 7)
     }
     const paths = calledPaths()
@@ -43,6 +48,16 @@ describe('watersupply api paths', () => {
       for (const call of Object.values(api[name])) call(7, {})
     }
     for (const path of calledPaths()) expect(path).toMatch(/^\/api\/farm\//)
+  })
+
+  it('reads the lots and the varieties from their owner modules, without writing', () => {
+    for (const [name, path] of Object.entries(OWNER_CLIENTS)) {
+      vi.clearAllMocks()
+      for (const call of Object.values(api[name])) call()
+      expect(apiClient.get).toHaveBeenCalled()
+      for (const called of calledPaths()) expect(called).toMatch(path)
+      expect(apiClient.post).not.toHaveBeenCalled()
+    }
   })
 
   it('keeps the resource segments and numeric ids', () => {

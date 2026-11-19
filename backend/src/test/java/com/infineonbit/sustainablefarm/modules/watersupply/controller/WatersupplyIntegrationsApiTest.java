@@ -13,12 +13,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IotDevice;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IotDeviceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.AgroWeatherService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.PlantsGrowthPort;
 import com.jayway.jsonpath.JsonPath;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -53,6 +60,12 @@ class WatersupplyIntegrationsApiTest {
 
     @Autowired
     private IotDeviceRepository deviceRepository;
+
+    @Autowired
+    private BatchRepository batchRepository;
+
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
 
     @MockitoBean
     private AgroWeatherService agroWeatherService;
@@ -170,7 +183,7 @@ class WatersupplyIntegrationsApiTest {
     void lotUsageThenConsumptionByLotThenQualityCompliance() throws Exception {
         String farmId = createFarm("Lot Farm");
         String sourceId = createSource(farmId, "Washing Tank");
-        String lotId = "LOT-" + UUID.randomUUID();
+        String lotId = processingBatch(farmId);
         Instant start = Instant.now().minus(3, ChronoUnit.HOURS);
         createConsumption(farmId, sourceId, null, 100.0, start.plusSeconds(600), null, null);
         createConsumption(farmId, sourceId, null, 50.0, start.plusSeconds(1200), null, null);
@@ -215,6 +228,13 @@ class WatersupplyIntegrationsApiTest {
                         .content("{\"startAt\":\"2026-10-13T08:00:00Z\",\"endAt\":\"2026-10-13T09:00:00Z\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors").isNotEmpty());
+        // Product Transformation owns the processing batches: a lot it does not have is refused.
+        mockMvc.perform(post("/api/water-supply/lot-usage").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"lotId":"LOT-%s","startAt":"2026-10-13T08:00:00Z","endAt":"2026-10-13T09:00:00Z"}
+                                """.formatted(UUID.randomUUID())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
         mockMvc.perform(post("/api/water-supply/consumption").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%s","sourceId":"%s","consumptionLiters":1,"consumptionDate":"2026-10-13T08:00:00Z","activity":"painting"}
@@ -227,15 +247,17 @@ class WatersupplyIntegrationsApiTest {
 
     @Test
     void availabilityForecastReportsATightBuffer() throws Exception {
-        String sourceId = createSource(createFarm("Forecast Farm"), "Forecast Tank");
+        String farmId = createFarm("Forecast Farm");
+        String sourceId = createSource(farmId, "Forecast Tank");
+        String lotId = processingBatch(farmId);
 
         // 2 500 L in the tank, washing 1 100 kg x 2 L/kg = 2 200 L: 300 L left, under the 500 L buffer.
         mockMvc.perform(post("/api/water-supply/product-transformation/availability-forecast")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"sourceId":"%s","horizonDays":7,"includeIrrigation":false,
-                                 "batches":[{"lotId":"LOT-F","activity":"washing","sizeKg":1100}]}
-                                """.formatted(sourceId)))
+                                 "batches":[{"lotId":"%s","activity":"washing","sizeKg":1100}]}
+                                """.formatted(sourceId, lotId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.batchDemandLiters").value(2200))
                 .andExpect(jsonPath("$.availableAfterForecastLiters").value(300))
@@ -248,6 +270,13 @@ class WatersupplyIntegrationsApiTest {
         mockMvc.perform(post("/api/water-supply/product-transformation/availability-forecast")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"sourceId\":\"%s\",\"batches\":[{\"activity\":\"painting\"}]}".formatted(sourceId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+        mockMvc.perform(post("/api/water-supply/product-transformation/availability-forecast")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sourceId":"%s","batches":[{"lotId":"LOT-F-%s","activity":"washing","sizeKg":1}]}
+                                """.formatted(sourceId, UUID.randomUUID())))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }
@@ -436,6 +465,19 @@ class WatersupplyIntegrationsApiTest {
 
     private String createFarm(String name) throws Exception {
         return idOf(post("/api/farm/farms"), "{\"name\":\"%s\",\"areaHectares\":12.5}".formatted(name));
+    }
+
+    /** A processing batch of Product Transformation, on a new field of the farm; returns its code. */
+    private String processingBatch(String farmId) throws Exception {
+        VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
+        Batch batch = new Batch();
+        batch.setBatchId("LOT-" + UUID.randomUUID().toString().substring(0, 8));
+        batch.setHarvestDate(LocalDate.of(2026, 6, 1));
+        batch.setVarietyKey("KEITT");
+        batch.setHarvestQuantityKg(new BigDecimal("300.00"));
+        batch.setCurrentStatus(BatchStatus.WASHING);
+        batch.setFarmBlockId(Long.valueOf(createField(farmId)));
+        return batchRepository.saveAndFlush(batch).getBatchId();
     }
 
     private String createField(String farmId) throws Exception {

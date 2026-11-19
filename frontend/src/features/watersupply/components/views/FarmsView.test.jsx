@@ -5,12 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { controlByLabel, renderView as render } from './testRender'
 import { FarmsView } from './FarmsView'
-import { farmApi, fieldApi, zoneApi } from '../../api/watersupplyApi'
+import { farmApi, fieldApi, varietyCatalogApi, zoneApi } from '../../api/watersupplyApi'
 
 vi.mock('../../api/watersupplyApi', () => ({
   farmApi: { getFarms: vi.fn(), createFarm: vi.fn(), updateFarm: vi.fn(), deleteFarm: vi.fn() },
   fieldApi: { getFields: vi.fn(), createField: vi.fn(), deleteField: vi.fn() },
   zoneApi: { getZones: vi.fn(), createZone: vi.fn(), deleteZone: vi.fn() },
+  varietyCatalogApi: { getVarieties: vi.fn() },
 }))
 
 const original = Object.getOwnPropertyDescriptor(globalThis.navigator, 'geolocation')
@@ -24,9 +25,13 @@ beforeEach(() => {
     { id: 'farm-1', name: 'North Farm', address: 'Banfora', areaHectares: 12, description: null, latitude: 10.5, longitude: -4.5 },
   ])
   fieldApi.getFields.mockResolvedValue([
-    { id: 'field-1', farmId: 'farm-1', name: 'Mango field', areaHectares: 3, coordinates: '10.6, -4.8' },
+    { id: 'field-1', farmId: 'farm-1', name: 'Mango field', areaHectares: 3, cropType: 'KENT', coordinates: '10.6, -4.8' },
   ])
   zoneApi.getZones.mockResolvedValue([])
+  varietyCatalogApi.getVarieties.mockResolvedValue([
+    { id: 1, varietyKey: 'KEITT', varietyName: 'Keitt' },
+    { id: 2, varietyKey: 'KENT', varietyName: 'Kent' },
+  ])
 })
 
 afterEach(() => {
@@ -118,6 +123,39 @@ describe('FarmsView - location', () => {
     await waitFor(() => expect(fieldApi.createField).toHaveBeenCalledWith(expect.objectContaining({
       farmId: 'farm-1', name: 'Cashew field', coordinates: '10.633123, -4.761234',
     })))
+  })
+
+  it('picks the crop type of a field in the Plants variety catalogue and sends its key', async () => {
+    fieldApi.createField.mockResolvedValue({ id: 'field-2' })
+    render(<FarmsView {...props} />)
+    await screen.findByText('North Farm')
+    // The crop type of a field is shown with its Plants name.
+    expect(await screen.findByText('Kent')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('New field'))
+    const form = document.querySelector('form')
+    const crop = controlByLabel(form, 'Crop type')
+    expect([...crop.options].map((option) => option.value)).toEqual(['', 'KEITT', 'KENT'])
+    fireEvent.change(controlByLabel(form, 'Parent farm'), { target: { value: 'farm-1' } })
+    fireEvent.change(controlByLabel(form, 'Name'), { target: { value: 'Keitt field' } })
+    fireEvent.change(crop, { target: { value: 'KEITT' } })
+    fireEvent.change(controlByLabel(form, 'Area'), { target: { value: '2' } })
+    fireEvent.submit(form)
+
+    await waitFor(() => expect(fieldApi.createField).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Keitt field', cropType: 'KEITT',
+    })))
+  })
+
+  it('sends the user to Plants when the variety catalogue is empty', async () => {
+    varietyCatalogApi.getVarieties.mockResolvedValue([])
+    render(<FarmsView {...props} />)
+    await screen.findByText('North Farm')
+
+    fireEvent.click(screen.getByText('New field'))
+    const dialog = screen.getByRole('dialog')
+    await waitFor(() => expect(controlByLabel(dialog, 'Crop type').disabled).toBe(true))
+    expect(within(dialog).getByRole('link').getAttribute('href')).toBe('/plants/harvest-maturity?create=variety')
   })
 
   it('refuses a field location that is not "latitude, longitude"', async () => {
