@@ -175,3 +175,50 @@ describe('FarmsView - dialogs', () => {
     expect(farmApi.deleteFarm).not.toHaveBeenCalled()
   })
 })
+
+describe('FarmsView - create links from other modules', () => {
+  const location = () => screen.getByTestId('location').textContent
+  const at = (query) => ({ url: `/watersupply/farms${query}` })
+
+  it('opens the new farm dialog on ?create=1, locates it, and removes the link on Cancel', async () => {
+    render(<FarmsView {...props} />, at('?create=1'))
+    const dialog = await screen.findByRole('dialog', { name: 'New farm' })
+    await waitFor(() => expect(controlByLabel(dialog, 'Latitude').value).toBe('10.633123'))
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(location()).toBe('/watersupply/farms')
+  })
+
+  it('removes the link once the farm is saved', async () => {
+    farmApi.createFarm.mockResolvedValue({ id: 'farm-2' })
+    render(<FarmsView {...props} />, at('?create=1'))
+    const dialog = await screen.findByRole('dialog', { name: 'New farm' })
+    fireEvent.change(controlByLabel(dialog, 'Name'), { target: { value: 'Linked Farm' } })
+    fireEvent.submit(dialog.querySelector('form'))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(farmApi.createFarm).toHaveBeenCalledWith(expect.objectContaining({ name: 'Linked Farm' }))
+    expect(location()).toBe('/watersupply/farms')
+  })
+
+  it('opens the new field dialog on ?create=field and removes the link on Cancel', async () => {
+    render(<FarmsView {...props} />, at('?create=field'))
+    const dialog = await screen.findByRole('dialog', { name: 'New field' })
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(location()).toBe('/watersupply/farms')
+  })
+
+  it('opens the new zone dialog on ?create=zone and removes the link on Cancel', async () => {
+    render(<FarmsView {...props} />, at('?create=zone'))
+    const dialog = await screen.findByRole('dialog', { name: 'New zone' })
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(location()).toBe('/watersupply/farms')
+  })
+})

@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import StaffPage from "./StaffPage";
+import { LocationProbe } from "../../../../test/LocationProbe";
 import { createStaff, deactivateStaff, fetchStaff } from "../../api/visitormanagementApi";
 
 vi.mock("../../api/visitormanagementApi", () => ({
@@ -14,11 +16,14 @@ vi.mock("../../api/visitormanagementApi", () => ({
 
 const MEMBER = { id: 7, fullName: "Guide One", role: "GUIDE", email: null, phone: null, active: true };
 
-function renderPage() {
+function renderPage(url = "/visitormanagement/staff") {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <StaffPage />
+            <MemoryRouter initialEntries={[url]}>
+                <StaffPage />
+                <LocationProbe />
+            </MemoryRouter>
         </QueryClientProvider>,
     );
 }
@@ -67,5 +72,26 @@ describe("StaffPage", () => {
         fireEvent.click(screen.getByRole("button", { name: "deactivate" }));
         fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Yes" }));
         await waitFor(() => expect(vi.mocked(deactivateStaff).mock.calls[0]?.[0]).toEqual(7));
+    });
+
+    it("opens the new staff member dialog from a create link and removes the link on close", async () => {
+        renderPage("/visitormanagement/staff?create=1");
+        const dialog = await screen.findByRole("dialog", { name: "New staff member" });
+        expect(screen.getByTestId("location")).toHaveTextContent("/visitormanagement/staff?create=1");
+
+        fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+        await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+        expect(screen.getByTestId("location").textContent).toBe("/visitormanagement/staff");
+    });
+
+    it("removes the create link once the member is created", async () => {
+        renderPage("/visitormanagement/staff?create=1");
+        const dialog = await screen.findByRole("dialog", { name: "New staff member" });
+        fireEvent.change(within(dialog).getByLabelText("Full name"), { target: { value: "Linked Guide" } });
+        fireEvent.click(within(dialog).getByRole("button", { name: "Create staff member" }));
+
+        await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+        expect(createStaff).toHaveBeenCalled();
+        expect(screen.getByTestId("location").textContent).toBe("/visitormanagement/staff");
     });
 });

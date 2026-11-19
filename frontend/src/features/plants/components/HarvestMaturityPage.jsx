@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CircleCheck, Plus } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, PageHeader } from "../../../shared/ui";
+import { useCreateParam } from "../../../shared/hooks/useCreateParam";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { useRecordHarvest } from "../hooks/useRecordHarvest";
 import BlockFilter from "./BlockFilter";
@@ -60,6 +61,9 @@ export default function HarvestMaturityPage() {
     const [isRecordingHarvest, setIsRecordingHarvest] = useState(false);
     // The harvest just recorded, until the form is opened again.
     const [recordedHarvest, setRecordedHarvest] = useState(null);
+    // "?create=1": another module sent the user here to record a harvest (app/ownerLinks.js).
+    const [createRequested, clearCreateRequest] = useCreateParam();
+    const harvestFormOpen = isRecordingHarvest || createRequested;
 
     const documentTitle = t("harvest.page.documentTitle");
     useEffect(() => {
@@ -76,6 +80,7 @@ export default function HarvestMaturityPage() {
     }
 
     function closeHarvestForm() {
+        clearCreateRequest();
         recordHarvest.reset();
         setIsRecordingHarvest(false);
     }
@@ -116,7 +121,7 @@ export default function HarvestMaturityPage() {
                 recordAction={<RecordHarvestButton onClick={openHarvestForm} />}
             />
 
-            {isRecordingHarvest && (
+            {harvestFormOpen && (
                 <RecordHarvestModal
                     blocks={blocks ?? []}
                     isSubmitting={recordHarvest.isPending}
