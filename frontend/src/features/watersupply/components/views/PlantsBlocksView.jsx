@@ -9,11 +9,10 @@ import {
   ErrorState,
   Field,
   IconButton,
-  Input,
   Select,
   Table,
 } from '../../../../shared/ui'
-import { zoneBlockMappingApi } from '../../api/watersupplyApi'
+import { zoneApi, zoneBlockMappingApi } from '../../api/watersupplyApi'
 import { useFarms, useFields, useZones } from '../../hooks/useFarms'
 import { useBlockIrrigationNeed, useBlockRainfall, useZoneBlockMappings } from '../../hooks/useIntegrations'
 import { useWaterFormat } from '../../format'
@@ -34,25 +33,26 @@ const PHASES = [
 
 const PHASE_SOURCES = ['request', 'plants_calendar', 'unknown']
 
-/** Same shape as Plants block codes ("A", "B2"): letters and digits, no prefix or space. */
-const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
+/** Label of a field in the block choice: its Plants code, then its name when it differs. */
+const fieldLabel = (field) => (field.name && field.name !== field.code ? `${field.code} · ${field.name}` : field.code)
 
 /**
  * Plants blocks: links Water Supply zones to the Plants blocks they water, then shows what Plants
  * reads per block (rain gauge rainfall of the month, irrigation need of the day).
  *
  * Backend contract: ZoneBlockMapping { id (= zoneId), zoneId, blockCode, farmId }, read from the zone's
- * field (a block of the farm referential): linking gives the field its Plants code, unlinking clears it.
- * The farm is derived from the zone (zone -> field -> farm) because the API refuses a farm that does
- * not own the zone.
+ * field (a block of the farm referential): a zone is linked to the Plants block of its field's code,
+ * unlinking clears that code. A field gets its code in Farms, fields & zones; here the block is picked
+ * among the fields of the zone's farm that have a code (never typed), and linking moves the zone into
+ * that field (PUT /api/farm/zones/{id} with its fieldId).
  */
 export function PlantsBlocksView({ notify }) {
   const { t } = useTranslation('watersupply')
   const { mappings, loading, error, refetch } = useZoneBlockMappings()
-  const { zones } = useZones()
+  const { zones, refetch: refetchZones } = useZones()
   const { fields } = useFields()
   const { farms } = useFarms()
-  const [form, setForm] = useState({ zoneId: '', blockCode: '' })
+  const [form, setForm] = useState({ zoneId: '', fieldId: '' })
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
   const [selectedBlock, setSelectedBlock] = useState('')
@@ -65,6 +65,12 @@ export function PlantsBlocksView({ notify }) {
   }
   const farmName = (farmId) =>
     farms.find((farm) => farm.id === farmId)?.name || (farmId ? t('plantsBlocks.farmFallback', { id: String(farmId).slice(0, 8) }) : t('common.none'))
+
+  // Plants blocks the zone can be linked to: fields with a code, of the zone's farm once a zone is chosen.
+  const zoneFarmId = form.zoneId ? farmIdOfZone(form.zoneId) : null
+  const blockFields = fields
+    .filter((field) => field.code && (!zoneFarmId || sameId(field.farmId, zoneFarmId)))
+    .sort((a, b) => a.code.localeCompare(b.code))
 
   const blockCodes = useMemo(() => [...new Set(mappings.map((mapping) => mapping.blockCode))].sort(), [mappings])
   const sortedMappings = useMemo(
@@ -81,32 +87,46 @@ export function PlantsBlocksView({ notify }) {
   const activeBlock = selectedBlock || blockCodes[0] || ''
 
   const updateForm = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
+  // Another zone may be of another farm: a block that is not of its farm is cleared.
+  const changeZone = (event) => {
+    const zoneId = event.target.value
+    const farmId = zoneId ? farmIdOfZone(zoneId) : null
+    setForm((current) => {
+      const field = fields.find((candidate) => sameId(candidate.id, current.fieldId))
+      return { zoneId, fieldId: field && farmId && !sameId(field.farmId, farmId) ? '' : current.fieldId }
+    })
+  }
 
   const submit = (event) => {
     event.preventDefault()
-    if (!form.zoneId) {
+    const zone = zones.find((candidate) => sameId(candidate.id, form.zoneId))
+    if (!zone) {
       setFormError(t('plantsBlocks.errors.zoneRequired'))
       return
     }
-    if (!BLOCK_CODE_PATTERN.test(form.blockCode.trim())) {
-      setFormError(t('plantsBlocks.errors.codeFormat'))
+    const field = blockFields.find((candidate) => sameId(candidate.id, form.fieldId))
+    if (!field) {
+      setFormError(t('plantsBlocks.errors.blockRequired'))
       return
     }
-    const farmId = farmIdOfZone(form.zoneId)
-    if (!farmId) {
+    if (!farmIdOfZone(zone.id)) {
       setFormError(t('plantsBlocks.errors.farmUnknown'))
+      return
+    }
+    if (sameId(field.id, zone.fieldId)) {
+      setFormError(t('plantsBlocks.errors.alreadyLinkedTo', { code: field.code }))
       return
     }
     setBusy(true)
     setFormError(null)
-    zoneBlockMappingApi
-      .createMapping({ zoneId: zones.find((zone) => sameId(zone.id, form.zoneId))?.id ?? form.zoneId, blockCode: form.blockCode.trim(), farmId })
-      .then((created) => refetch().then(() => created))
-      .then((created) => {
-        notify(t('plantsBlocks.linked', { code: created?.blockCode ?? form.blockCode.trim().toUpperCase() }))
-        setForm({ zoneId: '', blockCode: '' })
+    zoneApi
+      .updateZone(zone.id, { fieldId: field.id })
+      .then(() => Promise.all([refetch(), refetchZones?.()]))
+      .then(() => {
+        notify(t('plantsBlocks.linked', { code: field.code }))
+        setForm({ zoneId: '', fieldId: '' })
       })
-      .catch((err) => setFormError(err.status === 409 ? err.message || t('plantsBlocks.errors.alreadyLinked') : err.message || t('common.saveError')))
+      .catch((err) => setFormError(err.message || t('common.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -178,13 +198,16 @@ export function PlantsBlocksView({ notify }) {
             <FormAlert>{formError}</FormAlert>
             <form className="flex flex-col gap-4" onSubmit={submit}>
               <Field label={t('plantsBlocks.fields.zone')} required>
-                <Select value={form.zoneId} onChange={updateForm('zoneId')}>
+                <Select value={form.zoneId} onChange={changeZone}>
                   <option value="">{t('common.select')}</option>
                   {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
                 </Select>
               </Field>
-              <Field label={t('plantsBlocks.fields.blockCode')} required>
-                <Input value={form.blockCode} onChange={updateForm('blockCode')} placeholder={t('plantsBlocks.fields.blockCodePlaceholder')} />
+              <Field label={t('plantsBlocks.fields.block')} required>
+                <Select value={form.fieldId} onChange={updateForm('fieldId')} disabled={blockFields.length === 0}>
+                  <option value="">{blockFields.length === 0 ? t('plantsBlocks.fields.noBlock') : t('common.select')}</option>
+                  {blockFields.map((field) => <option key={field.id} value={field.id}>{fieldLabel(field)}</option>)}
+                </Select>
               </Field>
               <p className="text-xs text-text-muted">{t('plantsBlocks.codeHint')}</p>
               <FormActions>

@@ -31,12 +31,12 @@ export function useFieldZones(fieldId) {
 
 /** Every field of every farm: resolves the farm of a zone (zone -> field -> farm). */
 export function useFields() {
-  const { data, loading, error } = useModuleQuery(['watersupply', 'fields'], fieldApi.getFields)
-  return { fields: Array.isArray(data) ? data : data?.content ?? [], loading, error }
+  const { data, loading, error, refetch } = useModuleQuery(['watersupply', 'fields'], fieldApi.getFields)
+  return { fields: Array.isArray(data) ? data : data?.content ?? [], loading, error, refetch }
 }
 
 export function useZones() {
-  const { data, loading, error } = useModuleQuery(['watersupply', 'zones'], zoneApi.getZones)
-  return { zones: Array.isArray(data) ? data : data?.content ?? [], loading, error }
+  const { data, loading, error, refetch } = useModuleQuery(['watersupply', 'zones'], zoneApi.getZones)
+  return { zones: Array.isArray(data) ? data : data?.content ?? [], loading, error, refetch }
 }
 

@@ -6,7 +6,7 @@ import { LocateHint } from './LocateHint'
 
 const IRRIGATION_METHODS = ['drip', 'sprinkler', 'surface']
 
-/** Creation of a field (parent farm) or of a zone (parent field), in a kit dialog. */
+/** Creation or edit of a field (parent farm), or creation of a zone (parent field), in a kit dialog. */
 export function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave, busy, geo, onLocate, formError }) {
   const { t } = useTranslation('watersupply')
   const isZone = 'fieldId' in form
@@ -41,6 +41,11 @@ export function ChildFormModal({ title, farms, fields, form, setForm, onCancel, 
         {!isZone && (
           <Field label={t('farms.fields.cropType')}>
             <Input value={form.cropType} onChange={field('cropType')} />
+          </Field>
+        )}
+        {!isZone && (
+          <Field label={t('farms.fields.code')} hint={t('farms.codeHint')}>
+            <Input value={form.code} onChange={field('code')} placeholder={t('farms.codePlaceholder')} />
           </Field>
         )}
         <Field label={t('farms.fields.area')} required>

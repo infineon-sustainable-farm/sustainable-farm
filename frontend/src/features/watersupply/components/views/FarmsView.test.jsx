@@ -9,7 +9,7 @@ import { farmApi, fieldApi, zoneApi } from '../../api/watersupplyApi'
 
 vi.mock('../../api/watersupplyApi', () => ({
   farmApi: { getFarms: vi.fn(), createFarm: vi.fn(), updateFarm: vi.fn(), deleteFarm: vi.fn() },
-  fieldApi: { getFields: vi.fn(), createField: vi.fn(), deleteField: vi.fn() },
+  fieldApi: { getFields: vi.fn(), createField: vi.fn(), updateField: vi.fn(), deleteField: vi.fn() },
   zoneApi: { getZones: vi.fn(), createZone: vi.fn(), deleteZone: vi.fn() },
 }))
 
@@ -70,7 +70,7 @@ describe('FarmsView - location', () => {
     render(<FarmsView {...props} />)
     await screen.findByText('North Farm')
 
-    fireEvent.click(screen.getByTitle('Edit'))
+    fireEvent.click(within(screen.getByRole('table', { name: 'Farms' })).getByTitle('Edit'))
     // Editing never relocates: the farm keeps the position it was created with.
     expect(getCurrentPosition).not.toHaveBeenCalled()
     fireEvent.submit(document.querySelector('form'))
@@ -220,5 +220,57 @@ describe('FarmsView - create links from other modules', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(location()).toBe('/watersupply/farms')
+  })
+})
+
+describe('FarmsView - Plants block code', () => {
+  it('creates a field with its Plants block code', async () => {
+    fieldApi.createField.mockResolvedValue({ id: 'field-2' })
+    render(<FarmsView {...props} />)
+    await screen.findByText('North Farm')
+
+    fireEvent.click(screen.getByText('New field'))
+    const form = document.querySelector('form')
+    fireEvent.change(controlByLabel(form, 'Parent farm'), { target: { value: 'farm-1' } })
+    fireEvent.change(controlByLabel(form, 'Name'), { target: { value: 'Block field' } })
+    fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: ' b2 ' } })
+    fireEvent.submit(form)
+
+    await waitFor(() => expect(fieldApi.createField).toHaveBeenCalledWith(expect.objectContaining({
+      farmId: 'farm-1', name: 'Block field', code: 'b2',
+    })))
+  })
+
+  it('refuses a code Plants would not accept', async () => {
+    render(<FarmsView {...props} />)
+    await screen.findByText('North Farm')
+
+    fireEvent.click(screen.getByText('New field'))
+    const form = document.querySelector('form')
+    fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'Block A' } })
+    fireEvent.submit(form)
+
+    await waitFor(() => expect(screen.getByText(/short code such as A or B2/)).toBeTruthy())
+    expect(fieldApi.createField).not.toHaveBeenCalled()
+  })
+
+  it('gives an existing field its code from the field edit form, and shows the conflict', async () => {
+    fieldApi.updateField.mockRejectedValueOnce(Object.assign(new Error('Block code A is already the code of the field Other'), { status: 409 }))
+    fieldApi.updateField.mockResolvedValueOnce({})
+    render(<FarmsView {...props} />)
+    await screen.findByText('Mango field')
+
+    fireEvent.click(within(screen.getByRole('table', { name: 'Fields' })).getByTitle('Edit'))
+    const form = document.querySelector('form')
+    expect(controlByLabel(form, 'Name').value).toBe('Mango field')
+    fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'A' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText('Block code A is already the code of the field Other')).toBeTruthy())
+
+    fireEvent.submit(form)
+    await waitFor(() => expect(fieldApi.updateField).toHaveBeenLastCalledWith('field-1', expect.objectContaining({
+      farmId: 'farm-1', name: 'Mango field', areaHectares: 3, coordinates: '10.6, -4.8', code: 'A',
+    })))
+    await waitFor(() => expect(props.notify).toHaveBeenCalledWith('Field updated'))
   })
 })

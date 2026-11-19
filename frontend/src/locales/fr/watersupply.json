@@ -210,16 +210,16 @@
     "formTitle": "Relier une zone",
     "fields": {
       "zone": "Zone",
-      "blockCode": "Code du bloc Plants",
-      "blockCodePlaceholder": "A, B2…"
+      "block": "Bloc Plants",
+      "noBlock": "Aucune parcelle avec un code Plants"
     },
-    "codeHint": "Les codes sont enregistrés en majuscules. Le code appartient à la parcelle de la zone : toutes les zones de cette parcelle sont reliées au bloc.",
+    "codeHint": "La liste montre les parcelles de la ferme de la zone qui ont un code Plants ; une parcelle reçoit son code dans Fermes, parcelles et zones. Relier la zone la déplace dans cette parcelle.",
     "link": "Relier",
     "errors": {
       "zoneRequired": "Choisissez une zone.",
-      "codeFormat": "Le code de bloc est un code court comme A ou B2, sans préfixe ni espace.",
       "farmUnknown": "La ferme de cette zone est inconnue : vérifiez sa parcelle dans Fermes et parcelles.",
-      "alreadyLinked": "Cette zone est déjà reliée à un bloc."
+      "blockRequired": "Choisissez un bloc Plants.",
+      "alreadyLinkedTo": "Cette zone est déjà reliée au bloc {{code}}."
     },
     "linked": "Zone reliée au bloc {{code}}",
     "unlinked": "Zone déliée du bloc {{code}}",
@@ -281,7 +281,8 @@
       "location": "Position",
       "crop": "Culture",
       "soil": "Sol",
-      "irrigationMethod": "Mode d’irrigation"
+      "irrigationMethod": "Mode d’irrigation",
+      "code": "Code Plants"
     },
     "hectares": "{{value}} ha",
     "coordinates": "{{latitude}} ; {{longitude}}",
@@ -304,7 +305,8 @@
       "parentField": "Parcelle de rattachement",
       "irrigationMethod": "Mode d’irrigation",
       "cropType": "Type de culture",
-      "location": "Position (latitude, longitude)"
+      "location": "Position (latitude, longitude)",
+      "code": "Code du bloc Plants"
     },
     "selectOption": "-- Sélectionner --",
     "locationPlaceholder": "10.633100, -4.761200",
@@ -317,7 +319,8 @@
     "useMyPosition": "Utiliser ma position",
     "accuracy": "Position de cet appareil, précise à environ {{accuracy}} m : corrigez-la si vous n’êtes pas sur place.",
     "errors": {
-      "locationFormat": "Saisissez la position sous la forme « latitude, longitude »."
+      "locationFormat": "Saisissez la position sous la forme « latitude, longitude ».",
+      "codeFormat": "Le code du bloc Plants est un code court comme A ou B2, sans préfixe ni espace."
     },
     "geo": {
       "refused": "Accès à la position refusé (ou page non servie en HTTPS) : autorisez-le dans le navigateur ou saisissez les coordonnées.",
@@ -328,7 +331,11 @@
       "bothOrNeither": "Indiquez la latitude et la longitude, ou aucune des deux.",
       "latitudeRange": "La latitude est comprise entre -90 et 90.",
       "longitudeRange": "La longitude est comprise entre -180 et 180."
-    }
+    },
+    "codePlaceholder": "A, B2…",
+    "codeHint": "Lettres et chiffres, enregistrés en majuscules. Plants et Transformation choisissent la parcelle par ce code.",
+    "editField": "Modifier la parcelle",
+    "fieldUpdated": "Parcelle mise à jour"
   },
   "dashboard": {
     "title": "Tableau de bord de l’eau",
@@ -658,8 +665,8 @@
       "fields": {
         "version": "Version (vide = date du jour)",
         "text": "Texte lu au groupe",
-        "allowed": "Zones autorisées (une par ligne)",
-        "forbidden": "Zones interdites (une par ligne)",
+        "allowed": "Zones autorisées",
+        "forbidden": "Zones interdites",
         "risks": "Risques (un par ligne)",
         "maxCapacity": "Taille maximale du groupe",
         "guideRequired": "Un guide doit accompagner le groupe"
@@ -676,7 +683,8 @@
       "errors": {
         "groupSize": "Le groupe compte au moins 1 visiteur.",
         "publishFailed": "Publication impossible."
-      }
+      },
+      "noZones": "Aucune zone pour l’instant : ajoutez les zones dans Fermes, parcelles et zones."
     },
     "preview": {
       "title": "Aperçu de l’écran visiteurs",
