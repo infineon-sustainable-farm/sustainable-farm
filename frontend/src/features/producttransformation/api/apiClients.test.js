@@ -20,6 +20,7 @@ import { operatorApi } from './operatorApi';
 import { packagingApi } from './packagingApi';
 import { qcApi } from './qcApi';
 import { rawIntakeApi } from './rawIntakeApi';
+import { siteApi } from './siteApi';
 import { washSortApi } from './washSortApi';
 
 beforeEach(() => {
@@ -286,5 +287,14 @@ describe('washSortApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records/WS-1/complete', {
       outputQuantityKg: 480,
     });
+  });
+});
+
+describe('siteApi', () => {
+  it('reads the farms and fields of the farm module', () => {
+    siteApi.getFarms();
+    siteApi.getFields();
+    expect(apiClient.get).toHaveBeenCalledWith('/api/farm/farms');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/farm/fields');
   });
 });
