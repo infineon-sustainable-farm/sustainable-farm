@@ -1,0 +1,20 @@
+package com.infineonbit.sustainablefarm.modules.watersupply.dto;
+
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.StoredValue;
+import java.time.Instant;
+
+public record IrrigationScheduleResponse(Long id, Long zoneId, Instant startTime, Integer durationMinutes,
+                                         Double waterQuantityLiters, String status, Long createdBy, Instant createdAt,
+                                         String postponeReason, String blockCode, Boolean multipleBlockCodes) {
+    public static IrrigationScheduleResponse from(IrrigationSchedule schedule) {
+        return from(schedule, null, false);
+    }
+
+    public static IrrigationScheduleResponse from(IrrigationSchedule schedule, String blockCode, boolean multipleBlockCodes) {
+        return new IrrigationScheduleResponse(
+            schedule.getId(), schedule.getZoneId(), schedule.getStartTime(),
+            schedule.getDurationMinutes(), schedule.getWaterQuantityLiters(), StoredValue.valueOf(schedule.getStatus()),
+            schedule.getCreatedBy(), schedule.getCreatedAt(), schedule.getPostponeReason(), blockCode, multipleBlockCodes);
+    }
+}

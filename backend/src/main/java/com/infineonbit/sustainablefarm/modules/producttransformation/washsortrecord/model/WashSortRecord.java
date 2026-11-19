@@ -1,0 +1,104 @@
+package com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.model;
+
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
+
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
+
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+
+/**
+ * WashSortRecord Entity
+ * Washing and sorting stage data - Core Processing Entity
+ * 
+ * Business Rule: Record created only when batch assigned to washing stage
+ * Business Rule: Equipment can be assigned to one batch at a time
+ * 
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
+ */
+@Entity
+@Table(name = "wash_sort_record",
+        uniqueConstraints = @UniqueConstraint(name = "uk_wash_sort_record_code", columnNames = "code"),
+        indexes = {
+        @Index(name = "idx_wash_sort_record_batch_id", columnList = "batch_id"),
+        @Index(name = "idx_wash_sort_record_operator_id", columnList = "operator_id"),
+        @Index(name = "idx_wash_sort_record_start_time", columnList = "start_time"),
+        @Index(name = "idx_wash_sort_record_equipment_id", columnList = "equipment_id")
+})
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+public class WashSortRecord extends BaseEntity {
+
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
+    private String recordId;
+
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_batch"), nullable = false)
+    @ToString.Exclude
+    private Batch batch;
+
+    @Column(name = "input_quantity_kg", nullable = false, precision = 10, scale = 2)
+    private BigDecimal inputQuantityKg;
+
+    @Column(name = "output_quantity_kg", nullable = false, precision = 10, scale = 2)
+    private BigDecimal outputQuantityKg;
+
+    @Column(name = "waste_quantity_kg", nullable = false, precision = 10, scale = 2)
+    private BigDecimal wasteQuantityKg;
+
+    @Column(name = "water_usage_liters", nullable = false, precision = 10, scale = 2)
+    private BigDecimal waterUsageLiters;
+
+    @Column(name = "start_time", nullable = false)
+    private LocalDateTime startTime;
+
+    @Column(name = "end_time", nullable = false)
+    private LocalDateTime endTime;
+
+    /** The register id of the equipment used (machinery {@code equipment}); the equipment cannot be deleted while used. */
+    @Column(name = "equipment_id")
+    private Long equipmentId;
+
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_wash_sort_record_operator"))
+    @ToString.Exclude
+    private Operator operator;
+
+    /**
+     * Calculate yield percentage
+     * Business Rule: Output/Input * 100
+     */
+    public Double calculateYieldPercentage() {
+        if (inputQuantityKg == null || inputQuantityKg.compareTo(BigDecimal.ZERO) == 0) {
+            return 0.0;
+        }
+        return outputQuantityKg.divide(inputQuantityKg, 4, java.math.RoundingMode.HALF_UP).multiply(new BigDecimal("100")).doubleValue();
+    }
+
+    /**
+     * Calculate waste percentage
+     * Business Rule: Waste/Input * 100
+     */
+    public Double calculateWastePercentage() {
+        if (inputQuantityKg == null || inputQuantityKg.compareTo(BigDecimal.ZERO) == 0) {
+            return 0.0;
+        }
+        return wasteQuantityKg.divide(inputQuantityKg, 4, java.math.RoundingMode.HALF_UP).multiply(new BigDecimal("100")).doubleValue();
+    }
+}

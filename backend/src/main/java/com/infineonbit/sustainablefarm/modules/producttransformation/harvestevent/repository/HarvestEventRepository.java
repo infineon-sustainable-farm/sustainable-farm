@@ -1,0 +1,104 @@
+package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository;
+
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repository for HarvestEvent entity
+ * Harvest data from Plants workstream - Integration Entity
+ * 
+ * @author Abdoul Ben Fatao SANON
+ * @version 1.0.0
+ */
+@Repository
+public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Long> {
+
+    /** The harvest event of a business code, shown as {@code harvestId}. */
+    Optional<HarvestEvent> findByHarvestId(String harvestId);
+
+    /** Whether a harvest event has this business code. */
+    boolean existsByHarvestId(String harvestId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByHarvestId(String harvestId);
+
+
+    /**
+     * Find harvest event by batch ID
+     * Business Rule: One harvest event creates exactly one batch
+     */
+    Optional<HarvestEvent> findByBatchId(String batchId);
+
+    /**
+     * Find harvest events by date range
+     */
+    List<HarvestEvent> findByHarvestDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Find harvest events by mango variety
+     */
+    List<HarvestEvent> findByVarietyKey(String varietyKey);
+
+    /**
+     * Find harvest events by quality grade
+     */
+    List<HarvestEvent> findByQualityGrade(QualityGrade qualityGrade);
+
+    /**
+     * Find harvest events of several blocks (the blocks of a farm)
+     */
+    List<HarvestEvent> findByFarmBlockIdIn(java.util.Collection<Long> farmBlockIds);
+
+    /**
+     * Find harvest events of several blocks (the blocks of a farm) and a date range
+     */
+    List<HarvestEvent> findByFarmBlockIdInAndHarvestDateBetween(java.util.Collection<Long> farmBlockIds,
+                                                                LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Find harvest events by variety and quality grade
+     */
+    @Query("SELECT h FROM HarvestEvent h WHERE h.varietyKey = :variety AND h.qualityGrade = :grade")
+    List<HarvestEvent> findByVarietyAndGrade(@Param("variety") String variety, 
+                                       @Param("grade") QualityGrade grade);
+
+    /**
+     * Check if batch ID already exists
+     * Business Rule: batch_id must be unique
+     */
+    boolean existsByBatchId(String batchId);
+
+    /**
+     * Get total harvest quantity by variety
+     */
+    @Query("SELECT SUM(h.harvestQuantityKg) FROM HarvestEvent h WHERE h.varietyKey = :variety")
+    Double getTotalHarvestQuantityByVariety(@Param("variety") String variety);
+
+    /**
+     * Aggregate harvest totals for date range filtering (SQL-side aggregation).
+     * Using COALESCE(...) 0 ensures the query returns 0 instead of null
+     * when no rows match, and skips SQL NULL values inside SUM().
+     */
+    @Query("SELECT COALESCE(SUM(h.harvestQuantityKg), 0) FROM HarvestEvent h WHERE h.harvestDate BETWEEN :start AND :end")
+    BigDecimal getTotalHarvestQuantityByHarvestDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    /**
+     * Count harvest events by date range without loading the rows
+     */
+    @Query("SELECT COUNT(h) FROM HarvestEvent h WHERE h.harvestDate BETWEEN :start AND :end")
+    long countByHarvestDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    /**
+     * Get harvest events by team
+     */
+    List<HarvestEvent> findByHarvestTeamId(String harvestTeamId);
+}

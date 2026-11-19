@@ -1,0 +1,126 @@
+// @vitest-environment jsdom
+// DOM environment and between-test cleanup declared in the file: the module requires
+// no shared Vitest configuration (see SourcesView.test.jsx).
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { controlByLabel, renderView as render } from './testRender'
+import { PlantsBlocksView } from './PlantsBlocksView'
+import { plantsIntegrationApi, zoneApi, zoneBlockMappingApi } from '../../api/watersupplyApi'
+
+afterEach(cleanup)
+
+vi.mock('../../api/watersupplyApi', () => ({
+  zoneApi: { updateZone: vi.fn() },
+  zoneBlockMappingApi: {
+    getMappings: vi.fn(),
+    createMapping: vi.fn(),
+    deleteMapping: vi.fn(),
+  },
+  plantsIntegrationApi: {
+    getRainfall: vi.fn(),
+    getIrrigationNeed: vi.fn(),
+  },
+}))
+
+vi.mock('../../hooks/useFarms', () => ({
+  useFarms: () => ({ farms: [{ id: 1, name: 'North Farm' }] }),
+  useFields: () => ({ fields: [
+    { id: 10, farmId: 1, name: 'Field A', code: 'A' },
+    { id: 11, farmId: 1, name: 'D1', code: 'D1' },
+    { id: 12, farmId: 1, name: 'No code field', code: null },
+    { id: 20, farmId: 2, name: 'Far field', code: 'F' },
+  ] }),
+  useZones: () => ({ zones: [
+    { id: 100, name: 'Drip Zone A', fieldId: 10 },
+    { id: 101, name: 'Drip Zone B', fieldId: 10 },
+    { id: 102, name: 'Orphan zone', fieldId: 99 },
+  ] }),
+}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  zoneBlockMappingApi.getMappings.mockResolvedValue([
+    { id: 100, zoneId: 100, blockCode: 'A', farmId: 1 },
+    { id: 101, zoneId: 101, blockCode: 'B', farmId: 1 },
+    { id: 1010, zoneId: 101, blockCode: 'C', farmId: 1 },
+  ])
+  plantsIntegrationApi.getRainfall.mockResolvedValue({ blockCode: 'A', rainfallMm: 15, gaugeCount: 2 })
+  plantsIntegrationApi.getIrrigationNeed.mockResolvedValue({
+    blockCode: 'A', needLiters: 93750, baseNeedLiters: 93750, et0Mm: 5, growthPhase: 'full production',
+    growthPhaseSource: 'plants_calendar', phaseFactor: 1, warnings: ['phase_factors_not_validated'],
+  })
+})
+
+const props = { notify: vi.fn() }
+
+describe('PlantsBlocksView', () => {
+  it('lists the links and flags a zone shared by several blocks', async () => {
+    render(<PlantsBlocksView {...props} />)
+
+    // The zone names are also options of the form: wait for the links themselves.
+    await screen.findByText('3 block(s), 3 link(s)')
+    expect(screen.getAllByText('Drip Zone A').length).toBeGreaterThan(1)
+    // Zone B waters blocks B and C: Plants gets multipleBlockCodes=true for its volumes.
+    expect(screen.getAllByText('several blocks')).toHaveLength(2)
+  })
+
+  it('shows what Plants reads for the selected block', async () => {
+    render(<PlantsBlocksView {...props} />)
+
+    await waitFor(() => expect(screen.getByText('15 mm')).toBeTruthy())
+    expect(screen.getByText('93750 L')).toBeTruthy()
+    expect(screen.getByText(/full production × 1/)).toBeTruthy()
+    expect(screen.getByText(/Phase factors are still 1.0/)).toBeTruthy()
+    expect(plantsIntegrationApi.getRainfall).toHaveBeenCalledWith('A', expect.stringMatching(/-01$/), expect.any(String))
+    expect(plantsIntegrationApi.getIrrigationNeed).toHaveBeenCalledWith(expect.objectContaining({ blockCode: 'A', growthPhase: undefined }))
+
+    fireEvent.change(controlByLabel(document.body, 'Growth phase used'), { target: { value: 'establishment' } })
+    await waitFor(() => expect(plantsIntegrationApi.getIrrigationNeed)
+      .toHaveBeenCalledWith(expect.objectContaining({ blockCode: 'A', growthPhase: 'establishment' })))
+  })
+
+  it('links a zone by moving it into a field of its farm that has a Plants code', async () => {
+    zoneApi.updateZone.mockResolvedValue({ id: 100, fieldId: 11 })
+    render(<PlantsBlocksView {...props} />)
+    await screen.findByText('3 block(s), 3 link(s)')
+    const form = document.querySelector('form')
+
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
+    const block = controlByLabel(form, 'Plants block')
+    // Only the coded fields of the zone's farm: no typed code, no field without a code.
+    expect([...block.options].map((option) => option.textContent)).toEqual(['Select', 'A · Field A', 'D1'])
+    fireEvent.change(block, { target: { value: '11' } })
+    fireEvent.submit(form)
+
+    await waitFor(() => expect(zoneApi.updateZone).toHaveBeenCalledWith(100, { fieldId: 11 }))
+    await waitFor(() => expect(props.notify).toHaveBeenCalledWith('Zone linked to block D1'))
+    expect(zoneBlockMappingApi.createMapping).not.toHaveBeenCalled()
+  })
+
+  it('asks for a block and explains a zone already in that field', async () => {
+    render(<PlantsBlocksView {...props} />)
+    await screen.findByText('3 block(s), 3 link(s)')
+    const form = document.querySelector('form')
+
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText('Select a Plants block.')).toBeTruthy())
+
+    fireEvent.change(controlByLabel(form, 'Plants block'), { target: { value: '10' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText('This zone is already linked to block A.')).toBeTruthy())
+    expect(zoneApi.updateZone).not.toHaveBeenCalled()
+  })
+
+  it('explains a zone whose farm cannot be resolved', async () => {
+    render(<PlantsBlocksView {...props} />)
+    await screen.findByText('3 block(s), 3 link(s)')
+    const form = document.querySelector('form')
+
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '102' } })
+    fireEvent.change(controlByLabel(form, 'Plants block'), { target: { value: '11' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText(/farm of this zone is unknown/)).toBeTruthy())
+    expect(zoneApi.updateZone).not.toHaveBeenCalled()
+  })
+})

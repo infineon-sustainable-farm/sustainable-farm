@@ -1,0 +1,92 @@
+package com.infineonbit.sustainablefarm.modules.plants.entity;
+
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.Instant;
+import java.time.LocalDate;
+
+/**
+ * A problem seen during a {@link HealthInspection}: an issue of the catalogue,
+ * optionally on one tree.
+ *
+ * <p>The row holds no status. The status is computed on every read from the
+ * treatments of the finding and its resolution. {@code resolvedOn} and
+ * {@code resolutionNote} are written once, by the resolution route, and never
+ * change afterwards: the resolution is a dated event, not a status.
+ *
+ * <p>{@code otherLabel} names the problem when the issue is "Other", and only
+ * then. The farm and the block are those of the inspection.
+ *
+ * <p>The table and its columns follow the naming of the other modules: English
+ * snake_case and a singular table name.
+ */
+@Entity
+@Table(name = "health_finding",
+        indexes = {
+                @Index(name = "idx_health_finding_issue_id", columnList = "issue_id"),
+                @Index(name = "idx_health_finding_inspection_id", columnList = "inspection_id")})
+@Getter
+@Setter
+@NoArgsConstructor
+public class HealthFinding extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "inspection_id", nullable = false)
+    private HealthInspection inspection;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "issue_id", nullable = false)
+    private HealthIssueReference issue;
+
+    @Column(name = "other_label", length = 60)
+    private String otherLabel;
+
+    /** The tree concerned, for example {@code "42"}, or {@code null} for the block as a whole. */
+    @Column(name = "tree_label", length = 20)
+    private String treeLabel;
+
+    @Column(name = "resolved_on")
+    private LocalDate resolvedOn;
+
+    @Column(name = "resolution_note")
+    private String resolutionNote;
+
+    /** Where the row comes from, for example {@code "user_entry"} for the inspection route. */
+    @Column(name = "source", nullable = false)
+    private String source;
+
+    /** Write time of the finding, then of its resolution, its only change. */
+    @Column(name = "last_updated")
+    private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public HealthFinding(Long id,
+            HealthInspection inspection,
+            HealthIssueReference issue,
+            String otherLabel,
+            String treeLabel,
+            LocalDate resolvedOn,
+            String resolutionNote,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.inspection = inspection;
+        this.issue = issue;
+        this.otherLabel = otherLabel;
+        this.treeLabel = treeLabel;
+        this.resolvedOn = resolvedOn;
+        this.resolutionNote = resolutionNote;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
+}

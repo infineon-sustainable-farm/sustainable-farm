@@ -113,30 +113,3 @@ come from the base branch, and the PR code is only fetched and compared with
 git, never executed. Values written by the PR author (branch name, title) are
 passed through environment variables, never inlined in a script. Keep these two
 rules in any change to these workflows, otherwise the token can leak.
-
-## Default branch copy (main) must stay in sync
-
-`pull_request_target` workflows appear to be triggered only when the workflow
-file also exists on the repository default branch (`main`). The review stopped
-running on 2026-11-06 when Auto-review and Module ownership moved to
-`pull_request_target` while only `develop` had them; no run of either workflow
-was produced afterwards.
-
-Keep these files identical on `main` and `develop`, and update `main` in the
-same change window every time one of them changes on `develop`:
-
-- `.github/workflows/auto-review.yml`
-- `.github/workflows/module-ownership.yml`
-- `.github/module-owners.conf`
-- `scripts/audit-shared-files.sh`, `scripts/ci-guards.sh`, `scripts/module-ownership-guard.sh`
-
-Quick check that nothing drifted:
-
-```bash
-git diff origin/main origin/develop -- .github/workflows/auto-review.yml \
-  .github/workflows/module-ownership.yml .github/module-owners.conf scripts
-```
-
-An empty output means both branches are in sync. If the reviews stop running
-again, check first with `gh run list --workflow auto-review.yml` that runs with
-the `pull_request_target` event still appear.

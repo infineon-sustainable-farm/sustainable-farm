@@ -1,0 +1,285 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens of Sustainable Farm.
+ *
+ * One token set for every module, taken from the machinery module (the reference look) and kept
+ * consistent across the app. Components read these
+ * semantic names only (bg-surface-raised, text-text-muted, rounded-card...), never a raw colour.
+ *
+ * Kept from Tailwind 4 without redefinition, because machinery renders with them:
+ * - spacing: --spacing 0.25rem (4 px grid: p-1 = 4 px, p-5 = 20 px);
+ * - text sizes (7): xs 12, sm 14, base 16, lg 18, xl 20, 2xl 24, 3xl 30 px (plus --text-display
+ *   below, 64 px, for the headline of the home page only);
+ * - weights: normal 400, medium 500, semibold 600, bold 700;
+ * - the gray, green, amber, red, sky and teal palettes the semantic colours point to.
+ *
+ * `static`: every token below is emitted as a CSS variable even when no class uses it yet, so code
+ * outside Tailwind classes (Recharts colours, inline styles) can read var(--color-chart-1).
+ *
+ * The block at the end holds the tokens and classes of sitesecurity, the one module not migrated.
+ */
+@theme static {
+  /* Fonts: Inter for body and headings (SIL Open Font License 1.1, loaded in index.html) */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Spacing: 4 px base (Tailwind default, restated) */
+  --spacing: 0.25rem;
+
+  /* Surfaces */
+  --color-surface: #f8f9ff; /* page background */
+  --color-surface-raised: #ffffff; /* cards, panels, dialogs, inputs */
+  --color-surface-muted: var(--color-gray-50); /* table headers, skeletons, quiet panels */
+
+  /* Text */
+  --color-text: #0b1c30; /* body text: 17.5:1 on surface-raised */
+  --color-text-muted: var(--color-gray-500); /* secondary text: 4.8:1 on white, 4.6:1 on surface */
+  --color-text-accent: #065e55; /* primary-coloured text on surface (primary is 4.47:1 there) */
+
+  /* Borders */
+  --color-border-subtle: var(--color-gray-100); /* cards */
+  --color-border-input: var(--color-gray-300); /* inputs and selects, as in machinery */
+  --color-border-strong: var(--color-gray-500); /* boundaries that must reach 3:1 */
+  --color-border-divider: var(--color-gray-200); /* table header rule, as machinery (border-gray-200) */
+
+  /* Primary */
+  --color-primary: #0a8276; /* sidebar, primary buttons: 4.7:1 with on-primary */
+  --color-primary-hover: color-mix(in srgb, var(--color-primary) 85%, white 15%);
+  --color-primary-active: color-mix(in srgb, var(--color-primary) 70%, white 30%); /* current nav link */
+  --color-primary-pressed: #065e55;
+  --color-primary-tint: var(--color-teal-50); /* primary KPI icon tile */
+  --color-on-primary: #ffffff;
+  --color-focus-ring: var(--color-primary);
+
+  /* States: -bg and -fg pair for badges (AA), -tint for KPI icon tiles */
+  --color-success-bg: var(--color-green-100);
+  --color-success-fg: var(--color-green-700);
+  --color-warning-bg: var(--color-amber-100);
+  --color-warning-fg: var(--color-amber-700);
+  --color-warning-tint: var(--color-amber-50);
+  --color-error-bg: var(--color-red-100);
+  --color-error-fg: var(--color-red-700);
+  --color-error-tint: var(--color-red-50);
+  --color-info-bg: var(--color-sky-100);
+  --color-info-fg: var(--color-sky-700);
+  --color-info-tint: var(--color-sky-50);
+  --color-neutral-bg: var(--color-gray-100); /* neutral badge, skeleton blocks (machinery bg-gray-100) */
+  --color-neutral-fg: var(--color-gray-600); /* neutral badge text: 6.6:1 on neutral-bg */
+
+  /* Danger actions (machinery delete buttons, bg-red-600): 4.8:1 with on-primary */
+  --color-danger: var(--color-red-600);
+  --color-danger-pressed: var(--color-red-700);
+
+  /* Dialog backdrop (machinery bg-black/50) */
+  --color-backdrop: rgb(0 0 0 / 0.5);
+
+  /* Photo scrim (home page): a plain neutral dark layer over the landscape photo, no gradient, so
+     white text passes AA on every pixel of the photo (4.7:1 on the brightest one, 15:1 median) */
+  --color-scrim: rgb(0 0 0 / 0.55);
+  --color-on-scrim: #ffffff; /* text, icons and outlines over the scrim */
+
+  /* Charts (machinery fuel and usage chart) */
+  --color-chart-1: #0a8276;
+  --color-chart-2: #d9a441;
+  --color-chart-3: #94a3b8; /* also axis ticks */
+  --color-chart-4: #4caf50; /* charts with more than three series (energy consumption breakdown) */
+  --color-chart-5: #c1503f;
+  --color-chart-6: #3a7ca5;
+  --color-chart-grid: #eef2f1;
+
+  /* Radii */
+  --radius-control: 0.5rem; /* 8 px: buttons, inputs, nav links (rounded-lg) */
+  --radius-tile: 0.75rem; /* 12 px: icon tiles, chart tooltip (rounded-xl) */
+  --radius-card: 1rem; /* 16 px: cards, banners (rounded-2xl) */
+  --radius-pill: 9999px; /* badges (rounded-full) */
+
+  /* Shadows */
+  --shadow-raised: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); /* shadow-sm */
+  --shadow-overlay: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+
+  /* Motion */
+  --duration-fast: 150ms; /* colour and hover transitions */
+  --duration-base: 200ms;
+  --duration-slow: 300ms; /* mobile sidebar drawer */
+  --duration-reveal: 550ms; /* card entrance */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Layers: the only z-index values */
+  --z-drawer: 40; /* sidebar drawer */
+  --z-overlay: 50; /* menu button, modals */
+  --z-toast: 60;
+
+  /* Display text: the headline of the home page only (64 px, scale of @arc/design) */
+  --text-display: 4rem;
+  --text-display--line-height: 1.1;
+
+  /* Layout */
+  --width-sidebar: 15rem; /* 240 px (w-60) */
+  --breakpoint-xs: 24rem; /* 384 px: two module cards per row on the home page */
+  --breakpoint-wide: 90rem; /* 1440 px: the seven module cards in one row on the home page */
+}
+
+/* Base styles */
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Global chrome: text selection and scrollbars, same values as before T45 */
+::selection {
+  background: rgba(178, 58, 104, 0.18);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #d6dbe4;
+  border-radius: 8px;
+  border: 3px solid #f4f6f9;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ==========================================================================
+ * sitesecurity (excluded module, not migrated)
+ *
+ * The FenceLine tokens and classes that frontend/src/features/sitesecurity still uses, values
+ * unchanged. Nothing else may use them; delete this block when sitesecurity moves to the token set
+ * above. Fonts: Montserrat (font-display) and IBM Plex Mono (font-mono), loaded in index.html for
+ * this module only.
+ * ========================================================================== */
+@theme {
+  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-primary-700: #086960;
+  --color-primary-600: #0a8276;
+  --color-primary-50: #eaf8f6;
+
+  --color-navy-950: #0a111f;
+  --color-navy-900: #101b2e;
+  --color-navy-800: #16233a;
+  --color-navy-50: #f2f4f9;
+
+  --color-accent-50: #fff8f2;
+  --color-accent-100: #ffeedc;
+  --color-accent-200: #ffd5ab;
+  --color-accent-500: #ef6c00;
+  --color-accent-600: #d85f00;
+
+  --color-sec-red: #c62828;
+}
+
+.svg-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+}
+
+@keyframes fence-sweep {
+  to {
+    stroke-dashoffset: -1920;
+  }
+}
+
+.fence-sweep {
+  stroke-dasharray: 110 1810;
+  animation: fence-sweep 16s linear infinite;
+}
+
+@keyframes gate-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+
+  80%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.gate-ping {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: gate-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.status-pulse {
+  animation: status-pulse 1.8s ease-in-out infinite;
+}
+
+.bg-dotgrid {
+  background-image: radial-gradient(
+    circle,
+    rgba(15, 23, 42, 0.075) 1px,
+    transparent 1.2px
+  );
+  background-size: 22px 22px;
+  background-position: center;
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+    background-color: var(--color-accent-50);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.row-in {
+  animation: row-in 0.6s ease-out both;
+}
