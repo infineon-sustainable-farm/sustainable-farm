@@ -236,6 +236,18 @@ export const productTransformationApi = {
   forecastAvailability: (request) => apiClient.post('/api/water-supply/product-transformation/availability-forecast', request),
 }
 
+// The processing batches belong to Product Transformation (OWNER_LINKS.processingBatch): a lot is
+// picked in its list, never typed.
+export const processingBatchApi = {
+  getBatches: () => apiClient.get('/api/product-transformation/batches'),
+}
+
+// The variety catalogue belongs to Plants (OWNER_LINKS.variety): the crop type of a field is picked
+// in it, by key.
+export const varietyCatalogApi = {
+  getVarieties: () => apiClient.get('/api/plants/variety-references'),
+}
+
 // Outbound valve commands: 503 VALVE_GATEWAY_UNAVAILABLE until a device gateway is configured.
 export const iotCommandApi = {
   sendCommand: (deviceId, command) => apiClient.post(`/api/water-supply/iot/devices/${encodeURIComponent(deviceId)}/commands`, command),
