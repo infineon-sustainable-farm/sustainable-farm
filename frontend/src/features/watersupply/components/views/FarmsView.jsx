@@ -16,6 +16,9 @@ import { formatFieldCoordinates, parseFieldCoordinates, useGeoMessage } from './
 
 const EMPTY_FARM_FORM = { name: '', address: '', areaHectares: '', description: '', latitude: '', longitude: '' }
 
+/** Plants block code of a field ("A", "B2"): letters and digits, no prefix or space; empty for none. */
+const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
+
 /**
  * CRUD view for Farms / Fields / Zones (Task 4.1). The tables, the forms and the coordinate
  * helpers live in ./farms.
@@ -43,7 +46,8 @@ export function FarmsView({ notify }) {
   const [busy, setBusy] = useState(false)
 
   const [showFieldForm, setShowFieldForm] = useState(false)
-  const [fieldForm, setFieldForm] = useState({ farmId: '', name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '' })
+  const [fieldForm, setFieldForm] = useState({ farmId: '', name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '', code: '' })
+  const [editingField, setEditingField] = useState(null)
   const [showZoneForm, setShowZoneForm] = useState(false)
   const [zoneForm, setZoneForm] = useState({ fieldId: '', name: '', areaHectares: '', irrigationMethod: '' })
   const [query, setQuery] = useState('')
@@ -62,6 +66,7 @@ export function FarmsView({ notify }) {
   }
   const closeFieldForm = () => {
     setShowFieldForm(false)
+    setEditingField(null)
     clearCreateRequest()
   }
   const closeZoneForm = () => {
@@ -153,9 +158,26 @@ export function FarmsView({ notify }) {
 
   const openFieldForm = () => {
     setFormError(null)
-    setFieldForm((current) => ({ ...current, coordinates: '' }))
+    setEditingField(null)
+    setFieldForm((current) => ({ ...current, coordinates: '', code: '' }))
     setShowFieldForm(true)
     locateField()
+  }
+
+  /** Edits a field, its Plants block code included: the code Plants and Product Transformation pick it by. */
+  const editField = (row) => {
+    setFormError(null)
+    setEditingField(row)
+    setFieldForm({
+      farmId: row.farmId ?? '',
+      name: row.name || '',
+      areaHectares: row.areaHectares ?? '',
+      cropType: row.cropType || '',
+      soilType: row.soilType || '',
+      coordinates: row.coordinates || '',
+      code: row.code || '',
+    })
+    setShowFieldForm(true)
   }
 
   const saveFarm = (e) => {
@@ -196,6 +218,11 @@ export function FarmsView({ notify }) {
       setFormError(geoMessage(invalid))
       return
     }
+    const code = fieldForm.code.trim()
+    if (code && !BLOCK_CODE_PATTERN.test(code)) {
+      setFormError(t('farms.errors.codeFormat'))
+      return
+    }
     setFormError(null)
     setBusy(true)
     const payload = {
@@ -205,16 +232,18 @@ export function FarmsView({ notify }) {
       cropType: fieldForm.cropType || null,
       soilType: fieldForm.soilType || null,
       coordinates: parsed ? formatFieldCoordinates(Number(parsed.latitude), Number(parsed.longitude)) : null,
+      // On an update an empty code clears it; on a creation no code is sent as null.
+      code: editingField ? code : code || null,
     }
-    fieldApi
-      .createField(payload)
+    const req = editingField ? fieldApi.updateField(editingField.id, payload) : fieldApi.createField(payload)
+    req
       .then(() => {
-        notify(t('farms.fieldCreated'))
+        notify(editingField ? t('farms.fieldUpdated') : t('farms.fieldCreated'))
         closeFieldForm()
-        setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '' }))
+        setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '', code: '' }))
         loadAll()
       })
-      .catch((err) => setError(err.message || t('farms.saveError')))
+      .catch((err) => setFormError(err.message || t('farms.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -294,7 +323,7 @@ export function FarmsView({ notify }) {
             {visibleFields.length === 0 ? (
               <EmptyState title={t('farms.noFieldsTitle')} message={t('farms.noFields')} />
             ) : (
-              <FieldsTable rows={visibleFields} onDelete={(row) => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })} />
+              <FieldsTable rows={visibleFields} onEdit={editField} onDelete={(row) => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })} />
             )}
           </Card>
 
@@ -327,7 +356,7 @@ export function FarmsView({ notify }) {
 
       {fieldFormOpen && (
         <ChildFormModal
-          title={t('farms.newField')}
+          title={editingField ? t('farms.editField') : t('farms.newField')}
           farms={farms}
           fields={[]}
           form={fieldForm}

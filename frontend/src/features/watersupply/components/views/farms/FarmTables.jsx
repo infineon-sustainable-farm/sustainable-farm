@@ -43,11 +43,12 @@ export function FarmsTable({ rows, selectedFarm, onEdit, onDelete, onToggleField
   )
 }
 
-/** Fields, filtered by the selected farm. */
-export function FieldsTable({ rows, onDelete }) {
+/** Fields, filtered by the selected farm, with their Plants block code. */
+export function FieldsTable({ rows, onEdit, onDelete }) {
   const { t, text, area } = useCommonCells()
   const columns = [
     { key: 'name', header: t('farms.columns.name'), sortable: true },
+    { key: 'code', header: t('farms.columns.code'), sortable: true, cell: (r) => text(r.code) },
     { key: 'cropType', header: t('farms.columns.crop'), cell: (r) => text(r.cropType) },
     { key: 'soilType', header: t('farms.columns.soil'), cell: (r) => text(r.soilType) },
     { key: 'areaHectares', header: t('farms.columns.area'), cell: area },
@@ -65,7 +66,12 @@ export function FieldsTable({ rows, onDelete }) {
       caption={t('farms.fieldsTitle')}
       columns={columns}
       rows={rows}
-      rowActions={(row) => <IconButton icon={Trash2} tone="danger" label={t('common.delete')} onClick={() => onDelete(row)} />}
+      rowActions={(row) => (
+        <div className="flex items-center justify-end gap-1">
+          <IconButton icon={Pencil} label={t('common.edit')} onClick={() => onEdit(row)} />
+          <IconButton icon={Trash2} tone="danger" label={t('common.delete')} onClick={() => onDelete(row)} />
+        </div>
+      )}
     />
   )
 }
