@@ -3,12 +3,11 @@ import { PURCHASED } from "./nurseryRequests";
 
 /*
  * Checks of the nursery dialogs, the same rules as the API: a batch code of up
- * to 20 letters, digits or hyphens, a block as for a planting, a whole count or
+ * to 20 letters, digits or hyphens, a whole count or
  * quantity of up to 9 digits, and the lengths of the free texts. Spaces around
  * a code are removed by the API. Messages are read in the active language.
  */
 const BATCH_CODE_PATTERN = /^\s*[A-Za-z0-9-]{1,20}\s*$/;
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
 const COUNT_PATTERN = /^\d{1,9}$/;
 export const TEXT_MAX_LENGTH = 255;
 export const LOT_NUMBER_MAX_LENGTH = 50;
@@ -67,9 +66,6 @@ export function validateBatch(values, { today, isCountUnreadable }) {
     if (!values.plannedTransplantOn) {
         errors.plannedTransplantOn = message("plannedDateRequired");
     }
-    if (values.plannedBlockCode.trim() && !BLOCK_CODE_PATTERN.test(values.plannedBlockCode)) {
-        errors.plannedBlockCode = message("plannedBlockFormat");
-    }
     return errors;
 }
 
@@ -104,8 +100,6 @@ export function validateEvent(eventType, values, { today, isQuantityUnreadable }
     if (eventType === "TRANSPLANT") {
         if (!values.blockCode.trim()) {
             errors.blockCode = message("blockRequired");
-        } else if (!BLOCK_CODE_PATTERN.test(values.blockCode)) {
-            errors.blockCode = message("blockFormat");
         }
     }
     return errors;

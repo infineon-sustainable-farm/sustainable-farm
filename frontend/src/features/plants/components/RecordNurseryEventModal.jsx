@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Modal, Select } from "../../../shared/ui";
 import { useNurseryBatches } from "../hooks/useNurseryBatches";
-import { useVarietyBlocks } from "../hooks/useVarieties";
 import { formatDate, formatEnum, formatNumber } from "../utils/format";
 import {
     EVENT_DATE_FIELDS,
@@ -11,6 +10,7 @@ import {
     NURSERY_STAGES,
 } from "../utils/nurseryRequests";
 import { todayAsIsoDate, validateEvent } from "../utils/nurseryValidation";
+import BlockSelect from "./BlockSelect";
 import FormAlert from "./FormAlert";
 import NurseryField from "./NurseryField";
 import { noteId, RADIO_CLASS } from "./nurseryForm";
@@ -65,7 +65,6 @@ export default function RecordNurseryEventModal({ isSubmitting, error, onSubmit,
     const [today] = useState(todayAsIsoDate);
 
     const batches = useNurseryBatches();
-    const { data: blocks } = useVarietyBlocks();
     const batchList = batches.data ?? [];
     const batch = batchList.find((item) => String(item.id) === values.batchId) ?? null;
 
@@ -103,7 +102,6 @@ export default function RecordNurseryEventModal({ isSubmitting, error, onSubmit,
     const batchDescribedBy = describedBy(FIELD_IDS.batch, batchNote);
     const stageDescribedBy = describedBy(FIELD_IDS.stage, stageNote);
     const quantityDescribedBy = describedBy(FIELD_IDS.quantity, quantityNote);
-    const blockDescribedBy = describedBy(FIELD_IDS.block, blockNote);
     const typeOptions = NURSERY_EVENT_TYPES.map((type) => ({ value: type, label: formatEnum("nurseryEvent", type) }));
     const stageOptions = NURSERY_STAGES.map((stage) => ({ value: stage, label: formatEnum("nurseryStage", stage) }));
 
@@ -248,25 +246,15 @@ export default function RecordNurseryEventModal({ isSubmitting, error, onSubmit,
                     )}
 
                     {eventType === "TRANSPLANT" && (
-                        <NurseryField
-                            id="event-block"
+                        <BlockSelect
+                            id={FIELD_IDS.block}
                             label={t("nursery.eventForm.block")}
+                            value={values.blockCode}
+                            onChange={(code) => setValue("blockCode", code)}
                             error={fieldError("blockCode")}
-                            note={blockNote}
-                        >
-                            <Input
-                                type="text"
-                                list="event-block-options"
-                                value={values.blockCode}
-                                onChange={(event) => setValue("blockCode", event.target.value)}
-                                aria-describedby={blockDescribedBy}
-                            />
-                            <datalist id="event-block-options">
-                                {(blocks ?? []).map((block) => (
-                                    <option key={block} value={block} />
-                                ))}
-                            </datalist>
-                        </NurseryField>
+                            hint={blockNote}
+                            farmId={batch?.farmId ?? null}
+                        />
                     )}
                 </div>
 

@@ -154,7 +154,6 @@
       "title": "Enregistrer une plantation",
       "plantingDate": "Date de plantation",
       "block": "Bloc",
-      "blockPlaceholder": "ex. A",
       "variety": "Variété",
       "varietyPlaceholder": "ex. Keitt",
       "treeCount": "Nombre d’arbres",
@@ -171,7 +170,6 @@
       "plantingDateRequired": "La date de plantation est obligatoire.",
       "plantingDateFuture": "La date de plantation ne peut pas être dans le futur.",
       "blockRequired": "Le bloc est obligatoire.",
-      "blockFormat": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace.",
       "varietyRequired": "La variété est obligatoire.",
       "varietyTooLong": "La variété doit comporter au plus {{max}} caractères.",
       "treeCount": "Le nombre d’arbres doit être un nombre entier d’au moins 1.",
@@ -349,7 +347,6 @@
         "supplierTooLong": "Le fournisseur doit comporter au plus 255 caractères.",
         "totalCostInvalid": "Le coût total doit être un nombre supérieur à 0, avec au plus 2 décimales.",
         "blockRequired": "Le bloc est obligatoire.",
-        "blockInvalid": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace.",
         "applicatorRequired": "L’applicateur est obligatoire.",
         "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères.",
         "methodTooLong": "La méthode doit comporter au plus 255 caractères.",
@@ -464,8 +461,7 @@
         "startFuture": "La date de début ne peut pas être dans le futur.",
         "countInvalid": "L’effectif initial doit être un nombre entier, 1 ou plus.",
         "stageRequired": "Le stade initial est obligatoire.",
-        "plannedDateRequired": "La date de transplantation prévue est obligatoire.",
-        "plannedBlockFormat": "Le bloc prévu doit être un code court comme E ou B2, sans préfixe ni espace."
+        "plannedDateRequired": "La date de transplantation prévue est obligatoire."
       }
     },
     "eventForm": {
@@ -501,8 +497,7 @@
         "quantityInvalid": "La quantité doit être un nombre entier, 1 ou plus.",
         "reasonRequired": "Le motif est obligatoire.",
         "reasonTooLong": "Le motif doit compter au plus {{max}} caractères.",
-        "blockRequired": "Le bloc est obligatoire.",
-        "blockFormat": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace."
+        "blockRequired": "Le bloc est obligatoire."
       }
     }
   },
@@ -516,7 +511,7 @@
     "selectAllBlocks": "Sélectionnez « Tous les blocs » pour voir les blocs inspectés.",
     "optional": "Facultatif.",
     "block": "Bloc",
-    "blockNote": "Par exemple A ou B2. Le bloc n’a pas besoin de plantation.",
+    "blockNote": "Le bloc n’a pas besoin de plantation.",
     "selectProblem": "Choisir un problème",
     "otherLabel": "Nom du problème",
     "place": {
@@ -527,7 +522,6 @@
     },
     "errors": {
       "blockRequired": "Le bloc est obligatoire.",
-      "blockFormat": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace.",
       "otherLabelRequired": "Le nom du problème est obligatoire avec « Autre ».",
       "otherLabelTooLong": "Le nom du problème doit comporter au plus {{max}} caractères."
     },
