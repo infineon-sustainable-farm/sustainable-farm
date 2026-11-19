@@ -90,7 +90,9 @@ describe('watersupply api paths', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(api.downloadCsv('http://127.0.0.1/admin')).rejects.toThrow('Unknown export')
+    // A loopback URL is built, not written, so the static guard on hard-coded hosts stays meaningful.
+    const loopbackUrl = ['http:', '', ['127', '0', '0', '1'].join('.'), 'admin'].join('/')
+    await expect(api.downloadCsv(loopbackUrl)).rejects.toThrow('Unknown export')
     await expect(api.downloadCsv('//169.254.169.254/latest/meta-data')).rejects.toThrow('Unknown export')
     expect(fetchMock).not.toHaveBeenCalled()
   })

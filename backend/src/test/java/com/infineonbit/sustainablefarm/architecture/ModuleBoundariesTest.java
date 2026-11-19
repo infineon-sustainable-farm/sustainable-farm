@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
  *   <li>A class of {@code modules.<x>} depends on another module {@code modules.<y>} only
  *       through its public package {@code modules.<y>.api}.</li>
  *   <li>{@code core} depends on no module.</li>
- *   <li>Errors are handled only in {@code core}: no {@code @ControllerAdvice} or
- *       {@code @RestControllerAdvice}, and no class named {@code *ExceptionHandler}, elsewhere.</li>
+ *   <li>Errors are handled only in {@code core}: no controller advice (plain or REST) and no
+ *       class named {@code *ExceptionHandler} elsewhere.</li>
  * </ul>
  *
  * <p>Only production classes are checked. The first two rules are strict. The third one is

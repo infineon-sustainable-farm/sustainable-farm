@@ -3,7 +3,8 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +25,11 @@ import java.util.List;
  * The values of Tommy Atkins and Other are placeholders to validate, flagged by
  * their source {@value #ASSUMPTION}.
  *
- * <p>The loader runs first ({@link VarietyCatalog#LOAD_ORDER}), so that the
- * seeds of the other modules find the keys they reference. A variety is
+ * <p>This is reference data, not demo data: product transformation and sales
+ * reference these keys in every profile, production included. It is therefore
+ * loaded when the application has started ({@link ApplicationStartedEvent}),
+ * before every startup runner, so that the dev demo seed finds the keys it
+ * references. It is not a dev-only seeder. A variety is
  * inserted only when its name is missing, ignoring case, accents and
  * surrounding spaces (see {@link VarietyReferenceMatcher}), and its key too. An
  * existing row is never overwritten, even when its value differs from the
@@ -33,8 +37,7 @@ import java.util.List;
  * the application therefore never duplicates nor resets a row.
  */
 @Component
-@Order(VarietyCatalog.LOAD_ORDER)
-public class VarietyCatalogLoader implements CommandLineRunner {
+public class VarietyCatalogLoader {
 
     /** Default yield and harvest season of a variety, with their sources. */
     private record VarietyDefault(String varietyName, String varietyKey, double yieldPerTreeKg, String yieldSource,
@@ -57,9 +60,11 @@ public class VarietyCatalogLoader implements CommandLineRunner {
         this.varietyReferenceRepository = varietyReferenceRepository;
     }
 
-    @Override
+    /** Loads the missing varieties once the application has started. */
+    @EventListener(ApplicationStartedEvent.class)
+    @Order(VarietyCatalog.LOAD_ORDER)
     @Transactional
-    public void run(String... args) {
+    public void loadOnStartup() {
         load(Instant.now());
     }
 
