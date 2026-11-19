@@ -474,10 +474,10 @@
   },
   "equipment": {
     "title": "Ausrüstung",
-    "subtitle": "Ausrüstung der Produktverarbeitung: Kapazität, Energieverbrauch und Wartungsstatus.",
-    "new": "Neue Ausrüstung",
-    "newTitle": "Neue Ausrüstung",
-    "editTitle": "Ausrüstung bearbeiten",
+    "subtitle": "Verarbeitungs- und Trocknungsmaschinen aus Maschinen, mit Kapazität, Energieverbrauch und Standort.",
+    "editSpecs": "Technische Daten bearbeiten",
+    "editTitle": "Technische Daten der Ausrüstung bearbeiten",
+    "machineryNote": "ID, Name und Status einer Maschine werden in Maschinen verwaltet.",
     "count": "{{count}} Geräte",
     "type": "Typ",
     "status": "Status",
@@ -510,19 +510,14 @@
     "location": "Standort",
     "lastMaintenance": "Letzte Wartung",
     "validation": {
-      "idRequired": "Die Ausrüstungs-ID ist erforderlich",
-      "nameRequired": "Der Name der Ausrüstung ist erforderlich",
       "typeRequired": "Der Ausrüstungstyp ist erforderlich",
       "capacityPositive": "Die Kapazität muss größer als 0 sein",
       "energyPositive": "Der Energieverbrauch muss größer als 0 sein"
     },
     "saveError": "Die Ausrüstung konnte nicht gespeichert werden",
-    "deleteError": "Die Ausrüstung konnte nicht gelöscht werden",
     "loadError": "Die Ausrüstung konnte nicht geladen werden",
-    "empty": "Keine Ausrüstung gefunden",
-    "noMatch": "Keine Ausrüstung entspricht den Filtern",
-    "deleteTitle": "Ausrüstung löschen",
-    "deleteMessage": "Ausrüstung {{id}} löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+    "empty": "Noch keine Verarbeitungs- oder Trocknungsmaschine in Maschinen",
+    "noMatch": "Keine Ausrüstung entspricht den Filtern"
   },
   "batches": {
     "title": "Chargenverwaltung",

@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.dto.request;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -12,8 +11,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * DTO for updating an existing Equipment
- * 
+ * DTO for updating the product transformation attributes of a machine ({@code pt_equipment_spec}).
+ *
+ * <p>The machine itself (code, name, stage, status) belongs to machinery, which alone creates,
+ * renames, changes the status of and deletes it: those fields are not part of this request, and
+ * a name or a status sent anyway is ignored. A {@code null} field is left unchanged.</p>
+ *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
@@ -21,9 +24,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EquipmentUpdateRequest {
-
-    @Size(max = 100, message = "Equipment name must be 100 characters or fewer")
-    private String equipmentName;
 
     private EquipmentType equipmentType;
 
@@ -35,8 +35,6 @@ public class EquipmentUpdateRequest {
 
     @Size(max = 100, message = "Location must be 100 characters or fewer")
     private String location;
-
-    private MaintenanceStatus maintenanceStatus;
 
     private LocalDate lastMaintenanceDate;
 }

@@ -144,7 +144,7 @@ public class HarvestStatusServiceTest {
                                                      int intervalDays) {
         return new HealthTreatmentResponse(id, FARM, blockCode, "OTHER", "Other", "Fruit fly", null,
                 treatedOn, "Insecticide B", "deltamethrin", 1.5, TreatmentUnit.L, intervalDays,
-                treatedOn.plusDays(intervalDays), "Awa", null, "user_entry", null);
+                treatedOn.plusDays(intervalDays), "Awa", null, null, "user_entry", null);
     }
 
     private static HarvestResponse harvest(long id, BlockVariety variety, LocalDate harvestDate) {

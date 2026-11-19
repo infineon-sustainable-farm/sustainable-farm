@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, Field, Input, Modal, Select } from '../../../shared/ui';
+import { OWNER_LINKS } from '../../../app/ownerLinks';
+import { Button, Field, Input, Modal, OwnedResourceSelect, Select } from '../../../shared/ui';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import FormActions from './FormActions';
 import FormAlert from './FormAlert';
@@ -151,16 +152,17 @@ export default function PackagingFormModal({ open, editing, batches, equipment, 
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('packaging.equipment')}>
-            <Select value={form.equipmentId} onChange={update('equipmentId')}>
-              <option value="">{t('packaging.noEquipment')}</option>
-              {equipment.map((item) => (
-                <option key={item.equipmentId} value={item.equipmentId}>
-                  {t('packaging.equipmentOption', { name: item.equipmentName, id: item.equipmentId })}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <OwnedResourceSelect
+            label={t('packaging.equipment')}
+            value={form.equipmentId}
+            onChange={(id) => setForm((current) => ({ ...current, equipmentId: id }))}
+            options={equipment}
+            getOptionValue={(item) => item.equipmentId}
+            getOptionLabel={(item) => t('packaging.equipmentOption', { name: item.equipmentName, id: item.equipmentId })}
+            placeholder={t('packaging.noEquipment')}
+            owner={OWNER_LINKS.equipment}
+            showOwnerLinkAlways
+          />
           <Field label={t('packaging.operator')}>
             <Select value={form.operatorId} onChange={update('operatorId')}>
               <option value="">{t('packaging.noOperator')}</option>
