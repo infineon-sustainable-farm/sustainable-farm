@@ -7,6 +7,7 @@ import PersonSelect from '../../../app/PersonSelect';
 import FormActions from './FormActions';
 import FormAlert from './FormAlert';
 import { QUALITY_GRADES, varietyKeyOf } from './rawIntakeOptions';
+import { blockLabel, farmIdOf, sameBlockCode, useFarmSite } from './useFarmSite';
 
 const emptyForm = () => ({
   intakeId: '',
@@ -25,7 +26,9 @@ const toForm = (intake) =>
     ? {
         intakeId: intake.intakeId || '',
         batchId: intake.batchId || '',
-        sourceFarm: intake.sourceFarm || '',
+        // null: the farm is read back from the saved block once the site lists are loaded.
+        sourceFarm: null,
+        savedFarm: intake.sourceFarm || '',
         sourceBlock: intake.sourceBlock || '',
         intakeDate: intake.intakeDate ? String(intake.intakeDate).slice(0, 10) : todayIsoDate(),
         receivedQuantityKg: String(intake.receivedQuantityKg ?? ''),
@@ -55,6 +58,26 @@ export default function RawIntakeFormModal({
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const site = useFarmSite();
+  // The farm and block pickers hold a farm id and a block code (the API takes a farm id or name).
+  const farmValue =
+    form.sourceFarm ?? farmIdOf(site.farms, site.fields, form.savedFarm, form.sourceBlock);
+  const farmFields = site.fields.filter((field) => String(field.farmId) === farmValue);
+  const blockValue =
+    farmFields.find((field) => sameBlockCode(field.code, form.sourceBlock))?.code ?? '';
+
+  const chooseFarm = (farmId) =>
+    setForm((current) => ({
+      ...current,
+      sourceFarm: farmId,
+      sourceBlock: site.fields.some(
+        (field) => String(field.farmId) === farmId && sameBlockCode(field.code, current.sourceBlock),
+      )
+        ? current.sourceBlock
+        : '',
+    }));
+  const chooseBlock = (code) => setForm((current) => ({ ...current, sourceFarm: farmValue, sourceBlock: code }));
+
   const update = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
 
   const close = () => {
@@ -66,8 +89,8 @@ export default function RawIntakeFormModal({
     if (!editing && !form.intakeId.trim()) return t('rawIntake.validation.intakeIdRequired');
     if (!editing && !form.batchId) return t('rawIntake.validation.batchRequired');
     if (!form.intakeDate) return t('rawIntake.validation.dateRequired');
-    if (!form.sourceFarm.trim()) return t('rawIntake.validation.sourceFarmRequired');
-    if (!form.sourceBlock.trim()) return t('rawIntake.validation.sourceBlockRequired');
+    if (!farmValue) return t('rawIntake.validation.sourceFarmRequired');
+    if (!blockValue) return t('rawIntake.validation.sourceBlockRequired');
     if (form.receivedQuantityKg === '' || Number(form.receivedQuantityKg) <= 0) {
       return t('rawIntake.validation.quantityPositive');
     }
@@ -85,7 +108,7 @@ export default function RawIntakeFormModal({
     setSaving(true);
     setFormError('');
     try {
-      await onSubmit(form);
+      await onSubmit({ ...form, sourceFarm: farmValue, sourceBlock: blockValue });
     } catch (err) {
       setFormError(err?.message || t('rawIntake.saveError'));
       setSaving(false);
@@ -120,12 +143,33 @@ export default function RawIntakeFormModal({
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('rawIntake.sourceFarm')}>
-            <Input value={form.sourceFarm} onChange={update('sourceFarm')} />
-          </Field>
-          <Field label={t('rawIntake.sourceBlock')}>
-            <Input value={form.sourceBlock} onChange={update('sourceBlock')} />
-          </Field>
+          <OwnedResourceSelect
+            label={t('rawIntake.sourceFarm')}
+            value={farmValue}
+            onChange={chooseFarm}
+            options={site.farms}
+            loading={site.loading}
+            loadError={site.error}
+            onRetry={site.reload}
+            owner={OWNER_LINKS.farm}
+            required
+          />
+          <OwnedResourceSelect
+            label={t('rawIntake.sourceBlock')}
+            value={blockValue}
+            onChange={chooseBlock}
+            options={farmFields}
+            getOptionValue={(field) => field.code}
+            getOptionLabel={blockLabel}
+            loading={site.loading}
+            loadError={site.error}
+            onRetry={site.reload}
+            // Without a farm there is nothing to add yet: the hint asks for the farm first.
+            owner={farmValue ? OWNER_LINKS.field : undefined}
+            hint={farmValue ? undefined : t('rawIntake.chooseFarmFirst')}
+            disabled={!farmValue}
+            required
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

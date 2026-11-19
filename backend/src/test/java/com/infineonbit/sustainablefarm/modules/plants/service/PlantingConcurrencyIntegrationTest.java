@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
@@ -45,6 +46,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class PlantingConcurrencyIntegrationTest {
 
     private static final int TRIALS = 10;
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
 
     @Autowired
     private PlantsBlocks plantsBlocks;
@@ -166,9 +170,10 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: a variety row with no planting, like the Zalka 2025 row of the dev profile
             String blockCode = "CE" + trial;
+            siteTestBlocks.ensure(blockCode);
             BlockVariety keitt = new BlockVariety();
             keitt.setName("Keitt");
-            BlockDto block = plantsBlocks.resolve(null, blockCode);
+            BlockDto block = siteTestBlocks.ensure(blockCode);
             keitt.assignBlock(block.id(), PlantsBlocks.label(block));
             keitt.setTreeCount(200);
             keitt.setSource("Zalka_2025");
@@ -190,6 +195,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: the block already has a calendar row, dated by a first planting
             String blockCode = "CD" + trial;
+            siteTestBlocks.ensure(blockCode);
             plantingService.recordPlanting(new PlantingRequest(null, blockCode, "Palmer",
                     LocalDate.of(2024, 1, 1), 10));
             // Act: two older plantings of other varieties, sent together
@@ -207,6 +213,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: the triple has no row yet
             String blockCode = "CT" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act
             List<Object> results = together(List.of(
                     plant(blockCode, "Kent", "2021-03-01", 50),
@@ -224,6 +231,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange
             String blockCode = "CF" + trial;
+            siteTestBlocks.ensure(blockCode);
             List<Callable<Object>> plantings = Collections.nCopies(5, plant(blockCode, "Kent", "2021-03-01", 50));
             // Act
             List<Object> results = together(plantings);
@@ -240,6 +248,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange
             String blockCode = "CC" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act: the lookup already reads "kent" as "Kent"
             List<Object> results = together(List.of(
                     plant(blockCode, "Kent", "2021-03-01", 50),
@@ -256,6 +265,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: the block has no calendar row yet
             String blockCode = "CN" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act
             List<Object> results = together(List.of(
                     plant(blockCode, "Kent", "2021-03-01", 50),
@@ -272,6 +282,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange
             String blockCode = "CP" + trial;
+            siteTestBlocks.ensure(blockCode);
             Long batchId = startKentBatch("CP-" + trial);
             // Act
             List<Object> results = together(List.of(
@@ -293,6 +304,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: two batches of the same variety
             String blockCode = "CQ" + trial;
+            siteTestBlocks.ensure(blockCode);
             Long firstBatchId = startKentBatch("CQ-" + trial + "-1");
             Long secondBatchId = startKentBatch("CQ-" + trial + "-2");
             // Act

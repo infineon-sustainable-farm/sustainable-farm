@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -37,7 +37,7 @@ class BatchServiceTest {
     private BatchRepository batchRepository;
 
     @Autowired
-    private ProductTransformationBlocks blocks;
+    private SiteTestBlocks siteTestBlocks;
 
     @Autowired
     private VarietyReferenceRepository varietyReferenceRepository;
@@ -58,7 +58,7 @@ class BatchServiceTest {
         batch.setHarvestDate(LocalDate.of(2026, 10, 1));
         batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
-        batch.setFarmBlockId(blocks.resolve("FARM-001", "BLOCK-A"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-A").id());
         batch.setCurrentStatus(BatchStatus.CREATED);
         batch = batchRepository.save(batch);
 
@@ -90,7 +90,7 @@ class BatchServiceTest {
         batch.setHarvestDate(LocalDate.of(2026, 10, 2));
         batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("300.00"));
-        batch.setFarmBlockId(blocks.resolve("FARM-002", "BLOCK-B"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-B").id());
         batch.setCurrentStatus(BatchStatus.CREATED);
         batch = batchRepository.save(batch);
 
@@ -119,7 +119,7 @@ class BatchServiceTest {
         batch.setHarvestDate(LocalDate.of(2026, 10, 3));
         batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("200.00"));
-        batch.setFarmBlockId(blocks.resolve("FARM-003", "BLOCK-C"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-C").id());
         batch.setCurrentStatus(BatchStatus.CREATED);
         batch = batchRepository.save(batch);
 
@@ -151,7 +151,7 @@ class BatchServiceTest {
         batch.setHarvestDate(LocalDate.of(2026, 10, 4));
         batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
-        batch.setFarmBlockId(blocks.resolve("FARM-004", "BLOCK-D"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-D").id());
 
         // Default status should be CREATED
         Batch saved = batchRepository.save(batch);
@@ -168,7 +168,7 @@ class BatchServiceTest {
             batch.setHarvestDate(LocalDate.of(2026, 10, i));
             batch.setVarietyKey("TOMMY");
             batch.setHarvestQuantityKg(new BigDecimal(String.format("%.2f", 100.0 * i)));
-            batch.setFarmBlockId(blocks.resolve("FARM-00" + i, "BLOCK-" + i));
+            batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-" + i).id());
             batch.setCurrentStatus(BatchStatus.CREATED);
             batchRepository.save(batch);
         }
@@ -188,7 +188,7 @@ class BatchServiceTest {
             batch.setHarvestDate(LocalDate.of(2026, 10, i));
             batch.setVarietyKey("TOMMY");
             batch.setHarvestQuantityKg(new BigDecimal("100.00"));
-            batch.setFarmBlockId(blocks.resolve("FARM-00" + i, "BLOCK-" + i));
+            batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-" + i).id());
             batch.setCurrentStatus(BatchStatus.CREATED);
             batchRepository.save(batch);
         }
@@ -199,7 +199,7 @@ class BatchServiceTest {
         completedBatch.setHarvestDate(LocalDate.of(2026, 10, 3));
         completedBatch.setVarietyKey("TOMMY");
         completedBatch.setHarvestQuantityKg(new BigDecimal("200.00"));
-        completedBatch.setFarmBlockId(blocks.resolve("FARM-003", "BLOCK-3"));
+        completedBatch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-3").id());
         completedBatch.setCurrentStatus(BatchStatus.COMPLETED);
         batchRepository.save(completedBatch);
 
@@ -220,7 +220,7 @@ class BatchServiceTest {
         batch.setHarvestDate(LocalDate.of(2026, 10, 1));
         batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
-        batch.setFarmBlockId(blocks.resolve("FARM-001", "BLOCK-A"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-A").id());
         batch.setCurrentStatus(BatchStatus.CREATED);
         batchRepository.save(batch);
 
@@ -236,7 +236,7 @@ class BatchServiceTest {
         batch.setHarvestDate(LocalDate.of(2026, 10, 5));
         batch.setVarietyKey("TOMMY");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
-        batch.setFarmBlockId(blocks.resolve("FARM-005", "BLOCK-E"));
+        batch.setFarmBlockId(siteTestBlocks.ensure("BLOCK-E").id());
         batch.setCurrentStatus(BatchStatus.CREATED);
         batch = batchRepository.save(batch);
 

@@ -44,9 +44,6 @@ export const INITIAL_VALUES = {
 const QUANTITY_PATTERN = /^\d+(\.\d{1,3})?$/;
 const COST_PATTERN = /^\d+(\.\d{1,2})?$/;
 
-/** Same rule as a planting: a short code such as "A" or "B2"; spaces around it are removed. */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
-
 /** Today as "YYYY-MM-DD", in local time: the latest movement date the form accepts. */
 export function todayAsIsoDate() {
     const now = new Date();
@@ -95,8 +92,6 @@ export function validateMovement(movementType, values, unreadable, today) {
     if (movementType === "APPLICATION") {
         if (!values.blockCode.trim()) {
             errors.blockCode = message("blockRequired");
-        } else if (!BLOCK_CODE_PATTERN.test(values.blockCode)) {
-            errors.blockCode = message("blockInvalid");
         }
         if (!values.applicatorPersonId) {
             errors.applicatorPersonId = message("applicatorRequired");

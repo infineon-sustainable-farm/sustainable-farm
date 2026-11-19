@@ -16,7 +16,7 @@ import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.service.HarvestEventService;
@@ -68,7 +68,7 @@ class LotChainForeignKeyTest {
     private VarietyReferenceRepository varietyReferenceRepository;
 
     @Autowired
-    private ProductTransformationBlocks blocks;
+    private SiteTestBlocks siteTestBlocks;
 
     @Autowired
     private BatchRepository batchRepository;
@@ -89,11 +89,18 @@ class LotChainForeignKeyTest {
     @BeforeEach
     void farmOfBlockLc1() throws Exception {
         VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
+        Long existingFarm = jdbc.query("select farm_id from block where code = ?",
+                (rs, n) -> rs.getLong(1), BLOCK).stream().findFirst().orElse(null);
+        if (existingFarm != null) {
+            farm = existingFarm;
+            return;
+        }
         String createdFarm = mockMvc.perform(post("/api/farm/farms").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Lot Chain Farm\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         farm = objectMapper.readTree(createdFarm).get("id").asLong();
+        siteTestBlocks.ensure(farm, BLOCK);
     }
 
     private long plantsHarvest() throws Exception {
@@ -102,7 +109,9 @@ class LotChainForeignKeyTest {
                                 {"farmId": %d, "blockCode": "%s", "varietyName": "Keitt",
                                  "plantingDate": "2020-01-10", "treeCount": 10}
                                 """.formatted(farm, BLOCK)))
-                .andExpect(status().isCreated());
+                // 409 once an earlier test planted Keitt on the shared block LC1.
+                .andExpect(result -> org.junit.jupiter.api.Assertions.assertTrue(
+                        result.getResponse().getStatus() == 201 || result.getResponse().getStatus() == 409));
         String created = mockMvc.perform(post("/api/plants/harvests").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId": %d, "blockCode": "%s", "varietyName": "Keitt",
@@ -120,7 +129,7 @@ class LotChainForeignKeyTest {
         event.setPlantsHarvestId(plantsHarvestId);
         event.setHarvestDate(LocalDate.of(2026, 6, 1));
         event.setVarietyKey("KEITT");
-        event.setFarmBlockId(blocks.resolve(String.valueOf(farm), BLOCK));
+        event.setFarmBlockId(siteTestBlocks.ensure(farm, BLOCK).id());
         event.setHarvestQuantityKg(new BigDecimal("300.00"));
         event.setQualityGrade(QualityGrade.A);
         return event;
@@ -133,7 +142,7 @@ class LotChainForeignKeyTest {
         batch.setVarietyKey("KEITT");
         batch.setHarvestQuantityKg(new BigDecimal("300.00"));
         batch.setCurrentStatus(BatchStatus.PACKAGING);
-        batch.setFarmBlockId(blocks.resolve(String.valueOf(farm), BLOCK));
+        batch.setFarmBlockId(siteTestBlocks.ensure(farm, BLOCK).id());
         return batchRepository.saveAndFlush(batch);
     }
 
@@ -189,7 +198,7 @@ class LotChainForeignKeyTest {
 
         assertThat(jdbc.queryForObject("select plants_harvest_id from harvest_event where code = 'HE-LC-API'",
                 Long.class)).isEqualTo(harvestId);
-        assertThat(blocks.findBlockId("ZZ9")).isEmpty();
+        assertThat(jdbc.queryForObject("select count(*) from block where code = 'ZZ9'", Integer.class)).isZero();
     }
 
     @Test
