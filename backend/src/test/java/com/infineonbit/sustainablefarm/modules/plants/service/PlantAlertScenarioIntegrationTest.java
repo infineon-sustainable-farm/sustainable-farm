@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
 import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
@@ -65,6 +67,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @ActiveProfiles("test")
 class PlantAlertScenarioIntegrationTest {
+
+    @Autowired
+    private PersonDirectory personDirectory;
+
 
     /**
      * Farm of this test class, created once: block codes are unique across the farms of the
@@ -221,10 +227,10 @@ class PlantAlertScenarioIntegrationTest {
         fertilizerMovementService.recordPurchase(npk,
                 new PurchaseRequest(LocalDate.of(2027, 3, 1), 100.0, "Supplier A", null, null));
         fertilizerMovementService.recordApplication(npk,
-                new ApplicationRequest(LocalDate.of(2027, 3, 20), 70.0, FARM, "SC", "Awa", null));
+                new ApplicationRequest(LocalDate.of(2027, 3, 20), 70.0, FARM, "SC", TestPeople.idOf(personDirectory, "Awa"), null));
         healthTreatmentService.recordPreventiveTreatment(new PreventiveTreatmentRequest(FARM, "SC", SOOTY_MOULD,
                 null, LocalDate.of(2027, 3, 25), "Copper fungicide A", "copper oxychloride", 2.0, "KG", 14.0,
-                "Awa", null));
+                TestPeople.idOf(personDirectory, "Awa"), null));
         Long batch = nurseryBatchService.createBatch(new NurseryBatchRequest(FARM, "P1", "Keitt", "IN_HOUSE",
                 null, null, LocalDate.of(2026, 10, 1), 120.0, "GRAFTED", LocalDate.of(2027, 6, 15), "SD")).id();
 
@@ -239,14 +245,14 @@ class PlantAlertScenarioIntegrationTest {
         nurseryEventService.recordStageChange(batch,
                 new StageChangeRequest("READY_TO_TRANSPLANT", LocalDate.of(2027, 4, 20)));
         Long finding = healthInspectionService.recordInspection(new HealthInspectionRequest(FARM, "SC",
-                        LocalDate.of(2027, 5, 3), 70.0, "Awa", "VISUAL",
+                        LocalDate.of(2027, 5, 3), 70.0, TestPeople.idOf(personDirectory, "Awa"), "VISUAL",
                         List.of(new HealthFindingRequest(SOOTY_MOULD, null, null))))
                 .findings().get(0).id();
         fertilizerMovementService.recordApplication(npk,
-                new ApplicationRequest(LocalDate.of(2027, 5, 5), 30.0, FARM, "SC", "Awa", null));
+                new ApplicationRequest(LocalDate.of(2027, 5, 5), 30.0, FARM, "SC", TestPeople.idOf(personDirectory, "Awa"), null));
         Long treatment = healthTreatmentService.recordPreventiveTreatment(new PreventiveTreatmentRequest(FARM, "SC",
                 SOOTY_MOULD, null, LocalDate.of(2027, 5, 8), "Insecticide B", "deltamethrin", 1.5, "L", 14.0,
-                "Awa", null)).id();
+                TestPeople.idOf(personDirectory, "Awa"), null)).id();
 
         // B, 15 May 2027: every type, in full
         PlantAlertResponse checkB = alertsOn(MAY_15, null, null);

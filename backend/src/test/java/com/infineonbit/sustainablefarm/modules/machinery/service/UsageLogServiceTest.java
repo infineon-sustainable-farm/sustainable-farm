@@ -47,7 +47,7 @@ class UsageLogServiceTest {
     private EquipmentRepository equipmentRepository;
 
     @Spy
-    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
 
     @InjectMocks
     private UsageLogService usageLogService;
@@ -65,7 +65,7 @@ class UsageLogServiceTest {
                 1L,
                 LocalDate.of(2026, 7, 23),
                 new BigDecimal("6.50"),
-                "Wilfried Y.",
+                personDirectory.idOf("Wilfried Y."),
                 "Plowing field section B"
         );
 

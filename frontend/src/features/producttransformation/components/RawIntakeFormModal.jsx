@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Field, Input, Modal, OwnedResourceSelect, Select } from '../../../shared/ui';
 import { OWNER_LINKS } from '../../../app/ownerLinks';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
+import PersonSelect from '../../../app/PersonSelect';
 import FormActions from './FormActions';
 import FormAlert from './FormAlert';
 import { QUALITY_GRADES, varietyKeyOf } from './rawIntakeOptions';
@@ -17,7 +18,7 @@ const emptyForm = () => ({
   receivedQuantityKg: '',
   receivedVariety: '',
   receivedGrade: 'A',
-  intakeOperator: '',
+  intakeOperatorPersonId: '',
 });
 
 const toForm = (intake) =>
@@ -33,7 +34,7 @@ const toForm = (intake) =>
         receivedQuantityKg: String(intake.receivedQuantityKg ?? ''),
         receivedVariety: varietyKeyOf(intake.receivedVariety),
         receivedGrade: intake.receivedGrade || 'A',
-        intakeOperator: intake.intakeOperator || '',
+        intakeOperatorPersonId: intake.intakeOperatorPersonId != null ? String(intake.intakeOperatorPersonId) : '',
       }
     : emptyForm();
 
@@ -210,9 +211,13 @@ export default function RawIntakeFormModal({
           </Field>
         </div>
 
-        <Field label={t('rawIntake.intakeOperator')}>
-          <Input value={form.intakeOperator} onChange={update('intakeOperator')} />
-        </Field>
+        <PersonSelect
+          label={t('rawIntake.intakeOperator')}
+          value={form.intakeOperatorPersonId}
+          currentName={editing?.intakeOperator}
+          onChange={(id) => setForm((current) => ({ ...current, intakeOperatorPersonId: id }))}
+          placeholder={t('rawIntake.noOperator')}
+        />
 
         <FormActions onCancel={close} saving={saving} editing={Boolean(editing)} />
       </form>

@@ -10,14 +10,15 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * A farm staff member or guide who can be assigned to tour time slots
- * (A5: staff / guides).
+ * An entry of the farm people directory, administered by the visitor management Staff screen
+ * (resource ownership audit, 2026-11-19), with an optional visitor management role: a guide,
+ * receptionist or manager can be assigned to tour time slots (A5); a person with no role is a
+ * farm worker (operator, technician) picked by the other modules.
  *
- * <p>The visitor management extension of a person of the staff referential
- * ({@code modules.staff.api}, ADR 0004): full name, email and phone belong to the person;
- * the role and the active flag (a guide can be deactivated without touching the person's other
- * roles) stay here. One staff row per person; its foreign key
- * to {@code person} is declared in {@code VisitorStaffForeignKeys}.</p>
+ * <p>Full name, email, phone and the active flag belong to the person of the staff referential
+ * ({@code modules.staff.api}, ADR 0004); the role stays here, and the active flag here mirrors
+ * the person's. One staff row per person; its foreign key to {@code person} is declared in
+ * {@code VisitorStaffForeignKeys}.</p>
  */
 @Entity
 @Table(name = "staff", uniqueConstraints =
@@ -29,10 +30,10 @@ public class Staff extends BaseEntity {
     @Column(name = "person_id", nullable = false)
     private Long personId;
 
-    @NotNull
+    /** Visitor management role; {@code null} for a person who is not visitor staff. */
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
-    private StaffRole role = StaffRole.GUIDE;
+    @Column(name = "role", length = 20)
+    private StaffRole role;
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;

@@ -132,6 +132,7 @@
     "chooseFarmFirst": "Wählen Sie zuerst den Betrieb.",
     "quantityKg": "Menge (kg)",
     "intakeOperator": "Annehmende Person",
+    "noOperator": "Nicht erfasst",
     "columns": {
       "intake": "Eingang",
       "batch": "Charge",

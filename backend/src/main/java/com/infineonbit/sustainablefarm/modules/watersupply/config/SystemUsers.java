@@ -42,8 +42,8 @@ public class SystemUsers {
         Long id = iotSystemUserId;
         if (id == null || !personDirectory.exists(id)) {
             id = personDirectory.findByEmail(IOT_SYSTEM_EMAIL)
-                    .orElseGet(() -> personDirectory.findOrCreate(
-                            new PersonDetails(IOT_SYSTEM_NAME, IOT_SYSTEM_EMAIL, null, false), candidate -> true))
+                    .orElseGet(() -> personDirectory.create(
+                            new PersonDetails(IOT_SYSTEM_NAME, IOT_SYSTEM_EMAIL, null, false)))
                     .id();
             iotSystemUserId = id;
         }

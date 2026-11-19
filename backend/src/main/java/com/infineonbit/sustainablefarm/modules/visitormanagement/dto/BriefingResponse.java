@@ -14,6 +14,7 @@ public class BriefingResponse {
     private Long registrationId;
     private Instant deliveredAt;
     private String staffMember;
+    private Long staffMemberPersonId;
     private String signature;
     private BriefingStatus status;
     private Instant createdAt;
@@ -26,6 +27,7 @@ public class BriefingResponse {
         r.registrationId = b.getRegistration().getId();
         r.deliveredAt = b.getDeliveredAt();
         r.staffMember = staffMember;
+        r.staffMemberPersonId = b.getStaffMemberPersonId();
         r.signature = b.getSignature();
         r.status = b.getStatus();
         r.createdAt = b.getCreatedAt();
@@ -47,6 +49,10 @@ public class BriefingResponse {
 
     public String getStaffMember() {
         return staffMember;
+    }
+
+    public Long getStaffMemberPersonId() {
+        return staffMemberPersonId;
     }
 
     public String getSignature() {

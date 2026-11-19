@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
@@ -302,9 +303,14 @@ public class SchedulingServiceImpl implements SchedulingService {
         }
     }
 
+    /** A guide is a staff member with a visitor management role; a farm worker without one is refused. */
     private Staff resolveGuide(Long guideId) {
-        return staffRepository.findById(guideId)
+        Staff guide = staffRepository.findById(guideId)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff member " + guideId + " not found"));
+        if (guide.getRole() == null) {
+            throw new BadRequestException("Staff member " + guideId + " has no visitor management role");
+        }
+        return guide;
     }
 
     private TimeSlot getSlot(Long id) {

@@ -118,13 +118,14 @@ public final class SalesMarketingResponses {
             Long reportId, String reportType, LocalDate periodStart, LocalDate periodEnd,
             BigDecimal totalForecastedVolumeT, BigDecimal totalActualVolumeT, BigDecimal variancePct,
             DemandReportStatus status, Boolean isScheduled, LocalDateTime nextRunAt, String scheduleFrequency,
-            String summary, String generatedBy, LocalDateTime generatedAt) {
+            String summary, String generatedBy, Long generatedByPersonId, LocalDateTime generatedAt) {
 
-        public static DemandReportResponse of(DemandReport r) {
+        /** @param generatedBy full name of the person referenced by {@code generatedByPersonId}, or null */
+        public static DemandReportResponse of(DemandReport r, String generatedBy) {
             return new DemandReportResponse(r.getId(), r.getReportType(), r.getPeriodStart(), r.getPeriodEnd(),
                     r.getTotalForecastedVolumeT(), r.getTotalActualVolumeT(), r.getVariancePct(), r.getStatus(),
                     r.getIsScheduled(), r.getNextRunAt(), r.getScheduleFrequency(), r.getSummary(),
-                    r.getGeneratedBy(), r.getGeneratedAt());
+                    generatedBy, r.getGeneratedByPersonId(), r.getGeneratedAt());
         }
     }
 

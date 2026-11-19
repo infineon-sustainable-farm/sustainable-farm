@@ -15,6 +15,7 @@ public record DripMaintenanceLogResponse(
         Integer emitterReplacedCount,
         String notes,
         String performedBy,
+        Long performedByPersonId,
         Instant createdAt) {
 
     /**
@@ -24,6 +25,6 @@ public record DripMaintenanceLogResponse(
         return new DripMaintenanceLogResponse(log.getId(), log.getZoneId(), log.getMaintenanceDate(),
                 log.getMaintenanceType(), log.getFilterCleaned(), log.getCloggingDetected(),
                 log.getCloggingSeverity(), log.getEmitterReplacedCount(), log.getNotes(),
-                performedBy, log.getCreatedAt());
+                performedBy, log.getPerformedByPersonId(), log.getCreatedAt());
     }
 }

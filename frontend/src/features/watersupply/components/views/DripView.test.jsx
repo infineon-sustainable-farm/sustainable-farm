@@ -1,12 +1,16 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { renderView as render } from './testRender'
+import { controlByLabel, renderView as render } from './testRender'
 import { DripView } from './DripView'
 import { dripMaintenanceApi } from '../../api/watersupplyApi'
 
 vi.mock('../../api/watersupplyApi', () => ({
   dripMaintenanceApi: { getLogs: vi.fn(), createLog: vi.fn(), updateLog: vi.fn(), deleteLog: vi.fn() },
+}))
+
+vi.mock('../../../../shared/api/persons', () => ({
+  fetchPersons: vi.fn(() => Promise.resolve([{ id: 4, fullName: 'Issa Technician' }])),
 }))
 
 vi.mock('../../hooks/useFarms', () => ({
@@ -47,6 +51,21 @@ describe('DripView', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('The zone is required.')
     expect(dripMaintenanceApi.createLog).not.toHaveBeenCalled()
+  })
+
+  it('records who performed an intervention as a person of the directory', async () => {
+    dripMaintenanceApi.updateLog.mockResolvedValue({})
+    const { container } = render(<DripView notify={notify} />)
+    await screen.findByText('Clogging high')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await screen.findByRole('option', { name: 'Issa Technician' })
+    fireEvent.change(controlByLabel(container, 'Performed by'), { target: { value: '4' } })
+    fireEvent.submit(document.querySelector('form'))
+
+    await waitFor(() => expect(dripMaintenanceApi.updateLog).toHaveBeenCalledWith(
+      'log-1', expect.objectContaining({ performedByPersonId: 4 })))
+    expect(dripMaintenanceApi.updateLog.mock.calls[0][1]).not.toHaveProperty('performedBy')
   })
 
   it('deletes an intervention after confirmation', async () => {

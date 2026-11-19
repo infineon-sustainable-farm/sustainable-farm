@@ -87,9 +87,9 @@ public class FertilizerMovement extends BaseEntity implements BlockRow {
     @Setter(AccessLevel.NONE)
     private final BlockLink block = new BlockLink();
 
-    /** Person or team who applied the fertilizer; NULL for the other types. */
-    @Column(name = "applicator")
-    private String applicator;
+    /** Person of the people directory who applied the fertilizer (staff module); NULL for the other types. */
+    @Column(name = "applicator_person_id")
+    private Long applicatorPersonId;
 
     /** How an application was made, for example "around the tree base", or NULL. */
     @Column(name = "method")

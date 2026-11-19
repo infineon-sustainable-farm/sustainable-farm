@@ -14,7 +14,8 @@
     "unknownEquipment": "#{{id}}",
     "tryAgain": "Try again",
     "loadingEquipment": "Loading equipment…",
-    "noEquipmentDetached": "No equipment (detached)"
+    "noEquipmentDetached": "No equipment (detached)",
+    "noPerson": "No one"
   },
   "units": {
     "hours": "{{value}} h",
@@ -57,7 +58,6 @@
     "nameTooLong": "Name must be {{max}} characters or fewer.",
     "equipmentRequired": "Equipment is required.",
     "dateRequired": "Date is required.",
-    "operatorTooLong": "Operator must be {{max}} characters or fewer.",
     "costRequired": "Cost is required.",
     "costInvalid": "Cost must be 0 or more with up to 2 decimals."
   },
@@ -181,7 +181,6 @@
     "issueRequired": "Issue description is required.",
     "issueTooLong": "Issue description must be {{max}} characters or fewer.",
     "downtimeInvalid": "Downtime must be 0 or more with up to 2 decimals.",
-    "technicianTooLong": "Technician must be {{max}} characters or fewer.",
     "deleteTitle": "Delete repair log",
     "deleteMessage": "Are you sure you want to delete the repair log of {{date}} for {{equipment}}? This cannot be undone."
   },
@@ -196,11 +195,10 @@
     "jobTitle": "Job title",
     "startDate": "Start date",
     "endDate": "End date",
-    "fullName": "Operator's full name",
+    "person": "Operator",
     "selectEquipment": "Select equipment",
     "endDateOptional": "End date (optional)",
-    "fullNameRequired": "Operator's full name is required.",
-    "fullNameTooLong": "Full name must be {{max}} characters or fewer.",
+    "personRequired": "Pick the operator.",
     "jobTitleRequired": "Job title is required.",
     "jobTitleTooLong": "Job title must be {{max}} characters or fewer.",
     "startDateRequired": "Start date is required.",

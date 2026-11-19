@@ -19,8 +19,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class OperatorUpdateRequest {
 
-    private String operatorName;
-
     private Role role;
 
     private String certifications;

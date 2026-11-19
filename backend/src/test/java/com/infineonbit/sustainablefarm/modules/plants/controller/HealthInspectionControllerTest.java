@@ -79,6 +79,7 @@ public class HealthInspectionControllerTest {
 
     private static HealthInspectionResponse blockC() {
         return new HealthInspectionResponse(1L, null, "C", SEPTEMBER_1, 48, HealthCategory.MODERATE, "Awa",
+                null,
                 InspectionMethod.VISUAL, "user_entry", NOW, List.of(
                 new HealthFindingResponse(10L, 1L, null, "C", SEPTEMBER_1, "ANTHRACNOSE", "Anthracnose",
                         HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.UNTREATED, 0, null, null, null, null)));
@@ -90,7 +91,7 @@ public class HealthInspectionControllerTest {
         when(healthInspectionService.recordInspection(any(HealthInspectionRequest.class))).thenReturn(blockC());
         // Act
         ResultActions result = postInspection("""
-                {"blockCode":"C","inspectedOn":"2026-09-01","healthScorePct":48,"observer":"Awa","method":"visual",
+                {"blockCode":"C","inspectedOn":"2026-09-01","healthScorePct":48,"observerPersonId":7,"method":"visual",
                  "findings":[{"issueCode":"anthracnose","treeLabel":"42"}]}
                 """);
         // Assert: no Location header, the inspection and its findings in the body
@@ -193,19 +194,18 @@ public class HealthInspectionControllerTest {
         // Act
         ResultActions result = postInspection("""
                 {"farmId":0,"blockCode":"Block C","inspectedOn":"2999-01-01","healthScorePct":-1,
-                 "observer":"%s","method":"drone",
+                 "method":"drone",
                  "findings":[{"treeLabel":"tree 42"}]}
-                """.formatted("x".repeat(256)));
+                """);
         // Assert
         assertApiError(result, 400, "Bad Request", "Validation failed");
-        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(8)))
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(7)))
                 .andExpect(jsonPath("$.fieldErrors.farmId").value("farmId must be at least 1"))
                 .andExpect(jsonPath("$.fieldErrors.blockCode")
                         .value("blockCode must be a short code such as A or B2, without prefix or space"))
                 .andExpect(jsonPath("$.fieldErrors.inspectedOn").value("inspectedOn must be today or in the past"))
                 .andExpect(jsonPath("$.fieldErrors.healthScorePct")
                         .value("healthScorePct must be a whole number between 0 and 100"))
-                .andExpect(jsonPath("$.fieldErrors.observer").value("observer must be at most 255 characters"))
                 .andExpect(jsonPath("$.fieldErrors.method").value("method must be VISUAL or TRAP"))
                 .andExpect(jsonPath("$.fieldErrors['findings[0].issueCode']").value("issueCode is required"))
                 .andExpect(jsonPath("$.fieldErrors['findings[0].treeLabel']")

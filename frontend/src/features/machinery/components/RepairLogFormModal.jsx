@@ -3,12 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Field, Input, Modal, Textarea } from "../../../shared/ui";
 import { NON_NEGATIVE_DECIMAL } from "../../../shared/utils/validation";
 import { todayIsoDate } from "../../../shared/utils/todayIsoDate";
+import PersonSelect from "../../../app/PersonSelect";
 import EquipmentField from "./EquipmentField";
 import FormActions from "./FormActions";
 import FormAlert from "./FormAlert";
 
 const MAX_ISSUE_LENGTH = 500;
-const MAX_TECHNICIAN_LENGTH = 60;
 
 const initialForm = {
   equipmentId: "",
@@ -16,7 +16,7 @@ const initialForm = {
   issue: "",
   downtime: "",
   cost: "",
-  technician: "",
+  technicianPersonId: "",
 };
 
 function toFormState(repairLog) {
@@ -30,7 +30,7 @@ function toFormState(repairLog) {
     issue: repairLog.issue ?? "",
     downtime: repairLog.downtime != null ? String(repairLog.downtime) : "",
     cost: repairLog.cost != null ? String(repairLog.cost) : "",
-    technician: repairLog.technician ?? "",
+    technicianPersonId: repairLog.technicianPersonId != null ? String(repairLog.technicianPersonId) : "",
   };
 }
 
@@ -74,9 +74,6 @@ function RepairLogFormModal({
     if (form.cost.trim() && !NON_NEGATIVE_DECIMAL.test(form.cost.trim())) {
       errors.cost = t("validation.costInvalid");
     }
-    if (form.technician.trim().length > MAX_TECHNICIAN_LENGTH) {
-      errors.technician = t("repair.technicianTooLong", { max: MAX_TECHNICIAN_LENGTH });
-    }
 
     return errors;
   }
@@ -93,7 +90,7 @@ function RepairLogFormModal({
       issue: form.issue.trim(),
       downtime: form.downtime.trim() || null,
       cost: form.cost.trim() || null,
-      technician: form.technician.trim() || null,
+      technicianPersonId: form.technicianPersonId ? Number(form.technicianPersonId) : null,
     });
   }
 
@@ -124,9 +121,15 @@ function RepairLogFormModal({
             <Input type="date" name="date" value={form.date} onChange={handleChange} />
           </Field>
 
-          <Field className="flex-1" label={t("repair.technician")} error={fieldErrors.technician}>
-            <Input name="technician" value={form.technician} onChange={handleChange} />
-          </Field>
+          <PersonSelect
+            className="flex-1"
+            label={t("repair.technician")}
+            value={form.technicianPersonId}
+            currentName={repairLog?.technician}
+            onChange={(id) => setForm((previous) => ({ ...previous, technicianPersonId: id }))}
+            placeholder={t("common.noPerson")}
+            error={fieldErrors.technicianPersonId}
+          />
         </div>
 
         <Field label={t("repair.issueDescription")} error={fieldErrors.issue}>

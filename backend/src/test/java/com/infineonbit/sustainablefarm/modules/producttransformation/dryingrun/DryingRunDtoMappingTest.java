@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
 import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
@@ -111,7 +112,7 @@ class DryingRunDtoMappingTest {
 
         Operator operator = new Operator();
         operator.setOperatorId(OPERATOR_ID);
-        operator.setPersonId(personDirectory.idOf("DTO operator"));
+        operator.setPersonId(TestPeople.idOf(personDirectory, "DTO operator"));
         operator.setRole(Role.DRYER);
         operator.setActiveStatus(ActiveStatus.ACTIVE);
         operator.setHireDate(LocalDate.now());

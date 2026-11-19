@@ -10,6 +10,8 @@ import StaffTable from "../StaffTable";
 import { LoadError, LoadingBlock } from "../LoadState";
 
 const ROLES = ["GUIDE", "RECEPTION", "MANAGER"];
+/** Role filter value of the people without a visitor role (farm workers). */
+const NO_ROLE = "NONE";
 
 export default function StaffPage() {
     const { t } = useTranslation("visitormanagement");
@@ -44,7 +46,8 @@ export default function StaffPage() {
 
     const visibleStaff = (staff ?? []).filter(
         (member) =>
-            (roleFilter === "" || member.role === roleFilter) &&
+            (roleFilter === "" ||
+                (roleFilter === NO_ROLE ? !member.role : member.role === roleFilter)) &&
             (showInactive || member.active),
     );
 
@@ -101,6 +104,7 @@ export default function StaffPage() {
         <div className="space-y-4 p-6">
             <PageHeader
                 title={t("staff.title")}
+                subtitle={t("staff.subtitle")}
                 actions={
                     <Button icon={Plus} onClick={openCreate}>
                         {t("staff.new")}
@@ -112,6 +116,7 @@ export default function StaffPage() {
                 <Field className="min-w-40" label={t("staff.roleFilter")}>
                     <Select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
                         <option value="">{t("staff.allRoles")}</option>
+                        <option value={NO_ROLE}>{t("staff.noRole")}</option>
                         {ROLES.map((role) => (
                             <option key={role} value={role}>
                                 {labels.enum(role)}

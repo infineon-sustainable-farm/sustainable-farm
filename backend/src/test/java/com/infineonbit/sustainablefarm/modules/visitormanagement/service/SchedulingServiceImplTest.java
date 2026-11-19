@@ -179,6 +179,7 @@ class SchedulingServiceImplTest {
         Staff guide = new Staff();
         guide.setId(42L);
         guide.setPersonId(7L);
+        guide.setRole(com.infineonbit.sustainablefarm.modules.visitormanagement.entity.StaffRole.GUIDE);
         when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
         when(staffRepository.findById(42L)).thenReturn(Optional.of(guide));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -186,6 +187,20 @@ class SchedulingServiceImplTest {
 
         TimeSlotResponse resp = service.assignGuide(1L, 42L);
         assertThat(resp.getGuideId()).isEqualTo(42L);
+    }
+
+    @Test
+    void assignGuide_aFarmWorkerWithoutVisitorRole_isRefused() {
+        TimeSlot slot = buildSlot(1L, TimeSlotStatus.AVAILABLE);
+        Staff worker = new Staff();
+        worker.setId(43L);
+        worker.setPersonId(8L);
+        when(timeSlotRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(slot));
+        when(staffRepository.findById(43L)).thenReturn(Optional.of(worker));
+
+        assertThatThrownBy(() -> service.assignGuide(1L, 43L))
+                .isInstanceOf(com.infineonbit.sustainablefarm.core.exception.BadRequestException.class);
+        verify(timeSlotRepository, never()).save(any(TimeSlot.class));
     }
 
     @Test

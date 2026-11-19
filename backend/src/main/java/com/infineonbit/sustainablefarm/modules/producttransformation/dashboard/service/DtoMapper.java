@@ -68,12 +68,12 @@ public class DtoMapper {
     }
 
     /**
-     * The person of the staff referential named by a free-text field of the API (intake
-     * operator, harvest supervisor), created when nobody carries the name; {@code null} for a
-     * blank name.
+     * A person id sent to the API (intake operator, harvest supervisor), checked against the
+     * people directory: {@code null} stays {@code null}, an unknown id is refused (400). People
+     * are never created here.
      */
-    public Long personId(String fullName) {
-        return personDirectory.idOf(fullName);
+    public Long personId(Long personId) {
+        return personDirectory.requireExisting(personId);
     }
 
     /**
@@ -160,7 +160,7 @@ public class DtoMapper {
         intake.setReceivedQuantityKg(request.getReceivedQuantityKg());
         intake.setReceivedVarietyKey(mangoVarietyCodes.toKey(request.getReceivedVariety()));
         intake.setReceivedGrade(request.getReceivedGrade());
-        intake.setIntakeOperatorId(personId(request.getIntakeOperator()));
+        intake.setIntakeOperatorId(personId(request.getIntakeOperatorPersonId()));
         return intake;
     }
 
@@ -185,6 +185,7 @@ public class DtoMapper {
                 .receivedVariety(MangoVarietyCodes.toApi(entity.getReceivedVarietyKey()))
                 .receivedGrade(entity.getReceivedGrade())
                 .intakeOperator(personDirectory.nameOf(entity.getIntakeOperatorId()))
+                .intakeOperatorPersonId(entity.getIntakeOperatorId())
                 .createdAt(timestamp(entity.getCreatedAt()))
                 .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
@@ -389,7 +390,7 @@ public class DtoMapper {
     public Operator toEntity(OperatorCreateRequest request) {
         Operator operator = new Operator();
         operator.setOperatorId(request.getOperatorId());
-        operator.setOperatorName(request.getOperatorName());
+        operator.setPersonId(request.getPersonId());
         operator.setRole(request.getRole());
         operator.setCertifications(request.getCertifications());
         operator.setActiveStatus(request.getActiveStatus());
@@ -401,6 +402,7 @@ public class DtoMapper {
         return OperatorResponse.builder()
                 .operatorId(entity.getOperatorId())
                 .operatorName(entity.getOperatorName())
+                .personId(entity.getPersonId())
                 .role(entity.getRole())
                 .certifications(entity.getCertifications())
                 .activeStatus(entity.getActiveStatus())
@@ -422,7 +424,7 @@ public class DtoMapper {
         event.setQualityGrade(request.getQualityGrade());
         event.setQualityGradeDescription(request.getQualityGradeDescription());
         event.setHarvestTeamId(request.getHarvestTeamId());
-        event.setHarvestSupervisorId(personId(request.getHarvestSupervisor()));
+        event.setHarvestSupervisorId(personId(request.getHarvestSupervisorPersonId()));
         event.setWeatherConditions(request.getWeatherConditions());
         event.setStorageLocation(request.getStorageLocation());
         return event;
@@ -452,6 +454,7 @@ public class DtoMapper {
                 .qualityGradeDescription(entity.getQualityGradeDescription())
                 .harvestTeamId(entity.getHarvestTeamId())
                 .harvestSupervisor(personDirectory.nameOf(entity.getHarvestSupervisorId()))
+                .harvestSupervisorPersonId(entity.getHarvestSupervisorId())
                 .weatherConditions(entity.getWeatherConditions())
                 .storageLocation(entity.getStorageLocation())
                 .createdAt(timestamp(entity.getCreatedAt()))

@@ -32,8 +32,8 @@ vi.mock("../../hooks/useEducation", () => ({
     useWorkshopStatusAction: () => mutations.workshopStatus,
 }));
 
-vi.mock("../../hooks/useScheduling", () => ({
-    useGuides: () => query([{ id: 9, fullName: "Guide One" }]),
+vi.mock("../../../../shared/api/persons", () => ({
+    fetchPersons: vi.fn(() => Promise.resolve([{ id: 9, fullName: "Guide One" }])),
 }));
 
 describe("EducationPage", () => {
@@ -97,11 +97,12 @@ describe("EducationPage", () => {
         );
     });
 
-    it("edits a workshop in the dialog with the guides as facilitators", () => {
+    it("edits a workshop in the dialog with a person of the directory as facilitator", async () => {
         render(<EducationPage />);
         fireEvent.click(screen.getAllByRole("button", { name: "Edit" }).at(-1));
         const dialog = screen.getByRole("dialog", { name: "Edit workshop — Composting" });
-        fireEvent.change(within(dialog).getByLabelText("Facilitator (guide)"), { target: { value: "Guide One" } });
+        await within(dialog).findByRole("option", { name: "Guide One" });
+        fireEvent.change(within(dialog).getByLabelText("Facilitator"), { target: { value: "9" } });
         fireEvent.submit(within(dialog).getByRole("button", { name: "Save workshop" }).closest("form"));
         expect(mutations.updateWorkshop.mutate).toHaveBeenCalledWith(
             {
@@ -110,7 +111,7 @@ describe("EducationPage", () => {
                     name: "Composting",
                     durationMinutes: 40,
                     targetGroup: "School",
-                    facilitator: "Guide One",
+                    facilitatorPersonId: 9,
                     description: null,
                 },
             },

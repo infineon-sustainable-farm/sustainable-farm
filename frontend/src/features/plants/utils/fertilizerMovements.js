@@ -10,7 +10,7 @@ export const MOVEMENT_TYPES = ["PURCHASE", "APPLICATION", "LOSS"];
 // The fields each type adds to the fertilizer, the date and the quantity.
 export const TYPE_FIELDS = {
     PURCHASE: ["supplier", "totalCost", "currency"],
-    APPLICATION: ["blockCode", "applicator", "method"],
+    APPLICATION: ["blockCode", "applicatorPersonId", "method"],
     LOSS: ["reason"],
 };
 
@@ -35,7 +35,7 @@ export const INITIAL_VALUES = {
     totalCost: "",
     currency: "XOF",
     blockCode: "",
-    applicator: "",
+    applicatorPersonId: "",
     method: "",
     reason: "",
 };
@@ -93,10 +93,8 @@ export function validateMovement(movementType, values, unreadable, today) {
         if (!values.blockCode.trim()) {
             errors.blockCode = message("blockRequired");
         }
-        if (!values.applicator.trim()) {
-            errors.applicator = message("applicatorRequired");
-        } else if (values.applicator.length > 255) {
-            errors.applicator = message("applicatorTooLong");
+        if (!values.applicatorPersonId) {
+            errors.applicatorPersonId = message("applicatorRequired");
         }
         if (values.method.length > 255) {
             errors.method = message("methodTooLong");
@@ -123,7 +121,7 @@ export function movementRequestBody(movementType, values) {
         }
     } else if (movementType === "APPLICATION") {
         body.blockCode = values.blockCode;
-        body.applicator = values.applicator;
+        body.applicatorPersonId = Number(values.applicatorPersonId);
         if (values.method.trim()) body.method = values.method;
     } else {
         body.reason = values.reason;

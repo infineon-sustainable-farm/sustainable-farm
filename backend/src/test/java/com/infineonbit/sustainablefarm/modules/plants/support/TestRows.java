@@ -30,14 +30,14 @@ public final class TestRows {
     }
 
     public static HealthInspection inspection(Long id, Integer farmId, String blockCode, LocalDate inspectedOn,
-                                              Integer healthScorePct, String observer, InspectionMethod method,
+                                              Integer healthScorePct, Long observerPersonId, InspectionMethod method,
                                               String source, Instant lastUpdated) {
         HealthInspection inspection = new HealthInspection();
         inspection.setId(id);
         inspection.assignBlock(blockId(blockCode), label(farmId, blockCode));
         inspection.setInspectedOn(inspectedOn);
         inspection.setHealthScorePct(healthScorePct);
-        inspection.setObserver(observer);
+        inspection.setObserverPersonId(observerPersonId);
         inspection.setMethod(method);
         inspection.setSource(source);
         inspection.setLastUpdated(lastUpdated);
@@ -47,7 +47,7 @@ public final class TestRows {
     public static HealthTreatment treatment(Long id, Integer farmId, String blockCode, HealthIssueReference targetIssue,
                                             String targetOtherLabel, HealthFinding finding, LocalDate treatedOn,
                                             String productName, String activeIngredient, BigDecimal quantity,
-                                            TreatmentUnit unit, Integer preHarvestIntervalDays, String applicator,
+                                            TreatmentUnit unit, Integer preHarvestIntervalDays, Long applicatorPersonId,
                                             String equipment, String source, Instant lastUpdated) {
         HealthTreatment treatment = new HealthTreatment();
         treatment.setId(id);
@@ -61,7 +61,7 @@ public final class TestRows {
         treatment.setQuantity(quantity);
         treatment.setUnit(unit);
         treatment.setPreHarvestIntervalDays(preHarvestIntervalDays);
-        treatment.setApplicator(applicator);
+        treatment.setApplicatorPersonId(applicatorPersonId);
         treatment.setEquipment(equipment);
         treatment.setSource(source);
         treatment.setLastUpdated(lastUpdated);

@@ -169,7 +169,6 @@ public class SalesMarketingRequestMapper {
         d.setNextRunAt(r.nextRunAt());
         d.setScheduleFrequency(r.scheduleFrequency());
         d.setSummary(r.summary());
-        d.setGeneratedBy(r.generatedBy());
         return d;
     }
 
