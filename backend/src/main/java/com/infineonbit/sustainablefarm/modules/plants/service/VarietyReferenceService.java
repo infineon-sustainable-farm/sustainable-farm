@@ -54,7 +54,8 @@ public class VarietyReferenceService {
                 reference.getHarvestStartMonth(),
                 reference.getHarvestEndMonth(),
                 reference.getSeasonSource(),
-                reference.getLastUpdated());
+                reference.getLastUpdated(),
+                reference.getVarietyKey());
     }
 
     /**
