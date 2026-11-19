@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Badge, Button, Card, Field, IconButton, Input, Select, Table } from '../../../../shared/ui'
+import { Badge, Button, Card, Field, IconButton, Input, OwnerHint, Select, Table } from '../../../../shared/ui'
+import { OWNER_LINKS } from '../../../../app/ownerLinks'
 import { productTransformationApi } from '../../api/watersupplyApi'
 import { useWaterFormat } from '../../format'
 import { FormActions } from '../common/Screen'
@@ -18,8 +19,11 @@ const EMPTY_BATCH = { lotId: '', activity: 'WASHING', sizeKg: '', plannedAt: '' 
  * Availability forecast of a source for planned batches (Product Transformation): current level
  * minus the batches' demand and, by default, the scheduled irrigations of the source's farm. A tight
  * or insufficient buffer also raises an alert for the water team (backend side).
+ *
+ * The lot of a planned batch, optional, is a processing batch of Product Transformation, picked in
+ * `processingBatches` ({ batches, loading, error }, from useProcessingBatches).
  */
-export function AvailabilityForecastPanel({ sources }) {
+export function AvailabilityForecastPanel({ sources, processingBatches = { batches: [], loading: false, error: null } }) {
   const { t } = useTranslation('watersupply')
   const format = useWaterFormat()
   const activityLabel = useActivityLabel()
@@ -61,7 +65,7 @@ export function AvailabilityForecastPanel({ sources }) {
         horizonDays: horizon,
         includeIrrigation,
         batches: batches.map((batch) => ({
-          lotId: batch.lotId.trim() || null,
+          lotId: batch.lotId || null,
           activity: batch.activity,
           sizeKg: batch.sizeKg === '' ? null : Number(batch.sizeKg),
           plannedAt: fromLocalInput(batch.plannedAt),
@@ -75,13 +79,24 @@ export function AvailabilityForecastPanel({ sources }) {
       .finally(() => setBusy(false))
   }
 
+  const lotOptions = processingBatches.batches.map((batch) => batch.batchId)
+  const noLotToPick = !processingBatches.loading && !processingBatches.error && lotOptions.length === 0
   const rows = batches.map((batch, index) => ({ ...batch, index }))
   const columns = [
     {
       key: 'lotId',
       header: t('lots.forecast.columns.lot'),
       cell: (batch) => (
-        <Input value={batch.lotId} onChange={updateBatch(batch.index, 'lotId')} aria-label={t('lots.forecast.batchLot', { number: batch.index + 1 })} />
+        <Select
+          value={batch.lotId}
+          onChange={updateBatch(batch.index, 'lotId')}
+          disabled={processingBatches.loading}
+          aria-busy={processingBatches.loading || undefined}
+          aria-label={t('lots.forecast.batchLot', { number: batch.index + 1 })}
+        >
+          <option value="">{t('lots.forecast.noLot')}</option>
+          {lotOptions.map((lotId) => <option key={lotId} value={lotId}>{lotId}</option>)}
+        </Select>
       ),
     },
     {
@@ -166,6 +181,9 @@ export function AvailabilityForecastPanel({ sources }) {
             />
           )}
         />
+
+        {noLotToPick && <OwnerHint owner={OWNER_LINKS.processingBatch} variant="empty" />}
+        {processingBatches.error && <p className="text-xs text-error-fg">{t('lots.forecast.lotsLoadError')}</p>}
 
         <FormActions>
           <Button variant="secondary" icon={Plus} onClick={addBatch}>{t('lots.forecast.addBatch')}</Button>
