@@ -10,6 +10,7 @@ import {
     observationRequest,
     STATUS_OPTIONS,
 } from "../utils/maturityObservations";
+import PersonSelect from "../../../app/PersonSelect";
 import FormAlert from "./FormAlert";
 import { todayAsIsoDate, usePlantedVarieties } from "../hooks/usePlantedVarieties";
 import { BlockAndVarietyFields, FormButtons } from "./HarvestFormParts";
@@ -41,7 +42,7 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
     // A number field holds "" for text it cannot read, such as "1e"; this
     // keeps such a value from passing as an empty one.
     const [isValueUnreadable, setIsValueUnreadable] = useState(false);
-    const [observer, setObserver] = useState("");
+    const [observerPersonId, setObserverPersonId] = useState("");
     const [fieldErrors, setFieldErrors] = useState({});
     const [today] = useState(todayAsIsoDate);
 
@@ -97,9 +98,6 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
             const valueError = isValueUnreadable ? measuredValueMessage() : measuredValueError(measuredValue);
             if (valueError) errors.measuredValue = valueError;
         }
-        if (observer.length > 255) {
-            errors.observer = t("harvest.observation.errors.observerTooLong");
-        }
         return errors;
     }
 
@@ -115,7 +113,7 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
             maturityStatus,
             method,
             measuredValue,
-            observer,
+            observerPersonId,
         }));
     }
 
@@ -188,15 +186,15 @@ export default function RecordMaturityObservationModal({ blocks, isSubmitting, e
                         />
                     </Field>
 
-                    <Field
+                    <PersonSelect
                         id="observation-observer"
                         label={t("harvest.observation.observer")}
-                        error={fieldError("observer")}
+                        value={observerPersonId}
+                        onChange={(id) => setObserverPersonId(id)}
+                        error={fieldError("observerPersonId")}
                         hint={t("harvest.observation.optional")}
                         className="sm:col-span-2"
-                    >
-                        <Input type="text" value={observer} onChange={(event) => setObserver(event.target.value)} />
-                    </Field>
+                    />
                 </div>
 
                 <FormButtons

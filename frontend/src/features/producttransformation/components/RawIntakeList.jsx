@@ -107,7 +107,7 @@ const RawIntakeList = () => {
       receivedQuantityKg: Number(form.receivedQuantityKg),
       receivedVariety: form.receivedVariety,
       receivedGrade: form.receivedGrade,
-      intakeOperator: form.intakeOperator.trim() || null,
+      intakeOperatorPersonId: form.intakeOperatorPersonId ? Number(form.intakeOperatorPersonId) : null,
     };
 
     if (editing) {

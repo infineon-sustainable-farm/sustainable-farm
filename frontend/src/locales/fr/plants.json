@@ -351,7 +351,6 @@
         "blockRequired": "Le bloc est obligatoire.",
         "blockInvalid": "Le bloc doit être un code court comme A ou B2, sans préfixe ni espace.",
         "applicatorRequired": "L’applicateur est obligatoire.",
-        "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères.",
         "methodTooLong": "La méthode doit comporter au plus 255 caractères.",
         "reasonRequired": "Le motif est obligatoire.",
         "reasonTooLong": "Le motif doit comporter au plus 255 caractères."
@@ -681,7 +680,6 @@
         "dateInFuture": "La date d’inspection ne peut pas être dans le futur.",
         "scoreRequired": "Le score de santé est obligatoire.",
         "scoreFormat": "Le score de santé doit être un nombre entier de 0 à 100.",
-        "observerTooLong": "L’observateur doit comporter au plus 255 caractères.",
         "problemRequired": "Le problème est obligatoire.",
         "treeFormat": "L’arbre doit comporter jusqu’à 20 lettres, chiffres ou traits d’union, par exemple 42 ou R3-12."
       }
@@ -733,7 +731,6 @@
         "quantityFormat": "La quantité doit être un nombre supérieur à 0, avec au plus 3 décimales.",
         "unitRequired": "L’unité est obligatoire.",
         "applicatorRequired": "L’applicateur est obligatoire.",
-        "applicatorTooLong": "L’applicateur doit comporter au plus 255 caractères.",
         "equipmentTooLong": "Le matériel doit comporter au plus 255 caractères."
       }
     }
@@ -931,7 +928,6 @@
         "dateFuture": "La date d’observation ne peut pas être dans le futur.",
         "statusRequired": "L’état de maturité est obligatoire.",
         "methodRequired": "La méthode est obligatoire.",
-        "observerTooLong": "L’observateur doit compter 255 caractères au plus.",
         "measuredValue": "La valeur mesurée doit être supérieure à 0 et au plus de 100, avec une décimale au plus."
       }
     },

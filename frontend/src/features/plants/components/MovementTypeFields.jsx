@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Input, Select } from "../../../shared/ui";
+import PersonSelect from "../../../app/PersonSelect";
 import { CURRENCIES } from "../utils/fertilizerMovements";
 import FertilizerFormField from "./FertilizerFormField";
 
@@ -7,16 +8,15 @@ import FertilizerFormField from "./FertilizerFormField";
 const TEXT_FIELDS = {
     supplier: { field: "supplier", id: "movement-supplier", labelKey: "fertilizer.movementForm.supplier" },
     blockCode: { field: "blockCode", id: "movement-block", labelKey: "fertilizer.movementForm.block" },
-    applicator: { field: "applicator", id: "movement-applicator", labelKey: "fertilizer.movementForm.applicator" },
     method: { field: "method", id: "movement-method", labelKey: "fertilizer.movementForm.method" },
     reason: { field: "reason", id: "movement-reason", labelKey: "fertilizer.movementForm.reason" },
 };
-const APPLICATION_FIELDS = [TEXT_FIELDS.blockCode, TEXT_FIELDS.applicator, TEXT_FIELDS.method];
 
 /**
  * The fields a movement type adds to the fertilizer, the date and the quantity: supplier, total
  * cost and currency of a purchase; block, applicator and method of an application; reason of a
- * loss. The block is typed, with the blocks of the recorded varieties as suggestions.
+ * loss. The block is typed, with the blocks of the recorded varieties as suggestions; the
+ * applicator is picked in the farm people directory.
  */
 export default function MovementTypeFields({ movementType, values, setValue, setNumber, fieldError, blocks }) {
     const { t } = useTranslation("plants");
@@ -79,7 +79,16 @@ export default function MovementTypeFields({ movementType, values, setValue, set
     if (movementType === "APPLICATION") {
         return (
             <>
-                {APPLICATION_FIELDS.map(textField)}
+                {textField(TEXT_FIELDS.blockCode)}
+                <PersonSelect
+                    id="movement-applicator"
+                    label={t("fertilizer.movementForm.applicator")}
+                    value={values.applicatorPersonId}
+                    onChange={(id) => setValue("applicatorPersonId", id)}
+                    error={fieldError("applicatorPersonId")}
+                    required
+                />
+                {textField(TEXT_FIELDS.method)}
             </>
         );
     }

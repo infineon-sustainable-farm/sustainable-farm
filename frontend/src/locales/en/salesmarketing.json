@@ -434,7 +434,7 @@
       "forecast": "e.g. 9000",
       "actual": "e.g. 8750",
       "variance": "e.g. -2.8",
-      "generatedBy": "e.g. System, Admin, Analyst name",
+      "generatedBy": "Not recorded",
       "summary": "Brief description of this report's contents and key insights..."
     },
     "types": {

@@ -131,6 +131,7 @@
     "sourceBlock": "Bloc d’origine",
     "quantityKg": "Quantité (kg)",
     "intakeOperator": "Opérateur de réception",
+    "noOperator": "Non renseigné",
     "columns": {
       "intake": "Réception",
       "batch": "Lot",

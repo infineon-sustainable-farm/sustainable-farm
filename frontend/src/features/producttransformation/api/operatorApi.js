@@ -23,7 +23,8 @@ export const operatorApi = {
   getOperatorById: (operatorId) => apiClient.get(`/api/product-transformation/operators/${operatorId}`),
 
   /**
-   * Create a new operator
+   * Create the operator role of an existing person of the people directory:
+   * { operatorId, personId, role, certifications, activeStatus, hireDate }. The name is the person's.
    */
   createOperator: (operatorData) => apiClient.post('/api/product-transformation/operators', operatorData),
 

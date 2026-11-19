@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Field, Input, Select } from "../../../../shared/ui";
+import { Field, Input } from "../../../../shared/ui";
+import PersonSelect from "../../../../app/PersonSelect";
 import FormActions from "../FormActions";
 import FormAlert from "../FormAlert";
 
 /**
- * Workshop form, used both to create (status DRAFT) and to edit a workshop. Assigning a
- * facilitator is editing the facilitator field, which this form does. Facilitators are the
- * guides, so the field is a select built from the active guides; a previously stored facilitator
- * who is no longer in the list keeps an option so the record can be saved unchanged.
+ * Workshop form, used both to create (status DRAFT) and to edit a workshop. The facilitator is
+ * picked in the farm people directory (Staff screen); a stored facilitator who is no longer
+ * listed (deactivated) keeps an option so the record can be saved unchanged.
  */
 export default function WorkshopForm({
     workshop,
-    guides,
     isSubmitting,
     submitError,
     serverFieldErrors,
@@ -27,7 +26,9 @@ export default function WorkshopForm({
         workshop ? String(workshop.durationMinutes) : "",
     );
     const [targetGroup, setTargetGroup] = useState(workshop?.targetGroup ?? "");
-    const [facilitator, setFacilitator] = useState(workshop?.facilitator ?? "");
+    const [facilitatorPersonId, setFacilitatorPersonId] = useState(
+        workshop?.facilitatorPersonId != null ? String(workshop.facilitatorPersonId) : "",
+    );
     const [description, setDescription] = useState(workshop?.description ?? "");
     const [fieldErrors, setFieldErrors] = useState({});
 
@@ -53,11 +54,6 @@ export default function WorkshopForm({
         return errors;
     }
 
-    const facilitatorInList = (guides ?? []).some(
-        (guide) => guide.fullName === workshop?.facilitator,
-    );
-    const hasLegacyFacilitator = isEditing && workshop?.facilitator && !facilitatorInList;
-
     function handleSubmit(event) {
         event.preventDefault();
         const errors = validate();
@@ -68,7 +64,7 @@ export default function WorkshopForm({
             name: name.trim(),
             durationMinutes: Number(durationMinutes),
             targetGroup: targetGroup.trim(),
-            facilitator: facilitator || null,
+            facilitatorPersonId: facilitatorPersonId ? Number(facilitatorPersonId) : null,
             description: description.trim() || null,
         });
     }
@@ -114,23 +110,15 @@ export default function WorkshopForm({
                     />
                 </Field>
 
-                <Field
+                <PersonSelect
                     id="ws-facilitator"
                     label={t("education.workshopForm.facilitator")}
-                    error={fieldError("facilitator")}
-                >
-                    <Select value={facilitator} onChange={(event) => setFacilitator(event.target.value)}>
-                        <option value="">{t("education.workshopForm.selectGuide")}</option>
-                        {hasLegacyFacilitator && (
-                            <option value={workshop.facilitator}>{workshop.facilitator}</option>
-                        )}
-                        {(guides ?? []).map((guide) => (
-                            <option key={guide.id} value={guide.fullName}>
-                                {guide.fullName}
-                            </option>
-                        ))}
-                    </Select>
-                </Field>
+                    value={facilitatorPersonId}
+                    currentName={workshop?.facilitator}
+                    onChange={(id) => setFacilitatorPersonId(id)}
+                    placeholder={t("education.workshopForm.selectFacilitator")}
+                    error={fieldError("facilitatorPersonId")}
+                />
             </div>
 
             <Field

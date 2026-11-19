@@ -8,6 +8,10 @@ const fertilizersQuery = vi.hoisted(() => ({ current: null }));
 vi.mock("../hooks/useFertilizers", () => ({ useFertilizers: () => fertilizersQuery.current }));
 vi.mock("../hooks/useVarieties", () => ({ useVarietyBlocks: () => ({ data: ["A", "B"] }) }));
 
+vi.mock("../../../shared/api/persons", () => ({
+    fetchPersons: vi.fn(() => Promise.resolve([{ id: 4, fullName: "Field team" }])),
+}));
+
 const CATALOGUE = [{ id: 7, name: "NPK 15-15-15", unit: "KG", currentStock: 1000 }];
 
 function renderModal(props = {}) {
@@ -54,7 +58,7 @@ describe("the Record a movement dialog", () => {
         });
     });
 
-    it("sends an application, with the stock in the quantity note", () => {
+    it("sends an application, with the stock in the quantity note", async () => {
         const { onSubmit, onResetError } = renderModal();
         fireEvent.click(screen.getByRole("radio", { name: "Application" }));
         expect(onResetError).toHaveBeenCalled();
@@ -63,7 +67,8 @@ describe("the Record a movement dialog", () => {
         fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-01-05" } });
         fireEvent.change(screen.getByLabelText("Quantity (kg)"), { target: { value: "2" } });
         fireEvent.change(screen.getByLabelText("Block"), { target: { value: "B2 x" } });
-        fireEvent.change(screen.getByLabelText("Applicator"), { target: { value: "Team" } });
+        await screen.findByRole("option", { name: "Field team" });
+        fireEvent.change(screen.getByLabelText(/^Applicator/), { target: { value: "4" } });
         fireEvent.click(screen.getByRole("button", { name: "Record application" }));
         expect(onSubmit).not.toHaveBeenCalled();
         expect(screen.getByText("Block must be a short code such as A or B2, without prefix or space.")).toBeInTheDocument();
@@ -72,7 +77,7 @@ describe("the Record a movement dialog", () => {
         expect(onSubmit).toHaveBeenCalledWith({
             movementType: "APPLICATION",
             fertilizerId: 7,
-            body: { applicationDate: "2026-01-05", quantity: 2, blockCode: "B2", applicator: "Team" },
+            body: { applicationDate: "2026-01-05", quantity: 2, blockCode: "B2", applicatorPersonId: 4 },
         });
     });
 

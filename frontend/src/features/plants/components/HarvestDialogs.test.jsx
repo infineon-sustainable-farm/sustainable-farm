@@ -5,6 +5,10 @@ import RecordHarvestModal from "./RecordHarvestModal";
 import RecordMaturityObservationModal from "./RecordMaturityObservationModal";
 import VarietyReferenceModal from "./VarietyReferenceModal";
 
+vi.mock("../../../shared/api/persons", () => ({
+    fetchPersons: vi.fn(() => Promise.resolve([{ id: 4, fullName: "Field team" }])),
+}));
+
 // Block A has one planted variety (a current tree count) and one without a planting.
 vi.mock("../hooks/useVarieties", () => ({
     useVarieties: ({ blockCode }) => ({
@@ -102,7 +106,7 @@ describe("the maturity observation dialog", () => {
         expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it("lists the statuses and methods in words, and sends the same request", () => {
+    it("lists the statuses and methods in words, and sends the same request", async () => {
         const onSubmit = renderDialog();
         expect(within(screen.getByLabelText("Maturity status")).getAllByRole("option").map((o) => o.textContent))
             .toEqual(["Select a status", "Immature", "Ripe", "Ready for harvest"]);
@@ -112,7 +116,8 @@ describe("the maturity observation dialog", () => {
         change("Maturity status", "RIPE");
         change("Method", "BRIX");
         change("Measured value (°Bx)", "14.2");
-        change("Observer", "  Field team  ");
+        await screen.findByRole("option", { name: "Field team" });
+        change("Observer", "4");
         fireEvent.click(screen.getByRole("button", { name: "Record observation" }));
         expect(onSubmit).toHaveBeenCalledWith({
             observedOn: "2026-01-10",
@@ -121,7 +126,7 @@ describe("the maturity observation dialog", () => {
             maturityStatus: "RIPE",
             method: "BRIX",
             measuredValue: 14.2,
-            observer: "Field team",
+            observerPersonId: 4,
         });
     });
 });

@@ -389,15 +389,17 @@
   "staff": {
     "documentTitle": "Personnel — Gestion des visiteurs",
     "title": "Personnel et guides",
-    "new": "Nouveau membre d’équipe",
-    "editTitle": "Modifier le membre du personnel — {{name}}",
+    "subtitle": "L’annuaire des personnes de la ferme : toute personne choisie comme opérateur, technicien, observateur ou guide dans un module est ajoutée et modifiée ici.",
+    "new": "Nouvelle personne",
+    "editTitle": "Modifier la personne — {{name}}",
     "roleFilter": "Rôle",
     "allRoles": "Tous les rôles",
+    "noRole": "Sans rôle visiteurs",
     "showInactive": "Afficher les inactifs",
     "loading": "Chargement du personnel…",
     "loadError": "Le personnel n’a pas pu être chargé",
-    "footnote": "Les guides affectés à un créneau et le personnel noté sur une consigne de sécurité viennent de cette liste. Désactiver un membre conserve sa fiche mais le retire de toutes les listes de choix.",
-    "noMatch": "Aucun membre du personnel ne correspond à ce filtre.",
+    "footnote": "Tous les modules choisissent leurs opérateurs, techniciens et observateurs dans cette liste ; un guide affecté à un créneau doit avoir le rôle Guide. Désactiver une personne conserve sa fiche mais la retire de toutes les listes de choix.",
+    "noMatch": "Aucune personne ne correspond à ce filtre.",
     "edit": "modifier",
     "deactivate": "désactiver",
     "deactivating": "désactivation…",
@@ -418,6 +420,7 @@
     "form": {
       "fullName": "Nom complet",
       "role": "Rôle",
+      "roleHint": "Seuls les guides, l’accueil et les responsables ont un rôle visiteurs ; laissez vide pour les autres personnes de la ferme.",
       "email": "E-mail",
       "phone": "Téléphone",
       "status": "Statut",
@@ -425,12 +428,11 @@
       "phonePlaceholder": "+226 ...",
       "fullNameRequired": "Le nom complet est obligatoire.",
       "fullNameTooLong": "Le nom complet doit faire au plus {{max}} caractères.",
-      "roleRequired": "Choisissez un rôle.",
       "emailInvalid": "Saisissez une adresse e-mail valide.",
       "emailTooLong": "L’e-mail doit faire au plus {{max}} caractères.",
       "phoneTooLong": "Le téléphone doit faire au plus {{max}} caractères.",
-      "save": "Enregistrer le membre",
-      "create": "Créer le membre"
+      "save": "Enregistrer la personne",
+      "create": "Créer la personne"
     }
   },
   "education": {
@@ -504,8 +506,8 @@
       "durationPlaceholder": "ex. 40",
       "targetGroup": "Public cible",
       "targetGroupPlaceholder": "ex. Grand public, École, Professionnels",
-      "facilitator": "Animateur (guide)",
-      "selectGuide": "Choisir un guide…",
+      "facilitator": "Animateur",
+      "selectFacilitator": "Aucun animateur",
       "save": "Enregistrer l’atelier",
       "create": "Créer l’atelier"
     },

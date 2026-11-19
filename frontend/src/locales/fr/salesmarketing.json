@@ -434,7 +434,7 @@
       "forecast": "ex. 9000",
       "actual": "ex. 8750",
       "variance": "ex. -2,8",
-      "generatedBy": "ex. Système, Admin, nom de l’analyste",
+      "generatedBy": "Non renseigné",
       "summary": "Brève description du contenu du rapport et des points clés..."
     },
     "types": {

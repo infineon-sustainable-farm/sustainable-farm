@@ -3,18 +3,18 @@ import { useTranslation } from "react-i18next";
 import { Field, Input, Modal, Textarea } from "../../../shared/ui";
 import { NON_NEGATIVE_DECIMAL } from "../../../shared/utils/validation";
 import { todayIsoDate } from "../../../shared/utils/todayIsoDate";
+import PersonSelect from "../../../app/PersonSelect";
 import EquipmentField from "./EquipmentField";
 import FormActions from "./FormActions";
 import FormAlert from "./FormAlert";
 
-const MAX_OPERATOR_LENGTH = 60;
 const MAX_NOTES_LENGTH = 500;
 
 const initialForm = {
   equipmentId: "",
   date: "",
   hoursUsed: "",
-  operator: "",
+  operatorPersonId: "",
   notes: "",
 };
 
@@ -27,7 +27,7 @@ function toFormState(usageLog) {
     equipmentId: usageLog.equipmentId != null ? String(usageLog.equipmentId) : "",
     date: usageLog.date ?? "",
     hoursUsed: usageLog.hoursUsed != null ? String(usageLog.hoursUsed) : "",
-    operator: usageLog.operator ?? "",
+    operatorPersonId: usageLog.operatorPersonId != null ? String(usageLog.operatorPersonId) : "",
     notes: usageLog.notes ?? "",
   };
 }
@@ -65,9 +65,6 @@ function UsageLogFormModal({
       errors.hoursUsed = t("usage.hoursInvalid");
     }
 
-    if (form.operator.trim().length > MAX_OPERATOR_LENGTH) {
-      errors.operator = t("validation.operatorTooLong", { max: MAX_OPERATOR_LENGTH });
-    }
     if (form.notes.trim().length > MAX_NOTES_LENGTH) {
       errors.notes = t("usage.notesTooLong", { max: MAX_NOTES_LENGTH });
     }
@@ -85,7 +82,7 @@ function UsageLogFormModal({
       equipmentId: form.equipmentId ? Number(form.equipmentId) : null,
       date: form.date,
       hoursUsed: form.hoursUsed.trim(),
-      operator: form.operator.trim() || null,
+      operatorPersonId: form.operatorPersonId ? Number(form.operatorPersonId) : null,
       notes: form.notes.trim() || null,
     });
   }
@@ -122,9 +119,14 @@ function UsageLogFormModal({
           </Field>
         </div>
 
-        <Field label={t("fields.operator")} error={fieldErrors.operator}>
-          <Input name="operator" value={form.operator} onChange={handleChange} />
-        </Field>
+        <PersonSelect
+          label={t("fields.operator")}
+          value={form.operatorPersonId}
+          currentName={usageLog?.operator}
+          onChange={(id) => setForm((previous) => ({ ...previous, operatorPersonId: id }))}
+          placeholder={t("common.noPerson")}
+          error={fieldErrors.operatorPersonId}
+        />
 
         <Field label={t("fields.notes")} error={fieldErrors.notes}>
           <Textarea name="notes" value={form.notes} onChange={handleChange} />

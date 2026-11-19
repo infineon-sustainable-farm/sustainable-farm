@@ -389,15 +389,17 @@
   "staff": {
     "documentTitle": "Staff — Visitor Management",
     "title": "Staff & guides",
-    "new": "New staff member",
-    "editTitle": "Edit staff member — {{name}}",
+    "subtitle": "The farm people directory: everyone picked as operator, technician, observer or guide in any module is added and edited here.",
+    "new": "New person",
+    "editTitle": "Edit person — {{name}}",
     "roleFilter": "Role",
     "allRoles": "All roles",
+    "noRole": "No visitor role",
     "showInactive": "Show inactive",
     "loading": "Loading staff…",
     "loadError": "Staff could not be loaded",
-    "footnote": "Guides assigned to a time slot and staff recorded on a briefing come from this list. Deactivating a member keeps the record but removes them from every selector.",
-    "noMatch": "No staff member matches this filter.",
+    "footnote": "Every module picks its operators, technicians and observers from this list; guides assigned to a time slot need the Guide role. Deactivating a person keeps the record but removes them from every selector.",
+    "noMatch": "No person matches this filter.",
     "edit": "edit",
     "deactivate": "deactivate",
     "deactivating": "deactivating…",
@@ -418,6 +420,7 @@
     "form": {
       "fullName": "Full name",
       "role": "Role",
+      "roleHint": "Only guides, reception and managers have a visitor role; leave it empty for other farm workers.",
       "email": "Email",
       "phone": "Phone",
       "status": "Status",
@@ -425,12 +428,11 @@
       "phonePlaceholder": "+226 ...",
       "fullNameRequired": "Full name is required.",
       "fullNameTooLong": "Full name must be at most {{max}} characters.",
-      "roleRequired": "Pick a role.",
       "emailInvalid": "Enter a valid email address.",
       "emailTooLong": "Email must be at most {{max}} characters.",
       "phoneTooLong": "Phone must be at most {{max}} characters.",
-      "save": "Save staff member",
-      "create": "Create staff member"
+      "save": "Save person",
+      "create": "Create person"
     }
   },
   "education": {
@@ -504,8 +506,8 @@
       "durationPlaceholder": "e.g. 40",
       "targetGroup": "Target group",
       "targetGroupPlaceholder": "e.g. General public, School, Professional",
-      "facilitator": "Facilitator (guide)",
-      "selectGuide": "Select a guide…",
+      "facilitator": "Facilitator",
+      "selectFacilitator": "No facilitator",
       "save": "Save workshop",
       "create": "Create workshop"
     },

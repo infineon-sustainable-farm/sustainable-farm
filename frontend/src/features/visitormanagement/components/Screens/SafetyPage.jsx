@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, PageHeader, Table } from "../../../../shared/ui";
 import { useRegistrations } from "../../hooks/useRegistrations";
-import { useActiveStaff, useDeliverBriefing } from "../../hooks/useSafety";
+import { useDeliverBriefing } from "../../hooks/useSafety";
 import { useVisitorFormat } from "../../utils/format";
 import BriefingForm from "../Forms/BriefingForm";
 import {
@@ -31,7 +31,6 @@ export default function SafetyPage() {
     }, [t]);
 
     const { data: registrations, isPending, isError, refetch, isFetching } = useRegistrations();
-    const { data: staff } = useActiveStaff();
     const deliverMutation = useDeliverBriefing();
 
     const tracked = (registrations ?? []).filter(
@@ -80,13 +79,6 @@ export default function SafetyPage() {
                     <p className="mb-4 text-sm font-semibold text-text">
                         {t("safety.tracked", { count: tracked.length })}
                     </p>
-
-                    {/* Suggestions for the "delivered by" field of the delivery form. */}
-                    <datalist id="briefing-staff-names">
-                        {(staff ?? []).map((member) => (
-                            <option key={member.id} value={member.fullName} />
-                        ))}
-                    </datalist>
 
                     <Table
                         caption={t("safety.title")}

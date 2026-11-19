@@ -14,7 +14,8 @@
     "unknownEquipment": "#{{id}}",
     "tryAgain": "Erneut versuchen",
     "loadingEquipment": "Geräte werden geladen…",
-    "noEquipmentDetached": "Kein Gerät (nicht zugeordnet)"
+    "noEquipmentDetached": "Kein Gerät (nicht zugeordnet)",
+    "noPerson": "Niemand"
   },
   "units": {
     "hours": "{{value}} h",
@@ -57,7 +58,6 @@
     "nameTooLong": "Der Name darf höchstens {{max}} Zeichen lang sein.",
     "equipmentRequired": "Das Gerät ist erforderlich.",
     "dateRequired": "Das Datum ist erforderlich.",
-    "operatorTooLong": "Der Bediener darf höchstens {{max}} Zeichen lang sein.",
     "costRequired": "Die Kosten sind erforderlich.",
     "costInvalid": "Die Kosten müssen 0 oder mehr betragen, mit höchstens 2 Nachkommastellen."
   },
@@ -181,7 +181,6 @@
     "issueRequired": "Die Beschreibung der Störung ist erforderlich.",
     "issueTooLong": "Die Beschreibung der Störung darf höchstens {{max}} Zeichen lang sein.",
     "downtimeInvalid": "Die Ausfallzeit muss 0 oder mehr betragen, mit höchstens 2 Nachkommastellen.",
-    "technicianTooLong": "Der Techniker darf höchstens {{max}} Zeichen lang sein.",
     "deleteTitle": "Reparatur löschen",
     "deleteMessage": "Möchten Sie die Reparatur vom {{date}} für {{equipment}} wirklich löschen? Dies kann nicht rückgängig gemacht werden."
   },
@@ -196,11 +195,10 @@
     "jobTitle": "Funktion",
     "startDate": "Beginn",
     "endDate": "Ende",
-    "fullName": "Vollständiger Name des Bedieners",
+    "person": "Bediener",
     "selectEquipment": "Gerät auswählen",
     "endDateOptional": "Ende (optional)",
-    "fullNameRequired": "Der vollständige Name des Bedieners ist erforderlich.",
-    "fullNameTooLong": "Der vollständige Name darf höchstens {{max}} Zeichen lang sein.",
+    "personRequired": "Wählen Sie den Bediener.",
     "jobTitleRequired": "Die Funktion ist erforderlich.",
     "jobTitleTooLong": "Die Funktion darf höchstens {{max}} Zeichen lang sein.",
     "startDateRequired": "Das Beginndatum ist erforderlich.",
