@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import AddHealthIssueModal from "./AddHealthIssueModal";
 import RecordInspectionModal from "./RecordInspectionModal";
@@ -15,6 +16,19 @@ vi.mock("../hooks/useHealthIssues", () => ({
             { id: 1, code: "FRUIT_FLY", name: "Fruit flies", kind: "PEST" },
             { id: 5, code: "ANTHRACNOSE", name: "Anthracnose", kind: "DISEASE" },
         ],
+    }),
+}));
+
+vi.mock("../hooks/useFarmBlocks", () => ({
+    useFarmBlocks: () => ({
+        data: [
+            { id: 1, farmId: 1, code: "A", name: "North block" },
+            { id: 2, farmId: 1, code: "B2", name: "B2" },
+            { id: 3, farmId: 1, code: "E", name: "East" },
+        ],
+        isPending: false,
+        isError: false,
+        refetch: () => {},
     }),
 }));
 
@@ -111,13 +125,13 @@ describe("the dialog recording an inspection", () => {
     function renderForm(onSubmit = vi.fn()) {
         render(
             <RecordInspectionModal
-                blocks={["A", "B"]}
                 isSubmitting={false}
                 error={null}
                 onSubmit={onSubmit}
                 onResetError={vi.fn()}
                 onClose={vi.fn()}
-            />
+            />,
+            { wrapper: MemoryRouter }
         );
         return onSubmit;
     }
@@ -184,7 +198,9 @@ describe("the dialog recording a treatment", () => {
 
     it("treats a finding: the block and the problem come from the finding", () => {
         const onSubmit = vi.fn();
-        render(<TreatmentModal finding={FINDING} blocks={[]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />);
+        render(<TreatmentModal finding={FINDING} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />, {
+            wrapper: MemoryRouter,
+        });
 
         expect(screen.getByRole("dialog", { name: "Treat a finding" })).toBeInTheDocument();
         expect(screen.queryByLabelText("Block")).not.toBeInTheDocument();
@@ -204,7 +220,9 @@ describe("the dialog recording a treatment", () => {
 
     it("asks a preventive treatment for its block and problem", () => {
         const onSubmit = vi.fn();
-        render(<TreatmentModal finding={null} blocks={["A"]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />);
+        render(<TreatmentModal finding={null} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />, {
+            wrapper: MemoryRouter,
+        });
 
         expect(screen.getByRole("dialog", { name: "Record a preventive treatment" })).toBeInTheDocument();
         submit("Record treatment");

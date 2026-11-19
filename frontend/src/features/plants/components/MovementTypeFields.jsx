@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Input, Select } from "../../../shared/ui";
 import { CURRENCIES } from "../utils/fertilizerMovements";
+import BlockSelect from "./BlockSelect";
 import FertilizerFormField from "./FertilizerFormField";
 
 // The text fields of the types: name in the form state, id of the control, label.
@@ -16,28 +17,32 @@ const APPLICATION_FIELDS = [TEXT_FIELDS.blockCode, TEXT_FIELDS.applicator, TEXT_
 /**
  * The fields a movement type adds to the fertilizer, the date and the quantity: supplier, total
  * cost and currency of a purchase; block, applicator and method of an application; reason of a
- * loss. The block is typed, with the blocks of the recorded varieties as suggestions.
+ * loss. The block is picked among the blocks of the farm referential.
  */
-export default function MovementTypeFields({ movementType, values, setValue, setNumber, fieldError, blocks }) {
+export default function MovementTypeFields({ movementType, values, setValue, setNumber, fieldError }) {
     const { t } = useTranslation("plants");
 
     function textField({ field, id, labelKey }) {
+        if (field === "blockCode") {
+            return (
+                <BlockSelect
+                    key={field}
+                    id={id}
+                    label={t(labelKey)}
+                    value={values.blockCode}
+                    onChange={(code) => setValue("blockCode", code)}
+                    error={fieldError("blockCode")}
+                />
+            );
+        }
         return (
             <FertilizerFormField key={field} id={id} label={t(labelKey)} error={fieldError(field)}>
                 <Input
                     id={id}
                     type="text"
-                    list={field === "blockCode" ? "movement-block-options" : undefined}
                     value={values[field]}
                     onChange={(event) => setValue(field, event.target.value)}
                 />
-                {field === "blockCode" && (
-                    <datalist id="movement-block-options">
-                        {(blocks ?? []).map((block) => (
-                            <option key={block} value={block} />
-                        ))}
-                    </datalist>
-                )}
             </FertilizerFormField>
         );
     }
