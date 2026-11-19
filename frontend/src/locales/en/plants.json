@@ -716,6 +716,7 @@
       "selectUnit": "Select a unit",
       "applicator": "Applicator",
       "equipment": "Equipment",
+      "noEquipment": "No equipment",
       "submit": "Record treatment",
       "errors": {
         "targetRequired": "Problem targeted is required.",
@@ -730,8 +731,7 @@
         "ingredientTooLong": "Active ingredient must be at most 255 characters.",
         "quantityFormat": "Quantity must be a number greater than 0, with at most 3 decimals.",
         "unitRequired": "Unit is required.",
-        "applicatorRequired": "Applicator is required.",
-        "equipmentTooLong": "Equipment must be at most 255 characters."
+        "applicatorRequired": "Applicator is required."
       }
     }
   },

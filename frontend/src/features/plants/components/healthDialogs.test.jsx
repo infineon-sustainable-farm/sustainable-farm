@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import AddHealthIssueModal from "./AddHealthIssueModal";
 import RecordInspectionModal from "./RecordInspectionModal";
@@ -18,6 +19,18 @@ vi.mock("../hooks/useHealthIssues", () => ({
         data: [
             { id: 1, code: "FRUIT_FLY", name: "Fruit flies", kind: "PEST" },
             { id: 5, code: "ANTHRACNOSE", name: "Anthracnose", kind: "DISEASE" },
+        ],
+    }),
+}));
+
+// The machines of the machinery register, without a request.
+vi.mock("../hooks/useMachineryEquipment", () => ({
+    useMachineryEquipment: () => ({
+        isPending: false,
+        isError: false,
+        data: [
+            { id: 3, code: "EQ-00003", name: "Knapsack sprayer" },
+            { id: 4, code: "EQ-00004", name: "Tractor sprayer" },
         ],
     }),
 }));
@@ -189,7 +202,7 @@ describe("the dialog recording a treatment", () => {
 
     it("treats a finding: the block and the problem come from the finding", async () => {
         const onSubmit = vi.fn();
-        render(<TreatmentModal finding={FINDING} blocks={[]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />);
+        render(<TreatmentModal finding={FINDING} blocks={[]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />, { wrapper: MemoryRouter });
 
         expect(screen.getByRole("dialog", { name: "Treat a finding" })).toBeInTheDocument();
         expect(screen.queryByLabelText("Block")).not.toBeInTheDocument();
@@ -209,7 +222,7 @@ describe("the dialog recording a treatment", () => {
 
     it("asks a preventive treatment for its block and problem", async () => {
         const onSubmit = vi.fn();
-        render(<TreatmentModal finding={null} blocks={["A"]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />);
+        render(<TreatmentModal finding={null} blocks={["A"]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />, { wrapper: MemoryRouter });
 
         expect(screen.getByRole("dialog", { name: "Record a preventive treatment" })).toBeInTheDocument();
         submit("Record treatment");
@@ -226,5 +239,30 @@ describe("the dialog recording a treatment", () => {
         expect(onSubmit).toHaveBeenCalledWith(
             expect.objectContaining({ blockCode: "A", targetIssueCode: "FRUIT_FLY", productName: "Copper", applicatorPersonId: 4 })
         );
+    });
+
+    it("picks the equipment among the machines of Machinery and sends its id", async () => {
+        const onSubmit = vi.fn();
+        render(<TreatmentModal finding={FINDING} blocks={[]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />, { wrapper: MemoryRouter });
+
+        const equipment = screen.getByLabelText("Equipment");
+        expect(equipment.tagName).toBe("SELECT");
+        expect(within(equipment).getAllByRole("option").map((option) => option.textContent)).toEqual([
+            "No equipment",
+            "Knapsack sprayer",
+            "Tractor sprayer",
+        ]);
+        // Machinery owns the machines: a missing one is added there.
+        expect(screen.getByRole("link", { name: "Add it in Machinery" })).toHaveAttribute(
+            "href",
+            "/machinery/equipment-registry?create=1"
+        );
+
+        await fillCommonFields();
+        change("Equipment", "4");
+        submit("Record treatment");
+
+        expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ equipmentId: 4 }));
+        expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("equipment");
     });
 });

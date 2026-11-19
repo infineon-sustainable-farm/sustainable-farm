@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.api.PackagedLot;
@@ -40,15 +41,16 @@ public class ProductBatchService {
     }
 
     public ProductBatchResponse create(ProductBatchRequest request) {
+        PackagedLot lot = packagedLot(request.batchCode());
         ProductBatch item = mapper.apply(request, new ProductBatch());
-        linkPackagedLot(item);
+        link(item, lot);
         return ProductBatchResponse.of(repository.save(item));
     }
 
     public ProductBatchResponse update(Long id, ProductBatchRequest request) {
-        ProductBatch existing = mapper.apply(request, find(id));
-        linkPackagedLot(existing);
-
+        ProductBatch existing = find(id);
+        PackagedLot lot = packagedLot(request.batchCode());
+        link(mapper.apply(request, existing), lot);
         return ProductBatchResponse.of(repository.save(existing));
     }
 
@@ -58,14 +60,25 @@ public class ProductBatchService {
     }
 
     /**
-     * Links the batch to the product transformation packaged lot whose lot code is its batch
-     * code, or clears the link when there is none. Only the link is written: the stock and the
-     * status stay those of the request.
+     * The product transformation packaged lot a batch code designates. Product transformation
+     * owns the packaged lots: sales picks one by its lot code
+     * ({@code GET /api/product-transformation/packaging-records}) and never types a new one.
+     *
+     * @throws BadRequestException (400) when no packaged lot has this code
      */
-    private void linkPackagedLot(ProductBatch batch) {
-        batch.setPackagingRecordId(packagedLots.findByLotCode(batch.getBatchCode())
-                .map(PackagedLot::id)
-                .orElse(null));
+    private PackagedLot packagedLot(String batchCode) {
+        return packagedLots.findByLotCode(batchCode)
+                .orElseThrow(() -> new BadRequestException(
+                        "Unknown packaged lot, not a lot code of product transformation: " + batchCode));
+    }
+
+    /**
+     * Links the batch to its packaged lot, under the lot code. Only the link is written: the stock
+     * and the status stay those of the request.
+     */
+    private static void link(ProductBatch batch, PackagedLot lot) {
+        batch.setBatchCode(lot.lotCode());
+        batch.setPackagingRecordId(lot.id());
     }
 
     public void delete(Long id) {

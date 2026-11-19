@@ -576,7 +576,6 @@
     "attachTitle": "Messzeitfenster zuordnen",
     "fields": {
       "lot": "Los",
-      "lotPlaceholder": "LOT-2026-0142",
       "activity": "Tätigkeit",
       "source": "Quelle",
       "from": "Von",
@@ -619,6 +618,8 @@
         "plannedAt": "Geplant am"
       },
       "batchLot": "Los der Charge {{number}}",
+      "noLot": "Kein Los",
+      "lotsLoadError": "Die Lose der Produktverarbeitung konnten nicht geladen werden.",
       "batchActivity": "Tätigkeit der Charge {{number}}",
       "batchSize": "Größe der Charge {{number}}",
       "batchDate": "Datum der Charge {{number}}",

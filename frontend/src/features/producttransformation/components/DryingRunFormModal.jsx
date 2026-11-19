@@ -143,7 +143,7 @@ export default function DryingRunFormModal({ open, editing, batches, equipment, 
         <AssignmentFields
           equipmentId={form.equipmentId}
           operatorId={form.operatorId}
-          onEquipmentChange={update('equipmentId')}
+          onEquipmentChange={(id) => setForm((current) => ({ ...current, equipmentId: id }))}
           onOperatorChange={update('operatorId')}
           equipment={equipment}
           operators={operators}

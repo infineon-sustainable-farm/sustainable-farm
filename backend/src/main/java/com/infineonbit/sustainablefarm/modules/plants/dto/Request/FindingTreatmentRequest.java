@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.plants.dto.Request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
@@ -62,6 +63,8 @@ public record FindingTreatmentRequest(
         @NotNull(message = "applicatorPersonId is required")
         Long applicatorPersonId,
 
-        @Size(max = 255, message = "equipment must be at most 255 characters")
-        String equipment) {
+        @Schema(description = "Id of the machine used, a machine of the machinery register "
+                + "(/api/machinery/equipment); optional")
+        @Min(value = 1, message = "equipmentId must be at least 1")
+        Long equipmentId) {
 }

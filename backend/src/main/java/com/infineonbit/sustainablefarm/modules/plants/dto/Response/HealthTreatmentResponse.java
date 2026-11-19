@@ -10,7 +10,8 @@ import java.time.LocalDate;
  *
  * <p>{@code findingId} is {@code null} for a preventive treatment.
  * {@code targetOtherLabel} names the targeted problem when its code is
- * {@code OTHER}. {@code harvestAllowedFrom} is {@code treatedOn} plus
+ * {@code OTHER}. {@code equipmentId} is the machine of the machinery register,
+ * {@code equipment} its name when the treatment was recorded. {@code harvestAllowedFrom} is {@code treatedOn} plus
  * {@code preHarvestIntervalDays}, computed on every read; no harvest is refused
  * because of it.
  */
@@ -31,6 +32,7 @@ public record HealthTreatmentResponse(
         LocalDate harvestAllowedFrom,
         String applicator,
         Long applicatorPersonId,
+        Long equipmentId,
         String equipment,
         String source,
         Instant lastUpdated) {

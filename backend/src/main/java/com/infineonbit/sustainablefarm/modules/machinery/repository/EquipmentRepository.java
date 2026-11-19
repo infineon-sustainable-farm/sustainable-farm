@@ -18,8 +18,6 @@ import java.util.Optional;
 public interface EquipmentRepository extends JpaRepository<Equipment, Long> {
     boolean existsByName(String name);
 
-    boolean existsByNameAndIdNot(String name, Long id);
-
     boolean existsByCode(String code);
 
     Optional<Equipment> findByCode(String code);

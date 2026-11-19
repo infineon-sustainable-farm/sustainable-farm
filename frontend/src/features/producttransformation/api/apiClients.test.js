@@ -164,18 +164,16 @@ describe('equipmentApi', () => {
     equipmentApi.getAvailableEquipment();
     equipmentApi.getEquipmentByType('SOLAR_DRYER');
     equipmentApi.getEquipmentByStatus('ACTIVE');
-    equipmentApi.createEquipment({ equipmentId: 'EQ-1' });
     equipmentApi.updateEquipment('EQ-1', { capacityKgPerHour: 130 });
-    equipmentApi.deleteEquipment('EQ-1');
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment');
     expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/EQ-1');
     expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/available');
     expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/type/SOLAR_DRYER');
     expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/status/ACTIVE');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/equipment', { equipmentId: 'EQ-1' });
     expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/equipment/EQ-1', { capacityKgPerHour: 130 });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/equipment/EQ-1');
+    expect(equipmentApi.createEquipment).toBeUndefined();
+    expect(equipmentApi.deleteEquipment).toBeUndefined();
   });
 });
 

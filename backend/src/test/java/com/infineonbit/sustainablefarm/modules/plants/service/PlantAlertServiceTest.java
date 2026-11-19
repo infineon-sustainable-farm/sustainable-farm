@@ -176,7 +176,7 @@ public class PlantAlertServiceTest {
                                                      LocalDate treatedOn, String productName, int intervalDays) {
         return new HealthTreatmentResponse(id, farmId, blockCode, "OTHER", "Other", "Fruit fly", findingId,
                 treatedOn, productName, "deltamethrin", 1.5, TreatmentUnit.L, intervalDays,
-                treatedOn.plusDays(intervalDays), "Awa", null, null, "user_entry", null);
+                treatedOn.plusDays(intervalDays), "Awa", null, null, null, "user_entry", null);
     }
 
     private static FertilizerResponse fertilizer(long id, String name, FertilizerUnit unit, Double threshold,
