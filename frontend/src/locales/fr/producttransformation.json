@@ -148,7 +148,8 @@
       "dateRequired": "La date de réception est obligatoire",
       "sourceFarmRequired": "L’exploitation d’origine est obligatoire",
       "sourceBlockRequired": "Le bloc d’origine est obligatoire",
-      "quantityPositive": "La quantité reçue doit être supérieure à 0"
+      "quantityPositive": "La quantité reçue doit être supérieure à 0",
+      "varietyRequired": "La variété est obligatoire"
     },
     "saveError": "Impossible d’enregistrer la réception",
     "deleteError": "Impossible de supprimer la réception",
@@ -475,10 +476,10 @@
   },
   "equipment": {
     "title": "Équipements",
-    "subtitle": "Équipements de transformation des produits : capacité, consommation d’énergie et état de maintenance.",
-    "new": "Nouvel équipement",
-    "newTitle": "Nouvel équipement",
-    "editTitle": "Modifier l’équipement",
+    "subtitle": "Machines de transformation et de séchage du module Machines, avec leur capacité, leur consommation d’énergie et leur emplacement.",
+    "editSpecs": "Modifier les caractéristiques",
+    "editTitle": "Modifier les caractéristiques de l’équipement",
+    "machineryNote": "L’identifiant, le nom et l’état d’une machine se gèrent dans Machines.",
     "count": "{{count}} équipements",
     "type": "Type",
     "status": "État",
@@ -511,19 +512,14 @@
     "location": "Emplacement",
     "lastMaintenance": "Dernière maintenance",
     "validation": {
-      "idRequired": "L’identifiant de l’équipement est obligatoire",
-      "nameRequired": "Le nom de l’équipement est obligatoire",
       "typeRequired": "Le type d’équipement est obligatoire",
       "capacityPositive": "La capacité doit être supérieure à 0",
       "energyPositive": "La consommation d’énergie doit être supérieure à 0"
     },
     "saveError": "Impossible d’enregistrer l’équipement",
-    "deleteError": "Impossible de supprimer l’équipement",
     "loadError": "Impossible de charger les équipements",
-    "empty": "Aucun équipement trouvé",
-    "noMatch": "Aucun équipement ne correspond aux filtres",
-    "deleteTitle": "Supprimer l’équipement",
-    "deleteMessage": "Supprimer l’équipement {{id}} ? Cette action est irréversible."
+    "empty": "Aucune machine de transformation ou de séchage dans Machines pour l’instant",
+    "noMatch": "Aucun équipement ne correspond aux filtres"
   },
   "batches": {
     "title": "Gestion des lots",

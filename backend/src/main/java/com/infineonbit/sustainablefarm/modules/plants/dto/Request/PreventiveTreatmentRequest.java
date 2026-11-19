@@ -83,6 +83,8 @@ public record PreventiveTreatmentRequest(
         @NotNull(message = "applicatorPersonId is required")
         Long applicatorPersonId,
 
-        @Size(max = 255, message = "equipment must be at most 255 characters")
-        String equipment) {
+        @Schema(description = "Id of the machine used, a machine of the machinery register "
+                + "(/api/machinery/equipment); optional")
+        @Min(value = 1, message = "equipmentId must be at least 1")
+        Long equipmentId) {
 }

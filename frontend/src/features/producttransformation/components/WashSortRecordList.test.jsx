@@ -3,6 +3,7 @@
 // extra Vitest configuration (same approach as the Water Supply view tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import WashSortRecordList from './WashSortRecordList';
 import { washSortApi } from '../api/washSortApi';
 import { batchApi } from '../api/batchApi';
@@ -96,7 +97,7 @@ beforeEach(() => {
 
 describe('WashSortRecordList', () => {
   it('renders yields, waste, water and resolved equipment/operator', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
 
     // The loading state is a skeleton table: wait for the rows before reading the table.
     await screen.findByText('WS-1');
@@ -112,7 +113,7 @@ describe('WashSortRecordList', () => {
   });
 
   it('filters by batch and start date', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     fireEvent.change(screen.getByLabelText('Filter by batch'), { target: { value: 'B-002' } });
@@ -128,7 +129,7 @@ describe('WashSortRecordList', () => {
   });
 
   it('creates a wash record through the API and reloads the list', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Wash Record/i }));
@@ -169,7 +170,7 @@ describe('WashSortRecordList', () => {
   });
 
   it('rejects an end time before the start time', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Wash Record/i }));
@@ -194,7 +195,7 @@ describe('WashSortRecordList', () => {
   });
 
   it('edits a record, keeping identity fields read-only', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     const row = screen.getByText('WS-1').closest('tr');
@@ -227,7 +228,7 @@ describe('WashSortRecordList', () => {
   });
 
   it('deletes a record after confirmation', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     const row = screen.getByText('WS-1').closest('tr');
@@ -244,7 +245,7 @@ describe('WashSortRecordList', () => {
   it('shows an error state and retries the load', async () => {
     washSortApi.getAllWashSortRecords.mockRejectedValueOnce(new Error('Network down'));
 
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText('Network down')).toBeTruthy();
 
@@ -254,7 +255,7 @@ describe('WashSortRecordList', () => {
   });
 
   it('offers only washing equipment and washer operators in the form, with the equipment status', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Wash Record/i }));
@@ -262,12 +263,16 @@ describe('WashSortRecordList', () => {
 
     const equipmentOptions = within(within(dialog).getByLabelText('Equipment')).getAllByRole('option');
     expect(equipmentOptions.map((option) => option.textContent)).toEqual(['No equipment', 'Washer 1 · Active']);
+    // Machinery owns the machines: a missing one is added there, through its create form.
+    expect(within(dialog).getByRole('link', { name: 'Add it in Machinery' }).getAttribute('href')).toBe(
+      '/machinery/equipment-registry?create=1',
+    );
     const operatorOptions = within(within(dialog).getByLabelText('Operator')).getAllByRole('option');
     expect(operatorOptions.map((option) => option.textContent)).toEqual(['No operator', 'Moussa']);
   });
 
   it('closes the form on Cancel without calling the API', async () => {
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Wash Record/i }));
@@ -280,7 +285,7 @@ describe('WashSortRecordList', () => {
   it('keeps the delete dialog open with the server error when the deletion fails', async () => {
     washSortApi.deleteWashSortRecord.mockRejectedValueOnce(new Error('Record is locked'));
 
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     const row = screen.getByText('WS-1').closest('tr');
@@ -297,7 +302,7 @@ describe('WashSortRecordList', () => {
       { ...RECORDS[0], equipmentId: null, operatorId: null, yieldPercentage: null },
     ]);
 
-    render(<WashSortRecordList />);
+    render(<WashSortRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('WS-1');
 
     const row = screen.getByText('WS-1').closest('tr');

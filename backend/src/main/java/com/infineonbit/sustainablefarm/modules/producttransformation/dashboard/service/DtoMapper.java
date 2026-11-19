@@ -370,19 +370,6 @@ public class DtoMapper {
 
     // ===== EQUIPMENT MAPPERS =====
 
-    public Equipment toEntity(EquipmentCreateRequest request) {
-        Equipment equipment = new Equipment();
-        equipment.setEquipmentId(request.getEquipmentId());
-        equipment.setEquipmentName(request.getEquipmentName());
-        equipment.setEquipmentType(request.getEquipmentType());
-        equipment.setCapacityKgPerHour(request.getCapacityKgPerHour());
-        equipment.setEnergyConsumptionKwhPerKg(request.getEnergyConsumptionKwhPerKg());
-        equipment.setLocation(request.getLocation());
-        equipment.setMaintenanceStatus(request.getMaintenanceStatus());
-        equipment.setLastMaintenanceDate(request.getLastMaintenanceDate());
-        return equipment;
-    }
-
     public EquipmentResponse toResponse(Equipment entity) {
         return EquipmentResponse.builder()
                 .equipmentId(entity.getEquipmentId())
@@ -431,11 +418,9 @@ public class DtoMapper {
         HarvestEvent event = new HarvestEvent();
         event.setHarvestId(request.getHarvestId());
         event.setBatchId(request.getBatchId());
-        event.setHarvestDate(request.getHarvestDate());
+        // Date, variety, block and quantity are copied from the plants harvest by the service.
+        event.setPlantsHarvestId(request.getPlantsHarvestId());
         event.setHarvestTime(request.getHarvestTime());
-        event.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
-        event.setFarmBlockId(blocks.resolve(request.getFarmId(), request.getBlockId()));
-        event.setHarvestQuantityKg(request.getHarvestQuantityKg());
         event.setQualityGrade(request.getQualityGrade());
         event.setQualityGradeDescription(request.getQualityGradeDescription());
         event.setHarvestTeamId(request.getHarvestTeamId());
