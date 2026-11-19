@@ -86,7 +86,7 @@ public class EquipmentService {
     /**
      * The business code of a piece of equipment created from the machinery screens:
      * {@code EQ-} and a five-digit number, the first one after the highest id that no other
-     * equipment uses yet (a code chosen by product transformation may already hold it).
+     * equipment uses yet (a code written by a seed may already hold it).
      */
     String nextCode() {
         long number = equipmentRepository.findMaxId() + 1;

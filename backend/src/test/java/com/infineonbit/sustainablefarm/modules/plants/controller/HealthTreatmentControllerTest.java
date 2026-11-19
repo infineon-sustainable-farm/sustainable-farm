@@ -85,7 +85,7 @@ public class HealthTreatmentControllerTest {
     private static HealthTreatmentResponse bait() {
         return new HealthTreatmentResponse(21L, null, "D", "FRUIT_FLY", "Fruit flies", null, null,
                 LocalDate.of(2026, 9, 5), "Protein bait B", "spinosad", 1.0, TreatmentUnit.L, 1,
-                LocalDate.of(2026, 9, 6), "Issa", null, "user_entry", NOW);
+                LocalDate.of(2026, 9, 6), "Issa", null, null, "user_entry", NOW);
     }
 
     @Test
@@ -113,6 +113,7 @@ public class HealthTreatmentControllerTest {
                 .andExpect(jsonPath("$.preHarvestIntervalDays").value(1))
                 .andExpect(jsonPath("$.harvestAllowedFrom").value("2026-09-06"))
                 .andExpect(jsonPath("$.applicator").value("Issa"))
+                .andExpect(jsonPath("$.equipmentId").value(nullValue()))
                 .andExpect(jsonPath("$.equipment").value(nullValue()))
                 .andExpect(jsonPath("$.source").value("user_entry"))
                 .andExpect(jsonPath("$.lastUpdated").value("2026-09-28T10:00:00Z"));
@@ -128,8 +129,8 @@ public class HealthTreatmentControllerTest {
         // Act
         ResultActions result = postTreatment("""
                 {"farmId":0,"blockCode":"Block D","treatedOn":"2999-01-01","productName":"",
-                 "quantity":0,"unit":"tons","preHarvestIntervalDays":-1,"applicator":" ","equipment":"%s"}
-                """.formatted("x".repeat(256)));
+                 "quantity":0,"unit":"tons","preHarvestIntervalDays":-1,"applicator":" ","equipmentId":-3}
+                """);
         // Assert
         assertApiError(result, 400, "Bad Request", "Validation failed");
         result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(11)))
@@ -146,7 +147,7 @@ public class HealthTreatmentControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.preHarvestIntervalDays")
                         .value("preHarvestIntervalDays must be a whole number, 0 or more"))
                 .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"))
-                .andExpect(jsonPath("$.fieldErrors.equipment").value("equipment must be at most 255 characters"));
+                .andExpect(jsonPath("$.fieldErrors.equipmentId").value("equipmentId must be at least 1"));
         verify(healthTreatmentService, never()).recordPreventiveTreatment(any());
     }
 

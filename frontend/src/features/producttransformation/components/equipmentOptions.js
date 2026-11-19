@@ -5,9 +5,6 @@ import { formatEnum, notAvailable } from '../utils/format';
 export const EQUIPMENT_TYPES = ['WASHING', 'DRYING', 'PACKAGING', 'TESTA_DRYER', 'SOLAR_DRYER', 'TUNNEL_DRYER'];
 export const MAINTENANCE_STATUSES = ['ACTIVE', 'MAINTENANCE', 'RETIRED'];
 
-/** Same maximum as the Machinery equipment form: one register, one name length. */
-export const EQUIPMENT_NAME_MAX_LENGTH = 100;
-
 /**
  * Translated label of an equipment type. A machine created in Machinery has no type yet and shows
  * N/A; an unknown code is shown as received.
