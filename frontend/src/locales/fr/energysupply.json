@@ -56,7 +56,9 @@
     "kwhValue": "{{value}} kWh",
     "yearsValue": "{{value}} ans",
     "panelsValue": "{{value}} panneaux",
-    "kgPerDayValue": "{{value}} kg/jour"
+    "kgPerDayValue": "{{value}} kg/jour",
+    "kwhPerYearValue": "{{value}} kWh/an",
+    "kgPerYearValue": "{{value}} kg/an"
   },
   "dashboard": {
     "title": "Vue d’ensemble du système",
@@ -196,7 +198,7 @@
   },
   "whatIf": {
     "title": "Analyse de scénarios",
-    "subtitle": "Simulez une extension du système énergétique et voyez la puissance, le coût, le retour sur investissement et les émissions qui en résultent.",
+    "subtitle": "Simulez une extension du système énergétique et voyez la puissance, le coût, le retour sur investissement, le bilan énergétique et les émissions qui en résultent. La hausse de production est comptée comme une production journalière supplémentaire.",
     "simulationFailed": "Échec de la simulation : {{error}}",
     "inputsTitle": "Paramètres du scénario",
     "reset": "Réinitialiser",
@@ -208,13 +210,17 @@
     "noResult": "Aucun résultat de scénario n’est disponible.",
     "newCapacity": "Nouvelle puissance du système",
     "additionalCapex": "CAPEX supplémentaire",
-    "payback": "Délai de retour sur investissement",
-    "co2Reduction": "Réduction de CO₂",
-    "impactTitle": "Vue d’ensemble de l’impact",
-    "chartCapacity": "Puissance (kWc)",
-    "chartCo2": "Réduction de CO₂ (%)",
-    "chartPayback": "Retour (ans)",
-    "valueSeries": "valeur"
+    "payback": "Retour sur investissement estimé",
+    "impactTitle": "Impact énergétique annuel (kWh)",
+    "valueSeries": "valeur",
+    "notAvailable": "N/D",
+    "productionDemand": "Demande supplémentaire de la production",
+    "netEnergyBalance": "Bilan énergétique annuel net",
+    "co2Avoided": "CO₂ net évité par an",
+    "co2Increase": "Hausse nette de CO₂ par an",
+    "chartPvGeneration": "Production PV supplémentaire",
+    "chartProductionDemand": "Demande de la production",
+    "chartNetBalance": "Bilan énergétique net"
   },
   "alerts": {
     "title": "Alertes et notifications",

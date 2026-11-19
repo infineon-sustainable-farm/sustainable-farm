@@ -13,13 +13,11 @@ import java.math.RoundingMode;
 import java.util.List;
 
 /**
- * Recalculates CAPEX, payback, and CO2 reduction when the user adjusts
+ * Recalculates CAPEX, payback, and net energy and CO2 impact when the user adjusts
  * panel count, battery size, or production scale on the What-If tab.
  *
- * Assumptions used (from the Energy Supply Systems Excel business case,
- * Base scenario). TODO (Aida): replace with the exact figures from the
- * "TEAM SUMMARY — Energy System" sheet once the payback discrepancy
- * between tabs is resolved.
+ * Uses provisional business-case assumptions until the figures in the
+ * "TEAM SUMMARY — Energy System" sheet are confirmed.
  */
 @Service
 public class WhatIfService {
@@ -55,35 +53,38 @@ public class WhatIfService {
 
         BigDecimal additionalCapex = panelCapex.add(batteryCapex);
 
-        // Extra daily load introduced by scaling up dried-mango production (dryer demand)
-        BigDecimal extraDailyLoadKwh = (request.getProductionScaleKgPerDay() != null ? request.getProductionScaleKgPerDay() : BigDecimal.ZERO)
-                .multiply(DRYER_KWH_PER_KG);
+        BigDecimal additionalProductionDemandKwhPerYear =
+                (request.getProductionScaleKgPerDay() != null
+                        ? request.getProductionScaleKgPerDay()
+                        : BigDecimal.ZERO)
+                        .multiply(DRYER_KWH_PER_KG)
+                        .multiply(BigDecimal.valueOf(365));
 
         BigDecimal annualSavings = additionalPvCapacity.multiply(ANNUAL_SAVINGS_PER_KWP_EUR);
 
         BigDecimal newPaybackYears = annualSavings.compareTo(BigDecimal.ZERO) > 0
                 ? additionalCapex.divide(annualSavings, 2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
+                : null;
 
         BigDecimal annualKwhFromNewPanels = additionalPvCapacity
                 .multiply(BigDecimal.valueOf(365))
                 .multiply(BigDecimal.valueOf(4)); // ~4 sun-hours/day equivalent
 
-        BigDecimal co2AvoidedKg = annualKwhFromNewPanels
-                .multiply(GRID_EMISSION_FACTOR.subtract(PV_EMISSION_FACTOR));
-
-        BigDecimal baselineAnnualEmissionsKg = currentPvCapacity
-                .multiply(BigDecimal.valueOf(365))
-                .multiply(BigDecimal.valueOf(4))
-                .multiply(GRID_EMISSION_FACTOR)
-                .max(BigDecimal.ONE);
-
-        BigDecimal newCo2ReductionPct = co2AvoidedKg
-                .divide(baselineAnnualEmissionsKg, 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100))
+        BigDecimal netAnnualEnergyBalanceKwh =
+                annualKwhFromNewPanels.subtract(additionalProductionDemandKwhPerYear);
+        BigDecimal netAnnualCo2AvoidedKg = annualKwhFromNewPanels
+                .multiply(GRID_EMISSION_FACTOR.subtract(PV_EMISSION_FACTOR))
+                .subtract(additionalProductionDemandKwhPerYear.multiply(GRID_EMISSION_FACTOR))
                 .setScale(1, RoundingMode.HALF_UP);
 
-        return new WhatIfResponseDto(additionalCapex, newPaybackYears, newCo2ReductionPct, newSystemCapacity);
+        return new WhatIfResponseDto(
+                additionalCapex,
+                newPaybackYears,
+                newSystemCapacity,
+                annualKwhFromNewPanels,
+                additionalProductionDemandKwhPerYear,
+                netAnnualEnergyBalanceKwh,
+                netAnnualCo2AvoidedKg);
     }
 
     private BigDecimal currentPvCapacityKwp() {

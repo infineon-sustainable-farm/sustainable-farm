@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card, Table } from "../../../shared/ui";
+import CellNote from "./CellNote";
 import {
     formatBlock,
     formatDate,
@@ -34,9 +35,9 @@ function movementDetails(movement, t) {
 
 /**
  * Fertilizer movements, one row per purchase, application or loss, in the
- * order the API sends them. Both costs are the API's own conversion; a
- * movement without a cost shows a dash in each. Source is last, as in the
- * other lists of the module.
+ * order the API sends them, on seven columns: the source sits in small muted
+ * text under the details, and the cost in euros under the cost in FCFA. Both
+ * costs are the API's own conversion; a movement without a cost shows one dash.
  */
 export default function FertilizerMovementsTable({ movements }) {
     const { t } = useTranslation("plants");
@@ -45,19 +46,39 @@ export default function FertilizerMovementsTable({ movements }) {
         { key: "movementDate", header: header("date"), cell: (row) => formatDate(row.movementDate) },
         { key: "fertilizerName", header: header("fertilizer"), cell: (row) => formatText(row.fertilizerName) },
         { key: "movementType", header: header("type"), cell: (row) => formatEnum("movementType", row.movementType) },
-        { key: "quantity", header: header("quantity"), cell: (row) => formatQuantity(row.quantity, row.unit) },
+        { key: "quantity", align: "right", header: header("quantity"), cell: (row) => formatQuantity(row.quantity, row.unit) },
         { key: "blockCode", header: header("block"), cell: (row) => formatBlock(row.blockCode) },
-        { key: "details", header: header("details"), cell: (row) => movementDetails(row, t) },
-        { key: "totalCostXof", header: header("costXof"), cell: (row) => formatXof(row.totalCostXof) },
-        { key: "totalCostEur", header: header("costEur"), cell: (row) => formatEur(row.totalCostEur) },
-        { key: "source", header: header("source"), cell: (row) => formatText(row.source) },
+        {
+            key: "details",
+            header: header("details"),
+            cell: (row) => (
+                <>
+                    {movementDetails(row, t)}
+                    <CellNote>{t("fertilizer.movements.sourceNote", { source: formatText(row.source) })}</CellNote>
+                </>
+            ),
+        },
+        {
+            key: "cost",
+            align: "right",
+            header: header("cost"),
+            cell: (row) => {
+                const costEur = formatEur(row.totalCostEur);
+                return (
+                    <>
+                        {formatXof(row.totalCostXof)}
+                        {costEur !== NO_VALUE && <CellNote>{costEur}</CellNote>}
+                    </>
+                );
+            },
+        },
     ];
 
     return (
         <Card>
             <Table
                 caption={t("fertilizer.movements.title")}
-                columns={columns.map((column) => ({ ...column, className: "whitespace-nowrap" }))}
+                columns={columns.map((column) => ({ ...column, className: "whitespace-nowrap align-top" }))}
                 rows={movements}
             />
         </Card>

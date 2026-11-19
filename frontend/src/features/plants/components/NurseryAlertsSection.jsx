@@ -2,6 +2,7 @@ import { CircleCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, ErrorState, Skeleton } from "../../../shared/ui";
 import { useNurseryAlerts } from "../hooks/useNurseryAlerts";
+import PlantAlertGroups from "./PlantAlertGroups";
 import PlantAlertItem from "./PlantAlertItem";
 
 /**
@@ -48,16 +49,19 @@ export default function NurseryAlertsSection() {
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
-                <ul className="flex flex-col gap-3">
-                    {data.alerts.map((alert) => (
+                <PlantAlertGroups
+                    alerts={data.alerts}
+                    idPrefix="transplant-alerts"
+                    listClassName="flex flex-col gap-3"
+                    renderAlert={(alert) => (
                         <PlantAlertItem
                             key={`${alert.type}-${alert.batchId}`}
                             alert={alert}
                             title={t("nursery.alerts.itemTitle")}
                             dateLabel={t("nursery.alerts.dateLabel")}
                         />
-                    ))}
-                </ul>
+                    )}
+                />
             )}
         </Card>
     );

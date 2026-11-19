@@ -22,7 +22,7 @@ export default function NurseryEventsTable({ events = [], loading = false }) {
                 return <Value>{stage}</Value>;
             },
         },
-        { key: "quantity", header: header("quantity"), cell: (event) => <Value>{formatNumber(event.quantity)}</Value> },
+        { key: "quantity", align: "right", header: header("quantity"), cell: (event) => <Value>{formatNumber(event.quantity)}</Value> },
         { key: "blockCode", header: header("block"), cell: (event) => <Value>{formatBlock(event.blockCode)}</Value> },
         { key: "reason", header: header("reason"), cell: (event) => <Value>{formatText(event.reason)}</Value> },
         { key: "source", header: header("source"), cell: (event) => formatText(event.source) },

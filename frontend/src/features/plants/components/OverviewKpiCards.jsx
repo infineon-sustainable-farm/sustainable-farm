@@ -34,7 +34,10 @@ const FIGURES = [
     {
         field: "activeAlerts",
         labelKey: "overview.kpi.activeAlerts",
-        note: (t, overview) => t("overview.kpi.criticalNote", { count: formatNumber(overview.criticalAlerts) }),
+        // Counted from the list of alerts shown under the figures; a dash until that list is there.
+        note: (t, overview, actNowAlerts) => (actNowAlerts === null
+            ? t("overview.kpi.actNowPending")
+            : t("overview.kpi.actNowNote", { count: formatNumber(actNowAlerts) })),
         icon: TriangleAlert,
         tone: "error",
     },
@@ -45,9 +48,11 @@ const GRID = "grid grid-cols-2 gap-4 lg:grid-cols-4";
 /**
  * The four figures of the day, as the API computes them for the selected
  * block; none of them is computed or added up here. They do not add up to the
- * total; the line under each value says which trees it counts.
+ * total; the line under each value says which trees it counts. Under Active
+ * Alerts, `actNowAlerts` is how many of the listed alerts are in the "Act now"
+ * group, or null while the list is not there.
  */
-export default function OverviewKpiCards({ query }) {
+export default function OverviewKpiCards({ query, actNowAlerts = null }) {
     const { t } = useTranslation("plants");
     const { data: overview, isPending, isError, refetch, isFetching } = query;
 
@@ -85,7 +90,7 @@ export default function OverviewKpiCards({ query }) {
                             tone={figure.tone}
                             value={formatNumber(overview[figure.field])}
                             label={t(figure.labelKey)}
-                            hint={figure.note(t, overview)}
+                            hint={figure.note(t, overview, actNowAlerts)}
                         />
                     </li>
                 ))}

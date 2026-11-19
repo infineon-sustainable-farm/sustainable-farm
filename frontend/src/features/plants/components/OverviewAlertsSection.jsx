@@ -6,6 +6,7 @@ import { useNurseryBatches } from "../hooks/useNurseryBatches";
 import { usePlantAlerts } from "../hooks/usePlantAlerts";
 import { formatBlock } from "../utils/format";
 import OverviewAlertRow from "./OverviewAlertRow";
+import PlantAlertGroups from "./PlantAlertGroups";
 import { ALERT_COLUMNS } from "./overviewAlertColumns";
 
 /** Values by id, to name the batch or the tree an alert points at; empty until the list is there. */
@@ -17,7 +18,8 @@ function byId(items, pick) {
  * Every plant alert of the day for the selected block, as the API computes and
  * orders them, one row each: harvest seasons, pre-harvest intervals, low
  * stocks, open health problems and batches to transplant. All of them are
- * listed; the Active Alerts figure above counts the same ones.
+ * listed, in two groups, "Act now" then "Plan ahead"; the Active Alerts figure
+ * above counts the same ones.
  *
  * The batch code and the tree come from the nursery batches (already read by
  * the survival chart) and the health findings; while either is missing, the
@@ -80,16 +82,21 @@ export default function OverviewAlertsSection({ blockCode }) {
                         <span className={ALERT_COLUMNS.when}>{t("overview.alerts.when")}</span>
                         <span className={ALERT_COLUMNS.action} />
                     </div>
-                    <ul className="flex flex-col">
-                        {data.alerts.map((alert) => (
-                            <OverviewAlertRow
-                                key={`${alert.type}-${alert.varietyId}-${alert.treatmentId}-${alert.findingId}-${alert.fertilizerId}-${alert.batchId}`}
-                                alert={alert}
-                                batchCode={alert.batchId == null ? null : batchCodes.get(alert.batchId)}
-                                treeLabel={alert.findingId == null ? null : treeLabels.get(alert.findingId)}
-                            />
-                        ))}
-                    </ul>
+                    <div className="mt-3">
+                        <PlantAlertGroups
+                            alerts={data.alerts}
+                            idPrefix="overview-alerts"
+                            listClassName="flex flex-col"
+                            renderAlert={(alert) => (
+                                <OverviewAlertRow
+                                    key={`${alert.type}-${alert.varietyId}-${alert.treatmentId}-${alert.findingId}-${alert.fertilizerId}-${alert.batchId}`}
+                                    alert={alert}
+                                    batchCode={alert.batchId == null ? null : batchCodes.get(alert.batchId)}
+                                    treeLabel={alert.findingId == null ? null : treeLabels.get(alert.findingId)}
+                                />
+                            )}
+                        />
+                    </div>
                 </div>
             )}
         </Card>

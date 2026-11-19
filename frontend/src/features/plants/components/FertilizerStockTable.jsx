@@ -20,12 +20,12 @@ export default function FertilizerStockTable({ fertilizers }) {
         },
         { key: "composition", header: t("fertilizer.stock.columns.composition"), cell: (row) => formatText(row.composition) },
         {
-            key: "currentStock",
+            key: "currentStock", align: "right",
             header: t("fertilizer.stock.columns.stock"),
             cell: (row) => formatQuantity(row.currentStock, row.unit),
         },
         {
-            key: "reorderThreshold",
+            key: "reorderThreshold", align: "right",
             header: t("fertilizer.stock.columns.threshold"),
             cell: (row) => formatQuantity(row.reorderThreshold, row.unit),
         },

@@ -2,7 +2,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import AlertsNotifications from "./AlertsNotifications";
-import { updateAlertStatus } from "../api/energyApi";
+import { getAllAlerts, updateAlertStatus } from "../api/energyApi";
 
 vi.mock("../api/energyApi", () => ({
   getAllAlerts: vi.fn(() =>
@@ -36,5 +36,37 @@ describe("AlertsNotifications", () => {
     render(<AlertsNotifications />);
     fireEvent.click(await screen.findByRole("button", { name: "Resolve" }));
     await waitFor(() => expect(updateAlertStatus).toHaveBeenCalledWith(1, "RESOLVED"));
+  });
+
+  it("loads the alerts again after resolving one and shows the new status", async () => {
+    const open = { alertId: 1, severity: "WARNING", componentName: "Battery", message: "Battery charge is below reserve.", timestamp: "2026-11-10T09:00:00", status: "OPEN" };
+    let alerts = [open];
+    getAllAlerts.mockImplementation(async () => alerts);
+    updateAlertStatus.mockImplementation(async () => {
+      alerts = [{ ...open, status: "RESOLVED" }];
+    });
+    getAllAlerts.mockClear();
+
+    render(<AlertsNotifications />);
+    const row = (await screen.findByText(open.message)).closest("tr");
+    expect(within(row).getByText("Battery")).toBeInTheDocument();
+    expect(within(row).getByText("Open")).toBeInTheDocument();
+
+    fireEvent.click(within(row).getByRole("button", { name: "Resolve" }));
+
+    await waitFor(() => expect(getAllAlerts).toHaveBeenCalledTimes(2));
+    await waitFor(() => {
+      const updatedRow = screen.getByText(open.message).closest("tr");
+      expect(within(updatedRow).getByText("Resolved")).toBeInTheDocument();
+      expect(within(updatedRow).queryByRole("button", { name: "Resolve" })).toBeNull();
+    });
+  });
+
+  it("shows an explicit error when the API cannot load the alerts", async () => {
+    getAllAlerts.mockRejectedValueOnce(new Error("Service unavailable"));
+
+    render(<AlertsNotifications />);
+
+    expect(await screen.findByText("Failed to load alerts: Service unavailable")).toBeInTheDocument();
   });
 });

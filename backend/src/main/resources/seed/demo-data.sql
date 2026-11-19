@@ -300,6 +300,23 @@ JOIN fertilizer_product fp ON fp.name = m.product
 LEFT JOIN block b ON b.code = m.block_code
 LEFT JOIN person p ON p.email = m.applicator || '@ferme-banfora.example';
 
+-- Planned applications: the manure of field C was planned and done (the application above), two NPK
+-- applications are coming, one of them late, for more than the 150 kg left (stock check warning).
+INSERT INTO fertilizer_plan (created_at, updated_at, product_id, block_id, planned_date, planned_quantity, status,
+                             movement_id, note, source, last_updated)
+SELECT now(), now(), fp.id, b.id, CURRENT_DATE + pl.days_ahead, pl.quantity, pl.status, fm.id, pl.note, 'demo_data',
+       now()
+FROM (VALUES
+    ('Composted cattle manure', 'C', -72, 2800.0, 'DONE',    -70,  'Before the flowering'),
+    ('NPK 15-15-15',            'A',  -5,   80.0, 'PLANNED', NULL, NULL),
+    ('NPK 15-15-15',            'B',  12,  120.0, 'PLANNED', NULL, 'After the first rains'),
+    ('Composted cattle manure', 'B',  30, 1500.0, 'PLANNED', NULL, NULL)
+) AS pl (product, block_code, days_ahead, quantity, status, applied_days_ahead, note)
+JOIN fertilizer_product fp ON fp.name = pl.product
+JOIN block b ON b.code = pl.block_code
+LEFT JOIN fertilizer_movement fm ON fm.product_id = fp.id AND fm.movement_type = 'APPLICATION'
+                                 AND fm.movement_date = CURRENT_DATE + pl.applied_days_ahead;
+
 INSERT INTO nursery_batch (created_at, updated_at, batch_code, farm_id, variety_name, origin, initial_count, started_on,
                            planned_transplant_on, planned_block_id, supplier, supplier_lot_number, source, last_updated)
 SELECT now(), now(), 'NUR-' || to_char(CURRENT_DATE - 150, 'YYYY') || '-01', f.id, 'Kent', 'IN_HOUSE', 120,

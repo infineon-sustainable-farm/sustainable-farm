@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card, Table } from "../../../shared/ui";
 import { formatBlock, formatDate, formatDaysAhead, formatEnum, formatText, NO_VALUE } from "../utils/format";
 import { formatObservationMethod } from "../utils/maturityObservations";
+import CellNote from "./CellNote";
 import MaturityStatusBadge from "./MaturityStatusBadge";
 import Value from "./Value";
 
@@ -54,6 +55,7 @@ function Observed({ status }) {
                     ? t("harvest.statusTable.notCounted")
                     : t("harvest.statusTable.countsUntil", { date: formatDate(observation.countsUntil) })}
             </span>
+            <CellNote>{t("harvest.statusTable.sourceNote", { value: formatText(observation.source) })}</CellNote>
             {isHeldBack && (
                 <span className="block text-xs font-semibold text-text">
                     {t("harvest.statusTable.heldAt", { status: heldStatus })}
@@ -63,49 +65,43 @@ function Observed({ status }) {
     );
 }
 
-/** Source of the harvest season, of the yield share that opens the window, and of the observation. */
-function Sources({ status }) {
+/** The estimate, with the sources of the harvest season and of the yield share that opens the window. */
+function Estimated({ status }) {
     const { t } = useTranslation("plants");
-    const lines = [];
-    if (status.seasonSource !== null || status.phaseShareSource !== null) {
-        lines.push(
-            t("harvest.statusTable.season", { value: formatText(status.seasonSource) }),
-            t("harvest.statusTable.share", { value: formatText(status.phaseShareSource) })
-        );
+    // Without a reference there is no season, hence no estimate: said, not dashed.
+    if (status.estimatedStatus === null) {
+        return <span className="text-text-muted">{t("harvest.statusTable.noReference")}</span>;
     }
-    if (status.observation) {
-        lines.push(t("harvest.statusTable.observation", { value: formatText(status.observation.source) }));
-    }
-    if (lines.length === 0) {
-        return <Value>{NO_VALUE}</Value>;
-    }
-    return lines.map((line) => (
-        <span key={line} className="block">
-            {line}
-        </span>
-    ));
+    return (
+        <>
+            <MaturityStatusBadge status={status.estimatedStatus} />
+            <CellNote className="mt-1">{t("harvest.statusTable.season", { value: formatText(status.seasonSource) })}</CellNote>
+            <CellNote>{t("harvest.statusTable.share", { value: formatText(status.phaseShareSource) })}</CellNote>
+        </>
+    );
 }
 
 const CELL = "align-top whitespace-nowrap";
 
-/** The maturity status of each planted variety, in the order the API sends it. */
+/**
+ * The maturity status of each planted variety, in the order the API sends it. The variety sits
+ * under its block, and each source in small muted text under the value it explains.
+ */
 export default function HarvestStatusTable({ statuses }) {
     const { t } = useTranslation("plants");
     const columns = [
-        { key: "block", header: t("harvest.statusTable.block"), className: CELL, cell: (status) => formatBlock(status.blockCode) },
-        { key: "variety", header: t("harvest.statusTable.variety"), className: CELL, cell: (status) => formatText(status.varietyName) },
         {
-            key: "estimated",
-            header: t("harvest.statusTable.estimated"),
-            className: CELL,
-            // Without a reference there is no season, hence no estimate: said, not dashed.
-            cell: (status) =>
-                status.estimatedStatus === null ? (
-                    <span className="text-text-muted">{t("harvest.statusTable.noReference")}</span>
-                ) : (
-                    <MaturityStatusBadge status={status.estimatedStatus} />
-                ),
+            key: "block",
+            header: t("harvest.statusTable.block"),
+            className: `${CELL} font-semibold`,
+            cell: (status) => (
+                <>
+                    {formatBlock(status.blockCode)}
+                    <CellNote>{formatText(status.varietyName)}</CellNote>
+                </>
+            ),
         },
+        { key: "estimated", header: t("harvest.statusTable.estimated"), className: CELL, cell: (status) => <Estimated status={status} /> },
         { key: "observed", header: t("harvest.statusTable.observed"), className: CELL, cell: (status) => <Observed status={status} /> },
         {
             key: "window",
@@ -125,7 +121,6 @@ export default function HarvestStatusTable({ statuses }) {
             className: CELL,
             cell: (status) => <Value>{formatDate(status.firstHarvestDate)}</Value>,
         },
-        { key: "sources", header: t("harvest.statusTable.sources"), className: CELL, cell: (status) => <Sources status={status} /> },
     ];
 
     return (

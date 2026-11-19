@@ -148,6 +148,19 @@ export function formatQuantity(value, unit) {
     return isMissing(unit) ? number : t("format.quantity", { value: number, unit: formatUnit(unit) });
 }
 
+/** A gap in the unit of its fertilizer, with its sign: "+5 kg", "-20 kg", "0 L". */
+export function formatSignedQuantity(value, unit) {
+    if (isMissing(value)) return NO_VALUE;
+    const number = localeNumber(value, { signDisplay: "exceptZero" });
+    return t("format.quantity", { value: number, unit: formatUnit(unit) });
+}
+
+/** A gap as the percentage the API computed, with its sign: "-33.3%". Null when nothing was planned. */
+export function formatSignedPercent(value) {
+    if (isMissing(value)) return null;
+    return t("format.percent", { value: localeNumber(value, { signDisplay: "exceptZero", maximumFractionDigits: 1 }) });
+}
+
 /** An amount in CFA francs, already rounded to the franc by the API: "78,715 FCFA". */
 export function formatXof(value) {
     return isMissing(value) ? NO_VALUE : t("format.xof", { value: localeNumber(value) });

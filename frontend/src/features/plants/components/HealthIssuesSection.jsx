@@ -4,25 +4,46 @@ import { useTranslation } from "react-i18next";
 import { Button, Card, EmptyState, Table } from "../../../shared/ui";
 import { useAddHealthIssue } from "../hooks/useAddHealthIssue";
 import { useHealthIssues } from "../hooks/useHealthIssues";
-import { formatEnum, formatText } from "../utils/format";
+import { formatEnum, formatText, NO_VALUE } from "../utils/format";
 import AddHealthIssueModal from "./AddHealthIssueModal";
+import CellNote from "./CellNote";
 import { HealthSectionError, HealthSectionLoading } from "./HealthSectionStates";
 
-/** The catalogue, in the order the API sends it: pests, diseases, then "Other". */
+/**
+ * The catalogue, in the order the API sends it: pests, diseases, then "Other". The scientific name
+ * sits in small muted text under the name, and the EPPO code under the source.
+ */
 function HealthIssuesTable({ issues }) {
     const { t } = useTranslation("plants");
     const columns = [
-        { key: "name", header: t("health.issues.columns.name"), cell: (issue) => formatText(issue.name) },
-        { key: "kind", header: t("health.issues.columns.kind"), cell: (issue) => formatEnum("issueKind", issue.kind) },
-        { key: "code", header: t("health.issues.columns.code"), cell: (issue) => formatText(issue.code) },
         {
-            key: "scientificName",
-            header: t("health.issues.columns.scientificName"),
-            className: "italic",
-            cell: (issue) => formatText(issue.scientificName),
+            key: "name",
+            header: t("health.issues.columns.name"),
+            className: "align-top",
+            cell: (issue) => (
+                <>
+                    {formatText(issue.name)}
+                    {formatText(issue.scientificName) !== NO_VALUE && (
+                        <CellNote className="italic">{formatText(issue.scientificName)}</CellNote>
+                    )}
+                </>
+            ),
         },
-        { key: "eppoCode", header: t("health.issues.columns.eppoCode"), cell: (issue) => formatText(issue.eppoCode) },
-        { key: "source", header: t("health.issues.columns.source"), cell: (issue) => formatText(issue.source) },
+        { key: "kind", header: t("health.issues.columns.kind"), className: "align-top", cell: (issue) => formatEnum("issueKind", issue.kind) },
+        { key: "code", header: t("health.issues.columns.code"), className: "align-top", cell: (issue) => formatText(issue.code) },
+        {
+            key: "source",
+            header: t("health.issues.columns.source"),
+            className: "align-top",
+            cell: (issue) => (
+                <>
+                    {formatText(issue.source)}
+                    {formatText(issue.eppoCode) !== NO_VALUE && (
+                        <CellNote>{t("health.issues.eppoNote", { code: formatText(issue.eppoCode) })}</CellNote>
+                    )}
+                </>
+            ),
+        },
     ];
     return <Table caption={t("health.issues.title")} columns={columns} rows={issues} />;
 }

@@ -15,6 +15,7 @@ export const PLANTS_ENDPOINTS = {
     MATURITY_OBSERVATIONS: "/api/plants/maturity-observations",
     FERTILIZERS: "/api/plants/fertilizers",
     FERTILIZER_MOVEMENTS: "/api/plants/fertilizer-movements",
+    FERTILIZER_PLANS: "/api/plants/fertilizer-plans",
     EUR_XOF_RATE: "/api/plants/currency-rates/EUR/XOF",
     VARIETY_REFERENCES: "/api/plants/variety-references",
     GROWTH_PHASE_YIELD_SHARES: "/api/plants/growth-phase-yield-shares",
@@ -30,6 +31,8 @@ export const PLANTS_ENDPOINTS = {
     SCENARIOS: "/api/plants/scenarios",
     // Owned by the farm referential (Water Supply, Farms & fields): read only, never written here.
     FARM_FIELDS: "/api/farm/fields",
+    // Owned by Water Supply: the rain its gauges measured on the farm of a block, read only.
+    BLOCK_RAINFALL: "/api/water-supply/plants/rainfall",
     // Owned by machinery: the machines a treatment picks from, read only.
     MACHINERY_EQUIPMENT: "/api/machinery/equipment",
 };

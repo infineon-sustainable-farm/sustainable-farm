@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "../../../shared/ui";
+import { usePlantAlerts } from "../hooks/usePlantAlerts";
 import { usePlantsOverview } from "../hooks/usePlantsOverview";
 import { useVarietyBlocks } from "../hooks/useVarieties";
+import { countActNow } from "../utils/alertPriority";
 import { formatDate } from "../utils/format";
 import BlockFilter from "./BlockFilter";
 import BlockYieldChart from "./BlockYieldChart";
@@ -35,6 +37,9 @@ export default function OverviewPage() {
 
     const { data: blocks } = useVarietyBlocks();
     const overviewQuery = usePlantsOverview({ blockCode: selectedBlock || null });
+    // The same read as the list of alerts below: the figure and the list count the same alerts.
+    const alertsQuery = usePlantAlerts({ blockCode: selectedBlock || null });
+    const actNowAlerts = alertsQuery.data ? countActNow(alertsQuery.data.alerts) : null;
     const asOf = overviewQuery.data
         ? ` ${t("overview.asOf", { date: formatDate(overviewQuery.data.today) })}`
         : null;
@@ -52,7 +57,7 @@ export default function OverviewPage() {
                 actions={<BlockFilter bare blocks={blocks ?? []} value={selectedBlock} onChange={setSelectedBlock} />}
             />
 
-            <OverviewKpiCards query={overviewQuery} />
+            <OverviewKpiCards query={overviewQuery} actNowAlerts={actNowAlerts} />
 
             <OverviewAlertsSection blockCode={selectedBlock || null} />
 

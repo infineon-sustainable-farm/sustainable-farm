@@ -56,7 +56,9 @@
     "kwhValue": "{{value}} kWh",
     "yearsValue": "{{value}} yrs",
     "panelsValue": "{{value}} panels",
-    "kgPerDayValue": "{{value}} kg/day"
+    "kgPerDayValue": "{{value}} kg/day",
+    "kwhPerYearValue": "{{value}} kWh/year",
+    "kgPerYearValue": "{{value}} kg/year"
   },
   "dashboard": {
     "title": "System Overview",
@@ -196,7 +198,7 @@
   },
   "whatIf": {
     "title": "What-If Scenario Analysis",
-    "subtitle": "Model an expansion of the energy system and see the resulting capacity, cost, payback, and emissions.",
+    "subtitle": "Model an expansion of the energy system and see the resulting capacity, cost, payback, energy balance, and emissions. Production scale-up is treated as additional daily output.",
     "simulationFailed": "Simulation failed: {{error}}",
     "inputsTitle": "Scenario Inputs",
     "reset": "Reset",
@@ -208,13 +210,17 @@
     "noResult": "No scenario result is available.",
     "newCapacity": "New System Capacity",
     "additionalCapex": "Additional CAPEX",
-    "payback": "Payback Period",
-    "co2Reduction": "CO₂ Reduction",
-    "impactTitle": "Impact Overview",
-    "chartCapacity": "Capacity (kWp)",
-    "chartCo2": "CO₂ Reduction (%)",
-    "chartPayback": "Payback (yrs)",
-    "valueSeries": "value"
+    "payback": "Estimated Payback Period",
+    "impactTitle": "Annual Energy Impact (kWh)",
+    "valueSeries": "value",
+    "notAvailable": "N/A",
+    "productionDemand": "Additional Production Demand",
+    "netEnergyBalance": "Net Annual Energy Balance",
+    "co2Avoided": "Net Annual CO₂ Avoided",
+    "co2Increase": "Net Annual CO₂ Increase",
+    "chartPvGeneration": "Additional PV generation",
+    "chartProductionDemand": "Production demand",
+    "chartNetBalance": "Net energy balance"
   },
   "alerts": {
     "title": "Alerts & Notifications",

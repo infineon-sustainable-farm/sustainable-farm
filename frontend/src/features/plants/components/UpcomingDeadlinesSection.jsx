@@ -4,6 +4,7 @@ import { Card } from "../../../shared/ui";
 import { useHarvestAlerts } from "../hooks/useHarvestAlerts";
 import { formatCode } from "../utils/format";
 import { SectionError, SectionLoading } from "./HarvestSectionStates";
+import PlantAlertGroups from "./PlantAlertGroups";
 import PlantAlertItem from "./PlantAlertItem";
 
 // The alert types of this section, each worded for what its date is.
@@ -58,11 +59,14 @@ export default function UpcomingDeadlinesSection({ blockCode }) {
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
-                <ul className="flex flex-col gap-3">
-                    {data.alerts.map((alert) => (
+                <PlantAlertGroups
+                    alerts={data.alerts}
+                    idPrefix="upcoming-deadlines"
+                    listClassName="flex flex-col gap-3"
+                    renderAlert={(alert) => (
                         <Deadline key={`${alert.type}-${alert.varietyId}-${alert.treatmentId}`} alert={alert} />
-                    ))}
-                </ul>
+                    )}
+                />
             )}
         </section>
     );

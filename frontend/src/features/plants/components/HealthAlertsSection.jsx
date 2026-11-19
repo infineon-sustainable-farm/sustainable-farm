@@ -4,6 +4,7 @@ import { Card } from "../../../shared/ui";
 import { useHealthAlerts } from "../hooks/useHealthAlerts";
 import { formatCode } from "../utils/format";
 import { HealthSectionError, HealthSectionLoading } from "./HealthSectionStates";
+import PlantAlertGroups from "./PlantAlertGroups";
 import PlantAlertItem from "./PlantAlertItem";
 
 // What the date of each alert type is; labels from plants.json.
@@ -61,11 +62,14 @@ export default function HealthAlertsSection() {
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
-                <ul className="flex flex-col gap-3">
-                    {data.alerts.map((alert) => (
+                <PlantAlertGroups
+                    alerts={data.alerts}
+                    idPrefix="health-alerts"
+                    listClassName="flex flex-col gap-3"
+                    renderAlert={(alert) => (
                         <HealthAlert key={`${alert.type}-${alert.findingId}-${alert.treatmentId}`} alert={alert} />
-                    ))}
-                </ul>
+                    )}
+                />
             )}
         </Card>
     );

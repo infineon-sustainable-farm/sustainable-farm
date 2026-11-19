@@ -117,6 +117,12 @@
     "months": "Monate",
     "fromFormat": "Verwenden Sie das Format JJJJ-MM."
   },
+  "alertGroups": {
+    "ACT_NOW": "Jetzt handeln",
+    "PLAN_AHEAD": "Vorausplanen",
+    "count_one": "· {{count}} Warnung",
+    "count_other": "· {{count}} Warnungen"
+  },
   "varieties": {
     "documentTitle": "Sorten — Pflanzen",
     "title": "Sorten",
@@ -289,10 +295,9 @@
         "quantity": "Menge",
         "block": "Block",
         "details": "Details",
-        "costXof": "Kosten (FCFA)",
-        "costEur": "Kosten (EUR)",
-        "source": "Quelle"
-      }
+        "cost": "Kosten"
+      },
+      "sourceNote": "Quelle: {{source}}"
     },
     "addForm": {
       "title": "Düngemittel hinzufügen",
@@ -351,6 +356,119 @@
         "methodTooLong": "Die Methode darf höchstens 255 Zeichen lang sein.",
         "reasonRequired": "Der Grund ist erforderlich.",
         "reasonTooLong": "Der Grund darf höchstens 255 Zeichen lang sein."
+      }
+    },
+    "plans": {
+      "title": "Geplante Ausbringungen",
+      "subtitle": "Ihre eigenen Mengen: Es wird keine Aufwandmenge empfohlen. Kosten zum letzten Einkaufspreis.",
+      "statusFilter": "Status",
+      "allStatuses": "Alle Status",
+      "planAction": "Ausbringung planen",
+      "stockWarning": {
+        "title": "Die geplanten Ausbringungen übersteigen den Bestand in den nächsten {{days}} Tagen",
+        "line": "{{fertilizer}}: {{planned}} geplant in den nächsten {{days}} Tagen, {{stock}} auf Lager, {{shortfall}} fehlen.",
+        "overdue": "Davon sind {{quantity}} überfällig."
+      },
+      "loading": "Geplante Ausbringungen werden geladen…",
+      "loadError": "Die geplanten Ausbringungen konnten nicht geladen werden",
+      "empty": "Noch keine Ausbringung geplant",
+      "emptyFiltered": "Keine geplante Ausbringung hat diesen Status",
+      "emptyFilteredHint": "Wählen Sie einen anderen Status.",
+      "status": {
+        "PLANNED": "Geplant",
+        "DONE": "Erledigt",
+        "CANCELLED": "Storniert",
+        "OVERDUE": "Überfällig"
+      },
+      "delay": {
+        "today": "heute",
+        "late_one": "{{days}} Tag überfällig",
+        "late_other": "{{days}} Tage überfällig"
+      },
+      "columns": {
+        "plannedDate": "Geplantes Datum",
+        "block": "Block",
+        "fertilizer": "Düngemittel",
+        "quantity": "Menge",
+        "plannedCost": "Geplante Kosten",
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "applied": "{{quantity}} ausgebracht am {{date}}",
+      "markDone": "Erledigt",
+      "markDoneLabel": "Als erledigt markieren: {{plan}}",
+      "cancel": "Stornieren",
+      "cancelLabel": "Stornieren: {{plan}}",
+      "planLabel": "{{fertilizer}}, {{block}}, {{date}}",
+      "noPrice": "Noch kein Preis",
+      "comparison": {
+        "title": "Geplant und ausgebracht nach Block",
+        "subtitle": "{{period}} · Kosten zum letzten Einkaufspreis",
+        "subtitleNoPeriod": "Kosten zum letzten Einkaufspreis",
+        "from": "Von",
+        "to": "Bis",
+        "periodFrom": "Ab {{date}}",
+        "periodUntil": "Bis {{date}}",
+        "periodAll": "Alle Daten",
+        "loading": "Der Vergleich wird geladen…",
+        "loadError": "Der Vergleich konnte nicht geladen werden",
+        "empty": "In diesem Zeitraum nichts geplant oder ausgebracht",
+        "emptyHint": "Planen Sie eine Ausbringung oder wählen Sie andere Daten.",
+        "columns": {
+          "block": "Block",
+          "fertilizer": "Düngemittel",
+          "planned": "Geplant",
+          "applied": "Ausgebracht",
+          "gap": "Abweichung",
+          "plannedCost": "Geplante Kosten",
+          "appliedCost": "Kosten der Ausbringung"
+        },
+        "stillToDo": "{{quantity}} noch offen",
+        "notPlanned": "{{quantity}} ungeplant"
+      },
+      "planForm": {
+        "title": "Ausbringung planen",
+        "fertilizer": "Düngemittel",
+        "selectFertilizer": "Düngemittel auswählen",
+        "fertilizerOption": "{{name}} ({{unit}})",
+        "block": "Block",
+        "plannedDate": "Geplantes Datum",
+        "quantity": "Geplante Menge",
+        "quantityWithUnit": "Geplante Menge ({{unit}})",
+        "inStock": "Auf Lager: {{quantity}}",
+        "note": "Notiz (optional)",
+        "submit": "Ausbringung planen",
+        "submitting": "Wird geplant…"
+      },
+      "completeForm": {
+        "title": "Als erledigt markieren",
+        "summary": "{{fertilizer}} · {{block}} · geplant {{quantity}} am {{date}}",
+        "date": "Datum der Ausbringung",
+        "quantityWithUnit": "Ausgebrachte Menge ({{unit}})",
+        "applicator": "Ausgebracht von",
+        "method": "Methode (optional)",
+        "submit": "Als erledigt markieren",
+        "submitting": "Wird erfasst…"
+      },
+      "cancelForm": {
+        "title": "Diese geplante Ausbringung stornieren?",
+        "summary": "{{fertilizer}} · {{block}} · {{quantity}} am {{date}}",
+        "message": "Es wird nichts vom Bestand abgezogen. Eine stornierte Ausbringung kann nicht erneut geplant werden: Planen Sie stattdessen eine neue.",
+        "keep": "Behalten",
+        "confirm": "Ausbringung stornieren",
+        "confirming": "Wird storniert…"
+      },
+      "errors": {
+        "fertilizerRequired": "Das Düngemittel ist erforderlich.",
+        "blockRequired": "Der Block ist erforderlich.",
+        "plannedDateRequired": "Das geplante Datum ist erforderlich.",
+        "plannedDatePast": "Das geplante Datum darf nicht in der Vergangenheit liegen.",
+        "quantityInvalid": "Die Menge muss eine Zahl größer als 0 mit höchstens 3 Nachkommastellen sein.",
+        "noteTooLong": "Die Notiz darf höchstens 255 Zeichen lang sein.",
+        "dateRequired": "Das Datum ist erforderlich.",
+        "dateFuture": "Das Datum darf nicht in der Zukunft liegen.",
+        "applicatorRequired": "Die ausbringende Person ist erforderlich.",
+        "methodTooLong": "Die Methode darf höchstens 255 Zeichen lang sein."
       }
     }
   },
@@ -588,21 +706,18 @@
       "columns": {
         "date": "Datum",
         "block": "Block",
-        "problem": "Behandeltes Problem",
+        "problem": "Problem",
         "product": "Produkt",
-        "interval": "Wartezeit vor der Ernte",
+        "interval": "Wartezeit",
         "harvestAllowedFrom": "Ernte erlaubt ab",
-        "type": "Art",
-        "ingredient": "Wirkstoff",
         "quantity": "Menge",
-        "applicator": "Anwender",
-        "equipment": "Gerät",
-        "source": "Quelle"
+        "appliedBy": "Ausgebracht von"
       },
       "days_one": "{{days}} Tag",
       "days_other": "{{days}} Tage",
       "preventive": "Vorbeugend",
-      "finding": "Befund"
+      "finding": "Befund",
+      "sourceNote": "Quelle: {{source}}"
     },
     "issues": {
       "title": "Schädlinge und Krankheiten",
@@ -616,15 +731,14 @@
         "name": "Name",
         "kind": "Art",
         "code": "Code",
-        "scientificName": "Wissenschaftlicher Name",
-        "eppoCode": "EPPO-Code",
         "source": "Quelle"
       },
       "groups": {
         "PEST": "Schädlinge",
         "DISEASE": "Krankheiten"
       },
-      "other": "Sonstiges"
+      "other": "Sonstiges",
+      "eppoNote": "EPPO-Code: {{code}}"
     },
     "issueForm": {
       "title": "Schädling oder Krankheit hinzufügen",
@@ -755,13 +869,11 @@
     },
     "statusTable": {
       "block": "Block",
-      "variety": "Sorte",
       "estimated": "Geschätzt",
       "observed": "Beobachtet",
       "harvestWindow": "Erntefenster",
       "harvestAllowedFrom": "Ernte erlaubt ab",
       "firstHarvest": "Erste Ernte",
-      "sources": "Quellen",
       "noReference": "Kein Referenzwert",
       "notCounted": "Nicht gezählt: kein Referenzwert",
       "countsUntil": "Gilt bis {{date}}",
@@ -769,7 +881,7 @@
       "observationLine": "{{date}} · {{method}}",
       "season": "Saison: {{value}}",
       "share": "Anteil: {{value}}",
-      "observation": "Beobachtung: {{value}}"
+      "sourceNote": "Quelle: {{value}}"
     },
     "deadlines": {
       "title": "Anstehende Fristen",
@@ -988,9 +1100,11 @@
       "precision": "Genauigkeit",
       "age": "Alter",
       "phase": "Phase",
-      "rainfall": "Niederschlag",
+      "rainfall": "Niederschlag ({{days}} Tage)",
       "source": "Quelle"
-    }
+    },
+    "rainfallLoading": "Wird geladen…",
+    "rainfallUnavailable": "Niederschlag nicht verfügbar"
   },
   "scenarios": {
     "documentTitle": "Szenarioanalyse — Pflanzen",
@@ -1305,7 +1419,9 @@
       "inGrowthStageNote": "Etablierung, 0–2 Jahre",
       "readyForHarvest": "Erntereif",
       "activeAlerts": "Aktive Warnungen",
-      "criticalNote": "{{count}} kritisch"
+      "criticalNote": "{{count}} kritisch",
+      "actNowNote": "{{count}} jetzt handeln",
+      "actNowPending": "Jetzt handeln —"
     },
     "alerts": {
       "title": "Warnungen",

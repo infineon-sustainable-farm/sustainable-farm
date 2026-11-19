@@ -39,6 +39,11 @@ public class PlantsFarmForeignKeys {
     }
 
     @Bean
+    CrossModuleForeignKey fertilizerPlanBlockForeignKey() {
+        return toBlock("fk_fertilizer_plan_block", "fertilizer_plan", "block_id");
+    }
+
+    @Bean
     CrossModuleForeignKey nurseryEventBlockForeignKey() {
         return toBlock("fk_nursery_event_block", "nursery_event", "block_id");
     }

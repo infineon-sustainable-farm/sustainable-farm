@@ -229,7 +229,7 @@ Base paths found in the controllers:
 |---|---|---|
 | `farm` | `/api/farm` | `/farms`, `/fields`, `/zones`, `/zone-block-mappings` |
 | `machinery` | `/api/machinery` | `/equipment`, `/operator-assignments`, `/spare-parts`, `/maintenance-schedules`, `/usage-logs`, `/fuel-logs`, `/repair-logs` |
-| `plants` | `/api/plants` | `/varieties`, `/growth-calendar`, `/harvests`, `/nursery-batches`, `/currency-rates`, `/scenarios` |
+| `plants` | `/api/plants` | `/varieties`, `/growth-calendar`, `/harvests`, `/fertilizer-plans`, `/nursery-batches`, `/currency-rates`, `/scenarios` |
 | `producttransformation` | `/api/product-transformation` | `/raw-intakes`, `/batches`, `/drying-runs`, `/qc-checkpoints`, `/packaging-records`, `/equipment`, `/operators`, `/crop-storage` |
 | `energysupply` | `/api/energy-supply` | `/components`, `/solar`, `/consumption`, `/generator-events`, `/carbon`, `/whatif`, `/alerts`, `/dashboard` |
 | `watersupply` | `/api/water-supply` | `/sources`, `/consumption`, `/irrigations`, `/quotas`, `/iot`, `/notifications`, `/dashboard`, `/visitor-events` |

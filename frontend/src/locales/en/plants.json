@@ -117,6 +117,12 @@
     "months": "Months",
     "fromFormat": "Use the format YYYY-MM."
   },
+  "alertGroups": {
+    "ACT_NOW": "Act now",
+    "PLAN_AHEAD": "Plan ahead",
+    "count_one": "· {{count}} alert",
+    "count_other": "· {{count}} alerts"
+  },
   "varieties": {
     "documentTitle": "Varieties — Plants",
     "title": "Varieties",
@@ -289,10 +295,9 @@
         "quantity": "Quantity",
         "block": "Block",
         "details": "Details",
-        "costXof": "Cost (FCFA)",
-        "costEur": "Cost (EUR)",
-        "source": "Source"
-      }
+        "cost": "Cost"
+      },
+      "sourceNote": "Source: {{source}}"
     },
     "addForm": {
       "title": "Add a fertilizer",
@@ -351,6 +356,119 @@
         "methodTooLong": "Method must be at most 255 characters.",
         "reasonRequired": "Reason is required.",
         "reasonTooLong": "Reason must be at most 255 characters."
+      }
+    },
+    "plans": {
+      "title": "Planned applications",
+      "subtitle": "Your own quantities: no rate is recommended. Costs at last purchase price.",
+      "statusFilter": "Status",
+      "allStatuses": "All statuses",
+      "planAction": "Plan an application",
+      "stockWarning": {
+        "title": "Planned applications exceed the stock in the next {{days}} days",
+        "line": "{{fertilizer}}: {{planned}} planned in the next {{days}} days, {{stock}} in stock, {{shortfall}} short.",
+        "overdue": "{{quantity}} of it is overdue."
+      },
+      "loading": "Loading planned applications…",
+      "loadError": "Planned applications could not be loaded",
+      "empty": "No application planned yet",
+      "emptyFiltered": "No planned application has this status",
+      "emptyFilteredHint": "Try another status.",
+      "status": {
+        "PLANNED": "Planned",
+        "DONE": "Done",
+        "CANCELLED": "Cancelled",
+        "OVERDUE": "Overdue"
+      },
+      "delay": {
+        "today": "today",
+        "late_one": "{{days}} day late",
+        "late_other": "{{days}} days late"
+      },
+      "columns": {
+        "plannedDate": "Planned date",
+        "block": "Block",
+        "fertilizer": "Fertilizer",
+        "quantity": "Quantity",
+        "plannedCost": "Planned cost",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "applied": "Applied {{quantity}} on {{date}}",
+      "markDone": "Mark done",
+      "markDoneLabel": "Mark done: {{plan}}",
+      "cancel": "Cancel",
+      "cancelLabel": "Cancel: {{plan}}",
+      "planLabel": "{{fertilizer}}, {{block}}, {{date}}",
+      "noPrice": "No price yet",
+      "comparison": {
+        "title": "Planned and applied by block",
+        "subtitle": "{{period}} · costs at last purchase price",
+        "subtitleNoPeriod": "Costs at last purchase price",
+        "from": "From",
+        "to": "To",
+        "periodFrom": "From {{date}}",
+        "periodUntil": "Until {{date}}",
+        "periodAll": "All dates",
+        "loading": "Loading the comparison…",
+        "loadError": "The comparison could not be loaded",
+        "empty": "Nothing planned or applied over this period",
+        "emptyHint": "Plan an application, or choose other dates.",
+        "columns": {
+          "block": "Block",
+          "fertilizer": "Fertilizer",
+          "planned": "Planned",
+          "applied": "Applied",
+          "gap": "Gap",
+          "plannedCost": "Planned cost",
+          "appliedCost": "Applied cost"
+        },
+        "stillToDo": "{{quantity}} still to do",
+        "notPlanned": "{{quantity}} not planned"
+      },
+      "planForm": {
+        "title": "Plan an application",
+        "fertilizer": "Fertilizer",
+        "selectFertilizer": "Select a fertilizer",
+        "fertilizerOption": "{{name}} ({{unit}})",
+        "block": "Block",
+        "plannedDate": "Planned date",
+        "quantity": "Planned quantity",
+        "quantityWithUnit": "Planned quantity ({{unit}})",
+        "inStock": "In stock: {{quantity}}",
+        "note": "Note (optional)",
+        "submit": "Plan application",
+        "submitting": "Planning…"
+      },
+      "completeForm": {
+        "title": "Mark as done",
+        "summary": "{{fertilizer}} · {{block}} · planned {{quantity}} on {{date}}",
+        "date": "Date applied",
+        "quantityWithUnit": "Quantity applied ({{unit}})",
+        "applicator": "Applicator",
+        "method": "Method (optional)",
+        "submit": "Mark as done",
+        "submitting": "Recording…"
+      },
+      "cancelForm": {
+        "title": "Cancel this planned application?",
+        "summary": "{{fertilizer}} · {{block}} · {{quantity}} on {{date}}",
+        "message": "Nothing is taken from the stock. A cancelled application cannot be planned again: plan a new one instead.",
+        "keep": "Keep it",
+        "confirm": "Cancel application",
+        "confirming": "Cancelling…"
+      },
+      "errors": {
+        "fertilizerRequired": "Fertilizer is required.",
+        "blockRequired": "Block is required.",
+        "plannedDateRequired": "Planned date is required.",
+        "plannedDatePast": "Planned date cannot be in the past.",
+        "quantityInvalid": "Quantity must be a number greater than 0, with at most 3 decimals.",
+        "noteTooLong": "Note must be at most 255 characters.",
+        "dateRequired": "Date is required.",
+        "dateFuture": "Date cannot be in the future.",
+        "applicatorRequired": "Applicator is required.",
+        "methodTooLong": "Method must be at most 255 characters."
       }
     }
   },
@@ -588,21 +706,18 @@
       "columns": {
         "date": "Date",
         "block": "Block",
-        "problem": "Problem targeted",
+        "problem": "Problem",
         "product": "Product",
-        "interval": "Pre-harvest interval",
+        "interval": "Interval",
         "harvestAllowedFrom": "Harvest allowed from",
-        "type": "Type",
-        "ingredient": "Active ingredient",
         "quantity": "Quantity",
-        "applicator": "Applicator",
-        "equipment": "Equipment",
-        "source": "Source"
+        "appliedBy": "Applied by"
       },
       "days_one": "{{days}} day",
       "days_other": "{{days}} days",
       "preventive": "Preventive",
-      "finding": "Finding"
+      "finding": "Finding",
+      "sourceNote": "Source: {{source}}"
     },
     "issues": {
       "title": "Pests and diseases",
@@ -616,15 +731,14 @@
         "name": "Name",
         "kind": "Kind",
         "code": "Code",
-        "scientificName": "Scientific name",
-        "eppoCode": "EPPO code",
         "source": "Source"
       },
       "groups": {
         "PEST": "Pests",
         "DISEASE": "Diseases"
       },
-      "other": "Other"
+      "other": "Other",
+      "eppoNote": "EPPO code: {{code}}"
     },
     "issueForm": {
       "title": "Add a pest or disease",
@@ -755,13 +869,11 @@
     },
     "statusTable": {
       "block": "Block",
-      "variety": "Variety",
       "estimated": "Estimated",
       "observed": "Observed",
       "harvestWindow": "Harvest window",
       "harvestAllowedFrom": "Harvest allowed from",
       "firstHarvest": "First harvest",
-      "sources": "Sources",
       "noReference": "No reference value",
       "notCounted": "Not counted: no reference value",
       "countsUntil": "Counts until {{date}}",
@@ -769,7 +881,7 @@
       "observationLine": "{{date}} · {{method}}",
       "season": "Season: {{value}}",
       "share": "Share: {{value}}",
-      "observation": "Observation: {{value}}"
+      "sourceNote": "Source: {{value}}"
     },
     "deadlines": {
       "title": "Upcoming deadlines",
@@ -988,9 +1100,11 @@
       "precision": "Precision",
       "age": "Age",
       "phase": "Phase",
-      "rainfall": "Rainfall",
+      "rainfall": "Rainfall ({{days}} days)",
       "source": "Source"
-    }
+    },
+    "rainfallLoading": "Loading…",
+    "rainfallUnavailable": "Rainfall unavailable"
   },
   "scenarios": {
     "documentTitle": "Scenario Analysis — Plants",
@@ -1305,7 +1419,9 @@
       "inGrowthStageNote": "Establishment, 0–2 years",
       "readyForHarvest": "Ready for Harvest",
       "activeAlerts": "Active Alerts",
-      "criticalNote": "{{count}} critical"
+      "criticalNote": "{{count}} critical",
+      "actNowNote": "{{count}} Act now",
+      "actNowPending": "Act now —"
     },
     "alerts": {
       "title": "Alerts",

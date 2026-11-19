@@ -6,7 +6,8 @@ import { formatBlock, formatNumber, formatSpacing, formatText } from "../utils/f
 // The keyboard focus mark of the kit: 2 px primary outline, on :focus-visible only.
 const FOCUS_RING = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring";
 
-// The expected and actual yields are compared over a period, under this table.
+// The expected and actual yields are compared over a period, under this table. The tree count, a
+// figure, lines up on the right, header included.
 const COLUMNS = ["variety", "block", "trees", "spacing", "vigor"];
 
 /**
@@ -22,7 +23,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                 <thead>
                     <tr className="border-b border-border-divider text-sm text-text-muted">
                         {COLUMNS.map((column) => (
-                            <th key={column} scope="col" className="py-2 pr-4">
+                            <th key={column} scope="col" className={`py-2 pr-4 ${column === "trees" ? "text-right" : ""}`}>
                                 {t(`varieties.columns.${column}`)}
                             </th>
                         ))}
@@ -44,7 +45,7 @@ export default function VarietiesTable({ varieties, onSelect }) {
                         >
                             <td className="py-2 pr-4 font-medium">{formatText(variety.name)}</td>
                             <td className="py-2 pr-4">{formatBlock(variety.blockCode)}</td>
-                            <td className="py-2 pr-4">{formatNumber(variety.currentTreeCount)}</td>
+                            <td className="py-2 pr-4 text-right">{formatNumber(variety.currentTreeCount)}</td>
                             <td className="py-2 pr-4">{formatSpacing(variety.rowSpacingM, variety.treeSpacingM)}</td>
                             <td className="py-2 pr-4">
                                 <VigorBadge value={variety.vigor} />

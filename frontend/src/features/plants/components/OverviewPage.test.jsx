@@ -65,10 +65,16 @@ describe("the plants overview", () => {
         const figures = screen.getByRole("region", { name: "Figures of the day" });
         expect(within(figures).getByText("Total Plants")).toBeInTheDocument();
         expect(within(figures).getByText("120")).toBeInTheDocument();
-        expect(within(figures).getByText("1 critical")).toBeInTheDocument();
+        // The Active Alerts note counts the listed alerts of the "Act now" group.
+        expect(await within(figures).findByText("1 Act now")).toBeInTheDocument();
 
         const alerts = screen.getByRole("region", { name: "Alerts" });
         expect(await within(alerts).findByText("Low stock")).toBeInTheDocument();
+        const actNow = within(alerts).getByRole("heading", { level: 3, name: "Act now · 1 alert" });
+        expect(within(alerts).getByRole("list", { name: "Act now · 1 alert" })).toContainElement(
+            within(alerts).getByText("Low stock"));
+        expect(actNow).toBeInTheDocument();
+        expect(within(alerts).queryByRole("heading", { name: /Plan ahead/ })).not.toBeInTheDocument();
         expect(within(alerts).getByText("Inventory")).toBeInTheDocument();
         expect(within(alerts).getByText("Now")).toBeInTheDocument();
         expect(within(alerts).getByRole("link", { name: "View: Low stock, Inventory, on Fertilizer Inventory" }))

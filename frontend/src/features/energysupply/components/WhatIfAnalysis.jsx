@@ -8,12 +8,6 @@ import { useEnergyFormat } from "../format";
 import { Button, Card, PageHeader } from "../../../shared/ui";
 import InlineAlert from "./InlineAlert";
 
-// WhatIfResponseDto (backend) currently exposes only "proposed" values —
-// there is no baseline/current scenario in the response:
-//   additionalCapexEur, newPaybackYears, newCo2ReductionPct, newSystemCapacityKwp
-// A "Current vs Proposed" comparison isn't possible until the backend
-// adds baseline fields. This version shows only the proposed outcome.
-
 const DEFAULTS = { additionalPanels: 40, additionalBatteryKwh: 80, productionScaleKgPerDay: 500 };
 const DEBOUNCE_MS = 300; // so we don't fire a request on every pixel of slider drag
 
@@ -98,9 +92,9 @@ export default function WhatIfAnalysis() {
 
   const chartData = result
     ? [
-        { metric: t("whatIf.chartCapacity"), value: result.newSystemCapacityKwp },
-        { metric: t("whatIf.chartCo2"), value: result.newCo2ReductionPct },
-        { metric: t("whatIf.chartPayback"), value: result.newPaybackYears },
+        { metric: t("whatIf.chartPvGeneration"), value: result.additionalPvGenerationKwhPerYear },
+        { metric: t("whatIf.chartProductionDemand"), value: result.additionalProductionDemandKwhPerYear },
+        { metric: t("whatIf.chartNetBalance"), value: result.netAnnualEnergyBalanceKwh },
       ]
     : [];
 
@@ -119,11 +113,25 @@ export default function WhatIfAnalysis() {
         />
         <Row
           label={t("whatIf.payback")}
-          value={t("units.yearsValue", { value: result.newPaybackYears == null ? "" : format.fixed(result.newPaybackYears) })}
+          value={
+            result.newPaybackYears == null
+              ? t("whatIf.notAvailable")
+              : t("units.yearsValue", { value: format.fixed(result.newPaybackYears) })
+          }
         />
         <Row
-          label={t("whatIf.co2Reduction")}
-          value={t("units.percent", { value: format.number(result.newCo2ReductionPct) })}
+          label={t("whatIf.productionDemand")}
+          value={t("units.kwhPerYearValue", { value: format.grouped(result.additionalProductionDemandKwhPerYear) })}
+        />
+        <Row
+          label={t("whatIf.netEnergyBalance")}
+          value={t("units.kwhPerYearValue", { value: format.grouped(result.netAnnualEnergyBalanceKwh) })}
+        />
+        <Row
+          label={result.netAnnualCo2AvoidedKg >= 0 ? t("whatIf.co2Avoided") : t("whatIf.co2Increase")}
+          value={t("units.kgPerYearValue", {
+            value: result.netAnnualCo2AvoidedKg == null ? "" : format.grouped(Math.abs(result.netAnnualCo2AvoidedKg)),
+          })}
           noBorder
         />
       </div>

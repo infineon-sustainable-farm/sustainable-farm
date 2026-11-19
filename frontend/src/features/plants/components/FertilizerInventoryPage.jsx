@@ -7,6 +7,7 @@ import { useRecordFertilizerMovement } from "../hooks/useRecordFertilizerMovemen
 import AddFertilizerModal from "./AddFertilizerModal";
 import ExchangeRateSection from "./ExchangeRateSection";
 import FertilizerMovementsSection from "./FertilizerMovementsSection";
+import FertilizerPlansSection from "./FertilizerPlansSection";
 import FertilizerStockSection from "./FertilizerStockSection";
 import RecordMovementModal from "./RecordMovementModal";
 
@@ -30,7 +31,8 @@ function RecordMovementButton({ onClick }) {
 
 /**
  * Fertilizer Inventory: the EUR to XOF rate that converts the purchase costs,
- * the current stock of each fertilizer, then the history of its purchases,
+ * the current stock of each fertilizer, the applications planned ahead with
+ * their comparison to the real ones, then the history of the purchases,
  * applications and losses.
  *
  * The mock-up's last restock date and provisional-threshold note are left
@@ -96,6 +98,8 @@ export default function FertilizerInventoryPage() {
             <ExchangeRateSection />
 
             <FertilizerStockSection addAction={<AddFertilizerButton onClick={openFertilizerForm} />} />
+
+            <FertilizerPlansSection />
 
             <FertilizerMovementsSection recordAction={<RecordMovementButton onClick={openMovementForm} />} />
 

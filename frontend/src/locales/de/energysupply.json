@@ -56,7 +56,9 @@
     "kwhValue": "{{value}} kWh",
     "yearsValue": "{{value}} Jahre",
     "panelsValue": "{{value}} Module",
-    "kgPerDayValue": "{{value}} kg/Tag"
+    "kgPerDayValue": "{{value}} kg/Tag",
+    "kwhPerYearValue": "{{value}} kWh/Jahr",
+    "kgPerYearValue": "{{value}} kg/Jahr"
   },
   "dashboard": {
     "title": "Systemübersicht",
@@ -196,7 +198,7 @@
   },
   "whatIf": {
     "title": "Was-wäre-wenn-Szenarioanalyse",
-    "subtitle": "Modellieren Sie einen Ausbau des Energiesystems und sehen Sie die resultierende Leistung, Kosten, Amortisation und Emissionen.",
+    "subtitle": "Modellieren Sie einen Ausbau des Energiesystems und sehen Sie die resultierende Leistung, Kosten, Amortisation, Energiebilanz und Emissionen. Die Produktionssteigerung gilt als zusätzliche Tagesproduktion.",
     "simulationFailed": "Simulation fehlgeschlagen: {{error}}",
     "inputsTitle": "Szenarioeingaben",
     "reset": "Zurücksetzen",
@@ -208,13 +210,17 @@
     "noResult": "Kein Szenarioergebnis verfügbar.",
     "newCapacity": "Neue Systemleistung",
     "additionalCapex": "Zusätzliche Investitionskosten",
-    "payback": "Amortisationszeit",
-    "co2Reduction": "CO₂-Reduktion",
-    "impactTitle": "Übersicht der Auswirkungen",
-    "chartCapacity": "Leistung (kWp)",
-    "chartCo2": "CO₂-Reduktion (%)",
-    "chartPayback": "Amortisation (Jahre)",
-    "valueSeries": "Wert"
+    "payback": "Geschätzte Amortisationszeit",
+    "impactTitle": "Jährliche Energiewirkung (kWh)",
+    "valueSeries": "Wert",
+    "notAvailable": "k. A.",
+    "productionDemand": "Zusätzlicher Produktionsbedarf",
+    "netEnergyBalance": "Jährliche Netto-Energiebilanz",
+    "co2Avoided": "Jährlich netto vermiedenes CO₂",
+    "co2Increase": "Jährlicher Netto-Anstieg an CO₂",
+    "chartPvGeneration": "Zusätzliche PV-Erzeugung",
+    "chartProductionDemand": "Produktionsbedarf",
+    "chartNetBalance": "Netto-Energiebilanz"
   },
   "alerts": {
     "title": "Warnungen & Benachrichtigungen",

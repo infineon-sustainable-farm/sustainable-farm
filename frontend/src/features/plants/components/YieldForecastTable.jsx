@@ -15,10 +15,10 @@ export default function YieldForecastTable({ entries }) {
         { key: "month", header: t("harvest.forecastTable.month"), className: CELL, cell: (e) => formatMonth(e.month) },
         { key: "block", header: t("harvest.forecastTable.block"), className: CELL, cell: (e) => formatBlock(e.blockCode) },
         { key: "variety", header: t("harvest.forecastTable.variety"), className: CELL, cell: (e) => formatText(e.varietyName) },
-        { key: "trees", header: t("harvest.forecastTable.trees"), className: CELL, cell: (e) => formatNumber(e.treeCount) },
+        { key: "trees", align: "right", header: t("harvest.forecastTable.trees"), className: CELL, cell: (e) => formatNumber(e.treeCount) },
         { key: "phase", header: t("harvest.forecastTable.phase"), className: CELL, cell: (e) => formatText(e.growthPhase) },
         {
-            key: "expected",
+            key: "expected", align: "right",
             header: t("harvest.forecastTable.expectedYield"),
             className: CELL,
             cell: (e) => formatKilograms(e.expectedKg),

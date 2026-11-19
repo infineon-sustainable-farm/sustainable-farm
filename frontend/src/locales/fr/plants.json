@@ -117,6 +117,12 @@
     "months": "Mois",
     "fromFormat": "Utilisez le format AAAA-MM."
   },
+  "alertGroups": {
+    "ACT_NOW": "À traiter maintenant",
+    "PLAN_AHEAD": "À anticiper",
+    "count_one": "· {{count}} alerte",
+    "count_other": "· {{count}} alertes"
+  },
   "varieties": {
     "documentTitle": "Variétés — Plantes",
     "title": "Variétés",
@@ -289,10 +295,9 @@
         "quantity": "Quantité",
         "block": "Bloc",
         "details": "Détails",
-        "costXof": "Coût (FCFA)",
-        "costEur": "Coût (EUR)",
-        "source": "Source"
-      }
+        "cost": "Coût"
+      },
+      "sourceNote": "Source : {{source}}"
     },
     "addForm": {
       "title": "Ajouter un engrais",
@@ -351,6 +356,119 @@
         "methodTooLong": "La méthode doit comporter au plus 255 caractères.",
         "reasonRequired": "Le motif est obligatoire.",
         "reasonTooLong": "Le motif doit comporter au plus 255 caractères."
+      }
+    },
+    "plans": {
+      "title": "Apports planifiés",
+      "subtitle": "Vos propres quantités : aucune dose n’est recommandée. Coûts au dernier prix d’achat.",
+      "statusFilter": "Statut",
+      "allStatuses": "Tous les statuts",
+      "planAction": "Planifier un apport",
+      "stockWarning": {
+        "title": "Les apports planifiés dépassent le stock dans les {{days}} prochains jours",
+        "line": "{{fertilizer}} : {{planned}} planifiés dans les {{days}} prochains jours, {{stock}} en stock, {{shortfall}} manquants.",
+        "overdue": "Dont {{quantity}} en retard."
+      },
+      "loading": "Chargement des apports planifiés…",
+      "loadError": "Les apports planifiés n’ont pas pu être chargés",
+      "empty": "Aucun apport planifié pour l’instant",
+      "emptyFiltered": "Aucun apport planifié n’a ce statut",
+      "emptyFilteredHint": "Essayez un autre statut.",
+      "status": {
+        "PLANNED": "Planifié",
+        "DONE": "Effectué",
+        "CANCELLED": "Annulé",
+        "OVERDUE": "En retard"
+      },
+      "delay": {
+        "today": "aujourd’hui",
+        "late_one": "{{days}} jour de retard",
+        "late_other": "{{days}} jours de retard"
+      },
+      "columns": {
+        "plannedDate": "Date prévue",
+        "block": "Bloc",
+        "fertilizer": "Engrais",
+        "quantity": "Quantité",
+        "plannedCost": "Coût prévu",
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "applied": "{{quantity}} appliqués le {{date}}",
+      "markDone": "Effectué",
+      "markDoneLabel": "Marquer comme effectué : {{plan}}",
+      "cancel": "Annuler",
+      "cancelLabel": "Annuler : {{plan}}",
+      "planLabel": "{{fertilizer}}, {{block}}, {{date}}",
+      "noPrice": "Pas encore de prix",
+      "comparison": {
+        "title": "Planifié et appliqué par bloc",
+        "subtitle": "{{period}} · coûts au dernier prix d’achat",
+        "subtitleNoPeriod": "Coûts au dernier prix d’achat",
+        "from": "Du",
+        "to": "Au",
+        "periodFrom": "À partir du {{date}}",
+        "periodUntil": "Jusqu’au {{date}}",
+        "periodAll": "Toutes les dates",
+        "loading": "Chargement de la comparaison…",
+        "loadError": "La comparaison n’a pas pu être chargée",
+        "empty": "Rien de planifié ni d’appliqué sur cette période",
+        "emptyHint": "Planifiez un apport, ou choisissez d’autres dates.",
+        "columns": {
+          "block": "Bloc",
+          "fertilizer": "Engrais",
+          "planned": "Planifié",
+          "applied": "Appliqué",
+          "gap": "Écart",
+          "plannedCost": "Coût prévu",
+          "appliedCost": "Coût appliqué"
+        },
+        "stillToDo": "{{quantity}} restant à faire",
+        "notPlanned": "{{quantity}} non planifiés"
+      },
+      "planForm": {
+        "title": "Planifier un apport",
+        "fertilizer": "Engrais",
+        "selectFertilizer": "Choisir un engrais",
+        "fertilizerOption": "{{name}} ({{unit}})",
+        "block": "Bloc",
+        "plannedDate": "Date prévue",
+        "quantity": "Quantité prévue",
+        "quantityWithUnit": "Quantité prévue ({{unit}})",
+        "inStock": "En stock : {{quantity}}",
+        "note": "Note (facultative)",
+        "submit": "Planifier l’apport",
+        "submitting": "Planification…"
+      },
+      "completeForm": {
+        "title": "Marquer comme effectué",
+        "summary": "{{fertilizer}} · {{block}} · {{quantity}} prévus le {{date}}",
+        "date": "Date de l’apport",
+        "quantityWithUnit": "Quantité appliquée ({{unit}})",
+        "applicator": "Applicateur",
+        "method": "Méthode (facultative)",
+        "submit": "Marquer comme effectué",
+        "submitting": "Enregistrement…"
+      },
+      "cancelForm": {
+        "title": "Annuler cet apport planifié ?",
+        "summary": "{{fertilizer}} · {{block}} · {{quantity}} le {{date}}",
+        "message": "Rien n’est retiré du stock. Un apport annulé ne peut pas être planifié à nouveau : planifiez-en un nouveau.",
+        "keep": "Le garder",
+        "confirm": "Annuler l’apport",
+        "confirming": "Annulation…"
+      },
+      "errors": {
+        "fertilizerRequired": "L’engrais est obligatoire.",
+        "blockRequired": "Le bloc est obligatoire.",
+        "plannedDateRequired": "La date prévue est obligatoire.",
+        "plannedDatePast": "La date prévue ne peut pas être dans le passé.",
+        "quantityInvalid": "La quantité doit être un nombre supérieur à 0, avec au plus 3 décimales.",
+        "noteTooLong": "La note doit compter au plus 255 caractères.",
+        "dateRequired": "La date est obligatoire.",
+        "dateFuture": "La date ne peut pas être dans le futur.",
+        "applicatorRequired": "L’applicateur est obligatoire.",
+        "methodTooLong": "La méthode doit compter au plus 255 caractères."
       }
     }
   },
@@ -588,21 +706,18 @@
       "columns": {
         "date": "Date",
         "block": "Bloc",
-        "problem": "Problème ciblé",
+        "problem": "Problème",
         "product": "Produit",
-        "interval": "Délai avant récolte",
+        "interval": "Délai",
         "harvestAllowedFrom": "Récolte autorisée à partir du",
-        "type": "Type",
-        "ingredient": "Substance active",
         "quantity": "Quantité",
-        "applicator": "Applicateur",
-        "equipment": "Matériel",
-        "source": "Source"
+        "appliedBy": "Appliqué par"
       },
       "days_one": "{{days}} jour",
       "days_other": "{{days}} jours",
       "preventive": "Préventif",
-      "finding": "Constat"
+      "finding": "Constat",
+      "sourceNote": "Source : {{source}}"
     },
     "issues": {
       "title": "Ravageurs et maladies",
@@ -616,15 +731,14 @@
         "name": "Nom",
         "kind": "Type",
         "code": "Code",
-        "scientificName": "Nom scientifique",
-        "eppoCode": "Code OEPP",
         "source": "Source"
       },
       "groups": {
         "PEST": "Ravageurs",
         "DISEASE": "Maladies"
       },
-      "other": "Autre"
+      "other": "Autre",
+      "eppoNote": "Code OEPP : {{code}}"
     },
     "issueForm": {
       "title": "Ajouter un ravageur ou une maladie",
@@ -755,13 +869,11 @@
     },
     "statusTable": {
       "block": "Bloc",
-      "variety": "Variété",
       "estimated": "Estimé",
       "observed": "Observé",
       "harvestWindow": "Fenêtre de récolte",
       "harvestAllowedFrom": "Récolte autorisée à partir du",
       "firstHarvest": "Première récolte",
-      "sources": "Sources",
       "noReference": "Aucune valeur de référence",
       "notCounted": "Non pris en compte : aucune valeur de référence",
       "countsUntil": "Compte jusqu’au {{date}}",
@@ -769,7 +881,7 @@
       "observationLine": "{{date}} · {{method}}",
       "season": "Saison : {{value}}",
       "share": "Part : {{value}}",
-      "observation": "Observation : {{value}}"
+      "sourceNote": "Source : {{value}}"
     },
     "deadlines": {
       "title": "Échéances à venir",
@@ -988,9 +1100,11 @@
       "precision": "Précision",
       "age": "Âge",
       "phase": "Phase",
-      "rainfall": "Pluviométrie",
+      "rainfall": "Pluviométrie ({{days}} jours)",
       "source": "Source"
-    }
+    },
+    "rainfallLoading": "Chargement…",
+    "rainfallUnavailable": "Pluviométrie indisponible"
   },
   "scenarios": {
     "documentTitle": "Analyse de scénarios — Plantes",
@@ -1305,7 +1419,9 @@
       "inGrowthStageNote": "Installation, 0–2 ans",
       "readyForHarvest": "Prêts à récolter",
       "activeAlerts": "Alertes actives",
-      "criticalNote": "{{count}} critiques"
+      "criticalNote": "{{count}} critiques",
+      "actNowNote": "{{count}} à traiter maintenant",
+      "actNowPending": "À traiter maintenant —"
     },
     "alerts": {
       "title": "Alertes",

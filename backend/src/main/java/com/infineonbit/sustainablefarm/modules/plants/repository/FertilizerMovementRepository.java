@@ -98,6 +98,27 @@ public interface FertilizerMovementRepository extends JpaRepository<FertilizerMo
                                                    @Param("from") LocalDate from,
                                                    @Param("to") LocalDate to);
 
+    /**
+     * Returns the purchases of the given fertilizers that have a cost, the most
+     * recent first for each fertilizer.
+     *
+     * <p>The first purchase of a fertilizer in the result gives its last
+     * purchase price: its cost divided by its quantity. The most recent purchase
+     * date wins, then the latest entry of that day. A purchase recorded without
+     * a cost says nothing about the price and is left out.
+     *
+     * @param productIds identifiers of the fertilizers, not empty
+     * @return the purchases with a cost, by fertilizer, then by date and identifier, latest first
+     */
+    @Query("""
+            SELECT m FROM FertilizerMovement m
+            WHERE m.product.id IN :productIds
+              AND m.movementType = com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType.PURCHASE
+              AND m.totalCost IS NOT NULL
+            ORDER BY m.product.id ASC, m.movementDate DESC, m.id DESC
+            """)
+    List<FertilizerMovement> findPricedPurchases(@Param("productIds") Collection<Long> productIds);
+
     /** Total quantity of one movement type of one fertilizer, as returned by {@link #findMovementTotals}. */
     interface MovementTotal {
 

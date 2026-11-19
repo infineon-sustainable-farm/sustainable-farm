@@ -63,7 +63,7 @@ export default function NurseryBatchesTable({ batches = [], loading = false }) {
     const columns = [
         { key: "batchCode", header: header("batch"), cell: (batch) => formatText(batch.batchCode) },
         { key: "varietyName", header: header("variety"), cell: (batch) => formatText(batch.varietyName) },
-        { key: "currentCount", header: header("inNursery"), cell: (batch) => formatNumber(batch.currentCount) },
+        { key: "currentCount", align: "right", header: header("inNursery"), cell: (batch) => formatNumber(batch.currentCount) },
         {
             key: "plannedBlockCode",
             header: header("destBlock"),
@@ -75,7 +75,7 @@ export default function NurseryBatchesTable({ batches = [], loading = false }) {
             header: header("plannedTransplant"),
             cell: (batch) => formatDate(batch.plannedTransplantOn),
         },
-        { key: "survivalRatePct", header: header("survivalRate"), cell: (batch) => formatPercent(batch.survivalRatePct) },
+        { key: "survivalRatePct", align: "right", header: header("survivalRate"), cell: (batch) => formatPercent(batch.survivalRatePct) },
         { key: "origin", header: header("origin"), cell: (batch) => <OriginCell batch={batch} /> },
     ];
     return <Table caption={t("nursery.batches.caption")} columns={columns} rows={batches} loading={loading} />;

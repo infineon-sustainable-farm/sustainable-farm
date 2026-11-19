@@ -14,7 +14,7 @@ export default function HarvestsTable({ harvests }) {
         { key: "block", header: t("harvest.harvestsTable.block"), className: CELL, cell: (h) => formatBlock(h.blockCode) },
         { key: "variety", header: t("harvest.harvestsTable.variety"), className: CELL, cell: (h) => formatText(h.varietyName) },
         { key: "date", header: t("harvest.harvestsTable.harvestDate"), className: CELL, cell: (h) => formatDate(h.harvestDate) },
-        { key: "quantity", header: t("harvest.harvestsTable.quantity"), className: CELL, cell: (h) => formatNumber(h.quantityKg) },
+        { key: "quantity", align: "right", header: t("harvest.harvestsTable.quantity"), className: CELL, cell: (h) => formatNumber(h.quantityKg) },
         { key: "lot", header: t("harvest.harvestsTable.lot"), className: CELL, cell: (h) => formatText(h.lotNumber) },
         { key: "source", header: t("harvest.harvestsTable.source"), className: CELL, cell: (h) => formatText(h.source) },
     ];
