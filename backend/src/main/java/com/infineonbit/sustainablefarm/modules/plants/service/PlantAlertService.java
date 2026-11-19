@@ -5,13 +5,13 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYi
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthFindingResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFindingStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryStage;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertSeverity;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.HarvestWindow;
 import com.infineonbit.sustainablefarm.modules.plants.service.YieldForecastService.ForecastBasis;
@@ -71,8 +71,8 @@ public class PlantAlertService {
         this.clock = clock;
     }
 
-    /** A block, as the (farm, block) pair: a {@code null} farm is a farm of its own. */
-    private record BlockKey(Integer farmId, String blockCode) {
+    /** A block, by its farm and code: a code designates one {@code farm.block} row. */
+    private record BlockKey(Long farmId, String blockCode) {
     }
 
     /**
@@ -121,7 +121,7 @@ public class PlantAlertService {
      *                   announced, from 1 to 90, or {@code null} for 30
      * @return the alerts of today, CRITICAL first, then by date
      */
-    public PlantAlertResponse getAlerts(Integer farmId, String blockCode, Integer withinDays) {
+    public PlantAlertResponse getAlerts(Long farmId, String blockCode, Integer withinDays) {
         return getAlerts(farmId, blockCode, withinDays, LocalDate.now(clock));
     }
 
@@ -129,7 +129,7 @@ public class PlantAlertService {
      * Same as {@link #getAlerts(Integer, String, Integer)} on an explicit day,
      * so that the overview reads every figure on the same day.
      */
-    PlantAlertResponse getAlerts(Integer farmId, String blockCode, Integer withinDays, LocalDate today) {
+    PlantAlertResponse getAlerts(Long farmId, String blockCode, Integer withinDays, LocalDate today) {
         int window = withinDays == null ? DEFAULT_WITHIN_DAYS : withinDays;
         String block = normalizeFilter(blockCode);
 
@@ -199,7 +199,7 @@ public class PlantAlertService {
      * "… harvest season in progress, from 1 May 2027 to 31 July 2027".
      */
     private static PlantAlert harvestAlert(PlantedVariety planted, HarvestWindow harvest, int days) {
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         String subject = variety.getName() + " on block " + variety.getBlockCode() + ": harvest season ";
         String message = days > 0
                 ? subject + "starts on " + PlantAlertCalculator.formatDate(harvest.start()) + ", "

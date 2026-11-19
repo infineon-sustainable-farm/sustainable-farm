@@ -31,8 +31,8 @@ final class HealthCalculator {
         static final TreatmentSummary NONE = new TreatmentSummary(0, null, null);
     }
 
-    /** A block, as the (farm, block) pair: a {@code null} farm is a farm of its own. */
-    private record BlockKey(Integer farmId, String blockCode) {
+    /** A block, by its farm and code: a code designates one {@code farm.block} row. */
+    private record BlockKey(Long farmId, String blockCode) {
     }
 
     /** Most recent first: the latest date, then the highest identifier among the same date. */
@@ -135,8 +135,8 @@ final class HealthCalculator {
 
     /**
      * The most recent inspection of each block: the latest by date, then the
-     * one with the highest identifier when two share a date. A block is the
-     * (farm, block) pair, a {@code null} farm being a farm of its own.
+     * one with the highest identifier when two share a date. A block is a
+     * {@code farm.block} row, read as its farm and code.
      *
      * @param inspections inspections in any order, possibly empty
      * @return one inspection per block, by block code then farm

@@ -1,48 +1,54 @@
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { formatCode, formatKilograms, formatNumber, formatShare, formatText, formatTimestamp, NO_VALUE } from "../utils/format";
+import { formatEnum, formatKilograms, formatNumber, formatShare, formatText, formatTimestamp, NO_VALUE } from "../utils/format";
 import { formatMoney, formatUnitPrice } from "../utils/scenarioRequests";
-import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
+import { SectionHeading } from "./ScenarioStatus";
+import { HEAD_ROW_CLASS, ROW_CLASS, ROW_HEADER_CLASS, TD_CLASS, TH_CLASS } from "./scenarioStyles";
 
-const TH_CLASS = TABLE_HEAD;
-const CURRENCY_NAMES = { XOF: "XOF (FCFA)", EUR: "EUR (€)" };
+const TABLE_BOX_CLASS = "overflow-x-auto rounded-tile border border-border-subtle bg-surface-raised px-4 py-2";
 
 /** A value followed by its unit, or the dash alone when it is not entered. */
-function withUnit(value, text, unit) {
-    return value === null || value === undefined ? NO_VALUE : `${text} ${unit}`;
+function withUnit(t, value, text, unitKey) {
+    return value === null || value === undefined ? NO_VALUE : t(`scenarios.assumptions.units.${unitKey}`, { value: text });
+}
+
+/** Translated growth phase of a yield share. */
+function phaseLabel(code) {
+    return formatEnum("growthPhase", code);
 }
 
 /** The assumptions of a scenario, in the order of its form, each with the source the API recorded. */
-function assumptionRows(scenario) {
+function assumptionRows(t, scenario) {
     const currency = scenario.currency;
+    const currencyName = t(`scenarios.currencies.${currency}`, { defaultValue: formatText(currency) });
     return [
-        { label: "Variety", value: formatText(scenario.varietyName), source: null },
-        { label: "Trees", value: formatNumber(scenario.treeCount), source: scenario.treeCountSource },
+        { key: "variety", value: formatText(scenario.varietyName), source: null },
+        { key: "trees", value: formatNumber(scenario.treeCount), source: scenario.treeCountSource },
         {
-            label: "Yield per tree",
-            value: withUnit(scenario.yieldPerTreeKg, formatKilograms(scenario.yieldPerTreeKg), "per year in full production"),
+            key: "yieldPerTree",
+            value: withUnit(t, scenario.yieldPerTreeKg, formatKilograms(scenario.yieldPerTreeKg), "perYearFull"),
             source: scenario.yieldSource,
         },
         {
-            label: "Loss rate",
-            value: withUnit(scenario.lossRate, formatShare(scenario.lossRate), "of the harvest"),
+            key: "lossRate",
+            value: withUnit(t, scenario.lossRate, formatShare(scenario.lossRate), "ofHarvest"),
             source: scenario.lossRateSource,
         },
-        { label: "Price per kg", value: formatUnitPrice(scenario.pricePerKg, currency), source: scenario.priceSource },
-        { label: "Currency", value: CURRENCY_NAMES[currency] ?? formatText(currency), source: null },
+        { key: "pricePerKg", value: formatUnitPrice(scenario.pricePerKg, currency), source: scenario.priceSource },
+        { key: "currency", value: currency ? currencyName : formatText(currency), source: null },
         {
-            label: "Fixed operating cost",
-            value: withUnit(scenario.annualFixedCost, formatMoney(scenario.annualFixedCost, currency), "per year"),
+            key: "fixedCost",
+            value: withUnit(t, scenario.annualFixedCost, formatMoney(scenario.annualFixedCost, currency), "perYear"),
             source: scenario.annualFixedCostSource,
         },
         {
-            label: "Variable operating cost",
-            value: withUnit(scenario.variableCostPerKg, formatUnitPrice(scenario.variableCostPerKg, currency),
-                "per kg sold"),
+            key: "variableCost",
+            value: withUnit(t, scenario.variableCostPerKg, formatUnitPrice(scenario.variableCostPerKg, currency), "perKgSold"),
             source: scenario.variableCostSource,
         },
-        { label: "Investment", value: formatMoney(scenario.initialInvestment, currency), source: scenario.investmentSource },
+        { key: "investment", value: formatMoney(scenario.initialInvestment, currency), source: scenario.investmentSource },
         {
-            label: "Cost per added tree",
+            key: "costPerTree",
             value: formatMoney(scenario.costPerAdditionalTree, currency),
             source: scenario.costPerAdditionalTreeSource,
         },
@@ -56,35 +62,30 @@ function assumptionRows(scenario) {
  * Maturity, and a correction counts here at once.
  */
 export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
+    const { t } = useTranslation("plants");
     return (
         <section aria-labelledby="scenario-assumptions-title" className="flex flex-col gap-4">
-            <div>
-                <h2 id="scenario-assumptions-title" className="font-heading text-lg font-bold text-on-background">
-                    Assumptions
-                </h2>
-                <p className="mt-1 max-w-3xl text-sm text-gray-600">
-                    {`As entered, each with its source. Last updated ${formatTimestamp(scenario.lastUpdated)}. A dash `
-                        + "means not entered: the results that need the value are not computed."}
-                </p>
-            </div>
+            <SectionHeading id="scenario-assumptions-title" title={t("scenarios.assumptions.title")}>
+                {t("scenarios.assumptions.intro", { date: formatTimestamp(scenario.lastUpdated) })}
+            </SectionHeading>
 
-            <div className={`relative ${TABLE_CARD}`}>
+            <div className={TABLE_BOX_CLASS}>
                 <table className="w-full border-collapse text-sm">
                     <thead>
-                        <tr>
-                            <th scope="col" className={TH_CLASS}>Assumption</th>
-                            <th scope="col" className={TH_CLASS}>Value</th>
-                            <th scope="col" className={TH_CLASS}>Source</th>
+                        <tr className={HEAD_ROW_CLASS}>
+                            <th scope="col" className={TH_CLASS}>{t("scenarios.assumptions.assumption")}</th>
+                            <th scope="col" className={TH_CLASS}>{t("scenarios.assumptions.value")}</th>
+                            <th scope="col" className={TH_CLASS}>{t("scenarios.assumptions.source")}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {assumptionRows(scenario).map((row) => (
-                            <tr key={row.label} className="border-b border-gray-100 last:border-b-0">
-                                <th scope="row" className="px-4 py-3 text-left font-semibold whitespace-nowrap text-gray-800">
-                                    {row.label}
+                        {assumptionRows(t, scenario).map((row) => (
+                            <tr key={row.key} className={ROW_CLASS}>
+                                <th scope="row" className={`${ROW_HEADER_CLASS} whitespace-nowrap`}>
+                                    {t(`scenarios.assumptions.rows.${row.key}`)}
                                 </th>
-                                <td className="px-4 py-3 text-gray-700">{row.value}</td>
-                                <td className="px-4 py-3 break-words text-gray-700">{formatText(row.source)}</td>
+                                <td className={TD_CLASS}>{row.value}</td>
+                                <td className={`${TD_CLASS} break-words`}>{formatText(row.source)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -92,41 +93,46 @@ export default function ScenarioAssumptionsTable({ scenario, phaseShares }) {
             </div>
 
             <div className="flex flex-col gap-3">
-                <h3 className="font-heading text-sm font-bold text-on-background">Yield share by growth phase</h3>
+                <h3 className="text-sm font-semibold text-text">{t("scenarios.assumptions.sharesTitle")}</h3>
                 {phaseShares ? (
-                    <div className={`relative ${TABLE_CARD}`}>
+                    <div className={TABLE_BOX_CLASS}>
                         <table className="w-full border-collapse text-sm whitespace-nowrap">
                             <thead>
-                                <tr>
-                                    <th scope="col" className={TH_CLASS}>Growth phase</th>
-                                    <th scope="col" className={TH_CLASS}>Age</th>
-                                    <th scope="col" className={TABLE_HEAD_NUM}>Share of the full yield</th>
-                                    <th scope="col" className={TH_CLASS}>Source</th>
+                                <tr className={HEAD_ROW_CLASS}>
+                                    <th scope="col" className={TH_CLASS}>{t("scenarios.assumptions.growthPhase")}</th>
+                                    <th scope="col" className={TH_CLASS}>{t("scenarios.assumptions.age")}</th>
+                                    <th scope="col" className={TH_CLASS}>{t("scenarios.assumptions.share")}</th>
+                                    <th scope="col" className={TH_CLASS}>{t("scenarios.assumptions.source")}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {phaseShares.map((share) => (
-                                    <tr key={share.code} className="border-b border-gray-100 last:border-b-0">
-                                        <th scope="row" className="px-4 py-3 text-left font-semibold text-gray-800">
-                                            {formatCode(share.code)}
-                                        </th>
-                                        <td className="px-4 py-3 text-gray-700">{formatText(share.yearsBand)}</td>
-                                        <td className="px-4 py-3 text-right text-gray-700">{formatShare(share.yieldShare)}</td>
-                                        <td className="px-4 py-3 text-gray-700">{formatText(share.source)}</td>
-                                    </tr>
-                                ))}
+                                {phaseShares.map((share) => {
+                                    const phase = phaseLabel(share.code);
+                                    return (
+                                        <tr key={share.code} className={ROW_CLASS}>
+                                            <th scope="row" className={ROW_HEADER_CLASS}>
+                                                {phase}
+                                            </th>
+                                            <td className={TD_CLASS}>{formatText(share.yearsBand)}</td>
+                                            <td className={TD_CLASS}>{formatShare(share.yieldShare)}</td>
+                                            <td className={TD_CLASS}>{formatText(share.source)}</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-600">The shares come with the analysis of the scenario.</p>
+                    <p className="text-sm text-text-muted">{t("scenarios.assumptions.sharesPending")}</p>
                 )}
-                <p className="text-sm text-gray-600">
-                    The yield forecast uses the same shares. They are corrected on{" "}
-                    <Link to="/plants/harvest-maturity" className="font-semibold text-primary-dark underline">
-                        Harvest &amp; Maturity
-                    </Link>
-                    ; a correction counts here at once.
+                <p className="text-sm text-text-muted">
+                    <Trans
+                        ns="plants"
+                        i18nKey="scenarios.assumptions.sharesNote"
+                        components={{
+                            page: <Link to="/plants/harvest-maturity" className="font-semibold text-text-accent underline" />,
+                        }}
+                    />
                 </p>
             </div>
         </section>

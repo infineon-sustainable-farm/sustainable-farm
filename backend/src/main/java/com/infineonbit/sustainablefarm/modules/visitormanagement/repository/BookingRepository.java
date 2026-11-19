@@ -17,19 +17,19 @@ import java.util.List;
  */
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot "
+    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot JOIN FETCH b.visitor "
             + "ORDER BY b.id DESC")
     List<Booking> findAllByOrderByIdDesc();
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot "
+    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot JOIN FETCH b.visitor "
             + "WHERE b.status = :status")
     List<Booking> findByStatus(@Param("status") BookingStatus status);
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot "
+    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot JOIN FETCH b.visitor "
             + "WHERE b.activity.id = :activityId")
     List<Booking> findByActivityId(@Param("activityId") Long activityId);
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot "
+    @Query("SELECT b FROM Booking b JOIN FETCH b.activity JOIN FETCH b.timeSlot JOIN FETCH b.visitor "
             + "WHERE b.timeSlot.date = :date")
     List<Booking> findByTimeSlotDate(@Param("date") LocalDate date);
 
@@ -71,6 +71,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                @Param("excluded") List<BookingStatus> excluded);
 
     List<Booking> findByTimeSlotIdAndStatusIn(Long timeSlotId, Collection<BookingStatus> statuses);
+
+    boolean existsByVisitorId(Long visitorId);
 
     List<Booking> findByActivityIdAndStatusIn(Long activityId, Collection<BookingStatus> statuses);
 

@@ -71,23 +71,21 @@ public interface PopulationEventRepository extends JpaRepository<PopulationEvent
      *
      * <p>Only the variety rows that were planted are returned: a row without a
      * PLANTING event, such as the Zalka 2025 row of the dev profile, is not. Both
-     * filters work as in {@link VarietyRepository#findByOptionalFilters}: a
+     * filters work as in {@link BlockVarietyRepository#findByOptionalFilters}: a
      * {@code null} parameter disables its own filter.
      *
-     * @param farmId    farm identifier, or {@code null} to ignore the farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} to ignore the block
+     * @param allBlocks   {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds  ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @return the plantings, ordered by block, variety name, variety row, then date
      */
     @Query("""
             SELECT e FROM PopulationEvent e JOIN FETCH e.variety v
             WHERE e.eventType = com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType.PLANTING
-              AND (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
-            ORDER BY v.blockCode ASC, v.name ASC, v.id ASC, e.eventDate ASC
+              AND (:allBlocks = true OR v.blockId IN :blockIds)
+            ORDER BY v.blockId ASC, v.name ASC, v.id ASC, e.eventDate ASC
             """)
-    List<PopulationEvent> findPlantingsByOptionalFilters(@Param("farmId") Integer farmId,
-                                                         @Param("blockCode") String blockCode);
+    List<PopulationEvent> findPlantingsByOptionalFilters(@Param("allBlocks") boolean allBlocks,
+                                                         @Param("blockIds") Collection<Long> blockIds);
 
     /** Current number of trees of one variety row, as returned by {@link #findTreeBalances}. */
     interface TreeBalance {

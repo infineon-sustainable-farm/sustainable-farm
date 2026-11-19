@@ -1,7 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.NurseryBatch;
@@ -32,6 +34,7 @@ public class NurseryBatchService {
 
     private final NurseryBatchRepository nurseryBatchRepository;
     private final NurseryEventRepository nurseryEventRepository;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " p1 "} becomes
@@ -147,6 +150,9 @@ public class NurseryBatchService {
                     + " is before the start date " + request.startedOn() + " of batch " + batchCode);
         }
 
+        if (request.farmId() != null && !plantsBlocks.farmExists(request.farmId())) {
+            throw new BadRequestException("Farm " + request.farmId() + " not found");
+        }
         NurseryBatch batch = new NurseryBatch();
         batch.setFarmId(request.farmId());
         batch.setBatchCode(batchCode);
@@ -158,7 +164,11 @@ public class NurseryBatchService {
         // A whole number of 1 or more: the request validation refused anything else.
         batch.setInitialCount(request.initialCount().intValue());
         batch.setPlannedTransplantOn(request.plannedTransplantOn());
-        batch.setPlannedBlockCode(normalizeOptionalCode(request.plannedBlockCode()));
+        String plannedBlockCode = normalizeOptionalCode(request.plannedBlockCode());
+        if (plannedBlockCode != null) {
+            BlockDto plannedBlock = plantsBlocks.resolve(request.farmId(), plannedBlockCode);
+            batch.assignPlannedBlock(plannedBlock.id(), PlantsBlocks.label(plannedBlock));
+        }
         batch.setSource(USER_ENTRY_SOURCE);
         batch.setLastUpdated(now);
         NurseryBatch savedBatch = nurseryBatchRepository.save(batch);
@@ -184,7 +194,7 @@ public class NurseryBatchService {
      * @param stage  current stage, or {@code null} for every stage
      * @return the matching batches, ordered by start date then identifier
      */
-    public List<NurseryBatchResponse> getAllBatches(Integer farmId, NurseryStage stage) {
+    public List<NurseryBatchResponse> getAllBatches(Long farmId, NurseryStage stage) {
         return toResponses(nurseryBatchRepository.findByOptionalFarm(farmId)).stream()
                 .filter(batch -> stage == null || batch.currentStage() == stage)
                 .toList();

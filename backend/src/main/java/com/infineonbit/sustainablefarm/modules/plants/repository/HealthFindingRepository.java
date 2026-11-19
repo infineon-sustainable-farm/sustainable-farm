@@ -39,23 +39,21 @@ public interface HealthFindingRepository extends JpaRepository<HealthFinding, Lo
      * inspection, and each parameter is cast in its {@code IS NULL} test for
      * PostgreSQL. The status is computed afterwards, so it is filtered in Java.
      *
-     * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "C"}),
-     *                  or {@code null} for every block
+     * @param allBlocks {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds  ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @param from      first inspection date, included, or {@code null} for no lower bound
      * @param to        last inspection date, included, or {@code null} for no upper bound
      * @return the matching findings, ordered by inspection date, inspection, then identifier
      */
     @Query("""
             SELECT f FROM HealthFinding f JOIN FETCH f.inspection i JOIN FETCH f.issue
-            WHERE (CAST(:farmId AS Integer) IS NULL OR i.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR i.blockCode = :blockCode)
+            WHERE (:allBlocks = true OR i.blockId IN :blockIds)
               AND (CAST(:from AS LocalDate) IS NULL OR i.inspectedOn >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR i.inspectedOn <= :to)
             ORDER BY i.inspectedOn ASC, i.id ASC, f.id ASC
             """)
-    List<HealthFinding> findByOptionalFilters(@Param("farmId") Integer farmId,
-                                              @Param("blockCode") String blockCode,
+    List<HealthFinding> findByOptionalFilters(@Param("allBlocks") boolean allBlocks,
+                                              @Param("blockIds") Collection<Long> blockIds,
                                               @Param("from") LocalDate from,
                                               @Param("to") LocalDate to);
 

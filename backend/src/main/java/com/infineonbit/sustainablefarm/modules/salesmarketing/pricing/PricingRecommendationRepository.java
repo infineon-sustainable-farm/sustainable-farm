@@ -4,5 +4,5 @@ import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.PricingReco
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PricingRecommendationRepository
-        extends JpaRepository<PricingRecommendation, Integer> {
+        extends JpaRepository<PricingRecommendation, Long> {
 }

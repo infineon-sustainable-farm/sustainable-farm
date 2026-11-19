@@ -33,6 +33,16 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrec
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.*;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.*;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.*;
+import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentLookup;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks.Label;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,31 +54,98 @@ import org.springframework.stereotype.Component;
 @Component
 public class DtoMapper {
 
+    private final MangoVarietyCodes mangoVarietyCodes;
+    private final EquipmentLookup equipmentLookup;
+    private final ProductTransformationBlocks blocks;
+    private final PersonDirectory personDirectory;
+
+    public DtoMapper(MangoVarietyCodes mangoVarietyCodes, EquipmentLookup equipmentLookup,
+                     ProductTransformationBlocks blocks, PersonDirectory personDirectory) {
+        this.mangoVarietyCodes = mangoVarietyCodes;
+        this.equipmentLookup = equipmentLookup;
+        this.blocks = blocks;
+        this.personDirectory = personDirectory;
+    }
+
+    /**
+     * A person id sent to the API (intake operator, harvest supervisor), checked against the
+     * people directory: {@code null} stays {@code null}, an unknown id is refused (400). People
+     * are never created here.
+     */
+    public Long personId(Long personId) {
+        return personDirectory.requireExisting(personId);
+    }
+
+    /**
+     * The block a farm text and a block text designate, for an update: {@code null} when the block
+     * text is blank, so that the update keeps the current block.
+     *
+     * @see ProductTransformationBlocks#resolve(String, String)
+     */
+    public Long blockIdOrNull(String farmText, String blockText) {
+        return blocks.resolveOrNull(farmText, blockText);
+    }
+
+    /**
+     * An audit instant of an entity ({@code core.entity.BaseEntity}) as the responses show it: a
+     * {@link Timestamp}, so that the JSON keeps its format (milliseconds, {@code Z}).
+     */
+    private static Timestamp timestamp(Instant instant) {
+        return instant == null ? null : Timestamp.from(instant);
+    }
+
+    /** The business code of the register equipment with this id, shown as {@code equipmentId}. */
+    private String equipmentCode(Long equipmentId) {
+        return equipmentLookup.findById(equipmentId).map(EquipmentView::code).orElse(null);
+    }
+
+    /**
+     * The catalogue key of a variety sent to the API, for a path variable or an update.
+     *
+     * @see MangoVarietyCodes#toKey(String)
+     */
+    public String varietyKey(String apiValue) {
+        return mangoVarietyCodes.toKey(apiValue);
+    }
+
     // ===== BATCH MAPPERS =====
 
     public Batch toEntity(BatchCreateRequest request) {
         Batch batch = new Batch();
         batch.setBatchId(request.getBatchId());
         batch.setHarvestDate(request.getHarvestDate());
-        batch.setMangoVariety(request.getMangoVariety());
+        batch.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
         batch.setHarvestQuantityKg(request.getHarvestQuantityKg());
-        batch.setFarmId(request.getFarmId());
-        batch.setBlockId(request.getBlockId());
+        batch.setFarmBlockId(blocks.resolve(request.getFarmId(), request.getBlockId()));
         batch.setCurrentStatus(request.getCurrentStatus());
         return batch;
     }
 
     public BatchResponse toResponse(Batch entity) {
+        return toResponse(entity, blocks.label(entity.getFarmBlockId()));
+    }
+
+    /** The responses of several lots, with one lookup of their blocks. */
+    public List<BatchResponse> toBatchResponses(List<Batch> entities) {
+        Map<Long, Label> labels = blocks.labelsOf(entities, Batch::getFarmBlockId);
+        return entities.stream().map(entity -> toResponse(entity, labelOf(labels, entity.getFarmBlockId()))).toList();
+    }
+
+    private static Label labelOf(Map<Long, Label> labels, Long blockId) {
+        return blockId == null ? new Label(null, null) : labels.getOrDefault(blockId, new Label(null, null));
+    }
+
+    private BatchResponse toResponse(Batch entity, Label block) {
         return BatchResponse.builder()
                 .batchId(entity.getBatchId())
                 .harvestDate(entity.getHarvestDate())
-                .mangoVariety(entity.getMangoVariety())
+                .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
                 .currentStatus(entity.getCurrentStatus())
-                .farmId(entity.getFarmId())
-                .blockId(entity.getBlockId())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .farmId(block.farm())
+                .blockId(block.block())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -78,29 +155,39 @@ public class DtoMapper {
         RawIntake intake = new RawIntake();
         intake.setIntakeId(request.getIntakeId());
         intake.setBatch(batch);
-        intake.setSourceFarm(request.getSourceFarm());
-        intake.setSourceBlock(request.getSourceBlock());
+        intake.setSourceBlockId(blocks.resolve(request.getSourceFarm(), request.getSourceBlock()));
         intake.setIntakeDate(request.getIntakeDate());
         intake.setReceivedQuantityKg(request.getReceivedQuantityKg());
-        intake.setReceivedVariety(request.getReceivedVariety());
+        intake.setReceivedVarietyKey(mangoVarietyCodes.toKey(request.getReceivedVariety()));
         intake.setReceivedGrade(request.getReceivedGrade());
-        intake.setIntakeOperator(request.getIntakeOperator());
+        intake.setIntakeOperatorId(personId(request.getIntakeOperatorPersonId()));
         return intake;
     }
 
     public RawIntakeResponse toResponse(RawIntake entity) {
+        return toResponse(entity, blocks.label(entity.getSourceBlockId()));
+    }
+
+    /** The responses of several raw intakes, with one lookup of their blocks. */
+    public List<RawIntakeResponse> toRawIntakeResponses(List<RawIntake> entities) {
+        Map<Long, Label> labels = blocks.labelsOf(entities, RawIntake::getSourceBlockId);
+        return entities.stream().map(entity -> toResponse(entity, labelOf(labels, entity.getSourceBlockId()))).toList();
+    }
+
+    private RawIntakeResponse toResponse(RawIntake entity, Label block) {
         return RawIntakeResponse.builder()
                 .intakeId(entity.getIntakeId())
                 .batchId(entity.getBatch() != null ? entity.getBatch().getBatchId() : null)
-                .sourceFarm(entity.getSourceFarm())
-                .sourceBlock(entity.getSourceBlock())
+                .sourceFarm(block.farm())
+                .sourceBlock(block.block())
                 .intakeDate(entity.getIntakeDate())
                 .receivedQuantityKg(entity.getReceivedQuantityKg())
-                .receivedVariety(entity.getReceivedVariety())
+                .receivedVariety(MangoVarietyCodes.toApi(entity.getReceivedVarietyKey()))
                 .receivedGrade(entity.getReceivedGrade())
-                .intakeOperator(entity.getIntakeOperator())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .intakeOperator(personDirectory.nameOf(entity.getIntakeOperatorId()))
+                .intakeOperatorPersonId(entity.getIntakeOperatorId())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -116,7 +203,7 @@ public class DtoMapper {
         record.setWaterUsageLiters(request.getWaterUsageLiters());
         record.setStartTime(request.getStartTime());
         record.setEndTime(request.getEndTime());
-        record.setEquipment(equipment);
+        record.setEquipmentId(equipment != null ? equipment.getId() : null);
         record.setOperator(operator);
         return record;
     }
@@ -131,10 +218,10 @@ public class DtoMapper {
                 .waterUsageLiters(entity.getWaterUsageLiters())
                 .startTime(entity.getStartTime())
                 .endTime(entity.getEndTime())
-                .equipmentId(entity.getEquipment() != null ? entity.getEquipment().getEquipmentId() : null)
+                .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .yieldPercentage(entity.calculateYieldPercentage())
                 .wastePercentage(entity.calculateWastePercentage())
                 .build();
@@ -154,7 +241,7 @@ public class DtoMapper {
         run.setEnergyUsageKwh(request.getEnergyUsageKwh());
         run.setStartTime(request.getStartTime());
         run.setEndTime(request.getEndTime());
-        run.setEquipment(equipment);
+        run.setEquipmentId(equipment != null ? equipment.getId() : null);
         run.setOperator(operator);
         return run;
     }
@@ -171,10 +258,10 @@ public class DtoMapper {
                 .energyUsageKwh(entity.getEnergyUsageKwh())
                 .startTime(entity.getStartTime())
                 .endTime(entity.getEndTime())
-                .equipmentId(entity.getEquipment() != null ? entity.getEquipment().getEquipmentId() : null)
+                .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .moistureReductionPct(entity.calculateMoistureReductionPct())
                 .energyEfficiencyKwhPerKg(entity.calculateEnergyEfficiencyKwhPerKg())
                 .withinTargetRange(entity.isWithinTargetRange())
@@ -192,7 +279,7 @@ public class DtoMapper {
         record.setLotCode(request.getLotCode());
         record.setExportReady(request.getExportReady() != null ? request.getExportReady() : false);
         record.setPackagingDate(request.getPackagingDate());
-        record.setEquipment(equipment);
+        record.setEquipmentId(equipment != null ? equipment.getId() : null);
         record.setOperator(operator);
         return record;
     }
@@ -206,10 +293,10 @@ public class DtoMapper {
                 .lotCode(entity.getLotCode())
                 .exportReady(entity.getExportReady())
                 .packagingDate(entity.getPackagingDate())
-                .equipmentId(entity.getEquipment() != null ? entity.getEquipment().getEquipmentId() : null)
+                .equipmentId(equipmentCode(entity.getEquipmentId()))
                 .operatorId(entity.getOperator() != null ? entity.getOperator().getOperatorId() : null)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -240,8 +327,8 @@ public class DtoMapper {
                 .inspectorId(entity.getInspector() != null ? entity.getInspector().getOperatorId() : null)
                 .checkpointTime(entity.getCheckpointTime())
                 .notes(entity.getNotes())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .mandatory(entity.isMandatory())
                 .passed(entity.hasPassed())
                 .build();
@@ -274,27 +361,14 @@ public class DtoMapper {
                 .auditorId(entity.getAuditor() != null ? entity.getAuditor().getOperatorId() : null)
                 .auditDate(entity.getAuditDate())
                 .nextAuditDate(entity.getNextAuditDate())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .compliant(entity.isCompliant())
                 .auditOverdue(entity.isAuditOverdue())
                 .build();
     }
 
     // ===== EQUIPMENT MAPPERS =====
-
-    public Equipment toEntity(EquipmentCreateRequest request) {
-        Equipment equipment = new Equipment();
-        equipment.setEquipmentId(request.getEquipmentId());
-        equipment.setEquipmentName(request.getEquipmentName());
-        equipment.setEquipmentType(request.getEquipmentType());
-        equipment.setCapacityKgPerHour(request.getCapacityKgPerHour());
-        equipment.setEnergyConsumptionKwhPerKg(request.getEnergyConsumptionKwhPerKg());
-        equipment.setLocation(request.getLocation());
-        equipment.setMaintenanceStatus(request.getMaintenanceStatus());
-        equipment.setLastMaintenanceDate(request.getLastMaintenanceDate());
-        return equipment;
-    }
 
     public EquipmentResponse toResponse(Equipment entity) {
         return EquipmentResponse.builder()
@@ -316,7 +390,7 @@ public class DtoMapper {
     public Operator toEntity(OperatorCreateRequest request) {
         Operator operator = new Operator();
         operator.setOperatorId(request.getOperatorId());
-        operator.setOperatorName(request.getOperatorName());
+        operator.setPersonId(request.getPersonId());
         operator.setRole(request.getRole());
         operator.setCertifications(request.getCertifications());
         operator.setActiveStatus(request.getActiveStatus());
@@ -328,12 +402,13 @@ public class DtoMapper {
         return OperatorResponse.builder()
                 .operatorId(entity.getOperatorId())
                 .operatorName(entity.getOperatorName())
+                .personId(entity.getPersonId())
                 .role(entity.getRole())
                 .certifications(entity.getCertifications())
                 .activeStatus(entity.getActiveStatus())
                 .hireDate(entity.getHireDate())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -343,39 +418,47 @@ public class DtoMapper {
         HarvestEvent event = new HarvestEvent();
         event.setHarvestId(request.getHarvestId());
         event.setBatchId(request.getBatchId());
-        event.setHarvestDate(request.getHarvestDate());
+        // Date, variety, block and quantity are copied from the plants harvest by the service.
+        event.setPlantsHarvestId(request.getPlantsHarvestId());
         event.setHarvestTime(request.getHarvestTime());
-        event.setMangoVariety(request.getMangoVariety());
-        event.setFarmId(request.getFarmId());
-        event.setBlockId(request.getBlockId());
-        event.setHarvestQuantityKg(request.getHarvestQuantityKg());
         event.setQualityGrade(request.getQualityGrade());
         event.setQualityGradeDescription(request.getQualityGradeDescription());
         event.setHarvestTeamId(request.getHarvestTeamId());
-        event.setHarvestSupervisor(request.getHarvestSupervisor());
+        event.setHarvestSupervisorId(personId(request.getHarvestSupervisorPersonId()));
         event.setWeatherConditions(request.getWeatherConditions());
         event.setStorageLocation(request.getStorageLocation());
         return event;
     }
 
     public HarvestEventResponse toResponse(HarvestEvent entity) {
+        return toResponse(entity, blocks.label(entity.getFarmBlockId()));
+    }
+
+    /** The responses of several harvest events, with one lookup of their blocks. */
+    public List<HarvestEventResponse> toHarvestEventResponses(List<HarvestEvent> entities) {
+        Map<Long, Label> labels = blocks.labelsOf(entities, HarvestEvent::getFarmBlockId);
+        return entities.stream().map(entity -> toResponse(entity, labelOf(labels, entity.getFarmBlockId()))).toList();
+    }
+
+    private HarvestEventResponse toResponse(HarvestEvent entity, Label block) {
         return HarvestEventResponse.builder()
                 .harvestId(entity.getHarvestId())
                 .batchId(entity.getBatchId())
                 .harvestDate(entity.getHarvestDate())
                 .harvestTime(entity.getHarvestTime())
-                .mangoVariety(entity.getMangoVariety())
-                .farmId(entity.getFarmId())
-                .blockId(entity.getBlockId())
+                .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
+                .farmId(block.farm())
+                .blockId(block.block())
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
                 .qualityGrade(entity.getQualityGrade())
                 .qualityGradeDescription(entity.getQualityGradeDescription())
                 .harvestTeamId(entity.getHarvestTeamId())
-                .harvestSupervisor(entity.getHarvestSupervisor())
+                .harvestSupervisor(personDirectory.nameOf(entity.getHarvestSupervisorId()))
+                .harvestSupervisorPersonId(entity.getHarvestSupervisorId())
                 .weatherConditions(entity.getWeatherConditions())
                 .storageLocation(entity.getStorageLocation())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -386,7 +469,7 @@ public class DtoMapper {
         historical.setYear(request.getYear());
         historical.setMonth(request.getMonth());
         historical.setWeek(request.getWeek());
-        historical.setMangoVariety(request.getMangoVariety());
+        historical.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
         historical.setHarvestQuantityKg(request.getHarvestQuantityKg());
         historical.setQualityGradeAPct(request.getQualityGradeAPct());
         historical.setQualityGradeBPct(request.getQualityGradeBPct());
@@ -402,7 +485,7 @@ public class DtoMapper {
                 .year(entity.getYear())
                 .month(entity.getMonth())
                 .week(entity.getWeek())
-                .mangoVariety(entity.getMangoVariety())
+                .mangoVariety(MangoVarietyCodes.toApi(entity.getVarietyKey()))
                 .harvestQuantityKg(entity.getHarvestQuantityKg())
                 .qualityGradeAPct(entity.getQualityGradeAPct())
                 .qualityGradeBPct(entity.getQualityGradeBPct())
@@ -410,8 +493,8 @@ public class DtoMapper {
                 .weatherCondition(entity.getWeatherCondition())
                 .rainfallMm(entity.getRainfallMm())
                 .temperatureAvgC(entity.getTemperatureAvgC())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(timestamp(entity.getCreatedAt()))
+                .updatedAt(timestamp(entity.getUpdatedAt()))
                 .build();
     }
 }

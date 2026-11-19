@@ -2,20 +2,19 @@ package com.infineonbit.sustainablefarm.modules.watersupply.repository;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import java.util.List;
 
 /** Optional multi-criteria filters go through {@link ConsumptionCriteria} (JpaSpecificationExecutor). */
-public interface WaterConsumptionRepository extends JpaRepository<WaterConsumption, UUID>,
+public interface WaterConsumptionRepository extends JpaRepository<WaterConsumption, Long>,
         JpaSpecificationExecutor<WaterConsumption> {
-    Page<WaterConsumption> findByFarmId(UUID farmId, Pageable pageable);
+    Page<WaterConsumption> findByFarmId(Long farmId, Pageable pageable);
 
-    Page<WaterConsumption> findBySourceId(UUID sourceId, Pageable pageable);
+    Page<WaterConsumption> findBySourceId(Long sourceId, Pageable pageable);
 
     List<WaterConsumption> findByLotIdOrderByConsumptionDateAsc(String lotId);
 
@@ -33,7 +32,7 @@ public interface WaterConsumptionRepository extends JpaRepository<WaterConsumpti
      */
     @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w "
             + "where w.consumptionDate >= :start and w.consumptionDate < :end and w.farmId = :farmId")
-    double sumConsumptionByFarmIdBetween(Instant start, Instant end, UUID farmId);
+    double sumConsumptionByFarmIdBetween(Instant start, Instant end, Long farmId);
 
     /**
      * Volume measured on a zone over a semi-open interval [start, end[: this is the
@@ -42,6 +41,6 @@ public interface WaterConsumptionRepository extends JpaRepository<WaterConsumpti
      */
     @Query("select coalesce(sum(w.consumptionLiters), 0) from WaterConsumption w "
             + "where w.zoneId = :zoneId and w.consumptionDate >= :start and w.consumptionDate < :end")
-    double sumConsumptionByZoneIdBetween(Instant start, Instant end, UUID zoneId);
+    double sumConsumptionByZoneIdBetween(Instant start, Instant end, Long zoneId);
 
 }

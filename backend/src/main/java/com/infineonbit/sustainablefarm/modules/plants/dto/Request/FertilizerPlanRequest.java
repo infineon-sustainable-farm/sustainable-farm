@@ -21,7 +21,9 @@ import java.time.LocalDate;
  * <p>Validated like {@link ApplicationRequest}: a 400 whose {@code fieldErrors}
  * lists each failing component. The block code has the same {@code @NotNull}
  * and pattern, and is normalized the same way by the service ({@code " b "}
- * becomes {@code "B"}); the note is trimmed. The quantity has two constraints
+ * becomes {@code "B"}); it must be the code of an existing block of the farm
+ * referential ({@code GET /api/farm/fields}), and the optional farm must own
+ * it, otherwise 400. The note is trimmed. The quantity has two constraints
  * that share one message. The planned date is today or later: what is already
  * done is recorded as an application.
  */
@@ -30,7 +32,7 @@ public record FertilizerPlanRequest(
         Long fertilizerId,
 
         @Min(value = 1, message = "farmId must be at least 1")
-        Integer farmId,
+        Long farmId,
 
         @NotNull(message = "blockCode is required")
         @Pattern(regexp = "^\\s*[A-Za-z0-9]{1,10}\\s*$",

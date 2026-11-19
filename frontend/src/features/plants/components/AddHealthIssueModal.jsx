@@ -1,44 +1,17 @@
 import { useState } from "react";
-import { X } from "lucide-react";
-import { formatCode } from "../utils/format";
-import PlantsModal from "./PlantsModal";
-import { FIELD_INPUT, FIELD_LABEL, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
-
-const LABEL_CLASS = FIELD_LABEL;
-const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT}`;
-// The default placeholder is the text colour at half opacity, about 3:1 on
-// white; gray-500 (#6a7282) reaches 4.84:1.
-const TEXT_INPUT_CLASS = `${INPUT_CLASS} placeholder:text-gray-500`;
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal, Select } from "../../../shared/ui";
+import { formatEnum } from "../utils/format";
+import FormAlert from "./FormAlert";
+import HealthFormActions from "./HealthFormActions";
 
 // The API codes, sent as they are; "Other" is not one of them, the API adds it on first use.
 const KINDS = ["PEST", "DISEASE"];
 
 /** Same rules as the API: a name of at most 50 characters once trimmed, an EPPO code of 1 to 10 letters or digits. */
 const NAME_MAX_LENGTH = 50;
+const TEXT_MAX_LENGTH = 255;
 const EPPO_CODE_PATTERN = /^\s*([A-Za-z0-9]{1,10})?\s*$/;
-
-function FormField({ id, label, error, note, className, children }) {
-    return (
-        <div className={className}>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
 
 /**
  * Form of a new pest or disease of the catalogue. The API derives its code
@@ -50,6 +23,7 @@ function FormField({ id, label, error, note, className, children }) {
  * is shown above the form.
  */
 export default function AddHealthIssueModal({ isSubmitting, error, onSubmit, onClose }) {
+    const { t } = useTranslation("plants");
     const [name, setName] = useState("");
     const [kind, setKind] = useState("");
     const [scientificName, setScientificName] = useState("");
@@ -62,32 +36,26 @@ export default function AddHealthIssueModal({ isSubmitting, error, onSubmit, onC
     const formError = error && !serverFieldErrors && !nameConflict ? error.message : null;
     const fieldError = (field) =>
         fieldErrors[field] ?? serverFieldErrors?.[field] ?? (field === "name" ? nameConflict : null);
-    const fieldProps = (field, id, hasNote = false) => ({
-        "aria-invalid": fieldError(field) ? true : undefined,
-        "aria-describedby":
-            [fieldError(field) ? `${id}-error` : null, hasNote ? `${id}-note` : null]
-                .filter(Boolean)
-                .join(" ") || undefined,
-    });
+    const kindOptions = KINDS.map((code) => ({ value: code, label: formatEnum("issueKind", code) }));
 
     function validate() {
         const errors = {};
         if (!name.trim()) {
-            errors.name = "Name is required.";
+            errors.name = t("health.issueForm.errors.nameRequired");
         } else if (name.trim().length > NAME_MAX_LENGTH) {
-            errors.name = `Name must be at most ${NAME_MAX_LENGTH} characters.`;
+            errors.name = t("health.issueForm.errors.nameTooLong", { max: NAME_MAX_LENGTH });
         }
         if (!kind) {
-            errors.kind = "Kind is required.";
+            errors.kind = t("health.issueForm.errors.kindRequired");
         }
-        if (scientificName.length > 255) {
-            errors.scientificName = "Scientific name must be at most 255 characters.";
+        if (scientificName.length > TEXT_MAX_LENGTH) {
+            errors.scientificName = t("health.issueForm.errors.scientificNameTooLong");
         }
         if (!EPPO_CODE_PATTERN.test(eppoCode)) {
-            errors.eppoCode = "EPPO code must be 1 to 10 letters or digits.";
+            errors.eppoCode = t("health.issueForm.errors.eppoCode");
         }
-        if (source.length > 255) {
-            errors.source = "Source must be at most 255 characters.";
+        if (source.length > TEXT_MAX_LENGTH) {
+            errors.source = t("health.issueForm.errors.sourceTooLong");
         }
         return errors;
     }
@@ -106,120 +74,77 @@ export default function AddHealthIssueModal({ isSubmitting, error, onSubmit, onC
     }
 
     return (
-        <PlantsModal labelledBy="add-health-issue-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2 id="add-health-issue-title" className="font-heading text-lg font-bold text-on-background">
-                    Add a pest or disease
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
-
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of the dialogs: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+        <Modal open onClose={onClose} size="xl" title={t("health.issueForm.title")}>
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="health-issue-name" label="Name" error={fieldError("name")}
-                        note="Its code comes from the name: “Powdery mildew” gives POWDERY_MILDEW.">
-                        <input
-                            id="health-issue-name"
-                            type="text"
-                            autoFocus
-                            value={name}
-                            onChange={(event) => setName(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("name", "health-issue-name", true)}
-                        />
-                    </FormField>
+                    <Field
+                        id="health-issue-name"
+                        label={t("health.issueForm.name")}
+                        error={fieldError("name")}
+                        hint={t("health.issueForm.nameNote")}
+                    >
+                        <Input type="text" autoFocus value={name} onChange={(event) => setName(event.target.value)} />
+                    </Field>
 
-                    <FormField id="health-issue-kind" label="Kind" error={fieldError("kind")}>
-                        <select
-                            id="health-issue-kind"
-                            value={kind}
-                            onChange={(event) => setKind(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("kind", "health-issue-kind")}
-                        >
+                    <Field id="health-issue-kind" label={t("health.issueForm.kind")} error={fieldError("kind")}>
+                        <Select value={kind} onChange={(event) => setKind(event.target.value)}>
                             {/* Empty value: sending without a choice gives "Kind is required." */}
-                            <option value="">Select a kind</option>
-                            {KINDS.map((code) => (
-                                <option key={code} value={code}>
-                                    {formatCode(code)}
+                            <option value="">{t("health.issueForm.selectKind")}</option>
+                            {kindOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </Field>
 
-                    <FormField id="health-issue-scientific-name" label="Scientific name"
-                        error={fieldError("scientificName")} note="Optional.">
-                        <input
-                            id="health-issue-scientific-name"
+                    <Field
+                        id="health-issue-scientific-name"
+                        label={t("health.issueForm.scientificName")}
+                        error={fieldError("scientificName")}
+                        hint={t("health.optional")}
+                    >
+                        <Input
                             type="text"
                             value={scientificName}
                             onChange={(event) => setScientificName(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("scientificName", "health-issue-scientific-name", true)}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="health-issue-eppo-code" label="EPPO code" error={fieldError("eppoCode")}
-                        note="Optional, 1 to 10 letters or digits.">
-                        <input
-                            id="health-issue-eppo-code"
-                            type="text"
-                            value={eppoCode}
-                            onChange={(event) => setEppoCode(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("eppoCode", "health-issue-eppo-code", true)}
-                        />
-                    </FormField>
+                    <Field
+                        id="health-issue-eppo-code"
+                        label={t("health.issueForm.eppoCode")}
+                        error={fieldError("eppoCode")}
+                        hint={t("health.issueForm.eppoCodeNote")}
+                    >
+                        <Input type="text" value={eppoCode} onChange={(event) => setEppoCode(event.target.value)} />
+                    </Field>
 
-                    <FormField id="health-issue-source" label="Source" error={fieldError("source")}
-                        note="Optional. user_entry is recorded when left empty." className="sm:col-span-2">
-                        <input
-                            id="health-issue-source"
+                    <Field
+                        id="health-issue-source"
+                        label={t("health.issueForm.source")}
+                        error={fieldError("source")}
+                        hint={t("health.issueForm.sourceNote")}
+                        className="sm:col-span-2"
+                    >
+                        <Input
                             type="text"
                             value={source}
                             onChange={(event) => setSource(event.target.value)}
-                            placeholder="user_entry"
-                            className={TEXT_INPUT_CLASS}
-                            {...fieldProps("source", "health-issue-source", true)}
+                            placeholder={t("health.issueForm.sourcePlaceholder")}
                         />
-                    </FormField>
+                    </Field>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className={SECONDARY_BUTTON}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isSubmitting ? "Adding…" : "Add to catalogue"}
-                    </button>
-                </div>
+                <HealthFormActions
+                    onCancel={onClose}
+                    isSubmitting={isSubmitting}
+                    submitLabel={t("health.issueForm.submit")}
+                    submittingLabel={t("health.issueForm.submitting")}
+                />
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

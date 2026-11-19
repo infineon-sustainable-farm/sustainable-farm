@@ -56,7 +56,7 @@ public class PlantAlertControllerTest {
 
     private static PlantAlertResponse alerts(int withinDays) {
         return new PlantAlertResponse(LocalDate.of(2027, 5, 15), withinDays,
-                List.of(new PlantAlert(PlantAlertType.NURSERY_READY, PlantAlertSeverity.WARNING, 5, "D", "Keitt",
+                List.of(new PlantAlert(PlantAlertType.NURSERY_READY, PlantAlertSeverity.WARNING, 5L, "D", "Keitt",
                         "Batch P1 (Keitt, 120 plants): ready to transplant since 20 April 2027; "
                                 + "transplant planned on 15 June 2027 to block D, in 31 days",
                         LocalDate.of(2027, 6, 15), null, 31, null, null, null, null, 21L, null)),
@@ -66,7 +66,7 @@ public class PlantAlertControllerTest {
     @Test
     void getAlerts_shouldReturnTheAlerts_withEveryKeyOfAnAlert() throws Exception {
         // Arrange
-        when(plantAlertService.getAlerts(5, "D", 45)).thenReturn(alerts(45));
+        when(plantAlertService.getAlerts(5L, "D", 45)).thenReturn(alerts(45));
         // Act
         ResultActions result = mockMvc.perform(get(URL)
                 .param("farmId", "5")

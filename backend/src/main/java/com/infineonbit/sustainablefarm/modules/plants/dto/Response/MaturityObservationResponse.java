@@ -20,7 +20,7 @@ import java.time.LocalDate;
  */
 public record MaturityObservationResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         Long varietyId,
         String varietyName,
@@ -30,6 +30,7 @@ public record MaturityObservationResponse(
         Double measuredValue,
         String measuredUnit,
         String observer,
+        Long observerPersonId,
         String source,
         Instant lastUpdated) {
 }

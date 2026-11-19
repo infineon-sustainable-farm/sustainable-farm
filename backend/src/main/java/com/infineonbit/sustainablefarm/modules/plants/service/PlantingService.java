@@ -1,19 +1,21 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantingResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -28,9 +30,10 @@ public class PlantingService {
     /** {@code datePrecision} of a date entered through the form, which is always a full date. */
     static final String DAY_KNOWN_PRECISION = "day known";
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final GrowthCalendarRepository growthCalendarRepository;
     private final PopulationEventRepository populationEventRepository;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * Block code as stored: trimmed and upper-cased, so {@code " a "} becomes
@@ -45,17 +48,16 @@ public class PlantingService {
     }
 
     /**
-     * New variety row for a (farm, block, name) triple planted for the first time.
+     * New variety row for a (block, name) pair planted for the first time.
      *
      * <p>{@code treeCount} is the number declared when the row is created, that
      * is the trees of this planting. The spacings and the vigor are those of the
      * planting, when given; density, yields and plant origin are not entered
      * with a planting: they stay NULL rather than being guessed.
      */
-    private static Variety newVariety(Integer farmId, String blockCode, String name, Integer treeCount, Instant now) {
-        Variety variety = new Variety();
-        variety.setFarmId(farmId);
-        variety.setBlockCode(blockCode);
+    private static BlockVariety newVariety(BlockDto block, String name, Integer treeCount, Instant now) {
+        BlockVariety variety = new BlockVariety();
+        variety.assignBlock(block.id(), PlantsBlocks.label(block));
         variety.setName(name);
         variety.setTreeCount(treeCount);
         variety.setSource(USER_ENTRY_SOURCE);
@@ -73,11 +75,11 @@ public class PlantingService {
      * @param request the planting, already validated: both spacings or none
      * @return {@code true} if a value was written
      */
-    private static boolean applySpacingAndVigor(Variety variety, PlantingRequest request) {
+    private static boolean applySpacingAndVigor(BlockVariety variety, PlantingRequest request) {
         boolean written = false;
         if (request.rowSpacingM() != null) {
-            variety.setRowSpacingM(request.rowSpacingM().doubleValue());
-            variety.setTreeSpacingM(request.treeSpacingM().doubleValue());
+            variety.setRowSpacingM(request.rowSpacingM().setScale(BlockVariety.SPACING_SCALE, RoundingMode.HALF_UP));
+            variety.setTreeSpacingM(request.treeSpacingM().setScale(BlockVariety.SPACING_SCALE, RoundingMode.HALF_UP));
             written = true;
         }
         if (request.vigor() != null) {
@@ -95,7 +97,7 @@ public class PlantingService {
      * @return the API representation of that planting
      */
     private static PlantingResponse toResponse(PopulationEvent planting) {
-        Variety variety = planting.getVariety();
+        BlockVariety variety = planting.getVariety();
         return new PlantingResponse(
                 planting.getId(),
                 variety.getFarmId(),
@@ -112,10 +114,10 @@ public class PlantingService {
      * Records the planting of a variety on a block, in a single transaction.
      *
      * <ol>
-     *     <li>Finds the variety row of the (farm, block, name) triple. A NULL farm
-     *         matches only the rows without a farm, and the name ignores case. An
-     *         existing row is reused and locked until the commit; a missing one
-     *         is created. The spacings and the vigor given are written on the
+     *     <li>Finds the block of the code in the farm referential, created when
+     *         no block has it ({@link PlantsBlocks#resolve}), then the variety row
+     *         of the (block, name) pair; the name ignores case. An existing row is
+     *         reused and locked until the commit; a missing one is created. The spacings and the vigor given are written on the
      *         row, and replace those of an existing row.</li>
      *     <li>Refuses a second planting of the same variety row. The lock makes a
      *         planting sent at the same time wait, then see this one.</li>
@@ -139,27 +141,26 @@ public class PlantingService {
      * so the {@code lastUpdated} values can be tested.
      */
     PlantingResponse recordPlanting(PlantingRequest request, Instant now) {
-        Integer farmId = request.farmId();
-        String blockCode = normalizeBlockCode(request.blockCode());
+        BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeBlockCode(request.blockCode()));
         String varietyName = request.varietyName().trim();
 
-        Variety variety = varietyRepository.findByFarmBlockAndNameForUpdate(farmId, blockCode, varietyName)
+        BlockVariety variety = blockVarietyRepository.findByBlockAndNameForUpdate(block.id(), varietyName)
                 .stream()
                 .findFirst()
                 .orElse(null);
         if (variety == null) {
-            Variety created = newVariety(farmId, blockCode, varietyName, request.treeCount(), now);
+            BlockVariety created = newVariety(block, varietyName, request.treeCount(), now);
             applySpacingAndVigor(created, request);
-            variety = varietyRepository.save(created);
+            variety = blockVarietyRepository.save(created);
         } else if (populationEventRepository.existsByVarietyIdAndEventType(variety.getId(), PopulationEventType.PLANTING)) {
             throw new ConflictException("A planting of " + variety.getName()
                     + " is already recorded on block " + variety.getBlockCode());
         } else if (applySpacingAndVigor(variety, request)) {
             variety.setLastUpdated(now);
-            variety = varietyRepository.save(variety);
+            variety = blockVarietyRepository.save(variety);
         }
 
-        recordPlantingDate(farmId, blockCode, request.plantingDate(), now);
+        recordPlantingDate(block, request.plantingDate(), now);
 
         PopulationEvent planting = new PopulationEvent();
         planting.setVariety(variety);
@@ -179,20 +180,18 @@ public class PlantingService {
      * when its own date is NULL or later; its precision and source then follow
      * the new date. When its date is the same or older, the row is left untouched.
      *
-     * @param farmId       farm identifier, or {@code null} for no farm
-     * @param blockCode    normalized block code
+     * @param block        block of the planting
      * @param plantingDate date of the planting being recorded
      * @param now          write time
      */
-    private void recordPlantingDate(Integer farmId, String blockCode, LocalDate plantingDate, Instant now) {
-        GrowthCalendar entry = growthCalendarRepository.findByFarmAndBlockForUpdate(farmId, blockCode)
+    private void recordPlantingDate(BlockDto block, LocalDate plantingDate, Instant now) {
+        GrowthCalendar entry = growthCalendarRepository.findByBlockForUpdate(block.id())
                 .stream()
                 .findFirst()
                 .orElse(null);
         if (entry == null) {
             entry = new GrowthCalendar();
-            entry.setFarmId(farmId);
-            entry.setBlockCode(blockCode);
+            entry.assignBlock(block.id(), PlantsBlocks.label(block));
         } else if (entry.getPlantingDate() != null && !entry.getPlantingDate().isAfter(plantingDate)) {
             // The calendar date is that of the oldest planting of the block:
             // the recorded date is the same or older, so the row stays as it is.

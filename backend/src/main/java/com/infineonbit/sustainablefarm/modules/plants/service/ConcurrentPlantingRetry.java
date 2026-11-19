@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
@@ -17,8 +17,8 @@ import java.util.function.Supplier;
  * natural key of a variety row or of a calendar row, or on the lot number of a
  * harvest.
  *
- * <p>Two plantings of a new triple, or of a new block, sent at the same time
- * both find no row and both insert one. Likewise, two harvests of a block sent
+ * <p>Two plantings of a new (block, name) pair, or of a new block, sent at the
+ * same time both find no row and both insert one. Likewise, two harvests of a block sent
  * at the same time both read the same highest lot number and both take the
  * next one. The unique constraint makes the second insert wait for the first
  * transaction, then refuses it once the first one has committed. The losing
@@ -39,15 +39,15 @@ import java.util.function.Supplier;
 public class ConcurrentPlantingRetry {
 
     /** The unique constraints on the natural keys; a violation of any other one is not a lost race. */
-    private static final List<String> KEY_CONSTRAINTS = List.of(Variety.KEY_CONSTRAINT, GrowthCalendar.KEY_CONSTRAINT,
+    private static final List<String> KEY_CONSTRAINTS = List.of(BlockVariety.KEY_CONSTRAINT, GrowthCalendar.KEY_CONSTRAINT,
             HarvestRecord.LOT_NUMBER_CONSTRAINT);
 
     /**
      * The key constraint the violation comes from, if it is one of the three.
      *
      * <p>The constraint name is read as each database reports it:
-     * {@code uk_varietes_variety_key} on PostgreSQL,
-     * {@code PUBLIC.UK_VARIETES_VARIETY_KEY INDEX ...} on H2. Only its first
+     * {@code uk_block_variety_variety_key} on PostgreSQL,
+     * {@code PUBLIC.UK_BLOCK_VARIETY_VARIETY_KEY INDEX ...} on H2. Only its first
      * word is compared, without the schema and ignoring case, so the rest of
      * the message, which can quote the name of a variety, is never read.
      *

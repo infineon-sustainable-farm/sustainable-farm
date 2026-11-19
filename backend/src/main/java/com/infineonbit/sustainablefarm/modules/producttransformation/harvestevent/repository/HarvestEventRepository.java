@@ -1,8 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +20,17 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Repository
-public interface HarvestEventRepository extends JpaRepository<HarvestEvent, String> {
+public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Long> {
+
+    /** The harvest event of a business code, shown as {@code harvestId}. */
+    Optional<HarvestEvent> findByHarvestId(String harvestId);
+
+    /** Whether a harvest event has this business code. */
+    boolean existsByHarvestId(String harvestId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByHarvestId(String harvestId);
+
 
     /**
      * Find harvest event by batch ID
@@ -37,7 +46,7 @@ public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Stri
     /**
      * Find harvest events by mango variety
      */
-    List<HarvestEvent> findByMangoVariety(MangoVariety mangoVariety);
+    List<HarvestEvent> findByVarietyKey(String varietyKey);
 
     /**
      * Find harvest events by quality grade
@@ -45,23 +54,21 @@ public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Stri
     List<HarvestEvent> findByQualityGrade(QualityGrade qualityGrade);
 
     /**
-     * Find harvest events by farm
+     * Find harvest events of several blocks (the blocks of a farm)
      */
-    List<HarvestEvent> findByFarmId(String farmId);
+    List<HarvestEvent> findByFarmBlockIdIn(java.util.Collection<Long> farmBlockIds);
 
     /**
-     * Find harvest events by farm and date range
+     * Find harvest events of several blocks (the blocks of a farm) and a date range
      */
-    @Query("SELECT h FROM HarvestEvent h WHERE h.farmId = :farmId AND h.harvestDate BETWEEN :startDate AND :endDate")
-    List<HarvestEvent> findByFarmAndDateRange(@Param("farmId") String farmId, 
-                                            @Param("startDate") LocalDate startDate, 
-                                            @Param("endDate") LocalDate endDate);
+    List<HarvestEvent> findByFarmBlockIdInAndHarvestDateBetween(java.util.Collection<Long> farmBlockIds,
+                                                                LocalDate startDate, LocalDate endDate);
 
     /**
      * Find harvest events by variety and quality grade
      */
-    @Query("SELECT h FROM HarvestEvent h WHERE h.mangoVariety = :variety AND h.qualityGrade = :grade")
-    List<HarvestEvent> findByVarietyAndGrade(@Param("variety") MangoVariety variety, 
+    @Query("SELECT h FROM HarvestEvent h WHERE h.varietyKey = :variety AND h.qualityGrade = :grade")
+    List<HarvestEvent> findByVarietyAndGrade(@Param("variety") String variety, 
                                        @Param("grade") QualityGrade grade);
 
     /**
@@ -73,8 +80,8 @@ public interface HarvestEventRepository extends JpaRepository<HarvestEvent, Stri
     /**
      * Get total harvest quantity by variety
      */
-    @Query("SELECT SUM(h.harvestQuantityKg) FROM HarvestEvent h WHERE h.mangoVariety = :variety")
-    Double getTotalHarvestQuantityByVariety(@Param("variety") MangoVariety variety);
+    @Query("SELECT SUM(h.harvestQuantityKg) FROM HarvestEvent h WHERE h.varietyKey = :variety")
+    Double getTotalHarvestQuantityByVariety(@Param("variety") String variety);
 
     /**
      * Aggregate harvest totals for date range filtering (SQL-side aggregation).

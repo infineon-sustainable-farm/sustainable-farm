@@ -1,9 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvest;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
-import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvestId;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.repository.HistoricalHarvestRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.service.HistoricalHarvestService;
@@ -21,7 +20,7 @@ import java.util.List;
  * Business Rules:
  * - Minimum 7 years required for forecasting
  * - Historical data aggregated from harvest events for forecasting
- * - Composite key: (year, month, week, mango_variety)
+ * - Composite key: (year, month, week, variety_key)
  * 
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
@@ -56,8 +55,7 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
     }
 
     @Override
-    public HistoricalHarvest updateHistoricalHarvest(Integer year, Integer month, Integer week, MangoVariety variety, HistoricalHarvest historicalHarvest) {
-        HistoricalHarvestId id = new HistoricalHarvestId(year, month, week, variety);
+    public HistoricalHarvest updateHistoricalHarvest(Integer year, Integer month, Integer week, String variety, HistoricalHarvest historicalHarvest) {
         HistoricalHarvest existingRecord = getHistoricalHarvestById(year, month, week, variety);
         
         // Update fields
@@ -73,20 +71,16 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
     }
 
     @Override
-    public void deleteHistoricalHarvest(Integer year, Integer month, Integer week, MangoVariety variety) {
-        HistoricalHarvestId id = new HistoricalHarvestId(year, month, week, variety);
-        if (!historicalHarvestRepository.existsById(id)) {
-            throw new IllegalArgumentException("Historical harvest not found with composite key: " + id);
-        }
-        historicalHarvestRepository.deleteById(id);
+    public void deleteHistoricalHarvest(Integer year, Integer month, Integer week, String variety) {
+        historicalHarvestRepository.delete(getHistoricalHarvestById(year, month, week, variety));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public HistoricalHarvest getHistoricalHarvestById(Integer year, Integer month, Integer week, MangoVariety variety) {
-        HistoricalHarvestId id = new HistoricalHarvestId(year, month, week, variety);
-        return historicalHarvestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Historical harvest not found with composite key: " + id));
+    public HistoricalHarvest getHistoricalHarvestById(Integer year, Integer month, Integer week, String variety) {
+        return historicalHarvestRepository.findByYearAndMonthAndWeekAndVarietyKey(year, month, week, variety)
+                .orElseThrow(() -> new IllegalArgumentException("Historical harvest not found with composite key: "
+                        + periodAndVariety(year, month, week, variety)));
     }
 
     @Override
@@ -115,13 +109,13 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<HistoricalHarvest> getHistoricalHarvestByVariety(MangoVariety variety) {
-        return historicalHarvestRepository.findByMangoVariety(variety);
+    public List<HistoricalHarvest> getHistoricalHarvestByVariety(String variety) {
+        return historicalHarvestRepository.findByVarietyKey(variety);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<HistoricalHarvest> getHistoricalHarvestByYearAndVariety(Integer year, MangoVariety variety) {
+    public List<HistoricalHarvest> getHistoricalHarvestByYearAndVariety(Integer year, String variety) {
         return historicalHarvestRepository.findByYearAndVariety(year, variety);
     }
 
@@ -152,7 +146,7 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
     }
 
     @Override
-    public HistoricalHarvest aggregateFromHarvestEvents(Integer year, Integer month, Integer week, MangoVariety variety) {
+    public HistoricalHarvest aggregateFromHarvestEvents(Integer year, Integer month, Integer week, String variety) {
         // Business Rule: Historical data aggregated from harvest events for forecasting
         // This would aggregate harvest events from the specified period
         // For now, this is a placeholder for the actual aggregation logic
@@ -164,21 +158,21 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
         
         // Filter by variety and week (simplified logic)
         BigDecimal totalQuantity = harvestEvents.stream()
-            .filter(he -> he.getMangoVariety() == variety)
+            .filter(he -> variety.equals(he.getVarietyKey()))
             .map(HarvestEvent::getHarvestQuantityKg)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         // Calculate quality grade distribution
         long gradeACount = harvestEvents.stream()
-            .filter(he -> he.getMangoVariety() == variety && he.getQualityGrade() == HarvestEvent.QualityGrade.A)
+            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == QualityGrade.A)
             .count();
         
         long gradeBCount = harvestEvents.stream()
-            .filter(he -> he.getMangoVariety() == variety && he.getQualityGrade() == HarvestEvent.QualityGrade.B)
+            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == QualityGrade.B)
             .count();
         
         long gradeCCount = harvestEvents.stream()
-            .filter(he -> he.getMangoVariety() == variety && he.getQualityGrade() == HarvestEvent.QualityGrade.C)
+            .filter(he -> variety.equals(he.getVarietyKey()) && he.getQualityGrade() == QualityGrade.C)
             .count();
         
         long totalGraded = gradeACount + gradeBCount + gradeCCount;
@@ -187,7 +181,7 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
         historicalHarvest.setYear(year);
         historicalHarvest.setMonth(month);
         historicalHarvest.setWeek(week);
-        historicalHarvest.setMangoVariety(variety);
+        historicalHarvest.setVarietyKey(variety);
         historicalHarvest.setHarvestQuantityKg(totalQuantity);
         
         if (totalGraded > 0) {
@@ -197,5 +191,10 @@ public class HistoricalHarvestServiceImpl implements HistoricalHarvestService {
         }
         
         return historicalHarvestRepository.save(historicalHarvest);
+    }
+
+    /** The period and variety of a row, as the error messages show them. */
+    private static String periodAndVariety(Integer year, Integer month, Integer week, String variety) {
+        return "HistoricalHarvestId{year=" + year + ", month=" + month + ", week=" + week + ", varietyKey=" + variety + "}";
     }
 }

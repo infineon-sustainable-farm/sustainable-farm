@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.OperatorAssignmentCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.OperatorAssignmentUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.OperatorAssignmentObtainingResponse;
@@ -10,6 +11,7 @@ import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotF
 import com.infineonbit.sustainablefarm.modules.machinery.exception.OperatorAssignmentNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.OperatorAssignmentRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,22 +19,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
 public class OperatorAssignmentService {
     private final OperatorAssignmentRepository operatorAssignmentRepository;
     private final EquipmentRepository equipmentRepository;
+    private final PersonDirectory personDirectory;
 
     /**
      * Creates a new operator assignment after checking the equipment exists
      * and is not already assigned.
      *
-     * @param request the creation data (fullName, equipmentId, jobTitle, startDate, endDate)
+     * @param request the creation data (personId, equipmentId, jobTitle, startDate, endDate)
      * @return the representation of the created assignment, including its generated ID
      * @throws EquipmentNotFoundException      if no equipment exists with the given ID
+     * @throws com.infineonbit.sustainablefarm.core.exception.BadRequestException if the person is not in the people directory
      * @throws EquipmentAlreadyAssignedException if the equipment is already linked to an assignment
-     * @throws IllegalArgumentException        if the end date is before the start date
+     * @throws ConflictException        if the end date is before the start date
      */
     public OperatorAssignmentObtainingResponse addOperatorAssignment(OperatorAssignmentCreationRequest operatorAssignmentCreationRequest) {
         Equipment equipment = equipmentRepository.findById(operatorAssignmentCreationRequest.equipmentId())
@@ -46,7 +51,7 @@ public class OperatorAssignmentService {
         }
 
         OperatorAssignment operatorAssignment = new OperatorAssignment();
-        operatorAssignment.setFullName(operatorAssignmentCreationRequest.fullName().trim());
+        operatorAssignment.setPersonId(personDirectory.requireExisting(operatorAssignmentCreationRequest.personId()));
         operatorAssignment.setEquipment(equipment);
         operatorAssignment.setJobTitle(operatorAssignmentCreationRequest.jobTitle().trim());
         operatorAssignment.setStartDate(operatorAssignmentCreationRequest.startDate());
@@ -60,13 +65,7 @@ public class OperatorAssignmentService {
             throw e;
         }
 
-        return new OperatorAssignmentObtainingResponse(
-                operatorAssignment.getId(),
-                operatorAssignment.getFullName(),
-                operatorAssignment.getEquipment().getId(),
-                operatorAssignment.getJobTitle(),
-                operatorAssignment.getStartDate(),
-                operatorAssignment.getEndDate());
+        return toResponse(operatorAssignment, personDirectory.nameOf(operatorAssignment.getPersonId()));
     }
 
     /**
@@ -77,11 +76,11 @@ public class OperatorAssignmentService {
      *
      * @param startDate the start date sent by the client (never null in the POST flow)
      * @param endDate   the end date sent by the client (may be null)
-     * @throws IllegalArgumentException if the end date is before the start date
+     * @throws ConflictException if the end date is before the start date
      */
     private void validateAssignmentDates(LocalDate startDate, LocalDate endDate) {
         if (endDate != null && endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date cannot be before start date.");
+            throw new ConflictException("End date cannot be before start date.");
         }
     }
 
@@ -94,11 +93,11 @@ public class OperatorAssignmentService {
      *
      * @param endDate       the end date sent by the client (may be null)
      * @param storedStartDate the start date already registered in the database
-     * @throws IllegalArgumentException if the end date is before the stored start date
+     * @throws ConflictException if the end date is before the stored start date
      */
     private void validateEndDateAgainstStoredStartDate(LocalDate endDate, LocalDate storedStartDate) {
         if (endDate != null && endDate.isBefore(storedStartDate)) {
-            throw new IllegalArgumentException("End date cannot be before the stored start date.");
+            throw new ConflictException("End date cannot be before the stored start date.");
         }
     }
 
@@ -111,11 +110,11 @@ public class OperatorAssignmentService {
      *
      * @param startDate     the start date sent by the client (may be null)
      * @param storedEndDate the end date already registered in the database (may be null)
-     * @throws IllegalArgumentException if the start date is after the stored end date
+     * @throws ConflictException if the start date is after the stored end date
      */
     private void validateStartDateAgainstStoredEndDate(LocalDate startDate, LocalDate storedEndDate) {
         if (storedEndDate != null && startDate != null && startDate.isAfter(storedEndDate)) {
-            throw new IllegalArgumentException("Start date cannot be after the stored end date.");
+            throw new ConflictException("Start date cannot be after the stored end date.");
         }
     }
 
@@ -129,7 +128,7 @@ public class OperatorAssignmentService {
      * @throws OperatorAssignmentNotFoundException if no assignment exists with this ID
      * @throws EquipmentNotFoundException          if the new equipment does not exist
      * @throws EquipmentAlreadyAssignedException   if the new equipment is linked to another assignment
-     * @throws IllegalArgumentException            if a provided date is incoherent or a provided text is blank
+     * @throws ConflictException            if a provided date is incoherent or a provided text is blank
      */
     public OperatorAssignmentObtainingResponse updateOperatorAssignment(Long id,
             OperatorAssignmentUpdateRequest operatorAssignmentUpdateRequest) {
@@ -147,18 +146,14 @@ public class OperatorAssignmentService {
             assignment.setEquipment(equipment);
         }
 
-        if (operatorAssignmentUpdateRequest.fullName() != null) {
-            String fullName = operatorAssignmentUpdateRequest.fullName().trim();
-            if (fullName.isEmpty()) {
-                throw new IllegalArgumentException("Full name cannot be blank.");
-            }
-            assignment.setFullName(fullName);
+        if (operatorAssignmentUpdateRequest.personId() != null) {
+            assignment.setPersonId(personDirectory.requireExisting(operatorAssignmentUpdateRequest.personId()));
         }
 
         if (operatorAssignmentUpdateRequest.jobTitle() != null) {
             String jobTitle = operatorAssignmentUpdateRequest.jobTitle().trim();
             if (jobTitle.isEmpty()) {
-                throw new IllegalArgumentException("Job title cannot be blank.");
+                throw new ConflictException("Job title cannot be blank.");
             }
             assignment.setJobTitle(jobTitle);
         }
@@ -189,13 +184,7 @@ public class OperatorAssignmentService {
             throw e;
         }
 
-        return new OperatorAssignmentObtainingResponse(
-                assignment.getId(),
-                assignment.getFullName(),
-                assignment.getEquipment().getId(),
-                assignment.getJobTitle(),
-                assignment.getStartDate(),
-                assignment.getEndDate());
+        return toResponse(assignment, personDirectory.nameOf(assignment.getPersonId()));
     }
 
     /**
@@ -208,13 +197,21 @@ public class OperatorAssignmentService {
      */
     public Page<OperatorAssignmentObtainingResponse> obtainAllOperatorAssignments(Pageable pageable) {
         Page<OperatorAssignment> pageOfOperatorAssignments = operatorAssignmentRepository.findAll(pageable);
-        return pageOfOperatorAssignments.map(operatorAssignment -> new OperatorAssignmentObtainingResponse(
-                operatorAssignment.getId(),
-                operatorAssignment.getFullName(),
-                operatorAssignment.getEquipment().getId(),
-                operatorAssignment.getJobTitle(),
-                operatorAssignment.getStartDate(),
-                operatorAssignment.getEndDate()));
+        Map<Long, String> names = personDirectory.namesOf(
+                pageOfOperatorAssignments.map(OperatorAssignment::getPersonId).getContent());
+        return pageOfOperatorAssignments.map(operatorAssignment ->
+                toResponse(operatorAssignment, names.get(operatorAssignment.getPersonId())));
+    }
+
+    private static OperatorAssignmentObtainingResponse toResponse(OperatorAssignment assignment, String fullName) {
+        return new OperatorAssignmentObtainingResponse(
+                assignment.getId(),
+                fullName,
+                assignment.getPersonId(),
+                assignment.getEquipment().getId(),
+                assignment.getJobTitle(),
+                assignment.getStartDate(),
+                assignment.getEndDate());
     }
 
     /**

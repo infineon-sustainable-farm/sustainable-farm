@@ -1,27 +1,29 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.BlockComparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.Comparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.NotCompared;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.PhaseShare;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.VarietyComparison;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -43,7 +45,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class YieldComparisonServiceTest {
 
-    private static final int FARM = 7;
+    private static final Long FARM = 7L;
+    /** Blocks A to E of farm 7 in the farm referential. */
+    private static final PlantsBlocks PLANTS_BLOCKS = TestBlocks.onFarm(FARM, "A", "B", "C", "D", "E").asPlantsBlocks();
+    private static final List<Long> FARM_BLOCKS = TestBlocks.idsOf("A", "B", "C", "D", "E");
     private static final LocalDate JUNE_15_2027 = LocalDate.of(2027, 6, 15);
     private static final String KEITT_SEASON_SOURCE = "varietal_guide_west_africa";
     private static final PhaseShare GRADUAL = new PhaseShare("gradual production", 0.25, "Bally_2002");
@@ -67,7 +72,7 @@ public class YieldComparisonServiceTest {
     /** The real forecast and shares on the mocked repositories: the comparison follows their rules. */
     private YieldForecastService yieldForecastService() {
         return new YieldForecastService(populationEventRepository, varietyReferenceRepository,
-                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository), PLANTS_BLOCKS);
     }
 
     /** The service on a clock fixed at noon UTC of 15 June 2027. */
@@ -91,8 +96,8 @@ public class YieldComparisonServiceTest {
     }
 
     /** A variety row of farm 7 planted on a day, with trees left; the plantings are stubbed by {@link #stubPlantings}. */
-    private Variety planted(long id, String blockCode, String name, LocalDate plantedOn, long treesLeft) {
-        Variety variety = new Variety();
+    private BlockVariety planted(long id, String blockCode, String name, LocalDate plantedOn, long treesLeft) {
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.setFarmId(FARM);
         variety.setBlockCode(blockCode);
@@ -105,14 +110,14 @@ public class YieldComparisonServiceTest {
 
     /** Stubs the plantings of farm 7 and the Keitt and Kent references of the dev loader. */
     private void stubPlantings() {
-        when(populationEventRepository.findPlantingsByOptionalFilters(FARM, null)).thenReturn(plantings);
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, FARM_BLOCKS)).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
-                new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, null),
-                new VarietyReference(2L, "Kent", 200.0, "Zalka_2025", 4, 5, "FAO_mango_burkina", null)));
+                new VarietyReference(1L, "Keitt", BigDecimal.valueOf(220.0), "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, null),
+                new VarietyReference(2L, "Kent", BigDecimal.valueOf(200.0), "Zalka_2025", 4, 5, "FAO_mango_burkina", null)));
     }
 
-    private static HarvestResponse harvest(long id, Variety variety, LocalDate harvestDate, double quantityKg) {
+    private static HarvestResponse harvest(long id, BlockVariety variety, LocalDate harvestDate, double quantityKg) {
         return new HarvestResponse(id, null, variety.getFarmId(), variety.getBlockCode(), variety.getId(),
                 variety.getName(), harvestDate, quantityKg, "user_entry", null);
     }
@@ -123,7 +128,7 @@ public class YieldComparisonServiceTest {
                 .thenReturn(List.of(harvests));
     }
 
-    private static VarietyComparison keitt(Variety variety, int trees, Double expectedKg, Double actualKg,
+    private static VarietyComparison keitt(BlockVariety variety, int trees, Double expectedKg, Double actualKg,
                                            int harvestCount, Double achievedPct, List<PhaseShare> phases) {
         return new VarietyComparison(FARM, variety.getBlockCode(), variety.getId(), variety.getName(), trees,
                 expectedKg, actualKg, harvestCount, achievedPct, 220.0, "Zalka_2025", KEITT_SEASON_SOURCE, phases);
@@ -132,8 +137,8 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldCompareTheHarvestsWithTheForecastOfTheCalendarYear_byDefault() {
         // Arrange: Keitt on A in gradual production in May-July 2027, Keitt on B still in establishment
-        Variety keittA = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
-        Variety keittB = planted(2L, "B", "Keitt", LocalDate.of(2026, 3, 1), 100);
+        BlockVariety keittA = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
+        BlockVariety keittB = planted(2L, "B", "Keitt", LocalDate.of(2026, 3, 1), 100);
         stubPlantings();
         harvestsOf2027(harvest(11L, keittA, LocalDate.of(2027, 5, 20), 300.0),
                 harvest(12L, keittA, LocalDate.of(2027, 6, 10), 250.5));
@@ -156,7 +161,7 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldExpectWhatTheForecastExpects_overTheSameMonths() {
         // Arrange: a phase change inside the season, Keitt 3 years old on 1 July 2027 only
-        Variety keitt = planted(1L, "A", "Keitt", LocalDate.of(2024, 6, 20), 40);
+        BlockVariety keitt = planted(1L, "A", "Keitt", LocalDate.of(2024, 6, 20), 40);
         stubPlantings();
         when(harvestService.getAllHarvests(FARM, null, LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31)))
                 .thenReturn(List.of());
@@ -175,8 +180,8 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldAddTheHarvestsExactly_thenRoundToATenth() {
         // Arrange: 0.1 + 0.2 as doubles is 0.30000000000000004; 12.25 + 3.333 is 15.583
-        Variety keittA = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
-        Variety keittC = planted(3L, "C", "Keitt", LocalDate.of(2023, 9, 15), 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
+        BlockVariety keittC = planted(3L, "C", "Keitt", LocalDate.of(2023, 9, 15), 40);
         stubPlantings();
         harvestsOf2027(harvest(11L, keittA, LocalDate.of(2027, 5, 20), 0.1),
                 harvest(12L, keittA, LocalDate.of(2027, 5, 21), 0.2),
@@ -194,7 +199,7 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldGiveNoPercentage_whenNothingIsExpected() {
         // Arrange: a few fruits picked on trees in establishment
-        Variety keittB = planted(2L, "B", "Keitt", LocalDate.of(2026, 3, 1), 100);
+        BlockVariety keittB = planted(2L, "B", "Keitt", LocalDate.of(2026, 3, 1), 100);
         stubPlantings();
         harvestsOf2027(harvest(11L, keittB, LocalDate.of(2027, 6, 1), 12.0));
         // Act
@@ -208,7 +213,7 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldExpectTheExactSeason_inFullProduction() {
         // Arrange: 40 Keitt in full production, 7,500 kg harvested
-        Variety keittA = planted(1L, "A", "Keitt", LocalDate.of(2019, 9, 15), 40);
+        BlockVariety keittA = planted(1L, "A", "Keitt", LocalDate.of(2019, 9, 15), 40);
         stubPlantings();
         harvestsOf2027(harvest(11L, keittA, LocalDate.of(2027, 6, 10), 7500.0));
         // Act
@@ -223,8 +228,8 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldAddUpTheVarietiesOfABlock() {
         // Arrange: Keitt and Kent on block A, both in gradual production
-        Variety keitt = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
-        Variety kent = planted(4L, "A", "Kent", LocalDate.of(2023, 9, 15), 30);
+        BlockVariety keitt = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
+        BlockVariety kent = planted(4L, "A", "Kent", LocalDate.of(2023, 9, 15), 30);
         stubPlantings();
         harvestsOf2027(harvest(11L, kent, LocalDate.of(2027, 4, 20), 1000.0));
         // Act
@@ -241,8 +246,8 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldListTheVarietiesWithoutReferenceApart_withTheirHarvests() {
         // Arrange: Brooks and Palmer are not in the reference
-        Variety keitt = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
-        Variety brooks = planted(3L, "C", "Brooks", LocalDate.of(2020, 1, 10), 30);
+        BlockVariety keitt = planted(1L, "A", "Keitt", LocalDate.of(2023, 9, 15), 40);
+        BlockVariety brooks = planted(3L, "C", "Brooks", LocalDate.of(2020, 1, 10), 30);
         planted(5L, "D", "Palmer", LocalDate.of(2021, 2, 1), 10);
         stubPlantings();
         harvestsOf2027(harvest(11L, brooks, LocalDate.of(2027, 6, 5), 120.0));
@@ -260,7 +265,7 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldListTheHarvestsOfARowWithNoTreeLeft() {
         // Arrange: Keitt on E lost all its trees after a harvest of 2027
-        Variety keittE = planted(6L, "E", "Keitt", LocalDate.of(2023, 9, 15), 0);
+        BlockVariety keittE = planted(6L, "E", "Keitt", LocalDate.of(2023, 9, 15), 0);
         stubPlantings();
         harvestsOf2027(harvest(11L, keittE, LocalDate.of(2027, 5, 20), 80.0),
                 harvest(12L, keittE, LocalDate.of(2027, 5, 27), 40.0));
@@ -291,7 +296,7 @@ public class YieldComparisonServiceTest {
     @Test
     void getYieldComparison_shouldPassTheFiltersAndTheMonthsToTheHarvests() {
         // Arrange
-        when(populationEventRepository.findPlantingsByOptionalFilters(null, "B")).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, TestBlocks.idsOf("B"))).thenReturn(List.of());
         when(varietyReferenceRepository.findAll()).thenReturn(List.of());
         when(harvestService.getAllHarvests(null, "B", LocalDate.of(2026, 11, 1), LocalDate.of(2027, 2, 28)))
                 .thenReturn(List.of());

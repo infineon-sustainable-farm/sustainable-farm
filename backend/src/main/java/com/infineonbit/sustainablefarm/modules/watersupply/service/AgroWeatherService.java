@@ -54,8 +54,8 @@ public class AgroWeatherService {
 
     public AgroWeatherService(
             RestClient restClient,
-            @Value("${app.weather.latitude:10.5}") double latitude,
-            @Value("${app.weather.longitude:-61.2}") double longitude) {
+            @Value("${app.weather.latitude:10.63}") double latitude,
+            @Value("${app.weather.longitude:-4.77}") double longitude) {
         this.restClient = restClient;
         this.latitude = latitude;
         this.longitude = longitude;

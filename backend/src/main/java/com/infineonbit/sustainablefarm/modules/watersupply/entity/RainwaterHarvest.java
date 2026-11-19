@@ -1,19 +1,33 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
-@Table(name = "rainwater_harvests")
+@Table(name = "rainwater_harvests", indexes = {
+        @Index(name = "idx_rainwater_harvests_source_id", columnList = "source_id"),
+        @Index(name = "idx_rainwater_harvests_capture_date", columnList = "capture_date")
+})
 public class RainwaterHarvest extends BaseEntity {
     @NotNull
-    @Column(nullable = false)
-    private UUID sourceId;
+    @Column(name = "source_id", nullable = false)
+    private Long sourceId;
+
+    /** Read-only link that declares the foreign key fk_rainwater_harvests_source; the code writes the source_id column. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_rainwater_harvests_source"))
+    private WaterSource source;
 
     @NotNull
     @Column(name = "catchment_area_m2", nullable = false)
@@ -41,11 +55,11 @@ public class RainwaterHarvest extends BaseEntity {
         }
     }
 
-    public UUID getSourceId() {
+    public Long getSourceId() {
         return sourceId;
     }
 
-    public void setSourceId(UUID sourceId) {
+    public void setSourceId(Long sourceId) {
         this.sourceId = sourceId;
     }
 

@@ -29,7 +29,7 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CampaignMetricRequest(
-            @NotNull(message = "campaignId is required") Integer campaignId,
+            @NotNull(message = "campaignId is required") Long campaignId,
             LocalDate metricDate,
             @PositiveOrZero Integer clicks,
             @PositiveOrZero Integer signups,
@@ -41,7 +41,7 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CustomerContactRequest(
-            Integer customerId,
+            Long customerId,
             @NotBlank(message = "Full name is required") String fullName,
             @Email(message = "Must be a valid email address") String email,
             String phone,
@@ -50,7 +50,7 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record DemandForecastRequest(
-            Integer productId,
+            Long productId,
             @NotNull(message = "forecastMonth is required") LocalDate forecastMonth,
             @NotBlank(message = "scenario is required") String scenario,
             @NotNull(message = "forecastedVolumeT is required")
@@ -74,7 +74,8 @@ public final class SalesMarketingRequests {
             LocalDateTime nextRunAt,
             String scheduleFrequency,
             String summary,
-            String generatedBy) {}
+            /** Person of the people directory (GET /api/staff/persons) who generated it, or {@code null}. */
+            Long generatedByPersonId) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ForecastModelRunRequest(
@@ -88,8 +89,8 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record OrderRequest(
-            @NotNull(message = "customerId is required") Integer customerId,
-            Integer salesChannelId,
+            @NotNull(message = "customerId is required") Long customerId,
+            Long salesChannelId,
             @NotNull(message = "orderDate is required") LocalDate orderDate,
             @PositiveOrZero(message = "totalVolumeKg cannot be negative") BigDecimal totalVolumeKg,
             @PositiveOrZero(message = "totalValueEur cannot be negative") BigDecimal totalValueEur,
@@ -97,8 +98,8 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record OrderItemRequest(
-            @NotNull(message = "orderId is required") Integer orderId,
-            @NotNull(message = "productId is required") Integer productId,
+            @NotNull(message = "orderId is required") Long orderId,
+            @NotNull(message = "productId is required") Long productId,
             @NotNull(message = "quantityKg is required")
             @Positive(message = "quantityKg must be greater than zero") BigDecimal quantityKg,
             @NotNull(message = "unitPriceEur is required")
@@ -113,13 +114,13 @@ public final class SalesMarketingRequests {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ProductBatchRequest(
             @NotBlank(message = "batchCode is required") String batchCode,
-            Integer productId,
+            Long productId,
             @PositiveOrZero(message = "stockT cannot be negative") BigDecimal stockT,
             String status) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ReportFileRequest(
-            @NotNull(message = "reportId is required") Integer reportId,
+            @NotNull(message = "reportId is required") Long reportId,
             @NotBlank(message = "format is required") String format,
             String fileUrl) {}
 
@@ -129,7 +130,7 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record SalesChannelTargetRequest(
-            @NotNull(message = "channelId is required") Integer channelId,
+            @NotNull(message = "channelId is required") Long channelId,
             @NotNull(message = "periodStart is required") LocalDate periodStart,
             @NotNull(message = "periodEnd is required") LocalDate periodEnd,
             @NotNull(message = "revenueTargetEur is required") BigDecimal revenueTargetEur) {}
@@ -137,7 +138,7 @@ public final class SalesMarketingRequests {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ShipmentRequest(
             String shipmentCode,
-            Integer orderId,
+            Long orderId,
             @NotBlank(message = "origin is required") String origin,
             @NotBlank(message = "destination is required") String destination,
             String status,
@@ -160,14 +161,14 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ShipmentEventRequest(
-            @NotNull(message = "shipmentId is required") Integer shipmentId,
+            @NotNull(message = "shipmentId is required") Long shipmentId,
             @NotBlank(message = "step is required") String step,
             LocalDateTime eventTime,
             String note) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CompetitorPriceRequest(
-            Integer productId,
+            Long productId,
             @NotBlank(message = "competitorName is required") String competitorName,
             @NotNull(message = "priceEur is required") @Positive BigDecimal priceEur,
             @NotNull(message = "priceDate is required") LocalDate priceDate,
@@ -175,7 +176,7 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PricingHistoryRequest(
-            @NotNull(message = "productId is required") Integer productId,
+            @NotNull(message = "productId is required") Long productId,
             @NotNull(message = "priceDate is required") LocalDate priceDate,
             @NotNull(message = "priceEurPerKg is required")
             @Positive(message = "priceEurPerKg must be greater than zero") BigDecimal priceEurPerKg,
@@ -189,7 +190,7 @@ public final class SalesMarketingRequests {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PricingRecommendationRequest(
-            Integer productId,
+            Long productId,
             @NotBlank(message = "message is required") String message,
             BigDecimal suggestedPriceEur) {}
 }

@@ -1,266 +1,35 @@
-import { useKpis, useAlerts, useActivities, useRecommendations, useDroughtPrediction, useWeather, useHealthCheck, useWaterBalance } from '../../hooks/useDashboard'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
-
-/**
- * Dashboard connected to the API (Task 2).
- * Replaces frozen data with real data through the useDashboard hooks,
- * keeping the .ws-* design system (colors/typography unchanged).
- * Handles loading / error / empty states.
- */
-export function DashboardView({ onNavigate, notify }) {
-  const { data: kpis, loading: kpisLoading, error: kpisError } = useKpis()
-  const { data: alerts, loading: alertsLoading } = useAlerts()
-  const { data: activities, loading: activitiesLoading } = useActivities()
-  const { data: recommendations, loading: recLoading } = useRecommendations()
-  const { data: drought, loading: droughtLoading } = useDroughtPrediction()
-  const { data: weather, loading: weatherLoading } = useWeather()
-  const { healthy: backendHealthy, loading: healthLoading } = useHealthCheck()
-
-  const anythingLoading = kpisLoading || alertsLoading || activitiesLoading || weatherLoading
-
-  return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Water dashboard</h1>
-          <p>Operational view: irrigation, tanks, quality and drought risk.</p>
-        </div>
-      </div>
-
-      {/* Backend status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px', fontFamily: "'Inter', Arial, sans-serif", fontSize: '13px', color: 'var(--ws-muted)' }}>
-        <span
-          className={`ws-summary-dot ${backendHealthy ? 'green' : 'red'}`}
-          style={{ width: '10px', height: '10px', borderRadius: '50%', display: 'inline-block' }}
-        />
-        <span>
-          {healthLoading
-            ? 'Checking backend…'
-            : backendHealthy
-              ? 'Backend connected'
-              : 'Backend disconnected'}
-        </span>
-      </div>
-
-      {anythingLoading ? (
-        <Spinner label="Loading dashboard…" full />
-      ) : kpisError ? (
-        <EmptyState
-          title="Unable to load data"
-          description={kpisError.message || 'Make sure the backend is running, then try again.'}
-        />
-      ) : kpis ? (
-        <>
-          {/* ===== KPI ===== */}
-          <div className="ws-kpi-grid">
-            <Kpi label="Daily consumption" value={`${kpis.daily_consumption_liters ?? 0} L`} />
-            <Kpi label="Monthly consumption" value={`${kpis.monthly_consumption_liters ?? 0} L`} />
-            <Kpi label="Tank level" value={`${kpis.tank_level_percentage ?? 0}%`} tone="orange" />
-            <Kpi label="Water savings" value={`${kpis.water_savings_percentage ?? 0}%`} tone="hero" />
-            <Kpi label="Irrigations today" value={kpis.irrigation_count_today ?? 0} />
-            <Kpi label="Anomalies" value={kpis.anomaly_count ?? 0} tone="orange" />
-            <Kpi label="Water quality" value={kpis.water_quality_status ?? '—'} />
-            <Kpi label="Sensors available" value={`${kpis.sensor_availability_percentage ?? 0}%`} />
-          </div>
-{/* ===== Weather ===== */}
-          {weather && (
-            <div className="ws-panel" style={{ marginTop: '22px' }}>
-              <div className="ws-panel-header">
-                <h2>Current weather</h2>
-                <span>Open-Meteo</span>
-              </div>
-              <div className="ws-panel-body">
-                <div className="ws-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0,1fr))' }}>
-                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.temperature ?? '—'}°C</strong><small>Temperature</small></div>
-                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.humidity ?? '—'}%</strong><small>Humidity</small></div>
-                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.wind_speed ?? '—'} km/h</strong><small>Wind</small></div>
-                  <div className="ws-row-detail" style={{ fontSize: '13px' }}><strong>{weather.weather_condition ?? '—'}</strong><small>Condition</small></div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ===== Main content ===== */}
-          <div className="ws-dashboard-grid" style={{ marginTop: '22px' }}>
-            <div className="ws-stack">
-              {recLoading ? (
-                <Spinner label="Recommendations…" />
-              ) : recommendations && recommendations.length > 0 ? (
-                <div className="ws-panel">
-                  <div className="ws-panel-header">
-                    <h2>Recommendations</h2>
-                    <span>Priority-ordered</span>
-                  </div>
-                  <div className="ws-panel-body ws-summary-list">
-                    {recommendations.map((rec, i) => (
-                      <div className="ws-summary-item" key={i}>
-                        <span className={`ws-summary-dot ${recPriorityDot(rec.priority)}`} />
-                        <div className="ws-summary-title">
-                          <span className={`ws-tag ${recTag(rec.priority)}`}>{rec.priority}</span>
-                          <div>
-                            <small style={{ marginTop: '4px' }}>{rec.recommendation}</small>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <EmptyState title="No recommendations" description="Nothing to display right now." />
-              )}
-
-              {activitiesLoading ? (
-                <Spinner label="Activities…" />
-              ) : activities && activities.length > 0 ? (
-                <div className="ws-panel">
-                  <div className="ws-panel-header">
-                    <h2>Recent activity</h2>
-                    <span>History</span>
-                  </div>
-                  <div className="ws-panel-body ws-summary-list">
-                    {activities.map((a, i) => (
-                      <div className="ws-summary-item" key={i}>
-                        <span className="ws-summary-dot green" />
-                        <div className="ws-summary-title">
-                          {a.message}
-                          <small style={{ marginTop: '4px' }}>{a.timestamp}</small>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <EmptyState title="No activity" description="Recorded consumptions will appear here." />
-              )}
-            </div>
-<div className="ws-stack">
-              {!droughtLoading && drought && (
-                <div className="ws-panel">
-                  <div className="ws-panel-header">
-                    <h2>Drought forecast</h2>
-                    <span>Outlook</span>
-                  </div>
-                  <div className="ws-panel-body">
-                    <div className={`ws-tag ${droughtRiskTag(drought.risk_level)}`} style={{ marginBottom: '8px' }}>
-                      {drought.risk_level}
-                    </div>
-                    <p style={{ margin: 0, fontFamily: "'Inter', Arial, sans-serif", fontSize: '13px', color: 'var(--ws-muted)', lineHeight: 1.55 }}>
-                      {drought.recommendations}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <WaterBalancePanel />
-
-              {alertsLoading ? (
-                <Spinner label="Alerts…" />
-              ) : alerts && alerts.length > 0 ? (
-                <div className="ws-panel">
-                  <div className="ws-panel-header">
-                    <h2>Recent alerts</h2>
-                    <span>Unread</span>
-                  </div>
-                  <div className="ws-panel-body ws-summary-list">
-                    {alerts.map((al, i) => (
-                      <div className="ws-summary-item" key={i}>
-                        <span className={`ws-summary-dot ${alertDot(al.type)}`} />
-                        <div className="ws-summary-title">
-                          {al.title}
-                          <small style={{ marginTop: '4px' }}>{al.message}</small>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <EmptyState title="No alerts" description="Everything is nominal." />
-              )}
-
-              <div className="ws-panel">
-                <div className="ws-panel-header">
-                  <h2>Actions</h2>
-                </div>
-                <div className="ws-panel-body">
-                  <div className="ws-quick-actions">
-                    <button className="ws-action-btn" onClick={() => onNavigate('irrigation')}>Manage irrigation</button>
-                    <button className="ws-action-btn secondary" onClick={() => onNavigate('consumption')}>View consumption</button>
-                    <button className="ws-action-btn secondary" onClick={() => onNavigate('quality')}>View water quality</button>
-                    <button className="ws-action-btn secondary" onClick={() => onNavigate('outages')}>Plan an outage</button>
-                    <button className="ws-action-btn warning" onClick={() => notify('See the Drought view for the plan.')}>Drought plan</button>
-                    <button className="ws-action-btn secondary" onClick={() => notify('Demo: report prepared.')}>Prepared carry-over plan</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <EmptyState title="No data" description="Add data to visualize the dashboard." />
-      )}
-    </>
-  )
-}
-
-/**
- * Water balance of the month and what the tanks will hold once the irrigations scheduled for the
- * next 7 days have run (demand_forecast_liters / available_after_forecast_liters).
- */
-function WaterBalancePanel() {
-  const { data: balance, loading, error } = useWaterBalance('month')
-  if (loading || error || !balance) return null
-  const available = balance.available_after_forecast_liters ?? 0
-  return (
-    <div className="ws-panel">
-      <div className="ws-panel-header">
-        <h2>Water balance</h2>
-        <span className={`ws-tag ${balance.balance_status === 'deficit' ? 'red' : balance.balance_status === 'unknown' ? 'primary' : 'green'}`}>
-          {balance.balance_status === 'deficit' ? 'Deficit' : balance.balance_status === 'unknown' ? 'No tank capacity' : 'Balanced'}
-        </span>
-      </div>
-      <div className="ws-panel-body ws-summary-list">
-        <div className="ws-summary-item">
-          <span className="ws-summary-dot green" />
-          <div className="ws-summary-title">Rain harvested this month<small>{balance.rainwater_in_liters ?? 0} L</small></div>
-        </div>
-        <div className="ws-summary-item">
-          <span className="ws-summary-dot orange" />
-          <div className="ws-summary-title">Irrigation this month<small>{balance.irrigation_out_liters ?? 0} L</small></div>
-        </div>
-        <div className="ws-summary-item">
-          <span className="ws-summary-dot green" />
-          <div className="ws-summary-title">
-            In the tanks now
-            <small>{balance.reserve_level_liters ?? 0} L of {balance.reserve_capacity_liters ?? 0} L ({balance.reserve_level_percentage ?? 0}%)</small>
-          </div>
-        </div>
-        <div className="ws-summary-item">
-          <span className={`ws-summary-dot ${available < 0 ? 'red' : 'orange'}`} />
-          <div className="ws-summary-title">
-            After the next 7 days of scheduled irrigation
-            <small>{balance.demand_forecast_liters ?? 0} L planned, {available} L left</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Kpi({ label, value, tone }) {
-  return (
-    <div className={`ws-kpi-card ${tone || ''}`}>
-      <div className="ws-kpi-label">{label}</div>
-      <div className="ws-kpi-value">{value}</div>
-    </div>
-  )
-}
+import {
+  Activity,
+  BatteryMedium,
+  CalendarDays,
+  Cpu,
+  Droplet,
+  FlaskConical,
+  PiggyBank,
+  TriangleAlert,
+} from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Badge, Button, Card, EmptyState, KpiCard } from '../../../../shared/ui'
+import {
+  useKpis,
+  useAlerts,
+  useActivities,
+  useRecommendations,
+  useDroughtPrediction,
+  useWeather,
+  useHealthCheck,
+  useWaterBalance,
+} from '../../hooks/useDashboard'
+import { useWaterFormat } from '../../format'
+import { Screen } from '../common/Screen'
+import { LoadingState } from '../common/LoadingState'
+import { SummaryItem, SummaryList } from '../common/SummaryList'
+import { toneOf } from '../common/tones'
 
 function recPriorityDot(p) {
   switch (p) {
     case 'critical': return 'red'
     case 'high': case 'medium': return 'orange'
-    case 'low': return 'green'
     default: return 'green'
   }
 }
@@ -288,4 +57,199 @@ function alertDot(type) {
     case 'warning': case 'critical': return 'red'
     default: return 'green'
   }
+}
+
+/** Panel title with a muted note on the right, as the former panel headers. */
+function Note({ children }) {
+  return <span className="text-sm text-text-muted">{children}</span>
+}
+
+/**
+ * Dashboard connected to the API through the useDashboard hooks. Handles loading, error and
+ * empty states.
+ */
+export function DashboardView({ onNavigate, notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
+  const { data: kpis, loading: kpisLoading, error: kpisError } = useKpis()
+  const { data: alerts, loading: alertsLoading } = useAlerts()
+  const { data: activities, loading: activitiesLoading } = useActivities()
+  const { data: recommendations, loading: recLoading } = useRecommendations()
+  const { data: drought, loading: droughtLoading } = useDroughtPrediction()
+  const { data: weather, loading: weatherLoading } = useWeather()
+  const { healthy: backendHealthy, loading: healthLoading } = useHealthCheck()
+
+  const anythingLoading = kpisLoading || alertsLoading || activitiesLoading || weatherLoading
+  const healthText = healthLoading
+    ? t('dashboard.health.checking')
+    : backendHealthy
+      ? t('dashboard.health.connected')
+      : t('dashboard.health.disconnected')
+  const orNone = (value) => value ?? t('common.none')
+  // A figure the API did not send shows as none, never as 0.
+  const shown = (value, formatValue) => (value == null ? t('common.none') : formatValue(value))
+
+  function renderContent() {
+    if (anythingLoading) return <LoadingState label={t('dashboard.loading')} />
+    if (kpisError) {
+      return <EmptyState title={t('dashboard.loadErrorTitle')} message={kpisError.message || t('dashboard.loadError')} />
+    }
+    if (!kpis) return <EmptyState title={t('dashboard.emptyTitle')} message={t('dashboard.empty')} />
+    return (
+      <>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard icon={Droplet} label={t('dashboard.kpis.daily')} value={shown(kpis.daily_consumption_liters, format.liters)} />
+          <KpiCard icon={CalendarDays} label={t('dashboard.kpis.monthly')} value={shown(kpis.monthly_consumption_liters, format.liters)} />
+          <KpiCard icon={BatteryMedium} tone="warning" label={t('dashboard.kpis.tankLevel')} value={shown(kpis.tank_level_percentage, format.percent)} />
+          <KpiCard icon={PiggyBank} label={t('dashboard.kpis.savings')} value={shown(kpis.water_savings_percentage, format.percent)} />
+          <KpiCard icon={Activity} label={t('dashboard.kpis.irrigations')} value={orNone(kpis.irrigation_count_today)} />
+          <KpiCard icon={TriangleAlert} tone="warning" label={t('dashboard.kpis.anomalies')} value={orNone(kpis.anomaly_count)} />
+          <KpiCard icon={FlaskConical} label={t('dashboard.kpis.quality')} value={orNone(kpis.water_quality_status)} />
+          <KpiCard icon={Cpu} label={t('dashboard.kpis.sensors')} value={shown(kpis.sensor_availability_percentage, format.percent)} />
+        </div>
+
+        {weather && (
+          <Card title={t('dashboard.weather.title')} actions={<Note>{t('dashboard.weather.provider')}</Note>}>
+            <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                [t('dashboard.weather.temperature'), weather.temperature == null ? t('common.none') : t('units.celsius', { value: weather.temperature })],
+                [t('dashboard.weather.humidity'), weather.humidity == null ? t('common.none') : format.percent(weather.humidity)],
+                [t('dashboard.weather.wind'), weather.wind_speed == null ? t('common.none') : t('units.kmh', { value: weather.wind_speed })],
+                [t('dashboard.weather.condition'), orNone(weather.weather_condition)],
+              ].map(([label, value]) => (
+                <div key={label} className="flex flex-col-reverse">
+                  <dt className="mt-1 text-xs font-medium text-text-muted">{label}</dt>
+                  <dd className="font-semibold">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
+        )}
+
+        <div className="grid items-start gap-6 lg:grid-cols-5">
+          <div className="flex min-w-0 flex-col gap-6 lg:col-span-3">
+            {recLoading ? (
+              <LoadingState compact label={t('dashboard.recommendations.loading')} />
+            ) : recommendations && recommendations.length > 0 ? (
+              <Card title={t('dashboard.recommendations.title')} actions={<Note>{t('dashboard.recommendations.note')}</Note>}>
+                <SummaryList>
+                  {recommendations.map((rec, i) => (
+                    <SummaryItem
+                      key={i}
+                      tone={toneOf(recPriorityDot(rec.priority))}
+                      title={<Badge tone={toneOf(recTag(rec.priority))}>{t(`dashboard.priorities.${rec.priority}`, { defaultValue: rec.priority })}</Badge>}
+                      detail={rec.recommendation}
+                    />
+                  ))}
+                </SummaryList>
+              </Card>
+            ) : (
+              <EmptyState title={t('dashboard.recommendations.emptyTitle')} message={t('dashboard.recommendations.empty')} />
+            )}
+
+            {activitiesLoading ? (
+              <LoadingState compact label={t('dashboard.activity.loading')} />
+            ) : activities && activities.length > 0 ? (
+              <Card title={t('dashboard.activity.title')} actions={<Note>{t('dashboard.activity.note')}</Note>}>
+                <SummaryList>
+                  {activities.map((a, i) => (
+                    <SummaryItem key={i} tone="success" title={a.message} detail={a.timestamp} />
+                  ))}
+                </SummaryList>
+              </Card>
+            ) : (
+              <EmptyState title={t('dashboard.activity.emptyTitle')} message={t('dashboard.activity.empty')} />
+            )}
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+            {!droughtLoading && drought && (
+              <Card title={t('dashboard.drought.title')} actions={<Note>{t('dashboard.drought.note')}</Note>}>
+                <Badge tone={toneOf(droughtRiskTag(drought.risk_level))} className="mb-2">{drought.risk_level}</Badge>
+                <p className="text-sm text-text-muted">{drought.recommendations}</p>
+              </Card>
+            )}
+
+            <WaterBalancePanel />
+
+            {alertsLoading ? (
+              <LoadingState compact label={t('dashboard.alerts.loading')} />
+            ) : alerts && alerts.length > 0 ? (
+              <Card title={t('dashboard.alerts.title')} actions={<Note>{t('dashboard.alerts.note')}</Note>}>
+                <SummaryList>
+                  {alerts.map((al, i) => (
+                    <SummaryItem key={i} tone={toneOf(alertDot(al.type))} title={al.title} detail={al.message} />
+                  ))}
+                </SummaryList>
+              </Card>
+            ) : (
+              <EmptyState title={t('dashboard.alerts.emptyTitle')} message={t('dashboard.alerts.empty')} />
+            )}
+
+            <Card title={t('dashboard.actions.title')}>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => onNavigate('irrigation')}>{t('dashboard.actions.irrigation')}</Button>
+                <Button variant="secondary" onClick={() => onNavigate('consumption')}>{t('dashboard.actions.consumption')}</Button>
+                <Button variant="secondary" onClick={() => onNavigate('quality')}>{t('dashboard.actions.quality')}</Button>
+                <Button variant="secondary" onClick={() => onNavigate('outages')}>{t('dashboard.actions.outage')}</Button>
+                <Button variant="secondary" onClick={() => notify(t('dashboard.actions.droughtPlanNotice'))}>{t('dashboard.actions.droughtPlan')}</Button>
+                <Button variant="secondary" onClick={() => notify(t('dashboard.actions.carryOverNotice'))}>{t('dashboard.actions.carryOver')}</Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <Screen title={t('dashboard.title')} subtitle={t('dashboard.subtitle')}>
+      <p role="status" className="flex items-center gap-2 text-sm text-text-muted">
+        <span aria-hidden="true" className={`size-2.5 rounded-pill ${backendHealthy ? 'bg-success-fg' : 'bg-error-fg'}`} />
+        <span>{healthText}</span>
+      </p>
+      {renderContent()}
+    </Screen>
+  )
+}
+
+/**
+ * Water balance of the month and what the tanks will hold once the irrigations scheduled for the
+ * next 7 days have run (demand_forecast_liters / available_after_forecast_liters).
+ */
+function WaterBalancePanel() {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
+  const { data: balance, loading, error } = useWaterBalance('month')
+  if (loading || error || !balance) return null
+  const available = balance.available_after_forecast_liters
+  // A figure the API did not send shows as none, never as 0.
+  const liters = (value) => (value == null ? t('common.none') : format.liters(value))
+  const status = balance.balance_status === 'deficit' ? 'deficit' : balance.balance_status === 'unknown' ? 'unknown' : 'balanced'
+  const statusTone = { deficit: 'error', unknown: 'info', balanced: 'success' }[status]
+  return (
+    <Card title={t('dashboard.balance.title')} actions={<Badge tone={statusTone}>{t(`dashboard.balance.status.${status}`)}</Badge>}>
+      <SummaryList>
+        <SummaryItem tone="success" title={t('dashboard.balance.rain')} detail={liters(balance.rainwater_in_liters)} />
+        <SummaryItem tone="warning" title={t('dashboard.balance.irrigation')} detail={liters(balance.irrigation_out_liters)} />
+        <SummaryItem
+          tone="success"
+          title={t('dashboard.balance.tanks')}
+          detail={t('dashboard.balance.tanksDetail', {
+            level: liters(balance.reserve_level_liters),
+            capacity: liters(balance.reserve_capacity_liters),
+            pct: balance.reserve_level_percentage == null ? t('common.none') : format.percent(balance.reserve_level_percentage),
+          })}
+        />
+        <SummaryItem
+          tone={available != null && available < 0 ? 'error' : 'warning'}
+          title={t('dashboard.balance.forecast')}
+          detail={t('dashboard.balance.forecastDetail', {
+            planned: liters(balance.demand_forecast_liters),
+            left: liters(available),
+          })}
+        />
+      </SummaryList>
+    </Card>
+  )
 }

@@ -1,13 +1,17 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { formatKilograms, formatMonth, formatMonthName, formatNumber } from "../utils/format";
 
 /*
+ * Colours from the chart tokens of src/index.css: columns in chart-1, month and unit labels in
+ * chart-3 (the axis tick colour of machinery), values in the text colour.
+ *
  * Geometry in CSS pixels. The chart is drawn at its real size, never scaled
  * down, so its labels keep their font size on a phone; when the months do not
  * fit, the chart scrolls sideways inside its card, as the module's tables do.
  */
 const FONT_SIZE = 12;
-const CHAR_WIDTH = 7; // generous width of one digit or comma at 11px
+const CHAR_WIDTH = 7; // generous width of one digit or comma at the font size above
 const MIN_SLOT_WIDTH = 40;
 const MAX_BAR_WIDTH = 24;
 const CORNER_RADIUS = 4;
@@ -43,15 +47,21 @@ function barPath(x, y, width, height) {
  * value, and the total. The zero months are summed up in one phrase; each of
  * them is still listed in the monthly table.
  */
-function describe(monthlyTotals, totalKg) {
+function describe(t, monthlyTotals, totalKg) {
     const first = formatMonth(monthlyTotals[0].month, "long");
     const last = formatMonth(monthlyTotals[monthlyTotals.length - 1].month, "long");
     const nonZero = monthlyTotals
         .filter((total) => total.expectedKg > 0)
-        .map((total) => `${formatMonth(total.month, "long")} ${formatKilograms(total.expectedKg)}`);
-    const zeroMonths = nonZero.length < monthlyTotals.length ? "; 0 kg in the other months" : "";
-    return `Expected yield by month, ${first} to ${last}: ${nonZero.join(", ")}${zeroMonths}. `
-        + `Total ${formatKilograms(totalKg)}.`;
+        .map((total) =>
+            t("harvest.chart.monthValue", { month: formatMonth(total.month, "long"), value: formatKilograms(total.expectedKg) }));
+    const zeroMonths = nonZero.length < monthlyTotals.length ? t("harvest.chart.zeroMonths") : "";
+    return t("harvest.chart.description", {
+        first,
+        last,
+        months: nonZero.join(t("format.listSeparator")),
+        zeroMonths,
+        total: formatKilograms(totalKg),
+    });
 }
 
 /**
@@ -62,6 +72,7 @@ function describe(monthlyTotals, totalKg) {
  * named in the text alternative is passed in by the caller.
  */
 export default function YieldForecastChart({ monthlyTotals, totalKg }) {
+    const { t } = useTranslation("plants");
     const [containerRef, width] = useContentWidth();
 
     const labels = monthlyTotals.map((total) => formatNumber(total.expectedKg));
@@ -81,13 +92,13 @@ export default function YieldForecastChart({ monthlyTotals, totalKg }) {
             {width > 0 && (
                 <svg
                     role="img"
-                    aria-label={describe(monthlyTotals, totalKg)}
+                    aria-label={describe(t, monthlyTotals, totalKg)}
                     width={chartWidth}
                     height={baseline + BOTTOM}
                     className="block font-sans"
                 >
-                    <text x={0} y={FONT_SIZE} fontSize={FONT_SIZE} className="fill-gray-500">
-                        kg
+                    <text x={0} y={FONT_SIZE} fontSize={FONT_SIZE} fill="var(--color-chart-3)">
+                        {t("harvest.chart.unit")}
                     </text>
 
                     {monthlyTotals.map((total, index) => {
@@ -101,7 +112,7 @@ export default function YieldForecastChart({ monthlyTotals, totalKg }) {
                                 {height > 0 && (
                                     <path
                                         d={barPath(center - barWidth / 2, baseline - height, barWidth, height)}
-                                        className="fill-primary"
+                                        fill="var(--color-chart-1)"
                                     />
                                 )}
                                 <text
@@ -109,7 +120,7 @@ export default function YieldForecastChart({ monthlyTotals, totalKg }) {
                                     y={baseline - height - 6}
                                     textAnchor="middle"
                                     fontSize={FONT_SIZE}
-                                    className="fill-gray-700 font-semibold"
+                                    className="fill-text font-semibold"
                                 >
                                     {labels[index]}
                                 </text>
@@ -118,7 +129,7 @@ export default function YieldForecastChart({ monthlyTotals, totalKg }) {
                                     y={baseline + 16}
                                     textAnchor="middle"
                                     fontSize={FONT_SIZE}
-                                    className="fill-gray-500"
+                                    fill="var(--color-chart-3)"
                                 >
                                     {formatMonthName(total.month)}
                                 </text>
@@ -128,7 +139,7 @@ export default function YieldForecastChart({ monthlyTotals, totalKg }) {
                                         y={baseline + 31}
                                         textAnchor="middle"
                                         fontSize={FONT_SIZE}
-                                        className="fill-gray-500"
+                                        fill="var(--color-chart-3)"
                                     >
                                         {total.month.slice(0, 4)}
                                     </text>
@@ -142,7 +153,7 @@ export default function YieldForecastChart({ monthlyTotals, totalKg }) {
                         x2={chartWidth}
                         y1={baseline + 0.5}
                         y2={baseline + 0.5}
-                        className="stroke-gray-300"
+                        stroke="var(--color-chart-3)"
                     />
                 </svg>
             )}

@@ -4,5 +4,5 @@ import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.ShipmentEve
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ShipmentEventRepository
-        extends JpaRepository<ShipmentEvent, Integer> {
+        extends JpaRepository<ShipmentEvent, Long> {
 }

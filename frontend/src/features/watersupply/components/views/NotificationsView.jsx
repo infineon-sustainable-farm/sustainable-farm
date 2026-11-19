@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Check, CheckCheck, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Badge, Button, Card, ConfirmDialog, EmptyState, ErrorState, IconButton, Select } from '../../../../shared/ui'
+import { useListControls } from '../../../../shared/hooks/useListControls'
 import { notificationApi } from '../../api/watersupplyApi'
 import { useNotifications } from '../../hooks/useWaterData'
-import { useListControls } from '../../../../shared/hooks/useListControls'
-import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from './Pagination'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
-import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
+import { Filters, Screen } from '../common/Screen'
+import { ListPagination } from '../common/ListPagination'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { SummaryItem, SummaryList } from '../common/SummaryList'
+import { toneOf } from '../common/tones'
 
 function tagFor(type) {
   switch ((type || '').toLowerCase()) {
@@ -22,6 +25,7 @@ function tagFor(type) {
 }
 
 export function NotificationsView({ notify }) {
+  const { t } = useTranslation('watersupply')
   const { notifications, loading, error, refetch } = useNotifications()
   const [typeFilter, setTypeFilter] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -32,6 +36,7 @@ export function NotificationsView({ notify }) {
     () => notifications.filter((item) => !typeFilter || item.type === typeFilter),
     [notifications, typeFilter],
   )
+  const typeLabel = (type) => t(`notifications.types.${(type || 'info').toLowerCase()}`, { defaultValue: type || 'info' })
 
   // Client-side search + pagination.
   const list = useListControls(typeFiltered, { searchFields: ['title', 'message', 'type'] })
@@ -42,83 +47,85 @@ export function NotificationsView({ notify }) {
     request()
       .then(() => refetch())
       .then(() => notify(message))
-      .catch((err) => notify(err.message || 'Action failed.'))
+      .catch((err) => notify(err.message || t('notifications.actionFailed'), 'error'))
       .finally(() => setBusy(false))
   }
 
   const deleteNotification = () => {
     if (!deleteTarget) return
-    run(() => notificationApi.deleteNotification(deleteTarget.id), 'Notification deleted')
+    run(() => notificationApi.deleteNotification(deleteTarget.id), t('notifications.deleted'))
     setDeleteTarget(null)
   }
 
+  function renderList() {
+    if (loading) return <LoadingState label={t('notifications.loading')} />
+    if (error) return <ErrorState message={error.message || t('notifications.loadError')} />
+    if (filtered.length === 0) return <EmptyState title={t('notifications.emptyTitle')} message={t('notifications.empty')} />
+    return (
+      <SummaryList>
+        {filtered.map((item) => (
+          <SummaryItem
+            key={item.id}
+            tone={toneOf(item.read ? 'green' : tagFor(item.type))}
+            title={
+              <span className="flex flex-wrap items-center gap-2">
+                <Badge tone={toneOf(tagFor(item.type))}>{typeLabel(item.type)}</Badge>
+                {item.title}
+              </span>
+            }
+            detail={item.message}
+            aside={
+              <div className="flex gap-1">
+                {!item.read && (
+                  <IconButton
+                    icon={Check}
+                    label={t('notifications.markRead')}
+                    onClick={() => run(() => notificationApi.markAsRead(item.id), t('notifications.markedRead'))}
+                  />
+                )}
+                <IconButton icon={Trash2} tone="danger" label={t('common.delete')} onClick={() => setDeleteTarget(item)} />
+              </div>
+            }
+          />
+        ))}
+      </SummaryList>
+    )
+  }
+
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Notification center</h1>
-          <p>Operational alerts from quality, irrigation and storage checks.</p>
-        </div>
-      </div>
+    <Screen title={t('notifications.title')} subtitle={t('notifications.subtitle')}>
+      <Card
+        title={t('notifications.listTitle')}
+        actions={
+          <Button
+            variant="secondary"
+            icon={CheckCheck}
+            disabled={busy || notifications.length === 0}
+            onClick={() => run(notificationApi.markAllAsRead, t('notifications.allMarkedRead'))}
+          >
+            {t('notifications.markAllRead')}
+          </Button>
+        }
+      >
+        <Filters>
+          <Select aria-label={t('notifications.levelFilter')} value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="w-auto">
+            <option value="">{t('notifications.allLevels')}</option>
+            {types.map((type) => <option key={type} value={type}>{typeLabel(type)}</option>)}
+          </Select>
+          <SearchField value={list.query} onChange={list.setQuery} placeholder={t('notifications.search')} />
+        </Filters>
+        {renderList()}
+        <ListPagination list={list} />
+      </Card>
 
-      <div className="ws-panel">
-        <div className="ws-panel-header">
-          <h2>Notifications</h2>
-          <button className="ws-action-btn secondary" disabled={busy || notifications.length === 0}  onClick={() => run(notificationApi.markAllAsRead, 'Notifications marked as read')}>
-            <CheckCheck size={15} /> Mark all as read
-          </button>
-        </div>
-        <div className="ws-filters">
-          <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-            <option value="">All levels</option>
-            {types.map((type) => <option key={type} value={type}>{type}</option>)}
-          </select>
-          <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search a notification…" />
-        </div>
-        <div className="ws-panel-body">
-          {loading ? (
-            <Spinner label="Loading notifications..." full />
-          ) : error ? (
-            <EmptyState title="Error" description={error.message || 'Unable to load.'} />
-          ) : filtered.length === 0 ? (
-            <EmptyState title="No notifications" description="Alerts will appear here." />
-          ) : (
-            <div className="ws-summary-list">
-              {filtered.map((item) => (
-                <div className="ws-summary-item" key={item.id}>
-                  <span className={`ws-summary-dot ${item.read ? 'green' : tagFor(item.type)}`} />
-                  <div className="ws-summary-title">
-                    <span className={`ws-tag ${tagFor(item.type)}`}>{item.type || 'info'}</span>
-                    {item.title}
-                    <small>{item.message}</small>
-                  </div>
-                  <div className="ws-actions">
-                    {!item.read && (
-                      <button className="ws-icon-btn" title="Mark as read" onClick={() => run(() => notificationApi.markAsRead(item.id), 'Notification marked as read')}>
-                        <Check size={15} />
-                      </button>
-                    )}
-                    <button className="ws-icon-btn danger" title="Delete" onClick={() => setDeleteTarget(item)}>
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <Pagination page={list.page} pageCount={list.pageCount} onPage={list.setPage} total={list.total} unit="notification" />
-        </div>
-      </div>
-
-      {deleteTarget && (
-        <ConfirmDialog
-          title="Delete notification"
-          message="This notification will be removed from the notification center."
-          onConfirm={deleteNotification}
-          onCancel={() => setDeleteTarget(null)}
-          busy={busy}
-        />
-      )}
-    </>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t('notifications.deleteTitle')}
+        message={t('notifications.deleteMessage')}
+        onConfirm={deleteNotification}
+        onClose={() => setDeleteTarget(null)}
+        loading={busy}
+      />
+    </Screen>
   )
 }

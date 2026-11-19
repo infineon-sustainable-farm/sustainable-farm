@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -26,7 +27,8 @@ import java.util.List;
  * (09:00-11:00 and 14:00-16:00), closed on Sunday.</p>
  */
 @Entity
-@Table(name = "time_slot")
+@Table(name = "time_slot",
+        indexes = @Index(name = "idx_time_slot_guide_id", columnList = "guide_id"))
 public class TimeSlot extends BaseEntity {
 
     @NotNull

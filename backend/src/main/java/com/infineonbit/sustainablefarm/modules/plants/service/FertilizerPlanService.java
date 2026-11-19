@@ -2,6 +2,8 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerPlanCompletionRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerPlanRequest;
@@ -9,7 +11,6 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMov
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerPlanComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerPlanResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerPlanStockCheckResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovement;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerPlan;
@@ -65,6 +66,7 @@ public class FertilizerPlanService {
     private final FertilizerMovementRepository fertilizerMovementRepository;
     private final CurrencyRateRepository currencyRateRepository;
     private final FertilizerMovementService fertilizerMovementService;
+    private final PlantsBlocks plantsBlocks;
     private final Clock clock;
 
     public FertilizerPlanService(FertilizerPlanRepository fertilizerPlanRepository,
@@ -72,12 +74,14 @@ public class FertilizerPlanService {
                                  FertilizerMovementRepository fertilizerMovementRepository,
                                  CurrencyRateRepository currencyRateRepository,
                                  FertilizerMovementService fertilizerMovementService,
+                                 PlantsBlocks plantsBlocks,
                                  @Qualifier("plantsClock") Clock clock) {
         this.fertilizerPlanRepository = fertilizerPlanRepository;
         this.fertilizerProductRepository = fertilizerProductRepository;
         this.fertilizerMovementRepository = fertilizerMovementRepository;
         this.currencyRateRepository = currencyRateRepository;
         this.fertilizerMovementService = fertilizerMovementService;
+        this.plantsBlocks = plantsBlocks;
         this.clock = clock;
     }
 
@@ -209,13 +213,16 @@ public class FertilizerPlanService {
     /**
      * Plans an application of a fertilizer on a block.
      *
-     * <p>The block needs no recorded planting, as for an application. The
+     * <p>The block is an existing block of the farm referential, picked by its
+     * code; plants never creates one. It needs no recorded planting, as for an application. The
      * quantity is not compared with the stock: planning takes nothing from it,
      * and the fertilizer may be bought before the date.
      *
      * @param request the plan, already validated
      * @return the created plan, PLANNED
      * @throws FertilizerNotFoundException if no fertilizer has the given identifier
+     * @throws com.infineonbit.sustainablefarm.core.exception.BadRequestException if no block has the
+     *         code, or the farm does not exist or does not own the block
      */
     @Transactional
     public FertilizerPlanResponse createPlan(FertilizerPlanRequest request) {
@@ -231,9 +238,9 @@ public class FertilizerPlanService {
                 .orElseThrow(() -> new FertilizerNotFoundException(request.fertilizerId()));
 
         FertilizerPlan plan = new FertilizerPlan();
+        BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeBlockCode(request.blockCode()));
         plan.setProduct(product);
-        plan.setFarmId(request.farmId());
-        plan.setBlockCode(normalizeBlockCode(request.blockCode()));
+        plan.assignBlock(block.id(), PlantsBlocks.label(block));
         plan.setPlannedDate(request.plannedDate());
         plan.setPlannedQuantity(BigDecimal.valueOf(request.plannedQuantity()));
         plan.setStatus(FertilizerPlanStatus.PLANNED);
@@ -261,16 +268,17 @@ public class FertilizerPlanService {
      * @return the matching plans, ordered by planned date then identifier
      */
     @Transactional(readOnly = true)
-    public List<FertilizerPlanResponse> getAllPlans(Long fertilizerId, FertilizerPlanStatus status, Integer farmId,
+    public List<FertilizerPlanResponse> getAllPlans(Long fertilizerId, FertilizerPlanStatus status, Long farmId,
                                                     String blockCode, LocalDate from, LocalDate to) {
         return getAllPlans(fertilizerId, status, farmId, blockCode, from, to, LocalDate.now(clock));
     }
 
     /** Same as the public method, for an explicit day so the delays can be tested. */
-    List<FertilizerPlanResponse> getAllPlans(Long fertilizerId, FertilizerPlanStatus status, Integer farmId,
+    List<FertilizerPlanResponse> getAllPlans(Long fertilizerId, FertilizerPlanStatus status, Long farmId,
                                              String blockCode, LocalDate from, LocalDate to, LocalDate today) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, normalizeOptionalText(blockCode));
         List<FertilizerPlan> plans = fertilizerPlanRepository.findByOptionalFilters(
-                fertilizerId, status, farmId, normalizeOptionalText(blockCode), from, to);
+                fertilizerId, status, blocks.all(), blocks.ids(), from, to);
         Map<Long, LastPrice> prices = lastPrices(
                 plans.stream().map(plan -> plan.getProduct().getId()).collect(Collectors.toSet()));
         BigDecimal eurToXof = eurToXofRate(prices);
@@ -314,7 +322,7 @@ public class FertilizerPlanService {
                 request.quantity(),
                 plan.getFarmId(),
                 plan.getBlockCode(),
-                request.applicator(),
+                request.applicatorPersonId(),
                 request.method());
         FertilizerMovementResponse movement =
                 fertilizerMovementService.recordApplication(plan.getProduct().getId(), application);
@@ -375,10 +383,11 @@ public class FertilizerPlanService {
             first = today.withDayOfYear(1);
             last = today.withDayOfYear(today.lengthOfYear());
         }
-        List<FertilizerPlan> plans =
-                fertilizerPlanRepository.findByOptionalFilters(null, null, null, null, first, last);
+        List<FertilizerPlan> plans = fertilizerPlanRepository.findByOptionalFilters(
+                null, null, PlantsBlocks.BlockFilter.ALL.all(), PlantsBlocks.BlockFilter.ALL.ids(), first, last);
         List<FertilizerMovement> applications = fertilizerMovementRepository.findByOptionalFilters(
-                null, FertilizerMovementType.APPLICATION, null, null, first, last);
+                null, FertilizerMovementType.APPLICATION, PlantsBlocks.BlockFilter.ALL.all(),
+                PlantsBlocks.BlockFilter.ALL.ids(), first, last);
         Set<Long> linkedMovementIds = new HashSet<>(fertilizerPlanRepository.findLinkedMovementIds());
 
         List<ComparisonLine> lines = FertilizerPlanCalculator.compare(plans, applications, linkedMovementIds);

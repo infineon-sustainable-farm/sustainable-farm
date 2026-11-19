@@ -8,6 +8,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
 import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlockIds;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -22,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DataJpaTest
 @ActiveProfiles("test")
 public class HealthTreatmentRepositoryTest {
+
+    private final TestBlockIds blocks = new TestBlockIds();
 
     @Autowired
     private EntityManager entityManager;
@@ -51,7 +54,7 @@ public class HealthTreatmentRepositoryTest {
 
     private HealthFinding finding(String blockCode) {
         HealthInspection inspection = new HealthInspection();
-        inspection.setBlockCode(blockCode);
+        inspection.setBlockId(blocks.of(null, blockCode));
         inspection.setInspectedOn(LocalDate.of(2026, 9, 1));
         inspection.setHealthScorePct(48);
         inspection.setSource("user_entry");
@@ -63,11 +66,10 @@ public class HealthTreatmentRepositoryTest {
         return healthFindingRepository.save(finding);
     }
 
-    private HealthTreatment treatment(Integer farmId, String blockCode, HealthFinding finding, LocalDate treatedOn,
+    private HealthTreatment treatment(Long farmId, String blockCode, HealthFinding finding, LocalDate treatedOn,
                                       String quantity) {
         HealthTreatment treatment = new HealthTreatment();
-        treatment.setFarmId(farmId);
-        treatment.setBlockCode(blockCode);
+        treatment.setBlockId(blocks.of(farmId, blockCode));
         treatment.setTargetIssue(finding == null ? fruitFly : finding.getIssue());
         treatment.setFinding(finding);
         treatment.setTreatedOn(treatedOn);
@@ -76,13 +78,14 @@ public class HealthTreatmentRepositoryTest {
         treatment.setQuantity(new BigDecimal(quantity));
         treatment.setUnit(TreatmentUnit.KG);
         treatment.setPreHarvestIntervalDays(14);
-        treatment.setApplicator("Awa");
+        treatment.setApplicatorPersonId(7L);
         treatment.setSource("user_entry");
         return healthTreatmentRepository.save(treatment);
     }
 
-    private List<Long> find(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return healthTreatmentRepository.findByOptionalFilters(farmId, blockCode, from, to).stream()
+    private List<Long> find(Long farmId, String blockCode, LocalDate from, LocalDate to) {
+        return healthTreatmentRepository.findByOptionalFilters(blocks.all(farmId, blockCode), blocks.ids(farmId, blockCode),
+                        from, to).stream()
                 .map(HealthTreatment::getId)
                 .toList();
     }
@@ -92,11 +95,11 @@ public class HealthTreatmentRepositoryTest {
         // Arrange: saved out of date order, two on the same day
         HealthTreatment late = treatment(null, "C", null, LocalDate.of(2026, 9, 22), "1");
         HealthTreatment early = treatment(null, "D", null, LocalDate.of(2026, 9, 4), "1");
-        HealthTreatment sameDay = treatment(1, "C", null, LocalDate.of(2026, 9, 4), "1");
+        HealthTreatment sameDay = treatment(1L, "C", null, LocalDate.of(2026, 9, 4), "1");
         // Act & Assert: every treatment, by date then identifier
         assertEquals(List.of(early.getId(), sameDay.getId(), late.getId()), find(null, null, null, null));
         // Act & Assert: farm, block and dates, both included
-        assertEquals(List.of(sameDay.getId()), find(1, null, null, null));
+        assertEquals(List.of(sameDay.getId()), find(1L, null, null, null));
         assertEquals(List.of(sameDay.getId(), late.getId()), find(null, "C", null, null));
         assertEquals(List.of(early.getId(), sameDay.getId()),
                 find(null, null, LocalDate.of(2026, 9, 4), LocalDate.of(2026, 9, 4)));

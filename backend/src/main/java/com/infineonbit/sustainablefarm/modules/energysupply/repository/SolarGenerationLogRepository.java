@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface SolarGenerationLogRepository extends JpaRepository<SolarGenerationLog, String> {
+public interface SolarGenerationLogRepository extends JpaRepository<SolarGenerationLog, Long> {
 
     @Override
     @EntityGraph(attributePaths = "component")

@@ -1,17 +1,18 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.MaturityObservationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityObservation;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.MaturityObservationRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +31,11 @@ public class MaturityObservationService {
     /** {@code source} of every observation written through the API. */
     static final String USER_ENTRY_SOURCE = "user_entry";
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final PopulationEventRepository populationEventRepository;
     private final MaturityObservationRepository maturityObservationRepository;
+    private final PlantsBlocks plantsBlocks;
+    private final PersonDirectory personDirectory;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " b "} becomes
@@ -66,8 +69,8 @@ public class MaturityObservationService {
      * @param observation the stored observation
      * @return the API representation of that observation
      */
-    private static MaturityObservationResponse toResponse(MaturityObservation observation) {
-        Variety variety = observation.getVariety();
+    private MaturityObservationResponse toResponse(MaturityObservation observation) {
+        BlockVariety variety = observation.getVariety();
         BigDecimal value = observation.getMeasuredValue();
         return new MaturityObservationResponse(
                 observation.getId(),
@@ -80,7 +83,8 @@ public class MaturityObservationService {
                 observation.getMethod(),
                 value == null ? null : value.doubleValue(),
                 value == null ? null : observation.getMethod().unit(),
-                observation.getObserver(),
+                personDirectory.nameOf(observation.getObserverPersonId()),
+                observation.getObserverPersonId(),
                 observation.getSource(),
                 observation.getLastUpdated());
     }
@@ -103,9 +107,10 @@ public class MaturityObservationService {
      * in a single transaction.
      *
      * <ol>
-     *     <li>Finds the variety row of the (farm, block, name) triple, as a
-     *         harvest does: a NULL farm matches only the rows without a farm,
-     *         and the name ignores case but not accents.</li>
+     *     <li>Finds the variety row of the (block, name) pair, as a harvest
+     *         does: the block of the code, which must belong to the requested
+     *         farm when one is given (no block is created), and the name, which
+     *         ignores case but not accents.</li>
      *     <li>Refuses an observation of a variety with no recorded planting.</li>
      *     <li>Refuses an observation dated before the planting of that variety.</li>
      *     <li>Stores the observation. A variety without agronomic reference is
@@ -129,13 +134,13 @@ public class MaturityObservationService {
      * explicit write time so the {@code lastUpdated} value can be tested.
      */
     MaturityObservationResponse recordObservation(MaturityObservationRequest request, Instant now) {
-        Integer farmId = request.farmId();
         String blockCode = normalizeCode(request.blockCode());
         String varietyName = request.varietyName().trim();
 
-        Variety variety = varietyRepository.findByFarmBlockAndName(farmId, blockCode, varietyName)
-                .stream()
-                .findFirst()
+        // An observation designates an existing variety row: an unknown block, or a block of
+        // another farm than the one requested, has no planting, and no block is created.
+        BlockVariety variety = plantsBlocks.find(request.farmId(), blockCode)
+                .flatMap(block -> blockVarietyRepository.findByBlockAndName(block.id(), varietyName).stream().findFirst())
                 .orElse(null);
         if (variety == null) {
             throw noPlanting(varietyName, blockCode);
@@ -158,7 +163,7 @@ public class MaturityObservationService {
         observation.setMeasuredValue(request.measuredValue() == null
                 ? null
                 : BigDecimal.valueOf(request.measuredValue()).setScale(1, RoundingMode.HALF_UP));
-        observation.setObserver(normalizeOptionalText(request.observer()));
+        observation.setObserverPersonId(personDirectory.requireExisting(request.observerPersonId()));
         observation.setSource(USER_ENTRY_SOURCE);
         observation.setLastUpdated(now);
         return toResponse(maturityObservationRepository.save(observation));
@@ -173,17 +178,18 @@ public class MaturityObservationService {
      * an empty list and is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
      * @param from      first observation date, included, or {@code null}
      * @param to        last observation date, included, or {@code null}
      * @return the matching observations, ordered by date then identifier
      */
-    public List<MaturityObservationResponse> getAllObservations(Integer farmId, String blockCode,
+    public List<MaturityObservationResponse> getAllObservations(Long farmId, String blockCode,
                                                                 LocalDate from, LocalDate to) {
-        return maturityObservationRepository.findByOptionalFilters(farmId, normalizeOptionalText(blockCode), from, to)
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        return maturityObservationRepository.findByOptionalFilters(blocks.all(), blocks.ids(), from, to)
                 .stream()
-                .map(MaturityObservationService::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 }

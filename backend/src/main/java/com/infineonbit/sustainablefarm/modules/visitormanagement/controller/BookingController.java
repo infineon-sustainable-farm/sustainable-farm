@@ -25,7 +25,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/visitor-management")
 public class BookingController {
 
     private final BookingService bookingService;

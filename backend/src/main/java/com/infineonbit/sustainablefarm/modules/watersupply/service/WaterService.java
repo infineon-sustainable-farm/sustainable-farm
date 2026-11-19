@@ -1,10 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterLevelHistory;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionResponse;
@@ -17,12 +16,13 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityUpdat
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterSourceUpdateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.ConsumptionActivity;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterLevelHistory;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.ConsumptionCriteria;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.NotificationRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterLevelHistoryRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQualityTestRepository;
@@ -30,7 +30,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourc
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -43,45 +42,45 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class WaterService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaterService.class);
-    private final FarmRepository farmRepository;
+    private final FarmDirectory farmDirectory;
     private final WaterSourceRepository waterSourceRepository;
     private final WaterConsumptionRepository waterConsumptionRepository;
     private final WaterQualityTestRepository waterQualityTestRepository;
-    private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository;
+    private final AlertService alertService;
     private final WaterQuotaService waterQuotaService;
     private final ZoneBlockResolver zoneBlockResolver;
     private final WaterIntegrationProperties properties;
     private final WaterLevelHistoryRepository levelHistoryRepository;
+    private final ProcessingBatchLookup processingBatches;
 
     public WaterService(
-            FarmRepository farmRepository,
+            FarmDirectory farmDirectory,
             WaterSourceRepository waterSourceRepository,
             WaterConsumptionRepository waterConsumptionRepository,
             WaterQualityTestRepository waterQualityTestRepository,
-            NotificationRepository notificationRepository,
-            UserRepository userRepository,
+            AlertService alertService,
             WaterQuotaService waterQuotaService,
             ZoneBlockResolver zoneBlockResolver,
             WaterIntegrationProperties properties,
-            WaterLevelHistoryRepository levelHistoryRepository) {
-        this.farmRepository = farmRepository;
+            WaterLevelHistoryRepository levelHistoryRepository,
+            ProcessingBatchLookup processingBatches) {
+        this.farmDirectory = farmDirectory;
         this.waterSourceRepository = waterSourceRepository;
         this.waterConsumptionRepository = waterConsumptionRepository;
         this.waterQualityTestRepository = waterQualityTestRepository;
-        this.notificationRepository = notificationRepository;
-        this.userRepository = userRepository;
+        this.alertService = alertService;
         this.waterQuotaService = waterQuotaService;
         this.zoneBlockResolver = zoneBlockResolver;
         this.properties = properties;
         this.levelHistoryRepository = levelHistoryRepository;
+        this.processingBatches = processingBatches;
     }
 
     public List<WaterSourceResponse> findSources() {
         return waterSourceRepository.findAll().stream().map(WaterSourceResponse::from).toList();
     }
 
-    public PageResponse<WaterSourceResponse> findSources(Pageable pageable, UUID farmId) {
+    public PageResponse<WaterSourceResponse> findSources(Pageable pageable, Long farmId) {
         Page<WaterSource> page = farmId == null
                 ? waterSourceRepository.findAll(pageable)
                 : waterSourceRepository.findByFarmId(farmId, pageable);
@@ -104,7 +103,7 @@ public class WaterService {
         return WaterSourceResponse.from(saved);
     }
 
-    public WaterSourceResponse getSource(UUID sourceId) {
+    public WaterSourceResponse getSource(Long sourceId) {
         return WaterSourceResponse.from(getSourceEntity(sourceId));
     }
 
@@ -115,7 +114,7 @@ public class WaterService {
      * the percentage and status are computed here so that the UI and the other modules
      * do not need to know the thresholds.</p>
      */
-    public WaterLevelResponse sourceLevel(UUID sourceId) {
+    public WaterLevelResponse sourceLevel(Long sourceId) {
         WaterSource source = getSourceEntity(sourceId);
         Double percent = RainwaterTankRules.levelPercent(source);
         return new WaterLevelResponse(
@@ -134,7 +133,7 @@ public class WaterService {
      * Level history of a source (internal logic 5.2): every sensor reading and every manual level
      * change is kept, whereas {@code currentLevelLiters} only holds the last value.
      */
-    public List<WaterLevelHistoryResponse> sourceLevelHistory(UUID sourceId, Instant from, Instant to) {
+    public List<WaterLevelHistoryResponse> sourceLevelHistory(Long sourceId, Instant from, Instant to) {
         requireSource(sourceId);
         Instant start = from == null ? Instant.EPOCH : from;
         Instant end = to == null ? Instant.now() : to;
@@ -161,7 +160,7 @@ public class WaterService {
     }
 
     @Transactional
-    public WaterSourceResponse updateSource(UUID sourceId, WaterSourceUpdateRequest request) {
+    public WaterSourceResponse updateSource(Long sourceId, WaterSourceUpdateRequest request) {
         WaterSource source = getSourceEntity(sourceId);
         if (request.farmId() != null && !request.farmId().equals(source.getFarmId())) {
             requireFarm(request.farmId());
@@ -182,7 +181,7 @@ public class WaterService {
     }
 
     @Transactional
-    public void deleteSource(UUID sourceId) {
+    public void deleteSource(Long sourceId) {
         waterSourceRepository.delete(getSourceEntity(sourceId));
     }
 
@@ -190,7 +189,7 @@ public class WaterService {
         return consumptionResponses(waterConsumptionRepository.findAll());
     }
 
-    public PageResponse<WaterConsumptionResponse> findConsumptions(Pageable pageable, UUID farmId, UUID sourceId) {
+    public PageResponse<WaterConsumptionResponse> findConsumptions(Pageable pageable, Long farmId, Long sourceId) {
         return findConsumptions(pageable, farmId, sourceId, null, null, null);
     }
 
@@ -199,9 +198,9 @@ public class WaterService {
      * is translated into the zones mapped to that Plants block (restricted to {@code farmId} if given).
      * Filters are applied in the database so that {@code totalElements} matches the filtered content.
      */
-    public PageResponse<WaterConsumptionResponse> findConsumptions(Pageable pageable, UUID farmId, UUID sourceId,
-                                                                   UUID zoneId, String lotId, String blockCode) {
-        List<UUID> blockZones = blockCode == null || blockCode.isBlank()
+    public PageResponse<WaterConsumptionResponse> findConsumptions(Pageable pageable, Long farmId, Long sourceId,
+                                                                   Long zoneId, String lotId, String blockCode) {
+        List<Long> blockZones = blockCode == null || blockCode.isBlank()
                 ? null : zoneBlockResolver.zoneIdsForBlock(farmId, blockCode);
         ConsumptionCriteria criteria = new ConsumptionCriteria(farmId, sourceId, zoneId, blockZones,
                 normalizeLotId(lotId), null, null);
@@ -219,19 +218,20 @@ public class WaterService {
         consumption.setIrrigationId(request.irrigationId());
         consumption.setZoneId(request.zoneId());
         consumption.setLotId(normalizeLotId(request.lotId()));
-        consumption.setActivity(ConsumptionActivity.normalize(request.activity()));
+        consumption.setProcessingBatchId(processingBatchIdOf(consumption.getLotId()));
+        consumption.setActivity(ConsumptionActivity.of(request.activity()));
         validateConsumptionReferences(consumption);
         WaterConsumption saved = waterConsumptionRepository.save(consumption);
         checkQuotaThresholds(consumption);
         return consumptionResponse(saved);
     }
 
-    public WaterConsumptionResponse getConsumption(UUID consumptionId) {
+    public WaterConsumptionResponse getConsumption(Long consumptionId) {
         return consumptionResponse(getConsumptionEntity(consumptionId));
     }
 
     @Transactional
-    public WaterConsumptionResponse updateConsumption(UUID consumptionId, WaterConsumptionUpdateRequest request) {
+    public WaterConsumptionResponse updateConsumption(Long consumptionId, WaterConsumptionUpdateRequest request) {
         WaterConsumption consumption = getConsumptionEntity(consumptionId);
         if (request.farmId() != null) {
             consumption.setFarmId(request.farmId());
@@ -246,9 +246,10 @@ public class WaterService {
         consumption.setZoneId(request.zoneId() == null ? consumption.getZoneId() : request.zoneId());
         if (request.lotId() != null) {
             consumption.setLotId(normalizeLotId(request.lotId()));
+            consumption.setProcessingBatchId(processingBatchIdOf(consumption.getLotId()));
         }
         if (request.activity() != null) {
-            consumption.setActivity(ConsumptionActivity.normalize(request.activity()));
+            consumption.setActivity(ConsumptionActivity.of(request.activity()));
         }
         WaterConsumption updated = waterConsumptionRepository.save(consumption);
         checkQuotaThresholds(consumption);
@@ -270,7 +271,7 @@ public class WaterService {
     }
 
     @Transactional
-    public void deleteConsumption(UUID consumptionId) {
+    public void deleteConsumption(Long consumptionId) {
         waterConsumptionRepository.delete(getConsumptionEntity(consumptionId));
     }
 
@@ -278,7 +279,7 @@ public class WaterService {
         return waterQualityTestRepository.findAll().stream().map(WaterQualityResponse::from).toList();
     }
 
-    public PageResponse<WaterQualityResponse> findQualityTests(Pageable pageable, UUID sourceId) {
+    public PageResponse<WaterQualityResponse> findQualityTests(Pageable pageable, Long sourceId) {
         Page<WaterQualityTest> page = sourceId == null
                 ? waterQualityTestRepository.findAll(pageable)
                 : waterQualityTestRepository.findBySourceId(sourceId, pageable);
@@ -301,12 +302,12 @@ public class WaterService {
         return WaterQualityResponse.from(saved);
     }
 
-    public WaterQualityResponse getQualityTest(UUID qualityTestId) {
+    public WaterQualityResponse getQualityTest(Long qualityTestId) {
         return WaterQualityResponse.from(getQualityTestEntity(qualityTestId));
     }
 
     @Transactional
-    public WaterQualityResponse updateQualityTest(UUID qualityTestId, WaterQualityUpdateRequest request) {
+    public WaterQualityResponse updateQualityTest(Long qualityTestId, WaterQualityUpdateRequest request) {
         WaterQualityTest test = getQualityTestEntity(qualityTestId);
         if (request.sourceId() != null) {
             requireSource(request.sourceId());
@@ -324,7 +325,7 @@ public class WaterService {
     }
 
     @Transactional
-    public void deleteQualityTest(UUID qualityTestId) {
+    public void deleteQualityTest(Long qualityTestId) {
         waterQualityTestRepository.delete(getQualityTestEntity(qualityTestId));
     }
 
@@ -336,30 +337,30 @@ public class WaterService {
         }
     }
 
-    private void requireFarm(UUID farmId) {
-        if (farmId == null || farmRepository.findById(farmId).isEmpty()) {
+    private void requireFarm(Long farmId) {
+        if (farmId == null || !farmDirectory.farmExists(farmId)) {
             throw new NotFoundException("Farm");
         }
     }
 
-    private WaterSource requireSource(UUID sourceId) {
+    private WaterSource requireSource(Long sourceId) {
         if (sourceId == null) {
             throw new NotFoundException("WaterSource");
         }
         return getSourceEntity(sourceId);
     }
 
-    private WaterSource getSourceEntity(UUID sourceId) {
+    private WaterSource getSourceEntity(Long sourceId) {
         return waterSourceRepository.findById(sourceId)
                 .orElseThrow(() -> new NotFoundException("WaterSource"));
     }
 
-    private WaterConsumption getConsumptionEntity(UUID consumptionId) {
+    private WaterConsumption getConsumptionEntity(Long consumptionId) {
         return waterConsumptionRepository.findById(consumptionId)
                 .orElseThrow(() -> new NotFoundException("WaterConsumption"));
     }
 
-    private WaterQualityTest getQualityTestEntity(UUID qualityTestId) {
+    private WaterQualityTest getQualityTestEntity(Long qualityTestId) {
         return waterQualityTestRepository.findById(qualityTestId)
                 .orElseThrow(() -> new NotFoundException("WaterQualityTest"));
     }
@@ -378,19 +379,9 @@ public class WaterService {
             return;
         }
 
-        UUID recipient = userRepository.findAll().stream().map(user -> user.getId()).findFirst().orElse(null);
-        if (recipient == null) {
-            return;
-        }
-
-        Notification notification = new Notification();
-        notification.setUserId(recipient);
-        notification.setTitle("Non-compliant water");
-        notification.setMessage(buildQualityMessage(test, phOutOfRange, turbidityHigh));
-        notification.setType("warning");
-        notification.setRead(false);
-        notification.setActionUrl("/api/water/quality/" + test.getId());
-        notificationRepository.save(notification);
+        // An automatic alert like the others, addressed to the IoT system person.
+        alertService.raise("warning", "Non-compliant water", buildQualityMessage(test, phOutOfRange, turbidityHigh),
+                "/api/water-supply/quality/" + test.getId());
     }
 
     private String buildQualityMessage(WaterQualityTest test, boolean phOut, boolean turbidityHigh) {
@@ -413,7 +404,7 @@ public class WaterService {
 
     /** Batch variant: one mapping lookup for the whole list instead of one per row. */
     private List<WaterConsumptionResponse> consumptionResponses(List<WaterConsumption> consumptions) {
-        Map<UUID, List<String>> blocks = zoneBlockResolver.blockCodesForZones(
+        Map<Long, List<String>> blocks = zoneBlockResolver.blockCodesForZones(
                 consumptions.stream().map(WaterConsumption::getZoneId).toList());
         return consumptions.stream()
                 .map(c -> consumptionResponse(c, c.getZoneId() == null ? List.of() : blocks.getOrDefault(c.getZoneId(), List.of())))
@@ -426,6 +417,11 @@ public class WaterService {
      */
     private static WaterConsumptionResponse consumptionResponse(WaterConsumption consumption, List<String> blocks) {
         return WaterConsumptionResponse.from(consumption, blocks.size() == 1 ? blocks.get(0) : null, blocks.size() > 1);
+    }
+
+    /** The product transformation batch a lot designates, or {@code null} when the lot is not one. */
+    private Long processingBatchIdOf(String lotId) {
+        return processingBatches.findBatch(lotId).map(ProcessingBatch::id).orElse(null);
     }
 
     static String normalizeLotId(String lotId) {

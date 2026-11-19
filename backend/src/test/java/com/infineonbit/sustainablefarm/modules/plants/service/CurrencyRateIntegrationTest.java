@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.config.DemoDataSeeder;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.CurrencyRateRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
@@ -99,8 +100,8 @@ class CurrencyRateIntegrationTest {
 
     @Test
     void startup_shouldLoadNoRate_outsideTheDevProfile() {
-        // Assert: the loader is not even a bean, so no default rate reaches another environment
-        assertTrue(applicationContext.getBeansOfType(CurrencyRateLoader.class).isEmpty());
+        // Assert: the demo data seeder is not even a bean, so no default rate reaches another environment
+        assertTrue(applicationContext.getBeansOfType(DemoDataSeeder.class).isEmpty());
     }
 
     @Test

@@ -1,13 +1,22 @@
 import { useMemo, useState } from 'react'
-import { useRainwaterHarvests, useWaterSources } from '../../hooks/useWaterData'
+import { useTranslation } from 'react-i18next'
+import { Card, EmptyState, ErrorState, Select, Table } from '../../../../shared/ui'
 import { useListControls } from '../../../../shared/hooks/useListControls'
-import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from './Pagination'
+import { useRainwaterHarvests, useWaterSources } from '../../hooks/useWaterData'
+import { useWaterFormat } from '../../format'
 import { WsRadialGauge, WsBarChart } from '../charts'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
+import { C } from '../chartUtils'
+import { ChoiceChips } from '../common/ChoiceChips'
+import { Filters, Screen, SplitLayout } from '../common/Screen'
+import { ListPagination } from '../common/ListPagination'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { Stat } from '../common/Stat'
+import { tableSort } from '../common/listSort'
+import { sameId } from './ids'
 
 const DAY_MS = 24 * 3600 * 1000
+const PERIODS = ['week', 'month', 'all']
 
 /**
  * Rainwater harvesting - READ-ONLY view.
@@ -15,6 +24,8 @@ const DAY_MS = 24 * 3600 * 1000
  * are computed automatically by the backend: no manual entry.
  */
 export function RainwaterView() {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { harvests, loading, error } = useRainwaterHarvests()
   const { sources } = useWaterSources()
   const [period, setPeriod] = useState('all')
@@ -30,7 +41,7 @@ export function RainwaterView() {
   }, [harvests])
 
   const filtered = useMemo(() => {
-    let list = harvests.filter((item) => !sourceFilter || item.sourceId === sourceFilter)
+    let list = harvests.filter((item) => !sourceFilter || sameId(item.sourceId, sourceFilter))
     if (period !== 'all') {
       const days = period === 'week' ? 7 : 30
       const cutoff = maxDateMs - days * DAY_MS
@@ -53,105 +64,70 @@ export function RainwaterView() {
     collected: Math.round(item.harvestedLiters || 0),
   })), [filtered])
 
+  const columns = [
+    { key: 'captureDate', header: t('rainwater.columns.date'), sortable: true, cell: (item) => (item.captureDate || '').slice(0, 10) },
+    { key: 'volume', header: t('rainwater.columns.volume'), cell: (item) => <strong>{format.liters(Math.round(item.harvestedLiters || 0))}</strong> },
+  ]
+
+  function renderHarvests() {
+    if (loading) return <LoadingState label={t('rainwater.loading')} />
+    if (error) return <ErrorState message={error.message || t('rainwater.loadError')} />
+    if (barData.length === 0) return <EmptyState title={t('rainwater.emptyTitle')} message={t('rainwater.empty')} />
+    return (
+      <div className="flex flex-col gap-4">
+        <WsBarChart
+          data={barData}
+          xKey="day"
+          bars={[{ key: 'collected', name: t('rainwater.series'), color: C.primary }]}
+          exportName="rainwater-harvest"
+        />
+        <Table caption={t('rainwater.harvestTitle')} columns={columns} rows={tableList.items} {...tableSort(tableList)} />
+        <ListPagination list={tableList} />
+      </div>
+    )
+  }
+
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Rainwater harvesting</h1>
-          <p>Rainfall measured by IoT sensor - harvest volumes computed automatically.</p>
-        </div>
+    <Screen title={t('rainwater.title')} subtitle={t('rainwater.subtitle')}>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label={t('rainwater.period')} value={t(`rainwater.periodValues.${period}`)} />
+        <Stat label={t('rainwater.totalCollected')} value={<span className="text-text-accent">{format.liters(Math.round(totalCollected))}</span>} />
+        <Stat label={t('rainwater.coverage')} value={t('rainwater.coverageValue', { value: format.number(Math.round(coveragePct)) })} />
       </div>
 
-      <div className="ws-metric-banner">
-        <div className="ws-metric-pill">
-          <div>
-            <div className="label">Period</div>
-            <div className="value">{period === 'all' ? 'All history' : period === 'week' ? 'Last week' : 'Last month'}</div>
-          </div>
-        </div>
-        <div className="ws-metric-pill">
-          <div>
-            <div className="label">Total collected</div>
-            <div className="value" style={{ color: 'var(--ws-primary-dark)' }}>{Math.round(totalCollected)} L</div>
-          </div>
-        </div>
-        <div className="ws-metric-pill">
-          <div>
-            <div className="label">Coverage rate</div>
-            <div className="value">{Math.round(coveragePct)} %</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="ws-layout-2">
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Tank level</h2>
-            <span>{rainSource ? rainSource.name : '-'}</span>
-          </div>
-          <div className="ws-panel-body">
-            <WsRadialGauge value={levelPct} color={levelPct >= 90 ? 'var(--ws-orange)' : 'var(--ws-primary)'} />
-            <p style={{ margin: '10px 0 0', fontSize: '12px', color: 'var(--ws-muted)', textAlign: 'center' }}>
-              Level measured by IoT sensor - orange alert above 90 percent (SC-06).
-            </p>
-          </div>
-        </div>
-
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Harvest per rain event</h2>
-            <div className="ws-switcher">
-              {[['week', 'Week'], ['month', 'Month'], ['all', 'All']].map(([item, label]) => (
-                <button key={item} className={`ws-chip ${period === item ? 'active' : ''}`} onClick={() => setPeriod(item)}>{label}</button>
-              ))}
-            </div>
-          </div>
-          <div className="ws-filters">
-            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
-              <option value="">All sources</option>
-              {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
-            </select>
-            <SearchInput value={tableList.query} onChange={tableList.setQuery} placeholder="Search by date..." />
-          </div>
-          <div className="ws-panel-body">
-            {loading ? (
-              <Spinner label="Loading harvests..." full />
-            ) : error ? (
-              <EmptyState title="Error" description={error.message || 'Unable to load harvests.'} />
-            ) : barData.length === 0 ? (
-              <EmptyState title="No harvest" description="Rainfall measured by the IoT rain gauge will appear here - volumes computed automatically." />
-            ) : (
-              <>
-                <WsBarChart
-                  data={barData}
-                  xKey="day"
-                  bars={[{ key: 'collected', name: 'Collected volume (L)', color: 'var(--ws-primary)' }]}
-                  exportName="rainwater-harvest"
-                />
-                <table className="ws-table">
-                  <thead>
-                    <tr>
-                      <th onClick={() => tableList.toggleSort('captureDate')} style={{ cursor: 'pointer' }}>
-                        Date {tableList.sort && tableList.sort.key === 'captureDate' ? (tableList.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                      </th>
-                      <th>Collected volume</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableList.items.map((item) => (
-                      <tr key={item.id}>
-                        <td>{(item.captureDate || '').slice(0, 10)}</td>
-                        <td><strong>{Math.round(item.harvestedLiters || 0)} L</strong></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <Pagination page={tableList.page} pageCount={tableList.pageCount} onPage={tableList.setPage} total={tableList.total} unit="harvest" />
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+      <SplitLayout
+        main={
+          <Card
+            title={t('rainwater.tankTitle')}
+            actions={<span className="text-sm text-text-muted">{rainSource ? rainSource.name : t('rainwater.noSource')}</span>}
+          >
+            <WsRadialGauge value={levelPct} color={levelPct >= 90 ? C.orange : C.primary} />
+            <p className="mt-3 text-center text-xs text-text-muted">{t('rainwater.tankNote')}</p>
+          </Card>
+        }
+        aside={
+          <Card
+            title={t('rainwater.harvestTitle')}
+            actions={
+              <ChoiceChips
+                label={t('rainwater.periodLabel')}
+                value={period}
+                onChange={setPeriod}
+                options={PERIODS.map((value) => ({ value, label: t(`rainwater.periods.${value}`) }))}
+              />
+            }
+          >
+            <Filters>
+              <Select aria-label={t('rainwater.sourceFilter')} value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="w-auto">
+                <option value="">{t('rainwater.allSources')}</option>
+                {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
+              </Select>
+              <SearchField value={tableList.query} onChange={tableList.setQuery} placeholder={t('rainwater.search')} />
+            </Filters>
+            {renderHarvests()}
+          </Card>
+        }
+      />
+    </Screen>
   )
 }

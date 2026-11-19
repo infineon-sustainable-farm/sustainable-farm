@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import java.util.List;
 import java.util.Optional;
@@ -40,7 +40,7 @@ class RainwaterTankMonitorTest {
     @Test
     void raisesAnOverflowRiskAlertAboveNinetyFivePercent() {
         when(alertService.raiseOnce(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(Optional.of(new Notification()));
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(AlertDto.class)));
 
         List<String> raised = monitor(0d).evaluate(tank(1000d, 960d));
 
@@ -59,7 +59,7 @@ class RainwaterTankMonitorTest {
     @Test
     void recommendsRainwaterFirstAboveFiftyPercentWithANeed() {
         when(alertService.raiseOnce(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(Optional.of(new Notification()));
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(AlertDto.class)));
 
         List<String> raised = monitor(500d).evaluate(tank(1000d, 700d));
 

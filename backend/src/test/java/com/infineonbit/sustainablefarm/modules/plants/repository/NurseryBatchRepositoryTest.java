@@ -20,9 +20,17 @@ public class NurseryBatchRepositoryTest {
     @Autowired
     private NurseryBatchRepository nurseryBatchRepository;
 
-    private NurseryBatch batch(Integer farmId, String batchCode, LocalDate startedOn) {
-        return nurseryBatchRepository.save(new NurseryBatch(null, farmId, batchCode, "Keitt", NurseryOrigin.IN_HOUSE,
-                null, null, startedOn, 150, startedOn.plusMonths(6), null, "user_entry", null));
+    private NurseryBatch batch(Long farmId, String batchCode, LocalDate startedOn) {
+        NurseryBatch batch = new NurseryBatch();
+        batch.setFarmId(farmId);
+        batch.setBatchCode(batchCode);
+        batch.setVarietyName("Keitt");
+        batch.setOrigin(NurseryOrigin.IN_HOUSE);
+        batch.setStartedOn(startedOn);
+        batch.setInitialCount(150);
+        batch.setPlannedTransplantOn(startedOn.plusMonths(6));
+        batch.setSource("user_entry");
+        return nurseryBatchRepository.save(batch);
     }
 
     private static List<Long> ids(List<NurseryBatch> batches) {
@@ -33,7 +41,7 @@ public class NurseryBatchRepositoryTest {
     void findByFarmAndCode_shouldMatchOnlyTheBatchesWithoutFarm_whenTheFarmIsNull() {
         // Arrange
         NurseryBatch withoutFarm = batch(null, "P1", LocalDate.of(2026, 3, 2));
-        batch(1, "P1", LocalDate.of(2026, 3, 2));
+        batch(1L, "P1", LocalDate.of(2026, 3, 2));
         batch(null, "P2", LocalDate.of(2026, 3, 2));
         // Act & Assert: a missing farm is a farm of its own, never every farm
         assertEquals(List.of(withoutFarm.getId()), ids(nurseryBatchRepository.findByFarmAndCode(null, "P1")));
@@ -44,18 +52,18 @@ public class NurseryBatchRepositoryTest {
     void findByFarmAndCode_shouldMatchOnlyThatFarm_whenAFarmIsGiven() {
         // Arrange
         batch(null, "P1", LocalDate.of(2026, 3, 2));
-        NurseryBatch ofFarm1 = batch(1, "P1", LocalDate.of(2026, 3, 2));
-        batch(2, "P1", LocalDate.of(2026, 3, 2));
+        NurseryBatch ofFarm1 = batch(1L, "P1", LocalDate.of(2026, 3, 2));
+        batch(2L, "P1", LocalDate.of(2026, 3, 2));
         // Act & Assert
-        assertEquals(List.of(ofFarm1.getId()), ids(nurseryBatchRepository.findByFarmAndCode(1, "P1")));
-        assertEquals(List.of(), ids(nurseryBatchRepository.findByFarmAndCode(3, "P1")));
+        assertEquals(List.of(ofFarm1.getId()), ids(nurseryBatchRepository.findByFarmAndCode(1L, "P1")));
+        assertEquals(List.of(), ids(nurseryBatchRepository.findByFarmAndCode(3L, "P1")));
     }
 
     @Test
     void findByOptionalFarm_shouldReturnEveryFarm_byStartDateThenIdentifier() {
         // Arrange: saved out of date order, two on the same day
         NurseryBatch late = batch(null, "P2", LocalDate.of(2026, 7, 1));
-        NurseryBatch early = batch(1, "P1", LocalDate.of(2026, 3, 2));
+        NurseryBatch early = batch(1L, "P1", LocalDate.of(2026, 3, 2));
         NurseryBatch sameDay = batch(null, "P3", LocalDate.of(2026, 3, 2));
         // Act & Assert
         assertEquals(List.of(early.getId(), sameDay.getId(), late.getId()),
@@ -66,11 +74,11 @@ public class NurseryBatchRepositoryTest {
     void findByOptionalFarm_shouldKeepOnlyThatFarm_whenAFarmIsGiven() {
         // Arrange
         batch(null, "P1", LocalDate.of(2026, 3, 2));
-        NurseryBatch ofFarm1 = batch(1, "P1", LocalDate.of(2026, 3, 2));
-        batch(2, "P1", LocalDate.of(2026, 3, 2));
+        NurseryBatch ofFarm1 = batch(1L, "P1", LocalDate.of(2026, 3, 2));
+        batch(2L, "P1", LocalDate.of(2026, 3, 2));
         // Act & Assert
-        assertEquals(List.of(ofFarm1.getId()), ids(nurseryBatchRepository.findByOptionalFarm(1)));
-        assertEquals(List.of(), ids(nurseryBatchRepository.findByOptionalFarm(3)));
+        assertEquals(List.of(ofFarm1.getId()), ids(nurseryBatchRepository.findByOptionalFarm(1L)));
+        assertEquals(List.of(), ids(nurseryBatchRepository.findByOptionalFarm(3L)));
     }
 
     @Test

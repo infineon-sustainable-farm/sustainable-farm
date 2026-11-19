@@ -35,8 +35,9 @@ import java.util.List;
  * <li>{@code PUT /api/plants/variety-references/{id}} — correct a reference</li>
  * </ul>
  * <p>
- * Outside the dev profile the reference starts empty: a planted variety is
- * listed apart by the forecast until its reference is entered. One reference
+ * At startup the reference holds the five varieties of the catalogue that the
+ * other modules reference (see {@code VarietyCatalogLoader}); another planted
+ * variety is listed apart by the forecast until its reference is entered. One reference
  * serves a variety on every farm and block. Errors use the application-wide
  * {@code ApiError} body: 400 with {@code fieldErrors} for an invalid request,
  * 404 for an unknown reference, 409 when the name is already in the reference.

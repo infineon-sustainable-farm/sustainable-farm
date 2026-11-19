@@ -1,7 +1,12 @@
 import { useState } from "react";
-import Modal from "../../../shared/components/Modal";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal, Select } from "../../../shared/ui";
 import { CATEGORY, STAGE, STATUS } from "../constants";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
+import { useEnumLabels } from "../format";
+import FormActions from "./FormActions";
+import FormAlert from "./FormAlert";
+
+const MAX_NAME_LENGTH = 100;
 
 const initialForm = {
   name: "",
@@ -11,6 +16,8 @@ const initialForm = {
 };
 
 function EquipmentFormModal({ isOpen, onClose, onSubmit, serverError }) {
+  const { t } = useTranslation("machinery");
+  const enumLabels = useEnumLabels();
   const [form, setForm] = useState(initialForm);
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -21,8 +28,8 @@ function EquipmentFormModal({ isOpen, onClose, onSubmit, serverError }) {
 
   function validate() {
     const errors = {};
-    if (!form.name.trim()) errors.name = "Name is required.";
-    else if (form.name.length > 30) errors.name = "Name must be 30 characters or fewer.";
+    if (!form.name.trim()) errors.name = t("validation.nameRequired");
+    else if (form.name.length > MAX_NAME_LENGTH) errors.name = t("validation.nameTooLong", { max: MAX_NAME_LENGTH });
     return errors;
   }
 
@@ -41,52 +48,31 @@ function EquipmentFormModal({ isOpen, onClose, onSubmit, serverError }) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <h2 className="text-lg font-bold mb-4">Add equipment</h2>
-
-      {serverError && (
-        <p className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded mb-4">{serverError}</p>
-      )}
+    <Modal open={isOpen} onClose={handleClose} title={t("equipment.add")}>
+      {serverError && <FormAlert>{serverError}</FormAlert>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div>
-          <label className="text-sm font-medium">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-          />
-          {fieldErrors.name && <p className="text-red-600 text-xs mt-1">{fieldErrors.name}</p>}
-        </div>
+        <Field label={t("fields.name")} error={fieldErrors.name}>
+          <Input name="name" value={form.name} onChange={handleChange} />
+        </Field>
 
-        <div>
-          <label className="text-sm font-medium">Category</label>
-          <select name="category" value={form.category} onChange={handleChange} className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1">
+        <Field label={t("equipment.category")}>
+          <Select name="category" value={form.category} onChange={handleChange}>
             {Object.values(CATEGORY).map((value) => (
-              <option key={value} value={value}>{formatEnumLabel(value)}</option>
+              <option key={value} value={value}>{enumLabels.category(value)}</option>
             ))}
-          </select>
-        </div>
+          </Select>
+        </Field>
 
-        <div>
-          <label className="text-sm font-medium">Stage</label>
-          <select name="stage" value={form.stage} onChange={handleChange} className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1">
+        <Field label={t("equipment.stage")}>
+          <Select name="stage" value={form.stage} onChange={handleChange}>
             {Object.values(STAGE).map((value) => (
-              <option key={value} value={value}>{formatEnumLabel(value)}</option>
+              <option key={value} value={value}>{enumLabels.stage(value)}</option>
             ))}
-          </select>
-        </div>
+          </Select>
+        </Field>
 
-        <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-300">
-            Cancel
-          </button>
-          <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white">
-            Save
-          </button>
-        </div>
+        <FormActions onCancel={handleClose} />
       </form>
     </Modal>
   );

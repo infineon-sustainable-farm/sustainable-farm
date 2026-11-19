@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.VarietyResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.exception.VarietyNotFoundException;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,26 +17,9 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class VarietyService {
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final PopulationEventRepository populationEventRepository;
-
-    /**
-     * Turns a blank filter into no filter at all.
-     *
-     * <p>A filter sent as an empty or whitespace-only string means "no filter".
-     * It is turned into {@code null} so the query ignores it instead of looking
-     * for a variety whose block is literally the empty string.
-     *
-     * @param value the filter value as received, possibly {@code null}
-     * @return the trimmed value, or {@code null} if it was null or blank
-     */
-    private static String normalizeFilter(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * Maps an entity to its API representation.
@@ -49,16 +32,16 @@ public class VarietyService {
      *                         {@code null} if it has none
      * @return the API representation of that variety
      */
-    private static VarietyResponse toResponse(Variety variety, Integer currentTreeCount) {
+    private static VarietyResponse toResponse(BlockVariety variety, Integer currentTreeCount) {
         return new VarietyResponse(
                 variety.getId(),
                 variety.getFarmId(),
                 variety.getName(),
                 variety.getTreeCount(),
                 currentTreeCount,
-                variety.getRowSpacingM(),
-                variety.getTreeSpacingM(),
-                variety.getTreeDensityPerHa(),
+                Decimals.toDouble(variety.getRowSpacingM()),
+                Decimals.toDouble(variety.getTreeSpacingM()),
+                Decimals.toDouble(variety.getTreeDensityPerHa()),
                 variety.getVigor(),
                 variety.getBlockCode(),
                 variety.getPlantOrigin(),
@@ -73,14 +56,14 @@ public class VarietyService {
      * row is a normal outcome and returns an empty list; it is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
-     * @return the matching varieties, possibly empty
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
+     * @return the matching varieties ordered by block code, name and id, possibly empty
      */
-    public List<VarietyResponse> getAllVarieties(Integer farmId, String blockCode) {
-        List<Variety> varieties = varietyRepository.findByOptionalFilters(
-                farmId,
-                normalizeFilter(blockCode));
+    public List<VarietyResponse> getAllVarieties(Long farmId, String blockCode) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        List<BlockVariety> varieties = PlantsBlocks.sortedByBlockCode(
+                blockVarietyRepository.findByOptionalFilters(blocks.all(), blocks.ids()), BlockVariety::getBlockCode);
         Map<Long, Integer> currentTreeCounts = currentTreeCounts(varieties);
         return varieties.stream()
                 .map(variety -> toResponse(variety, currentTreeCounts.get(variety.getId())))
@@ -95,7 +78,7 @@ public class VarietyService {
      * @throws VarietyNotFoundException if no variety exists with this ID
      */
     public VarietyResponse getVarietyById(Long id) {
-        Variety variety = varietyRepository.findById(id)
+        BlockVariety variety = blockVarietyRepository.findById(id)
                 .orElseThrow(() -> new VarietyNotFoundException(id));
         return toResponse(variety, currentTreeCounts(List.of(variety)).get(variety.getId()));
     }
@@ -110,11 +93,11 @@ public class VarietyService {
      * @param varieties the varieties about to be returned
      * @return the balance of each variety that has at least one event, by variety ID
      */
-    private Map<Long, Integer> currentTreeCounts(List<Variety> varieties) {
+    private Map<Long, Integer> currentTreeCounts(List<BlockVariety> varieties) {
         if (varieties.isEmpty()) {
             return Map.of();
         }
-        List<Long> ids = varieties.stream().map(Variety::getId).toList();
+        List<Long> ids = varieties.stream().map(BlockVariety::getId).toList();
         return populationEventRepository.findTreeBalances(ids).stream()
                 .collect(Collectors.toMap(
                         TreeBalance::getVarietyId,

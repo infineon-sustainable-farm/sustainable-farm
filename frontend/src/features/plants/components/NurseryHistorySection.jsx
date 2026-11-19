@@ -1,18 +1,11 @@
 import { useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, EmptyState, ErrorState, Input, Select } from "../../../shared/ui";
 import { useNurseryBatches } from "../hooks/useNurseryBatches";
 import { useNurseryEvents } from "../hooks/useNurseryEvents";
-import { formatCode } from "../utils/format";
+import { formatEnum } from "../utils/format";
+import { NURSERY_EVENT_TYPES } from "../utils/nurseryRequests";
 import NurseryEventsTable from "./NurseryEventsTable";
-import PlantsEmptyState from "./PlantsEmptyState";
-import { FIELD_INPUT, PRIMARY_BUTTON } from "./plantsStyles";
-
-// The event types the API records.
-const EVENT_TYPES = ["STAGE_CHANGE", "LOSS", "TRANSPLANT"];
-
-const LABEL_CLASS = "text-xs font-semibold text-gray-500";
-const CONTROL_CLASS =
-    `min-w-0 max-w-full ${FIELD_INPUT}`;
 
 /**
  * One filter of the history. Its accessible name joins the section title and
@@ -21,10 +14,10 @@ const CONTROL_CLASS =
 function FilterField({ id, label, children }) {
     return (
         <div className="flex max-w-full min-w-0 items-center gap-3">
-            <label id={`${id}-label`} htmlFor={id} className={`${LABEL_CLASS} shrink-0`}>
+            <label id={`${id}-label`} htmlFor={id} className="shrink-0 text-sm font-medium">
                 {label}
             </label>
-            {children}
+            <div className="min-w-0">{children}</div>
         </div>
     );
 }
@@ -39,6 +32,7 @@ function FilterField({ id, label, children }) {
  * apply here.
  */
 export default function NurseryHistorySection() {
+    const { t } = useTranslation("plants");
     // Raw values as the API takes them; an empty string means "no filter".
     const [batchId, setBatchId] = useState("");
     const [eventType, setEventType] = useState("");
@@ -54,116 +48,91 @@ export default function NurseryHistorySection() {
     });
     const isFiltered = Boolean(batchId || eventType || from || to);
     const labelledBy = (id) => `nursery-history-title ${id}-label`;
+    const typeOptions = NURSERY_EVENT_TYPES.map((type) => ({ value: type, label: formatEnum("nurseryEvent", type) }));
 
     return (
-        <section aria-labelledby="nursery-history-title" className="flex flex-col gap-4">
-            <div>
-                <h2 id="nursery-history-title" className="font-heading text-lg font-bold text-on-background">
-                    Nursery history
-                </h2>
-                <p className="mt-1 text-sm text-gray-600">The destination block filter does not apply here.</p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
-                <FilterField id="nursery-history-batch" label="Batch">
-                    <select
+        <Card
+            aria-labelledby="nursery-history-title"
+            title={<span id="nursery-history-title">{t("nursery.history.title")}</span>}
+            subtitle={t("nursery.history.subtitle")}
+        >
+            <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <FilterField id="nursery-history-batch" label={t("nursery.history.batch")}>
+                    <Select
                         id="nursery-history-batch"
                         value={batchId}
                         onChange={(event) => setBatchId(event.target.value)}
                         aria-labelledby={labelledBy("nursery-history-batch")}
-                        className={CONTROL_CLASS}
                     >
-                        <option value="">All batches</option>
+                        <option value="">{t("nursery.history.allBatches")}</option>
                         {(batches ?? []).map((batch) => (
                             <option key={batch.id} value={batch.id}>
-                                {`${batch.batchCode} · ${batch.varietyName}`}
+                                {t("nursery.batches.batchOption", { code: batch.batchCode, variety: batch.varietyName })}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </FilterField>
 
-                <FilterField id="nursery-history-event" label="Event">
-                    <select
+                <FilterField id="nursery-history-event" label={t("nursery.history.event")}>
+                    <Select
                         id="nursery-history-event"
                         value={eventType}
                         onChange={(event) => setEventType(event.target.value)}
                         aria-labelledby={labelledBy("nursery-history-event")}
-                        className={CONTROL_CLASS}
                     >
-                        <option value="">All events</option>
-                        {EVENT_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                                {formatCode(type)}
+                        <option value="">{t("nursery.history.allEvents")}</option>
+                        {typeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </FilterField>
 
-                <FilterField id="nursery-history-from" label="From">
-                    <input
+                <FilterField id="nursery-history-from" label={t("nursery.history.from")}>
+                    <Input
                         id="nursery-history-from"
                         type="date"
                         value={from}
                         onChange={(event) => setFrom(event.target.value)}
                         aria-labelledby={labelledBy("nursery-history-from")}
-                        className={CONTROL_CLASS}
                     />
                 </FilterField>
 
-                <FilterField id="nursery-history-to" label="To">
-                    <input
+                <FilterField id="nursery-history-to" label={t("nursery.history.to")}>
+                    <Input
                         id="nursery-history-to"
                         type="date"
                         value={to}
                         onChange={(event) => setTo(event.target.value)}
                         aria-labelledby={labelledBy("nursery-history-to")}
-                        className={CONTROL_CLASS}
                     />
                 </FilterField>
             </div>
 
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-16 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading nursery events…
-                </div>
-            )}
+            {isPending && <NurseryEventsTable loading />}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-on-background">
-                            Nursery events could not be loaded
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <ErrorState
+                    message={`${t("nursery.history.error")}. ${t("nursery.batches.errorHint")}`}
+                    onRetry={() => refetch()}
+                    retrying={isFetching}
+                    retryLabel={t("common.retry")}
+                />
             )}
 
             {!isPending && !isError && events.length === 0 && (
                 isFiltered ? (
-                    <PlantsEmptyState
-                        title="No event matches these filters"
-                        hint="Try another batch, event or date range."
+                    <EmptyState
+                        title={t("nursery.history.emptyFiltered")}
+                        message={t("nursery.history.emptyFilteredHint")}
                     />
                 ) : (
-                    <PlantsEmptyState title="No nursery event recorded yet" />
+                    <EmptyState message={t("nursery.history.empty")} />
                 )
             )}
 
             {!isPending && !isError && events.length > 0 && <NurseryEventsTable events={events} />}
-        </section>
+        </Card>
     );
 }

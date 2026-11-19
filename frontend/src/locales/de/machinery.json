@@ -1,0 +1,232 @@
+{
+  "name": "Maschinen",
+  "nav": {
+    "dashboard": "Übersicht",
+    "equipmentRegistry": "Geräteverzeichnis",
+    "maintenance": "Wartung",
+    "usageFuelLog": "Nutzung & Kraftstoff",
+    "repairLog": "Reparaturprotokoll",
+    "operators": "Bediener",
+    "spareParts": "Ersatzteile"
+  },
+  "common": {
+    "none": "—",
+    "unknownEquipment": "#{{id}}",
+    "tryAgain": "Erneut versuchen",
+    "loadingEquipment": "Geräte werden geladen…",
+    "noEquipmentDetached": "Kein Gerät (nicht zugeordnet)",
+    "noPerson": "Niemand"
+  },
+  "units": {
+    "hours": "{{value}} h",
+    "liters": "{{value}} l",
+    "hoursTick": "{{value}} h"
+  },
+  "enums": {
+    "status": {
+      "OPERATIONAL": "Betriebsbereit",
+      "UNDER_MAINTENANCE": "In Wartung",
+      "OUT_OF_SERVICE": "Außer Betrieb"
+    },
+    "category": {
+      "AGRICULTURAL_MACHINERY": "Landmaschinen",
+      "AGRICULTURAL_EQUIPMENT": "Landwirtschaftliche Geräte",
+      "PROCESSING_MACHINERY": "Verarbeitungsmaschinen"
+    },
+    "stage": {
+      "CULTIVATION": "Anbau",
+      "HARVEST": "Ernte",
+      "PROCESSING": "Verarbeitung",
+      "DRYING": "Trocknung"
+    },
+    "maintenanceType": {
+      "PREVENTIVE": "Vorbeugend",
+      "CORRECTIVE": "Instandsetzend"
+    }
+  },
+  "fields": {
+    "name": "Name",
+    "equipment": "Gerät",
+    "date": "Datum",
+    "operator": "Bediener",
+    "cost": "Kosten",
+    "notes": "Notizen",
+    "type": "Art"
+  },
+  "validation": {
+    "nameRequired": "Der Name ist erforderlich.",
+    "nameTooLong": "Der Name darf höchstens {{max}} Zeichen lang sein.",
+    "equipmentRequired": "Das Gerät ist erforderlich.",
+    "dateRequired": "Das Datum ist erforderlich.",
+    "costRequired": "Die Kosten sind erforderlich.",
+    "costInvalid": "Die Kosten müssen 0 oder mehr betragen, mit höchstens 2 Nachkommastellen."
+  },
+  "notifications": {
+    "button": "Benachrichtigungen",
+    "title": "Benachrichtigungen zu niedrigem Bestand",
+    "deleteAll": "Alle löschen",
+    "empty": "Keine Benachrichtigungen zu niedrigem Bestand.",
+    "item": "{{quantity}} auf Lager – Meldebestand {{threshold}}",
+    "deleteOne": "Benachrichtigung löschen"
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "subtitle": "Überblick über Anlagen, Lagerbestand, Wartung und Feldarbeiten.",
+    "bannerAlt": "Kenne deinen Fuhrpark. Lass deinen Hof wachsen.",
+    "loadError": "Die Übersicht konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "totalAssets": "Anlagen gesamt",
+    "totalAssetsHint": "{{rate}} % betriebsbereit · {{underMaintenance}} in Wartung · {{outOfService}} außer Betrieb",
+    "overdue": "Überfällige Wartungen",
+    "dueSoonHint": "{{number}} in den nächsten 7 Tagen fällig",
+    "nothingDue": "In den nächsten 7 Tagen nichts fällig",
+    "lowStock": "Teile mit niedrigem Bestand",
+    "lowStockHint": "Am oder unter dem Meldebestand",
+    "inventoryValue": "Lagerwert",
+    "inventoryHint": "{{number}} erfasste Ersatzteile",
+    "chartTitle": "Kraftstoffkosten und Nutzung",
+    "chartSubtitle": "Feldarbeiten der letzten 6 Monate",
+    "usage": "Nutzung",
+    "downtime": "{{value}} h Ausfallzeit",
+    "chartEmpty": "In den letzten 6 Monaten wurden weder Kraftstoff noch Nutzung erfasst.",
+    "fuelCostSeries": "Kraftstoffkosten ($)",
+    "usageSeries": "Nutzung (Stunden)",
+    "attentionTitle": "Handlungsbedarf",
+    "attentionSubtitle": "Überfällige Wartungen und nachzubestellende Teile",
+    "allClear": "Alles erledigt: nichts überfällig und kein niedriger Bestand.",
+    "overdueMaintenance": "Überfällige Wartungen",
+    "lowStockParts": "Teile mit niedrigem Bestand",
+    "daysLate": "{{number}} Tg. überfällig",
+    "stockRatio": "{{quantity}} / {{threshold}}"
+  },
+  "equipment": {
+    "title": "Geräteverzeichnis",
+    "add": "Gerät hinzufügen",
+    "loadError": "Die Geräte konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "empty": "Noch keine Geräte erfasst. Klicken Sie auf „Gerät hinzufügen“, um zu beginnen.",
+    "category": "Kategorie",
+    "stage": "Phase",
+    "status": "Status",
+    "editStatus": "Status bearbeiten",
+    "statusTitle": "Status ändern: {{name}}",
+    "deleteTitle": "Gerät löschen",
+    "deleteMessage": "Möchten Sie „{{name}}“ wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+  },
+  "maintenance": {
+    "title": "Wartungsplan",
+    "add": "Wartung planen",
+    "edit": "Wartungsplan bearbeiten",
+    "loadError": "Der Wartungsplan konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "empty": "Noch keine Wartung geplant. Klicken Sie auf „Wartung planen“, um zu beginnen.",
+    "noEquipment": "Keine Geräte verfügbar. Fügen Sie ein Gerät hinzu, bevor Sie eine Wartung planen.",
+    "frequency": "Intervall",
+    "frequencyPlaceholder": "z. B. alle 250 Stunden",
+    "lastCompleted": "Zuletzt durchgeführt",
+    "nextDue": "Nächste Fälligkeit",
+    "nextDueDate": "Nächstes Fälligkeitsdatum",
+    "lastCompletedRequired": "Das Datum der letzten Durchführung ist erforderlich.",
+    "nextDueRequired": "Das nächste Fälligkeitsdatum ist erforderlich.",
+    "nextDueBeforeLast": "Das nächste Fälligkeitsdatum darf nicht vor der letzten Durchführung liegen.",
+    "frequencyTooLong": "Das Intervall darf höchstens {{max}} Zeichen lang sein.",
+    "overdueBy": "Seit {{number}} Tg. überfällig",
+    "dueIn": "Fällig in {{number}} Tg.",
+    "inDays": "In {{number}} Tg.",
+    "deleteTitle": "Wartungsplan löschen",
+    "deleteMessage": {
+      "PREVENTIVE": "Möchten Sie den vorbeugenden Wartungsplan für {{equipment}} wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+      "CORRECTIVE": "Möchten Sie den instandsetzenden Wartungsplan für {{equipment}} wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+    }
+  },
+  "usageFuel": {
+    "title": "Nutzungs- und Kraftstoffprotokoll"
+  },
+  "usage": {
+    "title": "Nutzungsprotokoll",
+    "add": "Nutzung erfassen",
+    "edit": "Nutzungseintrag bearbeiten",
+    "loadError": "Das Nutzungsprotokoll konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "empty": "Noch keine Nutzung erfasst. Klicken Sie auf „Nutzung erfassen“, um zu beginnen.",
+    "noEquipment": "Keine Geräte verfügbar. Fügen Sie ein Gerät hinzu, bevor Sie eine Nutzung erfassen.",
+    "hoursUsed": "Betriebsstunden",
+    "hoursRequired": "Die Betriebsstunden sind erforderlich.",
+    "hoursInvalid": "Die Betriebsstunden müssen 0 oder mehr betragen, mit höchstens 2 Nachkommastellen.",
+    "notesTooLong": "Die Notizen dürfen höchstens {{max}} Zeichen lang sein.",
+    "deleteTitle": "Nutzungseintrag löschen",
+    "deleteMessage": "Möchten Sie den Nutzungseintrag vom {{date}} für {{equipment}} wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+  },
+  "fuel": {
+    "title": "Kraftstoffprotokoll",
+    "add": "Betankung erfassen",
+    "edit": "Betankung bearbeiten",
+    "loadError": "Das Kraftstoffprotokoll konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "empty": "Noch keine Betankung erfasst. Klicken Sie auf „Betankung erfassen“, um zu beginnen.",
+    "noEquipment": "Keine Geräte verfügbar. Fügen Sie ein Gerät hinzu, bevor Sie eine Betankung erfassen.",
+    "liters": "Liter",
+    "litersRequired": "Die Litermenge ist erforderlich.",
+    "litersInvalid": "Die Litermenge muss 0 oder mehr betragen, mit höchstens 2 Nachkommastellen.",
+    "deleteTitle": "Betankung löschen",
+    "deleteMessage": "Möchten Sie die Betankung vom {{date}} für {{equipment}} wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+  },
+  "repair": {
+    "title": "Reparaturprotokoll",
+    "add": "Reparatur erfassen",
+    "edit": "Reparatur bearbeiten",
+    "loadError": "Das Reparaturprotokoll konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "empty": "Noch keine Reparaturen erfasst. Klicken Sie auf „Reparatur erfassen“, um zu beginnen.",
+    "noEquipment": "Keine Geräte verfügbar. Fügen Sie ein Gerät hinzu, bevor Sie eine Reparatur erfassen.",
+    "issue": "Störung",
+    "issueDescription": "Beschreibung der Störung",
+    "downtime": "Ausfallzeit",
+    "downtimeHours": "Ausfallzeit (Stunden)",
+    "technician": "Techniker",
+    "issueRequired": "Die Beschreibung der Störung ist erforderlich.",
+    "issueTooLong": "Die Beschreibung der Störung darf höchstens {{max}} Zeichen lang sein.",
+    "downtimeInvalid": "Die Ausfallzeit muss 0 oder mehr betragen, mit höchstens 2 Nachkommastellen.",
+    "deleteTitle": "Reparatur löschen",
+    "deleteMessage": "Möchten Sie die Reparatur vom {{date}} für {{equipment}} wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+  },
+  "operators": {
+    "title": "Bediener",
+    "add": "Bediener zuweisen",
+    "edit": "Zuweisung bearbeiten",
+    "editTitle": "Bedienerzuweisung bearbeiten",
+    "loadError": "Die Bedienerzuweisungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "empty": "Noch keine Bedienerzuweisungen. Weisen Sie einem Gerät einen Bediener zu, um zu beginnen.",
+    "noEquipment": "Keine Geräte verfügbar. Fügen Sie ein Gerät hinzu, bevor Sie einen Bediener zuweisen.",
+    "jobTitle": "Funktion",
+    "startDate": "Beginn",
+    "endDate": "Ende",
+    "person": "Bediener",
+    "selectEquipment": "Gerät auswählen",
+    "endDateOptional": "Ende (optional)",
+    "personRequired": "Wählen Sie den Bediener.",
+    "jobTitleRequired": "Die Funktion ist erforderlich.",
+    "jobTitleTooLong": "Die Funktion darf höchstens {{max}} Zeichen lang sein.",
+    "startDateRequired": "Das Beginndatum ist erforderlich.",
+    "endDateBeforeStart": "Das Enddatum darf nicht vor dem Beginndatum liegen.",
+    "deleteTitle": "Bedienerzuweisung löschen",
+    "deleteMessage": "Möchten Sie die Zuweisung von „{{name}}“ wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+  },
+  "spareParts": {
+    "title": "Ersatzteile",
+    "add": "Ersatzteil hinzufügen",
+    "edit": "Ersatzteil bearbeiten",
+    "loadError": "Die Ersatzteile konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "empty": "Noch keine Ersatzteile erfasst. Klicken Sie auf „Ersatzteil hinzufügen“, um zu beginnen.",
+    "compatibleAsset": "Passendes Gerät",
+    "noCompatibleAsset": "Kein passendes Gerät",
+    "quantity": "Lagerbestand",
+    "reorderThreshold": "Meldebestand",
+    "unitCost": "Stückpreis",
+    "lowStock": "Niedriger Bestand",
+    "lowStockTitle": "Am oder unter dem Meldebestand ({{threshold}})",
+    "quantityRequired": "Der Lagerbestand ist erforderlich.",
+    "quantityInvalid": "Der Lagerbestand muss eine ganze Zahl von 0 oder mehr sein.",
+    "thresholdRequired": "Der Meldebestand ist erforderlich.",
+    "thresholdInvalid": "Der Meldebestand muss eine ganze Zahl von 0 oder mehr sein.",
+    "unitCostRequired": "Der Stückpreis ist erforderlich.",
+    "unitCostInvalid": "Der Stückpreis muss 0 oder mehr betragen, mit höchstens 2 Nachkommastellen.",
+    "unitCostTooLarge": "Der Stückpreis ist zu hoch.",
+    "deleteTitle": "Ersatzteil löschen",
+    "deleteMessage": "Möchten Sie „{{name}}“ wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+  }
+}

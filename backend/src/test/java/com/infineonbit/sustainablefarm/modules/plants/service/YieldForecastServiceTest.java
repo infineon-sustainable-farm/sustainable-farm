@@ -1,24 +1,26 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.Entry;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.MonthlyTotal;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse.VarietyWithoutReference;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldForecastResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthPhaseYieldShare;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Arrays;
@@ -48,15 +50,18 @@ public class YieldForecastServiceTest {
 
     private YieldForecastService yieldForecastService;
 
+    /** Blocks A to E of farm 1 in the farm referential. */
+    private static final PlantsBlocks PLANTS_BLOCKS = TestBlocks.onFarm(1L, "A", "B", "C", "D", "E").asPlantsBlocks();
+
     /** The real shares on the mocked repository: a row is a correction, a missing row its default. */
     @BeforeEach
     void setUp() {
         yieldForecastService = new YieldForecastService(populationEventRepository, varietyReferenceRepository,
-                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository));
+                new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository), PLANTS_BLOCKS);
     }
 
-    private static Variety variety(long id, Integer farmId, String blockCode, String name) {
-        Variety variety = new Variety();
+    private static BlockVariety variety(long id, Long farmId, String blockCode, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.setFarmId(farmId);
         variety.setBlockCode(blockCode);
@@ -64,7 +69,7 @@ public class YieldForecastServiceTest {
         return variety;
     }
 
-    private static PopulationEvent planting(Variety variety, LocalDate date, int treeCount) {
+    private static PopulationEvent planting(BlockVariety variety, LocalDate date, int treeCount) {
         return new PopulationEvent(
                 variety.getId() + 100, variety, PopulationEventType.PLANTING, date, treeCount, "user_entry", null);
     }
@@ -85,11 +90,11 @@ public class YieldForecastServiceTest {
 
     private static VarietyReference reference(long id, String name, double yieldPerTreeKg,
                                               int harvestStartMonth, int harvestEndMonth, String seasonSource) {
-        return new VarietyReference(id, name, yieldPerTreeKg, "Zalka_2025",
+        return new VarietyReference(id, name, BigDecimal.valueOf(yieldPerTreeKg), "Zalka_2025",
                 harvestStartMonth, harvestEndMonth, seasonSource, null);
     }
 
-    /** The defaults of AgronomicReferenceLoader, as they sit in the tables. */
+    /** The default reference values, as they sit in the tables. */
     private static List<VarietyReference> defaultReferences() {
         return List.of(
                 reference(1L, "Keitt", 220.0, 5, 7, "varietal_guide_west_africa"),
@@ -99,14 +104,15 @@ public class YieldForecastServiceTest {
 
     private static List<GrowthPhaseYieldShare> shares(double establishment, double gradual, double full) {
         return List.of(
-                new GrowthPhaseYieldShare(1L, "establishment", establishment, "orchard_literature", null),
-                new GrowthPhaseYieldShare(2L, "gradual production", gradual, "assumption_to_validate", null),
-                new GrowthPhaseYieldShare(3L, "full production", full, "by_definition", null));
+                new GrowthPhaseYieldShare(1L, "establishment", BigDecimal.valueOf(establishment), "orchard_literature", null),
+                new GrowthPhaseYieldShare(2L, "gradual production", BigDecimal.valueOf(gradual), "assumption_to_validate", null),
+                new GrowthPhaseYieldShare(3L, "full production", BigDecimal.valueOf(full), "by_definition", null));
     }
 
     /** Stubs the plantings and the balance of each, one balance per planting, in the same order. */
-    private void plantings(Integer farmId, String blockCode, List<PopulationEvent> plantings, long... balances) {
-        when(populationEventRepository.findPlantingsByOptionalFilters(farmId, blockCode)).thenReturn(plantings);
+    private void plantings(Long farmId, String blockCode, List<PopulationEvent> plantings, long... balances) {
+        PlantsBlocks.BlockFilter blocks = PLANTS_BLOCKS.filter(farmId, blockCode);
+        when(populationEventRepository.findPlantingsByOptionalFilters(blocks.all(), blocks.ids())).thenReturn(plantings);
         TreeBalance[] rows = new TreeBalance[balances.length];
         for (int i = 0; i < balances.length; i++) {
             rows[i] = balance(plantings.get(i).getVariety().getId(), balances[i]);
@@ -117,10 +123,10 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldGiveTheWorkedExample_for2027() {
         // Arrange: the orchard of the runtime check, in the repository order (block, then name)
-        Variety amelie = variety(3L, null, "A", "Amélie");
-        Variety kent = variety(2L, null, "A", "Kent");
-        Variety palmer = variety(4L, null, "A", "Palmer");
-        Variety keitt = variety(1L, null, "B", "Keitt");
+        BlockVariety amelie = variety(3L, null, "A", "Amélie");
+        BlockVariety kent = variety(2L, null, "A", "Kent");
+        BlockVariety palmer = variety(4L, null, "A", "Palmer");
+        BlockVariety keitt = variety(1L, null, "B", "Keitt");
         plantings(null, null, List.of(
                         planting(amelie, LocalDate.of(2025, 3, 1), 20),
                         planting(kent, LocalDate.of(2020, 6, 1), 40),
@@ -160,7 +166,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldReadTheYieldFromTheReference() {
         // Arrange: a mentor lowered the Keitt yield to 80 kg in the table
-        Variety keitt = variety(1L, null, "B", "Keitt");
+        BlockVariety keitt = variety(1L, null, "B", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2023, 9, 24), 150)), 150);
         when(varietyReferenceRepository.findAll())
                 .thenReturn(List.of(reference(1L, "Keitt", 80.0, 5, 7, "orchard_literature")));
@@ -174,7 +180,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldDefaultToTheCurrentMonthAndSixMonths() {
         // Arrange
-        when(populationEventRepository.findPlantingsByOptionalFilters(null, null)).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS)).thenReturn(List.of());
         // Act
         YieldForecastResponse forecast = yieldForecastService.getYieldForecast(null, null, null, null, TODAY);
         // Assert: September 2026 to February 2027, all at zero
@@ -191,21 +197,21 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldPassTheFiltersAndTurnABlankBlockIntoNoFilter() {
         // Arrange
-        when(populationEventRepository.findPlantingsByOptionalFilters(1, "B")).thenReturn(List.of());
-        when(populationEventRepository.findPlantingsByOptionalFilters(null, null)).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, TestBlocks.idsOf("B"))).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS)).thenReturn(List.of());
         // Act
-        yieldForecastService.getYieldForecast(1, " B ", JANUARY_2027, 12, TODAY);
+        yieldForecastService.getYieldForecast(1L, " B ", JANUARY_2027, 12, TODAY);
         yieldForecastService.getYieldForecast(null, "  ", JANUARY_2027, 12, TODAY);
         // Assert
-        verify(populationEventRepository).findPlantingsByOptionalFilters(1, "B");
-        verify(populationEventRepository).findPlantingsByOptionalFilters(null, null);
+        verify(populationEventRepository).findPlantingsByOptionalFilters(false, TestBlocks.idsOf("B"));
+        verify(populationEventRepository).findPlantingsByOptionalFilters(true, TestBlocks.NO_IDS);
     }
 
     @Test
     void getYieldForecast_shouldIgnoreAVarietyWithNoTreeLeft() {
         // Arrange: every Kent tree died; Palmer has no reference but no tree either
-        Variety kent = variety(2L, null, "A", "Kent");
-        Variety palmer = variety(4L, null, "A", "Palmer");
+        BlockVariety kent = variety(2L, null, "A", "Kent");
+        BlockVariety palmer = variety(4L, null, "A", "Palmer");
         plantings(null, null, List.of(
                         planting(kent, LocalDate.of(2020, 6, 1), 40),
                         planting(palmer, LocalDate.of(2024, 1, 10), 10)),
@@ -222,7 +228,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldGiveNothing_forTheMonthOfAPlantingAfterItsFirstDay() {
         // Arrange: a non-zero establishment share, so only the missing age can explain a missing entry
-        Variety kent = variety(2L, null, "A", "Kent");
+        BlockVariety kent = variety(2L, null, "A", "Kent");
         plantings(null, null, List.of(planting(kent, LocalDate.of(2027, 4, 15), 40)), 40);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.1, 0.5, 1.0));
@@ -240,7 +246,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldSpreadASeasonOverTheNewYear() {
         // Arrange: a variety harvested from November to February
-        Variety winter = variety(5L, null, "C", "Winter");
+        BlockVariety winter = variety(5L, null, "C", "Winter");
         plantings(null, null, List.of(planting(winter, LocalDate.of(2015, 1, 1), 10)), 10);
         when(varietyReferenceRepository.findAll())
                 .thenReturn(List.of(reference(9L, "Winter", 100.0, 11, 2, "test_source")));
@@ -257,12 +263,12 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldUseTheDefaultShare_ofAPhaseWithoutCorrection() {
         // Arrange: the other two phases are corrected, gradual production is not
-        Variety keitt = variety(1L, null, "B", "Keitt");
+        BlockVariety keitt = variety(1L, null, "B", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2023, 9, 24), 150)), 150);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(List.of(
-                new GrowthPhaseYieldShare(1L, "establishment", 0.0, "orchard_literature", null),
-                new GrowthPhaseYieldShare(3L, "full production", 1.0, "by_definition", null)));
+                new GrowthPhaseYieldShare(1L, "establishment", BigDecimal.valueOf(0.0), "orchard_literature", null),
+                new GrowthPhaseYieldShare(3L, "full production", BigDecimal.valueOf(1.0), "by_definition", null)));
         // Act
         YieldForecastResponse forecast = yieldForecastService.getYieldForecast(null, null, JANUARY_2027, 12, TODAY);
         // Assert: 150 × 220 × 0.25 / 3 each month of the season, with the source of the default
@@ -280,7 +286,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldAddUpTheSeasonToItsExactTotal_byLargestRemainder() {
         // Arrange: 40 Keitt in full production, 8,800 kg a year over May to July
-        Variety keitt = variety(1L, 7, "A", "Keitt");
+        BlockVariety keitt = variety(1L, 7L, "A", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2019, 9, 15), 40)), 40);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.25, 1.0));
@@ -294,7 +300,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldGiveAMonthTheSameValue_whenTheWindowCutsTheSeason() {
         // Arrange: the same 40 Keitt
-        Variety keitt = variety(1L, 7, "A", "Keitt");
+        BlockVariety keitt = variety(1L, 7L, "A", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2019, 9, 15), 40)), 40);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.25, 1.0));
@@ -308,7 +314,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldSpreadASeasonOverTheNewYear_fromItsFirstMonth() {
         // Arrange: 1 tree of 100.3 kg in full production, November to February: 25.075 kg a month
-        Variety winter = variety(9L, null, "W", "Winter");
+        BlockVariety winter = variety(9L, null, "W", "Winter");
         plantings(null, null, List.of(planting(winter, LocalDate.of(2015, 1, 1), 1)), 1);
         when(varietyReferenceRepository.findAll())
                 .thenReturn(List.of(reference(9L, "Winter", 100.3, 11, 2, "test_source")));
@@ -323,7 +329,7 @@ public class YieldForecastServiceTest {
     @Test
     void getYieldForecast_shouldGiveTheTenthToTheLargestRemainder_whenThePhaseChangesInTheSeason() {
         // Arrange: 40 Keitt planted on 15/05/2024: 2 years on 01/05/2027, 3 years on 01/06/2027
-        Variety keitt = variety(1L, 7, "A", "Keitt");
+        BlockVariety keitt = variety(1L, 7L, "A", "Keitt");
         plantings(null, null, List.of(planting(keitt, LocalDate.of(2024, 5, 15), 40)), 40);
         when(varietyReferenceRepository.findAll()).thenReturn(defaultReferences());
         when(growthPhaseYieldShareRepository.findAll()).thenReturn(shares(0.0, 0.5, 1.0));

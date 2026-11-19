@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord.PackageType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackageType;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,8 +25,7 @@ public class PackagingRecordUpdateRequest {
     @Positive(message = "Package quantity must be positive")
     private BigDecimal packageQuantityKg;
 
-    // Lot code not updatable - mandatory for traceability compliance
-    // private String lotCode;
+    // No lotCode: it is not updatable, for traceability compliance.
 
     private Boolean exportReady;
 

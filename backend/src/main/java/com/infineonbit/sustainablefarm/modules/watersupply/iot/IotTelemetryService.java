@@ -1,11 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.iot;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterConsumptionCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQualityCreateRequest;
-import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.SoilMoistureReading;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
@@ -20,7 +21,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -39,11 +39,11 @@ public class IotTelemetryService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IotTelemetryService.class);
 
     /** Input record: a measurement from a device. */
-    public record Telemetry(String deviceId, String type, UUID sourceId, UUID zoneId,
+    public record Telemetry(String deviceId, String type, Long sourceId, Long zoneId,
                             Map<String, Object> values, Instant timestamp) {}
 
     /** Individual result of the routing. */
-    public record Result(String type, UUID sourceId, String status, String message) {}
+    public record Result(String type, Long sourceId, String status, String message) {}
 
     private final WaterSourceRepository waterSourceRepository;
     private final WaterService waterService;
@@ -55,6 +55,7 @@ public class IotTelemetryService {
     private final RainwaterTankMonitor rainwaterTankMonitor;
     private final WaterIntegrationProperties properties;
     private final TransactionTemplate itemTransaction;
+    private final SystemUsers systemUsers;
 
     public IotTelemetryService(WaterSourceRepository waterSourceRepository,
                                WaterService waterService,
@@ -65,7 +66,8 @@ public class IotTelemetryService {
                                WaterQuotaService waterQuotaService,
                                RainwaterTankMonitor rainwaterTankMonitor,
                                WaterIntegrationProperties properties,
-                               PlatformTransactionManager transactionManager) {
+                               PlatformTransactionManager transactionManager,
+                               SystemUsers systemUsers) {
         this.waterSourceRepository = waterSourceRepository;
         this.waterService = waterService;
         this.rainwaterHarvestService = rainwaterHarvestService;
@@ -75,6 +77,7 @@ public class IotTelemetryService {
         this.waterQuotaService = waterQuotaService;
         this.rainwaterTankMonitor = rainwaterTankMonitor;
         this.properties = properties;
+        this.systemUsers = systemUsers;
         TransactionTemplate perItem = new TransactionTemplate(transactionManager);
         perItem.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.itemTransaction = perItem;
@@ -88,8 +91,8 @@ public class IotTelemetryService {
         Map<String, Object> node = (Map<String, Object>) nodeMap;
         String deviceId = node.get("device_id") == null ? null : String.valueOf(node.get("device_id"));
         String type = node.get("type") == null ? null : String.valueOf(node.get("type"));
-        UUID sourceId = node.get("source_id") == null ? null : UUID.fromString(String.valueOf(node.get("source_id")));
-        UUID zoneId = node.get("zone_id") == null ? null : UUID.fromString(String.valueOf(node.get("zone_id")));
+        Long sourceId = node.get("source_id") == null ? null : Long.valueOf(String.valueOf(node.get("source_id")).trim());
+        Long zoneId = node.get("zone_id") == null ? null : Long.valueOf(String.valueOf(node.get("zone_id")).trim());
         Instant timestamp = node.get("timestamp") == null ? Instant.now()
                 : Instant.parse(String.valueOf(node.get("timestamp")));
         Map<String, Object> values = new java.util.LinkedHashMap<>();
@@ -314,12 +317,14 @@ public class IotTelemetryService {
                 true,
                 severity,
                 0,
-                "IoT sensor detection - abnormal flow (" + severity + ")",
-                t.deviceId() == null ? "IoT sensor" : t.deviceId()));
+                "IoT sensor detection - abnormal flow (" + severity + ")"
+                        + (t.deviceId() == null ? "" : " - device " + t.deviceId()),
+                // The technical IoT person: a sensor never creates a person in the people directory.
+                systemUsers.iotSystemUserId()));
         return new Result("clogging", t.zoneId(), "processed", "Clogging " + severity + " recorded");
     }
 
-    private WaterSource requireSource(UUID sourceId) {
+    private WaterSource requireSource(Long sourceId) {
         if (sourceId == null) {
             throw new IllegalArgumentException("Missing 'source_id' field");
         }

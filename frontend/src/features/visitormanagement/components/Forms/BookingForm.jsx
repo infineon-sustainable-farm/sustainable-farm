@@ -1,24 +1,23 @@
 import { useState } from "react";
-import { formatTimeRange, toIsoDate } from "../../utils/format";
-import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Select } from "../../../../shared/ui";
+import { toIsoDate, useVisitorFormat } from "../../utils/format";
+import { useLabels } from "../../utils/labels";
 import { useAvailability } from "../../hooks/useRegistrations";
-
-const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
-const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
-const ERROR_CLASS = "mt-1 text-xs text-error";
+import FormActions from "../FormActions";
+import FormAlert from "../FormAlert";
 
 const PAYMENT_METHODS = ["CASH", "ORANGE_MONEY", "MOOV_MONEY"];
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 const PHONE_PATTERN = /^\+?[0-9][0-9()\-. ]{5,28}$/;
 
 /**
- * Booking form, used to create a booking and to edit an existing one. Both
- * send the same BookingRequest payload.
+ * Booking form, used to create a booking and to edit an existing one. Both send the same
+ * BookingRequest payload.
  *
- * Capacity filtering differs by mode: when creating, slots that cannot seat
- * the group are removed; when editing, they are kept, because the API excludes
- * the booking's own people from the occupancy before checking, so a full slot
- * can still accept the unchanged booking.
+ * Capacity filtering differs by mode: when creating, slots that cannot seat the group are
+ * removed; when editing, they are kept, because the API excludes the booking's own people from
+ * the occupancy before checking, so a full slot can still accept the unchanged booking.
  */
 export default function BookingForm({
     booking,
@@ -29,6 +28,9 @@ export default function BookingForm({
     onSubmit,
     onCancel,
 }) {
+    const { t } = useTranslation("visitormanagement");
+    const format = useVisitorFormat();
+    const labels = useLabels();
     const isEditing = Boolean(booking);
 
     const [activityId, setActivityId] = useState(booking ? String(booking.activityId) : "");
@@ -53,40 +55,35 @@ export default function BookingForm({
 
     // The first active activity is proposed by default on a new booking.
     const firstActiveActivity = activities.find((activity) => activity.active);
-    const effectiveActivityId =
-        activityId || (firstActiveActivity ? String(firstActiveActivity.id) : "");
+    const effectiveActivityId = activityId || (firstActiveActivity ? String(firstActiveActivity.id) : "");
 
     const allSlots = availability ?? [];
     const slots = isEditing
         ? allSlots
         : allSlots.filter((slot) => slot.remaining >= (validPeople ? peopleNumber : 1));
     const selectionAvailable = slots.some((slot) => String(slot.id) === timeSlotId);
-    const effectiveTimeSlotId = selectionAvailable
-        ? timeSlotId
-        : slots.length > 0
-          ? String(slots[0].id)
-          : "";
+    const effectiveTimeSlotId = selectionAvailable ? timeSlotId : slots.length > 0 ? String(slots[0].id) : "";
 
     function validate() {
         const errors = {};
-        if (!effectiveActivityId) errors.activityId = "Pick an activity.";
-        if (!date) errors.date = "Pick a visit date.";
-        if (!effectiveTimeSlotId) errors.timeSlotId = "Pick a time slot.";
+        if (!effectiveActivityId) errors.activityId = t("booking.form.errors.activity");
+        if (!date) errors.date = t("booking.form.errors.date");
+        if (!effectiveTimeSlotId) errors.timeSlotId = t("booking.form.errors.slot");
         if (!visitorFullName.trim()) {
-            errors.visitorFullName = "Visitor name is required.";
+            errors.visitorFullName = t("booking.form.errors.nameRequired");
         } else if (visitorFullName.trim().length > 150) {
-            errors.visitorFullName = "Name must be at most 150 characters.";
+            errors.visitorFullName = t("booking.form.errors.nameTooLong");
         }
         if (!visitorEmail.trim() || !EMAIL_PATTERN.test(visitorEmail.trim())) {
-            errors.visitorEmail = "Enter a valid email address.";
+            errors.visitorEmail = t("booking.form.errors.emailInvalid");
         } else if (visitorEmail.trim().length > 200) {
-            errors.visitorEmail = "Email must be at most 200 characters.";
+            errors.visitorEmail = t("booking.form.errors.emailTooLong");
         }
         if (visitorPhone.trim() && !PHONE_PATTERN.test(visitorPhone.trim())) {
-            errors.visitorPhone = "Enter a valid phone number.";
+            errors.visitorPhone = t("booking.form.errors.phoneInvalid");
         }
         if (!validPeople) {
-            errors.peopleCount = "People count must be a whole number of at least 1.";
+            errors.peopleCount = t("booking.form.errors.people");
         }
         return errors;
     }
@@ -111,199 +108,95 @@ export default function BookingForm({
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
 
     return (
-        <form
-            onSubmit={handleSubmit}
-           
-        >
+        <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div>
-                    <label htmlFor="bk-activity" className={LABEL_CLASS}>
-                        Activity
-                    </label>
-                    <select
-                        id="bk-activity"
-                        value={effectiveActivityId}
-                        onChange={(event) => setActivityId(event.target.value)}
-                        className={INPUT_CLASS}
-                    >
+                <Field id="bk-activity" label={t("booking.form.activity")} error={fieldError("activityId")}>
+                    <Select value={effectiveActivityId} onChange={(event) => setActivityId(event.target.value)}>
                         {activities.map((activity) => (
                             <option
                                 key={activity.id}
                                 value={activity.id}
-                                disabled={
-                                    !activity.active &&
-                                    String(activity.id) !== effectiveActivityId
-                                }
+                                disabled={!activity.active && String(activity.id) !== effectiveActivityId}
                             >
-                                {activity.name}
-                                {!activity.active ? " (inactive)" : ""}
+                                {activity.active
+                                    ? activity.name
+                                    : t("booking.form.inactiveActivity", { name: activity.name })}
                             </option>
                         ))}
-                    </select>
-                    {fieldError("activityId") && (
-                        <p className={ERROR_CLASS}>{fieldError("activityId")}</p>
-                    )}
-                </div>
+                    </Select>
+                </Field>
 
-                <div>
-                    <label htmlFor="bk-date" className={LABEL_CLASS}>
-                        Visit date
-                    </label>
-                    <input
-                        id="bk-date"
-                        type="date"
-                        value={date}
-                        onChange={(event) => setDate(event.target.value)}
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("date") && <p className={ERROR_CLASS}>{fieldError("date")}</p>}
-                </div>
+                <Field id="bk-date" label={t("booking.form.date")} error={fieldError("date")}>
+                    <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+                </Field>
 
-                <div>
-                    <label htmlFor="bk-slot" className={LABEL_CLASS}>
-                        Time slot
-                    </label>
-                    <select
-                        id="bk-slot"
+                <Field
+                    id="bk-slot"
+                    label={t("booking.form.slot")}
+                    error={
+                        fieldError("timeSlotId") ??
+                        (availabilityError ? (
+                            <>
+                                {t("booking.form.slotsError")}{" "}
+                                <button type="button" onClick={() => refetchAvailability()} className="underline">
+                                    {t("booking.form.retry")}
+                                </button>
+                            </>
+                        ) : undefined)
+                    }
+                >
+                    <Select
                         value={effectiveTimeSlotId}
                         onChange={(event) => setTimeSlotId(event.target.value)}
                         disabled={availabilityLoading || Boolean(availabilityError)}
-                        className={`${INPUT_CLASS} disabled:opacity-60`}
                     >
-                        {availabilityLoading && <option value="">Loading slots…</option>}
+                        {availabilityLoading && <option value="">{t("booking.form.slotsLoading")}</option>}
                         {!availabilityLoading && slots.length === 0 && (
-                            <option value="">No slots on this date</option>
+                            <option value="">{t("booking.form.noSlots")}</option>
                         )}
                         {slots.map((slot) => (
                             <option key={slot.id} value={slot.id}>
-                                {formatTimeRange(slot.startTime, slot.endTime)} · {slot.remaining} left
+                                {t("booking.form.slotOption", {
+                                    time: format.timeRange(slot.startTime, slot.endTime),
+                                    remaining: slot.remaining,
+                                })}
                             </option>
                         ))}
-                    </select>
-                    {fieldError("timeSlotId") && (
-                        <p className={ERROR_CLASS}>{fieldError("timeSlotId")}</p>
-                    )}
-                    {availabilityError && (
-                        <p className={ERROR_CLASS}>
-                            Slots could not be loaded.{" "}
-                            <button type="button" onClick={() => refetchAvailability()} className="underline">
-                                Retry
-                            </button>
-                        </p>
-                    )}
-                </div>
+                    </Select>
+                </Field>
 
-                <div>
-                    <label htmlFor="bk-name" className={LABEL_CLASS}>
-                        Visitor full name
-                    </label>
-                    <input
-                        id="bk-name"
-                        type="text"
-                        value={visitorFullName}
-                        onChange={(event) => setVisitorFullName(event.target.value)}
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("visitorFullName") && (
-                        <p className={ERROR_CLASS}>{fieldError("visitorFullName")}</p>
-                    )}
-                </div>
+                <Field id="bk-name" label={t("booking.form.name")} error={fieldError("visitorFullName")}>
+                    <Input type="text" value={visitorFullName} onChange={(event) => setVisitorFullName(event.target.value)} />
+                </Field>
 
-                <div>
-                    <label htmlFor="bk-email" className={LABEL_CLASS}>
-                        Visitor email
-                    </label>
-                    <input
-                        id="bk-email"
-                        type="email"
-                        value={visitorEmail}
-                        onChange={(event) => setVisitorEmail(event.target.value)}
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("visitorEmail") && (
-                        <p className={ERROR_CLASS}>{fieldError("visitorEmail")}</p>
-                    )}
-                </div>
+                <Field id="bk-email" label={t("booking.form.email")} error={fieldError("visitorEmail")}>
+                    <Input type="email" value={visitorEmail} onChange={(event) => setVisitorEmail(event.target.value)} />
+                </Field>
 
-                <div>
-                    <label htmlFor="bk-phone" className={LABEL_CLASS}>
-                        Visitor phone
-                    </label>
-                    <input
-                        id="bk-phone"
-                        type="tel"
-                        value={visitorPhone}
-                        onChange={(event) => setVisitorPhone(event.target.value)}
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("visitorPhone") && (
-                        <p className={ERROR_CLASS}>{fieldError("visitorPhone")}</p>
-                    )}
-                </div>
+                <Field id="bk-phone" label={t("booking.form.phone")} error={fieldError("visitorPhone")}>
+                    <Input type="tel" value={visitorPhone} onChange={(event) => setVisitorPhone(event.target.value)} />
+                </Field>
 
-                <div>
-                    <label htmlFor="bk-people" className={LABEL_CLASS}>
-                        People
-                    </label>
-                    <input
-                        id="bk-people"
-                        type="number"
-                        min="1"
-                        value={peopleCount}
-                        onChange={(event) => setPeopleCount(event.target.value)}
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("peopleCount") && (
-                        <p className={ERROR_CLASS}>{fieldError("peopleCount")}</p>
-                    )}
-                </div>
+                <Field id="bk-people" label={t("booking.form.people")} error={fieldError("peopleCount")}>
+                    <Input type="number" min="1" value={peopleCount} onChange={(event) => setPeopleCount(event.target.value)} />
+                </Field>
 
-                <div>
-                    <label htmlFor="bk-payment" className={LABEL_CLASS}>
-                        Payment method
-                    </label>
-                    <select
-                        id="bk-payment"
+                <Field id="bk-payment" label={t("booking.form.paymentMethod")}>
+                    <Select
                         value={paymentMethod}
                         onChange={(event) => setPaymentMethod(event.target.value)}
-                        className={INPUT_CLASS}
-                    >
-                        {PAYMENT_METHODS.map((method) => (
-                            <option key={method} value={method}>
-                                {formatEnumLabel(method)}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                        options={PAYMENT_METHODS.map((method) => ({ value: method, label: labels.enum(method) }))}
+                    />
+                </Field>
             </div>
 
-            {submitError && (
-                <p className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
+            {submitError && <FormAlert className="mt-4">{submitError}</FormAlert>}
 
-            <div className="mt-4 flex gap-2.5">
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isSubmitting
-                        ? "Saving…"
-                        : isEditing
-                          ? "Save booking"
-                          : "Create booking"}
-                </button>
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
-                >
-                    Cancel
-                </button>
-            </div>
+            <FormActions
+                onCancel={onCancel}
+                isSubmitting={isSubmitting}
+                submitLabel={isEditing ? t("booking.form.save") : t("booking.form.create")}
+            />
         </form>
     );
 }

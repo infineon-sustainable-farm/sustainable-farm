@@ -1,27 +1,22 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
+import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, OwnedResourceSelect, Select, Table } from '../../../../shared/ui'
+import { OWNER_LINKS } from '../../../../app/ownerLinks'
 import { productTransformationApi } from '../../api/watersupplyApi'
 import { useWaterSources } from '../../hooks/useWaterData'
-import { useLotCompliance, useLotConsumption } from '../../hooks/useIntegrations'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { EmptyState } from './EmptyState'
+import { useLotCompliance, useLotConsumption, useProcessingBatches } from '../../hooks/useIntegrations'
+import { useWaterFormat } from '../../format'
+import { FormActions, Screen, SplitLayout } from '../common/Screen'
+import { FormAlert } from '../common/FormAlert'
+import { LoadingState } from '../common/LoadingState'
+import { Stat } from '../common/Stat'
 import { AvailabilityForecastPanel } from './AvailabilityForecastPanel'
-import { ACTIVITIES, activityLabel } from './lotActivities'
-import { formatInstant, fromLocalInput } from './datetime'
+import { ACTIVITIES, useActivityLabel } from './lotActivities'
+import { fromLocalInput } from './datetime'
 
-const COMPLIANCE_META = {
-  compliant: { cls: 'green', text: 'Compliant' },
-  non_compliant: { cls: 'red', text: 'Not compliant' },
-  no_test: { cls: 'orange', text: 'No test in the window' },
-}
-
-const USAGE_WARNINGS = {
-  no_consumption_found: 'No metered consumption in this window.',
-  window_overlaps_other_lot: 'Some consumptions already belong to another lot: they were left untouched.',
-  no_source_or_zone_filter: 'No source given: every meter of the site was considered.',
-}
+const COMPLIANCE_TONES = { compliant: 'success', non_compliant: 'error', no_test: 'warning' }
+const USAGE_WARNINGS = ['no_consumption_found', 'window_overlaps_other_lot', 'no_source_or_zone_filter']
 
 const EMPTY_USAGE = { lotId: '', activity: 'WASHING', sourceId: '', startAt: '', endAt: '' }
 
@@ -31,9 +26,15 @@ const EMPTY_USAGE = { lotId: '', activity: 'WASHING', sourceId: '', startAt: '',
  *
  * Meters know nothing about lots: Product Transformation (or the water team here) tells which
  * time window belongs to which lot, and the consumptions of that window are attributed to it.
+ * The lots are the processing batches of Product Transformation, which owns them: they are picked
+ * in its list (OWNER_LINKS.processingBatch), never typed.
  */
 export function LotsView({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
+  const activityLabel = useActivityLabel()
   const { sources } = useWaterSources()
+  const processingBatches = useProcessingBatches()
   const [lotQuery, setLotQuery] = useState('')
   const [activeLot, setActiveLot] = useState('')
   const [usage, setUsage] = useState(EMPTY_USAGE)
@@ -44,7 +45,9 @@ export function LotsView({ notify }) {
   const { data: lot, loading: lotLoading, error: lotError, refetch: refetchLot } = useLotConsumption(activeLot)
   const { data: compliance, loading: complianceLoading, error: complianceError, refetch: refetchCompliance } = useLotCompliance(activeLot)
 
-  const sourceName = (sourceId) => sources.find((source) => source.id === sourceId)?.name || (sourceId ? `Source ${String(sourceId).slice(0, 8)}` : '—')
+  const sourceName = (sourceId) =>
+    sources.find((source) => source.id === sourceId)?.name ||
+    (sourceId ? t('lots.sourceFallback', { id: String(sourceId).slice(0, 8) }) : t('common.none'))
   const updateUsage = (key) => (event) => setUsage((current) => ({ ...current, [key]: event.target.value }))
 
   const lookUp = (event) => {
@@ -55,16 +58,16 @@ export function LotsView({ notify }) {
   const attach = (event) => {
     event.preventDefault()
     if (!usage.lotId.trim()) {
-      setUsageError('The lot identifier is required.')
+      setUsageError(t('lots.errors.lotRequired'))
       return
     }
     // The API accepts a window without source, but it then sweeps every meter of the site.
     if (!usage.sourceId) {
-      setUsageError('Select the source used by the lot.')
+      setUsageError(t('lots.errors.sourceRequired'))
       return
     }
     if (!usage.startAt || !usage.endAt || new Date(usage.endAt) <= new Date(usage.startAt)) {
-      setUsageError('Give a start and an end after the start.')
+      setUsageError(t('lots.errors.window'))
       return
     }
     setBusy(true)
@@ -80,7 +83,7 @@ export function LotsView({ notify }) {
       })
       .then((result) => {
         setUsageResult(result)
-        notify(`${result.attachedCount} consumption(s) attributed to ${lotId}`)
+        notify(t('lots.attached', { count: result.attachedCount, lotId }))
         // Show the lot that was just updated.
         setLotQuery(lotId)
         if (lotId === activeLot) {
@@ -90,157 +93,146 @@ export function LotsView({ notify }) {
           setActiveLot(lotId)
         }
       })
-      .catch((err) => setUsageError(err.message || 'Unable to attribute the window.'))
+      .catch((err) => setUsageError(err.message || t('lots.errors.attachFailed')))
       .finally(() => setBusy(false))
   }
 
-  const verdict = compliance ? COMPLIANCE_META[compliance.status] : null
+  const columns = [
+    { key: 'date', header: t('lots.columns.date'), cell: (item) => format.instant(item.consumptionDate) },
+    { key: 'activity', header: t('lots.columns.activity'), cell: (item) => activityLabel(item.activity) },
+    { key: 'source', header: t('lots.columns.source'), cell: (item) => sourceName(item.sourceId) },
+    { key: 'volume', header: t('lots.columns.volume'), cell: (item) => <strong>{format.liters(item.liters)}</strong> },
+  ]
+
+  function renderVerdict() {
+    if (complianceLoading) return t('lots.verdictLoading')
+    if (!compliance || !COMPLIANCE_TONES[compliance.status]) return t('common.none')
+    return <Badge tone={COMPLIANCE_TONES[compliance.status]}>{t(`lots.compliance.${compliance.status}`)}</Badge>
+  }
+
+  function renderLot() {
+    if (!activeLot) return <EmptyState title={t('lots.noLotTitle')} message={t('lots.noLot')} />
+    if (lotLoading) return <LoadingState label={t('lots.loading')} />
+    if (lotError) return <ErrorState message={lotError.message || t('lots.loadError')} />
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Stat label={t('lots.waterUsed', { lotId: lot.lotId })} value={format.liters(lot.totalLiters)} />
+          <Stat label={t('lots.quality')} value={renderVerdict()} />
+        </div>
+        {complianceError && (
+          <p className="text-xs text-text-muted">{t('lots.noVerdict', { message: complianceError.message })}</p>
+        )}
+        {compliance && (
+          <p className="text-xs text-text-muted">
+            {t('lots.complianceDetail', {
+              tests: format.number(compliance.tests.length),
+              from: format.instant(compliance.from),
+              to: format.instant(compliance.to),
+              phMin: format.number(compliance.rule.phMin),
+              phMax: format.number(compliance.rule.phMax),
+              turbidity: format.number(compliance.rule.turbidityMaxNtu),
+            })}
+            {compliance.status === 'no_test' && ` ${t('lots.noTestWarning')}`}
+          </p>
+        )}
+        {lot.items.length === 0 ? (
+          <EmptyState title={t('lots.emptyTitle')} message={t('lots.empty')} />
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(lot.byActivity).map(([activity, liters]) => (
+                <Badge key={activity} tone="info">
+                  {t('lots.byActivity', { activity: activityLabel(activity), volume: format.liters(liters) })}
+                </Badge>
+              ))}
+            </div>
+            <Table caption={t('lots.consumptionsCaption')} columns={columns} rows={lot.items} getRowKey={(item) => item.consumptionId} />
+          </>
+        )}
+      </div>
+    )
+  }
 
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Processing lots</h1>
-          <p>Water used by each Product Transformation lot, its quality, and what the tanks can still supply.</p>
-        </div>
-      </div>
-
-      <div className="ws-layout-2">
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Lot lookup</h2>
-          </div>
-          <form className="ws-filters" onSubmit={lookUp}>
-            <input
-              style={{ ...inputStyle, maxWidth: '280px' }}
-              value={lotQuery}
-              onChange={(event) => setLotQuery(event.target.value)}
-              placeholder="Lot identifier, e.g. LOT-2026-0142"
-              aria-label="Lot identifier"
-            />
-            <button type="submit" className="ws-action-btn" disabled={!lotQuery.trim()}>
-              <Search size={14} /> Look up
-            </button>
-          </form>
-          <div className="ws-panel-body">
-            {!activeLot ? (
-              <EmptyState title="No lot selected" description="Enter a lot identifier to see its water consumption and quality." />
-            ) : lotLoading ? (
-              <Spinner label="Loading the lot…" />
-            ) : lotError ? (
-              <EmptyState title="Error" description={lotError.message || 'Unable to load the lot.'} />
-            ) : (
-              <>
-                <div className="ws-metric-banner">
-                  <div className="ws-metric-pill">
-                    <div>
-                      <div className="label">Water used by {lot.lotId}</div>
-                      <div className="value" style={{ color: 'var(--ws-primary-dark)' }}>{lot.totalLiters} L</div>
-                    </div>
-                  </div>
-                  <div className="ws-metric-pill">
-                    <div>
-                      <div className="label">Washing water quality</div>
-                      <div className="value">
-                        {complianceLoading ? '…' : verdict
-                          ? <span className={`ws-tag ${verdict.cls}`}>{verdict.text}</span>
-                          : '—'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {complianceError && (
-                  <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
-                    No quality verdict: {complianceError.message}
-                  </p>
-                )}
-                {compliance && (
-                  <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
-                    {compliance.tests.length} test(s) of the lot's sources between {formatInstant(compliance.from)} and {formatInstant(compliance.to)} ·
-                    pH {compliance.rule.phMin}–{compliance.rule.phMax}, turbidity ≤ {compliance.rule.turbidityMaxNtu} NTU.
-                    {compliance.status === 'no_test' && ' Without a test, the water of this lot cannot be declared compliant.'}
-                  </p>
-                )}
-                {lot.items.length === 0 ? (
-                  <EmptyState title="No consumption for this lot" description="Attribute a metering window to this lot with the form on the right." />
-                ) : (
-                  <>
-                    <div className="ws-switcher" style={{ margin: '6px 0 12px' }}>
-                      {Object.entries(lot.byActivity).map(([activity, liters]) => (
-                        <span key={activity} className="ws-tag primary">{activityLabel(activity)}: {liters} L</span>
-                      ))}
-                    </div>
-                    <table className="ws-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Activity</th>
-                          <th>Source</th>
-                          <th>Volume</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lot.items.map((item) => (
-                          <tr key={item.consumptionId}>
-                            <td>{formatInstant(item.consumptionDate)}</td>
-                            <td>{activityLabel(item.activity)}</td>
-                            <td>{sourceName(item.sourceId)}</td>
-                            <td><strong>{item.liters} L</strong></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Attribute a metering window</h2>
-          </div>
-          <div className="ws-panel-body">
-            {usageError && <div className="ws-inline-error">{usageError}</div>}
-            <form className="ws-form-grid" onSubmit={attach}>
-              <FormField label="Lot" required>
-                <input style={inputStyle} value={usage.lotId} onChange={updateUsage('lotId')} placeholder="LOT-2026-0142" />
-              </FormField>
-              <FormField label="Activity" required>
-                <select style={inputStyle} value={usage.activity} onChange={updateUsage('activity')}>
-                  {ACTIVITIES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                </select>
-              </FormField>
-              <FormField label="Source" required>
-                <select style={inputStyle} value={usage.sourceId} onChange={updateUsage('sourceId')}>
-                  <option value="">Select</option>
+    <Screen title={t('lots.title')} subtitle={t('lots.subtitle')}>
+      <SplitLayout
+        main={
+          <Card title={t('lots.lookupTitle')}>
+            <form className="mb-4 flex flex-wrap items-center gap-3" onSubmit={lookUp}>
+              <Input
+                className="max-w-xs"
+                value={lotQuery}
+                onChange={(event) => setLotQuery(event.target.value)}
+                placeholder={t('lots.lookupPlaceholder')}
+                aria-label={t('lots.lookupLabel')}
+              />
+              <Button type="submit" icon={Search} disabled={!lotQuery.trim()}>{t('lots.lookup')}</Button>
+            </form>
+            {renderLot()}
+          </Card>
+        }
+        aside={
+          <Card title={t('lots.attachTitle')}>
+            <FormAlert>{usageError}</FormAlert>
+            <form className="flex flex-col gap-4" onSubmit={attach}>
+              <OwnedResourceSelect
+                label={t('lots.fields.lot')}
+                value={usage.lotId}
+                onChange={(lotId) => setUsage((current) => ({ ...current, lotId }))}
+                options={processingBatches.batches}
+                getOptionValue={(batch) => batch.batchId}
+                getOptionLabel={(batch) => batch.batchId}
+                loading={processingBatches.loading}
+                loadError={Boolean(processingBatches.error)}
+                onRetry={processingBatches.refetch}
+                owner={OWNER_LINKS.processingBatch}
+                required
+              />
+              <Field label={t('lots.fields.activity')} required>
+                <Select value={usage.activity} onChange={updateUsage('activity')}>
+                  {ACTIVITIES.map(([key]) => <option key={key} value={key}>{activityLabel(key)}</option>)}
+                </Select>
+              </Field>
+              <Field label={t('lots.fields.source')} required>
+                <Select value={usage.sourceId} onChange={updateUsage('sourceId')}>
+                  <option value="">{t('common.select')}</option>
                   {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
-                </select>
-              </FormField>
-              <FormField label="From" required>
-                <input style={inputStyle} type="datetime-local" value={usage.startAt} onChange={updateUsage('startAt')} />
-              </FormField>
-              <FormField label="To" required>
-                <input style={inputStyle} type="datetime-local" value={usage.endAt} onChange={updateUsage('endAt')} />
-              </FormField>
-              <div className="ws-form-actions">
-                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Attribute'}</button>
-              </div>
+                </Select>
+              </Field>
+              <Field label={t('lots.fields.from')} required>
+                <Input type="datetime-local" value={usage.startAt} onChange={updateUsage('startAt')} />
+              </Field>
+              <Field label={t('lots.fields.to')} required>
+                <Input type="datetime-local" value={usage.endAt} onChange={updateUsage('endAt')} />
+              </Field>
+              <FormActions>
+                <Button type="submit" loading={busy}>{t('lots.attach')}</Button>
+              </FormActions>
             </form>
             {usageResult && (
-              <div style={{ marginTop: '14px', fontSize: '13px' }}>
-                <strong>{usageResult.attachedCount} consumption(s), {usageResult.attachedLiters} L</strong> attributed to {usageResult.lotId}.
+              <div className="mt-4 text-sm">
+                <Trans
+                  t={t}
+                  i18nKey="lots.attachedSummary"
+                  values={{
+                    count: format.number(usageResult.attachedCount),
+                    volume: format.liters(usageResult.attachedLiters),
+                    lotId: usageResult.lotId,
+                  }}
+                  components={{ strong: <strong /> }}
+                />
                 {usageResult.warnings.map((warning) => (
-                  <p key={warning} style={{ margin: '6px 0 0', color: 'var(--ws-orange)' }}>{USAGE_WARNINGS[warning] || warning}</p>
+                  <p key={warning} className="mt-2 text-warning-fg">
+                    {USAGE_WARNINGS.includes(warning) ? t(`lots.warnings.${warning}`) : warning}
+                  </p>
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      <AvailabilityForecastPanel sources={sources} />
-    </>
+          </Card>
+        }
+      />
+      <AvailabilityForecastPanel sources={sources} processingBatches={processingBatches} />
+    </Screen>
   )
 }

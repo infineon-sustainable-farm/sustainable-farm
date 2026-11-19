@@ -1,4 +1,4 @@
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useDebouncedValue, useScenarioAnalysis } from "../hooks/useScenarioAnalysis";
 import { formatKilograms, formatNumber, formatShare, formatText } from "../utils/format";
 import {
@@ -20,91 +20,91 @@ import {
     parseTreeCountChange,
     parseYieldChangePct,
 } from "../utils/scenarioRequests";
-import { PRIMARY_BUTTON, TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
+import { ErrorBox, LoadingBox, RetryButton, SectionHeading } from "./ScenarioStatus";
+import { FIGURE_LABEL_CLASS, HEAD_ROW_CLASS, NOTE_CLASS, ROW_CLASS, ROW_HEADER_CLASS, TD_CLASS, TH_CLASS, toneOf } from "./scenarioStyles";
 
-const TH_CLASS = TABLE_HEAD;
+const BOX_CLASS = "rounded-tile border border-border-subtle bg-surface-raised";
 
-/** A gain in green, a loss in red, both darkened for text on white; the sign says it too. */
-function toneOf(amount, currency) {
-    const value = amount?.[currency === "XOF" ? "xof" : "eur"];
-    if (value === null || value === undefined || value === 0) return "text-gray-800";
-    return value > 0 ? "text-[#257e55]" : "text-[#9a3f32]";
-}
-
-/** A value with its source, or what its absence means. */
-function sourced(text, source) {
-    return `${text} (${formatText(source)})`;
+function amountTone(amount, currency) {
+    return toneOf(amount?.[currency === "XOF" ? "xof" : "eur"]);
 }
 
 /** What the benefit is computed from: the assumptions of the baseline and the levers entered, with their sources. */
-function assumptionItems(scenario, levers) {
+function assumptionItems(t, scenario, levers) {
     const currency = scenario.currency;
+    const sourced = (value, source) => t("scenarios.benefit.sourced", { value, source: formatText(source) });
     const items = [
-        `Trees: ${sourced(formatNumber(scenario.treeCount), scenario.treeCountSource)}`,
-        `Yield per tree: ${sourced(formatKilograms(scenario.yieldPerTreeKg), scenario.yieldSource)}`,
-        `Price per kg: ${sourced(formatUnitPrice(scenario.pricePerKg, currency), scenario.priceSource)}`,
+        t("scenarios.benefit.trees", { value: sourced(formatNumber(scenario.treeCount), scenario.treeCountSource) }),
+        t("scenarios.benefit.yieldPerTree", { value: sourced(formatKilograms(scenario.yieldPerTreeKg), scenario.yieldSource) }),
+        t("scenarios.benefit.pricePerKg", { value: sourced(formatUnitPrice(scenario.pricePerKg, currency), scenario.priceSource) }),
         scenario.lossRate === null
-            ? "Loss rate: not entered, so the quantities are before losses"
-            : `Loss rate: ${sourced(formatShare(scenario.lossRate), scenario.lossRateSource)}`,
+            ? t("scenarios.benefit.lossRateMissing")
+            : t("scenarios.benefit.lossRate", { value: sourced(formatShare(scenario.lossRate), scenario.lossRateSource) }),
         scenario.variableCostPerKg === null
-            ? "Variable operating cost: not entered"
-            : `Variable operating cost: ${sourced(`${formatUnitPrice(scenario.variableCostPerKg, currency)} per kg`,
-                scenario.variableCostSource)}`,
+            ? t("scenarios.benefit.variableCostMissing")
+            : t("scenarios.benefit.variableCost", {
+                value: sourced(
+                    t("scenarios.benefit.perKg", { value: formatUnitPrice(scenario.variableCostPerKg, currency) }),
+                    scenario.variableCostSource
+                ),
+            }),
         scenario.costPerAdditionalTree === null
-            ? "Cost per added tree: not entered"
-            : `Cost per added tree: ${sourced(formatMoney(scenario.costPerAdditionalTree, currency),
-                scenario.costPerAdditionalTreeSource)}`,
+            ? t("scenarios.benefit.costPerTreeMissing")
+            : t("scenarios.benefit.costPerTree", {
+                value: sourced(formatMoney(scenario.costPerAdditionalTree, currency), scenario.costPerAdditionalTreeSource),
+            }),
     ];
-    if (levers.treeCountChange !== null) items.push(`Trees added: ${formatSignedTrees(levers.treeCountChange)} (entered above)`);
-    if (levers.yieldPerTreeChangePct !== null) {
-        items.push(`Change of the yield per tree: ${formatSignedPercent(levers.yieldPerTreeChangePct)} (entered above)`);
+    if (levers.treeCountChange !== null) {
+        items.push(t("scenarios.benefit.treesAdded", { value: formatSignedTrees(levers.treeCountChange) }));
     }
-    if (levers.lossRate !== null) items.push(`Loss rate of the variant: ${formatShare(levers.lossRate)} (entered above)`);
+    if (levers.yieldPerTreeChangePct !== null) {
+        items.push(t("scenarios.benefit.yieldChange", { value: formatSignedPercent(levers.yieldPerTreeChangePct) }));
+    }
+    if (levers.lossRate !== null) items.push(t("scenarios.benefit.variantLossRate", { value: formatShare(levers.lossRate) }));
     return items;
 }
 
+function AmountCell({ amount, currency, bold = false }) {
+    const other = formatSignedOtherAmount(amount, currency);
+    return (
+        <td className={`${TD_CLASS} whitespace-nowrap ${bold ? "font-bold" : "font-semibold"} ${amountTone(amount, currency)}`}>
+            {formatSignedAmount(amount, currency)}
+            {other && <span className="block text-xs font-normal text-text-muted">{other}</span>}
+        </td>
+    );
+}
+
 function BenefitTable({ analysis }) {
+    const { t } = useTranslation("plants");
     const { change, currency } = analysis;
     return (
-        <div className={`relative ${TABLE_CARD}`}>
+        <div className={`overflow-x-auto px-5 py-2 ${BOX_CLASS}`}>
             <table className="w-full border-collapse text-sm">
                 <thead>
-                    <tr>
-                        <th scope="col" className={TH_CLASS}>Benefit type</th>
-                        <th scope="col" className={TABLE_HEAD_NUM}>{`Amount (${currencyUnit(currency)})`}</th>
-                        <th scope="col" className={TH_CLASS}>Details</th>
+                    <tr className={HEAD_ROW_CLASS}>
+                        <th scope="col" className={TH_CLASS}>{t("scenarios.benefit.typeColumn")}</th>
+                        <th scope="col" className={TH_CLASS}>
+                            {t("scenarios.benefit.amountColumn", { unit: currencyUnit(currency) })}
+                        </th>
+                        <th scope="col" className={TH_CLASS}>{t("scenarios.benefit.detailsColumn")}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {change.benefitLines.map((line) => (
-                        <tr key={line.type} className="border-b border-gray-100">
-                            <th scope="row" className="px-4 py-3 text-left font-semibold text-gray-800">
+                        <tr key={line.type} className={ROW_CLASS}>
+                            <th scope="row" className={ROW_HEADER_CLASS}>
                                 {benefitLineLabel(line)}
                             </th>
-                            <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap ${toneOf(line.amount, currency)}`}>
-                                {formatSignedAmount(line.amount, currency)}
-                                {formatSignedOtherAmount(line.amount, currency) && (
-                                    <span className="block text-xs font-normal text-gray-600">
-                                        {formatSignedOtherAmount(line.amount, currency)}
-                                    </span>
-                                )}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">{benefitLineDetails(line, currency)}</td>
+                            <AmountCell amount={line.amount} currency={currency} />
+                            <td className={TD_CLASS}>{benefitLineDetails(line, currency)}</td>
                         </tr>
                     ))}
-                    <tr className="bg-gray-50">
-                        <th scope="row" className="px-4 py-3 text-left font-bold tracking-wide text-on-background">
-                            TOTAL ANNUAL BENEFIT
+                    <tr className="bg-surface-muted">
+                        <th scope="row" className={`${ROW_HEADER_CLASS} font-bold tracking-wide`}>
+                            {t("scenarios.benefit.total")}
                         </th>
-                        <td className={`px-4 py-3 text-right font-bold whitespace-nowrap ${toneOf(change.annualBenefit, currency)}`}>
-                            {formatSignedAmount(change.annualBenefit, currency)}
-                            {formatSignedOtherAmount(change.annualBenefit, currency) && (
-                                <span className="block text-xs font-normal text-gray-600">
-                                    {formatSignedOtherAmount(change.annualBenefit, currency)}
-                                </span>
-                            )}
-                        </td>
-                        <td className="px-4 py-3 text-gray-700">The lines above, added up.</td>
+                        <AmountCell amount={change.annualBenefit} currency={currency} bold />
+                        <td className={TD_CLASS}>{t("scenarios.benefit.totalDetails")}</td>
                     </tr>
                 </tbody>
             </table>
@@ -122,6 +122,7 @@ function BenefitTable({ analysis }) {
  * the example.
  */
 export default function AnnualBenefitTable({ scenario, levers }) {
+    const { t } = useTranslation("plants");
     const settledTrees = useDebouncedValue(levers.trees);
     const settledYield = useDebouncedValue(levers.yieldPct);
     const settledLoss = useDebouncedValue(levers.loss);
@@ -141,95 +142,59 @@ export default function AnnualBenefitTable({ scenario, levers }) {
 
     return (
         <section aria-labelledby="annual-benefit-title" className="flex flex-col gap-4">
-            <div>
-                <h2 id="annual-benefit-title" className="font-heading text-lg font-bold text-on-background">
-                    Annual Benefit
-                </h2>
-                <p className="mt-1 max-w-3xl text-sm text-gray-600">
-                    The levers entered above, applied together, in a year of full production. Each line is what one
-                    lever adds, in this order: trees, yield per tree, losses, then the variable cost of what is sold in
-                    addition. The lines add up to the total.
-                </p>
-            </div>
+            <SectionHeading id="annual-benefit-title" title={t("scenarios.benefit.title")}>
+                {t("scenarios.benefit.intro")}
+            </SectionHeading>
 
-            {!hasLever && (
-                <p className="rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-600">
-                    Enter at least one lever above to see the annual benefit of the levers together.
-                </p>
-            )}
+            {!hasLever && <p className={`px-5 py-4 text-sm text-text-muted ${BOX_CLASS}`}>{t("scenarios.benefit.noLever")}</p>}
 
-            {hasLever && !data && !isError && (
-                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Computing the annual benefit…
-                </div>
-            )}
+            {hasLever && !data && !isError && <LoadingBox label={t("scenarios.benefit.computing")} />}
 
             {hasLever && isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 px-5 py-4">
-                    <div className="flex items-start gap-3">
-                        <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
-                        <div>
-                            <p className="text-sm font-bold text-on-background">The annual benefit could not be computed</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
-                            <p className="mt-0.5 text-sm text-gray-600">{error.message || "The request to the server did not succeed."}</p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <ErrorBox
+                    title={t("scenarios.benefit.error")}
+                    message={error.message || t("scenarios.requestFailed")}
+                    action={<RetryButton onClick={() => refetch()} isFetching={isFetching} />}
+                />
             )}
 
             {hasLever && analysis && !isError && (
                 <>
                     {analysis.change.annualBenefit === null ? (
-                        <p className="rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-600">
-                            Enter a price per kg in the baseline to compute the annual benefit.
-                        </p>
+                        <p className={`px-5 py-4 text-sm text-text-muted ${BOX_CLASS}`}>{t("scenarios.benefit.noPrice")}</p>
                     ) : (
                         <BenefitTable analysis={analysis} />
                     )}
                     {formatSignedOtherAmount(analysis.change.annualBenefit, currency) && (
-                        <p className="-mt-2 px-1 text-xs text-gray-600">
-                            {`In ${currencyUnit(otherCurrency(currency))}, each amount is converted on its own: the `
-                                + "total may differ by one unit from the sum of the lines."}
+                        <p className={`-mt-2 px-1 ${NOTE_CLASS}`}>
+                            {t("scenarios.benefit.conversionNote", { unit: currencyUnit(otherCurrency(currency)) })}
                         </p>
                     )}
 
                     <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
-                            <dt className="text-xs font-semibold text-gray-500">Additional investment</dt>
-                            <dd className="mt-1 text-sm font-semibold text-gray-800">
+                        <div className={`px-4 py-3 ${BOX_CLASS}`}>
+                            <dt className={FIGURE_LABEL_CLASS}>{t("scenarios.benefit.additionalInvestment")}</dt>
+                            <dd className="mt-1 text-sm font-semibold text-text">
                                 {formatAmount(analysis.change.additionalInvestment, currency)}
                                 {formatOtherAmount(analysis.change.additionalInvestment, currency)
                                     && ` (${formatOtherAmount(analysis.change.additionalInvestment, currency)})`}
                             </dd>
                             {analysis.change.additionalInvestment === null && (
-                                <dd className="mt-1 text-xs text-gray-600">
-                                    Enter a cost per added tree in the baseline to compute it.
-                                </dd>
+                                <dd className={`mt-1 ${NOTE_CLASS}`}>{t("scenarios.enterCostPerTree")}</dd>
                             )}
                         </div>
-                        <div className="rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3">
-                            <dt className="text-xs font-semibold text-gray-500">
-                                Payback of the additional investment
-                            </dt>
-                            <dd className="mt-1 text-sm font-semibold text-gray-800">
+                        <div className={`px-4 py-3 ${BOX_CLASS}`}>
+                            <dt className={FIGURE_LABEL_CLASS}>{t("scenarios.benefit.additionalPayback")}</dt>
+                            <dd className="mt-1 text-sm font-semibold text-text">
                                 {formatYears(analysis.change.additionalInvestmentPaybackYears)}
                             </dd>
                         </div>
                     </dl>
 
-                    <div className="rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4">
-                        <h3 className="font-heading text-sm font-bold text-on-background">Assumptions</h3>
-                        <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-gray-700">
-                            {assumptionItems(scenario, values).map((item) => (
+                    <div className={`px-5 py-4 ${BOX_CLASS}`}>
+                        <h3 className="text-sm font-semibold text-text">{t("scenarios.benefit.assumptions")}</h3>
+                        <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-text">
+                            {assumptionItems(t, scenario, values).map((item) => (
                                 <li key={item}>{item}</li>
                             ))}
                         </ul>

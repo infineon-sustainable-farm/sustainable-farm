@@ -1,32 +1,28 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { OWNER_LINKS } from "../../../app/ownerLinks";
+import { Field, Input, Modal, OwnedResourceSelect, Select } from "../../../shared/ui";
 import { useHealthIssues } from "../hooks/useHealthIssues";
-import { formatDate } from "../utils/format";
-import { issueOptions, OTHER_ISSUE_CODE } from "../utils/healthIssues";
+import { useMachineryEquipment } from "../hooks/useMachineryEquipment";
+import { formatDate, formatUnit } from "../utils/format";
+import { issueOptions, OTHER_ISSUE_CODE, todayAsIsoDate } from "../utils/healthIssues";
 import FindingSummary from "./FindingSummary";
-import PlantsModal from "./PlantsModal";
-import { FIELD_INPUT, FIELD_LABEL, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
+import PersonSelect from "../../../app/PersonSelect";
+import FormAlert from "./FormAlert";
+import HealthFormActions from "./HealthFormActions";
+import TreatmentTargetFields from "./TreatmentTargetFields";
 
-const LABEL_CLASS = FIELD_LABEL;
-const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT}`;
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
-
-// The API codes, sent as they are; only their labels are shown.
-const UNITS = [
-    { code: "KG", label: "kg" },
-    { code: "L", label: "L" },
-];
+// The API codes, sent as they are; only their symbols are shown.
+const UNITS = ["KG", "L"];
 
 /**
- * Same rules as the API: a block as for a planting, a quantity above 0 with at
- * most 3 decimals, a whole number of days, and a name of at most 60 characters
+ * Same rules as the API: a quantity above 0 with at most 3 decimals, a whole number of days, and a name of at most 60 characters
  * for "Other".
  */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
 const QUANTITY_PATTERN = /^\d{1,9}(\.\d{1,3})?$/;
 const DAYS_PATTERN = /^\d{1,9}$/;
 const OTHER_LABEL_MAX_LENGTH = 60;
+const TEXT_MAX_LENGTH = 255;
 
 const INITIAL_VALUES = {
     blockCode: "",
@@ -38,43 +34,17 @@ const INITIAL_VALUES = {
     activeIngredient: "",
     quantity: "",
     unit: "",
-    applicator: "",
-    equipment: "",
+    applicatorPersonId: "",
+    equipmentId: "",
 };
 
-/** Today as "YYYY-MM-DD", in local time: the latest treatment date the form accepts. */
-function todayAsIsoDate() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${now.getFullYear()}-${month}-${day}`;
-}
-
-function FormField({ id, label, error, note, className, children }) {
-    return (
-        <div className={className}>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
-
-/** A required text of at most 255 characters, as the API checks it. */
-function checkText(value, label) {
-    if (!value.trim()) return `${label} is required.`;
-    if (value.length > 255) return `${label} must be at most 255 characters.`;
+/**
+ * A required text of at most 255 characters, as the API checks it. `messages` names the field:
+ * health.treatmentForm.errors.<messages>Required and <messages>TooLong.
+ */
+function checkText(value, messages, t) {
+    if (!value.trim()) return t(`health.treatmentForm.errors.${messages}Required`);
+    if (value.length > TEXT_MAX_LENGTH) return t(`health.treatmentForm.errors.${messages}TooLong`);
     return null;
 }
 
@@ -87,6 +57,8 @@ function checkText(value, label) {
  * preventive treatment names its block, typed as for an inspection, and its
  * problem: the catalogue, then "Other" once and last, with the name of the
  * problem. The date from which harvesting is allowed is computed by the API.
+ * The equipment, optional, is a machine of the machinery register, which owns
+ * the machines: the form sends its id, never a typed name.
  *
  * The checks mirror the API rules; what the API still refuses is shown the
  * same way as for a planting:
@@ -94,7 +66,8 @@ function checkText(value, label) {
  * - a 404 or a 422 (the finding is resolved, or the treatment predates its
  *   inspection), or any other error: one message above the form.
  */
-export default function TreatmentModal({ finding, blocks, isSubmitting, error, onSubmit, onClose }) {
+export default function TreatmentModal({ finding, isSubmitting, error, onSubmit, onClose }) {
+    const { t } = useTranslation("plants");
     const isPreventive = finding === null;
     const [values, setValues] = useState(INITIAL_VALUES);
     // A number field holds "" for text it cannot read, such as "1e"; these keep
@@ -104,26 +77,23 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
     const [today] = useState(todayAsIsoDate);
 
     const issues = useHealthIssues();
+    const machines = useMachineryEquipment();
     const options = issueOptions(issues.data);
     let catalogueNote = null;
     if (isPreventive && issues.isPending) {
-        catalogueNote = "Loading the pests and diseases…";
+        catalogueNote = t("health.issues.loading");
     } else if (isPreventive && issues.isError) {
-        catalogueNote = "The pests and diseases could not be loaded: only “Other” can be picked.";
+        catalogueNote = t("health.catalogue.loadError");
     } else if (isPreventive && options.groups.length === 0) {
-        catalogueNote = "Only “Other” can be picked until a pest or disease is added to the catalogue.";
+        catalogueNote = t("health.catalogue.empty");
     }
-    const dateNote = isPreventive ? null : `Not before the inspection, on ${formatDate(finding.inspectedOn)}.`;
+    const dateNote = isPreventive
+        ? null
+        : t("health.resolveForm.dateNote", { inspection: formatDate(finding.inspectedOn) });
 
     const serverFieldErrors = error?.status === 400 ? error.data?.fieldErrors : null;
     const formError = error && !serverFieldErrors ? error.message : null;
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
-    const fieldProps = (field, id, note = null) => ({
-        "aria-invalid": fieldError(field) ? true : undefined,
-        "aria-describedby":
-            [fieldError(field) ? `${id}-error` : null, note ? `${id}-note` : null].filter(Boolean).join(" ")
-            || undefined,
-    });
 
     function setValue(field, value) {
         setValues((current) => ({ ...current, [field]: value }));
@@ -150,49 +120,47 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
     function validate() {
         const errors = {};
         if (isPreventive) {
-            if (!values.blockCode.trim()) {
-                errors.blockCode = "Block is required.";
-            } else if (!BLOCK_CODE_PATTERN.test(values.blockCode)) {
-                errors.blockCode = "Block must be a short code such as A or B2, without prefix or space.";
+            if (!values.blockCode) {
+                errors.blockCode = t("health.errors.blockRequired");
             }
             if (!values.targetIssueCode) {
-                errors.targetIssueCode = "Problem targeted is required.";
+                errors.targetIssueCode = t("health.treatmentForm.errors.targetRequired");
             } else if (values.targetIssueCode === OTHER_ISSUE_CODE) {
                 if (!values.targetOtherLabel.trim()) {
-                    errors.targetOtherLabel = "Name of the problem is required with “Other”.";
+                    errors.targetOtherLabel = t("health.errors.otherLabelRequired");
                 } else if (values.targetOtherLabel.length > OTHER_LABEL_MAX_LENGTH) {
-                    errors.targetOtherLabel = `Name of the problem must be at most ${OTHER_LABEL_MAX_LENGTH} characters.`;
+                    errors.targetOtherLabel = t("health.errors.otherLabelTooLong", { max: OTHER_LABEL_MAX_LENGTH });
                 }
             }
         }
         if (!values.treatedOn) {
-            errors.treatedOn = "Treatment date is required.";
+            errors.treatedOn = t("health.treatmentForm.errors.dateRequired");
         } else if (values.treatedOn > today) {
-            errors.treatedOn = "Treatment date cannot be in the future.";
+            errors.treatedOn = t("health.treatmentForm.errors.dateInFuture");
         } else if (!isPreventive && values.treatedOn < finding.inspectedOn) {
-            errors.treatedOn = `Treatment date cannot be before the inspection, on ${formatDate(finding.inspectedOn)}.`;
+            errors.treatedOn = t("health.treatmentForm.errors.beforeInspection", {
+                date: formatDate(finding.inspectedOn),
+            });
         }
         const days = values.preHarvestIntervalDays.trim();
         if (!unreadable.preHarvestIntervalDays && days === "") {
-            errors.preHarvestIntervalDays = "Pre-harvest interval is required.";
+            errors.preHarvestIntervalDays = t("health.treatmentForm.errors.intervalRequired");
         } else if (unreadable.preHarvestIntervalDays || !DAYS_PATTERN.test(days)) {
-            errors.preHarvestIntervalDays = "Pre-harvest interval must be a whole number of days, 0 or more.";
+            errors.preHarvestIntervalDays = t("health.treatmentForm.errors.intervalFormat");
         }
-        const productError = checkText(values.productName, "Product");
+        const productError = checkText(values.productName, "product", t);
         if (productError) errors.productName = productError;
-        const ingredientError = checkText(values.activeIngredient, "Active ingredient");
+        const ingredientError = checkText(values.activeIngredient, "ingredient", t);
         if (ingredientError) errors.activeIngredient = ingredientError;
         const quantity = values.quantity.trim();
         if (unreadable.quantity || !QUANTITY_PATTERN.test(quantity) || Number(quantity) <= 0) {
-            errors.quantity = "Quantity must be a number greater than 0, with at most 3 decimals.";
+            errors.quantity = t("health.treatmentForm.errors.quantityFormat");
         }
         if (!values.unit) {
-            errors.unit = "Unit is required.";
+            errors.unit = t("health.treatmentForm.errors.unitRequired");
         }
-        const applicatorError = checkText(values.applicator, "Applicator");
-        if (applicatorError) errors.applicator = applicatorError;
-        if (values.equipment.length > 255) {
-            errors.equipment = "Equipment must be at most 255 characters.";
+        if (!values.applicatorPersonId) {
+            errors.applicatorPersonId = t("health.treatmentForm.errors.applicatorRequired");
         }
         return errors;
     }
@@ -210,9 +178,9 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
             quantity: Number(values.quantity.trim()),
             unit: values.unit,
             preHarvestIntervalDays: Number(values.preHarvestIntervalDays.trim()),
-            applicator: values.applicator,
+            applicatorPersonId: Number(values.applicatorPersonId),
         };
-        if (values.equipment.trim()) treatment.equipment = values.equipment;
+        if (values.equipmentId) treatment.equipmentId = Number(values.equipmentId);
         if (isPreventive) {
             treatment.blockCode = values.blockCode;
             treatment.targetIssueCode = values.targetIssueCode;
@@ -221,222 +189,141 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
         onSubmit(treatment);
     }
 
-    return (
-        <PlantsModal labelledBy="treatment-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2 id="treatment-title" className="font-heading text-lg font-bold text-on-background">
-                    {isPreventive ? "Record a preventive treatment" : "Treat a finding"}
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
+    const title = isPreventive ? t("health.treatmentForm.preventiveTitle") : t("health.treatmentForm.findingTitle");
+    const unitOptions = UNITS.map((code) => ({ value: code, label: formatUnit(code) }));
+    // Props of the plain text fields, by field name.
+    const textInputs = Object.fromEntries(
+        ["productName", "activeIngredient"].map((field) => [
+            field,
+            { type: "text", value: values[field], onChange: (event) => setValue(field, event.target.value) },
+        ]),
+    );
 
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of the dialogs: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+    return (
+        <Modal open onClose={onClose} size="xl" title={title}>
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 {!isPreventive && <FindingSummary finding={finding} />}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {isPreventive && (
-                        <>
-                            <FormField id="treatment-block" label="Block" error={fieldError("blockCode")}
-                                note="Such as A or B2. The block needs no planting.">
-                                <input
-                                    id="treatment-block"
-                                    type="text"
-                                    autoFocus
-                                    list="treatment-block-options"
-                                    value={values.blockCode}
-                                    onChange={(event) => setValue("blockCode", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("blockCode", "treatment-block", true)}
-                                />
-                                <datalist id="treatment-block-options">
-                                    {blocks.map((block) => (
-                                        <option key={block} value={block} />
-                                    ))}
-                                </datalist>
-                            </FormField>
-
-                            <FormField id="treatment-target" label="Problem targeted" error={fieldError("targetIssueCode")}
-                                note={catalogueNote}>
-                                <select
-                                    id="treatment-target"
-                                    value={values.targetIssueCode}
-                                    onChange={(event) => changeTarget(event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("targetIssueCode", "treatment-target", catalogueNote)}
-                                >
-                                    {/* Empty value: sending without a choice gives "Problem targeted is required." */}
-                                    <option value="">Select a problem</option>
-                                    {options.groups.map((group) => (
-                                        <optgroup key={group.label} label={group.label}>
-                                            {group.issues.map((issue) => (
-                                                <option key={issue.code} value={issue.code}>
-                                                    {issue.name}
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    ))}
-                                    <option value={options.other.code}>{options.other.name}</option>
-                                </select>
-                            </FormField>
-
-                            {values.targetIssueCode === OTHER_ISSUE_CODE && (
-                                <FormField id="treatment-other-label" label="Name of the problem"
-                                    error={fieldError("targetOtherLabel")} className="sm:col-span-2">
-                                    <input
-                                        id="treatment-other-label"
-                                        type="text"
-                                        value={values.targetOtherLabel}
-                                        onChange={(event) => setValue("targetOtherLabel", event.target.value)}
-                                        className={INPUT_CLASS}
-                                        {...fieldProps("targetOtherLabel", "treatment-other-label")}
-                                    />
-                                </FormField>
-                            )}
-                        </>
+                        <TreatmentTargetFields
+                            values={values}
+                            options={options}
+                            catalogueNote={catalogueNote}
+                            fieldError={fieldError}
+                            onChange={setValue}
+                            onTargetChange={changeTarget}
+                        />
                     )}
 
-                    <FormField id="treatment-date" label="Treatment date" error={fieldError("treatedOn")} note={dateNote}>
-                        <input
-                            id="treatment-date"
+                    <Field
+                        id="treatment-date"
+                        label={t("health.treatmentForm.date")}
+                        error={fieldError("treatedOn")}
+                        hint={dateNote}
+                    >
+                        <Input
                             type="date"
                             autoFocus={!isPreventive}
                             min={isPreventive ? undefined : finding.inspectedOn}
                             max={today}
                             value={values.treatedOn}
                             onChange={(event) => setValue("treatedOn", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("treatedOn", "treatment-date", dateNote)}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="treatment-interval" label="Pre-harvest interval (days)"
-                        error={fieldError("preHarvestIntervalDays")} note="Whole days before the block can be harvested again.">
-                        <input
-                            id="treatment-interval"
+                    <Field
+                        id="treatment-interval"
+                        label={t("health.treatmentForm.interval")}
+                        error={fieldError("preHarvestIntervalDays")}
+                        hint={t("health.treatmentForm.intervalNote")}
+                    >
+                        <Input
                             type="number"
                             min="0"
                             step="1"
                             inputMode="numeric"
                             value={values.preHarvestIntervalDays}
                             onChange={(event) => setNumber("preHarvestIntervalDays", event)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("preHarvestIntervalDays", "treatment-interval", true)}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="treatment-product" label="Product" error={fieldError("productName")}
-                        note="Trade name.">
-                        <input
-                            id="treatment-product"
-                            type="text"
-                            value={values.productName}
-                            onChange={(event) => setValue("productName", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("productName", "treatment-product", true)}
-                        />
-                    </FormField>
+                    <Field
+                        id="treatment-product"
+                        label={t("health.treatmentForm.product")}
+                        error={fieldError("productName")}
+                        hint={t("health.treatmentForm.productNote")}
+                    >
+                        <Input {...textInputs.productName} />
+                    </Field>
 
-                    <FormField id="treatment-ingredient" label="Active ingredient" error={fieldError("activeIngredient")}>
-                        <input
-                            id="treatment-ingredient"
-                            type="text"
-                            value={values.activeIngredient}
-                            onChange={(event) => setValue("activeIngredient", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("activeIngredient", "treatment-ingredient")}
-                        />
-                    </FormField>
+                    <Field
+                        id="treatment-ingredient"
+                        label={t("health.treatmentForm.ingredient")}
+                        error={fieldError("activeIngredient")}
+                    >
+                        <Input {...textInputs.activeIngredient} />
+                    </Field>
 
-                    <FormField id="treatment-quantity" label="Quantity" error={fieldError("quantity")}>
-                        <input
-                            id="treatment-quantity"
+                    <Field id="treatment-quantity" label={t("health.treatmentForm.quantity")} error={fieldError("quantity")}>
+                        <Input
                             type="number"
                             min="0"
                             step="any"
                             inputMode="decimal"
                             value={values.quantity}
                             onChange={(event) => setNumber("quantity", event)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("quantity", "treatment-quantity")}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="treatment-unit" label="Unit" error={fieldError("unit")}>
-                        <select
-                            id="treatment-unit"
-                            value={values.unit}
-                            onChange={(event) => setValue("unit", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("unit", "treatment-unit")}
-                        >
+                    <Field id="treatment-unit" label={t("health.treatmentForm.unit")} error={fieldError("unit")}>
+                        <Select value={values.unit} onChange={(event) => setValue("unit", event.target.value)}>
                             {/* Empty value: sending without a choice gives "Unit is required." */}
-                            <option value="">Select a unit</option>
-                            {UNITS.map(({ code, label }) => (
-                                <option key={code} value={code}>
-                                    {label}
+                            <option value="">{t("health.treatmentForm.selectUnit")}</option>
+                            {unitOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </Field>
 
-                    <FormField id="treatment-applicator" label="Applicator" error={fieldError("applicator")}>
-                        <input
-                            id="treatment-applicator"
-                            type="text"
-                            value={values.applicator}
-                            onChange={(event) => setValue("applicator", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("applicator", "treatment-applicator")}
-                        />
-                    </FormField>
+                    <PersonSelect
+                        id="treatment-applicator"
+                        label={t("health.treatmentForm.applicator")}
+                        value={values.applicatorPersonId}
+                        onChange={(id) => setValue("applicatorPersonId", id)}
+                        error={fieldError("applicatorPersonId")}
+                        required
+                    />
 
-                    <FormField id="treatment-equipment" label="Equipment" error={fieldError("equipment")} note="Optional.">
-                        <input
-                            id="treatment-equipment"
-                            type="text"
-                            value={values.equipment}
-                            onChange={(event) => setValue("equipment", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("equipment", "treatment-equipment", true)}
-                        />
-                    </FormField>
+                    {/* Machinery owns the machines: the treatment picks one, a missing one is added there. */}
+                    <OwnedResourceSelect
+                        id="treatment-equipment"
+                        label={t("health.treatmentForm.equipment")}
+                        value={values.equipmentId}
+                        onChange={(id) => setValue("equipmentId", id)}
+                        options={machines.data ?? []}
+                        loading={machines.isPending}
+                        loadError={machines.isError}
+                        onRetry={machines.refetch}
+                        placeholder={t("health.treatmentForm.noEquipment")}
+                        owner={OWNER_LINKS.equipment}
+                        showOwnerLinkAlways
+                        error={fieldError("equipmentId")}
+                        hint={t("health.optional")}
+                    />
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className={SECONDARY_BUTTON}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isSubmitting ? "Recording…" : "Record treatment"}
-                    </button>
-                </div>
+                <HealthFormActions
+                    onCancel={onClose}
+                    isSubmitting={isSubmitting}
+                    submitLabel={t("health.treatmentForm.submit")}
+                    submittingLabel={t("health.inspectionForm.submitting")}
+                />
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

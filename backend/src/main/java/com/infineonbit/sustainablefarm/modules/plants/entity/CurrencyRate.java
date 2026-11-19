@@ -1,13 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,8 +19,8 @@ import java.time.Instant;
  * <p>A reference row, sourced, that the user enters and replaces through
  * {@code PUT /api/plants/currency-rates/EUR/XOF}. The EUR-XOF parity has been
  * fixed since 1999, but a reform is announced: the rate is read from this table
- * on every conversion and never written in the code, except as the default
- * that {@code CurrencyRateLoader} inserts in the dev profile.
+ * on every conversion and never written in the code, except as the row of the
+ * demo data set ({@code seed/demo-data.sql}) in the dev profile.
  *
  * <p>The currency codes are plain text without a CHECK constraint, like
  * {@link FertilizerMovement#getCurrency()}: a new currency must not need a
@@ -40,12 +37,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class CurrencyRate {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class CurrencyRate extends BaseEntity {
 
     /** ISO 4217 code of the currency converted from, for example {@code "EUR"}. */
     @Column(name = "base_currency", nullable = false, length = 3)
@@ -64,4 +56,19 @@ public class CurrencyRate {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public CurrencyRate(Long id,
+            String baseCurrency,
+            String quoteCurrency,
+            BigDecimal rate,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.baseCurrency = baseCurrency;
+        this.quoteCurrency = quoteCurrency;
+        this.rate = rate;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
 }

@@ -1,97 +1,20 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Input, Modal, Select } from "../../../shared/ui";
 import { useFertilizers } from "../hooks/useFertilizers";
-import { useVarietyBlocks } from "../hooks/useVarieties";
-import { formatCode, formatDate, formatQuantity, formatUnit } from "../utils/format";
-import PlantsModal from "./PlantsModal";
-import { FIELD_INPUT, FIELD_LABEL, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
-
-const LABEL_CLASS = FIELD_LABEL;
-const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT} disabled:bg-gray-50`;
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
-
-const MOVEMENT_TYPES = ["PURCHASE", "APPLICATION", "LOSS"];
-
-// The fields each type adds to the fertilizer, the date and the quantity.
-const TYPE_FIELDS = {
-    PURCHASE: ["supplier", "totalCost", "currency"],
-    APPLICATION: ["blockCode", "applicator", "method"],
-    LOSS: ["reason"],
-};
-
-// Each API route names the date after its movement.
-const DATE_FIELDS = {
-    PURCHASE: "purchaseDate",
-    APPLICATION: "applicationDate",
-    LOSS: "lossDate",
-};
-
-const SUBMIT_LABELS = {
-    PURCHASE: "Record purchase",
-    APPLICATION: "Record application",
-    LOSS: "Record loss",
-};
-
-// XOF, the farm's currency, is the default of the API as well.
-const CURRENCIES = [
-    { code: "XOF", label: "FCFA" },
-    { code: "EUR", label: "EUR" },
-];
-
-const INITIAL_VALUES = {
-    fertilizerId: "",
-    date: "",
-    quantity: "",
-    supplier: "",
-    totalCost: "",
-    currency: "XOF",
-    blockCode: "",
-    applicator: "",
-    method: "",
-    reason: "",
-};
-
-/** Same rules as the API: a quantity above 0 with at most 3 decimals, a cost with at most 2. */
-const QUANTITY_PATTERN = /^\d+(\.\d{1,3})?$/;
-const COST_PATTERN = /^\d+(\.\d{1,2})?$/;
-
-/** Same rule as a planting: a short code such as "A" or "B2"; spaces around it are removed. */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
-
-/** Today as "YYYY-MM-DD", in local time: the latest movement date the form accepts. */
-function todayAsIsoDate() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${now.getFullYear()}-${month}-${day}`;
-}
-
-function isPositiveNumber(text, pattern) {
-    const trimmed = text.trim();
-    return pattern.test(trimmed) && Number(trimmed) > 0;
-}
-
-function FormField({ id, label, error, note, children }) {
-    return (
-        <div>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
+import {
+    DATE_FIELDS,
+    INITIAL_VALUES,
+    MOVEMENT_TYPES,
+    movementRequestBody,
+    todayAsIsoDate,
+    TYPE_FIELDS,
+    validateMovement,
+} from "../utils/fertilizerMovements";
+import { formatDate, formatEnum, formatQuantity, formatUnit } from "../utils/format";
+import FertilizerFormField from "./FertilizerFormField";
+import FormAlert from "./FormAlert";
+import MovementTypeFields from "./MovementTypeFields";
 
 /**
  * Form of a stock movement: a purchase, an application on a block or a loss.
@@ -105,16 +28,15 @@ function FormField({ id, label, error, note, children }) {
  *
  * The block of an application is typed, with the same rule as a planting:
  * the base fertilizer goes in before the tree, so the block may have no
- * planting yet. The blocks of the recorded varieties are offered as
- * suggestions. No farm is sent, as for a planting.
+ * planting yet. No farm is sent, as for a planting.
  *
- * The checks mirror the API rules; what the API still refuses is shown the
- * same way as for a planting:
+ * What the API still refuses is shown the same way as for a planting:
  * - a 400 with fieldErrors: each message under its field;
  * - a 422 (the quantity exceeds the stock), or any other error: one message
  *   above the form.
  */
 export default function RecordMovementModal({ isSubmitting, error, onSubmit, onResetError, onClose }) {
+    const { t } = useTranslation("plants");
     const [movementType, setMovementType] = useState("PURCHASE");
     const [values, setValues] = useState(INITIAL_VALUES);
     // A number field holds "" for text it cannot read, such as "1e"; these keep
@@ -122,32 +44,28 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
     const [unreadable, setUnreadable] = useState({ quantity: false, totalCost: false });
     const [fieldErrors, setFieldErrors] = useState({});
     const [today] = useState(todayAsIsoDate);
+    const typeLabel = (type) => formatEnum("movementType", type);
 
     const fertilizers = useFertilizers();
-    const { data: blocks } = useVarietyBlocks();
     const catalogue = fertilizers.data ?? [];
     const fertilizer = catalogue.find((item) => String(item.id) === values.fertilizerId) ?? null;
 
     let fertilizerNote = null;
     if (fertilizers.isError) {
-        fertilizerNote = "Fertilizers could not be loaded";
+        fertilizerNote = t("fertilizer.stock.loadError");
     } else if (fertilizers.isSuccess && catalogue.length === 0) {
-        fertilizerNote = "No fertilizer in the catalogue yet";
+        fertilizerNote = t("fertilizer.stock.empty");
     }
     const stockNote = fertilizer && movementType !== "PURCHASE"
-        ? `In stock: ${formatQuantity(fertilizer.currentStock, fertilizer.unit)}`
+        ? t("fertilizer.movementForm.inStock", { quantity: formatQuantity(fertilizer.currentStock, fertilizer.unit) })
         : null;
+    // The chosen date in letters, as the browser shows its own day/month order.
+    const dateNote = values.date ? formatDate(values.date) : null;
 
     const serverFieldErrors = error?.status === 400 ? error.data?.fieldErrors : null;
     const formError = error && !serverFieldErrors ? error.message : null;
     const fieldError = (field) =>
         fieldErrors[field] ?? serverFieldErrors?.[field === "date" ? DATE_FIELDS[movementType] : field];
-    const fieldProps = (field, id, note = null) => ({
-        "aria-invalid": fieldError(field) ? true : undefined,
-        "aria-describedby":
-            [fieldError(field) ? `${id}-error` : null, note ? `${id}-note` : null].filter(Boolean).join(" ")
-            || undefined,
-    });
 
     function setValue(field, value) {
         setValues((current) => ({ ...current, [field]: value }));
@@ -172,183 +90,80 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
         setMovementType(nextType);
     }
 
-    function validate() {
-        const errors = {};
-        if (!values.fertilizerId) {
-            errors.fertilizerId = "Fertilizer is required.";
-        }
-        if (!values.date) {
-            errors.date = "Date is required.";
-        } else if (values.date > today) {
-            errors.date = "Date cannot be in the future.";
-        }
-        if (unreadable.quantity || !isPositiveNumber(values.quantity, QUANTITY_PATTERN)) {
-            errors.quantity = "Quantity must be a number greater than 0, with at most 3 decimals.";
-        }
-        if (movementType === "PURCHASE") {
-            if (!values.supplier.trim()) {
-                errors.supplier = "Supplier is required.";
-            } else if (values.supplier.length > 255) {
-                errors.supplier = "Supplier must be at most 255 characters.";
-            }
-            if (unreadable.totalCost
-                || (values.totalCost.trim() !== "" && !isPositiveNumber(values.totalCost, COST_PATTERN))) {
-                errors.totalCost = "Total cost must be a number greater than 0, with at most 2 decimals.";
-            }
-        }
-        if (movementType === "APPLICATION") {
-            if (!values.blockCode.trim()) {
-                errors.blockCode = "Block is required.";
-            } else if (!BLOCK_CODE_PATTERN.test(values.blockCode)) {
-                errors.blockCode = "Block must be a short code such as A or B2, without prefix or space.";
-            }
-            if (!values.applicator.trim()) {
-                errors.applicator = "Applicator is required.";
-            } else if (values.applicator.length > 255) {
-                errors.applicator = "Applicator must be at most 255 characters.";
-            }
-            if (values.method.length > 255) {
-                errors.method = "Method must be at most 255 characters.";
-            }
-        }
-        if (movementType === "LOSS") {
-            if (!values.reason.trim()) {
-                errors.reason = "Reason is required.";
-            } else if (values.reason.length > 255) {
-                errors.reason = "Reason must be at most 255 characters.";
-            }
-        }
-        return errors;
-    }
-
-    /** The request body of the chosen type; optional fields left empty are not sent. */
-    function requestBody() {
-        const body = { [DATE_FIELDS[movementType]]: values.date, quantity: Number(values.quantity) };
-        if (movementType === "PURCHASE") {
-            body.supplier = values.supplier;
-            if (values.totalCost.trim()) {
-                body.totalCost = Number(values.totalCost);
-                body.currency = values.currency;
-            }
-        } else if (movementType === "APPLICATION") {
-            body.blockCode = values.blockCode;
-            body.applicator = values.applicator;
-            if (values.method.trim()) body.method = values.method;
-        } else {
-            body.reason = values.reason;
-        }
-        return body;
-    }
-
     function handleSubmit(event) {
         event.preventDefault();
-        const errors = validate();
+        const errors = validateMovement(movementType, values, unreadable, today);
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
-        onSubmit({ movementType, fertilizerId: Number(values.fertilizerId), body: requestBody() });
+        onSubmit({ movementType, fertilizerId: Number(values.fertilizerId), body: movementRequestBody(movementType, values) });
     }
 
     return (
-        <PlantsModal labelledBy="record-movement-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2
-                    id="record-movement-title"
-                    className="font-heading text-lg font-bold text-on-background"
-                >
-                    Record a movement
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
-
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of VigorBadge: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. --color-error as text gave 4.38:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+        <Modal open onClose={onClose} title={t("fertilizer.movementForm.title")} size="xl">
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <fieldset className="mb-5">
-                    <legend className={LABEL_CLASS}>Movement type</legend>
+                    <legend className="text-sm font-medium">{t("fertilizer.movementForm.type")}</legend>
                     <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
-                        {MOVEMENT_TYPES.map((type, index) => (
-                            <label key={type} className="flex items-center gap-2 text-sm text-gray-800">
+                        {MOVEMENT_TYPES.map((type) => (
+                            <label key={type} className="flex items-center gap-2 text-sm text-text">
                                 <input
                                     type="radio"
                                     name="movement-type"
                                     value={type}
-                                    autoFocus={index === 0}
                                     checked={movementType === type}
                                     onChange={() => changeType(type)}
                                     className="accent-primary"
                                 />
-                                {formatCode(type)}
+                                {typeLabel(type)}
                             </label>
                         ))}
                     </div>
                 </fieldset>
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField
+                    <FertilizerFormField
                         id="movement-fertilizer"
-                        label="Fertilizer"
+                        label={t("fertilizer.movementForm.fertilizer")}
                         error={fieldError("fertilizerId")}
                         note={fertilizerNote}
                     >
-                        <select
+                        <Select
                             id="movement-fertilizer"
                             value={values.fertilizerId}
                             disabled={catalogue.length === 0}
                             onChange={(event) => setValue("fertilizerId", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("fertilizerId", "movement-fertilizer", fertilizerNote)}
+                            aria-describedby={fertilizerNote ? "movement-fertilizer-note" : undefined}
                         >
                             {/* Empty value: sending without a choice gives "Fertilizer is required." */}
-                            <option value="">Select a fertilizer</option>
+                            <option value="">{t("fertilizer.movementForm.selectFertilizer")}</option>
                             {catalogue.map((item) => (
                                 <option key={item.id} value={item.id}>
                                     {item.name}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </FertilizerFormField>
 
-                    {/* The chosen date in letters, as the browser shows its own day/month order. */}
-                    <FormField
-                        id="movement-date"
-                        label="Date"
-                        error={fieldError("date")}
-                        note={values.date ? formatDate(values.date) : null}
-                    >
-                        <input
+                    <FertilizerFormField id="movement-date" label={t("fertilizer.movementForm.date")} error={fieldError("date")} note={dateNote}>
+                        <Input
                             id="movement-date"
                             type="date"
                             max={today}
                             value={values.date}
                             onChange={(event) => setValue("date", event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("date", "movement-date", values.date)}
+                            aria-describedby={dateNote ? "movement-date-note" : undefined}
                         />
-                    </FormField>
+                    </FertilizerFormField>
 
-                    <FormField
+                    <FertilizerFormField
                         id="movement-quantity"
-                        label={fertilizer ? `Quantity (${formatUnit(fertilizer.unit)})` : "Quantity"}
+                        label={fertilizer ? t("fertilizer.movementForm.quantityWithUnit", { unit: formatUnit(fertilizer.unit) }) : t("fertilizer.movementForm.quantity")}
                         error={fieldError("quantity")}
                         note={stockNote}
                     >
-                        <input
+                        <Input
                             id="movement-quantity"
                             type="number"
                             min="0"
@@ -356,130 +171,28 @@ export default function RecordMovementModal({ isSubmitting, error, onSubmit, onR
                             inputMode="decimal"
                             value={values.quantity}
                             onChange={(event) => setNumber("quantity", event)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("quantity", "movement-quantity", stockNote)}
+                            aria-describedby={stockNote ? "movement-quantity-note" : undefined}
                         />
-                    </FormField>
+                    </FertilizerFormField>
 
-                    {movementType === "PURCHASE" && (
-                        <>
-                            <FormField id="movement-supplier" label="Supplier" error={fieldError("supplier")}>
-                                <input
-                                    id="movement-supplier"
-                                    type="text"
-                                    value={values.supplier}
-                                    onChange={(event) => setValue("supplier", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("supplier", "movement-supplier")}
-                                />
-                            </FormField>
-
-                            <FormField id="movement-total-cost" label="Total cost" error={fieldError("totalCost")}>
-                                <input
-                                    id="movement-total-cost"
-                                    type="number"
-                                    min="0"
-                                    step="any"
-                                    inputMode="decimal"
-                                    value={values.totalCost}
-                                    onChange={(event) => setNumber("totalCost", event)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("totalCost", "movement-total-cost")}
-                                />
-                            </FormField>
-
-                            <FormField id="movement-currency" label="Currency" error={fieldError("currency")}>
-                                <select
-                                    id="movement-currency"
-                                    value={values.currency}
-                                    onChange={(event) => setValue("currency", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("currency", "movement-currency")}
-                                >
-                                    {CURRENCIES.map(({ code, label }) => (
-                                        <option key={code} value={code}>
-                                            {label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </FormField>
-                        </>
-                    )}
-
-                    {movementType === "APPLICATION" && (
-                        <>
-                            <FormField id="movement-block" label="Block" error={fieldError("blockCode")}>
-                                <input
-                                    id="movement-block"
-                                    type="text"
-                                    list="movement-block-options"
-                                    value={values.blockCode}
-                                    onChange={(event) => setValue("blockCode", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("blockCode", "movement-block")}
-                                />
-                                <datalist id="movement-block-options">
-                                    {(blocks ?? []).map((block) => (
-                                        <option key={block} value={block} />
-                                    ))}
-                                </datalist>
-                            </FormField>
-
-                            <FormField id="movement-applicator" label="Applicator" error={fieldError("applicator")}>
-                                <input
-                                    id="movement-applicator"
-                                    type="text"
-                                    value={values.applicator}
-                                    onChange={(event) => setValue("applicator", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("applicator", "movement-applicator")}
-                                />
-                            </FormField>
-
-                            <FormField id="movement-method" label="Method" error={fieldError("method")}>
-                                <input
-                                    id="movement-method"
-                                    type="text"
-                                    value={values.method}
-                                    onChange={(event) => setValue("method", event.target.value)}
-                                    className={INPUT_CLASS}
-                                    {...fieldProps("method", "movement-method")}
-                                />
-                            </FormField>
-                        </>
-                    )}
-
-                    {movementType === "LOSS" && (
-                        <FormField id="movement-reason" label="Reason" error={fieldError("reason")}>
-                            <input
-                                id="movement-reason"
-                                type="text"
-                                value={values.reason}
-                                onChange={(event) => setValue("reason", event.target.value)}
-                                className={INPUT_CLASS}
-                                {...fieldProps("reason", "movement-reason")}
-                            />
-                        </FormField>
-                    )}
+                    <MovementTypeFields
+                        movementType={movementType}
+                        values={values}
+                        setValue={setValue}
+                        setNumber={setNumber}
+                        fieldError={fieldError}
+                    />
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className={SECONDARY_BUTTON}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || fertilizerNote !== null}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isSubmitting ? "Recording…" : SUBMIT_LABELS[movementType]}
-                    </button>
+                    <Button variant="secondary" onClick={onClose}>
+                        {t("common:actions.cancel")}
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting || fertilizerNote !== null}>
+                        {isSubmitting ? t("fertilizer.movementForm.submitting") : t(`fertilizer.movementForm.submit.${movementType}`)}
+                    </Button>
                 </div>
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

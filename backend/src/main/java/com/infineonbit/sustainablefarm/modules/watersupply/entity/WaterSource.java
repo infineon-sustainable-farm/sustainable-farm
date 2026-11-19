@@ -1,18 +1,19 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
 
 @Entity
-@Table(name = "water_sources")
+@Table(name = "water_sources", indexes = @Index(name = "idx_water_sources_farm_id", columnList = "farm_id"))
 public class WaterSource extends BaseEntity {
     @NotNull
-    @Column(nullable = false)
-    private UUID farmId;
+    @Column(name = "farm_id", nullable = false)
+    private Long farmId;
 
     @NotBlank
     @Column(nullable = false, length = 100)
@@ -33,11 +34,11 @@ public class WaterSource extends BaseEntity {
     private Double latitude;
     private Double longitude;
 
-    public UUID getFarmId() {
+    public Long getFarmId() {
         return farmId;
     }
 
-    public void setFarmId(UUID farmId) {
+    public void setFarmId(Long farmId) {
         this.farmId = farmId;
     }
 

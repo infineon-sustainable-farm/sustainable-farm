@@ -1,54 +1,76 @@
 import { useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
-import { zoneBlockMappingApi } from '../../api/watersupplyApi'
+import { Unlink } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Field,
+  IconButton,
+  Select,
+  Table,
+} from '../../../../shared/ui'
+import { zoneApi, zoneBlockMappingApi } from '../../api/watersupplyApi'
 import { useFarms, useFields, useZones } from '../../hooks/useFarms'
 import { useBlockIrrigationNeed, useBlockRainfall, useZoneBlockMappings } from '../../hooks/useIntegrations'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { EmptyState } from './EmptyState'
+import { useWaterFormat } from '../../format'
+import { ChoiceChips } from '../common/ChoiceChips'
+import { FormActions, Screen, SplitLayout } from '../common/Screen'
+import { FormAlert } from '../common/FormAlert'
+import { LoadingState } from '../common/LoadingState'
 import { isoDay, monthStartDay } from './datetime'
+import { sameId } from './ids'
 
+/** Growth phases sent to Plants; the empty value lets Plants read its own calendar. */
 const PHASES = [
-  ['', 'From the Plants calendar'],
-  ['establishment', 'Establishment (0–2 yrs)'],
-  ['gradual production', 'Gradual production (3–5 yrs)'],
-  ['full production', 'Full production (6+ yrs)'],
+  ['', 'calendar'],
+  ['establishment', 'establishment'],
+  ['gradual production', 'gradual'],
+  ['full production', 'full'],
 ]
 
-const PHASE_SOURCE_LABELS = {
-  request: 'chosen here',
-  plants_calendar: 'Plants calendar',
-  unknown: 'unknown, no adjustment',
-}
+const PHASE_SOURCES = ['request', 'plants_calendar', 'unknown']
 
-/** Same shape as Plants block codes ("A", "B2"): letters and digits, no prefix or space. */
-const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
+/** Label of a field in the block choice: its Plants code, then its name when it differs. */
+const fieldLabel = (field) => (field.name && field.name !== field.code ? `${field.code} · ${field.name}` : field.code)
 
 /**
  * Plants blocks: links Water Supply zones to the Plants blocks they water, then shows what Plants
  * reads per block (rain gauge rainfall of the month, irrigation need of the day).
  *
- * Backend contract: ZoneBlockMapping { zoneId, blockCode, farmId }. The farm is derived from the
- * zone (zone -> field -> farm) because the API refuses a farm that does not own the zone.
+ * Backend contract: ZoneBlockMapping { id (= zoneId), zoneId, blockCode, farmId }, read from the zone's
+ * field (a block of the farm referential): a zone is linked to the Plants block of its field's code,
+ * unlinking clears that code. A field gets its code in Farms, fields & zones; here the block is picked
+ * among the fields of the zone's farm that have a code (never typed), and linking moves the zone into
+ * that field (PUT /api/farm/zones/{id} with its fieldId).
  */
 export function PlantsBlocksView({ notify }) {
+  const { t } = useTranslation('watersupply')
   const { mappings, loading, error, refetch } = useZoneBlockMappings()
-  const { zones } = useZones()
+  const { zones, refetch: refetchZones } = useZones()
   const { fields } = useFields()
   const { farms } = useFarms()
-  const [form, setForm] = useState({ zoneId: '', blockCode: '' })
+  const [form, setForm] = useState({ zoneId: '', fieldId: '' })
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
   const [selectedBlock, setSelectedBlock] = useState('')
 
   const zoneNames = useMemo(() => new Map(zones.map((zone) => [zone.id, zone.name])), [zones])
-  const zoneName = (zoneId) => zoneNames.get(zoneId) || `Zone ${String(zoneId).slice(0, 8)}`
+  const zoneName = (zoneId) => zoneNames.get(zoneId) || t('plantsBlocks.zoneFallback', { id: String(zoneId).slice(0, 8) })
   const farmIdOfZone = (zoneId) => {
-    const fieldId = zones.find((zone) => zone.id === zoneId)?.fieldId
-    return fields.find((field) => field.id === fieldId)?.farmId
+    const fieldId = zones.find((zone) => sameId(zone.id, zoneId))?.fieldId
+    return fields.find((field) => sameId(field.id, fieldId))?.farmId
   }
-  const farmName = (farmId) => farms.find((farm) => farm.id === farmId)?.name || (farmId ? `Farm ${String(farmId).slice(0, 8)}` : '—')
+  const farmName = (farmId) =>
+    farms.find((farm) => farm.id === farmId)?.name || (farmId ? t('plantsBlocks.farmFallback', { id: String(farmId).slice(0, 8) }) : t('common.none'))
+
+  // Plants blocks the zone can be linked to: fields with a code, of the zone's farm once a zone is chosen.
+  const zoneFarmId = form.zoneId ? farmIdOfZone(form.zoneId) : null
+  const blockFields = fields
+    .filter((field) => field.code && (!zoneFarmId || sameId(field.farmId, zoneFarmId)))
+    .sort((a, b) => a.code.localeCompare(b.code))
 
   const blockCodes = useMemo(() => [...new Set(mappings.map((mapping) => mapping.blockCode))].sort(), [mappings])
   const sortedMappings = useMemo(
@@ -65,32 +87,46 @@ export function PlantsBlocksView({ notify }) {
   const activeBlock = selectedBlock || blockCodes[0] || ''
 
   const updateForm = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
+  // Another zone may be of another farm: a block that is not of its farm is cleared.
+  const changeZone = (event) => {
+    const zoneId = event.target.value
+    const farmId = zoneId ? farmIdOfZone(zoneId) : null
+    setForm((current) => {
+      const field = fields.find((candidate) => sameId(candidate.id, current.fieldId))
+      return { zoneId, fieldId: field && farmId && !sameId(field.farmId, farmId) ? '' : current.fieldId }
+    })
+  }
 
   const submit = (event) => {
     event.preventDefault()
-    if (!form.zoneId) {
-      setFormError('Select a zone.')
+    const zone = zones.find((candidate) => sameId(candidate.id, form.zoneId))
+    if (!zone) {
+      setFormError(t('plantsBlocks.errors.zoneRequired'))
       return
     }
-    if (!BLOCK_CODE_PATTERN.test(form.blockCode.trim())) {
-      setFormError('The block code is a short code such as A or B2, without prefix or space.')
+    const field = blockFields.find((candidate) => sameId(candidate.id, form.fieldId))
+    if (!field) {
+      setFormError(t('plantsBlocks.errors.blockRequired'))
       return
     }
-    const farmId = farmIdOfZone(form.zoneId)
-    if (!farmId) {
-      setFormError('The farm of this zone is unknown: check its field in Farms & Fields.')
+    if (!farmIdOfZone(zone.id)) {
+      setFormError(t('plantsBlocks.errors.farmUnknown'))
+      return
+    }
+    if (sameId(field.id, zone.fieldId)) {
+      setFormError(t('plantsBlocks.errors.alreadyLinkedTo', { code: field.code }))
       return
     }
     setBusy(true)
     setFormError(null)
-    zoneBlockMappingApi
-      .createMapping({ zoneId: form.zoneId, blockCode: form.blockCode.trim(), farmId })
-      .then((created) => refetch().then(() => created))
-      .then((created) => {
-        notify(`Zone linked to block ${created?.blockCode ?? form.blockCode.trim().toUpperCase()}`)
-        setForm({ zoneId: '', blockCode: '' })
+    zoneApi
+      .updateZone(zone.id, { fieldId: field.id })
+      .then(() => Promise.all([refetch(), refetchZones?.()]))
+      .then(() => {
+        notify(t('plantsBlocks.linked', { code: field.code }))
+        setForm({ zoneId: '', fieldId: '' })
       })
-      .catch((err) => setFormError(err.status === 409 ? 'This zone is already linked to this block.' : err.message || 'Unable to save.'))
+      .catch((err) => setFormError(err.message || t('common.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -98,164 +134,181 @@ export function PlantsBlocksView({ notify }) {
     zoneBlockMappingApi
       .deleteMapping(mapping.id)
       .then(() => refetch())
-      .then(() => notify(`Zone unlinked from block ${mapping.blockCode}`))
-      .catch((err) => notify(err.message || 'Unable to delete.'))
+      .then(() => notify(t('plantsBlocks.unlinked', { code: mapping.blockCode })))
+      .catch((err) => notify(err.message || t('common.deleteError'), 'error'))
+  }
+
+  const columns = [
+    { key: 'blockCode', header: t('plantsBlocks.columns.block'), cell: (mapping) => <Badge tone="info">{mapping.blockCode}</Badge> },
+    {
+      key: 'zone',
+      header: t('plantsBlocks.columns.zone'),
+      cell: (mapping) => (
+        <span className="inline-flex flex-wrap items-center gap-2">
+          {zoneName(mapping.zoneId)}
+          {sharedZones.has(mapping.zoneId) && (
+            <Badge tone="warning" title={t('plantsBlocks.severalBlocksHint')}>{t('plantsBlocks.severalBlocks')}</Badge>
+          )}
+        </span>
+      ),
+    },
+    { key: 'farm', header: t('plantsBlocks.columns.farm'), cell: (mapping) => farmName(mapping.farmId) },
+  ]
+
+  function renderList() {
+    if (loading) return <LoadingState label={t('plantsBlocks.loading')} />
+    if (error) return <ErrorState message={error.message || t('plantsBlocks.loadError')} />
+    if (mappings.length === 0) return <EmptyState title={t('plantsBlocks.emptyTitle')} message={t('plantsBlocks.empty')} />
+    return (
+      <Table
+        caption={t('plantsBlocks.listTitle')}
+        columns={columns}
+        rows={sortedMappings}
+        rowActions={(mapping) => (
+          <div className="flex justify-end">
+            <IconButton icon={Unlink} tone="danger" label={t('plantsBlocks.unlink')} onClick={() => unlink(mapping)} />
+          </div>
+        )}
+      />
+    )
   }
 
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Plants blocks</h1>
-          <p>Link each irrigated zone to the Plants block it waters: Plants then reads its water per block.</p>
-        </div>
-      </div>
-
-      <div className="ws-layout-2">
-        <div className="ws-stack">
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Zone ↔ block links</h2>
-              <span>{blockCodes.length} block(s), {mappings.length} link(s)</span>
-            </div>
-            <div className="ws-panel-body">
-              {loading ? (
-                <Spinner label="Loading links…" full />
-              ) : error ? (
-                <EmptyState title="Error" description={error.message || 'Unable to load the links.'} />
-              ) : mappings.length === 0 ? (
-                <EmptyState title="No zone linked yet" description="Link a zone to its Plants block with the form on the right." />
-              ) : (
-                <table className="ws-table">
-                  <thead>
-                    <tr>
-                      <th>Block</th>
-                      <th>Zone</th>
-                      <th>Farm</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedMappings.map((mapping) => (
-                      <tr key={mapping.id}>
-                        <td><span className="ws-tag primary">{mapping.blockCode}</span></td>
-                        <td>
-                          {zoneName(mapping.zoneId)}
-                          {sharedZones.has(mapping.zoneId) && (
-                            <span className="ws-tag orange" style={{ marginLeft: '6px' }} title="Its volumes cannot be attributed to a single block">several blocks</span>
-                          )}
-                        </td>
-                        <td>{farmName(mapping.farmId)}</td>
-                        <td className="ws-table-actions">
-                          <button className="ws-icon-btn danger" title="Unlink" onClick={() => unlink(mapping)}>
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-
-          {blockCodes.length > 0 && (
-            <BlockDetails
-              blockCodes={blockCodes}
-              activeBlock={activeBlock}
-              onSelect={setSelectedBlock}
-            />
-          )}
-        </div>
-
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Link a zone</h2>
-            <Plus size={16} />
-          </div>
-          <div className="ws-panel-body">
-            {formError && <div className="ws-inline-error">{formError}</div>}
-            <form className="ws-form-grid" onSubmit={submit}>
-              <FormField label="Zone" required>
-                <select style={inputStyle} value={form.zoneId} onChange={updateForm('zoneId')}>
-                  <option value="">Select</option>
+    <Screen title={t('plantsBlocks.title')} subtitle={t('plantsBlocks.subtitle')}>
+      <SplitLayout
+        main={
+          <>
+            <Card
+              title={t('plantsBlocks.listTitle')}
+              actions={
+                <span className="text-sm text-text-muted">
+                  {t('plantsBlocks.count', { blocks: blockCodes.length, links: mappings.length })}
+                </span>
+              }
+            >
+              {renderList()}
+            </Card>
+            {blockCodes.length > 0 && (
+              <BlockDetails blockCodes={blockCodes} activeBlock={activeBlock} onSelect={setSelectedBlock} />
+            )}
+          </>
+        }
+        aside={
+          <Card title={t('plantsBlocks.formTitle')}>
+            <FormAlert>{formError}</FormAlert>
+            <form className="flex flex-col gap-4" onSubmit={submit}>
+              <Field label={t('plantsBlocks.fields.zone')} required>
+                <Select value={form.zoneId} onChange={changeZone}>
+                  <option value="">{t('common.select')}</option>
                   {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-                </select>
-              </FormField>
-              <FormField label="Plants block code" required>
-                <input style={inputStyle} value={form.blockCode} onChange={updateForm('blockCode')} placeholder="A, B2…" />
-              </FormField>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--ws-muted)' }}>
-                Codes are stored in upper case. A zone watering two blocks can be linked to both.
-              </p>
-              <div className="ws-form-actions">
-                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Link'}</button>
-              </div>
+                </Select>
+              </Field>
+              <Field label={t('plantsBlocks.fields.block')} required>
+                <Select value={form.fieldId} onChange={updateForm('fieldId')} disabled={blockFields.length === 0}>
+                  <option value="">{blockFields.length === 0 ? t('plantsBlocks.fields.noBlock') : t('common.select')}</option>
+                  {blockFields.map((field) => <option key={field.id} value={field.id}>{fieldLabel(field)}</option>)}
+                </Select>
+              </Field>
+              <p className="text-xs text-text-muted">{t('plantsBlocks.codeHint')}</p>
+              <FormActions>
+                <Button type="submit" loading={busy}>{t('plantsBlocks.link')}</Button>
+              </FormActions>
             </form>
-          </div>
-        </div>
-      </div>
-    </>
+          </Card>
+        }
+      />
+    </Screen>
+  )
+}
+
+/** One figure of the block: value (or a placeholder while loading or on error) and its label. */
+function BlockFigure({ value, label }) {
+  return (
+    <div className="text-sm">
+      {value}
+      <p className="mt-1 text-xs font-medium text-text-muted">{label}</p>
+    </div>
   )
 }
 
 /** What Plants reads for one block: rainfall of the current month and irrigation need of today. */
 function BlockDetails({ blockCodes, activeBlock, onSelect }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const [phase, setPhase] = useState('')
   const today = isoDay()
   const { data: rainfall, loading: rainLoading, error: rainError } = useBlockRainfall(activeBlock, monthStartDay(), today)
   const { data: need, loading: needLoading, error: needError } = useBlockIrrigationNeed(activeBlock, phase, today)
+  const pending = t('plantsBlocks.details.pending')
+  const phaseSource = PHASE_SOURCES.includes(need?.growthPhaseSource)
+    ? t(`plantsBlocks.details.phaseSources.${need.growthPhaseSource}`)
+    : pending
+
+  function figure(isLoading, failed, value) {
+    if (isLoading) return pending
+    if (failed) return t('common.none')
+    return <strong className="font-semibold">{value}</strong>
+  }
 
   return (
-    <div className="ws-panel">
-      <div className="ws-panel-header">
-        <h2>Block {activeBlock}</h2>
-        <div className="ws-switcher">
-          {blockCodes.map((code) => (
-            <button key={code} className={`ws-chip ${code === activeBlock ? 'active' : ''}`} onClick={() => onSelect(code)}>{code}</button>
-          ))}
-        </div>
+    <Card
+      title={t('plantsBlocks.details.title', { code: activeBlock })}
+      actions={
+        <ChoiceChips
+          label={t('plantsBlocks.details.blockChoice')}
+          options={blockCodes.map((code) => ({ value: code, label: code }))}
+          value={activeBlock}
+          onChange={onSelect}
+        />
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-3">
+        <BlockFigure
+          value={figure(rainLoading, rainError, format.mm(rainfall?.rainfallMm ?? 0))}
+          label={
+            rainfall
+              ? t('plantsBlocks.details.rainfallWithGauges', { count: rainfall.gaugeCount })
+              : t('plantsBlocks.details.rainfall')
+          }
+        />
+        <BlockFigure value={figure(needLoading, needError, format.liters(need?.needLiters ?? 0))} label={t('plantsBlocks.details.need')} />
+        <BlockFigure
+          value={
+            need ? (
+              <strong className="font-semibold">
+                {t('plantsBlocks.details.phaseValue', {
+                  phase: need.growthPhase || t('plantsBlocks.details.unknownPhase'),
+                  factor: format.number(need.phaseFactor),
+                })}
+              </strong>
+            ) : (
+              t('common.none')
+            )
+          }
+          label={t('plantsBlocks.details.phase', { source: phaseSource })}
+        />
       </div>
-      <div className="ws-panel-body">
-        <div className="ws-layout-3">
-          <div className="ws-row-detail">
-            {rainLoading ? '…' : rainError ? '—' : <strong>{rainfall?.rainfallMm ?? 0} mm</strong>}
-            <small>
-              Rainfall this month
-              {rainfall && ` · ${rainfall.gaugeCount} gauge(s) of the farm`}
-            </small>
-          </div>
-          <div className="ws-row-detail">
-            {needLoading ? '…' : needError ? '—' : <strong>{need?.needLiters ?? 0} L</strong>}
-            <small>Irrigation need today</small>
-          </div>
-          <div className="ws-row-detail">
-            {need ? <strong>{need.growthPhase || 'unknown'} × {need.phaseFactor}</strong> : '—'}
-            <small>Growth phase ({PHASE_SOURCE_LABELS[need?.growthPhaseSource] || '…'})</small>
-          </div>
+      {(rainError || needError) && (
+        <div className="mt-4">
+          <FormAlert>{(rainError || needError).message}</FormAlert>
         </div>
-        {(rainError || needError) && (
-          <div className="ws-inline-error" style={{ marginTop: '12px' }}>{(rainError || needError).message}</div>
-        )}
-        <div style={{ marginTop: '14px', maxWidth: '320px' }}>
-          <FormField label="Growth phase used for the need">
-            <select style={inputStyle} value={phase} onChange={(event) => setPhase(event.target.value)}>
-              {PHASES.map(([value, label]) => <option key={label} value={value}>{label}</option>)}
-            </select>
-          </FormField>
-        </div>
-        {need?.warnings?.includes('phase_factors_not_validated') && (
-          <p style={{ margin: '10px 0 0', fontSize: '12px', color: 'var(--ws-muted)' }}>
-            Phase factors are still 1.0: they wait for the agronomists' validation, the need is the plain FAO-56 one
-            (base {need.baseNeedLiters} L, ET0 {need.et0Mm} mm).
-          </p>
-        )}
-        {rainfall && (
-          <p style={{ margin: '6px 0 0', fontSize: '12px', color: 'var(--ws-muted)' }}>
-            Rain gauges belong to the farm, not to the block: two gauges of the same farm are never added up.
-          </p>
-        )}
+      )}
+      <div className="mt-4 max-w-xs">
+        <Field label={t('plantsBlocks.details.phaseField')}>
+          <Select value={phase} onChange={(event) => setPhase(event.target.value)}>
+            {PHASES.map(([value, key]) => <option key={key} value={value}>{t(`plantsBlocks.details.phases.${key}`)}</option>)}
+          </Select>
+        </Field>
       </div>
-    </div>
+      {need?.warnings?.includes('phase_factors_not_validated') && (
+        <p className="mt-3 text-xs text-text-muted">
+          {t('plantsBlocks.details.factorsNotValidated', {
+            base: format.liters(need.baseNeedLiters),
+            et0: format.mm(need.et0Mm),
+          })}
+        </p>
+      )}
+      {rainfall && <p className="mt-2 text-xs text-text-muted">{t('plantsBlocks.details.gaugesPerFarm')}</p>}
+    </Card>
   )
 }

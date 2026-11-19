@@ -1,31 +1,36 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.entity;
 
 import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
  * An agritourism booking linked to an activity and a tour time slot.
  *
  * <p>Business rules: a booking can never exceed the activity capacity (nor the
- * slot capacity); confirmations require payment.</p>
+ * slot capacity); confirmations require payment. The visitor is a {@link Visitor} row,
+ * not a copy of its name, email and phone.</p>
  */
 @Entity
-@Table(name = "booking")
+@Table(name = "booking", indexes = {
+        @Index(name = "idx_booking_visitor", columnList = "visitor_id"),
+        @Index(name = "idx_booking_agri_activity_id", columnList = "agri_activity_id"),
+        @Index(name = "idx_booking_time_slot_id", columnList = "time_slot_id")})
 public class Booking extends BaseEntity {
 
     @NotNull(message = "activity is required")
@@ -38,29 +43,25 @@ public class Booking extends BaseEntity {
     @JoinColumn(name = "time_slot_id", nullable = false)
     private TimeSlot timeSlot;
 
-    @NotBlank(message = "visitorFullName is required")
-    @Size(max = 150, message = "visitorFullName must be at most 150 characters")
-    @Column(name = "visitor_full_name", nullable = false, length = 150)
-    private String visitorFullName;
-
-    @NotBlank(message = "visitorEmail is required")
-    @Email(message = "visitorEmail must be a valid email")
-    @Size(max = 255, message = "visitorEmail must be at most 255 characters")
-    @Column(name = "visitor_email", nullable = false, length = 255)
-    private String visitorEmail;
-
-    @Size(max = 30, message = "visitorPhone must be at most 30 characters")
-    @Column(name = "visitor_phone", length = 30)
-    private String visitorPhone;
+    /** The visitor who booked: found by email (or by name without email) or created on booking. */
+    @NotNull(message = "visitor is required")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "visitor_id", nullable = false)
+    private Visitor visitor;
 
     @NotNull(message = "peopleCount is required")
     @Min(value = 1, message = "peopleCount must be at least 1")
     @Column(name = "people_count", nullable = false)
     private Integer peopleCount;
 
+    /** Price of the activity times the number of people, in XOF (FCFA). */
     @NotNull
-    @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO;
+    @Embedded
+    @AttributeOverride(name = "amount",
+            column = @Column(name = "total_amount", nullable = false, precision = 14, scale = 2))
+    @AttributeOverride(name = "currency",
+            column = @Column(name = "total_currency", nullable = false, length = 3))
+    private Money total = Money.zero(CurrencyCode.XOF);
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", length = 20)
@@ -101,28 +102,27 @@ public class Booking extends BaseEntity {
         this.timeSlot = timeSlot;
     }
 
+    public Visitor getVisitor() {
+        return visitor;
+    }
+
+    public void setVisitor(Visitor visitor) {
+        this.visitor = visitor;
+    }
+
+    /** Full name of the linked visitor, as the booking JSON shows it. */
     public String getVisitorFullName() {
-        return visitorFullName;
+        return visitor == null ? null : visitor.getFullName();
     }
 
-    public void setVisitorFullName(String visitorFullName) {
-        this.visitorFullName = visitorFullName;
-    }
-
+    /** Email of the linked visitor, where confirmations and reminders go. */
     public String getVisitorEmail() {
-        return visitorEmail;
+        return visitor == null ? null : visitor.getEmail();
     }
 
-    public void setVisitorEmail(String visitorEmail) {
-        this.visitorEmail = visitorEmail;
-    }
-
+    /** Phone of the linked visitor. */
     public String getVisitorPhone() {
-        return visitorPhone;
-    }
-
-    public void setVisitorPhone(String visitorPhone) {
-        this.visitorPhone = visitorPhone;
+        return visitor == null ? null : visitor.getPhone();
     }
 
     public Integer getPeopleCount() {
@@ -133,12 +133,12 @@ public class Booking extends BaseEntity {
         this.peopleCount = peopleCount;
     }
 
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
+    public Money getTotal() {
+        return total;
     }
 
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setTotal(Money total) {
+        this.total = total;
     }
 
     public BookingPaymentMethod getPaymentMethod() {

@@ -1,13 +1,12 @@
 import { useState } from "react";
-
-const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
-const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
-const ERROR_CLASS = "mt-1 text-xs text-error";
+import { useTranslation } from "react-i18next";
+import { Field, Input } from "../../../../shared/ui";
+import FormActions from "../FormActions";
+import FormAlert from "../FormAlert";
 
 /**
- * Tour stop create/edit form. The position is unique among active stops (the
- * API answers 409 otherwise), and there is no reactivation call, so a
- * deactivated stop stays out of the timeline.
+ * Tour stop create/edit form. The position is unique among active stops (the API answers 409
+ * otherwise), and there is no reactivation call, so a deactivated stop stays out of the timeline.
  */
 export default function TourStopForm({
     stop,
@@ -17,6 +16,7 @@ export default function TourStopForm({
     onSubmit,
     onCancel,
 }) {
+    const { t } = useTranslation("visitormanagement");
     const isEditing = Boolean(stop);
 
     const [name, setName] = useState(stop?.name ?? "");
@@ -34,33 +34,33 @@ export default function TourStopForm({
     function validate() {
         const errors = {};
         if (!name.trim()) {
-            errors.name = "Name is required.";
+            errors.name = t("education.validation.nameRequired");
         } else if (name.trim().length > 150) {
-            errors.name = "Name must be at most 150 characters.";
+            errors.name = t("education.validation.nameTooLong", { max: 150 });
         }
         const positionNumber = Number(position);
         if (!Number.isInteger(positionNumber) || positionNumber < 1) {
-            errors.position = "Position must be a whole number of at least 1.";
+            errors.position = t("education.validation.positionInvalid");
         }
         const durationNumber = Number(durationMinutes);
         if (!Number.isInteger(durationNumber) || durationNumber < 1) {
-            errors.durationMinutes = "Duration must be a whole number of at least 1 minute.";
+            errors.durationMinutes = t("education.validation.durationInvalid");
         }
         const capacityNumber = Number(maxCapacity);
         if (!Number.isInteger(capacityNumber) || capacityNumber < 1) {
-            errors.maxCapacity = "Capacity must be a whole number of at least 1.";
+            errors.maxCapacity = t("education.validation.capacityInvalid");
         }
         if (location.trim().length > 150) {
-            errors.location = "Location must be at most 150 characters.";
+            errors.location = t("education.validation.locationTooLong", { max: 150 });
         }
         if (demo.trim().length > 1000) {
-            errors.demo = "Demo must be at most 1000 characters.";
+            errors.demo = t("education.validation.demoTooLong", { max: 1000 });
         }
         if (safetyNotes.trim().length > 1000) {
-            errors.safetyNotes = "Safety notes must be at most 1000 characters.";
+            errors.safetyNotes = t("education.validation.safetyNotesTooLong", { max: 1000 });
         }
         if (description.trim().length > 2000) {
-            errors.description = "Description must be at most 2000 characters.";
+            errors.description = t("education.validation.descriptionTooLong", { max: 2000 });
         }
         return errors;
     }
@@ -86,169 +86,106 @@ export default function TourStopForm({
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
 
     return (
-        <form
-            onSubmit={handleSubmit}
-           
-        >
+        <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div>
-                    <label htmlFor="ts-name" className={LABEL_CLASS}>
-                        Stop name
-                    </label>
-                    <input
-                        id="ts-name"
+                <Field id="ts-name" label={t("education.stopForm.name")} error={fieldError("name")}>
+                    <Input
                         type="text"
                         value={name}
                         onChange={(event) => setName(event.target.value)}
-                        placeholder="e.g. Mango orchard"
-                        className={INPUT_CLASS}
+                        placeholder={t("education.stopForm.namePlaceholder")}
                     />
-                    {fieldError("name") && <p className={ERROR_CLASS}>{fieldError("name")}</p>}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="ts-position" className={LABEL_CLASS}>
-                        Position
-                    </label>
-                    <input
-                        id="ts-position"
+                <Field id="ts-position" label={t("education.stopForm.position")} error={fieldError("position")}>
+                    <Input
                         type="number"
                         min="1"
                         value={position}
                         onChange={(event) => setPosition(event.target.value)}
-                        placeholder="e.g. 2"
-                        className={INPUT_CLASS}
+                        placeholder={t("education.stopForm.positionPlaceholder")}
                     />
-                    {fieldError("position") && (
-                        <p className={ERROR_CLASS}>{fieldError("position")}</p>
-                    )}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="ts-duration" className={LABEL_CLASS}>
-                        Duration (min)
-                    </label>
-                    <input
-                        id="ts-duration"
+                <Field
+                    id="ts-duration"
+                    label={t("education.form.duration")}
+                    error={fieldError("durationMinutes")}
+                >
+                    <Input
                         type="number"
                         min="1"
                         value={durationMinutes}
                         onChange={(event) => setDurationMinutes(event.target.value)}
-                        className={INPUT_CLASS}
                     />
-                    {fieldError("durationMinutes") && (
-                        <p className={ERROR_CLASS}>{fieldError("durationMinutes")}</p>
-                    )}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="ts-capacity" className={LABEL_CLASS}>
-                        Max capacity
-                    </label>
-                    <input
-                        id="ts-capacity"
+                <Field
+                    id="ts-capacity"
+                    label={t("education.stopForm.maxCapacity")}
+                    error={fieldError("maxCapacity")}
+                >
+                    <Input
                         type="number"
                         min="1"
                         value={maxCapacity}
                         onChange={(event) => setMaxCapacity(event.target.value)}
-                        className={INPUT_CLASS}
                     />
-                    {fieldError("maxCapacity") && (
-                        <p className={ERROR_CLASS}>{fieldError("maxCapacity")}</p>
-                    )}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="ts-location" className={LABEL_CLASS}>
-                        Location
-                    </label>
-                    <input
-                        id="ts-location"
+                <Field id="ts-location" label={t("education.stopForm.location")} error={fieldError("location")}>
+                    <Input
                         type="text"
                         value={location}
                         onChange={(event) => setLocation(event.target.value)}
-                        placeholder="e.g. Orchard"
-                        className={INPUT_CLASS}
+                        placeholder={t("education.stopForm.locationPlaceholder")}
                     />
-                    {fieldError("location") && (
-                        <p className={ERROR_CLASS}>{fieldError("location")}</p>
-                    )}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="ts-demo" className={LABEL_CLASS}>
-                        Demo
-                    </label>
-                    <input
-                        id="ts-demo"
+                <Field id="ts-demo" label={t("education.stopForm.demo")} error={fieldError("demo")}>
+                    <Input
                         type="text"
                         value={demo}
                         onChange={(event) => setDemo(event.target.value)}
-                        placeholder="e.g. Drip line layout"
-                        className={INPUT_CLASS}
+                        placeholder={t("education.stopForm.demoPlaceholder")}
                     />
-                    {fieldError("demo") && <p className={ERROR_CLASS}>{fieldError("demo")}</p>}
-                </div>
+                </Field>
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                    <label htmlFor="ts-safety" className={LABEL_CLASS}>
-                        Safety notes
-                    </label>
-                    <input
-                        id="ts-safety"
+                <Field
+                    id="ts-safety"
+                    label={t("education.stopForm.safetyNotes")}
+                    error={fieldError("safetyNotes")}
+                >
+                    <Input
                         type="text"
                         value={safetyNotes}
                         onChange={(event) => setSafetyNotes(event.target.value)}
-                        placeholder="e.g. Stay on the paths"
-                        className={INPUT_CLASS}
+                        placeholder={t("education.stopForm.safetyNotesPlaceholder")}
                     />
-                    {fieldError("safetyNotes") && (
-                        <p className={ERROR_CLASS}>{fieldError("safetyNotes")}</p>
-                    )}
-                </div>
-                <div>
-                    <label htmlFor="ts-description" className={LABEL_CLASS}>
-                        Description
-                    </label>
-                    <input
-                        id="ts-description"
+                </Field>
+                <Field
+                    id="ts-description"
+                    label={t("education.form.description")}
+                    error={fieldError("description")}
+                >
+                    <Input
                         type="text"
                         value={description}
                         onChange={(event) => setDescription(event.target.value)}
-                        placeholder="Short description"
-                        className={INPUT_CLASS}
+                        placeholder={t("education.form.descriptionPlaceholder")}
                     />
-                    {fieldError("description") && (
-                        <p className={ERROR_CLASS}>{fieldError("description")}</p>
-                    )}
-                </div>
+                </Field>
             </div>
 
-            {submitError && (
-                <p className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
+            {submitError && <FormAlert className="mt-4">{submitError}</FormAlert>}
 
-            <div className="mt-4 flex gap-2.5">
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isSubmitting ? "Saving…" : isEditing ? "Save stop" : "Create stop"}
-                </button>
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
-                >
-                    Cancel
-                </button>
-            </div>
+            <FormActions
+                onCancel={onCancel}
+                isSubmitting={isSubmitting}
+                submitLabel={isEditing ? t("education.stopForm.save") : t("education.stopForm.create")}
+            />
         </form>
     );
 }

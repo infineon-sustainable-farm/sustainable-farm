@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { controlByLabel, renderView as render } from './testRender'
 import { LotsView } from './LotsView'
-import { productTransformationApi } from '../../api/watersupplyApi'
+import { processingBatchApi, productTransformationApi } from '../../api/watersupplyApi'
 
 afterEach(cleanup)
 
@@ -16,6 +16,7 @@ vi.mock('../../api/watersupplyApi', () => ({
     attachLotUsage: vi.fn(),
     forecastAvailability: vi.fn(),
   },
+  processingBatchApi: { getBatches: vi.fn() },
 }))
 
 vi.mock('../../hooks/useWaterData', () => ({
@@ -38,7 +39,12 @@ beforeEach(() => {
   vi.clearAllMocks()
   productTransformationApi.getConsumptionByLot.mockResolvedValue(LOT)
   productTransformationApi.getQualityCompliance.mockResolvedValue(COMPLIANCE)
+  // The processing batches of Product Transformation, the only lots that can be picked.
+  processingBatchApi.getBatches.mockResolvedValue(['LOT-1', 'LOT-2', 'LOT-9', 'LOT-A', 'LOT-B'].map((batchId) => ({ batchId })))
 })
+
+/** Waits for the Product Transformation batches to fill the lot lists. */
+const batchesLoaded = () => waitFor(() => expect(screen.getAllByRole('option', { name: 'LOT-9' }).length).toBeGreaterThan(0))
 
 const props = { notify: vi.fn() }
 
@@ -74,6 +80,7 @@ describe('LotsView', () => {
   it('requires the source before attributing a window', async () => {
     render(<LotsView {...props} />)
     const form = screen.getByRole('button', { name: 'Attribute' }).closest('form')
+    await batchesLoaded()
 
     fireEvent.change(controlByLabel(form, 'Lot'), { target: { value: 'LOT-2' } })
     fireEvent.submit(form)
@@ -88,6 +95,7 @@ describe('LotsView', () => {
     })
     render(<LotsView {...props} />)
     const form = screen.getByRole('button', { name: 'Attribute' }).closest('form')
+    await batchesLoaded()
 
     fireEvent.change(controlByLabel(form, 'Lot'), { target: { value: 'LOT-1' } })
     fireEvent.change(controlByLabel(form, 'Activity'), { target: { value: 'CUTTING' } })
@@ -116,6 +124,7 @@ describe('LotsView', () => {
     })
     render(<LotsView {...props} />)
     const form = screen.getByRole('button', { name: 'Forecast' }).closest('form')
+    await batchesLoaded()
 
     fireEvent.change(controlByLabel(form, 'Source'), { target: { value: 'src-1' } })
     fireEvent.change(screen.getByLabelText('Batch 1 lot'), { target: { value: 'LOT-9' } })
@@ -132,5 +141,33 @@ describe('LotsView', () => {
     await waitFor(() => expect(screen.getByText('Below the minimum buffer')).toBeTruthy())
     expect(screen.getByText('300 L')).toBeTruthy()
     expect(screen.getByText(/working defaults, to be confirmed/)).toBeTruthy()
+  })
+
+  it('adds and removes planned batches, keeping the values of the other rows', async () => {
+    render(<LotsView {...props} />)
+    await batchesLoaded()
+    expect(screen.getByRole('button', { name: 'Remove batch' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Batch 1 lot'), { target: { value: 'LOT-A' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add a batch' }))
+    fireEvent.change(screen.getByLabelText('Batch 2 lot'), { target: { value: 'LOT-B' } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove batch' })[0])
+
+    expect(screen.queryByLabelText('Batch 2 lot')).toBeNull()
+    expect(screen.getByLabelText('Batch 1 lot')).toHaveValue('LOT-B')
+  })
+
+  it('picks the lot among the Product Transformation batches, and sends to it when there is none', async () => {
+    processingBatchApi.getBatches.mockResolvedValue([])
+    render(<LotsView {...props} />)
+    const form = screen.getByRole('button', { name: 'Attribute' }).closest('form')
+
+    await waitFor(() => expect(controlByLabel(form, 'Lot').disabled).toBe(true))
+    const links = await screen.findAllByRole('link')
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/product-transformation/raw-intake?create=1',
+      '/product-transformation/raw-intake?create=1',
+    ])
+    expect(screen.getByLabelText('Batch 1 lot').tagName).toBe('SELECT')
   })
 })

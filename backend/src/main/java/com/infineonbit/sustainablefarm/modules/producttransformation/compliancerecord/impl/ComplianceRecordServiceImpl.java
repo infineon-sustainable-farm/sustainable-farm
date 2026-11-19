@@ -1,9 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord;
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceType;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.repository.ComplianceRecordRepository;
@@ -50,10 +51,10 @@ public class ComplianceRecordServiceImpl implements ComplianceRecordService {
     public ComplianceRecord createComplianceRecord(ComplianceRecord complianceRecord) {
         // Business Rule: Validate auditor is certified
         if (complianceRecord.getAuditor() != null) {
-            Operator auditor = operatorRepository.findById(complianceRecord.getAuditor().getOperatorId())
+            Operator auditor = operatorRepository.findByOperatorId(complianceRecord.getAuditor().getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Auditor not found"));
             
-            if (auditor.getRole() != Operator.Role.AUDITOR) {
+            if (auditor.getRole() != Role.AUDITOR) {
                 throw new IllegalArgumentException(
                     "Auditor must have AUDITOR role. Current role: " + auditor.getRole()
                 );
@@ -81,16 +82,16 @@ public class ComplianceRecordServiceImpl implements ComplianceRecordService {
 
     @Override
     public void deleteComplianceRecord(String recordId) {
-        if (!complianceRecordRepository.existsById(recordId)) {
+        if (!complianceRecordRepository.existsByRecordId(recordId)) {
             throw new IllegalArgumentException("Compliance record not found with ID: " + recordId);
         }
-        complianceRecordRepository.deleteById(recordId);
+        complianceRecordRepository.deleteByRecordId(recordId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ComplianceRecord getComplianceRecordById(String recordId) {
-        return complianceRecordRepository.findById(recordId)
+        return complianceRecordRepository.findByRecordId(recordId)
                 .orElseThrow(() -> new IllegalArgumentException("Compliance record not found with ID: " + recordId));
     }
 

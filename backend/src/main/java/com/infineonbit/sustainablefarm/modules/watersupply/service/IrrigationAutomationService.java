@@ -1,16 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationStatus;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationTrigger;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Field;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.SoilMoistureReadingRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Month;
@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
  * is created automatically ({@code trigger_source = auto}) with the volume derived from the zone's
  * agronomic need (ET0 x Kc / efficiency, see {@link WaterNeedService}).</p>
  *
- * <p>The same method serves the manual endpoint {@code POST /api/irrigations/auto-trigger} and the
+ * <p>The same method serves the manual endpoint {@code POST /api/water-supply/irrigations/auto-trigger} and the
  * scheduled job ({@link IrrigationAutoTriggerJob}): behavior is therefore identical regardless of
  * the origin, and each excluded zone is justified in the response.</p>
  *
@@ -56,43 +55,43 @@ public class IrrigationAutomationService {
     public static final int DEFAULT_DURATION_MINUTES = 30;
 
     /** Origin recorded on the schedules created by this rule. */
-    public static final String TRIGGER_SOURCE_AUTO = "auto";
+    public static final String TRIGGER_SOURCE_AUTO = IrrigationTrigger.AUTO.value();
 
-    private final FieldZoneRepository fieldZoneRepository;
+    private final FarmDirectory farmDirectory;
     private final SoilMoistureReadingRepository soilMoistureRepository;
     private final IrrigationScheduleRepository scheduleRepository;
     private final IrrigationLogRepository logRepository;
     private final AgroWeatherService agroWeatherService;
     private final AlertService alertService;
-    private final FieldRepository fieldRepository;
     private final RainfallService rainfallService;
     private final WaterUnavailabilityService unavailabilityService;
     private final PlantsIntegrationService plantsIntegrationService;
     private final WaterIntegrationProperties properties;
+    private final SystemUsers systemUsers;
 
     public IrrigationAutomationService(
-            FieldZoneRepository fieldZoneRepository,
+            FarmDirectory farmDirectory,
             SoilMoistureReadingRepository soilMoistureRepository,
             IrrigationScheduleRepository scheduleRepository,
             IrrigationLogRepository logRepository,
             AgroWeatherService agroWeatherService,
             AlertService alertService,
-            FieldRepository fieldRepository,
             RainfallService rainfallService,
             WaterUnavailabilityService unavailabilityService,
             PlantsIntegrationService plantsIntegrationService,
-            WaterIntegrationProperties properties) {
-        this.fieldZoneRepository = fieldZoneRepository;
+            WaterIntegrationProperties properties,
+            SystemUsers systemUsers) {
+        this.farmDirectory = farmDirectory;
         this.soilMoistureRepository = soilMoistureRepository;
         this.scheduleRepository = scheduleRepository;
         this.logRepository = logRepository;
         this.agroWeatherService = agroWeatherService;
         this.alertService = alertService;
-        this.fieldRepository = fieldRepository;
         this.rainfallService = rainfallService;
         this.unavailabilityService = unavailabilityService;
         this.plantsIntegrationService = plantsIntegrationService;
         this.properties = properties;
+        this.systemUsers = systemUsers;
     }
 
     /**
@@ -134,12 +133,12 @@ public class IrrigationAutomationService {
         double threshold = seasonalThresholdPercent(month);
         double et0 = agroWeatherService.et0Between(today, today);
         Instant rainStart = now.minus(properties.recentRainWindowHours, ChronoUnit.HOURS);
-        Map<UUID, Double> rainByFarm = new HashMap<>();
+        Map<Long, Double> rainByFarm = new HashMap<>();
 
         List<Map<String, Object>> created = new ArrayList<>();
         List<Map<String, Object>> skipped = new ArrayList<>();
-        for (Zone zone : fieldZoneRepository.findAll()) {
-            Double moisture = soilMoistureRepository.findLatestMoisturePercentBefore(zone.getId(), now);
+        for (ZoneDto zone : farmDirectory.listZones()) {
+            Double moisture = soilMoistureRepository.findLatestMoisturePercentBefore(zone.id(), now);
             if (moisture == null) {
                 skipped.add(skipped(zone, "no soil moisture reading"));
                 continue;
@@ -148,15 +147,15 @@ public class IrrigationAutomationService {
                 skipped.add(skipped(zone, "soil moisture above the seasonal threshold"));
                 continue;
             }
-            if (hasOpenIrrigation(zone.getId())) {
+            if (hasOpenIrrigation(zone.id())) {
                 skipped.add(skipped(zone, "an irrigation is already planned or running"));
                 continue;
             }
-            if (irrigatedRecently(zone.getId(), now)) {
+            if (irrigatedRecently(zone.id(), now)) {
                 skipped.add(skipped(zone, "irrigated less than " + MIN_HOURS_BETWEEN_IRRIGATIONS + " hours ago"));
                 continue;
             }
-            if (unavailabilityService.isZoneUnavailable(zone.getId(), now)) {
+            if (unavailabilityService.isZoneUnavailable(zone.id(), now)) {
                 skipped.add(skipped(zone, "planned water unavailability in progress"));
                 continue;
             }
@@ -186,31 +185,31 @@ public class IrrigationAutomationService {
         return response;
     }
 
-    private Map<String, Object> create(Zone zone, double et0, double moisture, double threshold,
+    private Map<String, Object> create(ZoneDto zone, double et0, double moisture, double threshold,
             Month month, Instant now, double recentRainMm) {
-        PlantsIntegrationService.PhaseAdjustment phase = plantsIntegrationService.phaseAdjustmentForZone(zone.getId());
+        PlantsIntegrationService.PhaseAdjustment phase = plantsIntegrationService.phaseAdjustmentForZone(zone.id());
         double liters = Math.round(plantsIntegrationService.needLiters(zone, et0, phase));
         IrrigationSchedule schedule = new IrrigationSchedule();
-        schedule.setZoneId(zone.getId());
+        schedule.setZoneId(zone.id());
         schedule.setStartTime(now);
         schedule.setDurationMinutes(DEFAULT_DURATION_MINUTES);
         schedule.setWaterQuantityLiters(liters);
-        schedule.setStatus("scheduled");
-        schedule.setTriggerSource(TRIGGER_SOURCE_AUTO);
-        schedule.setCreatedBy(SystemUsers.IOT_SYSTEM_USER_ID);
+        schedule.setStatus(IrrigationStatus.SCHEDULED);
+        schedule.setTriggerSource(IrrigationTrigger.AUTO);
+        schedule.setCreatedBy(systemUsers.iotSystemUserId());
         IrrigationSchedule saved = scheduleRepository.save(schedule);
 
-        alertService.raiseOnce("info", "Automatic irrigation planned - " + zone.getName(),
+        alertService.raiseOnce("info", "Automatic irrigation planned - " + zone.name(),
                 String.format(
                         "Soil moisture %.0f%% is below the %s season threshold (%.0f%%): %.0f L planned "
                                 + "for zone \"%s\" (the crop needs it, the calendar alone does not).",
-                        moisture, seasonLabel(month), threshold, liters, zone.getName()),
+                        moisture, seasonLabel(month), threshold, liters, zone.name()),
                 "/watersupply/irrigation");
 
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("schedule_id", saved.getId());
-        item.put("zone_id", zone.getId());
-        item.put("zone_name", zone.getName());
+        item.put("zone_id", zone.id());
+        item.put("zone_name", zone.name());
         item.put("soil_moisture_percent", moisture);
         item.put("season_threshold_percent", threshold);
         item.put("planned_liters", liters);
@@ -222,25 +221,25 @@ public class IrrigationAutomationService {
         return item;
     }
 
-    private Map<String, Object> skipped(Zone zone, String reason) {
+    private Map<String, Object> skipped(ZoneDto zone, String reason) {
         Map<String, Object> item = new LinkedHashMap<>();
-        item.put("zone_id", zone.getId());
-        item.put("zone_name", zone.getName());
+        item.put("zone_id", zone.id());
+        item.put("zone_name", zone.name());
         item.put("reason", reason);
         return item;
     }
 
-    private boolean hasOpenIrrigation(UUID zoneId) {
+    private boolean hasOpenIrrigation(Long zoneId) {
         return scheduleRepository.findByZoneId(zoneId).stream()
-                .anyMatch(schedule -> "scheduled".equalsIgnoreCase(schedule.getStatus())
-                        || "running".equalsIgnoreCase(schedule.getStatus()));
+                .anyMatch(schedule -> schedule.getStatus() == IrrigationStatus.SCHEDULED
+                        || schedule.getStatus() == IrrigationStatus.RUNNING);
     }
 
-    private Optional<UUID> farmIdOf(Zone zone) {
-        return Optional.ofNullable(zone.getFieldId()).flatMap(fieldRepository::findById).map(Field::getFarmId);
+    private Optional<Long> farmIdOf(ZoneDto zone) {
+        return Optional.ofNullable(zone.farmId());
     }
 
-    private boolean irrigatedRecently(UUID zoneId, Instant now) {
+    private boolean irrigatedRecently(Long zoneId, Instant now) {
         Instant since = now.minus(MIN_HOURS_BETWEEN_IRRIGATIONS, ChronoUnit.HOURS);
         List<IrrigationLog> recent = logRepository.findForZoneBetween(zoneId, since, now);
         return !recent.isEmpty();

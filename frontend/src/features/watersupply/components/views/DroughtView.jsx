@@ -1,106 +1,113 @@
+import { useTranslation } from 'react-i18next'
+import { Badge, Button, Card, EmptyState, ErrorState } from '../../../../shared/ui'
 import { useDroughtPrediction } from '../../hooks/useDashboard'
+import { useWaterFormat } from '../../format'
 import { WsRadialGauge } from '../charts'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
+import { C } from '../chartUtils'
+import { Screen, SplitLayout } from '../common/Screen'
+import { LoadingState } from '../common/LoadingState'
 
 function riskMeta(risk) {
   switch ((risk || '').toUpperCase()) {
-    case 'CRITICAL': return { step: 4, cls: 'red', tag: 'critical', text: 'Critical' }
-    case 'HIGH': return { step: 3, cls: 'orange', tag: 'red', text: 'Alert' }
-    case 'MEDIUM': return { step: 2, cls: 'orange', tag: 'orange', text: 'Vigilance' }
-    default: return { step: 1, cls: '', tag: 'green', text: 'Normal' }
+    case 'CRITICAL': return { step: 4, tone: 'error', level: 'critical' }
+    case 'HIGH': return { step: 3, tone: 'error', level: 'alert' }
+    case 'MEDIUM': return { step: 2, tone: 'warning', level: 'vigilance' }
+    default: return { step: 1, tone: 'success', level: 'normal' }
   }
 }
 
-const STEPS = ['Normal', 'Vigilance', 'Alert', 'Critical']
+const STEPS = ['normal', 'vigilance', 'alert', 'critical']
+// Colours of the active step, from the tone tokens; the step name carries the level.
+const STEP_ACTIVE = ['bg-success-bg text-success-fg', 'bg-primary-tint text-text-accent', 'bg-warning-bg text-warning-fg', 'bg-error-bg text-error-fg']
+
+/** Small figure of the recommendation panel. */
+function Figure({ label, value }) {
+  return (
+    <div>
+      <p className="text-xs text-text-muted">{label}</p>
+      <p className="font-semibold">{value}</p>
+    </div>
+  )
+}
 
 export function DroughtView({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { data, loading, error } = useDroughtPrediction()
   const meta = riskMeta(data?.risk_level)
+  const levelText = t(`drought.levels.${meta.level}`)
+
+  function renderContent() {
+    if (loading) return <LoadingState label={t('common.loading')} />
+    if (error) return <ErrorState message={error.message || t('drought.loadError')} />
+    if (!data) return <EmptyState message={t('drought.empty')} />
+    const gaugeColor = meta.step >= 3 ? C.red : meta.step === 2 ? C.orange : C.green
+    return (
+      <SplitLayout
+        main={
+          <Card title={t('drought.gaugeTitle')} actions={<Badge tone={meta.tone}>{levelText}</Badge>}>
+            <WsRadialGauge value={data.reservoir_level_percentage ?? 0} color={gaugeColor} />
+            <ol className="mt-3 grid grid-cols-4 gap-2" aria-label={t('drought.stepsLabel')}>
+              {STEPS.map((step, i) => {
+                const active = meta.step === i + 1
+                return (
+                  <li
+                    key={step}
+                    aria-current={active ? 'step' : undefined}
+                    className={`grid min-h-11 place-items-center rounded-control text-xs font-bold ${active ? STEP_ACTIVE[i] : 'bg-neutral-bg text-text-muted'}`}
+                  >
+                    {t(`drought.levels.${step}`)}
+                  </li>
+                )
+              })}
+            </ol>
+          </Card>
+        }
+        aside={
+          <>
+            <Card title={t('drought.recommendationTitle')}>
+              <Badge tone={meta.tone}>{levelText}</Badge>
+              <div className="mt-3 mb-1 flex flex-wrap gap-6 text-sm">
+                <Figure
+                  label={t('drought.reserveDays')}
+                  value={data.days_of_reserve_remaining != null
+                    ? t('drought.days', { value: format.number(Math.round(data.days_of_reserve_remaining * 10) / 10) })
+                    : t('drought.notAvailable')}
+                />
+                <Figure
+                  label={t('drought.averageConsumption')}
+                  value={t('drought.litersPerDay', { value: format.number(data.daily_average_consumption_liters_7d ?? 0) })}
+                />
+                <Figure
+                  label={t('drought.reserve')}
+                  value={t('drought.reserveValue', {
+                    reserve: format.number(data.total_reserve_liters ?? 0),
+                    capacity: format.number(data.total_capacity_liters ?? 0),
+                  })}
+                />
+              </div>
+              <p className="mt-2 text-sm text-text-muted">{data.recommendations || t('drought.defaultRecommendation')}</p>
+              <p className="mt-2 text-xs text-text-muted">
+                {t('drought.prediction', {
+                  date: data.prediction_date ? format.dateTime(data.prediction_date) : t('common.none'),
+                  confidence: format.percent((data.confidence ?? 0) * 100),
+                })}
+              </p>
+            </Card>
+            <Card title={t('drought.automationTitle')}>
+              <Badge tone="error">{t('drought.ifCritical')}</Badge>
+              <p className="my-3 text-sm text-text-muted">{t('drought.automationText')}</p>
+              <Button size="sm" onClick={() => notify(t('drought.planPrepared'))}>{t('drought.preparePlan')}</Button>
+            </Card>
+          </>
+        }
+      />
+    )
+  }
 
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Drought alerts</h1>
-          <p>Risk level based on reservoir levels, season and operational demand.</p>
-        </div>
-      </div>
-
-      {loading ? (
-        <Spinner label="Loading…" full />
-      ) : error ? (
-        <EmptyState title="Error" description={error.message || 'Unable to load.'} />
-      ) : data ? (
-        <div className="ws-layout-2">
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Current risk gauge</h2>
-              <span className={`ws-tag ${meta.tag}`}>{meta.text}</span>
-            </div>
-            <div className="ws-panel-body">
-              <WsRadialGauge
-                value={data.reservoir_level_percentage ?? 0}
-                color={
-                  meta.step >= 3
-                    ? 'var(--ws-red, #c62828)'
-                    : meta.step === 2
-                      ? 'var(--ws-orange, #ef6c00)'
-                      : 'var(--ws-green, #4caf50)'
-                }
-              />
-              <div className="ws-risk-gauge">
-                {STEPS.map((label, i) => (
-                  <div key={label} className={`ws-risk-step ${meta.step === i + 1 ? 'active' : ''}`}>
-                    {label}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="ws-stack">
-            <div className="ws-panel">
-              <div className="ws-panel-header">              <h2>Recommendation</h2></div>
-              <div className="ws-panel-body">
-                <span className={`ws-tag ${meta.tag}`}>{meta.text}</span>
-                <div style={{ display: 'flex', gap: '22px', marginTop: 12, marginBottom: 4, fontSize: '13px' }}>
-                  <div>
-                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Reserve days</div>
-                    <strong>{data.days_of_reserve_remaining != null ? (Math.round(data.days_of_reserve_remaining * 10) / 10) + ' j' : 'n/d'}</strong>
-                  </div>
-                  <div>
-                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Avg. consumption (7 d)</div>
-                    <strong>{data.daily_average_consumption_liters_7d ?? 0} L/j</strong>
-                  </div>
-                  <div>
-                    <div style={{ color: 'var(--ws-muted)', fontSize: '11px' }}>Reserve</div>
-                    <strong>{data.total_reserve_liters ?? 0} / {data.total_capacity_liters ?? 0} L</strong>
-                  </div>
-                </div>
-                <p style={{ color: 'var(--ws-muted)', lineHeight: 1.55, marginTop: 8 }}>
-                  {data.recommendations || 'Reserve water for priority crops.'}
-                </p>
-                <p style={{ color: 'var(--ws-muted)', fontSize: '12px' }}>
-                  Prediction from {data.prediction_date ? new Date(data.prediction_date).toLocaleString() : '—'} · confidence {(data.confidence ?? 0) * 100}%
-                </p>
-              </div>
-            </div>
-            <div className="ws-panel">
-              <div className="ws-panel-header">              <h2>Critical automation</h2></div>
-              <div className="ws-panel-body">
-                <span className="ws-tag red">If critical</span>
-                <p style={{ color: 'var(--ws-muted)', lineHeight: 1.55 }}>
-                  Proposes postponing non-essential irrigation until the reservoir recovers.
-                </p>
-                <button className="ws-chip active" onClick={() => notify('Postponement plan prepared (demo).')}>Prepare postponement plan</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <EmptyState title="No prediction" />
-      )}
-    </>
+    <Screen title={t('drought.title')} subtitle={t('drought.subtitle')}>
+      {renderContent()}
+    </Screen>
   )
 }

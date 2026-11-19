@@ -85,13 +85,13 @@ public class FertilizerPlanControllerTest {
     }
 
     private static FertilizerPlanResponse plannedNpk() {
-        return new FertilizerPlanResponse(5L, 1L, "NPK 15-15-15", FertilizerUnit.KG, null, "B",
+        return new FertilizerPlanResponse(5L, 1L, "NPK 15-15-15", FertilizerUnit.KG, 1L, "B",
                 LocalDate.of(2026, 11, 24), 30.0, FertilizerPlanStatus.PLANNED, false, 10, 500L, 0.76,
                 LocalDate.of(2026, 11, 3), 15000L, 22.87, null, null, null, "before the rains", "user_entry", NOW);
     }
 
     private static FertilizerPlanResponse doneNpk() {
-        return new FertilizerPlanResponse(5L, 1L, "NPK 15-15-15", FertilizerUnit.KG, null, "B",
+        return new FertilizerPlanResponse(5L, 1L, "NPK 15-15-15", FertilizerUnit.KG, 1L, "B",
                 LocalDate.of(2026, 11, 24), 30.0, FertilizerPlanStatus.DONE, false, null, 500L, 0.76,
                 LocalDate.of(2026, 11, 3), 15000L, 22.87, 77L, LocalDate.of(2026, 11, 14), 25.5, null,
                 "user_entry", NOW);
@@ -113,7 +113,7 @@ public class FertilizerPlanControllerTest {
                 .andExpect(jsonPath("$.fertilizerId").value(1))
                 .andExpect(jsonPath("$.fertilizerName").value("NPK 15-15-15"))
                 .andExpect(jsonPath("$.unit").value("KG"))
-                .andExpect(jsonPath("$.farmId").value(nullValue()))
+                .andExpect(jsonPath("$.farmId").value(1))
                 .andExpect(jsonPath("$.blockCode").value("B"))
                 .andExpect(jsonPath("$.plannedDate").value("2026-11-24"))
                 .andExpect(jsonPath("$.plannedQuantity").value(30.0))
@@ -210,7 +210,7 @@ public class FertilizerPlanControllerTest {
     @Test
     void getAllPlans_shouldReturn200WithThePlans_andPassEveryFilter() throws Exception {
         // Arrange
-        when(fertilizerPlanService.getAllPlans(1L, FertilizerPlanStatus.PLANNED, 2, "B",
+        when(fertilizerPlanService.getAllPlans(1L, FertilizerPlanStatus.PLANNED, 2L, "B",
                 LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30))).thenReturn(List.of(plannedNpk()));
         // Act
         ResultActions result = mockMvc.perform(get(URL)
@@ -256,7 +256,7 @@ public class FertilizerPlanControllerTest {
                 .thenReturn(doneNpk());
         // Act
         ResultActions result = postComplete(5L, """
-                {"applicationDate":"%s","quantity":25.5,"applicator":"Team A","method":"around the tree base"}
+                {"applicationDate":"%s","quantity":25.5,"applicatorPersonId":7,"method":"around the tree base"}
                 """.formatted(TODAY));
         // Assert
         result.andExpect(status().isOk())
@@ -268,7 +268,7 @@ public class FertilizerPlanControllerTest {
         ArgumentCaptor<FertilizerPlanCompletionRequest> captor =
                 ArgumentCaptor.forClass(FertilizerPlanCompletionRequest.class);
         verify(fertilizerPlanService).completePlan(eq(5L), captor.capture());
-        assertEquals(new FertilizerPlanCompletionRequest(TODAY, 25.5, "Team A", "around the tree base"),
+        assertEquals(new FertilizerPlanCompletionRequest(TODAY, 25.5, 7L, "around the tree base"),
                 captor.getValue());
     }
 
@@ -281,15 +281,15 @@ public class FertilizerPlanControllerTest {
         result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(3)))
                 .andExpect(jsonPath("$.fieldErrors.applicationDate").value("applicationDate is required"))
                 .andExpect(jsonPath("$.fieldErrors.quantity").value("quantity is required"))
-                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"));
+                .andExpect(jsonPath("$.fieldErrors.applicatorPersonId").value("applicatorPersonId is required"));
         verify(fertilizerPlanService, never()).completePlan(any(), any());
     }
 
     @Test
     void completePlan_shouldReturn400WithEveryFailingField_whenValuesAreInvalid() throws Exception {
-        // Act: a date in the future, a negative quantity, a blank applicator and a long method
+        // Act: a date in the future, a negative quantity, no applicator and a long method
         ResultActions result = postComplete(5L, """
-                {"applicationDate":"%s","quantity":-1,"applicator":"  ","method":"%s"}
+                {"applicationDate":"%s","quantity":-1,"applicatorPersonId":null,"method":"%s"}
                 """.formatted(TODAY.plusDays(1), "m".repeat(256)));
         // Assert: the same messages as an application
         assertApiError(result, 400, "Bad Request", "Validation failed", URL + "/5/complete");
@@ -298,7 +298,7 @@ public class FertilizerPlanControllerTest {
                         .value("applicationDate must be today or in the past"))
                 .andExpect(jsonPath("$.fieldErrors.quantity")
                         .value("quantity must be greater than 0, with at most 3 decimals"))
-                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"))
+                .andExpect(jsonPath("$.fieldErrors.applicatorPersonId").value("applicatorPersonId is required"))
                 .andExpect(jsonPath("$.fieldErrors.method").value("method must be at most 255 characters"));
     }
 
@@ -309,7 +309,7 @@ public class FertilizerPlanControllerTest {
                 .thenThrow(new FertilizerPlanNotFoundException(9L));
         // Act
         ResultActions result = postComplete(9L, """
-                {"applicationDate":"%s","quantity":25.5,"applicator":"Team A"}
+                {"applicationDate":"%s","quantity":25.5,"applicatorPersonId":7}
                 """.formatted(TODAY));
         // Assert
         assertApiError(result, 404, "Not Found", "Planned application with ID 9 not found", URL + "/9/complete");
@@ -324,7 +324,7 @@ public class FertilizerPlanControllerTest {
                 .thenThrow(new ConflictException(message));
         // Act
         ResultActions result = postComplete(5L, """
-                {"applicationDate":"%s","quantity":25.5,"applicator":"Team A"}
+                {"applicationDate":"%s","quantity":25.5,"applicatorPersonId":7}
                 """.formatted(TODAY));
         // Assert
         assertApiError(result, 409, "Conflict", message, URL + "/5/complete");
@@ -338,7 +338,7 @@ public class FertilizerPlanControllerTest {
                 .thenThrow(new BusinessRuleException(message));
         // Act
         ResultActions result = postComplete(5L, """
-                {"applicationDate":"%s","quantity":30,"applicator":"Team A"}
+                {"applicationDate":"%s","quantity":30,"applicatorPersonId":7}
                 """.formatted(TODAY));
         // Assert
         assertApiError(result, 422, "Unprocessable Entity", message, URL + "/5/complete");
@@ -348,7 +348,7 @@ public class FertilizerPlanControllerTest {
     void cancelPlan_shouldReturn200WithTheCancelledPlan() throws Exception {
         // Arrange
         when(fertilizerPlanService.cancelPlan(5L)).thenReturn(new FertilizerPlanResponse(5L, 1L, "NPK 15-15-15",
-                FertilizerUnit.KG, null, "B", LocalDate.of(2026, 11, 24), 30.0, FertilizerPlanStatus.CANCELLED,
+                FertilizerUnit.KG, 1L, "B", LocalDate.of(2026, 11, 24), 30.0, FertilizerPlanStatus.CANCELLED,
                 false, null, null, null, null, null, null, null, null, null, null, "user_entry", NOW));
         // Act: no body is needed
         ResultActions result = mockMvc.perform(post(URL + "/5/cancel"));

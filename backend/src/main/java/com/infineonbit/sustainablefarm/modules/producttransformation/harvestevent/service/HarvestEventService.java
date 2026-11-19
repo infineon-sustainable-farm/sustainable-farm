@@ -1,8 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -55,7 +54,7 @@ public interface HarvestEventService {
     /**
      * Get harvest events by mango variety
      */
-    List<HarvestEvent> getHarvestEventsByVariety(MangoVariety variety);
+    List<HarvestEvent> getHarvestEventsByVariety(String variety);
 
     /**
      * Get harvest events by quality grade
@@ -75,7 +74,7 @@ public interface HarvestEventService {
     /**
      * Get harvest events by variety and quality grade
      */
-    List<HarvestEvent> getHarvestEventsByVarietyAndGrade(MangoVariety variety, QualityGrade grade);
+    List<HarvestEvent> getHarvestEventsByVarietyAndGrade(String variety, QualityGrade grade);
 
     /**
      * Check if batch ID already exists
@@ -86,7 +85,7 @@ public interface HarvestEventService {
     /**
      * Get total harvest quantity by variety
      */
-    Double getTotalHarvestQuantityByVariety(MangoVariety variety);
+    Double getTotalHarvestQuantityByVariety(String variety);
 
     /**
      * Get harvest events by team

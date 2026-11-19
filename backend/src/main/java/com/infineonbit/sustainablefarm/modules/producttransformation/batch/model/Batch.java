@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.model;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
 import com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord;
@@ -8,16 +9,13 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrec
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord;
 
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDate;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.math.BigDecimal;
@@ -33,27 +31,30 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "batch")
+@Table(name = "batch",
+        uniqueConstraints = @UniqueConstraint(name = "uk_batch_code", columnNames = "code"),
+        indexes = {
+        @Index(name = "idx_batch_current_status", columnList = "current_status"),
+        @Index(name = "idx_batch_harvest_date", columnList = "harvest_date"),
+        @Index(name = "idx_batch_variety_key", columnList = "variety_key"),
+        @Index(name = "idx_batch_block_id", columnList = "block_id")
+})
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class Batch {
+public class Batch extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "batch_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String batchId;
 
     @Column(name = "harvest_date", nullable = false)
     private LocalDate harvestDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mango_variety", nullable = false, length = 20)
-    private HarvestEvent.MangoVariety mangoVariety;
+    /** Catalogue key of the variety, for example {@code KENT}: foreign key to plants {@code variety_reference}. */
+    @Column(name = "variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
+    private String varietyKey;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal harvestQuantityKg;
@@ -62,75 +63,37 @@ public class Batch {
     @Column(name = "current_status", nullable = false, length = 30)
     private BatchStatus currentStatus = BatchStatus.CREATED;
 
-    @Column(name = "farm_id", nullable = false, length = 50)
-    private String farmId;
-
-    @Column(name = "block_id", nullable = false, length = 50)
-    private String blockId;
-
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
+    /**
+     * Block of the farm the lot was harvested on: foreign key to {@code farm.block} (ADR 0004). The
+     * API shows it as {@code blockId} (the block code) and {@code farmId} (the name of its farm).
+     */
+    @Column(name = "block_id", nullable = false)
+    private Long farmBlockId;
 
     // Relationships
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<WashSortRecord> washSortRecords = new ArrayList<>();
 
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<DryingRun> dryingRuns = new ArrayList<>();
 
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<PackagingRecord> packagingRecords = new ArrayList<>();
 
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<QcCheckpoint> qcCheckpoints = new ArrayList<>();
 
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<ComplianceRecord> complianceRecords = new ArrayList<>();
 
     @OneToOne(mappedBy = "batch", cascade = CascadeType.ALL)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private RawIntake rawIntake;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    /**
-     * Batch Status Enum
-     * Business Rule: Matches database CHECK constraint
-     * Business Rule: Status transitions must follow the processing workflow
-     */
-    public enum BatchStatus {
-        CREATED,
-        INTAKE,
-        WASHING,
-        DRYING,
-        PACKAGING,
-        COMPLETED,
-        SHIPPED,
-        REJECTED
-    }
 
     /**
      * Advance batch status to next stage

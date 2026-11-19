@@ -1,18 +1,20 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.TransplantRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryBatchResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.NurseryEventResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantingResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -46,6 +48,12 @@ class PlantingConcurrencyIntegrationTest {
     private static final int TRIALS = 10;
 
     @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @Autowired
+    private PlantsBlocks plantsBlocks;
+
+    @Autowired
     private PlantingService plantingService;
 
     @Autowired
@@ -58,7 +66,7 @@ class PlantingConcurrencyIntegrationTest {
     private ConcurrentPlantingRetry concurrentPlantingRetry;
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private GrowthCalendarRepository growthCalendarRepository;
@@ -126,10 +134,24 @@ class PlantingConcurrencyIntegrationTest {
                 null, LocalDate.of(2025, 1, 1), 100.0, "READY_TO_TRANSPLANT", LocalDate.of(2026, 6, 1), null)).id();
     }
 
+    /** BlockVariety rows of the block of a code, none when the farm referential has no such block. */
+    private List<BlockVariety> varietiesOf(String blockCode) {
+        return plantsBlocks.find(null, blockCode)
+                .map(block -> blockVarietyRepository.findByOptionalFilters(false, List.of(block.id())))
+                .orElse(List.of());
+    }
+
+    /** Calendar rows of the block of a code, none when the farm referential has no such block. */
+    private List<GrowthCalendar> calendarsOf(String blockCode) {
+        return plantsBlocks.find(null, blockCode)
+                .map(block -> growthCalendarRepository.findByBlock(block.id()))
+                .orElse(List.of());
+    }
+
     /** Current number of trees of each variety row of the block, oldest row first. */
     private List<Integer> treeBalances(String blockCode) {
-        List<Long> ids = varietyRepository.findByOptionalFilters(null, blockCode).stream()
-                .map(Variety::getId)
+        List<Long> ids = varietiesOf(blockCode).stream()
+                .map(BlockVariety::getId)
                 .toList();
         return populationEventRepository.findTreeBalances(ids).stream()
                 .map(TreeBalance::getBalance)
@@ -138,7 +160,7 @@ class PlantingConcurrencyIntegrationTest {
     }
 
     private List<LocalDate> calendarDates(String blockCode) {
-        return growthCalendarRepository.findByFarmAndBlock(null, blockCode).stream()
+        return calendarsOf(blockCode).stream()
                 .map(GrowthCalendar::getPlantingDate)
                 .toList();
     }
@@ -148,12 +170,14 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: a variety row with no planting, like the Zalka 2025 row of the dev profile
             String blockCode = "CE" + trial;
-            Variety keitt = new Variety();
+            siteTestBlocks.ensure(blockCode);
+            BlockVariety keitt = new BlockVariety();
             keitt.setName("Keitt");
-            keitt.setBlockCode(blockCode);
+            BlockDto block = siteTestBlocks.ensure(blockCode);
+            keitt.assignBlock(block.id(), PlantsBlocks.label(block));
             keitt.setTreeCount(200);
             keitt.setSource("Zalka_2025");
-            varietyRepository.save(keitt);
+            blockVarietyRepository.save(keitt);
             // Act
             List<Object> results = together(List.of(
                     plant(blockCode, "Keitt", "2023-09-24", 150),
@@ -171,6 +195,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: the block already has a calendar row, dated by a first planting
             String blockCode = "CD" + trial;
+            siteTestBlocks.ensure(blockCode);
             plantingService.recordPlanting(new PlantingRequest(null, blockCode, "Palmer",
                     LocalDate.of(2024, 1, 1), 10));
             // Act: two older plantings of other varieties, sent together
@@ -188,6 +213,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: the triple has no row yet
             String blockCode = "CT" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act
             List<Object> results = together(List.of(
                     plant(blockCode, "Kent", "2021-03-01", 50),
@@ -205,13 +231,14 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange
             String blockCode = "CF" + trial;
+            siteTestBlocks.ensure(blockCode);
             List<Callable<Object>> plantings = Collections.nCopies(5, plant(blockCode, "Kent", "2021-03-01", 50));
             // Act
             List<Object> results = together(plantings);
             // Assert: one 201 and four 409, one row with one planting of 50 trees
             assertEquals(1, count(results, PlantingResponse.class), "trial " + trial);
             assertEquals(4, count(results, ConflictException.class), "trial " + trial);
-            assertEquals(1, varietyRepository.findByOptionalFilters(null, blockCode).size(), "trial " + trial);
+            assertEquals(1, varietiesOf(blockCode).size(), "trial " + trial);
             assertEquals(List.of(50), treeBalances(blockCode), "trial " + trial);
         }
     }
@@ -221,6 +248,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange
             String blockCode = "CC" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act: the lookup already reads "kent" as "Kent"
             List<Object> results = together(List.of(
                     plant(blockCode, "Kent", "2021-03-01", 50),
@@ -237,6 +265,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: the block has no calendar row yet
             String blockCode = "CN" + trial;
+            siteTestBlocks.ensure(blockCode);
             // Act
             List<Object> results = together(List.of(
                     plant(blockCode, "Kent", "2021-03-01", 50),
@@ -253,6 +282,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange
             String blockCode = "CP" + trial;
+            siteTestBlocks.ensure(blockCode);
             Long batchId = startKentBatch("CP-" + trial);
             // Act
             List<Object> results = together(List.of(
@@ -274,6 +304,7 @@ class PlantingConcurrencyIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: two batches of the same variety
             String blockCode = "CQ" + trial;
+            siteTestBlocks.ensure(blockCode);
             Long firstBatchId = startKentBatch("CQ-" + trial + "-1");
             Long secondBatchId = startKentBatch("CQ-" + trial + "-2");
             // Act

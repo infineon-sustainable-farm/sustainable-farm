@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/compliance-records")
+@RequestMapping("/api/product-transformation/compliance-records")
 @Tag(name = "Compliance Management", description = "APIs for managing HACCP compliance records")
 public class ComplianceRecordController {
 
@@ -53,12 +54,12 @@ public class ComplianceRecordController {
     @PostMapping
     @Operation(summary = "Create a new compliance record", description = "Creates a new HACCP compliance record")
     public ResponseEntity<ComplianceRecordResponse> createComplianceRecord(@Valid @RequestBody ComplianceRecordCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Operator auditor = null;
         if (request.getAuditorId() != null) {
-            auditor = operatorRepository.findById(request.getAuditorId())
+            auditor = operatorRepository.findByOperatorId(request.getAuditorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getAuditorId()));
         }
         
@@ -69,6 +70,7 @@ public class ComplianceRecordController {
     }
 
     @GetMapping("/{recordId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get compliance record by ID", description = "Retrieves a specific compliance record by its ID")
     public ResponseEntity<ComplianceRecordResponse> getComplianceRecordById(
             @Parameter(description = "Record ID") @PathVariable String recordId) {
@@ -78,6 +80,7 @@ public class ComplianceRecordController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get compliance records by batch", description = "Retrieves compliance records for a specific batch")
     public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -89,6 +92,7 @@ public class ComplianceRecordController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all compliance records", description = "Retrieves all compliance records")
     public ResponseEntity<List<ComplianceRecordResponse>> getAllComplianceRecords() {
         List<ComplianceRecord> records = complianceRecordService.getAllComplianceRecords();
@@ -118,7 +122,7 @@ public class ComplianceRecordController {
             existingRecord.setEvidence(request.getEvidence());
         }
         if (request.getAuditorId() != null) {
-            Operator auditor = operatorRepository.findById(request.getAuditorId())
+            Operator auditor = operatorRepository.findByOperatorId(request.getAuditorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getAuditorId()));
             existingRecord.setAuditor(auditor);
         }
@@ -143,9 +147,10 @@ public class ComplianceRecordController {
     }
 
     @GetMapping("/type/{complianceType}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get compliance records by type", description = "Retrieves compliance records filtered by compliance type")
     public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByType(
-            @Parameter(description = "Compliance type") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceType complianceType) {
+            @Parameter(description = "Compliance type") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceType complianceType) {
         List<ComplianceRecord> records = complianceRecordService.getComplianceRecordsByType(complianceType);
         List<ComplianceRecordResponse> responses = records.stream()
                 .map(dtoMapper::toResponse)
@@ -154,9 +159,10 @@ public class ComplianceRecordController {
     }
 
     @GetMapping("/result/{result}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get compliance records by result", description = "Retrieves compliance records filtered by result")
     public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByResult(
-            @Parameter(description = "Compliance result") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceRecord.ComplianceResult result) {
+            @Parameter(description = "Compliance result") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.compliancerecord.model.ComplianceResult result) {
         List<ComplianceRecord> records = complianceRecordService.getComplianceRecordsByResult(result);
         List<ComplianceRecordResponse> responses = records.stream()
                 .map(dtoMapper::toResponse)
@@ -165,6 +171,7 @@ public class ComplianceRecordController {
     }
 
     @GetMapping("/auditor/{auditorId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get compliance records by auditor", description = "Retrieves compliance records filtered by auditor")
     public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByAuditor(
             @Parameter(description = "Auditor ID") @PathVariable String auditorId) {
@@ -176,6 +183,7 @@ public class ComplianceRecordController {
     }
 
     @GetMapping("/overdue")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get overdue compliance records", description = "Retrieves compliance records with overdue next audit dates")
     public ResponseEntity<List<ComplianceRecordResponse>> getOverdueComplianceRecords() {
         List<ComplianceRecord> records = complianceRecordService.getOverdueAudits();
@@ -186,6 +194,7 @@ public class ComplianceRecordController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get compliance records by audit date range", description = "Retrieves compliance records within an audit date range")
     public ResponseEntity<List<ComplianceRecordResponse>> getComplianceRecordsByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,

@@ -15,7 +15,6 @@ import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundExc
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.RainwaterHarvestRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,7 +30,7 @@ class RainwaterHarvestServiceTest {
 
     @Test
     void createCalculatesHarvestedLiters() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 139L;
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.of(new WaterSource()));
         when(harvestRepository.save(any(RainwaterHarvest.class))).thenAnswer(call -> call.getArgument(0));
 
@@ -42,8 +41,8 @@ class RainwaterHarvestServiceTest {
 
     @Test
     void updateRecalculatesUsingExistingValuesWhenPayloadIsPartial() {
-        UUID sourceId = UUID.randomUUID();
-        UUID harvestId = UUID.randomUUID();
+        Long sourceId = 140L;
+        Long harvestId = 41L;
         RainwaterHarvest existing = harvest(sourceId, 10.0, 20.0, 0.5);
         existing.setHarvestedLiters(100.0);
         when(harvestRepository.findById(harvestId)).thenReturn(Optional.of(existing));
@@ -58,7 +57,7 @@ class RainwaterHarvestServiceTest {
 
     @Test
     void createRejectsUnknownSource() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 141L;
         when(waterSourceRepository.findById(sourceId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service().create(request(sourceId, 10.0, 20.0, 0.5)));
@@ -66,11 +65,11 @@ class RainwaterHarvestServiceTest {
     }
 
     /** Client request: id and creation date never come from the client. */
-    private RainwaterHarvestRequest request(UUID sourceId, double area, double rainfall, double coefficient) {
+    private RainwaterHarvestRequest request(Long sourceId, double area, double rainfall, double coefficient) {
         return new RainwaterHarvestRequest(sourceId, area, rainfall, coefficient, null, null);
     }
 
-    private RainwaterHarvest harvest(UUID sourceId, double area, double rainfall, double coefficient) {
+    private RainwaterHarvest harvest(Long sourceId, double area, double rainfall, double coefficient) {
         RainwaterHarvest harvest = new RainwaterHarvest();
         harvest.setSourceId(sourceId);
         harvest.setCatchmentAreaM2(area);

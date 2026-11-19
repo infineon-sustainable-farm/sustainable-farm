@@ -31,7 +31,7 @@ import java.time.LocalDate;
 @OtherLabelMatchesIssue(codeField = "targetIssueCode", labelField = "targetOtherLabel")
 public record PreventiveTreatmentRequest(
         @Min(value = 1, message = "farmId must be at least 1")
-        Integer farmId,
+        Long farmId,
 
         @NotNull(message = "blockCode is required")
         @Pattern(regexp = "^\\s*[A-Za-z0-9]{1,10}\\s*$",
@@ -79,10 +79,12 @@ public record PreventiveTreatmentRequest(
         @Digits(integer = 9, fraction = 0, message = "preHarvestIntervalDays must be a whole number, 0 or more")
         Double preHarvestIntervalDays,
 
-        @NotBlank(message = "applicator is required")
-        @Size(max = 255, message = "applicator must be at most 255 characters")
-        String applicator,
+        @Schema(description = "Person of the people directory (GET /api/staff/persons) who applied it")
+        @NotNull(message = "applicatorPersonId is required")
+        Long applicatorPersonId,
 
-        @Size(max = 255, message = "equipment must be at most 255 characters")
-        String equipment) {
+        @Schema(description = "Id of the machine used, a machine of the machinery register "
+                + "(/api/machinery/equipment); optional")
+        @Min(value = 1, message = "equipmentId must be at least 1")
+        Long equipmentId) {
 }

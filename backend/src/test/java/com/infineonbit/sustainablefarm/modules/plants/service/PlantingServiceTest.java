@@ -1,20 +1,23 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantingResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -39,7 +42,7 @@ public class PlantingServiceTest {
     private static final LocalDate PLANTING_DATE = LocalDate.of(2023, 9, 24);
 
     @Mock
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Mock
     private GrowthCalendarRepository growthCalendarRepository;
@@ -47,31 +50,48 @@ public class PlantingServiceTest {
     @Mock
     private PopulationEventRepository populationEventRepository;
 
+    @Spy
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("A", 1L).with("B", 1L).with("C", 2L).asPlantsBlocks();
+
     @InjectMocks
     private PlantingService plantingService;
 
-    private static PlantingRequest request(Integer farmId, String blockCode, String varietyName,
+    private static final long A = TestBlocks.idOf("A");
+    private static final long B = TestBlocks.idOf("B");
+
+    private static PlantingRequest request(Long farmId, String blockCode, String varietyName,
                                            LocalDate plantingDate, int treeCount) {
         return new PlantingRequest(farmId, blockCode, varietyName, plantingDate, treeCount);
     }
 
     /** The seeded Zalka 2025 variety row, as the dev profile loads it. */
-    private static Variety zalkaKeitt() {
-        return new Variety(
-                1L, null, "Keitt", 200, 8.0, 8.0, null,
-                null, "A", null, "Zalka_2025", null, null);
+    private static BlockVariety zalkaKeitt() {
+        BlockVariety variety = new BlockVariety();
+        variety.setId(1L);
+        variety.setName("Keitt");
+        variety.setTreeCount(200);
+        variety.setRowSpacingM(BigDecimal.valueOf(8.0));
+        variety.setTreeSpacingM(BigDecimal.valueOf(8.0));
+        variety.assignBlock(A, TestBlocks.label("A"));
+        variety.setSource("Zalka_2025");
+        return variety;
     }
 
     private static GrowthCalendar calendar(String block, LocalDate plantingDate, String precision, String source) {
-        return new GrowthCalendar(
-                5L, null, block, plantingDate, precision,
-                null, null, null, source, EARLIER, null);
+        GrowthCalendar entry = new GrowthCalendar();
+        entry.setId(5L);
+        entry.assignBlock(TestBlocks.idOf(block), TestBlocks.label(block));
+        entry.setPlantingDate(plantingDate);
+        entry.setDatePrecision(precision);
+        entry.setSource(source);
+        entry.setLastUpdated(EARLIER);
+        return entry;
     }
 
     /** Saving a new variety row gives it an identifier, as the database would. */
     private void varietySaveAssignsId(long id) {
-        when(varietyRepository.save(any(Variety.class))).thenAnswer(invocation -> {
-            Variety variety = invocation.getArgument(0);
+        when(blockVarietyRepository.save(any(BlockVariety.class))).thenAnswer(invocation -> {
+            BlockVariety variety = invocation.getArgument(0);
             variety.setId(id);
             return variety;
         });
@@ -101,18 +121,19 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldCreateVarietyCalendarAndEvent_whenBlockIsNew() {
         // Arrange
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "B", "Keitt")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "B")).thenReturn(List.of());
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(B, "Keitt")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(B)).thenReturn(List.of());
         varietySaveAssignsId(10L);
         eventSaveAssignsId(100L);
         // Act
         PlantingResponse response = plantingService.recordPlanting(
                 request(null, "B", "Keitt", PLANTING_DATE, 150), NOW);
         // Assert: the variety row, with only what a planting says
-        ArgumentCaptor<Variety> varietyCaptor = ArgumentCaptor.forClass(Variety.class);
-        verify(varietyRepository).save(varietyCaptor.capture());
-        Variety variety = varietyCaptor.getValue();
-        assertNull(variety.getFarmId());
+        ArgumentCaptor<BlockVariety> varietyCaptor = ArgumentCaptor.forClass(BlockVariety.class);
+        verify(blockVarietyRepository).save(varietyCaptor.capture());
+        BlockVariety variety = varietyCaptor.getValue();
+        assertEquals(B, variety.getBlockId());
+        assertEquals(1L, variety.getFarmId());
         assertEquals("B", variety.getBlockCode());
         assertEquals("Keitt", variety.getName());
         assertEquals(150, variety.getTreeCount());
@@ -125,7 +146,8 @@ public class PlantingServiceTest {
         assertNull(variety.getPlantOrigin());
         // Assert: the calendar row of the block
         GrowthCalendar entry = savedCalendar();
-        assertNull(entry.getFarmId());
+        assertEquals(B, entry.getBlockId());
+        assertEquals(1L, entry.getFarmId());
         assertEquals("B", entry.getBlockCode());
         assertEquals(PLANTING_DATE, entry.getPlantingDate());
         assertEquals("day known", entry.getDatePrecision());
@@ -142,24 +164,24 @@ public class PlantingServiceTest {
         assertEquals(150, event.getTreeCount());
         assertEquals("user_entry", event.getSource());
         assertEquals(NOW, event.getLastUpdated());
-        assertEquals(new PlantingResponse(100L, null, "B", 10L, "Keitt", PLANTING_DATE, 150, "user_entry", NOW),
+        assertEquals(new PlantingResponse(100L, 1L, "B", 10L, "Keitt", PLANTING_DATE, 150, "user_entry", NOW),
                 response);
     }
 
     @Test
     void recordPlanting_shouldReuseExistingVariety_whenNameDiffersOnlyByCase() {
         // Arrange: the repository matches names ignoring case, so "keitt" finds the Zalka row
-        Variety zalkaKeitt = zalkaKeitt();
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "keitt")).thenReturn(List.of(zalkaKeitt));
+        BlockVariety zalkaKeitt = zalkaKeitt();
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "keitt")).thenReturn(List.of(zalkaKeitt));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(false);
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of());
         eventSaveAssignsId(100L);
         // Act
         PlantingResponse response = plantingService.recordPlanting(
                 request(null, "A", "keitt", PLANTING_DATE, 150), NOW);
         // Assert: no second row, and the existing one is not modified
-        verify(varietyRepository, never()).save(any(Variety.class));
+        verify(blockVarietyRepository, never()).save(any(BlockVariety.class));
         assertEquals(200, zalkaKeitt.getTreeCount());
         assertEquals("Keitt", zalkaKeitt.getName());
         assertEquals("Zalka_2025", zalkaKeitt.getSource());
@@ -181,18 +203,18 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldWriteTheSpacingsAndTheVigor_onANewVarietyRow() {
         // Arrange
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of());
         varietySaveAssignsId(10L);
         eventSaveAssignsId(100L);
         // Act
         plantingService.recordPlanting(detailedRequest("Kent", "8", "7.5", " good "), NOW);
         // Assert: the vigor is trimmed and upper-cased
-        ArgumentCaptor<Variety> varietyCaptor = ArgumentCaptor.forClass(Variety.class);
-        verify(varietyRepository).save(varietyCaptor.capture());
-        Variety variety = varietyCaptor.getValue();
-        assertEquals(8.0, variety.getRowSpacingM());
-        assertEquals(7.5, variety.getTreeSpacingM());
+        ArgumentCaptor<BlockVariety> varietyCaptor = ArgumentCaptor.forClass(BlockVariety.class);
+        verify(blockVarietyRepository).save(varietyCaptor.capture());
+        BlockVariety variety = varietyCaptor.getValue();
+        assertEquals(8.0, variety.getRowSpacingM().doubleValue());
+        assertEquals(7.5, variety.getTreeSpacingM().doubleValue());
         assertEquals("GOOD", variety.getVigor());
         assertNull(variety.getTreeDensityPerHa());
     }
@@ -200,19 +222,19 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldReplaceTheSpacingsAndTheVigor_ofAnExistingRowWithoutPlanting() {
         // Arrange: the seeded Zalka row, 8 × 8 m, vigor not assessed
-        Variety zalkaKeitt = zalkaKeitt();
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt));
+        BlockVariety zalkaKeitt = zalkaKeitt();
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Keitt")).thenReturn(List.of(zalkaKeitt));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(false);
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
-        when(varietyRepository.save(zalkaKeitt)).thenReturn(zalkaKeitt);
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of());
+        when(blockVarietyRepository.save(zalkaKeitt)).thenReturn(zalkaKeitt);
         eventSaveAssignsId(100L);
         // Act
         plantingService.recordPlanting(detailedRequest("Keitt", "10", "6", "Poor"), NOW);
         // Assert: the values entered replace the row's; the rest of the row is kept
-        verify(varietyRepository).save(zalkaKeitt);
-        assertEquals(10.0, zalkaKeitt.getRowSpacingM());
-        assertEquals(6.0, zalkaKeitt.getTreeSpacingM());
+        verify(blockVarietyRepository).save(zalkaKeitt);
+        assertEquals(10.0, zalkaKeitt.getRowSpacingM().doubleValue());
+        assertEquals(6.0, zalkaKeitt.getTreeSpacingM().doubleValue());
         assertEquals("POOR", zalkaKeitt.getVigor());
         assertEquals(NOW, zalkaKeitt.getLastUpdated());
         assertEquals(200, zalkaKeitt.getTreeCount());
@@ -222,40 +244,40 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldKeepTheSpacingsOfAnExistingRow_whenOnlyTheVigorIsGiven() {
         // Arrange
-        Variety zalkaKeitt = zalkaKeitt();
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt));
+        BlockVariety zalkaKeitt = zalkaKeitt();
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Keitt")).thenReturn(List.of(zalkaKeitt));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(false);
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
-        when(varietyRepository.save(zalkaKeitt)).thenReturn(zalkaKeitt);
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of());
+        when(blockVarietyRepository.save(zalkaKeitt)).thenReturn(zalkaKeitt);
         eventSaveAssignsId(100L);
         // Act
         plantingService.recordPlanting(detailedRequest("Keitt", null, null, "AVERAGE"), NOW);
         // Assert: a field left out changes nothing
-        assertEquals(8.0, zalkaKeitt.getRowSpacingM());
-        assertEquals(8.0, zalkaKeitt.getTreeSpacingM());
+        assertEquals(8.0, zalkaKeitt.getRowSpacingM().doubleValue());
+        assertEquals(8.0, zalkaKeitt.getTreeSpacingM().doubleValue());
         assertEquals("AVERAGE", zalkaKeitt.getVigor());
     }
 
     @Test
     void recordPlanting_shouldLeaveTheRowUntouched_whenTheVarietyIsAlreadyPlanted() {
         // Arrange
-        Variety zalkaKeitt = zalkaKeitt();
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt));
+        BlockVariety zalkaKeitt = zalkaKeitt();
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Keitt")).thenReturn(List.of(zalkaKeitt));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(true);
         PlantingRequest request = detailedRequest("Keitt", "10", "6", "POOR");
         // Act & Assert: the 409 comes before any write
         assertThrows(ConflictException.class, () -> plantingService.recordPlanting(request, NOW));
-        verify(varietyRepository, never()).save(any(Variety.class));
-        assertEquals(8.0, zalkaKeitt.getRowSpacingM());
+        verify(blockVarietyRepository, never()).save(any(BlockVariety.class));
+        assertEquals(8.0, zalkaKeitt.getRowSpacingM().doubleValue());
         assertNull(zalkaKeitt.getVigor());
     }
 
     @Test
     void recordPlanting_shouldThrowConflict_whenVarietyIsAlreadyPlanted() {
         // Arrange
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt()));
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Keitt")).thenReturn(List.of(zalkaKeitt()));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(true);
         // Act
@@ -263,7 +285,7 @@ public class PlantingServiceTest {
                 () -> plantingService.recordPlanting(request(null, "A", "Keitt", PLANTING_DATE, 150), NOW));
         // Assert: the message, and nothing written
         assertEquals("A planting of Keitt is already recorded on block A", ex.getMessage());
-        verify(varietyRepository, never()).save(any(Variety.class));
+        verify(blockVarietyRepository, never()).save(any(BlockVariety.class));
         verify(growthCalendarRepository, never()).save(any(GrowthCalendar.class));
         verify(populationEventRepository, never()).save(any(PopulationEvent.class));
     }
@@ -272,8 +294,8 @@ public class PlantingServiceTest {
     void recordPlanting_shouldMoveCalendarDateBack_whenPlantingIsOlder() {
         // Arrange: the block is dated 2024-05-10, the new planting is older
         GrowthCalendar blockA = calendar("A", LocalDate.of(2024, 5, 10), "day known", "user_entry");
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(blockA));
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of(blockA));
         varietySaveAssignsId(11L);
         eventSaveAssignsId(101L);
         // Act
@@ -290,8 +312,8 @@ public class PlantingServiceTest {
     void recordPlanting_shouldLeaveCalendarUntouched_whenRecordedDateIsOlder() {
         // Arrange: the block is dated 2022-03-01, the new planting is later
         GrowthCalendar blockA = calendar("A", LocalDate.of(2022, 3, 1), "day known", "user_entry");
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(blockA));
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of(blockA));
         varietySaveAssignsId(11L);
         eventSaveAssignsId(101L);
         // Act
@@ -306,8 +328,8 @@ public class PlantingServiceTest {
     void recordPlanting_shouldLeaveCalendarUntouched_whenRecordedDateIsTheSame() {
         // Arrange
         GrowthCalendar blockA = calendar("A", PLANTING_DATE, "day known", "user_entry");
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Kent")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(blockA));
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Kent")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of(blockA));
         varietySaveAssignsId(11L);
         eventSaveAssignsId(101L);
         // Act
@@ -321,10 +343,10 @@ public class PlantingServiceTest {
     void recordPlanting_shouldDateCalendar_whenRecordedDateIsNull() {
         // Arrange: the Zalka calendar row has no date; precision and source follow the entered date
         GrowthCalendar zalkaBlockA = calendar("A", null, "rainy season (year unknown)", "Zalka_2025");
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of(zalkaKeitt()));
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Keitt")).thenReturn(List.of(zalkaKeitt()));
         when(populationEventRepository.existsByVarietyIdAndEventType(1L, PopulationEventType.PLANTING))
                 .thenReturn(false);
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of(zalkaBlockA));
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of(zalkaBlockA));
         eventSaveAssignsId(100L);
         // Act
         plantingService.recordPlanting(request(null, "A", "Keitt", PLANTING_DATE, 150), NOW);
@@ -339,8 +361,8 @@ public class PlantingServiceTest {
     @Test
     void recordPlanting_shouldNormalizeBlockCodeAndVarietyName() {
         // Arrange
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(null, "A", "Keitt")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(null, "A")).thenReturn(List.of());
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Keitt")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of());
         varietySaveAssignsId(10L);
         eventSaveAssignsId(100L);
         // Act
@@ -353,17 +375,55 @@ public class PlantingServiceTest {
     }
 
     @Test
-    void recordPlanting_shouldKeepTheFarmOfTheRequest_whenFarmIsGiven() {
-        // Arrange: farm 1 is looked up as farm 1, never as "any farm"
-        when(varietyRepository.findByFarmBlockAndNameForUpdate(1, "A", "Keitt")).thenReturn(List.of());
-        when(growthCalendarRepository.findByFarmAndBlockForUpdate(1, "A")).thenReturn(List.of());
+    void recordPlanting_shouldKeepTheFarmOfTheRequest_whenFarmOwnsTheBlock() {
+        // Arrange
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(A, "Keitt")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(A)).thenReturn(List.of());
         varietySaveAssignsId(12L);
         eventSaveAssignsId(102L);
         // Act
         PlantingResponse response = plantingService.recordPlanting(
-                request(1, "A", "Keitt", PLANTING_DATE, 80), NOW);
+                request(1L, "A", "Keitt", PLANTING_DATE, 80), NOW);
         // Assert
-        assertEquals(1, response.farmId());
-        assertEquals(1, savedCalendar().getFarmId());
+        assertEquals(1L, response.farmId());
+        assertEquals(1L, savedCalendar().getFarmId());
+    }
+
+    @Test
+    void recordPlanting_shouldPlantOnABlockOfTheRequestedFarm() {
+        // Arrange: block C belongs to farm 2 in the farm referential
+        long c = TestBlocks.idOf("C");
+        when(blockVarietyRepository.findByBlockAndNameForUpdate(c, "Keitt")).thenReturn(List.of());
+        when(growthCalendarRepository.findByBlockForUpdate(c)).thenReturn(List.of());
+        varietySaveAssignsId(13L);
+        eventSaveAssignsId(103L);
+        // Act
+        PlantingResponse response = plantingService.recordPlanting(
+                request(2L, "C", "Keitt", PLANTING_DATE, 80), NOW);
+        // Assert
+        assertEquals(2L, response.farmId());
+        assertEquals("C", response.blockCode());
+    }
+
+    @Test
+    void recordPlanting_shouldRefuseAnUnknownBlockCode_andCreateNoBlock() {
+        // Act & Assert: no block has code Q; plants never creates one
+        assertThrows(BadRequestException.class,
+                () -> plantingService.recordPlanting(request(null, "Q", "Keitt", PLANTING_DATE, 80), NOW));
+        assertThrows(BadRequestException.class,
+                () -> plantingService.recordPlanting(request(1L, "Q", "Keitt", PLANTING_DATE, 80), NOW));
+        verify(blockVarietyRepository, never()).save(any(BlockVariety.class));
+        verify(populationEventRepository, never()).save(any(PopulationEvent.class));
+    }
+
+    @Test
+    void recordPlanting_shouldRefuseAFarmThatDoesNotOwnTheBlock_orDoesNotExist() {
+        // Act & Assert: block A belongs to farm 1; farm 9 does not exist; nothing is written
+        assertThrows(BadRequestException.class,
+                () -> plantingService.recordPlanting(request(2L, "A", "Keitt", PLANTING_DATE, 80), NOW));
+        assertThrows(BadRequestException.class,
+                () -> plantingService.recordPlanting(request(9L, "Q", "Keitt", PLANTING_DATE, 80), NOW));
+        verify(blockVarietyRepository, never()).save(any(BlockVariety.class));
+        verify(populationEventRepository, never()).save(any(PopulationEvent.class));
     }
 }

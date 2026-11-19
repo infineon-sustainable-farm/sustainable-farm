@@ -1,10 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.repository.QcCheckpointRepository;
@@ -50,10 +51,10 @@ public class QcCheckpointServiceImpl implements QcCheckpointService {
     public QcCheckpoint createQcCheckpoint(QcCheckpoint qcCheckpoint) {
         // Business Rule: Validate inspector is certified
         if (qcCheckpoint.getInspector() != null) {
-            Operator inspector = operatorRepository.findById(qcCheckpoint.getInspector().getOperatorId())
+            Operator inspector = operatorRepository.findByOperatorId(qcCheckpoint.getInspector().getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Inspector not found"));
             
-            if (inspector.getRole() != Operator.Role.QC_INSPECTOR) {
+            if (inspector.getRole() != Role.QC_INSPECTOR) {
                 throw new IllegalArgumentException(
                     "Inspector must have QC_INSPECTOR role. Current role: " + inspector.getRole()
                 );
@@ -81,16 +82,16 @@ public class QcCheckpointServiceImpl implements QcCheckpointService {
 
     @Override
     public void deleteQcCheckpoint(String checkpointId) {
-        if (!qcCheckpointRepository.existsById(checkpointId)) {
+        if (!qcCheckpointRepository.existsByCheckpointId(checkpointId)) {
             throw new IllegalArgumentException("QC checkpoint not found with ID: " + checkpointId);
         }
-        qcCheckpointRepository.deleteById(checkpointId);
+        qcCheckpointRepository.deleteByCheckpointId(checkpointId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public QcCheckpoint getQcCheckpointById(String checkpointId) {
-        return qcCheckpointRepository.findById(checkpointId)
+        return qcCheckpointRepository.findByCheckpointId(checkpointId)
                 .orElseThrow(() -> new IllegalArgumentException("QC checkpoint not found with ID: " + checkpointId));
     }
 
@@ -200,14 +201,14 @@ public class QcCheckpointServiceImpl implements QcCheckpointService {
         }
         
         // Validate batch exists
-        Batch batch = batchRepository.findById(batchId)
+        Batch batch = batchRepository.findByBatchId(batchId)
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + batchId));
         
         // Validate inspector exists and has correct role
-        Operator inspector = operatorRepository.findById(inspectorId)
+        Operator inspector = operatorRepository.findByOperatorId(inspectorId)
                 .orElseThrow(() -> new IllegalArgumentException("Inspector not found with ID: " + inspectorId));
         
-        if (inspector.getRole() != Operator.Role.QC_INSPECTOR) {
+        if (inspector.getRole() != Role.QC_INSPECTOR) {
             throw new IllegalArgumentException(
                 "Inspector must have QC_INSPECTOR role. Current role: " + inspector.getRole()
             );

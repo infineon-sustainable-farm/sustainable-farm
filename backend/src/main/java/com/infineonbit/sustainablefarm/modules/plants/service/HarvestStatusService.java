@@ -1,13 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.FieldObservation;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.HarvestWindow;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantAlertCalculator.Season;
@@ -92,8 +92,8 @@ public class HarvestStatusService {
         this.clock = clock;
     }
 
-    /** A block, as the (farm, block) pair: a {@code null} farm is a farm of its own. */
-    private record BlockKey(Integer farmId, String blockCode) {
+    /** A block, by its farm and code: a code designates one {@code farm.block} row. */
+    private record BlockKey(Long farmId, String blockCode) {
     }
 
     /**
@@ -125,7 +125,7 @@ public class HarvestStatusService {
      *                   ripe, from 1 to 90, or {@code null} for 30, as for the alerts
      * @return the status of every planted variety row with trees
      */
-    public HarvestStatusResponse getHarvestStatus(Integer farmId, String blockCode, Integer withinDays) {
+    public HarvestStatusResponse getHarvestStatus(Long farmId, String blockCode, Integer withinDays) {
         return getHarvestStatus(farmId, blockCode, withinDays, LocalDate.now(clock));
     }
 
@@ -133,7 +133,7 @@ public class HarvestStatusService {
      * Same as {@link #getHarvestStatus(Integer, String, Integer)} on an
      * explicit day, so that the overview reads every figure on the same day.
      */
-    HarvestStatusResponse getHarvestStatus(Integer farmId, String blockCode, Integer withinDays, LocalDate today) {
+    HarvestStatusResponse getHarvestStatus(Long farmId, String blockCode, Integer withinDays, LocalDate today) {
         int window = withinDays == null ? PlantAlertService.DEFAULT_WITHIN_DAYS : withinDays;
         String block = normalizeFilter(blockCode);
         ForecastBasis basis = yieldForecastService.basis(farmId, block);
@@ -153,7 +153,7 @@ public class HarvestStatusService {
         rows.sort(ORDER);
         List<VarietyHarvestStatus> varieties = rows.stream()
                 .map(planted -> {
-                    Variety variety = planted.variety();
+                    BlockVariety variety = planted.variety();
                     HealthTreatmentResponse interval = intervals.get(
                             new BlockKey(variety.getFarmId(), variety.getBlockCode()));
                     List<MaturityObservationResponse> ofTheRow =
@@ -229,7 +229,7 @@ public class HarvestStatusService {
      * window, from one read of the harvests since the earliest open window.
      * A window still to come holds no harvest.
      */
-    private Map<Long, LocalDate> firstHarvests(Integer farmId, String blockCode, Map<Long, HarvestWindow> windows,
+    private Map<Long, LocalDate> firstHarvests(Long farmId, String blockCode, Map<Long, HarvestWindow> windows,
                                                LocalDate today) {
         Optional<LocalDate> earliest = windows.values().stream()
                 .filter(found -> found.isOpenOn(today))
@@ -312,7 +312,7 @@ public class HarvestStatusService {
                                                HealthTreatmentResponse interval, LocalDate firstHarvestDate,
                                                List<MaturityObservationResponse> observations,
                                                ForecastBasis basis, LocalDate today, int withinDays) {
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         VarietyReference reference = planted.reference();
         String phaseShareSource = window == null
                 ? null
@@ -359,7 +359,7 @@ public class HarvestStatusService {
      */
     private static VarietyHarvestStatus withoutReference(PlantedVariety planted, HealthTreatmentResponse interval,
                                                          List<MaturityObservationResponse> observations) {
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         MaturityObservationResponse latest = observations.isEmpty() ? null : observations.getLast();
         return new VarietyHarvestStatus(
                 variety.getFarmId(),

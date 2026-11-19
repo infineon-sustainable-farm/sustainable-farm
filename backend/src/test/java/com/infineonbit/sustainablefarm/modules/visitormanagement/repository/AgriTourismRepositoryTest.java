@@ -1,17 +1,19 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.repository;
 
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.Money;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.AgriActivity;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Booking;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingPaymentMethod;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.BookingStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Visitor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -29,11 +31,24 @@ class AgriTourismRepositoryTest {
     private AgriActivityRepository activityRepository;
     @Autowired
     private TimeSlotRepository timeSlotRepository;
+    @Autowired
+    private VisitorRepository visitorRepository;
+
+    private Visitor lucas() {
+        return visitorRepository.findFirstByEmailIgnoreCaseOrderByIdAsc("lucas@example.com")
+                .orElseGet(() -> {
+                    Visitor v = new Visitor();
+                    v.setFullName("Lucas Weber");
+                    v.setEmail("lucas@example.com");
+                    v.setPhone("+22612345678");
+                    return visitorRepository.save(v);
+                });
+    }
 
     private AgriActivity createActivity(String name, int capacity) {
         AgriActivity a = new AgriActivity();
         a.setName(name);
-        a.setPrice(new BigDecimal("5000"));
+        a.setPrice(Money.of("5000", CurrencyCode.XOF));
         a.setCapacity(capacity);
         a.setDurationMinutes(45);
         return activityRepository.save(a);
@@ -54,9 +69,7 @@ class AgriTourismRepositoryTest {
         Booking b = new Booking();
         b.setActivity(activity);
         b.setTimeSlot(slot);
-        b.setVisitorFullName("Lucas Weber");
-        b.setVisitorEmail("lucas@example.com");
-        b.setVisitorPhone("+22612345678");
+        b.setVisitor(lucas());
         b.setPeopleCount(people);
         b.setPaymentMethod(BookingPaymentMethod.ORANGE_MONEY);
         b.setStatus(status);
@@ -177,6 +190,39 @@ class AgriTourismRepositoryTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(due.getId());
+    }
+
+    @Test
+    void booking_linksOneVisitorRow_andStoresAmountsWithTheirCurrency() {
+        AgriActivity tour = createActivity("Tour", 10);
+        Booking first = createBooking(tour, createSlot(LocalDate.of(2026, 8, 20)), 3, BookingStatus.PENDING);
+        first.setTotal(Money.of("15000", CurrencyCode.XOF));
+        bookingRepository.saveAndFlush(first);
+        createBooking(tour, createSlot(LocalDate.of(2026, 8, 21)), 2, BookingStatus.PENDING);
+
+        assertThat(visitorRepository.count()).isEqualTo(1);
+        Long visitorId = lucas().getId();
+        assertThat(bookingRepository.existsByVisitorId(visitorId)).isTrue();
+        Booking reloaded = bookingRepository.findAllByOrderByIdDesc().get(1);
+        assertThat(reloaded.getVisitorEmail()).isEqualTo("lucas@example.com");
+        assertThat(reloaded.getVisitorPhone()).isEqualTo("+22612345678");
+        assertThat(reloaded.getTotal()).isEqualTo(Money.of("15000", CurrencyCode.XOF));
+        assertThat(reloaded.getActivity().getPrice()).isEqualTo(Money.of("5000", CurrencyCode.XOF));
+    }
+
+    @Test
+    void findVisitor_byEmailIgnoringCase_orByNameWithoutEmail() {
+        Visitor withEmail = lucas();
+        Visitor noEmail = new Visitor();
+        noEmail.setFullName("Awa Ouédraogo");
+        visitorRepository.save(noEmail);
+
+        assertThat(visitorRepository.findFirstByEmailIgnoreCaseOrderByIdAsc("LUCAS@example.com"))
+                .contains(withEmail);
+        assertThat(visitorRepository.findFirstByFullNameIgnoreCaseAndEmailIsNullOrderByIdAsc("awa ouédraogo"))
+                .contains(noEmail);
+        assertThat(visitorRepository.findFirstByFullNameIgnoreCaseAndEmailIsNullOrderByIdAsc("Lucas Weber"))
+                .isEmpty();
     }
 
     private void assertBoth(Object[] row, long activityId, long sum) {

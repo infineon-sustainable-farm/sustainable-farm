@@ -6,11 +6,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Inter: the interface font, critical, preloaded -->
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=Sora:wght@500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0&display=swap"
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Montserrat and IBM Plex Mono: used only by sitesecurity (excluded module, not migrated) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Montserrat:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <title>Sustainable Farm</title>
+    <script>
+      // Home page: fetch its landscape photo (the LCP image) while the application script loads.
+      // Same srcset and sizes as src/app/homePhoto.js (checked by LauncherPage.test.jsx).
+      if (location.pathname === '/') {
+        const link = document.createElement('link')
+        link.rel = 'preload'
+        link.as = 'image'
+        link.fetchPriority = 'high'
+        link.imageSrcset =
+          '/photos/orchard-960.webp 960w, /photos/orchard-1440.webp 1440w, /photos/orchard-1600.webp 1600w, /photos/orchard-1920.webp 1920w, /photos/orchard-2560.webp 2560w'
+        link.imageSizes =
+          '(min-width: 64rem) max(100vw, 160vh), (min-width: 40rem) max(100vw, 160vh - 22rem), max(100vw, 50rem)'
+        document.head.appendChild(link)
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

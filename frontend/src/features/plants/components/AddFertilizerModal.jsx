@@ -1,16 +1,13 @@
 import { useState } from "react";
-import { X } from "lucide-react";
-import { formatCode } from "../utils/format";
-import PlantsModal from "./PlantsModal";
-import { FIELD_INPUT, FIELD_LABEL, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
-
-const LABEL_CLASS = FIELD_LABEL;
-const INPUT_CLASS = `mt-1 w-full ${FIELD_INPUT}`;
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
+import { useTranslation } from "react-i18next";
+import { Button, Input, Modal, Select } from "../../../shared/ui";
+import { formatEnum } from "../utils/format";
+import FertilizerFormField from "./FertilizerFormField";
+import FormAlert from "./FormAlert";
 
 // The API codes, sent as they are; only their labels are shown.
 const FERTILIZER_TYPES = ["MINERAL", "ORGANIC"];
+// Unit symbols, the same in every language.
 const UNITS = [
     { code: "KG", label: "kg" },
     { code: "L", label: "L" },
@@ -18,27 +15,6 @@ const UNITS = [
 
 /** Same rule as the API: 0 or more, with at most 3 decimals. */
 const THRESHOLD_PATTERN = /^\d+(\.\d{1,3})?$/;
-
-function FormField({ id, label, error, note, children }) {
-    return (
-        <div>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
 
 /**
  * Form of a new fertilizer of the catalogue. It starts with a stock of 0,
@@ -52,6 +28,7 @@ function FormField({ id, label, error, note, children }) {
  *   above the form.
  */
 export default function AddFertilizerModal({ isSubmitting, error, onSubmit, onClose }) {
+    const { t } = useTranslation("plants");
     const [name, setName] = useState("");
     const [fertilizerType, setFertilizerType] = useState("");
     const [composition, setComposition] = useState("");
@@ -65,13 +42,8 @@ export default function AddFertilizerModal({ isSubmitting, error, onSubmit, onCl
     const serverFieldErrors = error?.status === 400 ? error.data?.fieldErrors : null;
     const formError = error && !serverFieldErrors ? error.message : null;
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
-    const fieldProps = (field, id, hasNote = false) => ({
-        "aria-invalid": fieldError(field) ? true : undefined,
-        "aria-describedby":
-            [fieldError(field) ? `${id}-error` : null, hasNote ? `${id}-note` : null]
-                .filter(Boolean)
-                .join(" ") || undefined,
-    });
+    const thresholdNote = t("fertilizer.addForm.thresholdNote");
+    const typeLabel = (type) => formatEnum("fertilizerType", type);
 
     function changeThreshold(event) {
         setReorderThreshold(event.target.value);
@@ -80,23 +52,24 @@ export default function AddFertilizerModal({ isSubmitting, error, onSubmit, onCl
 
     function validate() {
         const errors = {};
+        const message = (key) => t(`fertilizer.addForm.errors.${key}`);
         if (!name.trim()) {
-            errors.name = "Name is required.";
+            errors.name = message("nameRequired");
         } else if (name.length > 255) {
-            errors.name = "Name must be at most 255 characters.";
+            errors.name = message("nameTooLong");
         }
         if (!fertilizerType) {
-            errors.fertilizerType = "Type is required.";
+            errors.fertilizerType = message("typeRequired");
         }
         if (composition.length > 100) {
-            errors.composition = "Composition must be at most 100 characters.";
+            errors.composition = message("compositionTooLong");
         }
         if (!unit) {
-            errors.unit = "Unit is required.";
+            errors.unit = message("unitRequired");
         }
         if (isThresholdUnreadable
             || (reorderThreshold.trim() !== "" && !THRESHOLD_PATTERN.test(reorderThreshold.trim()))) {
-            errors.reorderThreshold = "Alert threshold must be 0 or more, with at most 3 decimals.";
+            errors.reorderThreshold = message("thresholdInvalid");
         }
         return errors;
     }
@@ -114,106 +87,64 @@ export default function AddFertilizerModal({ isSubmitting, error, onSubmit, onCl
     }
 
     return (
-        <PlantsModal labelledBy="add-fertilizer-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2
-                    id="add-fertilizer-title"
-                    className="font-heading text-lg font-bold text-on-background"
-                >
-                    Add a fertilizer
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
-
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of VigorBadge: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. --color-error as text gave 4.38:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+        <Modal open onClose={onClose} title={t("fertilizer.addForm.title")} size="xl">
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="fertilizer-name" label="Name" error={fieldError("name")}>
-                        <input
-                            id="fertilizer-name"
-                            type="text"
-                            autoFocus
-                            value={name}
-                            onChange={(event) => setName(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("name", "fertilizer-name")}
-                        />
-                    </FormField>
+                    <FertilizerFormField id="fertilizer-name" label={t("fertilizer.addForm.name")} error={fieldError("name")}>
+                        <Input id="fertilizer-name" type="text" value={name} onChange={(event) => setName(event.target.value)} />
+                    </FertilizerFormField>
 
-                    <FormField id="fertilizer-type" label="Type" error={fieldError("fertilizerType")}>
-                        <select
+                    <FertilizerFormField id="fertilizer-type" label={t("fertilizer.addForm.type")} error={fieldError("fertilizerType")}>
+                        <Select
                             id="fertilizer-type"
                             value={fertilizerType}
                             onChange={(event) => setFertilizerType(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("fertilizerType", "fertilizer-type")}
                         >
                             {/* Empty value: sending without a choice gives "Type is required." */}
-                            <option value="">Select a type</option>
+                            <option value="">{t("fertilizer.addForm.selectType")}</option>
                             {FERTILIZER_TYPES.map((type) => (
                                 <option key={type} value={type}>
-                                    {formatCode(type)}
+                                    {typeLabel(type)}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </FertilizerFormField>
 
-                    <FormField id="fertilizer-composition" label="Composition" error={fieldError("composition")}>
-                        {/* The default placeholder is the text colour at half opacity, about
-                            3:1 on white; gray-500 (#6a7282) reaches 4.84:1. */}
-                        <input
+                    <FertilizerFormField
+                        id="fertilizer-composition"
+                        label={t("fertilizer.addForm.composition")}
+                        error={fieldError("composition")}
+                    >
+                        <Input
                             id="fertilizer-composition"
                             type="text"
                             value={composition}
                             onChange={(event) => setComposition(event.target.value)}
-                            placeholder="e.g. 15-15-15"
-                            className={`${INPUT_CLASS} placeholder:text-gray-500`}
-                            {...fieldProps("composition", "fertilizer-composition")}
+                            placeholder={t("fertilizer.addForm.compositionPlaceholder")}
                         />
-                    </FormField>
+                    </FertilizerFormField>
 
-                    <FormField id="fertilizer-unit" label="Unit" error={fieldError("unit")}>
-                        <select
-                            id="fertilizer-unit"
-                            value={unit}
-                            onChange={(event) => setUnit(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("unit", "fertilizer-unit")}
-                        >
+                    <FertilizerFormField id="fertilizer-unit" label={t("fertilizer.addForm.unit")} error={fieldError("unit")}>
+                        <Select id="fertilizer-unit" value={unit} onChange={(event) => setUnit(event.target.value)}>
                             {/* Empty value: sending without a choice gives "Unit is required." */}
-                            <option value="">Select a unit</option>
-                            {UNITS.map(({ code, label }) => (
+                            <option value="">{t("fertilizer.addForm.selectUnit")}</option>
+                            {UNITS.map(({ code, label: symbol }) => (
                                 <option key={code} value={code}>
-                                    {label}
+                                    {symbol}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </FertilizerFormField>
 
-                    <FormField
+                    <FertilizerFormField
                         id="fertilizer-threshold"
-                        label="Alert threshold"
+                        label={t("fertilizer.addForm.threshold")}
                         error={fieldError("reorderThreshold")}
-                        note="Optional. It cannot be changed later."
+                        note={thresholdNote}
                     >
-                        <input
+                        <Input
                             id="fertilizer-threshold"
                             type="number"
                             min="0"
@@ -221,29 +152,20 @@ export default function AddFertilizerModal({ isSubmitting, error, onSubmit, onCl
                             inputMode="decimal"
                             value={reorderThreshold}
                             onChange={changeThreshold}
-                            className={INPUT_CLASS}
-                            {...fieldProps("reorderThreshold", "fertilizer-threshold", true)}
+                            aria-describedby="fertilizer-threshold-note"
                         />
-                    </FormField>
+                    </FertilizerFormField>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className={SECONDARY_BUTTON}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isSubmitting ? "Adding…" : "Add fertilizer"}
-                    </button>
+                    <Button variant="secondary" onClick={onClose}>
+                        {t("common:actions.cancel")}
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? t("fertilizer.addForm.submitting") : t("fertilizer.addForm.submit")}
+                    </Button>
                 </div>
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

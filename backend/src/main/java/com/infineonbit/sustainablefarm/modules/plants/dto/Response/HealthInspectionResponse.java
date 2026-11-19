@@ -15,12 +15,13 @@ import java.util.List;
  */
 public record HealthInspectionResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         LocalDate inspectedOn,
         Integer healthScorePct,
         HealthCategory healthCategory,
         String observer,
+        Long observerPersonId,
         InspectionMethod method,
         String source,
         Instant lastUpdated,

@@ -1,10 +1,13 @@
 import { useState } from "react";
-import Modal from "../../../shared/components/Modal";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal } from "../../../shared/ui";
+import { NON_NEGATIVE_DECIMAL, NON_NEGATIVE_INTEGER } from "../../../shared/utils/validation";
+import EquipmentField from "./EquipmentField";
+import FormActions from "./FormActions";
+import FormAlert from "./FormAlert";
 
 const MAX_NAME_LENGTH = 255;
 const MAX_UNIT_COST = 100000000;
-const NON_NEGATIVE_INTEGER = /^\d+$/;
-const NON_NEGATIVE_DECIMAL = /^\d+(\.\d{1,2})?$/;
 
 const initialForm = {
   name: "",
@@ -35,6 +38,7 @@ function SparePartFormModal({
   onSubmit,
   serverError,
 }) {
+  const { t } = useTranslation("machinery");
   const [form, setForm] = useState(() => toFormState(sparePart));
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -50,18 +54,20 @@ function SparePartFormModal({
     const errors = {};
     const name = form.name.trim();
 
-    if (!name) errors.name = "Name is required.";
-    else if (name.length > MAX_NAME_LENGTH) errors.name = `Name must be ${MAX_NAME_LENGTH} characters or fewer.`;
+    if (!name) errors.name = t("validation.nameRequired");
+    else if (name.length > MAX_NAME_LENGTH) errors.name = t("validation.nameTooLong", { max: MAX_NAME_LENGTH });
 
-    if (!form.quantity.trim()) errors.quantity = "Quantity is required.";
-    else if (!NON_NEGATIVE_INTEGER.test(form.quantity.trim())) errors.quantity = "Quantity must be a whole number of 0 or more.";
+    if (!form.quantity.trim()) errors.quantity = t("spareParts.quantityRequired");
+    else if (!NON_NEGATIVE_INTEGER.test(form.quantity.trim())) errors.quantity = t("spareParts.quantityInvalid");
 
-    if (!form.reorderThreshold.trim()) errors.reorderThreshold = "Reorder threshold is required.";
-    else if (!NON_NEGATIVE_INTEGER.test(form.reorderThreshold.trim())) errors.reorderThreshold = "Reorder threshold must be a whole number of 0 or more.";
+    if (!form.reorderThreshold.trim()) errors.reorderThreshold = t("spareParts.thresholdRequired");
+    else if (!NON_NEGATIVE_INTEGER.test(form.reorderThreshold.trim())) {
+      errors.reorderThreshold = t("spareParts.thresholdInvalid");
+    }
 
-    if (!form.unitCost.trim()) errors.unitCost = "Unit cost is required.";
-    else if (!NON_NEGATIVE_DECIMAL.test(form.unitCost.trim())) errors.unitCost = "Unit cost must be 0 or more with up to 2 decimals.";
-    else if (Number(form.unitCost) >= MAX_UNIT_COST) errors.unitCost = "Unit cost is too large.";
+    if (!form.unitCost.trim()) errors.unitCost = t("spareParts.unitCostRequired");
+    else if (!NON_NEGATIVE_DECIMAL.test(form.unitCost.trim())) errors.unitCost = t("spareParts.unitCostInvalid");
+    else if (Number(form.unitCost) >= MAX_UNIT_COST) errors.unitCost = t("spareParts.unitCostTooLarge");
 
     return errors;
   }
@@ -88,101 +94,46 @@ function SparePartFormModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <h2 className="text-lg font-bold mb-4">
-        {isEditing ? "Edit spare part" : "Add spare part"}
-      </h2>
-
-      {serverError && (
-        <p className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded mb-4">{serverError}</p>
-      )}
+    <Modal open={isOpen} onClose={handleClose} title={isEditing ? t("spareParts.edit") : t("spareParts.add")}>
+      {serverError && <FormAlert>{serverError}</FormAlert>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div>
-          <label className="text-sm font-medium">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-          />
-          {fieldErrors.name && <p className="text-red-600 text-xs mt-1">{fieldErrors.name}</p>}
-        </div>
+        <Field label={t("fields.name")} error={fieldErrors.name}>
+          <Input name="name" value={form.name} onChange={handleChange} />
+        </Field>
 
-        <div>
-          <label className="text-sm font-medium">Compatible asset</label>
-          <select
-            name="equipmentId"
-            value={form.equipmentId}
-            onChange={handleChange}
-            disabled={isEquipmentLoading}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1 disabled:bg-gray-50"
-          >
-            {canUnassignEquipment && (
-              <option value="">
-                {isEquipmentLoading ? "Loading equipment…" : "No compatible asset"}
-              </option>
-            )}
-            {equipments.map((equipment) => (
-              <option key={equipment.id} value={equipment.id}>{equipment.name}</option>
-            ))}
-          </select>
-          {fieldErrors.equipmentId && <p className="text-red-600 text-xs mt-1">{fieldErrors.equipmentId}</p>}
-        </div>
+        <EquipmentField
+          label={t("spareParts.compatibleAsset")}
+          value={form.equipmentId}
+          onChange={handleChange}
+          error={fieldErrors.equipmentId}
+          equipments={equipments}
+          isEquipmentLoading={isEquipmentLoading}
+          emptyOptionLabel={canUnassignEquipment ? t("spareParts.noCompatibleAsset") : null}
+        />
 
         <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="text-sm font-medium">Quantity in stock</label>
-            <input
-              type="number"
-              name="quantity"
-              min="0"
-              step="1"
-              value={form.quantity}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-            />
-            {fieldErrors.quantity && <p className="text-red-600 text-xs mt-1">{fieldErrors.quantity}</p>}
-          </div>
+          <Field className="flex-1" label={t("spareParts.quantity")} error={fieldErrors.quantity}>
+            <Input type="number" name="quantity" min="0" step="1" value={form.quantity} onChange={handleChange} />
+          </Field>
 
-          <div className="flex-1">
-            <label className="text-sm font-medium">Reorder threshold</label>
-            <input
+          <Field className="flex-1" label={t("spareParts.reorderThreshold")} error={fieldErrors.reorderThreshold}>
+            <Input
               type="number"
               name="reorderThreshold"
               min="0"
               step="1"
               value={form.reorderThreshold}
               onChange={handleChange}
-              className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
             />
-            {fieldErrors.reorderThreshold && <p className="text-red-600 text-xs mt-1">{fieldErrors.reorderThreshold}</p>}
-          </div>
+          </Field>
         </div>
 
-        <div>
-          <label className="text-sm font-medium">Unit cost</label>
-          <input
-            type="number"
-            name="unitCost"
-            min="0"
-            step="0.01"
-            value={form.unitCost}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg w-full px-3 py-2 mt-1"
-          />
-          {fieldErrors.unitCost && <p className="text-red-600 text-xs mt-1">{fieldErrors.unitCost}</p>}
-        </div>
+        <Field label={t("spareParts.unitCost")} error={fieldErrors.unitCost}>
+          <Input type="number" name="unitCost" min="0" step="0.01" value={form.unitCost} onChange={handleChange} />
+        </Field>
 
-        <div className="flex justify-end gap-2 mt-2">
-          <button type="button" onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-300">
-            Cancel
-          </button>
-          <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white">
-            Save
-          </button>
-        </div>
+        <FormActions onCancel={handleClose} />
       </form>
     </Modal>
   );

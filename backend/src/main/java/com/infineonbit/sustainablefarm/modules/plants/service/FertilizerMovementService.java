@@ -1,11 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PurchaseRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerMovementResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyRate;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovement;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
@@ -38,6 +40,8 @@ public class FertilizerMovementService {
     private final FertilizerProductRepository fertilizerProductRepository;
     private final FertilizerMovementRepository fertilizerMovementRepository;
     private final CurrencyRateRepository currencyRateRepository;
+    private final PlantsBlocks plantsBlocks;
+    private final PersonDirectory personDirectory;
 
     /**
      * A code as the enums spell it: trimmed and upper-cased, so {@code " eur "}
@@ -81,7 +85,7 @@ public class FertilizerMovementService {
      *                 movement has no cost or no rate is recorded
      * @return the API representation of that movement
      */
-    private static FertilizerMovementResponse toResponse(FertilizerMovement movement, BigDecimal eurToXof) {
+    private FertilizerMovementResponse toResponse(FertilizerMovement movement, BigDecimal eurToXof) {
         FertilizerProduct product = movement.getProduct();
         BigDecimal totalCost = movement.getTotalCost();
         Long totalCostXof = null;
@@ -102,7 +106,8 @@ public class FertilizerMovementService {
                 product.getUnit(),
                 movement.getFarmId(),
                 movement.getBlockCode(),
-                movement.getApplicator(),
+                personDirectory.nameOf(movement.getApplicatorPersonId()),
+                movement.getApplicatorPersonId(),
                 movement.getMethod(),
                 movement.getSupplier(),
                 totalCost == null ? null : totalCost.doubleValue(),
@@ -266,9 +271,9 @@ public class FertilizerMovementService {
 
         FertilizerMovement application = newMovement(product, FertilizerMovementType.APPLICATION,
                 request.applicationDate(), quantity, now);
-        application.setFarmId(request.farmId());
-        application.setBlockCode(normalizeBlockCode(request.blockCode()));
-        application.setApplicator(request.applicator().trim());
+        BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeBlockCode(request.blockCode()));
+        application.assignBlock(block.id(), PlantsBlocks.label(block));
+        application.setApplicatorPersonId(personDirectory.requireExisting(request.applicatorPersonId()));
         application.setMethod(normalizeOptionalText(request.method()));
         return toResponse(fertilizerMovementRepository.save(application), null);
     }
@@ -321,10 +326,11 @@ public class FertilizerMovementService {
      * @return the matching movements, ordered by date then identifier
      */
     public List<FertilizerMovementResponse> getAllMovements(Long fertilizerId, FertilizerMovementType movementType,
-                                                            Integer farmId, String blockCode,
+                                                            Long farmId, String blockCode,
                                                             LocalDate from, LocalDate to) {
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
         List<FertilizerMovement> movements = fertilizerMovementRepository.findByOptionalFilters(
-                fertilizerId, movementType, farmId, normalizeOptionalText(blockCode), from, to);
+                fertilizerId, movementType, blocks.all(), blocks.ids(), from, to);
         BigDecimal eurToXof = movements.stream().anyMatch(movement -> movement.getTotalCost() != null)
                 ? eurToXofRate()
                 : null;

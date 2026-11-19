@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.response;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,9 +28,11 @@ public class RawIntakeResponse {
     private String sourceBlock;
     private LocalDate intakeDate;
     private BigDecimal receivedQuantityKg;
-    private MangoVariety receivedVariety;
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
+    private String receivedVariety;
     private QualityGrade receivedGrade;
     private String intakeOperator;
+    private Long intakeOperatorPersonId;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

@@ -60,7 +60,7 @@ public class HarvestStatusController {
          @ApiResponse(responseCode = "400", description = "withinDays outside 1 to 90, or a non-numeric parameter")
    })
    public ResponseEntity<HarvestStatusResponse> getHarvestStatus(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Valid @ParameterObject PlantAlertWithinDays window) {
       HarvestStatusResponse harvestStatusResponse =

@@ -29,6 +29,10 @@ export const PLANTS_ENDPOINTS = {
     NURSERY_EVENTS: "/api/plants/nursery-events",
     OVERVIEW: "/api/plants/overview",
     SCENARIOS: "/api/plants/scenarios",
-    // The only route read from another module: the rain measured for a block.
-    BLOCK_RAINFALL: "/api/water/plants/rainfall",
+    // Owned by the farm referential (Water Supply, Farms & fields): read only, never written here.
+    FARM_FIELDS: "/api/farm/fields",
+    // Owned by Water Supply: the rain its gauges measured on the farm of a block, read only.
+    BLOCK_RAINFALL: "/api/water-supply/plants/rainfall",
+    // Owned by machinery: the machines a treatment picks from, read only.
+    MACHINERY_EQUIPMENT: "/api/machinery/equipment",
 };

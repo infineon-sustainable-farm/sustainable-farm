@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.dto.response;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

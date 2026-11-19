@@ -1,0 +1,1528 @@
+{
+  "name": "Plants",
+  "nav": {
+    "overview": "Overview",
+    "varieties": "Varieties",
+    "growthCalendar": "Growth Calendar",
+    "fertilizerInventory": "Fertilizer Inventory",
+    "diseasesAlerts": "Diseases & Alerts",
+    "harvestMaturity": "Harvest & Maturity",
+    "nursery": "Nursery",
+    "scenarioAnalysis": "Scenario Analysis"
+  },
+  "common": {
+    "none": "—",
+    "retry": "Retry",
+    "retrying": "Retrying…",
+    "checkConnection": "Check your connection, then try again."
+  },
+  "format": {
+    "kilograms": "{{value}} kg",
+    "meters": "{{value}} m",
+    "millimeters": "{{value}} mm",
+    "density": "{{value}} trees/ha",
+    "spacing": "{{interRow}} × {{intraRow}} m",
+    "block": "Block {{block}}",
+    "quantity": "{{value}} {{unit}}",
+    "xof": "{{value}} FCFA",
+    "percent": "{{value}}%",
+    "listSeparator": ", ",
+    "range": "{{start}} – {{end}}",
+    "daysAhead_one": "in {{days}} day",
+    "daysAhead_other": "in {{days}} days",
+    "age_one": "{{years}} yr {{months}} mo",
+    "age_other": "{{years}} yrs {{months}} mo",
+    "phaseBand": "{{phase}} · {{band}}"
+  },
+  "enums": {
+    "origin": {
+      "IN_HOUSE": "In-house production",
+      "PURCHASED": "External purchase"
+    },
+    "severity": {
+      "CRITICAL": "Critical",
+      "WARNING": "Warning"
+    },
+    "vigor": {
+      "GOOD": "Good",
+      "AVERAGE": "Average",
+      "POOR": "Poor"
+    },
+    "comparisonReason": {
+      "NO_REFERENCE": "no reference value",
+      "NO_TREE_LEFT": "no tree left"
+    },
+    "fertilizerType": {
+      "MINERAL": "Mineral",
+      "ORGANIC": "Organic"
+    },
+    "movementType": {
+      "PURCHASE": "Purchase",
+      "APPLICATION": "Application",
+      "LOSS": "Loss",
+      "ADJUSTMENT_IN": "Adjustment in",
+      "ADJUSTMENT_OUT": "Adjustment out"
+    },
+    "nurseryStage": {
+      "GERMINATION": "Germination",
+      "ROOTSTOCK_GROWTH": "Rootstock growth",
+      "GRAFTED": "Grafted",
+      "HARDENING": "Hardening",
+      "READY_TO_TRANSPLANT": "Ready to transplant"
+    },
+    "nurseryEvent": {
+      "STAGE_CHANGE": "Stage change",
+      "LOSS": "Loss",
+      "TRANSPLANT": "Transplant"
+    },
+    "findingStatus": {
+      "UNTREATED": "Untreated",
+      "IN_PROGRESS": "In progress",
+      "TREATED": "Treated",
+      "CLOSED_WITHOUT_TREATMENT": "Closed without treatment"
+    },
+    "healthCategory": {
+      "VERY_HEALTHY": "Very healthy",
+      "HEALTHY": "Healthy",
+      "MODERATE": "Moderate",
+      "WEAKENED": "Weakened",
+      "SEVERE_STRESS": "Severe stress"
+    },
+    "issueKind": {
+      "PEST": "Pest",
+      "DISEASE": "Disease",
+      "OTHER": "Other"
+    },
+    "inspectionMethod": {
+      "VISUAL": "Visual",
+      "TRAP": "Trap"
+    },
+    "maturityStatus": {
+      "IMMATURE": "Immature",
+      "RIPE": "Ripe",
+      "READY_FOR_HARVEST": "Ready for harvest"
+    },
+    "growthPhase": {
+      "ESTABLISHMENT": "Establishment",
+      "GRADUAL_PRODUCTION": "Gradual production",
+      "FULL_PRODUCTION": "Full production"
+    }
+  },
+  "blockFilter": {
+    "label": "Block / Plot:",
+    "all": "All blocks"
+  },
+  "period": {
+    "from": "From",
+    "months": "Months",
+    "fromFormat": "Use the format YYYY-MM."
+  },
+  "alertGroups": {
+    "ACT_NOW": "Act now",
+    "PLAN_AHEAD": "Plan ahead",
+    "count_one": "· {{count}} alert",
+    "count_other": "· {{count}} alerts"
+  },
+  "varieties": {
+    "documentTitle": "Varieties — Plants",
+    "title": "Varieties",
+    "subtitle": "Trees and yield by variety and block.",
+    "recordPlanting": "Record a planting",
+    "loading": "Loading varieties…",
+    "loadError": "Varieties could not be loaded",
+    "requestFailed": "The request to the server did not succeed.",
+    "emptyFiltered": "No variety records match this filter",
+    "emptyFilteredHint": "Try another block, or select “All blocks”.",
+    "empty": "No planting recorded yet",
+    "columns": {
+      "variety": "Variety",
+      "block": "Block",
+      "trees": "Trees",
+      "spacing": "Spacing",
+      "vigor": "Vigor"
+    },
+    "tableCaption": "Varieties",
+    "detail": {
+      "treesPlanted": "Trees planted",
+      "treesNow": "Trees now",
+      "spacing": "Spacing",
+      "interRowSpacing": "Inter-row spacing",
+      "intraRowSpacing": "Intra-row spacing",
+      "treeDensity": "Tree density",
+      "vigor": "Vigor",
+      "plantOrigin": "Plant origin",
+      "farmId": "Farm ID",
+      "source": "Source",
+      "lastUpdated": "Last updated",
+      "dashNote": "A dash means no value has been recorded for this field yet."
+    },
+    "planting": {
+      "title": "Record a planting",
+      "plantingDate": "Planting date",
+      "block": "Block",
+      "variety": "Variety",
+      "varietyPlaceholder": "e.g. Keitt",
+      "treeCount": "Number of trees",
+      "rowSpacing": "Inter-row spacing (m)",
+      "treeSpacing": "Intra-row spacing (m)",
+      "spacingPlaceholder": "e.g. 8",
+      "vigor": "Vigor",
+      "optional": "Optional.",
+      "submit": "Record planting",
+      "submitting": "Recording…",
+      "notAssessed": "Not assessed"
+    },
+    "validation": {
+      "plantingDateRequired": "Planting date is required.",
+      "plantingDateFuture": "Planting date cannot be in the future.",
+      "blockRequired": "Block is required.",
+      "varietyRequired": "Variety is required.",
+      "varietyTooLong": "Variety must be at most {{max}} characters.",
+      "treeCount": "Number of trees must be a whole number of at least 1.",
+      "rowSpacingBounds": "Inter-row spacing must be above 0 and at most {{max}} m, with at most 1 decimal.",
+      "treeSpacingBounds": "Intra-row spacing must be above 0 and at most {{max}} m, with at most 1 decimal.",
+      "rowSpacingRequired": "Inter-row spacing is required when the intra-row spacing is given.",
+      "treeSpacingRequired": "Intra-row spacing is required when the inter-row spacing is given."
+    },
+    "comparison": {
+      "title": "Expected vs actual yield",
+      "intro": "The harvests recorded over the period, against the yield the forecast expects for the same months.",
+      "loading": "Loading yield comparison…",
+      "loadError": "Yield comparison could not be loaded",
+      "empty": "No planted variety to compare over this period",
+      "emptyHint": "The comparison counts the recorded plantings and harvests. Record a planting, or choose another period.",
+      "noReference": "No planted variety with a reference value over this period.",
+      "footnote": "Expected yield: the rule of the forecast applied to today's trees and reference values, past months included. Actual yield: the harvests dated in the months.",
+      "months_one": "{{value}} month",
+      "months_other": "{{value}} months",
+      "trees_one": "{{value}} tree",
+      "trees_other": "{{value}} trees",
+      "harvests_one": "{{value}} harvest",
+      "harvests_other": "{{value}} harvests",
+      "period": "{{months}} from {{month}}",
+      "totalPrefix": "{{scope}}, {{period}}: ",
+      "totalNoHarvest": "no harvest recorded, {{expected}} expected.",
+      "totalHarvested": "{{actual}} harvested of {{expected}} expected.",
+      "totalHarvestedPct": "{{actual}} harvested of {{expected}} expected ({{pct}}).",
+      "notCompared": "Not compared: {{list}}.",
+      "notComparedWithHint": "Not compared: {{list}}. Reference values are entered on the Harvest & Maturity screen.",
+      "notComparedRow": "{{variety}} ({{where}}): {{harvested}}, {{reason}}",
+      "whereWithTrees": "{{block}}, {{trees}}",
+      "noHarvest": "no harvest",
+      "harvestedIn": "{{kg}} in {{harvests}}",
+      "listSeparator": "; ",
+      "cardTitle": "{{variety}} ({{block}})",
+      "noHarvestExpected": "No harvest recorded · {{expected}} expected",
+      "actualOf": "{{actual}} of {{expected}}",
+      "countsLine": "{{trees}} · {{harvests}}",
+      "byBlock": "By block",
+      "block": "Block",
+      "expected": "Expected",
+      "actual": "Actual",
+      "achieved": "Achieved",
+      "howComputed": "How the expected yield is computed",
+      "variety": "Variety",
+      "yieldPerTree": "Yield per tree",
+      "phases": "Growth phases in the harvest months",
+      "sources": "Sources",
+      "yieldSource": "Yield: {{source}}",
+      "seasonSource": "Season: {{source}}",
+      "phase": "{{phase}} {{share}} ({{source}})",
+      "phaseSeparator": ", "
+    }
+  },
+  "fertilizer": {
+    "pageTitle": "Fertilizer Inventory — Plants",
+    "title": "Fertilizer Inventory",
+    "subtitle": "Stock, purchases, applications and losses.",
+    "addFertilizer": "Add a fertilizer",
+    "recordMovement": "Record a movement",
+    "lowStock": "Low stock",
+    "serverFailed": "The request to the server did not succeed.",
+    "rate": {
+      "title": "Exchange rate",
+      "loading": "Loading the exchange rate…",
+      "loadError": "The exchange rate could not be loaded",
+      "value": "1 € = {{rate}} FCFA",
+      "meta": "Source: {{source}} · Updated {{updated}}",
+      "none": "No exchange rate recorded yet",
+      "noneHint": "Until one is entered, each cost is shown only in the currency it was paid in.",
+      "edit": "Edit",
+      "editLabel": "Edit the exchange rate",
+      "fieldLabel": "1 € =",
+      "unit": "FCFA",
+      "saving": "Saving…",
+      "required": "Rate is required.",
+      "invalid": "Rate must be a number greater than 0 and less than 1,000,000, with at most 6 decimals."
+    },
+    "stock": {
+      "title": "Current stock",
+      "loading": "Loading fertilizers…",
+      "loadError": "Fertilizers could not be loaded",
+      "empty": "No fertilizer in the catalogue yet",
+      "columns": {
+        "fertilizer": "Fertilizer",
+        "type": "Type",
+        "composition": "Composition",
+        "stock": "Stock",
+        "threshold": "Alert threshold",
+        "status": "Status",
+        "lastRestock": "Last restock"
+      }
+    },
+    "movements": {
+      "title": "Movement history",
+      "filters": {
+        "fertilizer": "Fertilizer",
+        "type": "Type",
+        "block": "Block (applications only)",
+        "from": "From",
+        "to": "To",
+        "allFertilizers": "All fertilizers",
+        "allTypes": "All types",
+        "allBlocks": "All blocks"
+      },
+      "loading": "Loading movements…",
+      "loadError": "Movements could not be loaded",
+      "noMatch": "No movement matches these filters",
+      "noMatchHint": "Try another fertilizer, type, block or date range.",
+      "empty": "No movement recorded yet",
+      "details": "{{applicator}} · {{method}}",
+      "columns": {
+        "date": "Date",
+        "fertilizer": "Fertilizer",
+        "type": "Type",
+        "quantity": "Quantity",
+        "block": "Block",
+        "details": "Details",
+        "cost": "Cost"
+      },
+      "sourceNote": "Source: {{source}}"
+    },
+    "addForm": {
+      "title": "Add a fertilizer",
+      "name": "Name",
+      "type": "Type",
+      "selectType": "Select a type",
+      "composition": "Composition",
+      "compositionPlaceholder": "e.g. 15-15-15",
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "threshold": "Alert threshold",
+      "thresholdNote": "Optional. It cannot be changed later.",
+      "submit": "Add fertilizer",
+      "submitting": "Adding…",
+      "errors": {
+        "nameRequired": "Name is required.",
+        "nameTooLong": "Name must be at most 255 characters.",
+        "typeRequired": "Type is required.",
+        "compositionTooLong": "Composition must be at most 100 characters.",
+        "unitRequired": "Unit is required.",
+        "thresholdInvalid": "Alert threshold must be 0 or more, with at most 3 decimals."
+      }
+    },
+    "movementForm": {
+      "title": "Record a movement",
+      "type": "Movement type",
+      "fertilizer": "Fertilizer",
+      "selectFertilizer": "Select a fertilizer",
+      "date": "Date",
+      "quantity": "Quantity",
+      "quantityWithUnit": "Quantity ({{unit}})",
+      "inStock": "In stock: {{quantity}}",
+      "supplier": "Supplier",
+      "totalCost": "Total cost",
+      "currency": "Currency",
+      "block": "Block",
+      "applicator": "Applicator",
+      "method": "Method",
+      "reason": "Reason",
+      "submit": {
+        "PURCHASE": "Record purchase",
+        "APPLICATION": "Record application",
+        "LOSS": "Record loss"
+      },
+      "submitting": "Recording…",
+      "errors": {
+        "fertilizerRequired": "Fertilizer is required.",
+        "dateRequired": "Date is required.",
+        "dateFuture": "Date cannot be in the future.",
+        "quantityInvalid": "Quantity must be a number greater than 0, with at most 3 decimals.",
+        "supplierRequired": "Supplier is required.",
+        "supplierTooLong": "Supplier must be at most 255 characters.",
+        "totalCostInvalid": "Total cost must be a number greater than 0, with at most 2 decimals.",
+        "blockRequired": "Block is required.",
+        "applicatorRequired": "Applicator is required.",
+        "methodTooLong": "Method must be at most 255 characters.",
+        "reasonRequired": "Reason is required.",
+        "reasonTooLong": "Reason must be at most 255 characters."
+      }
+    },
+    "plans": {
+      "title": "Planned applications",
+      "subtitle": "Your own quantities: no rate is recommended. Costs at last purchase price.",
+      "statusFilter": "Status",
+      "allStatuses": "All statuses",
+      "planAction": "Plan an application",
+      "stockWarning": {
+        "title": "Planned applications exceed the stock in the next {{days}} days",
+        "line": "{{fertilizer}}: {{planned}} planned in the next {{days}} days, {{stock}} in stock, {{shortfall}} short.",
+        "overdue": "{{quantity}} of it is overdue."
+      },
+      "loading": "Loading planned applications…",
+      "loadError": "Planned applications could not be loaded",
+      "empty": "No application planned yet",
+      "emptyFiltered": "No planned application has this status",
+      "emptyFilteredHint": "Try another status.",
+      "status": {
+        "PLANNED": "Planned",
+        "DONE": "Done",
+        "CANCELLED": "Cancelled",
+        "OVERDUE": "Overdue"
+      },
+      "delay": {
+        "today": "today",
+        "late_one": "{{days}} day late",
+        "late_other": "{{days}} days late"
+      },
+      "columns": {
+        "plannedDate": "Planned date",
+        "block": "Block",
+        "fertilizer": "Fertilizer",
+        "quantity": "Quantity",
+        "plannedCost": "Planned cost",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "applied": "Applied {{quantity}} on {{date}}",
+      "markDone": "Mark done",
+      "markDoneLabel": "Mark done: {{plan}}",
+      "cancel": "Cancel",
+      "cancelLabel": "Cancel: {{plan}}",
+      "planLabel": "{{fertilizer}}, {{block}}, {{date}}",
+      "noPrice": "No price yet",
+      "comparison": {
+        "title": "Planned and applied by block",
+        "subtitle": "{{period}} · costs at last purchase price",
+        "subtitleNoPeriod": "Costs at last purchase price",
+        "from": "From",
+        "to": "To",
+        "periodFrom": "From {{date}}",
+        "periodUntil": "Until {{date}}",
+        "periodAll": "All dates",
+        "loading": "Loading the comparison…",
+        "loadError": "The comparison could not be loaded",
+        "empty": "Nothing planned or applied over this period",
+        "emptyHint": "Plan an application, or choose other dates.",
+        "columns": {
+          "block": "Block",
+          "fertilizer": "Fertilizer",
+          "planned": "Planned",
+          "applied": "Applied",
+          "gap": "Gap",
+          "plannedCost": "Planned cost",
+          "appliedCost": "Applied cost"
+        },
+        "stillToDo": "{{quantity}} still to do",
+        "notPlanned": "{{quantity}} not planned"
+      },
+      "planForm": {
+        "title": "Plan an application",
+        "fertilizer": "Fertilizer",
+        "selectFertilizer": "Select a fertilizer",
+        "fertilizerOption": "{{name}} ({{unit}})",
+        "block": "Block",
+        "plannedDate": "Planned date",
+        "quantity": "Planned quantity",
+        "quantityWithUnit": "Planned quantity ({{unit}})",
+        "inStock": "In stock: {{quantity}}",
+        "note": "Note (optional)",
+        "submit": "Plan application",
+        "submitting": "Planning…"
+      },
+      "completeForm": {
+        "title": "Mark as done",
+        "summary": "{{fertilizer}} · {{block}} · planned {{quantity}} on {{date}}",
+        "date": "Date applied",
+        "quantityWithUnit": "Quantity applied ({{unit}})",
+        "applicator": "Applicator",
+        "method": "Method (optional)",
+        "submit": "Mark as done",
+        "submitting": "Recording…"
+      },
+      "cancelForm": {
+        "title": "Cancel this planned application?",
+        "summary": "{{fertilizer}} · {{block}} · {{quantity}} on {{date}}",
+        "message": "Nothing is taken from the stock. A cancelled application cannot be planned again: plan a new one instead.",
+        "keep": "Keep it",
+        "confirm": "Cancel application",
+        "confirming": "Cancelling…"
+      },
+      "errors": {
+        "fertilizerRequired": "Fertilizer is required.",
+        "blockRequired": "Block is required.",
+        "plannedDateRequired": "Planned date is required.",
+        "plannedDatePast": "Planned date cannot be in the past.",
+        "quantityInvalid": "Quantity must be a number greater than 0, with at most 3 decimals.",
+        "noteTooLong": "Note must be at most 255 characters.",
+        "dateRequired": "Date is required.",
+        "dateFuture": "Date cannot be in the future.",
+        "applicatorRequired": "Applicator is required.",
+        "methodTooLong": "Method must be at most 255 characters."
+      }
+    }
+  },
+  "nursery": {
+    "documentTitle": "Nursery — Plants",
+    "title": "Nursery",
+    "subtitle": "Seedling batches until they are transplanted.",
+    "addBatch": "Add a batch",
+    "recordEvent": "Record an event",
+    "destinationBlock": "Destination block:",
+    "alerts": {
+      "title": "Transplant alerts",
+      "subtitle": "All batches.",
+      "loading": "Loading transplant alerts…",
+      "error": "Alerts are unavailable.",
+      "empty": "No batch to transplant today.",
+      "itemTitle": "Batch to transplant",
+      "dateLabel": "Planned transplant"
+    },
+    "batches": {
+      "title": "Nursery batches",
+      "loading": "Loading batches…",
+      "error": "Batches could not be loaded",
+      "errorHint": "The request to the server did not succeed.",
+      "empty": "No nursery batch yet",
+      "emptyForBlock": "No batch is planned for this block",
+      "emptyForBlockHint": "Select “All blocks”.",
+      "caption": "Nursery batches",
+      "columns": {
+        "batch": "Batch",
+        "variety": "Variety",
+        "inNursery": "In nursery",
+        "destBlock": "Dest. block",
+        "stage": "Stage",
+        "plannedTransplant": "Planned transplant",
+        "survivalRate": "Survival rate",
+        "origin": "Origin"
+      },
+      "noPlantsLeft": "No plants left",
+      "since": "since {{date}}",
+      "supplierLot": "{{supplier}} · lot {{lot}}",
+      "batchOption": "{{code}} · {{variety}}"
+    },
+    "survival": {
+      "title": "Survival rate by batch",
+      "cardTitle": "{{code}} · {{variety}}",
+      "cardTitleWithBlock": "{{code}} · {{variety}} ({{block}})",
+      "survived": "{{survived}} of {{initial}} survived",
+      "lostTransplanted": "{{lost}} lost · {{transplanted}} transplanted"
+    },
+    "history": {
+      "title": "Nursery history",
+      "subtitle": "The destination block filter does not apply here.",
+      "batch": "Batch",
+      "event": "Event",
+      "from": "From",
+      "to": "To",
+      "allBatches": "All batches",
+      "allEvents": "All events",
+      "error": "Nursery events could not be loaded",
+      "emptyFiltered": "No event matches these filters",
+      "emptyFilteredHint": "Try another batch, event or date range.",
+      "empty": "No nursery event recorded yet",
+      "caption": "Nursery history",
+      "columns": {
+        "date": "Date",
+        "batch": "Batch",
+        "event": "Event",
+        "stage": "Stage",
+        "quantity": "Quantity",
+        "block": "Block",
+        "reason": "Reason",
+        "source": "Source"
+      }
+    },
+    "addForm": {
+      "title": "Add a nursery batch",
+      "batchCode": "Batch code",
+      "variety": "Variety",
+      "origin": "Origin",
+      "supplier": "Supplier",
+      "supplierLot": "Supplier lot number",
+      "startDate": "Start date",
+      "initialCount": "Initial count",
+      "initialStage": "Initial stage",
+      "selectStage": "Select a stage",
+      "plannedDate": "Planned transplant date",
+      "plannedBlock": "Planned block",
+      "submit": "Add batch",
+      "submitting": "Adding…",
+      "notes": {
+        "batchCode": "Letters are saved in capitals: p1 becomes P1.",
+        "varietyName": "The transplant plants this variety. The forecast uses the reference of the same name.",
+        "startedOn": "Day of sowing, or of reception for a purchase.",
+        "plannedBlockCode": "Optional. The transplant alerts name it."
+      },
+      "errors": {
+        "batchCodeRequired": "Batch code is required.",
+        "batchCodeFormat": "Batch code must be up to 20 letters, digits or hyphens, such as P1 or KEITT-2026-01.",
+        "varietyRequired": "Variety is required.",
+        "varietyTooLong": "Variety must be at most {{max}} characters.",
+        "originRequired": "Origin is required.",
+        "supplierRequired": "Supplier is required for an external purchase.",
+        "supplierTooLong": "Supplier must be at most {{max}} characters.",
+        "lotTooLong": "Supplier lot number must be at most {{max}} characters.",
+        "startRequired": "Start date is required.",
+        "startFuture": "Start date cannot be in the future.",
+        "countInvalid": "Initial count must be a whole number, 1 or more.",
+        "stageRequired": "Initial stage is required.",
+        "plannedDateRequired": "Planned transplant date is required."
+      }
+    },
+    "eventForm": {
+      "title": "Record a nursery event",
+      "event": "Event",
+      "batch": "Batch",
+      "date": "Date",
+      "stage": "Stage",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "block": "Block",
+      "selectBatch": "Select a batch",
+      "selectStage": "Select a stage",
+      "submitting": "Recording…",
+      "submit": {
+        "STAGE_CHANGE": "Record stage change",
+        "LOSS": "Record loss",
+        "TRANSPLANT": "Record transplant"
+      },
+      "notes": {
+        "currentStage": "Current stage: {{stage}}, since {{date}}.",
+        "inNursery": "In nursery: {{count}}",
+        "plannedBlock": "Planned block: {{block}}. ",
+        "oncePerBlock": "A variety can be planted only once on a block.",
+        "transplant": "The transplant also records the planting of {{variety}} on this block: it then appears in Varieties, Growth Calendar and the forecast.",
+        "batchVariety": "the batch's variety"
+      },
+      "errors": {
+        "batchRequired": "Batch is required.",
+        "dateRequired": "Date is required.",
+        "dateFuture": "Date cannot be in the future.",
+        "stageRequired": "Stage is required.",
+        "quantityInvalid": "Quantity must be a whole number, 1 or more.",
+        "reasonRequired": "Reason is required.",
+        "reasonTooLong": "Reason must be at most {{max}} characters.",
+        "blockRequired": "Block is required."
+      }
+    }
+  },
+  "health": {
+    "title": "Diseases & Alerts",
+    "subtitle": "Block health, findings and treatments.",
+    "documentTitle": "Diseases & Alerts — Plants",
+    "recordInspection": "Record an inspection",
+    "recordPreventiveTreatment": "Record a preventive treatment",
+    "requestFailed": "The request to the server did not succeed.",
+    "selectAllBlocks": "Select “All blocks” to see the inspected blocks.",
+    "optional": "Optional.",
+    "block": "Block",
+    "blockNote": "The block needs no planting.",
+    "selectProblem": "Select a problem",
+    "otherLabel": "Name of the problem",
+    "place": {
+      "withTree": "{{block}}, tree {{tree}}"
+    },
+    "summary": {
+      "details": " · {{problem}} · seen on {{date}}"
+    },
+    "errors": {
+      "blockRequired": "Block is required.",
+      "otherLabelRequired": "Name of the problem is required with “Other”.",
+      "otherLabelTooLong": "Name of the problem must be at most {{max}} characters."
+    },
+    "catalogue": {
+      "loadError": "The pests and diseases could not be loaded: only “Other” can be picked.",
+      "empty": "Only “Other” can be picked until a pest or disease is added to the catalogue."
+    },
+    "alerts": {
+      "title": "Health alerts",
+      "allBlocks": "All blocks.",
+      "loading": "Loading health alerts…",
+      "loadError": "Alerts are unavailable.",
+      "empty": "No health alert today.",
+      "types": {
+        "OPEN_HEALTH_ISSUE": "Open health problem",
+        "PRE_HARVEST_INTERVAL": "Pre-harvest interval"
+      },
+      "seenOn": "Seen on",
+      "harvestAllowedFrom": "Harvest allowed from",
+      "date": "Date:"
+    },
+    "blocks": {
+      "title": "Health by block",
+      "loading": "Loading the health of the blocks…",
+      "loadError": "The health of the blocks could not be loaded",
+      "emptyForBlock": "{{block}} has not been inspected yet",
+      "emptyTitle": "No block inspected yet",
+      "emptyHint": "The health of a block comes from its latest inspection.",
+      "inspectedOn": "Inspected on {{date}}"
+    },
+    "findings": {
+      "title": "Findings",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "loading": "Loading findings…",
+      "loadError": "Findings could not be loaded",
+      "emptyFilteredTitle": "No finding matches these filters",
+      "emptyFilteredHint": "Try another block or status, or select “All blocks”.",
+      "emptyTitle": "No finding recorded yet",
+      "emptyHint": "Findings are recorded with an inspection.",
+      "columns": {
+        "block": "Block",
+        "tree": "Tree",
+        "problem": "Disease / Pest",
+        "observedOn": "Observed on",
+        "status": "Status",
+        "harvestAllowedFrom": "Harvest allowed from",
+        "resolvedOn": "Resolved on"
+      },
+      "describe": "{{problem}} on {{place}}",
+      "treat": "Treat",
+      "resolve": "Resolve",
+      "treatLabel": "Treat {{finding}}",
+      "resolveLabel": "Resolve {{finding}}"
+    },
+    "treatments": {
+      "title": "Treatment record",
+      "subtitle": "Every treatment, with the date harvest is allowed again.",
+      "loading": "Loading treatments…",
+      "loadError": "Treatments are unavailable.",
+      "emptyForBlock": "No treatment on this block",
+      "emptyForBlockHint": "Select “All blocks” to see the whole record.",
+      "emptyTitle": "No treatment recorded yet",
+      "emptyHint": "A treatment is recorded for a finding, or as a preventive treatment.",
+      "columns": {
+        "date": "Date",
+        "block": "Block",
+        "problem": "Problem",
+        "product": "Product",
+        "interval": "Interval",
+        "harvestAllowedFrom": "Harvest allowed from",
+        "quantity": "Quantity",
+        "appliedBy": "Applied by"
+      },
+      "days_one": "{{days}} day",
+      "days_other": "{{days}} days",
+      "preventive": "Preventive",
+      "finding": "Finding",
+      "sourceNote": "Source: {{source}}"
+    },
+    "issues": {
+      "title": "Pests and diseases",
+      "subtitle": "The problems an inspection can report, for every block. “Other” covers a problem outside this list; it is listed here once an inspection has used it.",
+      "add": "Add a pest or disease",
+      "loading": "Loading the pests and diseases…",
+      "loadError": "The pests and diseases could not be loaded",
+      "emptyTitle": "No pest or disease in the catalogue yet",
+      "emptyHint": "Until one is added, an inspection can report “Other” only.",
+      "columns": {
+        "name": "Name",
+        "kind": "Kind",
+        "code": "Code",
+        "source": "Source"
+      },
+      "groups": {
+        "PEST": "Pests",
+        "DISEASE": "Diseases"
+      },
+      "other": "Other",
+      "eppoNote": "EPPO code: {{code}}"
+    },
+    "issueForm": {
+      "title": "Add a pest or disease",
+      "name": "Name",
+      "nameNote": "Its code comes from the name: “Powdery mildew” gives POWDERY_MILDEW.",
+      "kind": "Kind",
+      "selectKind": "Select a kind",
+      "scientificName": "Scientific name",
+      "eppoCode": "EPPO code",
+      "eppoCodeNote": "Optional, 1 to 10 letters or digits.",
+      "source": "Source",
+      "sourceNote": "Optional. user_entry is recorded when left empty.",
+      "sourcePlaceholder": "user_entry",
+      "submit": "Add to catalogue",
+      "submitting": "Adding…",
+      "errors": {
+        "nameRequired": "Name is required.",
+        "nameTooLong": "Name must be at most {{max}} characters.",
+        "kindRequired": "Kind is required.",
+        "scientificNameTooLong": "Scientific name must be at most 255 characters.",
+        "eppoCode": "EPPO code must be 1 to 10 letters or digits.",
+        "sourceTooLong": "Source must be at most 255 characters."
+      }
+    },
+    "inspectionForm": {
+      "title": "Record an inspection",
+      "date": "Inspection date",
+      "score": "Health score (%)",
+      "scoreNote": "A whole number from 0 to 100.",
+      "method": "Method",
+      "notSpecified": "Not specified",
+      "observer": "Observer",
+      "findings": "Findings",
+      "noFindings": "None: the inspection records a visit with nothing found.",
+      "findingsNote": "Each problem found, on the whole block or on one tree.",
+      "addFinding": "Add a finding",
+      "findingNumber": "Finding {{number}}",
+      "problem": "Problem",
+      "tree": "Tree",
+      "treeNote": "Optional, such as 42 or R3-12. Empty for the whole block.",
+      "remove": "Remove",
+      "removeFinding": "Remove finding {{number}}",
+      "submit": "Record inspection",
+      "submitting": "Recording…",
+      "errors": {
+        "dateRequired": "Inspection date is required.",
+        "dateInFuture": "Inspection date cannot be in the future.",
+        "scoreRequired": "Health score is required.",
+        "scoreFormat": "Health score must be a whole number from 0 to 100.",
+        "problemRequired": "Problem is required.",
+        "treeFormat": "Tree must be up to 20 letters, digits or hyphens, such as 42 or R3-12."
+      }
+    },
+    "resolveForm": {
+      "title": "Resolve a finding",
+      "date": "Resolution date",
+      "dateNote": "Not before the inspection, on {{inspection}}.",
+      "dateNoteWithTreatment": "Not before the inspection ({{inspection}}) nor the last treatment ({{treatment}}).",
+      "note": "Note",
+      "noteHint": "Optional, such as how the problem was settled.",
+      "submit": "Resolve finding",
+      "submitting": "Resolving…",
+      "errors": {
+        "dateRequired": "Resolution date is required.",
+        "dateInFuture": "Resolution date cannot be in the future.",
+        "beforeInspection": "Resolution date cannot be before the inspection, on {{date}}.",
+        "beforeTreatment": "Resolution date cannot be before the last treatment, on {{date}}.",
+        "noteTooLong": "Note must be at most 255 characters."
+      }
+    },
+    "treatmentForm": {
+      "preventiveTitle": "Record a preventive treatment",
+      "findingTitle": "Treat a finding",
+      "target": "Problem targeted",
+      "date": "Treatment date",
+      "interval": "Pre-harvest interval (days)",
+      "intervalNote": "Whole days before the block can be harvested again.",
+      "product": "Product",
+      "productNote": "Trade name.",
+      "ingredient": "Active ingredient",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "applicator": "Applicator",
+      "equipment": "Equipment",
+      "noEquipment": "No equipment",
+      "submit": "Record treatment",
+      "errors": {
+        "targetRequired": "Problem targeted is required.",
+        "dateRequired": "Treatment date is required.",
+        "dateInFuture": "Treatment date cannot be in the future.",
+        "beforeInspection": "Treatment date cannot be before the inspection, on {{date}}.",
+        "intervalRequired": "Pre-harvest interval is required.",
+        "intervalFormat": "Pre-harvest interval must be a whole number of days, 0 or more.",
+        "productRequired": "Product is required.",
+        "productTooLong": "Product must be at most 255 characters.",
+        "ingredientRequired": "Active ingredient is required.",
+        "ingredientTooLong": "Active ingredient must be at most 255 characters.",
+        "quantityFormat": "Quantity must be a number greater than 0, with at most 3 decimals.",
+        "unitRequired": "Unit is required.",
+        "applicatorRequired": "Applicator is required."
+      }
+    }
+  },
+  "harvest": {
+    "page": {
+      "title": "Harvest & Maturity",
+      "subtitle": "Maturity, harvest dates and yield, by block.",
+      "documentTitle": "Harvest & Maturity — Plants",
+      "recordHarvest": "Record a harvest",
+      "recorded": "Harvest recorded",
+      "recordedLot": "Harvest recorded — lot <lot>{{lot}}</lot>"
+    },
+    "status": {
+      "title": "Maturity status",
+      "subtitle": "Maturity today, estimated and observed.",
+      "record": "Record an observation",
+      "loading": "Loading maturity status…",
+      "error": "Maturity is unavailable.",
+      "emptyBlockTitle": "No planted variety on this block",
+      "emptyBlockHint": "Select another block, or “All blocks”.",
+      "emptyTitle": "No planted variety yet",
+      "emptyHint": "Record a planting from the Varieties screen.",
+      "rulesToggle": "How is this estimated?",
+      "rulesEstimated": "As of {{date}}. Estimated — Ready for harvest: the harvest window is open and no pre-harvest interval runs on the block. Ripe: the window opens within {{days}} days, or it is open while an interval runs. Immature: the window opens later.",
+      "rulesObserved": "Observed: the latest field observation of the season under way. An observation made between two seasons counts for the next one. It takes precedence over the estimate until the last day of that season, given as “Counts until” under the observation. A running pre-harvest interval holds Ready for harvest back to Ripe, observed or estimated.",
+      "rulesWindow": "Harvest window: from the first month of the season in which the trees give a yield, to the end of the season, as in the forecast. First harvest: the first harvest recorded in the open window; earlier pickings are listed under Recorded harvests. A dash means no value."
+    },
+    "statusTable": {
+      "block": "Block",
+      "estimated": "Estimated",
+      "observed": "Observed",
+      "harvestWindow": "Harvest window",
+      "harvestAllowedFrom": "Harvest allowed from",
+      "firstHarvest": "First harvest",
+      "noReference": "No reference value",
+      "notCounted": "Not counted: no reference value",
+      "countsUntil": "Counts until {{date}}",
+      "heldAt": "Held at {{status}}: pre-harvest interval",
+      "observationLine": "{{date}} · {{method}}",
+      "season": "Season: {{value}}",
+      "share": "Share: {{value}}",
+      "sourceNote": "Source: {{value}}"
+    },
+    "deadlines": {
+      "title": "Upcoming deadlines",
+      "subtitle": "Harvest seasons and waiting periods in the next {{days}} days.",
+      "loading": "Loading upcoming deadlines…",
+      "error": "Upcoming dates are unavailable.",
+      "empty": "Nothing in the next {{days}} days.",
+      "otherDate": "Date:",
+      "types": {
+        "HARVEST_APPROACHING": {
+          "title": "Harvest season",
+          "date": "Window from"
+        },
+        "PRE_HARVEST_INTERVAL": {
+          "title": "Pre-harvest interval",
+          "date": "Harvest allowed from"
+        }
+      }
+    },
+    "forecast": {
+      "title": "Expected yield by month",
+      "loading": "Loading yield forecast…",
+      "error": "The forecast is unavailable.",
+      "emptyTitle": "No yield expected over this period",
+      "emptyHint": "The forecast counts recorded plantings only. Record a planting from the Varieties screen, or choose another period.",
+      "totalOverPeriod": "Total over the period:",
+      "basedOn": "Based on recorded plantings and the reference values below.",
+      "showTable": "Show monthly totals as a table",
+      "month": "Month",
+      "expectedYield": "Expected yield",
+      "total": "Total",
+      "trees_one": "{{value}} tree",
+      "trees_other": "{{value}} trees",
+      "listedVariety": "{{variety}} ({{block}}, {{trees}})",
+      "notInForecast_one": "Not in the forecast: {{list}}. No reference value is entered for this variety yet: add it under Reference values below.",
+      "notInForecast_other": "Not in the forecast: {{list}}. No reference value is entered for these varieties yet: add it under Reference values below."
+    },
+    "chart": {
+      "unit": "kg",
+      "monthValue": "{{month}} {{value}}",
+      "zeroMonths": "; 0 kg in the other months",
+      "description": "Expected yield by month, {{first}} to {{last}}: {{months}}{{zeroMonths}}. Total {{total}}."
+    },
+    "forecastTable": {
+      "month": "Month",
+      "block": "Block",
+      "variety": "Variety",
+      "trees": "Trees",
+      "phase": "Phase",
+      "expectedYield": "Expected yield",
+      "sources": "Sources",
+      "sourcesValue": "Yield: {{yield}} · Season: {{season}} · Phase share: {{share}}"
+    },
+    "references": {
+      "title": "Reference values",
+      "subtitle": "Values used for forecasts and alerts. Changes apply at once.",
+      "varieties": "Varieties",
+      "add": "Add a variety",
+      "loading": "Loading the reference values…",
+      "error": "Reference values are unavailable.",
+      "emptyTitle": "No reference values yet",
+      "emptyHint": "Add yield and harvest months for a variety.",
+      "sharesTitle": "Yield share by growth phase",
+      "sharesLoading": "Loading the yield shares…",
+      "variety": "Variety",
+      "yieldPerTree": "Yield per tree",
+      "harvestSeason": "Harvest season",
+      "sources": "Sources",
+      "sourcesValue": "Yield: {{yield}} · Season: {{season}}",
+      "editVariety": "Edit {{name}}",
+      "ofFullYield": "of the full yield",
+      "sourceCorrected": "Source: {{source}} · Updated {{updated}} · Default: {{defaultShare}} ({{defaultSource}})",
+      "sourceDefault": "Source: {{source}} · Default value",
+      "editShare": "Edit the share of {{phase}}",
+      "shareLabel": "Share of the full yield (0 to 1)",
+      "sourceLabel": "Source",
+      "userEntry": "user_entry",
+      "sourceNote": "Optional. user_entry is recorded when left empty.",
+      "saving": "Saving…",
+      "shareRequired": "Share is required.",
+      "shareInvalid": "Share must be between 0 and 1, with at most 3 decimals.",
+      "sourceTooLong": "Source must be at most 255 characters."
+    },
+    "referenceForm": {
+      "editTitle": "Edit {{name}}",
+      "variety": "Variety",
+      "varietyHint": "Its plantings find it ignoring case and accents.",
+      "yield": "Yield per tree (kg)",
+      "yieldHint": "In full production, per year.",
+      "yieldSource": "Yield source",
+      "startMonth": "First harvest month",
+      "endMonth": "Last harvest month",
+      "endMonthHint": "Before the first month for a season over the new year.",
+      "seasonSource": "Season source",
+      "selectMonth": "Select a month",
+      "keepSource": "Leave empty to keep “{{source}}” if {{condition}}; otherwise user_entry is recorded.",
+      "yieldUnchanged": "the yield does not change",
+      "monthsUnchanged": "the months do not change",
+      "adding": "Adding…",
+      "addVariety": "Add variety",
+      "errors": {
+        "varietyRequired": "Variety is required.",
+        "varietyTooLong": "Variety must be at most 255 characters.",
+        "yieldRequired": "Yield per tree is required.",
+        "yieldInvalid": "Yield per tree must be greater than 0 and at most 1,000 kg, with at most 1 decimal.",
+        "startRequired": "First harvest month is required.",
+        "endRequired": "Last harvest month is required.",
+        "yieldSourceTooLong": "Yield source must be at most 255 characters.",
+        "seasonSourceTooLong": "Season source must be at most 255 characters."
+      }
+    },
+    "form": {
+      "block": "Block",
+      "selectBlock": "Select a block",
+      "variety": "Variety",
+      "selectVariety": "Select a variety",
+      "varietiesError": "Varieties could not be loaded",
+      "noPlanted": "No planted variety on this block",
+      "blockRequired": "Block is required.",
+      "varietyRequired": "Variety is required.",
+      "recording": "Recording…"
+    },
+    "recordHarvest": {
+      "title": "Record a harvest",
+      "date": "Harvest date",
+      "quantity": "Quantity (kg)",
+      "submit": "Record harvest",
+      "errors": {
+        "dateRequired": "Harvest date is required.",
+        "dateFuture": "Harvest date cannot be in the future.",
+        "quantity": "Quantity must be a number greater than 0."
+      }
+    },
+    "observation": {
+      "title": "Record a maturity observation",
+      "date": "Observation date",
+      "status": "Maturity status",
+      "selectStatus": "Select a status",
+      "method": "Method",
+      "selectMethod": "Select a method",
+      "measuredValue": "Measured value",
+      "measuredValueUnit": "Measured value ({{unit}})",
+      "valueHint": "Optional. Above 0 and up to 100, one decimal at most.",
+      "valueDisabledHint": "With Brix or dry matter only.",
+      "observer": "Observer",
+      "optional": "Optional.",
+      "submit": "Record observation",
+      "errors": {
+        "dateRequired": "Observation date is required.",
+        "dateFuture": "Observation date cannot be in the future.",
+        "statusRequired": "Maturity status is required.",
+        "methodRequired": "Method is required.",
+        "measuredValue": "Measured value must be above 0 and at most 100, with one decimal at most."
+      }
+    },
+    "methods": {
+      "FLESH_COLOR": {
+        "label": "Flesh color near the stone",
+        "name": "Flesh color"
+      },
+      "BRIX": {
+        "label": "Brix (°Bx)",
+        "name": "Brix"
+      },
+      "DRY_MATTER": {
+        "label": "Dry matter (%)",
+        "name": "Dry matter"
+      },
+      "VISUAL": {
+        "label": "Visual (shoulders, skin)",
+        "name": "Visual"
+      }
+    },
+    "methodValue": {
+      "plain": "{{name}} {{value}}",
+      "percent": "{{name}} {{value}}%",
+      "unit": "{{name}} {{value}} {{unit}}"
+    },
+    "harvests": {
+      "title": "Recorded harvests",
+      "from": "From",
+      "to": "To",
+      "loading": "Loading harvests…",
+      "error": "Harvests are unavailable.",
+      "filteredTitle": "No harvest matches these filters",
+      "filteredHint": "Try another block or date range, or select “All blocks”.",
+      "emptyTitle": "No harvest recorded yet"
+    },
+    "harvestsTable": {
+      "block": "Block",
+      "variety": "Variety",
+      "harvestDate": "Harvest Date",
+      "quantity": "Quantity (kg)",
+      "lot": "Lot No.",
+      "source": "Source"
+    }
+  },
+  "calendar": {
+    "documentTitle": "Growth Calendar — Plants",
+    "title": "Planting Calendar & Growth Stages",
+    "subtitle": "Tree age and growth stage, from the planting date.",
+    "loading": "Loading growth calendar…",
+    "loadError": "Growth calendar could not be loaded.",
+    "loadErrorHint": "The request to the server did not succeed.",
+    "emptyFilteredTitle": "No growth calendar records match this filter",
+    "emptyFilteredHint": "Try another block, or select “All blocks”.",
+    "emptyTitle": "No planting recorded yet",
+    "emptyHint": "Record a planting from the Varieties screen.",
+    "missingDateZalka": "Planting date not recorded in the reference study (Zalka 2025 gives only “beginning of the rainy season”). Tree age and growth phase are computed from the planting date and cannot be shown until it is recorded.",
+    "missingDate": "Planting date not entered yet. Tree age and growth phase are computed from the planting date and appear once it is entered.",
+    "legend": "Age bands of the growth phases, from the Zalka 2025 study: 0–2 yrs establishment · 3–5 yrs gradual production · 6+ yrs full production. The study gives “years 5 to 7” for full production: year 5 is counted as gradual production, and full production continues after year 7. The share of the full yield in each phase, with its source, is under Reference values on <page>Harvest & Maturity</page>.",
+    "columns": {
+      "block": "Block",
+      "variety": "Variety",
+      "plantingDate": "Planting Date",
+      "precision": "Precision",
+      "age": "Age",
+      "phase": "Phase",
+      "rainfall": "Rainfall ({{days}} days)",
+      "source": "Source"
+    },
+    "rainfallLoading": "Loading…",
+    "rainfallUnavailable": "Rainfall unavailable"
+  },
+  "scenarios": {
+    "documentTitle": "Scenario Analysis — Plants",
+    "title": "Scenario Analysis",
+    "subtitle": "Costs and benefits of growing mango output.",
+    "loading": "Loading the scenarios…",
+    "loadError": "The scenarios could not be loaded",
+    "requestFailed": "The request to the server did not succeed.",
+    "emptyTitle": "No baseline scenario entered yet",
+    "emptyHint": "Enter the assumptions of a planting plan: trees, yield per tree, costs and investment. The server computes every result from them.",
+    "enterBaseline": "Enter baseline",
+    "unknownTitle": "This scenario cannot be shown",
+    "unknownLooking": "Looking for the scenario…",
+    "showScenario": "Show {{name}}",
+    "editName": "Edit {{name}}",
+    "notRecovered": "Not recovered",
+    "enterPriceRevenue": "Enter a price per kg to compute revenue.",
+    "enterCostPerTree": "Enter a cost per added tree in the baseline to compute it.",
+    "optionalSuffix": " (optional)",
+    "currencies": {
+      "XOF": "XOF (FCFA)",
+      "EUR": "EUR (€)"
+    },
+    "baseline": {
+      "title": "Baseline — {{name}}",
+      "scenarioLabel": "Scenario:",
+      "edit": "Edit",
+      "add": "Add a scenario",
+      "computing": "Computing the baseline…",
+      "error": "The baseline could not be computed",
+      "payback": "Payback",
+      "year": "Year {{year}}",
+      "notWithin": "Not within {{years}} years",
+      "simplePayback": "Simple payback (full production from year 1)",
+      "phasesPayback": "Payback with growth phases",
+      "beforeLosses": "Before losses (no loss rate entered)",
+      "soldAfterLosses": "{{sold}} sold after {{lost}} of losses",
+      "totalTrees": "Total Trees",
+      "annualYield": "Annual Yield",
+      "annualRevenue": "Annual Revenue",
+      "annualNetBenefit": "Annual Net Benefit",
+      "operatingCost": "Operating cost {{amount}}",
+      "roi": "ROI",
+      "roiNote": "Net benefit of a year in full production, as a share of the investment.",
+      "investment": "Total investment {{amount}}",
+      "investmentWithOther": "Total investment {{amount}} ({{other}})",
+      "noPrice": "No price per kg entered",
+      "price": "Price {{price}} per kg",
+      "investmentLine": "{{investment}} · {{price}}",
+      "paybackExplained": "Simple payback (full production from year 1): the investment divided by the net benefit of a year in full production, as if the trees gave their full yield from year 1. Payback with growth phases: the first year whose net benefits, added up year by year with the yield share of each growth phase, cover the investment."
+    },
+    "assumptions": {
+      "title": "Assumptions",
+      "intro": "As entered, each with its source. Last updated {{date}}. A dash means not entered: the results that need the value are not computed.",
+      "assumption": "Assumption",
+      "value": "Value",
+      "source": "Source",
+      "rows": {
+        "variety": "Variety",
+        "trees": "Trees",
+        "yieldPerTree": "Yield per tree",
+        "lossRate": "Loss rate",
+        "pricePerKg": "Price per kg",
+        "currency": "Currency",
+        "fixedCost": "Fixed operating cost",
+        "variableCost": "Variable operating cost",
+        "investment": "Investment",
+        "costPerTree": "Cost per added tree"
+      },
+      "units": {
+        "perYearFull": "{{value}} per year in full production",
+        "ofHarvest": "{{value}} of the harvest",
+        "perYear": "{{value}} per year",
+        "perKgSold": "{{value}} per kg sold"
+      },
+      "sharesTitle": "Yield share by growth phase",
+      "growthPhase": "Growth phase",
+      "age": "Age",
+      "share": "Share of the full yield",
+      "sharesPending": "The shares come with the analysis of the scenario.",
+      "sharesNote": "The yield forecast uses the same shares. They are corrected on <page>Harvest & Maturity</page>; a correction counts here at once."
+    },
+    "simulator": {
+      "title": "Yield Increase Simulator",
+      "yieldIncrease": "Yield increase",
+      "baselineStep": "Baseline (0%)",
+      "step": "+{{value}}%",
+      "computedNote": "Computed by the server from the baseline assumptions.",
+      "additionalInvestment": "Additional investment ({{unit}})",
+      "investmentAdded": "Added to the investment of the baseline.",
+      "investmentNone": "No additional investment entered",
+      "computing": "Computing the variant…",
+      "error": "The variant could not be computed",
+      "updating": "Updating…",
+      "results": "Results for {{increase}}, {{investment}}",
+      "resultsBaseline": "the baseline yield (0%)",
+      "resultsIncrease": "+{{value}}% yield per tree",
+      "resultsNoInvestment": "no additional investment",
+      "resultsInvestment": "{{amount}} of additional investment",
+      "projectedYield": "Projected Yield",
+      "projectedRevenue": "Projected Revenue",
+      "annualBenefit": "Annual Benefit",
+      "resultingRoi": "Resulting ROI",
+      "netBenefit": "Net benefit {{amount}}",
+      "investmentBaseline": "Investment {{amount}}, the baseline's",
+      "investmentAdditional": "Investment {{amount}} ({{additional}} additional)"
+    },
+    "chart": {
+      "title": "Yield Growth Projection",
+      "caption": "Annual yield in full production, at the baseline and with 10, 20 and 30% more yield per tree.",
+      "computing": "Computing the projection…",
+      "error": "The projection could not be computed",
+      "description": "Annual yield in full production: {{values}}.",
+      "unit": "kg",
+      "baseline": "Baseline",
+      "step": "+{{value}}%",
+      "legendYield": "Projected yield (kg)",
+      "legendBaseline": "Baseline reference"
+    },
+    "levers": {
+      "title": "Production Increase Scenarios",
+      "intro": "Each lever on its own, against the baseline. A variant is another plan, planted before year 1 like the baseline; removed trees save no investment.",
+      "trees": {
+        "title": "More or fewer trees",
+        "input": "Trees added (negative to remove)"
+      },
+      "yieldPct": {
+        "title": "Yield per tree",
+        "input": "Change of the yield per tree (%)"
+      },
+      "loss": {
+        "title": "Lower losses",
+        "input": "Loss rate (0 to 1)"
+      },
+      "lossDisabled": "Enter the loss rate of the baseline first: a lower rate needs one to compare with.",
+      "lossNote": "The baseline loses {{rate}} of its harvest. Enter a lower rate to see its effect.",
+      "enterValue": "Enter a value to see its effect.",
+      "computing": "Computing…",
+      "noAdditional": "No additional investment",
+      "yield": "Yield",
+      "revenue": "Revenue",
+      "annualBenefit": "Annual benefit",
+      "additionalInvestment": "Add'l investment",
+      "roi": "ROI",
+      "additionalPayback": "Payback of add'l investment",
+      "noPrice": "Enter a price per kg in the baseline to compute revenue."
+    },
+    "benefit": {
+      "title": "Annual Benefit",
+      "intro": "The levers entered above, applied together, in a year of full production. Each line is what one lever adds, in this order: trees, yield per tree, losses, then the variable cost of what is sold in addition. The lines add up to the total.",
+      "noLever": "Enter at least one lever above to see the annual benefit of the levers together.",
+      "computing": "Computing the annual benefit…",
+      "error": "The annual benefit could not be computed",
+      "noPrice": "Enter a price per kg in the baseline to compute the annual benefit.",
+      "conversionNote": "In {{unit}}, each amount is converted on its own: the total may differ by one unit from the sum of the lines.",
+      "additionalInvestment": "Additional investment",
+      "additionalPayback": "Payback of the additional investment",
+      "assumptions": "Assumptions",
+      "typeColumn": "Benefit type",
+      "amountColumn": "Amount ({{unit}})",
+      "detailsColumn": "Details",
+      "total": "TOTAL ANNUAL BENEFIT",
+      "totalDetails": "The lines above, added up.",
+      "sourced": "{{value}} ({{source}})",
+      "perKg": "{{value}} per kg",
+      "trees": "Trees: {{value}}",
+      "yieldPerTree": "Yield per tree: {{value}}",
+      "pricePerKg": "Price per kg: {{value}}",
+      "lossRateMissing": "Loss rate: not entered, so the quantities are before losses",
+      "lossRate": "Loss rate: {{value}}",
+      "variableCostMissing": "Variable operating cost: not entered",
+      "variableCost": "Variable operating cost: {{value}}",
+      "costPerTreeMissing": "Cost per added tree: not entered",
+      "costPerTree": "Cost per added tree: {{value}}",
+      "treesAdded": "Trees added: {{value}} (entered above)",
+      "yieldChange": "Change of the yield per tree: {{value}} (entered above)",
+      "variantLossRate": "Loss rate of the variant: {{value}} (entered above)",
+      "treeCountMore": "Additional trees",
+      "treeCountLess": "Fewer trees",
+      "yieldPerTreeMore": "Higher yield per tree",
+      "yieldPerTreeLess": "Lower yield per tree",
+      "lossRateMore": "Loss reduction",
+      "lossRateLess": "Higher losses",
+      "variableCostMore": "Additional operating cost",
+      "variableCostLess": "Operating cost saved",
+      "factors": "{{quantity}} × {{price}}/kg",
+      "variableCostFactors": "{{quantity}} × {{price}}/kg variable cost"
+    },
+    "cashFlow": {
+      "title": "Cash Flow by Year",
+      "yearsShown": "Years shown:",
+      "computing": "Computing the years…",
+      "error": "The years could not be computed",
+      "paybackYear": "Payback with growth phases: year {{year}}",
+      "enterPrice": "Enter a price per kg to compute the payback.",
+      "paybackNotWithin": "Payback with growth phases: not within {{years}} years",
+      "payback": "Payback",
+      "age_one": "{{count}} yr",
+      "age_other": "{{count}} yrs",
+      "columns": {
+        "year": "Year",
+        "age": "Age",
+        "growthPhase": "Growth phase",
+        "yieldShare": "Yield share",
+        "harvest": "Harvest (kg)",
+        "sellable": "Sellable (kg)",
+        "revenue": "Revenue ({{unit}})",
+        "operatingCost": "Operating cost ({{unit}})",
+        "netBenefit": "Net benefit ({{unit}})",
+        "cumulative": "Cumulative ({{unit}})"
+      },
+      "note": "The trees are all planted before year 1, so in year n they are n − 1 years old and give the share of the full yield of their growth phase. The investment is spent before year 1, and the fixed cost runs from year 1, harvest or not."
+    },
+    "form": {
+      "newTitle": "Enter a scenario",
+      "intro": "Every result is computed by the server from these values. A source is optional: left empty, user_entry is recorded for a new value, and the recorded source stays while its value does not change.",
+      "name": "Name",
+      "variety": "Variety",
+      "currency": "Currency",
+      "currencyNote": "Every amount below is in this currency.",
+      "reference": "Reference of {{variety}}: {{yield}} ({{source}}).",
+      "useReference": "Use this value",
+      "recorded": "Recorded: {{source}}",
+      "cancel": "Cancel",
+      "save": "Save scenario",
+      "saving": "Saving…",
+      "fields": {
+        "treeCount": {
+          "label": "Trees",
+          "note": "All planted before year 1.",
+          "source": "Source of trees"
+        },
+        "yieldPerTreeKg": {
+          "label": "Yield per tree (kg per year, full production)",
+          "source": "Source of yield per tree"
+        },
+        "lossRate": {
+          "label": "Loss rate (0 to 1)",
+          "note": "Share of the harvest lost before sale, 0.15 for 15%. Empty: the figures are before losses.",
+          "source": "Source of loss rate"
+        },
+        "pricePerKg": {
+          "label": "Price per kg",
+          "note": "Selling price of fresh mangoes. Empty: no revenue is computed.",
+          "source": "Source of price per kg"
+        },
+        "annualFixedCost": {
+          "label": "Fixed operating cost (per year)",
+          "source": "Source of fixed operating cost"
+        },
+        "variableCostPerKg": {
+          "label": "Variable operating cost (per kg sold)",
+          "note": "Such as packaging or transport. Empty: the operating cost is the fixed cost alone.",
+          "source": "Source of variable operating cost"
+        },
+        "initialInvestment": {
+          "label": "Investment",
+          "source": "Source of investment"
+        },
+        "costPerAdditionalTree": {
+          "label": "Cost per added tree",
+          "note": "Plant and planting, for a variant with more trees.",
+          "source": "Source of cost per added tree"
+        }
+      }
+    },
+    "messages": {
+      "nameRequired": "Name is required.",
+      "nameTooLong": "Name must be at most {{max}} characters.",
+      "varietyTooLong": "Variety must be at most {{max}} characters.",
+      "treeCount": "Trees must be a whole number from 1 to 1,000,000.",
+      "yieldPerTreeKg": "Yield per tree must be greater than 0 and at most 1,000 kg, with at most 1 decimal.",
+      "lossRate": "Loss rate must be between 0 and 1, with at most 3 decimals.",
+      "pricePerKg": "Price per kg must be greater than 0, with at most 4 decimals.",
+      "currency": "Currency is required.",
+      "annualFixedCostRequired": "Fixed operating cost is required.",
+      "annualFixedCost": "Fixed operating cost must be 0 or more, with at most 2 decimals.",
+      "variableCostPerKg": "Variable operating cost must be 0 or more, with at most 4 decimals.",
+      "initialInvestmentRequired": "Investment is required.",
+      "initialInvestment": "Investment must be greater than 0, with at most 2 decimals.",
+      "costPerAdditionalTree": "Cost per added tree must be 0 or more, with at most 2 decimals.",
+      "source": "Source must be at most {{max}} characters."
+    },
+    "variantMessages": {
+      "treeCountChange": "Trees added must be a whole number from -1,000,000 to 1,000,000.",
+      "yieldPerTreeChangePct": "Change must be above -100% and at most 1,000%, with at most 1 decimal.",
+      "lossRate": "Loss rate must be between 0 and 1, with at most 3 decimals.",
+      "additionalInvestment": "Additional investment must be 0 or more, with at most 2 decimals."
+    },
+    "format": {
+      "percent": "{{value}}%",
+      "points": "{{value}} pts",
+      "xof": "{{value}} FCFA",
+      "years_one": "{{value}} year",
+      "years_other": "{{value}} years",
+      "trees_one": "{{value}} tree",
+      "trees_other": "{{value}} trees"
+    }
+  },
+  "overview": {
+    "title": "Overview",
+    "documentTitle": "Overview — Plants",
+    "subtitle": "Your orchard today.",
+    "asOf": "As of {{date}}",
+    "kpi": {
+      "region": "Figures of the day",
+      "loading": "Loading the figures of the day…",
+      "error": "Today's figures are unavailable.",
+      "totalPlants": "Total Plants",
+      "totalPlantsNote": "Field trees, nursery excluded",
+      "inGrowthStage": "In Growth Stage",
+      "inGrowthStageNote": "Establishment, 0–2 years",
+      "readyForHarvest": "Ready for Harvest",
+      "activeAlerts": "Active Alerts",
+      "criticalNote": "{{count}} critical",
+      "actNowNote": "{{count}} Act now",
+      "actNowPending": "Act now —"
+    },
+    "alerts": {
+      "title": "Alerts",
+      "scopeBlock": "{{block}}. Stock alerts show under All blocks.",
+      "scopeAll": "Most urgent first.",
+      "loading": "Loading alerts…",
+      "error": "Alerts are unavailable.",
+      "empty": "Nothing needs attention today.",
+      "priority": "Priority",
+      "where": "Where",
+      "issue": "Issue",
+      "when": "When",
+      "noDate": "No date",
+      "view": "View",
+      "viewLabel": "View: {{issue}}, {{place}}, on {{screen}}"
+    },
+    "alertTypes": {
+      "OPEN_HEALTH_ISSUE": "Health issue still open",
+      "PRE_HARVEST_INTERVAL": "Pre-harvest interval running",
+      "LOW_STOCK": "Low stock",
+      "NURSERY_READY": "Ready to transplant",
+      "HARVEST_APPROACHING": "Harvest season approaching",
+      "now": "Now"
+    },
+    "places": {
+      "inventory": "Inventory",
+      "batch": "Batch {{code}}",
+      "nursery": "Nursery",
+      "allBlocks": "All blocks",
+      "blockTree": "{{block}} · Tree {{tree}}"
+    },
+    "relative": {
+      "today": "today",
+      "ahead_one": "in {{days}} day",
+      "ahead_other": "in {{days}} days",
+      "ago_one": "{{days}} day ago",
+      "ago_other": "{{days}} days ago"
+    },
+    "yield": {
+      "title": "Expected vs Actual Yield by Block",
+      "caption_one": "Expected and harvested over {{months}} month from {{from}}.",
+      "caption_other": "Expected and harvested over {{months}} months from {{from}}.",
+      "loading": "Loading the yield by block…",
+      "error": "Yield is unavailable.",
+      "empty": "No planted variety with a reference value over this period.",
+      "expected": "Expected",
+      "actual": "Actual",
+      "noHarvestExpected": "No harvest expected over this period",
+      "noHarvestRecorded": "No harvest recorded yet",
+      "notCompared": "Planted varieties without a reference value are not compared.",
+      "link": "See Harvest & Maturity"
+    },
+    "maturity": {
+      "title": "Harvest Maturity Status",
+      "caption": "Trees by maturity today.",
+      "loading": "Loading the maturity status…",
+      "error": "Maturity is unavailable.",
+      "empty": "No planted tree to show.",
+      "trees_one": "tree",
+      "trees_other": "trees",
+      "share": "{{trees}} · {{percent}}",
+      "meaningLabel": "{{label}}: ",
+      "meaningSentence": "{{meaning}}.",
+      "labels": {
+        "IMMATURE": "Immature",
+        "RIPE": "Ripe",
+        "READY_FOR_HARVEST": "Ready for harvest",
+        "NO_REFERENCE": "No reference"
+      },
+      "meanings": {
+        "IMMATURE": "Harvest not near yet, young trees included",
+        "RIPE": "Harvest near, or on hold for a pre-harvest interval",
+        "READY_FOR_HARVEST": "Can be picked today"
+      }
+    },
+    "nursery": {
+      "title": "Nursery Survival Rate by Batch",
+      "caption": "All nursery batches.",
+      "loading": "Loading the nursery batches…",
+      "error": "Nursery batches are unavailable.",
+      "empty": "No nursery batch yet.",
+      "batch": "Batch {{code}}",
+      "destination": " · to {{block}}",
+      "survivedOf": "{{survived}} of {{initial}}",
+      "survived_one": " plant survived ({{percent}})",
+      "survived_other": " plants survived ({{percent}})",
+      "lost": " · {{lost}} lost",
+      "transplanted": "{{transplanted}} transplanted · {{current}} still in the nursery"
+    },
+    "fertilizer": {
+      "title": "Fertilizer Stock vs Alert Threshold",
+      "caption": "Stock for the whole farm, by unit.",
+      "loading": "Loading the fertilizer stock…",
+      "error": "Fertilizer stock is unavailable.",
+      "empty": "No fertilizer in the catalogue yet.",
+      "stockIn": "Stock in {{unit}}",
+      "currentStock": "Current stock",
+      "alertThreshold": "Alert threshold",
+      "stock": "Stock {{quantity}}",
+      "noThreshold": " · No threshold",
+      "threshold": " · Threshold {{quantity}}"
+    }
+  }
+}

@@ -1,13 +1,14 @@
 import { useRef, useState } from "react";
-import { ChevronRight, Loader2, Plus, TriangleAlert } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Card, EmptyState } from "../../../shared/ui";
 import { useHarvestStatus } from "../hooks/useHarvestStatus";
 import { useRecordMaturityObservation } from "../hooks/useRecordMaturityObservation";
 import { useVarietyBlocks } from "../hooks/useVarieties";
 import { formatDate } from "../utils/format";
+import { SectionError, SectionLoading } from "./HarvestSectionStates";
 import HarvestStatusTable from "./HarvestStatusTable";
-import PlantsEmptyState from "./PlantsEmptyState";
 import RecordMaturityObservationModal from "./RecordMaturityObservationModal";
-import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
 /**
  * How the statuses are read, folded under the table: closed by default, opened
@@ -15,6 +16,7 @@ import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
  * every visit. The day and the look-ahead are the ones the API used.
  */
 function EstimationRules({ today, withinDays }) {
+    const { t } = useTranslation("plants");
     const [isOpen, setIsOpen] = useState(false);
     return (
         <div>
@@ -23,29 +25,15 @@ function EstimationRules({ today, withinDays }) {
                 aria-expanded={isOpen}
                 aria-controls="maturity-status-rules"
                 onClick={() => setIsOpen((open) => !open)}
-                className="inline-flex items-center gap-1 rounded text-sm font-semibold text-primary-dark hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+                className="inline-flex cursor-pointer items-center gap-1 rounded-control text-sm font-semibold text-text-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
             >
                 <ChevronRight size={16} aria-hidden="true" className={isOpen ? "rotate-90" : ""} />
-                How is this estimated?
+                {t("harvest.status.rulesToggle")}
             </button>
-            {/* primary-dark: #065e55 on the gray-50 page -> 7.33:1; gray-600 below -> 7.23:1. */}
-            <div id="maturity-status-rules" hidden={!isOpen} className="mt-2 flex max-w-3xl flex-col gap-2 text-sm text-gray-600">
-                <p>
-                    {`As of ${formatDate(today)}. Estimated — Ready for harvest: the harvest window is open and no `
-                        + "pre-harvest interval runs on the block. Ripe: the window opens within "
-                        + `${withinDays} days, or it is open while an interval runs. Immature: the window opens later.`}
-                </p>
-                <p>
-                    Observed: the latest field observation of the season under way. An observation made between two
-                    seasons counts for the next one. It takes precedence over the estimate until the last day of that
-                    season, given as “Counts until” under the observation. A running pre-harvest interval holds Ready
-                    for harvest back to Ripe, observed or estimated.
-                </p>
-                <p>
-                    Harvest window: from the first month of the season in which the trees give a yield, to the end of
-                    the season, as in the forecast. First harvest: the first harvest recorded in the open window;
-                    earlier pickings are listed under Recorded harvests. A dash means no value.
-                </p>
+            <div id="maturity-status-rules" hidden={!isOpen} className="mt-2 flex max-w-3xl flex-col gap-2 text-sm text-text-muted">
+                <p>{t("harvest.status.rulesEstimated", { date: formatDate(today), days: withinDays })}</p>
+                <p>{t("harvest.status.rulesObserved")}</p>
+                <p>{t("harvest.status.rulesWindow")}</p>
             </div>
         </div>
     );
@@ -63,7 +51,9 @@ function EstimationRules({ today, withinDays }) {
  * when the dialog closes.
  */
 export default function HarvestStatusSection({ blockCode }) {
-    const { data, isPending, isError, refetch, isFetching } = useHarvestStatus({ blockCode });
+    const { t } = useTranslation("plants");
+    const query = useHarvestStatus({ blockCode });
+    const { data, isPending, isError } = query;
     const { data: blocks } = useVarietyBlocks();
     const recordObservation = useRecordMaturityObservation();
     const [isRecordingObservation, setIsRecordingObservation] = useState(false);
@@ -88,64 +78,31 @@ export default function HarvestStatusSection({ blockCode }) {
         <section aria-labelledby="maturity-status-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 id="maturity-status-title" className="font-heading text-lg font-bold text-on-background">
-                        Maturity status
+                    <h2 id="maturity-status-title" className="text-lg font-semibold">
+                        {t("harvest.status.title")}
                     </h2>
-                    <p className="mt-1 text-sm text-gray-600">Maturity today, estimated and observed.</p>
+                    <p className="text-sm text-text-muted">{t("harvest.status.subtitle")}</p>
                 </div>
-                <button
-                    ref={recordButtonRef}
-                    type="button"
-                    onClick={openObservationForm}
-                    className={SECONDARY_BUTTON}
-                >
-                    <Plus size={16} />
-                    Record an observation
-                </button>
+                <Button ref={recordButtonRef} variant="secondary" icon={Plus} onClick={openObservationForm}>
+                    {t("harvest.status.record")}
+                </Button>
             </div>
 
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-12 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading maturity status…
-                </div>
-            )}
+            {isPending && <SectionLoading label={t("harvest.status.loading")} />}
 
-            {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-12 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-on-background">
-                            Maturity is unavailable.
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            Check your connection, then try again.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
-            )}
+            {isError && <SectionError title={t("harvest.status.error")} query={query} />}
 
             {!isPending && !isError && data.varieties.length === 0 && (
-                blockCode ? (
-                    <PlantsEmptyState
-                        title="No planted variety on this block"
-                        hint="Select another block, or “All blocks”."
-                    />
-                ) : (
-                    <PlantsEmptyState
-                        title="No planted variety yet"
-                        hint="Record a planting from the Varieties screen."
-                    />
-                )
+                <Card>
+                    {blockCode ? (
+                        <EmptyState
+                            title={t("harvest.status.emptyBlockTitle")}
+                            message={t("harvest.status.emptyBlockHint")}
+                        />
+                    ) : (
+                        <EmptyState title={t("harvest.status.emptyTitle")} message={t("harvest.status.emptyHint")} />
+                    )}
+                </Card>
             )}
 
             {!isPending && !isError && data.varieties.length > 0 && (

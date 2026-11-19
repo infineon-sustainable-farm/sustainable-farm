@@ -1,13 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.model.WashSortRecord;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.repository.WashSortRecordRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.service.OperatorService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.service.WashSortRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,30 +37,29 @@ import java.util.List;
 public class WashSortRecordServiceImpl implements WashSortRecordService {
 
     private final WashSortRecordRepository washSortRecordRepository;
-    private final EquipmentRepository equipmentRepository;
-    private final OperatorRepository operatorRepository;
+    private final EquipmentService equipmentService;
+    private final OperatorService operatorService;
 
     @Autowired
     public WashSortRecordServiceImpl(WashSortRecordRepository washSortRecordRepository,
-                                     EquipmentRepository equipmentRepository,
-                                     OperatorRepository operatorRepository) {
+                                     EquipmentService equipmentService,
+                                     OperatorService operatorService) {
         this.washSortRecordRepository = washSortRecordRepository;
-        this.equipmentRepository = equipmentRepository;
-        this.operatorRepository = operatorRepository;
+        this.equipmentService = equipmentService;
+        this.operatorService = operatorService;
     }
 
     @Override
     public WashSortRecord createWashSortRecord(WashSortRecord washSortRecord) {
         // Business Rule: Validate equipment availability
-        if (washSortRecord.getEquipment() != null) {
-            Equipment equipment = washSortRecord.getEquipment();
+        if (washSortRecord.getEquipmentId() != null) {
             // Verify equipment exists and is available
-            Equipment dbEquipment = equipmentRepository.findById(equipment.getEquipmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with ID: " + equipment.getEquipmentId()));
+            Equipment dbEquipment = equipmentService.findEquipmentByRegisterId(washSortRecord.getEquipmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with ID: " + washSortRecord.getEquipmentId()));
             
-            if (dbEquipment.getMaintenanceStatus() != Equipment.MaintenanceStatus.ACTIVE) {
+            if (dbEquipment.getMaintenanceStatus() != MaintenanceStatus.ACTIVE) {
                 throw new BusinessRuleViolationException(
-                    "Equipment is not available for washing. Equipment ID: " + equipment.getEquipmentId() + 
+                    "Equipment is not available for washing. Equipment ID: " + dbEquipment.getEquipmentId() + 
                     " must be in ACTIVE status. Current status: " + dbEquipment.getMaintenanceStatus()
                 );
             }
@@ -67,10 +69,10 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
         if (washSortRecord.getOperator() != null) {
             Operator operator = washSortRecord.getOperator();
             // Verify operator exists and is active
-            Operator dbOperator = operatorRepository.findById(operator.getOperatorId())
+            Operator dbOperator = operatorService.findOperatorById(operator.getOperatorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Operator not found with ID: " + operator.getOperatorId()));
             
-            if (dbOperator.getActiveStatus() != Operator.ActiveStatus.ACTIVE) {
+            if (dbOperator.getActiveStatus() != ActiveStatus.ACTIVE) {
                 throw new BusinessRuleViolationException(
                     "Operator is not active for washing. Operator ID: " + operator.getOperatorId() + 
                     " must be in ACTIVE status. Current status: " + dbOperator.getActiveStatus()
@@ -78,7 +80,7 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
             }
             
             // Verify operator has appropriate role for washing operations
-            if (dbOperator.getRole() != Operator.Role.WASHER) {
+            if (dbOperator.getRole() != Role.WASHER) {
                 throw new BusinessRuleViolationException(
                     "Operator must have WASHER role for washing operations. Operator ID: " + operator.getOperatorId() + 
                     ", Current role: " + dbOperator.getRole()
@@ -100,7 +102,7 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
         existingRecord.setWaterUsageLiters(washSortRecord.getWaterUsageLiters());
         existingRecord.setStartTime(washSortRecord.getStartTime());
         existingRecord.setEndTime(washSortRecord.getEndTime());
-        existingRecord.setEquipment(washSortRecord.getEquipment());
+        existingRecord.setEquipmentId(washSortRecord.getEquipmentId());
         existingRecord.setOperator(washSortRecord.getOperator());
         
         return washSortRecordRepository.save(existingRecord);
@@ -108,16 +110,16 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
 
     @Override
     public void deleteWashSortRecord(String recordId) {
-        if (!washSortRecordRepository.existsById(recordId)) {
+        if (!washSortRecordRepository.existsByRecordId(recordId)) {
             throw new ResourceNotFoundException("Wash sort record not found with ID: " + recordId);
         }
-        washSortRecordRepository.deleteById(recordId);
+        washSortRecordRepository.deleteByRecordId(recordId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public WashSortRecord getWashSortRecordById(String recordId) {
-        return washSortRecordRepository.findById(recordId)
+        return washSortRecordRepository.findByRecordId(recordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Wash sort record not found with ID: " + recordId));
     }
 
@@ -142,7 +144,9 @@ public class WashSortRecordServiceImpl implements WashSortRecordService {
     @Override
     @Transactional(readOnly = true)
     public List<WashSortRecord> getWashSortRecordsByEquipment(String equipmentId) {
-        return washSortRecordRepository.findByEquipmentEquipmentId(equipmentId);
+        return equipmentService.findEquipmentById(equipmentId)
+                .map(equipment -> washSortRecordRepository.findByEquipmentId(equipment.getId()))
+                .orElse(List.of());
     }
 
     @Override

@@ -1,31 +1,31 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import com.infineonbit.sustainablefarm.modules.producttransformation.integration.plants.dto.PlantsHarvestResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import com.infineonbit.sustainablefarm.modules.plants.api.HarvestLookup;
+import com.infineonbit.sustainablefarm.modules.plants.api.HarvestSummary;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * Plants Integration Service
- * HTTP-based integration with Plants module for harvest data
+ * Reads the harvests of the Plants module through its public API
+ * ({@link HarvestLookup}, docs/adr/0003-communication-entre-modules.md), in the
+ * same process, and maps them to the Product Transformation contract
+ * ({@link PlantsHarvestResponse}: id, farmId, blockCode, varietyId, varietyName,
+ * harvestDate, quantityKg, source, lastUpdated, in camelCase).
  *
- * Contract from Plants team:
- * Endpoint: GET /api/plants/harvests
- * Fields: id, farmId, blockCode, varietyId, varietyName, harvestDate, quantityKg, source, lastUpdated
- * Convention: camelCase
- * Error handling: 422 for validation errors
+ * <p>An unknown harvest id is a 404 ({@link ResourceNotFoundException}); a farm id
+ * outside the range Plants stores is a 400.
  *
  * @author Abdoul Ben Fatao SANON
- * @version 1.0.0
+ * @version 1.1.0
  */
 // Explicit bean name: the watersupply module ships its own
 // PlantsIntegrationService, and two @Service classes with the same simple
@@ -33,14 +33,15 @@ import java.util.List;
 @Service("productTransformationPlantsIntegrationService")
 public class PlantsIntegrationService {
 
-    private final RestTemplate restTemplate;
+    private final HarvestLookup harvestLookup;
+    private final MangoVarietyCodes mangoVarietyCodes;
+    private final ProductTransformationBlocks blocks;
 
-    @Value("${plants.api.base-url:http://localhost:8080}")
-    private String plantsApiBaseUrl;
-
-    @Autowired
-    public PlantsIntegrationService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public PlantsIntegrationService(HarvestLookup harvestLookup, MangoVarietyCodes mangoVarietyCodes,
+                                    ProductTransformationBlocks blocks) {
+        this.harvestLookup = harvestLookup;
+        this.mangoVarietyCodes = mangoVarietyCodes;
+        this.blocks = blocks;
     }
 
     /**
@@ -49,9 +50,7 @@ public class PlantsIntegrationService {
      * @return List of harvests from Plants
      */
     public List<PlantsHarvestResponse> getAllHarvests() {
-        String url = plantsApiBaseUrl + "/api/plants/harvests";
-        ResponseEntity<PlantsHarvestResponse[]> response = restTemplate.getForEntity(url, PlantsHarvestResponse[].class);
-        return Arrays.asList(response.getBody());
+        return toResponses(harvestLookup.listHarvests(null, null));
     }
 
     /**
@@ -59,11 +58,12 @@ public class PlantsIntegrationService {
      *
      * @param harvestId Harvest ID from Plants
      * @return Harvest data from Plants
+     * @throws ResourceNotFoundException if Plants has no harvest with this ID
      */
     public PlantsHarvestResponse getHarvestById(Long harvestId) {
-        String url = plantsApiBaseUrl + "/api/plants/harvests/" + harvestId;
-        ResponseEntity<PlantsHarvestResponse> response = restTemplate.getForEntity(url, PlantsHarvestResponse.class);
-        return response.getBody();
+        return harvestLookup.findHarvest(harvestId)
+                .map(PlantsIntegrationService::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Plants harvest " + harvestId + " not found"));
     }
 
     /**
@@ -73,9 +73,7 @@ public class PlantsIntegrationService {
      * @return List of harvests from Plants for the specified farm
      */
     public List<PlantsHarvestResponse> getHarvestsByFarm(Long farmId) {
-        String url = plantsApiBaseUrl + "/api/plants/harvests?farmId=" + farmId;
-        ResponseEntity<PlantsHarvestResponse[]> response = restTemplate.getForEntity(url, PlantsHarvestResponse[].class);
-        return Arrays.asList(response.getBody());
+        return toResponses(harvestLookup.listHarvests(farmId, null));
     }
 
     /**
@@ -85,9 +83,26 @@ public class PlantsIntegrationService {
      * @return List of harvests from Plants for the specified block
      */
     public List<PlantsHarvestResponse> getHarvestsByBlock(String blockCode) {
-        String url = plantsApiBaseUrl + "/api/plants/harvests?blockCode=" + blockCode;
-        ResponseEntity<PlantsHarvestResponse[]> response = restTemplate.getForEntity(url, PlantsHarvestResponse[].class);
-        return Arrays.asList(response.getBody());
+        return toResponses(harvestLookup.listHarvests(null, blockCode));
+    }
+
+    private static List<PlantsHarvestResponse> toResponses(List<HarvestSummary> harvests) {
+        return harvests.stream().map(PlantsIntegrationService::toResponse).toList();
+    }
+
+    /** The Plants harvest in the Product Transformation contract, field for field. */
+    static PlantsHarvestResponse toResponse(HarvestSummary harvest) {
+        return PlantsHarvestResponse.builder()
+                .id(harvest.id())
+                .farmId(harvest.farmId())
+                .blockCode(harvest.blockCode())
+                .varietyId(harvest.varietyId())
+                .varietyName(harvest.varietyName())
+                .harvestDate(harvest.harvestDate() != null ? harvest.harvestDate().toString() : null)
+                .quantityKg(harvest.quantityKg())
+                .source(harvest.source())
+                .lastUpdated(harvest.lastUpdated())
+                .build();
     }
 
     /**
@@ -99,8 +114,10 @@ public class PlantsIntegrationService {
      * {@code plantsHarvestId} to keep the cross-module link.
      *
      * <p>The variety name comes back from Plants as the planted name
-     * ("Keitt", "keitt", "Amélie"...), so it is resolved through
-     * {@link MangoVariety#fromPlants(String)}.
+     * ("Keitt", "keitt", "Amélie"...), so it is resolved to a catalogue key
+     * through the plants variety catalogue
+     * ({@link MangoVarietyCodes#keyOfPlantsName(String)}); an unknown name gives
+     * {@code OTHER}.
      *
      * <p>The quality grade is not part of the Plants harvest contract: the
      * caller remains responsible for it and must set it before persisting.
@@ -128,9 +145,10 @@ public class PlantsIntegrationService {
         event.setPlantsHarvestId(harvest.getId());
         event.setBatchId(originalBatchId.trim());
         event.setHarvestDate(LocalDate.parse(harvest.getHarvestDate()));
-        event.setMangoVariety(MangoVariety.fromPlants(harvest.getVarietyName()));
-        event.setFarmId(harvest.getFarmId() != null ? String.valueOf(harvest.getFarmId()) : null);
-        event.setBlockId(harvest.getBlockCode());
+        event.setVarietyKey(mangoVarietyCodes.keyOfPlantsName(harvest.getVarietyName()));
+        // A Plants block code is the code of a farm.block row: the same block for both modules.
+        event.setFarmBlockId(blocks.resolve(harvest.getFarmId() != null ? String.valueOf(harvest.getFarmId()) : null,
+                harvest.getBlockCode()));
         event.setHarvestQuantityKg(harvest.getQuantityKg() != null
                 ? BigDecimal.valueOf(harvest.getQuantityKg())
                 : null);

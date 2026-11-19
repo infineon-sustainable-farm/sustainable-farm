@@ -1,17 +1,20 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.VarietyResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.exception.VarietyNotFoundException;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -30,13 +33,18 @@ import static org.mockito.Mockito.when;
 public class VarietyServiceTest {
 
     @Mock
-    private VarietyRepository varietyRepository;
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Mock
     private PopulationEventRepository populationEventRepository;
 
+    @Spy
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("A", 1L).with("B", 1L).asPlantsBlocks();
+
     @InjectMocks
     private VarietyService varietyService;
+
+    private static final List<Long> ALL = List.of(PlantsBlocks.NO_BLOCK);
 
     private static TreeBalance balance(Long varietyId, Long balance) {
         return new TreeBalance() {
@@ -52,11 +60,11 @@ public class VarietyServiceTest {
         };
     }
 
-    private static Variety plantedVariety(Long id, String name) {
-        Variety variety = new Variety();
+    private static BlockVariety plantedVariety(Long id, String name) {
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.setName(name);
-        variety.setBlockCode("B");
+        variety.assignBlock(TestBlocks.idOf("B"), TestBlocks.label("B"));
         variety.setTreeCount(150);
         variety.setSource("user_entry");
         return variety;
@@ -67,26 +75,23 @@ public class VarietyServiceTest {
      * fields stay null here too, so the tests also pin down that the service
      * does not invent a value for them.
      */
-    private static Variety keittOnBlockA() {
-        return new Variety(
-                1L,
-                null,
-                "Keitt",
-                200,
-                8.0,
-                8.0,
-                null,
-                null,
-                "A",
-                null,
-                "Zalka_2025",
-                Instant.parse("2025-01-01T00:00:00Z"), null);
+    private static BlockVariety keittOnBlockA() {
+        BlockVariety variety = new BlockVariety();
+        variety.setId(1L);
+        variety.setName("Keitt");
+        variety.setTreeCount(200);
+        variety.setRowSpacingM(BigDecimal.valueOf(8.0));
+        variety.setTreeSpacingM(BigDecimal.valueOf(8.0));
+        variety.assignBlock(TestBlocks.idOf("A"), TestBlocks.label("A"));
+        variety.setSource("Zalka_2025");
+        variety.setLastUpdated(Instant.parse("2025-01-01T00:00:00Z"));
+        return variety;
     }
 
     @Test
     void getAllVarieties_shouldReturnMatchingVarieties_whenFilterMatches() {
         // Arrange
-        when(varietyRepository.findByOptionalFilters(null, "A"))
+        when(blockVarietyRepository.findByOptionalFilters(false, List.of(TestBlocks.idOf("A"))))
                 .thenReturn(List.of(keittOnBlockA()));
         // Act
         List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(null, "A");
@@ -94,6 +99,7 @@ public class VarietyServiceTest {
         assertEquals(1, varietyResponses.size());
         assertEquals("Keitt", varietyResponses.get(0).name());
         assertEquals("A", varietyResponses.get(0).blockCode());
+        assertEquals(1L, varietyResponses.get(0).farmId());
         assertEquals(200, varietyResponses.get(0).treeCount());
         assertNull(varietyResponses.get(0).treeDensityPerHa());
         assertNull(varietyResponses.get(0).vigor());
@@ -102,7 +108,7 @@ public class VarietyServiceTest {
     @Test
     void getAllVarieties_shouldReturnEmptyList_whenFilterMatchesNothing() {
         // Arrange
-        when(varietyRepository.findByOptionalFilters(null, "ZZZ"))
+        when(blockVarietyRepository.findByOptionalFilters(false, ALL))
                 .thenReturn(List.of());
         // Act
         List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(null, "ZZZ");
@@ -113,7 +119,7 @@ public class VarietyServiceTest {
     @Test
     void getVarietyById_shouldReturnVariety_whenIdExists() {
         // Arrange
-        when(varietyRepository.findById(1L)).thenReturn(Optional.of(keittOnBlockA()));
+        when(blockVarietyRepository.findById(1L)).thenReturn(Optional.of(keittOnBlockA()));
         // Act
         VarietyResponse varietyResponse = varietyService.getVarietyById(1L);
         // Assert
@@ -127,7 +133,7 @@ public class VarietyServiceTest {
     void getVarietyById_shouldThrowException_whenIdDoesNotExist() {
         // Arrange
         Long nonExistentId = 99L;
-        when(varietyRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(blockVarietyRepository.findById(nonExistentId)).thenReturn(Optional.empty());
         // Act
         VarietyNotFoundException ex = assertThrows(VarietyNotFoundException.class, () -> {
             varietyService.getVarietyById(nonExistentId);
@@ -139,7 +145,7 @@ public class VarietyServiceTest {
     @Test
     void getAllVarieties_shouldLeaveCurrentTreeCountNull_whenVarietyHasNoEvent() {
         // Arrange: the Zalka row is a scenario, nothing was planted
-        when(varietyRepository.findByOptionalFilters(null, null)).thenReturn(List.of(keittOnBlockA()));
+        when(blockVarietyRepository.findByOptionalFilters(true, ALL)).thenReturn(List.of(keittOnBlockA()));
         when(populationEventRepository.findTreeBalances(List.of(1L))).thenReturn(List.of());
         // Act
         List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(null, null);
@@ -151,7 +157,7 @@ public class VarietyServiceTest {
     @Test
     void getAllVarieties_shouldReturnEventBalance_whenVarietyHasEvents() {
         // Arrange: 150 planted, then the events bring the balance to 138
-        when(varietyRepository.findByOptionalFilters(null, "B")).thenReturn(List.of(plantedVariety(2L, "Kent")));
+        when(blockVarietyRepository.findByOptionalFilters(false, List.of(TestBlocks.idOf("B")))).thenReturn(List.of(plantedVariety(2L, "Kent")));
         when(populationEventRepository.findTreeBalances(List.of(2L))).thenReturn(List.of(balance(2L, 138L)));
         // Act
         List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(null, "B");
@@ -163,7 +169,7 @@ public class VarietyServiceTest {
     @Test
     void getAllVarieties_shouldComputeEveryBalanceInOneQuery() {
         // Arrange
-        when(varietyRepository.findByOptionalFilters(null, null))
+        when(blockVarietyRepository.findByOptionalFilters(true, ALL))
                 .thenReturn(List.of(keittOnBlockA(), plantedVariety(2L, "Kent")));
         when(populationEventRepository.findTreeBalances(List.of(1L, 2L))).thenReturn(List.of(balance(2L, 150L)));
         // Act
@@ -175,9 +181,20 @@ public class VarietyServiceTest {
     }
 
     @Test
+    void getAllVarieties_shouldSortByBlockCodeThenKeepTheRepositoryOrder() {
+        // Arrange: the repository orders by block id; B (id 2) first here on purpose
+        when(blockVarietyRepository.findByOptionalFilters(true, ALL))
+                .thenReturn(List.of(plantedVariety(2L, "Kent"), keittOnBlockA(), plantedVariety(3L, "Amelie")));
+        // Act
+        List<VarietyResponse> varietyResponses = varietyService.getAllVarieties(null, null);
+        // Assert
+        assertEquals(List.of(1L, 2L, 3L), varietyResponses.stream().map(VarietyResponse::id).toList());
+    }
+
+    @Test
     void getAllVarieties_shouldNotQueryEvents_whenNoVarietyMatches() {
         // Arrange
-        when(varietyRepository.findByOptionalFilters(null, "ZZZ")).thenReturn(List.of());
+        when(blockVarietyRepository.findByOptionalFilters(false, ALL)).thenReturn(List.of());
         // Act
         varietyService.getAllVarieties(null, "ZZZ");
         // Assert
@@ -187,7 +204,7 @@ public class VarietyServiceTest {
     @Test
     void getVarietyById_shouldReturnEventBalance_whenVarietyHasEvents() {
         // Arrange
-        when(varietyRepository.findById(2L)).thenReturn(Optional.of(plantedVariety(2L, "Kent")));
+        when(blockVarietyRepository.findById(2L)).thenReturn(Optional.of(plantedVariety(2L, "Kent")));
         when(populationEventRepository.findTreeBalances(List.of(2L))).thenReturn(List.of(balance(2L, 150L)));
         // Act
         VarietyResponse varietyResponse = varietyService.getVarietyById(2L);

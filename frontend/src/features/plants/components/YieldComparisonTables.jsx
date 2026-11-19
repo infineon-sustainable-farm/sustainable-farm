@@ -1,43 +1,27 @@
+import { useTranslation } from "react-i18next";
+import { Card, Table } from "../../../shared/ui";
 import { formatBlock, formatKilograms, formatPercent, formatShare, formatText, NO_VALUE } from "../utils/format";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
-
-const TH_CLASS = TABLE_HEAD;
-
-/** The growth phases of the trees in the harvest months, each with its share and the source of that share. */
-function formatPhases(phases) {
-    if (!Array.isArray(phases) || phases.length === 0) return NO_VALUE;
-    return phases
-        .map((phase) => `${formatText(phase.growthPhase)} ${formatShare(phase.yieldShare)} (${formatText(phase.source)})`)
-        .join(", ");
-}
 
 /** The lines added up by block, as the API sends them. */
 function BlockTable({ blocks }) {
+    const { t } = useTranslation("plants");
+    const columns = [
+        { key: "blockCode", header: t("varieties.comparison.block"), cell: (block) => formatBlock(block.blockCode) },
+        { key: "expectedKg", header: t("varieties.comparison.expected"), cell: (block) => formatKilograms(block.expectedKg) },
+        { key: "actualKg", header: t("varieties.comparison.actual"), cell: (block) => formatKilograms(block.actualKg) },
+        { key: "achievedPct", header: t("varieties.comparison.achieved"), cell: (block) => formatPercent(block.achievedPct) },
+    ];
     return (
-        <div className={TABLE_CARD}>
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <caption className="px-4 py-3 text-left text-sm font-semibold text-on-background">By block</caption>
-                <thead>
-                    <tr>
-                        <th scope="col" className={TH_CLASS}>Block</th>
-                        <th scope="col" className={TABLE_HEAD_NUM}>Expected</th>
-                        <th scope="col" className={TABLE_HEAD_NUM}>Actual</th>
-                        <th scope="col" className={TABLE_HEAD_NUM}>Achieved</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {blocks.map((block) => (
-                        <tr key={`${block.farmId}-${block.blockCode}`} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-2.5 font-semibold text-gray-800">{formatBlock(block.blockCode)}</td>
-                            <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(block.expectedKg)}</td>
-                            <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(block.actualKg)}</td>
-                            <td className="px-4 py-2.5 text-right text-gray-700">{formatPercent(block.achievedPct)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Card title={t("varieties.comparison.byBlock")} titleAs="h3">
+            <Table
+                caption={t("varieties.comparison.byBlock")}
+                columns={columns}
+                rows={blocks}
+                getRowKey={(block) => `${block.farmId}-${block.blockCode}`}
+                className="whitespace-nowrap"
+            />
+        </Card>
     );
 }
 
@@ -47,41 +31,50 @@ function BlockTable({ blocks }) {
  * default, as the forecast's details are.
  */
 function ComputationDetails({ lines }) {
+    const { t } = useTranslation("plants");
+
+    /** The growth phases of the trees in the harvest months, each with its share and the source of that share. */
+    function formatPhases(phases) {
+        if (!Array.isArray(phases) || phases.length === 0) return NO_VALUE;
+        return phases
+            .map((phase) =>
+                t("varieties.comparison.phase", {
+                    phase: formatText(phase.growthPhase),
+                    share: formatShare(phase.yieldShare),
+                    source: formatText(phase.source),
+                })
+            )
+            .join(t("varieties.comparison.phaseSeparator"));
+    }
+
+    const columns = [
+        { key: "varietyName", header: t("varieties.comparison.variety"), cell: (line) => formatText(line.varietyName) },
+        { key: "blockCode", header: t("varieties.comparison.block"), cell: (line) => formatBlock(line.blockCode) },
+        { key: "yieldPerTreeKg", header: t("varieties.comparison.yieldPerTree"), cell: (line) => formatKilograms(line.yieldPerTreeKg) },
+        { key: "phases", header: t("varieties.comparison.phases"), cell: (line) => <Value>{formatPhases(line.phases)}</Value> },
+        {
+            key: "sources",
+            header: t("varieties.comparison.sources"),
+            cell: (line) => (
+                <>
+                    <span className="block">{t("varieties.comparison.yieldSource", { source: formatText(line.yieldSource) })}</span>
+                    <span className="block">{t("varieties.comparison.seasonSource", { source: formatText(line.seasonSource) })}</span>
+                </>
+            ),
+        },
+    ];
+
     return (
-        <details className="rounded-2xl border border-gray-200 bg-white shadow-card">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700">
-                How the expected yield is computed
-            </summary>
-            <div className="overflow-x-auto border-t border-gray-200">
-                <table className="w-full border-collapse text-sm whitespace-nowrap">
-                    <thead>
-                        <tr>
-                            <th scope="col" className={TH_CLASS}>Variety</th>
-                            <th scope="col" className={TH_CLASS}>Block</th>
-                            <th scope="col" className={TABLE_HEAD_NUM}>Yield per tree</th>
-                            <th scope="col" className={TH_CLASS}>Growth phases in the harvest months</th>
-                            <th scope="col" className={TH_CLASS}>Sources</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {lines.map((line) => (
-                            <tr key={line.varietyId} className="border-b border-gray-100 align-top last:border-b-0">
-                                <td className="px-4 py-2.5 font-semibold text-gray-800">{formatText(line.varietyName)}</td>
-                                <td className="px-4 py-2.5 text-gray-700">{formatBlock(line.blockCode)}</td>
-                                <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(line.yieldPerTreeKg)}</td>
-                                <td className="px-4 py-2.5 text-gray-700">
-                                    <Value>{formatPhases(line.phases)}</Value>
-                                </td>
-                                <td className="px-4 py-2.5 text-gray-700">
-                                    <span className="block">{`Yield: ${formatText(line.yieldSource)}`}</span>
-                                    <span className="block">{`Season: ${formatText(line.seasonSource)}`}</span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </details>
+        <Card as="details" padding="none" className="px-5 py-3">
+            <summary className="cursor-pointer py-1 text-sm font-semibold text-text">{t("varieties.comparison.howComputed")}</summary>
+            <Table
+                className="mt-3 whitespace-nowrap"
+                caption={t("varieties.comparison.howComputed")}
+                columns={columns}
+                rows={lines}
+                getRowKey={(line) => line.varietyId}
+            />
+        </Card>
     );
 }
 

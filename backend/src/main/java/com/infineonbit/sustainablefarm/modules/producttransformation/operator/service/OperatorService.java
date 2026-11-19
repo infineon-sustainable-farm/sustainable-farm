@@ -1,8 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.service;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 
 import java.util.List;
 
@@ -34,6 +34,11 @@ public interface OperatorService {
      * Get operator by ID
      */
     Operator getOperatorById(String operatorId);
+
+    /**
+     * Find an operator by ID, with the name and active status of its person
+     */
+    java.util.Optional<Operator> findOperatorById(String operatorId);
 
     /**
      * Get all operators

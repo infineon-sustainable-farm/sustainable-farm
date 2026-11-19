@@ -74,7 +74,7 @@ public class VarietyReferenceControllerTest {
     }
 
     private static VarietyReferenceResponse keitt(String yieldSource, String seasonSource) {
-        return new VarietyReferenceResponse(1L, "Keitt", 220.0, yieldSource, 5, 7, seasonSource, NOW);
+        return new VarietyReferenceResponse(1L, "Keitt", 220.0, yieldSource, 5, 7, seasonSource, NOW, "KEITT");
     }
 
     /** Common part of every 4xx body: the application-wide ApiError envelope. */
@@ -91,8 +91,9 @@ public class VarietyReferenceControllerTest {
     private static void assertKeittBody(ResultActions result, String yieldSource, String seasonSource)
             throws Exception {
         result.andExpect(header().doesNotExist("Location"))
-                .andExpect(jsonPath("$", aMapWithSize(8)))
+                .andExpect(jsonPath("$", aMapWithSize(9)))
                 .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.varietyKey").value("KEITT"))
                 .andExpect(jsonPath("$.varietyName").value("Keitt"))
                 .andExpect(jsonPath("$.yieldPerTreeKg").value(220.0))
                 .andExpect(jsonPath("$.yieldSource").value(yieldSource))
@@ -116,7 +117,7 @@ public class VarietyReferenceControllerTest {
     void getAllReferences_shouldReturn200WithTheReference() throws Exception {
         // Arrange
         when(varietyReferenceService.getAllReferences()).thenReturn(List.of(
-                new VarietyReferenceResponse(3L, "Amelie", 160.0, "Zalka_2025", 2, 4, "FAO_mango_burkina", NOW),
+                new VarietyReferenceResponse(3L, "Amelie", 160.0, "Zalka_2025", 2, 4, "FAO_mango_burkina", NOW, "AMELIE"),
                 keitt("Zalka_2025", "varietal_guide_west_africa")));
         // Act
         ResultActions result = mockMvc.perform(get(URL));
@@ -124,6 +125,7 @@ public class VarietyReferenceControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].varietyName").value("Amelie"))
+                .andExpect(jsonPath("$[0].varietyKey").value("AMELIE"))
                 .andExpect(jsonPath("$[1].seasonSource").value("varietal_guide_west_africa"));
     }
 

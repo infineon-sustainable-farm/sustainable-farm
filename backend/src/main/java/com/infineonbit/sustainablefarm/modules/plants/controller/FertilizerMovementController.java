@@ -58,7 +58,7 @@ public class FertilizerMovementController {
    public ResponseEntity<List<FertilizerMovementResponse>> getAllMovements(
          @Parameter(description = "Fertilizer identifier") @RequestParam(name = "fertilizerId", required = false) Long fertilizerId,
          @Parameter(description = "PURCHASE, APPLICATION, LOSS, ADJUSTMENT_IN or ADJUSTMENT_OUT") @RequestParam(name = "movementType", required = false) FertilizerMovementType movementType,
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"B\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Parameter(description = "First movement date, included, as yyyy-MM-dd") @RequestParam(name = "from", required = false)
          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

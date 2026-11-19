@@ -77,7 +77,7 @@ public class HealthTreatmentControllerTest {
         return """
                 {"blockCode":"D","targetIssueCode":"%s",%s"treatedOn":"2026-09-05","productName":"Protein bait B",
                  "activeIngredient":"spinosad","quantity":%s,"unit":"L","preHarvestIntervalDays":%s,
-                 "applicator":"Issa"}
+                 "applicatorPersonId":7}
                 """.formatted(target, label == null ? "" : "\"targetOtherLabel\":\"" + label + "\",", quantity,
                 interval);
     }
@@ -85,7 +85,7 @@ public class HealthTreatmentControllerTest {
     private static HealthTreatmentResponse bait() {
         return new HealthTreatmentResponse(21L, null, "D", "FRUIT_FLY", "Fruit flies", null, null,
                 LocalDate.of(2026, 9, 5), "Protein bait B", "spinosad", 1.0, TreatmentUnit.L, 1,
-                LocalDate.of(2026, 9, 6), "Issa", null, "user_entry", NOW);
+                LocalDate.of(2026, 9, 6), "Issa", null, null, null, "user_entry", NOW);
     }
 
     @Test
@@ -113,6 +113,7 @@ public class HealthTreatmentControllerTest {
                 .andExpect(jsonPath("$.preHarvestIntervalDays").value(1))
                 .andExpect(jsonPath("$.harvestAllowedFrom").value("2026-09-06"))
                 .andExpect(jsonPath("$.applicator").value("Issa"))
+                .andExpect(jsonPath("$.equipmentId").value(nullValue()))
                 .andExpect(jsonPath("$.equipment").value(nullValue()))
                 .andExpect(jsonPath("$.source").value("user_entry"))
                 .andExpect(jsonPath("$.lastUpdated").value("2026-09-28T10:00:00Z"));
@@ -128,8 +129,8 @@ public class HealthTreatmentControllerTest {
         // Act
         ResultActions result = postTreatment("""
                 {"farmId":0,"blockCode":"Block D","treatedOn":"2999-01-01","productName":"",
-                 "quantity":0,"unit":"tons","preHarvestIntervalDays":-1,"applicator":" ","equipment":"%s"}
-                """.formatted("x".repeat(256)));
+                 "quantity":0,"unit":"tons","preHarvestIntervalDays":-1,"applicatorPersonId":null,"equipmentId":-3}
+                """);
         // Assert
         assertApiError(result, 400, "Bad Request", "Validation failed");
         result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(11)))
@@ -145,8 +146,8 @@ public class HealthTreatmentControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.unit").value("unit must be KG or L"))
                 .andExpect(jsonPath("$.fieldErrors.preHarvestIntervalDays")
                         .value("preHarvestIntervalDays must be a whole number, 0 or more"))
-                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"))
-                .andExpect(jsonPath("$.fieldErrors.equipment").value("equipment must be at most 255 characters"));
+                .andExpect(jsonPath("$.fieldErrors.applicatorPersonId").value("applicatorPersonId is required"))
+                .andExpect(jsonPath("$.fieldErrors.equipmentId").value("equipmentId must be at least 1"));
         verify(healthTreatmentService, never()).recordPreventiveTreatment(any());
     }
 
@@ -193,13 +194,13 @@ public class HealthTreatmentControllerTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        when(healthTreatmentService.getAllTreatments(1, "D", from, to)).thenReturn(List.of(bait()));
+        when(healthTreatmentService.getAllTreatments(1L, "D", from, to)).thenReturn(List.of(bait()));
         // Act & Assert
         mockMvc.perform(get(URL).param("farmId", "1").param("blockCode", "D")
                         .param("from", "2026-09-01").param("to", "2026-09-30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].targetIssueCode").value("FRUIT_FLY"));
-        verify(healthTreatmentService).getAllTreatments(eq(1), eq("D"), eq(from), eq(to));
+        verify(healthTreatmentService).getAllTreatments(eq(1L), eq("D"), eq(from), eq(to));
     }
 }

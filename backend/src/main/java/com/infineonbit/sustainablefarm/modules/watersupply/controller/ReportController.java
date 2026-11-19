@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Generates exportable (TXT) reports for analysis and sharing.
  */
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/api/water-supply/reports")
 public class ReportController {
 
     private final WaterConsumptionRepository waterConsumptionRepository;

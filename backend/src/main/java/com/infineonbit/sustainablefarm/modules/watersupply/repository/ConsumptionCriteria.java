@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -20,10 +19,10 @@ import org.springframework.data.jpa.domain.Specification;
  * @param from    inclusive lower bound of {@code consumptionDate}
  * @param to      exclusive upper bound of {@code consumptionDate}
  */
-public record ConsumptionCriteria(UUID farmId, UUID sourceId, UUID zoneId, Collection<UUID> zoneIds,
+public record ConsumptionCriteria(Long farmId, Long sourceId, Long zoneId, Collection<Long> zoneIds,
                                   String lotId, Instant from, Instant to) {
 
-    public static ConsumptionCriteria window(UUID sourceId, UUID zoneId, Instant from, Instant to) {
+    public static ConsumptionCriteria window(Long sourceId, Long zoneId, Instant from, Instant to) {
         return new ConsumptionCriteria(null, sourceId, zoneId, null, null, from, to);
     }
 

@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -19,6 +19,13 @@ public class CurrencyConverterTest {
         assertNull(CurrencyConverter.toEur(new BigDecimal("150000"), CurrencyCode.XOF, null));
         assertEquals(new BigDecimal("120.00"), CurrencyConverter.toEur(new BigDecimal("120"), CurrencyCode.EUR, null));
         assertNull(CurrencyConverter.toXof(new BigDecimal("120"), CurrencyCode.EUR, null));
+    }
+
+    @Test
+    void conversions_shouldGiveNoAmount_forADollarAmount() {
+        // Act & Assert: no rate is recorded for the dollar of the machinery costs
+        assertNull(CurrencyConverter.toXof(new BigDecimal("12.50"), CurrencyCode.USD, PARITY));
+        assertNull(CurrencyConverter.toEur(new BigDecimal("12.50"), CurrencyCode.USD, PARITY));
     }
 
     @Test

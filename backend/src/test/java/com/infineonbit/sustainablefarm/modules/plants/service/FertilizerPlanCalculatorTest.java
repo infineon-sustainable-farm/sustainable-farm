@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovement;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerPlan;
@@ -64,8 +64,16 @@ public class FertilizerPlanCalculatorTest {
 
     private static FertilizerPlan plan(long id, FertilizerProduct product, String block, LocalDate date,
                                        String quantity, FertilizerPlanStatus status) {
-        return new FertilizerPlan(id, product, null, block, date, new BigDecimal(quantity), status, null, null,
-                "user_entry", NOW);
+        FertilizerPlan plan = new FertilizerPlan();
+        plan.setId(id);
+        plan.setProduct(product);
+        plan.setBlockCode(block);
+        plan.setPlannedDate(date);
+        plan.setPlannedQuantity(new BigDecimal(quantity));
+        plan.setStatus(status);
+        plan.setSource("user_entry");
+        plan.setLastUpdated(NOW);
+        return plan;
     }
 
     @Test

@@ -1,8 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.api.ProcessingBatchLookup;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.AvailabilityForecastRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.LotUsageRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.ConsumptionActivity;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterConsumption;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQualityTest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
@@ -20,7 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,29 +48,41 @@ public class ProductTransformationIntegrationService {
     private final IrrigationScheduleRepository scheduleRepository;
     private final AlertService alertService;
     private final WaterIntegrationProperties properties;
+    private final FarmDirectory farmDirectory;
+    private final ProcessingBatchLookup processingBatches;
 
     public ProductTransformationIntegrationService(WaterConsumptionRepository consumptionRepository,
                                                    WaterQualityTestRepository qualityRepository,
                                                    WaterSourceRepository sourceRepository,
                                                    IrrigationScheduleRepository scheduleRepository,
                                                    AlertService alertService,
-                                                   WaterIntegrationProperties properties) {
+                                                   WaterIntegrationProperties properties,
+                                                   FarmDirectory farmDirectory,
+                                                   ProcessingBatchLookup processingBatches) {
         this.consumptionRepository = consumptionRepository;
         this.qualityRepository = qualityRepository;
         this.sourceRepository = sourceRepository;
         this.scheduleRepository = scheduleRepository;
         this.alertService = alertService;
         this.properties = properties;
+        this.farmDirectory = farmDirectory;
+        this.processingBatches = processingBatches;
     }
 
-    /** Attributes the consumptions of a time window to a lot (T1). Re-sending the same window is harmless. */
+    /**
+     * Attributes the consumptions of a time window to a lot (T1). Re-sending the same window is harmless.
+     * The lot is a processing batch of Product Transformation, which owns them: an unknown lot is
+     * refused with 400.
+     */
     @Transactional
     public Map<String, Object> attachLotUsage(LotUsageRequest request) {
         if (!request.endAt().isAfter(request.startAt())) {
             throw new IllegalArgumentException("endAt must be after startAt");
         }
-        String lotId = request.lotId().trim();
+        ProcessingBatch batch = processingBatch(request.lotId());
+        String lotId = batch.batchId();
         String activity = ConsumptionActivity.normalize(request.activity());
+        Long processingBatchId = batch.id();
         List<WaterConsumption> inWindow = consumptionRepository.findAll(
                 ConsumptionCriteria.window(request.sourceId(), request.zoneId(), request.startAt(), request.endAt())
                         .toSpecification(), Sort.by("consumptionDate"));
@@ -78,8 +94,9 @@ public class ProductTransformationIntegrationService {
                 continue;
             }
             item.setLotId(lotId);
+            item.setProcessingBatchId(processingBatchId);
             if (activity != null) {
-                item.setActivity(activity);
+                item.setActivity(ConsumptionActivity.valueOf(activity));
             }
             attached.add(item);
         }
@@ -113,7 +130,7 @@ public class ProductTransformationIntegrationService {
         List<WaterConsumption> items = consumptionRepository.findByLotIdOrderByConsumptionDateAsc(lot);
         Map<String, Double> byActivity = new LinkedHashMap<>();
         for (WaterConsumption item : items) {
-            byActivity.merge(item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity(),
+            byActivity.merge(item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity().name(),
                     item.getConsumptionLiters() == null ? 0d : item.getConsumptionLiters(), Double::sum);
         }
         Map<String, Object> response = new LinkedHashMap<>();
@@ -144,7 +161,7 @@ public class ProductTransformationIntegrationService {
         if (end.isBefore(start)) {
             throw new IllegalArgumentException("to must be after from");
         }
-        List<UUID> sourceIds = lotItems.stream().map(WaterConsumption::getSourceId).filter(Objects::nonNull).distinct().toList();
+        List<Long> sourceIds = lotItems.stream().map(WaterConsumption::getSourceId).filter(Objects::nonNull).distinct().toList();
         List<WaterQualityTest> tests = sourceIds.isEmpty()
                 ? qualityRepository.findBetween(start, end)
                 : qualityRepository.findBySourcesBetween(sourceIds, start, end);
@@ -183,7 +200,12 @@ public class ProductTransformationIntegrationService {
         List<String> warnings = new ArrayList<>();
         List<Map<String, Object>> batches = new ArrayList<>();
         double batchDemand = 0d;
-        for (AvailabilityForecastRequest.Batch batch : request.batches() == null ? List.<AvailabilityForecastRequest.Batch>of() : request.batches()) {
+        List<AvailabilityForecastRequest.Batch> planned = request.batches() == null ? List.of() : request.batches();
+        // A planned batch names an existing processing batch of Product Transformation, or none.
+        planned.stream().map(AvailabilityForecastRequest.Batch::lotId)
+                .filter(lotId -> lotId != null && !lotId.isBlank())
+                .forEach(this::processingBatch);
+        for (AvailabilityForecastRequest.Batch batch : planned) {
             String activity = ConsumptionActivity.normalize(batch.activity());
             boolean inHorizon = batch.plannedAt() == null || (!batch.plannedAt().isBefore(now) && batch.plannedAt().isBefore(end));
             double demand = inHorizon ? batchDemand(activity, batch.sizeKg(), warnings) : 0d;
@@ -198,7 +220,7 @@ public class ProductTransformationIntegrationService {
         }
         boolean includeIrrigation = request.includeIrrigation() == null || request.includeIrrigation();
         double irrigationDemand = includeIrrigation && source.getFarmId() != null
-                ? scheduleRepository.sumPlannedDemandForFarmBetween(source.getFarmId(), now, end) : 0d;
+                ? plannedDemandOfFarm(source.getFarmId(), now, end) : 0d;
         double forecastDemand = batchDemand + irrigationDemand;
         double current = source.getCurrentLevelLiters() == null ? 0d : source.getCurrentLevelLiters();
         double available = current - forecastDemand;
@@ -226,6 +248,16 @@ public class ProductTransformationIntegrationService {
         return response;
     }
 
+    /**
+     * The processing batch of Product Transformation a lot id designates.
+     *
+     * @throws IllegalArgumentException (400) when Product Transformation has no batch with this code
+     */
+    private ProcessingBatch processingBatch(String lotId) {
+        return processingBatches.findBatch(lotId).orElseThrow(() -> new IllegalArgumentException(
+                "Unknown lot, not a processing batch of Product Transformation: " + lotId.trim()));
+    }
+
     private double batchDemand(String activity, Double sizeKg, List<String> warnings) {
         double size = sizeKg == null ? 0d : sizeKg;
         if (activity == null) {
@@ -250,7 +282,7 @@ public class ProductTransformationIntegrationService {
     private Map<String, Object> consumptionItem(WaterConsumption item) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("consumptionId", item.getId());
-        map.put("activity", item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity());
+        map.put("activity", item.getActivity() == null ? ConsumptionActivity.OTHER.name() : item.getActivity().name());
         map.put("sourceId", item.getSourceId());
         map.put("zoneId", item.getZoneId());
         map.put("liters", item.getConsumptionLiters());
@@ -279,5 +311,11 @@ public class ProductTransformationIntegrationService {
             throw new IllegalArgumentException("lotId must not be blank");
         }
         return lotId.trim();
+    }
+
+    /** Irrigation volume still to deliver on the zones of a farm over [start, end[. */
+    private double plannedDemandOfFarm(Long farmId, Instant start, Instant end) {
+        List<Long> zoneIds = farmDirectory.listZonesOfFarm(farmId).stream().map(ZoneDto::id).toList();
+        return zoneIds.isEmpty() ? 0d : scheduleRepository.sumPlannedDemandForZonesBetween(zoneIds, start, end);
     }
 }

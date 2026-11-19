@@ -1,0 +1,232 @@
+{
+  "name": "Machinery",
+  "nav": {
+    "dashboard": "Dashboard",
+    "equipmentRegistry": "Equipment Registry",
+    "maintenance": "Maintenance",
+    "usageFuelLog": "Usage & Fuel Log",
+    "repairLog": "Repair Log",
+    "operators": "Operators",
+    "spareParts": "Spare Parts"
+  },
+  "common": {
+    "none": "—",
+    "unknownEquipment": "#{{id}}",
+    "tryAgain": "Try again",
+    "loadingEquipment": "Loading equipment…",
+    "noEquipmentDetached": "No equipment (detached)",
+    "noPerson": "No one"
+  },
+  "units": {
+    "hours": "{{value}} h",
+    "liters": "{{value}} L",
+    "hoursTick": "{{value}}h"
+  },
+  "enums": {
+    "status": {
+      "OPERATIONAL": "Operational",
+      "UNDER_MAINTENANCE": "Under Maintenance",
+      "OUT_OF_SERVICE": "Out Of Service"
+    },
+    "category": {
+      "AGRICULTURAL_MACHINERY": "Agricultural Machinery",
+      "AGRICULTURAL_EQUIPMENT": "Agricultural Equipment",
+      "PROCESSING_MACHINERY": "Processing Machinery"
+    },
+    "stage": {
+      "CULTIVATION": "Cultivation",
+      "HARVEST": "Harvest",
+      "PROCESSING": "Processing",
+      "DRYING": "Drying"
+    },
+    "maintenanceType": {
+      "PREVENTIVE": "Preventive",
+      "CORRECTIVE": "Corrective"
+    }
+  },
+  "fields": {
+    "name": "Name",
+    "equipment": "Equipment",
+    "date": "Date",
+    "operator": "Operator",
+    "cost": "Cost",
+    "notes": "Notes",
+    "type": "Type"
+  },
+  "validation": {
+    "nameRequired": "Name is required.",
+    "nameTooLong": "Name must be {{max}} characters or fewer.",
+    "equipmentRequired": "Equipment is required.",
+    "dateRequired": "Date is required.",
+    "costRequired": "Cost is required.",
+    "costInvalid": "Cost must be 0 or more with up to 2 decimals."
+  },
+  "notifications": {
+    "button": "Notifications",
+    "title": "Low stock notifications",
+    "deleteAll": "Delete all",
+    "empty": "No low stock notifications.",
+    "item": "{{quantity}} in stock — reorder threshold {{threshold}}",
+    "deleteOne": "Delete notification"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of assets, inventory, maintenance and field operations.",
+    "bannerAlt": "Know your fleet. Grow your farm.",
+    "loadError": "Failed to load the dashboard. Please try again.",
+    "totalAssets": "Total assets",
+    "totalAssetsHint": "{{rate}}% operational · {{underMaintenance}} under maintenance · {{outOfService}} out of service",
+    "overdue": "Maintenance overdue",
+    "dueSoonHint": "{{number}} due within 7 days",
+    "nothingDue": "Nothing due in the next 7 days",
+    "lowStock": "Low stock parts",
+    "lowStockHint": "At or below their reorder threshold",
+    "inventoryValue": "Inventory value",
+    "inventoryHint": "{{number}} spare parts tracked",
+    "chartTitle": "Fuel spend & usage",
+    "chartSubtitle": "Last 6 months of field operations",
+    "usage": "usage",
+    "downtime": "{{value}} h downtime",
+    "chartEmpty": "No fuel or usage recorded over the last 6 months.",
+    "fuelCostSeries": "Fuel cost ($)",
+    "usageSeries": "Usage (hours)",
+    "attentionTitle": "Needs attention",
+    "attentionSubtitle": "Overdue maintenance and parts to reorder",
+    "allClear": "All caught up — nothing overdue and no low stock.",
+    "overdueMaintenance": "Overdue maintenance",
+    "lowStockParts": "Low stock parts",
+    "daysLate": "{{number}}d late",
+    "stockRatio": "{{quantity}} / {{threshold}}"
+  },
+  "equipment": {
+    "title": "Equipment Registry",
+    "add": "Add equipment",
+    "loadError": "Failed to load equipment. Please try again.",
+    "empty": "No equipment registered yet. Click “Add equipment” to get started.",
+    "category": "Category",
+    "stage": "Stage",
+    "status": "Status",
+    "editStatus": "Edit status",
+    "statusTitle": "Update status — {{name}}",
+    "deleteTitle": "Delete equipment",
+    "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This cannot be undone."
+  },
+  "maintenance": {
+    "title": "Maintenance Schedule",
+    "add": "Add maintenance schedule",
+    "edit": "Edit maintenance schedule",
+    "loadError": "Failed to load the maintenance schedule. Please try again.",
+    "empty": "No maintenance scheduled yet. Click “Add maintenance schedule” to get started.",
+    "noEquipment": "No equipment available. Add equipment before scheduling maintenance.",
+    "frequency": "Frequency",
+    "frequencyPlaceholder": "e.g. Every 250 hours",
+    "lastCompleted": "Last completed",
+    "nextDue": "Next due",
+    "nextDueDate": "Next due date",
+    "lastCompletedRequired": "Last completed date is required.",
+    "nextDueRequired": "Next due date is required.",
+    "nextDueBeforeLast": "Next due date cannot be before the last completed date.",
+    "frequencyTooLong": "Frequency must be {{max}} characters or fewer.",
+    "overdueBy": "Overdue by {{number}}d",
+    "dueIn": "Due in {{number}}d",
+    "inDays": "In {{number}}d",
+    "deleteTitle": "Delete maintenance schedule",
+    "deleteMessage": {
+      "PREVENTIVE": "Are you sure you want to delete the preventive maintenance schedule for {{equipment}}? This cannot be undone.",
+      "CORRECTIVE": "Are you sure you want to delete the corrective maintenance schedule for {{equipment}}? This cannot be undone."
+    }
+  },
+  "usageFuel": {
+    "title": "Usage & Fuel Log"
+  },
+  "usage": {
+    "title": "Usage Log",
+    "add": "Add usage log",
+    "edit": "Edit usage log",
+    "loadError": "Failed to load the usage log. Please try again.",
+    "empty": "No usage logged yet. Click “Add usage log” to get started.",
+    "noEquipment": "No equipment available. Add equipment before logging usage.",
+    "hoursUsed": "Hours used",
+    "hoursRequired": "Hours used is required.",
+    "hoursInvalid": "Hours used must be 0 or more with up to 2 decimals.",
+    "notesTooLong": "Notes must be {{max}} characters or fewer.",
+    "deleteTitle": "Delete usage log",
+    "deleteMessage": "Are you sure you want to delete the usage log of {{date}} for {{equipment}}? This cannot be undone."
+  },
+  "fuel": {
+    "title": "Fuel Log",
+    "add": "Add fuel log",
+    "edit": "Edit fuel log",
+    "loadError": "Failed to load the fuel log. Please try again.",
+    "empty": "No fuel logged yet. Click “Add fuel log” to get started.",
+    "noEquipment": "No equipment available. Add equipment before logging fuel.",
+    "liters": "Liters",
+    "litersRequired": "Liters is required.",
+    "litersInvalid": "Liters must be 0 or more with up to 2 decimals.",
+    "deleteTitle": "Delete fuel log",
+    "deleteMessage": "Are you sure you want to delete the fuel log of {{date}} for {{equipment}}? This cannot be undone."
+  },
+  "repair": {
+    "title": "Repair Log",
+    "add": "Add repair log",
+    "edit": "Edit repair log",
+    "loadError": "Failed to load the repair log. Please try again.",
+    "empty": "No repairs logged yet. Click “Add repair log” to get started.",
+    "noEquipment": "No equipment available. Add equipment before logging a repair.",
+    "issue": "Issue",
+    "issueDescription": "Issue description",
+    "downtime": "Downtime",
+    "downtimeHours": "Downtime (hours)",
+    "technician": "Technician",
+    "issueRequired": "Issue description is required.",
+    "issueTooLong": "Issue description must be {{max}} characters or fewer.",
+    "downtimeInvalid": "Downtime must be 0 or more with up to 2 decimals.",
+    "deleteTitle": "Delete repair log",
+    "deleteMessage": "Are you sure you want to delete the repair log of {{date}} for {{equipment}}? This cannot be undone."
+  },
+  "operators": {
+    "title": "Operators",
+    "add": "Assign operator",
+    "edit": "Edit assignment",
+    "editTitle": "Edit operator assignment",
+    "loadError": "Failed to load operator assignments. Please try again.",
+    "empty": "No operator assignments yet. Assign an operator to a piece of equipment to get started.",
+    "noEquipment": "No equipment available. Add equipment before assigning an operator.",
+    "jobTitle": "Job title",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "person": "Operator",
+    "selectEquipment": "Select equipment",
+    "endDateOptional": "End date (optional)",
+    "personRequired": "Pick the operator.",
+    "jobTitleRequired": "Job title is required.",
+    "jobTitleTooLong": "Job title must be {{max}} characters or fewer.",
+    "startDateRequired": "Start date is required.",
+    "endDateBeforeStart": "End date cannot be before start date.",
+    "deleteTitle": "Delete operator assignment",
+    "deleteMessage": "Are you sure you want to delete the assignment for \"{{name}}\"? This cannot be undone."
+  },
+  "spareParts": {
+    "title": "Spare Parts",
+    "add": "Add spare part",
+    "edit": "Edit spare part",
+    "loadError": "Failed to load spare parts. Please try again.",
+    "empty": "No spare parts registered yet. Click “Add spare part” to get started.",
+    "compatibleAsset": "Compatible asset",
+    "noCompatibleAsset": "No compatible asset",
+    "quantity": "Quantity in stock",
+    "reorderThreshold": "Reorder threshold",
+    "unitCost": "Unit cost",
+    "lowStock": "Low stock",
+    "lowStockTitle": "At or below the reorder threshold ({{threshold}})",
+    "quantityRequired": "Quantity is required.",
+    "quantityInvalid": "Quantity must be a whole number of 0 or more.",
+    "thresholdRequired": "Reorder threshold is required.",
+    "thresholdInvalid": "Reorder threshold must be a whole number of 0 or more.",
+    "unitCostRequired": "Unit cost is required.",
+    "unitCostInvalid": "Unit cost must be 0 or more with up to 2 decimals.",
+    "unitCostTooLarge": "Unit cost is too large.",
+    "deleteTitle": "Delete spare part",
+    "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This cannot be undone."
+  }
+}
