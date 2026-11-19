@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader } from '../../../shared/ui';
+import { useCreateParam } from '../../../shared/hooks/useCreateParam';
 import { rawIntakeApi } from '../api/rawIntakeApi';
 import { batchApi } from '../api/batchApi';
 import RawIntakeFilters from './RawIntakeFilters';
@@ -37,6 +38,9 @@ const RawIntakeList = () => {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  // "?create=1": another module sent the user here to receive a batch (app/ownerLinks.js).
+  const [createRequested, clearCreateRequest] = useCreateParam();
+  const formOpen = showForm || createRequested;
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -90,6 +94,7 @@ const RawIntakeList = () => {
   };
 
   const closeForm = () => {
+    clearCreateRequest();
     setShowForm(false);
     setEditing(null);
   };
@@ -187,7 +192,7 @@ const RawIntakeList = () => {
 
       {renderContent()}
 
-      {showForm && (
+      {formOpen && (
         <RawIntakeFormModal
           key={editing?.intakeId ?? 'create'}
           open

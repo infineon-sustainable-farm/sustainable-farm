@@ -142,6 +142,60 @@ texte. Rendu machinery : libellé `text-sm font-medium`, contrôle à 4 px, erre
 La bordure `border-input` (gray-300) donne 1,5:1 sur blanc, sous les 3:1 demandés pour un bord de
 champ. Elle est gardée pour le rendu machinery ; le propriétaire tranche à la démo (T50).
 
+### OwnedResourceSelect, OwnerHint
+
+Choix d'une ressource dont un autre module est propriétaire (équipement, personne, ferme, parcelle,
+zone, variété, récolte, lot) : un `Field` et un `Select` du kit, remplis par l'appelant depuis l'API
+du module propriétaire. Le composant ne charge rien : l'écran garde sa façon de charger (React Query
+ou `useEffect`) et passe `options`, `loading`, `loadError` et `onRetry`.
+
+Quand la liste est vide, le champ est désactivé (« Aucun choix disponible ») et un renvoi s'affiche
+dessous : icône, « Demandez au module {{module}} de l'ajouter. » et un lien « L'ajouter dans
+{{module}} » qui ouvre le formulaire de création du propriétaire. Le nom du module est sa clé
+`<module>:name`, donc traduit. Le renvoi est relié au champ par `aria-describedby`.
+
+```jsx
+import { OwnedResourceSelect } from '../../../shared/ui'
+import { OWNER_LINKS } from '../../../app/ownerLinks'
+
+<OwnedResourceSelect
+  label={t('drying.machine')}
+  value={form.equipmentId}
+  onChange={(id) => setForm({ ...form, equipmentId: id })}
+  options={machines.data ?? []}
+  loading={machines.isPending}
+  loadError={machines.isError}
+  onRetry={machines.refetch}
+  owner={OWNER_LINKS.equipment}
+  required
+/>
+```
+
+| Prop | Type | Défaut | Rôle |
+|---|---|---|---|
+| `label` | nœud | requis | Libellé |
+| `value` | chaîne, nombre | | Id de l'option choisie, `''` ou `null` pour aucune |
+| `onChange` | `(id, option) => void` | | Id choisi (chaîne) et l'objet de l'option, `null` pour aucune |
+| `options` | tableau | `[]` | Ressources chargées depuis l'API du propriétaire |
+| `getOptionValue` | fonction | `option.id` | Valeur d'une option |
+| `getOptionLabel` | fonction | `option.name` | Libellé d'une option, déjà traduit s'il le faut |
+| `placeholder` | chaîne | `common:owner.choose` | Première option vide |
+| `loading` | booléen | `false` | Champ désactivé, `aria-busy`, option « Chargement… » |
+| `loadError` | nœud ou `true` | | Échec du chargement : message en alerte avec icône (`common:owner.loadError` pour `true`) |
+| `onRetry` | fonction | | Bouton Réessayer sous l'échec |
+| `owner` | `{ moduleId, createPath }` | | Module propriétaire, pris dans `app/ownerLinks.js` |
+| `showOwnerLinkAlways` | booléen | `false` | Renvoi discret sous une liste remplie : « Absent de la liste ? Demandez au module {{module}}. » |
+| `hint`, `error`, `required`, `disabled`, `id`, `name` | | | Comme `Field` et `Select` |
+
+`OwnerHint` n'affiche que la ligne de renvoi, là où il n'y a pas de liste (props `owner`, `variant`
+`empty` ou `more`, `id` pour `aria-describedby`). Le lien fait 44 px au toucher.
+
+Lien vers le formulaire de création : `shared/hooks/useCreateParam.js`. Le propriétaire lit
+`?create=1` (ou une valeur par dialogue, `?create=field`) avec `useCreateParam(value)`, qui renvoie
+`[open, clear]` : le dialogue est ouvert tant que `open` est vrai, et `clear()` retire le paramètre
+à sa fermeture. `ownerCreatePath(chemin, value)` construit l'URL. Les liens de chaque ressource
+sont dans `app/ownerLinks.js`.
+
 ### Badge, StatusBadge
 
 `Badge` : petite étiquette `rounded-full text-xs font-semibold px-2 py-0.5` (DueBadge machinery).

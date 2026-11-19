@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader } from '../../../shared/ui';
+import { useCreateParam } from '../../../shared/hooks/useCreateParam';
 import { packagingApi } from '../api/packagingApi';
 import { batchApi } from '../api/batchApi';
 import { equipmentApi } from '../api/equipmentApi';
@@ -44,6 +45,9 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  // "?create=1": another module sent the user here to pack a lot (app/ownerLinks.js).
+  const [createRequested, clearCreateRequest] = useCreateParam();
+  const formOpen = showForm || createRequested;
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -126,6 +130,7 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
   };
 
   const closeForm = () => {
+    clearCreateRequest();
     setShowForm(false);
     setEditing(null);
   };
@@ -238,7 +243,7 @@ const PackagingRecordList = ({ onOpenCompliance }) => {
 
       {renderContent()}
 
-      {showForm && (
+      {formOpen && (
         <PackagingFormModal
           key={editing?.recordId ?? 'create'}
           open

@@ -54,5 +54,13 @@
     "eyebrow": "From Banfora, Burkina Faso, to Germany",
     "hero": "From orchard to export, one farm platform.",
     "lede": "Record farm operations and decide with shared data at every step of the dried mango chain."
+  },
+  "owner": {
+    "choose": "Choose…",
+    "none": "None available",
+    "loadError": "The list could not load.",
+    "askToAdd": "Ask the {{module}} module to add it.",
+    "notInList": "Not in the list? Ask the {{module}} module.",
+    "addIn": "Add it in {{module}}"
   }
 }

@@ -54,5 +54,13 @@
     "eyebrow": "Von Banfora, Burkina Faso, nach Deutschland",
     "hero": "Von der Plantage bis zum Export, eine Plattform.",
     "lede": "Erfassen Sie die Arbeit des Betriebs und entscheiden Sie mit denselben Daten in jeder Stufe der Trockenmango-Kette."
+  },
+  "owner": {
+    "choose": "Auswählen…",
+    "none": "Keine Auswahl verfügbar",
+    "loadError": "Die Liste konnte nicht geladen werden.",
+    "askToAdd": "Bitten Sie das Modul {{module}}, es hinzuzufügen.",
+    "notInList": "Nicht in der Liste? Fragen Sie das Modul {{module}}.",
+    "addIn": "In {{module}} hinzufügen"
   }
 }
