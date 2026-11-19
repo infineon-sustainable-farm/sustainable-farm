@@ -39,12 +39,15 @@ Infrastructure:
 
 ## Quick start
 
+With Docker installed, one command builds and starts the database, the backend and the frontend, with the demo data loaded:
+
 ```bash
-cp .env.example .env    # set SPRING_PROFILES_ACTIVE=dev for demo data
-docker compose up -d --build
+scripts/demo.sh           # then open http://localhost:3000
+scripts/demo.sh reset     # start again from the demo data
+scripts/demo.sh stop      # stop
 ```
 
-Then open http://localhost:3000. Details, ports and tests: [Setup](docs/SETUP.md).
+The demo data is one file, [`backend/src/main/resources/seed/demo-data.sql`](backend/src/main/resources/seed/demo-data.sql): a small fictitious farm in Banfora shared by every module. Details, ports and tests: [Setup](docs/SETUP.md).
 
 ## Documentation
 

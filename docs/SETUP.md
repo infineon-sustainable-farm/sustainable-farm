@@ -50,9 +50,23 @@ cp .env.example .env
 | `APP_MAIL_ENABLED`, `APP_MAIL_FROM` | commented out | Optional real e-mail, with `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` |
 | `VITE_API_URL` | empty | Frontend build argument; empty means same origin, through the nginx proxy |
 
-For a demo, set `SPRING_PROFILES_ACTIVE=dev`. The demo data is loaded at the first start only (when the `farm` table is empty) and its dates follow the current date. To start again from a clean demo, drop the database volume (`docker compose down -v`) and start again.
+For a demo, set `SPRING_PROFILES_ACTIVE=dev`, or use `scripts/demo.sh` (section 3), which sets it for you. The demo data is loaded at the first start only (when the `farm` table is empty) and its dates follow the current date. To start again from a clean demo, drop the database volume (`docker compose down -v`) and start again.
 
 ## 3. Start
+
+### Demo in one command
+
+```bash
+scripts/demo.sh           # create .env if missing, build, start with the demo data, print the URLs
+scripts/demo.sh reset     # drop the database, replay the migration, reload the demo data
+scripts/demo.sh stop      # stop, keep the database
+scripts/demo.sh status    # containers
+scripts/demo.sh logs      # backend logs
+```
+
+The demo data is one SQL file, `backend/src/main/resources/seed/demo-data.sql`, loaded by the backend in the `dev` profile when the database has no farm. To change it, edit the file and run `scripts/demo.sh reset`.
+
+### With Docker Compose directly
 
 ```bash
 docker compose up -d --build
