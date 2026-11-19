@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FertilizerRequest;
@@ -33,6 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @ActiveProfiles("test")
 class FertilizerStockConcurrencyIntegrationTest {
+
+    @Autowired
+    private PersonDirectory personDirectory;
+
 
     private static final int TRIALS = 10;
     private static final LocalDate JUNE_1 = LocalDate.of(2026, 6, 1);
@@ -96,7 +102,7 @@ class FertilizerStockConcurrencyIntegrationTest {
 
     private Callable<Object> apply30Kg(Long id) {
         return () -> fertilizerMovementService.recordApplication(id,
-                new ApplicationRequest(JUNE_15, 30.0, null, "B", "Team A", null));
+                new ApplicationRequest(JUNE_15, 30.0, null, "B", TestPeople.idOf(personDirectory, "Team A"), null));
     }
 
     private Callable<Object> lose30Kg(Long id) {

@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.staff.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDetails;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
@@ -26,57 +27,58 @@ class PersonDirectoryServiceTest {
     private PersonRepository personRepository;
 
     @Test
-    void theSameNameGivesTheSamePerson() {
-        PersonDto first = directory.findOrCreateByName("  Awa Traoré ");
-        PersonDto second = directory.findOrCreateByName("awa traoré");
+    void createTrimsAndStartsActive() {
+        PersonDto person = directory.create(new PersonDetails("  Awa Traoré ", " awa@farm.local ", " ", null));
 
-        assertThat(second.id()).isEqualTo(first.id());
-        assertThat(first.fullName()).isEqualTo("Awa Traoré");
-        assertThat(first.active()).isTrue();
+        assertThat(person.fullName()).isEqualTo("Awa Traoré");
+        assertThat(person.email()).isEqualTo("awa@farm.local");
+        assertThat(person.phone()).isNull();
+        assertThat(person.active()).isTrue();
         assertThat(personRepository.count()).isEqualTo(1);
     }
 
     @Test
-    void idOfABlankNameIsNullAndNameOfAnIdIsTheFullName() {
-        assertThat(directory.idOf("  ")).isNull();
+    void createNeverReusesAPersonByNameAndRefusesATakenEmail() {
+        PersonDto first = directory.create(new PersonDetails("Moussa", "moussa@farm.local", null, null));
+        PersonDto homonym = directory.create(new PersonDetails("Moussa", null, null, null));
+
+        assertThat(homonym.id()).isNotEqualTo(first.id());
+        assertThatThrownBy(() -> directory.create(new PersonDetails("Other", "MOUSSA@farm.local", null, null)))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void nameOfAndNamesOfReadTheFullName() {
         assertThat(directory.nameOf(null)).isNull();
-        Long id = directory.idOf("Issa Ouédraogo");
+        Long id = directory.create(new PersonDetails("Issa Ouédraogo", null, null, null)).id();
         assertThat(directory.nameOf(id)).isEqualTo("Issa Ouédraogo");
         assertThat(directory.namesOf(List.of(id, 999_999L))).containsOnlyKeys(id);
     }
 
     @Test
-    void anEmailNamesOnePersonWhateverTheName() {
-        PersonDto guide = directory.findOrCreate(new PersonDetails("Alix", "alix@farm.local", null, null), id -> true);
-        PersonDto again = directory.findOrCreate(new PersonDetails("Alix Kaboré", "ALIX@farm.local", null, null), id -> true);
+    void requireExistingRefusesAnUnknownIdAndKeepsNull() {
+        Long id = directory.create(new PersonDetails("Known", null, null, null)).id();
 
-        assertThat(again.id()).isEqualTo(guide.id());
+        assertThat(directory.requireExisting(id)).isEqualTo(id);
+        assertThat(directory.requireExisting(null)).isNull();
+        assertThatThrownBy(() -> directory.requireExisting(999_999L)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
-    void aNameMatchReceivesTheMissingEmailButNotAnotherOne() {
-        PersonDto byName = directory.findOrCreateByName("Moussa");
-        PersonDto withEmail = directory.findOrCreate(new PersonDetails("Moussa", "moussa@farm.local", "+22670000000", null), id -> true);
-        PersonDto otherMoussa = directory.findOrCreate(new PersonDetails("Moussa", "other@farm.local", null, null), id -> true);
+    void searchActiveMatchesNameOrEmailAndSkipsInactivePeople() {
+        directory.create(new PersonDetails("Alix Kaboré", "alix@farm.local", null, null));
+        directory.create(new PersonDetails("Bintou", "bk@farm.local", null, null));
+        directory.create(new PersonDetails("Alima", null, null, false));
 
-        assertThat(withEmail.id()).isEqualTo(byName.id());
-        assertThat(withEmail.email()).isEqualTo("moussa@farm.local");
-        assertThat(withEmail.phone()).isEqualTo("+22670000000");
-        assertThat(otherMoussa.id()).isNotEqualTo(byName.id());
-    }
-
-    @Test
-    void anIneligiblePersonIsNotReusedByName() {
-        PersonDto first = directory.findOrCreateByName("Guide");
-        PersonDto second = directory.findOrCreate(PersonDetails.named("Guide"), id -> id != first.id());
-
-        assertThat(second.id()).isNotEqualTo(first.id());
+        assertThat(directory.searchActive("ali")).extracting(PersonDto::fullName).containsExactly("Alix Kaboré");
+        assertThat(directory.searchActive("BK@")).extracting(PersonDto::fullName).containsExactly("Bintou");
+        assertThat(directory.searchActive(" ")).extracting(PersonDto::fullName).containsExactly("Alix Kaboré", "Bintou");
     }
 
     @Test
     void updateKeepsNullAttributesClearsBlankOnesAndRefusesATakenEmail() {
-        PersonDto person = directory.findOrCreate(new PersonDetails("Aida", "aida@farm.local", "123", null), id -> true);
-        directory.findOrCreate(new PersonDetails("Other", "other@farm.local", null, null), id -> true);
+        PersonDto person = directory.create(new PersonDetails("Aida", "aida@farm.local", "123", null));
+        directory.create(new PersonDetails("Other", "other@farm.local", null, null));
 
         PersonDto renamed = directory.update(person.id(), new PersonDetails("Aida Sawadogo", null, "", false));
         assertThat(renamed.fullName()).isEqualTo("Aida Sawadogo");
@@ -91,6 +93,7 @@ class PersonDirectoryServiceTest {
 
     @Test
     void aPersonNeedsAName() {
-        assertThatThrownBy(() -> directory.findOrCreateByName(" ")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> directory.create(new PersonDetails(" ", null, null, null)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

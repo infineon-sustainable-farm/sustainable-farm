@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.iot;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.DripMaintenanceLogRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
@@ -54,6 +55,7 @@ public class IotTelemetryService {
     private final RainwaterTankMonitor rainwaterTankMonitor;
     private final WaterIntegrationProperties properties;
     private final TransactionTemplate itemTransaction;
+    private final SystemUsers systemUsers;
 
     public IotTelemetryService(WaterSourceRepository waterSourceRepository,
                                WaterService waterService,
@@ -64,7 +66,8 @@ public class IotTelemetryService {
                                WaterQuotaService waterQuotaService,
                                RainwaterTankMonitor rainwaterTankMonitor,
                                WaterIntegrationProperties properties,
-                               PlatformTransactionManager transactionManager) {
+                               PlatformTransactionManager transactionManager,
+                               SystemUsers systemUsers) {
         this.waterSourceRepository = waterSourceRepository;
         this.waterService = waterService;
         this.rainwaterHarvestService = rainwaterHarvestService;
@@ -74,6 +77,7 @@ public class IotTelemetryService {
         this.waterQuotaService = waterQuotaService;
         this.rainwaterTankMonitor = rainwaterTankMonitor;
         this.properties = properties;
+        this.systemUsers = systemUsers;
         TransactionTemplate perItem = new TransactionTemplate(transactionManager);
         perItem.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.itemTransaction = perItem;
@@ -313,8 +317,10 @@ public class IotTelemetryService {
                 true,
                 severity,
                 0,
-                "IoT sensor detection - abnormal flow (" + severity + ")",
-                t.deviceId() == null ? "IoT sensor" : t.deviceId()));
+                "IoT sensor detection - abnormal flow (" + severity + ")"
+                        + (t.deviceId() == null ? "" : " - device " + t.deviceId()),
+                // The technical IoT person: a sensor never creates a person in the people directory.
+                systemUsers.iotSystemUserId()));
         return new Result("clogging", t.zoneId(), "processed", "Clogging " + severity + " recorded");
     }
 

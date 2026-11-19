@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
 import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
@@ -71,6 +73,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @SpringBootTest
 @ActiveProfiles("test")
 class OverviewScenarioIntegrationTest {
+
+    @Autowired
+    private PersonDirectory personDirectory;
+
 
     /**
      * Farm of this test class, created once: block codes are unique across the farms of the
@@ -195,7 +201,7 @@ class OverviewScenarioIntegrationTest {
         harvest("OC", "Brooks", LocalDate.of(2027, 6, 5), 120.0);
         Long treatment = healthTreatmentService.recordPreventiveTreatment(new PreventiveTreatmentRequest(FARM, "OA",
                 STEM_END_ROT, null, LocalDate.of(2027, 6, 10), "Copper fungicide A", "copper oxychloride", 2.0,
-                "KG", 14.0, "Awa", null)).id();
+                "KG", 14.0, TestPeople.idOf(personDirectory, "Awa"), null)).id();
         // Arrange: the NPK bought twice, applied, then bought again with a late entry dated in March
         Long npk = fertilizerService.createFertilizer(
                 new FertilizerRequest("NPK 12-12-17", "MINERAL", "12-12-17", "KG", null)).id();
@@ -206,7 +212,7 @@ class OverviewScenarioIntegrationTest {
         fertilizerMovementService.recordPurchase(npk,
                 new PurchaseRequest(LocalDate.of(2027, 4, 12), 100.0, "Supplier A", null, null));
         fertilizerMovementService.recordApplication(npk,
-                new ApplicationRequest(LocalDate.of(2027, 5, 2), 160.0, FARM, "OA", "Awa", null));
+                new ApplicationRequest(LocalDate.of(2027, 5, 2), 160.0, FARM, "OA", TestPeople.idOf(personDirectory, "Awa"), null));
         fertilizerMovementService.recordPurchase(npk,
                 new PurchaseRequest(LocalDate.of(2027, 3, 1), 50.0, "Supplier B", null, null));
 

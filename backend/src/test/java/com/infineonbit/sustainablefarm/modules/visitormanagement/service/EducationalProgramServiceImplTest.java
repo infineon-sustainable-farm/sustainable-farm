@@ -36,7 +36,7 @@ class EducationalProgramServiceImplTest {
     @Mock
     private WorkshopRepository workshopRepository;
     @Spy
-    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
     @InjectMocks
     private EducationalProgramServiceImpl service;
 

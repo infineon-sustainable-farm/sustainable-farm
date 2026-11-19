@@ -63,8 +63,9 @@ public class DemandReport extends BaseEntity {
     @Column(name = "summary", columnDefinition = "text")
     private String summary;
 
-    @Column(name = "generated_by", length = 100)
-    private String generatedBy;
+    /** Person of the people directory (staff module) who generated the report, or {@code null}. */
+    @Column(name = "generated_by_person_id")
+    private Long generatedByPersonId;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "generated_at", nullable = false)

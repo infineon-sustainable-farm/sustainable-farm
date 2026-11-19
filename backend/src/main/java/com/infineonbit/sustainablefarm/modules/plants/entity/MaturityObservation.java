@@ -65,8 +65,9 @@ public class MaturityObservation extends BaseEntity {
     @Column(name = "measured_value", precision = 4, scale = 1)
     private BigDecimal measuredValue;
 
-    @Column(name = "observer")
-    private String observer;
+    /** Person of the people directory who observed (staff module), or {@code null}. */
+    @Column(name = "observer_person_id")
+    private Long observerPersonId;
 
     /** Where the row comes from, for example {@code "user_entry"} for the observation route. */
     @Column(name = "source", nullable = false)
@@ -82,7 +83,7 @@ public class MaturityObservation extends BaseEntity {
             MaturityStatus maturityStatus,
             MaturityMethod method,
             BigDecimal measuredValue,
-            String observer,
+            Long observerPersonId,
             String source,
             Instant lastUpdated) {
         setId(id);
@@ -91,7 +92,7 @@ public class MaturityObservation extends BaseEntity {
         this.maturityStatus = maturityStatus;
         this.method = method;
         this.measuredValue = measuredValue;
-        this.observer = observer;
+        this.observerPersonId = observerPersonId;
         this.source = source;
         this.lastUpdated = lastUpdated;
     }

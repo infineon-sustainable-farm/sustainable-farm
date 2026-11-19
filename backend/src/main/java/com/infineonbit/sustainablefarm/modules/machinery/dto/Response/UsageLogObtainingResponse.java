@@ -9,5 +9,6 @@ public record UsageLogObtainingResponse(
         LocalDate date,
         BigDecimal hoursUsed,
         String operator,
+        Long operatorPersonId,
         String notes) {
 }

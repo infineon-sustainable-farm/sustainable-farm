@@ -39,7 +39,7 @@ public class UsageLogService {
         usageLog.setEquipment(equipment);
         usageLog.setDate(request.date());
         usageLog.setHoursUsed(request.hoursUsed());
-        usageLog.setOperatorPersonId(personDirectory.idOf(request.operator()));
+        usageLog.setOperatorPersonId(personDirectory.requireExisting(request.operatorPersonId()));
         usageLog.setNotes(trimToNull(request.notes()));
 
         try {
@@ -103,8 +103,8 @@ public class UsageLogService {
         if (request.hoursUsed() != null) {
             usageLog.setHoursUsed(request.hoursUsed());
         }
-        if (request.operator() != null) {
-            usageLog.setOperatorPersonId(personDirectory.idOf(request.operator()));
+        if (request.operatorPersonId() != null) {
+            usageLog.setOperatorPersonId(personDirectory.requireExisting(request.operatorPersonId()));
         }
         if (request.notes() != null) {
             usageLog.setNotes(trimToNull(request.notes()));
@@ -140,6 +140,7 @@ public class UsageLogService {
                 usageLog.getDate(),
                 usageLog.getHoursUsed(),
                 personDirectory.nameOf(usageLog.getOperatorPersonId()),
+                usageLog.getOperatorPersonId(),
                 usageLog.getNotes()
         );
     }

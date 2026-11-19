@@ -60,7 +60,7 @@ public class FertilizerMovementRepositoryTest {
         application.setMovementDate(date);
         application.setQuantity(new BigDecimal("10"));
         application.setBlockId(TestBlocks.idOf(blockCode));
-        application.setApplicator("Team A");
+        application.setApplicatorPersonId(7L);
         application.setSource("user_entry");
         return fertilizerMovementRepository.save(application);
     }

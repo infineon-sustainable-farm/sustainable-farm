@@ -21,6 +21,7 @@ public record HealthInspectionResponse(
         Integer healthScorePct,
         HealthCategory healthCategory,
         String observer,
+        Long observerPersonId,
         InspectionMethod method,
         String source,
         Instant lastUpdated,

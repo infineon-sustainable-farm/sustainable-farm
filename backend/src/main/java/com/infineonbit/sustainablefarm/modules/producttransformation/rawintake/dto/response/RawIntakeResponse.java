@@ -32,6 +32,7 @@ public class RawIntakeResponse {
     private String receivedVariety;
     private QualityGrade receivedGrade;
     private String intakeOperator;
+    private Long intakeOperatorPersonId;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public record OperatorAssignmentObtainingResponse(
         Long id,
         String fullName,
+        Long personId,
         Long equipmentId,
         String jobTitle,
         LocalDate startDate,

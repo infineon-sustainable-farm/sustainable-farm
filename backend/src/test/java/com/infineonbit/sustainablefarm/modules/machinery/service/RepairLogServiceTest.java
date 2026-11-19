@@ -47,7 +47,7 @@ class RepairLogServiceTest {
     private EquipmentRepository equipmentRepository;
 
     @Spy
-    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
 
     @InjectMocks
     private RepairLogService repairLogService;
@@ -67,7 +67,7 @@ class RepairLogServiceTest {
                 "Heating element malfunction",
                 new BigDecimal("14.00"),
                 new BigDecimal("150.00"),
-                "Maintenance Team A"
+                personDirectory.idOf("Maintenance Team A")
         );
 
         testRepairLog = new RepairLog();

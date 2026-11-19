@@ -35,7 +35,7 @@ class DripMaintenanceServiceTest {
     @Mock
     private FarmDirectory farmDirectory;
 
-    private final PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private final InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
 
     @Test
     void theSamePerformedByNameReferencesTheSamePerson() {
@@ -46,9 +46,9 @@ class DripMaintenanceServiceTest {
         org.mockito.ArgumentCaptor<DripMaintenanceLog> saved = org.mockito.ArgumentCaptor.forClass(DripMaintenanceLog.class);
 
         DripMaintenanceLogResponse first = service().create(new DripMaintenanceLogRequest(
-                zoneId, Instant.now(), "inspection", null, null, null, null, null, "Technicien Demo"));
+                zoneId, Instant.now(), "inspection", null, null, null, null, null, personDirectory.idOf("Technicien Demo")));
         DripMaintenanceLogResponse second = service().create(new DripMaintenanceLogRequest(
-                zoneId, Instant.now(), "flush", null, null, null, null, null, " technicien demo "));
+                zoneId, Instant.now(), "flush", null, null, null, null, null, personDirectory.idOf(" technicien demo ")));
 
         verify(logRepository, org.mockito.Mockito.times(2)).save(saved.capture());
         Long personId = saved.getAllValues().get(0).getPerformedByPersonId();

@@ -99,7 +99,7 @@ Les trois copies (energysupply `alert`, salesmarketing `alerts`, watersupply `no
 | Référentiel | État final |
 |---|---|
 | `farm` | `/api/farm/farms`, `/api/farm/fields`, `/api/farm/zones`, `/api/farm/zone-block-mappings` ; lu par plants, producttransformation et watersupply via `FarmDirectory` et `BlockRegistry` |
-| `staff` | Table `person`, sans contrôleur ; lu via `PersonDirectory` par machinery, producttransformation (extension `operator`), visitormanagement (guides de la table `staff`, servis par `/api/visitor-management/staff`), watersupply et notification (destinataire d'une alerte) |
+| `staff` | Table `person`, liste en lecture seule `GET /api/staff/persons` ; créée, modifiée et désactivée uniquement par l’écran Staff de visitormanagement (annuaire des personnes, rôle visiteur facultatif, `/api/visitor-management/staff`) ; les autres modules (machinery, producttransformation, watersupply, plants, salesmarketing, notification) envoient l’id d’une personne choisie, jamais un nom (audit de propriété du 2026-11-19) |
 | `notification` | Table `alert`, sans contrôleur ; chaque module sert ses alertes sur son propre chemin : `/api/energy-supply/alerts`, `/api/sales-marketing/alerts`, `/api/water-supply/notifications` |
 | Équipement | Table `equipment` de machinery, servie par `/api/machinery/equipment` ; producttransformation lit et modifie ses machines de transformation et de séchage via `EquipmentLookup` et `ProcessingEquipmentRegistry`, sous `/api/product-transformation/equipment`, et garde `pt_equipment_spec` |
 | Variété | Catalogue `variety_reference` de plants, référencé sur sa colonne unique `variety_key` (et non sur l'id) par producttransformation et salesmarketing, via `VarietyCatalog` |

@@ -33,6 +33,7 @@ public record FertilizerMovementResponse(
         Long farmId,
         String blockCode,
         String applicator,
+        Long applicatorPersonId,
         String method,
         String supplier,
         Double totalCost,

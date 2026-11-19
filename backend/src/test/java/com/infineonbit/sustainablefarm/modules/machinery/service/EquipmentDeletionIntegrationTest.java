@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.staff.service.PersonDirectoryService;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.FuelLog;
@@ -136,14 +137,14 @@ class EquipmentDeletionIntegrationTest {
         schedule.setFrequency("Every 3 months");
         schedule.setLastCompleted(LocalDate.of(2026, 5, 15));
         schedule.setNextDue(LocalDate.of(2026, 8, 15));
-        schedule.setOperatorPersonId(personDirectory.idOf("Jean-Louis R."));
+        schedule.setOperatorPersonId(TestPeople.idOf(personDirectory, "Jean-Louis R."));
         schedule = maintenanceScheduleRepository.save(schedule);
 
         UsageLog usageLog = new UsageLog();
         usageLog.setEquipment(equipment);
         usageLog.setDate(LocalDate.of(2026, 7, 23));
         usageLog.setHoursUsed(new BigDecimal("6.50"));
-        usageLog.setOperatorPersonId(personDirectory.idOf("Wilfried Y."));
+        usageLog.setOperatorPersonId(TestPeople.idOf(personDirectory, "Wilfried Y."));
         usageLog.setNotes("Morning drying cycle");
         usageLog = usageLogRepository.save(usageLog);
 
@@ -160,7 +161,7 @@ class EquipmentDeletionIntegrationTest {
         repairLog.setIssue("Heating element malfunction");
         repairLog.setDowntime(new BigDecimal("14.00"));
         repairLog.setCost(MachineryMoney.of(new BigDecimal("150.00")));
-        repairLog.setTechnicianPersonId(personDirectory.idOf("Maintenance Team A"));
+        repairLog.setTechnicianPersonId(TestPeople.idOf(personDirectory, "Maintenance Team A"));
         repairLog = repairLogRepository.save(repairLog);
 
         Long equipmentId = equipment.getId();

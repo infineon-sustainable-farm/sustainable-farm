@@ -35,6 +35,9 @@ class MachineryApiPathsTest {
     @Autowired
     private SparePartRepository sparePartRepository;
 
+    @Autowired
+    private com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory personDirectory;
+
     @Test
     void equipmentAndOperatorAssignmentsLiveUnderTheModulePrefix() throws Exception {
         String body = mockMvc.perform(post("/api/machinery/equipment").contentType(MediaType.APPLICATION_JSON).content("""
@@ -47,8 +50,9 @@ class MachineryApiPathsTest {
         mockMvc.perform(get("/api/machinery/equipment").param("size", "1000"))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/machinery/operator-assignments").contentType(MediaType.APPLICATION_JSON).content("""
-                        {"fullName":"Paths Test Operator","equipmentId":%d,"jobTitle":"Driver","startDate":"2026-01-01"}
-                        """.formatted(equipmentId.longValue())))
+                        {"personId":%d,"equipmentId":%d,"jobTitle":"Driver","startDate":"2026-01-01"}
+                        """.formatted(com.infineonbit.sustainablefarm.modules.staff.api.TestPeople.idOf(personDirectory,
+                        "Paths Test Operator"), equipmentId.longValue())))
                 .andExpect(status().isCreated());
         mockMvc.perform(get("/api/machinery/operator-assignments"))
                 .andExpect(status().isOk());

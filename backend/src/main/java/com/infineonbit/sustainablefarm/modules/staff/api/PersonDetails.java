@@ -1,7 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.staff.api;
 
 /**
- * Attributes of a person sent by a module to {@link PersonDirectory}.
+ * Attributes of a person sent by the owner module to {@link PersonDirectory#create} and
+ * {@link PersonDirectory#update}.
  *
  * @param fullName full name; required to create a person
  * @param email    email, unique when present; blank means none
@@ -12,9 +13,4 @@ package com.infineonbit.sustainablefarm.modules.staff.api;
  * blank email or phone clears it.</p>
  */
 public record PersonDetails(String fullName, String email, String phone, Boolean active) {
-
-    /** Details holding a full name only. */
-    public static PersonDetails named(String fullName) {
-        return new PersonDetails(fullName, null, null, null);
-    }
 }

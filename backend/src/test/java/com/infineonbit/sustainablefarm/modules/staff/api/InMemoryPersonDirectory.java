@@ -7,11 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.LongPredicate;
 
 /**
  * A {@link PersonDirectory} kept in memory, for the unit tests of the modules that reference
- * people: the same name gives the same id, as with the real referential.
+ * people; {@link #add} registers a person as the owner module would.
  */
 public class InMemoryPersonDirectory implements PersonDirectory {
 
@@ -49,37 +48,46 @@ public class InMemoryPersonDirectory implements PersonDirectory {
     }
 
     @Override
-    public PersonDto findOrCreateByName(String fullName) {
-        return findOrCreate(PersonDetails.named(fullName), id -> true);
+    public List<PersonDto> searchActive(String search) {
+        String term = blankToNull(search);
+        return listActive().stream().filter(p -> term == null
+                || p.fullName().toLowerCase().contains(term.toLowerCase())
+                || (p.email() != null && p.email().toLowerCase().contains(term.toLowerCase()))).toList();
     }
 
     @Override
-    public PersonDto findOrCreate(PersonDetails details, LongPredicate eligible) {
+    public PersonDto create(PersonDetails details) {
         String name = blankToNull(details.fullName());
         if (name == null) {
             throw new IllegalArgumentException("A person needs a full name");
         }
         String email = blankToNull(details.email());
-        Optional<PersonDto> byEmail = findByEmail(email);
-        if (byEmail.isPresent()) {
-            return byEmail.get();
-        }
-        for (PersonDto candidate : people.values()) {
-            boolean sameEmail = candidate.email() == null || email == null || candidate.email().equalsIgnoreCase(email);
-            if (candidate.fullName().equalsIgnoreCase(name) && sameEmail && eligible.test(candidate.id())) {
-                PersonDto merged = new PersonDto(candidate.id(), candidate.fullName(),
-                        candidate.email() != null ? candidate.email() : email,
-                        candidate.phone() != null ? candidate.phone() : blankToNull(details.phone()),
-                        candidate.active(), candidate.createdAt(), Instant.now());
-                people.put(merged.id(), merged);
-                return merged;
-            }
+        if (findByEmail(email).isPresent()) {
+            throw new com.infineonbit.sustainablefarm.core.exception.ConflictException("Email already used by another person");
         }
         Instant now = Instant.now();
         PersonDto person = new PersonDto(nextId++, name, email, blankToNull(details.phone()),
                 details.active() == null || details.active(), now, now);
         people.put(person.id(), person);
         return person;
+    }
+
+    /**
+     * Test helper: the id of the person carrying this name, registered on first use as the owner
+     * module would (the real directory never does this); {@code null} for a blank name.
+     */
+    public Long idOf(String fullName) {
+        String name = blankToNull(fullName);
+        if (name == null) {
+            return null;
+        }
+        return people.values().stream().filter(p -> p.fullName().equalsIgnoreCase(name)).findFirst()
+                .map(PersonDto::id).orElseGet(() -> add(name).id());
+    }
+
+    /** Test helper: an active person with this name and no email nor phone. */
+    public PersonDto add(String fullName) {
+        return create(new PersonDetails(fullName, null, null, null));
     }
 
     @Override

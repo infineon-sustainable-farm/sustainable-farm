@@ -51,7 +51,7 @@ public class FertilizerMovementControllerTest {
 
     private static FertilizerMovementResponse application() {
         return new FertilizerMovementResponse(13L, 1L, "NPK 15-15-15", FertilizerMovementType.APPLICATION,
-                LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, null, "B", "Team A", "around the tree base",
+                LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, null, "B", "Team A", null, "around the tree base",
                 null, null, null, null, null, null, "user_entry", NOW);
     }
 

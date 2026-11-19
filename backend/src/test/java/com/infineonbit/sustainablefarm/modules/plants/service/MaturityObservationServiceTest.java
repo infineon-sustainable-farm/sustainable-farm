@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.MaturityObservationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
@@ -41,6 +43,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class MaturityObservationServiceTest {
 
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+
+
     private static final Instant NOW = Instant.parse("2026-10-25T10:00:00Z");
     private static final LocalDate PLANTING_DATE = LocalDate.of(2015, 3, 1);
     private static final LocalDate OBSERVED_ON = LocalDate.of(2026, 10, 12);
@@ -63,11 +69,11 @@ public class MaturityObservationServiceTest {
     @InjectMocks
     private MaturityObservationService maturityObservationService;
 
-    private static MaturityObservationRequest request(String blockCode, String varietyName, LocalDate observedOn,
+    private MaturityObservationRequest request(String blockCode, String varietyName, LocalDate observedOn,
                                                       String maturityStatus, String method, Double measuredValue,
                                                       String observer) {
         return new MaturityObservationRequest(null, blockCode, varietyName, observedOn, maturityStatus, method,
-                measuredValue, observer);
+                measuredValue, personDirectory.idOf(observer));
     }
 
     private static BlockVariety variety(Long id, String blockCode, String name) {
@@ -121,12 +127,12 @@ public class MaturityObservationServiceTest {
         assertEquals(MaturityStatus.READY_FOR_HARVEST, observation.getMaturityStatus());
         assertEquals(MaturityMethod.BRIX, observation.getMethod());
         assertEquals(new BigDecimal("14.2"), observation.getMeasuredValue());
-        assertEquals("Awa", observation.getObserver());
+        assertEquals(personDirectory.idOf("Awa"), observation.getObserverPersonId());
         assertEquals("user_entry", observation.getSource());
         assertEquals(NOW, observation.getLastUpdated());
         // Assert: the response describes the variety row, with the unit of the method
         assertEquals(new MaturityObservationResponse(300L, 1L, "B", 10L, "Keitt", OBSERVED_ON,
-                MaturityStatus.READY_FOR_HARVEST, MaturityMethod.BRIX, 14.2, "°Bx", "Awa", "user_entry", NOW),
+                MaturityStatus.READY_FOR_HARVEST, MaturityMethod.BRIX, 14.2, "°Bx", "Awa", personDirectory.idOf("Awa"), "user_entry", NOW),
                 response);
     }
 
@@ -143,7 +149,7 @@ public class MaturityObservationServiceTest {
         assertEquals(MaturityStatus.RIPE, observation.getMaturityStatus());
         assertEquals(MaturityMethod.DRY_MATTER, observation.getMethod());
         assertEquals(new BigDecimal("15.0"), observation.getMeasuredValue());
-        assertEquals("Awa Ouedraogo", observation.getObserver());
+        assertEquals(personDirectory.idOf("Awa Ouedraogo"), observation.getObserverPersonId());
         assertEquals("B", response.blockCode());
         assertEquals("Keitt", response.varietyName());
         assertEquals(15.0, response.measuredValue());
@@ -161,9 +167,9 @@ public class MaturityObservationServiceTest {
         // Assert: neither a value nor a unit, and no observer rather than a blank one
         MaturityObservation observation = savedObservation();
         assertNull(observation.getMeasuredValue());
-        assertNull(observation.getObserver());
+        assertNull(observation.getObserverPersonId());
         assertEquals(new MaturityObservationResponse(300L, 1L, "B", 10L, "Keitt", OBSERVED_ON,
-                MaturityStatus.IMMATURE, MaturityMethod.VISUAL, null, null, null, "user_entry", NOW), response);
+                MaturityStatus.IMMATURE, MaturityMethod.VISUAL, null, null, null, null, "user_entry", NOW), response);
     }
 
     @Test
@@ -265,7 +271,7 @@ public class MaturityObservationServiceTest {
         // Arrange
         BlockVariety keitt = variety(10L, "B", "Keitt");
         MaturityObservation brix = new MaturityObservation(300L, keitt, OBSERVED_ON, MaturityStatus.RIPE,
-                MaturityMethod.BRIX, new BigDecimal("12.0"), "Awa", "user_entry", NOW);
+                MaturityMethod.BRIX, new BigDecimal("12.0"), personDirectory.idOf("Awa"), "user_entry", NOW);
         when(maturityObservationRepository.findByOptionalFilters(false, List.of(A, B), OBSERVED_ON, null))
                 .thenReturn(List.of(brix));
         // Act
@@ -273,6 +279,6 @@ public class MaturityObservationServiceTest {
                 maturityObservationService.getAllObservations(1L, "  ", OBSERVED_ON, null);
         // Assert
         assertEquals(List.of(new MaturityObservationResponse(300L, 1L, "B", 10L, "Keitt", OBSERVED_ON,
-                MaturityStatus.RIPE, MaturityMethod.BRIX, 12.0, "°Bx", "Awa", "user_entry", NOW)), observations);
+                MaturityStatus.RIPE, MaturityMethod.BRIX, 12.0, "°Bx", "Awa", personDirectory.idOf("Awa"), "user_entry", NOW)), observations);
     }
 }

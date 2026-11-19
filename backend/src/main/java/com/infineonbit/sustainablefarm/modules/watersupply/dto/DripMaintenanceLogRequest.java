@@ -16,5 +16,6 @@ public record DripMaintenanceLogRequest(
         String cloggingSeverity,
         Integer emitterReplacedCount,
         String notes,
-        String performedBy) {
+        /** Person of the people directory (GET /api/staff/persons) who performed it, or {@code null}. */
+        Long performedByPersonId) {
 }

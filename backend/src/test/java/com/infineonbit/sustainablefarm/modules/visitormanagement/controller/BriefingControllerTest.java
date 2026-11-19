@@ -67,7 +67,7 @@ class BriefingControllerTest {
 
         mockMvc.perform(patch("/api/visitor-management/registrations/100/briefing/deliver")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"staffMember\":\"Camille\",\"signature\":\"abc\"}"))
+                        .content("{\"staffMemberPersonId\":7,\"signature\":\"abc\"}"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -86,7 +86,7 @@ class BriefingControllerTest {
 
         mockMvc.perform(patch("/api/visitor-management/registrations/100/briefing/deliver")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"staffMember\":\"Camille\",\"signature\":\"abc\"}"))
+                        .content("{\"staffMemberPersonId\":7,\"signature\":\"abc\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DONE"));
     }

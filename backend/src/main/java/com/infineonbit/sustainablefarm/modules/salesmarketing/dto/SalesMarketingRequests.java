@@ -74,7 +74,8 @@ public final class SalesMarketingRequests {
             LocalDateTime nextRunAt,
             String scheduleFrequency,
             String summary,
-            String generatedBy) {}
+            /** Person of the people directory (GET /api/staff/persons) who generated it, or {@code null}. */
+            Long generatedByPersonId) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ForecastModelRunRequest(
