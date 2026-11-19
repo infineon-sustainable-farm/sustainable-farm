@@ -963,6 +963,7 @@
       "severity": "Gravité du colmatage",
       "emitters": "Goutteurs remplacés",
       "performedBy": "Réalisée par",
+      "noPerformer": "Non renseigné",
       "notes": "Notes"
     },
     "errors": {

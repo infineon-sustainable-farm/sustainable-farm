@@ -6,7 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record OperatorAssignmentCreationRequest(
-        @NotBlank(message = "Operator's full name is required") String fullName,
+        /** Person of the people directory (GET /api/staff/persons) who operates the equipment. */
+        @NotNull(message = "Operator is required") Long personId,
         @NotNull(message = "Equipment id is required") Long equipmentId,
         @NotBlank(message = "Operator's job title is required") String jobTitle,
         @NotNull(message = "Start date is required") LocalDate startDate,

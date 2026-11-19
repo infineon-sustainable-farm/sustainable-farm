@@ -47,7 +47,7 @@ class MaintenanceScheduleServiceTest {
     private EquipmentRepository equipmentRepository;
 
     @Spy
-    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
 
     @InjectMocks
     private MaintenanceScheduleService maintenanceScheduleService;
@@ -67,7 +67,7 @@ class MaintenanceScheduleServiceTest {
                 "Every 250 hours",
                 LocalDate.of(2026, 7, 10),
                 LocalDate.of(2026, 8, 5),
-                "Wilfried Y."
+                personDirectory.idOf("Wilfried Y.")
         );
 
         testSchedule = new MaintenanceSchedule();
@@ -180,7 +180,7 @@ class MaintenanceScheduleServiceTest {
                 null,
                 null,
                 LocalDate.of(2026, 9, 1),
-                "Abdoul S."
+                personDirectory.idOf("Abdoul S.")
         );
         when(maintenanceScheduleRepository.findById(1L)).thenReturn(Optional.of(testSchedule));
         when(maintenanceScheduleRepository.saveAndFlush(testSchedule)).thenReturn(testSchedule);

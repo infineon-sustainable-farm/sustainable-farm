@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
 import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.MaturityObservationRequest;
@@ -48,6 +50,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @SpringBootTest
 @ActiveProfiles("test")
 class MaturityObservationIntegrationTest {
+
+    @Autowired
+    private PersonDirectory personDirectory;
+
 
     /**
      * Farm of this test class, created once: block codes are unique across the farms of the
@@ -148,7 +154,7 @@ class MaturityObservationIntegrationTest {
 
     private MaturityObservationResponse observe(String blockCode, LocalDate observedOn, String status) {
         return maturityObservationService.recordObservation(new MaturityObservationRequest(FARM, blockCode, "Keitt",
-                observedOn, status, "VISUAL", null, "Awa"));
+                observedOn, status, "VISUAL", null, TestPeople.idOf(personDirectory, "Awa")));
     }
 
     @Test
@@ -156,7 +162,7 @@ class MaturityObservationIntegrationTest {
         // Arrange: Keitt planted on block MO1 of farm 8, then a Brix reading sent in any case
         Long varietyId = plant("MO1", LocalDate.of(2015, 3, 1), 40);
         Long observationId = maturityObservationService.recordObservation(new MaturityObservationRequest(FARM,
-                " mo1 ", " keitt ", LocalDate.of(2026, 10, 12), "ready_for_harvest", "brix", 14.2, " Awa ")).id();
+                " mo1 ", " keitt ", LocalDate.of(2026, 10, 12), "ready_for_harvest", "brix", 14.2, TestPeople.idOf(personDirectory, " Awa "))).id();
         // The write time as stored, at the precision of the database
         Instant lastUpdated = maturityObservationRepository.findById(observationId).orElseThrow().getLastUpdated();
         // Act
@@ -165,7 +171,7 @@ class MaturityObservationIntegrationTest {
         // Assert: every field, the value with its unit, the variety as planted
         assertEquals(List.of(new MaturityObservationResponse(observationId, FARM, "MO1", varietyId, "Keitt",
                 LocalDate.of(2026, 10, 12), MaturityStatus.READY_FOR_HARVEST, MaturityMethod.BRIX, 14.2, "°Bx",
-                "Awa", "user_entry", lastUpdated)), observations);
+                "Awa", TestPeople.idOf(personDirectory, "Awa"), "user_entry", lastUpdated)), observations);
     }
 
     @Test

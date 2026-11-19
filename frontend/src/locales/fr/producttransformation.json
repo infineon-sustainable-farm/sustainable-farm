@@ -132,6 +132,7 @@
     "chooseFarmFirst": "Choisissez d’abord l’exploitation.",
     "quantityKg": "Quantité (kg)",
     "intakeOperator": "Opérateur de réception",
+    "noOperator": "Non renseigné",
     "columns": {
       "intake": "Réception",
       "batch": "Lot",

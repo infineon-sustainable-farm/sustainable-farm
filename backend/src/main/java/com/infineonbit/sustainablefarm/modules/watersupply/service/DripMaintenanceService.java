@@ -78,7 +78,7 @@ public class DripMaintenanceService {
         log.setNotes(request.notes());
         requireZone(log.getZoneId());
         requireMaintenanceInfo(log.getMaintenanceDate(), log.getMaintenanceType());
-        log.setPerformedByPersonId(personDirectory.idOf(request.performedBy()));
+        log.setPerformedByPersonId(personDirectory.requireExisting(request.performedByPersonId()));
         return response(logRepository.save(log));
     }
 
@@ -101,7 +101,7 @@ public class DripMaintenanceService {
         log.setEmitterReplacedCount(request.emitterReplacedCount());
         log.setNotes(request.notes());
         requireMaintenanceInfo(log.getMaintenanceDate(), log.getMaintenanceType());
-        log.setPerformedByPersonId(personDirectory.idOf(request.performedBy()));
+        log.setPerformedByPersonId(personDirectory.requireExisting(request.performedByPersonId()));
         return response(logRepository.save(log));
     }
 

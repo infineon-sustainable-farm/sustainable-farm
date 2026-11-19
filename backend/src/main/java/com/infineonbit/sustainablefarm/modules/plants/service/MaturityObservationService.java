@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.MaturityObservationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.MaturityObservationResponse;
@@ -34,6 +35,7 @@ public class MaturityObservationService {
     private final PopulationEventRepository populationEventRepository;
     private final MaturityObservationRepository maturityObservationRepository;
     private final PlantsBlocks plantsBlocks;
+    private final PersonDirectory personDirectory;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " b "} becomes
@@ -67,7 +69,7 @@ public class MaturityObservationService {
      * @param observation the stored observation
      * @return the API representation of that observation
      */
-    private static MaturityObservationResponse toResponse(MaturityObservation observation) {
+    private MaturityObservationResponse toResponse(MaturityObservation observation) {
         BlockVariety variety = observation.getVariety();
         BigDecimal value = observation.getMeasuredValue();
         return new MaturityObservationResponse(
@@ -81,7 +83,8 @@ public class MaturityObservationService {
                 observation.getMethod(),
                 value == null ? null : value.doubleValue(),
                 value == null ? null : observation.getMethod().unit(),
-                observation.getObserver(),
+                personDirectory.nameOf(observation.getObserverPersonId()),
+                observation.getObserverPersonId(),
                 observation.getSource(),
                 observation.getLastUpdated());
     }
@@ -160,7 +163,7 @@ public class MaturityObservationService {
         observation.setMeasuredValue(request.measuredValue() == null
                 ? null
                 : BigDecimal.valueOf(request.measuredValue()).setScale(1, RoundingMode.HALF_UP));
-        observation.setObserver(normalizeOptionalText(request.observer()));
+        observation.setObserverPersonId(personDirectory.requireExisting(request.observerPersonId()));
         observation.setSource(USER_ENTRY_SOURCE);
         observation.setLastUpdated(now);
         return toResponse(maturityObservationRepository.save(observation));
@@ -186,7 +189,7 @@ public class MaturityObservationService {
         PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
         return maturityObservationRepository.findByOptionalFilters(blocks.all(), blocks.ids(), from, to)
                 .stream()
-                .map(MaturityObservationService::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 }

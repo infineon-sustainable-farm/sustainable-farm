@@ -45,7 +45,8 @@ public class HarvestEventCreateRequest {
 
     private String harvestTeamId;
 
-    private String harvestSupervisor;
+    /** Person of the people directory (GET /api/staff/persons) who supervised the harvest, or {@code null}. */
+    private Long harvestSupervisorPersonId;
 
     private String weatherConditions;
 

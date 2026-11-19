@@ -20,6 +20,13 @@ vi.mock('../api/rawIntakeApi', () => ({
   },
 }));
 
+vi.mock('../../../shared/api/persons', () => ({
+  fetchPersons: vi.fn(() => Promise.resolve([
+    { id: 3, fullName: 'Issa' },
+    { id: 5, fullName: 'Moussa' },
+  ])),
+}));
+
 vi.mock('../api/batchApi', () => ({
   batchApi: {
     getAllBatches: vi.fn(),
@@ -71,6 +78,7 @@ const INTAKES = [
     receivedVariety: 'KEITT',
     receivedGrade: 'A',
     intakeOperator: 'Moussa',
+    intakeOperatorPersonId: 5,
   },
   {
     intakeId: 'RI-2',
@@ -153,8 +161,9 @@ describe('RawIntakeList', () => {
     await within(dialog).findByRole('option', { name: 'Tommy Atkins' });
     fireEvent.change(within(dialog).getByLabelText(/^Variety/), { target: { value: 'TOMMY' } });
     fireEvent.change(within(dialog).getByLabelText('Grade'), { target: { value: 'C' } });
+    await within(dialog).findByRole('option', { name: 'Issa' });
     fireEvent.change(within(dialog).getByLabelText('Intake Operator'), {
-      target: { value: 'Issa' },
+      target: { value: '3' },
     });
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
@@ -169,7 +178,7 @@ describe('RawIntakeList', () => {
         receivedQuantityKg: 150.25,
         receivedVariety: 'TOMMY',
         receivedGrade: 'C',
-        intakeOperator: 'Issa',
+        intakeOperatorPersonId: 3,
       }),
     );
     await waitFor(() => expect(rawIntakeApi.getAllRawIntakes).toHaveBeenCalledTimes(2));
@@ -287,7 +296,7 @@ describe('RawIntakeList', () => {
           receivedQuantityKg: 530,
           receivedVariety: 'KEITT',
           receivedGrade: 'A',
-          intakeOperator: 'Moussa',
+          intakeOperatorPersonId: 5,
         }),
       ),
     );

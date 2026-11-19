@@ -52,7 +52,7 @@ public class HealthFindingControllerTest {
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
     private static final String COPPER = """
             {"treatedOn":"2026-09-04","productName":"Copper fungicide A","activeIngredient":"copper hydroxide",
-             "quantity":2.5,"unit":"KG","preHarvestIntervalDays":14,"applicator":"Awa","equipmentId":7}
+             "quantity":2.5,"unit":"KG","preHarvestIntervalDays":14,"applicatorPersonId":7,"equipmentId":7}
             """;
 
     @Autowired
@@ -83,7 +83,7 @@ public class HealthFindingControllerTest {
     private static HealthTreatmentResponse copper() {
         return new HealthTreatmentResponse(20L, null, "C", "ANTHRACNOSE", "Anthracnose", null, 1L,
                 LocalDate.of(2026, 9, 4), "Copper fungicide A", "copper hydroxide", 2.5, TreatmentUnit.KG, 14,
-                LocalDate.of(2026, 9, 18), "Awa", 7L, "Knapsack sprayer", "user_entry", NOW);
+                LocalDate.of(2026, 9, 18), "Awa", 7L, 7L, "Knapsack sprayer", "user_entry", NOW);
     }
 
     @Test
@@ -130,7 +130,7 @@ public class HealthFindingControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.unit").value("unit must be KG or L"))
                 .andExpect(jsonPath("$.fieldErrors.preHarvestIntervalDays")
                         .value("preHarvestIntervalDays must be a whole number, 0 or more"))
-                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"))
+                .andExpect(jsonPath("$.fieldErrors.applicatorPersonId").value("applicatorPersonId is required"))
                 .andExpect(jsonPath("$.fieldErrors.equipmentId").value("equipmentId must be at least 1"));
         verify(healthTreatmentService, never()).recordFindingTreatment(any(), any());
     }

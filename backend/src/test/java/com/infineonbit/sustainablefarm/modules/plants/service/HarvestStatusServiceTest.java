@@ -144,7 +144,7 @@ public class HarvestStatusServiceTest {
                                                      int intervalDays) {
         return new HealthTreatmentResponse(id, FARM, blockCode, "OTHER", "Other", "Fruit fly", null,
                 treatedOn, "Insecticide B", "deltamethrin", 1.5, TreatmentUnit.L, intervalDays,
-                treatedOn.plusDays(intervalDays), "Awa", null, null, "user_entry", null);
+                treatedOn.plusDays(intervalDays), "Awa", null, null, null, "user_entry", null);
     }
 
     private static HarvestResponse harvest(long id, BlockVariety variety, LocalDate harvestDate) {
@@ -179,7 +179,7 @@ public class HarvestStatusServiceTest {
     private static MaturityObservationResponse observation(long id, BlockVariety variety, LocalDate observedOn,
                                                            MaturityStatus status) {
         return new MaturityObservationResponse(id, FARM, variety.getBlockCode(), variety.getId(), variety.getName(),
-                observedOn, status, MaturityMethod.VISUAL, null, null, "Awa", "user_entry", null);
+                observedOn, status, MaturityMethod.VISUAL, null, null, "Awa", null, "user_entry", null);
     }
 
     /** An observation as the harvest status shows it, counting until the given day or not at all. */
@@ -353,6 +353,7 @@ public class HarvestStatusServiceTest {
         LocalDate may12 = LocalDate.of(2027, 5, 12);
         MaturityObservationResponse immature = new MaturityObservationResponse(30L, FARM, "A", 1L, "Keitt",
                 LocalDate.of(2027, 5, 10), MaturityStatus.IMMATURE, MaturityMethod.FLESH_COLOR, null, null, "Awa",
+                null,
                 "user_entry", null);
         stubObservations(may12, immature);
         // Act

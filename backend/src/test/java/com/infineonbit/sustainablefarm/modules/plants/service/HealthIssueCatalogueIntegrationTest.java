@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
@@ -45,6 +47,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @ActiveProfiles("test")
 class HealthIssueCatalogueIntegrationTest {
+
+    @Autowired
+    private PersonDirectory personDirectory;
+
 
     /** Each race runs this many times, since H2 does not reproduce it on every trial. */
     private static final int TRIALS = 10;
@@ -136,8 +142,8 @@ class HealthIssueCatalogueIntegrationTest {
         }
     }
 
-    private static HealthInspectionRequest inspection(String blockCode, HealthFindingRequest finding) {
-        return new HealthInspectionRequest(null, blockCode, LocalDate.of(2026, 10, 1), 48.0, "Awa", "VISUAL",
+    private HealthInspectionRequest inspection(String blockCode, HealthFindingRequest finding) {
+        return new HealthInspectionRequest(null, blockCode, LocalDate.of(2026, 10, 1), 48.0, TestPeople.idOf(personDirectory, "Awa"), "VISUAL",
                 List.of(finding));
     }
 

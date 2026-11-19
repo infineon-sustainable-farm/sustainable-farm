@@ -43,7 +43,7 @@ public class RepairLogService {
         repairLog.setIssue(trimRequired(request.issue(), "Issue description is required."));
         repairLog.setDowntime(request.downtime());
         repairLog.setCost(MachineryMoney.of(request.cost()));
-        repairLog.setTechnicianPersonId(personDirectory.idOf(request.technician()));
+        repairLog.setTechnicianPersonId(personDirectory.requireExisting(request.technicianPersonId()));
 
         try {
             repairLogRepository.save(repairLog);
@@ -113,8 +113,8 @@ public class RepairLogService {
         if (request.cost() != null) {
             repairLog.setCost(MachineryMoney.of(request.cost()));
         }
-        if (request.technician() != null) {
-            repairLog.setTechnicianPersonId(personDirectory.idOf(request.technician()));
+        if (request.technicianPersonId() != null) {
+            repairLog.setTechnicianPersonId(personDirectory.requireExisting(request.technicianPersonId()));
         }
 
         return toResponse(repairLogRepository.saveAndFlush(repairLog));
@@ -149,7 +149,8 @@ public class RepairLogService {
                 repairLog.getIssue(),
                 repairLog.getDowntime(),
                 MachineryMoney.amountOf(repairLog.getCost()),
-                personDirectory.nameOf(repairLog.getTechnicianPersonId())
+                personDirectory.nameOf(repairLog.getTechnicianPersonId()),
+                repairLog.getTechnicianPersonId()
         );
     }
 }

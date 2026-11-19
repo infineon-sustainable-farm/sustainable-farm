@@ -31,16 +31,15 @@ class StaffPersonRepositoryTest {
     private PersonRepository personRepository;
 
     @Test
-    void aGuideNamedLikeAnExistingPersonReferencesThatPersonRow() {
-        Long operator = personDirectory.idOf("Awa Traore");
-
+    void aNewEntryEntersItsOwnPersonRow() {
         StaffRequest request = new StaffRequest();
         request.setFullName("Awa Traore");
         request.setRole(StaffRole.GUIDE);
         request.setPhone("+22670010203");
         StaffResponse guide = staffService.create(request);
 
-        assertThat(staffRepository.findById(guide.getId()).orElseThrow().getPersonId()).isEqualTo(operator);
+        Long personId = staffRepository.findById(guide.getId()).orElseThrow().getPersonId();
+        assertThat(personDirectory.nameOf(personId)).isEqualTo("Awa Traore");
         assertThat(personRepository.count()).isEqualTo(1);
         assertThat(guide.getPhone()).isEqualTo("+22670010203");
     }

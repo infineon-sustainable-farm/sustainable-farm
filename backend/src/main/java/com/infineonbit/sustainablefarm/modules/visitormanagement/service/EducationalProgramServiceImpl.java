@@ -178,7 +178,7 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         workshop.setName(request.getName());
         workshop.setDurationMinutes(request.getDurationMinutes());
         workshop.setTargetGroup(request.getTargetGroup());
-        workshop.setFacilitatorPersonId(personDirectory.idOf(request.getFacilitator()));
+        workshop.setFacilitatorPersonId(personDirectory.requireExisting(request.getFacilitatorPersonId()));
         workshop.setDescription(request.getDescription());
     }
 

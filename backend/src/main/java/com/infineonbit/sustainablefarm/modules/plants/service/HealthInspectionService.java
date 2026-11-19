@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
@@ -36,6 +37,7 @@ public class HealthInspectionService {
     private final HealthIssueService healthIssueService;
     private final HealthFindingService healthFindingService;
     private final PlantsBlocks plantsBlocks;
+    private final PersonDirectory personDirectory;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " c "} becomes
@@ -68,7 +70,7 @@ public class HealthInspectionService {
         return text == null ? null : text.toUpperCase(Locale.ROOT);
     }
 
-    private static HealthInspectionResponse toResponse(HealthInspection inspection,
+    private HealthInspectionResponse toResponse(HealthInspection inspection,
                                                        List<HealthFindingResponse> findings) {
         return new HealthInspectionResponse(
                 inspection.getId(),
@@ -77,7 +79,8 @@ public class HealthInspectionService {
                 inspection.getInspectedOn(),
                 inspection.getHealthScorePct(),
                 HealthCalculator.category(inspection.getHealthScorePct()),
-                inspection.getObserver(),
+                personDirectory.nameOf(inspection.getObserverPersonId()),
+                inspection.getObserverPersonId(),
                 inspection.getMethod(),
                 inspection.getSource(),
                 inspection.getLastUpdated(),
@@ -124,7 +127,7 @@ public class HealthInspectionService {
         inspection.setInspectedOn(request.inspectedOn());
         // A whole number from 0 to 100: the request validation refused anything else.
         inspection.setHealthScorePct(request.healthScorePct().intValue());
-        inspection.setObserver(normalizeOptionalText(request.observer()));
+        inspection.setObserverPersonId(personDirectory.requireExisting(request.observerPersonId()));
         inspection.setMethod(request.method() == null
                 ? null
                 : InspectionMethod.valueOf(normalizeCode(request.method())));

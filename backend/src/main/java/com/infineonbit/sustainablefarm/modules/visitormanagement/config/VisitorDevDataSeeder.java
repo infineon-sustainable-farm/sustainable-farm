@@ -2,13 +2,16 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.config;
 
 import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.core.money.Money;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDetails;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.AgriActivity;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Event;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.EventStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.EventType;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Registration;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.RegistrationStatus;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Staff;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlot;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TimeSlotStatus;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.TourStop;
@@ -20,6 +23,7 @@ import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.Workshop
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.AgriActivityRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.EventRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.StaffRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TourStopRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
@@ -42,7 +46,8 @@ import java.time.temporal.TemporalAdjusters;
  * visitors, registrations). Enable with the {@code dev} Spring profile
  * (e.g. {@code SPRING_PROFILES_ACTIVE=dev}). Never active in production.
  * Each entity type is seeded only when its table is empty (idempotent).
- * Workshop facilitators are people of the staff referential, found or created by name.
+ * Workshop facilitators are entries of the farm people directory this module owns (person and
+ * staff row without a visitor role), reused by name when the directory already lists them.
  */
 @Component
 @Profile("dev")
@@ -58,6 +63,7 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
     private final VisitorRepository visitorRepository;
     private final RegistrationRepository registrationRepository;
     private final PersonDirectory personDirectory;
+    private final StaffRepository staffRepository;
 
     public VisitorDevDataSeeder(TourStopRepository tourStopRepository,
                          WorkshopRepository workshopRepository,
@@ -66,7 +72,8 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
                          EventRepository eventRepository,
                          VisitorRepository visitorRepository,
                          RegistrationRepository registrationRepository,
-                         PersonDirectory personDirectory) {
+                         PersonDirectory personDirectory,
+                         StaffRepository staffRepository) {
         this.tourStopRepository = tourStopRepository;
         this.workshopRepository = workshopRepository;
         this.activityRepository = activityRepository;
@@ -75,6 +82,7 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
         this.visitorRepository = visitorRepository;
         this.registrationRepository = registrationRepository;
         this.personDirectory = personDirectory;
+        this.staffRepository = staffRepository;
     }
 
     @Override
@@ -144,10 +152,25 @@ public class VisitorDevDataSeeder implements CommandLineRunner {
         workshop.setName(name);
         workshop.setDurationMinutes(duration);
         workshop.setTargetGroup(targetGroup);
-        workshop.setFacilitatorPersonId(personDirectory.idOf(facilitator));
+        workshop.setFacilitatorPersonId(directoryPerson(facilitator));
         workshop.setDescription(description);
         workshop.setStatus(status);
         return workshop;
+    }
+
+    /** The directory person of this name, entered (person and staff row) when missing. */
+    private Long directoryPerson(String fullName) {
+        return personDirectory.listActive().stream()
+                .filter(person -> person.fullName().equalsIgnoreCase(fullName))
+                .findFirst()
+                .map(PersonDto::id)
+                .orElseGet(() -> {
+                    Long personId = personDirectory.create(new PersonDetails(fullName, null, null, null)).id();
+                    Staff staff = new Staff();
+                    staff.setPersonId(personId);
+                    staffRepository.save(staff);
+                    return personId;
+                });
     }
 
     private void seedActivities() {

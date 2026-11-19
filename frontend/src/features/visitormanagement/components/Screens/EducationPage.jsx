@@ -11,7 +11,6 @@ import {
     useWorkshopStatusAction,
     useWorkshops,
 } from "../../hooks/useEducation";
-import { useGuides } from "../../hooks/useScheduling";
 import { Button, Card, Modal, PageHeader } from "../../../../shared/ui";
 import { LoadError, LoadingBlock } from "../LoadState";
 import TourStopsTimeline from "../TourStopsTimeline";
@@ -62,7 +61,6 @@ export default function EducationPage() {
         refetch: refetchWorkshops,
         isFetching: workshopsFetching,
     } = useWorkshops();
-    const { data: guides } = useGuides();
 
     const createMutation = useCreateWorkshop();
     const updateMutation = useUpdateWorkshop();
@@ -282,7 +280,6 @@ export default function EducationPage() {
                 <WorkshopForm
                     key={formKey}
                     workshop={editingWorkshop}
-                    guides={guides ?? []}
                     isSubmitting={formMutation.isPending}
                     submitError={formMutation.error?.message}
                     serverFieldErrors={formMutation.error?.data?.fieldErrors}

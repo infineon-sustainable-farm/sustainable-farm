@@ -53,8 +53,8 @@ public record HealthInspectionRequest(
         @Digits(integer = 3, fraction = 0, message = "healthScorePct must be a whole number between 0 and 100")
         Double healthScorePct,
 
-        @Size(max = 255, message = "observer must be at most 255 characters")
-        String observer,
+        @Schema(description = "Person of the people directory (GET /api/staff/persons) who observed, or left out")
+        Long observerPersonId,
 
         @Schema(allowableValues = {"VISUAL", "TRAP"}, description = "Case and surrounding spaces are ignored")
         @Pattern(regexp = "^\\s*(VISUAL|TRAP)\\s*$", flags = Pattern.Flag.CASE_INSENSITIVE,

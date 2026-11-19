@@ -348,7 +348,6 @@
         "totalCostInvalid": "Total cost must be a number greater than 0, with at most 2 decimals.",
         "blockRequired": "Block is required.",
         "applicatorRequired": "Applicator is required.",
-        "applicatorTooLong": "Applicator must be at most 255 characters.",
         "methodTooLong": "Method must be at most 255 characters.",
         "reasonRequired": "Reason is required.",
         "reasonTooLong": "Reason must be at most 255 characters."
@@ -675,7 +674,6 @@
         "dateInFuture": "Inspection date cannot be in the future.",
         "scoreRequired": "Health score is required.",
         "scoreFormat": "Health score must be a whole number from 0 to 100.",
-        "observerTooLong": "Observer must be at most 255 characters.",
         "problemRequired": "Problem is required.",
         "treeFormat": "Tree must be up to 20 letters, digits or hyphens, such as 42 or R3-12."
       }
@@ -727,8 +725,7 @@
         "ingredientTooLong": "Active ingredient must be at most 255 characters.",
         "quantityFormat": "Quantity must be a number greater than 0, with at most 3 decimals.",
         "unitRequired": "Unit is required.",
-        "applicatorRequired": "Applicator is required.",
-        "applicatorTooLong": "Applicator must be at most 255 characters."
+        "applicatorRequired": "Applicator is required."
       }
     }
   },
@@ -925,7 +922,6 @@
         "dateFuture": "Observation date cannot be in the future.",
         "statusRequired": "Maturity status is required.",
         "methodRequired": "Method is required.",
-        "observerTooLong": "Observer must be at most 255 characters.",
         "measuredValue": "Measured value must be above 0 and at most 100, with one decimal at most."
       }
     },

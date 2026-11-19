@@ -963,6 +963,7 @@
       "severity": "Schwere der Verstopfung",
       "emitters": "Ersetzte Tropfer",
       "performedBy": "Durchgeführt von",
+      "noPerformer": "Nicht erfasst",
       "notes": "Notizen"
     },
     "errors": {

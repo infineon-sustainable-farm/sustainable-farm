@@ -98,8 +98,9 @@ public class HealthTreatment extends BaseEntity implements BlockRow {
     @Column(name = "pre_harvest_interval_days", nullable = false)
     private Integer preHarvestIntervalDays;
 
-    @Column(name = "applicator", nullable = false)
-    private String applicator;
+    /** Person of the people directory who applied the treatment (staff module). */
+    @Column(name = "applicator_person_id", nullable = false)
+    private Long applicatorPersonId;
 
     /**
      * The machine used, an {@code equipment} row of the machinery register (foreign key

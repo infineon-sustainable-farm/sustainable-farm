@@ -32,9 +32,10 @@ public class OperatorAssignmentService {
      * Creates a new operator assignment after checking the equipment exists
      * and is not already assigned.
      *
-     * @param request the creation data (fullName, equipmentId, jobTitle, startDate, endDate)
+     * @param request the creation data (personId, equipmentId, jobTitle, startDate, endDate)
      * @return the representation of the created assignment, including its generated ID
      * @throws EquipmentNotFoundException      if no equipment exists with the given ID
+     * @throws com.infineonbit.sustainablefarm.core.exception.BadRequestException if the person is not in the people directory
      * @throws EquipmentAlreadyAssignedException if the equipment is already linked to an assignment
      * @throws ConflictException        if the end date is before the start date
      */
@@ -50,7 +51,7 @@ public class OperatorAssignmentService {
         }
 
         OperatorAssignment operatorAssignment = new OperatorAssignment();
-        operatorAssignment.setPersonId(personDirectory.findOrCreateByName(operatorAssignmentCreationRequest.fullName()).id());
+        operatorAssignment.setPersonId(personDirectory.requireExisting(operatorAssignmentCreationRequest.personId()));
         operatorAssignment.setEquipment(equipment);
         operatorAssignment.setJobTitle(operatorAssignmentCreationRequest.jobTitle().trim());
         operatorAssignment.setStartDate(operatorAssignmentCreationRequest.startDate());
@@ -145,12 +146,8 @@ public class OperatorAssignmentService {
             assignment.setEquipment(equipment);
         }
 
-        if (operatorAssignmentUpdateRequest.fullName() != null) {
-            String fullName = operatorAssignmentUpdateRequest.fullName().trim();
-            if (fullName.isEmpty()) {
-                throw new ConflictException("Full name cannot be blank.");
-            }
-            assignment.setPersonId(personDirectory.findOrCreateByName(fullName).id());
+        if (operatorAssignmentUpdateRequest.personId() != null) {
+            assignment.setPersonId(personDirectory.requireExisting(operatorAssignmentUpdateRequest.personId()));
         }
 
         if (operatorAssignmentUpdateRequest.jobTitle() != null) {
@@ -210,6 +207,7 @@ public class OperatorAssignmentService {
         return new OperatorAssignmentObtainingResponse(
                 assignment.getId(),
                 fullName,
+                assignment.getPersonId(),
                 assignment.getEquipment().getId(),
                 assignment.getJobTitle(),
                 assignment.getStartDate(),

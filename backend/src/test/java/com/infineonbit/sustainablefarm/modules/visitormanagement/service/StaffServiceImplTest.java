@@ -36,7 +36,7 @@ class StaffServiceImplTest {
     @Mock
     private StaffRepository staffRepository;
     @Spy
-    private PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
     @InjectMocks
     private StaffServiceImpl service;
 
@@ -44,8 +44,8 @@ class StaffServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        Long personId = personDirectory.findOrCreate(
-                new PersonDetails("Awa Diallo", "awa@farm.io", "+22670010203", true), id -> true).id();
+        Long personId = personDirectory.create(
+                new PersonDetails("Awa Diallo", "awa@farm.io", "+22670010203", true)).id();
         staff = new Staff();
         staff.setId(1L);
         staff.setPersonId(personId);
@@ -83,13 +83,27 @@ class StaffServiceImplTest {
     }
 
     @Test
-    void create_reusesThePersonOfTheSameName() {
-        Long operator = personDirectory.idOf("Issa Ouedraogo");
+    void create_entersANewPerson_evenWithTheNameOfAnother() {
+        Long existing = personDirectory.idOf("Issa Ouedraogo");
         saveAssignsId(3L);
 
         service.create(buildRequest("issa ouedraogo", null));
 
-        verify(staffRepository).save(org.mockito.ArgumentMatchers.argThat(s -> operator.equals(s.getPersonId())));
+        verify(staffRepository).save(org.mockito.ArgumentMatchers.argThat(s -> !existing.equals(s.getPersonId())));
+        assertThat(personDirectory.listActive()).hasSize(3);
+    }
+
+    @Test
+    void create_withoutVisitorRole_entersAFarmWorker() {
+        saveAssignsId(4L);
+        StaffRequest req = buildRequest("Karim Technician", null);
+        req.setRole(null);
+
+        StaffResponse resp = service.create(req);
+
+        assertThat(resp.getRole()).isNull();
+        assertThat(resp.getFullName()).isEqualTo("Karim Technician");
+        assertThat(personDirectory.listActive()).extracting(p -> p.fullName()).contains("Karim Technician");
     }
 
     @Test
@@ -135,7 +149,7 @@ class StaffServiceImplTest {
     }
 
     @Test
-    void update_toAnInactiveState_renamesThePersonButKeepsItActive() {
+    void update_toAnInactiveState_renamesAndDeactivatesThePerson() {
         when(staffRepository.findById(1L)).thenReturn(Optional.of(staff));
         lenient().when(staffRepository.save(any(Staff.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -147,16 +161,44 @@ class StaffServiceImplTest {
         assertThat(resp.isActive()).isFalse();
         assertThat(resp.getFullName()).isEqualTo("Awa Diallo Traore");
         assertThat(personDirectory.nameOf(staff.getPersonId())).isEqualTo("Awa Diallo Traore");
-        assertThat(personDirectory.findById(staff.getPersonId()).orElseThrow().active()).isTrue();
+        assertThat(personDirectory.findById(staff.getPersonId()).orElseThrow().active()).isFalse();
     }
 
     @Test
-    void deactivate_setsTheGuideInactiveAndLeavesThePersonAlone() {
+    void update_keepsAnEmailAndPhoneLeftOutOfTheRequest() {
+        when(staffRepository.findById(1L)).thenReturn(Optional.of(staff));
+        lenient().when(staffRepository.save(any(Staff.class))).thenAnswer(inv -> inv.getArgument(0));
+        StaffRequest req = new StaffRequest();
+        req.setFullName("Awa Diallo");
+        req.setRole(StaffRole.MANAGER);
+
+        StaffResponse resp = service.update(1L, req);
+
+        assertThat(resp.getEmail()).isEqualTo("awa@farm.io");
+        assertThat(resp.getPhone()).isEqualTo("+22670010203");
+        assertThat(resp.getRole()).isEqualTo(StaffRole.MANAGER);
+    }
+
+    @Test
+    void update_clearsAnEmailAndPhoneTheFormSentEmpty() {
+        when(staffRepository.findById(1L)).thenReturn(Optional.of(staff));
+        lenient().when(staffRepository.save(any(Staff.class))).thenAnswer(inv -> inv.getArgument(0));
+        StaffRequest req = buildRequest("Awa Diallo", null);
+        req.setPhone(null);
+
+        StaffResponse resp = service.update(1L, req);
+
+        assertThat(resp.getEmail()).isNull();
+        assertThat(resp.getPhone()).isNull();
+    }
+
+    @Test
+    void deactivate_setsTheEntryAndThePersonInactive() {
         when(staffRepository.findById(1L)).thenReturn(Optional.of(staff));
 
         service.deactivate(1L);
 
         assertThat(staff.isActive()).isFalse();
-        assertThat(personDirectory.findById(staff.getPersonId()).orElseThrow().active()).isTrue();
+        assertThat(personDirectory.findById(staff.getPersonId()).orElseThrow().active()).isFalse();
     }
 }

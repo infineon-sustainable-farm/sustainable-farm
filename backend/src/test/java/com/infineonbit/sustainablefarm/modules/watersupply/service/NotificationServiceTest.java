@@ -33,7 +33,7 @@ class NotificationServiceTest {
     @Mock
     private AlertBoard alertBoard;
 
-    private final PersonDirectory personDirectory = new InMemoryPersonDirectory();
+    private final InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
 
     @Test
     void createRejectsUnknownUser() {

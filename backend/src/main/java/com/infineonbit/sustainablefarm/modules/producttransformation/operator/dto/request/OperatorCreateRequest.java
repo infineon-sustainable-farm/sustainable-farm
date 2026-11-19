@@ -24,8 +24,12 @@ public class OperatorCreateRequest {
     @NotBlank(message = "Operator ID is required")
     private String operatorId;
 
-    @NotBlank(message = "Operator name is required")
-    private String operatorName;
+    /**
+     * Person of the people directory (GET /api/staff/persons) who receives the operator role; the
+     * operator name is the person's.
+     */
+    @NotNull(message = "Person is required")
+    private Long personId;
 
     @NotNull(message = "Role is required")
     private Role role;

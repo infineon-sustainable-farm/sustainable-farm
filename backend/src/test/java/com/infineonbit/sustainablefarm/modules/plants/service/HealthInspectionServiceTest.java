@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import org.mockito.Spy;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthFindingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HealthInspectionRequest;
@@ -49,6 +52,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class HealthInspectionServiceTest {
 
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+
+
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
     private static final LocalDate SEPTEMBER_1 = LocalDate.of(2026, 9, 1);
 
@@ -79,7 +86,7 @@ public class HealthInspectionServiceTest {
         PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).with("D", 3L).asPlantsBlocks();
         healthInspectionService = new HealthInspectionService(healthInspectionRepository, healthFindingRepository,
                 healthIssueService, new HealthFindingService(healthFindingRepository, healthTreatmentRepository,
-                plantsBlocks), plantsBlocks);
+                plantsBlocks), plantsBlocks, personDirectory);
     }
 
     /**
@@ -133,9 +140,9 @@ public class HealthInspectionServiceTest {
         return captor.getAllValues();
     }
 
-    private static HealthInspectionRequest inspection(Long farmId, String blockCode, double score,
+    private HealthInspectionRequest inspection(Long farmId, String blockCode, double score,
                                                       List<HealthFindingRequest> findings) {
-        return new HealthInspectionRequest(farmId, blockCode, SEPTEMBER_1, score, "Awa", "VISUAL", findings);
+        return new HealthInspectionRequest(farmId, blockCode, SEPTEMBER_1, score, personDirectory.idOf("Awa"), "VISUAL", findings);
     }
 
     @Test
@@ -155,7 +162,7 @@ public class HealthInspectionServiceTest {
         assertEquals("C", inspection.getBlockCode());
         assertEquals(SEPTEMBER_1, inspection.getInspectedOn());
         assertEquals(48, inspection.getHealthScorePct());
-        assertEquals("Awa", inspection.getObserver());
+        assertEquals(personDirectory.idOf("Awa"), inspection.getObserverPersonId());
         assertEquals(InspectionMethod.VISUAL, inspection.getMethod());
         assertEquals("user_entry", inspection.getSource());
         assertEquals(NOW, inspection.getLastUpdated());
@@ -174,6 +181,7 @@ public class HealthInspectionServiceTest {
         });
         // Assert: the response, both findings untreated
         assertEquals(new HealthInspectionResponse(1L, 1L, "C", SEPTEMBER_1, 48, HealthCategory.MODERATE, "Awa",
+                personDirectory.idOf("Awa"),
                 InspectionMethod.VISUAL, "user_entry", NOW, List.of(
                 new HealthFindingResponse(10L, 1L, 1L, "C", SEPTEMBER_1, "ANTHRACNOSE", "Anthracnose",
                         HealthIssueKind.DISEASE, null, "42", HealthFindingStatus.UNTREATED, 0, null, null, null, null),
@@ -203,12 +211,12 @@ public class HealthInspectionServiceTest {
         savesAssignIds();
         // Act
         HealthInspectionResponse response = healthInspectionService.recordInspection(new HealthInspectionRequest(
-                null, " c ", SEPTEMBER_1, 48.0, " Awa ", " visual ",
+                null, " c ", SEPTEMBER_1, 48.0, personDirectory.idOf(" Awa "), " visual ",
                 List.of(new HealthFindingRequest(" anthracnose ", null, " r3-12 "))), NOW);
         // Assert
         HealthInspection inspection = savedInspection();
         assertEquals("C", inspection.getBlockCode());
-        assertEquals("Awa", inspection.getObserver());
+        assertEquals(personDirectory.idOf("Awa"), inspection.getObserverPersonId());
         assertEquals(InspectionMethod.VISUAL, inspection.getMethod());
         HealthFinding finding = savedFindings(1).getFirst();
         assertSame(ANTHRACNOSE, finding.getIssue());
@@ -265,7 +273,7 @@ public class HealthInspectionServiceTest {
         // Arrange: two inspections, the second with nothing found
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        HealthInspection blockC = TestRows.inspection(1L, 1, "C", SEPTEMBER_1, 48, "Awa",
+        HealthInspection blockC = TestRows.inspection(1L, 1, "C", SEPTEMBER_1, 48, personDirectory.idOf("Awa"),
                 InspectionMethod.VISUAL, "user_entry", NOW);
         HealthInspection blockCAgain = TestRows.inspection(3L, 1, "C", LocalDate.of(2026, 9, 21), 72, null,
                 null, "user_entry", NOW);
@@ -289,7 +297,7 @@ public class HealthInspectionServiceTest {
     void getBlockHealth_shouldGiveTheLatestScoreAndCategoryOfEachBlock_withOneQuery() {
         // Arrange: block C inspected twice, block D once
         when(healthInspectionRepository.findByOptionalFilters(true, TestBlocks.NO_IDS, null, null)).thenReturn(List.of(
-                TestRows.inspection(1L, null, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,
+                TestRows.inspection(1L, null, "C", SEPTEMBER_1, 48, 7L, InspectionMethod.VISUAL,
                         "user_entry", NOW),
                 TestRows.inspection(2L, null, "D", LocalDate.of(2026, 9, 2), 85, null, null, "user_entry", NOW),
                 TestRows.inspection(4L, null, "C", LocalDate.of(2026, 9, 21), 72, null, null, "user_entry", NOW)));

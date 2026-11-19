@@ -143,7 +143,8 @@ export default function DemandReportsPage() {
         nextRunAt: r.nextRunAt ? localIsoDateTime(new Date(r.nextRunAt)) : '',
         scheduleFrequency: r.scheduleFrequency || '',
         summary: r.summary || '',
-        generatedBy: r.generatedBy || '',
+        generatedByPersonId: r.generatedByPersonId != null ? String(r.generatedByPersonId) : '',
+        generatedByName: r.generatedBy || '',
       });
       setEditingReportId(report.reportId);
       setShowReportModal(true);
@@ -171,7 +172,7 @@ export default function DemandReportsPage() {
         nextRunAt: reportForm.nextRunAt || null,
         scheduleFrequency: reportForm.scheduleFrequency || null,
         summary: reportForm.summary || null,
-        generatedBy: reportForm.generatedBy || null,
+        generatedByPersonId: reportForm.generatedByPersonId ? Number(reportForm.generatedByPersonId) : null,
         generatedAt: editingReportId != null ? undefined : new Date().toISOString(),
       };
 

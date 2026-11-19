@@ -88,14 +88,15 @@ export function measuredValueError(text) {
 /**
  * The request body of an observation, from the values of the form. The
  * measured value goes out as a number, and only with a method that measures
- * one; an empty value or observer is left out, and the observer is trimmed.
+ * one; an empty value or observer is left out. The observer is the id of a
+ * person of the farm people directory, sent as a number.
  */
-export function observationRequest({ observedOn, blockCode, varietyName, maturityStatus, method, measuredValue, observer }) {
+export function observationRequest({ observedOn, blockCode, varietyName, maturityStatus, method, measuredValue, observerPersonId }) {
     const body = { observedOn, blockCode, varietyName, maturityStatus, method };
     const value = String(measuredValue ?? "").trim();
     if (methodTakesValue(method) && value !== "") body.measuredValue = Number(value);
-    const name = String(observer ?? "").trim();
-    if (name !== "") body.observer = name;
+    const observer = String(observerPersonId ?? "").trim();
+    if (observer !== "") body.observerPersonId = Number(observer);
     return body;
 }
 

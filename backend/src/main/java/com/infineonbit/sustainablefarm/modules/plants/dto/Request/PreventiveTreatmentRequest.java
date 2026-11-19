@@ -79,9 +79,9 @@ public record PreventiveTreatmentRequest(
         @Digits(integer = 9, fraction = 0, message = "preHarvestIntervalDays must be a whole number, 0 or more")
         Double preHarvestIntervalDays,
 
-        @NotBlank(message = "applicator is required")
-        @Size(max = 255, message = "applicator must be at most 255 characters")
-        String applicator,
+        @Schema(description = "Person of the people directory (GET /api/staff/persons) who applied it")
+        @NotNull(message = "applicatorPersonId is required")
+        Long applicatorPersonId,
 
         @Schema(description = "Id of the machine used, a machine of the machinery register "
                 + "(/api/machinery/equipment); optional")

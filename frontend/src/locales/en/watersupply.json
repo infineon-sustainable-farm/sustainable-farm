@@ -963,6 +963,7 @@
       "severity": "Clogging severity",
       "emitters": "Emitters replaced",
       "performedBy": "Performed by",
+      "noPerformer": "Not recorded",
       "notes": "Notes"
     },
     "errors": {

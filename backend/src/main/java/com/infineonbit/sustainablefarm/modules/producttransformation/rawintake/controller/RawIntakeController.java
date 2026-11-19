@@ -98,7 +98,7 @@ public class RawIntakeController {
         existingIntake.setReceivedQuantityKg(request.getReceivedQuantityKg());
         existingIntake.setReceivedVarietyKey(dtoMapper.varietyKey(request.getReceivedVariety()));
         existingIntake.setReceivedGrade(request.getReceivedGrade());
-        existingIntake.setIntakeOperatorId(dtoMapper.personId(request.getIntakeOperator()));
+        existingIntake.setIntakeOperatorId(dtoMapper.personId(request.getIntakeOperatorPersonId()));
         
         RawIntake updatedIntake = rawIntakeService.updateRawIntake(intakeId, existingIntake);
         RawIntakeResponse response = dtoMapper.toResponse(updatedIntake);

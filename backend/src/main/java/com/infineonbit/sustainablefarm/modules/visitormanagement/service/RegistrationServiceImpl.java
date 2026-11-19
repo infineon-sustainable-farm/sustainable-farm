@@ -339,7 +339,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         if (briefing.getStatus() == BriefingStatus.DONE) {
             return toResponse(briefing);
         }
-        briefing.setStaffMemberPersonId(personDirectory.idOf(request.getStaffMember()));
+        briefing.setStaffMemberPersonId(personDirectory.requireExisting(request.getStaffMemberPersonId()));
         briefing.setSignature(request.getSignature());
         briefing.setDeliveredAt(Instant.now());
         briefing.setStatus(BriefingStatus.DONE);

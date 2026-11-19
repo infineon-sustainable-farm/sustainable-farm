@@ -24,6 +24,7 @@ public class OperatorResponse {
 
     private String operatorId;
     private String operatorName;
+    private Long personId;
     private Role role;
     private String certifications;
     private ActiveStatus activeStatus;

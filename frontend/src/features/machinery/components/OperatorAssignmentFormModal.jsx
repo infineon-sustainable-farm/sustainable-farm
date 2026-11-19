@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Field, Input, Modal } from "../../../shared/ui";
+import PersonSelect from "../../../app/PersonSelect";
 import EquipmentField from "./EquipmentField";
 import FormActions from "./FormActions";
 import FormAlert from "./FormAlert";
@@ -9,7 +10,7 @@ const MAX_TEXT_LENGTH = 60;
 
 function toFormState(assignment) {
   return {
-    fullName: assignment?.fullName ?? "",
+    personId: assignment?.personId != null ? String(assignment.personId) : "",
     jobTitle: assignment?.jobTitle ?? "",
     equipmentId: assignment?.equipmentId != null ? String(assignment.equipmentId) : "",
     startDate: assignment?.startDate ?? "",
@@ -40,11 +41,9 @@ function OperatorAssignmentFormModal({
 
   function validate() {
     const errors = {};
-    const fullName = form.fullName.trim();
     const jobTitle = form.jobTitle.trim();
 
-    if (!fullName) errors.fullName = t("operators.fullNameRequired");
-    else if (fullName.length > MAX_TEXT_LENGTH) errors.fullName = t("operators.fullNameTooLong", { max: MAX_TEXT_LENGTH });
+    if (!form.personId) errors.personId = t("operators.personRequired");
 
     if (!jobTitle) errors.jobTitle = t("operators.jobTitleRequired");
     else if (jobTitle.length > MAX_TEXT_LENGTH) errors.jobTitle = t("operators.jobTitleTooLong", { max: MAX_TEXT_LENGTH });
@@ -65,7 +64,7 @@ function OperatorAssignmentFormModal({
     if (Object.keys(errors).length > 0) return;
 
     onSubmit({
-      fullName: form.fullName.trim(),
+      personId: Number(form.personId),
       jobTitle: form.jobTitle.trim(),
       equipmentId: Number(form.equipmentId),
       startDate: form.startDate,
@@ -86,9 +85,14 @@ function OperatorAssignmentFormModal({
       {!hasEquipment && !isEquipmentLoading && <FormAlert tone="warning">{t("operators.noEquipment")}</FormAlert>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <Field label={t("operators.fullName")} error={fieldErrors.fullName}>
-          <Input name="fullName" value={form.fullName} onChange={handleChange} />
-        </Field>
+        <PersonSelect
+          label={t("operators.person")}
+          value={form.personId}
+          currentName={assignment?.fullName}
+          onChange={(id) => setForm((previous) => ({ ...previous, personId: id }))}
+          error={fieldErrors.personId}
+          required
+        />
 
         <Field label={t("operators.jobTitle")} error={fieldErrors.jobTitle}>
           <Input name="jobTitle" value={form.jobTitle} onChange={handleChange} />

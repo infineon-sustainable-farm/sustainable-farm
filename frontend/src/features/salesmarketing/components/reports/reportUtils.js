@@ -46,7 +46,8 @@ export function emptyReportForm() {
     nextRunAt: '',
     scheduleFrequency: '',
     summary: '',
-    generatedBy: '',
+    generatedByPersonId: '',
+    generatedByName: '',
   };
 }
 

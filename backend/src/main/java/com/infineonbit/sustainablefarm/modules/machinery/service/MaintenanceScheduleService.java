@@ -47,7 +47,7 @@ public class MaintenanceScheduleService {
         schedule.setFrequency(trimToNull(request.frequency()));
         schedule.setLastCompleted(request.lastCompleted());
         schedule.setNextDue(request.nextDue());
-        schedule.setOperatorPersonId(personDirectory.idOf(request.operator()));
+        schedule.setOperatorPersonId(personDirectory.requireExisting(request.operatorPersonId()));
 
         try {
             maintenanceScheduleRepository.save(schedule);
@@ -121,8 +121,8 @@ public class MaintenanceScheduleService {
         if (request.nextDue() != null) {
             schedule.setNextDue(request.nextDue());
         }
-        if (request.operator() != null) {
-            schedule.setOperatorPersonId(personDirectory.idOf(request.operator()));
+        if (request.operatorPersonId() != null) {
+            schedule.setOperatorPersonId(personDirectory.requireExisting(request.operatorPersonId()));
         }
 
         return toResponse(maintenanceScheduleRepository.saveAndFlush(schedule));
@@ -162,7 +162,8 @@ public class MaintenanceScheduleService {
                 schedule.getFrequency(),
                 schedule.getLastCompleted(),
                 schedule.getNextDue(),
-                personDirectory.nameOf(schedule.getOperatorPersonId())
+                personDirectory.nameOf(schedule.getOperatorPersonId()),
+                schedule.getOperatorPersonId()
         );
     }
 }

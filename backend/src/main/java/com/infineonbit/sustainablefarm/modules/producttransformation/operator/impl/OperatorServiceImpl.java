@@ -5,7 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.operator.mo
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.service.OperatorService;
-import com.infineonbit.sustainablefarm.modules.staff.api.PersonDetails;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +46,8 @@ public class OperatorServiceImpl implements OperatorService {
     }
 
     /**
-     * Creates the operator role of a person: the person carrying the operator name is reused
-     * (unless it already holds an operator role), or created.
+     * Creates the operator role of an existing person of the people directory (the person is
+     * never created nor renamed here). A person holds one operator role at most.
      */
     @Override
     public Operator createOperator(Operator operator) {
@@ -55,14 +55,16 @@ public class OperatorServiceImpl implements OperatorService {
         if (operator.getActiveStatus() == null) {
             operator.setActiveStatus(ActiveStatus.ACTIVE);
         }
-        PersonDto person = personDirectory.findOrCreate(
-                PersonDetails.named(operator.getOperatorName()),
-                personId -> !operatorRepository.existsByPersonId(personId));
-        operator.setPersonId(person.id());
+        Long personId = operator.getPersonId();
+        PersonDto person = personDirectory.findById(personId).orElseThrow(
+                () -> new IllegalArgumentException("Person " + personId + " not found in the people directory"));
+        if (operatorRepository.existsByPersonId(personId)) {
+            throw new ConflictException("Person " + personId + " already holds an operator role");
+        }
         return withPerson(operatorRepository.save(operator), person);
     }
 
-    /** Updates the role attributes here and the name on the person. */
+    /** Updates the role attributes; the person (name) belongs to the people directory and is not changed. */
     @Override
     public Operator updateOperator(String operatorId, Operator operator) {
         Operator existingOperator = operatorRepository.findByOperatorId(operatorId)
@@ -75,10 +77,7 @@ public class OperatorServiceImpl implements OperatorService {
         if (operator.getActiveStatus() != null) {
             existingOperator.setActiveStatus(operator.getActiveStatus());
         }
-        PersonDto person = personDirectory.update(existingOperator.getPersonId(),
-                PersonDetails.named(operator.getOperatorName()));
-
-        return withPerson(operatorRepository.save(existingOperator), person);
+        return withPerson(operatorRepository.save(existingOperator));
     }
 
     /** Deletes the operator role; the person stays in the staff referential. */

@@ -1,6 +1,7 @@
 import { Plus, Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Field, Input, Modal, Select, Textarea } from '../../../../shared/ui';
+import PersonSelect from '../../../../app/PersonSelect';
 import { REPORT_TYPE_KEYS, REPORT_TYPES, SCHEDULE_FREQUENCIES, STATUS_OPTIONS } from './reportUtils';
 
 /** Create or edit a demand report (POST /api/sales-marketing/demand-reports, PUT /api/sales-marketing/demand-reports/{id}). */
@@ -113,14 +114,13 @@ function ReportFormModal({ open, editingId, form, setForm, saving, onClose, onSu
           )}
         </div>
 
-        <Field label={t('reports.fields.generatedBy')}>
-          <Input
-            type="text"
-            value={form.generatedBy}
-            onChange={set('generatedBy')}
-            placeholder={t('reports.placeholders.generatedBy')}
-          />
-        </Field>
+        <PersonSelect
+          label={t('reports.fields.generatedBy')}
+          value={form.generatedByPersonId}
+          currentName={form.generatedByName}
+          onChange={(id) => setForm((current) => ({ ...current, generatedByPersonId: id }))}
+          placeholder={t('reports.placeholders.generatedBy')}
+        />
         <Field label={t('reports.fields.summary')}>
           <Textarea
             rows={3}

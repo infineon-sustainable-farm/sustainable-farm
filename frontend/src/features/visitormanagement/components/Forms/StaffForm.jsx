@@ -10,8 +10,10 @@ const ROLES = ["GUIDE", "RECEPTION", "MANAGER"];
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 
 /**
- * Staff create/edit form. A new member is always created active; deactivation and reactivation
- * are handled by the table actions, not by this form.
+ * Create/edit form of a person of the farm people directory. The visitor role (guide, reception,
+ * manager) is optional: a farm worker (operator, technician) has none. A new person is always
+ * created active; deactivation and reactivation are handled by the table actions. The form sends
+ * the full record, so an emptied email or phone is cleared.
  */
 export default function StaffForm({ staff, isSubmitting, submitError, serverFieldErrors, onSubmit, onCancel }) {
     const { t } = useTranslation("visitormanagement");
@@ -19,7 +21,7 @@ export default function StaffForm({ staff, isSubmitting, submitError, serverFiel
     const isEditing = Boolean(staff);
 
     const [fullName, setFullName] = useState(staff?.fullName ?? "");
-    const [role, setRole] = useState(staff?.role ?? "GUIDE");
+    const [role, setRole] = useState(staff ? (staff.role ?? "") : "GUIDE");
     const [email, setEmail] = useState(staff?.email ?? "");
     const [phone, setPhone] = useState(staff?.phone ?? "");
     const [fieldErrors, setFieldErrors] = useState({});
@@ -35,7 +37,6 @@ export default function StaffForm({ staff, isSubmitting, submitError, serverFiel
         } else if (fullName.trim().length > 150) {
             errors.fullName = t("staff.form.fullNameTooLong", { max: 150 });
         }
-        if (!role) errors.role = t("staff.form.roleRequired");
         if (email.trim() && !EMAIL_PATTERN.test(email.trim())) {
             errors.email = t("staff.form.emailInvalid");
         } else if (email.trim().length > 200) {
@@ -55,7 +56,7 @@ export default function StaffForm({ staff, isSubmitting, submitError, serverFiel
 
         onSubmit({
             fullName: fullName.trim(),
-            role,
+            role: role || null,
             email: email.trim() || null,
             phone: phone.trim() || null,
             active,
@@ -73,8 +74,9 @@ export default function StaffForm({ staff, isSubmitting, submitError, serverFiel
                     <Input type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} />
                 </Field>
 
-                <Field label={t("staff.form.role")} error={fieldError("role")}>
+                <Field label={t("staff.form.role")} hint={t("staff.form.roleHint")} error={fieldError("role")}>
                     <Select value={role} onChange={(event) => setRole(event.target.value)}>
+                        <option value="">{t("staff.noRole")}</option>
                         {ROLES.map((option) => (
                             <option key={option} value={option}>
                                 {labels.enum(option)}
