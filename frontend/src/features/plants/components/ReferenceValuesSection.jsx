@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Card, EmptyState } from "../../../shared/ui";
+import { useCreateParam } from "../../../shared/hooks/useCreateParam";
 import { useGrowthPhaseShares } from "../hooks/useGrowthPhaseShares";
 import { useSaveGrowthPhaseShare } from "../hooks/useSaveGrowthPhaseShare";
 import { useSaveVarietyReference } from "../hooks/useSaveVarietyReference";
@@ -31,6 +32,9 @@ export default function ReferenceValuesSection() {
     const saveShare = useSaveGrowthPhaseShare();
     // undefined: no dialog; null: a new variety; otherwise the reference to correct.
     const [dialogReference, setDialogReference] = useState(undefined);
+    // "?create=variety": another module sent the user here to add a variety (app/ownerLinks.js).
+    const [createRequested, clearCreateRequest] = useCreateParam("variety");
+    const shownReference = dialogReference === undefined && createRequested ? null : dialogReference;
     const [editingShareCode, setEditingShareCode] = useState(null);
 
     function openReferenceForm(reference) {
@@ -39,13 +43,14 @@ export default function ReferenceValuesSection() {
     }
 
     function closeReferenceForm() {
+        clearCreateRequest();
         saveReference.reset();
         setDialogReference(undefined);
     }
 
     function submitReference(values) {
         saveReference.mutate(
-            { id: dialogReference === null ? null : dialogReference.id, reference: values },
+            { id: shownReference === null ? null : shownReference.id, reference: values },
             { onSuccess: closeReferenceForm },
         );
     }
@@ -113,9 +118,9 @@ export default function ReferenceValuesSection() {
                 </Card>
             )}
 
-            {dialogReference !== undefined && (
+            {shownReference !== undefined && (
                 <VarietyReferenceModal
-                    reference={dialogReference}
+                    reference={shownReference}
                     isSubmitting={saveReference.isPending}
                     error={saveReference.error}
                     onSubmit={submitReference}

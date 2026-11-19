@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCreateStaff, useStaffList, useStaffStatusAction, useUpdateStaff } from "../../hooks/useStaff";
 import { Button, ConfirmDialog, Field, Modal, PageHeader, Select } from "../../../../shared/ui";
+import { useCreateParam } from "../../../../shared/hooks/useCreateParam";
 import { useLabels } from "../../utils/labels";
 import StaffForm from "../Forms/StaffForm";
 import StaffTable from "../StaffTable";
@@ -18,6 +19,9 @@ export default function StaffPage() {
     const [formKey, setFormKey] = useState(0);
     const [roleFilter, setRoleFilter] = useState("");
     const [showInactive, setShowInactive] = useState(false);
+    // "?create=1": another module sent the user here to add a person (app/ownerLinks.js).
+    const [createRequested, clearCreateRequest] = useCreateParam();
+    const formOpen = formState.open || createRequested;
 
     useEffect(() => {
         document.title = t("staff.documentTitle");
@@ -45,6 +49,7 @@ export default function StaffPage() {
     );
 
     function resetForm() {
+        clearCreateRequest();
         setFormState({ open: false, staff: null });
         setFormKey((current) => current + 1);
         createMutation.reset();
@@ -144,13 +149,13 @@ export default function StaffPage() {
             )}
 
             <Modal
-                open={formState.open}
+                open={formOpen}
                 onClose={resetForm}
                 size="xl"
                 dismissible={!formMutation.isPending}
                 title={editingStaff ? t("staff.editTitle", { name: editingStaff.fullName }) : t("staff.new")}
             >
-                {formState.open && (
+                {formOpen && (
                     <StaffForm
                         key={formKey}
                         staff={editingStaff}

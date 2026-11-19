@@ -54,5 +54,13 @@
     "eyebrow": "De Banfora, au Burkina Faso, jusqu’en Allemagne",
     "hero": "Du verger à l’export, une seule plateforme.",
     "lede": "Enregistrez le travail de la ferme et décidez avec les mêmes données à chaque étape de la filière mangue séchée."
+  },
+  "owner": {
+    "choose": "Choisir…",
+    "none": "Aucun choix disponible",
+    "loadError": "La liste n’a pas pu se charger.",
+    "askToAdd": "Demandez au module {{module}} de l’ajouter.",
+    "notInList": "Absent de la liste ? Demandez au module {{module}}.",
+    "addIn": "L’ajouter dans {{module}}"
   }
 }
