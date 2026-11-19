@@ -257,7 +257,7 @@ function VisitorPreviewPanel() {
           />
           <Stat
             label={t('visitors.preview.used', { minutes: format.number(live?.windowMinutes ?? 15) })}
-            value={format.liters(live?.liters ?? 0)}
+            value={live?.liters == null ? t('common.none') : format.liters(live.liters)}
           />
         </div>
         {irrigation && (

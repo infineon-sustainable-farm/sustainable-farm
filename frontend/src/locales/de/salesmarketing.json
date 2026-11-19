@@ -98,7 +98,8 @@
       "products": "Produkte: {{message}}",
       "pricing": "Preise: {{message}}",
       "customers": "Kunden: {{message}}",
-      "orders": "Bestellungen: {{message}}"
+      "orders": "Bestellungen: {{message}}",
+      "varieties": "Sorten: {{message}}"
     },
     "forecastCreated": "Prognose erfolgreich erstellt.",
     "forecastCreateFailed": "Prognose konnte nicht erstellt werden",
@@ -142,7 +143,8 @@
     },
     "harvest": {
       "title": "Haupterntezeit",
-      "months": "März - Juli"
+      "range": "{{from}} - {{to}}",
+      "none": "Noch keine Erntemonate für die Produkte bekannt."
     },
     "batches": {
       "title": "Produktverarbeitung",

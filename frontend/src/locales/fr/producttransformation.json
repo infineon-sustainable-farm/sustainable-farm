@@ -544,9 +544,7 @@
     "title": "Tableau de bord de la transformation",
     "period": "Période : {{period}} ({{start}} → {{end}})",
     "naShort": "n.d.",
-    "sourceDemo": "Source : données DÉMO (format Plants)",
     "sourcePlants": "Source : récoltes de Plants",
-    "demoNotice": "Jeu de démonstration : enregistrements de transformation synthétiques (lots LOT-DEMO), pas de vraies récoltes de Plants. Voir backend/src/main/resources/seed/producttransformation-demo-seed.sql.",
     "loadError": "Impossible de charger les indicateurs du tableau de bord. Réessayez plus tard.",
     "pieLabel": "{{name}} {{value}} %",
     "kpis": {
