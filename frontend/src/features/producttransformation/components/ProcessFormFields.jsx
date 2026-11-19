@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Field, Input, Select } from '../../../shared/ui';
+import { OWNER_LINKS } from '../../../app/ownerLinks';
+import { Field, Input, OwnedResourceSelect, Select } from '../../../shared/ui';
 import { equipmentStatusLabel } from './processRun';
 
 /**
@@ -41,23 +42,30 @@ export function PeriodFields({ startTime, endTime, onStartChange, onEndChange })
   );
 }
 
+/**
+ * The machine is picked among the machines of Machinery, which owns them (`onEquipmentChange`
+ * receives the equipment ID); a missing one is added there, through the owner link.
+ */
 export function AssignmentFields({ equipmentId, operatorId, onEquipmentChange, onOperatorChange, equipment, operators }) {
   const { t } = useTranslation('producttransformation');
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <Field label={t('washSort.equipment')}>
-        <Select value={equipmentId} onChange={onEquipmentChange}>
-          <option value="">{t('washSort.noEquipment')}</option>
-          {equipment.map((item) => (
-            <option key={item.equipmentId} value={item.equipmentId}>
-              {t('washSort.equipmentOption', {
-                name: item.equipmentName,
-                status: equipmentStatusLabel(item.maintenanceStatus),
-              })}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      <OwnedResourceSelect
+        label={t('washSort.equipment')}
+        value={equipmentId}
+        onChange={onEquipmentChange}
+        options={equipment}
+        getOptionValue={(item) => item.equipmentId}
+        getOptionLabel={(item) =>
+          t('washSort.equipmentOption', {
+            name: item.equipmentName,
+            status: equipmentStatusLabel(item.maintenanceStatus),
+          })
+        }
+        placeholder={t('washSort.noEquipment')}
+        owner={OWNER_LINKS.equipment}
+        showOwnerLinkAlways
+      />
       <Field label={t('washSort.operator')}>
         <Select value={operatorId} onChange={onOperatorChange}>
           <option value="">{t('washSort.noOperator')}</option>

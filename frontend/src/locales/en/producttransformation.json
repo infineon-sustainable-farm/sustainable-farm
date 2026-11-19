@@ -474,10 +474,10 @@
   },
   "equipment": {
     "title": "Equipment",
-    "subtitle": "Product Transformation equipment: capacity, energy use and maintenance status.",
-    "new": "New Equipment",
-    "newTitle": "New Equipment",
-    "editTitle": "Edit Equipment",
+    "subtitle": "Processing and drying machines of Machinery, with their capacity, energy use and location.",
+    "editSpecs": "Edit specs",
+    "editTitle": "Edit equipment specs",
+    "machineryNote": "The ID, name and status of a machine are managed in Machinery.",
     "count": "{{count}} equipment",
     "type": "Type",
     "status": "Status",
@@ -510,19 +510,14 @@
     "location": "Location",
     "lastMaintenance": "Last Maintenance",
     "validation": {
-      "idRequired": "Equipment ID is required",
-      "nameRequired": "Equipment name is required",
       "typeRequired": "Equipment type is required",
       "capacityPositive": "Capacity must be greater than 0",
       "energyPositive": "Energy consumption must be greater than 0"
     },
     "saveError": "Failed to save the equipment",
-    "deleteError": "Failed to delete the equipment",
     "loadError": "Failed to load equipment",
-    "empty": "No equipment found",
-    "noMatch": "No equipment matches the filters",
-    "deleteTitle": "Delete equipment",
-    "deleteMessage": "Delete equipment {{id}}? This action cannot be undone."
+    "empty": "No processing or drying machine in Machinery yet",
+    "noMatch": "No equipment matches the filters"
   },
   "batches": {
     "title": "Batch Management",
