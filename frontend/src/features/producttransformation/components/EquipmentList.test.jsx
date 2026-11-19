@@ -3,15 +3,14 @@
 // extra Vitest configuration (same approach as the Water Supply view tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import EquipmentList from './EquipmentList';
 import { equipmentApi } from '../api/equipmentApi';
 
 vi.mock('../api/equipmentApi', () => ({
   equipmentApi: {
     getAllEquipment: vi.fn(),
-    createEquipment: vi.fn(),
     updateEquipment: vi.fn(),
-    deleteEquipment: vi.fn(),
   },
 }));
 
@@ -50,17 +49,19 @@ const EQUIPMENT = [
   },
 ];
 
+const renderList = () => render(<EquipmentList />, { wrapper: MemoryRouter });
+
+const MACHINERY_CREATE = '/machinery/equipment-registry?create=1';
+
 beforeEach(() => {
   vi.clearAllMocks();
   equipmentApi.getAllEquipment.mockResolvedValue(EQUIPMENT.map((item) => ({ ...item })));
-  equipmentApi.createEquipment.mockResolvedValue({});
   equipmentApi.updateEquipment.mockResolvedValue({});
-  equipmentApi.deleteEquipment.mockResolvedValue(undefined);
 });
 
 describe('EquipmentList', () => {
   it('renders equipment with type, capacity, energy and maintenance status', async () => {
-    render(<EquipmentList />);
+    renderList();
 
     // The loading state is a skeleton table: wait for the rows before reading the table.
     await screen.findByText('EQ-1');
@@ -74,7 +75,26 @@ describe('EquipmentList', () => {
     expect(within(table).getByText('Maintenance')).toBeTruthy();
   });
 
-  it('lists a machine registered from Machinery without its PT attributes', async () => {
+  it('creates and deletes no machine: Machinery owns them, the screen links to it', async () => {
+    renderList();
+    await screen.findByText('EQ-1');
+
+    expect(screen.queryByRole('button', { name: /New Equipment/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+    expect(screen.getByText('Not in the list? Ask the Machinery module.')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Add it in Machinery' }).getAttribute('href')).toBe(MACHINERY_CREATE);
+  });
+
+  it('sends the user to Machinery when it has no processing machine yet', async () => {
+    equipmentApi.getAllEquipment.mockResolvedValue([]);
+    renderList();
+
+    expect(await screen.findByText('No processing or drying machine in Machinery yet')).toBeTruthy();
+    expect(screen.getByText('Ask the Machinery module to add it.')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Add it in Machinery' }).getAttribute('href')).toBe(MACHINERY_CREATE);
+  });
+
+  it('lists a machine registered from Machinery without its PT attributes and edits its specs', async () => {
     equipmentApi.getAllEquipment.mockResolvedValue([
       {
         equipmentId: 'EQ-00007',
@@ -87,45 +107,80 @@ describe('EquipmentList', () => {
         lastMaintenanceDate: null,
       },
     ]);
-    render(<EquipmentList />);
+    renderList();
 
     // The loading state is a skeleton table: wait for the rows before reading the table.
     await screen.findByText('EQ-00007');
     const table = screen.getByRole('table');
-    expect(within(table).getByText('EQ-00007')).toBeTruthy();
     expect(within(table).getByText('Drum dryer')).toBeTruthy();
     expect(within(table).getByText('N/A kg/h')).toBeTruthy();
 
-    fireEvent.click(within(table).getByRole('button', { name: 'Edit' }));
-    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(table).getByRole('button', { name: 'Edit specs' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit equipment specs' });
     fireEvent.change(within(dialog).getByLabelText('Type'), { target: { value: 'TUNNEL_DRYER' } });
     fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), { target: { value: '90' } });
     fireEvent.change(within(dialog).getByLabelText('Energy (kWh/kg)'), { target: { value: '1.2' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     await waitFor(() =>
-      expect(equipmentApi.updateEquipment).toHaveBeenCalledWith(
-        'EQ-00007',
-        expect.objectContaining({
-          equipmentName: 'Drum dryer',
-          equipmentType: 'TUNNEL_DRYER',
-          capacityKgPerHour: 90,
-          energyConsumptionKwhPerKg: 1.2,
-        }),
-      ),
+      expect(equipmentApi.updateEquipment).toHaveBeenCalledWith('EQ-00007', {
+        equipmentType: 'TUNNEL_DRYER',
+        capacityKgPerHour: 90,
+        energyConsumptionKwhPerKg: 1.2,
+        location: null,
+        lastMaintenanceDate: null,
+      }),
     );
   });
 
-  it('limits the name to 100 characters, like the Machinery form', async () => {
-    render(<EquipmentList />);
+  it('edits only the specs: ID, name and status stay read-only and are not sent', async () => {
+    renderList();
     await screen.findByText('EQ-1');
-    fireEvent.click(screen.getByRole('button', { name: /New Equipment/i }));
+
+    const row = screen.getByText('EQ-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit specs' }));
+
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByLabelText('Name').getAttribute('maxlength')).toBe('100');
+    expect(within(dialog).getByLabelText('Equipment ID').disabled).toBe(true);
+    expect(within(dialog).getByLabelText('Name').disabled).toBe(true);
+    expect(within(dialog).getByLabelText('Maintenance Status').disabled).toBe(true);
+    expect(within(dialog).getByText('The ID, name and status of a machine are managed in Machinery.')).toBeTruthy();
+
+    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), { target: { value: '130' } });
+    fireEvent.change(within(dialog).getByLabelText('Location'), { target: { value: 'Hall B' } });
+    fireEvent.change(within(dialog).getByLabelText('Last Maintenance'), { target: { value: '2026-11-09' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(equipmentApi.updateEquipment).toHaveBeenCalledWith('EQ-1', {
+        equipmentType: 'SOLAR_DRYER',
+        capacityKgPerHour: 130,
+        energyConsumptionKwhPerKg: 0.85,
+        location: 'Hall B',
+        lastMaintenanceDate: '2026-11-09',
+      }),
+    );
+    await waitFor(() => expect(equipmentApi.getAllEquipment).toHaveBeenCalledTimes(2));
+  });
+
+  it('rejects a non-positive capacity', async () => {
+    renderList();
+    await screen.findByText('EQ-1');
+
+    const row = screen.getByText('EQ-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit specs' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), { target: { value: '0' } });
+    // jsdom enforces the native `min` constraint on click, so submit directly to
+    // exercise the JavaScript validation backstop.
+    fireEvent.submit(dialog.querySelector('form'));
+
+    expect(screen.getByText('Capacity must be greater than 0')).toBeTruthy();
+    expect(equipmentApi.updateEquipment).not.toHaveBeenCalled();
   });
 
   it('filters by type, status and search', async () => {
-    render(<EquipmentList />);
+    renderList();
     await screen.findByText('EQ-1');
 
     fireEvent.change(screen.getByLabelText('Filter by type'), {
@@ -149,133 +204,10 @@ describe('EquipmentList', () => {
     expect(screen.queryByText('EQ-1')).toBeNull();
   });
 
-  it('creates equipment through the API and reloads the list', async () => {
-    render(<EquipmentList />);
-    await screen.findByText('EQ-1');
-
-    fireEvent.click(screen.getByRole('button', { name: /New Equipment/i }));
-    const dialog = screen.getByRole('dialog');
-
-    fireEvent.change(within(dialog).getByLabelText('Equipment ID'), {
-      target: { value: 'EQ-4' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Name'), {
-      target: { value: 'Tunnel dryer 1' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Type'), {
-      target: { value: 'TUNNEL_DRYER' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Maintenance Status'), {
-      target: { value: 'ACTIVE' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), {
-      target: { value: '95' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Energy (kWh/kg)'), {
-      target: { value: '0.9' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Location'), {
-      target: { value: 'Unit PT' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Last Maintenance'), {
-      target: { value: '2026-11-09' },
-    });
-
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
-
-    await waitFor(() =>
-      expect(equipmentApi.createEquipment).toHaveBeenCalledWith({
-        equipmentId: 'EQ-4',
-        equipmentName: 'Tunnel dryer 1',
-        equipmentType: 'TUNNEL_DRYER',
-        capacityKgPerHour: 95,
-        energyConsumptionKwhPerKg: 0.9,
-        location: 'Unit PT',
-        maintenanceStatus: 'ACTIVE',
-        lastMaintenanceDate: '2026-11-09',
-      }),
-    );
-    await waitFor(() => expect(equipmentApi.getAllEquipment).toHaveBeenCalledTimes(2));
-  });
-
-  it('rejects a non-positive capacity', async () => {
-    render(<EquipmentList />);
-    await screen.findByText('EQ-1');
-
-    fireEvent.click(screen.getByRole('button', { name: /New Equipment/i }));
-    const dialog = screen.getByRole('dialog');
-
-    fireEvent.change(within(dialog).getByLabelText('Equipment ID'), {
-      target: { value: 'EQ-4' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Name'), {
-      target: { value: 'Tunnel dryer 1' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), {
-      target: { value: '0' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Energy (kWh/kg)'), {
-      target: { value: '0.9' },
-    });
-    // jsdom enforces the native `min` constraint on click, so submit directly to
-    // exercise the JavaScript validation backstop.
-    fireEvent.submit(dialog.querySelector('form'));
-
-    expect(screen.getByText('Capacity must be greater than 0')).toBeTruthy();
-    expect(equipmentApi.createEquipment).not.toHaveBeenCalled();
-  });
-
-  it('edits equipment, keeping the identifier read-only', async () => {
-    render(<EquipmentList />);
-    await screen.findByText('EQ-1');
-
-    const row = screen.getByText('EQ-1').closest('tr');
-    fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
-
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByLabelText('Equipment ID').disabled).toBe(true);
-
-    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), {
-      target: { value: '130' },
-    });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-
-    await waitFor(() =>
-      expect(equipmentApi.updateEquipment).toHaveBeenCalledWith(
-        'EQ-1',
-        expect.objectContaining({
-          equipmentName: 'Solar dryer 1',
-          equipmentType: 'SOLAR_DRYER',
-          capacityKgPerHour: 130,
-          energyConsumptionKwhPerKg: 0.85,
-          location: 'Unit PT',
-          maintenanceStatus: 'ACTIVE',
-          lastMaintenanceDate: '2026-10-20',
-        }),
-      ),
-    );
-    expect(equipmentApi.updateEquipment.mock.calls[0][1]).not.toHaveProperty('equipmentId');
-  });
-
-  it('deletes equipment after confirmation', async () => {
-    render(<EquipmentList />);
-    await screen.findByText('EQ-1');
-
-    const row = screen.getByText('EQ-1').closest('tr');
-    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
-
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText(/Delete equipment EQ-1/)).toBeTruthy();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
-
-    await waitFor(() => expect(equipmentApi.deleteEquipment).toHaveBeenCalledWith('EQ-1'));
-    await waitFor(() => expect(equipmentApi.getAllEquipment).toHaveBeenCalledTimes(2));
-  });
-
   it('shows an error state and retries the load', async () => {
     equipmentApi.getAllEquipment.mockRejectedValueOnce(new Error('Network down'));
 
-    render(<EquipmentList />);
+    renderList();
 
     expect(await screen.findByText('Network down')).toBeTruthy();
 
@@ -283,32 +215,16 @@ describe('EquipmentList', () => {
 
     expect(await screen.findByText('EQ-1')).toBeTruthy();
   });
-  it('keeps the delete dialog open with the server error when the deletion fails', async () => {
-    equipmentApi.deleteEquipment.mockRejectedValueOnce(new Error('Equipment in use'));
-    render(<EquipmentList />);
+
+  it('shows the server error in the form and closes it on Cancel', async () => {
+    equipmentApi.updateEquipment.mockRejectedValueOnce(new Error(''));
+    renderList();
     await screen.findByText('EQ-1');
 
     const row = screen.getByText('EQ-1').closest('tr');
-    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
-
-    expect(await within(dialog).findByText('Equipment in use')).toBeTruthy();
-    expect(equipmentApi.getAllEquipment).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows the server error in the form and closes it on Cancel', async () => {
-    equipmentApi.createEquipment.mockRejectedValueOnce(new Error(''));
-    render(<EquipmentList />);
-    await screen.findByText('EQ-1');
-
-    fireEvent.click(screen.getByRole('button', { name: /New Equipment/i }));
-    const dialog = screen.getByRole('dialog', { name: 'New Equipment' });
-    fireEvent.change(within(dialog).getByLabelText('Equipment ID'), { target: { value: 'EQ-4' } });
-    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'Dryer' } });
-    fireEvent.change(within(dialog).getByLabelText('Capacity (kg/h)'), { target: { value: '10' } });
-    fireEvent.change(within(dialog).getByLabelText('Energy (kWh/kg)'), { target: { value: '1' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit specs' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit equipment specs' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(await within(dialog).findByText('Failed to save the equipment')).toBeTruthy();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
