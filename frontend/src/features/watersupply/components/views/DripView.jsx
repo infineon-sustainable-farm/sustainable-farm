@@ -15,6 +15,7 @@ import {
   Table,
   Textarea,
 } from '../../../../shared/ui'
+import PersonSelect from '../../../../app/PersonSelect'
 import { useListControls } from '../../../../shared/hooks/useListControls'
 import { dripMaintenanceApi } from '../../api/watersupplyApi'
 import { useDripMaintenanceLogs } from '../../hooks/useWaterData'
@@ -42,7 +43,8 @@ const EMPTY_FORM = {
   cloggingSeverity: '',
   emitterReplacedCount: '',
   notes: '',
-  performedBy: '',
+  performedByPersonId: '',
+  performedByName: '',
 }
 // Native checkbox (the kit has none), in the primary colour with the kit focus mark.
 const CHECKBOX = 'size-4 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring'
@@ -58,7 +60,8 @@ function severityTone(severity) {
 /**
  * Drip view: maintenance interventions (full CRUD).
  * Backend contract: DripMaintenanceLog { zoneId, maintenanceDate, maintenanceType,
- * filterCleaned, cloggingDetected, cloggingSeverity, emitterReplacedCount, notes, performedBy }.
+ * filterCleaned, cloggingDetected, cloggingSeverity, emitterReplacedCount, notes, performedByPersonId }
+ * (performedBy, the name, in the responses). The person is picked in the farm people directory.
  */
 export function DripView({ notify }) {
   const { t } = useTranslation('watersupply')
@@ -140,7 +143,7 @@ export function DripView({ notify }) {
       cloggingSeverity: form.cloggingDetected ? form.cloggingSeverity || 'low' : null,
       emitterReplacedCount: form.emitterReplacedCount === '' ? 0 : Number(form.emitterReplacedCount),
       notes: form.notes || null,
-      performedBy: form.performedBy || null,
+      performedByPersonId: form.performedByPersonId ? Number(form.performedByPersonId) : null,
     }
     const request = editingId ? dripMaintenanceApi.updateLog(editingId, payload) : dripMaintenanceApi.createLog(payload)
     request
@@ -164,7 +167,8 @@ export function DripView({ notify }) {
       cloggingSeverity: item.cloggingSeverity || '',
       emitterReplacedCount: item.emitterReplacedCount ?? '',
       notes: item.notes || '',
-      performedBy: item.performedBy || '',
+      performedByPersonId: item.performedByPersonId != null ? String(item.performedByPersonId) : '',
+      performedByName: item.performedBy || '',
     })
     setFormError(null)
   }
@@ -314,9 +318,13 @@ export function DripView({ notify }) {
               <Field label={t('maintenance.form.emitters')}>
                 <Input type="number" min="0" step="1" value={form.emitterReplacedCount} onChange={updateForm('emitterReplacedCount')} />
               </Field>
-              <Field label={t('maintenance.form.performedBy')}>
-                <Input value={form.performedBy} onChange={updateForm('performedBy')} />
-              </Field>
+              <PersonSelect
+                label={t('maintenance.form.performedBy')}
+                value={form.performedByPersonId}
+                currentName={form.performedByName}
+                onChange={(id) => setForm((current) => ({ ...current, performedByPersonId: id }))}
+                placeholder={t('maintenance.form.noPerformer')}
+              />
               <Field label={t('maintenance.form.notes')}>
                 <Textarea value={form.notes} onChange={updateForm('notes')} />
               </Field>

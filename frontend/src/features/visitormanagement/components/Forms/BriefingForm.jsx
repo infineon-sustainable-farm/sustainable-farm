@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Field, Input } from "../../../../shared/ui";
+import PersonSelect from "../../../../app/PersonSelect";
 import FormActions from "../FormActions";
 import FormAlert from "../FormAlert";
 
-const MAX_STAFF_LENGTH = 150;
-
 /**
- * Briefing delivery form, opened from a tracker row. The staff name is a free input backed by a
- * datalist of the active staff (rendered by the page), so a guest can still be recorded if they
- * are not in the list. The group leader's signature is a plain checkbox: ticking it records the
+ * Briefing delivery form, opened from a tracker row. Who delivered it is picked in the farm people
+ * directory (the Staff screen of this module adds a missing person). The group leader's signature is a plain checkbox: ticking it records the
  * proof of delivery.
  */
 export default function BriefingForm({
@@ -21,23 +18,21 @@ export default function BriefingForm({
     onCancel,
 }) {
     const { t } = useTranslation("visitormanagement");
-    const [staffMember, setStaffMember] = useState("");
+    const [staffMemberPersonId, setStaffMemberPersonId] = useState("");
     const [signed, setSigned] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
 
     function handleSubmit(event) {
         event.preventDefault();
         const errors = {};
-        if (!staffMember.trim()) {
-            errors.staffMember = t("safety.form.staffRequired");
-        } else if (staffMember.trim().length > MAX_STAFF_LENGTH) {
-            errors.staffMember = t("safety.form.staffTooLong", { max: MAX_STAFF_LENGTH });
+        if (!staffMemberPersonId) {
+            errors.staffMemberPersonId = t("safety.form.staffRequired");
         }
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
 
         onSubmit({
-            staffMember: staffMember.trim(),
+            staffMemberPersonId: Number(staffMemberPersonId),
             signature: signed ? "signed" : null,
         });
     }
@@ -49,17 +44,14 @@ export default function BriefingForm({
     return (
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field
+                <PersonSelect
                     id={`briefing-staff-${registrationId}`}
                     label={t("safety.form.deliveredBy")}
-                    error={fieldError("staffMember")}
-                >
-                    <Input
-                        list="briefing-staff-names"
-                        value={staffMember}
-                        onChange={(event) => setStaffMember(event.target.value)}
-                    />
-                </Field>
+                    value={staffMemberPersonId}
+                    onChange={(id) => setStaffMemberPersonId(id)}
+                    error={fieldError("staffMemberPersonId") ?? fieldError("staffMember")}
+                    required
+                />
                 <div className="flex flex-col justify-end pb-2">
                     <label htmlFor={signatureId} className="flex items-center gap-2 text-sm">
                         <input

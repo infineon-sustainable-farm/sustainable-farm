@@ -389,15 +389,17 @@
   "staff": {
     "documentTitle": "Personal — Besucherverwaltung",
     "title": "Personal & Guides",
-    "new": "Neues Teammitglied",
-    "editTitle": "Teammitglied bearbeiten — {{name}}",
+    "subtitle": "Das Personenverzeichnis des Betriebs: Wer in einem Modul als Bediener, Techniker, Beobachter oder Guide ausgewählt wird, wird hier angelegt und bearbeitet.",
+    "new": "Neue Person",
+    "editTitle": "Person bearbeiten — {{name}}",
     "roleFilter": "Rolle",
     "allRoles": "Alle Rollen",
+    "noRole": "Keine Besucherrolle",
     "showInactive": "Inaktive anzeigen",
     "loading": "Personal wird geladen…",
     "loadError": "Das Personal konnte nicht geladen werden",
-    "footnote": "Die einem Zeitfenster zugewiesenen Guides und das bei einer Einweisung erfasste Personal stammen aus dieser Liste. Ein deaktiviertes Mitglied bleibt gespeichert, erscheint aber in keiner Auswahl mehr.",
-    "noMatch": "Kein Teammitglied entspricht diesem Filter.",
+    "footnote": "Alle Module wählen ihre Bediener, Techniker und Beobachter aus dieser Liste; einem Zeitfenster zugewiesene Guides brauchen die Rolle Guide. Eine deaktivierte Person bleibt gespeichert, erscheint aber in keiner Auswahl mehr.",
+    "noMatch": "Keine Person entspricht diesem Filter.",
     "edit": "bearbeiten",
     "deactivate": "deaktivieren",
     "deactivating": "wird deaktiviert…",
@@ -418,6 +420,7 @@
     "form": {
       "fullName": "Vollständiger Name",
       "role": "Rolle",
+      "roleHint": "Nur Guides, Empfang und Leitung haben eine Besucherrolle; für andere Mitarbeitende des Betriebs leer lassen.",
       "email": "E-Mail",
       "phone": "Telefon",
       "status": "Status",
@@ -425,12 +428,11 @@
       "phonePlaceholder": "+226 ...",
       "fullNameRequired": "Der vollständige Name ist erforderlich.",
       "fullNameTooLong": "Der vollständige Name darf höchstens {{max}} Zeichen lang sein.",
-      "roleRequired": "Wählen Sie eine Rolle.",
       "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein.",
       "emailTooLong": "Die E-Mail-Adresse darf höchstens {{max}} Zeichen lang sein.",
       "phoneTooLong": "Die Telefonnummer darf höchstens {{max}} Zeichen lang sein.",
-      "save": "Teammitglied speichern",
-      "create": "Teammitglied anlegen"
+      "save": "Person speichern",
+      "create": "Person anlegen"
     }
   },
   "education": {
@@ -504,8 +506,8 @@
       "durationPlaceholder": "z. B. 40",
       "targetGroup": "Zielgruppe",
       "targetGroupPlaceholder": "z. B. Allgemeines Publikum, Schule, Fachpublikum",
-      "facilitator": "Leitung (Guide)",
-      "selectGuide": "Guide auswählen…",
+      "facilitator": "Leitung",
+      "selectFacilitator": "Keine Leitung",
       "save": "Workshop speichern",
       "create": "Workshop anlegen"
     },

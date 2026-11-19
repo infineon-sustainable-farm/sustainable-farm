@@ -5,6 +5,7 @@ import { useHealthIssues } from "../hooks/useHealthIssues";
 import { formatDate, formatUnit } from "../utils/format";
 import { issueOptions, OTHER_ISSUE_CODE, todayAsIsoDate } from "../utils/healthIssues";
 import FindingSummary from "./FindingSummary";
+import PersonSelect from "../../../app/PersonSelect";
 import FormAlert from "./FormAlert";
 import HealthFormActions from "./HealthFormActions";
 import TreatmentTargetFields from "./TreatmentTargetFields";
@@ -33,7 +34,7 @@ const INITIAL_VALUES = {
     activeIngredient: "",
     quantity: "",
     unit: "",
-    applicator: "",
+    applicatorPersonId: "",
     equipment: "",
 };
 
@@ -157,8 +158,9 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
         if (!values.unit) {
             errors.unit = t("health.treatmentForm.errors.unitRequired");
         }
-        const applicatorError = checkText(values.applicator, "applicator", t);
-        if (applicatorError) errors.applicator = applicatorError;
+        if (!values.applicatorPersonId) {
+            errors.applicatorPersonId = t("health.treatmentForm.errors.applicatorRequired");
+        }
         if (values.equipment.length > TEXT_MAX_LENGTH) {
             errors.equipment = t("health.treatmentForm.errors.equipmentTooLong");
         }
@@ -178,7 +180,7 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
             quantity: Number(values.quantity.trim()),
             unit: values.unit,
             preHarvestIntervalDays: Number(values.preHarvestIntervalDays.trim()),
-            applicator: values.applicator,
+            applicatorPersonId: Number(values.applicatorPersonId),
         };
         if (values.equipment.trim()) treatment.equipment = values.equipment;
         if (isPreventive) {
@@ -193,7 +195,7 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
     const unitOptions = UNITS.map((code) => ({ value: code, label: formatUnit(code) }));
     // Props of the plain text fields, by field name.
     const textInputs = Object.fromEntries(
-        ["productName", "activeIngredient", "applicator", "equipment"].map((field) => [
+        ["productName", "activeIngredient", "equipment"].map((field) => [
             field,
             { type: "text", value: values[field], onChange: (event) => setValue(field, event.target.value) },
         ]),
@@ -291,13 +293,14 @@ export default function TreatmentModal({ finding, blocks, isSubmitting, error, o
                         </Select>
                     </Field>
 
-                    <Field
+                    <PersonSelect
                         id="treatment-applicator"
                         label={t("health.treatmentForm.applicator")}
-                        error={fieldError("applicator")}
-                    >
-                        <Input {...textInputs.applicator} />
-                    </Field>
+                        value={values.applicatorPersonId}
+                        onChange={(id) => setValue("applicatorPersonId", id)}
+                        error={fieldError("applicatorPersonId")}
+                        required
+                    />
 
                     <Field
                         id="treatment-equipment"

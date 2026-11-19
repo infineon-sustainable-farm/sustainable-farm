@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deliverBriefing, fetchBriefing, fetchStaff } from "../api/visitormanagementApi";
+import { deliverBriefing, fetchBriefing } from "../api/visitormanagementApi";
 
 const BRIEFINGS_KEY = ["visitormanagement", "briefings"];
-const STAFF_KEY = ["visitormanagement", "staff"];
 const DASHBOARD_KEY = ["visitormanagement", "dashboard"];
 
 /**
@@ -15,19 +14,6 @@ export function useBriefing(registrationId, enabled = true) {
         queryKey: [...BRIEFINGS_KEY, { registrationId }],
         queryFn: () => fetchBriefing(registrationId),
         enabled: Boolean(registrationId) && enabled,
-    });
-}
-
-/**
- * The active staff members, offered as suggestions for the "delivered by"
- * field. Any role can deliver a briefing (front desk, guide, farm), so this is
- * not restricted to guides as the scheduling screen does.
- */
-export function useActiveStaff() {
-    return useQuery({
-        queryKey: STAFF_KEY,
-        queryFn: fetchStaff,
-        select: (staff) => staff.filter((member) => member.active),
     });
 }
 

@@ -3,12 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Field, Input, Modal, Select } from "../../../shared/ui";
 import { MAINTENANCE_TYPE } from "../constants";
 import { useEnumLabels } from "../format";
+import PersonSelect from "../../../app/PersonSelect";
 import EquipmentField from "./EquipmentField";
 import FormActions from "./FormActions";
 import FormAlert from "./FormAlert";
 
 const MAX_FREQUENCY_LENGTH = 100;
-const MAX_OPERATOR_LENGTH = 60;
 
 const initialForm = {
   equipmentId: "",
@@ -16,7 +16,7 @@ const initialForm = {
   frequency: "",
   lastCompleted: "",
   nextDue: "",
-  operator: "",
+  operatorPersonId: "",
 };
 
 function toFormState(schedule) {
@@ -28,7 +28,7 @@ function toFormState(schedule) {
     frequency: schedule.frequency ?? "",
     lastCompleted: schedule.lastCompleted ?? "",
     nextDue: schedule.nextDue ?? "",
-    operator: schedule.operator ?? "",
+    operatorPersonId: schedule.operatorPersonId != null ? String(schedule.operatorPersonId) : "",
   };
 }
 
@@ -67,9 +67,6 @@ function MaintenanceScheduleFormModal({
     if (form.frequency.trim().length > MAX_FREQUENCY_LENGTH) {
       errors.frequency = t("maintenance.frequencyTooLong", { max: MAX_FREQUENCY_LENGTH });
     }
-    if (form.operator.trim().length > MAX_OPERATOR_LENGTH) {
-      errors.operator = t("validation.operatorTooLong", { max: MAX_OPERATOR_LENGTH });
-    }
 
     return errors;
   }
@@ -86,7 +83,7 @@ function MaintenanceScheduleFormModal({
       frequency: form.frequency.trim() || null,
       lastCompleted: form.lastCompleted,
       nextDue: form.nextDue,
-      operator: form.operator.trim() || null,
+      operatorPersonId: form.operatorPersonId ? Number(form.operatorPersonId) : null,
     });
   }
 
@@ -141,9 +138,14 @@ function MaintenanceScheduleFormModal({
           </Field>
         </div>
 
-        <Field label={t("fields.operator")} error={fieldErrors.operator}>
-          <Input name="operator" value={form.operator} onChange={handleChange} />
-        </Field>
+        <PersonSelect
+          label={t("fields.operator")}
+          value={form.operatorPersonId}
+          currentName={schedule?.operator}
+          onChange={(id) => setForm((previous) => ({ ...previous, operatorPersonId: id }))}
+          placeholder={t("common.noPerson")}
+          error={fieldErrors.operatorPersonId}
+        />
 
         <FormActions onCancel={handleClose} />
       </form>

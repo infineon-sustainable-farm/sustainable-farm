@@ -6,6 +6,10 @@ import RecordInspectionModal from "./RecordInspectionModal";
 import ResolveFindingModal from "./ResolveFindingModal";
 import TreatmentModal from "./TreatmentModal";
 
+vi.mock("../../../shared/api/persons", () => ({
+    fetchPersons: vi.fn(() => Promise.resolve([{ id: 4, fullName: "Field team" }])),
+}));
+
 // The catalogue of the forms, without a request: one pest and one disease.
 vi.mock("../hooks/useHealthIssues", () => ({
     useHealthIssues: () => ({
@@ -172,23 +176,24 @@ describe("the dialog recording an inspection", () => {
 });
 
 describe("the dialog recording a treatment", () => {
-    function fillCommonFields() {
+    async function fillCommonFields() {
         change("Treatment date", "2026-01-11");
         change("Pre-harvest interval (days)", "14");
         change("Product", "Copper");
         change("Active ingredient", "Copper hydroxide");
         change("Quantity", "2.5");
         change("Unit", "KG");
-        change("Applicator", "Field team");
+        await screen.findByRole("option", { name: "Field team" });
+        fireEvent.change(screen.getByLabelText(/^Applicator/), { target: { value: "4" } });
     }
 
-    it("treats a finding: the block and the problem come from the finding", () => {
+    it("treats a finding: the block and the problem come from the finding", async () => {
         const onSubmit = vi.fn();
         render(<TreatmentModal finding={FINDING} blocks={[]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />);
 
         expect(screen.getByRole("dialog", { name: "Treat a finding" })).toBeInTheDocument();
         expect(screen.queryByLabelText("Block")).not.toBeInTheDocument();
-        fillCommonFields();
+        await fillCommonFields();
         submit("Record treatment");
 
         expect(onSubmit).toHaveBeenCalledWith({
@@ -198,11 +203,11 @@ describe("the dialog recording a treatment", () => {
             quantity: 2.5,
             unit: "KG",
             preHarvestIntervalDays: 14,
-            applicator: "Field team",
+            applicatorPersonId: 4,
         });
     });
 
-    it("asks a preventive treatment for its block and problem", () => {
+    it("asks a preventive treatment for its block and problem", async () => {
         const onSubmit = vi.fn();
         render(<TreatmentModal finding={null} blocks={["A"]} isSubmitting={false} error={null} onSubmit={onSubmit} onClose={vi.fn()} />);
 
@@ -215,11 +220,11 @@ describe("the dialog recording a treatment", () => {
 
         change("Block", "A");
         change("Problem targeted", "FRUIT_FLY");
-        fillCommonFields();
+        await fillCommonFields();
         submit("Record treatment");
 
         expect(onSubmit).toHaveBeenCalledWith(
-            expect.objectContaining({ blockCode: "A", targetIssueCode: "FRUIT_FLY", productName: "Copper" })
+            expect.objectContaining({ blockCode: "A", targetIssueCode: "FRUIT_FLY", productName: "Copper", applicatorPersonId: 4 })
         );
     });
 });

@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Field, Input, Modal, Select } from "../../../shared/ui";
+import PersonSelect from "../../../app/PersonSelect";
 import { useHealthIssues } from "../hooks/useHealthIssues";
 import { formatEnum } from "../utils/format";
 import { CATALOGUE_NOTE_ID, issueOptions, OTHER_ISSUE_CODE, todayAsIsoDate } from "../utils/healthIssues";
@@ -21,7 +22,6 @@ const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
 const SCORE_PATTERN = /^\d{1,3}$/;
 const TREE_LABEL_PATTERN = /^\s*([A-Za-z0-9-]{1,20})?\s*$/;
 const OTHER_LABEL_MAX_LENGTH = 60;
-const TEXT_MAX_LENGTH = 255;
 
 /**
  * Form of an inspection of a block: its date, health score, observer and
@@ -47,7 +47,7 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
     // A number field holds "" for text it cannot read, such as "1e"; this
     // keeps such a value from passing as an empty one.
     const [isScoreUnreadable, setIsScoreUnreadable] = useState(false);
-    const [observer, setObserver] = useState("");
+    const [observerPersonId, setObserverPersonId] = useState("");
     const [method, setMethod] = useState("");
     const [findings, setFindings] = useState([]);
     const [fieldErrors, setFieldErrors] = useState({});
@@ -126,9 +126,6 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
         } else if (isScoreUnreadable || !SCORE_PATTERN.test(score) || Number(score) > 100) {
             errors.healthScorePct = t("health.inspectionForm.errors.scoreFormat");
         }
-        if (observer.length > TEXT_MAX_LENGTH) {
-            errors.observer = t("health.inspectionForm.errors.observerTooLong");
-        }
         for (const finding of findings) {
             const prefix = `finding-${finding.key}-`;
             if (!finding.issueCode) {
@@ -166,7 +163,7 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
                 return found;
             }),
         };
-        if (observer.trim()) inspection.observer = observer;
+        if (observerPersonId) inspection.observerPersonId = Number(observerPersonId);
         if (method) inspection.method = method;
         onSubmit(inspection);
     }
@@ -237,15 +234,15 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
                         </Select>
                     </Field>
 
-                    <Field
+                    <PersonSelect
                         id="inspection-observer"
                         label={t("health.inspectionForm.observer")}
-                        error={fieldError("observer")}
+                        value={observerPersonId}
+                        onChange={(id) => setObserverPersonId(id)}
+                        error={fieldError("observerPersonId")}
                         hint={t("health.optional")}
                         className="sm:col-span-2"
-                    >
-                        <Input type="text" value={observer} onChange={(event) => setObserver(event.target.value)} />
-                    </Field>
+                    />
                 </div>
 
                 <fieldset className="mt-6">

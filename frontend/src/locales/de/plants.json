@@ -351,7 +351,6 @@
         "blockRequired": "Der Block ist erforderlich.",
         "blockInvalid": "Der Block muss ein kurzer Code wie A oder B2 sein, ohne Präfix oder Leerzeichen.",
         "applicatorRequired": "Der Ausbringer ist erforderlich.",
-        "applicatorTooLong": "Der Ausbringer darf höchstens 255 Zeichen lang sein.",
         "methodTooLong": "Die Methode darf höchstens 255 Zeichen lang sein.",
         "reasonRequired": "Der Grund ist erforderlich.",
         "reasonTooLong": "Der Grund darf höchstens 255 Zeichen lang sein."
@@ -681,7 +680,6 @@
         "dateInFuture": "Das Inspektionsdatum darf nicht in der Zukunft liegen.",
         "scoreRequired": "Der Gesundheitswert ist erforderlich.",
         "scoreFormat": "Der Gesundheitswert muss eine ganze Zahl von 0 bis 100 sein.",
-        "observerTooLong": "Der Beobachter darf höchstens 255 Zeichen lang sein.",
         "problemRequired": "Das Problem ist erforderlich.",
         "treeFormat": "Der Baum darf bis zu 20 Buchstaben, Ziffern oder Bindestriche enthalten, zum Beispiel 42 oder R3-12."
       }
@@ -733,7 +731,6 @@
         "quantityFormat": "Die Menge muss eine Zahl größer als 0 mit höchstens 3 Dezimalstellen sein.",
         "unitRequired": "Die Einheit ist erforderlich.",
         "applicatorRequired": "Der Anwender ist erforderlich.",
-        "applicatorTooLong": "Der Anwender darf höchstens 255 Zeichen lang sein.",
         "equipmentTooLong": "Das Gerät darf höchstens 255 Zeichen lang sein."
       }
     }
@@ -931,7 +928,6 @@
         "dateFuture": "Das Beobachtungsdatum darf nicht in der Zukunft liegen.",
         "statusRequired": "Der Reifestatus ist erforderlich.",
         "methodRequired": "Die Methode ist erforderlich.",
-        "observerTooLong": "Der Beobachter darf höchstens 255 Zeichen lang sein.",
         "measuredValue": "Der Messwert muss über 0 und höchstens 100 liegen, mit höchstens einer Dezimalstelle."
       }
     },

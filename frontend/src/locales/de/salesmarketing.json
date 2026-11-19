@@ -434,7 +434,7 @@
       "forecast": "z. B. 9000",
       "actual": "z. B. 8750",
       "variance": "z. B. -2,8",
-      "generatedBy": "z. B. System, Admin, Name der Analystin oder des Analysten",
+      "generatedBy": "Nicht erfasst",
       "summary": "Kurze Beschreibung des Berichtsinhalts und der wichtigsten Erkenntnisse..."
     },
     "types": {

@@ -21,7 +21,7 @@ function form(overrides = {}) {
         maturityStatus: "READY_FOR_HARVEST",
         method: "BRIX",
         measuredValue: "14.2",
-        observer: "Awa",
+        observerPersonId: "4",
         ...overrides,
     };
 }
@@ -74,29 +74,29 @@ describe("measuredValueError", () => {
 });
 
 describe("observationRequest", () => {
-    it("sends the value as a number with Brix, and the observer trimmed", () => {
-        expect(observationRequest(form({ observer: "  Awa  " }))).toEqual({
+    it("sends the value and the observer person id as numbers with Brix", () => {
+        expect(observationRequest(form())).toEqual({
             observedOn: "2026-10-25",
             blockCode: "A",
             varietyName: "Keitt",
             maturityStatus: "READY_FOR_HARVEST",
             method: "BRIX",
             measuredValue: 14.2,
-            observer: "Awa",
+            observerPersonId: 4,
         });
     });
 
     it("leaves out an empty value, a value with a method that measures none, and a blank observer", () => {
-        expect(observationRequest(form({ measuredValue: "", observer: "" }))).toEqual({
+        expect(observationRequest(form({ measuredValue: "", observerPersonId: "" }))).toEqual({
             observedOn: "2026-10-25",
             blockCode: "A",
             varietyName: "Keitt",
             maturityStatus: "READY_FOR_HARVEST",
             method: "BRIX",
         });
-        const visual = observationRequest(form({ method: "VISUAL", measuredValue: "14.2", observer: "   " }));
+        const visual = observationRequest(form({ method: "VISUAL", measuredValue: "14.2", observerPersonId: null }));
         expect(visual).not.toHaveProperty("measuredValue");
-        expect(visual).not.toHaveProperty("observer");
+        expect(visual).not.toHaveProperty("observerPersonId");
     });
 });
 

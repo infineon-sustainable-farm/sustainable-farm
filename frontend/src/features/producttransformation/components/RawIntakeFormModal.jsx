@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Field, Input, Modal, Select } from '../../../shared/ui';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
+import PersonSelect from '../../../app/PersonSelect';
 import FormActions from './FormActions';
 import FormAlert from './FormAlert';
 import { MANGO_VARIETIES, QUALITY_GRADES, varietyLabel } from './rawIntakeOptions';
@@ -15,7 +16,7 @@ const emptyForm = () => ({
   receivedQuantityKg: '',
   receivedVariety: 'KEITT',
   receivedGrade: 'A',
-  intakeOperator: '',
+  intakeOperatorPersonId: '',
 });
 
 const toForm = (intake) =>
@@ -29,7 +30,7 @@ const toForm = (intake) =>
         receivedQuantityKg: String(intake.receivedQuantityKg ?? ''),
         receivedVariety: intake.receivedVariety || 'KEITT',
         receivedGrade: intake.receivedGrade || 'A',
-        intakeOperator: intake.intakeOperator || '',
+        intakeOperatorPersonId: intake.intakeOperatorPersonId != null ? String(intake.intakeOperatorPersonId) : '',
       }
     : emptyForm();
 
@@ -151,9 +152,13 @@ export default function RawIntakeFormModal({ open, editing, batches, onClose, on
           </Field>
         </div>
 
-        <Field label={t('rawIntake.intakeOperator')}>
-          <Input value={form.intakeOperator} onChange={update('intakeOperator')} />
-        </Field>
+        <PersonSelect
+          label={t('rawIntake.intakeOperator')}
+          value={form.intakeOperatorPersonId}
+          currentName={editing?.intakeOperator}
+          onChange={(id) => setForm((current) => ({ ...current, intakeOperatorPersonId: id }))}
+          placeholder={t('rawIntake.noOperator')}
+        />
 
         <FormActions onCancel={close} saving={saving} editing={Boolean(editing)} />
       </form>

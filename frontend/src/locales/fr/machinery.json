@@ -14,7 +14,8 @@
     "unknownEquipment": "n° {{id}}",
     "tryAgain": "Réessayer",
     "loadingEquipment": "Chargement des équipements…",
-    "noEquipmentDetached": "Aucun équipement (non rattaché)"
+    "noEquipmentDetached": "Aucun équipement (non rattaché)",
+    "noPerson": "Aucune personne"
   },
   "units": {
     "hours": "{{value}} h",
@@ -57,7 +58,6 @@
     "nameTooLong": "Le nom doit comporter {{max}} caractères au maximum.",
     "equipmentRequired": "L’équipement est obligatoire.",
     "dateRequired": "La date est obligatoire.",
-    "operatorTooLong": "L’opérateur doit comporter {{max}} caractères au maximum.",
     "costRequired": "Le coût est obligatoire.",
     "costInvalid": "Le coût doit être supérieur ou égal à 0, avec 2 décimales au maximum."
   },
@@ -181,7 +181,6 @@
     "issueRequired": "La description de la panne est obligatoire.",
     "issueTooLong": "La description de la panne doit comporter {{max}} caractères au maximum.",
     "downtimeInvalid": "L’immobilisation doit être supérieure ou égale à 0, avec 2 décimales au maximum.",
-    "technicianTooLong": "Le technicien doit comporter {{max}} caractères au maximum.",
     "deleteTitle": "Supprimer la réparation",
     "deleteMessage": "Voulez-vous vraiment supprimer la réparation du {{date}} pour {{equipment}} ? Cette action est irréversible."
   },
@@ -196,11 +195,10 @@
     "jobTitle": "Fonction",
     "startDate": "Date de début",
     "endDate": "Date de fin",
-    "fullName": "Nom complet de l’opérateur",
+    "person": "Opérateur",
     "selectEquipment": "Choisir un équipement",
     "endDateOptional": "Date de fin (facultative)",
-    "fullNameRequired": "Le nom complet de l’opérateur est obligatoire.",
-    "fullNameTooLong": "Le nom complet doit comporter {{max}} caractères au maximum.",
+    "personRequired": "Choisissez l’opérateur.",
     "jobTitleRequired": "La fonction est obligatoire.",
     "jobTitleTooLong": "La fonction doit comporter {{max}} caractères au maximum.",
     "startDateRequired": "La date de début est obligatoire.",

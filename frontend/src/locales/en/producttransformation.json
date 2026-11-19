@@ -131,6 +131,7 @@
     "sourceBlock": "Source Block",
     "quantityKg": "Quantity (kg)",
     "intakeOperator": "Intake Operator",
+    "noOperator": "Not recorded",
     "columns": {
       "intake": "Intake",
       "batch": "Batch",
