@@ -28,6 +28,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthIssueReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import org.junit.jupiter.api.AfterEach;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,11 +82,17 @@ class OverviewScenarioIntegrationTest {
     @Autowired
     private FarmService farmService;
 
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
     @BeforeEach
     void createTheFarmOfTheTestOnce() {
         if (FARM == null) {
             FARM = farmService.createFarm(new FarmCreateRequest("OverviewScenario test farm", null, null, null, null, null)).id();
         }
+        siteTestBlocks.ensure(FARM, "OA");
+        siteTestBlocks.ensure(FARM, "OB");
+        siteTestBlocks.ensure(FARM, "OC");
     }
     private static final String STEM_END_ROT = "STEM_END_ROT";
     private static final String KEITT_SEASON_SOURCE = "varietal_guide_west_africa";

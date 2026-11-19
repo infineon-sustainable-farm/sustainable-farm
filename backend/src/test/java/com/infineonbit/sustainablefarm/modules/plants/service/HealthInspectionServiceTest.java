@@ -76,7 +76,7 @@ public class HealthInspectionServiceTest {
 
     @BeforeEach
     void setUp() {
-        PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).asPlantsBlocks();
+        PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).with("D", 3L).asPlantsBlocks();
         healthInspectionService = new HealthInspectionService(healthInspectionRepository, healthFindingRepository,
                 healthIssueService, new HealthFindingService(healthFindingRepository, healthTreatmentRepository,
                 plantsBlocks), plantsBlocks);

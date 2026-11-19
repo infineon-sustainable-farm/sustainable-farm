@@ -41,9 +41,9 @@ class FarmServiceTest {
 
     @Test
     void createFieldRejectsUnknownFarm() {
-        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, null, null, null);
+        FieldCreateRequest request = new FieldCreateRequest(3L, "Field", 1.0, null, null, null, null);
         when(farmRepository.findById(3L)).thenReturn(Optional.empty());
-        BlockService service = new BlockService(farmRepository, blockRepository);
+        BlockService service = new BlockService(farmRepository, blockRepository, null);
 
         assertThrows(ResourceNotFoundException.class, () -> service.createField(request));
         verify(blockRepository, never()).save(any());

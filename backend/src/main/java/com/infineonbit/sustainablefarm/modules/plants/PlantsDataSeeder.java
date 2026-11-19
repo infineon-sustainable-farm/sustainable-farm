@@ -4,6 +4,8 @@ import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.service.PlantsBlocks;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -37,11 +39,13 @@ import java.math.BigDecimal;
  * <p>Block A is the {@code farm.block} row of code A: the demo farm seed
  * ({@code FarmDemoDataSeeder}, which runs first) gives it to farm 1, the farm of
  * the Water Supply demo zone, so plants and Water Supply show the same block.
- * Without that seed, the block is created under the default farm.
+ * Plants never creates a block: without that block the variety is not seeded.
  */
 @Component
 @Profile("dev")
 public class PlantsDataSeeder implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(PlantsDataSeeder.class);
 
     private final BlockVarietyRepository blockVarietyRepository;
     private final PlantsBlocks plantsBlocks;
@@ -60,12 +64,16 @@ public class PlantsDataSeeder implements CommandLineRunner {
     }
 
     private void seedZalka2025() {
+        BlockDto blockA = plantsBlocks.find(null, "A").orElse(null);
+        if (blockA == null) {
+            log.warn("Plants demo variety not seeded: the farm referential has no block A");
+            return;
+        }
         BlockVariety keitt = new BlockVariety();
         keitt.setName("Keitt");
         keitt.setTreeCount(200);
         keitt.setRowSpacingM(new BigDecimal("8.0"));
         keitt.setTreeSpacingM(new BigDecimal("8.0"));
-        BlockDto blockA = plantsBlocks.resolve(null, "A");
         keitt.assignBlock(blockA.id(), PlantsBlocks.label(blockA));
         keitt.setSource("Zalka_2025");
         // treeDensityPerHa, vigor, plantOrigin and lastUpdated:

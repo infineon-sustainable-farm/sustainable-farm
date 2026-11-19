@@ -15,6 +15,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import org.junit.jupiter.api.AfterEach;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,11 +64,15 @@ class AgronomicReferenceIntegrationTest {
     @Autowired
     private FarmService farmService;
 
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
     @BeforeEach
     void createTheFarmOfTheTestOnce() {
         if (FARM == null) {
             FARM = farmService.createFarm(new FarmCreateRequest("AgronomicReference test farm", null, null, null, null, null)).id();
         }
+        siteTestBlocks.ensure(FARM, "R");
     }
     private static final String SENSATION = "Sensation";
     private static final String RACE_MANGO = "Race mango";
