@@ -52,7 +52,7 @@ Owners are listed in `.github/module-owners.conf`. A module owner changes only t
 | `frontend/src/shared/` (`ui`, `api`, `i18n`, `hooks`, `utils`) and `frontend/src/index.css` | Admin |
 | `frontend/src/locales/<language>/common.json` | Admin |
 | `frontend/src/locales/<language>/<module>.json` | Changed with the module's screens; outside `features/<module>/`, so through the admin for a non-admin author |
-| `docs/`, `scripts/`, `.github/`, `.arc-core/`, build and Docker files, root files | Admin |
+| `docs/`, `scripts/`, `.github/`, build and Docker files, root files | Admin |
 
 | Owner | Modules |
 |---|---|
@@ -85,13 +85,7 @@ scripts/module-ownership-guard.sh <github-login> feature/<module>/init HEAD orig
 
 ## 3. Before a commit
 
-Run the checks of your change ([Setup](SETUP.md#4-run-the-checks)), then the gate:
-
-```bash
-arc-core gate
-```
-
-The Git hooks run the same gate on every commit. A refused commit is fixed, never forced: do not use `--no-verify`. The checks are declared in `.arc-core/proof.json` and `.arc-core/config.json`; both are committed.
+Run the checks of your change ([Setup](SETUP.md#4-run-the-checks)). A refused commit is fixed, never forced: do not use `--no-verify`.
 
 ## 4. Commits
 
@@ -102,6 +96,6 @@ Header: `<type>(<scope>): <subject>`, in lower case.
 | `type` | One of `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`, `style`, `revert` |
 | `scope` | The module (`plants`, `watersupply`, ...) or `core`, `app`, `ui`, `i18n` |
 | `subject` | What the commit does, imperative, no final period |
-| Attribution | No AI attribution line of any kind (refused by `arc-core commit-msg`) |
+| Attribution | No AI attribution line of any kind |
 
 Examples: `fix(api): keep the sort order after an edit`, `docs(adr): update the alert model`.

@@ -4,7 +4,7 @@
  * Design tokens of Sustainable Farm.
  *
  * One token set for every module, taken from the machinery module (the reference look) and kept
- * consistent with the brand of .arc-core/design (arc-core design check tokens). Components read these
+ * consistent across the app. Components read these
  * semantic names only (bg-surface-raised, text-text-muted, rounded-card...), never a raw colour.
  *
  * Kept from Tailwind 4 without redefinition, because machinery renders with them:

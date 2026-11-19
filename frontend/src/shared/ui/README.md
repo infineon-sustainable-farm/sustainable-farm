@@ -14,7 +14,7 @@ ARIA, état chargement, état désactivé, mouvement réduit.
 | Cibles tactiles | Taille machinery sur ordinateur, 44 px sur écran tactile (`pointer-coarse:`) |
 | Mouvement | Transitions des tokens (`--duration-fast` 150 ms, `--duration-base` 200 ms, `--duration-slow` 300 ms), coupées sous `prefers-reduced-motion` |
 | État | Jamais porté par la couleur seule : un mot ou une icône l'accompagne |
-| Vérification | `npm run lint` (texte en dur, parité des langues), `npm test -- shared/ui`, `scripts/design-check.sh` |
+| Vérification | `npm run lint` (texte en dur, parité des langues), `npm test -- shared/ui` |
 
 Les anciens composants de `shared/components` ont été supprimés en T45 : tous les modules intégrés
 utilisent ce kit.

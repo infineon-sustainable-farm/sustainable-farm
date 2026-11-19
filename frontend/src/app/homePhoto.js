@@ -1,4 +1,4 @@
-// Landscape photo of the home page: brand photo bank (.arc-core/design/photos, id home-orchard),
+// Landscape photo of the home page: Scott Blake on Unsplash (Unsplash License, free commercial use),
 // 16:10 WebP derivatives in public/photos. index.html preloads it with the same srcset and sizes.
 
 const WIDTHS = [960, 1440, 1600, 1920, 2560]

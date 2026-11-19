@@ -52,6 +52,6 @@ Then open http://localhost:3000. Details, ports and tests: [Setup](docs/SETUP.md
 |---|---|
 | [Docs index](docs/README.md) | Every document and the reading order |
 | [Architecture](docs/ARCHITECTURE.md) | Modules, shared referentials, module rules, database, API, frontend shell |
-| [Setup](docs/SETUP.md) | Prerequisites, configuration, start, tests, the ARC Core gate |
+| [Setup](docs/SETUP.md) | Prerequisites, configuration, start, tests |
 | [Contributing](docs/CONTRIBUTING.md) | Branches, module ownership, commits |
 | [Decision records](docs/adr/README.md) | Why the architecture is what it is |

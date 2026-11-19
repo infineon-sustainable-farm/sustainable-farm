@@ -26,7 +26,6 @@ How to run sustainable-farm locally and how to run its checks. The whole stack (
 | Git | Yes | Clone and commit |
 | JDK 21 | No | `scripts/backend-test.sh` uses `./mvnw` when `java` is on the `PATH`, otherwise Maven in the `maven:3.9-eclipse-temurin-21` image |
 | Node.js 22 and npm | For frontend work only | Lint, tests, dev server (the CI uses Node 22; the image builds with `node:22-alpine`) |
-| `arc-core`, `arc-design` | For committing | The Git hooks run the ARC Core gate (section 5) |
 
 ## 2. Configure
 
@@ -115,32 +114,3 @@ npm run i18n:check    # i18n parity check only
 npm test              # Vitest
 npm run build         # production bundle
 ```
-
-### Design and docs
-
-```bash
-scripts/design-check.sh                                   # no hard-coded visual value, brand icon set
-arc-design check tokens --brand-dir .arc-core/design      # tokens and brand contract
-arc-core check-docs                                       # a README, every relative link resolves
-```
-
-## 5. The ARC Core gate
-
-Every commit goes through the ARC Core gate, installed as Git hooks (`arc-core status` says whether they are installed, `arc-core init` installs them). The gate runs the checks of `.arc-core/proof.json` that concern the staged files:
-
-| Staged files | Checks |
-|---|---|
-| `backend/**` | `scripts/backend-test.sh` |
-| `frontend/**` | `npm run lint`, `npm test` |
-| `frontend/src/**`, `.arc-core/design/**` | `scripts/design-check.sh` |
-| `.arc-core/design/**` | `arc-design check tokens` |
-| `*.md` | `arc-core check-docs` |
-| Any | gitleaks on the staged changes; osv-scanner when a manifest or lockfile changes |
-
-Run it yourself before committing:
-
-```bash
-arc-core gate
-```
-
-Fix a refused commit; never bypass the hooks with `--no-verify`. The commit message rules are in [Contributing](CONTRIBUTING.md#4-commits).

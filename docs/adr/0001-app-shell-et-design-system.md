@@ -20,13 +20,13 @@ Les modules frontend ont été construits séparément sous `frontend/src/featur
 | Navigation | energysupply et sitesecurity naviguent par state, sans URL par écran |
 | Textes | tous en dur dans le JSX, en anglais |
 
-Les règles ARC Core (`get_design_brief`, `arc-design check`) imposent des tokens partout, un seul jeu d'icônes à une épaisseur, l'i18n de tout texte, un focus visible, des cibles de 44 px et un texte de 12 px minimum. machinery est le module dont le rendu est retenu comme référence (Q5), avec l'accessibilité reprise de plants.
+Les règles de design retenues imposent des tokens partout, un seul jeu d'icônes à une épaisseur, l'i18n de tout texte, un focus visible, des cibles de 44 px et un texte de 12 px minimum. machinery est le module dont le rendu est retenu comme référence (Q5), avec l'accessibilité reprise de plants.
 
 ## Décision
 
 | Sujet | Décision |
 |---|---|
-| Tokens | Un seul jeu de tokens dans `frontend/src/index.css`, initialisé par `arc-core design init` avec la palette machinery : primitifs et sémantiques (surface, texte, bordure, primaire, succès, alerte, erreur, info), espacement sur 4 px, 6 à 8 tailles de texte, 3 graisses, 4 rayons, 2 ombres, durées, z-index, palette de graphiques. Les anciens blocs restent sous un nom `legacy` jusqu'à T45 |
+| Tokens | Un seul jeu de tokens dans `frontend/src/index.css` avec la palette machinery : primitifs et sémantiques (surface, texte, bordure, primaire, succès, alerte, erreur, info), espacement sur 4 px, 6 à 8 tailles de texte, 3 graisses, 4 rayons, 2 ombres, durées, z-index, palette de graphiques. Les anciens blocs restent sous un nom `legacy` jusqu'à T45 |
 | Kit | Un kit `frontend/src/shared/ui` au look machinery : Button, IconButton, Card, KpiCard, PageHeader, Field, Input, Select, Textarea, Badge, StatusBadge, Modal accessible (Escape, `role="dialog"`, focus piégé), ConfirmDialog, Table, Pagination, Tabs, EmptyState, ErrorState, Skeleton, Toast. Aucun module ne garde ses propres versions |
 | Shell | Un seul `app/AppLayout` et un seul composant de sidebar au style machinery (w-60, bg-primary, lucide 18). Chaque module a sa propre sidebar : elle ne montre que ce module (son nom sous le logo, ses liens et sections construits depuis le `nav` de son `routes.jsx`, son `sidebarFooter`), plus un lien « Tous les modules » vers le lanceur ; on change de module depuis le lanceur. Drawer avec overlay sous `md`, en-tête de page commun, page 404 et `errorElement` |
 | Lanceur | `/` est une page plein écran sans sidebar : logo, sélecteur de langue, une tuile par module intégré (carré arrondi couleur primaire, icône lucide blanche, nom traduit dessous). Le logo de la sidebar ramène à `/` (A4, Q7) |
@@ -41,7 +41,7 @@ Les règles ARC Core (`get_design_brief`, `arc-design check`) imposent des token
 | Type | Conséquence |
 |---|---|
 | Positive | Une seule apparence et une seule navigation pour l'utilisateur, quel que soit le module |
-| Positive | `arc-design check` peut vérifier tout le frontend avec les mêmes règles |
+| Positive | Tout le frontend suit les mêmes règles de design |
 | Positive | Bundle réduit : framer-motion, Material Symbols et 3 polices sont retirés |
 | Positive | Les fichiers de traduction par module évitent les conflits entre worktrees parallèles |
 | Négative | Chaque module doit être migré écran par écran (T27 à T42), ce qui gèle ses nouvelles features pendant sa migration |
@@ -70,6 +70,6 @@ Les règles ARC Core (`get_design_brief`, `arc-design check`) imposent des token
 | Toasts | Le fournisseur de toasts est monté une seule fois dans `app/RootLayout.jsx` (T53) |
 | i18n | La règle ESLint anti-texte-en-dur couvre tout `src`, sauf les tests et les deux modules exclus (T45). L'anglais est embarqué ; l'allemand et le français sont chargés à la demande, un fichier par module et par langue. La langue est mémorisée sous la clé `sf.lang` |
 | Écrans | Chaque écran de module est chargé à sa première visite (`shared/utils/lazyScreen`) |
-| Marque | Les tokens et la marque d'ARC Core sont dans `.arc-core/design` ; `scripts/design-check.sh` et `arc-design check tokens` sont joués par le gate |
+| Marque | Les tokens de la marque sont dans `frontend/src/index.css` |
 
 La description complète est dans [ARCHITECTURE.md](../ARCHITECTURE.md#3-frontend).

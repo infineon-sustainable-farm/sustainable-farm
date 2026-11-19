@@ -28,7 +28,7 @@ Le backend est un monolithe modulaire : une seule application Spring Boot, un se
 | Dépendance de `core` | `core` ne dépend d'aucun module ; les modules dépendent de `core` |
 | Gestion des erreurs | Uniquement dans `core` (`CoreExceptionHandler`, voir ADR 0002) |
 
-Ces règles sont vérifiées par le test ArchUnit `backend/src/test/java/com/infineonbit/sustainablefarm/architecture/ModuleBoundariesTest.java`, joué par `./mvnw test` en CI et par le gate ARC Core :
+Ces règles sont vérifiées par le test ArchUnit `backend/src/test/java/com/infineonbit/sustainablefarm/architecture/ModuleBoundariesTest.java`, joué par `./mvnw test` en local et en CI :
 
 | Règle | Contenu |
 |---|---|

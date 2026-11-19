@@ -154,7 +154,7 @@ flowchart LR
 | Solid arrow | The source calls an interface or reads a DTO of the target's `api` package |
 | Dotted arrow | The source consumes Spring events declared in the target's `api` package |
 
-The rules are enforced by the ArchUnit test `backend/src/test/java/com/infineonbit/sustainablefarm/architecture/ModuleBoundariesTest.java`, run by every backend test run (CI and the ARC Core gate):
+The rules are enforced by the ArchUnit test `backend/src/test/java/com/infineonbit/sustainablefarm/architecture/ModuleBoundariesTest.java`, run by every backend test run (locally and in CI):
 
 | Rule | Content | Frozen violations (`backend/src/test/resources/archunit_store`) |
 |---|---|---|
@@ -317,11 +317,10 @@ Module base paths in the browser: `/machinery`, `/plants`, `/product-transformat
 | Element | Location | Rule |
 |---|---|---|
 | Tokens | `frontend/src/index.css` | One token set with the machinery look: colours (surface, text, border, primary, success, warning, error, info), 4 px spacing, type scale, radii, shadows, durations, z-index, chart palette. A separate block holds the tokens of sitesecurity only |
-| Brand | `.arc-core/design/` (`BRAND.md`, `brand.json`, `rules.json`, `tokens/`, `copy/`, `photos/`) | Source of the brand for `arc-design`; accent teal `#0A8276`, font Inter, icons lucide stroke 2 |
+| Brand | `frontend/src/index.css` (core token section) | Accent teal `#0A8276`, font Inter, icons lucide stroke 2 |
 | Kit | `frontend/src/shared/ui` | Button, IconButton, Card, KpiCard, PageHeader, Field, Input, Select, Textarea, Badge, StatusBadge, Modal, ConfirmDialog, Table, Pagination, Tabs, EmptyState, ErrorState, Skeleton, Toast; imported from `shared/ui/index.js` only |
 | Icons | `lucide-react` only | |
 | Theme | Light only | |
-| Checks | `scripts/design-check.sh` (no hard-coded visual value, brand icon set), `arc-design check tokens --brand-dir .arc-core/design` | Both run by the ARC Core gate |
 
 ### 3.4 Internationalisation
 
@@ -356,16 +355,13 @@ The full list with defaults is in `.env.example` and [Setup](SETUP.md).
 
 | Check | Command | Where it runs |
 |---|---|---|
-| Backend tests, ArchUnit included | `scripts/backend-test.sh` (`SF_TEST_PG=1` for PostgreSQL) | ARC Core gate on `backend/**`, CI job "Backend tests (PostgreSQL)" |
+| Backend tests, ArchUnit included | `scripts/backend-test.sh` (`SF_TEST_PG=1` for PostgreSQL) | CI job "Backend tests (PostgreSQL)" |
 | Frontend lint and i18n parity | `npm run lint` | Gate on `frontend/**`, CI job "Frontend build" |
 | Frontend tests | `npm test` | Gate, CI |
 | Frontend build | `npm run build` | CI |
-| Design | `scripts/design-check.sh`, `arc-design check tokens` | Gate on `frontend/src/**` and `.arc-core/design/**` |
-| Docs | `arc-core check-docs` | Gate on `*.md` |
 | Secrets, dependencies | gitleaks, osv-scanner | Gate |
 | Module ownership and layout | `scripts/module-ownership-guard.sh` | Workflow `module-ownership.yml` on every PR |
 
-The gate is configured in `.arc-core/proof.json` and `.arc-core/config.json`.
 
 ## 6. Excluded modules
 
@@ -383,7 +379,7 @@ Integrating one of them later requires, in the same branch:
 | 3 | API moved to `/api/site-security/...` (or `/api/crop-storage/...`) with record DTOs, `SiteSecurityExceptionHandler` removed and its line deleted from the ArchUnit store |
 | 4 | A new Flyway migration after the baseline for its tables |
 | 5 | Frontend: one URL per screen, the shell (`nav` with `shell: true`) and the kit, light tokens instead of its own block, framer-motion and tailwind-merge removed, texts in `src/locales/<en,de,fr>/<module>.json` |
-| 6 | Removal of the module from `EXCLUDED_DIRS` of `scripts/design-check.sh` and from `I18N_EXCLUDED` of `frontend/eslint.config.js` |
+| 6 | Removal of the module from `I18N_EXCLUDED` of `frontend/eslint.config.js` |
 
 ## 7. Open questions
 
