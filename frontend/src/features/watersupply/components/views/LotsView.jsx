@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
-import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, Select, Table } from '../../../../shared/ui'
+import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, OwnedResourceSelect, Select, Table } from '../../../../shared/ui'
+import { OWNER_LINKS } from '../../../../app/ownerLinks'
 import { productTransformationApi } from '../../api/watersupplyApi'
 import { useWaterSources } from '../../hooks/useWaterData'
-import { useLotCompliance, useLotConsumption } from '../../hooks/useIntegrations'
+import { useLotCompliance, useLotConsumption, useProcessingBatches } from '../../hooks/useIntegrations'
 import { useWaterFormat } from '../../format'
 import { FormActions, Screen, SplitLayout } from '../common/Screen'
 import { FormAlert } from '../common/FormAlert'
@@ -25,12 +26,15 @@ const EMPTY_USAGE = { lotId: '', activity: 'WASHING', sourceId: '', startAt: '',
  *
  * Meters know nothing about lots: Product Transformation (or the water team here) tells which
  * time window belongs to which lot, and the consumptions of that window are attributed to it.
+ * The lots are the processing batches of Product Transformation, which owns them: they are picked
+ * in its list (OWNER_LINKS.processingBatch), never typed.
  */
 export function LotsView({ notify }) {
   const { t } = useTranslation('watersupply')
   const format = useWaterFormat()
   const activityLabel = useActivityLabel()
   const { sources } = useWaterSources()
+  const processingBatches = useProcessingBatches()
   const [lotQuery, setLotQuery] = useState('')
   const [activeLot, setActiveLot] = useState('')
   const [usage, setUsage] = useState(EMPTY_USAGE)
@@ -172,9 +176,19 @@ export function LotsView({ notify }) {
           <Card title={t('lots.attachTitle')}>
             <FormAlert>{usageError}</FormAlert>
             <form className="flex flex-col gap-4" onSubmit={attach}>
-              <Field label={t('lots.fields.lot')} required>
-                <Input value={usage.lotId} onChange={updateUsage('lotId')} placeholder={t('lots.fields.lotPlaceholder')} />
-              </Field>
+              <OwnedResourceSelect
+                label={t('lots.fields.lot')}
+                value={usage.lotId}
+                onChange={(lotId) => setUsage((current) => ({ ...current, lotId }))}
+                options={processingBatches.batches}
+                getOptionValue={(batch) => batch.batchId}
+                getOptionLabel={(batch) => batch.batchId}
+                loading={processingBatches.loading}
+                loadError={Boolean(processingBatches.error)}
+                onRetry={processingBatches.refetch}
+                owner={OWNER_LINKS.processingBatch}
+                required
+              />
               <Field label={t('lots.fields.activity')} required>
                 <Select value={usage.activity} onChange={updateUsage('activity')}>
                   {ACTIVITIES.map(([key]) => <option key={key} value={key}>{activityLabel(key)}</option>)}
@@ -218,7 +232,7 @@ export function LotsView({ notify }) {
           </Card>
         }
       />
-      <AvailabilityForecastPanel sources={sources} />
+      <AvailabilityForecastPanel sources={sources} processingBatches={processingBatches} />
     </Screen>
   )
 }

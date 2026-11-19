@@ -2,7 +2,9 @@ import {
   iotCommandApi,
   outageApi,
   plantsIntegrationApi,
+  processingBatchApi,
   productTransformationApi,
+  varietyCatalogApi,
   visitorApi,
   waterSourceApi,
   zoneBlockMappingApi,
@@ -103,4 +105,22 @@ export function useValveCommands(deviceId) {
     { enabled: Boolean(deviceId) },
   )
   return { commands: asList(data), loading, error, refetch }
+}
+
+/** Processing batches of Product Transformation, the lots water consumption is attributed to. */
+export function useProcessingBatches() {
+  const { data, loading, error, refetch } = useModuleQuery(
+    ['watersupply', 'product-transformation-batches'],
+    () => processingBatchApi.getBatches(),
+  )
+  return { batches: asList(data), loading, error, refetch }
+}
+
+/** Variety catalogue of Plants, the crop types of the fields. */
+export function useVarietyCatalog() {
+  const { data, loading, error, refetch } = useModuleQuery(
+    ['watersupply', 'plants-varieties'],
+    () => varietyCatalogApi.getVarieties(),
+  )
+  return { varieties: asList(data), loading, error, refetch }
 }

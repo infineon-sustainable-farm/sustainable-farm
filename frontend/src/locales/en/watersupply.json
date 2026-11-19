@@ -583,7 +583,6 @@
     "attachTitle": "Attribute a metering window",
     "fields": {
       "lot": "Lot",
-      "lotPlaceholder": "LOT-2026-0142",
       "activity": "Activity",
       "source": "Source",
       "from": "From",
@@ -626,6 +625,8 @@
         "plannedAt": "Planned at"
       },
       "batchLot": "Batch {{number}} lot",
+      "noLot": "No lot",
+      "lotsLoadError": "The Product Transformation lots could not load.",
       "batchActivity": "Batch {{number}} activity",
       "batchSize": "Batch {{number}} size",
       "batchDate": "Batch {{number}} date",

@@ -17,6 +17,8 @@ import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader } from '../..
 import { useCreateParam } from '../../../shared/hooks/useCreateParam';
 import { rawIntakeApi } from '../api/rawIntakeApi';
 import { batchApi } from '../api/batchApi';
+import { varietyApi } from '../api/varietyApi';
+import { varietyKeyOf } from './rawIntakeOptions';
 import RawIntakeFilters from './RawIntakeFilters';
 import RawIntakeFormModal from './RawIntakeFormModal';
 import RawIntakeTable from './RawIntakeTable';
@@ -34,6 +36,8 @@ const RawIntakeList = () => {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // The plants variety catalogue, loaded apart: the list still shows when it fails.
+  const [varieties, setVarieties] = useState({ items: [], loading: true, error: null });
 
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [showForm, setShowForm] = useState(false);
@@ -63,17 +67,34 @@ const RawIntakeList = () => {
     }
   }, []);
 
+  const loadVarieties = useCallback(async () => {
+    setVarieties((current) => ({ ...current, loading: true, error: null }));
+    try {
+      const data = await varietyApi.getVarieties();
+      setVarieties({ items: Array.isArray(data) ? data : [], loading: false, error: null });
+    } catch (err) {
+      setVarieties({ items: [], loading: false, error: err });
+    }
+  }, []);
+
   useEffect(() => {
     const timeoutId = window.setTimeout(load, 0);
     return () => window.clearTimeout(timeoutId);
   }, [load]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(loadVarieties, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadVarieties]);
 
   const filteredIntakes = useMemo(() => {
     return intakes
       .filter((intake) => {
         if (filters.batchId !== 'all' && intake.batchId !== filters.batchId) return false;
         if (filters.grade !== 'all' && intake.receivedGrade !== filters.grade) return false;
-        if (filters.variety !== 'all' && intake.receivedVariety !== filters.variety) return false;
+        if (filters.variety !== 'all' && varietyKeyOf(intake.receivedVariety) !== filters.variety) {
+          return false;
+        }
         if (filters.date && String(intake.intakeDate || '').slice(0, 10) !== filters.date)
           return false;
         return true;
@@ -162,6 +183,7 @@ const RawIntakeList = () => {
           filters={filters}
           onChange={updateFilter}
           batches={batches}
+          varieties={varieties.items}
           count={filteredIntakes.length}
         />
         {filteredIntakes.length === 0 ? (
@@ -198,6 +220,8 @@ const RawIntakeList = () => {
           open
           editing={editing}
           batches={batches}
+          varieties={varieties}
+          onRetryVarieties={loadVarieties}
           onClose={closeForm}
           onSubmit={handleSubmit}
         />

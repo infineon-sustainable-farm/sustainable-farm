@@ -5,7 +5,7 @@ import { OWNER_LINKS } from '../../../app/ownerLinks';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import FormActions from './FormActions';
 import FormAlert from './FormAlert';
-import { MANGO_VARIETIES, QUALITY_GRADES, varietyLabel } from './rawIntakeOptions';
+import { QUALITY_GRADES, varietyKeyOf } from './rawIntakeOptions';
 import { blockLabel, farmIdOf, sameBlockCode, useFarmSite } from './useFarmSite';
 
 const emptyForm = () => ({
@@ -15,7 +15,7 @@ const emptyForm = () => ({
   sourceBlock: '',
   intakeDate: todayIsoDate(),
   receivedQuantityKg: '',
-  receivedVariety: 'KEITT',
+  receivedVariety: '',
   receivedGrade: 'A',
   intakeOperator: '',
 });
@@ -31,7 +31,7 @@ const toForm = (intake) =>
         sourceBlock: intake.sourceBlock || '',
         intakeDate: intake.intakeDate ? String(intake.intakeDate).slice(0, 10) : todayIsoDate(),
         receivedQuantityKg: String(intake.receivedQuantityKg ?? ''),
-        receivedVariety: intake.receivedVariety || 'KEITT',
+        receivedVariety: varietyKeyOf(intake.receivedVariety),
         receivedGrade: intake.receivedGrade || 'A',
         intakeOperator: intake.intakeOperator || '',
       }
@@ -39,9 +39,19 @@ const toForm = (intake) =>
 
 /**
  * Create or edit a raw intake. The intake ID and the batch are set at creation and read-only
- * afterwards. `onSubmit(form)` returns a promise; it rejects with the server error.
+ * afterwards. The variety is picked, by key, in the plants catalogue (`varieties`: items,
+ * loading, error), which plants owns. `onSubmit(form)` returns a promise; it rejects with the
+ * server error.
  */
-export default function RawIntakeFormModal({ open, editing, batches, onClose, onSubmit }) {
+export default function RawIntakeFormModal({
+  open,
+  editing,
+  batches,
+  varieties = { items: [], loading: false, error: null },
+  onRetryVarieties,
+  onClose,
+  onSubmit,
+}) {
   const { t } = useTranslation('producttransformation');
   const [form, setForm] = useState(() => toForm(editing));
   const [formError, setFormError] = useState('');
@@ -83,6 +93,7 @@ export default function RawIntakeFormModal({ open, editing, batches, onClose, on
     if (form.receivedQuantityKg === '' || Number(form.receivedQuantityKg) <= 0) {
       return t('rawIntake.validation.quantityPositive');
     }
+    if (!form.receivedVariety) return t('rawIntake.validation.varietyRequired');
     return '';
   };
 
@@ -176,15 +187,18 @@ export default function RawIntakeFormModal({ open, editing, batches, onClose, on
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t('rawIntake.variety')}>
-            <Select value={form.receivedVariety} onChange={update('receivedVariety')}>
-              {MANGO_VARIETIES.map((variety) => (
-                <option key={variety} value={variety}>
-                  {varietyLabel(variety)}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <OwnedResourceSelect
+            label={t('rawIntake.variety')}
+            value={form.receivedVariety}
+            onChange={(key) => setForm((current) => ({ ...current, receivedVariety: key }))}
+            options={varieties.items}
+            getOptionValue={(variety) => variety.varietyKey}
+            getOptionLabel={(variety) => variety.varietyName}
+            loading={varieties.loading}
+            loadError={Boolean(varieties.error)}
+            onRetry={onRetryVarieties}
+            owner={OWNER_LINKS.variety}
+          />
           <Field label={t('rawIntake.grade')}>
             <Select value={form.receivedGrade} onChange={update('receivedGrade')}>
               {QUALITY_GRADES.map((grade) => (

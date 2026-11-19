@@ -43,13 +43,14 @@ export function FarmsTable({ rows, selectedFarm, onEdit, onDelete, onToggleField
   )
 }
 
-/** Fields, filtered by the selected farm, with their Plants block code. */
-export function FieldsTable({ rows, onEdit, onDelete }) {
+/** Fields, filtered by the selected farm, with their Plants block code. The crop type, a variety key, shows its Plants name. */
+export function FieldsTable({ rows, varieties = [], onEdit, onDelete }) {
   const { t, text, area } = useCommonCells()
+  const varietyName = (key) => varieties.find((variety) => variety.varietyKey === key)?.varietyName ?? key
   const columns = [
     { key: 'name', header: t('farms.columns.name'), sortable: true },
     { key: 'code', header: t('farms.columns.code'), sortable: true, cell: (r) => text(r.code) },
-    { key: 'cropType', header: t('farms.columns.crop'), cell: (r) => text(r.cropType) },
+    { key: 'cropType', header: t('farms.columns.crop'), cell: (r) => text(varietyName(r.cropType)) },
     { key: 'soilType', header: t('farms.columns.soil'), cell: (r) => text(r.soilType) },
     { key: 'areaHectares', header: t('farms.columns.area'), cell: area },
     {

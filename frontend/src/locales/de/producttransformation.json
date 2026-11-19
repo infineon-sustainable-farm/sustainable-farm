@@ -148,7 +148,8 @@
       "dateRequired": "Das Eingangsdatum ist erforderlich",
       "sourceFarmRequired": "Der Herkunftsbetrieb ist erforderlich",
       "sourceBlockRequired": "Der Herkunftsblock ist erforderlich",
-      "quantityPositive": "Die angenommene Menge muss größer als 0 sein"
+      "quantityPositive": "Die angenommene Menge muss größer als 0 sein",
+      "varietyRequired": "Die Sorte ist erforderlich"
     },
     "saveError": "Der Rohwareneingang konnte nicht gespeichert werden",
     "deleteError": "Der Rohwareneingang konnte nicht gelöscht werden",

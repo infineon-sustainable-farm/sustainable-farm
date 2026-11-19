@@ -148,7 +148,8 @@
       "dateRequired": "La date de réception est obligatoire",
       "sourceFarmRequired": "L’exploitation d’origine est obligatoire",
       "sourceBlockRequired": "Le bloc d’origine est obligatoire",
-      "quantityPositive": "La quantité reçue doit être supérieure à 0"
+      "quantityPositive": "La quantité reçue doit être supérieure à 0",
+      "varietyRequired": "La variété est obligatoire"
     },
     "saveError": "Impossible d’enregistrer la réception",
     "deleteError": "Impossible de supprimer la réception",

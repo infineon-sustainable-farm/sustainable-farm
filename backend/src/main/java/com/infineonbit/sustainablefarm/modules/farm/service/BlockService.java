@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.farm.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.core.web.PageResponse;
@@ -11,6 +12,8 @@ import com.infineonbit.sustainablefarm.modules.farm.entity.Block;
 import com.infineonbit.sustainablefarm.modules.farm.entity.Farm;
 import com.infineonbit.sustainablefarm.modules.farm.repository.BlockRepository;
 import com.infineonbit.sustainablefarm.modules.farm.repository.FarmRepository;
+import com.infineonbit.sustainablefarm.modules.plants.api.CatalogVariety;
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,18 +24,24 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>The only place, with the zone to block links, where a block gets its Plants code: Plants and
  * Product Transformation pick existing blocks by code and never create one (docs/adr/0004).</p>
+ *
+ * <p>The crop type of a field is a variety of the plants catalogue, which plants owns: the request
+ * names it by its key or its name, the block stores its key ({@link VarietyCatalog}), and a variety
+ * the catalogue does not have is refused with 400.</p>
  */
 @Service
 @Transactional(readOnly = true)
 public class BlockService {
     private final FarmRepository farmRepository;
     private final BlockRepository blockRepository;
+    private final VarietyCatalog varietyCatalog;
     private final BlockReferences blockReferences;
 
-    public BlockService(FarmRepository farmRepository, BlockRepository blockRepository,
+    public BlockService(FarmRepository farmRepository, BlockRepository blockRepository, VarietyCatalog varietyCatalog,
                         BlockReferences blockReferences) {
         this.farmRepository = farmRepository;
         this.blockRepository = blockRepository;
+        this.varietyCatalog = varietyCatalog;
         this.blockReferences = blockReferences;
     }
 
@@ -60,7 +69,7 @@ public class BlockService {
         block.setFarm(getFarmEntity(request.farmId()));
         block.setName(request.name());
         block.setAreaHectares(request.areaHectares());
-        block.setCropType(request.cropType());
+        block.setCropType(cropTypeKey(request.cropType()));
         block.setSoilType(request.soilType());
         block.setCoordinates(request.coordinates());
         String code = FarmDirectory.normalizeBlockCode(request.code());
@@ -83,7 +92,7 @@ public class BlockService {
         }
         block.setName(request.name() == null ? block.getName() : request.name());
         block.setAreaHectares(request.areaHectares() == null ? block.getAreaHectares() : request.areaHectares());
-        block.setCropType(request.cropType());
+        block.setCropType(cropTypeKey(request.cropType()));
         block.setSoilType(request.soilType());
         block.setCoordinates(request.coordinates());
         if (request.code() != null) {
@@ -120,6 +129,20 @@ public class BlockService {
     public void deleteField(Long fieldId) {
         blockRepository.delete(getBlockEntity(fieldId));
         blockRepository.flush();
+    }
+
+    /**
+     * The catalogue key of the crop type sent, {@code null} for none.
+     *
+     * @throws BadRequestException (400) when the plants catalogue has no such variety
+     */
+    private String cropTypeKey(String cropType) {
+        if (cropType == null || cropType.isBlank()) {
+            return null;
+        }
+        return varietyCatalog.resolve(cropType).map(CatalogVariety::key)
+                .orElseThrow(() -> new BadRequestException("Unknown crop type, not a variety of the plants catalogue: "
+                        + cropType.trim()));
     }
 
     private Farm getFarmEntity(Long farmId) {

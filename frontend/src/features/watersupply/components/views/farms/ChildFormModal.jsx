@@ -1,13 +1,20 @@
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Input, Modal, Select } from '../../../../../shared/ui'
+import { Button, Field, Input, Modal, OwnedResourceSelect, Select } from '../../../../../shared/ui'
+import { OWNER_LINKS } from '../../../../../app/ownerLinks'
 import { FormActions } from '../../common/Screen'
 import { FormAlert } from '../../common/FormAlert'
 import { LocateHint } from './LocateHint'
 
 const IRRIGATION_METHODS = ['drip', 'sprinkler', 'surface']
 
-/** Creation or edit of a field (parent farm), or creation of a zone (parent field), in a kit dialog. */
-export function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave, busy, geo, onLocate, formError }) {
+/**
+ * Creation or edit of a field (parent farm), or creation of a zone (parent field), in a kit dialog.
+ * The crop type of a field is a variety of the Plants catalogue (`varietyCatalog`: varieties,
+ * loading, error, refetch), stored by its key.
+ */
+export function ChildFormModal({
+  title, farms, fields, varietyCatalog, form, setForm, onCancel, onSave, busy, geo, onLocate, formError,
+}) {
   const { t } = useTranslation('watersupply')
   const isZone = 'fieldId' in form
   const parentKey = isZone ? 'fieldId' : 'farmId'
@@ -39,9 +46,19 @@ export function ChildFormModal({ title, farms, fields, form, setForm, onCancel, 
           </Field>
         )}
         {!isZone && (
-          <Field label={t('farms.fields.cropType')}>
-            <Input value={form.cropType} onChange={field('cropType')} />
-          </Field>
+          <OwnedResourceSelect
+            label={t('farms.fields.cropType')}
+            value={form.cropType}
+            onChange={(cropType) => setForm((p) => ({ ...p, cropType }))}
+            options={varietyCatalog?.varieties ?? []}
+            getOptionValue={(variety) => variety.varietyKey}
+            getOptionLabel={(variety) => variety.varietyName}
+            placeholder={t('farms.selectOption')}
+            loading={varietyCatalog?.loading}
+            loadError={Boolean(varietyCatalog?.error)}
+            onRetry={varietyCatalog?.refetch}
+            owner={OWNER_LINKS.variety}
+          />
         )}
         {!isZone && (
           <Field label={t('farms.fields.code')} hint={t('farms.codeHint')}>

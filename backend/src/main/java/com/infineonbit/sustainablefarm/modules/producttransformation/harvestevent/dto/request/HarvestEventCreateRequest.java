@@ -3,20 +3,23 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.harvesteve
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalTime;
 
 /**
- * DTO for creating a new HarvestEvent (from Plants workstream)
- * 
+ * DTO for creating a new HarvestEvent from a harvest recorded in plants.
+ *
+ * <p>Plants owns the harvest lots: the event names one by {@code plantsHarvestId} (the id of
+ * {@code GET /api/plants/harvests} or {@code GET /api/product-transformation/harvest-events/plants/all}),
+ * and its date, variety, block (with its farm) and quantity are copied from it, read-only. An
+ * unknown harvest is refused with 400. Product transformation keeps its own fields: the event and
+ * batch codes, the time, the quality grade, the team, the supervisor, the weather and the storage.
+ *
  * @author Abdoul Ben Fatao SANON
- * @version 1.0.0
+ * @version 1.1.0
  */
 @Data
 @NoArgsConstructor
@@ -29,24 +32,11 @@ public class HarvestEventCreateRequest {
     @NotBlank(message = "Batch ID is required")
     private String batchId;
 
-    @NotNull(message = "Harvest date is required")
-    private LocalDate harvestDate;
+    /** The plants harvest (lot) the event comes from: {@code harvest_record.id}. */
+    @NotNull(message = "Plants harvest ID is required")
+    private Long plantsHarvestId;
 
     private LocalTime harvestTime;
-
-    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
-    @NotNull(message = "Mango variety is required")
-    private String mangoVariety;
-
-    @NotBlank(message = "Farm ID is required")
-    private String farmId;
-
-    @NotBlank(message = "Block ID is required")
-    private String blockId;
-
-    @NotNull(message = "Harvest quantity is required")
-    @Positive(message = "Harvest quantity must be positive")
-    private BigDecimal harvestQuantityKg;
 
     @NotNull(message = "Quality grade is required")
     private QualityGrade qualityGrade;
