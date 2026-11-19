@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.NurseryBatchRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
@@ -13,6 +14,7 @@ import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRep
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthCalendarRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.NurseryEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +36,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class NurseryTransplantTransactionIntegrationTest {
 
     private static final LocalDate MARCH_2 = LocalDate.of(2026, 3, 2);
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("N1", "N2");
+    }
 
     @Autowired
     private PlantsBlocks plantsBlocks;

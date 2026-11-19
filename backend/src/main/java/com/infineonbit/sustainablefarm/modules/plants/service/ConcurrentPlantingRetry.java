@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
-import com.infineonbit.sustainablefarm.modules.farm.api.BlockRegistry;
 import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.GrowthCalendar;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
@@ -19,8 +18,7 @@ import java.util.function.Supplier;
  * harvest.
  *
  * <p>Two plantings of a new (block, name) pair, or of a new block, sent at the
- * same time both find no row and both insert one; so do two writes on a block
- * code that the farm referential does not have yet, on the code of the block. Likewise, two harvests of a block sent
+ * same time both find no row and both insert one. Likewise, two harvests of a block sent
  * at the same time both read the same highest lot number and both take the
  * next one. The unique constraint makes the second insert wait for the first
  * transaction, then refuses it once the first one has committed. The losing
@@ -32,7 +30,7 @@ import java.util.function.Supplier;
  *
  * <p>Must be called outside any transaction, as the controllers do; the
  * transplant of a nursery batch is run again as a whole and stays
- * all-or-nothing. Only the four key constraints are handled: any other
+ * all-or-nothing. Only the three key constraints are handled: any other
  * integrity violation goes through unchanged and is never run again. When the
  * second run loses a race again, for example with three requests or more on
  * the same block, the request is refused with a 409 and nothing is saved.
@@ -42,10 +40,10 @@ public class ConcurrentPlantingRetry {
 
     /** The unique constraints on the natural keys; a violation of any other one is not a lost race. */
     private static final List<String> KEY_CONSTRAINTS = List.of(BlockVariety.KEY_CONSTRAINT, GrowthCalendar.KEY_CONSTRAINT,
-            HarvestRecord.LOT_NUMBER_CONSTRAINT, BlockRegistry.CODE_CONSTRAINT);
+            HarvestRecord.LOT_NUMBER_CONSTRAINT);
 
     /**
-     * The key constraint the violation comes from, if it is one of the four.
+     * The key constraint the violation comes from, if it is one of the three.
      *
      * <p>The constraint name is read as each database reports it:
      * {@code uk_block_variety_variety_key} on PostgreSQL,
@@ -78,7 +76,7 @@ public class ConcurrentPlantingRetry {
      * @param <T>       the result of the write
      * @return the result of the first run, or of the second one after a lost race
      * @throws ConflictException                if the second run loses a race again
-     * @throws DataIntegrityViolationException  if a constraint other than the four keys is violated
+     * @throws DataIntegrityViolationException  if a constraint other than the three keys is violated
      */
     public <T> T runRetryingOnce(String blockCode, Supplier<T> write) {
         try {

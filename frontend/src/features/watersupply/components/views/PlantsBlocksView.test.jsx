@@ -5,11 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { controlByLabel, renderView as render } from './testRender'
 import { PlantsBlocksView } from './PlantsBlocksView'
-import { plantsIntegrationApi, zoneBlockMappingApi } from '../../api/watersupplyApi'
+import { plantsIntegrationApi, zoneApi, zoneBlockMappingApi } from '../../api/watersupplyApi'
 
 afterEach(cleanup)
 
 vi.mock('../../api/watersupplyApi', () => ({
+  zoneApi: { updateZone: vi.fn() },
   zoneBlockMappingApi: {
     getMappings: vi.fn(),
     createMapping: vi.fn(),
@@ -23,7 +24,12 @@ vi.mock('../../api/watersupplyApi', () => ({
 
 vi.mock('../../hooks/useFarms', () => ({
   useFarms: () => ({ farms: [{ id: 1, name: 'North Farm' }] }),
-  useFields: () => ({ fields: [{ id: 10, farmId: 1 }] }),
+  useFields: () => ({ fields: [
+    { id: 10, farmId: 1, name: 'Field A', code: 'A' },
+    { id: 11, farmId: 1, name: 'D1', code: 'D1' },
+    { id: 12, farmId: 1, name: 'No code field', code: null },
+    { id: 20, farmId: 2, name: 'Far field', code: 'F' },
+  ] }),
   useZones: () => ({ zones: [
     { id: 100, name: 'Drip Zone A', fieldId: 10 },
     { id: 101, name: 'Drip Zone B', fieldId: 10 },
@@ -73,47 +79,48 @@ describe('PlantsBlocksView', () => {
       .toHaveBeenCalledWith(expect.objectContaining({ blockCode: 'A', growthPhase: 'establishment' })))
   })
 
-  it('links a zone with the farm of its field', async () => {
-    zoneBlockMappingApi.createMapping.mockResolvedValue({ id: 100, blockCode: 'D1' })
+  it('links a zone by moving it into a field of its farm that has a Plants code', async () => {
+    zoneApi.updateZone.mockResolvedValue({ id: 100, fieldId: 11 })
     render(<PlantsBlocksView {...props} />)
     await screen.findByText('3 block(s), 3 link(s)')
     const form = document.querySelector('form')
 
     fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
-    fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: ' d1 ' } })
+    const block = controlByLabel(form, 'Plants block')
+    // Only the coded fields of the zone's farm: no typed code, no field without a code.
+    expect([...block.options].map((option) => option.textContent)).toEqual(['Select', 'A · Field A', 'D1'])
+    fireEvent.change(block, { target: { value: '11' } })
     fireEvent.submit(form)
 
-    await waitFor(() => expect(zoneBlockMappingApi.createMapping)
-      .toHaveBeenCalledWith({ zoneId: 100, blockCode: 'd1', farmId: 1 }))
+    await waitFor(() => expect(zoneApi.updateZone).toHaveBeenCalledWith(100, { fieldId: 11 }))
     await waitFor(() => expect(props.notify).toHaveBeenCalledWith('Zone linked to block D1'))
-  })
-
-  it('refuses a block code that Plants would not accept', async () => {
-    render(<PlantsBlocksView {...props} />)
-    await screen.findByText('3 block(s), 3 link(s)')
-    const form = document.querySelector('form')
-
-    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
-    fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'Block A' } })
-    fireEvent.submit(form)
-
-    await waitFor(() => expect(screen.getByText(/short code such as A or B2/)).toBeTruthy())
     expect(zoneBlockMappingApi.createMapping).not.toHaveBeenCalled()
   })
 
-  it('explains a zone whose farm cannot be resolved and a duplicate link', async () => {
-    zoneBlockMappingApi.createMapping.mockRejectedValue(Object.assign(new Error('This zone is already linked to block A'), { status: 409 }))
+  it('asks for a block and explains a zone already in that field', async () => {
+    render(<PlantsBlocksView {...props} />)
+    await screen.findByText('3 block(s), 3 link(s)')
+    const form = document.querySelector('form')
+
+    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText('Select a Plants block.')).toBeTruthy())
+
+    fireEvent.change(controlByLabel(form, 'Plants block'), { target: { value: '10' } })
+    fireEvent.submit(form)
+    await waitFor(() => expect(screen.getByText('This zone is already linked to block A.')).toBeTruthy())
+    expect(zoneApi.updateZone).not.toHaveBeenCalled()
+  })
+
+  it('explains a zone whose farm cannot be resolved', async () => {
     render(<PlantsBlocksView {...props} />)
     await screen.findByText('3 block(s), 3 link(s)')
     const form = document.querySelector('form')
 
     fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '102' } })
-    fireEvent.change(controlByLabel(form, 'Plants block code'), { target: { value: 'A' } })
+    fireEvent.change(controlByLabel(form, 'Plants block'), { target: { value: '11' } })
     fireEvent.submit(form)
     await waitFor(() => expect(screen.getByText(/farm of this zone is unknown/)).toBeTruthy())
-
-    fireEvent.change(controlByLabel(form, 'Zone'), { target: { value: '100' } })
-    fireEvent.submit(form)
-    await waitFor(() => expect(screen.getByText('This zone is already linked to block A')).toBeTruthy())
+    expect(zoneApi.updateZone).not.toHaveBeenCalled()
   })
 })

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Modal, Select } from "../../../shared/ui";
-import { useVarietyBlocks } from "../hooks/useVarieties";
 import { useVarietyReferences } from "../hooks/useVarietyReferences";
 import { formatEnum } from "../utils/format";
 import { batchRequestBody, NURSERY_STAGES, PURCHASED } from "../utils/nurseryRequests";
 import { todayAsIsoDate, validateBatch } from "../utils/nurseryValidation";
+import BlockSelect from "./BlockSelect";
 import FormAlert from "./FormAlert";
 import NurseryField from "./NurseryField";
 import { noteId } from "./nurseryForm";
@@ -42,8 +42,8 @@ const INITIAL_VALUES = {
  * The supplier and its lot number are asked for an external purchase only,
  * as the API requires the supplier then and refuses both otherwise. Going
  * back to in-house production empties them and drops their errors, the API's
- * included. The variety names of the reference and the blocks of the recorded
- * varieties are offered as suggestions; both stay free text.
+ * included. The variety names of the reference are offered as suggestions; the
+ * planned block is picked among the blocks of the farm referential.
  *
  * The checks mirror the API's 400 rules (utils/nurseryValidation); what the API
  * still refuses is shown under its field: a 400 under each field it names, a
@@ -60,7 +60,6 @@ export default function AddNurseryBatchModal({ isSubmitting, error, onSubmit, on
     const [today] = useState(todayAsIsoDate);
 
     const { data: references } = useVarietyReferences();
-    const { data: blocks } = useVarietyBlocks();
 
     const serverFieldErrors = error?.status === 400 ? error.data?.fieldErrors : null;
     const codeConflict = error?.status === 409 ? error.message : null;
@@ -232,25 +231,14 @@ export default function AddNurseryBatchModal({ isSubmitting, error, onSubmit, on
                         />
                     </NurseryField>
 
-                    <NurseryField
+                    <BlockSelect
                         id="batch-planned-block"
                         label={t("nursery.addForm.plannedBlock")}
+                        value={values.plannedBlockCode}
+                        onChange={(code) => setValue("plannedBlockCode", code)}
                         error={fieldError("plannedBlockCode")}
-                        note={notes.plannedBlockCode}
-                    >
-                        <Input
-                            type="text"
-                            list="batch-block-options"
-                            value={values.plannedBlockCode}
-                            onChange={(event) => setValue("plannedBlockCode", event.target.value)}
-                            aria-describedby={describedBy.plannedBlockCode}
-                        />
-                        <datalist id="batch-block-options">
-                            {(blocks ?? []).map((block) => (
-                                <option key={block} value={block} />
-                            ))}
-                        </datalist>
-                    </NurseryField>
+                        hint={notes.plannedBlockCode}
+                    />
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">

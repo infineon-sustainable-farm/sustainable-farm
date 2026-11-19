@@ -8,9 +8,9 @@ import { LocateHint } from './LocateHint'
 const IRRIGATION_METHODS = ['drip', 'sprinkler', 'surface']
 
 /**
- * Creation of a field (parent farm) or of a zone (parent field), in a kit dialog. The crop type of
- * a field is a variety of the Plants catalogue (`varietyCatalog`: varieties, loading, error,
- * refetch), stored by its key.
+ * Creation or edit of a field (parent farm), or creation of a zone (parent field), in a kit dialog.
+ * The crop type of a field is a variety of the Plants catalogue (`varietyCatalog`: varieties,
+ * loading, error, refetch), stored by its key.
  */
 export function ChildFormModal({
   title, farms, fields, varietyCatalog, form, setForm, onCancel, onSave, busy, geo, onLocate, formError,
@@ -59,6 +59,11 @@ export function ChildFormModal({
             onRetry={varietyCatalog?.refetch}
             owner={OWNER_LINKS.variety}
           />
+        )}
+        {!isZone && (
+          <Field label={t('farms.fields.code')} hint={t('farms.codeHint')}>
+            <Input value={form.code} onChange={field('code')} placeholder={t('farms.codePlaceholder')} />
+          </Field>
         )}
         <Field label={t('farms.fields.area')} required>
           <Input type="number" step="0.01" value={form.areaHectares} onChange={field('areaHectares')} />

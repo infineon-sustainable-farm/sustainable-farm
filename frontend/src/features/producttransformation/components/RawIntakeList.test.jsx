@@ -8,6 +8,7 @@ import RawIntakeList from './RawIntakeList';
 import { LocationProbe } from '../../../test/LocationProbe';
 import { rawIntakeApi } from '../api/rawIntakeApi';
 import { batchApi } from '../api/batchApi';
+import { siteApi } from '../api/siteApi';
 import { varietyApi } from '../api/varietyApi';
 
 vi.mock('../api/rawIntakeApi', () => ({
@@ -25,6 +26,13 @@ vi.mock('../api/batchApi', () => ({
   },
 }));
 
+vi.mock('../api/siteApi', () => ({
+  siteApi: {
+    getFarms: vi.fn(),
+    getFields: vi.fn(),
+  },
+}));
+
 vi.mock('../api/varietyApi', () => ({
   varietyApi: {
     getVarieties: vi.fn(),
@@ -32,6 +40,17 @@ vi.mock('../api/varietyApi', () => ({
 }));
 
 afterEach(cleanup);
+
+const FARMS = [
+  { id: 1, name: 'Farm A' },
+  { id: 2, name: 'Farm C' },
+];
+
+const FIELDS = [
+  { id: 10, farmId: 1, code: 'BLOCK A', name: 'Block A' },
+  { id: 11, farmId: 2, code: 'C1', name: 'North field' },
+  { id: 12, farmId: 2, code: null, name: 'Field without code' },
+];
 
 // The plants variety catalogue, as GET /api/plants/variety-references serves it.
 const VARIETIES = [
@@ -73,6 +92,8 @@ beforeEach(() => {
   rawIntakeApi.updateRawIntake.mockResolvedValue({});
   rawIntakeApi.deleteRawIntake.mockResolvedValue(undefined);
   batchApi.getAllBatches.mockResolvedValue([{ batchId: 'B-001' }, { batchId: 'B-002' }]);
+  siteApi.getFarms.mockResolvedValue(FARMS);
+  siteApi.getFields.mockResolvedValue(FIELDS);
   varietyApi.getVarieties.mockResolvedValue(VARIETIES.map((item) => ({ ...item })));
 });
 
@@ -115,12 +136,14 @@ describe('RawIntakeList', () => {
 
     fireEvent.change(within(dialog).getByLabelText('Intake ID'), { target: { value: 'RI-3' } });
     fireEvent.change(within(dialog).getByLabelText('Batch'), { target: { value: 'B-002' } });
-    fireEvent.change(within(dialog).getByLabelText('Source Farm'), {
-      target: { value: 'Farm C' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Source Block'), {
-      target: { value: 'Block C' },
-    });
+    await within(dialog).findByRole('option', { name: 'Farm C' });
+    fireEvent.change(within(dialog).getByLabelText(/Source Farm/), { target: { value: '2' } });
+    // Only the coded fields of the chosen farm are offered.
+    const block = within(dialog).getByLabelText(/Source Block/);
+    expect(within(block).getByRole('option', { name: 'C1 · North field' })).toBeTruthy();
+    expect(within(block).queryByRole('option', { name: /Block A/ })).toBeNull();
+    expect(within(block).queryByRole('option', { name: /without code/ })).toBeNull();
+    fireEvent.change(block, { target: { value: 'C1' } });
     fireEvent.change(within(dialog).getByLabelText('Intake Date'), {
       target: { value: '2026-11-09' },
     });
@@ -140,8 +163,8 @@ describe('RawIntakeList', () => {
       expect(rawIntakeApi.createRawIntake).toHaveBeenCalledWith({
         intakeId: 'RI-3',
         batchId: 'B-002',
-        sourceFarm: 'Farm C',
-        sourceBlock: 'Block C',
+        sourceFarm: '2',
+        sourceBlock: 'C1',
         intakeDate: '2026-11-09',
         receivedQuantityKg: 150.25,
         receivedVariety: 'TOMMY',
@@ -180,8 +203,9 @@ describe('RawIntakeList', () => {
 
     fireEvent.change(within(dialog).getByLabelText('Intake ID'), { target: { value: 'RI-3' } });
     fireEvent.change(within(dialog).getByLabelText('Batch'), { target: { value: 'B-001' } });
-    fireEvent.change(within(dialog).getByLabelText('Source Farm'), { target: { value: 'Farm C' } });
-    fireEvent.change(within(dialog).getByLabelText('Source Block'), { target: { value: 'Block C' } });
+    await within(dialog).findByRole('option', { name: 'Farm C' });
+    fireEvent.change(within(dialog).getByLabelText(/Source Farm/), { target: { value: '2' } });
+    fireEvent.change(within(dialog).getByLabelText(/Source Block/), { target: { value: 'C1' } });
     fireEvent.change(within(dialog).getByLabelText('Quantity (kg)'), { target: { value: '10' } });
     fireEvent.submit(dialog.querySelector('form'));
 
@@ -222,12 +246,9 @@ describe('RawIntakeList', () => {
 
     fireEvent.change(within(dialog).getByLabelText('Intake ID'), { target: { value: 'RI-3' } });
     fireEvent.change(within(dialog).getByLabelText('Batch'), { target: { value: 'B-001' } });
-    fireEvent.change(within(dialog).getByLabelText('Source Farm'), {
-      target: { value: 'Farm C' },
-    });
-    fireEvent.change(within(dialog).getByLabelText('Source Block'), {
-      target: { value: 'Block C' },
-    });
+    await within(dialog).findByRole('option', { name: 'Farm C' });
+    fireEvent.change(within(dialog).getByLabelText(/Source Farm/), { target: { value: '2' } });
+    fireEvent.change(within(dialog).getByLabelText(/Source Block/), { target: { value: 'C1' } });
     fireEvent.change(within(dialog).getByLabelText('Quantity (kg)'), { target: { value: '0' } });
     // jsdom enforces the native `min` constraint on click, so submit directly to
     // exercise the JavaScript validation backstop.
@@ -247,6 +268,9 @@ describe('RawIntakeList', () => {
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByLabelText('Intake ID').disabled).toBe(true);
     expect(within(dialog).getByLabelText('Batch').disabled).toBe(true);
+    // The saved block code gives back its farm in the pickers.
+    await waitFor(() => expect(within(dialog).getByLabelText(/Source Farm/).value).toBe('1'));
+    expect(within(dialog).getByLabelText(/Source Block/).value).toBe('BLOCK A');
 
     fireEvent.change(within(dialog).getByLabelText('Quantity (kg)'), {
       target: { value: '530' },
@@ -257,8 +281,8 @@ describe('RawIntakeList', () => {
       expect(rawIntakeApi.updateRawIntake).toHaveBeenCalledWith(
         'RI-1',
         expect.objectContaining({
-          sourceFarm: 'Farm A',
-          sourceBlock: 'Block A',
+          sourceFarm: '1',
+          sourceBlock: 'BLOCK A',
           intakeDate: '2026-10-01',
           receivedQuantityKg: 530,
           receivedVariety: 'KEITT',
@@ -269,6 +293,38 @@ describe('RawIntakeList', () => {
     );
     expect(rawIntakeApi.updateRawIntake.mock.calls[0][1]).not.toHaveProperty('intakeId');
     expect(rawIntakeApi.updateRawIntake.mock.calls[0][1]).not.toHaveProperty('batchId');
+  });
+
+  it('clears the block when another farm is chosen', async () => {
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
+    await screen.findByText('RI-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Raw Intake/i }));
+    const dialog = screen.getByRole('dialog');
+    await within(dialog).findByRole('option', { name: 'Farm A' });
+    expect(within(dialog).getByLabelText(/Source Block/).disabled).toBe(true);
+    expect(within(dialog).getByText('Choose the farm first.')).toBeTruthy();
+
+    fireEvent.change(within(dialog).getByLabelText(/Source Farm/), { target: { value: '1' } });
+    fireEvent.change(within(dialog).getByLabelText(/Source Block/), { target: { value: 'BLOCK A' } });
+    expect(within(dialog).getByLabelText(/Source Block/).value).toBe('BLOCK A');
+
+    fireEvent.change(within(dialog).getByLabelText(/Source Farm/), { target: { value: '2' } });
+    expect(within(dialog).getByLabelText(/Source Block/).value).toBe('');
+  });
+
+  it('sends to the farms screen when the farm has no coded field', async () => {
+    siteApi.getFields.mockResolvedValue([{ id: 12, farmId: 2, code: null, name: 'Field without code' }]);
+    render(<RawIntakeList />, { wrapper: MemoryRouter });
+    await screen.findByText('RI-1');
+
+    fireEvent.click(screen.getByRole('button', { name: /New Raw Intake/i }));
+    const dialog = screen.getByRole('dialog');
+    await within(dialog).findByRole('option', { name: 'Farm C' });
+    fireEvent.change(within(dialog).getByLabelText(/Source Farm/), { target: { value: '2' } });
+
+    const link = within(dialog).getByRole('link');
+    expect(link.getAttribute('href')).toBe('/watersupply/farms?create=field');
   });
 
   it('deletes an intake after confirmation', async () => {

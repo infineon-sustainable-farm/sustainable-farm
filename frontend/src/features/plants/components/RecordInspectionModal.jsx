@@ -5,6 +5,7 @@ import { Button, Field, Input, Modal, Select } from "../../../shared/ui";
 import { useHealthIssues } from "../hooks/useHealthIssues";
 import { formatEnum } from "../utils/format";
 import { CATALOGUE_NOTE_ID, issueOptions, OTHER_ISSUE_CODE, todayAsIsoDate } from "../utils/healthIssues";
+import BlockSelect from "./BlockSelect";
 import FormAlert from "./FormAlert";
 import HealthFormActions from "./HealthFormActions";
 import InspectionFindingFields from "./InspectionFindingFields";
@@ -13,11 +14,10 @@ import InspectionFindingFields from "./InspectionFindingFields";
 const METHODS = ["VISUAL", "TRAP"];
 
 /**
- * Same rules as the API: a block as for a planting, a whole score from 0 to
- * 100, a tree label of up to 20 letters, digits or hyphens, and a name of at
- * most 60 characters for "Other". Spaces around a code are removed by the API.
+ * Same rules as the API: a whole score from 0 to 100, a tree label of up to
+ * 20 letters, digits or hyphens, and a name of at most 60 characters for
+ * "Other". Spaces around a tree label are removed by the API.
  */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
 const SCORE_PATTERN = /^\d{1,3}$/;
 const TREE_LABEL_PATTERN = /^\s*([A-Za-z0-9-]{1,20})?\s*$/;
 const OTHER_LABEL_MAX_LENGTH = 60;
@@ -27,8 +27,8 @@ const TEXT_MAX_LENGTH = 255;
  * Form of an inspection of a block: its date, health score, observer and
  * method, and the problems found, none or several, recorded together.
  *
- * The block is typed, as an inspection needs no planting; the known blocks
- * are offered as suggestions. No farm is sent, as for a planting. The
+ * The block is picked among the blocks of the farm referential, as an
+ * inspection needs no planting. No farm is sent, as for a planting. The
  * problems are those of the catalogue, then "Other" once and last; "Other"
  * asks for the name of the problem.
  *
@@ -39,7 +39,7 @@ const TEXT_MAX_LENGTH = 255;
  * - a 422 (a problem not in the catalogue), or any other error: one message
  *   above the form.
  */
-export default function RecordInspectionModal({ blocks, isSubmitting, error, onSubmit, onResetError, onClose }) {
+export default function RecordInspectionModal({ isSubmitting, error, onSubmit, onResetError, onClose }) {
     const { t } = useTranslation("plants");
     const [blockCode, setBlockCode] = useState("");
     const [inspectedOn, setInspectedOn] = useState("");
@@ -110,10 +110,8 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
 
     function validate() {
         const errors = {};
-        if (!blockCode.trim()) {
+        if (!blockCode) {
             errors.blockCode = t("health.errors.blockRequired");
-        } else if (!BLOCK_CODE_PATTERN.test(blockCode)) {
-            errors.blockCode = t("health.errors.blockFormat");
         }
         if (!inspectedOn) {
             errors.inspectedOn = t("health.inspectionForm.errors.dateRequired");
@@ -180,25 +178,14 @@ export default function RecordInspectionModal({ blocks, isSubmitting, error, onS
                 {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <Field
+                    <BlockSelect
                         id="inspection-block"
                         label={t("health.block")}
+                        value={blockCode}
+                        onChange={setBlockCode}
                         error={fieldError("blockCode")}
                         hint={t("health.blockNote")}
-                    >
-                        <Input
-                            type="text"
-                            autoFocus
-                            list="inspection-block-options"
-                            value={blockCode}
-                            onChange={(event) => setBlockCode(event.target.value)}
-                        />
-                    </Field>
-                    <datalist id="inspection-block-options">
-                        {blocks.map((block) => (
-                            <option key={block} value={block} />
-                        ))}
-                    </datalist>
+                    />
 
                     <Field id="inspection-date" label={t("health.inspectionForm.date")} error={fieldError("inspectedOn")}>
                         <Input

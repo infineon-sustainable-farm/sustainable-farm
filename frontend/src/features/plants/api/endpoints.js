@@ -28,6 +28,8 @@ export const PLANTS_ENDPOINTS = {
     NURSERY_EVENTS: "/api/plants/nursery-events",
     OVERVIEW: "/api/plants/overview",
     SCENARIOS: "/api/plants/scenarios",
+    // Owned by the farm referential (Water Supply, Farms & fields): read only, never written here.
+    FARM_FIELDS: "/api/farm/fields",
     // Owned by machinery: the machines a treatment picks from, read only.
     MACHINERY_EQUIPMENT: "/api/machinery/equipment",
 };

@@ -210,16 +210,16 @@
     "formTitle": "Link a zone",
     "fields": {
       "zone": "Zone",
-      "blockCode": "Plants block code",
-      "blockCodePlaceholder": "A, B2…"
+      "block": "Plants block",
+      "noBlock": "No field with a Plants code"
     },
-    "codeHint": "Codes are stored in upper case. The code belongs to the field of the zone: every zone of that field is linked to the block.",
+    "codeHint": "The list shows the fields of the zone’s farm that have a Plants code; a field gets its code in Farms, fields & zones. Linking moves the zone into that field.",
     "link": "Link",
     "errors": {
       "zoneRequired": "Select a zone.",
-      "codeFormat": "The block code is a short code such as A or B2, without prefix or space.",
       "farmUnknown": "The farm of this zone is unknown: check its field in Farms & Fields.",
-      "alreadyLinked": "This zone is already linked to a block."
+      "blockRequired": "Select a Plants block.",
+      "alreadyLinkedTo": "This zone is already linked to block {{code}}."
     },
     "linked": "Zone linked to block {{code}}",
     "unlinked": "Zone unlinked from block {{code}}",
@@ -281,7 +281,8 @@
       "location": "Location",
       "crop": "Crop",
       "soil": "Soil",
-      "irrigationMethod": "Irrigation method"
+      "irrigationMethod": "Irrigation method",
+      "code": "Plants code"
     },
     "hectares": "{{value}} ha",
     "coordinates": "{{latitude}}, {{longitude}}",
@@ -304,7 +305,8 @@
       "parentField": "Parent field",
       "irrigationMethod": "Irrigation method",
       "cropType": "Crop type",
-      "location": "Location (latitude, longitude)"
+      "location": "Location (latitude, longitude)",
+      "code": "Plants block code"
     },
     "selectOption": "-- Select --",
     "locationPlaceholder": "10.633100, -4.761200",
@@ -317,7 +319,8 @@
     "useMyPosition": "Use my position",
     "accuracy": "Position of this device, accurate to about {{accuracy}} m: correct it if you are not on site.",
     "errors": {
-      "locationFormat": "Write the location as \"latitude, longitude\"."
+      "locationFormat": "Write the location as \"latitude, longitude\".",
+      "codeFormat": "The Plants block code is a short code such as A or B2, without prefix or space."
     },
     "geo": {
       "refused": "Location access refused (or page not served over HTTPS): allow it in the browser, or type the coordinates.",
@@ -328,7 +331,11 @@
       "bothOrNeither": "Give both latitude and longitude, or neither.",
       "latitudeRange": "The latitude is between -90 and 90.",
       "longitudeRange": "The longitude is between -180 and 180."
-    }
+    },
+    "codePlaceholder": "A, B2…",
+    "codeHint": "Letters and digits, stored in upper case. Plants and Product Transformation pick the field by this code.",
+    "editField": "Edit field",
+    "fieldUpdated": "Field updated"
   },
   "dashboard": {
     "title": "Water dashboard",
@@ -659,8 +666,8 @@
       "fields": {
         "version": "Version (empty = today's date)",
         "text": "Text read to the group",
-        "allowed": "Allowed areas (one per line)",
-        "forbidden": "Forbidden areas (one per line)",
+        "allowed": "Allowed areas",
+        "forbidden": "Forbidden areas",
         "risks": "Risks (one per line)",
         "maxCapacity": "Maximum group size",
         "guideRequired": "A guide must accompany the group"
@@ -677,7 +684,8 @@
       "errors": {
         "groupSize": "The group size is at least 1 visitor.",
         "publishFailed": "Unable to publish."
-      }
+      },
+      "noZones": "No zone yet: add the zones in Farms, fields & zones."
     },
     "preview": {
       "title": "Visitor screen preview",

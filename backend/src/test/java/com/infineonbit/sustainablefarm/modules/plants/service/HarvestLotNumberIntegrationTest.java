@@ -1,8 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +40,14 @@ class HarvestLotNumberIntegrationTest {
     private static final int TRIALS = 10;
     private static final LocalDate PLANTED_ON = LocalDate.of(2023, 9, 15);
     private static final LocalDate HARVESTED_ON = LocalDate.of(2026, 6, 10);
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("LN1", "LN2", "LN3");
+    }
 
     @Autowired
     private PlantsBlocks plantsBlocks;
@@ -146,6 +156,7 @@ class HarvestLotNumberIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: two varieties of one block, so no lock on a variety row could keep them apart
             String blockCode = "LR" + trial;
+            siteTestBlocks.ensure(blockCode);
             plantingService.recordPlanting(new PlantingRequest(null, blockCode, "Keitt", PLANTED_ON, 40));
             plantingService.recordPlanting(new PlantingRequest(null, blockCode, "Kent", PLANTED_ON, 20));
             // Act
