@@ -29,6 +29,15 @@ describe('DashboardView', () => {
     expect(screen.getByText('No activity')).toBeTruthy()
   })
 
+  it('shows a figure the API did not send as none, not as zero', () => {
+    render(<DashboardView onNavigate={vi.fn()} notify={vi.fn()} />)
+
+    // monthly consumption, savings, irrigations today and sensor availability are not in the KPIs
+    expect(screen.queryByText('0 L')).toBeNull()
+    expect(screen.queryByText('0%')).toBeNull()
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(4)
+  })
+
   it('opens other screens and shows the demo notices from the quick actions', () => {
     const onNavigate = vi.fn()
     const notify = vi.fn()

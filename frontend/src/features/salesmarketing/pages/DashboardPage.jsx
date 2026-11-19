@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ChartNoAxesCombined, Download, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/api';
+import { varietyApi } from '../api/varietyApi';
 import { todayIsoDate } from '../../../shared/utils/todayIsoDate';
 import { Button, ConfirmDialog, PageHeader, Skeleton } from '../../../shared/ui';
 import Notice from '../components/common/Notice';
@@ -16,13 +17,14 @@ import Shortcuts from '../components/dashboard/Shortcuts';
 import { emptyForecastForm, forecastsToCsv, getErrorMessage } from '../components/dashboard/dashboardData';
 
 const LOADS = [
-  { key: 'forecasts', call: 'getDemandForecasts' },
-  { key: 'alerts', call: 'getAlerts' },
-  { key: 'batches', call: 'getProductBatches' },
-  { key: 'products', call: 'getProducts' },
-  { key: 'pricing', call: 'getPricingHistory' },
-  { key: 'customers', call: 'getCustomers' },
-  { key: 'orders', call: 'getOrders' },
+  { key: 'forecasts', load: () => api.getDemandForecasts() },
+  { key: 'alerts', load: () => api.getAlerts() },
+  { key: 'batches', load: () => api.getProductBatches() },
+  { key: 'products', load: () => api.getProducts() },
+  { key: 'pricing', load: () => api.getPricingHistory() },
+  { key: 'customers', load: () => api.getCustomers() },
+  { key: 'orders', load: () => api.getOrders() },
+  { key: 'varieties', load: () => varietyApi.getVarietyReferences() },
 ];
 
 export default function DashboardPage() {
@@ -43,6 +45,7 @@ export default function DashboardPage() {
   const [pricingHistory, setPricingHistory] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [varieties, setVarieties] = useState([]);
 
   const later = useLater();
   const flashSuccess = (msg) => {
@@ -65,10 +68,11 @@ export default function DashboardPage() {
       pricing: setPricingHistory,
       customers: setCustomers,
       orders: setOrders,
+      varieties: setVarieties,
     };
     const requestFailed = t('dashboard.requestFailed');
     try {
-      const results = await Promise.allSettled(LOADS.map(({ call }) => api[call]()));
+      const results = await Promise.allSettled(LOADS.map(({ load }) => load()));
       setApiError(null);
 
       const failures = [];
@@ -272,7 +276,7 @@ export default function DashboardPage() {
                 rowCount={forecasts.length}
                 onCreate={openNewForecast}
               />
-              <HarvestWindow />
+              <HarvestWindow products={products} varieties={varieties} />
             </div>
             <div className="flex flex-col gap-4 xl:col-span-4">
               <BatchesCard className="flex-1" batches={productBatches} onRefresh={fetchDashboardData} />

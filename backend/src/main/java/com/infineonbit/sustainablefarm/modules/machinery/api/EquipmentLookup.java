@@ -13,12 +13,6 @@ import java.util.Optional;
  */
 public interface EquipmentLookup {
 
-    /**
-     * Order of the {@code dev} seeder of the demo machines. A seeder of another module that
-     * references them (product transformation) runs after it (a higher {@code @Order} value).
-     */
-    int DEMO_SEED_ORDER = -50;
-
     /** The equipment with this register id, if any. */
     Optional<EquipmentView> findById(Long id);
 

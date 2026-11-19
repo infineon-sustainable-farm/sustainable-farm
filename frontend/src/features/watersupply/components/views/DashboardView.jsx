@@ -86,6 +86,8 @@ export function DashboardView({ onNavigate, notify }) {
       ? t('dashboard.health.connected')
       : t('dashboard.health.disconnected')
   const orNone = (value) => value ?? t('common.none')
+  // A figure the API did not send shows as none, never as 0.
+  const shown = (value, formatValue) => (value == null ? t('common.none') : formatValue(value))
 
   function renderContent() {
     if (anythingLoading) return <LoadingState label={t('dashboard.loading')} />
@@ -96,14 +98,14 @@ export function DashboardView({ onNavigate, notify }) {
     return (
       <>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard icon={Droplet} label={t('dashboard.kpis.daily')} value={format.liters(kpis.daily_consumption_liters ?? 0)} />
-          <KpiCard icon={CalendarDays} label={t('dashboard.kpis.monthly')} value={format.liters(kpis.monthly_consumption_liters ?? 0)} />
-          <KpiCard icon={BatteryMedium} tone="warning" label={t('dashboard.kpis.tankLevel')} value={format.percent(kpis.tank_level_percentage ?? 0)} />
-          <KpiCard icon={PiggyBank} label={t('dashboard.kpis.savings')} value={format.percent(kpis.water_savings_percentage ?? 0)} />
-          <KpiCard icon={Activity} label={t('dashboard.kpis.irrigations')} value={kpis.irrigation_count_today ?? 0} />
-          <KpiCard icon={TriangleAlert} tone="warning" label={t('dashboard.kpis.anomalies')} value={kpis.anomaly_count ?? 0} />
+          <KpiCard icon={Droplet} label={t('dashboard.kpis.daily')} value={shown(kpis.daily_consumption_liters, format.liters)} />
+          <KpiCard icon={CalendarDays} label={t('dashboard.kpis.monthly')} value={shown(kpis.monthly_consumption_liters, format.liters)} />
+          <KpiCard icon={BatteryMedium} tone="warning" label={t('dashboard.kpis.tankLevel')} value={shown(kpis.tank_level_percentage, format.percent)} />
+          <KpiCard icon={PiggyBank} label={t('dashboard.kpis.savings')} value={shown(kpis.water_savings_percentage, format.percent)} />
+          <KpiCard icon={Activity} label={t('dashboard.kpis.irrigations')} value={orNone(kpis.irrigation_count_today)} />
+          <KpiCard icon={TriangleAlert} tone="warning" label={t('dashboard.kpis.anomalies')} value={orNone(kpis.anomaly_count)} />
           <KpiCard icon={FlaskConical} label={t('dashboard.kpis.quality')} value={orNone(kpis.water_quality_status)} />
-          <KpiCard icon={Cpu} label={t('dashboard.kpis.sensors')} value={format.percent(kpis.sensor_availability_percentage ?? 0)} />
+          <KpiCard icon={Cpu} label={t('dashboard.kpis.sensors')} value={shown(kpis.sensor_availability_percentage, format.percent)} />
         </div>
 
         {weather && (
@@ -220,29 +222,31 @@ function WaterBalancePanel() {
   const format = useWaterFormat()
   const { data: balance, loading, error } = useWaterBalance('month')
   if (loading || error || !balance) return null
-  const available = balance.available_after_forecast_liters ?? 0
+  const available = balance.available_after_forecast_liters
+  // A figure the API did not send shows as none, never as 0.
+  const liters = (value) => (value == null ? t('common.none') : format.liters(value))
   const status = balance.balance_status === 'deficit' ? 'deficit' : balance.balance_status === 'unknown' ? 'unknown' : 'balanced'
   const statusTone = { deficit: 'error', unknown: 'info', balanced: 'success' }[status]
   return (
     <Card title={t('dashboard.balance.title')} actions={<Badge tone={statusTone}>{t(`dashboard.balance.status.${status}`)}</Badge>}>
       <SummaryList>
-        <SummaryItem tone="success" title={t('dashboard.balance.rain')} detail={format.liters(balance.rainwater_in_liters ?? 0)} />
-        <SummaryItem tone="warning" title={t('dashboard.balance.irrigation')} detail={format.liters(balance.irrigation_out_liters ?? 0)} />
+        <SummaryItem tone="success" title={t('dashboard.balance.rain')} detail={liters(balance.rainwater_in_liters)} />
+        <SummaryItem tone="warning" title={t('dashboard.balance.irrigation')} detail={liters(balance.irrigation_out_liters)} />
         <SummaryItem
           tone="success"
           title={t('dashboard.balance.tanks')}
           detail={t('dashboard.balance.tanksDetail', {
-            level: format.liters(balance.reserve_level_liters ?? 0),
-            capacity: format.liters(balance.reserve_capacity_liters ?? 0),
-            pct: format.percent(balance.reserve_level_percentage ?? 0),
+            level: liters(balance.reserve_level_liters),
+            capacity: liters(balance.reserve_capacity_liters),
+            pct: balance.reserve_level_percentage == null ? t('common.none') : format.percent(balance.reserve_level_percentage),
           })}
         />
         <SummaryItem
-          tone={available < 0 ? 'error' : 'warning'}
+          tone={available != null && available < 0 ? 'error' : 'warning'}
           title={t('dashboard.balance.forecast')}
           detail={t('dashboard.balance.forecastDetail', {
-            planned: format.liters(balance.demand_forecast_liters ?? 0),
-            left: format.liters(available),
+            planned: liters(balance.demand_forecast_liters),
+            left: liters(available),
           })}
         />
       </SummaryList>

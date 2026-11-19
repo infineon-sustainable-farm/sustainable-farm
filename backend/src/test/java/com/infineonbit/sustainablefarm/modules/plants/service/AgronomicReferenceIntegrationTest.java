@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.config.DemoDataSeeder;
 import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
 import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
@@ -190,8 +191,8 @@ class AgronomicReferenceIntegrationTest {
         for (String key : List.of("KEITT", "KENT", "AMELIE", "TOMMY", "OTHER")) {
             assertTrue(varietyReferenceRepository.findByVarietyKey(key).isPresent(), key);
         }
-        // Assert: the dev clean-up of the shares is not even a bean
-        assertTrue(applicationContext.getBeansOfType(AgronomicReferenceLoader.class).isEmpty());
+        // Assert: the demo data seeder is not even a bean
+        assertTrue(applicationContext.getBeansOfType(DemoDataSeeder.class).isEmpty());
     }
 
     @Test

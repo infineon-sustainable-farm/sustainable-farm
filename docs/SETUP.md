@@ -45,13 +45,13 @@ cp .env.example .env
 | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | `jdbc:postgresql://localhost:5432/sustainable_farm`, ... | Only when the backend runs outside Docker |
 | `BACKEND_PORT` | `8080` | Host port of the backend |
 | `FRONTEND_PORT` | `3000` | Host port of the frontend |
-| `SPRING_PROFILES_ACTIVE` | empty | Set `dev` to load the demo data (farm 1 with blocks A, B, C, and the seeds of every module) |
+| `SPRING_PROFILES_ACTIVE` | empty | Set `dev` to load the demo data set (`seed/demo-data.sql`: the Ferme de Banfora with fields A, B, C and a few rows for every module), once, on a database without a farm |
 | `CORS_ALLOWED_ORIGINS` | ports 3000 and 5173 on `localhost` and `127.0.0.1` | Origins allowed to call the API |
 | `WEATHER_LATITUDE`, `WEATHER_LONGITUDE` | `10.63`, `-4.77` | Site coordinates (Banfora) |
 | `APP_MAIL_ENABLED`, `APP_MAIL_FROM` | commented out | Optional real e-mail, with `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` |
 | `VITE_API_URL` | empty | Frontend build argument; empty means same origin, through the nginx proxy |
 
-For a demo, set `SPRING_PROFILES_ACTIVE=dev`.
+For a demo, set `SPRING_PROFILES_ACTIVE=dev`. The demo data is loaded at the first start only (when the `farm` table is empty) and its dates follow the current date. To start again from a clean demo, drop the database volume (`docker compose down -v`) and start again.
 
 ## 3. Start
 

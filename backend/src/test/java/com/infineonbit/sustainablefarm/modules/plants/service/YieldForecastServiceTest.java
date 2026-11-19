@@ -94,7 +94,7 @@ public class YieldForecastServiceTest {
                 harvestStartMonth, harvestEndMonth, seasonSource, null);
     }
 
-    /** The defaults of AgronomicReferenceLoader, as they sit in the tables. */
+    /** The default reference values, as they sit in the tables. */
     private static List<VarietyReference> defaultReferences() {
         return List.of(
                 reference(1L, "Keitt", 220.0, 5, 7, "varietal_guide_west_africa"),

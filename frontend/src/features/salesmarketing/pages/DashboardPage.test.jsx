@@ -17,10 +17,14 @@ const api = vi.hoisted(() => ({
   deleteAlert: vi.fn(),
 }));
 
+const varietyApi = vi.hoisted(() => ({ getVarietyReferences: vi.fn() }));
+
 vi.mock('../api/api', () => ({ api }));
+vi.mock('../api/varietyApi', () => ({ varietyApi }));
 
 beforeEach(() => {
   Object.values(api).forEach((mock) => mock.mockReset().mockResolvedValue([]));
+  varietyApi.getVarietyReferences.mockReset().mockResolvedValue([]);
   api.getProducts.mockResolvedValue([{ productId: 3, name: 'Mango', variety: 'Kent' }]);
   api.getDemandForecasts.mockResolvedValue([
     { forecastId: 1, productId: 3, scenario: 'base', forecastedVolumeT: 1200, lowerBoundT: 1000, upperBoundT: 1500 },
@@ -67,6 +71,21 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Processed')).toBeInTheDocument();
   });
 
+  it('shows the harvest months of the product varieties from the plants catalogue', async () => {
+    varietyApi.getVarietyReferences.mockResolvedValue([
+      { varietyKey: 'KENT', varietyName: 'Kent', harvestStartMonth: 4, harvestEndMonth: 5 },
+      { varietyKey: 'KEITT', varietyName: 'Keitt', harvestStartMonth: 5, harvestEndMonth: 7 },
+    ]);
+    renderPage();
+    expect(await screen.findByText('April - May')).toBeInTheDocument();
+  });
+
+  it('shows no harvest months without a catalogue entry for the products', async () => {
+    renderPage();
+    expect(await screen.findByText('No harvest months known for the products yet.')).toBeInTheDocument();
+    expect(screen.queryByText('March - July')).not.toBeInTheDocument();
+  });
+
   it('creates a forecast from the New forecast dialog', async () => {
     renderPage();
     fireEvent.click(await screen.findByRole('button', { name: 'NEW FORECAST' }));
@@ -104,8 +123,9 @@ describe('DashboardPage', () => {
     expect(screen.getByTestId('where')).toHaveTextContent('/salesmarketing/forecasting');
   });
 
-  it('reports a full failure, not a partial load, when all seven requests fail', async () => {
+  it('reports a full failure, not a partial load, when all eight requests fail', async () => {
     Object.values(api).forEach((mock) => mock.mockRejectedValue(new Error('offline')));
+    varietyApi.getVarietyReferences.mockRejectedValue(new Error('offline'));
     renderPage();
     expect(await screen.findByText('Forecasts: offline', { exact: false })).toBeInTheDocument();
     expect(screen.queryByText(/Partial load/)).not.toBeInTheDocument();
