@@ -429,11 +429,9 @@ public class DtoMapper {
         HarvestEvent event = new HarvestEvent();
         event.setHarvestId(request.getHarvestId());
         event.setBatchId(request.getBatchId());
-        event.setHarvestDate(request.getHarvestDate());
+        // Date, variety, block and quantity are copied from the plants harvest by the service.
+        event.setPlantsHarvestId(request.getPlantsHarvestId());
         event.setHarvestTime(request.getHarvestTime());
-        event.setVarietyKey(mangoVarietyCodes.toKey(request.getMangoVariety()));
-        event.setFarmBlockId(blocks.resolve(request.getFarmId(), request.getBlockId()));
-        event.setHarvestQuantityKg(request.getHarvestQuantityKg());
         event.setQualityGrade(request.getQualityGrade());
         event.setQualityGradeDescription(request.getQualityGradeDescription());
         event.setHarvestTeamId(request.getHarvestTeamId());
