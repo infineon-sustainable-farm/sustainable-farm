@@ -144,10 +144,10 @@ class CropStorageHttpJpaIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].supplier.name").value(supplier.getName()))
                 .andExpect(jsonPath("$[0].storageZone.zoneCode").value(zone.getZoneCode()));
-        mockMvc.perform(get("/api/sensors"))
+        mockMvc.perform(get("/api/crop-storage/sensors"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].storageZone.zoneCode").value(zone.getZoneCode()));
-        mockMvc.perform(get("/api/sensor-readings"))
+        mockMvc.perform(get("/api/crop-storage/sensor-readings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].sensor.storageZone.zoneCode").value(zone.getZoneCode()));
         mockMvc.perform(get("/api/crop-storage/alerts/status/ACTIVE"))
@@ -162,7 +162,7 @@ class CropStorageHttpJpaIntegrationTest {
         StorageZone zone = createZone();
         CropStorageBatch batch = createBatch(supplier, zone, "10");
 
-        mockMvc.perform(post("/api/stock-movements")
+        mockMvc.perform(post("/api/crop-storage/stock-movements")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"type":"OUT","quantityKg":2,"batch":{"id":%d},
@@ -175,14 +175,14 @@ class CropStorageHttpJpaIntegrationTest {
         assertEquals(0, new BigDecimal("8.00").compareTo(
                 batchRepository.findById(batch.getId()).orElseThrow().getCurrentQuantityKg()));
         assertEquals(1, stockMovementRepository.count());
-        mockMvc.perform(get("/api/stock-movements"))
+        mockMvc.perform(get("/api/crop-storage/stock-movements"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].batch.storageZone.zoneCode").value(zone.getZoneCode()));
-        mockMvc.perform(get("/api/stock-movements/batch/{id}", batch.getId()))
+        mockMvc.perform(get("/api/crop-storage/stock-movements/batch/{id}", batch.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].batch.supplier.name").value(supplier.getName()));
 
-        mockMvc.perform(post("/api/loss-records")
+        mockMvc.perform(post("/api/crop-storage/loss-records")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"batch":{"id":%d},"quantityKg":1,"cause":"Damage",
@@ -190,14 +190,14 @@ class CropStorageHttpJpaIntegrationTest {
                                 """.formatted(batch.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.batch.supplier.name").value(supplier.getName()));
-        mockMvc.perform(get("/api/loss-records"))
+        mockMvc.perform(get("/api/crop-storage/loss-records"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].batch.storageZone.zoneCode").value(zone.getZoneCode()));
-        mockMvc.perform(get("/api/loss-records/batch/{id}", batch.getId()))
+        mockMvc.perform(get("/api/crop-storage/loss-records/batch/{id}", batch.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].batch.supplier.name").value(supplier.getName()));
 
-        mockMvc.perform(post("/api/quality-checks")
+        mockMvc.perform(post("/api/crop-storage/quality-checks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"batch":{"id":%d},"moisturePercent":12,"qualityGrade":"A",
@@ -205,10 +205,10 @@ class CropStorageHttpJpaIntegrationTest {
                                 """.formatted(batch.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.batch.supplier.name").value(supplier.getName()));
-        mockMvc.perform(get("/api/quality-checks"))
+        mockMvc.perform(get("/api/crop-storage/quality-checks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].batch.storageZone.zoneCode").value(zone.getZoneCode()));
-        mockMvc.perform(get("/api/quality-checks/batch/{id}", batch.getId()))
+        mockMvc.perform(get("/api/crop-storage/quality-checks/batch/{id}", batch.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].batch.supplier.name").value(supplier.getName()));
         assertEquals(1, stockMovementRepository.count());
@@ -257,20 +257,20 @@ class CropStorageHttpJpaIntegrationTest {
                                 {"type":"DAMAGE","status":"ACTIVE","sensor":{"id":999999}}
                                 """))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(post("/api/stock-movements")
+        mockMvc.perform(post("/api/crop-storage/stock-movements")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"type":"OUT","quantityKg":1,"batch":{"id":999999},
                                  "movedAt":"2026-10-30T10:00:00"}
                                 """))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(post("/api/loss-records")
+        mockMvc.perform(post("/api/crop-storage/loss-records")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"batch":{"id":999999},"quantityKg":1,"recordedAt":"2026-10-30T10:00:00"}
                                 """))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(post("/api/quality-checks")
+        mockMvc.perform(post("/api/crop-storage/quality-checks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"batch":{"id":999999},"passed":true,"checkedAt":"2026-10-30T10:00:00"}

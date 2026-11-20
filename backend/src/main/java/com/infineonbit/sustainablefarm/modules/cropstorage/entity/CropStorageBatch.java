@@ -24,6 +24,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Entity(name = "CropStorageBatch")
 @Table(name = "crop_storage_batch")
@@ -112,7 +113,9 @@ public class CropStorageBatch {
 
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
+        // Microsecond precision, as stored by PostgreSQL: the API-005 creation response
+        // then carries the same entry_timestamp as a later read.
+        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         createdAt = now;
         updatedAt = now;
         if (currentQuantityKg == null) {
@@ -122,6 +125,6 @@ public class CropStorageBatch {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
     }
 }

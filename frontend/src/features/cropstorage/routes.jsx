@@ -5,6 +5,7 @@ import BatchesPage from "./components/BatchesPage";
 import MovementsPage from "./components/MovementsPage";
 import AlertsPage from "./components/AlertsPage";
 import QualityLossPage from "./components/QualityLossPage";
+import ScenarioAnalysisPage from "./components/ScenarioAnalysisPage";
 
 export default [
   {
@@ -17,6 +18,7 @@ export default [
       { path: "movements", element: <MovementsPage /> },
       { path: "alerts", element: <AlertsPage /> },
       { path: "quality", element: <QualityLossPage /> },
+      { path: "scenario-analysis", element: <ScenarioAnalysisPage /> },
     ],
   },
 ];

@@ -38,7 +38,8 @@ class CropStorageReferenceResolutionTest {
         storedSupplier.setId(5L);
         storedZone.setId(6L);
         when(suppliers.findById(5L)).thenReturn(Optional.of(storedSupplier));
-        when(zones.findById(6L)).thenReturn(Optional.of(storedZone));
+        // The zone is read with a row lock before its capacity is checked.
+        when(zones.findForUpdateById(6L)).thenReturn(Optional.of(storedZone));
         when(batches.save(any(CropStorageBatch.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         CropStorageBatch request = new CropStorageBatch();
@@ -54,7 +55,7 @@ class CropStorageReferenceResolutionTest {
         assertSame(storedSupplier, request.getSupplier());
         assertSame(storedZone, request.getStorageZone());
         verify(suppliers).findById(5L);
-        verify(zones).findById(6L);
+        verify(zones).findForUpdateById(6L);
     }
 
     @Test
@@ -153,7 +154,8 @@ class CropStorageReferenceResolutionTest {
         storedToZone.setCapacityKg(new BigDecimal("10"));
         when(batches.findWithRelationshipsById(7L)).thenReturn(Optional.of(storedBatch));
         when(zones.findById(6L)).thenReturn(Optional.of(storedFromZone));
-        when(zones.findById(8L)).thenReturn(Optional.of(storedToZone));
+        // The destination zone is read with a row lock to serialize capacity checks.
+        when(zones.findForUpdateById(8L)).thenReturn(Optional.of(storedToZone));
         when(batches.findByStorageZoneId(8L)).thenReturn(List.of());
         when(batches.save(any(CropStorageBatch.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(movements.save(any(StockMovement.class))).thenAnswer(invocation -> invocation.getArgument(0));

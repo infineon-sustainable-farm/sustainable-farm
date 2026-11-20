@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/loss-records")
+@RequestMapping("/api/crop-storage/loss-records")
 @RequiredArgsConstructor
 public class LossRecordController {
 

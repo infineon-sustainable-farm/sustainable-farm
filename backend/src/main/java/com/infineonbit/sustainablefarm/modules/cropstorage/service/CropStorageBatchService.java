@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
@@ -10,12 +11,14 @@ import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZon
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Core inventory service of Crop Storage: batch persistence, FIFO rotation
@@ -46,9 +49,17 @@ public class CropStorageBatchService {
      * Saves a new batch exactly as received; the batch code follows the team
      * convention B26-01 (block letter + 2-digit year + sequence) and is unique.
      *
+     * <p>When the batch is placed in a zone, its stock must fit in the zone: the
+     * zone row is locked, the stock already stored is summed from the database,
+     * and the batch is written, all in one transaction. Concurrent writes filling
+     * the same zone (API-005 entry, IN movement, another creation) take the same
+     * lock and are serialized, so they cannot overfill it together.
+     *
      * @param batch batch parsed from the request body
      * @return the saved batch with its generated id
+     * @throws ConflictException when the batch stock would exceed the zone capacity
      */
+    @Transactional
     public CropStorageBatch create(CropStorageBatch batch) {
         if (batch.getSupplier() != null) {
             Long supplierId = requireId(batch.getSupplier().getId(), "supplier");
@@ -58,11 +69,32 @@ public class CropStorageBatchService {
         }
         if (batch.getStorageZone() != null) {
             Long zoneId = requireId(batch.getStorageZone().getId(), "zone");
-            StorageZone zone = storageZoneRepository.findById(zoneId)
+            StorageZone zone = storageZoneRepository.findForUpdateById(zoneId)
                     .orElseThrow(() -> new ResourceNotFoundException("Zone not found with id " + zoneId));
+            checkCapacity(zone, batch);
             batch.setStorageZone(zone);
         }
         return batchRepository.save(batch);
+    }
+
+    /**
+     * Same rule as an IN movement: stock already in the locked zone plus the new
+     * batch stock must stay within capacityKg. The new batch stock is its current
+     * quantity, or its initial quantity when no current quantity is given (the
+     * value the entity stores on creation).
+     */
+    private void checkCapacity(StorageZone zone, CropStorageBatch batch) {
+        if (zone.getCapacityKg() == null) {
+            return;
+        }
+        BigDecimal incoming = batch.getCurrentQuantityKg() != null
+                ? batch.getCurrentQuantityKg()
+                : Objects.requireNonNullElse(batch.getInitialQuantityKg(), BigDecimal.ZERO);
+        BigDecimal stored = Objects.requireNonNullElse(
+                batchRepository.sumCurrentQuantityKgByStorageZoneId(zone.getId()), BigDecimal.ZERO);
+        if (stored.add(incoming).compareTo(zone.getCapacityKg()) > 0) {
+            throw new ConflictException("Zone capacity exceeded");
+        }
     }
 
     private Long requireId(Long id, String reference) {

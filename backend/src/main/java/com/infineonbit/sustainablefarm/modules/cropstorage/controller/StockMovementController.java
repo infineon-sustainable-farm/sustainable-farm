@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/stock-movements")
+@RequestMapping("/api/crop-storage/stock-movements")
 @RequiredArgsConstructor
 public class StockMovementController {
 

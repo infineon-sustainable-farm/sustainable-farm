@@ -38,7 +38,7 @@ public class StockMovementService {
      * @return the saved movement
      * @throws ResourceNotFoundException when the batch or zone id is unknown
      * @throws BusinessRuleException when the batch is missing, the type is
-     *         unknown, a TRANSFER has no destination, or OUT exceeds stock
+     *         unknown, an IN or TRANSFER has no destination, or OUT exceeds stock
      * @throws ConflictException when an IN or TRANSFER would overflow the zone
      */
     @Transactional
@@ -46,6 +46,21 @@ public class StockMovementService {
         if (movement.getBatch() == null || movement.getBatch().getId() == null) {
             throw new BusinessRuleException("A batch is required");
         }
+        // The destination zone is locked BEFORE the batch is read: once the lock is
+        // held, every quantity read below is the committed state, and it stays
+        // consistent with the check and the write until this transaction ends.
+        StorageZone toZone = null;
+        if (movement.getToZone() != null) {
+            if (movement.getToZone().getId() == null) {
+                throw new BusinessRuleException("A destination zone reference requires an id");
+            }
+            // Row lock: serializes concurrent writes filling the same zone (see findForUpdateById).
+            toZone = storageZoneRepository.findForUpdateById(movement.getToZone().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Zone not found with id " + movement.getToZone().getId()));
+            movement.setToZone(toZone);
+        }
+
         CropStorageBatch batch = batchRepository.findWithRelationshipsById(movement.getBatch().getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Batch not found with id " + movement.getBatch().getId()));
@@ -54,17 +69,6 @@ public class StockMovementService {
         // @Version, Hibernate reads a null version as unsaved and refuses
         // to link the movement. Attach the managed batch instead.
         movement.setBatch(batch);
-        
-        StorageZone toZone = null;
-        if (movement.getToZone() != null) {
-            if (movement.getToZone().getId() == null) {
-                throw new BusinessRuleException("A destination zone reference requires an id");
-            }
-            toZone = storageZoneRepository.findById(movement.getToZone().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Zone not found with id " + movement.getToZone().getId()));
-            movement.setToZone(toZone);
-        }
         if (movement.getFromZone() != null) {
             if (movement.getFromZone().getId() == null) {
                 throw new BusinessRuleException("A source zone reference requires an id");
@@ -81,11 +85,16 @@ public class StockMovementService {
         String type = movement.getType();
 
         if ("IN".equals(type)) {
-            BigDecimal resulting = current.add(quantity);
-            if (toZone != null) {
-                checkCapacity(toZone, batch, resulting);
-                batch.setStorageZone(toZone);
+            // Server-side twin of the movement form rule: stock always enters a zone,
+            // otherwise it would escape every capacity check.
+            if (toZone == null) {
+                throw new BusinessRuleException("A destination zone is required for IN");
             }
+            BigDecimal resulting = current.add(quantity);
+            // toZone is row-locked above; the check reads fresh sums and the write
+            // below commits in the same transaction, so no concurrent fill can interleave.
+            checkInCapacity(toZone, batch, resulting);
+            batch.setStorageZone(toZone);
             batch.setCurrentQuantityKg(resulting);
         } else if ("OUT".equals(type)) {
             if (current.compareTo(quantity) < 0) {
@@ -121,7 +130,24 @@ public class StockMovementService {
         return stockMovementRepository.findByBatchIdOrderByMovedAtDesc(batchId);
     }
 
-    // HYPOTHESIS: total of batch quantities in a zone must stay under capacityKg
+    /**
+     * IN rule: the other batches of the locked zone plus the batch after the
+     * entry must fit in capacityKg. Uses a scalar query, so the sum is read from
+     * the database after the lock, never from stale managed entities.
+     */
+    private void checkInCapacity(StorageZone zone, CropStorageBatch movedBatch, BigDecimal resultingKg) {
+        if (zone.getCapacityKg() == null) {
+            return;
+        }
+        BigDecimal others = java.util.Objects.requireNonNullElse(
+                batchRepository.sumCurrentQuantityKgByStorageZoneIdExcludingBatch(zone.getId(), movedBatch.getId()),
+                BigDecimal.ZERO);
+        if (others.add(resultingKg).compareTo(zone.getCapacityKg()) > 0) {
+            throw new ConflictException("Zone capacity exceeded");
+        }
+    }
+
+    // TRANSFER rule (unchanged). HYPOTHESIS: total of batch quantities in a zone must stay under capacityKg
     private void checkCapacity(StorageZone zone, CropStorageBatch movedBatch, BigDecimal resultingKg) {
         if (zone.getCapacityKg() == null) {
             return;

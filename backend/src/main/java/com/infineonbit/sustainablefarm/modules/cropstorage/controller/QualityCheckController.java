@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/quality-checks")
+@RequestMapping("/api/crop-storage/quality-checks")
 @RequiredArgsConstructor
 public class QualityCheckController {
 

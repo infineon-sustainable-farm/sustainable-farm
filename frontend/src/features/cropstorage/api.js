@@ -2,15 +2,15 @@ import { apiClient } from "../../shared/api/client";
 
 const ENDPOINTS = {
     BATCHES: "/api/crop-storage/batches",
-    SENSORS: "/api/sensors",
+    SENSORS: "/api/crop-storage/sensors",
     ALERTS: "/api/crop-storage/alerts",
     STORAGE_ENTRIES: "/api/crop-storage/entries",
-    STOCK_MOVEMENTS: "/api/stock-movements",
-    STORAGE_ZONES: "/api/storage-zones",
-    LOSS_RECORDS: "/api/loss-records",
-    SENSOR_READINGS: "/api/sensor-readings",
-    SUPPLIERS: "/api/suppliers",
-    QUALITY_CHECKS: "/api/quality-checks",
+    STOCK_MOVEMENTS: "/api/crop-storage/stock-movements",
+    STORAGE_ZONES: "/api/crop-storage/storage-zones",
+    LOSS_RECORDS: "/api/crop-storage/loss-records",
+    SENSOR_READINGS: "/api/crop-storage/sensor-readings",
+    SUPPLIERS: "/api/crop-storage/suppliers",
+    QUALITY_CHECKS: "/api/crop-storage/quality-checks",
 };
 
 export function createBatch(batch) {

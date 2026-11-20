@@ -146,7 +146,7 @@ class CropStorageCreateControllerTest {
     void createLossRecordIgnoresEntityAndNestedBatchFields() throws Exception {
         when(lossRecordService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/loss-records")
+        mockMvc.perform(post("/api/crop-storage/loss-records")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"batch":{"id":7,"batchCode":"overposted","version":44},
@@ -167,7 +167,7 @@ class CropStorageCreateControllerTest {
     void createQualityCheckIgnoresEntityAndNestedBatchFields() throws Exception {
         when(qualityCheckService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/quality-checks")
+        mockMvc.perform(post("/api/crop-storage/quality-checks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"batch":{"id":7,"batchCode":"overposted","version":44},
@@ -188,7 +188,7 @@ class CropStorageCreateControllerTest {
     void createSensorIgnoresEntityAndNestedZoneFields() throws Exception {
         when(sensorService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/sensors")
+        mockMvc.perform(post("/api/crop-storage/sensors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"createdAt":"2000-01-01T00:00:00",
@@ -212,7 +212,7 @@ class CropStorageCreateControllerTest {
     void createSensorReadingIgnoresEntityAndNestedSensorFields() throws Exception {
         when(sensorReadingService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/sensor-readings")
+        mockMvc.perform(post("/api/crop-storage/sensor-readings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"sensor":{"id":5,"sensorCode":"overposted","status":"DISABLED"},
@@ -233,7 +233,7 @@ class CropStorageCreateControllerTest {
     void createStockMovementIgnoresEntityAndNestedRelationshipFields() throws Exception {
         when(stockMovementService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/stock-movements")
+        mockMvc.perform(post("/api/crop-storage/stock-movements")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"type":"TRANSFER","quantityKg":2,
@@ -262,7 +262,7 @@ class CropStorageCreateControllerTest {
     void createStorageZoneIgnoresEntityAndTimestamps() throws Exception {
         when(storageZoneService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/storage-zones")
+        mockMvc.perform(post("/api/crop-storage/storage-zones")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"createdAt":"2000-01-01T00:00:00",
@@ -283,7 +283,7 @@ class CropStorageCreateControllerTest {
     void createSupplierIgnoresEntityIdAndTimestamp() throws Exception {
         when(supplierService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        mockMvc.perform(post("/api/suppliers")
+        mockMvc.perform(post("/api/crop-storage/suppliers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"createdAt":"2000-01-01T00:00:00",
@@ -314,7 +314,7 @@ class CropStorageCreateControllerTest {
 
     @Test
     void nestedReferenceWithoutAnIdIsRejectedBeforeCallingService() throws Exception {
-        mockMvc.perform(post("/api/sensor-readings")
+        mockMvc.perform(post("/api/crop-storage/sensor-readings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"sensor":{},"measuredAt":"2026-10-30T10:00:00"}

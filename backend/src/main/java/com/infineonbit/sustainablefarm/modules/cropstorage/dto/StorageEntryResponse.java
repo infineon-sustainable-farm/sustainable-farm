@@ -3,11 +3,15 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
- * API-005 answer after a storage entry: identifiers as strings and
- * quantities as numbers, exactly as the contract documents.
+ * API-005 answer for a storage entry: identifiers as strings and quantities as
+ * numbers. entry_timestamp is an ISO 8601 instant with an explicit UTC offset,
+ * converted from the server-local creation time (never just relabelled).
+ *
+ * <p>available_capacity_kg is the room left in the zone right after the entry on
+ * creation, and the current room left on a later read.
  */
 public record StorageEntryResponse(
 
@@ -18,7 +22,7 @@ public record StorageEntryResponse(
         String storageLocationId,
 
         @JsonProperty("entry_timestamp")
-        LocalDateTime entryTimestamp,
+        OffsetDateTime entryTimestamp,
 
         @JsonProperty("available_capacity_kg")
         BigDecimal availableCapacityKg,

@@ -19,7 +19,7 @@ import java.util.List;
  * the future IoT push will POST one measure per sensor every hour.
  */
 @RestController
-@RequestMapping("/api/sensor-readings")
+@RequestMapping("/api/crop-storage/sensor-readings")
 @RequiredArgsConstructor
 public class SensorReadingController {
 

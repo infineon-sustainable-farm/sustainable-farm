@@ -3,6 +3,7 @@ import {
     Bell,
     Boxes,
     ClipboardCheck,
+    GitCompareArrows,
     MapPinned,
     Menu,
     Truck,
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
     { label: "Movements", path: "/cropstorage/movements", icon: Truck },
     { label: "Alerts", path: "/cropstorage/alerts", icon: Bell },
     { label: "Quality & Losses", path: "/cropstorage/quality", icon: ClipboardCheck },
+    { label: "Scenario Analysis", path: "/cropstorage/scenario-analysis", icon: GitCompareArrows },
 ];
 
 const ITEM_BASE = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm";

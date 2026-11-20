@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/storage-zones")
+@RequestMapping("/api/crop-storage/storage-zones")
 @RequiredArgsConstructor
 public class StorageZoneController {
 
