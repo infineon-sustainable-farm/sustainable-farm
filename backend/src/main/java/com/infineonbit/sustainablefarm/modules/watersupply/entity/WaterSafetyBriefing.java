@@ -1,11 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "water_safety_briefing")
+@Table(name = "water_safety_briefing",
+        indexes = @Index(name = "idx_water_safety_briefing_created_at", columnList = "created_at"))
 public class WaterSafetyBriefing extends BaseEntity {
     @Column(nullable = false, length = 64)
     private String version;
@@ -18,6 +22,7 @@ public class WaterSafetyBriefing extends BaseEntity {
     @Column(name = "briefing_text", columnDefinition = "text")
     private String text;
     private Integer maxCapacity;
+    @ColumnDefault("true")
     @Column(nullable = false)
     private Boolean guideRequired = true;
 

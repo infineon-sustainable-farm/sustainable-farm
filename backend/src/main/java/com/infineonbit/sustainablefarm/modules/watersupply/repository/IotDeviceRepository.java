@@ -1,13 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.repository;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IotDevice;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-public interface IotDeviceRepository extends JpaRepository<IotDevice, UUID> {
+public interface IotDeviceRepository extends JpaRepository<IotDevice, Long> {
 
     IotDevice findByDeviceUid(String deviceUid);
 

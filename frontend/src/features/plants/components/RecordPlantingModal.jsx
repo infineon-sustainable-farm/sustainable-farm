@@ -1,16 +1,12 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Field, Input, Modal, Select } from "../../../shared/ui";
 import { plantingBody, spacingErrors, VIGOR_OPTIONS } from "../utils/plantingRequests";
-import PlantsModal from "./PlantsModal";
+import BlockSelect from "./BlockSelect";
+import FormAlert from "./FormAlert";
 
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
-
-/** Same rule as the API: a short code such as "A" or "B2"; spaces around it are removed. */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
+/** Longest variety name the API accepts. */
+const VARIETY_MAX_LENGTH = 255;
 
 /** Today as "YYYY-MM-DD", in local time: the latest planting date the form accepts. */
 function todayAsIsoDate() {
@@ -18,27 +14,6 @@ function todayAsIsoDate() {
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     return `${now.getFullYear()}-${month}-${day}`;
-}
-
-function FormField({ id, label, error, note, children }) {
-    return (
-        <div>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
 }
 
 /**
@@ -53,6 +28,7 @@ function FormField({ id, label, error, note, children }) {
  *   message above the form.
  */
 export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onClose }) {
+    const { t } = useTranslation("plants");
     const [plantingDate, setPlantingDate] = useState("");
     const [blockCode, setBlockCode] = useState("");
     const [varietyName, setVarietyName] = useState("");
@@ -66,36 +42,26 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
     const serverFieldErrors = error?.status === 400 ? error.data?.fieldErrors : null;
     const formError = error && !serverFieldErrors ? error.message : null;
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
-    const errorProps = (field, id) =>
-        fieldError(field)
-            ? { "aria-invalid": true, "aria-describedby": `${id}-error` }
-            : {};
-    // The optional fields have a note, described along with an error.
-    const optionalProps = (field, id) =>
-        fieldError(field)
-            ? { "aria-invalid": true, "aria-describedby": `${id}-error ${id}-note` }
-            : { "aria-describedby": `${id}-note` };
+    const message = (key, options) => t(`varieties.validation.${key}`, options);
 
     function validate() {
         const errors = {};
         if (!plantingDate) {
-            errors.plantingDate = "Planting date is required.";
+            errors.plantingDate = message("plantingDateRequired");
         } else if (plantingDate > today) {
-            errors.plantingDate = "Planting date cannot be in the future.";
+            errors.plantingDate = message("plantingDateFuture");
         }
-        if (!blockCode.trim()) {
-            errors.blockCode = "Block is required.";
-        } else if (!BLOCK_CODE_PATTERN.test(blockCode)) {
-            errors.blockCode = "Block must be a short code such as A or B2, without prefix or space.";
+        if (!blockCode) {
+            errors.blockCode = message("blockRequired");
         }
         if (!varietyName.trim()) {
-            errors.varietyName = "Variety is required.";
-        } else if (varietyName.length > 255) {
-            errors.varietyName = "Variety must be at most 255 characters.";
+            errors.varietyName = message("varietyRequired");
+        } else if (varietyName.length > VARIETY_MAX_LENGTH) {
+            errors.varietyName = message("varietyTooLong", { max: VARIETY_MAX_LENGTH });
         }
         const count = Number(treeCount);
         if (treeCount === "" || !Number.isInteger(count) || count < 1) {
-            errors.treeCount = "Number of trees must be a whole number of at least 1.";
+            errors.treeCount = message("treeCount");
         }
         return { ...errors, ...spacingErrors({ rowSpacing, treeSpacing }) };
     }
@@ -109,92 +75,55 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
     }
 
     return (
-        <PlantsModal labelledBy="record-planting-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2
-                    id="record-planting-title"
-                    className="font-heading text-lg font-bold text-gray-900"
-                >
-                    Record a planting
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
+        <Modal open onClose={onClose} size="xl" title={t("varieties.planting.title")} dismissible={!isSubmitting}>
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-4">{formError}</FormAlert>}
 
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of VigorBadge: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. --color-error as text gave 4.38:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
-
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="planting-date" label="Planting date" error={fieldError("plantingDate")}>
-                        <input
-                            id="planting-date"
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field id="planting-date" label={t("varieties.planting.plantingDate")} error={fieldError("plantingDate")}>
+                        <Input
                             type="date"
-                            autoFocus
                             max={today}
                             value={plantingDate}
                             onChange={(event) => setPlantingDate(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...errorProps("plantingDate", "planting-date")}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="planting-block" label="Block" error={fieldError("blockCode")}>
-                        <input
-                            id="planting-block"
-                            type="text"
-                            value={blockCode}
-                            onChange={(event) => setBlockCode(event.target.value)}
-                            placeholder="e.g. A"
-                            className={INPUT_CLASS}
-                            {...errorProps("blockCode", "planting-block")}
-                        />
-                    </FormField>
+                    <BlockSelect
+                        id="planting-block"
+                        label={t("varieties.planting.block")}
+                        value={blockCode}
+                        onChange={setBlockCode}
+                        error={fieldError("blockCode")}
+                    />
 
-                    <FormField id="planting-variety" label="Variety" error={fieldError("varietyName")}>
-                        <input
-                            id="planting-variety"
+                    <Field id="planting-variety" label={t("varieties.planting.variety")} error={fieldError("varietyName")}>
+                        <Input
                             type="text"
                             value={varietyName}
                             onChange={(event) => setVarietyName(event.target.value)}
-                            placeholder="e.g. Keitt"
-                            className={INPUT_CLASS}
-                            {...errorProps("varietyName", "planting-variety")}
+                            placeholder={t("varieties.planting.varietyPlaceholder")}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="planting-tree-count" label="Number of trees" error={fieldError("treeCount")}>
-                        <input
-                            id="planting-tree-count"
+                    <Field id="planting-tree-count" label={t("varieties.planting.treeCount")} error={fieldError("treeCount")}>
+                        <Input
                             type="number"
                             min="1"
                             step="1"
                             inputMode="numeric"
                             value={treeCount}
                             onChange={(event) => setTreeCount(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...errorProps("treeCount", "planting-tree-count")}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="planting-row-spacing" label="Inter-row spacing (m)"
-                        error={fieldError("rowSpacingM")} note="Optional.">
-                        <input
-                            id="planting-row-spacing"
+                    <Field
+                        id="planting-row-spacing"
+                        label={t("varieties.planting.rowSpacing")}
+                        error={fieldError("rowSpacingM")}
+                        hint={t("varieties.planting.optional")}
+                    >
+                        <Input
                             type="number"
                             min="0.1"
                             max="30"
@@ -202,16 +131,17 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
                             inputMode="decimal"
                             value={rowSpacing}
                             onChange={(event) => setRowSpacing(event.target.value)}
-                            placeholder="e.g. 8"
-                            className={`${INPUT_CLASS} placeholder:text-gray-500`}
-                            {...optionalProps("rowSpacingM", "planting-row-spacing")}
+                            placeholder={t("varieties.planting.spacingPlaceholder")}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="planting-tree-spacing" label="Intra-row spacing (m)"
-                        error={fieldError("treeSpacingM")} note="Optional.">
-                        <input
-                            id="planting-tree-spacing"
+                    <Field
+                        id="planting-tree-spacing"
+                        label={t("varieties.planting.treeSpacing")}
+                        error={fieldError("treeSpacingM")}
+                        hint={t("varieties.planting.optional")}
+                    >
+                        <Input
                             type="number"
                             min="0.1"
                             max="30"
@@ -219,46 +149,30 @@ export default function RecordPlantingModal({ isSubmitting, error, onSubmit, onC
                             inputMode="decimal"
                             value={treeSpacing}
                             onChange={(event) => setTreeSpacing(event.target.value)}
-                            placeholder="e.g. 8"
-                            className={`${INPUT_CLASS} placeholder:text-gray-500`}
-                            {...optionalProps("treeSpacingM", "planting-tree-spacing")}
+                            placeholder={t("varieties.planting.spacingPlaceholder")}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="planting-vigor" label="Vigor" error={fieldError("vigor")} note="Optional.">
-                        <select
-                            id="planting-vigor"
-                            value={vigor}
-                            onChange={(event) => setVigor(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...optionalProps("vigor", "planting-vigor")}
-                        >
+                    <Field id="planting-vigor" label={t("varieties.planting.vigor")} error={fieldError("vigor")} hint={t("varieties.planting.optional")}>
+                        <Select value={vigor} onChange={(event) => setVigor(event.target.value)}>
                             {VIGOR_OPTIONS.map((option) => (
                                 <option key={option.code} value={option.code}>
-                                    {option.label}
+                                    {t(option.labelKey)}
                                 </option>
                             ))}
-                        </select>
-                    </FormField>
+                        </Select>
+                    </Field>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isSubmitting ? "Recording…" : "Record planting"}
-                    </button>
+                    <Button variant="secondary" onClick={onClose}>
+                        {t("common:actions.cancel")}
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? t("varieties.planting.submitting") : t("varieties.planting.submit")}
+                    </Button>
                 </div>
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

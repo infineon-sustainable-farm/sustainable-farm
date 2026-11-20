@@ -1,29 +1,52 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import UsageLogTable from "./UsageLogTable";
 import UsageLogFormModal from "./UsageLogFormModal";
 import FuelLogTable from "./FuelLogTable";
 import FuelLogFormModal from "./FuelLogFormModal";
-import ConfirmDeleteRecordDialog from "./ConfirmDeleteRecordDialog";
-import EmptyState from "../../../shared/components/EmptyState";
-import ErrorState from "../../../shared/components/ErrorState";
-import Pagination from "../../../shared/components/Pagination";
+import { Button, ConfirmDialog, EmptyState, ErrorState, PageHeader, Pagination } from "../../../shared/ui";
 import { useUsageLogs } from "../hooks/useUsageLogs";
 import { useFuelLogs } from "../hooks/useFuelLogs";
-import { useEquipmentOptions } from "../hooks/useEquipmentOptions";
+import { useEquipmentLookup } from "../hooks/useEquipmentLookup";
 import { useCreateUsageLog, useUpdateUsageLog, useDeleteUsageLog } from "../hooks/useUsageLogMutations";
 import { useCreateFuelLog, useUpdateFuelLog, useDeleteFuelLog } from "../hooks/useFuelLogMutations";
-import { formatDate } from "../../../shared/utils/formatDate";
+import { useMachineryFormat } from "../format";
 
 const PAGE_SIZE = 10;
 
+/** One log of the page: heading with its add button, then loading, error, empty or the table. */
+function LogSection({ title, addLabel, onAdd, query, page, onPageChange, loadError, emptyMessage, renderTable }) {
+  const { t } = useTranslation("machinery");
+  return (
+    <section>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <Button icon={Plus} onClick={onAdd}>{addLabel}</Button>
+      </div>
+
+      {query.isLoading && renderTable({ loading: true })}
+      {query.isError && <ErrorState message={loadError} onRetry={query.refetch} retryLabel={t("common.tryAgain")} />}
+      {query.isSuccess && query.data.content.length === 0 && <EmptyState message={emptyMessage} />}
+      {query.isSuccess && query.data.content.length > 0 && (
+        <>
+          {renderTable({ rows: query.data.content })}
+          <Pagination page={page} totalPages={query.data.totalPages} onPageChange={onPageChange} />
+        </>
+      )}
+    </section>
+  );
+}
+
 function UsageFuelLog() {
+  const { t } = useTranslation("machinery");
+  const format = useMachineryFormat();
   const [usagePage, setUsagePage] = useState(0);
   const [fuelPage, setFuelPage] = useState(0);
 
   const usageQuery = useUsageLogs(usagePage, PAGE_SIZE);
   const fuelQuery = useFuelLogs(fuelPage, PAGE_SIZE);
-  const equipmentOptions = useEquipmentOptions();
+  const { equipments, isEquipmentLoading, getEquipmentName } = useEquipmentLookup();
 
   const createUsageMutation = useCreateUsageLog();
   const updateUsageMutation = useUpdateUsageLog();
@@ -40,20 +63,6 @@ function UsageFuelLog() {
   const [isFuelFormOpen, setIsFuelFormOpen] = useState(false);
   const [editingFuelLog, setEditingFuelLog] = useState(null);
   const [fuelDeleteTarget, setFuelDeleteTarget] = useState(null);
-
-  const equipments = useMemo(
-    () => equipmentOptions.data?.content ?? [],
-    [equipmentOptions.data]
-  );
-  const equipmentNames = useMemo(
-    () => new Map(equipments.map((equipment) => [equipment.id, equipment.name])),
-    [equipments]
-  );
-
-  function getEquipmentName(equipmentId) {
-    if (equipmentId == null) return "—";
-    return equipmentNames.get(equipmentId) ?? `#${equipmentId}`;
-  }
 
   function openCreateUsageForm() {
     createUsageMutation.reset();
@@ -130,88 +139,56 @@ function UsageFuelLog() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-6">Usage &amp; Fuel Log</h1>
+      <PageHeader className="mb-6" title={t("usageFuel.title")} />
 
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Usage Log</h2>
-          <button
-            type="button"
-            onClick={openCreateUsageForm}
-            className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Add usage log
-          </button>
-        </div>
-
-        {usageQuery.isLoading && <p className="text-gray-500">Loading usage log…</p>}
-        {usageQuery.isError && (
-          <ErrorState
-            message="Failed to load the usage log. Please try again."
-            onRetry={usageQuery.refetch}
+      <LogSection
+        title={t("usage.title")}
+        addLabel={t("usage.add")}
+        onAdd={openCreateUsageForm}
+        query={usageQuery}
+        page={usagePage}
+        onPageChange={setUsagePage}
+        loadError={t("usage.loadError")}
+        emptyMessage={t("usage.empty")}
+        renderTable={({ rows, loading }) => (
+          <UsageLogTable
+            usageLogs={rows}
+            loading={loading}
+            getEquipmentName={getEquipmentName}
+            onEdit={openEditUsageForm}
+            onDelete={setUsageDeleteTarget}
           />
         )}
-        {usageQuery.isSuccess && usageQuery.data.content.length === 0 && (
-          <EmptyState message="No usage logged yet. Click “Add usage log” to get started." />
-        )}
-        {usageQuery.isSuccess && usageQuery.data.content.length > 0 && (
-          <>
-            <UsageLogTable
-              usageLogs={usageQuery.data.content}
-              getEquipmentName={getEquipmentName}
-              onEdit={openEditUsageForm}
-              onDelete={setUsageDeleteTarget}
-            />
-            <Pagination page={usagePage} totalPages={usageQuery.data.totalPages} onPageChange={setUsagePage} />
-          </>
-        )}
-      </section>
+      />
 
-      <div className="border-t border-gray-200 my-8" />
+      <hr className="my-8 border-border-divider" />
 
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Fuel Log</h2>
-          <button
-            type="button"
-            onClick={openCreateFuelForm}
-            className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Add fuel log
-          </button>
-        </div>
-
-        {fuelQuery.isLoading && <p className="text-gray-500">Loading fuel log…</p>}
-        {fuelQuery.isError && (
-          <ErrorState
-            message="Failed to load the fuel log. Please try again."
-            onRetry={fuelQuery.refetch}
+      <LogSection
+        title={t("fuel.title")}
+        addLabel={t("fuel.add")}
+        onAdd={openCreateFuelForm}
+        query={fuelQuery}
+        page={fuelPage}
+        onPageChange={setFuelPage}
+        loadError={t("fuel.loadError")}
+        emptyMessage={t("fuel.empty")}
+        renderTable={({ rows, loading }) => (
+          <FuelLogTable
+            fuelLogs={rows}
+            loading={loading}
+            getEquipmentName={getEquipmentName}
+            onEdit={openEditFuelForm}
+            onDelete={setFuelDeleteTarget}
           />
         )}
-        {fuelQuery.isSuccess && fuelQuery.data.content.length === 0 && (
-          <EmptyState message="No fuel logged yet. Click “Add fuel log” to get started." />
-        )}
-        {fuelQuery.isSuccess && fuelQuery.data.content.length > 0 && (
-          <>
-            <FuelLogTable
-              fuelLogs={fuelQuery.data.content}
-              getEquipmentName={getEquipmentName}
-              onEdit={openEditFuelForm}
-              onDelete={setFuelDeleteTarget}
-            />
-            <Pagination page={fuelPage} totalPages={fuelQuery.data.totalPages} onPageChange={setFuelPage} />
-          </>
-        )}
-      </section>
+      />
 
       <UsageLogFormModal
         key={isUsageFormOpen ? (editingUsageLog?.id ?? "create") : "closed"}
         isOpen={isUsageFormOpen}
         usageLog={editingUsageLog}
         equipments={equipments}
-        isEquipmentLoading={equipmentOptions.isLoading}
+        isEquipmentLoading={isEquipmentLoading}
         onClose={() => setIsUsageFormOpen(false)}
         onSubmit={handleUsageSubmit}
         serverError={activeUsageFormMutation.isError ? activeUsageFormMutation.error.message : null}
@@ -222,18 +199,21 @@ function UsageFuelLog() {
         isOpen={isFuelFormOpen}
         fuelLog={editingFuelLog}
         equipments={equipments}
-        isEquipmentLoading={equipmentOptions.isLoading}
+        isEquipmentLoading={isEquipmentLoading}
         onClose={() => setIsFuelFormOpen(false)}
         onSubmit={handleFuelSubmit}
         serverError={activeFuelFormMutation.isError ? activeFuelFormMutation.error.message : null}
       />
 
-      <ConfirmDeleteRecordDialog
-        isOpen={Boolean(usageDeleteTarget)}
-        title="Delete usage log"
+      <ConfirmDialog
+        open={Boolean(usageDeleteTarget)}
+        title={t("usage.deleteTitle")}
         message={
           usageDeleteTarget
-            ? `Are you sure you want to delete the usage log of ${formatDate(usageDeleteTarget.date)} for ${getEquipmentName(usageDeleteTarget.equipmentId)}? This cannot be undone.`
+            ? t("usage.deleteMessage", {
+                date: format.date(usageDeleteTarget.date),
+                equipment: getEquipmentName(usageDeleteTarget.equipmentId),
+              })
             : ""
         }
         onClose={() => {
@@ -241,15 +221,19 @@ function UsageFuelLog() {
           setUsageDeleteTarget(null);
         }}
         onConfirm={handleUsageDelete}
-        serverError={deleteUsageMutation.isError ? deleteUsageMutation.error.message : null}
+        loading={deleteUsageMutation.isPending}
+        error={deleteUsageMutation.isError ? deleteUsageMutation.error.message : null}
       />
 
-      <ConfirmDeleteRecordDialog
-        isOpen={Boolean(fuelDeleteTarget)}
-        title="Delete fuel log"
+      <ConfirmDialog
+        open={Boolean(fuelDeleteTarget)}
+        title={t("fuel.deleteTitle")}
         message={
           fuelDeleteTarget
-            ? `Are you sure you want to delete the fuel log of ${formatDate(fuelDeleteTarget.date)} for ${getEquipmentName(fuelDeleteTarget.equipmentId)}? This cannot be undone.`
+            ? t("fuel.deleteMessage", {
+                date: format.date(fuelDeleteTarget.date),
+                equipment: getEquipmentName(fuelDeleteTarget.equipmentId),
+              })
             : ""
         }
         onClose={() => {
@@ -257,7 +241,8 @@ function UsageFuelLog() {
           setFuelDeleteTarget(null);
         }}
         onConfirm={handleFuelDelete}
-        serverError={deleteFuelMutation.isError ? deleteFuelMutation.error.message : null}
+        loading={deleteFuelMutation.isPending}
+        error={deleteFuelMutation.isError ? deleteFuelMutation.error.message : null}
       />
     </div>
   );

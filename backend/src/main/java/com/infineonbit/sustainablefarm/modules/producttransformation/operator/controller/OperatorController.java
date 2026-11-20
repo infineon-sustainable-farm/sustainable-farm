@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/operators")
+@RequestMapping("/api/product-transformation/operators")
 @Tag(name = "Operator Management", description = "APIs for managing personnel/operators")
 public class OperatorController {
 
@@ -73,9 +73,6 @@ public class OperatorController {
             @Valid @RequestBody OperatorUpdateRequest request) {
         Operator existingOperator = operatorService.getOperatorById(operatorId);
         
-        if (request.getOperatorName() != null) {
-            existingOperator.setOperatorName(request.getOperatorName());
-        }
         if (request.getRole() != null) {
             existingOperator.setRole(request.getRole());
         }
@@ -105,7 +102,7 @@ public class OperatorController {
     @GetMapping("/role/{role}")
     @Operation(summary = "Get operators by role", description = "Retrieves operators filtered by role")
     public ResponseEntity<List<OperatorResponse>> getOperatorsByRole(
-            @Parameter(description = "Operator role") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role role) {
+            @Parameter(description = "Operator role") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role role) {
         List<Operator> operators = operatorService.getOperatorsByRole(role);
         List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
@@ -116,7 +113,7 @@ public class OperatorController {
     @GetMapping("/status/{activeStatus}")
     @Operation(summary = "Get operators by status", description = "Retrieves operators filtered by active status")
     public ResponseEntity<List<OperatorResponse>> getOperatorsByStatus(
-            @Parameter(description = "Active status") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus activeStatus) {
+            @Parameter(description = "Active status") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus activeStatus) {
         List<Operator> operators = operatorService.getOperatorsByStatus(activeStatus);
         List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
@@ -127,7 +124,7 @@ public class OperatorController {
     @GetMapping("/active")
     @Operation(summary = "Get active operators", description = "Retrieves operators with ACTIVE status")
     public ResponseEntity<List<OperatorResponse>> getActiveOperators() {
-        List<Operator> operators = operatorService.getOperatorsByStatus(com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus.ACTIVE);
+        List<Operator> operators = operatorService.getOperatorsByStatus(com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus.ACTIVE);
         List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());
@@ -137,7 +134,7 @@ public class OperatorController {
     @GetMapping("/certified/{role}")
     @Operation(summary = "Get certified operators by role", description = "Retrieves active operators with specific role")
     public ResponseEntity<List<OperatorResponse>> getCertifiedOperatorsByRole(
-            @Parameter(description = "Operator role") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role role) {
+            @Parameter(description = "Operator role") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role role) {
         List<Operator> operators = operatorService.getActiveOperatorsByRole(role);
         List<OperatorResponse> responses = operators.stream()
                 .map(dtoMapper::toResponse)

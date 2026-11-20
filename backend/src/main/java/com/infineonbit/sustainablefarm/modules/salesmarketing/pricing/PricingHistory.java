@@ -1,159 +1,62 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
+/** The price of a product per kilogram on a day, in euros, with the factors behind it. */
 @Entity
-@Table(name = "pricing_history")
-public class PricingHistory {
+@Table(name = "pricing_history", indexes = @Index(name = "idx_pricing_product_date", columnList = "product_id, price_date"))
+@Getter
+@Setter
+public class PricingHistory extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pricing_id")
-    private Integer pricingId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_id", nullable = false, foreignKey = @ForeignKey(name = "pricing_history_product_id_fkey"))
+    private Product product;
 
-    @NotNull(message = "productId is required")
-    @Column(name = "product_id")
-    private Integer productId;
-
-    @NotNull(message = "priceDate is required")
-    @Column(name = "price_date")
+    @Column(name = "price_date", nullable = false)
     private LocalDate priceDate;
 
-    @NotNull(message = "priceEurPerKg is required")
-    @Positive(message = "priceEurPerKg must be greater than zero")
-    @Column(name = "price_eur_per_kg")
-    private BigDecimal priceEurPerKg;
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "price_per_kg_amount", nullable = false, precision = 14, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "price_per_kg_currency", nullable = false, length = 3))
+    private Money pricePerKg;
 
-    @Column(name = "harvest_season_factor")
+    @Column(name = "harvest_season_factor", precision = 5, scale = 2)
     private BigDecimal harvestSeasonFactor;
 
-    @Column(name = "season_label")
+    @Column(name = "season_label", length = 30)
     private String seasonLabel;
 
-    @Column(name = "stock_level_tons")
+    @Column(name = "stock_level_tons", precision = 10, scale = 2)
     private BigDecimal stockLevelTons;
 
-    @Column(name = "stock_target_tons")
+    @Column(name = "stock_target_tons", precision = 10, scale = 2)
     private BigDecimal stockTargetTons;
 
-    @Column(name = "demand_factor")
+    @Column(name = "demand_factor", precision = 5, scale = 2)
     private BigDecimal demandFactor;
 
-    @Column(name = "demand_index_label")
+    @Column(name = "demand_index_label", length = 20)
     private String demandIndexLabel;
 
+    @ColumnDefault("false")
     @Column(name = "is_applied")
     private Boolean isApplied;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
-
-    public Integer getPricingId() {
-        return pricingId;
-    }
-
-    public void setPricingId(Integer pricingId) {
-        this.pricingId = pricingId;
-    }
-
-    public Integer getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Integer productId) {
-        this.productId = productId;
-    }
-
-    public LocalDate getPriceDate() {
-        return priceDate;
-    }
-
-    public void setPriceDate(LocalDate priceDate) {
-        this.priceDate = priceDate;
-    }
-
-    public BigDecimal getPriceEurPerKg() {
-        return priceEurPerKg;
-    }
-
-    public void setPriceEurPerKg(BigDecimal priceEurPerKg) {
-        this.priceEurPerKg = priceEurPerKg;
-    }
-
-    public BigDecimal getHarvestSeasonFactor() {
-        return harvestSeasonFactor;
-    }
-
-    public void setHarvestSeasonFactor(BigDecimal harvestSeasonFactor) {
-        this.harvestSeasonFactor = harvestSeasonFactor;
-    }
-
-    public String getSeasonLabel() {
-        return seasonLabel;
-    }
-
-    public void setSeasonLabel(String seasonLabel) {
-        this.seasonLabel = seasonLabel;
-    }
-
-    public BigDecimal getStockLevelTons() {
-        return stockLevelTons;
-    }
-
-    public void setStockLevelTons(BigDecimal stockLevelTons) {
-        this.stockLevelTons = stockLevelTons;
-    }
-
-    public BigDecimal getStockTargetTons() {
-        return stockTargetTons;
-    }
-
-    public void setStockTargetTons(BigDecimal stockTargetTons) {
-        this.stockTargetTons = stockTargetTons;
-    }
-
-    public BigDecimal getDemandFactor() {
-        return demandFactor;
-    }
-
-    public void setDemandFactor(BigDecimal demandFactor) {
-        this.demandFactor = demandFactor;
-    }
-
-    public String getDemandIndexLabel() {
-        return demandIndexLabel;
-    }
-
-    public void setDemandIndexLabel(String demandIndexLabel) {
-        this.demandIndexLabel = demandIndexLabel;
-    }
-
-    public Boolean getIsApplied() {
-        return isApplied;
-    }
-
-    public void setIsApplied(Boolean isApplied) {
-        this.isApplied = isApplied;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }

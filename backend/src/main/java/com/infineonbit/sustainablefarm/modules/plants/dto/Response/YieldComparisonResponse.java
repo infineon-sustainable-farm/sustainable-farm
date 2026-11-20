@@ -57,7 +57,7 @@ public record YieldComparisonResponse(
      *                       with its share and the source of that share
      */
     public record VarietyComparison(
-            Integer farmId,
+            Long farmId,
             String blockCode,
             Long varietyId,
             String varietyName,
@@ -93,7 +93,7 @@ public record YieldComparisonResponse(
      * @param achievedPct actual yield × 100 / expected yield, to 0.1, {@code null} as for a line
      */
     public record BlockComparison(
-            Integer farmId,
+            Long farmId,
             String blockCode,
             Double expectedKg,
             Double actualKg,
@@ -124,7 +124,7 @@ public record YieldComparisonResponse(
      *                     {@code NO_TREE_LEFT} when the row has no tree left
      */
     public record NotCompared(
-            Integer farmId,
+            Long farmId,
             String blockCode,
             Long varietyId,
             String varietyName,

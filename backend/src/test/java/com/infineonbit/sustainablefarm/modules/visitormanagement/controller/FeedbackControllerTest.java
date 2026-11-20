@@ -67,7 +67,7 @@ class FeedbackControllerTest {
         when(feedbackService.listFeedback(isNull(), isNull(), isNull()))
                 .thenReturn(List.of(buildFeedbackResponse(1L)));
 
-        mockMvc.perform(get("/api/v1/feedback"))
+        mockMvc.perform(get("/api/visitor-management/feedback"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].rating").value(4))
                 .andExpect(jsonPath("$[0].origin").value("ON_SITE"));
@@ -78,7 +78,7 @@ class FeedbackControllerTest {
         when(feedbackService.listFeedback(eq(10L), isNull(), isNull()))
                 .thenReturn(List.of(buildFeedbackResponse(1L)));
 
-        mockMvc.perform(get("/api/v1/feedback").param("visitorId", "10"))
+        mockMvc.perform(get("/api/visitor-management/feedback").param("visitorId", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].visitorId").value(10));
     }
@@ -89,7 +89,7 @@ class FeedbackControllerTest {
                 Map.of(1, 0L, 2, 0L, 3, 2L, 4, 6L, 5, 8L));
         when(feedbackService.summary(isNull(), isNull())).thenReturn(summary);
 
-        mockMvc.perform(get("/api/v1/feedback/summary"))
+        mockMvc.perform(get("/api/visitor-management/feedback/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.averageRating").value(4.2))
                 .andExpect(jsonPath("$.total").value(18));
@@ -100,7 +100,7 @@ class FeedbackControllerTest {
         when(feedbackService.submitFeedback(any(FeedbackRequest.class)))
                 .thenReturn(buildFeedbackResponse(1L));
 
-        mockMvc.perform(post("/api/v1/feedback")
+        mockMvc.perform(post("/api/visitor-management/feedback")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"visitorId\":10,\"rating\":4,\"comment\":\"Great visit\"}"))
                 .andExpect(status().isCreated())
@@ -109,7 +109,7 @@ class FeedbackControllerTest {
 
     @Test
     void submit_missingRating_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/feedback")
+        mockMvc.perform(post("/api/visitor-management/feedback")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"visitorId\":10}"))
                 .andExpect(status().isBadRequest());
@@ -117,7 +117,7 @@ class FeedbackControllerTest {
 
     @Test
     void submit_ratingOutOfRange_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/feedback")
+        mockMvc.perform(post("/api/visitor-management/feedback")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"visitorId\":10,\"rating\":7}"))
                 .andExpect(status().isBadRequest());
@@ -130,7 +130,7 @@ class FeedbackControllerTest {
         when(feedbackService.routeFeedback(eq(1L), any(RouteFeedbackRequest.class)))
                 .thenReturn(routed);
 
-        mockMvc.perform(patch("/api/v1/feedback/1/route")
+        mockMvc.perform(patch("/api/visitor-management/feedback/1/route")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"routedTo\":\"Sales (Mariata)\"}"))
                 .andExpect(status().isOk())
@@ -142,7 +142,7 @@ class FeedbackControllerTest {
         when(feedbackService.listSurveys(isNull(), isNull()))
                 .thenReturn(List.of(buildSurveyResponse(1L)));
 
-        mockMvc.perform(get("/api/v1/surveys"))
+        mockMvc.perform(get("/api/visitor-management/surveys"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("SENT"));
     }
@@ -152,7 +152,7 @@ class FeedbackControllerTest {
         when(feedbackService.sendSurvey(any(SurveyRequest.class)))
                 .thenReturn(buildSurveyResponse(1L));
 
-        mockMvc.perform(post("/api/v1/surveys")
+        mockMvc.perform(post("/api/visitor-management/surveys")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"visitorId\":10,\"channel\":\"EMAIL\"}"))
                 .andExpect(status().isCreated())
@@ -164,7 +164,7 @@ class FeedbackControllerTest {
         when(feedbackService.sendSurvey(any(SurveyRequest.class)))
                 .thenThrow(new BusinessRuleException("ON_SITE surveys cannot be sent"));
 
-        mockMvc.perform(post("/api/v1/surveys")
+        mockMvc.perform(post("/api/visitor-management/surveys")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"visitorId\":10,\"channel\":\"ON_SITE\"}"))
                 .andExpect(status().isUnprocessableEntity());

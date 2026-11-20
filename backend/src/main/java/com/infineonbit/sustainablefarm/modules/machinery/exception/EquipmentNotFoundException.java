@@ -1,6 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.machinery.exception;
 
-public class EquipmentNotFoundException extends RuntimeException {
+import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+
+public class EquipmentNotFoundException extends ResourceNotFoundException {
     public EquipmentNotFoundException(Long id) {
         super("Equipment with ID " + id + " not found");
     }

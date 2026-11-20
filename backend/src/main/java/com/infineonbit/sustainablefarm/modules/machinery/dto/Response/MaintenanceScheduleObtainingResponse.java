@@ -11,5 +11,6 @@ public record MaintenanceScheduleObtainingResponse(
         String frequency,
         LocalDate lastCompleted,
         LocalDate nextDue,
-        String operator) {
+        String operator,
+        Long operatorPersonId) {
 }

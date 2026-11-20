@@ -1,44 +1,40 @@
 import { Pencil, Trash2 } from "lucide-react";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
-import StatusBadge from "./StatusBadge";
+import { useTranslation } from "react-i18next";
+import { IconButton, StatusBadge, Table } from "../../../shared/ui";
+import { STATUS_TONES } from "../constants";
+import { useEnumLabels } from "../format";
 
-function EquipmentTable({ equipments, onEditStatus, onDelete }) {
+function EquipmentTable({ equipments = [], onEditStatus, onDelete, loading = false }) {
+  const { t } = useTranslation("machinery");
+  const enumLabels = useEnumLabels();
+  const { t: tCommon } = useTranslation("common");
+
+  const columns = [
+    { key: "name", header: t("fields.name") },
+    { key: "category", header: t("equipment.category"), cell: (row) => enumLabels.category(row.category) },
+    { key: "stage", header: t("equipment.stage"), cell: (row) => enumLabels.stage(row.stage) },
+    {
+      key: "status",
+      header: t("equipment.status"),
+      cell: (row) => (
+        <StatusBadge tone={STATUS_TONES[row.status] ?? "neutral"} label={enumLabels.status(row.status)} />
+      ),
+    },
+  ];
+
   return (
-    <table className="w-full text-left border-collapse">
-      <thead>
-        <tr className="border-b border-gray-200 text-sm text-gray-500">
-          <th className="py-2">Name</th>
-          <th className="py-2">Category</th>
-          <th className="py-2">Stage</th>
-          <th className="py-2">Status</th>
-          <th className="py-2">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {equipments.map((equipment, index) => (
-          <tr
-            key={equipment.id}
-            className="border-b border-gray-100 animate-fade-up-sm"
-            style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
-          >
-            <td className="py-2 font-medium">{equipment.name}</td>
-            <td className="py-2">{formatEnumLabel(equipment.category)}</td>
-            <td className="py-2">{formatEnumLabel(equipment.stage)}</td>
-            <td className="py-2">
-              <StatusBadge status={equipment.status} />
-            </td>
-            <td className="py-2 space-x-2">
-              <button type="button" onClick={() => onEditStatus(equipment)} className="text-primary hover:opacity-70" title="Edit status">
-                <Pencil size={16} />
-              </button>
-              <button type="button" onClick={() => onDelete(equipment)} className="text-red-600 hover:opacity-70" title="Delete">
-                <Trash2 size={16} />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <Table
+      caption={t("equipment.title")}
+      columns={columns}
+      rows={equipments}
+      loading={loading}
+      rowActions={(equipment) => (
+        <>
+          <IconButton icon={Pencil} label={t("equipment.editStatus")} onClick={() => onEditStatus(equipment)} />
+          <IconButton icon={Trash2} label={tCommon("actions.delete")} tone="danger" onClick={() => onDelete(equipment)} />
+        </>
+      )}
+    />
   );
 }
 export default EquipmentTable;

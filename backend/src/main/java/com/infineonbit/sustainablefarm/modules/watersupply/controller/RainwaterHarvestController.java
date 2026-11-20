@@ -1,13 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.controller;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.RainwaterHarvestService;
 import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -31,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
  * lists of the module.</p>
  */
 @RestController
-@RequestMapping("/api/rainwater-harvests")
+@RequestMapping("/api/water-supply/rainwater-harvests")
 public class RainwaterHarvestController {
     private final RainwaterHarvestService rainwaterHarvestService;
 
@@ -43,7 +42,7 @@ public class RainwaterHarvestController {
     public Object list(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID sourceId) {
+            @RequestParam(required = false) Long sourceId) {
         if (page == null && size == null && sourceId == null) {
             return rainwaterHarvestService.findAll();
         }
@@ -60,19 +59,19 @@ public class RainwaterHarvestController {
     }
 
     @GetMapping("/{harvestId}")
-    public RainwaterHarvestResponse get(@PathVariable UUID harvestId) {
+    public RainwaterHarvestResponse get(@PathVariable Long harvestId) {
         return rainwaterHarvestService.get(harvestId);
     }
 
     @PutMapping("/{harvestId}")
-    public RainwaterHarvestResponse update(@PathVariable UUID harvestId,
+    public RainwaterHarvestResponse update(@PathVariable Long harvestId,
             @RequestBody RainwaterHarvestRequest request) {
         return rainwaterHarvestService.update(harvestId, request);
     }
 
     @DeleteMapping("/{harvestId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID harvestId) {
+    public void delete(@PathVariable Long harvestId) {
         rainwaterHarvestService.delete(harvestId);
     }
 

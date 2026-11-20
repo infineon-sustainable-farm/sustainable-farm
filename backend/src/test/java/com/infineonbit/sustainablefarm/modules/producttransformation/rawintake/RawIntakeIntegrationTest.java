@@ -1,5 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
@@ -24,22 +31,32 @@ public class RawIntakeIntegrationTest {
     private BatchRepository batchRepository;
 
     @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @Autowired
     private RawIntakeRepository rawIntakeRepository;
 
     @Autowired
     private RawIntakeService rawIntakeService;
 
+    @Autowired
+    private PersonDirectory personDirectory;
+
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
+
     @Test
     public void testBusinessJourneyBatchThenRawIntakeThenInitialize() {
+        VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
+
         // 1. Create Batch (precondition for RawIntake per contract)
         Batch batch = new Batch();
         batch.setBatchId("B-TEST-001");
         batch.setHarvestDate(LocalDate.now());
-        batch.setMangoVariety(HarvestEvent.MangoVariety.KENT);
+        batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("100.00"));
-        batch.setCurrentStatus(Batch.BatchStatus.CREATED);
-        batch.setFarmId("F-TEST");
-        batch.setBlockId("BL-TEST");
+        batch.setCurrentStatus(BatchStatus.CREATED);
+        batch.setFarmBlockId(siteTestBlocks.ensure("BL-TEST").id());
         Batch savedBatch = batchRepository.save(batch);
         assertThat(savedBatch.getBatchId()).isEqualTo("B-TEST-001");
 
@@ -47,13 +64,12 @@ public class RawIntakeIntegrationTest {
         RawIntake intake = new RawIntake();
         intake.setIntakeId("RI-TEST-001");
         intake.setBatch(savedBatch);
-        intake.setSourceFarm("TestFarm");
-        intake.setSourceBlock("BL-01");
+        intake.setSourceBlockId(siteTestBlocks.ensure("BL-01").id());
         intake.setIntakeDate(LocalDate.now());
         intake.setReceivedQuantityKg(new BigDecimal("95.00"));
-        intake.setReceivedVariety(HarvestEvent.MangoVariety.KENT);
-        intake.setReceivedGrade(HarvestEvent.QualityGrade.A);
-        intake.setIntakeOperator("op-test");
+        intake.setReceivedVarietyKey("KENT");
+        intake.setReceivedGrade(QualityGrade.A);
+        intake.setIntakeOperatorId(TestPeople.idOf(personDirectory, "op-test"));
         RawIntake savedIntake = rawIntakeService.createRawIntake(intake);
         assertThat(savedIntake.getIntakeId()).isEqualTo("RI-TEST-001");
         assertThat(savedIntake.getBatch()).isNotNull();
@@ -64,10 +80,10 @@ public class RawIntakeIntegrationTest {
         assertThat(initialized.getBatch()).isNotNull();
 
         // 4. Verify persistence link
-        RawIntake readIntake = rawIntakeRepository.findById("RI-TEST-001").orElseThrow();
+        RawIntake readIntake = rawIntakeRepository.findByIntakeId("RI-TEST-001").orElseThrow();
         assertThat(readIntake.getBatch().getBatchId()).isEqualTo("B-TEST-001");
 
-        Batch readBatch = batchRepository.findById("B-TEST-001").orElseThrow();
-        assertThat(readBatch.getCurrentStatus()).isEqualTo(Batch.BatchStatus.INTAKE);
+        Batch readBatch = batchRepository.findByBatchId("B-TEST-001").orElseThrow();
+        assertThat(readBatch.getCurrentStatus()).isEqualTo(BatchStatus.INTAKE);
     }
 }

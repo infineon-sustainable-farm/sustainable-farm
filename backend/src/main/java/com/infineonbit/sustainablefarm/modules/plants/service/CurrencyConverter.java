@@ -1,6 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -12,7 +12,8 @@ import java.math.RoundingMode;
  * caller, or {@code null} while no rate is recorded: an amount that needs the
  * rate is then {@code null}, and an amount already in the asked currency is
  * still given. Amounts in FCFA are rounded to the franc, amounts in euros to
- * the cent, both to the nearest with halves rounded up.
+ * the cent, both to the nearest with halves rounded up. No rate is recorded
+ * for the US dollar, so an amount in dollars always gives {@code null}.
  */
 final class CurrencyConverter {
 
@@ -32,8 +33,9 @@ final class CurrencyConverter {
         BigDecimal xof = switch (currency) {
             case XOF -> amount;
             case EUR -> eurToXof == null ? null : amount.multiply(eurToXof);
+            case USD -> null;
         };
-        return xof == null ? null : xof.setScale(0, RoundingMode.HALF_UP).longValueExact();
+        return xof == null ? null : CurrencyCode.XOF.round(xof).longValueExact();
     }
 
     /**
@@ -47,8 +49,9 @@ final class CurrencyConverter {
      */
     static BigDecimal toEur(BigDecimal amount, CurrencyCode currency, BigDecimal eurToXof) {
         return switch (currency) {
-            case EUR -> amount.setScale(2, RoundingMode.HALF_UP);
-            case XOF -> eurToXof == null ? null : amount.divide(eurToXof, 2, RoundingMode.HALF_UP);
+            case EUR -> CurrencyCode.EUR.round(amount);
+            case XOF -> eurToXof == null ? null : amount.divide(eurToXof, CurrencyCode.EUR.fractionDigits(), RoundingMode.HALF_UP);
+            case USD -> null;
         };
     }
 }

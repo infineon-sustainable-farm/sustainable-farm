@@ -1,140 +1,87 @@
-import { useState } from "react";
-import StatusBadge from "./StatusBadge";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
-
-const TINY_BUTTON =
-    "rounded border border-[#C3D8D4] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-[#ECFAF7] disabled:opacity-60";
-const TINY_DANGER =
-    "rounded border border-[#EDC9C9] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-error hover:bg-[#FBEAEA] disabled:opacity-60";
-
-const COLUMNS = ["Name", "Role", "Email", "Phone", "Status", "Actions"];
+import { CircleCheck, CircleX, Pencil } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, IconButton, Table } from "../../../shared/ui";
+import { useLabels } from "../utils/labels";
+import StatusTag from "./StatusTag";
 
 /**
- * One row's actions. Deactivation asks for confirmation because it removes the
- * member from every selector at once; reactivation goes through an update with
- * active=true, the only path the API offers.
+ * One row's actions. Deactivation is confirmed by the page because it removes the member from
+ * every selector at once; reactivation goes through an update with active=true, the only path
+ * the API offers.
  */
-function StaffActions({ member, isPending, onAction, onEdit }) {
-    const [confirming, setConfirming] = useState(false);
-
-    if (confirming) {
-        return (
-            <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[11px] text-error">Deactivate?</span>
-                <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => {
-                        setConfirming(false);
-                        onAction(member, "deactivate");
-                    }}
-                    className={TINY_DANGER}
-                >
-                    {isPending ? "…" : "Yes"}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setConfirming(false)}
-                    className={TINY_BUTTON}
-                >
-                    No
-                </button>
-            </div>
-        );
-    }
-
+function StaffActions({ member, isPending, onAction, onDeactivate, onEdit }) {
+    const { t } = useTranslation("visitormanagement");
     return (
-        <div className="flex flex-wrap items-center gap-1.5">
-            <button
-                type="button"
-                disabled={isPending}
-                onClick={() => onEdit(member)}
-                className={TINY_BUTTON}
-            >
-                ✎ edit
-            </button>
+        <>
+            <IconButton icon={Pencil} label={t("staff.edit")} disabled={isPending} onClick={() => onEdit(member)} />
             {member.active ? (
-                <button
-                    type="button"
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={CircleX}
                     disabled={isPending}
-                    onClick={() => setConfirming(true)}
-                    className={TINY_DANGER}
+                    className="text-error-fg"
+                    onClick={() => onDeactivate(member)}
                 >
-                    {isPending ? "deactivating…" : "✕ deactivate"}
-                </button>
+                    {isPending ? t("staff.deactivating") : t("staff.deactivate")}
+                </Button>
             ) : (
-                <button
-                    type="button"
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={CircleCheck}
                     disabled={isPending}
                     onClick={() => onAction(member, "activate")}
-                    className={TINY_BUTTON}
                 >
-                    {isPending ? "activating…" : "✓ activate"}
-                </button>
+                    {isPending ? t("staff.activating") : t("staff.activate")}
+                </Button>
             )}
-        </div>
+        </>
     );
 }
 
-export default function StaffTable({ staff, pendingAction, actionError, onAction, onEdit }) {
+export default function StaffTable({ staff, pendingAction, actionError, onAction, onDeactivate, onEdit }) {
+    const { t } = useTranslation("visitormanagement");
+    const labels = useLabels();
+    const none = t("format.none");
+
+    const columns = [
+        { key: "fullName", header: t("staff.columns.name") },
+        { key: "role", header: t("staff.columns.role"), cell: (member) => labels.enum(member.role) },
+        { key: "email", header: t("staff.columns.email"), cell: (member) => member.email ?? none },
+        { key: "phone", header: t("staff.columns.phone"), cell: (member) => member.phone ?? none },
+        {
+            key: "status",
+            header: t("staff.columns.status"),
+            cell: (member) => <StatusTag value={member.active ? "ACTIVE" : "INACTIVE"} />,
+        },
+    ];
+
     return (
-        <div className="overflow-x-auto">
-            <table className="vm-table w-full border-collapse text-sm">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className="border-b-2 border-line bg-[#F4F8F8] px-3 py-2.5 text-left text-xs font-semibold tracking-wide whitespace-nowrap text-ink uppercase"
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {staff.length === 0 && (
-                        <tr>
-                            <td colSpan={COLUMNS.length} className="px-3 py-8 text-center text-muted">
-                                No staff member matches this filter.
-                            </td>
-                        </tr>
+        <Table
+            caption={t("staff.title")}
+            columns={columns}
+            rows={staff}
+            emptyMessage={t("staff.noMatch")}
+            actionsHeader={t("staff.columns.actions")}
+            rowActions={(member) => (
+                <div className="flex flex-col items-start gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
+                        <StaffActions
+                            member={member}
+                            isPending={pendingAction?.staff?.id === member.id}
+                            onAction={onAction}
+                            onDeactivate={onDeactivate}
+                            onEdit={onEdit}
+                        />
+                    </div>
+                    {actionError?.id === member.id && (
+                        <p role="alert" className="max-w-64 text-xs text-error-fg">
+                            {actionError.message}
+                        </p>
                     )}
-                    {staff.map((member) => {
-                        const isPending = pendingAction?.id === member.id;
-                        const failed = actionError?.id === member.id;
-                        return (
-                            <tr key={member.id} className="border-b border-line align-top">
-                                <td className="px-3 py-2.5 font-medium text-ink">
-                                    {member.fullName}
-                                </td>
-                                <td className="px-3 py-2.5 text-ink">
-                                    {formatEnumLabel(member.role)}
-                                </td>
-                                <td className="px-3 py-2.5 text-ink">{member.email ?? "—"}</td>
-                                <td className="px-3 py-2.5 text-ink">{member.phone ?? "—"}</td>
-                                <td className="px-3 py-2.5">
-                                    <StatusBadge value={member.active ? "ACTIVE" : "INACTIVE"} />
-                                </td>
-                                <td className="px-3 py-2.5">
-                                    <StaffActions
-                                        member={member}
-                                        isPending={isPending}
-                                        onAction={onAction}
-                                        onEdit={onEdit}
-                                    />
-                                    {failed && (
-                                        <p className="mt-1 max-w-[260px] text-[11px] text-error">
-                                            {actionError.message}
-                                        </p>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
+                </div>
+            )}
+        />
     );
 }

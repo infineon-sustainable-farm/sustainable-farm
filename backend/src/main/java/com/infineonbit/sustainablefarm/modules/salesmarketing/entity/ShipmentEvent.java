@@ -1,46 +1,42 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
+/** A step of a shipment, deleted with the shipment. The step is a free label. */
 @Entity
-@Table(name = "shipment_events")
-public class ShipmentEvent {
+@Table(name = "shipment_events", indexes = @Index(name = "idx_shipment_events_ship", columnList = "shipment_id"))
+@Getter
+@Setter
+public class ShipmentEvent extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "event_id")
-    private Integer eventId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "shipment_id", nullable = false, foreignKey = @ForeignKey(name = "shipment_events_shipment_id_fkey"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Shipment shipment;
 
-    @NotNull(message = "shipmentId is required")
-    @Column(name = "shipment_id")
-    private Integer shipmentId;
-
-    @NotBlank(message = "step is required")
-    @Column(name = "step")
+    @Column(name = "step", nullable = false, length = 30)
     private String step;
 
-    @Column(name = "event_time")
+    /** The time of the step; the time it is recorded when none is sent. */
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "event_time", nullable = false)
     private LocalDateTime eventTime;
 
-    @Column(name = "note")
+    @Column(name = "note", length = 200)
     private String note;
-
-    public Integer getEventId() { return eventId; }
-    public void setEventId(Integer eventId) { this.eventId = eventId; }
-
-    public Integer getShipmentId() { return shipmentId; }
-    public void setShipmentId(Integer shipmentId) { this.shipmentId = shipmentId; }
-
-    public String getStep() { return step; }
-    public void setStep(String step) { this.step = step; }
-
-    public LocalDateTime getEventTime() { return eventTime; }
-    public void setEventTime(LocalDateTime eventTime) { this.eventTime = eventTime; }
-
-    public String getNote() { return note; }
-    public void setNote(String note) { this.note = note; }
 }

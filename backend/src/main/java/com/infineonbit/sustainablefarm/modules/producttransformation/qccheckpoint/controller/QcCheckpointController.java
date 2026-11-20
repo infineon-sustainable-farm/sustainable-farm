@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/qc-checkpoints")
+@RequestMapping("/api/product-transformation/qc-checkpoints")
 @Tag(name = "Quality Control Management", description = "APIs for managing quality control checkpoints")
 public class QcCheckpointController {
 
@@ -53,12 +54,12 @@ public class QcCheckpointController {
     @PostMapping
     @Operation(summary = "Create a new QC checkpoint", description = "Creates a new quality control checkpoint")
     public ResponseEntity<QcCheckpointResponse> createQcCheckpoint(@Valid @RequestBody QcCheckpointCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Operator inspector = null;
         if (request.getInspectorId() != null) {
-            inspector = operatorRepository.findById(request.getInspectorId())
+            inspector = operatorRepository.findByOperatorId(request.getInspectorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getInspectorId()));
         }
         
@@ -69,6 +70,7 @@ public class QcCheckpointController {
     }
 
     @GetMapping("/{checkpointId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get QC checkpoint by ID", description = "Retrieves a specific QC checkpoint by its ID")
     public ResponseEntity<QcCheckpointResponse> getQcCheckpointById(
             @Parameter(description = "Checkpoint ID") @PathVariable String checkpointId) {
@@ -78,6 +80,7 @@ public class QcCheckpointController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get QC checkpoints by batch", description = "Retrieves QC checkpoints for a specific batch")
     public ResponseEntity<List<QcCheckpointResponse>> getQcCheckpointsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -89,6 +92,7 @@ public class QcCheckpointController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all QC checkpoints", description = "Retrieves all QC checkpoint records")
     public ResponseEntity<List<QcCheckpointResponse>> getAllQcCheckpoints() {
         List<QcCheckpoint> checkpoints = qcCheckpointService.getAllQcCheckpoints();
@@ -118,7 +122,7 @@ public class QcCheckpointController {
             existingCheckpoint.setDefectsCount(request.getDefectsCount());
         }
         if (request.getInspectorId() != null) {
-            Operator inspector = operatorRepository.findById(request.getInspectorId())
+            Operator inspector = operatorRepository.findByOperatorId(request.getInspectorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getInspectorId()));
             existingCheckpoint.setInspector(inspector);
         }
@@ -143,10 +147,11 @@ public class QcCheckpointController {
     }
 
     @GetMapping("/batch/{batchId}/stage/{stage}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get QC checkpoints by batch and stage", description = "Retrieves QC checkpoints for a specific batch and stage")
     public ResponseEntity<List<QcCheckpointResponse>> getQcCheckpointsByBatchAndStage(
             @Parameter(description = "Batch ID") @PathVariable String batchId,
-            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage stage) {
+            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage stage) {
         List<QcCheckpoint> checkpoints = qcCheckpointService.getQcCheckpointsByBatchAndStage(batchId, stage);
         List<QcCheckpointResponse> responses = checkpoints.stream()
                 .map(dtoMapper::toResponse)
@@ -155,6 +160,7 @@ public class QcCheckpointController {
     }
 
     @GetMapping("/batch/{batchId}/count")
+    @Transactional(readOnly = true)
     @Operation(summary = "Count QC checkpoints by batch", description = "Counts QC checkpoints for a specific batch")
     public ResponseEntity<Long> countQcCheckpointsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -164,15 +170,17 @@ public class QcCheckpointController {
     }
 
     @GetMapping("/batch/{batchId}/stage/{stage}/count")
+    @Transactional(readOnly = true)
     @Operation(summary = "Count QC checkpoints by batch and stage", description = "Counts QC checkpoints for a specific batch and stage")
     public ResponseEntity<Long> countQcCheckpointsByBatchAndStage(
             @Parameter(description = "Batch ID") @PathVariable String batchId,
-            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage stage) {
+            @Parameter(description = "QC stage") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage stage) {
         long count = qcCheckpointService.countByBatchAndStage(batchId, stage);
         return ResponseEntity.ok(count);
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get QC checkpoints by date range", description = "Retrieves QC checkpoints within a date range")
     public ResponseEntity<List<QcCheckpointResponse>> getQcCheckpointsByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDateTime startDate,
@@ -185,6 +193,7 @@ public class QcCheckpointController {
     }
 
     @GetMapping("/inspector/{inspectorId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get QC checkpoints by inspector", description = "Retrieves QC checkpoints filtered by inspector")
     public ResponseEntity<List<QcCheckpointResponse>> getQcCheckpointsByInspector(
             @Parameter(description = "Inspector ID") @PathVariable String inspectorId) {

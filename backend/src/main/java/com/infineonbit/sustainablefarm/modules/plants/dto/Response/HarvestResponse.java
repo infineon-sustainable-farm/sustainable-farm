@@ -22,7 +22,7 @@ import java.time.LocalDate;
 public record HarvestResponse(
         Long id,
         String lotNumber,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         Long varietyId,
         String varietyName,

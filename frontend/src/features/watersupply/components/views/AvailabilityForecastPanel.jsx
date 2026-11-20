@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Badge, Button, Card, Field, IconButton, Input, OwnerHint, Select, Table } from '../../../../shared/ui'
+import { OWNER_LINKS } from '../../../../app/ownerLinks'
 import { productTransformationApi } from '../../api/watersupplyApi'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { ACTIVITIES } from './lotActivities'
+import { useWaterFormat } from '../../format'
+import { FormActions } from '../common/Screen'
+import { FormAlert } from '../common/FormAlert'
+import { Stat, StatGrid } from '../common/Stat'
+import { ACTIVITIES, useActivityLabel } from './lotActivities'
 import { fromLocalInput } from './datetime'
 
-const BUFFER_META = {
-  ok: { cls: 'green', text: 'Enough water' },
-  tight: { cls: 'orange', text: 'Below the minimum buffer' },
-  insufficient: { cls: 'red', text: 'Not enough water' },
-}
+const BUFFER_TONES = { ok: 'success', tight: 'warning', insufficient: 'error' }
 
 const EMPTY_BATCH = { lotId: '', activity: 'WASHING', sizeKg: '', plannedAt: '' }
 
@@ -18,12 +19,20 @@ const EMPTY_BATCH = { lotId: '', activity: 'WASHING', sizeKg: '', plannedAt: '' 
  * Availability forecast of a source for planned batches (Product Transformation): current level
  * minus the batches' demand and, by default, the scheduled irrigations of the source's farm. A tight
  * or insufficient buffer also raises an alert for the water team (backend side).
+ *
+ * The lot of a planned batch, optional, is a processing batch of Product Transformation, picked in
+ * `processingBatches` ({ batches, loading, error }, from useProcessingBatches).
  */
-export function AvailabilityForecastPanel({ sources }) {
+export function AvailabilityForecastPanel({ sources, processingBatches = { batches: [], loading: false, error: null } }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
+  const activityLabel = useActivityLabel()
+  // Stable keys of the batch rows (removing a row must not shift the others' inputs).
+  const nextKey = useRef(1)
   const [sourceId, setSourceId] = useState('')
   const [horizonDays, setHorizonDays] = useState('7')
   const [includeIrrigation, setIncludeIrrigation] = useState(true)
-  const [batches, setBatches] = useState([EMPTY_BATCH])
+  const [batches, setBatches] = useState([{ ...EMPTY_BATCH, key: 0 }])
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -31,15 +40,21 @@ export function AvailabilityForecastPanel({ sources }) {
   const updateBatch = (index, key) => (event) =>
     setBatches((current) => current.map((batch, i) => (i === index ? { ...batch, [key]: event.target.value } : batch)))
 
+  const addBatch = () => {
+    const key = nextKey.current
+    nextKey.current += 1
+    setBatches((current) => [...current, { ...EMPTY_BATCH, key }])
+  }
+
   const submit = (event) => {
     event.preventDefault()
     if (!sourceId) {
-      setError('Select the source to forecast.')
+      setError(t('lots.forecast.errors.sourceRequired'))
       return
     }
     const horizon = Number(horizonDays)
     if (!(horizon >= 1 && horizon <= 90)) {
-      setError('The horizon is between 1 and 90 days.')
+      setError(t('lots.forecast.errors.horizonRange'))
       return
     }
     setBusy(true)
@@ -50,7 +65,7 @@ export function AvailabilityForecastPanel({ sources }) {
         horizonDays: horizon,
         includeIrrigation,
         batches: batches.map((batch) => ({
-          lotId: batch.lotId.trim() || null,
+          lotId: batch.lotId || null,
           activity: batch.activity,
           sizeKg: batch.sizeKg === '' ? null : Number(batch.sizeKg),
           plannedAt: fromLocalInput(batch.plannedAt),
@@ -59,113 +74,148 @@ export function AvailabilityForecastPanel({ sources }) {
       .then(setResult)
       .catch((err) => {
         setResult(null)
-        setError(err.message || 'Unable to compute the forecast.')
+        setError(err.message || t('lots.forecast.errors.failed'))
       })
       .finally(() => setBusy(false))
   }
 
-  const status = result ? BUFFER_META[result.bufferStatus] : null
+  const lotOptions = processingBatches.batches.map((batch) => batch.batchId)
+  const noLotToPick = !processingBatches.loading && !processingBatches.error && lotOptions.length === 0
+  const rows = batches.map((batch, index) => ({ ...batch, index }))
+  const columns = [
+    {
+      key: 'lotId',
+      header: t('lots.forecast.columns.lot'),
+      cell: (batch) => (
+        <Select
+          value={batch.lotId}
+          onChange={updateBatch(batch.index, 'lotId')}
+          disabled={processingBatches.loading}
+          aria-busy={processingBatches.loading || undefined}
+          aria-label={t('lots.forecast.batchLot', { number: batch.index + 1 })}
+        >
+          <option value="">{t('lots.forecast.noLot')}</option>
+          {lotOptions.map((lotId) => <option key={lotId} value={lotId}>{lotId}</option>)}
+        </Select>
+      ),
+    },
+    {
+      key: 'activity',
+      header: t('lots.forecast.columns.activity'),
+      cell: (batch) => (
+        <Select value={batch.activity} onChange={updateBatch(batch.index, 'activity')} aria-label={t('lots.forecast.batchActivity', { number: batch.index + 1 })}>
+          {ACTIVITIES.map(([key]) => <option key={key} value={key}>{activityLabel(key)}</option>)}
+        </Select>
+      ),
+    },
+    {
+      key: 'sizeKg',
+      header: t('lots.forecast.columns.size'),
+      cell: (batch) => (
+        <Input
+          type="number"
+          min="0"
+          step="0.1"
+          value={batch.sizeKg}
+          onChange={updateBatch(batch.index, 'sizeKg')}
+          aria-label={t('lots.forecast.batchSize', { number: batch.index + 1 })}
+        />
+      ),
+    },
+    {
+      key: 'plannedAt',
+      header: t('lots.forecast.columns.plannedAt'),
+      cell: (batch) => (
+        <Input
+          type="datetime-local"
+          value={batch.plannedAt}
+          onChange={updateBatch(batch.index, 'plannedAt')}
+          aria-label={t('lots.forecast.batchDate', { number: batch.index + 1 })}
+        />
+      ),
+    },
+  ]
+
+  const statusTone = result ? BUFFER_TONES[result.bufferStatus] ?? 'info' : 'info'
+  const statusText = result
+    ? t(`lots.forecast.buffer.${result.bufferStatus}`, { defaultValue: result.bufferStatus })
+    : ''
 
   return (
-    <div className="ws-panel" style={{ marginTop: '22px' }}>
-      <div className="ws-panel-header">
-        <h2>Availability forecast</h2>
-        <span>Can the tank supply the planned batches?</span>
-      </div>
-      <div className="ws-panel-body">
-        {error && <div className="ws-inline-error">{error}</div>}
-        <form className="ws-form-grid" onSubmit={submit}>
-          <div className="ws-layout-3">
-            <FormField label="Source" required>
-              <select style={inputStyle} value={sourceId} onChange={(event) => setSourceId(event.target.value)}>
-                <option value="">Select</option>
-                {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Horizon (days)" required>
-              <input style={inputStyle} type="number" min="1" max="90" value={horizonDays} onChange={(event) => setHorizonDays(event.target.value)} />
-            </FormField>
-            <label style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px', alignSelf: 'end' }}>
-              <input type="checkbox" checked={includeIrrigation} onChange={(event) => setIncludeIrrigation(event.target.checked)} />
-              Include the farm's scheduled irrigations
-            </label>
-          </div>
+    <Card title={t('lots.forecast.title')} subtitle={t('lots.forecast.subtitle')}>
+      <FormAlert>{error}</FormAlert>
+      <form className="flex flex-col gap-4" onSubmit={submit}>
+        <div className="grid items-end gap-4 md:grid-cols-3">
+          <Field label={t('lots.forecast.fields.source')} required>
+            <Select value={sourceId} onChange={(event) => setSourceId(event.target.value)}>
+              <option value="">{t('common.select')}</option>
+              {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
+            </Select>
+          </Field>
+          <Field label={t('lots.forecast.fields.horizon')} required>
+            <Input type="number" min="1" max="90" value={horizonDays} onChange={(event) => setHorizonDays(event.target.value)} />
+          </Field>
+          <label className="flex min-h-10 items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={includeIrrigation}
+              onChange={(event) => setIncludeIrrigation(event.target.checked)}
+            />
+            {t('lots.forecast.fields.includeIrrigation')}
+          </label>
+        </div>
 
-          <table className="ws-table">
-            <thead>
-              <tr>
-                <th>Lot</th>
-                <th>Activity</th>
-                <th>Size (kg)</th>
-                <th>Planned at</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {batches.map((batch, index) => (
-                <tr key={index}>
-                  <td><input style={inputStyle} value={batch.lotId} onChange={updateBatch(index, 'lotId')} aria-label={`Batch ${index + 1} lot`} /></td>
-                  <td>
-                    <select style={inputStyle} value={batch.activity} onChange={updateBatch(index, 'activity')} aria-label={`Batch ${index + 1} activity`}>
-                      {ACTIVITIES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                    </select>
-                  </td>
-                  <td><input style={inputStyle} type="number" min="0" step="0.1" value={batch.sizeKg} onChange={updateBatch(index, 'sizeKg')} aria-label={`Batch ${index + 1} size`} /></td>
-                  <td><input style={inputStyle} type="datetime-local" value={batch.plannedAt} onChange={updateBatch(index, 'plannedAt')} aria-label={`Batch ${index + 1} date`} /></td>
-                  <td className="ws-table-actions">
-                    <button
-                      type="button"
-                      className="ws-icon-btn danger"
-                      title="Remove batch"
-                      disabled={batches.length === 1}
-                      onClick={() => setBatches((current) => current.filter((_, i) => i !== index))}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <Table
+          caption={t('lots.forecast.batchesCaption')}
+          columns={columns}
+          rows={rows}
+          getRowKey={(batch) => batch.key}
+          rowActions={(batch) => (
+            <IconButton
+              icon={Trash2}
+              tone="danger"
+              label={t('lots.forecast.removeBatch')}
+              disabled={batches.length === 1}
+              onClick={() => setBatches((current) => current.filter((_, i) => i !== batch.index))}
+            />
+          )}
+        />
 
-          <div className="ws-form-actions">
-            <button type="button" className="ws-chip" onClick={() => setBatches((current) => [...current, EMPTY_BATCH])}>
-              <Plus size={12} /> Add a batch
-            </button>
-            <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Forecast'}</button>
-          </div>
-        </form>
+        {noLotToPick && <OwnerHint owner={OWNER_LINKS.processingBatch} variant="empty" />}
+        {processingBatches.error && <p className="text-xs text-error-fg">{t('lots.forecast.lotsLoadError')}</p>}
 
-        {result && (
-          <div style={{ marginTop: '16px' }}>
-            <div className="ws-metric-banner">
-              <div className="ws-metric-pill"><div><div className="label">In the tank now</div><div className="value">{result.currentLevelLiters} L</div></div></div>
-              <div className="ws-metric-pill"><div><div className="label">Batches</div><div className="value">{result.batchDemandLiters} L</div></div></div>
-              <div className="ws-metric-pill"><div><div className="label">Irrigations</div><div className="value">{result.irrigationDemandLiters} L</div></div></div>
-              <div className="ws-metric-pill">
-                <div>
-                  <div className="label">Left after {result.horizonDays} day(s)</div>
-                  <div className="value">{result.availableAfterForecastLiters} L</div>
-                </div>
-              </div>
-            </div>
-            <p style={{ fontSize: '13px' }}>
-              <span className={`ws-tag ${status?.cls || 'primary'}`}>{status?.text || result.bufferStatus}</span>
-              {' '}Minimum buffer {result.bufferMinLiters} L.
+        <FormActions>
+          <Button variant="secondary" icon={Plus} onClick={addBatch}>{t('lots.forecast.addBatch')}</Button>
+          <Button type="submit" loading={busy}>{t('lots.forecast.submit')}</Button>
+        </FormActions>
+      </form>
+
+      {result && (
+        <div className="mt-4 flex flex-col gap-3 text-sm">
+          <StatGrid>
+            <Stat label={t('lots.forecast.result.current')} value={format.liters(result.currentLevelLiters)} />
+            <Stat label={t('lots.forecast.result.batches')} value={format.liters(result.batchDemandLiters)} />
+            <Stat label={t('lots.forecast.result.irrigations')} value={format.liters(result.irrigationDemandLiters)} />
+            <Stat
+              label={t('lots.forecast.result.left', { days: format.number(result.horizonDays) })}
+              value={format.liters(result.availableAfterForecastLiters)}
+            />
+          </StatGrid>
+          <p className="flex flex-wrap items-center gap-2">
+            <Badge tone={statusTone}>{statusText}</Badge>
+            {t('lots.forecast.result.buffer', { value: format.liters(result.bufferMinLiters) })}
+          </p>
+          {result.warnings.length > 0 && (
+            <p className="text-xs text-warning-fg">
+              {t('lots.forecast.result.noCoefficient', { activities: result.warnings.join(', ') })}
             </p>
-            {result.warnings.length > 0 && (
-              <p style={{ fontSize: '12px', color: 'var(--ws-orange)' }}>
-                Some activities have no water coefficient and count for 0 L: {result.warnings.join(', ')}.
-              </p>
-            )}
-            {result.parametersStatus === 'unvalidated_defaults' && (
-              <p style={{ fontSize: '12px', color: 'var(--ws-muted)' }}>
-                Litres per kg and the minimum buffer are working defaults, to be confirmed by Product Transformation.
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+          {result.parametersStatus === 'unvalidated_defaults' && (
+            <p className="text-xs text-text-muted">{t('lots.forecast.result.defaults')}</p>
+          )}
+        </div>
+      )}
+    </Card>
   )
 }

@@ -1,40 +1,50 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.PositiveOrZero;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
+/** A marketing campaign. Its budget is in euros; {@code currency} is the label the API keeps. */
 @Entity
 @Table(name = "campaigns")
-public class Campaign {
+@Getter
+@Setter
+public class Campaign extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "campaign_id")
-    private Integer campaignId;
-
-    @NotBlank(message = "Campaign name is required")
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 120)
     private String name;
 
-    @Column(name = "status")
-    private String status;
+    /** {@code scheduled} when none is sent. */
+    @ColumnDefault("'scheduled'")
+    @Convert(converter = CampaignStatus.Converter.class)
+    @Column(name = "status", nullable = false, length = 20)
+    private CampaignStatus status;
 
-    @PositiveOrZero(message = "budgetEur cannot be negative")
-    @Column(name = "budget_eur")
-    private BigDecimal budgetEur;
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "budget_amount", precision = 14, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "budget_currency", length = 3))
+    private Money budget;
 
-    @Column(name = "budget_spent_eur")
-    private BigDecimal budgetSpentEur;
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "budget_spent_amount", precision = 14, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "budget_spent_currency", length = 3))
+    private Money budgetSpent;
 
     @Column(name = "estimated_reach")
     private Integer estimatedReach;
 
-    @Column(name = "currency")
+    @ColumnDefault("'EUR'")
+    @Column(name = "currency", length = 3)
     private String currency;
 
     @Column(name = "start_date")
@@ -42,94 +52,4 @@ public class Campaign {
 
     @Column(name = "end_date")
     private LocalDate endDate;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
-
-    public Integer getCampaignId() {
-        return campaignId;
-    }
-
-    public void setCampaignId(Integer campaignId) {
-        this.campaignId = campaignId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public BigDecimal getBudgetEur() {
-        return budgetEur;
-    }
-
-    public void setBudgetEur(BigDecimal budgetEur) {
-        this.budgetEur = budgetEur;
-    }
-
-    public BigDecimal getBudgetSpentEur() {
-        return budgetSpentEur;
-    }
-
-    public void setBudgetSpentEur(BigDecimal budgetSpentEur) {
-        this.budgetSpentEur = budgetSpentEur;
-    }
-
-    public Integer getEstimatedReach() {
-        return estimatedReach;
-    }
-
-    public void setEstimatedReach(Integer estimatedReach) {
-        this.estimatedReach = estimatedReach;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }

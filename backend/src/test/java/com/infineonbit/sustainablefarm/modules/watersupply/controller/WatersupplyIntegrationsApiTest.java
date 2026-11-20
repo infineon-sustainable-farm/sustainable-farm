@@ -13,12 +13,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IotDevice;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IotDeviceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.AgroWeatherService;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.PlantsGrowthPort;
 import com.jayway.jsonpath.JsonPath;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -54,6 +61,12 @@ class WatersupplyIntegrationsApiTest {
     @Autowired
     private IotDeviceRepository deviceRepository;
 
+    @Autowired
+    private BatchRepository batchRepository;
+
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
+
     @MockitoBean
     private AgroWeatherService agroWeatherService;
 
@@ -67,7 +80,8 @@ class WatersupplyIntegrationsApiTest {
         String farmId = createFarm("Block Filter Farm");
         String fieldId = createField(farmId);
         String zoneA = createZone(fieldId, "Zone A", 1.0);
-        String zoneB = createZone(fieldId, "Zone B", 1.0);
+        // A block code belongs to the field (block) of the zone: zone B sits in another field.
+        String zoneB = createZone(createField(farmId), "Zone B", 1.0);
         String sourceId = createSource(farmId, "Block Filter Tank");
         String block = uniqueBlock();
         mapZone(zoneA, block.toLowerCase(), farmId);
@@ -77,24 +91,24 @@ class WatersupplyIntegrationsApiTest {
         createConsumption(farmId, sourceId, zoneB, 40.0, at.plusSeconds(120), null, null);
 
         // Filtered in the database: the total counts the 2 matching rows, not the page.
-        mockMvc.perform(get("/api/water/consumption").param("blockCode", block).param("page", "0").param("size", "1"))
+        mockMvc.perform(get("/api/water-supply/consumption").param("blockCode", block).param("page", "0").param("size", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].blockCode").value(block))
                 .andExpect(jsonPath("$.content[0].multipleBlockCodes").value(false));
-        mockMvc.perform(get("/api/water/consumption").param("zoneId", zoneB))
+        mockMvc.perform(get("/api/water-supply/consumption").param("zoneId", zoneB))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].blockCode").doesNotExist());
 
         createIrrigation(zoneA, 300.0);
         createIrrigation(zoneB, 300.0);
-        mockMvc.perform(get("/api/irrigations").param("blockCode", block))
+        mockMvc.perform(get("/api/water-supply/irrigations").param("blockCode", block))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].zoneId").value(zoneA))
                 .andExpect(jsonPath("$.content[0].blockCode").value(block));
-        mockMvc.perform(get("/api/irrigations").param("blockCode", uniqueBlock()))
+        mockMvc.perform(get("/api/water-supply/irrigations").param("blockCode", uniqueBlock()))
                 .andExpect(jsonPath("$.totalElements").value(0));
     }
 
@@ -111,7 +125,7 @@ class WatersupplyIntegrationsApiTest {
         createHarvest(gaugeA, 3.0, Instant.parse("2026-10-06T06:00:00Z"));
         createHarvest(gaugeA, 50.0, Instant.parse("2026-11-01T06:00:00Z"));
 
-        mockMvc.perform(get("/api/water/plants/rainfall").param("blockCode", block)
+        mockMvc.perform(get("/api/water-supply/plants/rainfall").param("blockCode", block)
                         .param("from", "2026-10-01").param("to", "2026-10-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rainfallMm").value(15.0))
@@ -119,13 +133,13 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(jsonPath("$.readings", hasSize(3)))
                 .andExpect(jsonPath("$.spatialResolution").value("farm"));
 
-        mockMvc.perform(get("/api/water/plants/rainfall").param("blockCode", uniqueBlock())
+        mockMvc.perform(get("/api/water-supply/plants/rainfall").param("blockCode", uniqueBlock())
                         .param("from", "2026-10-01").param("to", "2026-10-31"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
-        mockMvc.perform(get("/api/water/plants/rainfall").param("blockCode", block))
+        mockMvc.perform(get("/api/water-supply/plants/rainfall").param("blockCode", block))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }
 
     @Test
@@ -139,7 +153,7 @@ class WatersupplyIntegrationsApiTest {
                 .thenReturn(List.of(new PlantsGrowthPort.BlockGrowth(block, "full production", 7)));
 
         // 1.5 ha x 10 000 m2 x 5 mm x Kc 1.0 / efficiency 0.80 (no irrigation method) = 93 750 L.
-        mockMvc.perform(post("/api/water/plants/irrigation-need").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/water-supply/plants/irrigation-need").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"blockCode":"%s","treeCount":120,"date":"2026-10-13"}
                                 """.formatted(block.toLowerCase())))
@@ -151,16 +165,16 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(jsonPath("$.needLiters").value(93750))
                 .andExpect(jsonPath("$.matchedZones[0]").value(zoneId));
 
-        mockMvc.perform(post("/api/water/plants/irrigation-need").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/water-supply/plants/irrigation-need").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"blockCode":"%s","growthPhase":"flowering"}
                                 """.formatted(block)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
-        mockMvc.perform(post("/api/water/plants/irrigation-need").contentType(MediaType.APPLICATION_JSON)
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+        mockMvc.perform(post("/api/water-supply/plants/irrigation-need").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"treeCount\":3}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.fieldErrors").isNotEmpty());
     }
 
     // --- Product Transformation -----------------------------------------------------------------
@@ -169,13 +183,13 @@ class WatersupplyIntegrationsApiTest {
     void lotUsageThenConsumptionByLotThenQualityCompliance() throws Exception {
         String farmId = createFarm("Lot Farm");
         String sourceId = createSource(farmId, "Washing Tank");
-        String lotId = "LOT-" + UUID.randomUUID();
+        String lotId = processingBatch(farmId);
         Instant start = Instant.now().minus(3, ChronoUnit.HOURS);
         createConsumption(farmId, sourceId, null, 100.0, start.plusSeconds(600), null, null);
         createConsumption(farmId, sourceId, null, 50.0, start.plusSeconds(1200), null, null);
         createConsumption(farmId, sourceId, null, 999.0, start.minusSeconds(600), null, null);
 
-        mockMvc.perform(post("/api/water/lot-usage").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/water-supply/lot-usage").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"lotId":"%s","activity":"washing","startAt":"%s","endAt":"%s","sourceId":"%s"}
                                 """.formatted(lotId, start, start.plus(1, ChronoUnit.HOURS), sourceId)))
@@ -184,71 +198,87 @@ class WatersupplyIntegrationsApiTest {
                 .andExpect(jsonPath("$.attachedLiters").value(150.0))
                 .andExpect(jsonPath("$.warnings", hasSize(0)));
 
-        mockMvc.perform(get("/api/water/consumption/by-lot").param("lotId", lotId))
+        mockMvc.perform(get("/api/water-supply/consumption/by-lot").param("lotId", lotId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalLiters").value(150.0))
                 .andExpect(jsonPath("$.byActivity.WASHING").value(150.0))
                 .andExpect(jsonPath("$.items", hasSize(2)));
-        mockMvc.perform(get("/api/water/consumption").param("lotId", lotId))
+        mockMvc.perform(get("/api/water-supply/consumption").param("lotId", lotId))
                 .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.content[0].activity").value("WASHING"));
 
         // No test yet in the lot window: no proof of compliance.
-        mockMvc.perform(get("/api/water/quality/compliance").param("lotId", lotId))
+        mockMvc.perform(get("/api/water-supply/quality/compliance").param("lotId", lotId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("no_test"))
                 .andExpect(jsonPath("$.compliant").value(false));
         createQualityTest(sourceId, 7.0, start.plusSeconds(900));
-        mockMvc.perform(get("/api/water/quality/compliance").param("lotId", lotId))
+        mockMvc.perform(get("/api/water-supply/quality/compliance").param("lotId", lotId))
                 .andExpect(jsonPath("$.status").value("compliant"))
                 .andExpect(jsonPath("$.sourceIds[0]").value(sourceId));
         createQualityTest(sourceId, 9.1, start.plusSeconds(1000));
-        mockMvc.perform(get("/api/water/quality/compliance").param("lotId", lotId))
+        mockMvc.perform(get("/api/water-supply/quality/compliance").param("lotId", lotId))
                 .andExpect(jsonPath("$.status").value("non_compliant"))
                 .andExpect(jsonPath("$.tests", hasSize(2)));
     }
 
     @Test
     void lotEndpointsValidateTheirInput() throws Exception {
-        mockMvc.perform(post("/api/water/lot-usage").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/water-supply/lot-usage").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"startAt\":\"2026-10-13T08:00:00Z\",\"endAt\":\"2026-10-13T09:00:00Z\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
-        mockMvc.perform(post("/api/water/consumption").contentType(MediaType.APPLICATION_JSON)
+                .andExpect(jsonPath("$.fieldErrors").isNotEmpty());
+        // Product Transformation owns the processing batches: a lot it does not have is refused.
+        mockMvc.perform(post("/api/water-supply/lot-usage").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"lotId":"LOT-%s","startAt":"2026-10-13T08:00:00Z","endAt":"2026-10-13T09:00:00Z"}
+                                """.formatted(UUID.randomUUID())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+        mockMvc.perform(post("/api/water-supply/consumption").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"farmId":"%s","sourceId":"%s","consumptionLiters":1,"consumptionDate":"2026-10-13T08:00:00Z","activity":"painting"}
-                                """.formatted(UUID.randomUUID(), UUID.randomUUID())))
+                                """.formatted(999998L, 999999L)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
-        mockMvc.perform(get("/api/water/consumption/by-lot"))
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+        mockMvc.perform(get("/api/water-supply/consumption/by-lot"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void availabilityForecastReportsATightBuffer() throws Exception {
-        String sourceId = createSource(createFarm("Forecast Farm"), "Forecast Tank");
+        String farmId = createFarm("Forecast Farm");
+        String sourceId = createSource(farmId, "Forecast Tank");
+        String lotId = processingBatch(farmId);
 
         // 2 500 L in the tank, washing 1 100 kg x 2 L/kg = 2 200 L: 300 L left, under the 500 L buffer.
-        mockMvc.perform(post("/api/water/product-transformation/availability-forecast")
+        mockMvc.perform(post("/api/water-supply/product-transformation/availability-forecast")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"sourceId":"%s","horizonDays":7,"includeIrrigation":false,
-                                 "batches":[{"lotId":"LOT-F","activity":"washing","sizeKg":1100}]}
-                                """.formatted(sourceId)))
+                                 "batches":[{"lotId":"%s","activity":"washing","sizeKg":1100}]}
+                                """.formatted(sourceId, lotId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.batchDemandLiters").value(2200))
                 .andExpect(jsonPath("$.availableAfterForecastLiters").value(300))
                 .andExpect(jsonPath("$.bufferStatus").value("tight"));
 
-        mockMvc.perform(post("/api/water/product-transformation/availability-forecast")
+        mockMvc.perform(post("/api/water-supply/product-transformation/availability-forecast")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"sourceId\":\"%s\"}".formatted(UUID.randomUUID())))
+                        .content("{\"sourceId\":\"%s\"}".formatted(999999L)))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(post("/api/water/product-transformation/availability-forecast")
+        mockMvc.perform(post("/api/water-supply/product-transformation/availability-forecast")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"sourceId\":\"%s\",\"batches\":[{\"activity\":\"painting\"}]}".formatted(sourceId)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+        mockMvc.perform(post("/api/water-supply/product-transformation/availability-forecast")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sourceId":"%s","batches":[{"lotId":"LOT-F-%s","activity":"washing","sizeKg":1}]}
+                                """.formatted(sourceId, UUID.randomUUID())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }
 
     // --- Visitor Management and planned unavailability ------------------------------------------
@@ -261,18 +291,18 @@ class WatersupplyIntegrationsApiTest {
         String outageId = createOutage("zone", zoneId, now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS));
         String farmOutageId = createOutage("farm", farmId, now.plus(2, ChronoUnit.DAYS), now.plus(3, ChronoUnit.DAYS));
 
-        mockMvc.perform(post("/api/water/outages").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/water-supply/outages").contentType(MediaType.APPLICATION_JSON)
                         .content(outageJson("zone", zoneId, now, now.plus(30, ChronoUnit.MINUTES), "planned")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"));
-        mockMvc.perform(post("/api/water/outages").contentType(MediaType.APPLICATION_JSON)
-                        .content(outageJson("zone", UUID.randomUUID().toString(), now, now.plusSeconds(60), "planned")))
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+        mockMvc.perform(post("/api/water-supply/outages").contentType(MediaType.APPLICATION_JSON)
+                        .content(outageJson("zone", "999999", now, now.plusSeconds(60), "planned")))
                 .andExpect(status().isNotFound());
 
         // A farm-wide period also concerns the zones of that farm.
-        mockMvc.perform(get("/api/water/outages").param("zoneId", zoneId))
+        mockMvc.perform(get("/api/water-supply/outages").param("zoneId", zoneId))
                 .andExpect(jsonPath("$", hasSize(2)));
-        mockMvc.perform(get("/api/water/outages").param("zoneId", zoneId).param("activeOn", now.toString()))
+        mockMvc.perform(get("/api/water-supply/outages").param("zoneId", zoneId).param("activeOn", now.toString()))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(outageId));
 
@@ -280,30 +310,30 @@ class WatersupplyIntegrationsApiTest {
         String visit = """
                 {"visitId":"%s","groupName":"School A","expectedAt":"%s","zones":["%s"]}
                 """.formatted(visitId, now, zoneId);
-        mockMvc.perform(post("/api/water/visitor-events").contentType(MediaType.APPLICATION_JSON).content(visit))
+        mockMvc.perform(post("/api/water-supply/visitor-events").contentType(MediaType.APPLICATION_JSON).content(visit))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.created").value(true))
                 .andExpect(jsonPath("$.conflict").value(true))
                 .andExpect(jsonPath("$.conflictingZones[0]").value(zoneId));
-        mockMvc.perform(post("/api/water/visitor-events").contentType(MediaType.APPLICATION_JSON).content(visit))
+        mockMvc.perform(post("/api/water-supply/visitor-events").contentType(MediaType.APPLICATION_JSON).content(visit))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.created").value(false));
 
-        mockMvc.perform(get("/api/water/visitor/summary").param("zoneId", zoneId))
+        mockMvc.perform(get("/api/water-supply/visitor/summary").param("zoneId", zoneId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activeUnavailability", hasSize(1)))
                 .andExpect(jsonPath("$.irrigationStatus.status").value("none"))
                 .andExpect(jsonPath("$", hasKey("waterSavingsPercentage")));
 
-        mockMvc.perform(put("/api/water/outages/{id}", outageId).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/water-supply/outages/{id}", outageId).contentType(MediaType.APPLICATION_JSON)
                         .content(outageJson("zone", zoneId, now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS), "cancelled")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("cancelled"));
-        mockMvc.perform(get("/api/water/outages").param("zoneId", zoneId).param("activeOn", now.toString()))
+        mockMvc.perform(get("/api/water-supply/outages").param("zoneId", zoneId).param("activeOn", now.toString()))
                 .andExpect(jsonPath("$", hasSize(0)));
 
-        mockMvc.perform(delete("/api/water/outages/{id}", farmOutageId)).andExpect(status().isNoContent());
-        mockMvc.perform(get("/api/water/outages/{id}", farmOutageId)).andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/water-supply/outages/{id}", farmOutageId)).andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/water-supply/outages/{id}", farmOutageId)).andExpect(status().isNotFound());
     }
 
     @Test
@@ -312,26 +342,26 @@ class WatersupplyIntegrationsApiTest {
         String zoneId = createZone(createField(farmId), "Visitor Zone", 1.0);
         String sourceId = createSource(farmId, "Visitor Tank");
 
-        mockMvc.perform(get("/api/water/visitor/irrigation-status").param("zoneId", zoneId))
+        mockMvc.perform(get("/api/water-supply/visitor/irrigation-status").param("zoneId", zoneId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false))
                 .andExpect(jsonPath("$.status").value("none"));
         String scheduleId = createIrrigation(zoneId, 250.0);
-        mockMvc.perform(post("/api/irrigations/{id}/start", scheduleId)).andExpect(status().isCreated());
-        mockMvc.perform(get("/api/water/visitor/irrigation-status").param("zoneId", zoneId))
+        mockMvc.perform(post("/api/water-supply/irrigations/{id}/start", scheduleId)).andExpect(status().isCreated());
+        mockMvc.perform(get("/api/water-supply/visitor/irrigation-status").param("zoneId", zoneId))
                 .andExpect(jsonPath("$.active").value(true))
                 .andExpect(jsonPath("$.scheduleId").value(scheduleId))
                 .andExpect(jsonPath("$.plannedLiters").value(250.0))
                 .andExpect(jsonPath("$.lastActivationAt").isNotEmpty());
-        mockMvc.perform(get("/api/water/visitor/irrigation-status").param("zoneId", UUID.randomUUID().toString()))
+        mockMvc.perform(get("/api/water-supply/visitor/irrigation-status").param("zoneId", "999999"))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(get("/api/water/visitor/irrigation-status"))
+        mockMvc.perform(get("/api/water-supply/visitor/irrigation-status"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
 
         createConsumption(farmId, sourceId, zoneId, 12.5, Instant.now().minus(2, ChronoUnit.MINUTES), null, null);
         createConsumption(farmId, sourceId, zoneId, 99.0, Instant.now().minus(2, ChronoUnit.HOURS), null, null);
-        mockMvc.perform(get("/api/water/visitor/live-consumption").param("sourceId", sourceId).param("windowMinutes", "10"))
+        mockMvc.perform(get("/api/water-supply/visitor/live-consumption").param("sourceId", sourceId).param("windowMinutes", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.liters").value(12.5))
                 .andExpect(jsonPath("$.measurementCount").value(1))
@@ -340,22 +370,22 @@ class WatersupplyIntegrationsApiTest {
 
     @Test
     void safetyBriefingIsVersionedOnPublication() throws Exception {
-        mockMvc.perform(get("/api/water/visitor/safety-briefing"))
+        mockMvc.perform(get("/api/water-supply/visitor/safety-briefing"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.version").isNotEmpty())
                 .andExpect(jsonPath("$.forbiddenZones").isArray());
 
-        mockMvc.perform(patch("/api/water/visitor/safety-briefing").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(patch("/api/water-supply/visitor/safety-briefing").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"version":"2026-10-22","text":"Stay on the marked path.","maxCapacity":8}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.validated").value(true))
                 .andExpect(jsonPath("$.maxCapacity").value(8));
-        mockMvc.perform(get("/api/water/visitor/safety-briefing"))
+        mockMvc.perform(get("/api/water-supply/visitor/safety-briefing"))
                 .andExpect(jsonPath("$.version").value("2026-10-22"))
                 .andExpect(jsonPath("$.text").value("Stay on the marked path."));
-        mockMvc.perform(patch("/api/water/visitor/safety-briefing").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(patch("/api/water-supply/visitor/safety-briefing").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"maxCapacity\":0}"))
                 .andExpect(status().isBadRequest());
     }
@@ -365,19 +395,19 @@ class WatersupplyIntegrationsApiTest {
     @Test
     void levelHistoryAndWaterBalanceForecast() throws Exception {
         String sourceId = createSource(createFarm("History Farm"), "History Tank");
-        mockMvc.perform(put("/api/water/sources/{id}", sourceId).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/water-supply/sources/{id}", sourceId).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"currentLevelLiters\":1800}"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/water/sources/{id}/level-history", sourceId))
+        mockMvc.perform(get("/api/water-supply/sources/{id}/level-history", sourceId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].levelLiters").value(2500.0))
                 .andExpect(jsonPath("$[1].levelLiters").value(1800.0));
-        mockMvc.perform(get("/api/water/sources/{id}/level-history", UUID.randomUUID()))
+        mockMvc.perform(get("/api/water-supply/sources/{id}/level-history", 999999L))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(get("/api/dashboard/water-balance"))
+        mockMvc.perform(get("/api/water-supply/dashboard/water-balance"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasKey("demand_forecast_liters")))
                 .andExpect(jsonPath("$", hasKey("available_after_forecast_liters")));
@@ -394,8 +424,8 @@ class WatersupplyIntegrationsApiTest {
 
         mockMvc.perform(command(deviceId, "{\"command\":\"OPEN_VALVE\",\"durationSeconds\":10,\"reason\":\"visitor_demo\"}"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.code").value("VALVE_GATEWAY_UNAVAILABLE"));
-        mockMvc.perform(get("/api/iot/devices/{id}/commands", deviceId))
+                .andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"));
+        mockMvc.perform(get("/api/water-supply/iot/devices/{id}/commands", deviceId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].command").value("OPEN_VALVE"))
@@ -418,7 +448,7 @@ class WatersupplyIntegrationsApiTest {
     // --- Helpers --------------------------------------------------------------------------------
 
     private MockHttpServletRequestBuilder command(String deviceId, String body) {
-        return post("/api/iot/devices/{id}/commands", deviceId).contentType(MediaType.APPLICATION_JSON).content(body);
+        return post("/api/water-supply/iot/devices/{id}/commands", deviceId).contentType(MediaType.APPLICATION_JSON).content(body);
     }
 
     private void registerDevice(String deviceId, Instant lastSeen) {
@@ -434,55 +464,68 @@ class WatersupplyIntegrationsApiTest {
     }
 
     private String createFarm(String name) throws Exception {
-        return idOf(post("/api/farms"), "{\"name\":\"%s\",\"areaHectares\":12.5}".formatted(name));
+        return idOf(post("/api/farm/farms"), "{\"name\":\"%s\",\"areaHectares\":12.5}".formatted(name));
+    }
+
+    /** A processing batch of Product Transformation, on a new field of the farm; returns its code. */
+    private String processingBatch(String farmId) throws Exception {
+        VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
+        Batch batch = new Batch();
+        batch.setBatchId("LOT-" + UUID.randomUUID().toString().substring(0, 8));
+        batch.setHarvestDate(LocalDate.of(2026, 6, 1));
+        batch.setVarietyKey("KEITT");
+        batch.setHarvestQuantityKg(new BigDecimal("300.00"));
+        batch.setCurrentStatus(BatchStatus.WASHING);
+        batch.setFarmBlockId(Long.valueOf(createField(farmId)));
+        return batchRepository.saveAndFlush(batch).getBatchId();
     }
 
     private String createField(String farmId) throws Exception {
-        return idOf(post("/api/fields"), "{\"farmId\":\"%s\",\"name\":\"Field\",\"areaHectares\":5}".formatted(farmId));
+        return idOf(post("/api/farm/fields"), "{\"farmId\":\"%s\",\"name\":\"Field\",\"areaHectares\":5}".formatted(farmId));
     }
 
     private String createZone(String fieldId, String name, double hectares) throws Exception {
-        return idOf(post("/api/zones"), "{\"fieldId\":\"%s\",\"name\":\"%s\",\"areaHectares\":%s}"
+        return idOf(post("/api/farm/zones"), "{\"fieldId\":\"%s\",\"name\":\"%s\",\"areaHectares\":%s}"
                 .formatted(fieldId, name, hectares));
     }
 
     private String createSource(String farmId, String name) throws Exception {
-        return idOf(post("/api/water/sources"), """
+        return idOf(post("/api/water-supply/sources"), """
                 {"farmId":"%s","name":"%s","type":"tank","capacityLiters":5000,"currentLevelLiters":2500}
                 """.formatted(farmId, name));
     }
 
     private void mapZone(String zoneId, String blockCode, String farmId) throws Exception {
-        idOf(post("/api/water/zone-block-mappings"), "{\"zoneId\":\"%s\",\"blockCode\":\"%s\",\"farmId\":\"%s\"}"
+        idOf(post("/api/farm/zone-block-mappings"), "{\"zoneId\":\"%s\",\"blockCode\":\"%s\",\"farmId\":\"%s\"}"
                 .formatted(zoneId, blockCode, farmId));
     }
 
     private void createConsumption(String farmId, String sourceId, String zoneId, double liters, Instant at,
                                    String lotId, String activity) throws Exception {
-        idOf(post("/api/water/consumption"), """
+        idOf(post("/api/water-supply/consumption"), """
                 {"farmId":"%s","sourceId":"%s","zoneId":%s,"consumptionLiters":%s,"consumptionDate":"%s","lotId":%s,"activity":%s}
                 """.formatted(farmId, sourceId, quoted(zoneId), liters, at, quoted(lotId), quoted(activity)));
     }
 
     private String createIrrigation(String zoneId, double liters) throws Exception {
-        return idOf(post("/api/irrigations"), """
+        return idOf(post("/api/water-supply/irrigations"), """
                 {"zoneId":"%s","startTime":"%s","durationMinutes":30,"waterQuantityLiters":%s}
                 """.formatted(zoneId, Instant.now().plus(1, ChronoUnit.HOURS), liters));
     }
 
     private void createHarvest(String sourceId, double rainfallMm, Instant at) throws Exception {
-        idOf(post("/api/rainwater-harvests"), """
+        idOf(post("/api/water-supply/rainwater-harvests"), """
                 {"sourceId":"%s","catchmentAreaM2":100,"rainfallMm":%s,"runoffCoefficient":0.8,"harvestedLiters":100,"captureDate":"%s"}
                 """.formatted(sourceId, rainfallMm, at));
     }
 
     private void createQualityTest(String sourceId, double ph, Instant at) throws Exception {
-        idOf(post("/api/water/quality"), "{\"sourceId\":\"%s\",\"ph\":%s,\"turbidityNtu\":1.0,\"testDate\":\"%s\"}"
+        idOf(post("/api/water-supply/quality"), "{\"sourceId\":\"%s\",\"ph\":%s,\"turbidityNtu\":1.0,\"testDate\":\"%s\"}"
                 .formatted(sourceId, ph, at));
     }
 
     private String createOutage(String scope, String scopeId, Instant start, Instant end) throws Exception {
-        return idOf(post("/api/water/outages"), outageJson(scope, scopeId, start, end, "planned"));
+        return idOf(post("/api/water-supply/outages"), outageJson(scope, scopeId, start, end, "planned"));
     }
 
     private static String outageJson(String scope, String scopeId, Instant start, Instant end, String status) {
@@ -495,7 +538,7 @@ class WatersupplyIntegrationsApiTest {
         MvcResult result = mockMvc.perform(request.contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        return String.valueOf((Object) JsonPath.read(result.getResponse().getContentAsString(), "$.id"));
     }
 
     private static String quoted(String value) {

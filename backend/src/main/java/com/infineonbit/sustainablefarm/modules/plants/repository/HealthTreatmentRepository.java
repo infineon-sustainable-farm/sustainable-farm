@@ -37,23 +37,21 @@ public interface HealthTreatmentRepository extends JpaRepository<HealthTreatment
      * after {@code to} matches nothing and is not an error. Each parameter is
      * cast in its {@code IS NULL} test, for the same reason as in that method.
      *
-     * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "C"}),
-     *                  or {@code null} for every block
+     * @param allBlocks {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds  ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @param from      first treatment date, included, or {@code null} for no lower bound
      * @param to        last treatment date, included, or {@code null} for no upper bound
      * @return the matching treatments, ordered by date then identifier
      */
     @Query("""
             SELECT t FROM HealthTreatment t JOIN FETCH t.targetIssue
-            WHERE (CAST(:farmId AS Integer) IS NULL OR t.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR t.blockCode = :blockCode)
+            WHERE (:allBlocks = true OR t.blockId IN :blockIds)
               AND (CAST(:from AS LocalDate) IS NULL OR t.treatedOn >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR t.treatedOn <= :to)
             ORDER BY t.treatedOn ASC, t.id ASC
             """)
-    List<HealthTreatment> findByOptionalFilters(@Param("farmId") Integer farmId,
-                                                @Param("blockCode") String blockCode,
+    List<HealthTreatment> findByOptionalFilters(@Param("allBlocks") boolean allBlocks,
+                                                @Param("blockIds") Collection<Long> blockIds,
                                                 @Param("from") LocalDate from,
                                                 @Param("to") LocalDate to);
 }

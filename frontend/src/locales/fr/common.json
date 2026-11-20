@@ -1,0 +1,66 @@
+{
+  "appName": "Sustainable Farm",
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "La page demandée n’existe pas ou a été déplacée.",
+    "backToModules": "Retour aux modules"
+  },
+  "actions": {
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "dismiss": "Masquer"
+  },
+  "status": {
+    "loading": "Chargement…",
+    "noResults": "Aucun résultat",
+    "error": "Une erreur est survenue. Réessayez."
+  },
+  "confirm": {
+    "deleteTitle": "Supprimer cet élément ?"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pageOf": "Page {{page}} sur {{total}}"
+  },
+  "table": {
+    "actions": "Actions"
+  },
+  "toast": {
+    "region": "Notifications"
+  },
+  "shell": {
+    "navigation": "Modules",
+    "openMenu": "Ouvrir la navigation",
+    "closeMenu": "Fermer la navigation",
+    "allModules": "Tous les modules"
+  },
+  "launcher": {
+    "modules": "Modules"
+  },
+  "home": {
+    "eyebrow": "De Banfora, au Burkina Faso, jusqu’en Allemagne",
+    "hero": "Du verger à l’export, une seule plateforme.",
+    "lede": "Enregistrez le travail de la ferme et décidez avec les mêmes données à chaque étape de la filière mangue séchée."
+  },
+  "owner": {
+    "choose": "Choisir…",
+    "none": "Aucun choix disponible",
+    "loadError": "La liste n’a pas pu se charger.",
+    "askToAdd": "Demandez au module {{module}} de l’ajouter.",
+    "notInList": "Absent de la liste ? Demandez au module {{module}}.",
+    "addIn": "L’ajouter dans {{module}}"
+  }
+}

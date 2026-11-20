@@ -1,17 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,7 +23,7 @@ import java.time.LocalDate;
  * day (PL-05-01, "Manual entry"), with how it was seen and by whom.
  *
  * <p>Like {@link HarvestRecord}, the row holds no farm and no block: the
- * {@link Variety} row already stands for one (farm, block, variety) triple.
+ * {@link BlockVariety} row already stands for one (block, variety) pair, the block giving the farm.
  * Several observations may share a day.
  *
  * <p>Only the observations are stored, never the status of a variety: the
@@ -36,20 +34,16 @@ import java.time.LocalDate;
  * snake_case and a singular table name.
  */
 @Entity
-@Table(name = "maturity_observation")
+@Table(name = "maturity_observation",
+        indexes = @Index(name = "idx_maturity_observation_block_variety_id", columnList = "block_variety_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class MaturityObservation {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class MaturityObservation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "variety_id", nullable = false)
-    private Variety variety;
+    @JoinColumn(name = "block_variety_id", nullable = false)
+    private BlockVariety variety;
 
     @Column(name = "observed_on", nullable = false)
     private LocalDate observedOn;
@@ -71,8 +65,9 @@ public class MaturityObservation {
     @Column(name = "measured_value", precision = 4, scale = 1)
     private BigDecimal measuredValue;
 
-    @Column(name = "observer")
-    private String observer;
+    /** Person of the people directory who observed (staff module), or {@code null}. */
+    @Column(name = "observer_person_id")
+    private Long observerPersonId;
 
     /** Where the row comes from, for example {@code "user_entry"} for the observation route. */
     @Column(name = "source", nullable = false)
@@ -80,4 +75,25 @@ public class MaturityObservation {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** A row with every column, {@code id} first ({@code null} for a new row); the audit timestamps are set on save. */
+    public MaturityObservation(Long id,
+            BlockVariety variety,
+            LocalDate observedOn,
+            MaturityStatus maturityStatus,
+            MaturityMethod method,
+            BigDecimal measuredValue,
+            Long observerPersonId,
+            String source,
+            Instant lastUpdated) {
+        setId(id);
+        this.variety = variety;
+        this.observedOn = observedOn;
+        this.maturityStatus = maturityStatus;
+        this.method = method;
+        this.measuredValue = measuredValue;
+        this.observerPersonId = observerPersonId;
+        this.source = source;
+        this.lastUpdated = lastUpdated;
+    }
 }

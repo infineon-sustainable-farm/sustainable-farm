@@ -1,12 +1,10 @@
-import { formatCode, NO_VALUE } from "../utils/format";
-import PlantsBadge from "./PlantsBadge";
+import { Badge } from "../../../shared/ui";
+import { formatEnum, NO_VALUE } from "../utils/format";
 import Value from "./Value";
 
 /*
- * The tones of PlantsBadge, which holds the colours and their contrast.
- * Untreated is red and in progress amber, as in the mock-up. A resolved
- * finding needs nothing more, treated or not: both are green, and the label
- * tells them apart.
+ * Untreated is red and in progress amber. A resolved finding needs nothing
+ * more, treated or not: both are green, and the label tells them apart.
  */
 const STATUS_TONES = {
     UNTREATED: "error",
@@ -17,14 +15,13 @@ const STATUS_TONES = {
 
 /**
  * Status of a finding, as computed by the API from its treatments and its
- * resolution ("IN_PROGRESS"), shown in sentence case ("In progress").
+ * resolution ("IN_PROGRESS"), shown with its translated label ("In progress").
  */
 export default function FindingStatusBadge({ status }) {
-    const label = formatCode(status);
+    const label = formatEnum("findingStatus", status);
     if (label === NO_VALUE) {
         return <Value>{NO_VALUE}</Value>;
     }
-
-    // An unknown status is still shown, in the neutral tone.
-    return <PlantsBadge tone={STATUS_TONES[status]}>{label}</PlantsBadge>;
+    // An unknown status is still shown, in neutral styling.
+    return <Badge tone={STATUS_TONES[status] ?? "neutral"}>{label}</Badge>;
 }

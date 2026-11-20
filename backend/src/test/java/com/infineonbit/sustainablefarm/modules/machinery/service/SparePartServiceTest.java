@@ -1,12 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.SparePartUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.SparePart;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Category;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.exception.SparePartNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.SparePartRepository;
@@ -64,7 +65,7 @@ class SparePartServiceTest {
         testSparePart.setName("Air Filter");
         testSparePart.setQuantity(50);
         testSparePart.setReorderThreshold(10);
-        testSparePart.setUnitCost(new BigDecimal("25.99"));
+        testSparePart.setUnitCost(MachineryMoney.of(new BigDecimal("25.99")));
         testSparePart.setEquipment(testEquipment);
     }
 
@@ -90,7 +91,7 @@ class SparePartServiceTest {
     void testAddSparePart_NameAlreadyExists() {
         when(sparePartRepository.existsByName("Air Filter")).thenReturn(true);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -102,7 +103,7 @@ class SparePartServiceTest {
         when(sparePartRepository.existsByName("Air Filter")).thenReturn(false);
         when(equipmentRepository.findById(1L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -175,12 +176,11 @@ class SparePartServiceTest {
         updatedSparePart.setName("Air Filter");
         updatedSparePart.setQuantity(45);
         updatedSparePart.setReorderThreshold(10);
-        updatedSparePart.setUnitCost(new BigDecimal("25.99"));
+        updatedSparePart.setUnitCost(MachineryMoney.of(new BigDecimal("25.99")));
         updatedSparePart.setEquipment(testSparePart.getEquipment());
 
         when(sparePartRepository.findById(1L)).thenReturn(Optional.of(testSparePart));
-        when(sparePartRepository.updateSparePartQuantityById(1L, 45)).thenReturn(1);
-        when(sparePartRepository.findById(1L)).thenReturn(Optional.of(updatedSparePart));
+        when(sparePartRepository.saveAndFlush(testSparePart)).thenReturn(updatedSparePart);
 
         var result = sparePartService.updateSparePartQuantity(1L, 45);
 
@@ -195,12 +195,11 @@ class SparePartServiceTest {
         updatedSparePart.setName("Air Filter");
         updatedSparePart.setQuantity(50);
         updatedSparePart.setReorderThreshold(10);
-        updatedSparePart.setUnitCost(new BigDecimal("24.99"));
+        updatedSparePart.setUnitCost(MachineryMoney.of(new BigDecimal("24.99")));
         updatedSparePart.setEquipment(testSparePart.getEquipment());
 
         when(sparePartRepository.findById(1L)).thenReturn(Optional.of(testSparePart));
-        when(sparePartRepository.updateSparePartUnitCostById(1L, new BigDecimal("24.99"))).thenReturn(1);
-        when(sparePartRepository.findById(1L)).thenReturn(Optional.of(updatedSparePart));
+        when(sparePartRepository.saveAndFlush(testSparePart)).thenReturn(updatedSparePart);
 
         var result = sparePartService.updateSparePartUnitCost(1L, new BigDecimal("24.99"));
 
@@ -261,7 +260,7 @@ class SparePartServiceTest {
                 "duplicate key value violates unique constraint \"spare_part_name_key\""))
                 .when(sparePartRepository).save(any(SparePart.class));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -276,7 +275,7 @@ class SparePartServiceTest {
                 "insert or update on table \"spare_part\" violates foreign key constraint \"fk_spare_part_equipment\""))
                 .when(sparePartRepository).save(any(SparePart.class));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.addSparePart(validSparePartRequest);
         });
 
@@ -301,7 +300,7 @@ class SparePartServiceTest {
                 "update on table \"spare_part\" violates foreign key constraint \"fk_spare_part_equipment\""))
                 .when(sparePartRepository).save(any(SparePart.class));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ConflictException exception = assertThrows(ConflictException.class, () -> {
             sparePartService.updateSparePart(1L, updateRequest);
         });
 

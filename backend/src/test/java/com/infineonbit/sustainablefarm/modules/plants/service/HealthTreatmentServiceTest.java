@@ -1,6 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentLookup;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PreventiveTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
@@ -14,11 +22,15 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.TreatmentUnit;
 import com.infineonbit.sustainablefarm.modules.plants.exception.HealthFindingNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthFindingRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HealthTreatmentRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestRows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -32,12 +44,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class HealthTreatmentServiceTest {
+
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+
 
     private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
     private static final LocalDate SEPTEMBER_1 = LocalDate.of(2026, 9, 1);
@@ -59,11 +76,26 @@ public class HealthTreatmentServiceTest {
     @Mock
     private HealthIssueService healthIssueService;
 
+    @Mock
+    private EquipmentLookup equipmentLookup;
+
+    /** A sprayer of the machinery register, id 7. */
+    private static final EquipmentView SPRAYER = new EquipmentView(7L, "EQ-00007", "Knapsack sprayer",
+            Category.AGRICULTURAL_EQUIPMENT, Stage.CULTIVATION, Status.OPERATIONAL, NOW, NOW);
+
     @InjectMocks
     private HealthTreatmentService healthTreatmentService;
 
+    @Spy
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("C", 1L).with("D", 1L).asPlantsBlocks();
+
+    @BeforeEach
+    void sprayerInTheMachineryRegister() {
+        lenient().when(equipmentLookup.findById(7L)).thenReturn(Optional.of(SPRAYER));
+    }
+
     private static HealthInspection blockC(Integer farmId) {
-        return new HealthInspection(1L, farmId, "C", SEPTEMBER_1, 48, "Awa", InspectionMethod.VISUAL,
+        return TestRows.inspection(1L, farmId, "C", SEPTEMBER_1, 48, 7L, InspectionMethod.VISUAL,
                 "user_entry", NOW);
     }
 
@@ -89,16 +121,16 @@ public class HealthTreatmentServiceTest {
         return captor.getValue();
     }
 
-    private static FindingTreatmentRequest copperOn(LocalDate treatedOn) {
+    private FindingTreatmentRequest copperOn(LocalDate treatedOn) {
         return new FindingTreatmentRequest(treatedOn, " Copper fungicide A ", " copper hydroxide ", 2.5, " kg ",
-                14.0, " Awa ", " knapsack sprayer ");
+                14.0, personDirectory.idOf(" Awa "), 7L);
     }
 
-    private static PreventiveTreatmentRequest preventive(String blockCode, String target, String label,
+    private PreventiveTreatmentRequest preventive(String blockCode, String target, String label,
                                                          double quantity, String unit, double interval,
-                                                         String equipment) {
+                                                         Long equipmentId) {
         return new PreventiveTreatmentRequest(null, blockCode, target, label, LocalDate.of(2026, 9, 5),
-                " Protein bait B ", " spinosad ", quantity, unit, interval, " Issa ", equipment);
+                " Protein bait B ", " spinosad ", quantity, unit, interval, personDirectory.idOf(" Issa "), equipmentId);
     }
 
     @Test
@@ -111,7 +143,8 @@ public class HealthTreatmentServiceTest {
                 copperOn(SEPTEMBER_4), NOW);
         // Assert: the stored row, its farm, block and target copied from the finding
         HealthTreatment treatment = savedTreatment();
-        assertEquals(1, treatment.getFarmId());
+        assertEquals(1L, treatment.getFarmId());
+        assertEquals(TestBlocks.idOf("C"), treatment.getBlockId());
         assertEquals("C", treatment.getBlockCode());
         assertSame(ANTHRACNOSE, treatment.getTargetIssue());
         assertNull(treatment.getTargetOtherLabel());
@@ -122,14 +155,16 @@ public class HealthTreatmentServiceTest {
         assertEquals(0, new BigDecimal("2.5").compareTo(treatment.getQuantity()));
         assertEquals(TreatmentUnit.KG, treatment.getUnit());
         assertEquals(14, treatment.getPreHarvestIntervalDays());
-        assertEquals("Awa", treatment.getApplicator());
-        assertEquals("knapsack sprayer", treatment.getEquipment());
+        assertEquals(personDirectory.idOf("Awa"), treatment.getApplicatorPersonId());
+        // The machine: its id in the machinery register and its name there, kept with the record
+        assertEquals(7L, treatment.getEquipmentId());
+        assertEquals("Knapsack sprayer", treatment.getEquipment());
         assertEquals("user_entry", treatment.getSource());
         assertEquals(NOW, treatment.getLastUpdated());
         // Assert: the response, with the harvest date computed
-        assertEquals(new HealthTreatmentResponse(20L, 1, "C", "ANTHRACNOSE", "Anthracnose", null, 10L, SEPTEMBER_4,
+        assertEquals(new HealthTreatmentResponse(20L, 1L, "C", "ANTHRACNOSE", "Anthracnose", null, 10L, SEPTEMBER_4,
                 "Copper fungicide A", "copper hydroxide", 2.5, TreatmentUnit.KG, 14, LocalDate.of(2026, 9, 18),
-                "Awa", "knapsack sprayer", "user_entry", NOW), response);
+                "Awa", personDirectory.idOf("Awa"), 7L, "Knapsack sprayer", "user_entry", NOW), response);
     }
 
     @Test
@@ -202,21 +237,24 @@ public class HealthTreatmentServiceTest {
         treatmentSaveAssignsId();
         // Act
         HealthTreatmentResponse response = healthTreatmentService.recordPreventiveTreatment(
-                preventive(" d ", "fruit_fly", null, 1.0, " l ", 1.0, "  "), NOW);
+                preventive(" d ", "fruit_fly", null, 1.0, " l ", 1.0, null), NOW);
         // Assert
         HealthTreatment treatment = savedTreatment();
-        assertNull(treatment.getFarmId());
+        // A new block D: created under the default farm of the referential
+        assertEquals(1L, treatment.getFarmId());
+        assertEquals(TestBlocks.idOf("D"), treatment.getBlockId());
         assertEquals("D", treatment.getBlockCode());
         assertSame(FRUIT_FLY, treatment.getTargetIssue());
         assertNull(treatment.getTargetOtherLabel());
         assertNull(treatment.getFinding());
         assertEquals(TreatmentUnit.L, treatment.getUnit());
         assertEquals("Protein bait B", treatment.getProductName());
-        assertEquals("Issa", treatment.getApplicator());
+        assertEquals(personDirectory.idOf("Issa"), treatment.getApplicatorPersonId());
+        assertNull(treatment.getEquipmentId());
         assertNull(treatment.getEquipment());
-        assertEquals(new HealthTreatmentResponse(20L, null, "D", "FRUIT_FLY", "Fruit flies", null, null,
+        assertEquals(new HealthTreatmentResponse(20L, 1L, "D", "FRUIT_FLY", "Fruit flies", null, null,
                 LocalDate.of(2026, 9, 5), "Protein bait B", "spinosad", 1.0, TreatmentUnit.L, 1,
-                LocalDate.of(2026, 9, 6), "Issa", null, "user_entry", NOW), response);
+                LocalDate.of(2026, 9, 6), "Issa", personDirectory.idOf("Issa"), null, null, "user_entry", NOW), response);
     }
 
     @Test
@@ -262,20 +300,35 @@ public class HealthTreatmentServiceTest {
     }
 
     @Test
+    void recordTreatment_shouldRefuseAMachineMissingFromTheMachineryRegister() {
+        // Arrange: machinery owns the machines; plants never creates one from a request
+        when(healthIssueService.getIssueByCode("FRUIT_FLY")).thenReturn(FRUIT_FLY);
+        when(equipmentLookup.findById(99L)).thenReturn(Optional.empty());
+        // Act
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> healthTreatmentService.recordPreventiveTreatment(
+                        preventive("D", "FRUIT_FLY", null, 1.0, "L", 1.0, 99L), NOW));
+        // Assert
+        assertEquals("equipmentId 99 is not a machine of the machinery register", exception.getMessage());
+        verify(healthTreatmentRepository, never()).save(any());
+    }
+
+    @Test
     void getAllTreatments_shouldPassTheFilters_andComputeHarvestAllowedFrom() {
         // Arrange
         LocalDate from = LocalDate.of(2026, 9, 1);
         LocalDate to = LocalDate.of(2026, 9, 30);
-        HealthTreatment copper = new HealthTreatment(20L, 1, "C", ANTHRACNOSE, null,
+        HealthTreatment copper = TestRows.treatment(20L, 1, "C", ANTHRACNOSE, null,
                 new HealthFinding(10L, blockC(1), ANTHRACNOSE, null, "42", null, null, "user_entry", NOW),
                 SEPTEMBER_4, "Copper fungicide A", "copper hydroxide", new BigDecimal("2.500"), TreatmentUnit.KG, 14,
-                "Awa", "knapsack sprayer", "user_entry", NOW);
-        HealthTreatment bait = new HealthTreatment(21L, 1, "C", FRUIT_FLY, null, null, LocalDate.of(2026, 9, 5),
-                "Protein bait B", "spinosad", new BigDecimal("1.000"), TreatmentUnit.L, 1, "Issa", null,
+                personDirectory.idOf("Awa"), "knapsack sprayer", "user_entry", NOW);
+        HealthTreatment bait = TestRows.treatment(21L, 1, "C", FRUIT_FLY, null, null, LocalDate.of(2026, 9, 5),
+                "Protein bait B", "spinosad", new BigDecimal("1.000"), TreatmentUnit.L, 1, personDirectory.idOf("Issa"), null,
                 "user_entry", NOW);
-        when(healthTreatmentRepository.findByOptionalFilters(1, "C", from, to)).thenReturn(List.of(copper, bait));
+        when(healthTreatmentRepository.findByOptionalFilters(false, TestBlocks.idsOf("C"), from, to))
+                .thenReturn(List.of(copper, bait));
         // Act
-        List<HealthTreatmentResponse> treatments = healthTreatmentService.getAllTreatments(1, " C ", from, to);
+        List<HealthTreatmentResponse> treatments = healthTreatmentService.getAllTreatments(1L, " C ", from, to);
         // Assert
         assertEquals(List.of(20L, 21L), treatments.stream().map(HealthTreatmentResponse::id).toList());
         assertEquals(10L, treatments.get(0).findingId());

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.RepairLogObtainingResponse;
@@ -9,6 +10,7 @@ import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotF
 import com.infineonbit.sustainablefarm.modules.machinery.exception.RepairLogNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.RepairLogRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class RepairLogService {
     private final RepairLogRepository repairLogRepository;
     private final EquipmentRepository equipmentRepository;
+    private final PersonDirectory personDirectory;
 
     /**
      * Creates a repair log entry for an existing equipment.
@@ -28,7 +31,7 @@ public class RepairLogService {
      * @param request the creation data (equipmentId, date, issue, downtime, cost, technician)
      * @return the created repair log, including its generated ID
      * @throws EquipmentNotFoundException if no equipment exists with the given ID
-     * @throws IllegalArgumentException  if the issue description is missing
+     * @throws ConflictException  if the issue description is missing
      */
     public RepairLogObtainingResponse addRepairLog(RepairLogCreationRequest request) {
         Equipment equipment = equipmentRepository.findById(request.equipmentId())
@@ -39,8 +42,8 @@ public class RepairLogService {
         repairLog.setDate(request.date());
         repairLog.setIssue(trimRequired(request.issue(), "Issue description is required."));
         repairLog.setDowntime(request.downtime());
-        repairLog.setCost(request.cost());
-        repairLog.setTechnician(trimToNull(request.technician()));
+        repairLog.setCost(MachineryMoney.of(request.cost()));
+        repairLog.setTechnicianPersonId(personDirectory.requireExisting(request.technicianPersonId()));
 
         try {
             repairLogRepository.save(repairLog);
@@ -86,7 +89,7 @@ public class RepairLogService {
      * @return the complete state of the repair log after the update
      * @throws RepairLogNotFoundException if no repair log exists with this ID
      * @throws EquipmentNotFoundException if the new equipment does not exist
-     * @throws IllegalArgumentException   if the issue description is blank
+     * @throws ConflictException   if the issue description is blank
      */
     @Transactional
     public RepairLogObtainingResponse updateRepairLog(Long id, RepairLogUpdateRequest request) {
@@ -108,10 +111,10 @@ public class RepairLogService {
             repairLog.setDowntime(request.downtime());
         }
         if (request.cost() != null) {
-            repairLog.setCost(request.cost());
+            repairLog.setCost(MachineryMoney.of(request.cost()));
         }
-        if (request.technician() != null) {
-            repairLog.setTechnician(trimToNull(request.technician()));
+        if (request.technicianPersonId() != null) {
+            repairLog.setTechnicianPersonId(personDirectory.requireExisting(request.technicianPersonId()));
         }
 
         return toResponse(repairLogRepository.saveAndFlush(repairLog));
@@ -133,15 +136,9 @@ public class RepairLogService {
 
     private String trimRequired(String value, String message) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(message);
+            throw new ConflictException(message);
         }
         return value.trim();
-    }
-
-    private String trimToNull(String value) {
-        if (value == null) return null;
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private RepairLogObtainingResponse toResponse(RepairLog repairLog) {
@@ -151,8 +148,9 @@ public class RepairLogService {
                 repairLog.getDate(),
                 repairLog.getIssue(),
                 repairLog.getDowntime(),
-                repairLog.getCost(),
-                repairLog.getTechnician()
+                MachineryMoney.amountOf(repairLog.getCost()),
+                personDirectory.nameOf(repairLog.getTechnicianPersonId()),
+                repairLog.getTechnicianPersonId()
         );
     }
 }

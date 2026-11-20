@@ -20,7 +20,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSafetyBri
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterVisitorEvent;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.ExternalServiceException;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSafetyBriefingRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -53,7 +52,7 @@ class VisitorIntegrationServiceTest {
     private WaterSourceRepository sourceRepository;
 
     @Mock
-    private FieldZoneRepository zoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private WaterService waterService;
@@ -73,7 +72,7 @@ class VisitorIntegrationServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void liveConsumptionSumsTheWindowAndReportsTheLastMeasurement() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 108L;
         when(sourceRepository.existsById(sourceId)).thenReturn(true);
         when(consumptionRepository.findAll(any(Specification.class))).thenReturn(List.of(
                 consumption(12.5, Instant.parse("2026-10-13T10:01:00Z")),
@@ -95,8 +94,8 @@ class VisitorIntegrationServiceTest {
 
     @Test
     void liveConsumptionRejectsAnUnknownZone() {
-        UUID zoneId = UUID.randomUUID();
-        when(zoneRepository.existsById(zoneId)).thenReturn(false);
+        Long zoneId = 109L;
+        when(farmDirectory.zoneExists(zoneId)).thenReturn(false);
 
         assertThrows(NotFoundException.class, () -> service().liveConsumption(null, zoneId, null));
     }
@@ -114,7 +113,7 @@ class VisitorIntegrationServiceTest {
     @Test
     void reSendingAVisitUpdatesItInsteadOfCreatingADuplicate() {
         WaterVisitorEvent existing = new WaterVisitorEvent();
-        existing.setId(UUID.randomUUID());
+        existing.setId(11L);
         existing.setVisitId("VIS-1");
         when(visitorEventRepository.findByVisitId("VIS-1")).thenReturn(Optional.of(existing));
         when(visitorEventRepository.save(existing)).thenReturn(existing);
@@ -130,7 +129,7 @@ class VisitorIntegrationServiceTest {
 
     @Test
     void aVisitOnAZoneUnderUnavailabilityIsFlaggedAsAConflict() {
-        UUID zoneId = UUID.randomUUID();
+        Long zoneId = 110L;
         Instant expectedAt = Instant.parse("2026-10-20T09:00:00Z");
         when(visitorEventRepository.findByVisitId("VIS-2")).thenReturn(Optional.empty());
         when(visitorEventRepository.save(any(WaterVisitorEvent.class))).thenAnswer(call -> call.getArgument(0));
@@ -143,6 +142,26 @@ class VisitorIntegrationServiceTest {
         assertEquals(true, response.get("created"));
         verify(alertService).raiseOnce(eq("warning"), eq("Visitor group expected during water unavailability - VIS-2"),
                 anyString(), anyString());
+    }
+
+    @Test
+    void withdrawingAVisitRemovesItsAnnouncement() {
+        WaterVisitorEvent existing = new WaterVisitorEvent();
+        existing.setVisitId("booking-3");
+        when(visitorEventRepository.findByVisitId("booking-3")).thenReturn(Optional.of(existing));
+
+        assertTrue(service().withdrawVisit("booking-3"));
+
+        verify(visitorEventRepository).delete(existing);
+    }
+
+    @Test
+    void withdrawingAnUnknownVisitChangesNothing() {
+        when(visitorEventRepository.findByVisitId("booking-4")).thenReturn(Optional.empty());
+
+        assertEquals(false, service().withdrawVisit("booking-4"));
+
+        verify(visitorEventRepository, never()).delete(any(WaterVisitorEvent.class));
     }
 
     @Test
@@ -160,7 +179,7 @@ class VisitorIntegrationServiceTest {
     @Test
     void publishingABriefingCreatesANewVersionAndKeepsTheOmittedFields() {
         WaterSafetyBriefing current = new WaterSafetyBriefing();
-        current.setId(UUID.randomUUID());
+        current.setId(12L);
         current.setVersion("v1");
         current.setAllowedZones("demo path");
         current.setText("old text");
@@ -198,7 +217,7 @@ class VisitorIntegrationServiceTest {
 
     private VisitorIntegrationService service() {
         return new VisitorIntegrationService(visitorEventRepository, safetyRepository, consumptionRepository,
-                sourceRepository, zoneRepository, waterService, irrigationService, economyService,
+                sourceRepository, farmDirectory, waterService, irrigationService, economyService,
                 unavailabilityService, alertService, WaterIntegrationProperties.defaults());
     }
 }

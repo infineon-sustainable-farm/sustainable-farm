@@ -21,7 +21,7 @@ class CorsConfigurationTest {
 
     @Test
     void preflight_fromAllowedOrigin_getsAllowOriginHeader() throws Exception {
-        mockMvc.perform(options("/api/v1/time-slots")
+        mockMvc.perform(options("/api/visitor-management/time-slots")
                         .header("Origin", "http://localhost:3000")
                         .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isOk())
@@ -30,7 +30,7 @@ class CorsConfigurationTest {
 
     @Test
     void preflight_fromAllowedDevOrigin_getsAllowOriginHeader() throws Exception {
-        mockMvc.perform(options("/api/v1/time-slots")
+        mockMvc.perform(options("/api/visitor-management/time-slots")
                         .header("Origin", "http://localhost:5173")
                         .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isOk())
@@ -39,7 +39,7 @@ class CorsConfigurationTest {
 
     @Test
     void preflight_fromDisallowedOrigin_isRejected() throws Exception {
-        mockMvc.perform(options("/api/v1/time-slots")
+        mockMvc.perform(options("/api/visitor-management/time-slots")
                         .header("Origin", "http://evil.example")
                         .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isForbidden())

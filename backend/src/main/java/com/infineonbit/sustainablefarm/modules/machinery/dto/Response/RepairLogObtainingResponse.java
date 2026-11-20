@@ -10,5 +10,6 @@ public record RepairLogObtainingResponse(
         String issue,
         BigDecimal downtime,
         BigDecimal cost,
-        String technician) {
+        String technician,
+        Long technicianPersonId) {
 }

@@ -1,7 +1,9 @@
-import { CircleCheck, Loader2, TriangleAlert } from "lucide-react";
+import { CircleCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, ErrorState, Skeleton } from "../../../shared/ui";
 import { useNurseryAlerts } from "../hooks/useNurseryAlerts";
+import PlantAlertGroups from "./PlantAlertGroups";
 import PlantAlertItem from "./PlantAlertItem";
-import { PRIMARY_BUTTON } from "./plantsStyles";
 
 /**
  * The batches to transplant today, as the API decides it: those with plants
@@ -13,66 +15,54 @@ import { PRIMARY_BUTTON } from "./plantsStyles";
  * cover every block.
  */
 export default function NurseryAlertsSection() {
+    const { t } = useTranslation("plants");
     const { data, isPending, isError, refetch, isFetching } = useNurseryAlerts();
 
     return (
-        <section aria-labelledby="transplant-alerts-title" className="flex flex-col gap-3">
-            <div>
-                <h2 id="transplant-alerts-title" className="font-heading text-lg font-bold text-on-background">
-                    Transplant alerts
-                </h2>
-                <p className="mt-1 text-sm text-gray-600">
-                    All batches.
-                </p>
-            </div>
-
+        <Card
+            aria-labelledby="transplant-alerts-title"
+            title={<span id="transplant-alerts-title">{t("nursery.alerts.title")}</span>}
+            subtitle={t("nursery.alerts.subtitle")}
+        >
             {isPending && (
-                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card p-6 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading transplant alerts…
+                <div role="status" className="flex flex-col gap-3">
+                    <span className="sr-only">{t("nursery.alerts.loading")}</span>
+                    <Skeleton radius="tile" className="h-16 w-full" />
                 </div>
             )}
 
             {isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 p-6">
-                    <div className="flex items-start gap-3">
-                        <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
-                        <div>
-                            <p className="text-sm font-bold text-on-background">Alerts are unavailable.</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
-                            <p className="mt-0.5 text-sm text-gray-600">Check your connection, then try again.</p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <ErrorState
+                    className="py-6"
+                    message={`${t("nursery.alerts.error")} ${t("common.checkConnection")}`}
+                    onRetry={() => refetch()}
+                    retrying={isFetching}
+                    retryLabel={t("common.retry")}
+                />
             )}
 
             {!isPending && !isError && data.alerts.length === 0 && (
-                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card p-6 text-sm text-gray-700">
-                    <CircleCheck size={18} aria-hidden="true" className="shrink-0 text-success" />
-                    No batch to transplant today.
-                </div>
+                <p className="flex items-center gap-3 text-sm text-text">
+                    <CircleCheck size={18} aria-hidden="true" className="shrink-0 text-success-fg" />
+                    {t("nursery.alerts.empty")}
+                </p>
             )}
 
             {!isPending && !isError && data.alerts.length > 0 && (
-                <ul className="flex flex-col gap-3">
-                    {data.alerts.map((alert) => (
+                <PlantAlertGroups
+                    alerts={data.alerts}
+                    idPrefix="transplant-alerts"
+                    listClassName="flex flex-col gap-3"
+                    renderAlert={(alert) => (
                         <PlantAlertItem
                             key={`${alert.type}-${alert.batchId}`}
                             alert={alert}
-                            title="Batch to transplant"
-                            dateLabel="Planned transplant"
+                            title={t("nursery.alerts.itemTitle")}
+                            dateLabel={t("nursery.alerts.dateLabel")}
                         />
-                    ))}
-                </ul>
+                    )}
+                />
             )}
-        </section>
+        </Card>
     );
 }

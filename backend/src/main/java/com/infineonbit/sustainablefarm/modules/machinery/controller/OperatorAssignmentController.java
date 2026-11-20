@@ -20,15 +20,15 @@ import org.springframework.web.bind.annotation.*;
  * <p>
  * Available Endpoints :
  * <ul>
- * <li>{@code POST /api/operator-assignments} — operator assignment creation</li>
- * <li>{@code GET /api/operator-assignments} — paginated list of operator assignments</li>
+ * <li>{@code POST /api/machinery/operator-assignments} — operator assignment creation</li>
+ * <li>{@code GET /api/machinery/operator-assignments} — paginated list of operator assignments</li>
  * </ul>
  *
  * @since 1.0
  */
 
 @RestController
-@RequestMapping("/api/operator-assignments")
+@RequestMapping("/api/machinery/operator-assignments")
 @AllArgsConstructor
 public class OperatorAssignmentController {
    private final OperatorAssignmentService operatorAssignmentService;

@@ -1,92 +1,38 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { LocateFixed, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Button, Card, ConfirmDialog, EmptyState } from '../../../../shared/ui'
+import { useCreateParam } from '../../../../shared/hooks/useCreateParam'
 import { farmApi, fieldApi, zoneApi } from '../../api/watersupplyApi'
-import { coordinatesError, mapUrl, useGeolocation } from '../../hooks/useGeolocation'
-import { DataTable } from '../../../../shared/components/DataTable'
-import { SearchInput } from '../../../../shared/components/SearchInput'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
-import { EmptyState } from './EmptyState'
-import { Spinner } from '../../../../shared/components/Spinner'
-
-const sectionLabel = {
-  fontFamily: "'Montserrat', Arial, sans-serif",
-  fontWeight: 600,
-  fontSize: '16px',
-  color: 'var(--ws-ink, #1c2b29)',
-  margin: '0 0 12px',
-}
-
-const panelBox = {
-  background: 'var(--ws-card, #fff)',
-  border: '1px solid var(--ws-line, #e2e9e7)',
-  borderRadius: '12px',
-  padding: '18px',
-  marginBottom: '22px',
-}
-
-const btn = (kind) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  padding: '8px 14px',
-  border: 'none',
-  borderRadius: '8px',
-  fontSize: '13px',
-  fontWeight: 600,
-  fontFamily: "'Inter', Arial, sans-serif",
-  cursor: 'pointer',
-  color: kind === 'primary' ? '#fff' : 'var(--ws-ink, #1c2b29)',
-  background: kind === 'primary' ? 'var(--ws-primary, #0a8276)' : 'var(--ws-line, #e2e9e7)',
-})
-
-const btnDanger = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  padding: '7px 10px',
-  border: 'none',
-  borderRadius: '8px',
-  fontSize: '13px',
-  fontWeight: 600,
-  fontFamily: "'Inter', Arial, sans-serif",
-  cursor: 'pointer',
-  color: 'var(--ws-red, #c62828)',
-  background: 'var(--ws-red-tint, #fbeaea)',
-}
-
-/** Field coordinates are stored as text by the API: "lat, lng". */
-function formatFieldCoordinates(latitude, longitude) {
-  return `${latitude}, ${longitude}`
-}
-
-function parseFieldCoordinates(text) {
-  const match = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(text || '')
-  return match ? { latitude: match[1], longitude: match[2] } : null
-}
-
-/** Position cell of the tables: coordinates with a link to check them on a map. */
-function LocationCell({ latitude, longitude }) {
-  if (latitude == null || longitude == null || latitude === '' || longitude === '') return '—'
-  return (
-    <a href={mapUrl(latitude, longitude)} target="_blank" rel="noopener noreferrer" title="Open on OpenStreetMap">
-      {Number(latitude).toFixed(4)}, {Number(longitude).toFixed(4)}
-    </a>
-  )
-}
+import { coordinatesError, useGeolocation } from '../../hooks/useGeolocation'
+import { useVarietyCatalog } from '../../hooks/useIntegrations'
+import { Filters, Screen } from '../common/Screen'
+import { FormAlert } from '../common/FormAlert'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { ChildFormModal } from './farms/ChildFormModal'
+import { FarmFormModal } from './farms/FarmFormModal'
+import { FarmsTable, FieldsTable, ZonesTable } from './farms/FarmTables'
+import { formatFieldCoordinates, parseFieldCoordinates, useGeoMessage } from './farms/coordinates'
 
 const EMPTY_FARM_FORM = { name: '', address: '', areaHectares: '', description: '', latitude: '', longitude: '' }
 
+/** Plants block code of a field ("A", "B2"): letters and digits, no prefix or space; empty for none. */
+const BLOCK_CODE_PATTERN = /^[A-Za-z0-9]{1,50}$/
+
 /**
- * CRUD view for Farms / Fields / Zones (Task 4.1).
- * Uses the reusable design-system components.
+ * CRUD view for Farms / Fields / Zones (Task 4.1). The tables, the forms and the coordinate
+ * helpers live in ./farms. The crop type of a field is a variety of the Plants catalogue, picked by
+ * its key (OWNER_LINKS.variety).
  *
  * Location: when a farm or a field is created, its position is taken from the device's
  * geolocation (the person is expected to be on site) and can be corrected by hand. TO BE
  * REVIEWED: first version, see useGeolocation.
  */
 export function FarmsView({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const geoMessage = useGeoMessage()
+  const varietyCatalog = useVarietyCatalog()
   const [farms, setFarms] = useState([])
   const [fields, setFields] = useState([])
   const [zones, setZones] = useState([])
@@ -103,10 +49,33 @@ export function FarmsView({ notify }) {
   const [busy, setBusy] = useState(false)
 
   const [showFieldForm, setShowFieldForm] = useState(false)
-  const [fieldForm, setFieldForm] = useState({ farmId: '', name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '' })
+  const [fieldForm, setFieldForm] = useState({ farmId: '', name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '', code: '' })
+  const [editingField, setEditingField] = useState(null)
   const [showZoneForm, setShowZoneForm] = useState(false)
   const [zoneForm, setZoneForm] = useState({ fieldId: '', name: '', areaHectares: '', irrigationMethod: '' })
   const [query, setQuery] = useState('')
+
+  // Links from other modules open a create form on arrival (app/ownerLinks.js): "?create=1" the
+  // farm form, "?create=field" the field form, "?create=zone" the zone form.
+  const [createFarmRequested, clearCreateRequest] = useCreateParam()
+  const [createFieldRequested] = useCreateParam('field')
+  const [createZoneRequested] = useCreateParam('zone')
+  const farmFormOpen = showFarmForm || createFarmRequested
+  const fieldFormOpen = showFieldForm || createFieldRequested
+  const zoneFormOpen = showZoneForm || createZoneRequested
+  const closeFarmForm = () => {
+    setShowFarmForm(false)
+    clearCreateRequest()
+  }
+  const closeFieldForm = () => {
+    setShowFieldForm(false)
+    setEditingField(null)
+    clearCreateRequest()
+  }
+  const closeZoneForm = () => {
+    setShowZoneForm(false)
+    clearCreateRequest()
+  }
 
   const loadAll = useCallback(() => {
     setLoading(true)
@@ -117,22 +86,14 @@ export function FarmsView({ notify }) {
         setFields(fi)
         setZones(z)
       })
-      .catch((e) => setError(e.message || 'Loading error'))
+      .catch((e) => setError(e.message || t('farms.loadError')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(loadAll, 0)
     return () => window.clearTimeout(timeoutId)
   }, [loadAll])
-const farmColumns = [
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'address', label: 'Address' },
-    { key: 'areaHectares', label: 'Area (ha)', sortable: true, render: (r) => `${r.areaHectares ?? 0} ha` },
-    { key: 'description', label: 'Description', render: (r) => r.description || '—' },
-    { key: 'latitude', label: 'Location', render: (r) => <LocationCell latitude={r.latitude} longitude={r.longitude} /> },
-  ]
-
   const filteredFields = selectedFarm ? fields.filter((f) => f.farmId === selectedFarm) : fields
 
   // Global search: filters farms, fields and zones by name.
@@ -148,19 +109,33 @@ const farmColumns = [
   const visibleZones = useMemo(() => zones.filter(matchesQuery), [zones, matchesQuery])
 
   /** Fills the position from the device, unless the user already typed one meanwhile. */
-  const locateFarm = () => geo.locate().then((position) => {
+  const { locate } = geo
+  const locateFarm = useCallback(() => locate().then((position) => {
     if (!position) return
     setFarmForm((current) => (current.latitude === '' && current.longitude === ''
       ? { ...current, latitude: String(position.latitude), longitude: String(position.longitude) }
       : current))
-  })
+  }), [locate])
 
-  const locateField = () => geo.locate().then((position) => {
+  const locateField = useCallback(() => locate().then((position) => {
     if (!position) return
     setFieldForm((current) => (current.coordinates === ''
       ? { ...current, coordinates: formatFieldCoordinates(position.latitude, position.longitude) }
       : current))
-  })
+  }), [locate])
+
+  // A farm or a field opened from a link is created on site too: its position is asked for at once.
+  useEffect(() => {
+    if (!createFarmRequested) return undefined
+    const timeoutId = window.setTimeout(locateFarm, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [createFarmRequested, locateFarm])
+
+  useEffect(() => {
+    if (!createFieldRequested) return undefined
+    const timeoutId = window.setTimeout(locateField, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [createFieldRequested, locateField])
 
   const openFarmForm = (farm) => {
     setFormError(null)
@@ -186,16 +161,33 @@ const farmColumns = [
 
   const openFieldForm = () => {
     setFormError(null)
-    setFieldForm((current) => ({ ...current, coordinates: '' }))
+    setEditingField(null)
+    setFieldForm((current) => ({ ...current, coordinates: '', code: '' }))
     setShowFieldForm(true)
     locateField()
+  }
+
+  /** Edits a field, its Plants block code included: the code Plants and Product Transformation pick it by. */
+  const editField = (row) => {
+    setFormError(null)
+    setEditingField(row)
+    setFieldForm({
+      farmId: row.farmId ?? '',
+      name: row.name || '',
+      areaHectares: row.areaHectares ?? '',
+      cropType: row.cropType || '',
+      soilType: row.soilType || '',
+      coordinates: row.coordinates || '',
+      code: row.code || '',
+    })
+    setShowFieldForm(true)
   }
 
   const saveFarm = (e) => {
     e.preventDefault()
     const invalid = coordinatesError(String(farmForm.latitude), String(farmForm.longitude))
     if (invalid) {
-      setFormError(invalid)
+      setFormError(geoMessage(invalid))
       return
     }
     setFormError(null)
@@ -212,11 +204,11 @@ const farmColumns = [
     const req = editingFarm ? farmApi.updateFarm(editingFarm.id, payload) : farmApi.createFarm(payload)
     req
       .then(() => {
-        notify(editingFarm ? 'Farm updated' : 'Farm created')
-        setShowFarmForm(false)
+        notify(editingFarm ? t('farms.farmUpdated') : t('farms.farmCreated'))
+        closeFarmForm()
         loadAll()
       })
-      .catch((err) => setError(err.message || 'Save error'))
+      .catch((err) => setError(err.message || t('farms.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -224,9 +216,14 @@ const farmColumns = [
     e.preventDefault()
     const coordinates = fieldForm.coordinates.trim()
     const parsed = parseFieldCoordinates(coordinates)
-    const invalid = coordinates && (parsed ? coordinatesError(parsed.latitude, parsed.longitude) : 'Write the location as "latitude, longitude".')
+    const invalid = coordinates && (parsed ? coordinatesError(parsed.latitude, parsed.longitude) : t('farms.errors.locationFormat'))
     if (invalid) {
-      setFormError(invalid)
+      setFormError(geoMessage(invalid))
+      return
+    }
+    const code = fieldForm.code.trim()
+    if (code && !BLOCK_CODE_PATTERN.test(code)) {
+      setFormError(t('farms.errors.codeFormat'))
       return
     }
     setFormError(null)
@@ -238,16 +235,18 @@ const farmColumns = [
       cropType: fieldForm.cropType || null,
       soilType: fieldForm.soilType || null,
       coordinates: parsed ? formatFieldCoordinates(Number(parsed.latitude), Number(parsed.longitude)) : null,
+      // On an update an empty code clears it; on a creation no code is sent as null.
+      code: editingField ? code : code || null,
     }
-    fieldApi
-      .createField(payload)
+    const req = editingField ? fieldApi.updateField(editingField.id, payload) : fieldApi.createField(payload)
+    req
       .then(() => {
-        notify('Field created')
-        setShowFieldForm(false)
-        setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '' }))
+        notify(editingField ? t('farms.fieldUpdated') : t('farms.fieldCreated'))
+        closeFieldForm()
+        setFieldForm((p) => ({ ...p, name: '', areaHectares: '', cropType: '', soilType: '', coordinates: '', code: '' }))
         loadAll()
       })
-      .catch((err) => setError(err.message || 'Save error'))
+      .catch((err) => setFormError(err.message || t('farms.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -263,12 +262,12 @@ const farmColumns = [
     zoneApi
       .createZone(payload)
       .then(() => {
-        notify('Zone created')
-        setShowZoneForm(false)
+        notify(t('farms.zoneCreated'))
+        closeZoneForm()
         setZoneForm((p) => ({ ...p, name: '', areaHectares: '', irrigationMethod: '' }))
         loadAll()
       })
-      .catch((err) => setError(err.message || 'Save error'))
+      .catch((err) => setError(err.message || t('farms.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -283,137 +282,70 @@ const farmColumns = [
         : () => api.deleteZone(deleteTarget.id)
     fn()
       .then(() => {
-        notify('Deleted')
+        notify(t('farms.deleted'))
         setDeleteTarget(null)
         loadAll()
       })
-      .catch((err) => setError(err.message || 'Delete error'))
+      .catch((err) => setError(err.message || t('farms.deleteError')))
       .finally(() => setBusy(false))
   }
-return (
-    <div>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Farms, fields & zones</h1>
-          <p>Manage production sites, their fields and irrigation zones.</p>
-        </div>
-      </div>
+  const newButton = (label, onClick) => (
+    <Button size="sm" icon={Plus} onClick={onClick}>{label}</Button>
+  )
 
-      {error && (
-        <div style={{ ...panelBox, borderColor: 'var(--ws-red, #c62828)', color: 'var(--ws-red, #c62828)' }}>
-          {error}
-        </div>
-      )}
+  return (
+    <Screen title={t('farms.title')} subtitle={t('farms.subtitle')}>
+      <FormAlert>{error}</FormAlert>
 
-      <div className="ws-filters">
-        <SearchInput value={query} onChange={setQuery} placeholder="Search a farm, a field, a zone…" />
-      </div>
+      <Filters>
+        <SearchField value={query} onChange={setQuery} placeholder={t('farms.search')} />
+      </Filters>
 
       {loading ? (
-        <Spinner label="Loading data…" full />
+        <LoadingState label={t('farms.loading')} />
       ) : (
         <>
-          <div style={panelBox}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h2 style={sectionLabel}>Farms</h2>
-              <button style={btn('primary')} onClick={() => openFarmForm(null)}>
-                <Plus size={15} /> New farm
-              </button>
-            </div>
+          <Card title={t('farms.farmsTitle')} actions={newButton(t('farms.newFarm'), () => openFarmForm(null))}>
             {visibleFarms.length === 0 ? (
-              <EmptyState title="No farms" description="Create your first farm." />
+              <EmptyState title={t('farms.noFarmsTitle')} message={t('farms.noFarms')} />
             ) : (
-              <DataTable
-                columns={farmColumns}
+              <FarmsTable
                 rows={visibleFarms}
-                keyField="id"
-                actions={(row) => (
-                  <span style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
-                    <button title="Edit" onClick={() => openFarmForm(row)} style={btn('ghost')}>
-                      <Pencil size={14} />
-                    </button>
-                    <button title="Delete" onClick={() => setDeleteTarget({ kind: 'farm', id: row.id, title: row.name })} style={btnDanger}>
-                      <Trash2 size={14} />
-                    </button>
-                    <button style={{ padding: '7px 10px', ...btn('ghost') }} onClick={() => setSelectedFarm((prev) => (prev === row.id ? null : row.id))}>
-                      {selectedFarm === row.id ? 'All' : 'Fields'}
-                    </button>
-                  </span>
-                )}
+                selectedFarm={selectedFarm}
+                onEdit={openFarmForm}
+                onDelete={(row) => setDeleteTarget({ kind: 'farm', id: row.id, title: row.name })}
+                onToggleFields={(id) => setSelectedFarm((prev) => (prev === id ? null : id))}
               />
             )}
-          </div>
+          </Card>
 
-          <div style={panelBox}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h2 style={sectionLabel}>{selectedFarm ? 'Fields (filtered)' : 'Fields'}</h2>
-              <button style={btn('primary')} onClick={openFieldForm}>
-                <Plus size={15} /> New field
-              </button>
-            </div>
+          <Card
+            title={selectedFarm ? t('farms.fieldsFilteredTitle') : t('farms.fieldsTitle')}
+            actions={newButton(t('farms.newField'), openFieldForm)}
+          >
             {visibleFields.length === 0 ? (
-              <EmptyState title="No fields" description="Add a field to a farm." />
+              <EmptyState title={t('farms.noFieldsTitle')} message={t('farms.noFields')} />
             ) : (
-              <DataTable
-                columns={[
-                  { key: 'name', label: 'Name', sortable: true },
-                  { key: 'cropType', label: 'Crop', render: (r) => r.cropType || '—' },
-                  { key: 'soilType', label: 'Soil', render: (r) => r.soilType || '—' },
-                  { key: 'areaHectares', label: 'Area (ha)', render: (r) => `${r.areaHectares ?? 0} ha` },
-                  {
-                    key: 'coordinates',
-                    label: 'Location',
-                    render: (r) => {
-                      const position = parseFieldCoordinates(r.coordinates)
-                      return position ? <LocationCell {...position} /> : (r.coordinates || '—')
-                    },
-                  },
-                ]}
-                rows={visibleFields}
-                keyField="id"
-                actions={(row) => (
-                  <button title="Delete" style={btnDanger} onClick={() => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })}>
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              />
+              <FieldsTable rows={visibleFields} varieties={varietyCatalog.varieties} onEdit={editField} onDelete={(row) => setDeleteTarget({ kind: 'field', id: row.id, title: row.name })} />
             )}
-          </div>
-<div style={panelBox}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h2 style={sectionLabel}>Zones</h2>
-              <button style={btn('primary')} onClick={() => setShowZoneForm(true)}>
-                <Plus size={15} /> New zone
-              </button>
-            </div>
+          </Card>
+
+          <Card title={t('farms.zonesTitle')} actions={newButton(t('farms.newZone'), () => setShowZoneForm(true))}>
             {visibleZones.length === 0 ? (
-              <EmptyState title="No zones" description="Add irrigation zones." />
+              <EmptyState title={t('farms.noZonesTitle')} message={t('farms.noZones')} />
             ) : (
-              <DataTable
-                columns={[
-                  { key: 'name', label: 'Name', sortable: true },
-                  { key: 'irrigationMethod', label: 'Irrigation method', render: (r) => r.irrigationMethod || '—' },
-                  { key: 'areaHectares', label: 'Area (ha)', render: (r) => `${r.areaHectares ?? 0} ha` },
-                ]}
-                rows={visibleZones}
-                keyField="id"
-                actions={(row) => (
-                  <button title="Delete" style={btnDanger} onClick={() => setDeleteTarget({ kind: 'zone', id: row.id, title: row.name })}>
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              />
+              <ZonesTable rows={visibleZones} onDelete={(row) => setDeleteTarget({ kind: 'zone', id: row.id, title: row.name })} />
             )}
-          </div>
+          </Card>
         </>
       )}
 
-      {showFarmForm && (
+      {farmFormOpen && (
         <FarmFormModal
           editing={editingFarm}
           form={farmForm}
           setForm={setFarmForm}
-          onCancel={() => setShowFarmForm(false)}
+          onCancel={closeFarmForm}
           onSave={saveFarm}
           busy={busy}
           geo={geo}
@@ -425,15 +357,15 @@ return (
         />
       )}
 
-      {showFieldForm && (
+      {fieldFormOpen && (
         <ChildFormModal
-          title="New field"
-          farmId={fieldForm.farmId}
+          title={editingField ? t('farms.editField') : t('farms.newField')}
           farms={farms}
           fields={[]}
+          varietyCatalog={varietyCatalog}
           form={fieldForm}
           setForm={setFieldForm}
-          onCancel={() => setShowFieldForm(false)}
+          onCancel={closeFieldForm}
           onSave={saveField}
           busy={busy}
           geo={geo}
@@ -445,159 +377,27 @@ return (
         />
       )}
 
-      {showZoneForm && (
+      {zoneFormOpen && (
         <ChildFormModal
-          title="New zone"
-          farmId={zoneForm.fieldId}
+          title={t('farms.newZone')}
           farms={farms}
           fields={fields}
           form={zoneForm}
           setForm={setZoneForm}
-          onCancel={() => setShowZoneForm(false)}
+          onCancel={closeZoneForm}
           onSave={saveZone}
           busy={busy}
         />
       )}
 
-      {deleteTarget && (
-        <ConfirmDialog
-          title={`Delete ${deleteTarget.title}`}
-          message="Do you really want to delete this item? This action cannot be undone."
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteTarget(null)}
-          busy={busy}
-        />
-      )}
-    </div>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t('farms.deleteTitle', { name: deleteTarget?.title })}
+        message={t('farms.deleteMessage')}
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteTarget(null)}
+        loading={busy}
+      />
+    </Screen>
   )
 }
-/* ===== Farm form ===== */
-function FarmFormModal({ editing, form, setForm, onCancel, onSave, busy, geo, onLocate, formError }) {
-  const field = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }))
-  return (
-    <ModalShell onCancel={onCancel}>
-      <h3 style={modalTitle}>{editing ? 'Edit farm' : 'New farm'}</h3>
-      {formError && <div className="ws-inline-error">{formError}</div>}
-      <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <FormField label="Name" required>
-          <input style={inputStyle} value={form.name} onChange={field('name')} required />
-        </FormField>
-        <FormField label="Address">
-          <input style={inputStyle} value={form.address} onChange={field('address')} />
-        </FormField>
-        <FormField label="Area (ha)">
-          <input style={inputStyle} type="number" step="0.01" value={form.areaHectares} onChange={field('areaHectares')} />
-        </FormField>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <FormField label="Latitude">
-            <input style={inputStyle} type="number" step="any" min="-90" max="90" value={form.latitude} onChange={field('latitude')} />
-          </FormField>
-          <FormField label="Longitude">
-            <input style={inputStyle} type="number" step="any" min="-180" max="180" value={form.longitude} onChange={field('longitude')} />
-          </FormField>
-        </div>
-        <LocateHint geo={geo} onLocate={onLocate} />
-        <FormField label="Description">
-          <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} value={form.description} onChange={field('description')} />
-        </FormField>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
-          <button type="button" style={btn('ghost')} onClick={onCancel}>Cancel</button>
-          <button type="submit" style={btn('primary')} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-        </div>
-      </form>
-    </ModalShell>
-  )
-
-}
-
-/* ===== Field / Zone form ===== */
-function ChildFormModal({ title, farms, fields, form, setForm, onCancel, onSave, busy, geo, onLocate, formError }) {
-  const isZone = 'fieldId' in form
-  const parentKey = isZone ? 'fieldId' : 'farmId'
-  const parents = isZone ? fields : farms
-  const field = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }))
-  return (
-    <ModalShell onCancel={onCancel}>
-      <h3 style={modalTitle}>{title}</h3>
-      {formError && <div className="ws-inline-error">{formError}</div>}
-      <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <FormField label={isZone ? 'Parent field' : 'Parent farm'} required>
-          <select style={inputStyle} value={form[parentKey]} onChange={field(parentKey)} required>
-            <option value="">-- Select --</option>
-            {parents.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label="Name" required>
-          <input style={inputStyle} value={form.name} onChange={field('name')} required />
-        </FormField>
-        {isZone && (
-          <FormField label="Irrigation method">
-            <select style={inputStyle} value={form.irrigationMethod} onChange={field('irrigationMethod')}>
-              <option value="">-- Select --</option>
-              <option value="drip">Drip</option>
-              <option value="sprinkler">Sprinkler</option>
-              <option value="surface">Surface</option>
-            </select>
-          </FormField>
-        )}
-        {!isZone && (
-          <FormField label="Crop type">
-            <input style={inputStyle} value={form.cropType} onChange={field('cropType')} />
-          </FormField>
-        )}
-        <FormField label="Area (ha)" required>
-          <input style={inputStyle} type="number" step="0.01" value={form.areaHectares} onChange={field('areaHectares')} required />
-        </FormField>
-        {!isZone && (
-          <>
-            <FormField label="Location (latitude, longitude)">
-              <input style={inputStyle} value={form.coordinates} onChange={field('coordinates')} placeholder="10.633100, -4.761200" />
-            </FormField>
-            <LocateHint geo={geo} onLocate={onLocate} />
-          </>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
-          <button type="button" style={btn('ghost')} onClick={onCancel}>Cancel</button>
-          <button type="submit" style={btn('primary')} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-        </div>
-      </form>
-    </ModalShell>
-  )
-}
-
-/** Geolocation state under the coordinates: locating, accuracy obtained, or why it failed. */
-function LocateHint({ geo, onLocate }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--ws-muted, #6b7a78)' }}>
-      <button type="button" style={btn('ghost')} onClick={onLocate} disabled={geo.locating}>
-        <LocateFixed size={14} /> {geo.locating ? 'Locating…' : 'Use my position'}
-      </button>
-      {geo.error ? (
-        <span style={{ color: 'var(--ws-red, #c62828)' }}>{geo.error}</span>
-      ) : geo.accuracy != null ? (
-        <span>Position of this device, accurate to about {geo.accuracy} m: correct it if you are not on site.</span>
-      ) : null}
-    </div>
-  )
-}
-
-/* ===== Modal shell ===== */
-function ModalShell({ onCancel, children }) {
-  return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'grid', placeItems: 'center', background: 'rgba(16,47,43,.4)', padding: '20px', fontFamily: "'Inter', Arial, sans-serif" }}
-      onClick={onCancel}
-    >
-      <div
-        style={{ width: '100%', maxWidth: '460px', background: 'var(--ws-card,#fff)', border: '1px solid var(--ws-line,#e2e9e7)', borderRadius: '12px', padding: '24px', boxShadow: '0 16px 40px rgba(0,0,0,.18)', maxHeight: '90vh', overflow: 'auto' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {children}
-      </div>
-    </div>
-  )
-}
-
-const modalTitle = { margin: '0 0 16px', fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 600, fontSize: '17px', color: 'var(--ws-ink,#1c2b29)' }

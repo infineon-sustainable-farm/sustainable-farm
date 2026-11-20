@@ -1,18 +1,30 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
-@Table(name = "irrigation_logs")
+@Table(name = "irrigation_logs", indexes = @Index(name = "idx_irrigation_logs_schedule_id", columnList = "schedule_id"))
 public class IrrigationLog extends BaseEntity {
     @NotNull
-    @Column(nullable = false)
-    private UUID scheduleId;
+    @Column(name = "schedule_id", nullable = false)
+    private Long scheduleId;
+
+    /** Read-only link that declares the foreign key fk_irrigation_logs_schedule; the code writes the schedule_id column. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_irrigation_logs_schedule"))
+    private IrrigationSchedule schedule;
 
     @NotNull
     @Column(nullable = false)
@@ -25,14 +37,15 @@ public class IrrigationLog extends BaseEntity {
     private Double waterUsedLiters;
 
     @NotNull
+    @Convert(converter = IrrigationLogStatus.Converter.class)
     @Column(nullable = false, length = 20)
-    private String status;
+    private IrrigationLogStatus status;
 
-    public UUID getScheduleId() {
+    public Long getScheduleId() {
         return scheduleId;
     }
 
-    public void setScheduleId(UUID scheduleId) {
+    public void setScheduleId(Long scheduleId) {
         this.scheduleId = scheduleId;
     }
 
@@ -60,11 +73,11 @@ public class IrrigationLog extends BaseEntity {
         this.waterUsedLiters = waterUsedLiters;
     }
 
-    public String getStatus() {
+    public IrrigationLogStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(IrrigationLogStatus status) {
         this.status = status;
     }
 }

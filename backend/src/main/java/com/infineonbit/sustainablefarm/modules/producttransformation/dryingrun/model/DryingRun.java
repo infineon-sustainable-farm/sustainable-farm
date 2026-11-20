@@ -1,15 +1,12 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model;
+
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,25 +25,28 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "drying_run")
+@Table(name = "drying_run",
+        uniqueConstraints = @UniqueConstraint(name = "uk_drying_run_code", columnNames = "code"),
+        indexes = {
+        @Index(name = "idx_drying_run_operator_id", columnList = "operator_id"),
+        @Index(name = "idx_drying_run_batch_id", columnList = "batch_id"),
+        @Index(name = "idx_drying_run_start_time", columnList = "start_time"),
+        @Index(name = "idx_drying_run_equipment_id", columnList = "equipment_id")
+})
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class DryingRun {
+public class DryingRun extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "run_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String runId;
 
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false, referencedColumnName = "batch_id")
+    @JoinColumn(name = "batch_id", foreignKey = @ForeignKey(name = "fk_drying_run_batch"), nullable = false)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Batch batch;
 
     @Column(name = "duration_hours", nullable = false, precision = 5, scale = 2)
@@ -73,38 +73,23 @@ public class DryingRun {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipment_id", referencedColumnName = "equipment_id")
-    private Equipment equipment;
+    /** The register id of the equipment used (machinery {@code equipment}); the equipment cannot be deleted while used. */
+    @Column(name = "equipment_id")
+    private Long equipmentId;
 
+    // Lazy: the read queries fetch it (entity graph), responses are built in a read-only transaction.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_id", referencedColumnName = "operator_id")
+    @JoinColumn(name = "operator_id", foreignKey = @ForeignKey(name = "fk_drying_run_operator"))
+    @ToString.Exclude
     private Operator operator;
-
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-        validateMoistureContent();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-        validateMoistureContent();
-    }
 
     /**
      * Validate moisture content against EU requirements
      * Business Rule: Target moisture 12-18% (range: 6-17.44%)
      */
-    private void validateMoistureContent() {
+    @PrePersist
+    @PreUpdate
+    void validateMoistureContent() {
         if (endMoisturePct != null && (endMoisturePct.compareTo(new BigDecimal("6")) < 0 || endMoisturePct.compareTo(new BigDecimal("18")) > 0)) {
             throw new IllegalArgumentException(
                 "End moisture content must be between 6% and 18% for EU compliance. Current: " + endMoisturePct + "%"

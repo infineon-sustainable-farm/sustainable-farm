@@ -1,15 +1,18 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.modules.staff.service.PersonDirectoryService;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.FuelLog;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.MaintenanceSchedule;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.RepairLog;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.SparePart;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.UsageLog;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Category;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Category;
 import com.infineonbit.sustainablefarm.modules.machinery.enums.MaintenanceType;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Stage;
-import com.infineonbit.sustainablefarm.modules.machinery.enums.Status;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Status;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.FuelLogRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceScheduleRepository;
@@ -31,11 +34,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
-@Import(EquipmentService.class)
+@Import({EquipmentService.class, PersonDirectoryService.class})
 class EquipmentDeletionIntegrationTest {
 
     @Autowired
     private EquipmentService equipmentService;
+
+    @Autowired
+    private PersonDirectory personDirectory;
 
     @Autowired
     private EquipmentRepository equipmentRepository;
@@ -62,6 +68,7 @@ class EquipmentDeletionIntegrationTest {
     void deletingEquipment_shouldPreserveItsSpareParts() {
         Equipment equipment = new Equipment();
         equipment.setName("Tractor");
+        equipment.setCode("EQ-TEST-" + "Tractor");
         equipment.setCategory(Category.AGRICULTURAL_MACHINERY);
         equipment.setStage(Stage.CULTIVATION);
         equipment.setStatus(Status.OPERATIONAL);
@@ -71,7 +78,7 @@ class EquipmentDeletionIntegrationTest {
         attached.setName("Air Filter");
         attached.setQuantity(10);
         attached.setReorderThreshold(2);
-        attached.setUnitCost(new BigDecimal("25.99"));
+        attached.setUnitCost(MachineryMoney.of(new BigDecimal("25.99")));
         attached.setEquipment(equipment);
         attached = sparePartRepository.save(attached);
 
@@ -93,11 +100,12 @@ class EquipmentDeletionIntegrationTest {
         standalone.setName("General Bolt");
         standalone.setQuantity(100);
         standalone.setReorderThreshold(20);
-        standalone.setUnitCost(new BigDecimal("0.50"));
+        standalone.setUnitCost(MachineryMoney.of(new BigDecimal("0.50")));
         standalone = sparePartRepository.save(standalone);
 
         Equipment equipment = new Equipment();
         equipment.setName("Harvester");
+        equipment.setCode("EQ-TEST-" + "Harvester");
         equipment.setCategory(Category.AGRICULTURAL_MACHINERY);
         equipment.setStage(Stage.HARVEST);
         equipment.setStatus(Status.OPERATIONAL);
@@ -117,6 +125,7 @@ class EquipmentDeletionIntegrationTest {
     void deletingEquipment_shouldPreserveMaintenanceUsageFuelAndRepairLogs() {
         Equipment equipment = new Equipment();
         equipment.setName("Dryer");
+        equipment.setCode("EQ-TEST-" + "Dryer");
         equipment.setCategory(Category.PROCESSING_MACHINERY);
         equipment.setStage(Stage.DRYING);
         equipment.setStatus(Status.UNDER_MAINTENANCE);
@@ -128,14 +137,14 @@ class EquipmentDeletionIntegrationTest {
         schedule.setFrequency("Every 3 months");
         schedule.setLastCompleted(LocalDate.of(2026, 5, 15));
         schedule.setNextDue(LocalDate.of(2026, 8, 15));
-        schedule.setOperator("Jean-Louis R.");
+        schedule.setOperatorPersonId(TestPeople.idOf(personDirectory, "Jean-Louis R."));
         schedule = maintenanceScheduleRepository.save(schedule);
 
         UsageLog usageLog = new UsageLog();
         usageLog.setEquipment(equipment);
         usageLog.setDate(LocalDate.of(2026, 7, 23));
         usageLog.setHoursUsed(new BigDecimal("6.50"));
-        usageLog.setOperator("Wilfried Y.");
+        usageLog.setOperatorPersonId(TestPeople.idOf(personDirectory, "Wilfried Y."));
         usageLog.setNotes("Morning drying cycle");
         usageLog = usageLogRepository.save(usageLog);
 
@@ -143,7 +152,7 @@ class EquipmentDeletionIntegrationTest {
         fuelLog.setEquipment(equipment);
         fuelLog.setDate(LocalDate.of(2026, 7, 22));
         fuelLog.setLiters(new BigDecimal("25.00"));
-        fuelLog.setCost(new BigDecimal("37.50"));
+        fuelLog.setCost(MachineryMoney.of(new BigDecimal("37.50")));
         fuelLog = fuelLogRepository.save(fuelLog);
 
         RepairLog repairLog = new RepairLog();
@@ -151,8 +160,8 @@ class EquipmentDeletionIntegrationTest {
         repairLog.setDate(LocalDate.of(2026, 7, 22));
         repairLog.setIssue("Heating element malfunction");
         repairLog.setDowntime(new BigDecimal("14.00"));
-        repairLog.setCost(new BigDecimal("150.00"));
-        repairLog.setTechnician("Maintenance Team A");
+        repairLog.setCost(MachineryMoney.of(new BigDecimal("150.00")));
+        repairLog.setTechnicianPersonId(TestPeople.idOf(personDirectory, "Maintenance Team A"));
         repairLog = repairLogRepository.save(repairLog);
 
         Long equipmentId = equipment.getId();
@@ -176,7 +185,7 @@ class EquipmentDeletionIntegrationTest {
         assertNull(detachedUsageLog.getEquipment());
 
         FuelLog detachedFuelLog = fuelLogRepository.findById(fuelLogId).orElseThrow();
-        assertEquals(new BigDecimal("37.50"), detachedFuelLog.getCost());
+        assertEquals(MachineryMoney.of(new BigDecimal("37.50")), detachedFuelLog.getCost());
         assertNull(detachedFuelLog.getEquipment());
 
         RepairLog detachedRepairLog = repairLogRepository.findById(repairLogId).orElseThrow();

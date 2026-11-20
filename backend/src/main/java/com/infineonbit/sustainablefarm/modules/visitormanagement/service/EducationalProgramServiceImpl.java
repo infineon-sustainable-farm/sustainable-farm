@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TourStopRequest;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TourStopResponse;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.WorkshopRequest;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,11 +28,14 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
 
     private final TourStopRepository tourStopRepository;
     private final WorkshopRepository workshopRepository;
+    private final PersonDirectory personDirectory;
 
     public EducationalProgramServiceImpl(TourStopRepository tourStopRepository,
-                                         WorkshopRepository workshopRepository) {
+                                         WorkshopRepository workshopRepository,
+                                         PersonDirectory personDirectory) {
         this.tourStopRepository = tourStopRepository;
         this.workshopRepository = workshopRepository;
+        this.personDirectory = personDirectory;
     }
 
     @Override
@@ -83,22 +88,23 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         List<Workshop> workshops = status == null
                 ? workshopRepository.findAll()
                 : workshopRepository.findByStatus(status);
+        Map<Long, String> facilitators = personDirectory.namesOf(
+                workshops.stream().map(Workshop::getFacilitatorPersonId).toList());
         return workshops.stream()
-                .map(WorkshopResponse::from)
+                .map(w -> WorkshopResponse.from(w, facilitators.get(w.getFacilitatorPersonId())))
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<WorkshopResponse> listWorkshops(WorkshopStatus status, int page, int size) {
-        if (status != null) {
-            return workshopRepository.findByStatus(status,
-                            PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
-                    .map(WorkshopResponse::from);
-        }
-        return workshopRepository.findAll(
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
-                .map(WorkshopResponse::from);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        Page<Workshop> workshops = status != null
+                ? workshopRepository.findByStatus(status, pageable)
+                : workshopRepository.findAll(pageable);
+        Map<Long, String> facilitators = personDirectory.namesOf(
+                workshops.getContent().stream().map(Workshop::getFacilitatorPersonId).toList());
+        return workshops.map(w -> WorkshopResponse.from(w, facilitators.get(w.getFacilitatorPersonId())));
     }
 
     @Override
@@ -107,7 +113,7 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         Workshop workshop = new Workshop();
         apply(workshop, request);
         workshop.setStatus(WorkshopStatus.DRAFT);
-        return WorkshopResponse.from(workshopRepository.save(workshop));
+        return toResponse(workshopRepository.save(workshop));
     }
 
     @Override
@@ -117,7 +123,7 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         apply(workshop, request);
         workshopRepository.save(workshop);
         workshopRepository.flush();
-        return WorkshopResponse.from(workshop);
+        return toResponse(workshop);
     }
 
     @Override
@@ -131,7 +137,7 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         workshop.setStatus(WorkshopStatus.ACTIVE);
         workshopRepository.save(workshop);
         workshopRepository.flush();
-        return WorkshopResponse.from(workshop);
+        return toResponse(workshop);
     }
 
     @Override
@@ -145,7 +151,7 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         workshop.setStatus(WorkshopStatus.INACTIVE);
         workshopRepository.save(workshop);
         workshopRepository.flush();
-        return WorkshopResponse.from(workshop);
+        return toResponse(workshop);
     }
 
     private void assertPositionFree(int position, Long excludeId) {
@@ -172,8 +178,12 @@ public class EducationalProgramServiceImpl implements EducationalProgramService 
         workshop.setName(request.getName());
         workshop.setDurationMinutes(request.getDurationMinutes());
         workshop.setTargetGroup(request.getTargetGroup());
-        workshop.setFacilitator(request.getFacilitator());
+        workshop.setFacilitatorPersonId(personDirectory.requireExisting(request.getFacilitatorPersonId()));
         workshop.setDescription(request.getDescription());
+    }
+
+    private WorkshopResponse toResponse(Workshop workshop) {
+        return WorkshopResponse.from(workshop, personDirectory.nameOf(workshop.getFacilitatorPersonId()));
     }
 
     private TourStop getStopEntity(Long id) {

@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.dto.response;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +27,8 @@ public class HarvestEventResponse {
     private String batchId;
     private LocalDate harvestDate;
     private LocalTime harvestTime;
-    private MangoVariety mangoVariety;
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
+    private String mangoVariety;
     private String farmId;
     private String blockId;
     private BigDecimal harvestQuantityKg;
@@ -36,6 +36,7 @@ public class HarvestEventResponse {
     private String qualityGradeDescription;
     private String harvestTeamId;
     private String harvestSupervisor;
+    private Long harvestSupervisorPersonId;
     private String weatherConditions;
     private String storageLocation;
     private Timestamp createdAt;

@@ -49,7 +49,7 @@ class TimeSlotControllerTest {
     void list_returns200() throws Exception {
         when(schedulingService.findAll()).thenReturn(List.of(buildResponse(1L)));
 
-        mockMvc.perform(get("/api/v1/time-slots"))
+        mockMvc.perform(get("/api/visitor-management/time-slots"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
@@ -59,7 +59,7 @@ class TimeSlotControllerTest {
         LocalDate date = LocalDate.of(2026, 9, 8);
         when(schedulingService.findByDate(date)).thenReturn(List.of(buildResponse(1L)));
 
-        mockMvc.perform(get("/api/v1/time-slots").param("date", "2026-09-08"))
+        mockMvc.perform(get("/api/visitor-management/time-slots").param("date", "2026-09-08"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1));
     }
@@ -68,7 +68,7 @@ class TimeSlotControllerTest {
     void get_byId_returns200() throws Exception {
         when(schedulingService.findById(1L)).thenReturn(buildResponse(1L));
 
-        mockMvc.perform(get("/api/v1/time-slots/1"))
+        mockMvc.perform(get("/api/visitor-management/time-slots/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
     }
@@ -77,7 +77,7 @@ class TimeSlotControllerTest {
     void get_notFound_returns404() throws Exception {
         when(schedulingService.findById(999L)).thenThrow(new ResourceNotFoundException("not found"));
 
-        mockMvc.perform(get("/api/v1/time-slots/999"))
+        mockMvc.perform(get("/api/visitor-management/time-slots/999"))
                 .andExpect(status().isNotFound());
     }
 
@@ -86,7 +86,7 @@ class TimeSlotControllerTest {
         TimeSlotResponse resp = buildResponse(1L);
         when(schedulingService.create(any(TimeSlotRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/time-slots")
+        mockMvc.perform(post("/api/visitor-management/time-slots")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"date\":\"2026-09-08\",\"startTime\":\"09:00\",\"endTime\":\"11:00\",\"maxCapacity\":10}"))
                 .andExpect(status().isCreated())
@@ -95,7 +95,7 @@ class TimeSlotControllerTest {
 
     @Test
     void create_missingDate_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/time-slots")
+        mockMvc.perform(post("/api/visitor-management/time-slots")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"startTime\":\"09:00\",\"endTime\":\"11:00\"}"))
                 .andExpect(status().isBadRequest());
@@ -106,7 +106,7 @@ class TimeSlotControllerTest {
         TimeSlotResponse resp = buildResponse(1L);
         when(schedulingService.update(any(Long.class), any(TimeSlotRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(put("/api/v1/time-slots/1")
+        mockMvc.perform(put("/api/visitor-management/time-slots/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"date\":\"2026-09-08\",\"startTime\":\"09:00\",\"endTime\":\"11:00\",\"maxCapacity\":10}"))
                 .andExpect(status().isOk())
@@ -115,7 +115,7 @@ class TimeSlotControllerTest {
 
     @Test
     void cancel_returns204() throws Exception {
-        mockMvc.perform(delete("/api/v1/time-slots/1"))
+        mockMvc.perform(delete("/api/visitor-management/time-slots/1"))
                 .andExpect(status().isNoContent());
     }
 
@@ -125,7 +125,7 @@ class TimeSlotControllerTest {
         resp.setGuideId(42L);
         when(schedulingService.assignGuide(1L, 42L)).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/time-slots/1/assign-guide").param("guideId", "42"))
+        mockMvc.perform(post("/api/visitor-management/time-slots/1/assign-guide").param("guideId", "42"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.guideId").value(42));
     }

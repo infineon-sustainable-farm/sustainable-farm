@@ -2,13 +2,13 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYieldShareResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.BlockComparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.Comparison;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.NotCompared;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.PhaseShare;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse.VarietyComparison;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.YieldComparisonResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.service.YieldForecastService.ForecastBasis;
 import com.infineonbit.sustainablefarm.modules.plants.service.YieldForecastService.MonthExpectation;
@@ -55,11 +55,11 @@ public class YieldComparisonService {
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     /** Order of the lines: farm (none first), block, variety name, then variety row, sorted in Java. */
-    private static final Comparator<Variety> VARIETY_ORDER = Comparator
-            .comparing(Variety::getFarmId, Comparator.nullsFirst(Comparator.naturalOrder()))
-            .thenComparing(Variety::getBlockCode)
-            .thenComparing(Variety::getName)
-            .thenComparing(Variety::getId);
+    private static final Comparator<BlockVariety> VARIETY_ORDER = Comparator
+            .comparing(BlockVariety::getFarmId, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(BlockVariety::getBlockCode)
+            .thenComparing(BlockVariety::getName)
+            .thenComparing(BlockVariety::getId);
 
     private static final Comparator<NotCompared> NOT_COMPARED_ORDER = Comparator
             .comparing(NotCompared::farmId, Comparator.nullsFirst(Comparator.naturalOrder()))
@@ -79,8 +79,8 @@ public class YieldComparisonService {
         this.clock = clock;
     }
 
-    /** A block, as the (farm, block) pair: a {@code null} farm is a farm of its own. */
-    private record BlockKey(Integer farmId, String blockCode) {
+    /** A block, by its farm and code: a code designates one {@code farm.block} row. */
+    private record BlockKey(Long farmId, String blockCode) {
     }
 
     /**
@@ -144,7 +144,7 @@ public class YieldComparisonService {
      * @param months    number of months, from 1 to 24, or {@code null} for 12
      * @return the comparison
      */
-    public YieldComparisonResponse getYieldComparison(Integer farmId, String blockCode, YearMonth from,
+    public YieldComparisonResponse getYieldComparison(Long farmId, String blockCode, YearMonth from,
                                                       Integer months) {
         YearMonth firstMonth = from == null ? YearMonth.of(LocalDate.now(clock).getYear(), 1) : from;
         List<YearMonth> window = YieldForecastCalculator.window(firstMonth, months == null ? DEFAULT_MONTHS : months);
@@ -191,7 +191,7 @@ public class YieldComparisonService {
         }
         BigDecimal expected = expectedKg.setScale(1, RoundingMode.HALF_UP);
         BigDecimal actual = harvested == null ? null : harvested.totalKg().setScale(1, RoundingMode.HALF_UP);
-        Variety variety = planted.variety();
+        BlockVariety variety = planted.variety();
         VarietyReference reference = planted.reference();
         return new VarietyComparison(
                 variety.getFarmId(),
@@ -203,7 +203,7 @@ public class YieldComparisonService {
                 toTenth(actual),
                 harvested == null ? 0 : harvested.count(),
                 achievedPct(expected, actual),
-                reference.getYieldPerTreeKg(),
+                Decimals.toDouble(reference.getYieldPerTreeKg()),
                 reference.getYieldSource(),
                 reference.getSeasonSource(),
                 List.copyOf(phases.values()));
@@ -257,7 +257,7 @@ public class YieldComparisonService {
             if (row.plantingDate().isAfter(lastDay)) {
                 continue;
             }
-            Variety variety = row.variety();
+            BlockVariety variety = row.variety();
             Harvested harvests = harvested.get(variety.getId());
             lines.add(new NotCompared(variety.getFarmId(), variety.getBlockCode(), variety.getId(), variety.getName(),
                     row.treeCount(),

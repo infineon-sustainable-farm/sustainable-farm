@@ -1,27 +1,29 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse.VarietyHarvestStatus;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestStatusResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse.PlantAlert;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantAlertResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse.MaturityShare;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.PlantsOverviewResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertSeverity;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.VarietyReference;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository.TreeBalance;
+import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -41,7 +43,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class PlantsOverviewServiceTest {
 
-    private static final int FARM = 7;
+    private static final Long FARM = 7L;
+    /** Blocks A to E of farm 7 in the farm referential. */
+    private static final PlantsBlocks PLANTS_BLOCKS = TestBlocks.onFarm(FARM, "A", "B", "C", "D", "E").asPlantsBlocks();
+    private static final List<Long> FARM_BLOCKS = TestBlocks.idsOf("A", "B", "C", "D", "E");
     private static final LocalDate JUNE_15_2027 = LocalDate.of(2027, 6, 15);
 
     /** The trees by maturity status when nothing is planted: every entry, with 0 trees and no share. */
@@ -73,7 +78,8 @@ public class PlantsOverviewServiceTest {
     private PlantsOverviewService serviceOn(LocalDate today) {
         Clock clock = Clock.fixed(today.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
         return new PlantsOverviewService(new YieldForecastService(populationEventRepository,
-                varietyReferenceRepository, new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository)),
+                varietyReferenceRepository, new GrowthPhaseYieldShareService(growthPhaseYieldShareRepository),
+                PLANTS_BLOCKS),
                 harvestStatusService, plantAlertService, clock);
     }
 
@@ -93,7 +99,7 @@ public class PlantsOverviewServiceTest {
 
     /** A variety row of farm 7 planted on a day, with trees left; stubbed by {@link #stubPlantings}. */
     private void planted(long id, String blockCode, String name, LocalDate plantedOn, long treesLeft) {
-        Variety variety = new Variety();
+        BlockVariety variety = new BlockVariety();
         variety.setId(id);
         variety.setFarmId(FARM);
         variety.setBlockCode(blockCode);
@@ -104,10 +110,11 @@ public class PlantsOverviewServiceTest {
     }
 
     private void stubPlantings(String blockCode) {
-        when(populationEventRepository.findPlantingsByOptionalFilters(FARM, blockCode)).thenReturn(plantings);
+        when(populationEventRepository.findPlantingsByOptionalFilters(PLANTS_BLOCKS.filter(FARM, blockCode).all(),
+                PLANTS_BLOCKS.filter(FARM, blockCode).ids())).thenReturn(plantings);
         when(populationEventRepository.findTreeBalances(anyCollection())).thenReturn(balances);
         when(varietyReferenceRepository.findAll()).thenReturn(List.of(
-                new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, "varietal_guide_west_africa", null)));
+                new VarietyReference(1L, "Keitt", BigDecimal.valueOf(220.0), "Zalka_2025", 5, 7, "varietal_guide_west_africa", null)));
     }
 
     /** A line whose status holds as given, from the estimate; the overview reads no other field. */
@@ -177,7 +184,7 @@ public class PlantsOverviewServiceTest {
     @Test
     void getOverview_shouldGiveZeros_whenNothingIsPlanted() {
         // Arrange
-        when(populationEventRepository.findPlantingsByOptionalFilters(FARM, null)).thenReturn(List.of());
+        when(populationEventRepository.findPlantingsByOptionalFilters(false, FARM_BLOCKS)).thenReturn(List.of());
         when(varietyReferenceRepository.findAll()).thenReturn(List.of());
         statusesAndAlerts(null, JUNE_15_2027, List.of(), List.of());
         // Act & Assert

@@ -4,9 +4,8 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationCreat
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.NotificationResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.service.NotificationService;
 import jakarta.validation.Valid;
-import java.util.List;
-import java.util.UUID;
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/water-supply/notifications")
 public class NotificationController {
     private final NotificationService notificationService;
 
@@ -34,7 +33,7 @@ public class NotificationController {
     public Object list(
             @RequestParam(required = false) @Min(0) Integer page,
             @RequestParam(required = false) @Min(1) Integer size,
-            @RequestParam(required = false) UUID userId) {
+            @RequestParam(required = false) Long userId) {
         if (page == null && size == null && userId == null) return notificationService.findAll();
         return notificationService.findAll(pageRequest(page, size), userId);
     }
@@ -46,12 +45,12 @@ public class NotificationController {
     }
 
     @GetMapping("/{notificationId}")
-    public NotificationResponse get(@PathVariable UUID notificationId) {
+    public NotificationResponse get(@PathVariable Long notificationId) {
         return notificationService.get(notificationId);
     }
 
     @PatchMapping("/{notificationId}/read")
-    public NotificationResponse markAsRead(@PathVariable UUID notificationId) {
+    public NotificationResponse markAsRead(@PathVariable Long notificationId) {
         return notificationService.markAsRead(notificationId);
     }
 
@@ -62,12 +61,12 @@ public class NotificationController {
 
     @DeleteMapping("/{notificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID notificationId) {
+    public void delete(@PathVariable Long notificationId) {
         notificationService.delete(notificationId);
     }
 
     private PageRequest pageRequest(Integer page, Integer size) {
         return PageRequest.of(page == null ? 0 : page, size == null ? 20 : size,
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+                Sort.by(Sort.Direction.DESC, "raisedAt"));
     }
 }

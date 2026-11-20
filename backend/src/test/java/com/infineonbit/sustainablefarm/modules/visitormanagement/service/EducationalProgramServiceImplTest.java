@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import org.mockito.Spy;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.TourStopRequest;
@@ -32,6 +35,8 @@ class EducationalProgramServiceImplTest {
     private TourStopRepository tourStopRepository;
     @Mock
     private WorkshopRepository workshopRepository;
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
     @InjectMocks
     private EducationalProgramServiceImpl service;
 

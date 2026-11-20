@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcResult;
-import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,0 +1,66 @@
+{
+  "appName": "Sustainable Farm",
+  "language": {
+    "label": "Sprache",
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "backToModules": "Zurück zu den Modulen"
+  },
+  "actions": {
+    "retry": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "search": "Suchen",
+    "dismiss": "Ausblenden"
+  },
+  "status": {
+    "loading": "Wird geladen…",
+    "noResults": "Keine Ergebnisse",
+    "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "confirm": {
+    "deleteTitle": "Diesen Eintrag löschen?"
+  },
+  "pagination": {
+    "label": "Seitennavigation",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "pageOf": "Seite {{page}} von {{total}}"
+  },
+  "table": {
+    "actions": "Aktionen"
+  },
+  "toast": {
+    "region": "Benachrichtigungen"
+  },
+  "shell": {
+    "navigation": "Module",
+    "openMenu": "Navigation öffnen",
+    "closeMenu": "Navigation schließen",
+    "allModules": "Alle Module"
+  },
+  "launcher": {
+    "modules": "Module"
+  },
+  "home": {
+    "eyebrow": "Von Banfora, Burkina Faso, nach Deutschland",
+    "hero": "Von der Plantage bis zum Export, eine Plattform.",
+    "lede": "Erfassen Sie die Arbeit des Betriebs und entscheiden Sie mit denselben Daten in jeder Stufe der Trockenmango-Kette."
+  },
+  "owner": {
+    "choose": "Auswählen…",
+    "none": "Keine Auswahl verfügbar",
+    "loadError": "Die Liste konnte nicht geladen werden.",
+    "askToAdd": "Bitten Sie das Modul {{module}}, es hinzuzufügen.",
+    "notInList": "Nicht in der Liste? Fragen Sie das Modul {{module}}.",
+    "addIn": "In {{module}} hinzufügen"
+  }
+}

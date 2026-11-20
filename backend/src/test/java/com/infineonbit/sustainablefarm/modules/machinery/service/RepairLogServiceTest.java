@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.RepairLogUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
@@ -11,7 +12,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.repository.RepairLogRep
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -42,6 +46,9 @@ class RepairLogServiceTest {
     @Mock
     private EquipmentRepository equipmentRepository;
 
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+
     @InjectMocks
     private RepairLogService repairLogService;
 
@@ -60,7 +67,7 @@ class RepairLogServiceTest {
                 "Heating element malfunction",
                 new BigDecimal("14.00"),
                 new BigDecimal("150.00"),
-                "Maintenance Team A"
+                personDirectory.idOf("Maintenance Team A")
         );
 
         testRepairLog = new RepairLog();
@@ -69,8 +76,8 @@ class RepairLogServiceTest {
         testRepairLog.setDate(LocalDate.of(2026, 7, 22));
         testRepairLog.setIssue("Heating element malfunction");
         testRepairLog.setDowntime(new BigDecimal("14.00"));
-        testRepairLog.setCost(new BigDecimal("150.00"));
-        testRepairLog.setTechnician("Maintenance Team A");
+        testRepairLog.setCost(MachineryMoney.of(new BigDecimal("150.00")));
+        testRepairLog.setTechnicianPersonId(personDirectory.idOf("Maintenance Team A"));
     }
 
     @Test
@@ -112,7 +119,7 @@ class RepairLogServiceTest {
         );
         when(equipmentRepository.findById(1L)).thenReturn(Optional.of(testEquipment));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> repairLogService.addRepairLog(blankIssueRequest));
 
         assertTrue(exception.getMessage().contains("Issue description is required"));
@@ -189,7 +196,7 @@ class RepairLogServiceTest {
                 null, null, "  ", null, null, null);
         when(repairLogRepository.findById(1L)).thenReturn(Optional.of(testRepairLog));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> repairLogService.updateRepairLog(1L, updateRequest));
 
         assertTrue(exception.getMessage().contains("Issue description cannot be blank"));

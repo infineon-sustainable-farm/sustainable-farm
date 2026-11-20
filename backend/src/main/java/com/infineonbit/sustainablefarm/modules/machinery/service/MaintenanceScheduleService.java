@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Response.MaintenanceScheduleObtainingResponse;
@@ -9,6 +10,7 @@ import com.infineonbit.sustainablefarm.modules.machinery.exception.EquipmentNotF
 import com.infineonbit.sustainablefarm.modules.machinery.exception.MaintenanceScheduleNotFoundException;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.EquipmentRepository;
 import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceScheduleRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +25,7 @@ import java.time.LocalDate;
 public class MaintenanceScheduleService {
     private final MaintenanceScheduleRepository maintenanceScheduleRepository;
     private final EquipmentRepository equipmentRepository;
+    private final PersonDirectory personDirectory;
 
     /**
      * Creates a maintenance schedule entry for an existing equipment.
@@ -30,7 +33,7 @@ public class MaintenanceScheduleService {
      * @param request the creation data (equipmentId, type, frequency, lastCompleted, nextDue, operator)
      * @return the created maintenance schedule, including its generated ID
      * @throws EquipmentNotFoundException if no equipment exists with the given ID
-     * @throws IllegalArgumentException  if the next due date is before the last completed date
+     * @throws ConflictException  if the next due date is before the last completed date
      */
     public MaintenanceScheduleObtainingResponse addMaintenanceSchedule(MaintenanceScheduleCreationRequest request) {
         Equipment equipment = equipmentRepository.findById(request.equipmentId())
@@ -44,7 +47,7 @@ public class MaintenanceScheduleService {
         schedule.setFrequency(trimToNull(request.frequency()));
         schedule.setLastCompleted(request.lastCompleted());
         schedule.setNextDue(request.nextDue());
-        schedule.setOperator(trimToNull(request.operator()));
+        schedule.setOperatorPersonId(personDirectory.requireExisting(request.operatorPersonId()));
 
         try {
             maintenanceScheduleRepository.save(schedule);
@@ -90,7 +93,7 @@ public class MaintenanceScheduleService {
      * @return the complete state of the maintenance schedule after the update
      * @throws MaintenanceScheduleNotFoundException if no schedule exists with this ID
      * @throws EquipmentNotFoundException           if the new equipment does not exist
-     * @throws IllegalArgumentException             if the resulting dates are incoherent
+     * @throws ConflictException             if the resulting dates are incoherent
      */
     @Transactional
     public MaintenanceScheduleObtainingResponse updateMaintenanceSchedule(Long id, MaintenanceScheduleUpdateRequest request) {
@@ -118,8 +121,8 @@ public class MaintenanceScheduleService {
         if (request.nextDue() != null) {
             schedule.setNextDue(request.nextDue());
         }
-        if (request.operator() != null) {
-            schedule.setOperator(trimToNull(request.operator()));
+        if (request.operatorPersonId() != null) {
+            schedule.setOperatorPersonId(personDirectory.requireExisting(request.operatorPersonId()));
         }
 
         return toResponse(maintenanceScheduleRepository.saveAndFlush(schedule));
@@ -141,7 +144,7 @@ public class MaintenanceScheduleService {
 
     private void validateDates(LocalDate lastCompleted, LocalDate nextDue) {
         if (lastCompleted != null && nextDue != null && nextDue.isBefore(lastCompleted)) {
-            throw new IllegalArgumentException("Next due date cannot be before the last completed date.");
+            throw new ConflictException("Next due date cannot be before the last completed date.");
         }
     }
 
@@ -159,7 +162,8 @@ public class MaintenanceScheduleService {
                 schedule.getFrequency(),
                 schedule.getLastCompleted(),
                 schedule.getNextDue(),
-                schedule.getOperator()
+                personDirectory.nameOf(schedule.getOperatorPersonId()),
+                schedule.getOperatorPersonId()
         );
     }
 }

@@ -1,14 +1,17 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Transient;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,19 +37,18 @@ import java.time.LocalDate;
  * snake_case and a singular table name.
  */
 @Entity
-@Table(name = "nursery_batch")
+@EntityListeners(BlockLabelListener.class)
+@Table(name = "nursery_batch", indexes = {
+        @Index(name = "idx_nursery_batch_farm_id", columnList = "farm_id"),
+        @Index(name = "idx_nursery_batch_planned_block_id", columnList = "planned_block_id")})
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class NurseryBatch {
+public class NurseryBatch extends BaseEntity implements BlockRow {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    /** Farm of the nursery, a {@code farm} row (foreign key {@code fk_nursery_batch_farm}), or NULL. */
     @Column(name = "farm_id")
-    private Integer farmId;
+    private Long farmId;
 
     /** Letters, digits and hyphens, upper-cased, for example {@code "P1"}. */
     @Column(name = "batch_code", nullable = false, length = 20)
@@ -79,9 +81,14 @@ public class NurseryBatch {
     @Column(name = "planned_transplant_on", nullable = false)
     private LocalDate plannedTransplantOn;
 
-    /** Block the batch is meant for, stored like the block of a planting, or {@code null}. */
-    @Column(name = "planned_block_code")
-    private String plannedBlockCode;
+    /** Block the batch is meant for, a {@code farm.block} row (foreign key {@code fk_nursery_batch_planned_block}), or NULL. */
+    @Column(name = "planned_block_id")
+    private Long plannedBlockId;
+
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink plannedBlock = new BlockLink();
 
     /** Where the row comes from, for example {@code "user_entry"} for the batch route. */
     @Column(name = "source", nullable = false)
@@ -89,4 +96,31 @@ public class NurseryBatch {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** Code of the block the batch is meant for, read from the farm referential, or {@code null}. */
+    public String getPlannedBlockCode() {
+        return plannedBlock.label(plannedBlockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setPlannedBlockCode(String blockCode) {
+        plannedBlock.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignPlannedBlock(Long blockId, BlockLabel label) {
+        this.plannedBlockId = blockId;
+        plannedBlock.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        plannedBlock.useSource(source);
+    }
+
+    @PrePersist
+    @PreUpdate
+    void requireResolvedBlock() {
+        plannedBlock.requireResolved("nursery batch");
+    }
 }

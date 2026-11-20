@@ -1,10 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentLookup;
+import com.infineonbit.sustainablefarm.modules.machinery.api.EquipmentView;
+import com.infineonbit.sustainablefarm.modules.farm.api.BlockDto;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.FindingTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PreventiveTreatmentRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HealthTreatmentResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthFinding;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthIssueReference;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthTreatment;
@@ -32,6 +38,9 @@ public class HealthTreatmentService {
     private final HealthTreatmentRepository healthTreatmentRepository;
     private final HealthFindingRepository healthFindingRepository;
     private final HealthIssueService healthIssueService;
+    private final PlantsBlocks plantsBlocks;
+    private final PersonDirectory personDirectory;
+    private final EquipmentLookup equipmentLookup;
 
     /**
      * A code as stored: trimmed and upper-cased, so {@code " kg "} becomes
@@ -64,7 +73,7 @@ public class HealthTreatmentService {
      * @param treatment the stored treatment, with its targeted issue loaded
      * @return the API representation of that treatment
      */
-    private static HealthTreatmentResponse toResponse(HealthTreatment treatment) {
+    private HealthTreatmentResponse toResponse(HealthTreatment treatment) {
         HealthIssueReference target = treatment.getTargetIssue();
         HealthFinding finding = treatment.getFinding();
         return new HealthTreatmentResponse(
@@ -82,7 +91,9 @@ public class HealthTreatmentService {
                 treatment.getUnit(),
                 treatment.getPreHarvestIntervalDays(),
                 HealthCalculator.harvestAllowedFrom(treatment.getTreatedOn(), treatment.getPreHarvestIntervalDays()),
-                treatment.getApplicator(),
+                personDirectory.nameOf(treatment.getApplicatorPersonId()),
+                treatment.getApplicatorPersonId(),
+                treatment.getEquipmentId(),
                 treatment.getEquipment(),
                 treatment.getSource(),
                 treatment.getLastUpdated());
@@ -91,11 +102,14 @@ public class HealthTreatmentService {
     /**
      * A new treatment with the columns shared by both routes. The quantity has
      * at most 3 decimals and the interval is a whole number, as the request
-     * validation guarantees, so both conversions are exact.
+     * validation guarantees, so both conversions are exact. The machine is
+     * picked by its id in the machinery register, which owns the machines; its
+     * name is kept with the treatment. An unknown id is refused (400), never
+     * created.
      */
-    private static HealthTreatment newTreatment(LocalDate treatedOn, String productName, String activeIngredient,
-                                                Double quantity, String unit, Double preHarvestIntervalDays,
-                                                String applicator, String equipment, Instant now) {
+    private HealthTreatment newTreatment(LocalDate treatedOn, String productName, String activeIngredient,
+                                         Double quantity, String unit, Double preHarvestIntervalDays,
+                                         Long applicatorPersonId, Long equipmentId, Instant now) {
         HealthTreatment treatment = new HealthTreatment();
         treatment.setTreatedOn(treatedOn);
         treatment.setProductName(productName.trim());
@@ -103,8 +117,14 @@ public class HealthTreatmentService {
         treatment.setQuantity(BigDecimal.valueOf(quantity));
         treatment.setUnit(TreatmentUnit.valueOf(normalizeCode(unit)));
         treatment.setPreHarvestIntervalDays(preHarvestIntervalDays.intValue());
-        treatment.setApplicator(applicator.trim());
-        treatment.setEquipment(normalizeOptionalText(equipment));
+        treatment.setApplicatorPersonId(personDirectory.requireExisting(applicatorPersonId));
+        if (equipmentId != null) {
+            EquipmentView machine = equipmentLookup.findById(equipmentId)
+                    .orElseThrow(() -> new BadRequestException(
+                            "equipmentId " + equipmentId + " is not a machine of the machinery register"));
+            treatment.setEquipmentId(machine.id());
+            treatment.setEquipment(machine.name());
+        }
         treatment.setSource(USER_ENTRY_SOURCE);
         treatment.setLastUpdated(now);
         return treatment;
@@ -122,6 +142,8 @@ public class HealthTreatmentService {
      * @param request   the treatment, already validated
      * @return the recorded treatment
      * @throws HealthFindingNotFoundException if no finding has this identifier
+     * @throws BadRequestException            if the equipment id is not a machine
+     *                                        of the machinery register
      * @throws BusinessRuleException          if the finding is resolved, or the
      *                                        treatment predates the inspection
      */
@@ -149,9 +171,9 @@ public class HealthTreatmentService {
 
         HealthTreatment treatment = newTreatment(request.treatedOn(), request.productName(),
                 request.activeIngredient(), request.quantity(), request.unit(), request.preHarvestIntervalDays(),
-                request.applicator(), request.equipment(), now);
-        treatment.setFarmId(inspection.getFarmId());
-        treatment.setBlockCode(inspection.getBlockCode());
+                request.applicatorPersonId(), request.equipmentId(), now);
+        treatment.assignBlock(inspection.getBlockId(),
+                new BlockLabel(inspection.getFarmId(), inspection.getBlockCode()));
         treatment.setTargetIssue(finding.getIssue());
         treatment.setTargetOtherLabel(finding.getOtherLabel());
         treatment.setFinding(finding);
@@ -167,6 +189,8 @@ public class HealthTreatmentService {
      *
      * @param request the treatment, already validated
      * @return the recorded treatment
+     * @throws BadRequestException   if the equipment id is not a machine of the
+     *                               machinery register
      * @throws BusinessRuleException if the targeted code is not {@code OTHER}
      *                               and is not in the catalogue
      */
@@ -184,9 +208,9 @@ public class HealthTreatmentService {
 
         HealthTreatment treatment = newTreatment(request.treatedOn(), request.productName(),
                 request.activeIngredient(), request.quantity(), request.unit(), request.preHarvestIntervalDays(),
-                request.applicator(), request.equipment(), now);
-        treatment.setFarmId(request.farmId());
-        treatment.setBlockCode(normalizeCode(request.blockCode()));
+                request.applicatorPersonId(), request.equipmentId(), now);
+        BlockDto block = plantsBlocks.resolve(request.farmId(), normalizeCode(request.blockCode()));
+        treatment.assignBlock(block.id(), PlantsBlocks.label(block));
         treatment.setTargetIssue(target);
         treatment.setTargetOtherLabel(normalizeOptionalText(request.targetOtherLabel()));
         return toResponse(healthTreatmentRepository.save(treatment));
@@ -199,17 +223,18 @@ public class HealthTreatmentService {
      * farm, as for the other lists of the module. Both dates are included.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "C"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "C"}), or {@code null}
+     *                  or blank for every block
      * @param from      first treatment date, included, or {@code null}
      * @param to        last treatment date, included, or {@code null}
      * @return the matching treatments, ordered by date then identifier
      */
-    public List<HealthTreatmentResponse> getAllTreatments(Integer farmId, String blockCode,
+    public List<HealthTreatmentResponse> getAllTreatments(Long farmId, String blockCode,
                                                           LocalDate from, LocalDate to) {
-        return healthTreatmentRepository.findByOptionalFilters(farmId, normalizeOptionalText(blockCode), from, to)
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        return healthTreatmentRepository.findByOptionalFilters(blocks.all(), blocks.ids(), from, to)
                 .stream()
-                .map(HealthTreatmentService::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 }

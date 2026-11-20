@@ -1,10 +1,9 @@
-import { formatCode, NO_VALUE } from "../utils/format";
-import PlantsBadge from "./PlantsBadge";
+import { Badge } from "../../../shared/ui";
+import { formatEnum, NO_VALUE } from "../utils/format";
 import Value from "./Value";
 
 /*
- * The tones of PlantsBadge, which holds the colours and their contrast. As in
- * the mock-up, a batch ready to transplant is green, the stages it grows
+ * As in the mock-up, a batch ready to transplant is green, the stages it grows
  * through in the nursery are amber ("Nursery growth"), and germination is
  * neutral.
  */
@@ -18,14 +17,14 @@ const STAGE_TONES = {
 
 /**
  * Current stage of a nursery batch, as computed by the API from its stage
- * changes ("ROOTSTOCK_GROWTH"), shown in sentence case ("Rootstock growth").
+ * changes ("ROOTSTOCK_GROWTH"), shown with its translated label ("Rootstock growth").
  */
 export default function NurseryStageBadge({ stage }) {
-    const label = formatCode(stage);
+    const label = formatEnum("nurseryStage", stage);
     if (label === NO_VALUE) {
         return <Value>{NO_VALUE}</Value>;
     }
 
-    // An unknown stage is still shown, in the neutral tone.
-    return <PlantsBadge tone={STAGE_TONES[stage]}>{label}</PlantsBadge>;
+    // An unknown stage is still shown, in neutral styling.
+    return <Badge tone={STAGE_TONES[stage] ?? "neutral"}>{label}</Badge>;
 }

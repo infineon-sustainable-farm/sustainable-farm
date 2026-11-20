@@ -10,7 +10,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.model.WashSortRecord;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.service.WashSortRecordService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -33,25 +34,25 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/wash-sort-records")
+@RequestMapping("/api/product-transformation/wash-sort-records")
 @Tag(name = "Wash & Sort Management", description = "APIs for managing washing and sorting records")
 public class WashSortRecordController {
 
     private final WashSortRecordService washSortRecordService;
     private final BatchRepository batchRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final OperatorRepository operatorRepository;
     private final DtoMapper dtoMapper;
 
     @Autowired
     public WashSortRecordController(WashSortRecordService washSortRecordService,
                                    BatchRepository batchRepository,
-                                   EquipmentRepository equipmentRepository,
+                                   EquipmentService equipmentService,
                                    OperatorRepository operatorRepository,
                                    DtoMapper dtoMapper) {
         this.washSortRecordService = washSortRecordService;
         this.batchRepository = batchRepository;
-        this.equipmentRepository = equipmentRepository;
+        this.equipmentService = equipmentService;
         this.operatorRepository = operatorRepository;
         this.dtoMapper = dtoMapper;
     }
@@ -59,18 +60,18 @@ public class WashSortRecordController {
     @PostMapping
     @Operation(summary = "Create a new wash sort record", description = "Creates a new washing and sorting record")
     public ResponseEntity<WashSortRecordResponse> createWashSortRecord(@Valid @RequestBody WashSortRecordCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Equipment equipment = null;
         if (request.getEquipmentId() != null) {
-            equipment = equipmentRepository.findById(request.getEquipmentId())
+            equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
         }
         
         Operator operator = null;
         if (request.getOperatorId() != null) {
-            operator = operatorRepository.findById(request.getOperatorId())
+            operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
         }
         
@@ -81,6 +82,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/{recordId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort record by ID", description = "Retrieves a specific wash sort record by its ID")
     public ResponseEntity<WashSortRecordResponse> getWashSortRecordById(
             @Parameter(description = "Record ID") @PathVariable String recordId) {
@@ -90,6 +92,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by batch", description = "Retrieves wash sort records for a specific batch")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -101,6 +104,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all wash sort records", description = "Retrieves all wash sort records")
     public ResponseEntity<List<WashSortRecordResponse>> getAllWashSortRecords() {
         List<WashSortRecord> records = washSortRecordService.getAllWashSortRecords();
@@ -136,12 +140,12 @@ public class WashSortRecordController {
             existingRecord.setEndTime(request.getEndTime());
         }
         if (request.getEquipmentId() != null) {
-            Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
+            Equipment equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
-            existingRecord.setEquipment(equipment);
+            existingRecord.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
-            Operator operator = operatorRepository.findById(request.getOperatorId())
+            Operator operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
             existingRecord.setOperator(operator);
         }
@@ -171,6 +175,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by date range", description = "Retrieves wash sort records within a date range")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDateTime startDate,
@@ -183,6 +188,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/equipment/{equipmentId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by equipment", description = "Retrieves wash sort records filtered by equipment")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByEquipment(
             @Parameter(description = "Equipment ID") @PathVariable String equipmentId) {
@@ -194,6 +200,7 @@ public class WashSortRecordController {
     }
 
     @GetMapping("/operator/{operatorId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get wash sort records by operator", description = "Retrieves wash sort records filtered by operator")
     public ResponseEntity<List<WashSortRecordResponse>> getWashSortRecordsByOperator(
             @Parameter(description = "Operator ID") @PathVariable String operatorId) {

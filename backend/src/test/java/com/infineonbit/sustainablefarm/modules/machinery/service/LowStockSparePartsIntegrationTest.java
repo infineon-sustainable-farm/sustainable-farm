@@ -50,7 +50,7 @@ class LowStockSparePartsIntegrationTest {
         sparePart.setName(name);
         sparePart.setQuantity(quantity);
         sparePart.setReorderThreshold(reorderThreshold);
-        sparePart.setUnitCost(new BigDecimal("1.00"));
+        sparePart.setUnitCost(MachineryMoney.of(new BigDecimal("1.00")));
         sparePartRepository.save(sparePart);
     }
 }

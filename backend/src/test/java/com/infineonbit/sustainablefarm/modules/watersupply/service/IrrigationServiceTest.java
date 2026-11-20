@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLogStatus;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,19 +17,20 @@ import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogCrea
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationLogResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.IrrigationScheduleResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.watersupply.config.SystemUsers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -43,7 +46,7 @@ class IrrigationServiceTest {
     private IrrigationLogRepository logRepository;
 
     @Mock
-    private FieldZoneRepository fieldZoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private AgroWeatherService agroWeatherService;
@@ -56,10 +59,10 @@ class IrrigationServiceTest {
 
     @Test
     void createScheduleRejectsUnknownZone() {
-        UUID zoneId = UUID.randomUUID();
+        Long zoneId = 101L;
         IrrigationScheduleCreateRequest schedule = new IrrigationScheduleCreateRequest(
-            zoneId, Instant.now(), 10, 20.0, null, UUID.randomUUID());
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+            zoneId, Instant.now(), 10, 20.0, null, 7L);
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.empty());
         IrrigationService service = service();
 
         assertThrows(NotFoundException.class, () -> service.createSchedule(schedule));
@@ -68,7 +71,7 @@ class IrrigationServiceTest {
 
     @Test
     void createLogRejectsUnknownSchedule() {
-        UUID scheduleId = UUID.randomUUID();
+        Long scheduleId = 73L;
         IrrigationLogCreateRequest log = new IrrigationLogCreateRequest(
             scheduleId, Instant.now(), null, 0.0, "started");
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.empty());
@@ -80,22 +83,22 @@ class IrrigationServiceTest {
 
     @Test
     void stopCompletesMostRecentStartedLog() {
-        UUID scheduleId = UUID.randomUUID();
+        Long scheduleId = 85L;
         IrrigationSchedule schedule = new IrrigationSchedule();
         schedule.setWaterQuantityLiters(42.0);
         IrrigationLog started = new IrrigationLog();
         started.setScheduleId(scheduleId);
         started.setActualStartTime(Instant.parse("2026-01-01T10:00:00Z"));
-        started.setStatus("started");
+        started.setStatus(IrrigationLogStatus.STARTED);
         when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
-        when(logRepository.findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(scheduleId, "started"))
+        when(logRepository.findFirstByScheduleIdAndStatusOrderByActualStartTimeDesc(scheduleId, IrrigationLogStatus.STARTED))
                 .thenReturn(Optional.of(started));
         when(logRepository.save(started)).thenReturn(started);
         IrrigationService service = service();
 
         IrrigationLogResponse completed = service.stop(scheduleId);
 
-        assertEquals("completed", schedule.getStatus());
+        assertEquals("completed", schedule.getStatus().value());
         assertEquals("completed", completed.status());
         assertEquals(42.0, completed.waterUsedLiters());
         assertNotNull(completed.actualEndTime());
@@ -105,12 +108,12 @@ class IrrigationServiceTest {
 
     @Test
     void irrigationStatusReportsTheRunningScheduleAndItsActualStart() {
-        UUID zoneId = UUID.randomUUID();
+        Long zoneId = 102L;
         IrrigationSchedule running = schedule(zoneId, "running", Instant.parse("2026-10-13T10:00:00Z"));
         IrrigationLog log = new IrrigationLog();
         log.setActualStartTime(Instant.parse("2026-10-13T10:02:00Z"));
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(new Zone()));
-        when(scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running")).thenReturn(List.of(running));
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().build()));
+        when(scheduleRepository.findByZoneIdAndStatus(zoneId, IrrigationStatus.RUNNING)).thenReturn(List.of(running));
         when(logRepository.findFirstByScheduleIdOrderByActualStartTimeDesc(running.getId())).thenReturn(Optional.of(log));
 
         Map<String, Object> status = service().irrigationStatus(zoneId);
@@ -124,11 +127,11 @@ class IrrigationServiceTest {
 
     @Test
     void irrigationStatusFallsBackToTheLatestScheduleWhenNothingRuns() {
-        UUID zoneId = UUID.randomUUID();
+        Long zoneId = 103L;
         IrrigationSchedule older = schedule(zoneId, "completed", Instant.parse("2026-10-10T06:00:00Z"));
         IrrigationSchedule latest = schedule(zoneId, "scheduled", Instant.parse("2026-10-14T06:00:00Z"));
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(new Zone()));
-        when(scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running")).thenReturn(List.of());
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().build()));
+        when(scheduleRepository.findByZoneIdAndStatus(zoneId, IrrigationStatus.RUNNING)).thenReturn(List.of());
         when(scheduleRepository.findByZoneId(zoneId)).thenReturn(List.of(older, latest));
         when(logRepository.findFirstByScheduleIdOrderByActualStartTimeDesc(latest.getId())).thenReturn(Optional.empty());
 
@@ -142,9 +145,9 @@ class IrrigationServiceTest {
 
     @Test
     void irrigationStatusOfAZoneWithoutScheduleIsNone() {
-        UUID zoneId = UUID.randomUUID();
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(new Zone()));
-        when(scheduleRepository.findByZoneIdAndStatusIgnoreCase(zoneId, "running")).thenReturn(List.of());
+        Long zoneId = 104L;
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().build()));
+        when(scheduleRepository.findByZoneIdAndStatus(zoneId, IrrigationStatus.RUNNING)).thenReturn(List.of());
         when(scheduleRepository.findByZoneId(zoneId)).thenReturn(List.of());
 
         Map<String, Object> status = service().irrigationStatus(zoneId);
@@ -155,8 +158,8 @@ class IrrigationServiceTest {
 
     @Test
     void irrigationStatusRejectsUnknownZone() {
-        UUID zoneId = UUID.randomUUID();
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        Long zoneId = 105L;
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service().irrigationStatus(zoneId));
     }
@@ -174,8 +177,8 @@ class IrrigationServiceTest {
 
     @Test
     void scheduleCarriesTheBlockCodeOnlyWhenTheZoneMapsToOneBlock() {
-        UUID single = UUID.randomUUID();
-        UUID multiple = UUID.randomUUID();
+        Long single = 106L;
+        Long multiple = 107L;
         when(scheduleRepository.findAll()).thenReturn(List.of(schedule(single, "scheduled", Instant.now()),
                 schedule(multiple, "scheduled", Instant.now())));
         when(zoneBlockResolver.blockCodesForZones(any())).thenReturn(Map.of(single, List.of("A"), multiple, List.of("B", "C")));
@@ -188,18 +191,20 @@ class IrrigationServiceTest {
         assertTrue(schedules.get(1).multipleBlockCodes());
     }
 
-    private static IrrigationSchedule schedule(UUID zoneId, String status, Instant start) {
+    private static long nextScheduleId = 1L;
+
+    private static IrrigationSchedule schedule(Long zoneId, String status, Instant start) {
         IrrigationSchedule schedule = new IrrigationSchedule();
-        schedule.setId(UUID.randomUUID());
+        schedule.setId(nextScheduleId++);
         schedule.setZoneId(zoneId);
-        schedule.setStatus(status);
+        schedule.setStatus(IrrigationStatus.of(status));
         schedule.setStartTime(start);
         schedule.setWaterQuantityLiters(300.0);
         return schedule;
     }
 
     private IrrigationService service() {
-        return new IrrigationService(scheduleRepository, logRepository, fieldZoneRepository, agroWeatherService,
-                alertService, zoneBlockResolver);
+        return new IrrigationService(scheduleRepository, logRepository, farmDirectory, agroWeatherService,
+                alertService, zoneBlockResolver, new SystemUsers(new InMemoryPersonDirectory()));
     }
 }

@@ -17,7 +17,7 @@ import java.util.List;
 
 /** Feeds the "Alerts & Notifications" tab of the Energy App. */
 @RestController("energyAlertController")
-@RequestMapping("/api/energy/alerts")
+@RequestMapping("/api/energy-supply/alerts")
 public class AlertController {
 
     private final AlertService service;
@@ -39,7 +39,7 @@ public class AlertController {
 
     @PatchMapping("/{alertId}/status")
     public ResponseEntity<EnergyAlertResponse> updateStatus(
-            @PathVariable String alertId,
+            @PathVariable Long alertId,
             @Valid @RequestBody AlertStatusRequest request) {
         return ResponseEntity.ok(service.updateStatus(alertId, request.status()));
     }

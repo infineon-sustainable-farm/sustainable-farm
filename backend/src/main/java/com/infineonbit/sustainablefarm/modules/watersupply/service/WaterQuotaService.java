@@ -1,15 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQuotaCreateRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQuotaResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterQuotaUpdateRequest;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.QuotaTargetType;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterQuota;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterQuotaRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -17,7 +16,6 @@ import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,13 +38,9 @@ public class WaterQuotaService {
     /** Alert threshold "quota reached" (fraction of the quota). */
     public static final double CRITICAL_THRESHOLD = 1.00;
 
-    private static final String TARGET_FARM = "farm";
-    private static final String TARGET_ZONE = "zone";
 
     private final WaterQuotaRepository quotaRepository;
-    private final FarmRepository farmRepository;
-    private final FieldZoneRepository fieldZoneRepository;
-    private final FieldRepository fieldRepository;
+    private final FarmDirectory farmDirectory;
     private final WaterConsumptionRepository consumptionRepository;
     private final AlertService alertService;
 
@@ -57,18 +51,14 @@ public class WaterQuotaService {
     private final long checkThrottleSeconds;
 
     public WaterQuotaService(WaterQuotaRepository quotaRepository,
-                             FarmRepository farmRepository,
-                             FieldZoneRepository fieldZoneRepository,
-                             FieldRepository fieldRepository,
+                             FarmDirectory farmDirectory,
                              WaterConsumptionRepository consumptionRepository,
                              AlertService alertService,
                              @Value("${app.quota.check-throttle-seconds:60}") long checkThrottleSeconds) {
         this.checkThrottleSeconds = Math.max(0, checkThrottleSeconds);
         this.alertService = alertService;
         this.consumptionRepository = consumptionRepository;
-        this.fieldRepository = fieldRepository;
-        this.fieldZoneRepository = fieldZoneRepository;
-        this.farmRepository = farmRepository;
+        this.farmDirectory = farmDirectory;
         this.quotaRepository = quotaRepository;
     }
 
@@ -82,14 +72,14 @@ public class WaterQuotaService {
                 .toList();
     }
 
-    public List<WaterQuotaResponse> findQuotas(String targetType, UUID targetId) {
-        String type = normalizeTargetType(targetType);
+    public List<WaterQuotaResponse> findQuotas(String targetType, Long targetId) {
+        QuotaTargetType type = normalizeTargetType(targetType);
         return quotaRepository.findByTargetTypeAndTargetIdOrderByQuotaMonthDesc(type, targetId).stream()
                 .map(WaterQuotaResponse::from)
                 .toList();
     }
 
-    public WaterQuotaResponse getQuota(UUID quotaId) {
+    public WaterQuotaResponse getQuota(Long quotaId) {
         return WaterQuotaResponse.from(getQuotaEntity(quotaId));
     }
 
@@ -100,7 +90,7 @@ public class WaterQuotaService {
      */
     @Transactional
     public WaterQuotaResponse createQuota(WaterQuotaCreateRequest request) {
-        String targetType = normalizeTargetType(request.targetType());
+        QuotaTargetType targetType = normalizeTargetType(request.targetType());
         requireTarget(targetType, request.targetId());
         requireFirstDayOfMonth(request.quotaMonth());
 
@@ -114,7 +104,7 @@ public class WaterQuotaService {
     }
 
     @Transactional
-    public WaterQuotaResponse updateQuota(UUID quotaId, WaterQuotaUpdateRequest request) {
+    public WaterQuotaResponse updateQuota(Long quotaId, WaterQuotaUpdateRequest request) {
         WaterQuota quota = getQuotaEntity(quotaId);
         if (request.quotaMonth() != null) {
             requireFirstDayOfMonth(request.quotaMonth());
@@ -130,7 +120,7 @@ public class WaterQuotaService {
     }
 
     @Transactional
-    public void deleteQuota(UUID quotaId) {
+    public void deleteQuota(Long quotaId) {
         quotaRepository.delete(getQuotaEntity(quotaId));
     }
 
@@ -154,7 +144,7 @@ public class WaterQuotaService {
      * ingestion of a flow measurement (IoT sensors) and at each manual consumption entry.
      * Alerts go through {@link AlertService#raiseOnce}: no repetition every minute.
      */
-    public void checkThresholds(UUID farmId, UUID zoneId, Instant consumptionDate) {
+    public void checkThresholds(Long farmId, Long zoneId, Instant consumptionDate) {
         // A flow meter can send several measurements per minute: recomputing the quota at
         // every pulse would not change the result and would cost one aggregation per measurement.
         if (throttled(farmId, zoneId)) {
@@ -164,15 +154,15 @@ public class WaterQuotaService {
                 ? LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1)
                 : consumptionDate.atZone(ZoneOffset.UTC).toLocalDate().withDayOfMonth(1);
         if (zoneId != null) {
-            checkThreshold("zone", zoneId, month);
+            checkThreshold(QuotaTargetType.ZONE, zoneId, month);
         }
         if (farmId != null) {
-            checkThreshold("farm", farmId, month);
+            checkThreshold(QuotaTargetType.FARM, farmId, month);
         }
     }
 
     /** True if the target was already evaluated within the throttle window (0 disables the mechanism). */
-    private boolean throttled(UUID farmId, UUID zoneId) {
+    private boolean throttled(Long farmId, Long zoneId) {
         if (checkThrottleSeconds == 0) {
             return false;
         }
@@ -186,7 +176,7 @@ public class WaterQuotaService {
         return false;
     }
 
-    private void checkThreshold(String targetType, UUID targetId, LocalDate monthStart) {
+    private void checkThreshold(QuotaTargetType targetType, Long targetId, LocalDate monthStart) {
         WaterQuota quota = currentQuota(targetType, targetId, monthStart);
         if (quota == null) {
             return;
@@ -226,7 +216,7 @@ public class WaterQuotaService {
 
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("quota_id", quota.getId());
-            item.put("target_type", quota.getTargetType());
+            item.put("target_type", quota.getTargetType().value());
             item.put("target_id", quota.getTargetId());
             item.put("target_name", targetName(quota.getTargetType(), quota.getTargetId()));
             item.put("quota_month", quota.getQuotaMonth().toString());
@@ -243,51 +233,51 @@ public class WaterQuotaService {
     }
 
     /** Quota that applies: the requested month's if it exists, otherwise the most recent earlier one. */
-    private WaterQuota currentQuota(String targetType, UUID targetId, LocalDate monthStart) {
+    private WaterQuota currentQuota(QuotaTargetType targetType, Long targetId, LocalDate monthStart) {
         return quotaRepository
                 .findFirstByTargetTypeAndTargetIdAndQuotaMonthBetweenOrderByQuotaMonthDesc(
                         targetType, targetId, monthStart, monthStart.plusMonths(1))
                 .orElse(null);
     }
 
-    private double usedLiters(String targetType, UUID targetId, LocalDate monthStart) {
+    private double usedLiters(QuotaTargetType targetType, Long targetId, LocalDate monthStart) {
         Instant start = monthStart.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant end = monthStart.plusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC);
         return switch (targetType) {
-            case TARGET_FARM -> consumptionRepository.sumConsumptionByFarmIdBetween(start, end, targetId);
-            case TARGET_ZONE -> zoneConsumption(start, end, targetId);
+            case FARM -> consumptionRepository.sumConsumptionByFarmIdBetween(start, end, targetId);
+            case ZONE -> zoneConsumption(start, end, targetId);
             default -> 0d;
         };
     }
 
-    private double zoneConsumption(Instant start, Instant end, UUID zoneId) {
+    private double zoneConsumption(Instant start, Instant end, Long zoneId) {
         return consumptionRepository.sumConsumptionByZoneIdBetween(start, end, zoneId);
     }
 
-    private String targetName(String targetType, UUID targetId) {
+    private String targetName(QuotaTargetType targetType, Long targetId) {
         return switch (targetType) {
-            case TARGET_FARM -> farmRepository.findById(targetId)
-                    .map(farm -> farm.getName()).orElse("Unknown farm");
-            case TARGET_ZONE -> fieldZoneRepository.findById(targetId)
-                    .map(zone -> zone.getName()).orElse("Unknown zone");
+            case FARM -> farmDirectory.findFarm(targetId)
+                    .map(farm -> farm.name()).orElse("Unknown farm");
+            case ZONE -> farmDirectory.findZone(targetId)
+                    .map(zone -> zone.name()).orElse("Unknown zone");
             default -> "Unknown target";
         };
     }
 
-    private String quotaLabel(String label, String targetType, UUID targetId, LocalDate month) {
+    private String quotaLabel(String label, QuotaTargetType targetType, Long targetId, LocalDate month) {
         if (label != null && !label.isBlank()) {
             return label;
         }
-        String prefix = TARGET_FARM.equals(targetType) ? "Farm quota" : "Zone quota";
+        String prefix = targetType == QuotaTargetType.FARM ? "Farm quota" : "Zone quota";
         return prefix + " - " + targetName(targetType, targetId) + " - " + YearMonth.from(month);
     }
 
-    private String normalizeTargetType(String targetType) {
+    private QuotaTargetType normalizeTargetType(String targetType) {
         if (targetType == null) {
             throw new IllegalArgumentException("The quota target type is required (farm or zone).");
         }
-        String normalized = targetType.trim().toLowerCase();
-        if (!TARGET_FARM.equals(normalized) && !TARGET_ZONE.equals(normalized)) {
+        QuotaTargetType normalized = QuotaTargetType.of(targetType);
+        if (normalized == null) {
             throw new IllegalArgumentException("Invalid target type: farm or zone expected.");
         }
         return normalized;
@@ -299,21 +289,21 @@ public class WaterQuotaService {
         }
     }
 
-    private void requireTarget(String targetType, UUID targetId) {
+    private void requireTarget(QuotaTargetType targetType, Long targetId) {
         if (targetId == null) {
             throw new IllegalArgumentException("The quota target is required.");
         }
         boolean exists = switch (targetType) {
-            case TARGET_FARM -> farmRepository.findById(targetId).isPresent();
-            case TARGET_ZONE -> fieldZoneRepository.findById(targetId).isPresent();
+            case FARM -> farmDirectory.farmExists(targetId);
+            case ZONE -> farmDirectory.findZone(targetId).isPresent();
             default -> false;
         };
         if (!exists) {
-            throw new NotFoundException(TARGET_FARM.equals(targetType) ? "Farm" : "Zone");
+            throw new NotFoundException(targetType == QuotaTargetType.FARM ? "Farm" : "Zone");
         }
     }
 
-    private WaterQuota getQuotaEntity(UUID quotaId) {
+    private WaterQuota getQuotaEntity(Long quotaId) {
         return quotaRepository.findById(quotaId)
                 .orElseThrow(() -> new NotFoundException("WaterQuota"));
     }

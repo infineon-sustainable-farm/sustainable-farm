@@ -55,7 +55,7 @@ public class YieldComparisonController {
          @ApiResponse(responseCode = "400", description = "months outside 1 to 24, or from not in the yyyy-MM format")
    })
    public ResponseEntity<YieldComparisonResponse> getYieldComparison(
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "Raw block value as stored, for example \"A\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Parameter(description = "First month, as yyyy-MM; January of the current year by default") @RequestParam(name = "from", required = false) YearMonth from,
          @Valid @ParameterObject YieldForecastMonths window) {

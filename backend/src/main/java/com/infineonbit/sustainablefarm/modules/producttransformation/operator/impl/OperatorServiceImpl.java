@@ -1,20 +1,28 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.impl;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.service.OperatorService;
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service Implementation for Operator Entity
  * Personnel data - Supporting Entity
  * 
+ * The operator is the product transformation role of a person of the staff referential
+ * ({@code modules.staff.api.PersonDirectory}): the name is the person's, the active status
+ * is the operator's own.
+ *
  * Business Rules:
  * - Only ACTIVE operators can be assigned
  * - Operators must be certified for assigned role
@@ -29,91 +37,115 @@ import java.util.List;
 public class OperatorServiceImpl implements OperatorService {
 
     private final OperatorRepository operatorRepository;
+    private final PersonDirectory personDirectory;
 
     @Autowired
-    public OperatorServiceImpl(OperatorRepository operatorRepository) {
+    public OperatorServiceImpl(OperatorRepository operatorRepository, PersonDirectory personDirectory) {
         this.operatorRepository = operatorRepository;
+        this.personDirectory = personDirectory;
     }
 
+    /**
+     * Creates the operator role of an existing person of the people directory (the person is
+     * never created nor renamed here). A person holds one operator role at most.
+     */
     @Override
     public Operator createOperator(Operator operator) {
         // Business Rule: Default to ACTIVE status if not set
         if (operator.getActiveStatus() == null) {
             operator.setActiveStatus(ActiveStatus.ACTIVE);
         }
-        return operatorRepository.save(operator);
+        Long personId = operator.getPersonId();
+        PersonDto person = personDirectory.findById(personId).orElseThrow(
+                () -> new IllegalArgumentException("Person " + personId + " not found in the people directory"));
+        if (operatorRepository.existsByPersonId(personId)) {
+            throw new ConflictException("Person " + personId + " already holds an operator role");
+        }
+        return withPerson(operatorRepository.save(operator), person);
     }
 
+    /** Updates the role attributes; the person (name) belongs to the people directory and is not changed. */
     @Override
     public Operator updateOperator(String operatorId, Operator operator) {
-        Operator existingOperator = getOperatorById(operatorId);
-        
+        Operator existingOperator = operatorRepository.findByOperatorId(operatorId)
+                .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operatorId));
+
         // Update fields
-        existingOperator.setOperatorName(operator.getOperatorName());
         existingOperator.setRole(operator.getRole());
         existingOperator.setCertifications(operator.getCertifications());
-        existingOperator.setActiveStatus(operator.getActiveStatus());
         existingOperator.setHireDate(operator.getHireDate());
-        
-        return operatorRepository.save(existingOperator);
+        if (operator.getActiveStatus() != null) {
+            existingOperator.setActiveStatus(operator.getActiveStatus());
+        }
+        return withPerson(operatorRepository.save(existingOperator));
     }
 
+    /** Deletes the operator role; the person stays in the staff referential. */
     @Override
     public void deleteOperator(String operatorId) {
-        if (!operatorRepository.existsById(operatorId)) {
+        if (!operatorRepository.existsByOperatorId(operatorId)) {
             throw new IllegalArgumentException("Operator not found with ID: " + operatorId);
         }
-        operatorRepository.deleteById(operatorId);
+        operatorRepository.deleteByOperatorId(operatorId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Operator getOperatorById(String operatorId) {
-        return operatorRepository.findById(operatorId)
+        return operatorRepository.findByOperatorId(operatorId)
+                .map(this::withPerson)
                 .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + operatorId));
     }
 
     @Override
     @Transactional(readOnly = true)
+    public java.util.Optional<Operator> findOperatorById(String operatorId) {
+        return operatorRepository.findByOperatorId(operatorId).map(this::withPerson);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Operator> getAllOperators() {
-        return operatorRepository.findAll();
+        return withPeople(operatorRepository.findAll());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Operator> getOperatorsByRole(Role role) {
-        return operatorRepository.findByRole(role);
+        return withPeople(operatorRepository.findByRole(role));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Operator> getOperatorsByStatus(ActiveStatus status) {
-        return operatorRepository.findByActiveStatus(status);
+        return withStatus(operatorRepository.findAll(), status);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Operator> getActiveOperatorsByRole(Role role) {
         // Business Rule: Only ACTIVE operators can be assigned
-        return operatorRepository.findActiveByRole(role);
+        return withStatus(operatorRepository.findByRole(role), ActiveStatus.ACTIVE);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Operator> getActiveQcInspectors() {
-        return operatorRepository.findActiveQcInspectors();
+        return getActiveOperatorsByRole(Role.QC_INSPECTOR);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Operator> getActiveAuditors() {
-        return operatorRepository.findActiveAuditors();
+        return getActiveOperatorsByRole(Role.AUDITOR);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean isOperatorActive(String operatorId) {
-        return operatorRepository.isOperatorActive(operatorId);
+        return operatorRepository.findByOperatorId(operatorId)
+                .map(operator -> operator.getActiveStatus() == ActiveStatus.ACTIVE)
+                .orElse(false);
     }
 
     @Override
@@ -126,26 +158,46 @@ public class OperatorServiceImpl implements OperatorService {
     public Operator updateActiveStatus(String operatorId, ActiveStatus status) {
         Operator operator = getOperatorById(operatorId);
         operator.setActiveStatus(status);
-        return operatorRepository.save(operator);
+        return withPerson(operatorRepository.save(operator));
     }
 
     @Override
     public Operator addCertification(String operatorId, String certification) {
         Operator operator = getOperatorById(operatorId);
         String existingCertifications = operator.getCertifications();
-        
+
         if (existingCertifications == null || existingCertifications.isEmpty()) {
             operator.setCertifications(certification);
         } else {
             operator.setCertifications(existingCertifications + ", " + certification);
         }
-        
-        return operatorRepository.save(operator);
+
+        return withPerson(operatorRepository.save(operator));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Operator> getOperatorsByCertification(String certification) {
-        return operatorRepository.findByCertification(certification);
+        return withPeople(operatorRepository.findByCertification(certification));
+    }
+
+    private List<Operator> withStatus(List<Operator> operators, ActiveStatus status) {
+        return withPeople(operators).stream().filter(operator -> operator.getActiveStatus() == status).toList();
+    }
+
+    private Operator withPerson(Operator operator) {
+        return withPerson(operator, personDirectory.findById(operator.getPersonId()).orElse(null));
+    }
+
+    private List<Operator> withPeople(List<Operator> operators) {
+        Map<Long, PersonDto> people = personDirectory.findAllById(operators.stream().map(Operator::getPersonId).toList());
+        operators.forEach(operator -> withPerson(operator, people.get(operator.getPersonId())));
+        return operators;
+    }
+
+    /** Fills the name of an operator from its person. */
+    private static Operator withPerson(Operator operator, PersonDto person) {
+        operator.setOperatorName(person == null ? null : person.fullName());
+        return operator;
     }
 }

@@ -24,7 +24,7 @@ import java.util.List;
  * @version 1.0.0
  */
 @RestController("prodTransDashboardController")
-@RequestMapping({"/api/product-transformation/dashboard", "/api/producttransformation/dashboard"})
+@RequestMapping("/api/product-transformation/dashboard")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Dashboard", description = "Dashboard KPI endpoints for Product Transformation")

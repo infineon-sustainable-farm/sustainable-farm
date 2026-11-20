@@ -1,60 +1,26 @@
+import { useTranslation } from "react-i18next";
+import { Card, Table } from "../../../shared/ui";
 import { formatBlock, formatDate, formatNumber, formatText } from "../utils/format";
 
-// The mock-up's columns that the API records, in its order ("Actual Harvest" is
-// the harvest date), with Source last. A harvest recorded before lot numbers
-// existed has none and shows "—".
-const COLUMNS = [
-    "Block",
-    "Variety",
-    "Harvest Date",
-    "Quantity (kg)",
-    "Lot No.",
-    "Source",
-];
+const CELL = "whitespace-nowrap";
 
-/** Recorded harvests, one row per picking, in the order the API sends them. */
+/**
+ * Recorded harvests, one row per picking, in the order the API sends them. A
+ * harvest recorded before lot numbers existed has none and shows a dash.
+ */
 export default function HarvestsTable({ harvests }) {
+    const { t } = useTranslation("plants");
+    const columns = [
+        { key: "block", header: t("harvest.harvestsTable.block"), className: CELL, cell: (h) => formatBlock(h.blockCode) },
+        { key: "variety", header: t("harvest.harvestsTable.variety"), className: CELL, cell: (h) => formatText(h.varietyName) },
+        { key: "date", header: t("harvest.harvestsTable.harvestDate"), className: CELL, cell: (h) => formatDate(h.harvestDate) },
+        { key: "quantity", align: "right", header: t("harvest.harvestsTable.quantity"), className: CELL, cell: (h) => formatNumber(h.quantityKg) },
+        { key: "lot", header: t("harvest.harvestsTable.lot"), className: CELL, cell: (h) => formatText(h.lotNumber) },
+        { key: "source", header: t("harvest.harvestsTable.source"), className: CELL, cell: (h) => formatText(h.source) },
+    ];
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {harvests.map((harvest) => (
-                        <tr key={harvest.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 font-semibold text-gray-800">
-                                {formatBlock(harvest.blockCode)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(harvest.varietyName)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatDate(harvest.harvestDate)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatNumber(harvest.quantityKg)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(harvest.lotNumber)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(harvest.source)}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Card>
+            <Table columns={columns} rows={harvests} caption={t("harvest.harvests.title")} className="text-sm" />
+        </Card>
     );
 }

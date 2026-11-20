@@ -1,15 +1,14 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import java.time.Instant;
-import java.util.UUID;
 
 public record WaterConsumptionUpdateRequest(
-        UUID farmId,
-        UUID sourceId,
+        Long farmId,
+        Long sourceId,
         Double consumptionLiters,
         Instant consumptionDate,
-        UUID irrigationId,
-        UUID zoneId,
+        Long irrigationId,
+        Long zoneId,
         String lotId,
         String activity) {
 }

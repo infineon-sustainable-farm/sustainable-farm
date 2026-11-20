@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
 import com.infineonbit.sustainablefarm.modules.plants.entity.HealthInspection;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlockIds;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -15,21 +16,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ActiveProfiles("test")
 public class HealthInspectionRepositoryTest {
 
+    private final TestBlockIds blocks = new TestBlockIds();
+
     @Autowired
     private HealthInspectionRepository healthInspectionRepository;
 
-    private HealthInspection inspection(Integer farmId, String blockCode, LocalDate inspectedOn) {
+    private HealthInspection inspection(Long farmId, String blockCode, LocalDate inspectedOn) {
         HealthInspection inspection = new HealthInspection();
-        inspection.setFarmId(farmId);
-        inspection.setBlockCode(blockCode);
+        inspection.setBlockId(blocks.of(farmId, blockCode));
         inspection.setInspectedOn(inspectedOn);
         inspection.setHealthScorePct(60);
         inspection.setSource("user_entry");
         return healthInspectionRepository.save(inspection);
     }
 
-    private List<Long> find(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return healthInspectionRepository.findByOptionalFilters(farmId, blockCode, from, to).stream()
+    private List<Long> find(Long farmId, String blockCode, LocalDate from, LocalDate to) {
+        return healthInspectionRepository.findByOptionalFilters(blocks.all(farmId, blockCode), blocks.ids(farmId, blockCode),
+                        from, to).stream()
                 .map(HealthInspection::getId)
                 .toList();
     }
@@ -65,10 +68,10 @@ public class HealthInspectionRepositoryTest {
     void findByOptionalFilters_shouldTellANullFarmFromFarm1() {
         // Arrange
         HealthInspection noFarm = inspection(null, "C", LocalDate.of(2026, 9, 1));
-        HealthInspection farm1 = inspection(1, "C", LocalDate.of(2026, 9, 2));
+        HealthInspection farm1 = inspection(1L, "C", LocalDate.of(2026, 9, 2));
         // Act & Assert: no filter means every farm; farm 1 leaves out the rows without a farm
         assertEquals(List.of(noFarm.getId(), farm1.getId()), find(null, null, null, null));
-        assertEquals(List.of(farm1.getId()), find(1, null, null, null));
-        assertEquals(List.of(), find(2, null, null, null));
+        assertEquals(List.of(farm1.getId()), find(1L, null, null, null));
+        assertEquals(List.of(), find(2L, null, null, null));
     }
 }

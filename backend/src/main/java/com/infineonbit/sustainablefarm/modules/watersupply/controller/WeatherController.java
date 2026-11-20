@@ -1,7 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.controller;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.service.WeatherCodeMapper;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.ExternalServiceException;
+import com.infineonbit.sustainablefarm.modules.watersupply.service.WeatherCodeMapper;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import org.springframework.web.client.RestClientException;
  * site.</p>
  */
 @RestController
-@RequestMapping("/api/weather")
+@RequestMapping("/api/water-supply/weather")
 public class WeatherController {
     private final RestClient restClient;
     private final double defaultLatitude;

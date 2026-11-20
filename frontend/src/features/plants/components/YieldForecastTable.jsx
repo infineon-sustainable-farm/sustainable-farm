@@ -1,20 +1,8 @@
-import {
-    formatBlock,
-    formatKilograms,
-    formatMonth,
-    formatNumber,
-    formatText,
-} from "../utils/format";
+import { useTranslation } from "react-i18next";
+import { Card, Table } from "../../../shared/ui";
+import { formatBlock, formatKilograms, formatMonth, formatNumber, formatText } from "../utils/format";
 
-const COLUMNS = [
-    "Month",
-    "Block",
-    "Variety",
-    "Trees",
-    "Phase",
-    "Expected yield",
-    "Sources",
-];
+const CELL = "whitespace-nowrap";
 
 /**
  * The forecast line by line: one row per month and variety with a yield above
@@ -22,57 +10,42 @@ const COLUMNS = [
  * sends, one per reference value.
  */
 export default function YieldForecastTable({ entries }) {
+    const { t } = useTranslation("plants");
+    const columns = [
+        { key: "month", header: t("harvest.forecastTable.month"), className: CELL, cell: (e) => formatMonth(e.month) },
+        { key: "block", header: t("harvest.forecastTable.block"), className: CELL, cell: (e) => formatBlock(e.blockCode) },
+        { key: "variety", header: t("harvest.forecastTable.variety"), className: CELL, cell: (e) => formatText(e.varietyName) },
+        { key: "trees", align: "right", header: t("harvest.forecastTable.trees"), className: CELL, cell: (e) => formatNumber(e.treeCount) },
+        { key: "phase", header: t("harvest.forecastTable.phase"), className: CELL, cell: (e) => formatText(e.growthPhase) },
+        {
+            key: "expected", align: "right",
+            header: t("harvest.forecastTable.expectedYield"),
+            className: CELL,
+            cell: (e) => formatKilograms(e.expectedKg),
+        },
+        {
+            key: "sources",
+            header: t("harvest.forecastTable.sources"),
+            // The only cell allowed to wrap: three sources on one line would push the table into a
+            // sideways scroll even on a wide screen.
+            className: "min-w-72",
+            cell: (e) =>
+                t("harvest.forecastTable.sourcesValue", {
+                    yield: formatText(e.yieldSource),
+                    season: formatText(e.seasonSource),
+                    share: formatText(e.phaseShareSource),
+                }),
+        },
+    ];
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className="border-b border-gray-200 bg-gray-50 px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase"
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {entries.map((entry) => (
-                        <tr
-                            key={`${entry.month}-${entry.varietyId}`}
-                            className="border-b border-gray-100 last:border-b-0"
-                        >
-                            <td className="px-4 py-3 font-semibold text-gray-800">
-                                {formatMonth(entry.month)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatBlock(entry.blockCode)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.varietyName)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatNumber(entry.treeCount)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(entry.growthPhase)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatKilograms(entry.expectedKg)}
-                            </td>
-                            {/* The only cell allowed to wrap: three sources on one line would push
-                                the table into a sideways scroll even on a wide screen. */}
-                            <td className="min-w-72 px-4 py-3 whitespace-normal text-gray-700">
-                                {`Yield: ${formatText(entry.yieldSource)} · `
-                                    + `Season: ${formatText(entry.seasonSource)} · `
-                                    + `Phase share: ${formatText(entry.phaseShareSource)}`}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Card>
+            <Table
+                columns={columns}
+                rows={entries}
+                getRowKey={(e) => `${e.month}-${e.varietyId}`}
+                caption={t("harvest.forecast.title")}
+                className="text-sm"
+            />
+        </Card>
     );
 }

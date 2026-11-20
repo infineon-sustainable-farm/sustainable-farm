@@ -45,7 +45,7 @@ class BriefingControllerTest {
         when(registrationService.getBriefingForRegistration(100L))
                 .thenThrow(new ResourceNotFoundException("not found"));
 
-        mockMvc.perform(get("/api/v1/registrations/100/briefing"))
+        mockMvc.perform(get("/api/visitor-management/registrations/100/briefing"))
                 .andExpect(status().isNotFound());
     }
 
@@ -54,7 +54,7 @@ class BriefingControllerTest {
         when(registrationService.getBriefingForRegistration(100L))
                 .thenReturn(buildResponse(200L, BriefingStatus.PENDING));
 
-        mockMvc.perform(get("/api/v1/registrations/100/briefing"))
+        mockMvc.perform(get("/api/visitor-management/registrations/100/briefing"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.staffMember").value("Guard Camille"));
@@ -65,15 +65,15 @@ class BriefingControllerTest {
         when(registrationService.deliverBriefing(eq(100L), any()))
                 .thenThrow(new BusinessRuleException("No briefing"));
 
-        mockMvc.perform(patch("/api/v1/registrations/100/briefing/deliver")
+        mockMvc.perform(patch("/api/visitor-management/registrations/100/briefing/deliver")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"staffMember\":\"Camille\",\"signature\":\"abc\"}"))
+                        .content("{\"staffMemberPersonId\":7,\"signature\":\"abc\"}"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
     void deliver_missingStaffMember_returns400() throws Exception {
-        mockMvc.perform(patch("/api/v1/registrations/100/briefing/deliver")
+        mockMvc.perform(patch("/api/visitor-management/registrations/100/briefing/deliver")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"signature\":\"abc\"}"))
                 .andExpect(status().isBadRequest());
@@ -84,9 +84,9 @@ class BriefingControllerTest {
         when(registrationService.deliverBriefing(eq(100L), any()))
                 .thenReturn(buildResponse(200L, BriefingStatus.DONE));
 
-        mockMvc.perform(patch("/api/v1/registrations/100/briefing/deliver")
+        mockMvc.perform(patch("/api/visitor-management/registrations/100/briefing/deliver")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"staffMember\":\"Camille\",\"signature\":\"abc\"}"))
+                        .content("{\"staffMemberPersonId\":7,\"signature\":\"abc\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DONE"));
     }

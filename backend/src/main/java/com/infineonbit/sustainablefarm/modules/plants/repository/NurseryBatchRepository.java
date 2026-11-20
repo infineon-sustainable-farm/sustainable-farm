@@ -19,7 +19,7 @@ public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long
      *
      * <p>A {@code null} farm is a value here, not a missing filter: it matches
      * only the batches without a farm, as in
-     * {@link VarietyRepository#findByFarmBlockAndName}. The code must match
+     * {@link BlockVarietyRepository#findByFarmBlockAndName}. The code must match
      * exactly; it is stored normalized ({@code "P1"}).
      *
      * @param farmId    farm identifier, or {@code null} for the batches without a farm
@@ -28,11 +28,11 @@ public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long
      */
     @Query("""
             SELECT b FROM NurseryBatch b
-            WHERE ((CAST(:farmId AS Integer) IS NULL AND b.farmId IS NULL) OR b.farmId = :farmId)
+            WHERE ((CAST(:farmId AS Long) IS NULL AND b.farmId IS NULL) OR b.farmId = :farmId)
               AND b.batchCode = :batchCode
             ORDER BY b.id ASC
             """)
-    List<NurseryBatch> findByFarmAndCode(@Param("farmId") Integer farmId,
+    List<NurseryBatch> findByFarmAndCode(@Param("farmId") Long farmId,
                                          @Param("batchCode") String batchCode);
 
     /**
@@ -47,10 +47,10 @@ public interface NurseryBatchRepository extends JpaRepository<NurseryBatch, Long
      */
     @Query("""
             SELECT b FROM NurseryBatch b
-            WHERE (CAST(:farmId AS Integer) IS NULL OR b.farmId = :farmId)
+            WHERE (CAST(:farmId AS Long) IS NULL OR b.farmId = :farmId)
             ORDER BY b.startedOn ASC, b.id ASC
             """)
-    List<NurseryBatch> findByOptionalFarm(@Param("farmId") Integer farmId);
+    List<NurseryBatch> findByOptionalFarm(@Param("farmId") Long farmId);
 
     /**
      * Returns a batch and locks its row until the end of the transaction.

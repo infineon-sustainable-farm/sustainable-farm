@@ -22,6 +22,6 @@ public record MaintenanceScheduleCreationRequest(
         @NotNull(message = "Next due date is required")
         LocalDate nextDue,
 
-        @Size(max = 60, message = "Operator must be 60 characters or fewer")
-        String operator
+        /** Person of the people directory (GET /api/staff/persons); {@code null} for none. */
+        Long operatorPersonId
 ) {}

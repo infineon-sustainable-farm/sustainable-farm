@@ -1,14 +1,17 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Transient;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,30 +27,28 @@ import java.time.LocalDate;
  * was checked. The block needs no recorded planting, since termites can be seen
  * before the trees go in, as for a fertilizer application.
  *
- * <p>A block is the (farm, block) pair: a NULL farm is a farm of its own, as in
- * the planting lookup.
+ * <p>The block is a {@code farm.block} row, which gives the farm, as for a
+ * planting.
  *
  * <p>The table and its columns follow the naming of the other modules: English
  * snake_case and a singular table name.
  */
 @Entity
-@Table(name = "health_inspection")
+@EntityListeners(BlockLabelListener.class)
+@Table(name = "health_inspection", indexes = @Index(name = "idx_health_inspection_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class HealthInspection {
+public class HealthInspection extends BaseEntity implements BlockRow {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    /** Inspected block, a {@code farm.block} row (foreign key {@code fk_health_inspection_block}). */
+    @Column(name = "block_id", nullable = false)
+    private Long blockId;
 
-    @Column(name = "farm_id")
-    private Integer farmId;
-
-    /** Block code as stored, trimmed and upper-cased, for example {@code "C"}. */
-    @Column(name = "block_code", nullable = false)
-    private String blockCode;
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink block = new BlockLink();
 
     @Column(name = "inspected_on", nullable = false)
     private LocalDate inspectedOn;
@@ -56,8 +57,9 @@ public class HealthInspection {
     @Column(name = "health_score_pct", nullable = false)
     private Integer healthScorePct;
 
-    @Column(name = "observer")
-    private String observer;
+    /** Person of the people directory who inspected (staff module), or {@code null}. */
+    @Column(name = "observer_person_id")
+    private Long observerPersonId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "method", length = 30)
@@ -69,4 +71,41 @@ public class HealthInspection {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** Farm of the block, read from the farm referential; {@code null} without a block. */
+    public Long getFarmId() {
+        return block.label(blockId).farmId();
+    }
+
+    /** Sets the farm by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setFarmId(Long farmId) {
+        block.setFarmId(farmId);
+    }
+
+    /** Code of the block, for example {@code "C"}, read from the farm referential. */
+    public String getBlockCode() {
+        return block.label(blockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setBlockCode(String blockCode) {
+        block.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignBlock(Long blockId, BlockLabel label) {
+        this.blockId = blockId;
+        block.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        block.useSource(source);
+    }
+
+    @PrePersist
+    @PreUpdate
+    void requireResolvedBlock() {
+        block.requireResolved("health inspection");
+    }
 }

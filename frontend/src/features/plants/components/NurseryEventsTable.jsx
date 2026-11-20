@@ -1,68 +1,31 @@
-import { formatBlock, formatCode, formatDate, formatNumber, formatText } from "../utils/format";
+import { useTranslation } from "react-i18next";
+import { Table } from "../../../shared/ui";
+import { formatBlock, formatDate, formatEnum, formatNumber, formatText } from "../utils/format";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
 
-// Each column holds what one event type records; the others show the dash.
-const COLUMNS = [
-    "Date",
-    "Batch",
-    "Event",
-    "Stage",
-    "Quantity",
-    "Block",
-    "Reason",
-    "Source",
-];
-
-/** Nursery events, one row per event, in the order the API sends them. */
-export default function NurseryEventsTable({ events }) {
-    return (
-        <div className={TABLE_CARD}>
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className={TABLE_HEAD}
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {events.map((event) => (
-                        <tr key={event.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatDate(event.eventDate)}
-                            </td>
-                            <td className="px-4 py-3 font-semibold text-gray-800">
-                                {formatText(event.batchCode)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatCode(event.eventType)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                <Value>{formatCode(event.stage)}</Value>
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                <Value>{formatNumber(event.quantity)}</Value>
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                <Value>{formatBlock(event.blockCode)}</Value>
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                <Value>{formatText(event.reason)}</Value>
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(event.source)}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+/**
+ * Nursery events, one row per event, in the order the API sends them. Each
+ * column holds what one event type records; the others show the dash.
+ */
+export default function NurseryEventsTable({ events = [], loading = false }) {
+    const { t } = useTranslation("plants");
+    const header = (key) => t(`nursery.history.columns.${key}`);
+    const columns = [
+        { key: "eventDate", header: header("date"), cell: (event) => formatDate(event.eventDate) },
+        { key: "batchCode", header: header("batch"), cell: (event) => formatText(event.batchCode) },
+        { key: "eventType", header: header("event"), cell: (event) => formatEnum("nurseryEvent", event.eventType) },
+        {
+            key: "stage",
+            header: header("stage"),
+            cell: (event) => {
+                const stage = formatEnum("nurseryStage", event.stage);
+                return <Value>{stage}</Value>;
+            },
+        },
+        { key: "quantity", align: "right", header: header("quantity"), cell: (event) => <Value>{formatNumber(event.quantity)}</Value> },
+        { key: "blockCode", header: header("block"), cell: (event) => <Value>{formatBlock(event.blockCode)}</Value> },
+        { key: "reason", header: header("reason"), cell: (event) => <Value>{formatText(event.reason)}</Value> },
+        { key: "source", header: header("source"), cell: (event) => formatText(event.source) },
+    ];
+    return <Table caption={t("nursery.history.caption")} columns={columns} rows={events} loading={loading} />;
 }

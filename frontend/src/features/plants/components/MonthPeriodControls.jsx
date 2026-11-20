@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL } from "./plantsStyles";
+import { useTranslation } from "react-i18next";
+import { CircleAlert } from "lucide-react";
+import { Input, Select } from "../../../shared/ui";
 
 const MONTHS_OPTIONS = [6, 12, 18, 24];
 
@@ -9,6 +11,7 @@ const MONTHS_OPTIONS = [6, 12, 18, 24];
  */
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
+const LABEL_CLASS = "text-sm font-medium";
 
 /**
  * Period of a monthly read: a first month and a number of months. Until a
@@ -21,10 +24,11 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
  * "From" apart.
  */
 export default function MonthPeriodControls({ idPrefix, titleId, answeredFrom, onFromChange, months, onMonthsChange }) {
+    const { t } = useTranslation("plants");
     // What the "From" field holds; null until the user changes it.
     const [fromInput, setFromInput] = useState(null);
 
-    const fromError = fromInput === null || MONTH_PATTERN.test(fromInput) ? null : "Use the format YYYY-MM.";
+    const fromError = fromInput === null || MONTH_PATTERN.test(fromInput) ? null : t("period.fromFormat");
 
     function changeFrom(value) {
         setFromInput(value);
@@ -32,48 +36,53 @@ export default function MonthPeriodControls({ idPrefix, titleId, answeredFrom, o
     }
 
     return (
-        <div className={`flex flex-wrap items-start gap-x-6 gap-y-3 px-4 py-3 ${CARD_FRAME}`}>
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-3 rounded-tile border border-border-subtle bg-surface-raised px-4 py-3">
             <div>
                 <div className="flex items-center gap-3">
-                    <label id={`${idPrefix}-from-label`} htmlFor={`${idPrefix}-from`} className={FIELD_LABEL}>
-                        From
+                    <label id={`${idPrefix}-from-label`} htmlFor={`${idPrefix}-from`} className={LABEL_CLASS}>
+                        {t("period.from")}
                     </label>
-                    <input
-                        id={`${idPrefix}-from`}
-                        type="month"
-                        value={fromInput ?? answeredFrom ?? ""}
-                        onChange={(event) => changeFrom(event.target.value)}
-                        aria-labelledby={`${titleId} ${idPrefix}-from-label`}
-                        className={FIELD_INPUT}
-                        {...(fromError
-                            ? { "aria-invalid": true, "aria-describedby": `${idPrefix}-from-error` }
-                            : {})}
-                    />
+                    <div>
+                        <Input
+                            id={`${idPrefix}-from`}
+                            type="month"
+                            value={fromInput ?? answeredFrom ?? ""}
+                            onChange={(event) => changeFrom(event.target.value)}
+                            aria-labelledby={`${titleId} ${idPrefix}-from-label`}
+                           
+                            {...(fromError
+                                ? { "aria-invalid": true, "aria-describedby": `${idPrefix}-from-error` }
+                                : {})}
+                        />
+                    </div>
                 </div>
                 {fromError && (
-                    <p id={`${idPrefix}-from-error`} className="mt-1 text-xs text-error">
-                        {fromError}
+                    <p id={`${idPrefix}-from-error`} className="mt-1 flex items-center gap-1 text-xs text-error-fg">
+                        <CircleAlert size={14} aria-hidden="true" className="shrink-0" />
+                        <span>{fromError}</span>
                     </p>
                 )}
             </div>
 
             <div className="flex items-center gap-3">
-                <label id={`${idPrefix}-months-label`} htmlFor={`${idPrefix}-months`} className={FIELD_LABEL}>
-                    Months
+                <label id={`${idPrefix}-months-label`} htmlFor={`${idPrefix}-months`} className={LABEL_CLASS}>
+                    {t("period.months")}
                 </label>
-                <select
-                    id={`${idPrefix}-months`}
-                    value={months}
-                    onChange={(event) => onMonthsChange(Number(event.target.value))}
-                    aria-labelledby={`${titleId} ${idPrefix}-months-label`}
-                    className={FIELD_INPUT}
-                >
-                    {MONTHS_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                            {option}
-                        </option>
-                    ))}
-                </select>
+                <div>
+                    <Select
+                        id={`${idPrefix}-months`}
+                        value={months}
+                        onChange={(event) => onMonthsChange(Number(event.target.value))}
+                        aria-labelledby={`${titleId} ${idPrefix}-months-label`}
+                       
+                    >
+                        {MONTHS_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </Select>
+                </div>
             </div>
         </div>
     );

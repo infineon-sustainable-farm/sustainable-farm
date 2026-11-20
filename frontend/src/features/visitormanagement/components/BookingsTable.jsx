@@ -1,19 +1,15 @@
-import StatusBadge from "./StatusBadge";
-import { formatDateShort, formatTimeRange } from "../utils/format";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
-
-const TINY_BUTTON =
-    "rounded border border-[#C3D8D4] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-[#ECFAF7] disabled:opacity-60";
-const TINY_DANGER =
-    "rounded border border-[#EDC9C9] bg-white px-1.5 py-0.5 text-[11px] font-semibold text-error hover:bg-[#FBEAEA] disabled:opacity-60";
-
-const COLUMNS = ["Ref", "Activity", "Date / Slot", "People", "Payment", "Status", "Actions"];
+import { Banknote, CircleCheck, Check, Pencil, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { IconButton, Table } from "../../../shared/ui";
+import StatusTag from "./StatusTag";
+import { useVisitorFormat } from "../utils/format";
+import { useLabels } from "../utils/labels";
 
 /*
- * The transitions the API accepts, per row. A booking must be PAID before it
- * can be confirmed, so an unpaid pending booking offers "pay", not "confirm" —
- * offering confirm would guarantee a 422. Completing requires CONFIRMED, and
- * cancelling is only possible while the booking is still active.
+ * The transitions the API accepts, per row. A booking must be PAID before it can be confirmed,
+ * so an unpaid pending booking offers "pay", not "confirm": offering confirm would guarantee a
+ * 422. Completing requires CONFIRMED, and cancelling is only possible while the booking is still
+ * active.
  */
 function rowActions(booking) {
     const actions = [];
@@ -26,99 +22,64 @@ function rowActions(booking) {
     return actions;
 }
 
-function paymentLabel(booking) {
-    const method = booking.paymentMethod ? formatEnumLabel(booking.paymentMethod) : "—";
-    const status = booking.paymentStatus ? formatEnumLabel(booking.paymentStatus) : "";
-    return status ? `${method} · ${status}` : method;
-}
+const ACTION_ICONS = { pay: Banknote, confirm: Check, complete: CircleCheck, cancel: X, edit: Pencil };
 
-export default function BookingsTable({
-    bookings,
-    pendingAction,
-    actionError,
-    onAction,
-    onEdit,
-}) {
+export default function BookingsTable({ bookings, pendingAction, actionError, onAction, onEdit }) {
+    const { t } = useTranslation("visitormanagement");
+    const format = useVisitorFormat();
+    const labels = useLabels();
+
+    function paymentLabel(booking) {
+        const method = booking.paymentMethod ? labels.enum(booking.paymentMethod) : format.none;
+        if (!booking.paymentStatus) return method;
+        return t("booking.table.payment", { method, status: labels.enum(booking.paymentStatus) });
+    }
+
+    const columns = [
+        { key: "reference", header: t("booking.table.ref"), className: "whitespace-nowrap" },
+        { key: "activityName", header: t("booking.table.activity") },
+        {
+            key: "slot",
+            header: t("booking.table.dateSlot"),
+            className: "whitespace-nowrap",
+            cell: (booking) =>
+                t("booking.table.slot", {
+                    date: format.dateShort(booking.slotDate),
+                    time: format.timeRange(booking.slotStartTime, booking.slotEndTime),
+                }),
+        },
+        { key: "peopleCount", header: t("booking.table.people") },
+        { key: "payment", header: t("booking.table.paymentHeader"), className: "whitespace-nowrap", cell: paymentLabel },
+        { key: "status", header: t("booking.table.status"), cell: (booking) => <StatusTag value={booking.status} /> },
+    ];
+
     return (
-        <div className="overflow-x-auto">
-            <table className="vm-table w-full border-collapse text-sm">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className="border-b-2 border-line bg-[#F4F8F8] px-3 py-2.5 text-left text-xs font-semibold tracking-wide whitespace-nowrap text-ink uppercase"
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {bookings.length === 0 && (
-                        <tr>
-                            <td colSpan={COLUMNS.length} className="px-3 py-8 text-center text-muted">
-                                No bookings yet.
-                            </td>
-                        </tr>
-                    )}
-                    {bookings.map((booking) => {
-                        const isPending = pendingAction?.id === booking.id;
-                        const failed = actionError?.id === booking.id;
-                        return (
-                            <tr key={booking.id} className="border-b border-line align-top">
-                                <td className="px-3 py-2.5 font-medium whitespace-nowrap text-ink">
-                                    {booking.reference}
-                                </td>
-                                <td className="px-3 py-2.5 text-ink">{booking.activityName}</td>
-                                <td className="px-3 py-2.5 whitespace-nowrap text-ink">
-                                    {formatDateShort(booking.slotDate)}
-                                    {" · "}
-                                    {formatTimeRange(booking.slotStartTime, booking.slotEndTime)}
-                                </td>
-                                <td className="px-3 py-2.5 text-ink">{booking.peopleCount}</td>
-                                <td className="px-3 py-2.5 whitespace-nowrap text-ink">
-                                    {paymentLabel(booking)}
-                                </td>
-                                <td className="px-3 py-2.5">
-                                    <StatusBadge value={booking.status} />
-                                </td>
-                                <td className="px-3 py-2.5">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                        {rowActions(booking).map((action) => (
-                                            <button
-                                                key={action}
-                                                type="button"
-                                                disabled={isPending}
-                                                onClick={() =>
-                                                    action === "edit"
-                                                        ? onEdit(booking)
-                                                        : onAction(booking, action)
-                                                }
-                                                className={
-                                                    action === "cancel" ? TINY_DANGER : TINY_BUTTON
-                                                }
-                                            >
-                                                {action === "pay" && "₣ pay"}
-                                                {action === "confirm" && "✓ confirm"}
-                                                {action === "complete" && "☑ complete"}
-                                                {action === "cancel" && "✕ cancel"}
-                                                {action === "edit" && "✎ edit"}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {failed && (
-                                        <p className="mt-1 max-w-[260px] text-[11px] text-error">
-                                            {actionError.message}
-                                        </p>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
+        <Table
+            caption={t("booking.bookingsTitle")}
+            columns={columns}
+            rows={bookings}
+            emptyMessage={t("booking.table.empty")}
+            rowActions={(booking) => {
+                const isPending = pendingAction?.id === booking.id;
+                const failed = actionError?.id === booking.id;
+                return (
+                    <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-1">
+                            {rowActions(booking).map((action) => (
+                                <IconButton
+                                    key={action}
+                                    icon={ACTION_ICONS[action]}
+                                    label={t(`booking.actions.${action}`)}
+                                    tone={action === "cancel" ? "danger" : "primary"}
+                                    disabled={isPending}
+                                    onClick={() => (action === "edit" ? onEdit(booking) : onAction(booking, action))}
+                                />
+                            ))}
+                        </div>
+                        {failed && <p className="max-w-xs text-xs text-error-fg">{actionError.message}</p>}
+                    </div>
+                );
+            }}
+        />
     );
 }

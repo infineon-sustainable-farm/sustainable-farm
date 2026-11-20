@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     useAvailability,
@@ -11,13 +12,15 @@ import { useUpdateVisitor, useVisitors } from "../../hooks/useVisitors";
 import { useRegisterEventVisitor, useEvents } from "../../hooks/useEvents";
 import { useActivities, useCreateBooking } from "../../hooks/useBooking";
 import { useTimeSlots } from "../../hooks/useScheduling";
+import { Button, Modal, PageHeader } from "../../../../shared/ui";
 import { toIsoDate } from "../../utils/format";
-import Modal from "../Modal";
+import { LoadError, LoadingBlock } from "../LoadState";
 import RegistrationForm from "../Forms/RegistrationForm";
 import RegistrationsTable from "../RegistrationsTable";
 import ProspectsSection from "../ProspectsSection";
 
 export default function RegistrationPage() {
+    const { t } = useTranslation("visitormanagement");
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const preselectedEventId = searchParams.get("eventId");
@@ -32,8 +35,8 @@ export default function RegistrationPage() {
     const [showCancelled, setShowCancelled] = useState(false);
 
     useEffect(() => {
-        document.title = "Visitor Registration — Visitor Management";
-    }, []);
+        document.title = t("registration.documentTitle");
+    }, [t]);
 
     const {
         data: registrations,
@@ -71,7 +74,7 @@ export default function RegistrationPage() {
     /*
      * The next date, at or after today, that has at least one live slot. It is
      * offered to the user when the date being edited has no bookable slot
-     * (e.g. today is a closed or empty day), instead of showing a bare error.
+     * (for example today is a closed or empty day), instead of showing a bare error.
      */
     const today = toIsoDate(new Date());
     const nextAvailableDate =
@@ -166,133 +169,93 @@ export default function RegistrationPage() {
         : null;
 
     return (
-        <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
-                <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
-                    Visitor registration
-                </h2>
-
-                <div className="mb-4 flex flex-wrap items-center justify-end gap-4">
-                    <label className="flex items-center gap-2 text-xs text-ink">
-                        <input
-                            type="checkbox"
-                            checked={showCancelled}
-                            onChange={(event) => setShowCancelled(event.target.checked)}
-                            className="h-4 w-4 accent-[#0a8276]"
-                        />
-                        Show cancelled
-                    </label>
-                    <button
-                        type="button"
-                        onClick={openCreate}
-                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
-                    >
-                        + New registration
-                    </button>
-                </div>
-
-                {visitorsError && (
-                    <p className="mt-3 text-xs text-muted">
-                        Visitor details (language, type) could not be loaded — the queue still
-                        works, but editing a visitor is unavailable.
-                    </p>
-                )}
-
-                <h3 className="font-heading mt-6.5 mb-3 text-[17px] font-bold text-ink">
-                    Registered visitors
-                </h3>
-
-                {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading registrations…
-                    </div>
-                )}
-
-                {isError && (
-                    <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
-                        <TriangleAlert size={28} className="text-error" />
-                        <div>
-                            <p className="font-heading text-base font-bold text-ink">
-                                Registrations could not be loaded
-                            </p>
-                            <p className="mt-1 text-sm text-muted">
-                                The request to the server did not succeed.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
-                        >
-                            {isFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
-                )}
-
-                {!isPending && !isError && (
+        <div className="p-6">
+            <PageHeader
+                className="mb-4"
+                title={t("registration.title")}
+                actions={
                     <>
-                        <RegistrationsTable
-                            registrations={visibleRegistrations}
-                            visitorsById={visitorsById}
-                            slotsById={slotsById}
-                            eventsById={eventsById}
-                            pendingAction={pendingAction}
-                            actionError={actionError}
-                            onAction={handleAction}
-                            onEdit={startEdit}
-                        />
-                        <p className="mt-6 text-[11px] text-muted">
-                            The registration is the single source of truth: approve / reject /
-                            check-in / edit per visitor. A confirmed registration triggers the
-                            safety briefing.
-                        </p>
+                        <label className="flex items-center gap-2 text-sm text-text">
+                            <input
+                                type="checkbox"
+                                checked={showCancelled}
+                                onChange={(event) => setShowCancelled(event.target.checked)}
+                                className="h-4 w-4 accent-primary"
+                            />
+                            {t("registration.showCancelled")}
+                        </label>
+                        <Button icon={Plus} onClick={openCreate}>
+                            {t("registration.new")}
+                        </Button>
                     </>
-                )}
+                }
+            />
 
-                <ProspectsSection />
+            {visitorsError && <p className="mb-3 text-xs text-text-muted">{t("registration.visitorsError")}</p>}
 
-                {formOpen && (
-                    <Modal
-                        title={
-                            editing
-                                ? `Edit visitor — ${
-                                      visitorsById.get(editing.visitorId)?.fullName ?? ""
-                                  }`
-                                : "New registration"
-                        }
-                        onClose={resetForm}
-                        widthClass="max-w-3xl"
-                    >
-                        <RegistrationForm
-                            key={formKey}
-                            mode={mode}
-                            onModeChange={changeMode}
-                            date={date}
-                            onDateChange={setDate}
-                            availability={availability ?? []}
-                            availabilityLoading={availabilityLoading}
-                            availabilityError={availabilityError}
-                            onRetryAvailability={refetchAvailability}
-                            nextAvailableDate={nextAvailableDate}
-                            onUseNextDate={(nextDate) => setDate(nextDate)}
-                            events={publishedEvents}
-                            activities={activeActivities}
-                            visitors={visitors ?? []}
-                            preselectedEventId={preselectedEvent}
-                            editingVisitor={
-                                editing ? visitorsById.get(editing.visitorId) : null
-                            }
-                            isSubmitting={formMutation.isPending}
-                            submitError={formMutation.error?.message}
-                            serverFieldErrors={formMutation.error?.data?.fieldErrors}
-                            onSubmit={handleSubmit}
-                            onCancel={resetForm}
-                        />
-                    </Modal>
-                )}
-            </section>
+            <h2 className="mt-6 mb-3 text-lg font-semibold text-text">{t("registration.tableTitle")}</h2>
+
+            {isPending && <LoadingBlock label={t("registration.loading")} />}
+
+            {isError && (
+                <LoadError title={t("registration.loadError")} onRetry={() => refetch()} retrying={isFetching} />
+            )}
+
+            {!isPending && !isError && (
+                <>
+                    <RegistrationsTable
+                        registrations={visibleRegistrations}
+                        visitorsById={visitorsById}
+                        slotsById={slotsById}
+                        eventsById={eventsById}
+                        pendingAction={pendingAction}
+                        actionError={actionError}
+                        onAction={handleAction}
+                        onEdit={startEdit}
+                    />
+                    <p className="mt-6 text-xs text-text-muted">{t("registration.footnote")}</p>
+                </>
+            )}
+
+            <ProspectsSection />
+
+            <Modal
+                open={formOpen}
+                onClose={resetForm}
+                size="xl"
+                dismissible={!formMutation.isPending}
+                title={
+                    editing
+                        ? t("registration.editTitle", {
+                              name: visitorsById.get(editing.visitorId)?.fullName ?? "",
+                          })
+                        : t("registration.newTitle")
+                }
+            >
+                <RegistrationForm
+                    key={formKey}
+                    mode={mode}
+                    onModeChange={changeMode}
+                    date={date}
+                    onDateChange={setDate}
+                    availability={availability ?? []}
+                    availabilityLoading={availabilityLoading}
+                    availabilityError={availabilityError}
+                    onRetryAvailability={refetchAvailability}
+                    nextAvailableDate={nextAvailableDate}
+                    onUseNextDate={(nextDate) => setDate(nextDate)}
+                    events={publishedEvents}
+                    activities={activeActivities}
+                    visitors={visitors ?? []}
+                    preselectedEventId={preselectedEvent}
+                    editingVisitor={editing ? visitorsById.get(editing.visitorId) : null}
+                    isSubmitting={formMutation.isPending}
+                    submitError={formMutation.error?.message}
+                    serverFieldErrors={formMutation.error?.data?.fieldErrors}
+                    onSubmit={handleSubmit}
+                    onCancel={resetForm}
+                />
+            </Modal>
         </div>
     );
 }

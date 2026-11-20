@@ -1,25 +1,34 @@
 import { useState } from "react";
-import Modal from "../../../shared/components/Modal";
+import { useTranslation } from "react-i18next";
+import { Button, Modal, Select } from "../../../shared/ui";
 import { STATUS } from "../constants";
-import { formatEnumLabel } from "../../../shared/utils/formatEnumLabel";
+import { useEnumLabels } from "../format";
 
 function StatusUpdateModal({ equipment, onClose, onSubmit }) {
+  const { t } = useTranslation("machinery");
+  const enumLabels = useEnumLabels();
+  const { t: tCommon } = useTranslation("common");
   const [status, setStatus] = useState(equipment?.status ?? STATUS.OPERATIONAL);
 
   if (!equipment) return null;
 
   return (
-    <Modal isOpen={true} onClose={onClose}>
-      <h2 className="text-lg font-bold mb-4">Update status — {equipment.name}</h2>
-      <select value={status} onChange={(e) => setStatus(e.target.value)} className="border border-gray-300 rounded-lg w-full px-3 py-2 mb-4">
+    <Modal
+      open
+      onClose={onClose}
+      title={t("equipment.statusTitle", { name: equipment.name })}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>{tCommon("actions.cancel")}</Button>
+          <Button onClick={() => onSubmit(equipment.id, status)}>{tCommon("actions.save")}</Button>
+        </>
+      }
+    >
+      <Select aria-label={t("equipment.status")} value={status} onChange={(e) => setStatus(e.target.value)}>
         {Object.values(STATUS).map((value) => (
-          <option key={value} value={value}>{formatEnumLabel(value)}</option>
+          <option key={value} value={value}>{enumLabels.status(value)}</option>
         ))}
-      </select>
-      <div className="flex justify-end gap-2">
-        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
-        <button type="button" onClick={() => onSubmit(equipment.id, status)} className="px-4 py-2 rounded-lg bg-primary text-white">Save</button>
-      </div>
+      </Select>
     </Modal>
   );
 }

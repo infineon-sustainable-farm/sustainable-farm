@@ -66,7 +66,7 @@ public record PlantAlertResponse(
     public record PlantAlert(
             PlantAlertType type,
             PlantAlertSeverity severity,
-            Integer farmId,
+            Long farmId,
             String blockCode,
             String varietyName,
             String message,

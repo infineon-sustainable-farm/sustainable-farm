@@ -10,7 +10,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.model.PackagingRecord;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.packagingrecord.service.PackagingRecordService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,25 +33,25 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/packaging-records")
+@RequestMapping("/api/product-transformation/packaging-records")
 @Tag(name = "Packaging Management", description = "APIs for managing packaging records")
 public class PackagingRecordController {
 
     private final PackagingRecordService packagingRecordService;
     private final BatchRepository batchRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final OperatorRepository operatorRepository;
     private final DtoMapper dtoMapper;
 
     @Autowired
     public PackagingRecordController(PackagingRecordService packagingRecordService,
                                     BatchRepository batchRepository,
-                                    EquipmentRepository equipmentRepository,
+                                    EquipmentService equipmentService,
                                     OperatorRepository operatorRepository,
                                     DtoMapper dtoMapper) {
         this.packagingRecordService = packagingRecordService;
         this.batchRepository = batchRepository;
-        this.equipmentRepository = equipmentRepository;
+        this.equipmentService = equipmentService;
         this.operatorRepository = operatorRepository;
         this.dtoMapper = dtoMapper;
     }
@@ -58,18 +59,18 @@ public class PackagingRecordController {
     @PostMapping
     @Operation(summary = "Create a new packaging record", description = "Creates a new packaging record")
     public ResponseEntity<PackagingRecordResponse> createPackagingRecord(@Valid @RequestBody PackagingRecordCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Equipment equipment = null;
         if (request.getEquipmentId() != null) {
-            equipment = equipmentRepository.findById(request.getEquipmentId())
+            equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
         }
         
         Operator operator = null;
         if (request.getOperatorId() != null) {
-            operator = operatorRepository.findById(request.getOperatorId())
+            operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
         }
         
@@ -80,6 +81,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping("/{recordId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get packaging record by ID", description = "Retrieves a specific packaging record by its ID")
     public ResponseEntity<PackagingRecordResponse> getPackagingRecordById(
             @Parameter(description = "Record ID") @PathVariable String recordId) {
@@ -89,6 +91,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get packaging records by batch", description = "Retrieves packaging records for a specific batch")
     public ResponseEntity<List<PackagingRecordResponse>> getPackagingRecordsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -100,6 +103,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all packaging records", description = "Retrieves all packaging records")
     public ResponseEntity<List<PackagingRecordResponse>> getAllPackagingRecords() {
         List<PackagingRecord> records = packagingRecordService.getAllPackagingRecords();
@@ -129,12 +133,12 @@ public class PackagingRecordController {
             existingRecord.setPackagingDate(request.getPackagingDate());
         }
         if (request.getEquipmentId() != null) {
-            Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
+            Equipment equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
-            existingRecord.setEquipment(equipment);
+            existingRecord.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
-            Operator operator = operatorRepository.findById(request.getOperatorId())
+            Operator operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
             existingRecord.setOperator(operator);
         }
@@ -165,6 +169,7 @@ public class PackagingRecordController {
     }
 
     @GetMapping("/export-ready")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get export ready packaging records", description = "Retrieves packaging records marked as export ready")
     public ResponseEntity<List<PackagingRecordResponse>> getExportReadyPackagingRecords() {
         List<PackagingRecord> records = packagingRecordService.getExportReadyPackagingRecords();

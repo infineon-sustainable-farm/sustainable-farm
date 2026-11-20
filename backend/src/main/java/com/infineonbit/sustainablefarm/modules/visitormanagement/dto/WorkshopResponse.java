@@ -15,18 +15,21 @@ public class WorkshopResponse {
     private int durationMinutes;
     private String targetGroup;
     private String facilitator;
+    private Long facilitatorPersonId;
     private String description;
     private WorkshopStatus status;
     private Instant createdAt;
     private Instant updatedAt;
 
-    public static WorkshopResponse from(Workshop workshop) {
+    /** @param facilitator full name of the facilitating person, or null */
+    public static WorkshopResponse from(Workshop workshop, String facilitator) {
         WorkshopResponse r = new WorkshopResponse();
         r.id = workshop.getId();
         r.name = workshop.getName();
         r.durationMinutes = workshop.getDurationMinutes();
         r.targetGroup = workshop.getTargetGroup();
-        r.facilitator = workshop.getFacilitator();
+        r.facilitator = facilitator;
+        r.facilitatorPersonId = workshop.getFacilitatorPersonId();
         r.description = workshop.getDescription();
         r.status = workshop.getStatus();
         r.createdAt = workshop.getCreatedAt();
@@ -52,6 +55,10 @@ public class WorkshopResponse {
 
     public String getFacilitator() {
         return facilitator;
+    }
+
+    public Long getFacilitatorPersonId() {
+        return facilitatorPersonId;
     }
 
     public String getDescription() {

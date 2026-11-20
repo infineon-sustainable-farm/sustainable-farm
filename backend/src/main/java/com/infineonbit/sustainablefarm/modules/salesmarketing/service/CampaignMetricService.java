@@ -1,51 +1,57 @@
 package com.infineonbit.sustainablefarm.modules.salesmarketing.service;
 
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequestMapper;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingRequests.CampaignMetricRequest;
+import com.infineonbit.sustainablefarm.modules.salesmarketing.dto.SalesMarketingResponses.CampaignMetricResponse;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.entity.CampaignMetric;
 import com.infineonbit.sustainablefarm.modules.salesmarketing.repository.CampaignMetricRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class CampaignMetricService {
 
     private final CampaignMetricRepository repository;
+    private final SalesMarketingRequestMapper mapper;
 
-    public CampaignMetricService(CampaignMetricRepository repository) {
+    public CampaignMetricService(CampaignMetricRepository repository, SalesMarketingRequestMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public List<CampaignMetric> getAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<CampaignMetricResponse> getAll() {
+        return repository.findAll().stream().map(CampaignMetricResponse::of).toList();
     }
 
-    public CampaignMetric getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "CampaignMetric not found with id: " + id));
+    @Transactional(readOnly = true)
+    public CampaignMetricResponse getById(Long id) {
+        return CampaignMetricResponse.of(find(id));
     }
 
-    public CampaignMetric create(CampaignMetric item) {
-        return repository.save(item);
+    public CampaignMetricResponse create(CampaignMetricRequest request) {
+        return CampaignMetricResponse.of(repository.save(mapper.apply(request, new CampaignMetric())));
     }
 
-    public CampaignMetric update(
-            Integer id,
-            CampaignMetric updatedData) {
-
-        CampaignMetric existing = getById(id);
-
-        existing.setCampaignId(updatedData.getCampaignId());
-        existing.setMetricDate(updatedData.getMetricDate());
-        existing.setClicks(updatedData.getClicks());
-        existing.setSignups(updatedData.getSignups());
-        existing.setReach(updatedData.getReach());
-
-        return repository.save(existing);
+    /** Replaces every field of the request; the id and the creation time stay. */
+    public CampaignMetricResponse update(Long id, CampaignMetricRequest request) {
+        return CampaignMetricResponse.of(repository.save(mapper.apply(request, find(id))));
     }
 
-    public void delete(Integer id) {
+    public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    /**
+     * The exception of an unknown id is still a plain {@code RuntimeException} (500), as before.
+     *
+     * @throws RuntimeException if no row has this id
+     */
+    private CampaignMetric find(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("CampaignMetric not found with id: " + id));
     }
 }

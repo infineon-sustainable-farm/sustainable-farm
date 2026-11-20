@@ -66,7 +66,7 @@ class FuelLogServiceTest {
         testFuelLog.setEquipment(testEquipment);
         testFuelLog.setDate(LocalDate.of(2026, 7, 22));
         testFuelLog.setLiters(new BigDecimal("25.00"));
-        testFuelLog.setCost(new BigDecimal("37.50"));
+        testFuelLog.setCost(MachineryMoney.of(new BigDecimal("37.50")));
     }
 
     @Test

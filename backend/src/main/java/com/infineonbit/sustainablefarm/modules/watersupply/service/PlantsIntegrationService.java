@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.config.WaterIntegrationProperties;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.BlockIrrigationNeedRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -15,13 +15,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Plants integration: rainfall and irrigation need expressed per Plants block ({@code blockCode})
- * instead of per Water Supply zone, through {@code zone_block_mapping}.
+ * instead of per Water Supply zone, through the block of each zone in the farm referential ({@link ZoneBlockResolver}).
  *
  * <p>Irrigation need = FAO-56 need of the mapped zones (area x ET0 x Kc / efficiency, see
  * {@link WaterNeedService}) x a growth phase factor. The factors are configuration
@@ -40,20 +39,20 @@ public class PlantsIntegrationService {
         static final PhaseAdjustment NONE = new PhaseAdjustment(null, 1.0, "unknown");
     }
 
-    private final ZoneBlockMappingService zoneBlockMappingService;
-    private final FieldZoneRepository zoneRepository;
+    private final ZoneBlockResolver zoneBlockResolver;
+    private final FarmDirectory farmDirectory;
     private final RainfallService rainfallService;
     private final WaterNeedService waterNeedService;
     private final AgroWeatherService agroWeatherService;
     private final PlantsGrowthPort plantsGrowthPort;
     private final WaterIntegrationProperties properties;
 
-    public PlantsIntegrationService(ZoneBlockMappingService zoneBlockMappingService, FieldZoneRepository zoneRepository,
+    public PlantsIntegrationService(ZoneBlockResolver zoneBlockResolver, FarmDirectory farmDirectory,
                                     RainfallService rainfallService, WaterNeedService waterNeedService,
                                     AgroWeatherService agroWeatherService, PlantsGrowthPort plantsGrowthPort,
                                     WaterIntegrationProperties properties) {
-        this.zoneBlockMappingService = zoneBlockMappingService;
-        this.zoneRepository = zoneRepository;
+        this.zoneBlockResolver = zoneBlockResolver;
+        this.farmDirectory = farmDirectory;
         this.rainfallService = rainfallService;
         this.waterNeedService = waterNeedService;
         this.agroWeatherService = agroWeatherService;
@@ -68,12 +67,12 @@ public class PlantsIntegrationService {
      * @param from first day included (UTC)
      * @param to   last day included (UTC)
      */
-    public Map<String, Object> rainfall(String blockCode, UUID farmId, LocalDate from, LocalDate to) {
+    public Map<String, Object> rainfall(String blockCode, Long farmId, LocalDate from, LocalDate to) {
         if (to.isBefore(from)) {
             throw new IllegalArgumentException("to must not be before from");
         }
-        String block = ZoneBlockMappingService.normalizeBlockCode(blockCode);
-        List<UUID> farmIds = zoneBlockMappingService.farmIdsForBlock(farmId, block);
+        String block = ZoneBlockResolver.normalizeBlockCode(blockCode);
+        List<Long> farmIds = zoneBlockResolver.farmIdsForBlock(farmId, block);
         if (farmIds.isEmpty()) {
             throw new NotFoundException("Block mapping");
         }
@@ -97,8 +96,8 @@ public class PlantsIntegrationService {
 
     /** Irrigation need of a block (P3) for one day. */
     public Map<String, Object> irrigationNeed(BlockIrrigationNeedRequest request) {
-        String block = ZoneBlockMappingService.normalizeBlockCode(request.blockCode());
-        List<UUID> zoneIds = zoneBlockMappingService.zoneIdsForBlock(request.farmId(), block);
+        String block = ZoneBlockResolver.normalizeBlockCode(request.blockCode());
+        List<Long> zoneIds = zoneBlockResolver.zoneIdsForBlock(request.farmId(), block);
         if (zoneIds.isEmpty()) {
             throw new NotFoundException("Block mapping");
         }
@@ -108,7 +107,7 @@ public class PlantsIntegrationService {
                 : fromRequest(request.growthPhase());
         double et0 = agroWeatherService.et0Between(date, date);
         double baseNeed = zoneIds.stream()
-                .map(zoneRepository::findById)
+                .map(farmDirectory::findZone)
                 .flatMap(java.util.Optional::stream)
                 .mapToDouble(zone -> waterNeedService.needLiters(zone, et0))
                 .sum();
@@ -141,13 +140,13 @@ public class PlantsIntegrationService {
      * Phase adjustment of a zone for the automatic irrigation (2.4): applied only when the zone maps
      * to exactly one block and Plants reports a single phase for it; otherwise factor 1.0.
      */
-    public PhaseAdjustment phaseAdjustmentForZone(UUID zoneId) {
-        List<String> blocks = zoneBlockMappingService.blockCodesForZone(zoneId);
+    public PhaseAdjustment phaseAdjustmentForZone(Long zoneId) {
+        List<String> blocks = zoneBlockResolver.blockCodesForZone(zoneId);
         return blocks.size() == 1 ? phaseFromPlants(blocks.get(0)) : PhaseAdjustment.NONE;
     }
 
     /** Automatic irrigation volume of a zone: FAO-56 need x phase factor. */
-    double needLiters(Zone zone, double et0Mm, PhaseAdjustment adjustment) {
+    double needLiters(ZoneDto zone, double et0Mm, PhaseAdjustment adjustment) {
         return waterNeedService.needLiters(zone, et0Mm) * adjustment.factor();
     }
 

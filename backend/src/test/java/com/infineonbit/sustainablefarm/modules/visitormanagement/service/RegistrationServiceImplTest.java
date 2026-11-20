@@ -1,12 +1,20 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import org.mockito.Spy;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitCancelled;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.api.VisitScheduled;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.dto.*;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.entity.*;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BookingRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.BriefingRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.FeedbackRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.RegistrationRepository;
+import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.SurveySendRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.TimeSlotRepository;
 import com.infineonbit.sustainablefarm.modules.visitormanagement.repository.VisitorRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +23,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -40,7 +50,17 @@ class RegistrationServiceImplTest {
     @Mock
     private BriefingRepository briefingRepository;
     @Mock
+    private FeedbackRepository feedbackRepository;
+    @Mock
+    private SurveySendRepository surveySendRepository;
+    @Mock
+    private BookingRepository bookingRepository;
+    @Mock
     private SchedulingService schedulingService;
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private RegistrationServiceImpl service;
 
@@ -185,6 +205,8 @@ class RegistrationServiceImplTest {
         assertThat(resp.getVisitPurpose()).isEqualTo(VisitPurpose.TOURISM);
         assertThat(resp.isProspect()).isFalse();
         verify(schedulingService).refreshStatus(slot);
+        verify(eventPublisher).publishEvent(new VisitScheduled("registration-100", "Alice Dupont",
+                Instant.parse("2026-09-08T09:00:00Z"), 2));
     }
 
     @Test
@@ -302,6 +324,8 @@ class RegistrationServiceImplTest {
         RegistrationResponse resp = service.approve(100L);
         assertThat(resp.getStatus()).isEqualTo(RegistrationStatus.CONFIRMED);
         verify(briefingRepository).save(any(Briefing.class));
+        // The visit was already announced at registration: approving it changes nothing for it.
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
     // --- Reject ---
@@ -324,6 +348,7 @@ class RegistrationServiceImplTest {
 
         RegistrationResponse resp = service.reject(100L);
         assertThat(resp.getStatus()).isEqualTo(RegistrationStatus.REJECTED);
+        verify(eventPublisher).publishEvent(new VisitCancelled("registration-100"));
     }
 
     // --- Check-in ---
@@ -367,6 +392,7 @@ class RegistrationServiceImplTest {
 
         RegistrationResponse resp = service.cancel(100L);
         assertThat(resp.getStatus()).isEqualTo(RegistrationStatus.CANCELLED);
+        verify(eventPublisher).publishEvent(new VisitCancelled("registration-100"));
     }
 
     // --- Briefing ---
@@ -385,7 +411,7 @@ class RegistrationServiceImplTest {
         when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Staff");
+        req.setStaffMemberPersonId(personDirectory.idOf("Staff"));
 
         assertThatThrownBy(() -> service.deliverBriefing(100L, req))
                 .isInstanceOf(BusinessRuleException.class)
@@ -398,7 +424,7 @@ class RegistrationServiceImplTest {
         when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Staff");
+        req.setStaffMemberPersonId(personDirectory.idOf("Staff"));
 
         assertThatThrownBy(() -> service.deliverBriefing(100L, req))
                 .isInstanceOf(BusinessRuleException.class)
@@ -418,12 +444,32 @@ class RegistrationServiceImplTest {
         when(briefingRepository.save(any(Briefing.class))).thenAnswer(inv -> inv.getArgument(0));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Guard Camille");
+        req.setStaffMemberPersonId(personDirectory.idOf("Guard Camille"));
         req.setSignature("sig123");
 
         BriefingResponse resp = service.deliverBriefing(100L, req);
         assertThat(resp.getStatus()).isEqualTo(BriefingStatus.DONE);
         assertThat(resp.getStaffMember()).isEqualTo("Guard Camille");
+        assertThat(briefing.getStaffMemberPersonId()).isEqualTo(personDirectory.idOf("guard camille"));
+    }
+
+    @Test
+    void deliverBriefing_unknownPerson_isRefusedAndNothingSaved() {
+        registration.setStatus(RegistrationStatus.CONFIRMED);
+        Briefing briefing = new Briefing();
+        briefing.setId(200L);
+        briefing.setRegistration(registration);
+        briefing.setStatus(BriefingStatus.PENDING);
+        registration.setBriefing(briefing);
+        when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
+
+        BriefingDeliverRequest req = new BriefingDeliverRequest();
+        req.setStaffMemberPersonId(999L);
+
+        assertThatThrownBy(() -> service.deliverBriefing(100L, req))
+                .isInstanceOf(com.infineonbit.sustainablefarm.core.exception.BadRequestException.class);
+        assertThat(briefing.getStatus()).isEqualTo(BriefingStatus.PENDING);
+        verify(briefingRepository, never()).save(any(Briefing.class));
     }
 
     @Test
@@ -433,14 +479,14 @@ class RegistrationServiceImplTest {
         briefing.setId(200L);
         briefing.setRegistration(registration);
         briefing.setStatus(BriefingStatus.DONE);
-        briefing.setStaffMember("Guard Camille");
+        briefing.setStaffMemberPersonId(personDirectory.idOf("Guard Camille"));
         briefing.setDeliveredAt(java.time.Instant.parse("2026-09-08T09:00:00Z"));
         registration.setBriefing(briefing);
 
         when(registrationRepository.findById(100L)).thenReturn(Optional.of(registration));
 
         BriefingDeliverRequest req = new BriefingDeliverRequest();
-        req.setStaffMember("Someone Else");
+        req.setStaffMemberPersonId(personDirectory.idOf("Someone Else"));
 
         BriefingResponse resp = service.deliverBriefing(100L, req);
         assertThat(resp.getStaffMember()).isEqualTo("Guard Camille");
@@ -488,5 +534,16 @@ class RegistrationServiceImplTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).isProspect()).isTrue();
         assertThat(result.get(0).getVisitPurpose()).isEqualTo(VisitPurpose.PURCHASE);
+    }
+
+    @Test
+    void deleteVisitor_stillBooked_isRefused() {
+        when(visitorRepository.findById(5L)).thenReturn(Optional.of(new Visitor()));
+        when(bookingRepository.existsByVisitorId(5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.deleteVisitor(5L))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("bookings");
+        verify(visitorRepository, never()).deleteById(any());
     }
 }

@@ -54,7 +54,7 @@ public class NurseryEventController {
    })
    public ResponseEntity<List<NurseryEventResponse>> getAllEvents(
          @Parameter(description = "Batch identifier") @RequestParam(name = "batchId", required = false) Long batchId,
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
          @Parameter(description = "STAGE_CHANGE, LOSS or TRANSPLANT") @RequestParam(name = "eventType", required = false) NurseryEventType eventType,
          @Parameter(description = "First event date, included, as yyyy-MM-dd") @RequestParam(name = "from", required = false)
          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

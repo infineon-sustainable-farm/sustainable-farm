@@ -2,12 +2,11 @@ package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.DripMaintenanceLog;
 import java.time.Instant;
-import java.util.UUID;
 
 /** API view of a maintenance intervention: stable contract, independent of the JPA entity. */
 public record DripMaintenanceLogResponse(
-        UUID id,
-        UUID zoneId,
+        Long id,
+        Long zoneId,
         Instant maintenanceDate,
         String maintenanceType,
         Boolean filterCleaned,
@@ -16,12 +15,16 @@ public record DripMaintenanceLogResponse(
         Integer emitterReplacedCount,
         String notes,
         String performedBy,
+        Long performedByPersonId,
         Instant createdAt) {
 
-    public static DripMaintenanceLogResponse from(DripMaintenanceLog log) {
+    /**
+     * @param performedBy full name of the person referenced by {@code performedByPersonId}
+     */
+    public static DripMaintenanceLogResponse from(DripMaintenanceLog log, String performedBy) {
         return new DripMaintenanceLogResponse(log.getId(), log.getZoneId(), log.getMaintenanceDate(),
                 log.getMaintenanceType(), log.getFilterCleaned(), log.getCloggingDetected(),
                 log.getCloggingSeverity(), log.getEmitterReplacedCount(), log.getNotes(),
-                log.getPerformedBy(), log.getCreatedAt());
+                performedBy, log.getPerformedByPersonId(), log.getCreatedAt());
     }
 }

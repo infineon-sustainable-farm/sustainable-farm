@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Device commands are in {@code iot.IotCommandController}.
  */
 @RestController
-@RequestMapping("/api/water")
+@RequestMapping("/api/water-supply")
 @Tag(name = "Water Supply - Integrations", description = "Read models and events for Plants, Visitor Management and Product Transformation")
 public class WaterIntegrationController {
     private final PlantsIntegrationService plantsService;
@@ -64,7 +63,7 @@ public class WaterIntegrationController {
     @GetMapping("/plants/rainfall")
     @Operation(summary = "Rain gauge rainfall of a Plants block over [from, to] (days, UTC)")
     public Map<String, Object> rainfall(@RequestParam String blockCode,
-                                        @RequestParam(required = false) UUID farmId,
+                                        @RequestParam(required = false) Long farmId,
                                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return plantsService.rainfall(blockCode, farmId, from, to);
@@ -80,22 +79,22 @@ public class WaterIntegrationController {
 
     @GetMapping("/visitor/irrigation-status")
     @Operation(summary = "Is the zone being irrigated, and when was it last activated")
-    public Map<String, Object> irrigationStatus(@RequestParam UUID zoneId) {
+    public Map<String, Object> irrigationStatus(@RequestParam Long zoneId) {
         return irrigationService.irrigationStatus(zoneId);
     }
 
     @GetMapping("/visitor/live-consumption")
     @Operation(summary = "Volume measured over the last minutes, for a source, a zone or the whole site")
-    public Map<String, Object> liveConsumption(@RequestParam(required = false) UUID sourceId,
-                                               @RequestParam(required = false) UUID zoneId,
+    public Map<String, Object> liveConsumption(@RequestParam(required = false) Long sourceId,
+                                               @RequestParam(required = false) Long zoneId,
                                                @RequestParam(required = false) Integer windowMinutes) {
         return visitorService.liveConsumption(sourceId, zoneId, windowMinutes);
     }
 
     @GetMapping("/visitor/summary")
     @Operation(summary = "Level, savings, irrigation status, live consumption and unavailability in one call")
-    public Map<String, Object> visitorSummary(@RequestParam(required = false) UUID sourceId,
-                                              @RequestParam(required = false) UUID zoneId) {
+    public Map<String, Object> visitorSummary(@RequestParam(required = false) Long sourceId,
+                                              @RequestParam(required = false) Long zoneId) {
         return visitorService.summary(sourceId, zoneId);
     }
 
@@ -124,8 +123,8 @@ public class WaterIntegrationController {
     @Operation(summary = "Planned unavailability, filtered by period, zone/source (farm-wide included) or instant")
     public List<WaterUnavailabilityResponse> outages(@RequestParam(required = false) Instant from,
                                                      @RequestParam(required = false) Instant to,
-                                                     @RequestParam(required = false) UUID zoneId,
-                                                     @RequestParam(required = false) UUID sourceId,
+                                                     @RequestParam(required = false) Long zoneId,
+                                                     @RequestParam(required = false) Long sourceId,
                                                      @RequestParam(required = false) Instant activeOn) {
         return unavailabilityService.search(from, to, zoneId, sourceId, activeOn);
     }
@@ -137,19 +136,19 @@ public class WaterIntegrationController {
     }
 
     @GetMapping("/outages/{outageId}")
-    public WaterUnavailabilityResponse outage(@PathVariable UUID outageId) {
+    public WaterUnavailabilityResponse outage(@PathVariable Long outageId) {
         return unavailabilityService.get(outageId);
     }
 
     @PutMapping("/outages/{outageId}")
-    public WaterUnavailabilityResponse updateOutage(@PathVariable UUID outageId,
+    public WaterUnavailabilityResponse updateOutage(@PathVariable Long outageId,
                                                     @Valid @RequestBody WaterUnavailabilityRequest request) {
         return unavailabilityService.update(outageId, request);
     }
 
     @DeleteMapping("/outages/{outageId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteOutage(@PathVariable UUID outageId) {
+    public void deleteOutage(@PathVariable Long outageId) {
         unavailabilityService.delete(outageId);
     }
 

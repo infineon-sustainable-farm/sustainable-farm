@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Level of a water source, read in real time for the interface and the other modules
@@ -11,7 +10,7 @@ import java.util.UUID;
  * is the reading instant, {@code status} summarizes the situation against capacity.</p>
  */
 public record WaterLevelResponse(
-        UUID sourceId,
+        Long sourceId,
         String name,
         String type,
         Double capacityLiters,

@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Water availability forecast of a source for planned Product Transformation batches.
@@ -17,7 +16,7 @@ import java.util.UUID;
  * @param includeIrrigation adds the scheduled irrigations of the source's farm (default true)
  */
 public record AvailabilityForecastRequest(
-        @NotNull UUID sourceId,
+        @NotNull Long sourceId,
         @Min(1) @Max(90) Integer horizonDays,
         Boolean includeIrrigation,
         List<@Valid Batch> batches) {

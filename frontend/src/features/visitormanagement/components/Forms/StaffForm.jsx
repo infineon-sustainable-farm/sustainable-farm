@@ -1,52 +1,49 @@
 import { useState } from "react";
-import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
-
-const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
-const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
-const ERROR_CLASS = "mt-1 text-xs text-error";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Select } from "../../../../shared/ui";
+import { useLabels } from "../../utils/labels";
+import FormActions from "../FormActions";
+import FormAlert from "../FormAlert";
+import StatusTag from "../StatusTag";
 
 const ROLES = ["GUIDE", "RECEPTION", "MANAGER"];
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 
 /**
- * Staff create/edit form. A new member is always created active; deactivation
- * and reactivation are handled by the table actions, not by this form.
+ * Create/edit form of a person of the farm people directory. The visitor role (guide, reception,
+ * manager) is optional: a farm worker (operator, technician) has none. A new person is always
+ * created active; deactivation and reactivation are handled by the table actions. The form sends
+ * the full record, so an emptied email or phone is cleared.
  */
-export default function StaffForm({
-    staff,
-    isSubmitting,
-    submitError,
-    serverFieldErrors,
-    onSubmit,
-    onCancel,
-}) {
+export default function StaffForm({ staff, isSubmitting, submitError, serverFieldErrors, onSubmit, onCancel }) {
+    const { t } = useTranslation("visitormanagement");
+    const labels = useLabels();
     const isEditing = Boolean(staff);
 
     const [fullName, setFullName] = useState(staff?.fullName ?? "");
-    const [role, setRole] = useState(staff?.role ?? "GUIDE");
+    const [role, setRole] = useState(staff ? (staff.role ?? "") : "GUIDE");
     const [email, setEmail] = useState(staff?.email ?? "");
     const [phone, setPhone] = useState(staff?.phone ?? "");
     const [fieldErrors, setFieldErrors] = useState({});
 
-    // A new member is always created active; editing keeps the current value,
-    // since deactivation/reactivation live in the table actions.
+    // A new member is always created active; editing keeps the current value, since
+    // deactivation and reactivation live in the table actions.
     const active = staff ? staff.active : true;
 
     function validate() {
         const errors = {};
         if (!fullName.trim()) {
-            errors.fullName = "Full name is required.";
+            errors.fullName = t("staff.form.fullNameRequired");
         } else if (fullName.trim().length > 150) {
-            errors.fullName = "Full name must be at most 150 characters.";
+            errors.fullName = t("staff.form.fullNameTooLong", { max: 150 });
         }
-        if (!role) errors.role = "Pick a role.";
         if (email.trim() && !EMAIL_PATTERN.test(email.trim())) {
-            errors.email = "Enter a valid email address.";
+            errors.email = t("staff.form.emailInvalid");
         } else if (email.trim().length > 200) {
-            errors.email = "Email must be at most 200 characters.";
+            errors.email = t("staff.form.emailTooLong", { max: 200 });
         }
         if (phone.trim().length > 30) {
-            errors.phone = "Phone must be at most 30 characters.";
+            errors.phone = t("staff.form.phoneTooLong", { max: 30 });
         }
         return errors;
     }
@@ -59,7 +56,7 @@ export default function StaffForm({
 
         onSubmit({
             fullName: fullName.trim(),
-            role,
+            role: role || null,
             email: email.trim() || null,
             phone: phone.trim() || null,
             active,
@@ -69,107 +66,54 @@ export default function StaffForm({
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
 
     return (
-        <form
-            onSubmit={handleSubmit}
-           
-        >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                    <label htmlFor="st-name" className={LABEL_CLASS}>
-                        Full name
-                    </label>
-                    <input
-                        id="st-name"
-                        type="text"
-                        value={fullName}
-                        onChange={(event) => setFullName(event.target.value)}
-                        placeholder="e.g. Alix VEBAMBA"
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("fullName") && (
-                        <p className={ERROR_CLASS}>{fieldError("fullName")}</p>
-                    )}
-                </div>
+        <form onSubmit={handleSubmit}>
+            {submitError && <FormAlert className="mb-4">{submitError}</FormAlert>}
 
-                <div>
-                    <label htmlFor="st-role" className={LABEL_CLASS}>
-                        Role
-                    </label>
-                    <select
-                        id="st-role"
-                        value={role}
-                        onChange={(event) => setRole(event.target.value)}
-                        className={INPUT_CLASS}
-                    >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label={t("staff.form.fullName")} error={fieldError("fullName")}>
+                    <Input type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} />
+                </Field>
+
+                <Field label={t("staff.form.role")} hint={t("staff.form.roleHint")} error={fieldError("role")}>
+                    <Select value={role} onChange={(event) => setRole(event.target.value)}>
+                        <option value="">{t("staff.noRole")}</option>
                         {ROLES.map((option) => (
                             <option key={option} value={option}>
-                                {formatEnumLabel(option)}
+                                {labels.enum(option)}
                             </option>
                         ))}
-                    </select>
-                    {fieldError("role") && <p className={ERROR_CLASS}>{fieldError("role")}</p>}
-                </div>
+                    </Select>
+                </Field>
 
-                <div>
-                    <label htmlFor="st-email" className={LABEL_CLASS}>
-                        Email
-                    </label>
-                    <input
-                        id="st-email"
+                <Field label={t("staff.form.email")} error={fieldError("email")}>
+                    <Input
                         type="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
-                        placeholder="name@example.com"
-                        className={INPUT_CLASS}
+                        placeholder={t("staff.form.emailPlaceholder")}
                     />
-                    {fieldError("email") && <p className={ERROR_CLASS}>{fieldError("email")}</p>}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="st-phone" className={LABEL_CLASS}>
-                        Phone
-                    </label>
-                    <input
-                        id="st-phone"
+                <Field label={t("staff.form.phone")} error={fieldError("phone")}>
+                    <Input
                         type="tel"
                         value={phone}
                         onChange={(event) => setPhone(event.target.value)}
-                        placeholder="+226 ..."
-                        className={INPUT_CLASS}
+                        placeholder={t("staff.form.phonePlaceholder")}
                     />
-                    {fieldError("phone") && <p className={ERROR_CLASS}>{fieldError("phone")}</p>}
-                </div>
+                </Field>
             </div>
 
-            <label className="mt-4 flex items-center gap-2 text-sm text-ink"><span className="text-xs tracking-wide text-primary uppercase">Status</span> {staff ? (staff.active ? "Active" : "Inactive") : "Active"}</label>
+            <p className="mt-4 flex items-center gap-2 text-sm">
+                <span className="font-medium">{t("staff.form.status")}</span>
+                <StatusTag value={active ? "ACTIVE" : "INACTIVE"} />
+            </p>
 
-            {submitError && (
-                <p className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
-
-            <div className="mt-4 flex gap-2.5">
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isSubmitting
-                        ? "Saving…"
-                        : isEditing
-                          ? "Save staff member"
-                          : "Create staff member"}
-                </button>
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
-                >
-                    Cancel
-                </button>
-            </div>
+            <FormActions
+                onCancel={onCancel}
+                isSubmitting={isSubmitting}
+                submitLabel={isEditing ? t("staff.form.save") : t("staff.form.create")}
+            />
         </form>
     );
 }

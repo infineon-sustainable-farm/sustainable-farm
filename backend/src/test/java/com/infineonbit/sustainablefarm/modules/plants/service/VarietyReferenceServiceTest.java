@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -40,12 +41,12 @@ public class VarietyReferenceServiceTest {
     private VarietyReferenceService varietyReferenceService;
 
     private static VarietyReference reference(long id, String name) {
-        return new VarietyReference(id, name, 200.0, "Zalka_2025", 4, 5, "FAO_mango_burkina", ENTERED);
+        return new VarietyReference(id, name, BigDecimal.valueOf(200.0), "Zalka_2025", 4, 5, "FAO_mango_burkina", ENTERED);
     }
 
     /** Keitt as the dev loader enters it: 220 kg from Zalka 2025, May to July. */
     private static VarietyReference keitt() {
-        return new VarietyReference(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, ENTERED);
+        return new VarietyReference(1L, "Keitt", BigDecimal.valueOf(220.0), "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, ENTERED);
     }
 
     /** Stubs the rows of the reference. */
@@ -108,7 +109,7 @@ public class VarietyReferenceServiceTest {
         assertEquals("Keitt", inserted.getVarietyName());
         assertEquals("user_entry", inserted.getYieldSource());
         assertEquals("user_entry", inserted.getSeasonSource());
-        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "user_entry", 5, 7, "user_entry", NOW),
+        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "user_entry", 5, 7, "user_entry", NOW, null),
                 created);
     }
 
@@ -121,7 +122,7 @@ public class VarietyReferenceServiceTest {
         VarietyReferenceResponse created = varietyReferenceService.createReference(new VarietyReferenceRequest(
                 "Keitt", 220.0, " Zalka_2025 ", 5, 7, " " + KEITT_SEASON_SOURCE + " "), NOW);
         // Assert
-        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, NOW),
+        assertEquals(new VarietyReferenceResponse(1L, "Keitt", 220.0, "Zalka_2025", 5, 7, KEITT_SEASON_SOURCE, NOW, null),
                 created);
     }
 
@@ -162,7 +163,7 @@ public class VarietyReferenceServiceTest {
         // Assert
         assertSame(recorded, writtenRow());
         assertEquals(new VarietyReferenceResponse(1L, "Keitt", 230.0, "farm_records_2026", 4, 7,
-                "farm_records_2026", NOW), corrected);
+                "farm_records_2026", NOW, null), corrected);
     }
 
     @Test

@@ -72,7 +72,7 @@ public class FertilizerControllerTest {
 
     private static FertilizerMovementResponse npkPurchaseInEuros() {
         return new FertilizerMovementResponse(11L, 1L, "NPK 15-15-15", FertilizerMovementType.PURCHASE,
-                LocalDate.of(2026, 6, 5), 100.0, FertilizerUnit.KG, null, null, null, null, "Supplier B", 120.0, "EUR",
+                LocalDate.of(2026, 6, 5), 100.0, FertilizerUnit.KG, null, null, null, null, null, "Supplier B", 120.0, "EUR",
                 78715L, 120.0, null, "user_entry", NOW);
     }
 
@@ -283,7 +283,7 @@ public class FertilizerControllerTest {
         // Arrange: the service leaves out the amount that needs the rate
         when(fertilizerMovementService.recordPurchase(eq(1L), any(PurchaseRequest.class)))
                 .thenReturn(new FertilizerMovementResponse(11L, 1L, "NPK 15-15-15", FertilizerMovementType.PURCHASE,
-                        LocalDate.of(2026, 6, 5), 100.0, FertilizerUnit.KG, null, null, null, null, "Supplier B",
+                        LocalDate.of(2026, 6, 5), 100.0, FertilizerUnit.KG, null, null, null, null, null, "Supplier B",
                         120.0, "EUR", null, 120.0, null, "user_entry", NOW));
         // Act
         ResultActions result = postMovement(1L, "purchases", """
@@ -366,10 +366,11 @@ public class FertilizerControllerTest {
         when(fertilizerMovementService.recordApplication(eq(1L), any(ApplicationRequest.class))).thenReturn(
                 new FertilizerMovementResponse(13L, 1L, "NPK 15-15-15", FertilizerMovementType.APPLICATION,
                         LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, null, "B", "Team A",
+                        null,
                         "around the tree base", null, null, null, null, null, null, "user_entry", NOW));
         // Act
         ResultActions result = postMovement(1L, "applications", """
-                {"applicationDate":"2026-06-15","quantity":250,"blockCode":" b ","applicator":"Team A",
+                {"applicationDate":"2026-06-15","quantity":250,"blockCode":" b ","applicatorPersonId":7,
                  "method":"around the tree base"}
                 """);
         // Assert: no Location header, the application in the body
@@ -399,7 +400,7 @@ public class FertilizerControllerTest {
         String future = LocalDate.now().plusYears(1).toString();
         // Act
         ResultActions result = postMovement(1L, "applications", """
-                {"applicationDate":"%s","quantity":0,"farmId":0,"blockCode":"Block B","applicator":"  ",
+                {"applicationDate":"%s","quantity":0,"farmId":0,"blockCode":"Block B","applicatorPersonId":null,
                  "method":"%s"}
                 """.formatted(future, "m".repeat(256)));
         // Assert
@@ -412,7 +413,7 @@ public class FertilizerControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.farmId").value("farmId must be at least 1"))
                 .andExpect(jsonPath("$.fieldErrors.blockCode")
                         .value("blockCode must be a short code such as A or B2, without prefix or space"))
-                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"))
+                .andExpect(jsonPath("$.fieldErrors.applicatorPersonId").value("applicatorPersonId is required"))
                 .andExpect(jsonPath("$.fieldErrors.method").value("method must be at most 255 characters"));
         verify(fertilizerMovementService, never()).recordApplication(any(), any());
     }
@@ -427,7 +428,7 @@ public class FertilizerControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.applicationDate").value("applicationDate is required"))
                 .andExpect(jsonPath("$.fieldErrors.quantity").value("quantity is required"))
                 .andExpect(jsonPath("$.fieldErrors.blockCode").value("blockCode is required"))
-                .andExpect(jsonPath("$.fieldErrors.applicator").value("applicator is required"));
+                .andExpect(jsonPath("$.fieldErrors.applicatorPersonId").value("applicatorPersonId is required"));
     }
 
     @Test
@@ -438,7 +439,7 @@ public class FertilizerControllerTest {
                 .thenThrow(new BusinessRuleException(message));
         // Act
         ResultActions result = postMovement(1L, "applications", """
-                {"applicationDate":"2026-06-16","quantity":60,"blockCode":"B","applicator":"Team A"}
+                {"applicationDate":"2026-06-16","quantity":60,"blockCode":"B","applicatorPersonId":7}
                 """);
         // Assert
         assertApiError(result, 422, "Unprocessable Entity", message, URL + "/1/applications");
@@ -452,7 +453,7 @@ public class FertilizerControllerTest {
                 .thenThrow(new FertilizerNotFoundException(999L));
         // Act
         ResultActions result = postMovement(999L, "applications", """
-                {"applicationDate":"2026-06-16","quantity":60,"blockCode":"B","applicator":"Team A"}
+                {"applicationDate":"2026-06-16","quantity":60,"blockCode":"B","applicatorPersonId":7}
                 """);
         // Assert
         assertApiError(result, 404, "Not Found", "Fertilizer with ID 999 not found", URL + "/999/applications");
@@ -463,7 +464,7 @@ public class FertilizerControllerTest {
         // Arrange
         when(fertilizerMovementService.recordLoss(eq(1L), any(LossRequest.class))).thenReturn(
                 new FertilizerMovementResponse(16L, 1L, "NPK 15-15-15", FertilizerMovementType.LOSS,
-                        LocalDate.of(2026, 7, 1), 10.0, FertilizerUnit.KG, null, null, null, null, null, null, null,
+                        LocalDate.of(2026, 7, 1), 10.0, FertilizerUnit.KG, null, null, null, null, null, null, null, null,
                         null, null, "expired", "user_entry", NOW));
         // Act
         ResultActions result = postMovement(1L, "losses", """

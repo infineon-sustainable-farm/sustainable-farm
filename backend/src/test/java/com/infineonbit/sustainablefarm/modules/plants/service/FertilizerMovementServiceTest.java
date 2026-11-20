@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.LossRequest;
@@ -13,14 +15,16 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
 import com.infineonbit.sustainablefarm.modules.plants.exception.FertilizerNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.repository.CurrencyRateRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.MovementTotal;
+import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerProductRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -34,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -42,6 +47,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class FertilizerMovementServiceTest {
+
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+
 
     private static final Instant NOW = Instant.parse("2026-09-24T10:00:00Z");
     private static final LocalDate JUNE_1 = LocalDate.of(2026, 6, 1);
@@ -54,6 +63,12 @@ public class FertilizerMovementServiceTest {
 
     @Mock
     private CurrencyRateRepository currencyRateRepository;
+
+    /** Block A of farm 1, block B of farm 2. */
+    @Spy
+    private PlantsBlocks plantsBlocks = new TestBlocks().with("A", 1L).with("B", 2L).asPlantsBlocks();
+
+    private static final List<Long> ALL = List.of(PlantsBlocks.NO_BLOCK);
 
     @InjectMocks
     private FertilizerMovementService fertilizerMovementService;
@@ -119,8 +134,8 @@ public class FertilizerMovementServiceTest {
         when(fertilizerMovementRepository.findMovementTotals(List.of(1L))).thenReturn(List.of(totals));
     }
 
-    private static ApplicationRequest application(double quantity) {
-        return new ApplicationRequest(LocalDate.of(2026, 6, 15), quantity, null, " b ", " Team A ",
+    private ApplicationRequest application(double quantity) {
+        return new ApplicationRequest(LocalDate.of(2026, 6, 15), quantity, null, " b ", personDirectory.idOf(" Team A "),
                 " around the tree base ");
     }
 
@@ -164,13 +179,13 @@ public class FertilizerMovementServiceTest {
         assertEquals(0, new BigDecimal("150000").compareTo(saved.getTotalCost()));
         assertEquals("XOF", saved.getCurrency());
         assertNull(saved.getBlockCode());
-        assertNull(saved.getApplicator());
+        assertNull(saved.getApplicatorPersonId());
         assertNull(saved.getReason());
         assertEquals("user_entry", saved.getSource());
         assertEquals(NOW, saved.getLastUpdated());
         // Assert: the cost in both currencies
         assertEquals(new FertilizerMovementResponse(10L, 1L, "NPK 15-15-15", FertilizerMovementType.PURCHASE, JUNE_1,
-                200.0, FertilizerUnit.KG, null, null, null, null, "Supplier A", 150000.0, "XOF", 150000L, 228.67,
+                200.0, FertilizerUnit.KG, null, null, null, null, null, "Supplier A", 150000.0, "XOF", 150000L, 228.67,
                 null, "user_entry", NOW), response);
     }
 
@@ -281,9 +296,10 @@ public class FertilizerMovementServiceTest {
         assertEquals(FertilizerMovementType.APPLICATION, saved.getMovementType());
         assertEquals(LocalDate.of(2026, 6, 15), saved.getMovementDate());
         assertEquals(0, new BigDecimal("250").compareTo(saved.getQuantity()));
-        assertNull(saved.getFarmId());
+        assertEquals(TestBlocks.idOf("B"), saved.getBlockId());
+        assertEquals(2L, saved.getFarmId());
         assertEquals("B", saved.getBlockCode());
-        assertEquals("Team A", saved.getApplicator());
+        assertEquals(personDirectory.idOf("Team A"), saved.getApplicatorPersonId());
         assertEquals("around the tree base", saved.getMethod());
         assertNull(saved.getSupplier());
         assertNull(saved.getTotalCost());
@@ -292,7 +308,7 @@ public class FertilizerMovementServiceTest {
         assertEquals("user_entry", saved.getSource());
         assertEquals(NOW, saved.getLastUpdated());
         assertEquals(new FertilizerMovementResponse(13L, 1L, "NPK 15-15-15", FertilizerMovementType.APPLICATION,
-                LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, null, "B", "Team A", "around the tree base",
+                LocalDate.of(2026, 6, 15), 250.0, FertilizerUnit.KG, 2L, "B", "Team A", personDirectory.idOf("Team A"), "around the tree base",
                 null, null, null, null, null, null, "user_entry", NOW), response);
         verifyNoInteractions(currencyRateRepository);
     }
@@ -305,10 +321,10 @@ public class FertilizerMovementServiceTest {
         movementSaveAssignsId(14L);
         // Act
         fertilizerMovementService.recordApplication(1L,
-                new ApplicationRequest(LocalDate.of(2026, 6, 15), 10.0, 1, "A", "Team A", "  "), NOW);
+                new ApplicationRequest(LocalDate.of(2026, 6, 15), 10.0, 1L, "A", personDirectory.idOf("Team A"), "  "), NOW);
         // Assert
         FertilizerMovement saved = savedMovement();
-        assertEquals(1, saved.getFarmId());
+        assertEquals(1L, saved.getFarmId());
         assertNull(saved.getMethod());
     }
 
@@ -376,7 +392,7 @@ public class FertilizerMovementServiceTest {
         assertEquals(0, new BigDecimal("10").compareTo(saved.getQuantity()));
         assertEquals("expired", saved.getReason());
         assertNull(saved.getBlockCode());
-        assertNull(saved.getApplicator());
+        assertNull(saved.getApplicatorPersonId());
         assertNull(saved.getSupplier());
         assertEquals(NOW, saved.getLastUpdated());
         assertEquals("expired", response.reason());
@@ -402,7 +418,7 @@ public class FertilizerMovementServiceTest {
     void getAllMovements_shouldConvertEveryCost_readingTheRateOnce() {
         // Arrange
         rateIs("655.957");
-        when(fertilizerMovementRepository.findByOptionalFilters(null, null, null, null, null, null)).thenReturn(List.of(
+        when(fertilizerMovementRepository.findByOptionalFilters(null, null, true, ALL, null, null)).thenReturn(List.of(
                 storedPurchase(1L, JUNE_1, "150000.00", "XOF"),
                 storedPurchase(2L, LocalDate.of(2026, 6, 5), "120.00", "EUR"),
                 storedPurchase(3L, LocalDate.of(2026, 6, 6), null, null)));
@@ -424,7 +440,7 @@ public class FertilizerMovementServiceTest {
     void getAllMovements_shouldGiveEachCostInItsOwnCurrencyOnly_whenNoRateIsRecorded() {
         // Arrange
         noRate();
-        when(fertilizerMovementRepository.findByOptionalFilters(null, null, null, null, null, null)).thenReturn(List.of(
+        when(fertilizerMovementRepository.findByOptionalFilters(null, null, true, ALL, null, null)).thenReturn(List.of(
                 storedPurchase(1L, JUNE_1, "150000.00", "XOF"),
                 storedPurchase(2L, LocalDate.of(2026, 6, 5), "120.00", "EUR")));
         // Act: the list is still served, with no error
@@ -441,7 +457,7 @@ public class FertilizerMovementServiceTest {
     @Test
     void getAllMovements_shouldNotReadTheRate_whenNoMovementHasACost() {
         // Arrange
-        when(fertilizerMovementRepository.findByOptionalFilters(null, null, null, null, null, null))
+        when(fertilizerMovementRepository.findByOptionalFilters(null, null, true, ALL, null, null))
                 .thenReturn(List.of(storedPurchase(3L, JUNE_1, null, null)));
         // Act
         fertilizerMovementService.getAllMovements(null, null, null, null, null, null);
@@ -454,14 +470,14 @@ public class FertilizerMovementServiceTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 6, 2);
         LocalDate to = LocalDate.of(2026, 6, 30);
-        when(fertilizerMovementRepository.findByOptionalFilters(any(), any(), any(), any(), any(), any()))
+        when(fertilizerMovementRepository.findByOptionalFilters(any(), any(), anyBoolean(), any(), any(), any()))
                 .thenReturn(List.of());
         // Act
-        fertilizerMovementService.getAllMovements(1L, FertilizerMovementType.APPLICATION, 2, " B ", from, to);
+        fertilizerMovementService.getAllMovements(1L, FertilizerMovementType.APPLICATION, 2L, " B ", from, to);
         fertilizerMovementService.getAllMovements(null, null, null, "  ", null, null);
         // Assert: the block is trimmed, a blank one is no filter
-        verify(fertilizerMovementRepository).findByOptionalFilters(1L, FertilizerMovementType.APPLICATION, 2, "B",
-                from, to);
-        verify(fertilizerMovementRepository).findByOptionalFilters(null, null, null, null, null, null);
+        verify(fertilizerMovementRepository).findByOptionalFilters(1L, FertilizerMovementType.APPLICATION, false,
+                List.of(TestBlocks.idOf("B")), from, to);
+        verify(fertilizerMovementRepository).findByOptionalFilters(null, null, true, ALL, null, null);
     }
 }

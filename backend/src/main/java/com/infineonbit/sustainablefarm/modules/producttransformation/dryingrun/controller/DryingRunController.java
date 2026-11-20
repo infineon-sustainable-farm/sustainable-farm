@@ -9,7 +9,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.service.DryingRunService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -32,25 +33,25 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/drying-runs")
+@RequestMapping("/api/product-transformation/drying-runs")
 @Tag(name = "Drying Management", description = "APIs for managing drying process records")
 public class DryingRunController {
 
     private final DryingRunService dryingRunService;
     private final BatchRepository batchRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final OperatorRepository operatorRepository;
     private final DtoMapper dtoMapper;
 
     @Autowired
     public DryingRunController(DryingRunService dryingRunService,
                              BatchRepository batchRepository,
-                             EquipmentRepository equipmentRepository,
+                             EquipmentService equipmentService,
                              OperatorRepository operatorRepository,
                              DtoMapper dtoMapper) {
         this.dryingRunService = dryingRunService;
         this.batchRepository = batchRepository;
-        this.equipmentRepository = equipmentRepository;
+        this.equipmentService = equipmentService;
         this.operatorRepository = operatorRepository;
         this.dtoMapper = dtoMapper;
     }
@@ -58,18 +59,18 @@ public class DryingRunController {
     @PostMapping
     @Operation(summary = "Create a new drying run", description = "Creates a new drying process record")
     public ResponseEntity<DryingRunResponse> createDryingRun(@Valid @RequestBody DryingRunCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         Equipment equipment = null;
         if (request.getEquipmentId() != null) {
-            equipment = equipmentRepository.findById(request.getEquipmentId())
+            equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
         }
         
         Operator operator = null;
         if (request.getOperatorId() != null) {
-            operator = operatorRepository.findById(request.getOperatorId())
+            operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
         }
         
@@ -80,6 +81,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/{runId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying run by ID", description = "Retrieves a specific drying run by its ID")
     public ResponseEntity<DryingRunResponse> getDryingRunById(
             @Parameter(description = "Run ID") @PathVariable String runId) {
@@ -89,6 +91,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by batch", description = "Retrieves drying runs for a specific batch")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByBatch(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -100,6 +103,7 @@ public class DryingRunController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all drying runs", description = "Retrieves all drying run records")
     public ResponseEntity<List<DryingRunResponse>> getAllDryingRuns() {
         List<DryingRun> runs = dryingRunService.getAllDryingRuns();
@@ -141,12 +145,12 @@ public class DryingRunController {
             existingRun.setEndTime(request.getEndTime());
         }
         if (request.getEquipmentId() != null) {
-            Equipment equipment = equipmentRepository.findById(request.getEquipmentId())
+            Equipment equipment = equipmentService.findEquipmentById(request.getEquipmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Equipment not found with ID: " + request.getEquipmentId()));
-            existingRun.setEquipment(equipment);
+            existingRun.setEquipmentId(equipment.getId());
         }
         if (request.getOperatorId() != null) {
-            Operator operator = operatorRepository.findById(request.getOperatorId())
+            Operator operator = operatorRepository.findByOperatorId(request.getOperatorId())
                     .orElseThrow(() -> new IllegalArgumentException("Operator not found with ID: " + request.getOperatorId()));
             existingRun.setOperator(operator);
         }
@@ -165,6 +169,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by date range", description = "Retrieves drying runs within a date range")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDateTime startDate,
@@ -177,6 +182,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/equipment/{equipmentId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by equipment", description = "Retrieves drying runs filtered by equipment")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByEquipment(
             @Parameter(description = "Equipment ID") @PathVariable String equipmentId) {
@@ -188,6 +194,7 @@ public class DryingRunController {
     }
 
     @GetMapping("/operator/{operatorId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get drying runs by operator", description = "Retrieves drying runs filtered by operator")
     public ResponseEntity<List<DryingRunResponse>> getDryingRunsByOperator(
             @Parameter(description = "Operator ID") @PathVariable String operatorId) {

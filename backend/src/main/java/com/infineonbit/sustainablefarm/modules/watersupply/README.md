@@ -10,18 +10,18 @@ share the same structure and the same conventions.
 | Part | Location |
 |---|---|
 | REST API, services, entities | `backend/src/main/java/com/infineonbit/sustainablefarm/modules/watersupply/` |
-| Database schema (migrations V1 -> V12) | `backend/src/main/resources/db/migration/` |
+| Database schema | built from the entities during the integration, single baseline migration afterwards (see `docs/adr/`) |
 | Interface (views, hooks, API client) | `frontend/src/features/watersupply/` |
-| Sensors and ESP32 firmware | `iot/` |
+| Sensors and ESP32 firmware | not in this repository; devices post to `/api/water-supply/iot/telemetry` |
 
 The module is mounted under `/watersupply` in the application (`routes.jsx`), like
 `/machinery` and `/plants`: each module carries its own menu and its own screens.
 
 ## Integration
 
-Water Supply serves Plants, Visitor Management, Product Transformation and IoT. The contracts,
-examples and open questions for each team are in [`docs/integrations/`](../../../../../../../../../docs/integrations/README.md).
-The source of the needs is the [integration audit](../../../../../../../../../docs/watersupply-integration-audit.md).
+Water Supply serves Plants, Visitor Management, Product Transformation and IoT. How modules
+talk to each other and which module owns each shared referential are decided in the
+architecture decision records of `docs/adr/` (0003 and 0004).
 
 ### Progress
 
@@ -57,13 +57,13 @@ The source of the needs is the [integration audit](../../../../../../../../../do
 
 | Area | Endpoints |
 |---|---|
-| Zone to block (Plants) | `GET|POST /api/water/zone-block-mappings`, `GET|PUT|DELETE /api/water/zone-block-mappings/{id}`; `blockCode` filter on `GET /api/irrigations` and `GET /api/water/consumption` |
-| Plants | `GET /api/water/plants/rainfall`, `POST /api/water/plants/irrigation-need` |
-| Visitor Management | `GET /api/water/visitor/irrigation-status`, `/visitor/live-consumption`, `/visitor/summary`, `GET|PATCH /api/water/visitor/safety-briefing`, `POST /api/water/visitor-events` |
-| Planned unavailability | `GET|POST /api/water/outages`, `GET|PUT|DELETE /api/water/outages/{id}` |
-| Product Transformation | `lotId`/`activity` on consumption, `POST /api/water/lot-usage`, `GET /api/water/consumption/by-lot`, `GET /api/water/quality/compliance`, `POST /api/water/product-transformation/availability-forecast` |
-| Internal | `GET /api/water/sources/{id}/level-history`; `demand_forecast_liters` / `available_after_forecast_liters` in `GET /api/dashboard/water-balance` |
-| IoT | `POST|GET /api/iot/devices/{deviceId}/commands` |
+| Zone to block (Plants) | `GET|POST /api/farm/zone-block-mappings`, `GET|PUT|DELETE /api/farm/zone-block-mappings/{id}`; `blockCode` filter on `GET /api/water-supply/irrigations` and `GET /api/water-supply/consumption` |
+| Plants | `GET /api/water-supply/plants/rainfall`, `POST /api/water-supply/plants/irrigation-need` |
+| Visitor Management | `GET /api/water-supply/visitor/irrigation-status`, `/visitor/live-consumption`, `/visitor/summary`, `GET|PATCH /api/water-supply/visitor/safety-briefing`, `POST /api/water-supply/visitor-events` |
+| Planned unavailability | `GET|POST /api/water-supply/outages`, `GET|PUT|DELETE /api/water-supply/outages/{id}` |
+| Product Transformation | `lotId`/`activity` on consumption, `POST /api/water-supply/lot-usage`, `GET /api/water-supply/consumption/by-lot`, `GET /api/water-supply/quality/compliance`, `POST /api/water-supply/product-transformation/availability-forecast` |
+| Internal | `GET /api/water-supply/sources/{id}/level-history`; `demand_forecast_liters` / `available_after_forecast_liters` in `GET /api/water-supply/dashboard/water-balance` |
+| IoT | `POST|GET /api/water-supply/iot/devices/{deviceId}/commands` |
 
 ### Screens (frontend `features/watersupply`)
 
@@ -105,7 +105,14 @@ This is a first version, **to be reviewed soon**:
   phase factor of the zone's block.
 - **Rainfall** of a farm is the highest cumulative value among its gauges, never their sum (two
   tanks record the same rain).
-- **Plants** is read in a single class, `PlantsGrowthCalendarAdapter`, behind `PlantsGrowthPort`.
+- **Visit announcements** (`water_visitor_events`) follow Visitor Management in process:
+  `VisitorManagementListener` consumes `VisitScheduled`, `VisitRescheduled` and `VisitCancelled`
+  (`visitormanagement.api`, after commit) for bookings (`booking-<id>`) and registrations
+  (`registration-<id>`), and records them like `POST /api/water-supply/visitor-events`, which stays for
+  external callers. A cancelled visit removes its announcement. Visitor Management knows no farm
+  zone, so these announcements carry no zone and raise no zone conflict.
+- **Plants** is read in a single class, `PlantsGrowthCalendarAdapter`, behind `PlantsGrowthPort`, through
+  the public interface `plants.api.BlockGrowthLookup`.
 - **Valve commands** go through `ValveCommandPort`. Its only implementation refuses every command
   until an MQTT/HTTP gateway is chosen. The attempt is journaled anyway (`noRollbackFor`).
 - Optional filters use Criteria (`ConsumptionCriteria`, unavailability search) instead of JPQL
@@ -113,47 +120,47 @@ This is a first version, **to be reviewed soon**:
 
 ## API contract (summary)
 
-- **Farms / fields / zones**: `GET|POST /api/farms`, `GET|PUT|DELETE /api/farms/{id}`,
-  `GET /api/farms/{id}/fields`, `GET|POST /api/fields`, `GET|PUT|DELETE /api/fields/{id}`,
-  `GET /api/fields/{id}/zones`, `GET|POST /api/zones`, `GET|PUT|DELETE /api/zones/{id}`.
+- **Farms / fields / zones**: `GET|POST /api/farm/farms`, `GET|PUT|DELETE /api/farm/farms/{id}`,
+  `GET /api/farm/farms/{id}/fields`, `GET|POST /api/farm/fields`, `GET|PUT|DELETE /api/farm/fields/{id}`,
+  `GET /api/farm/fields/{id}/zones`, `GET|POST /api/farm/zones`, `GET|PUT|DELETE /api/farm/zones/{id}`.
   A zone carries its irrigation method, its crop coefficient (Kc) and, for
   drip irrigation, the number of emitters and their nominal flow rate.
-- **Water sources**: `GET|POST /api/water/sources`, `GET|PUT|DELETE /api/water/sources/{id}`,
-  `GET /api/water/sources/{id}/level` (capacity, level, percentage, status, rainwater tank).
-- **Consumption**: `GET|POST /api/water/consumption`, `GET|PUT|DELETE /api/water/consumption/{id}`
+- **Water sources**: `GET|POST /api/water-supply/sources`, `GET|PUT|DELETE /api/water-supply/sources/{id}`,
+  `GET /api/water-supply/sources/{id}/level` (capacity, level, percentage, status, rainwater tank).
+- **Consumption**: `GET|POST /api/water-supply/consumption`, `GET|PUT|DELETE /api/water-supply/consumption/{id}`
   (array response, or a Page as soon as `page`/`size` is provided).
-- **Quality**: `GET|POST /api/water/quality`, `GET|PUT|DELETE /api/water/quality/{id}`.
-- **Irrigation**: `GET|POST /api/irrigations`, `GET|PUT|DELETE /api/irrigations/{id}`,
-  `POST /api/irrigations/{id}/start|stop`, `POST /api/irrigations/{id}/postpone`,
-  `POST /api/irrigations/auto-trigger`, `GET /api/irrigation/suggestions`,
-  `GET|POST /api/irrigation-logs`, `GET|PUT|DELETE /api/irrigation-logs/{id}`.
-- **Drip clogging**: `GET /api/water/zones/{zoneId}/flow-check` (flow diagnostic of the zone).
-- **Rainwater**: `GET|POST /api/rainwater-harvests`, `GET|PUT|DELETE /api/rainwater-harvests/{id}`,
-  `GET /api/rainwater-harvests/coverage`.
-- **Drip maintenance**: `GET|POST /api/drip-maintenance-logs`,
-  `GET|PUT|DELETE /api/drip-maintenance-logs/{id}`, `GET /api/drip-maintenance-logs/schedule`
+- **Quality**: `GET|POST /api/water-supply/quality`, `GET|PUT|DELETE /api/water-supply/quality/{id}`.
+- **Irrigation**: `GET|POST /api/water-supply/irrigations`, `GET|PUT|DELETE /api/water-supply/irrigations/{id}`,
+  `POST /api/water-supply/irrigations/{id}/start|stop`, `POST /api/water-supply/irrigations/{id}/postpone`,
+  `POST /api/water-supply/irrigations/auto-trigger`, `GET /api/water-supply/irrigation/suggestions`,
+  `GET|POST /api/water-supply/irrigation-logs`, `GET|PUT|DELETE /api/water-supply/irrigation-logs/{id}`.
+- **Drip clogging**: `GET /api/water-supply/zones/{zoneId}/flow-check` (flow diagnostic of the zone).
+- **Rainwater**: `GET|POST /api/water-supply/rainwater-harvests`, `GET|PUT|DELETE /api/water-supply/rainwater-harvests/{id}`,
+  `GET /api/water-supply/rainwater-harvests/coverage`.
+- **Drip maintenance**: `GET|POST /api/water-supply/drip-maintenance-logs`,
+  `GET|PUT|DELETE /api/water-supply/drip-maintenance-logs/{id}`, `GET /api/water-supply/drip-maintenance-logs/schedule`
   (preventive calendar computed per zone).
-- **Quotas**: `GET|POST /api/water/quotas`, `GET /api/water/quotas/usage`, `GET|PUT|DELETE .../{id}`.
-- **Dashboard**: `GET /api/dashboard/kpis|activities|alerts|water-savings|savings-series|water-balance|leaks`.
-- **AI**: `GET /api/ai/recommendations`, `GET /api/ai/drought-prediction`, `POST /api/ai/analyze`.
-- **Weather**: `GET /api/weather/current`, `GET /api/weather/forecast` (optional coordinates).
-- **Notifications**: `GET|POST /api/notifications`, `GET /api/notifications/{id}`,
-  `PATCH /api/notifications/{id}/read`, `PATCH /api/notifications/read-all`, `DELETE /api/notifications/{id}`.
-- **Reports**: `GET /api/reports/consumption|irrigation|quality` and `.../csv`.
-- **Health**: `GET /api/health` (really checks the database, 503 when it is down).
+- **Quotas**: `GET|POST /api/water-supply/quotas`, `GET /api/water-supply/quotas/usage`, `GET|PUT|DELETE .../{id}`.
+- **Dashboard**: `GET /api/water-supply/dashboard/kpis|activities|alerts|water-savings|savings-series|water-balance|leaks`.
+- **AI**: `GET /api/water-supply/ai/recommendations`, `GET /api/water-supply/ai/drought-prediction`, `POST /api/water-supply/ai/analyze`.
+- **Weather**: `GET /api/water-supply/weather/current`, `GET /api/water-supply/weather/forecast` (optional coordinates).
+- **Notifications** (stored as the module alerts of the `notification` module, table `alert`, docs/adr/0004): `GET|POST /api/water-supply/notifications`, `GET /api/water-supply/notifications/{id}`,
+  `PATCH /api/water-supply/notifications/{id}/read`, `PATCH /api/water-supply/notifications/read-all`, `DELETE /api/water-supply/notifications/{id}`.
+- **Reports**: `GET /api/water-supply/reports/consumption|irrigation|quality` and `.../csv`.
+- **Health**: `GET /api/water-supply/health` (really checks the database, 503 when it is down).
 
 ## Business rules (values are spelled out in the code)
 
 | Rule | Reference |
 |---|---|
-| Water need of a zone | `need = area x ET0 x Kc / efficiency` (FAO-56) — `WaterNeedService` |
+| Water need of a zone | `need = area x ET0 x Kc / efficiency` (FAO-56), `WaterNeedService` |
 | System efficiency | drip 0.90 · sprinkler 0.75 · gravity 0.60 |
-| Automatic control by soil moisture | seasonal thresholds **40 / 45 / 50 / 55%** (rain, transition, fresh dry, hot dry) + guard "last watering > 24 h" — `IrrigationAutomationService` |
-| Irrigation postponement because of rain | probability >= 60% and rain >= 5 mm — `IrrigationService` |
-| Monthly quota | alert at 80% then 100% — `WaterQuotaService` (evaluation throttled to 1x/60 s) |
-| Drip clogging / leak | measured volume < 90% (clogging) or > 110% (leak) of the expected volume — `DripFlowCheckService` |
-| Rainwater tank | >= 95% likely overflow, >= 50% use the rain first — `RainwaterTankMonitor` |
-| Recurring alert | same title unread and less than 12 h apart: no duplicate — `AlertService` |
+| Automatic control by soil moisture | seasonal thresholds **40 / 45 / 50 / 55%** (rain, transition, fresh dry, hot dry) + guard "last watering > 24 h", `IrrigationAutomationService` |
+| Irrigation postponement because of rain | probability >= 60% and rain >= 5 mm, `IrrigationService` |
+| Monthly quota | alert at 80% then 100%, `WaterQuotaService` (evaluation throttled to 1x/60 s) |
+| Drip clogging / leak | measured volume < 90% (clogging) or > 110% (leak) of the expected volume, `DripFlowCheckService` |
+| Rainwater tank | >= 95% likely overflow, >= 50% use the rain first, `RainwaterTankMonitor` |
+| Recurring alert | same title unread and less than 12 h apart: no duplicate, `AlertService` |
 
 ## Configuration (environment variables)
 
@@ -174,58 +181,56 @@ This is a first version, **to be reviewed soon**:
 | `app.water.iot.valve-max-duration-seconds` / `offline-threshold-minutes` | 30 / 15 | Valve opening cap, device offline delay |
 
 Every `app.water.*` value has an environment variable (see `application.properties`); the
-integration values are working defaults listed as open questions in `docs/integrations/`.
+integration values are working defaults, still to be validated with the modules concerned.
 
 ## IoT ingestion contract
 
-`POST /api/iot/telemetry` (single object or batch, 202, status per measurement) — types
+`POST /api/water-supply/iot/telemetry` (single object or batch, 202, status per measurement). Types
 `level`, `flow`, `quality`, `rain`, `clogging`, `soil`. Two things to know:
 
 - **`flow` can carry `zone_id`**: this link is what allows comparing the measured volume to the
   expected volume of the network (without it, `flow-check` answers `no_measurement`).
 - **`level`** updates the source level and triggers the rainwater tank rules, on top of the
-  real-time level read by `/api/water/sources/{id}/level`.
+  real-time level read by `/api/water-supply/sources/{id}/level`.
 
 ## Tests
 
 ```bash
-cd backend && ./mvnw test     # whole backend: 664 tests, of which 168 for watersupply
-cd frontend && npm test       # 79 tests, of which 72 for watersupply (views, hooks, wiring, menu)
-cd frontend && npm run lint && npm run build
+scripts/backend-test.sh -q -B test -Dtest='*watersupply*,*Watersupply*'   # module tests (H2)
+SF_TEST_PG=1 scripts/backend-test.sh                                      # whole backend on PostgreSQL
+cd frontend && npm test -- watersupply && npm run lint && npm run build
 ```
 
 Watersupply tests: unit tests per service (Mockito) and three HTTP integration classes on the full
-context — `WatersupplyApiIntegrationTest`, `WatersupplyIntegrationsApiTest` (every integration
+context: `WatersupplyApiIntegrationTest`, `WatersupplyIntegrationsApiTest` (every integration
 endpoint, weather and Plants calendar mocked) and `IotTelemetryIntegrationTest`. The defaults run on
 H2; the CI overrides the datasource to PostgreSQL, and the suite passes on both.
 
-The module's tests declare their own DOM environment (`// @vitest-environment jsdom`):
-the project has no global Vitest configuration, and the view tests provide a brand-new
-React Query client (`components/views/testRender.jsx`).
+The module's tests declare their own DOM environment (`// @vitest-environment jsdom`), and the
+view tests provide a brand-new React Query client (`components/views/testRender.jsx`).
 
 ## Integrating this module into another one (or the reverse)
 
 1. Shareable data is exposed read-only through dedicated endpoints
-   (`/api/water/sources/{id}/level`, `/api/water/zones/{id}/flow-check`, `/api/dashboard/water-balance`)
+   (`/api/water-supply/sources/{id}/level`, `/api/water-supply/zones/{id}/flow-check`, `/api/water-supply/dashboard/water-balance`)
    rather than through direct table access.
 2. API responses are DTOs (`dto/`), never JPA entities.
-3. The schema only evolves through versioned migrations: **announce the number** before writing
-   the next one (folder shared between modules).
-4. The module never modifies another module's files nor `frontend/src/shared/`.
+3. Another module reads Water Supply through events or a `watersupply.api` package, never its
+   internal classes; Water Supply reads the others through their `api` packages
+   ([docs/ARCHITECTURE.md](../../../../../../../../../docs/ARCHITECTURE.md#24-module-communication)).
+4. After the baseline, the schema only evolves through new migrations named
+   `V<n>__watersupply_<description>.sql`; existing migrations are never edited.
+5. The module never modifies another module's files nor `frontend/src/shared/`.
 
 ## Open decisions (to settle with the team)
 
 - **Authentication**: out of the module's scope (no `/api/auth` endpoint), it will come from the
-  global platform. Automatic alerts are attached to a technical account
-  (`SystemUsers.IOT_SYSTEM_USER_ID`, with no usable password).
-- **Migration numbers**: `V11` (zone/block mapping) and `V12` (integrations) belong to watersupply;
-  the next free number is `V13`.
-- **Fresh PostgreSQL startup**: V1-V12 apply, but `ddl-auto=validate` then fails on tables of other
-  modules that have no migration (list in `docs/integrations/README.md`).
+  global platform. Automatic alerts are attached to a technical person of the staff referential
+  (`SystemUsers.iotSystemUserId()`, email `systeme.iot@watersupply.local`, inactive, with no
+  usable password), created at startup in every profile by `SystemUserSeeder`. Notification
+  recipients, schedule authors and command requesters are `person` ids (docs/adr/0004).
 - **Farm and field location**: first version from the device geolocation, to be reviewed (see
   "Farm and field location" above).
-- **Integration answers** expected from Plants, Visitor Management, Product Transformation, IoT and
-  Site Security: see the "What we need from you" section of each page in `docs/integrations/`.
-- **`shared/hooks/useAuth.js`**: dead code outside the module importing `getToken`/`setToken` from
-  `shared/api/client.js` — those functions do not exist; to fix in coordination or remove.
+- **Integration values** (`app.water.pt.*`, `app.water.plants.phase-factor.*`): working defaults
+  to validate with Product Transformation and Plants.
 

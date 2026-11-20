@@ -1,18 +1,32 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
-@Table(name = "water_quality_tests")
+@Table(name = "water_quality_tests", indexes = {
+        @Index(name = "idx_water_quality_tests_source_id", columnList = "source_id"),
+        @Index(name = "idx_water_quality_tests_test_date", columnList = "test_date")
+})
 public class WaterQualityTest extends BaseEntity {
     @NotNull
-    @Column(nullable = false)
-    private UUID sourceId;
+    @Column(name = "source_id", nullable = false)
+    private Long sourceId;
+
+    /** Read-only link that declares the foreign key fk_water_quality_tests_source; the code writes the source_id column. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_water_quality_tests_source"))
+    private WaterSource source;
 
     private Double ph;
     private Double temperatureCelsius;
@@ -21,11 +35,11 @@ public class WaterQualityTest extends BaseEntity {
     private Double salinityPpt;
     private Instant testDate;
 
-    public UUID getSourceId() {
+    public Long getSourceId() {
         return sourceId;
     }
 
-    public void setSourceId(UUID sourceId) {
+    public void setSourceId(Long sourceId) {
         this.sourceId = sourceId;
     }
 

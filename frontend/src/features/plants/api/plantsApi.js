@@ -39,6 +39,15 @@ export function fetchGrowthCalendar({ blockCode, farmId } = {}) {
 }
 
 /**
+ * Reads the rain measured for a block over [from, to], both "YYYY-MM-DD" days
+ * included. The route belongs to another module: it answers 404 for a block
+ * linked to no rain gauge, and otherwise `rainfallMm` with `gaugeCount`.
+ */
+export function fetchBlockRainfall({ blockCode, from, to }) {
+    return apiClient.get(PLANTS_ENDPOINTS.BLOCK_RAINFALL, { params: { blockCode, from, to } });
+}
+
+/**
  * Records a planting: date, block, variety and number of trees, and optionally
  * the two spacings in metres (rowSpacingM and treeSpacingM, both or none) and
  * the vigor (GOOD, AVERAGE or POOR).
@@ -204,6 +213,68 @@ export function createFertilizerLoss(fertilizerId, body) {
 }
 
 /**
+ * Fetches the planned applications of fertilizer, optionally filtered, in the
+ * order of the API: by planned date.
+ *
+ * `status` is the API code ("PLANNED"). Each plan comes with its delay
+ * (`overdue`, `daysFromToday`) and its cost at the last purchase price, all
+ * computed by the API; none is computed here.
+ */
+export function fetchFertilizerPlans({ status } = {}) {
+    const params = {};
+    if (status) params.status = status;
+
+    return apiClient.get(PLANTS_ENDPOINTS.FERTILIZER_PLANS, { params });
+}
+
+/**
+ * Plans an application of a fertilizer on a block, in the unit of the
+ * fertilizer. The API answers 400 with fieldErrors for an invalid value.
+ */
+export function createFertilizerPlan(body) {
+    return apiClient.post(PLANTS_ENDPOINTS.FERTILIZER_PLANS, body);
+}
+
+/**
+ * Marks a planned application as done: the API records the real application
+ * and links it. It answers 409 when the plan is already done or cancelled,
+ * and 422 when the quantity exceeds the current stock.
+ */
+export function completeFertilizerPlan(planId, body) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.FERTILIZER_PLANS}/${planId}/complete`, body);
+}
+
+/**
+ * Cancels a planned application. The API answers 409 when the plan is already
+ * done or cancelled.
+ */
+export function cancelFertilizerPlan(planId) {
+    return apiClient.post(`${PLANTS_ENDPOINTS.FERTILIZER_PLANS}/${planId}/cancel`);
+}
+
+/**
+ * Fetches planned and applied quantities by block and fertilizer.
+ *
+ * `from` and `to` are "YYYY-MM-DD" dates, both included. Without any, the
+ * API takes the current calendar year and says so in its answer.
+ */
+export function fetchFertilizerPlanComparison({ from, to } = {}) {
+    const params = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+
+    return apiClient.get(`${PLANTS_ENDPOINTS.FERTILIZER_PLANS}/comparison`, { params });
+}
+
+/**
+ * Fetches the fertilizers whose stock does not cover the applications planned
+ * in the next 30 days, late ones included, with the day the API computed it for.
+ */
+export function fetchFertilizerPlanStockCheck() {
+    return apiClient.get(`${PLANTS_ENDPOINTS.FERTILIZER_PLANS}/stock-check`);
+}
+
+/**
  * Fetches how many FCFA one euro is worth, with its source.
  *
  * The API answers 404 until a rate is entered. That is a normal state, not a
@@ -276,6 +347,19 @@ export function saveGrowthPhaseShare(code, body) {
  */
 export function fetchHealthIssues() {
     return apiClient.get(PLANTS_ENDPOINTS.HEALTH_ISSUES);
+}
+
+/** Machines listed at most, enough for one farm. */
+const MACHINERY_EQUIPMENT_PAGE_SIZE = 100;
+
+/**
+ * Fetches the machines of the machinery register, the module that owns them,
+ * for the treatment form to pick one: a page of `{ id, code, name, ... }`.
+ */
+export function fetchMachineryEquipment() {
+    return apiClient.get(PLANTS_ENDPOINTS.MACHINERY_EQUIPMENT, {
+        params: { page: 0, size: MACHINERY_EQUIPMENT_PAGE_SIZE },
+    });
 }
 
 /**
@@ -500,4 +584,12 @@ export function updateScenario(id, body) {
  */
 export function fetchScenarioAnalysis(id, params = {}) {
     return apiClient.get(`${PLANTS_ENDPOINTS.SCENARIOS}/${id}/analysis`, { params });
+}
+
+/**
+ * Fetches the fields (blocks) of the farm referential, owned by the Farms & fields screen of
+ * Water Supply. Plants only picks one of them by its block code; it never creates a block.
+ */
+export function fetchFarmFields() {
+    return apiClient.get(PLANTS_ENDPOINTS.FARM_FIELDS);
 }

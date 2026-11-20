@@ -89,7 +89,7 @@ class BookingControllerTest {
     void activities_returns200() throws Exception {
         when(bookingService.listActivities()).thenReturn(List.of(buildActivityResponse()));
 
-        mockMvc.perform(get("/api/v1/activities"))
+        mockMvc.perform(get("/api/visitor-management/activities"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Solar workshop"));
     }
@@ -99,7 +99,7 @@ class BookingControllerTest {
         when(bookingService.createActivity(any(AgriActivityRequest.class)))
                 .thenReturn(buildActivityResponse());
 
-        mockMvc.perform(post("/api/v1/activities")
+        mockMvc.perform(post("/api/visitor-management/activities")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(activityJson()))
                 .andExpect(status().isCreated())
@@ -108,7 +108,7 @@ class BookingControllerTest {
 
     @Test
     void createActivity_missingPrice_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/activities")
+        mockMvc.perform(post("/api/visitor-management/activities")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Solar workshop\",\"capacity\":15}"))
                 .andExpect(status().isBadRequest());
@@ -116,7 +116,7 @@ class BookingControllerTest {
 
     @Test
     void deactivateActivity_returns204() throws Exception {
-        mockMvc.perform(delete("/api/v1/activities/1"))
+        mockMvc.perform(delete("/api/visitor-management/activities/1"))
                 .andExpect(status().isNoContent());
     }
 
@@ -125,7 +125,7 @@ class BookingControllerTest {
         when(bookingService.listBookings(isNull(), isNull(), isNull()))
                 .thenReturn(List.of(buildBookingResponse()));
 
-        mockMvc.perform(get("/api/v1/bookings"))
+        mockMvc.perform(get("/api/visitor-management/bookings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].reference").value("BK-00001"))
                 .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
@@ -136,7 +136,7 @@ class BookingControllerTest {
         when(bookingService.listBookings(eq(BookingStatus.PENDING), isNull(), isNull()))
                 .thenReturn(List.of(buildBookingResponse()));
 
-        mockMvc.perform(get("/api/v1/bookings").param("status", "PENDING"))
+        mockMvc.perform(get("/api/visitor-management/bookings").param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
     }
@@ -146,7 +146,7 @@ class BookingControllerTest {
         when(bookingService.createBooking(any(BookingRequest.class)))
                 .thenReturn(buildBookingResponse());
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/visitor-management/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bookingJson()))
                 .andExpect(status().isCreated())
@@ -155,7 +155,7 @@ class BookingControllerTest {
 
     @Test
     void createBooking_missingVisitorEmail_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/visitor-management/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"activityId\":1,\"timeSlotId\":2,"
                                 + "\"visitorFullName\":\"Lucas Weber\",\"peopleCount\":3}"))
@@ -164,7 +164,7 @@ class BookingControllerTest {
 
     @Test
     void createBooking_invalidPhone_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/visitor-management/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"activityId\":1,\"timeSlotId\":2,"
                                 + "\"visitorFullName\":\"Lucas Weber\",\"visitorEmail\":\"lucas@example.com\","
@@ -177,7 +177,7 @@ class BookingControllerTest {
         when(bookingService.createBooking(any(BookingRequest.class)))
                 .thenThrow(new ConflictException("Not enough remaining capacity"));
 
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/api/visitor-management/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bookingJson()))
                 .andExpect(status().isConflict());
@@ -187,7 +187,7 @@ class BookingControllerTest {
     void markPaid_returns200() throws Exception {
         when(bookingService.markPaid(1L)).thenReturn(buildBookingResponse());
 
-        mockMvc.perform(post("/api/v1/bookings/1/pay"))
+        mockMvc.perform(post("/api/visitor-management/bookings/1/pay"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paymentStatus").value("PAID"));
     }
@@ -197,7 +197,7 @@ class BookingControllerTest {
         when(bookingService.confirmBooking(1L)).thenThrow(
                 new BusinessRuleException("Booking 1 must be paid before confirmation"));
 
-        mockMvc.perform(post("/api/v1/bookings/1/confirm"))
+        mockMvc.perform(post("/api/visitor-management/bookings/1/confirm"))
                 .andExpect(status().isUnprocessableEntity());
     }
 
@@ -208,7 +208,7 @@ class BookingControllerTest {
         cancelled.setPaymentStatus(BookingPaymentStatus.REFUNDED);
         when(bookingService.cancelBooking(1L)).thenReturn(cancelled);
 
-        mockMvc.perform(post("/api/v1/bookings/1/cancel"))
+        mockMvc.perform(post("/api/visitor-management/bookings/1/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
@@ -223,7 +223,7 @@ class BookingControllerTest {
         occ.setOccupancyPercent(33);
         when(bookingService.getOccupancy()).thenReturn(List.of(occ));
 
-        mockMvc.perform(get("/api/v1/bookings/occupancy"))
+        mockMvc.perform(get("/api/visitor-management/bookings/occupancy"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].occupancyPercent").value(33));
     }

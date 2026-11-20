@@ -1,68 +1,28 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Modal, Select } from "../../../shared/ui";
 import { monthName } from "../utils/format";
-import PlantsModal from "./PlantsModal";
-
-const LABEL_CLASS = "text-xs font-semibold tracking-wide text-gray-500 uppercase";
-const INPUT_CLASS =
-    "mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none";
-// The default placeholder is the text colour at half opacity, about 3:1 on
-// white; gray-500 (#6a7282) reaches 4.84:1.
-const TEXT_INPUT_CLASS = `${INPUT_CLASS} placeholder:text-gray-500`;
-const ERROR_CLASS = "mt-1 text-xs text-error";
-const NOTE_CLASS = "mt-1 text-xs text-gray-600";
+import FormAlert from "./FormAlert";
+import { FormButtons } from "./HarvestFormParts";
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
 /** Same rule as the API: above 0 and at most 1000 kg, with at most 1 decimal. */
 const YIELD_PATTERN = /^\d{1,4}(\.\d)?$/;
-const YIELD_ERROR = "Yield per tree must be greater than 0 and at most 1,000 kg, with at most 1 decimal.";
 
-function FormField({ id, label, error, note, className, children }) {
+function MonthSelect({ value, onChange }) {
+    const { t } = useTranslation("plants");
     return (
-        <div className={className}>
-            <label htmlFor={id} className={LABEL_CLASS}>
-                {label}
-            </label>
-            {children}
-            {error && (
-                <p id={`${id}-error`} className={ERROR_CLASS}>
-                    {error}
-                </p>
-            )}
-            {note && (
-                <p id={`${id}-note`} className={NOTE_CLASS}>
-                    {note}
-                </p>
-            )}
-        </div>
-    );
-}
-
-function MonthSelect({ id, value, onChange, fieldProps }) {
-    return (
-        <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={INPUT_CLASS}
-            {...fieldProps}>
+        <Select value={value} onChange={(event) => onChange(event.target.value)}>
             {/* Empty value: sending without a choice gives the "required" message. */}
-            <option value="">Select a month</option>
+            <option value="">{t("harvest.referenceForm.selectMonth")}</option>
             {MONTHS.map((month) => (
                 <option key={month} value={month}>
                     {monthName(month)}
                 </option>
             ))}
-        </select>
+        </Select>
     );
-}
-
-/**
- * Note under a source field. A new reference records an empty source as
- * user_entry; a correction keeps the recorded source while its value stays
- * the same, as the API does.
- */
-function sourceNote(recordedSource, unchangedValue) {
-    return recordedSource
-        ? `Leave empty to keep “${recordedSource}” if ${unchangedValue}; otherwise user_entry is recorded.`
-        : "Optional. user_entry is recorded when left empty.";
 }
 
 /**
@@ -75,6 +35,7 @@ function sourceNote(recordedSource, unchangedValue) {
  * the name. Any other error is shown above the form.
  */
 export default function VarietyReferenceModal({ reference, isSubmitting, error, onSubmit, onClose }) {
+    const { t } = useTranslation("plants");
     const isEditing = reference !== null;
     const [varietyName, setVarietyName] = useState(reference?.varietyName ?? "");
     const [yieldPerTreeKg, setYieldPerTreeKg] = useState(isEditing ? String(reference.yieldPerTreeKg) : "");
@@ -93,13 +54,17 @@ export default function VarietyReferenceModal({ reference, isSubmitting, error, 
     const formError = error && !serverFieldErrors && !nameConflict ? error.message : null;
     const fieldError = (field) =>
         fieldErrors[field] ?? serverFieldErrors?.[field] ?? (field === "varietyName" ? nameConflict : null);
-    const fieldProps = (field, id, hasNote = false) => ({
-        "aria-invalid": fieldError(field) ? true : undefined,
-        "aria-describedby":
-            [fieldError(field) ? `${id}-error` : null, hasNote ? `${id}-note` : null]
-                .filter(Boolean)
-                .join(" ") || undefined,
-    });
+
+    /**
+     * Note under a source field. A new reference records an empty source as
+     * user_entry; a correction keeps the recorded source while its value stays
+     * the same, as the API does.
+     */
+    function sourceNote(recordedSource, unchangedKey) {
+        return recordedSource
+            ? t("harvest.referenceForm.keepSource", { source: recordedSource, condition: t(unchangedKey) })
+            : t("harvest.references.sourceNote");
+    }
 
     function changeYield(event) {
         setYieldPerTreeKg(event.target.value);
@@ -109,28 +74,28 @@ export default function VarietyReferenceModal({ reference, isSubmitting, error, 
     function validate() {
         const errors = {};
         if (!varietyName.trim()) {
-            errors.varietyName = "Variety is required.";
+            errors.varietyName = t("harvest.referenceForm.errors.varietyRequired");
         } else if (varietyName.length > 255) {
-            errors.varietyName = "Variety must be at most 255 characters.";
+            errors.varietyName = t("harvest.referenceForm.errors.varietyTooLong");
         }
         const yieldText = yieldPerTreeKg.trim();
         if (!isYieldUnreadable && yieldText === "") {
-            errors.yieldPerTreeKg = "Yield per tree is required.";
+            errors.yieldPerTreeKg = t("harvest.referenceForm.errors.yieldRequired");
         } else if (isYieldUnreadable || !YIELD_PATTERN.test(yieldText)
             || Number(yieldText) <= 0 || Number(yieldText) > 1000) {
-            errors.yieldPerTreeKg = YIELD_ERROR;
+            errors.yieldPerTreeKg = t("harvest.referenceForm.errors.yieldInvalid");
         }
         if (!harvestStartMonth) {
-            errors.harvestStartMonth = "First harvest month is required.";
+            errors.harvestStartMonth = t("harvest.referenceForm.errors.startRequired");
         }
         if (!harvestEndMonth) {
-            errors.harvestEndMonth = "Last harvest month is required.";
+            errors.harvestEndMonth = t("harvest.referenceForm.errors.endRequired");
         }
         if (yieldSource.length > 255) {
-            errors.yieldSource = "Yield source must be at most 255 characters.";
+            errors.yieldSource = t("harvest.referenceForm.errors.yieldSourceTooLong");
         }
         if (seasonSource.length > 255) {
-            errors.seasonSource = "Season source must be at most 255 characters.";
+            errors.seasonSource = t("harvest.referenceForm.errors.seasonSourceTooLong");
         }
         return errors;
     }
@@ -152,52 +117,25 @@ export default function VarietyReferenceModal({ reference, isSubmitting, error, 
         onSubmit(values);
     }
 
-    return (
-        <PlantsModal labelledBy="variety-reference-title" onClose={onClose}>
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
-                <h2 id="variety-reference-title" className="font-heading text-lg font-bold text-gray-900">
-                    {isEditing ? `Edit ${reference.varietyName}` : "Add a variety"}
-                </h2>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                >
-                    <X size={20} />
-                </button>
-            </div>
+    const userEntry = t("harvest.references.userEntry");
+    const title = isEditing
+        ? t("harvest.referenceForm.editTitle", { name: reference.varietyName })
+        : t("harvest.references.add");
 
-            <form noValidate onSubmit={handleSubmit} className="px-6 py-5">
-                {/* Text in the darkened error hue of the dialogs: #9a3f32 on the tinted
-                    alert (#fcf6f5) -> 6.27:1. */}
-                {formError && (
-                    <p
-                        role="alert"
-                        className="mb-5 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-sm text-[#9a3f32]"
-                    >
-                        {formError}
-                    </p>
-                )}
+    return (
+        <Modal open onClose={onClose} title={title} size="xl">
+            <form noValidate onSubmit={handleSubmit}>
+                {formError && <FormAlert className="mb-5">{formError}</FormAlert>}
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <FormField id="reference-variety" label="Variety" error={fieldError("varietyName")}
-                        note="Its plantings find it ignoring case and accents." className="sm:col-span-2">
-                        <input
-                            id="reference-variety"
-                            type="text"
-                            autoFocus
-                            value={varietyName}
-                            onChange={(event) => setVarietyName(event.target.value)}
-                            className={INPUT_CLASS}
-                            {...fieldProps("varietyName", "reference-variety", true)}
-                        />
-                    </FormField>
+                    <Field id="reference-variety" label={t("harvest.referenceForm.variety")} error={fieldError("varietyName")}
+                        hint={t("harvest.referenceForm.varietyHint")} className="sm:col-span-2">
+                        <Input type="text" value={varietyName} onChange={(event) => setVarietyName(event.target.value)} />
+                    </Field>
 
-                    <FormField id="reference-yield" label="Yield per tree (kg)" error={fieldError("yieldPerTreeKg")}
-                        note="In full production, per year.">
-                        <input
-                            id="reference-yield"
+                    <Field id="reference-yield" label={t("harvest.referenceForm.yield")} error={fieldError("yieldPerTreeKg")}
+                        hint={t("harvest.referenceForm.yieldHint")}>
+                        <Input
                             type="number"
                             min="0"
                             max="1000"
@@ -205,76 +143,51 @@ export default function VarietyReferenceModal({ reference, isSubmitting, error, 
                             inputMode="decimal"
                             value={yieldPerTreeKg}
                             onChange={changeYield}
-                            className={INPUT_CLASS}
-                            {...fieldProps("yieldPerTreeKg", "reference-yield", true)}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="reference-yield-source" label="Yield source" error={fieldError("yieldSource")}
-                        note={sourceNote(reference?.yieldSource, "the yield does not change")}>
-                        <input
-                            id="reference-yield-source"
+                    <Field id="reference-yield-source" label={t("harvest.referenceForm.yieldSource")}
+                        error={fieldError("yieldSource")}
+                        hint={sourceNote(reference?.yieldSource, "harvest.referenceForm.yieldUnchanged")}>
+                        <Input
                             type="text"
                             value={yieldSource}
                             onChange={(event) => setYieldSource(event.target.value)}
-                            placeholder={reference?.yieldSource ?? "user_entry"}
-                            className={TEXT_INPUT_CLASS}
-                            {...fieldProps("yieldSource", "reference-yield-source", true)}
+                            placeholder={reference?.yieldSource ?? userEntry}
                         />
-                    </FormField>
+                    </Field>
 
-                    <FormField id="reference-start-month" label="First harvest month"
+                    <Field id="reference-start-month" label={t("harvest.referenceForm.startMonth")}
                         error={fieldError("harvestStartMonth")}>
-                        <MonthSelect
-                            id="reference-start-month"
-                            value={harvestStartMonth}
-                            onChange={setHarvestStartMonth}
-                            fieldProps={fieldProps("harvestStartMonth", "reference-start-month")}
-                        />
-                    </FormField>
+                        <MonthSelect value={harvestStartMonth} onChange={setHarvestStartMonth} />
+                    </Field>
 
-                    <FormField id="reference-end-month" label="Last harvest month" error={fieldError("harvestEndMonth")}
-                        note="Before the first month for a season over the new year.">
-                        <MonthSelect
-                            id="reference-end-month"
-                            value={harvestEndMonth}
-                            onChange={setHarvestEndMonth}
-                            fieldProps={fieldProps("harvestEndMonth", "reference-end-month", true)}
-                        />
-                    </FormField>
+                    <Field id="reference-end-month" label={t("harvest.referenceForm.endMonth")}
+                        error={fieldError("harvestEndMonth")} hint={t("harvest.referenceForm.endMonthHint")}>
+                        <MonthSelect value={harvestEndMonth} onChange={setHarvestEndMonth} />
+                    </Field>
 
-                    <FormField id="reference-season-source" label="Season source" error={fieldError("seasonSource")}
-                        note={sourceNote(reference?.seasonSource, "the months do not change")}
+                    <Field id="reference-season-source" label={t("harvest.referenceForm.seasonSource")}
+                        error={fieldError("seasonSource")}
+                        hint={sourceNote(reference?.seasonSource, "harvest.referenceForm.monthsUnchanged")}
                         className="sm:col-span-2">
-                        <input
-                            id="reference-season-source"
+                        <Input
                             type="text"
                             value={seasonSource}
                             onChange={(event) => setSeasonSource(event.target.value)}
-                            placeholder={reference?.seasonSource ?? "user_entry"}
-                            className={TEXT_INPUT_CLASS}
-                            {...fieldProps("seasonSource", "reference-season-source", true)}
+                            placeholder={reference?.seasonSource ?? userEntry}
                         />
-                    </FormField>
+                    </Field>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {isEditing ? (isSubmitting ? "Saving…" : "Save") : (isSubmitting ? "Adding…" : "Add variety")}
-                    </button>
-                </div>
+                <FormButtons
+                    onCancel={onClose}
+                    isSubmitting={isSubmitting}
+                    submitDisabled={false}
+                    submitLabel={isEditing ? t("common:actions.save") : t("harvest.referenceForm.addVariety")}
+                    submittingLabel={isEditing ? t("harvest.references.saving") : t("harvest.referenceForm.adding")}
+                />
             </form>
-        </PlantsModal>
+        </Modal>
     );
 }

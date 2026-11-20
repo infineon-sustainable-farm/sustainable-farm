@@ -25,7 +25,7 @@ import java.time.LocalDate;
  */
 public record NurseryBatchResponse(
         Long id,
-        Integer farmId,
+        Long farmId,
         String batchCode,
         String varietyName,
         NurseryOrigin origin,

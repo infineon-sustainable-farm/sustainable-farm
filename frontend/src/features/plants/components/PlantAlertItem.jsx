@@ -1,22 +1,13 @@
 import { TriangleAlert } from "lucide-react";
-import { formatCode, formatDate } from "../utils/format";
-import PlantsBadge from "./PlantsBadge";
-import { CARD } from "./plantsStyles";
+import { Badge } from "../../../shared/ui";
+import { formatDate, formatEnum } from "../utils/format";
 
-/*
- * A white card like the others, with the severity said twice: by the tinted
- * tile of the icon and by the badge, in the tones of PlantsBadge (critical
- * #9a3f32 on #f7e9e7 -> 5.67:1, warning #8a631b on #f8efde -> 4.74:1). The
- * icon repeats the badge and is hidden from screen readers; it takes the
- * colour of the badge text on the same tint, so the same ratios hold (3:1 is
- * required for a graphic). A severity the API adds later reads neutral, with
- * a gray-600 icon on gray-100 -> 6.87:1.
- */
+// Critical alerts take the error tint, warnings the warning tint, any other severity stays neutral.
 const SEVERITY_STYLES = {
-    CRITICAL: { tone: "error", tile: "bg-[#f7e9e7] text-[#9a3f32]" },
-    WARNING: { tone: "warning", tile: "bg-[#f8efde] text-[#8a631b]" },
+    CRITICAL: { box: "bg-error-tint", icon: "text-error-fg", tone: "error" },
+    WARNING: { box: "bg-warning-tint", icon: "text-warning-fg", tone: "warning" },
 };
-const NEUTRAL = { tone: "neutral", tile: "bg-gray-100 text-gray-600" };
+const NEUTRAL = { box: "bg-surface-muted", icon: "text-text-muted", tone: "neutral" };
 
 /**
  * One plant alert, as a list item: its kind and severity, the API's message as
@@ -27,18 +18,19 @@ const NEUTRAL = { tone: "neutral", tile: "bg-gray-100 text-gray-600" };
  */
 export default function PlantAlertItem({ alert, title, dateLabel }) {
     const style = SEVERITY_STYLES[alert.severity] ?? NEUTRAL;
+    const severity = formatEnum("severity", alert.severity);
     return (
-        <li className={`flex items-start gap-4 ${CARD}`}>
-            <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${style.tile}`}>
-                <TriangleAlert size={20} aria-hidden="true" />
+        <li className={`flex items-start gap-4 rounded-tile border border-border-subtle p-4 ${style.box}`}>
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-control bg-surface-raised">
+                <TriangleAlert size={20} aria-hidden="true" className={style.icon} />
             </div>
             <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <p className="text-sm font-bold text-on-background">{title}</p>
-                    <PlantsBadge tone={style.tone}>{formatCode(alert.severity)}</PlantsBadge>
+                    <p className="text-sm font-semibold text-text">{title}</p>
+                    <Badge tone={style.tone}>{severity}</Badge>
                 </div>
-                <p className="mt-1 text-sm break-words text-gray-800">{alert.message}</p>
-                {dateLabel && <p className="mt-1 text-xs text-gray-600">{`${dateLabel} ${formatDate(alert.date)}`}</p>}
+                <p className="mt-1 text-sm break-words text-text">{alert.message}</p>
+                {dateLabel && <p className="mt-1 text-xs text-text-muted">{`${dateLabel} ${formatDate(alert.date)}`}</p>}
             </div>
         </li>
     );

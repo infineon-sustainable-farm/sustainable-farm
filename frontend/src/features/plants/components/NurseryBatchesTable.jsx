@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { Table } from "../../../shared/ui";
 import {
     formatBlock,
     formatDate,
@@ -9,20 +11,6 @@ import {
 } from "../utils/format";
 import NurseryStageBadge from "./NurseryStageBadge";
 import Value from "./Value";
-import { TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
-
-// The mock-up's columns, with "Batch" for its "Lot", as the API's messages say,
-// and the plants still in the nursery where it showed the starting count.
-const COLUMNS = [
-    "Batch",
-    "Variety",
-    "In nursery",
-    "Dest. block",
-    "Stage",
-    "Planned transplant",
-    "Survival rate",
-    "Origin",
-];
 
 /**
  * Stage of a batch, with the day it was reached. A batch with no plant left
@@ -31,28 +19,32 @@ const COLUMNS = [
  * sends, not a computation.
  */
 function StageCell({ batch }) {
+    const { t } = useTranslation("plants");
     if (batch.currentCount === 0) {
-        return <span className="text-gray-700">No plants left</span>;
+        return <span className="text-text">{t("nursery.batches.noPlantsLeft")}</span>;
     }
     const since = formatDate(batch.currentStageSince);
     return (
         <>
             <NurseryStageBadge stage={batch.currentStage} />
-            {since !== NO_VALUE && <p className="mt-1 text-xs text-gray-600">{`since ${since}`}</p>}
+            {since !== NO_VALUE && (
+                <p className="mt-1 text-xs text-text-muted">{t("nursery.batches.since", { date: since })}</p>
+            )}
         </>
     );
 }
 
 /** Origin of a batch; a purchased one also names its supplier and, if any, the supplier's lot number. */
 function OriginCell({ batch }) {
+    const { t } = useTranslation("plants");
     const supplier = formatText(batch.supplier);
     const lotNumber = formatText(batch.supplierLotNumber);
     return (
         <>
             {formatOrigin(batch.origin)}
             {supplier !== NO_VALUE && (
-                <p className="mt-1 text-xs text-gray-600">
-                    {lotNumber === NO_VALUE ? supplier : `${supplier} · lot ${lotNumber}`}
+                <p className="mt-1 text-xs text-text-muted">
+                    {lotNumber === NO_VALUE ? supplier : t("nursery.batches.supplierLot", { supplier, lot: lotNumber })}
                 </p>
             )}
         </>
@@ -61,56 +53,30 @@ function OriginCell({ batch }) {
 
 /**
  * Nursery batches, one row per batch, in the order the API sends them. Every
- * count, rate and stage is the API's.
+ * count, rate and stage is the API's. The columns are those of the mock-up,
+ * with "Batch" for its "Lot", as the API's messages say, and the plants still
+ * in the nursery where it showed the starting count.
  */
-export default function NurseryBatchesTable({ batches }) {
-    return (
-        <div className={TABLE_CARD}>
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className={`${TABLE_HEAD} align-bottom whitespace-normal`}
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {batches.map((batch) => (
-                        <tr key={batch.id} className="border-b border-gray-100 align-top last:border-b-0">
-                            <td className="px-4 py-3 font-semibold text-gray-800">
-                                {formatText(batch.batchCode)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatText(batch.varietyName)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatNumber(batch.currentCount)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                <Value>{formatBlock(batch.plannedBlockCode)}</Value>
-                            </td>
-                            <td className="px-4 py-3">
-                                <StageCell batch={batch} />
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatDate(batch.plannedTransplantOn)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                {formatPercent(batch.survivalRatePct)}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">
-                                <OriginCell batch={batch} />
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+export default function NurseryBatchesTable({ batches = [], loading = false }) {
+    const { t } = useTranslation("plants");
+    const header = (key) => t(`nursery.batches.columns.${key}`);
+    const columns = [
+        { key: "batchCode", header: header("batch"), cell: (batch) => formatText(batch.batchCode) },
+        { key: "varietyName", header: header("variety"), cell: (batch) => formatText(batch.varietyName) },
+        { key: "currentCount", align: "right", header: header("inNursery"), cell: (batch) => formatNumber(batch.currentCount) },
+        {
+            key: "plannedBlockCode",
+            header: header("destBlock"),
+            cell: (batch) => <Value>{formatBlock(batch.plannedBlockCode)}</Value>,
+        },
+        { key: "currentStage", header: header("stage"), cell: (batch) => <StageCell batch={batch} /> },
+        {
+            key: "plannedTransplantOn",
+            header: header("plannedTransplant"),
+            cell: (batch) => formatDate(batch.plannedTransplantOn),
+        },
+        { key: "survivalRatePct", align: "right", header: header("survivalRate"), cell: (batch) => formatPercent(batch.survivalRatePct) },
+        { key: "origin", header: header("origin"), cell: (batch) => <OriginCell batch={batch} /> },
+    ];
+    return <Table caption={t("nursery.batches.caption")} columns={columns} rows={batches} loading={loading} />;
 }
