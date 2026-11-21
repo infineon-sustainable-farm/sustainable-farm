@@ -63,7 +63,7 @@ public class SiteSecurityAccessInterceptor implements HandlerInterceptor {
         if (caller.isEmpty()) {
             log.warn("Site Security access denied (central identity unavailable): {} {}",
                     request.getMethod(), request.getRequestURI());
-            writeError(response, HttpStatus.UNAUTHORIZED, "Sign in to use Site Security.");
+            writeError(response, HttpStatus.UNAUTHORIZED, "No platform identity is available for Site Security.");
             return false;
         }
         SiteSecurityPrincipal principal = caller.get();

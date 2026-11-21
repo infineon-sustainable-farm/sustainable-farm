@@ -1,53 +1,37 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.config;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.User;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.UserRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Creates the technical IoT account at application startup.
+ * Creates the technical IoT person at application startup, in every profile.
  *
  * <p>Why this bean exists: {@code irrigation_schedules.created_by} is mandatory and
- * {@code notifications.user_id} points to {@code users(id)}. The watersupply module has
- * no authentication endpoint - it is delegated to the global software - so this account
- * has no login credentials and cannot be used to log in.
+ * {@code notifications.user_id} references {@code person(id)} (staff referential,
+ * docs/adr/0004). The watersupply module has no authentication endpoint - it is delegated
+ * to the global software - so this person has no login credentials and cannot be used to log in.
  *
- * <p>This is not demo data: the row is required in production, hence the
- * {@code !test} profile (not {@code dev}). The Flyway migrations only carry the schema
- * (PR-33): the two V2 constraints toward {@code users} are added {@code NOT VALID}
- * precisely because this row does not exist yet when Flyway runs.
+ * <p>This is not demo data: the row is required in production and in the tests alike.
+ * It runs first among the runners so that the seeders after it can reference it.
  *
- * <p>Under the {@code test} profile, it is {@code TestSystemUserSeeder} that provides the
- * same row: the tests disable Flyway and work on H2.
- *
- * <p>Idempotent execution: the row is created only once.
+ * <p>Idempotent execution: the person is found by its email {@link SystemUsers#IOT_SYSTEM_EMAIL}
+ * and created only once.
  */
 @Component
-@Profile("!test")
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class SystemUserSeeder implements ApplicationRunner {
 
-    private final UserRepository userRepository;
+    private final SystemUsers systemUsers;
 
-    public SystemUserSeeder(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public SystemUserSeeder(SystemUsers systemUsers) {
+        this.systemUsers = systemUsers;
     }
 
     @Override
-    @Transactional
     public void run(ApplicationArguments args) {
-        if (userRepository.findById(SystemUsers.IOT_SYSTEM_USER_ID).isPresent()) {
-            return;
-        }
-        User system = new User();
-        system.setId(SystemUsers.IOT_SYSTEM_USER_ID);
-        system.setFirstName("Systeme");
-        system.setLastName("IoT");
-        system.setEmail("systeme.iot@watersupply.local");
-        system.setStatus(false);
-        userRepository.save(system);
+        systemUsers.iotSystemUserId();
     }
 }

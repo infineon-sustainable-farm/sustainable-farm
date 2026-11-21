@@ -14,59 +14,37 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Records administrative and account changes. It must run inside the transaction
- * of the change itself, so that a change is never saved without its audit row,
- * and a change that fails leaves no row behind.
+ * Records administrative changes (operators, credentials). It must run inside the transaction
+ * of the change itself, so that a change is never saved without its audit row, and a change
+ * that fails leaves no row behind.
  */
 @Service
 @RequiredArgsConstructor
 public class SiteSecurityAuditService {
 
-    public static final String SYSTEM_ACTOR = "system";
     static final String ADMIN = "ADMIN";
-    static final String SELF = "SELF";
-    static final String SYSTEM = "SYSTEM";
 
     private static final Logger log = LoggerFactory.getLogger(SiteSecurityAuditService.class);
 
     private final SiteSecurityAuditEventRepository repository;
 
-    /** A change made by a signed-in operator (an admin action). */
+    /** A change made by an operator holding the admin role. */
     @Transactional(propagation = Propagation.MANDATORY)
     public void record(SiteSecurityPrincipal actor, SiteSecurityAuditAction action, String targetId, String detail) {
         if (actor == null || actor.operatorId() == null) {
-            // Only signed-in operators reach these endpoints; refuse rather than store an anonymous change.
-            throw new IllegalStateException("An administrative change needs a signed-in operator.");
+            // Only resolved operators reach these endpoints; refuse rather than store an anonymous change.
+            throw new IllegalStateException("An administrative change needs an operator.");
         }
-        save(actor.operatorId(), ADMIN, action, targetId, detail);
-    }
-
-    /** A change the account made to itself, for example activating it or resetting its password. */
-    @Transactional(propagation = Propagation.MANDATORY)
-    public void recordSelf(String accountId, SiteSecurityAuditAction action, String detail) {
-        if (accountId == null) {
-            throw new IllegalStateException("A self-service event needs the account id.");
-        }
-        save(accountId, SELF, action, accountId, detail);
-    }
-
-    /** A change made by the module itself, for example blocking sign-in after repeated wrong passwords. */
-    @Transactional(propagation = Propagation.MANDATORY)
-    public void recordSystem(SiteSecurityAuditAction action, String targetId, String detail) {
-        save(SYSTEM_ACTOR, SYSTEM, action, targetId, detail);
-    }
-
-    private void save(String actorId, String actorKind, SiteSecurityAuditAction action, String targetId, String detail) {
         repository.save(SiteSecurityAuditEventEntity.builder()
                 .occurredAt(Instant.now())
-                .actorOperatorId(actorId)
-                .actorKind(actorKind)
+                .actorOperatorId(actor.operatorId())
+                .actorKind(ADMIN)
                 .actionName(action.name())
                 .targetType(action.targetType())
                 .targetId(targetId)
                 .detail(detail == null || detail.length() <= 64 ? detail : detail.substring(0, 64))
                 .build());
-        log.info("Site Security audit: {} on {} {} by {} {}", action, action.targetType().toLowerCase(Locale.ROOT),
-                targetId, actorKind.toLowerCase(Locale.ROOT), actorId);
+        log.info("Site Security audit: {} on {} {} by {}", action, action.targetType().toLowerCase(Locale.ROOT),
+                targetId, actor.operatorId());
     }
 }

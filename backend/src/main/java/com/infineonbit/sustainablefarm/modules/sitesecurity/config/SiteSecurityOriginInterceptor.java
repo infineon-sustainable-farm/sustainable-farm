@@ -16,11 +16,10 @@ import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * A second guard against cross-site requests, on top of the SameSite=Strict
- * cookie: every write must come from one of the frontend origins listed in
- * APP_CORS_ORIGINS. Browsers always send Origin on such requests. The gate
- * scanner is not a browser and does not use the cookie, so a request with a
- * Bearer token and no session cookie is left to the access check.
+ * A guard against cross-site requests: every write must come from one of the
+ * frontend origins listed in APP_CORS_ORIGINS. Browsers always send Origin on
+ * such requests. The gate scanner is not a browser, so a request with a Bearer
+ * token is left to the access check.
  */
 @Component
 public class SiteSecurityOriginInterceptor implements HandlerInterceptor {

@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
-
-const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
-const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
-const ERROR_CLASS = "mt-1 text-xs text-error";
+import { useTranslation } from "react-i18next";
+import { Button, Field, Input, Select } from "../../../../shared/ui";
+import { useLabels } from "../../utils/labels";
+import FormAlert from "../FormAlert";
 
 const EVENT_TYPES = ["OPEN_DAY", "PARTNER_BUYER", "SCHOOL"];
 
@@ -13,19 +12,13 @@ function splitDateTime(value) {
 }
 
 /**
- * Inline event form, used to create and to edit an event. The mockup's
- * "linked visitor groups" and "status" fields are not part of EventRequest:
- * attendees are registrations linked to the event through the API, and the
+ * Event form, used to create and to edit an event. Linked visitor groups and the status are not
+ * part of EventRequest: attendees are registrations linked to the event through the API, and the
  * status is driven by publish/cancel and the visit lifecycle job.
  */
-export default function EventForm({
-    event,
-    isSubmitting,
-    submitError,
-    serverFieldErrors,
-    onSubmit,
-    onCancel,
-}) {
+export default function EventForm({ event, isSubmitting, submitError, serverFieldErrors, onSubmit, onCancel }) {
+    const { t } = useTranslation("visitormanagement");
+    const labels = useLabels();
     const isEditing = Boolean(event);
     const start = splitDateTime(event?.startDateTime);
     const end = splitDateTime(event?.endDateTime);
@@ -36,35 +29,33 @@ export default function EventForm({
     const [startTime, setStartTime] = useState(start.time);
     const [endTime, setEndTime] = useState(end.time);
     const [location, setLocation] = useState(event?.location ?? "");
-    const [maxCapacity, setMaxCapacity] = useState(
-        event ? String(event.maxCapacity) : "10",
-    );
+    const [maxCapacity, setMaxCapacity] = useState(event ? String(event.maxCapacity) : "10");
     const [description, setDescription] = useState(event?.description ?? "");
     const [fieldErrors, setFieldErrors] = useState({});
 
     function validate() {
         const errors = {};
         if (!title.trim()) {
-            errors.title = "Event name is required.";
+            errors.title = t("events.validation.titleRequired");
         } else if (title.trim().length > 150) {
-            errors.title = "Name must be at most 150 characters.";
+            errors.title = t("events.validation.titleTooLong", { max: 150 });
         }
-        if (!type) errors.type = "Pick an event type.";
-        if (!date) errors.date = "Pick a date.";
-        if (!startTime) errors.startTime = "Pick a start time.";
-        if (!endTime) errors.endTime = "Pick an end time.";
+        if (!type) errors.type = t("events.validation.typeRequired");
+        if (!date) errors.date = t("events.validation.dateRequired");
+        if (!startTime) errors.startTime = t("events.validation.startRequired");
+        if (!endTime) errors.endTime = t("events.validation.endRequired");
         if (startTime && endTime && endTime <= startTime) {
-            errors.endTime = "End time must be after the start time.";
+            errors.endTime = t("events.validation.endAfterStart");
         }
         const capacity = Number(maxCapacity);
         if (!Number.isInteger(capacity) || capacity < 1) {
-            errors.maxCapacity = "Capacity must be a whole number of at least 1.";
+            errors.maxCapacity = t("events.validation.capacityInvalid");
         }
         if (location.trim().length > 150) {
-            errors.location = "Location must be at most 150 characters.";
+            errors.location = t("events.validation.locationTooLong", { max: 150 });
         }
         if (description.trim().length > 1000) {
-            errors.description = "Description must be at most 1000 characters.";
+            errors.description = t("events.validation.descriptionTooLong", { max: 1000 });
         }
         return errors;
     }
@@ -89,171 +80,92 @@ export default function EventForm({
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
 
     return (
-        <form
-            onSubmit={handleSubmit}
-           
-        >
+        <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div>
-                    <label htmlFor="ev-title" className={LABEL_CLASS}>
-                        Event name
-                    </label>
-                    <input
-                        id="ev-title"
+                <Field id="ev-title" label={t("events.form.title")} error={fieldError("title")}>
+                    <Input
                         type="text"
                         value={title}
                         onChange={(changeEvent) => setTitle(changeEvent.target.value)}
-                        placeholder="e.g. Open Farm Day"
-                        className={INPUT_CLASS}
+                        placeholder={t("events.form.titlePlaceholder")}
                     />
-                    {fieldError("title") && <p className={ERROR_CLASS}>{fieldError("title")}</p>}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="ev-type" className={LABEL_CLASS}>
-                        Event type
-                    </label>
-                    <select
-                        id="ev-type"
-                        value={type}
-                        onChange={(changeEvent) => setType(changeEvent.target.value)}
-                        className={INPUT_CLASS}
-                    >
+                <Field id="ev-type" label={t("events.form.type")} error={fieldError("type")}>
+                    <Select value={type} onChange={(changeEvent) => setType(changeEvent.target.value)}>
                         {EVENT_TYPES.map((option) => (
                             <option key={option} value={option}>
-                                {formatEnumLabel(option)}
+                                {labels.enum(option)}
                             </option>
                         ))}
-                    </select>
-                </div>
+                    </Select>
+                </Field>
 
-                <div>
-                    <label htmlFor="ev-capacity" className={LABEL_CLASS}>
-                        Max capacity
-                    </label>
-                    <input
-                        id="ev-capacity"
+                <Field id="ev-capacity" label={t("events.form.maxCapacity")} error={fieldError("maxCapacity")}>
+                    <Input
                         type="number"
                         min="1"
                         value={maxCapacity}
                         onChange={(changeEvent) => setMaxCapacity(changeEvent.target.value)}
-                        className={INPUT_CLASS}
                     />
-                    {fieldError("maxCapacity") && (
-                        <p className={ERROR_CLASS}>{fieldError("maxCapacity")}</p>
-                    )}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="ev-date" className={LABEL_CLASS}>
-                        Date
-                    </label>
-                    <input
-                        id="ev-date"
-                        type="date"
-                        value={date}
-                        onChange={(changeEvent) => setDate(changeEvent.target.value)}
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("date") && <p className={ERROR_CLASS}>{fieldError("date")}</p>}
-                </div>
+                <Field id="ev-date" label={t("events.form.date")} error={fieldError("date")}>
+                    <Input type="date" value={date} onChange={(changeEvent) => setDate(changeEvent.target.value)} />
+                </Field>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="ev-start" className={LABEL_CLASS}>
-                            Start time
-                        </label>
-                        <input
-                            id="ev-start"
+                    <Field id="ev-start" label={t("events.form.startTime")} error={fieldError("startTime")}>
+                        <Input
                             type="time"
                             value={startTime}
                             onChange={(changeEvent) => setStartTime(changeEvent.target.value)}
-                            className={INPUT_CLASS}
                         />
-                        {fieldError("startTime") && (
-                            <p className={ERROR_CLASS}>{fieldError("startTime")}</p>
-                        )}
-                    </div>
-                    <div>
-                        <label htmlFor="ev-end" className={LABEL_CLASS}>
-                            End time
-                        </label>
-                        <input
-                            id="ev-end"
+                    </Field>
+                    <Field id="ev-end" label={t("events.form.endTime")} error={fieldError("endTime")}>
+                        <Input
                             type="time"
                             value={endTime}
                             onChange={(changeEvent) => setEndTime(changeEvent.target.value)}
-                            className={INPUT_CLASS}
                         />
-                        {fieldError("endTime") && (
-                            <p className={ERROR_CLASS}>{fieldError("endTime")}</p>
-                        )}
-                    </div>
+                    </Field>
                 </div>
 
-                <div>
-                    <label htmlFor="ev-location" className={LABEL_CLASS}>
-                        Location on farm
-                    </label>
-                    <input
-                        id="ev-location"
+                <Field id="ev-location" label={t("events.form.location")} error={fieldError("location")}>
+                    <Input
                         type="text"
                         value={location}
                         onChange={(changeEvent) => setLocation(changeEvent.target.value)}
-                        placeholder="e.g. Main courtyard"
-                        className={INPUT_CLASS}
+                        placeholder={t("events.form.locationPlaceholder")}
                     />
-                    {fieldError("location") && (
-                        <p className={ERROR_CLASS}>{fieldError("location")}</p>
-                    )}
-                </div>
+                </Field>
             </div>
 
-            <div className="mt-4">
-                <label htmlFor="ev-description" className={LABEL_CLASS}>
-                    Description
-                </label>
-                <input
-                    id="ev-description"
+            <Field
+                id="ev-description"
+                className="mt-4"
+                label={t("events.form.description")}
+                error={fieldError("description")}
+            >
+                <Input
                     type="text"
                     value={description}
                     onChange={(changeEvent) => setDescription(changeEvent.target.value)}
-                    placeholder="Short description"
-                    className={INPUT_CLASS}
+                    placeholder={t("events.form.descriptionPlaceholder")}
                 />
-                {fieldError("description") && (
-                    <p className={ERROR_CLASS}>{fieldError("description")}</p>
-                )}
-            </div>
+            </Field>
 
-            {submitError && (
-                <p className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
+            {submitError && <FormAlert className="mt-4">{submitError}</FormAlert>}
 
-            <div className="mt-4 flex gap-2.5">
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isSubmitting
-                        ? "Saving…"
-                        : isEditing
-                          ? "Save event"
-                          : "Create event"}
-                </button>
+            <div className="mt-4 flex justify-end gap-2">
                 {isEditing && (
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        disabled={isSubmitting}
-                        className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
-                    >
-                        Cancel
-                    </button>
+                    <Button variant="secondary" onClick={onCancel} disabled={isSubmitting}>
+                        {t("common:actions.cancel")}
+                    </Button>
                 )}
+                <Button type="submit" loading={isSubmitting}>
+                    {isEditing ? t("events.form.save") : t("events.form.create")}
+                </Button>
             </div>
         </form>
     );

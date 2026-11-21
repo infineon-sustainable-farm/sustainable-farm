@@ -5,8 +5,7 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.d
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.request.RawIntakeUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.dto.response.RawIntakeResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade;
+import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.model.RawIntake;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.service.RawIntakeService;
@@ -17,11 +16,11 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller for RawIntake operations
@@ -30,7 +29,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/raw-intakes")
+@RequestMapping("/api/product-transformation/raw-intakes")
 @Tag(name = "Raw Intake Management", description = "APIs for managing raw material intake from Plants")
 public class RawIntakeController {
 
@@ -50,7 +49,7 @@ public class RawIntakeController {
     @PostMapping
     @Operation(summary = "Create a new raw intake", description = "Creates a new raw intake record")
     public ResponseEntity<RawIntakeResponse> createRawIntake(@Valid @RequestBody RawIntakeCreateRequest request) {
-        Batch batch = batchRepository.findById(request.getBatchId())
+        Batch batch = batchRepository.findByBatchId(request.getBatchId())
                 .orElseThrow(() -> new IllegalArgumentException("Batch not found with ID: " + request.getBatchId()));
         
         RawIntake intake = dtoMapper.toEntity(request, batch);
@@ -60,6 +59,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/{intakeId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intake by ID", description = "Retrieves a specific raw intake by its ID")
     public ResponseEntity<RawIntakeResponse> getRawIntakeById(
             @Parameter(description = "Intake ID") @PathVariable String intakeId) {
@@ -69,6 +69,7 @@ public class RawIntakeController {
     }
 
     @GetMapping("/batch/{batchId}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intake by batch ID", description = "Retrieves raw intake for a specific batch")
     public ResponseEntity<RawIntakeResponse> getRawIntakeByBatchId(
             @Parameter(description = "Batch ID") @PathVariable String batchId) {
@@ -78,12 +79,11 @@ public class RawIntakeController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all raw intakes", description = "Retrieves all raw intake records")
     public ResponseEntity<List<RawIntakeResponse>> getAllRawIntakes() {
         List<RawIntake> intakes = rawIntakeService.getAllRawIntakes();
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
@@ -94,13 +94,15 @@ public class RawIntakeController {
             @Valid @RequestBody RawIntakeUpdateRequest request) {
         RawIntake existingIntake = rawIntakeService.getRawIntakeById(intakeId);
         
-        existingIntake.setSourceFarm(request.getSourceFarm());
-        existingIntake.setSourceBlock(request.getSourceBlock());
+        Long sourceBlockId = dtoMapper.blockIdOrNull(request.getSourceFarm(), request.getSourceBlock());
+        if (sourceBlockId != null) {
+            existingIntake.setSourceBlockId(sourceBlockId);
+        }
         existingIntake.setIntakeDate(request.getIntakeDate());
         existingIntake.setReceivedQuantityKg(request.getReceivedQuantityKg());
-        existingIntake.setReceivedVariety(request.getReceivedVariety());
+        existingIntake.setReceivedVarietyKey(dtoMapper.varietyKey(request.getReceivedVariety()));
         existingIntake.setReceivedGrade(request.getReceivedGrade());
-        existingIntake.setIntakeOperator(request.getIntakeOperator());
+        existingIntake.setIntakeOperatorId(dtoMapper.personId(request.getIntakeOperatorPersonId()));
         
         RawIntake updatedIntake = rawIntakeService.updateRawIntake(intakeId, existingIntake);
         RawIntakeResponse response = dtoMapper.toResponse(updatedIntake);
@@ -125,47 +127,43 @@ public class RawIntakeController {
     }
 
     @GetMapping("/date-range")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by date range", description = "Retrieves raw intakes within a date range")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByDateRange(
             @Parameter(description = "Start date") @RequestParam LocalDate startDate,
             @Parameter(description = "End date") @RequestParam LocalDate endDate) {
         List<RawIntake> intakes = rawIntakeService.getRawIntakesByDateRange(startDate, endDate);
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/farm/{sourceFarm}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by source farm", description = "Retrieves raw intakes filtered by source farm")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesBySourceFarm(
             @Parameter(description = "Source farm") @PathVariable String sourceFarm) {
         List<RawIntake> intakes = rawIntakeService.getRawIntakesBySourceFarm(sourceFarm);
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/variety/{variety}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by variety", description = "Retrieves raw intakes filtered by mango variety")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByVariety(
-            @Parameter(description = "Mango variety") @PathVariable MangoVariety variety) {
-        List<RawIntake> intakes = rawIntakeService.getRawIntakesByVariety(variety);
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+            @Parameter(description = "Mango variety") @PathVariable String variety) {
+        List<RawIntake> intakes = rawIntakeService.getRawIntakesByVariety(dtoMapper.varietyKey(variety));
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/grade/{grade}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get raw intakes by grade", description = "Retrieves raw intakes filtered by quality grade")
     public ResponseEntity<List<RawIntakeResponse>> getRawIntakesByGrade(
             @Parameter(description = "Quality grade") @PathVariable QualityGrade grade) {
         List<RawIntake> intakes = rawIntakeService.getRawIntakesByGrade(grade);
-        List<RawIntakeResponse> responses = intakes.stream()
-                .map(dtoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<RawIntakeResponse> responses = dtoMapper.toRawIntakeResponses(intakes);
         return ResponseEntity.ok(responses);
     }
 }

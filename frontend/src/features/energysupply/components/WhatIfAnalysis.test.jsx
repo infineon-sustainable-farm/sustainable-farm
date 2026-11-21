@@ -52,7 +52,7 @@ describe("WhatIfAnalysis", () => {
     render(<WhatIfAnalysis />);
     await screen.findByText("Additional Production Demand");
     await waitFor(() => {
-      expect(displayedValue("Additional Production Demand")).toBe("164250kWh/year");
+      expect(displayedValue("Additional Production Demand")).toBe("164,250kWh/year");
     });
 
     fireEvent.change(screen.getByRole("slider", { name: "Production scale-up" }), {
@@ -67,7 +67,7 @@ describe("WhatIfAnalysis", () => {
       });
     });
     await waitFor(() => {
-      expect(displayedValue("Additional Production Demand")).toBe("180675kWh/year");
+      expect(displayedValue("Additional Production Demand")).toBe("180,675kWh/year");
     });
   });
 
@@ -75,6 +75,6 @@ describe("WhatIfAnalysis", () => {
     render(<WhatIfAnalysis />);
 
     expect(await screen.findByText("Net Annual CO₂ Increase")).toBeTruthy();
-    expect(displayedValue("Net Annual CO₂ Increase")).toBe("71613kg/year");
+    expect(displayedValue("Net Annual CO₂ Increase")).toBe("71,613kg/year");
   });
 });

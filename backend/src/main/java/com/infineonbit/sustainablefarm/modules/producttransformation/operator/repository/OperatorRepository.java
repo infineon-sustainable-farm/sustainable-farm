@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.ActiveStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,12 +13,25 @@ import java.util.List;
 /**
  * Repository for Operator entity
  * Personnel data - Supporting Entity
- * 
+ *
+ * <p>The name belongs to the person of the staff referential; the status queries filter in
+ * {@code OperatorServiceImpl}, which also fills the name.</p>
+ *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
 @Repository
-public interface OperatorRepository extends JpaRepository<Operator, String> {
+public interface OperatorRepository extends JpaRepository<Operator, Long> {
+
+    /** The Operator of a business code, shown as {@code operatorId}. */
+    Optional<Operator> findByOperatorId(String operatorId);
+
+    /** Whether a Operator has this business code. */
+    boolean existsByOperatorId(String operatorId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByOperatorId(String operatorId);
+
 
     /**
      * Find operators by role
@@ -26,40 +39,15 @@ public interface OperatorRepository extends JpaRepository<Operator, String> {
     List<Operator> findByRole(Role role);
 
     /**
-     * Find operators by active status
+     * Whether a person already holds a product transformation operator role
      */
-    List<Operator> findByActiveStatus(ActiveStatus activeStatus);
-
-    /**
-     * Find active operators by role
-     * Business Rule: Only ACTIVE operators can be assigned
-     */
-    @Query("SELECT o FROM Operator o WHERE o.role = :role AND o.activeStatus = 'ACTIVE'")
-    List<Operator> findActiveByRole(@Param("role") Role role);
-
-    /**
-     * Find active QC inspectors
-     */
-    @Query("SELECT o FROM Operator o WHERE o.role = 'QC_INSPECTOR' AND o.activeStatus = 'ACTIVE'")
-    List<Operator> findActiveQcInspectors();
-
-    /**
-     * Find active auditors
-     */
-    @Query("SELECT o FROM Operator o WHERE o.role = 'AUDITOR' AND o.activeStatus = 'ACTIVE'")
-    List<Operator> findActiveAuditors();
+    boolean existsByPersonId(Long personId);
 
     /**
      * Find operators by certification
      */
     @Query("SELECT o FROM Operator o WHERE o.certifications LIKE %:certification%")
     List<Operator> findByCertification(@Param("certification") String certification);
-
-    /**
-     * Check if operator is active
-     */
-    @Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END FROM Operator o WHERE o.operatorId = :id AND o.activeStatus = 'ACTIVE'")
-    boolean isOperatorActive(@Param("id") String operatorId);
 
     /**
      * Check if operator has specific role

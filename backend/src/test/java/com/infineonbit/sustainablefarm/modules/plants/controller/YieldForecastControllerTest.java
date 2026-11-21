@@ -65,7 +65,7 @@ public class YieldForecastControllerTest {
     @Test
     void getYieldForecast_shouldReturnTheForecast_withMonthsAsYearMonthStrings() throws Exception {
         // Arrange
-        when(yieldForecastService.getYieldForecast(1, "B", JANUARY_2027, 12)).thenReturn(forecast());
+        when(yieldForecastService.getYieldForecast(1L, "B", JANUARY_2027, 12)).thenReturn(forecast());
         // Act
         ResultActions result = mockMvc.perform(get(URL)
                 .param("farmId", "1")

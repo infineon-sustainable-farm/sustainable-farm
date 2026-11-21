@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Production-safe placeholder until the central platform identity adapter is
- * connected. Anonymous requests fail closed instead of receiving a module role.
+ * Outside the development profile, until the platform authentication adapter is connected:
+ * there is no identity, so every request fails closed (401) instead of receiving a module role.
  */
 @Component
 @Profile("!dev")

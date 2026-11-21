@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Entry point for IoT sensors - real system integration. See IotTelemetryService for the routing. */
 @RestController
-@RequestMapping("/api/iot")
+@RequestMapping("/api/water-supply/iot")
 public class IotTelemetryController {
 
     private final IotTelemetryService telemetryService;

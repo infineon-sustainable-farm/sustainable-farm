@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/visitors")
+@RequestMapping("/api/visitor-management/visitors")
 public class VisitorController {
 
     private final RegistrationService registrationService;

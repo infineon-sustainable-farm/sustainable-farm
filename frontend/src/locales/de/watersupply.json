@@ -1,0 +1,979 @@
+{
+  "name": "Wasserversorgung",
+  "nav": {
+    "dashboard": "Übersicht",
+    "farms": "Betriebe und Felder",
+    "sources": "Wasserquellen",
+    "irrigation": "Bewässerungsplanung",
+    "consumption": "Verbrauchserfassung",
+    "rainwater": "Regenwassernutzung",
+    "maintenance": "Wartung",
+    "quality": "Wasserqualität",
+    "drought": "Dürrewarnungen",
+    "outages": "Geplante Ausfälle",
+    "plants": "Pflanzenblöcke",
+    "lots": "Verarbeitungschargen",
+    "visitors": "Besucher",
+    "notifications": "Benachrichtigungen"
+  },
+  "navSections": {
+    "dataManagement": "Datenverwaltung",
+    "waterPlanning": "Wasserplanung",
+    "integrations": "Integrationen",
+    "operations": "Betrieb"
+  },
+  "common": {
+    "none": "—",
+    "loading": "Wird geladen…",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "close": "Schließen",
+    "select": "Auswählen",
+    "allFarms": "Alle Betriebe",
+    "saveError": "Speichern nicht möglich.",
+    "deleteError": "Löschen nicht möglich.",
+    "history": "Verlauf"
+  },
+  "units": {
+    "liters": "{{value}} L",
+    "cubicMeters": "{{value}} m³",
+    "mm": "{{value}} mm",
+    "percent": "{{value}} %",
+    "minutes": "{{value}} min",
+    "kmh": "{{value}} km/h",
+    "celsius": "{{value}} °C"
+  },
+  "charts": {
+    "unit": "Einheit: {{unit}}",
+    "units": {
+      "liters": "Liter",
+      "millimeters": "Millimeter",
+      "percent": "%"
+    },
+    "axis": {
+      "liters": "L",
+      "cubicMeters": "m³",
+      "mm": "mm",
+      "percent": "%"
+    },
+    "label": "Diagramm in {{unit}}",
+    "exportPng": "Diagramm als PNG-Bild exportieren",
+    "exportCsv": "Diagrammdaten als CSV exportieren",
+    "png": "PNG",
+    "csv": "CSV",
+    "target": "Ziel {{value}}",
+    "ofTarget": "/ Ziel {{value}}"
+  },
+  "sources": {
+    "title": "Wasserquellen",
+    "subtitle": "Brunnen, Regentanks, Flüsse: Entnahmestellen je Betrieb verwalten.",
+    "listTitle": "Quellenliste",
+    "count": "{{count}} Quelle(n)",
+    "farmFilter": "Nach Betrieb filtern",
+    "search": "Quelle suchen…",
+    "loading": "Quellen werden geladen...",
+    "loadError": "Quellen können nicht geladen werden.",
+    "emptyTitle": "Keine Quellen",
+    "empty": "Legen Sie zum Start eine Wasserquelle an, die einem Betrieb zugeordnet ist.",
+    "columns": {
+      "name": "Name",
+      "farm": "Betrieb",
+      "type": "Typ",
+      "capacity": "Kapazität",
+      "level": "Füllstand"
+    },
+    "levelValue": "{{level}} ({{pct}})",
+    "farmFallback": "Betrieb {{id}}",
+    "types": {
+      "borehole": "Bohrbrunnen",
+      "rain": "Regen",
+      "river": "Fluss",
+      "well": "Brunnen",
+      "municipal": "Leitungsnetz"
+    },
+    "newTitle": "Neue Quelle",
+    "editTitle": "Quelle bearbeiten",
+    "fields": {
+      "farm": "Betrieb",
+      "name": "Name",
+      "type": "Typ",
+      "capacity": "Kapazität (L)"
+    },
+    "errors": {
+      "farmRequired": "Der Betrieb ist erforderlich.",
+      "nameRequired": "Der Name ist erforderlich.",
+      "capacityPositive": "Die Kapazität muss größer als 0 sein.",
+      "levelRange": "Der aktuelle Füllstand muss zwischen 0 und der Kapazität liegen."
+    },
+    "created": "Quelle angelegt",
+    "updated": "Quelle aktualisiert",
+    "deleted": "Quelle gelöscht",
+    "deleteTitle": "{{name}} löschen",
+    "theSource": "Die Quelle",
+    "deleteMessage": "Diese Quelle wird entfernt. Zugehörige Verbräuche und Qualitätstests können betroffen sein.",
+    "history": {
+      "title": "Füllstandsverlauf - {{name}}",
+      "loading": "Füllstandsverlauf wird geladen…",
+      "loadError": "Der Verlauf kann nicht geladen werden.",
+      "emptyTitle": "Kein Füllstand erfasst",
+      "empty": "Messwerte erscheinen hier, sobald der Füllstandssensor sie meldet oder der Füllstand bearbeitet wird.",
+      "series": "Füllstand (L)",
+      "capacity": "Kapazität"
+    }
+  },
+  "outages": {
+    "title": "Geplante Ausfälle",
+    "subtitle": "Vorab angekündigte Wartungen oder Abschaltungen: Besucher werden gewarnt, Ventile und automatische Bewässerung bleiben aus.",
+    "inForceNow": "Derzeit wirksam",
+    "plannedPeriods": "Geplante Zeiträume",
+    "listTitle": "Zeiträume der Nichtverfügbarkeit",
+    "filterLabel": "Zeiträume anzeigen",
+    "filters": {
+      "current": "Laufend und anstehend",
+      "past": "Beendet",
+      "cancelled": "Abgesagt",
+      "all": "Alle"
+    },
+    "phases": {
+      "cancelled": "Abgesagt",
+      "active": "Wirksam",
+      "upcoming": "Anstehend",
+      "past": "Beendet"
+    },
+    "scopes": {
+      "zone": "Zone",
+      "source": "Wasserquelle",
+      "farm": "Gesamter Betrieb"
+    },
+    "statuses": {
+      "planned": "Geplant",
+      "active": "Aktiv",
+      "cancelled": "Abgesagt"
+    },
+    "columns": {
+      "what": "Was",
+      "from": "Von",
+      "to": "Bis",
+      "reason": "Grund",
+      "status": "Status"
+    },
+    "loading": "Geplante Ausfälle werden geladen…",
+    "loadError": "Geplante Ausfälle können nicht geladen werden.",
+    "emptyTitle": "Kein geplanter Ausfall",
+    "empty": "Planen Sie rechts eine Wartung oder Abschaltung: Besucher und automatische Bewässerung berücksichtigen sie.",
+    "newTitle": "Nichtverfügbarkeit planen",
+    "editTitle": "Nichtverfügbarkeit bearbeiten",
+    "fields": {
+      "scope": "Nicht verfügbar",
+      "start": "Beginn",
+      "end": "Ende",
+      "reason": "Grund",
+      "reasonPlaceholder": "Filterreinigung, Pumpenreparatur…",
+      "status": "Status",
+      "postpone": "In diesem Zeitraum geplante Bewässerungen verschieben"
+    },
+    "sourceNoPostpone": "Eine Quelle ist keinen Zonen zugeordnet: Ihre Bewässerungen können nicht automatisch verschoben werden.",
+    "errors": {
+      "targetRequired": "Wählen Sie aus, was nicht verfügbar ist.",
+      "periodRequired": "Beginn und Ende sind erforderlich.",
+      "endAfterStart": "Das Ende muss nach dem Beginn liegen."
+    },
+    "planned": "Nichtverfügbarkeit geplant",
+    "updated": "Nichtverfügbarkeit aktualisiert",
+    "cancelled": "Nichtverfügbarkeit abgesagt",
+    "deleted": "Nichtverfügbarkeit gelöscht",
+    "cancelError": "Absagen nicht möglich.",
+    "deleteTitle": "Diese Nichtverfügbarkeit löschen",
+    "deleteMessage": "Der Zeitraum wird aus dem Verlauf entfernt. Um eine Spur zu behalten, sagen Sie ihn stattdessen ab."
+  },
+  "plantsBlocks": {
+    "title": "Pflanzenblöcke",
+    "subtitle": "Verknüpfen Sie jede bewässerte Zone mit dem Pflanzenblock, den sie bewässert: Plants liest dann sein Wasser je Block.",
+    "listTitle": "Verknüpfungen Zone ↔ Block",
+    "count": "{{blocks}} Block/Blöcke, {{links}} Verknüpfung(en)",
+    "columns": {
+      "block": "Block",
+      "zone": "Zone",
+      "farm": "Betrieb"
+    },
+    "zoneFallback": "Zone {{id}}",
+    "farmFallback": "Betrieb {{id}}",
+    "severalBlocks": "mehrere Blöcke",
+    "severalBlocksHint": "Ihre Mengen können keinem einzelnen Block zugeordnet werden",
+    "unlink": "Verknüpfung lösen",
+    "loading": "Verknüpfungen werden geladen…",
+    "loadError": "Die Verknüpfungen können nicht geladen werden.",
+    "emptyTitle": "Noch keine Zone verknüpft",
+    "empty": "Verknüpfen Sie eine Zone mit dem Formular rechts mit ihrem Pflanzenblock.",
+    "formTitle": "Zone verknüpfen",
+    "fields": {
+      "zone": "Zone",
+      "block": "Pflanzenblock",
+      "noBlock": "Kein Feld mit Pflanzen-Code"
+    },
+    "codeHint": "Die Liste zeigt die Felder des Betriebs der Zone, die einen Pflanzen-Code haben; ein Feld erhält seinen Code unter Betriebe, Felder und Zonen. Beim Verknüpfen wird die Zone in dieses Feld verschoben.",
+    "link": "Verknüpfen",
+    "errors": {
+      "zoneRequired": "Wählen Sie eine Zone.",
+      "farmUnknown": "Der Betrieb dieser Zone ist unbekannt: Prüfen Sie ihr Feld unter Betriebe und Felder.",
+      "blockRequired": "Wählen Sie einen Pflanzenblock.",
+      "alreadyLinkedTo": "Diese Zone ist bereits mit Block {{code}} verknüpft."
+    },
+    "linked": "Zone mit Block {{code}} verknüpft",
+    "unlinked": "Zone von Block {{code}} gelöst",
+    "details": {
+      "title": "Block {{code}}",
+      "blockChoice": "Angezeigter Block",
+      "pending": "…",
+      "rainfall": "Niederschlag in diesem Monat",
+      "rainfallWithGauges": "Niederschlag in diesem Monat · {{count}} Regenmesser des Betriebs",
+      "need": "Bewässerungsbedarf heute",
+      "phaseValue": "{{phase}} × {{factor}}",
+      "unknownPhase": "unbekannt",
+      "phase": "Wachstumsphase ({{source}})",
+      "phaseSources": {
+        "request": "hier gewählt",
+        "plants_calendar": "Plants-Kalender",
+        "unknown": "unbekannt, keine Anpassung"
+      },
+      "phaseField": "Für den Bedarf verwendete Wachstumsphase",
+      "phases": {
+        "calendar": "Aus dem Plants-Kalender",
+        "establishment": "Etablierung (0–2 J.)",
+        "gradual": "Ansteigende Produktion (3–5 J.)",
+        "full": "Volle Produktion (ab 6 J.)"
+      },
+      "factorsNotValidated": "Die Phasenfaktoren stehen noch auf 1,0: Sie warten auf die Freigabe der Agronomen, der Bedarf ist der reine FAO-56-Wert (Basis {{base}}, ET0 {{et0}}).",
+      "gaugesPerFarm": "Regenmesser gehören zum Betrieb, nicht zum Block: Zwei Messer desselben Betriebs werden nie addiert."
+    }
+  },
+  "farms": {
+    "title": "Betriebe, Felder und Zonen",
+    "subtitle": "Produktionsstandorte, ihre Felder und Bewässerungszonen verwalten.",
+    "search": "Betrieb, Feld oder Zone suchen…",
+    "loading": "Daten werden geladen…",
+    "loadError": "Fehler beim Laden",
+    "saveError": "Fehler beim Speichern",
+    "deleteError": "Fehler beim Löschen",
+    "farmsTitle": "Betriebe",
+    "fieldsTitle": "Felder",
+    "fieldsFilteredTitle": "Felder (gefiltert)",
+    "zonesTitle": "Zonen",
+    "newFarm": "Neuer Betrieb",
+    "editFarm": "Betrieb bearbeiten",
+    "newField": "Neues Feld",
+    "newZone": "Neue Zone",
+    "noFarmsTitle": "Keine Betriebe",
+    "noFarms": "Legen Sie Ihren ersten Betrieb an.",
+    "noFieldsTitle": "Keine Felder",
+    "noFields": "Fügen Sie einem Betrieb ein Feld hinzu.",
+    "noZonesTitle": "Keine Zonen",
+    "noZones": "Fügen Sie Bewässerungszonen hinzu.",
+    "showFields": "Felder",
+    "showAll": "Alle",
+    "columns": {
+      "name": "Name",
+      "address": "Adresse",
+      "area": "Fläche (ha)",
+      "description": "Beschreibung",
+      "location": "Standort",
+      "crop": "Kultur",
+      "soil": "Boden",
+      "irrigationMethod": "Bewässerungsart",
+      "code": "Pflanzen-Code"
+    },
+    "hectares": "{{value}} ha",
+    "coordinates": "{{latitude}}; {{longitude}}",
+    "openMap": "In OpenStreetMap öffnen",
+    "farmCreated": "Betrieb angelegt",
+    "farmUpdated": "Betrieb aktualisiert",
+    "fieldCreated": "Feld angelegt",
+    "zoneCreated": "Zone angelegt",
+    "deleted": "Gelöscht",
+    "deleteTitle": "{{name}} löschen",
+    "deleteMessage": "Möchten Sie diesen Eintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "fields": {
+      "name": "Name",
+      "address": "Adresse",
+      "area": "Fläche (ha)",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad",
+      "description": "Beschreibung",
+      "parentFarm": "Zugehöriger Betrieb",
+      "parentField": "Zugehöriges Feld",
+      "irrigationMethod": "Bewässerungsart",
+      "cropType": "Kulturart",
+      "location": "Standort (Breitengrad, Längengrad)",
+      "code": "Code des Pflanzenblocks"
+    },
+    "selectOption": "-- Auswählen --",
+    "locationPlaceholder": "10.633100, -4.761200",
+    "methods": {
+      "drip": "Tropfbewässerung",
+      "sprinkler": "Beregnung",
+      "surface": "Oberflächenbewässerung"
+    },
+    "locating": "Ortung läuft…",
+    "useMyPosition": "Meinen Standort nutzen",
+    "accuracy": "Standort dieses Geräts, auf etwa {{accuracy}} m genau: korrigieren Sie ihn, wenn Sie nicht vor Ort sind.",
+    "errors": {
+      "locationFormat": "Geben Sie den Standort als „Breitengrad, Längengrad“ ein.",
+      "codeFormat": "Der Code des Pflanzenblocks ist ein kurzer Code wie A oder B2, ohne Präfix und Leerzeichen."
+    },
+    "geo": {
+      "refused": "Standortzugriff verweigert (oder Seite nicht über HTTPS geladen): erlauben Sie ihn im Browser oder geben Sie die Koordinaten ein.",
+      "unavailable": "Standort auf diesem Gerät nicht verfügbar: geben Sie die Koordinaten ein.",
+      "timeout": "Die Standortermittlung hat zu lange gedauert: versuchen Sie es erneut oder geben Sie die Koordinaten ein.",
+      "unsupported": "Dieser Browser kann keinen Standort liefern: geben Sie die Koordinaten ein.",
+      "failed": "Standortermittlung fehlgeschlagen.",
+      "bothOrNeither": "Geben Sie Breiten- und Längengrad an oder keinen von beiden.",
+      "latitudeRange": "Der Breitengrad liegt zwischen -90 und 90.",
+      "longitudeRange": "Der Längengrad liegt zwischen -180 und 180."
+    },
+    "codePlaceholder": "A, B2…",
+    "codeHint": "Buchstaben und Ziffern, in Großbuchstaben gespeichert. Pflanzen und Produktverarbeitung wählen das Feld über diesen Code.",
+    "editField": "Feld bearbeiten",
+    "fieldUpdated": "Feld aktualisiert"
+  },
+  "dashboard": {
+    "title": "Wasser-Dashboard",
+    "subtitle": "Betriebsübersicht: Bewässerung, Tanks, Qualität und Dürrerisiko.",
+    "health": {
+      "checking": "Backend wird geprüft…",
+      "connected": "Backend verbunden",
+      "disconnected": "Backend getrennt"
+    },
+    "loading": "Dashboard wird geladen…",
+    "loadErrorTitle": "Daten können nicht geladen werden",
+    "loadError": "Prüfen Sie, ob das Backend läuft, und versuchen Sie es erneut.",
+    "emptyTitle": "Keine Daten",
+    "empty": "Erfassen Sie Daten, um das Dashboard anzuzeigen.",
+    "kpis": {
+      "daily": "Tagesverbrauch",
+      "monthly": "Monatsverbrauch",
+      "tankLevel": "Tankfüllstand",
+      "savings": "Wassereinsparung",
+      "irrigations": "Bewässerungen heute",
+      "anomalies": "Anomalien",
+      "quality": "Wasserqualität",
+      "sensors": "Verfügbare Sensoren"
+    },
+    "weather": {
+      "title": "Aktuelles Wetter",
+      "provider": "Open-Meteo",
+      "temperature": "Temperatur",
+      "humidity": "Luftfeuchtigkeit",
+      "wind": "Wind",
+      "condition": "Wetterlage"
+    },
+    "recommendations": {
+      "loading": "Empfehlungen…",
+      "title": "Empfehlungen",
+      "note": "Nach Priorität sortiert",
+      "emptyTitle": "Keine Empfehlungen",
+      "empty": "Derzeit gibt es nichts anzuzeigen."
+    },
+    "priorities": {
+      "critical": "kritisch",
+      "high": "hoch",
+      "medium": "mittel",
+      "low": "niedrig"
+    },
+    "activity": {
+      "loading": "Aktivitäten…",
+      "title": "Letzte Aktivitäten",
+      "note": "Verlauf",
+      "emptyTitle": "Keine Aktivität",
+      "empty": "Erfasste Verbräuche erscheinen hier."
+    },
+    "drought": {
+      "title": "Dürreprognose",
+      "note": "Ausblick"
+    },
+    "alerts": {
+      "loading": "Warnungen…",
+      "title": "Letzte Warnungen",
+      "note": "Ungelesen",
+      "emptyTitle": "Keine Warnungen",
+      "empty": "Alles im Normalbereich."
+    },
+    "actions": {
+      "title": "Aktionen",
+      "irrigation": "Bewässerung verwalten",
+      "consumption": "Verbrauch anzeigen",
+      "quality": "Wasserqualität anzeigen",
+      "outage": "Ausfall planen",
+      "droughtPlan": "Dürreplan",
+      "droughtPlanNotice": "Den Plan finden Sie in der Ansicht Dürre.",
+      "carryOver": "Vorbereiteter Übertragungsplan",
+      "carryOverNotice": "Demo: Bericht vorbereitet."
+    },
+    "balance": {
+      "title": "Wasserbilanz",
+      "status": {
+        "deficit": "Defizit",
+        "unknown": "Keine Tankkapazität",
+        "balanced": "Ausgeglichen"
+      },
+      "rain": "Diesen Monat gesammeltes Regenwasser",
+      "irrigation": "Bewässerung diesen Monat",
+      "tanks": "Derzeit in den Tanks",
+      "tanksDetail": "{{level}} von {{capacity}} ({{pct}})",
+      "forecast": "Nach den geplanten Bewässerungen der nächsten 7 Tage",
+      "forecastDetail": "{{planned}} geplant, {{left}} übrig"
+    }
+  },
+  "drought": {
+    "title": "Dürrewarnungen",
+    "subtitle": "Risikostufe nach Speicherfüllständen, Jahreszeit und betrieblichem Bedarf.",
+    "loadError": "Laden nicht möglich.",
+    "empty": "Keine Prognose",
+    "levels": {
+      "normal": "Normal",
+      "vigilance": "Wachsamkeit",
+      "alert": "Warnung",
+      "critical": "Kritisch"
+    },
+    "stepsLabel": "Risikostufen",
+    "gaugeTitle": "Aktuelle Risikoanzeige",
+    "recommendationTitle": "Empfehlung",
+    "reserveDays": "Reservetage",
+    "days": "{{value}} T",
+    "notAvailable": "k. A.",
+    "averageConsumption": "Ø Verbrauch (7 T)",
+    "litersPerDay": "{{value}} L/T",
+    "reserve": "Reserve",
+    "reserveValue": "{{reserve}} / {{capacity}} L",
+    "defaultRecommendation": "Wasser für vorrangige Kulturen zurückhalten.",
+    "prediction": "Prognose vom {{date}} · Konfidenz {{confidence}}",
+    "automationTitle": "Automatik bei kritischer Lage",
+    "ifCritical": "Wenn kritisch",
+    "automationText": "Schlägt vor, nicht notwendige Bewässerungen zu verschieben, bis sich der Speicher erholt hat.",
+    "preparePlan": "Verschiebungsplan vorbereiten",
+    "planPrepared": "Verschiebungsplan vorbereitet (Demo)."
+  },
+  "notifications": {
+    "title": "Benachrichtigungszentrale",
+    "subtitle": "Betriebswarnungen aus Qualitäts-, Bewässerungs- und Speicherprüfungen.",
+    "listTitle": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "allMarkedRead": "Benachrichtigungen als gelesen markiert",
+    "markRead": "Als gelesen markieren",
+    "markedRead": "Benachrichtigung als gelesen markiert",
+    "deleted": "Benachrichtigung gelöscht",
+    "actionFailed": "Aktion fehlgeschlagen.",
+    "levelFilter": "Nach Stufe filtern",
+    "allLevels": "Alle Stufen",
+    "search": "Benachrichtigung suchen…",
+    "loading": "Benachrichtigungen werden geladen...",
+    "loadError": "Laden nicht möglich.",
+    "emptyTitle": "Keine Benachrichtigungen",
+    "empty": "Warnungen erscheinen hier.",
+    "types": {
+      "critical": "kritisch",
+      "warning": "Warnung",
+      "info": "Info",
+      "success": "Erfolg"
+    },
+    "deleteTitle": "Benachrichtigung löschen",
+    "deleteMessage": "Diese Benachrichtigung wird aus der Benachrichtigungszentrale entfernt."
+  },
+  "quality": {
+    "title": "Wasserqualität",
+    "subtitle": "Messwerte der IoT-Sonden - automatische Warnung außerhalb der Grenzwerte: pH 6-7,5 - Trübung < 5 NTU.",
+    "listTitle": "Messverlauf",
+    "alertsCount": "{{count}} Warnung(en)",
+    "sourceFilter": "Nach Quelle filtern",
+    "allSources": "Alle Quellen",
+    "search": "Nach Datum suchen...",
+    "loading": "Messwerte werden geladen...",
+    "loadError": "Messwerte können nicht geladen werden.",
+    "emptyTitle": "Keine Messwerte",
+    "empty": "Messwerte der IoT-Sonden (pH, Trübung) erscheinen hier, sobald sie gemeldet werden.",
+    "columns": {
+      "date": "Datum",
+      "source": "Quelle",
+      "ph": "pH",
+      "turbidity": "Trübung",
+      "status": "Status"
+    },
+    "unknown": "-",
+    "ntu": "{{value}} NTU",
+    "alert": "Warnung",
+    "compliant": "Konform",
+    "thresholdsTitle": "Referenzgrenzwerte",
+    "compliantPh": "Konformer pH-Wert",
+    "phRange": "6,0 - 7,5",
+    "maxTurbidity": "Maximale Trübung",
+    "outOfRange": "Außerhalb der Grenzwerte",
+    "outOfRangeAction": "Warnung + automatische Meldung",
+    "dataSourceTitle": "Datenquelle",
+    "dataSourceText": "Die Messwerte stammen von IoT-Sonden an den Quellen. Sie werden automatisch über den Ingestion-Endpunkt gemeldet - keine manuelle Eingabe."
+  },
+  "rainwater": {
+    "title": "Regenwassernutzung",
+    "subtitle": "Niederschlag per IoT-Sensor gemessen - Sammelmengen automatisch berechnet.",
+    "period": "Zeitraum",
+    "periodValues": {
+      "all": "Gesamter Verlauf",
+      "week": "Letzte Woche",
+      "month": "Letzter Monat"
+    },
+    "totalCollected": "Insgesamt gesammelt",
+    "coverage": "Deckungsgrad",
+    "coverageValue": "{{value}} %",
+    "tankTitle": "Tankfüllstand",
+    "noSource": "-",
+    "tankNote": "Füllstand per IoT-Sensor gemessen - orange Warnung über 90 Prozent (SC-06).",
+    "harvestTitle": "Sammelmenge je Regenereignis",
+    "periodLabel": "Zeitraum",
+    "periods": {
+      "week": "Woche",
+      "month": "Monat",
+      "all": "Alle"
+    },
+    "sourceFilter": "Nach Quelle filtern",
+    "allSources": "Alle Quellen",
+    "search": "Nach Datum suchen...",
+    "loading": "Sammelmengen werden geladen...",
+    "loadError": "Sammelmengen können nicht geladen werden.",
+    "emptyTitle": "Keine Sammelmenge",
+    "empty": "Vom IoT-Regenmesser gemessene Niederschläge erscheinen hier - Mengen automatisch berechnet.",
+    "series": "Gesammelte Menge (L)",
+    "columns": {
+      "date": "Datum",
+      "volume": "Gesammelte Menge"
+    }
+  },
+  "lots": {
+    "title": "Verarbeitungslose",
+    "subtitle": "Wasserverbrauch je Los der Produktverarbeitung, seine Qualität und was die Tanks noch liefern können.",
+    "lookupTitle": "Los suchen",
+    "lookupPlaceholder": "Loskennung, z. B. LOT-2026-0142",
+    "lookupLabel": "Loskennung",
+    "lookup": "Suchen",
+    "noLotTitle": "Kein Los ausgewählt",
+    "noLot": "Geben Sie eine Loskennung ein, um Wasserverbrauch und Qualität zu sehen.",
+    "loading": "Los wird geladen…",
+    "loadError": "Das Los kann nicht geladen werden.",
+    "sourceFallback": "Quelle {{id}}",
+    "waterUsed": "Wasserverbrauch von {{lotId}}",
+    "quality": "Qualität des Waschwassers",
+    "verdictLoading": "…",
+    "compliance": {
+      "compliant": "Konform",
+      "non_compliant": "Nicht konform",
+      "no_test": "Kein Test im Zeitfenster"
+    },
+    "noVerdict": "Keine Qualitätsbewertung: {{message}}",
+    "complianceDetail": "{{tests}} Test(s) der Quellen des Loses zwischen {{from}} und {{to}} · pH {{phMin}}–{{phMax}}, Trübung ≤ {{turbidity}} NTU.",
+    "noTestWarning": "Ohne Test kann das Wasser dieses Loses nicht als konform gelten.",
+    "emptyTitle": "Kein Verbrauch für dieses Los",
+    "empty": "Ordnen Sie diesem Los mit dem Formular rechts ein Messzeitfenster zu.",
+    "byActivity": "{{activity}}: {{volume}}",
+    "consumptionsCaption": "Verbräuche des Loses",
+    "columns": {
+      "date": "Datum",
+      "activity": "Tätigkeit",
+      "source": "Quelle",
+      "volume": "Menge"
+    },
+    "attachTitle": "Messzeitfenster zuordnen",
+    "fields": {
+      "lot": "Los",
+      "activity": "Tätigkeit",
+      "source": "Quelle",
+      "from": "Von",
+      "to": "Bis"
+    },
+    "attach": "Zuordnen",
+    "attached": "{{count}} Verbrauch/Verbräuche {{lotId}} zugeordnet",
+    "attachedSummary": "<strong>{{count}} Verbrauch/Verbräuche, {{volume}}</strong> {{lotId}} zugeordnet.",
+    "warnings": {
+      "no_consumption_found": "Kein gemessener Verbrauch in diesem Zeitfenster.",
+      "window_overlaps_other_lot": "Einige Verbräuche gehören bereits zu einem anderen Los: Sie wurden nicht verändert.",
+      "no_source_or_zone_filter": "Keine Quelle angegeben: Alle Zähler des Standorts wurden berücksichtigt."
+    },
+    "errors": {
+      "lotRequired": "Die Loskennung ist erforderlich.",
+      "sourceRequired": "Wählen Sie die vom Los genutzte Quelle.",
+      "window": "Geben Sie einen Beginn und ein Ende nach dem Beginn an.",
+      "attachFailed": "Das Zeitfenster kann nicht zugeordnet werden."
+    },
+    "activities": {
+      "WASHING": "Waschen",
+      "CUTTING": "Schneiden",
+      "DRYER_CLEANING": "Trocknerreinigung",
+      "IRRIGATION": "Bewässerung",
+      "OTHER": "Sonstiges"
+    },
+    "forecast": {
+      "title": "Verfügbarkeitsprognose",
+      "subtitle": "Kann der Tank die geplanten Chargen versorgen?",
+      "fields": {
+        "source": "Quelle",
+        "horizon": "Horizont (Tage)",
+        "includeIrrigation": "Geplante Bewässerungen des Betriebs einbeziehen"
+      },
+      "batchesCaption": "Geplante Chargen",
+      "columns": {
+        "lot": "Los",
+        "activity": "Tätigkeit",
+        "size": "Größe (kg)",
+        "plannedAt": "Geplant am"
+      },
+      "batchLot": "Los der Charge {{number}}",
+      "noLot": "Kein Los",
+      "lotsLoadError": "Die Lose der Produktverarbeitung konnten nicht geladen werden.",
+      "batchActivity": "Tätigkeit der Charge {{number}}",
+      "batchSize": "Größe der Charge {{number}}",
+      "batchDate": "Datum der Charge {{number}}",
+      "removeBatch": "Charge entfernen",
+      "addBatch": "Charge hinzufügen",
+      "submit": "Prognostizieren",
+      "buffer": {
+        "ok": "Genug Wasser",
+        "tight": "Unter dem Mindestpuffer",
+        "insufficient": "Nicht genug Wasser"
+      },
+      "result": {
+        "current": "Aktuell im Tank",
+        "batches": "Chargen",
+        "irrigations": "Bewässerungen",
+        "left": "Rest nach {{days}} Tag(en)",
+        "buffer": "Mindestpuffer {{value}}.",
+        "noCoefficient": "Einige Tätigkeiten haben keinen Wasserkoeffizienten und zählen mit 0 L: {{activities}}.",
+        "defaults": "Liter pro kg und der Mindestpuffer sind vorläufige Standardwerte, die die Produktverarbeitung bestätigen muss."
+      },
+      "errors": {
+        "sourceRequired": "Wählen Sie die Quelle für die Prognose.",
+        "horizonRange": "Der Horizont liegt zwischen 1 und 90 Tagen.",
+        "failed": "Die Prognose kann nicht berechnet werden."
+      }
+    }
+  },
+  "visitors": {
+    "title": "Besucher",
+    "subtitle": "Sicherheitsregeln und Live-Werte, die die Besucherverwaltung den Besuchergruppen zeigt.",
+    "briefing": {
+      "title": "Wassersicherheitsunterweisung",
+      "version": "Version {{version}}",
+      "notValidated": "Standardtext, nicht freigegeben",
+      "loading": "Unterweisung wird geladen…",
+      "loadError": "Die Unterweisung kann nicht geladen werden.",
+      "fields": {
+        "version": "Version (leer = heutiges Datum)",
+        "text": "Text, der der Gruppe vorgelesen wird",
+        "allowed": "Erlaubte Bereiche",
+        "forbidden": "Verbotene Bereiche",
+        "risks": "Risiken (eines pro Zeile)",
+        "maxCapacity": "Maximale Gruppengröße",
+        "guideRequired": "Ein Führer muss die Gruppe begleiten"
+      },
+      "publish": "Veröffentlichen",
+      "published": "Sicherheitsunterweisung veröffentlicht",
+      "allowed": "Erlaubte Bereiche",
+      "forbidden": "Verbotene Bereiche",
+      "risks": "Risiken",
+      "maxGroup": "Höchstens <strong>{{value}}</strong> Besucher pro Gruppe.",
+      "maxGroupGuided": "Höchstens <strong>{{value}}</strong> Besucher pro Gruppe, immer mit Führung.",
+      "publishedAt": "Veröffentlicht am {{date}}. Frühere Versionen bleiben erhalten.",
+      "newVersion": "Neue Version veröffentlichen",
+      "errors": {
+        "groupSize": "Die Gruppe umfasst mindestens 1 Besucher.",
+        "publishFailed": "Veröffentlichen nicht möglich."
+      },
+      "noZones": "Noch keine Zone: Legen Sie die Zonen unter Betriebe, Felder und Zonen an."
+    },
+    "preview": {
+      "title": "Vorschau des Besucherbildschirms",
+      "tankShown": "Angezeigter Tank",
+      "noTank": "Kein Tank",
+      "zoneShown": "Angezeigte Zone",
+      "wholeSite": "Gesamter Standort",
+      "loading": "Vorschau wird geladen…",
+      "loadError": "Die Vorschau kann nicht geladen werden.",
+      "level": "Füllstand {{name}}",
+      "selectTank": "Tank auswählen",
+      "saved": "Diesen Monat eingespartes Wasser",
+      "used": "Verbrauch der letzten {{minutes}} min",
+      "irrigating": "Bewässert gerade",
+      "notIrrigating": "Keine Bewässerung",
+      "lastStarted": "Zuletzt gestartet am {{date}}.",
+      "outages": "{{count}} geplante Unterbrechung(en) in Kraft: Besuchern wird mitgeteilt, dass kein Wasser verfügbar ist.",
+      "outagesHere": "{{count}} geplante Unterbrechung(en) hier in Kraft: Besuchern wird mitgeteilt, dass kein Wasser verfügbar ist.",
+      "savingsUnavailable": "Einsparungen sind nicht verfügbar, solange der Wetterdienst ausgefallen ist."
+    }
+  },
+  "valves": {
+    "title": "Vorführventil",
+    "gatewayMissing": "Gateway nicht eingerichtet",
+    "devicePlaceholder": "Geräte-ID, z. B. valve-demo-01",
+    "deviceLabel": "Geräte-ID des Ventils",
+    "open": "{{seconds}} s öffnen",
+    "close": "Schließen",
+    "showJournal": "Protokoll anzeigen",
+    "explanation": "Öffnungen werden abgelehnt, solange eine geplante Unterbrechung in Kraft ist; Schließen ist immer erlaubt. Bis das IoT-Team ein Gateway anbindet, werden Befehle protokolliert, erreichen das Ventil aber nie.",
+    "noDeviceTitle": "Kein Gerät ausgewählt",
+    "noDevice": "Geben Sie die Geräte-ID des Ventils ein, um sein Befehlsprotokoll zu sehen.",
+    "loading": "Protokoll wird geladen…",
+    "loadError": "Das Protokoll kann nicht geladen werden.",
+    "emptyTitle": "Noch kein Befehl",
+    "empty": "An {{deviceId}} wurde noch nie etwas gesendet.",
+    "journalCaption": "Befehlsprotokoll",
+    "columns": {
+      "requested": "Angefordert",
+      "command": "Befehl",
+      "status": "Status"
+    },
+    "commands": {
+      "open": "Öffnen",
+      "close": "Schließen"
+    },
+    "status": {
+      "dispatched": "Gesendet",
+      "queued": "In Warteschlange",
+      "rejected": "Nicht gesendet"
+    },
+    "opened": "Ventil für {{seconds}} s geöffnet",
+    "closed": "Ventil geschlossen",
+    "errors": {
+      "noGateway": "Noch kein Geräte-Gateway: Der Befehl wurde protokolliert, aber nicht gesendet.",
+      "offline": "Das Gerät ist offline oder eine Wasserunterbrechung ist in Kraft.",
+      "unknownDevice": "Unbekanntes Gerät: Es meldet sich mit seiner ersten Telemetrie an.",
+      "failed": "Befehl fehlgeschlagen."
+    }
+  },
+  "irrigation": {
+    "title": "Bewässerungsplanung",
+    "subtitle": "Bewässert wird, wenn der Boden es braucht, nicht nur weil die Uhr es sagt.",
+    "zoneFallback": "Zone {{id}}",
+    "status": {
+      "running": "Läuft",
+      "completed": "Abgeschlossen",
+      "postponed": "Verschoben",
+      "scheduled": "Geplant"
+    },
+    "schedules": {
+      "title": "Bewässerungspläne",
+      "count": "{{count}} aktive(r) Plan/Pläne",
+      "loading": "Pläne werden geladen…",
+      "loadError": "Laden nicht möglich.",
+      "emptyTitle": "Keine laufenden oder geplanten Pläne",
+      "empty": "Legen Sie rechts einen Bewässerungsplan an. Abgeschlossene Pläne stehen im Bewässerungsjournal.",
+      "block": "Block {{code}}",
+      "severalBlocks": "Mehrere Blöcke",
+      "planned": "{{volume}} geplant",
+      "start": "Jetzt starten",
+      "stop": "Bewässerung stoppen",
+      "archived": "Abgeschlossene Pläne werden unten im Bewässerungsjournal archiviert."
+    },
+    "journal": {
+      "title": "Bewässerungsjournal",
+      "count": "{{count}} abgeschlossene(r) Zyklus/Zyklen",
+      "search": "Nach Datum suchen (JJJJ-MM-TT)…",
+      "loading": "Journal wird geladen…",
+      "emptyTitle": "Keine abgeschlossenen Zyklen",
+      "empty": "Starten und stoppen Sie eine Bewässerung: Jeder beendete Zyklus wird automatisch ins Journal übernommen.",
+      "scheduleRef": "#{{id}}",
+      "columns": {
+        "schedule": "Plan",
+        "start": "Start",
+        "stop": "Stopp",
+        "duration": "Tatsächliche Dauer",
+        "volume": "Tatsächliche Menge",
+        "status": "Status"
+      },
+      "limit": "Hier werden nur die letzten {{count}} abgeschlossenen Zyklen angezeigt.",
+      "olderStored": "Ältere Zyklen bleiben in der Datenbank gespeichert.",
+      "moreStored": "Weitere Zyklen bleiben ebenfalls in der Datenbank gespeichert."
+    },
+    "form": {
+      "newTitle": "Plan anlegen",
+      "editTitle": "Plan bearbeiten",
+      "zone": "Zone",
+      "start": "Start",
+      "duration": "Dauer (min)",
+      "volume": "Geplante Menge (L)",
+      "status": "Status"
+    },
+    "errors": {
+      "zoneRequired": "Die Zone ist erforderlich.",
+      "startRequired": "Das Startdatum ist erforderlich.",
+      "durationPositive": "Die Dauer muss größer als 0 sein.",
+      "volumePositive": "Die geplante Menge muss größer als 0 sein."
+    },
+    "created": "Plan angelegt",
+    "updated": "Plan aktualisiert",
+    "started": "Bewässerung für {{zone}} gestartet.",
+    "stopped": "Bewässerung für {{zone}} gestoppt.",
+    "actionFailed": "Aktion fehlgeschlagen."
+  },
+  "consumption": {
+    "title": "Verbrauchsverfolgung",
+    "subtitle": "Automatisch von IoT-Sensoren gemeldete Messwerte, verglichen mit dem theoretischen Bedarf.",
+    "stats": {
+      "period": "Gewählter Zeitraum",
+      "total": "Gesamtverbrauch",
+      "peak": "Spitze",
+      "peakValue": "{{day}} - {{volume}}",
+      "noPeak": "-"
+    },
+    "periodNames": {
+      "all": "Gesamter Verlauf",
+      "week": "Letzte Woche",
+      "month": "Letzter Monat"
+    },
+    "periodLabel": "Zeitraum",
+    "periods": {
+      "week": "Woche",
+      "month": "Monat",
+      "all": "Alle"
+    },
+    "report": "CSV-Bericht",
+    "exporting": "Export läuft…",
+    "reportHint": "Verbrauchsbericht herunterladen (CSV)",
+    "exported": "CSV-Bericht heruntergeladen.",
+    "exportFailed": "Export fehlgeschlagen.",
+    "chart": {
+      "title": "Verbrauch im Zeitverlauf",
+      "loading": "Verbräuche werden geladen…",
+      "loadError": "Daten können nicht geladen werden.",
+      "emptyTitle": "Kein Verbrauch",
+      "empty": "Messwerte der IoT-Sensoren erscheinen hier, sobald sie gemeldet werden.",
+      "series": "Menge (L)"
+    },
+    "history": {
+      "title": "Messverlauf",
+      "count": "{{count}} Messung(en)",
+      "loading": "Messungen werden geladen…",
+      "emptyTitle": "Kein Verbrauch erfasst",
+      "empty": "Mengen werden von IoT-Sensoren gemessen und automatisch gemeldet, ohne manuelle Eingabe."
+    },
+    "farmFilter": "Nach Betrieb filtern",
+    "sourceFilter": "Nach Quelle filtern",
+    "allSources": "Alle Quellen",
+    "search": "Nach Datum, Charge oder Block suchen…",
+    "columns": {
+      "date": "Datum",
+      "volume": "Menge",
+      "block": "Pflanzenblock",
+      "lot": "Charge"
+    },
+    "severalBlocks": "Mehrere",
+    "lotValue": "{{lot}} · {{activity}}"
+  },
+  "quota": {
+    "title": "Monatliche Wasserkontingente",
+    "status": {
+      "exceeded": "Kontingent überschritten",
+      "warning": "80 % des Kontingents erreicht",
+      "ok": "Unter dem Kontingent",
+      "none": "Keine Referenz"
+    },
+    "targetTypes": {
+      "farm": "Betrieb",
+      "zone": "Zone"
+    },
+    "chooseFarm": "Betrieb wählen…",
+    "chooseZone": "Zone wählen…",
+    "fields": {
+      "targetType": "Art des Kontingentziels",
+      "target": "Kontingentziel",
+      "month": "Kontingentmonat",
+      "liters": "Monatskontingent (L)"
+    },
+    "submit": "Kontingent festlegen",
+    "saving": "Wird gespeichert…",
+    "errors": {
+      "chooseFarm": "Wählen Sie einen Betrieb.",
+      "chooseZone": "Wählen Sie eine Zone.",
+      "positive": "Das Kontingent muss eine positive Menge (Liter) sein.",
+      "save": "Das Kontingent kann nicht gespeichert werden.",
+      "delete": "Das Kontingent kann nicht gelöscht werden."
+    },
+    "saved": "Kontingent gespeichert.",
+    "deleted": "Kontingent gelöscht.",
+    "loading": "Kontingente werden geladen…",
+    "loadError": "Kontingente können nicht geladen werden.",
+    "emptyTitle": "Kein Kontingent festgelegt",
+    "empty": "Legen Sie ein Monatskontingent je Betrieb oder Zone fest: Der Sensorverbrauch wird mit diesem Ziel verglichen, mit automatischer Warnung bei 80 % und 100 %.",
+    "unknownTarget": "Unbekanntes Ziel",
+    "used": "{{pct}} des Kontingents verbraucht",
+    "over": "um {{volume}} überschritten",
+    "left": "{{volume}} übrig",
+    "usageLine": "{{used}} — {{rest}}"
+  },
+  "maintenance": {
+    "title": "Wartung",
+    "subtitle": "Einsätze verfolgen und die Pflege der Tropfer planen.",
+    "historyTitle": "Einsatzverlauf",
+    "periodLabel": "Zeitraum",
+    "periods": {
+      "week": "Woche",
+      "month": "Monat",
+      "all": "alle"
+    },
+    "zoneFilter": "Nach Zone filtern",
+    "allZones": "Alle Zonen",
+    "search": "Einsatz suchen…",
+    "loading": "Einsätze werden geladen...",
+    "loadError": "Einsätze können nicht geladen werden.",
+    "emptyTitle": "Keine Einsätze",
+    "empty": "Erfassen Sie einen Wartungseinsatz, um den Verlauf zu beginnen.",
+    "zoneFallback": "Zone {{id}}",
+    "columns": {
+      "date": "Datum",
+      "zone": "Zone",
+      "type": "Typ",
+      "state": "Zustand",
+      "emitters": "Tropfer"
+    },
+    "types": {
+      "cleaning": "Reinigung",
+      "filter_change": "Filterwechsel",
+      "repair": "Reparatur",
+      "inspection": "Inspektion"
+    },
+    "clogging": "Verstopfung {{severity}}",
+    "ok": "OK",
+    "severityInline": {
+      "low": "gering",
+      "medium": "mittel",
+      "high": "hoch"
+    },
+    "severities": {
+      "low": "Gering",
+      "medium": "Mittel",
+      "high": "Hoch"
+    },
+    "planningTitle": "Wartungsplanung",
+    "planning": "Empfohlen: Filter wöchentlich prüfen und verstopfte Tropfer ersetzen.",
+    "recent": "{{count}} Einsatz/Einsätze in den letzten 7 Tagen (bezogen auf die neuesten Daten).",
+    "form": {
+      "newTitle": "Neuer Einsatz",
+      "editTitle": "Einsatz bearbeiten",
+      "zone": "Zone",
+      "type": "Einsatzart",
+      "date": "Einsatzdatum",
+      "filterCleaned": "Filter gereinigt",
+      "cloggingDetected": "Verstopfung festgestellt",
+      "severity": "Schwere der Verstopfung",
+      "emitters": "Ersetzte Tropfer",
+      "performedBy": "Durchgeführt von",
+      "noPerformer": "Nicht erfasst",
+      "notes": "Notizen"
+    },
+    "errors": {
+      "zoneRequired": "Die Zone ist erforderlich.",
+      "dateRequired": "Das Einsatzdatum ist erforderlich."
+    },
+    "saved": "Einsatz gespeichert",
+    "updated": "Einsatz aktualisiert",
+    "deleted": "Einsatz gelöscht",
+    "deleteTitle": "Einsatz löschen",
+    "deleteMessage": "Dieser Einsatz wird aus dem Wartungsverlauf entfernt."
+  }
+}

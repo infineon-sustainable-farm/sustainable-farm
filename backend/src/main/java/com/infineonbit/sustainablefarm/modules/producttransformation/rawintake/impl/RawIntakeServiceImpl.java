@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
@@ -32,24 +34,27 @@ public class RawIntakeServiceImpl implements RawIntakeService {
 
     private final RawIntakeRepository rawIntakeRepository;
     private final BatchRepository batchRepository;
+    private final ProductTransformationBlocks blocks;
 
     @Autowired
     public RawIntakeServiceImpl(RawIntakeRepository rawIntakeRepository,
-                              BatchRepository batchRepository) {
+                              BatchRepository batchRepository,
+                              ProductTransformationBlocks blocks) {
         this.rawIntakeRepository = rawIntakeRepository;
         this.batchRepository = batchRepository;
+        this.blocks = blocks;
     }
 
     @Override
     public RawIntake createRawIntake(RawIntake rawIntake) {
         // Business Rule: Validate batch exists
         if (rawIntake.getBatch() != null) {
-            Batch batch = batchRepository.findById(rawIntake.getBatch().getBatchId())
+            Batch batch = batchRepository.findByBatchId(rawIntake.getBatch().getBatchId())
                     .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
             
             // Business Rule: Validate batch is in appropriate status for intake
-            if (batch.getCurrentStatus() != Batch.BatchStatus.CREATED && 
-                batch.getCurrentStatus() != Batch.BatchStatus.INTAKE) {
+            if (batch.getCurrentStatus() != BatchStatus.CREATED && 
+                batch.getCurrentStatus() != BatchStatus.INTAKE) {
                 throw new BusinessRuleViolationException(
                     "Batch must be in CREATED or INTAKE status for raw intake. Current: " + batch.getCurrentStatus()
                 );
@@ -64,29 +69,30 @@ public class RawIntakeServiceImpl implements RawIntakeService {
         RawIntake existingIntake = getRawIntakeById(intakeId);
         
         // Update fields
-        existingIntake.setSourceFarm(rawIntake.getSourceFarm());
-        existingIntake.setSourceBlock(rawIntake.getSourceBlock());
+        if (rawIntake.getSourceBlockId() != null) {
+            existingIntake.setSourceBlockId(rawIntake.getSourceBlockId());
+        }
         existingIntake.setIntakeDate(rawIntake.getIntakeDate());
         existingIntake.setReceivedQuantityKg(rawIntake.getReceivedQuantityKg());
-        existingIntake.setReceivedVariety(rawIntake.getReceivedVariety());
+        existingIntake.setReceivedVarietyKey(rawIntake.getReceivedVarietyKey());
         existingIntake.setReceivedGrade(rawIntake.getReceivedGrade());
-        existingIntake.setIntakeOperator(rawIntake.getIntakeOperator());
+        existingIntake.setIntakeOperatorId(rawIntake.getIntakeOperatorId());
         
         return rawIntakeRepository.save(existingIntake);
     }
 
     @Override
     public void deleteRawIntake(String intakeId) {
-        if (!rawIntakeRepository.existsById(intakeId)) {
+        if (!rawIntakeRepository.existsByIntakeId(intakeId)) {
             throw new ResourceNotFoundException("Raw intake not found with ID: " + intakeId);
         }
-        rawIntakeRepository.deleteById(intakeId);
+        rawIntakeRepository.deleteByIntakeId(intakeId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public RawIntake getRawIntakeById(String intakeId) {
-        return rawIntakeRepository.findById(intakeId)
+        return rawIntakeRepository.findByIntakeId(intakeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Raw intake not found with ID: " + intakeId));
     }
 
@@ -113,36 +119,39 @@ public class RawIntakeServiceImpl implements RawIntakeService {
     @Override
     @Transactional(readOnly = true)
     public List<RawIntake> getRawIntakesBySourceFarm(String sourceFarm) {
-        return rawIntakeRepository.findBySourceFarm(sourceFarm);
+        List<Long> blockIds = blocks.blockIdsOfFarm(sourceFarm);
+        return blockIds.isEmpty() ? List.of() : rawIntakeRepository.findBySourceBlockIdIn(blockIds);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RawIntake> getRawIntakesByVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety) {
-        return rawIntakeRepository.findByReceivedVariety(variety);
+    public List<RawIntake> getRawIntakesByVariety(String variety) {
+        return rawIntakeRepository.findByReceivedVarietyKey(variety);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RawIntake> getRawIntakesByGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade) {
+    public List<RawIntake> getRawIntakesByGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade) {
         return rawIntakeRepository.findByReceivedGrade(grade);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RawIntake> getRawIntakesBySourceFarmAndDateRange(String farm, LocalDate startDate, LocalDate endDate) {
-        return rawIntakeRepository.findBySourceFarmAndDateRange(farm, startDate, endDate);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farm);
+        return blockIds.isEmpty() ? List.of()
+                : rawIntakeRepository.findBySourceBlockIdInAndIntakeDateBetween(blockIds, startDate, endDate);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Double getTotalReceivedQuantityByVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety) {
+    public Double getTotalReceivedQuantityByVariety(String variety) {
         return rawIntakeRepository.getTotalReceivedQuantityByVariety(variety);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long countByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade) {
+    public long countByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade) {
         return rawIntakeRepository.countByReceivedGrade(grade);
     }
 
@@ -153,7 +162,7 @@ public class RawIntakeServiceImpl implements RawIntakeService {
         
         // Business Rule: One intake initializes exactly one batch
         // Update batch status to INTAKE
-        batch.setCurrentStatus(Batch.BatchStatus.INTAKE);
+        batch.setCurrentStatus(BatchStatus.INTAKE);
         batchRepository.save(batch);
         
         return intake;

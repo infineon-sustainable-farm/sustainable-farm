@@ -1,5 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Role;
+import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.ActiveStatus;
+import com.infineonbit.sustainablefarm.modules.machinery.api.Stage;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.ProcessingMachines;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.plants.VarietyCatalogTestData;
+import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service.DtoMapper;
@@ -8,10 +19,11 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.m
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.repository.DryingRunRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.service.DryingRunService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.model.Operator;
 import com.infineonbit.sustainablefarm.modules.producttransformation.operator.repository.OperatorRepository;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,11 +40,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Regression test for the HTTP 500 on {@code GET /api/drying-runs}.
+ * Regression test for the HTTP 500 on {@code GET /api/product-transformation/drying-runs}.
  *
  * <p>{@code DryingRunResponse.energyEfficiencyKwhPerKg} is derived from
  * {@code batch.harvestQuantityKg}, so the batch association must be fetched by
- * the repository. With {@code spring.jpa.open-in-view=false} the entities are
+ * the repository (lazy association, entity graph). With {@code spring.jpa.open-in-view=false} the entities are
  * detached when the service transaction ends: if the adapter only relies on
  * lazy loading, the DTO mapping throws {@code LazyInitializationException} and
  * the endpoint answers 500. This test maps detached entities on purpose, which
@@ -43,7 +55,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 class DryingRunDtoMappingTest {
 
     private static final String BATCH_ID = "B-DRY-DTO-001";
-    private static final String EQUIPMENT_ID = "EQ-DRY-DTO-001";
+    private static final String EQUIPMENT_NAME = "DTO dryer";
     private static final String OPERATOR_ID = "OP-DRY-DTO-001";
     private static final String RUN_ID = "DR-DRY-DTO-001";
 
@@ -51,10 +63,19 @@ class DryingRunDtoMappingTest {
     private BatchRepository batchRepository;
 
     @Autowired
-    private EquipmentRepository equipmentRepository;
+    private SiteTestBlocks siteTestBlocks;
+
+    @Autowired
+    private EquipmentService equipmentService;
+
+    @Autowired
+    private com.infineonbit.sustainablefarm.modules.machinery.service.EquipmentService machineryEquipment;
 
     @Autowired
     private OperatorRepository operatorRepository;
+
+    @Autowired
+    private PersonDirectory personDirectory;
 
     @Autowired
     private DryingRunRepository dryingRunRepository;
@@ -65,43 +86,43 @@ class DryingRunDtoMappingTest {
     @Autowired
     private DtoMapper dtoMapper;
 
+    @Autowired
+    private VarietyReferenceRepository varietyReferenceRepository;
+
     @BeforeEach
     void seedDryingRun() {
-        if (dryingRunRepository.existsById(RUN_ID)) {
+        VarietyCatalogTestData.ensureDefaults(varietyReferenceRepository);
+        if (dryingRunRepository.existsByRunId(RUN_ID)) {
             return;
         }
 
         Batch batch = new Batch();
         batch.setBatchId(BATCH_ID);
         batch.setHarvestDate(LocalDate.now());
-        batch.setMangoVariety(HarvestEvent.MangoVariety.KENT);
+        batch.setVarietyKey("KENT");
         batch.setHarvestQuantityKg(new BigDecimal("500.00"));
-        batch.setCurrentStatus(Batch.BatchStatus.CREATED);
-        batch.setFarmId("F-DTO");
-        batch.setBlockId("BL-DTO");
+        batch.setCurrentStatus(BatchStatus.CREATED);
+        batch.setFarmBlockId(siteTestBlocks.ensure("BL-DTO").id());
         batchRepository.saveAndFlush(batch);
 
-        Equipment equipment = new Equipment();
-        equipment.setEquipmentId(EQUIPMENT_ID);
-        equipment.setEquipmentName("DTO dryer");
-        equipment.setEquipmentType(Equipment.EquipmentType.DRYING);
-        equipment.setCapacityKgPerHour(new BigDecimal("250.00"));
-        equipment.setEnergyConsumptionKwhPerKg(new BigDecimal("0.2500"));
-        equipment.setMaintenanceStatus(Equipment.MaintenanceStatus.ACTIVE);
-        equipmentRepository.saveAndFlush(equipment);
+        Equipment registered = equipmentService.getAllEquipment().stream()
+                .filter(machine -> EQUIPMENT_NAME.equals(machine.getEquipmentName()))
+                .findFirst()
+                .orElseGet(() -> ProcessingMachines.register(machineryEquipment, equipmentService,
+                        EQUIPMENT_NAME, Stage.DRYING, EquipmentType.DRYING, "250.00", "0.2500"));
 
         Operator operator = new Operator();
         operator.setOperatorId(OPERATOR_ID);
-        operator.setOperatorName("DTO operator");
-        operator.setRole(Operator.Role.DRYER);
-        operator.setActiveStatus(Operator.ActiveStatus.ACTIVE);
+        operator.setPersonId(TestPeople.idOf(personDirectory, "DTO operator"));
+        operator.setRole(Role.DRYER);
+        operator.setActiveStatus(ActiveStatus.ACTIVE);
         operator.setHireDate(LocalDate.now());
         operatorRepository.saveAndFlush(operator);
 
         DryingRun run = new DryingRun();
         run.setRunId(RUN_ID);
         run.setBatch(batch);
-        run.setEquipment(equipment);
+        run.setEquipmentId(registered.getId());
         run.setOperator(operator);
         run.setDurationHours(new BigDecimal("6.50"));
         run.setTargetTemperatureC(new BigDecimal("55.00"));
@@ -115,15 +136,20 @@ class DryingRunDtoMappingTest {
     }
 
     @Test
-    @DisplayName("GET /api/drying-runs/{id}: the response maps a detached run")
+    @DisplayName("GET /api/product-transformation/drying-runs/{id}: the response maps a detached run")
     void detailedResponseMapsDetachedDryingRun() {
         DryingRun run = dryingRunService.getDryingRunById(RUN_ID);
 
+        // Lazy associations, fetched by the query (entity graph), not one select per row.
+        assertThat(Hibernate.isInitialized(run.getBatch())).isTrue();
+        assertThat(Hibernate.isInitialized(run.getOperator())).isTrue();
         assertThatCode(() -> dtoMapper.toResponse(run)).doesNotThrowAnyException();
 
         DryingRunResponse response = dtoMapper.toResponse(run);
         assertThat(response.getBatchId()).isEqualTo(BATCH_ID);
-        assertThat(response.getEquipmentId()).isEqualTo(EQUIPMENT_ID);
+        assertThat(response.getEquipmentId()).isEqualTo(equipmentService.getEquipmentByRegisterId(run.getEquipmentId())
+                .getEquipmentId());
+        assertThat(response.getEquipmentId()).startsWith("EQ-");
         assertThat(response.getOperatorId()).isEqualTo(OPERATOR_ID);
         // 118.40 kWh / 500 kg, computed from the batch association.
         assertThat(response.getEnergyEfficiencyKwhPerKg()).isCloseTo(0.2368,
@@ -135,9 +161,10 @@ class DryingRunDtoMappingTest {
     }
 
     @Test
-    @DisplayName("GET /api/drying-runs: the list response maps detached runs")
+    @DisplayName("GET /api/product-transformation/drying-runs: the list response maps detached runs")
     void listResponseMapsDetachedDryingRuns() {
         List<DryingRun> runs = dryingRunService.getAllDryingRuns();
+        assertThat(runs).allSatisfy(run -> assertThat(Hibernate.isInitialized(run.getBatch())).isTrue());
 
         DryingRunResponse response = runs.stream()
                 .filter(run -> RUN_ID.equals(run.getRunId()))

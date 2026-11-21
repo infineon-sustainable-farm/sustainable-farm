@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.machinery.service;
 
+import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleCreationRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.dto.Request.MaintenanceScheduleUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.machinery.entity.Equipment;
@@ -12,7 +13,10 @@ import com.infineonbit.sustainablefarm.modules.machinery.repository.MaintenanceS
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.infineonbit.sustainablefarm.modules.staff.api.InMemoryPersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -42,6 +46,9 @@ class MaintenanceScheduleServiceTest {
     @Mock
     private EquipmentRepository equipmentRepository;
 
+    @Spy
+    private InMemoryPersonDirectory personDirectory = new InMemoryPersonDirectory();
+
     @InjectMocks
     private MaintenanceScheduleService maintenanceScheduleService;
 
@@ -60,7 +67,7 @@ class MaintenanceScheduleServiceTest {
                 "Every 250 hours",
                 LocalDate.of(2026, 7, 10),
                 LocalDate.of(2026, 8, 5),
-                "Wilfried Y."
+                personDirectory.idOf("Wilfried Y.")
         );
 
         testSchedule = new MaintenanceSchedule();
@@ -70,7 +77,7 @@ class MaintenanceScheduleServiceTest {
         testSchedule.setFrequency("Every 250 hours");
         testSchedule.setLastCompleted(LocalDate.of(2026, 7, 10));
         testSchedule.setNextDue(LocalDate.of(2026, 8, 5));
-        testSchedule.setOperator("Wilfried Y.");
+        testSchedule.setOperatorPersonId(personDirectory.idOf("Wilfried Y."));
     }
 
     @Test
@@ -127,7 +134,7 @@ class MaintenanceScheduleServiceTest {
         );
         when(equipmentRepository.findById(1L)).thenReturn(Optional.of(testEquipment));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> maintenanceScheduleService.addMaintenanceSchedule(incoherentRequest));
 
         assertTrue(exception.getMessage().contains("Next due date cannot be before"));
@@ -173,7 +180,7 @@ class MaintenanceScheduleServiceTest {
                 null,
                 null,
                 LocalDate.of(2026, 9, 1),
-                "Abdoul S."
+                personDirectory.idOf("Abdoul S.")
         );
         when(maintenanceScheduleRepository.findById(1L)).thenReturn(Optional.of(testSchedule));
         when(maintenanceScheduleRepository.saveAndFlush(testSchedule)).thenReturn(testSchedule);
@@ -213,7 +220,7 @@ class MaintenanceScheduleServiceTest {
                 null, null, null, null, LocalDate.of(2026, 7, 1), null);
         when(maintenanceScheduleRepository.findById(1L)).thenReturn(Optional.of(testSchedule));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        ConflictException exception = assertThrows(ConflictException.class,
                 () -> maintenanceScheduleService.updateMaintenanceSchedule(1L, updateRequest));
 
         assertTrue(exception.getMessage().contains("Next due date cannot be before"));

@@ -4,13 +4,11 @@ import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyComponentR
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.EnergyComponentResponse;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentCategory;
 import com.infineonbit.sustainablefarm.modules.energysupply.entity.ComponentStatus;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.EnergyComponentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EnergyComponentController.class)
-@Import(EnergySupplyExceptionHandler.class)
 class EnergyComponentControllerTest {
 
     @Autowired
@@ -44,11 +41,11 @@ class EnergyComponentControllerTest {
     @Test
     void createReturnsCreatedAndLocation() throws Exception {
         when(energyComponentService.create(any())).thenReturn(component());
-        mockMvc.perform(post("/api/energy/components")
+        mockMvc.perform(post("/api/energy-supply/components")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validRequest()))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/energy/components/ENG-001")))
+                .andExpect(header().string("Location", containsString("/api/energy-supply/components/ENG-001")))
                 .andExpect(jsonPath("$.componentId").value("ENG-001"));
     }
 
@@ -57,7 +54,7 @@ class EnergyComponentControllerTest {
         when(energyComponentService.create(any())).thenReturn(new EnergyComponentResponse(
                 "ENG-006", "Additional component", ComponentCategory.BATTERY,
                 BigDecimal.ONE, ComponentStatus.OPERATIONAL));
-        mockMvc.perform(post("/api/energy/components")
+        mockMvc.perform(post("/api/energy-supply/components")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"componentId":"ENG-006","name":"Additional component","category":"BATTERY","capacityValue":1,"status":"OPERATIONAL"}
@@ -70,10 +67,10 @@ class EnergyComponentControllerTest {
     void listAndGetReturnResponseDtos() throws Exception {
         when(energyComponentService.findAll()).thenReturn(List.of(component()));
         when(energyComponentService.findById("ENG-001")).thenReturn(component());
-        mockMvc.perform(get("/api/energy/components"))
+        mockMvc.perform(get("/api/energy-supply/components"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Solar array"));
-        mockMvc.perform(get("/api/energy/components/ENG-001"))
+        mockMvc.perform(get("/api/energy-supply/components/ENG-001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("OPERATIONAL"));
     }
@@ -81,7 +78,7 @@ class EnergyComponentControllerTest {
     @Test
     void updateReturnsUpdatedComponent() throws Exception {
         when(energyComponentService.update(any(), any())).thenReturn(component());
-        mockMvc.perform(put("/api/energy/components/ENG-001")
+        mockMvc.perform(put("/api/energy-supply/components/ENG-001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validRequest()))
                 .andExpect(status().isOk())
@@ -91,7 +88,7 @@ class EnergyComponentControllerTest {
     @Test
     void deleteReturnsNoContent() throws Exception {
         doNothing().when(energyComponentService).delete("ENG-001");
-        mockMvc.perform(delete("/api/energy/components/ENG-001"))
+        mockMvc.perform(delete("/api/energy-supply/components/ENG-001"))
                 .andExpect(status().isNoContent());
     }
 
@@ -99,20 +96,20 @@ class EnergyComponentControllerTest {
     void missingComponentReturnsNotFound() throws Exception {
         when(energyComponentService.findById("missing"))
                 .thenThrow(new EnergySupplyNotFoundException("Energy component", "missing"));
-        mockMvc.perform(get("/api/energy/components/missing"))
+        mockMvc.perform(get("/api/energy-supply/components/missing"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void invalidComponentReturnsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/energy/components")
+        mockMvc.perform(post("/api/energy-supply/components")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"componentId":"bad","name":"","category":null,"capacityValue":-1,"status":null}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("componentId")));
+                .andExpect(jsonPath("$.fieldErrors.componentId").exists());
     }
 
     private String validRequest() {

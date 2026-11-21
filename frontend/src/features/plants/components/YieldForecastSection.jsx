@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { Info, Loader2, TriangleAlert } from "lucide-react";
+import { Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, EmptyState } from "../../../shared/ui";
 import { useYieldForecast } from "../hooks/useYieldForecast";
 import { formatBlock, formatKilograms, formatMonth, formatNumber, formatText } from "../utils/format";
+import { SectionError, SectionLoading } from "./HarvestSectionStates";
 import MonthPeriodControls from "./MonthPeriodControls";
-import PlantsEmptyState from "./PlantsEmptyState";
 import YieldForecastChart from "./YieldForecastChart";
 import YieldForecastTable from "./YieldForecastTable";
-import { PRIMARY_BUTTON, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
 const DEFAULT_MONTHS = 12;
-
-const TH_CLASS = TABLE_HEAD;
 
 /**
  * The API gives no total. The monthly totals are added here and the sum is
@@ -21,41 +20,38 @@ function periodTotal(monthlyTotals) {
     return Math.round(sum * 10) / 10;
 }
 
-function formatTrees(count) {
-    return `${formatNumber(count)} ${Number(count) === 1 ? "tree" : "trees"}`;
-}
-
 /**
  * The same values as the chart, month by month, as a table. Closed by default:
  * the chart already shows every value, and the table is there for whoever
  * prefers to read them in rows.
  */
 function MonthlyTotalsTable({ monthlyTotals, totalKg }) {
+    const { t } = useTranslation("plants");
     return (
-        <details className="rounded-2xl border border-gray-200 bg-white shadow-card">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700">
-                Show monthly totals as a table
+        <details className="rounded-card border border-border-subtle bg-surface-raised shadow-raised">
+            <summary className="cursor-pointer rounded-card px-5 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring">
+                {t("harvest.forecast.showTable")}
             </summary>
-            <div className="overflow-x-auto border-t border-gray-200">
-                <table className="w-full border-collapse text-sm whitespace-nowrap">
+            <div className="overflow-x-auto px-5 pb-3">
+                <table className="w-full border-collapse text-left text-sm whitespace-nowrap">
                     <thead>
-                        <tr>
-                            <th scope="col" className={TH_CLASS}>Month</th>
-                            <th scope="col" className={TABLE_HEAD_NUM}>Expected yield</th>
+                        <tr className="border-b border-border-divider text-text-muted">
+                            <th scope="col" className="py-2 pr-4 font-normal">{t("harvest.forecast.month")}</th>
+                            <th scope="col" className="py-2 pr-4 font-normal">{t("harvest.forecast.expectedYield")}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {monthlyTotals.map((month) => (
-                            <tr key={month.month} className="border-b border-gray-100">
-                                <td className="px-4 py-2.5 text-gray-700">{formatMonth(month.month)}</td>
-                                <td className="px-4 py-2.5 text-right text-gray-700">{formatKilograms(month.expectedKg)}</td>
+                            <tr key={month.month} className="border-b border-border-subtle">
+                                <td className="py-2 pr-4">{formatMonth(month.month)}</td>
+                                <td className="py-2 pr-4">{formatKilograms(month.expectedKg)}</td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td className="px-4 py-2.5 font-semibold text-on-background">Total</td>
-                            <td className="px-4 py-2.5 text-right font-semibold text-on-background">{formatKilograms(totalKg)}</td>
+                            <td className="py-2 pr-4 font-semibold">{t("harvest.forecast.total")}</td>
+                            <td className="py-2 pr-4 font-semibold">{formatKilograms(totalKg)}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -69,21 +65,24 @@ function MonthlyTotalsTable({ monthlyTotals, totalKg }) {
  * does not know them. They are named rather than silently dropped.
  */
 function VarietiesWithoutReferenceNote({ varieties }) {
+    const { t } = useTranslation("plants");
     if (varieties.length === 0) return null;
     const listed = varieties
         .map((variety) =>
-            `${formatText(variety.varietyName)} (${formatBlock(variety.blockCode)}, ${formatTrees(variety.treeCount)})`)
-        .join(", ");
-    const subject = varieties.length === 1 ? "this variety" : "these varieties";
+            t("harvest.forecast.listedVariety", {
+                variety: formatText(variety.varietyName),
+                block: formatBlock(variety.blockCode),
+                trees: t("harvest.forecast.trees", { count: Number(variety.treeCount), value: formatNumber(variety.treeCount) }),
+            }))
+        .join(t("format.listSeparator"));
 
     return (
-        <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white shadow-card p-6 text-sm text-gray-600">
-            <Info size={18} className="mt-0.5 shrink-0 text-info" />
-            <p>
-                {`Not in the forecast: ${listed}. No reference value is entered for ${subject} yet: `
-                    + "add it under Reference values below."}
-            </p>
-        </div>
+        <Card>
+            <div className="flex gap-3 text-sm text-text-muted">
+                <Info size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-info-fg" />
+                <p>{t("harvest.forecast.notInForecast", { count: varieties.length, list: listed })}</p>
+            </div>
+        </Card>
     );
 }
 
@@ -93,23 +92,21 @@ function VarietiesWithoutReferenceNote({ varieties }) {
  * with its sources.
  */
 export default function YieldForecastSection({ blockCode }) {
+    const { t } = useTranslation("plants");
     // Month sent to the API; null lets the API start at its current month.
     const [from, setFrom] = useState(null);
     const [months, setMonths] = useState(DEFAULT_MONTHS);
 
-    const { data: forecast, isPending, isError, refetch, isFetching } = useYieldForecast({
-        blockCode,
-        from,
-        months,
-    });
+    const query = useYieldForecast({ blockCode, from, months });
+    const { data: forecast, isPending, isError } = query;
 
     const isEmpty = !isPending && !isError && forecast.monthlyTotals.every((month) => month.expectedKg === 0);
     const totalKg = !isPending && !isError ? periodTotal(forecast.monthlyTotals) : null;
 
     return (
         <section aria-labelledby="yield-forecast-title" className="flex flex-col gap-4">
-            <h2 id="yield-forecast-title" className="font-heading text-lg font-bold text-on-background">
-                Expected yield by month
+            <h2 id="yield-forecast-title" className="text-lg font-semibold">
+                {t("harvest.forecast.title")}
             </h2>
 
             <MonthPeriodControls
@@ -121,60 +118,31 @@ export default function YieldForecastSection({ blockCode }) {
                 onMonthsChange={setMonths}
             />
 
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-12 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading yield forecast…
-                </div>
-            )}
+            {isPending && <SectionLoading label={t("harvest.forecast.loading")} />}
 
-            {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-12 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-on-background">
-                            The forecast is unavailable.
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            Check your connection, then try again.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
-            )}
+            {isError && <SectionError title={t("harvest.forecast.error")} query={query} />}
 
             {isEmpty && (
                 <>
-                    <PlantsEmptyState
-                        title="No yield expected over this period"
-                        hint="The forecast counts recorded plantings only. Record a planting from the Varieties screen, or choose another period."
-                    />
+                    <Card>
+                        <EmptyState title={t("harvest.forecast.emptyTitle")} message={t("harvest.forecast.emptyHint")} />
+                    </Card>
                     <VarietiesWithoutReferenceNote varieties={forecast.varietiesWithoutReference} />
                 </>
             )}
 
             {!isPending && !isError && !isEmpty && (
                 <>
-                    <div className="rounded-2xl border border-gray-200 bg-white shadow-card p-6">
-                        <p className="mb-4 text-sm text-gray-600">
-                            Total over the period:{" "}
-                            <span className="font-semibold text-on-background">{formatKilograms(totalKg)}</span>
+                    <Card>
+                        <p className="mb-4 text-sm text-text-muted">
+                            {t("harvest.forecast.totalOverPeriod")}{" "}
+                            <span className="font-semibold text-text">{formatKilograms(totalKg)}</span>
                         </p>
                         <YieldForecastChart monthlyTotals={forecast.monthlyTotals} totalKg={totalKg} />
-                    </div>
+                    </Card>
                     <MonthlyTotalsTable monthlyTotals={forecast.monthlyTotals} totalKg={totalKg} />
                     <VarietiesWithoutReferenceNote varieties={forecast.varietiesWithoutReference} />
-                    <p className="px-1 text-xs text-gray-500">
-                        Based on recorded plantings and the reference values below.
-                    </p>
+                    <p className="px-1 text-xs text-text-muted">{t("harvest.forecast.basedOn")}</p>
                     <YieldForecastTable entries={forecast.entries} />
                 </>
             )}

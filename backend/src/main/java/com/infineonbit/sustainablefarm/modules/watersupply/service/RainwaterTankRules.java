@@ -5,7 +5,7 @@ import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterSource;
 /**
  * Pure rules of the rainwater harvesting reservoir (specification module 5.3), without side
  * effects: usable by the alert service ({@link RainwaterTankMonitor}) as well as by the level
- * reading ({@code GET /api/water/sources/{id}/level}).
+ * reading ({@code GET /api/water-supply/sources/{id}/level}).
  */
 public final class RainwaterTankRules {
 

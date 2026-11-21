@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.UnavailabilityScope;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.UnavailabilityStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,21 +14,17 @@ import static org.mockito.Mockito.when;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.WaterUnavailabilityResponse;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Field;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationSchedule;
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.WaterUnavailability;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.farm.api.ZoneDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FarmRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationScheduleRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterUnavailabilityRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -43,16 +41,10 @@ class WaterUnavailabilityServiceTest {
     private WaterUnavailabilityRepository outageRepository;
 
     @Mock
-    private FarmRepository farmRepository;
-
-    @Mock
     private WaterSourceRepository sourceRepository;
 
     @Mock
-    private FieldZoneRepository zoneRepository;
-
-    @Mock
-    private FieldRepository fieldRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private IrrigationScheduleRepository scheduleRepository;
@@ -66,35 +58,35 @@ class WaterUnavailabilityServiceTest {
     @Test
     void createRejectsAPeriodEndingBeforeItStarts() {
         assertThrows(IllegalArgumentException.class,
-                () -> service().create(request("zone", UUID.randomUUID(), END, START, null, null)));
+                () -> service().create(request("zone", 1L, END, START, null, null)));
         verify(outageRepository, never()).save(any());
     }
 
     @Test
     void createRejectsAnUnknownScope() {
         assertThrows(IllegalArgumentException.class,
-                () -> service().create(request("field", UUID.randomUUID(), START, END, null, null)));
+                () -> service().create(request("field", 1L, START, END, null, null)));
     }
 
     @Test
     void createRejectsAnUnknownStatus() {
         assertThrows(IllegalArgumentException.class,
-                () -> service().create(request("zone", UUID.randomUUID(), START, END, "done", null)));
+                () -> service().create(request("zone", 1L, START, END, "done", null)));
     }
 
     @Test
     void createRejectsAnUnknownTarget() {
-        UUID zoneId = UUID.randomUUID();
-        when(zoneRepository.existsById(zoneId)).thenReturn(false);
+        Long zoneId = 134L;
+        when(farmDirectory.zoneExists(zoneId)).thenReturn(false);
 
         assertThrows(NotFoundException.class, () -> service().create(request("zone", zoneId, START, END, null, null)));
     }
 
     @Test
     void createRejectsAnOverlapOnTheSameScope() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 135L;
         when(sourceRepository.existsById(sourceId)).thenReturn(true);
-        when(outageRepository.overlaps("source", sourceId, START, END)).thenReturn(List.of(existing(UUID.randomUUID())));
+        when(outageRepository.overlaps(UnavailabilityScope.SOURCE, sourceId, START, END)).thenReturn(List.of(existing(81L)));
 
         assertThrows(IllegalArgumentException.class, () -> service().create(request("source", sourceId, START, END, null, null)));
         verify(outageRepository, never()).save(any());
@@ -102,31 +94,27 @@ class WaterUnavailabilityServiceTest {
 
     @Test
     void aCancelledPeriodNeverConflicts() {
-        UUID sourceId = UUID.randomUUID();
+        Long sourceId = 136L;
         when(sourceRepository.existsById(sourceId)).thenReturn(true);
         when(outageRepository.save(any(WaterUnavailability.class))).thenAnswer(call -> call.getArgument(0));
 
         WaterUnavailabilityResponse saved = service().create(request("SOURCE", sourceId, START, END, "Cancelled", null));
 
         assertEquals("cancelled", saved.status());
-        verify(outageRepository, never()).overlaps(anyString(), any(), any(), any());
+        verify(outageRepository, never()).overlaps(any(), any(), any(), any());
     }
 
     @Test
     void aFarmWidePeriodPostponesTheOpenIrrigationsOfEveryZoneOfTheFarm() {
-        UUID farmId = UUID.randomUUID();
-        Field field = new Field();
-        field.setId(UUID.randomUUID());
-        Zone zone = new Zone();
-        zone.setId(UUID.randomUUID());
+        Long farmId = 137L;
+        ZoneDto zone = TestZones.zone().id(11L).blockId(12L).farmId(farmId).build();
         IrrigationSchedule schedule = new IrrigationSchedule();
-        schedule.setId(UUID.randomUUID());
-        when(farmRepository.existsById(farmId)).thenReturn(true);
-        when(outageRepository.overlaps("farm", farmId, START, END)).thenReturn(List.of());
+        schedule.setId(82L);
+        when(farmDirectory.farmExists(farmId)).thenReturn(true);
+        when(outageRepository.overlaps(UnavailabilityScope.FARM, farmId, START, END)).thenReturn(List.of());
         when(outageRepository.save(any(WaterUnavailability.class))).thenAnswer(call -> call.getArgument(0));
-        when(fieldRepository.findByFarmId(farmId)).thenReturn(List.of(field));
-        when(zoneRepository.findByFieldId(field.getId())).thenReturn(List.of(zone));
-        when(scheduleRepository.findOpenForZoneBetween(zone.getId(), START, END)).thenReturn(List.of(schedule));
+        when(farmDirectory.listZonesOfFarm(farmId)).thenReturn(List.of(zone));
+        when(scheduleRepository.findOpenForZoneBetween(zone.id(), START, END)).thenReturn(List.of(schedule));
 
         service().create(new WaterUnavailabilityRequest("farm", farmId, START, END, "pump repair", null, true));
 
@@ -138,12 +126,12 @@ class WaterUnavailabilityServiceTest {
 
     @Test
     void updateDoesNotConflictWithItself() {
-        UUID id = UUID.randomUUID();
-        UUID zoneId = UUID.randomUUID();
+        Long id = 83L;
+        Long zoneId = 138L;
         WaterUnavailability current = existing(id);
         when(outageRepository.findById(id)).thenReturn(Optional.of(current));
-        when(zoneRepository.existsById(zoneId)).thenReturn(true);
-        when(outageRepository.overlaps("zone", zoneId, START, END)).thenReturn(List.of(current));
+        when(farmDirectory.zoneExists(zoneId)).thenReturn(true);
+        when(outageRepository.overlaps(UnavailabilityScope.ZONE, zoneId, START, END)).thenReturn(List.of(current));
         when(outageRepository.save(current)).thenReturn(current);
 
         WaterUnavailabilityResponse updated = service().update(id, request("zone", zoneId, START, END, "active", null));
@@ -151,20 +139,20 @@ class WaterUnavailabilityServiceTest {
         assertEquals("active", updated.status());
     }
 
-    private static WaterUnavailabilityRequest request(String scope, UUID scopeId, Instant start, Instant end,
+    private static WaterUnavailabilityRequest request(String scope, Long scopeId, Instant start, Instant end,
                                                       String status, Boolean postpone) {
         return new WaterUnavailabilityRequest(scope, scopeId, start, end, "maintenance", status, postpone);
     }
 
-    private static WaterUnavailability existing(UUID id) {
+    private static WaterUnavailability existing(Long id) {
         WaterUnavailability outage = new WaterUnavailability();
         outage.setId(id);
-        outage.setStatus("planned");
+        outage.setStatus(UnavailabilityStatus.PLANNED);
         return outage;
     }
 
     private WaterUnavailabilityService service() {
-        return new WaterUnavailabilityService(outageRepository, farmRepository, sourceRepository, zoneRepository,
-                fieldRepository, scheduleRepository, irrigationService, alertService);
+        return new WaterUnavailabilityService(outageRepository, sourceRepository, farmDirectory,
+                scheduleRepository, irrigationService, alertService);
     }
 }

@@ -1,71 +1,51 @@
 import { useState } from "react";
-import { Loader2, Plus, TriangleAlert } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Card, EmptyState, Table } from "../../../shared/ui";
 import { useAddHealthIssue } from "../hooks/useAddHealthIssue";
 import { useHealthIssues } from "../hooks/useHealthIssues";
-import { formatCode, formatText, NO_VALUE } from "../utils/format";
+import { formatEnum, formatText, NO_VALUE } from "../utils/format";
 import AddHealthIssueModal from "./AddHealthIssueModal";
-import PlantsEmptyState from "./PlantsEmptyState";
-import { CELL_NOTE, PRIMARY_BUTTON, SECONDARY_BUTTON, TABLE_CARD, TABLE_HEAD } from "./plantsStyles";
+import CellNote from "./CellNote";
+import { HealthSectionError, HealthSectionLoading } from "./HealthSectionStates";
 
-// The scientific name sits in small gray under the name, and the EPPO code under the source.
-const COLUMNS = ["Name", "Kind", "Code", "Source"];
-
-function AddHealthIssueButton({ onClick }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={SECONDARY_BUTTON}
-        >
-            <Plus size={16} />
-            Add a pest or disease
-        </button>
-    );
-}
-
-/** The catalogue, in the order the API sends it: pests, diseases, then "Other". */
+/**
+ * The catalogue, in the order the API sends it: pests, diseases, then "Other". The scientific name
+ * sits in small muted text under the name, and the EPPO code under the source.
+ */
 function HealthIssuesTable({ issues }) {
-    return (
-        <div className={TABLE_CARD}>
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className={TABLE_HEAD}
-                            >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {issues.map((issue) => {
-                        const scientificName = formatText(issue.scientificName);
-                        const eppoCode = formatText(issue.eppoCode);
-                        return (
-                            <tr key={issue.id} className="border-b border-gray-100 align-top last:border-b-0">
-                                <td className="px-4 py-3 font-semibold text-gray-800">
-                                    {formatText(issue.name)}
-                                    {scientificName !== NO_VALUE && (
-                                        <span className={`font-normal italic ${CELL_NOTE}`}>{scientificName}</span>
-                                    )}
-                                </td>
-                                <td className="px-4 py-3 text-gray-700">{formatCode(issue.kind)}</td>
-                                <td className="px-4 py-3 text-gray-700">{formatText(issue.code)}</td>
-                                <td className="px-4 py-3 text-gray-700">
-                                    {formatText(issue.source)}
-                                    {eppoCode !== NO_VALUE && <span className={CELL_NOTE}>{`EPPO code: ${eppoCode}`}</span>}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
-    );
+    const { t } = useTranslation("plants");
+    const columns = [
+        {
+            key: "name",
+            header: t("health.issues.columns.name"),
+            className: "align-top",
+            cell: (issue) => (
+                <>
+                    {formatText(issue.name)}
+                    {formatText(issue.scientificName) !== NO_VALUE && (
+                        <CellNote className="italic">{formatText(issue.scientificName)}</CellNote>
+                    )}
+                </>
+            ),
+        },
+        { key: "kind", header: t("health.issues.columns.kind"), className: "align-top", cell: (issue) => formatEnum("issueKind", issue.kind) },
+        { key: "code", header: t("health.issues.columns.code"), className: "align-top", cell: (issue) => formatText(issue.code) },
+        {
+            key: "source",
+            header: t("health.issues.columns.source"),
+            className: "align-top",
+            cell: (issue) => (
+                <>
+                    {formatText(issue.source)}
+                    {formatText(issue.eppoCode) !== NO_VALUE && (
+                        <CellNote>{t("health.issues.eppoNote", { code: formatText(issue.eppoCode) })}</CellNote>
+                    )}
+                </>
+            ),
+        },
+    ];
+    return <Table caption={t("health.issues.title")} columns={columns} rows={issues} />;
 }
 
 /**
@@ -78,6 +58,7 @@ function HealthIssuesTable({ issues }) {
  * an inspection has used it: the API adds it then.
  */
 export default function HealthIssuesSection() {
+    const { t } = useTranslation("plants");
     const issues = useHealthIssues();
     const addIssue = useAddHealthIssue();
     const [isAdding, setIsAdding] = useState(false);
@@ -97,52 +78,31 @@ export default function HealthIssuesSection() {
     }
 
     return (
-        <section aria-labelledby="health-issues-title" className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h2 id="health-issues-title" className="font-heading text-lg font-bold text-on-background">
-                        Pests and diseases
-                    </h2>
-                    <p className="mt-1 max-w-2xl text-sm text-gray-600">
-                        The problems an inspection can report, for every block. “Other” covers a problem outside
-                        this list; it is listed here once an inspection has used it.
-                    </p>
-                </div>
-                <AddHealthIssueButton onClick={openForm} />
-            </div>
-
-            {issues.isPending && (
-                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-5 py-4 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading the pests and diseases…
-                </div>
-            )}
+        <Card
+            aria-labelledby="health-issues-title"
+            title={<span id="health-issues-title">{t("health.issues.title")}</span>}
+            subtitle={t("health.issues.subtitle")}
+            actions={
+                <Button variant="secondary" icon={Plus} onClick={openForm}>
+                    {t("health.issues.add")}
+                </Button>
+            }
+        >
+            {issues.isPending && <HealthSectionLoading>{t("health.issues.loading")}</HealthSectionLoading>}
 
             {issues.isError && (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-error/30 bg-error/5 px-5 py-4">
-                    <div className="flex items-start gap-3">
-                        <TriangleAlert size={20} className="mt-0.5 shrink-0 text-error" />
-                        <div>
-                            <p className="text-sm font-bold text-on-background">The pests and diseases could not be loaded</p>
-                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1, as in the other sections. */}
-                            <p className="mt-0.5 text-sm text-gray-600">The request to the server did not succeed.</p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => issues.refetch()}
-                        disabled={issues.isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {issues.isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <HealthSectionError
+                    title={t("health.issues.loadError")}
+                    detail={t("health.requestFailed")}
+                    query={issues}
+                />
             )}
 
             {!issues.isPending && !issues.isError && issues.data.length === 0 && (
-                <PlantsEmptyState
-                    title="No pest or disease in the catalogue yet"
-                    hint="Until one is added, an inspection can report “Other” only."
+                <EmptyState
+                    className="py-8"
+                    title={t("health.issues.emptyTitle")}
+                    message={t("health.issues.emptyHint")}
                 />
             )}
 
@@ -158,6 +118,6 @@ export default function HealthIssuesSection() {
                     onClose={closeForm}
                 />
             )}
-        </section>
+        </Card>
     );
 }

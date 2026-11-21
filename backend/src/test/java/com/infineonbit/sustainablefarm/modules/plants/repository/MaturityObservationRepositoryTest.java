@@ -1,9 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.plants.repository;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockLabel;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityMethod;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityObservation;
 import com.infineonbit.sustainablefarm.modules.plants.entity.MaturityStatus;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlockIds;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -21,10 +25,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@org.springframework.context.annotation.Import(com.infineonbit.sustainablefarm.modules.staff.service.PersonDirectoryService.class)
 public class MaturityObservationRepositoryTest {
 
     @Autowired
-    private VarietyRepository varietyRepository;
+    private PersonDirectory personDirectory;
+
+
+    private final TestBlockIds blocks = new TestBlockIds();
+
+    @Autowired
+    private BlockVarietyRepository blockVarietyRepository;
 
     @Autowired
     private MaturityObservationRepository maturityObservationRepository;
@@ -32,21 +43,21 @@ public class MaturityObservationRepositoryTest {
     @Autowired
     private TestEntityManager entityManager;
 
-    private Variety variety(Integer farmId, String blockCode, String name) {
-        Variety variety = new Variety();
-        variety.setFarmId(farmId);
-        variety.setBlockCode(blockCode);
+    private BlockVariety variety(Long farmId, String blockCode, String name) {
+        BlockVariety variety = new BlockVariety();
+        variety.assignBlock(blocks.of(farmId, blockCode), new BlockLabel(farmId, blockCode));
         variety.setName(name);
-        return varietyRepository.save(variety);
+        return blockVarietyRepository.save(variety);
     }
 
-    private MaturityObservation observation(Variety variety, LocalDate observedOn) {
+    private MaturityObservation observation(BlockVariety variety, LocalDate observedOn) {
         return maturityObservationRepository.save(new MaturityObservation(null, variety, observedOn,
                 MaturityStatus.RIPE, MaturityMethod.VISUAL, null, null, "user_entry", null));
     }
 
-    private List<Long> find(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
-        return maturityObservationRepository.findByOptionalFilters(farmId, blockCode, from, to).stream()
+    private List<Long> find(Long farmId, String blockCode, LocalDate from, LocalDate to) {
+        return maturityObservationRepository.findByOptionalFilters(
+                        blocks.all(farmId, blockCode), blocks.ids(farmId, blockCode), from, to).stream()
                 .map(MaturityObservation::getId)
                 .toList();
     }
@@ -54,7 +65,7 @@ public class MaturityObservationRepositoryTest {
     @Test
     void findByOptionalFilters_shouldReturnEveryObservationByDateThenId_whenNoFilterIsGiven() {
         // Arrange: two observations on the same day, saved out of date order
-        Variety keitt = variety(null, "B", "Keitt");
+        BlockVariety keitt = variety(null, "B", "Keitt");
         MaturityObservation late = observation(keitt, LocalDate.of(2026, 10, 20));
         MaturityObservation first = observation(keitt, LocalDate.of(2026, 10, 12));
         MaturityObservation second = observation(keitt, LocalDate.of(2026, 10, 12));
@@ -66,11 +77,11 @@ public class MaturityObservationRepositoryTest {
     void findByOptionalFilters_shouldKeepFarmNullAndFarm1Apart() {
         // Arrange: the same block and variety on no farm and on farm 1
         MaturityObservation noFarm = observation(variety(null, "B", "Keitt"), LocalDate.of(2026, 10, 12));
-        MaturityObservation farm1 = observation(variety(1, "B", "Keitt"), LocalDate.of(2026, 10, 12));
+        MaturityObservation farm1 = observation(variety(1L, "B", "Keitt"), LocalDate.of(2026, 10, 12));
         // Act & Assert: farm 1 excludes the row without a farm; no farm filter means every farm
-        assertEquals(List.of(farm1.getId()), find(1, null, null, null));
+        assertEquals(List.of(farm1.getId()), find(1L, null, null, null));
         assertEquals(List.of(noFarm.getId(), farm1.getId()), find(null, null, null, null));
-        assertTrue(find(2, null, null, null).isEmpty());
+        assertTrue(find(2L, null, null, null).isEmpty());
     }
 
     @Test
@@ -86,7 +97,7 @@ public class MaturityObservationRepositoryTest {
     @Test
     void findByOptionalFilters_shouldIncludeBothBounds_andApplyASingleOne() {
         // Arrange
-        Variety keitt = variety(null, "B", "Keitt");
+        BlockVariety keitt = variety(null, "B", "Keitt");
         MaturityObservation september = observation(keitt, LocalDate.of(2026, 9, 30));
         MaturityObservation first = observation(keitt, LocalDate.of(2026, 10, 1));
         MaturityObservation last = observation(keitt, LocalDate.of(2026, 10, 31));
@@ -110,11 +121,11 @@ public class MaturityObservationRepositoryTest {
     @Test
     void save_shouldStoreEveryField_asGiven() {
         // Arrange: a Brix reading, and a visual observation without value
-        Variety keitt = variety(null, "B", "Keitt");
+        BlockVariety keitt = variety(null, "B", "Keitt");
         Instant now = Instant.parse("2026-10-25T10:00:00Z");
         Long brix = maturityObservationRepository.save(new MaturityObservation(null, keitt,
                 LocalDate.of(2026, 10, 12), MaturityStatus.READY_FOR_HARVEST, MaturityMethod.BRIX,
-                new BigDecimal("14.2"), "Awa", "user_entry", now)).getId();
+                new BigDecimal("14.2"), TestPeople.idOf(personDirectory, "Awa"), "user_entry", now)).getId();
         Long visual = observation(keitt, LocalDate.of(2026, 10, 13)).getId();
         entityManager.flush();
         entityManager.clear();
@@ -127,11 +138,11 @@ public class MaturityObservationRepositoryTest {
         assertEquals(MaturityStatus.READY_FOR_HARVEST, storedBrix.getMaturityStatus());
         assertEquals(MaturityMethod.BRIX, storedBrix.getMethod());
         assertEquals(new BigDecimal("14.2"), storedBrix.getMeasuredValue());
-        assertEquals("Awa", storedBrix.getObserver());
+        assertEquals(TestPeople.idOf(personDirectory, "Awa"), storedBrix.getObserverPersonId());
         assertEquals("user_entry", storedBrix.getSource());
         assertEquals(now, storedBrix.getLastUpdated());
         assertEquals(MaturityMethod.VISUAL, storedVisual.getMethod());
         assertNull(storedVisual.getMeasuredValue());
-        assertNull(storedVisual.getObserver());
+        assertNull(storedVisual.getObserverPersonId());
     }
 }

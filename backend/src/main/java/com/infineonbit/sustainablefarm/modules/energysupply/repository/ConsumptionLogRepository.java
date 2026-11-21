@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface ConsumptionLogRepository extends JpaRepository<ConsumptionLog, String> {
+public interface ConsumptionLogRepository extends JpaRepository<ConsumptionLog, Long> {
 
     List<ConsumptionLog> findByDate(LocalDate date);
 

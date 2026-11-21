@@ -1,6 +1,5 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.controller;
 
-import com.infineonbit.sustainablefarm.modules.sitesecurity.config.AnyAccount;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityAccessInterceptor;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.config.UserPermission;
@@ -20,17 +19,11 @@ import org.springframework.web.bind.annotation.*;
  * (data restricted to their zones); everything else needs the admin role.
  */
 @RestController
-@RequestMapping("/api/v1/sitesecurity")
+@RequestMapping("/api/site-security")
 @RequiredArgsConstructor
 public class SiteSecurityController {
 
     private final SiteSecurityService siteSecurityService;
-    @AnyAccount
-    @GetMapping("/session")
-    public ResponseEntity<SessionDto> getSession(
-            @RequestAttribute(SiteSecurityAccessInterceptor.PRINCIPAL_ATTRIBUTE) SiteSecurityPrincipal principal) {
-        return ResponseEntity.ok(SessionDto.of(principal));
-    }
 
     @UserPermission(Permission.VIEW_DASHBOARD)
     @GetMapping("/overview")

@@ -65,11 +65,13 @@ public class FertilizerPlanController {
    @PostMapping
    @Operation(summary = "Plan an application of a fertilizer on a block",
          description = "The quantity is in the unit of the fertilizer and is the farmer's own figure. The block "
+               + "must be an existing block of the farm referential (GET /api/farm/fields) and "
                + "needs no recorded planting. Planning takes nothing from the stock, so the quantity is not "
                + "compared with it. The planned cost is computed at the last purchase price of the fertilizer.")
    @ApiResponses({
          @ApiResponse(responseCode = "201", description = "The planned application"),
-         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "400", description = "Invalid request (fieldErrors lists the failing fields), "
+               + "unknown block code, or a farm that does not exist or does not own the block"),
          @ApiResponse(responseCode = "404", description = "No fertilizer with the given fertilizerId")
    })
    public ResponseEntity<FertilizerPlanResponse> createPlan(@Valid @RequestBody FertilizerPlanRequest planRequest) {
@@ -92,8 +94,8 @@ public class FertilizerPlanController {
    public ResponseEntity<List<FertilizerPlanResponse>> getAllPlans(
          @Parameter(description = "Fertilizer identifier") @RequestParam(name = "fertilizerId", required = false) Long fertilizerId,
          @Parameter(description = "PLANNED, DONE or CANCELLED") @RequestParam(name = "status", required = false) FertilizerPlanStatus status,
-         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Integer farmId,
-         @Parameter(description = "Raw block value as stored, for example \"B\"") @RequestParam(name = "blockCode", required = false) String blockCode,
+         @Parameter(description = "Farm identifier") @RequestParam(name = "farmId", required = false) Long farmId,
+         @Parameter(description = "Block code of the farm referential, for example \"B\"") @RequestParam(name = "blockCode", required = false) String blockCode,
          @Parameter(description = "First planned date, included, as yyyy-MM-dd") @RequestParam(name = "from", required = false)
          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
          @Parameter(description = "Last planned date, included, as yyyy-MM-dd") @RequestParam(name = "to", required = false)
@@ -110,7 +112,8 @@ public class FertilizerPlanController {
                + "one. When the stock does not cover it, nothing is recorded and the plan stays PLANNED.")
    @ApiResponses({
          @ApiResponse(responseCode = "200", description = "The planned application, DONE, with its real application"),
-         @ApiResponse(responseCode = "400", description = "Invalid request; fieldErrors lists the failing fields"),
+         @ApiResponse(responseCode = "400", description = "Invalid request (fieldErrors lists the failing fields), "
+               + "or an applicatorPersonId the people directory does not know"),
          @ApiResponse(responseCode = "404", description = "No planned application with this ID"),
          @ApiResponse(responseCode = "409", description = "The planned application is already done or cancelled"),
          @ApiResponse(responseCode = "422", description = "The quantity exceeds the current stock")

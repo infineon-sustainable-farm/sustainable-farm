@@ -38,7 +38,7 @@ import java.time.LocalDate;
 @SpacingComplete
 public record PlantingRequest(
         @Min(value = 1, message = "farmId must be at least 1")
-        Integer farmId,
+        Long farmId,
 
         @NotNull(message = "blockCode is required")
         @Pattern(regexp = "^\\s*[A-Za-z0-9]{1,10}\\s*$",
@@ -86,7 +86,7 @@ public record PlantingRequest(
     /**
      * A planting without spacing or vigor, as a nursery transplant records it.
      */
-    public PlantingRequest(Integer farmId, String blockCode, String varietyName, LocalDate plantingDate,
+    public PlantingRequest(Long farmId, String blockCode, String varietyName, LocalDate plantingDate,
                            Integer treeCount) {
         this(farmId, blockCode, varietyName, plantingDate, treeCount, null, null, null);
     }

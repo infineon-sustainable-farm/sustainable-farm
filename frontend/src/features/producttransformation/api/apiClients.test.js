@@ -20,6 +20,7 @@ import { operatorApi } from './operatorApi';
 import { packagingApi } from './packagingApi';
 import { qcApi } from './qcApi';
 import { rawIntakeApi } from './rawIntakeApi';
+import { siteApi } from './siteApi';
 import { washSortApi } from './washSortApi';
 
 beforeEach(() => {
@@ -47,21 +48,21 @@ describe('batchApi', () => {
     batchApi.getBatchesByFarmAndBlock('F-1', 'BL-1');
     batchApi.getBatchesByHarvestDateRange('2026-10-01', '2026-10-31');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches/B-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/batches', { batchId: 'B-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/batches/B-1', { currentStatus: 'DRYING' });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/batches/B-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/batches/B-1/advance-status');
-    expect(apiClient.put).toHaveBeenCalledWith('/api/batches/B-1/status', null, {
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches/B-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/batches', { batchId: 'B-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/batches/B-1', { currentStatus: 'DRYING' });
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/batches/B-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/batches/B-1/advance-status');
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/batches/B-1/status', null, {
       params: { status: 'REJECTED' },
     });
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches/status/DRYING');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches/farm/F-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches/variety/KEITT');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches/ready-for-shipping');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches/farm/F-1/block/BL-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/batches/date-range', {
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches/status/DRYING');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches/farm/F-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches/variety/KEITT');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches/ready-for-shipping');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches/farm/F-1/block/BL-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/batches/date-range', {
       params: { startDate: '2026-10-01', endDate: '2026-10-31' },
     });
   });
@@ -81,18 +82,18 @@ describe('complianceApi', () => {
     complianceApi.getOverdueComplianceRecords();
     complianceApi.getComplianceRecordsByDateRange('2026-10-01', '2026-10-31');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/compliance-records');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/compliance-records/C-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/compliance-records', { recordId: 'C-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/compliance-records/C-1', { result: 'PENDING' });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/compliance-records/C-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/compliance-records/batch/B-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/compliance-records/type/HACCP');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/compliance-records/result/COMPLIANT');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/compliance-records/auditor/OP-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/compliance-records/overdue');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/compliance-records');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/compliance-records/C-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/compliance-records', { recordId: 'C-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/compliance-records/C-1', { result: 'PENDING' });
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/compliance-records/C-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/compliance-records/batch/B-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/compliance-records/type/HACCP');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/compliance-records/result/COMPLIANT');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/compliance-records/auditor/OP-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/compliance-records/overdue');
     expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/compliance-records/date-range?startDate=2026-10-01&endDate=2026-10-31',
+      '/api/product-transformation/compliance-records/date-range?startDate=2026-10-01&endDate=2026-10-31',
     );
   });
 });
@@ -100,10 +101,6 @@ describe('complianceApi', () => {
 describe('dashboardApi', () => {
   it('uses the documented dashboard endpoints, with optional date filters', async () => {
     await dashboardApi.getDashboardStats();
-    await dashboardApi.getBatchStatusDistribution();
-    await dashboardApi.getHarvestQuantityKPI();
-    await dashboardApi.getProcessingEfficiencyKPI();
-    await dashboardApi.getQcPassRateKPI();
     await dashboardApi.getHarvestTrendData();
     await dashboardApi.getHarvestTrendData('2026-10-01', '2026-10-31');
     await dashboardApi.getProductionOutputData();
@@ -114,18 +111,6 @@ describe('dashboardApi', () => {
     await dashboardApi.getQualityTrendData('2026-10-01', '2026-10-31');
 
     expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/dashboard/kpis');
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/active-batches',
-    );
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/harvest-quantity',
-    );
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/energy-consumption',
-    );
-    expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/product-transformation/dashboard/kpi/quality-pass-rate',
-    );
     expect(apiClient.get).toHaveBeenCalledWith(
       '/api/product-transformation/dashboard/charts/harvest-trend',
     );
@@ -163,13 +148,13 @@ describe('dryingApi', () => {
     dryingApi.deleteDryingRun('DR-1');
     dryingApi.getDryingRunsByEquipment('EQ-1');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/drying-runs');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/drying-runs/DR-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/drying-runs/batch/B-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/drying-runs', { runId: 'DR-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/drying-runs/DR-1', { durationHours: 5 });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/drying-runs/DR-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/drying-runs/equipment/EQ-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/drying-runs');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/drying-runs/DR-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/drying-runs/batch/B-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/drying-runs', { runId: 'DR-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/drying-runs/DR-1', { durationHours: 5 });
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/drying-runs/DR-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/drying-runs/equipment/EQ-1');
   });
 });
 
@@ -180,18 +165,16 @@ describe('equipmentApi', () => {
     equipmentApi.getAvailableEquipment();
     equipmentApi.getEquipmentByType('SOLAR_DRYER');
     equipmentApi.getEquipmentByStatus('ACTIVE');
-    equipmentApi.createEquipment({ equipmentId: 'EQ-1' });
     equipmentApi.updateEquipment('EQ-1', { capacityKgPerHour: 130 });
-    equipmentApi.deleteEquipment('EQ-1');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/equipment');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/equipment/EQ-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/equipment/available');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/equipment/type/SOLAR_DRYER');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/equipment/status/ACTIVE');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/equipment', { equipmentId: 'EQ-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/equipment/EQ-1', { capacityKgPerHour: 130 });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/equipment/EQ-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/EQ-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/available');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/type/SOLAR_DRYER');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/equipment/status/ACTIVE');
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/equipment/EQ-1', { capacityKgPerHour: 130 });
+    expect(equipmentApi.createEquipment).toBeUndefined();
+    expect(equipmentApi.deleteEquipment).toBeUndefined();
   });
 });
 
@@ -205,13 +188,13 @@ describe('operatorApi', () => {
     operatorApi.getOperatorsByRole('WASHER');
     operatorApi.getActiveOperators();
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/operators');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/operators/OP-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/operators', { operatorId: 'OP-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/operators/OP-1', { role: 'WASHER' });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/operators/OP-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/operators/role/WASHER');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/operators/active');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/operators');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/operators/OP-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/operators', { operatorId: 'OP-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/operators/OP-1', { role: 'WASHER' });
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/operators/OP-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/operators/role/WASHER');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/operators/active');
   });
 });
 
@@ -226,16 +209,16 @@ describe('packagingApi', () => {
     packagingApi.getExportReadyPackagingRecords();
     packagingApi.markExportReady('PK-1');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/packaging-records');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/packaging-records/PK-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/packaging-records', { recordId: 'PK-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/packaging-records/PK-1', {
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/packaging-records');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/packaging-records/PK-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/packaging-records', { recordId: 'PK-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/packaging-records/PK-1', {
       exportReady: true,
     });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/packaging-records/PK-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/packaging-records/batch/B-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/packaging-records/export-ready');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/packaging-records/PK-1/mark-export-ready', {});
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/packaging-records/PK-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/packaging-records/batch/B-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/packaging-records/export-ready');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/packaging-records/PK-1/mark-export-ready', {});
   });
 });
 
@@ -249,13 +232,13 @@ describe('qcApi', () => {
     qcApi.getQcCheckpointsByBatch('B-1');
     qcApi.getQcCheckpointsByInspector('OP-1');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/qc-checkpoints');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/qc-checkpoints/QC-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/qc-checkpoints', { checkpointId: 'QC-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/qc-checkpoints/QC-1', { result: 'PASS' });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/qc-checkpoints/QC-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/qc-checkpoints/batch/B-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/qc-checkpoints/inspector/OP-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/qc-checkpoints');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/qc-checkpoints/QC-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/qc-checkpoints', { checkpointId: 'QC-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/qc-checkpoints/QC-1', { result: 'PASS' });
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/qc-checkpoints/QC-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/qc-checkpoints/batch/B-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/qc-checkpoints/inspector/OP-1');
   });
 });
 
@@ -269,15 +252,15 @@ describe('rawIntakeApi', () => {
     rawIntakeApi.deleteRawIntake('RI-1');
     rawIntakeApi.initializeBatch('RI-1');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/raw-intakes');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/raw-intakes/RI-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/raw-intakes/batch/B-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/raw-intakes', { intakeId: 'RI-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/raw-intakes/RI-1', {
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/raw-intakes');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/raw-intakes/RI-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/raw-intakes/batch/B-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/raw-intakes', { intakeId: 'RI-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/raw-intakes/RI-1', {
       receivedQuantityKg: 520,
     });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/raw-intakes/RI-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/raw-intakes/RI-1/initialize-batch');
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/raw-intakes/RI-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/raw-intakes/RI-1/initialize-batch');
   });
 });
 
@@ -291,16 +274,25 @@ describe('washSortApi', () => {
     washSortApi.deleteWashSortRecord('WS-1');
     washSortApi.completeWashSortRecord('WS-1', { outputQuantityKg: 480 });
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/wash-sort-records');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/wash-sort-records/WS-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/api/wash-sort-records/batch/B-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/wash-sort-records', { recordId: 'WS-1' });
-    expect(apiClient.put).toHaveBeenCalledWith('/api/wash-sort-records/WS-1', {
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records/WS-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records/batch/B-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records', { recordId: 'WS-1' });
+    expect(apiClient.put).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records/WS-1', {
       waterUsageLiters: 900,
     });
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/wash-sort-records/WS-1');
-    expect(apiClient.post).toHaveBeenCalledWith('/api/wash-sort-records/WS-1/complete', {
+    expect(apiClient.delete).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records/WS-1');
+    expect(apiClient.post).toHaveBeenCalledWith('/api/product-transformation/wash-sort-records/WS-1/complete', {
       outputQuantityKg: 480,
     });
+  });
+});
+
+describe('siteApi', () => {
+  it('reads the farms and fields of the farm module', () => {
+    siteApi.getFarms();
+    siteApi.getFields();
+    expect(apiClient.get).toHaveBeenCalledWith('/api/farm/farms');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/farm/fields');
   });
 });

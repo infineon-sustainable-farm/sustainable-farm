@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
@@ -16,10 +17,15 @@ import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.Credentia
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.GateRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.LogEntryRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -33,6 +39,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Site Security data: gates, zones, the access register (credentials) and the access log.
+ * People come from the shared directory ({@link PersonDirectory}, ADR 0004): a credential or a
+ * log entry stores the id of a person, and the name and email are read from the directory.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -60,6 +71,7 @@ public class SiteSecurityService {
     private final LogEntryRepository logRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final SiteSecurityAuditService audit;
+    private final PersonDirectory personDirectory;
 
     /** The whole site, as an admin sees it. */
     private static final SiteSecurityPrincipal WHOLE_SITE =
@@ -118,9 +130,12 @@ public class SiteSecurityService {
 
     /** Emails only for admins; a user only sees credentials whose level is one of their zones. */
     public List<UserDto> getCredentials(SiteSecurityPrincipal viewer) {
-        List<UserDto> credentials = userRepository.findAll().stream()
+        List<CredentialUserEntity> visible = userRepository.findAll().stream()
                 .filter(user -> viewer.seesZone(user.getLevel()))
-                .map(this::mapUserToDto)
+                .toList();
+        Map<Long, PersonDto> people = peopleOf(visible.stream().map(CredentialUserEntity::getPersonId).toList());
+        List<UserDto> credentials = visible.stream()
+                .map(user -> mapUserToDto(user, personOf(people, user.getPersonId())))
                 .collect(Collectors.toList());
         if (!viewer.isAdmin()) {
             credentials.forEach(credential -> credential.setEmail(null));
@@ -130,9 +145,9 @@ public class SiteSecurityService {
 
     @Transactional
     public UserDto createCredential(CreateUserRequestDto req, SiteSecurityPrincipal actor) {
-        String name = req.getName().trim();
-        if (userRepository.existsByName(name)) {
-            throw duplicateCredential(name);
+        PersonDto person = requireActivePerson(req.getPersonId());
+        if (userRepository.existsByPersonId(person.id())) {
+            throw duplicateCredential(person);
         }
         if (!zoneRepository.existsById(req.getLevel())) {
             throw new BusinessRuleException("Unknown access level '" + req.getLevel()
@@ -143,15 +158,13 @@ public class SiteSecurityService {
 
         CredentialUserEntity entity = CredentialUserEntity.builder()
                 .id(UUID.randomUUID().toString())
-                .name(name)
-                .email(OperatorService.normalizeEmail(req.getEmail()))
-                .notificationStatus(CredentialNotificationStatus.PENDING)
+                .personId(person.id())
+                .notificationStatus(hasEmail(person) ? CredentialNotificationStatus.PENDING : null)
                 .role(req.getRole().trim())
                 .type(req.getType())
                 .level(req.getLevel())
                 .validUntil(PERMANENT.equalsIgnoreCase(req.getValidUntil()) ? PERMANENT : req.getValidUntil())
                 .status(INITIAL_STATUS)
-                .initials(initialsOf(name))
                 .lastActive("Not yet on site")
                 .build();
 
@@ -159,11 +172,13 @@ public class SiteSecurityService {
             // Flush here so a concurrent duplicate fails inside this method, as a 409.
             CredentialUserEntity saved = userRepository.saveAndFlush(entity);
             audit.record(actor, SiteSecurityAuditAction.CREDENTIAL_CREATED, saved.getId(), saved.getLevel());
-            eventPublisher.publishEvent(new CredentialNotificationEvent(
-                    saved.getId(), CredentialNotificationEvent.Type.GRANTED));
-            return mapUserToDto(saved);
+            if (saved.getNotificationStatus() != null) {
+                eventPublisher.publishEvent(new CredentialNotificationEvent(
+                        saved.getId(), CredentialNotificationEvent.Type.GRANTED));
+            }
+            return mapUserToDto(saved, person);
         } catch (DataIntegrityViolationException e) {
-            throw duplicateCredential(name);
+            throw duplicateCredential(person);
         }
     }
 
@@ -172,9 +187,10 @@ public class SiteSecurityService {
     public UserDto revokeCredential(String id, SiteSecurityPrincipal actor) {
         CredentialUserEntity credential = userRepository.lockById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No credential with id '" + id + "'."));
+        PersonDto person = personDirectory.findById(credential.getPersonId()).orElse(null);
         if (!REVOKED_STATUS.equals(credential.getStatus())) {
             credential.setStatus(REVOKED_STATUS);
-            if (credential.getEmail() != null) {
+            if (hasEmail(person)) {
                 credential.setNotificationStatus(CredentialNotificationStatus.PENDING);
                 eventPublisher.publishEvent(new CredentialNotificationEvent(
                         credential.getId(), CredentialNotificationEvent.Type.REVOKED));
@@ -183,7 +199,7 @@ public class SiteSecurityService {
             audit.record(actor, SiteSecurityAuditAction.CREDENTIAL_REVOKED, credential.getId(), null);
             log.info("Site Security credential revoked: {}", credential.getId());
         }
-        return mapUserToDto(credential);
+        return mapUserToDto(credential, person);
     }
 
     public List<LogEntryDto> getAccessLogs(LogFilter filter, SiteSecurityPrincipal viewer) {
@@ -202,13 +218,37 @@ public class SiteSecurityService {
             case SERVICE -> logRepository.findByType("Service", NEWEST_FIRST);
         };
 
+        Map<Long, PersonDto> people = peopleOf(logs.stream().map(LogEntryEntity::getPersonId).toList());
         return logs.stream()
-                .map(this::mapLogToDto)
+                .map(entry -> mapLogToDto(entry, personOf(people, entry.getPersonId())))
                 .collect(Collectors.toList());
     }
 
-    private ConflictException duplicateCredential(String name) {
-        return new ConflictException("A credential for '" + name + "' already exists.");
+    private ConflictException duplicateCredential(PersonDto person) {
+        return new ConflictException("A credential for '" + person.fullName() + "' already exists.");
+    }
+
+    /** The holder of a new credential: an active person of the shared directory, never created here. */
+    private PersonDto requireActivePerson(Long personId) {
+        PersonDto person = personDirectory.findById(personId).orElseThrow(() ->
+                new BadRequestException("Person " + personId + " not found in the people directory"));
+        if (!person.active()) {
+            throw new BusinessRuleException("Person " + personId + " is deactivated in the people directory.");
+        }
+        return person;
+    }
+
+    private Map<Long, PersonDto> peopleOf(Collection<Long> personIds) {
+        List<Long> ids = personIds.stream().filter(Objects::nonNull).distinct().toList();
+        return ids.isEmpty() ? Map.of() : personDirectory.findAllById(ids);
+    }
+
+    private static PersonDto personOf(Map<Long, PersonDto> people, Long personId) {
+        return personId == null ? null : people.get(personId);
+    }
+
+    private static boolean hasEmail(PersonDto person) {
+        return person != null && person.email() != null && !person.email().isBlank();
     }
 
     private void validateVisitorRules(CreateUserRequestDto req) {
@@ -299,31 +339,35 @@ public class SiteSecurityService {
                 .build();
     }
 
-    private UserDto mapUserToDto(CredentialUserEntity e) {
+    private UserDto mapUserToDto(CredentialUserEntity e, PersonDto person) {
+        String name = person == null ? null : person.fullName();
         return UserDto.builder()
                 .id(e.getId())
-                .name(e.getName())
+                .personId(e.getPersonId())
+                .name(name)
                 .role(e.getRole())
                 .type(e.getType())
                 .level(e.getLevel())
                 .validUntil(e.getValidUntil())
                 .status(effectiveStatus(e))
-                .initials(e.getInitials())
+                .initials(initialsOf(name))
                 .lastActive(e.getLastActive())
-                .email(e.getEmail())
+                .email(person == null ? null : person.email())
                 .notificationStatus(e.getNotificationStatus() == null
                         ? null : e.getNotificationStatus().name().toLowerCase(Locale.ROOT))
                 .build();
     }
 
-    private LogEntryDto mapLogToDto(LogEntryEntity e) {
+    private LogEntryDto mapLogToDto(LogEntryEntity e, PersonDto person) {
+        String name = person == null ? null : person.fullName();
         return LogEntryDto.builder()
                 .id(e.getId())
                 .ref(e.getRef())
                 .time(e.getTime())
                 .date(e.getDate())
-                .user(e.getUser())
-                .initials(e.getInitials())
+                .personId(e.getPersonId())
+                .user(name)
+                .initials(initialsOf(name))
                 .type(e.getType())
                 .zone(e.getZone())
                 .zoneName(e.getZoneName())
@@ -335,8 +379,9 @@ public class SiteSecurityService {
                 .build();
     }
 
-    private String initialsOf(String name) {
-        if (name == null || name.trim().isEmpty()) return "??";
+    /** Empty for an unknown person: the screen shows its own placeholder. */
+    private static String initialsOf(String name) {
+        if (name == null || name.trim().isEmpty()) return null;
         String[] parts = name.trim().split("\\s+");
         if (parts.length == 1) return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
         return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();

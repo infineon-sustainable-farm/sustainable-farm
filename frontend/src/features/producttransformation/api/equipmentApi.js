@@ -2,8 +2,11 @@
  * Product Transformation - Equipment API
  * API client for Product Transformation equipment operations.
  *
- * Equipment collision rule (Option A): this client targets the PT-only
- * `pt_equipment` entity, not the Machinery module's `equipment`.
+ * Single equipment register (ADR 0004): `equipmentId` is the business code of
+ * a processing or drying machine of the farm register owned by Machinery
+ * (`equipment`); its PT attributes live in `pt_equipment_spec`. Machinery alone creates,
+ * renames, changes the status of and deletes a machine: this client only reads the machines
+ * and updates their PT attributes.
  *
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
@@ -15,45 +18,35 @@ export const equipmentApi = {
   /**
    * Get all PT equipment
    */
-  getAllEquipment: () => apiClient.get('/api/equipment'),
+  getAllEquipment: () => apiClient.get('/api/product-transformation/equipment'),
 
   /**
    * Get PT equipment by ID
    */
-  getEquipmentById: (equipmentId) => apiClient.get(`/api/equipment/${equipmentId}`),
+  getEquipmentById: (equipmentId) => apiClient.get(`/api/product-transformation/equipment/${equipmentId}`),
 
   /**
    * Get available PT equipment
    */
-  getAvailableEquipment: () => apiClient.get('/api/equipment/available'),
+  getAvailableEquipment: () => apiClient.get('/api/product-transformation/equipment/available'),
 
   /**
    * Get PT equipment by type
    */
   getEquipmentByType: (equipmentType) =>
-    apiClient.get(`/api/equipment/type/${equipmentType}`),
+    apiClient.get(`/api/product-transformation/equipment/type/${equipmentType}`),
 
   /**
    * Get PT equipment by maintenance status
    */
   getEquipmentByStatus: (maintenanceStatus) =>
-    apiClient.get(`/api/equipment/status/${maintenanceStatus}`),
+    apiClient.get(`/api/product-transformation/equipment/status/${maintenanceStatus}`),
 
   /**
-   * Create PT equipment
-   */
-  createEquipment: (equipmentData) => apiClient.post('/api/equipment', equipmentData),
-
-  /**
-   * Update PT equipment
+   * Update the PT attributes of a machine (type, capacity, energy, location, last maintenance)
    */
   updateEquipment: (equipmentId, equipmentData) =>
-    apiClient.put(`/api/equipment/${equipmentId}`, equipmentData),
-
-  /**
-   * Delete PT equipment
-   */
-  deleteEquipment: (equipmentId) => apiClient.delete(`/api/equipment/${equipmentId}`),
+    apiClient.put(`/api/product-transformation/equipment/${equipmentId}`, equipmentData),
 };
 
 export default equipmentApi;

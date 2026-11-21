@@ -18,7 +18,11 @@ export function daysUntil(dateString) {
   return Math.round((date - startOfToday()) / MS_PER_DAY);
 }
 
-export function buildMonthlySeries(fuelLogs = [], usageLogs = [], monthCount = 6) {
+function defaultMonthLabel(date) {
+  return date.toLocaleDateString("en-US", { month: "short" });
+}
+
+export function buildMonthlySeries(fuelLogs = [], usageLogs = [], monthCount = 6, formatMonth = defaultMonthLabel) {
   const now = new Date();
   const months = [];
 
@@ -26,7 +30,7 @@ export function buildMonthlySeries(fuelLogs = [], usageLogs = [], monthCount = 6
     const date = new Date(now.getFullYear(), now.getMonth() - index, 1);
     months.push({
       key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
-      month: date.toLocaleDateString("en-US", { month: "short" }),
+      month: formatMonth(date),
       fuelCost: 0,
       usageHours: 0,
     });
@@ -59,6 +63,7 @@ export function buildDashboardMetrics({
   usageLogs,
   fuelLogs,
   repairLogs,
+  formatMonth,
 }) {
   const equipmentList = equipments?.content ?? [];
   const sparePartList = spareParts?.content ?? [];
@@ -118,7 +123,7 @@ export function buildDashboardMetrics({
     overdueSchedules,
     dueSoonSchedules,
     lowStockList: (lowStockSpareParts ?? []).slice(0, 4),
-    chartData: buildMonthlySeries(fuelList, usageList),
+    chartData: buildMonthlySeries(fuelList, usageList, 6, formatMonth),
     equipmentNames,
   };
 }

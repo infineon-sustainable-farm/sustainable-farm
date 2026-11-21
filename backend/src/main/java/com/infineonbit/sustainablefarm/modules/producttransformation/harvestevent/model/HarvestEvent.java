@@ -1,11 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.GenericGenerator;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,33 +30,42 @@ import java.math.BigDecimal;
  * @version 1.0.0
  */
 @Entity
-@Table(name = "harvest_event")
+@Table(name = "harvest_event",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_harvest_event_code", columnNames = "code"),
+                @UniqueConstraint(name = "uk_harvest_event_batch_code", columnNames = "batch_code")
+        },
+        indexes = {
+                @Index(name = "idx_harvest_event_harvest_date", columnList = "harvest_date"),
+                @Index(name = "idx_harvest_event_block_id", columnList = "block_id"),
+                @Index(name = "idx_harvest_event_variety_key", columnList = "variety_key"),
+                @Index(name = "idx_harvest_event_plants_harvest_id", columnList = "plants_harvest_id"),
+                @Index(name = "idx_harvest_event_harvest_supervisor_id", columnList = "harvest_supervisor_id")})
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class HarvestEvent {
+public class HarvestEvent extends BaseEntity {
 
-    @Id
-    @GeneratedValue(generator = "assigned")
-    @GenericGenerator(name = "assigned", strategy = "assigned")
-    @Column(name = "harvest_id", length = 50)
+    /** Business code, assigned by the client and shown by the API; the key is {@code id}. */
+    @Column(name = "code", nullable = false, length = 50)
     private String harvestId;
 
-    // Reference to Plants harvest ID for cross-module integration
-    // Allows Product Transformation to reference Plants harvest data without duplication
+    /**
+     * The plants harvest record the event was imported from, when there is one: foreign key to
+     * plants {@code harvest_record.id} ({@code fk_harvest_event_plants_harvest}), checked on write
+     * through {@code plants.api.HarvestLookup}.
+     */
     @Column(name = "plants_harvest_id")
     private Long plantsHarvestId;
 
-    @Column(name = "batch_id", nullable = false, unique = true, length = 50)
+    /**
+     * Code of the processing batch the harvest creates, for example {@code LOT-DEMO-001}, shown as
+     * {@code batchId}. A code, not a foreign key: the event is recorded before its batch exists
+     * (MCD: "HARVEST_EVENT '1' -- '1' BATCH : creates_batch").
+     */
+    @Column(name = "batch_code", nullable = false, length = 50)
     private String batchId;
-
-    // Note: No @OneToOne relationship to Batch entity
-    // Reason: Database schema has batch_id as VARCHAR foreign key without explicit FK constraint
-    // Relationship is maintained through batch_id field for Plants integration
-    // Per MCD: "HARVEST_EVENT '1' -- '1' BATCH : creates_batch"
 
     @Column(name = "harvest_date", nullable = false)
     private LocalDate harvestDate;
@@ -65,15 +73,16 @@ public class HarvestEvent {
     @Column(name = "harvest_time")
     private LocalTime harvestTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mango_variety", nullable = false, length = 20)
-    private MangoVariety mangoVariety;
+    /** Catalogue key of the variety, for example {@code KENT}: foreign key to plants {@code variety_reference}. */
+    @Column(name = "variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
+    private String varietyKey;
 
-    @Column(name = "farm_id", nullable = false, length = 50)
-    private String farmId;
-
-    @Column(name = "block_id", nullable = false, length = 50)
-    private String blockId;
+    /**
+     * Block of the farm the harvest comes from: foreign key to {@code farm.block} (ADR 0004). The
+     * API shows it as {@code blockId} (the block code) and {@code farmId} (the name of its farm).
+     */
+    @Column(name = "block_id", nullable = false)
+    private Long farmBlockId;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal harvestQuantityKg;
@@ -88,8 +97,9 @@ public class HarvestEvent {
     @Column(name = "harvest_team_id", length = 50)
     private String harvestTeamId;
 
-    @Column(name = "harvest_supervisor", length = 100)
-    private String harvestSupervisor;
+    /** The harvest supervisor, a person of the staff referential ({@code person.id}); the API shows the name. */
+    @Column(name = "harvest_supervisor_id")
+    private Long harvestSupervisorId;
 
     @Column(name = "weather_conditions", length = 200)
     private String weatherConditions;
@@ -97,75 +107,4 @@ public class HarvestEvent {
     @Column(name = "storage_location", length = 50)
     private String storageLocation;
 
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    /**
-     * Mango Variety Enum
-     * Business Rule: Matches database CHECK constraint
-     */
-    public enum MangoVariety {
-        KEITT,
-        KENT,
-        TOMMY,
-        AMÉLIE,
-        OTHER;
-
-        /**
-         * Resolve a variety name coming from the Plants module (for example
-         * {@code "Keitt"}, {@code "keitt"} or {@code "Amelie"}) to this enum.
-         *
-         * <p>Plants returns the planted name as stored, so it can differ in case
-         * and accents from the enum constants ({@code KEITT}, {@code AMÉLIE}).
-         * The comparison is therefore case-insensitive and accent-insensitive.
-         * Unknown or missing names map to {@link #OTHER} instead of failing the
-         * whole harvest import.
-         */
-        public static MangoVariety fromPlants(String varietyName) {
-            if (varietyName == null) {
-                return OTHER;
-            }
-            String normalized = java.text.Normalizer.normalize(varietyName.trim(), java.text.Normalizer.Form.NFD)
-                    .replaceAll("\\p{M}", "")
-                    .toUpperCase(java.util.Locale.ROOT);
-            switch (normalized) {
-                case "KEITT":
-                    return KEITT;
-                case "KENT":
-                    return KENT;
-                case "TOMMY":
-                case "TOMMY ATKINS":
-                    return TOMMY;
-                case "AMELIE":
-                    return AMÉLIE;
-                default:
-                    return OTHER;
-            }
-        }
-    }
-
-    /**
-     * Quality Grade Enum
-     * Business Rule: Matches database CHECK constraint
-     */
-    public enum QualityGrade {
-        A,    // Premium - No defects
-        B,    // Standard - Minor defects
-        C,    // Processing - Visible defects
-        D     // Reject - Significant defects
-    }
 }

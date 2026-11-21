@@ -12,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class SiteSecurityWebConfig implements WebMvcConfigurer {
 
-    private static final String API = "/api/v1/sitesecurity/**";
+    private static final String API = "/api/site-security/**";
 
     private final SiteSecurityOriginInterceptor originInterceptor;
     private final SiteSecurityAccessInterceptor accessInterceptor;

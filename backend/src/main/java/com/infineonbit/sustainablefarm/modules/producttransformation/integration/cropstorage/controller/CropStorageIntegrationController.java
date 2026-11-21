@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api/crop-storage")
+@RequestMapping("/api/product-transformation/crop-storage")
 @Tag(name = "Crop Storage Integration", description = "APIs for integrating with Crop Storage module")
 public class CropStorageIntegrationController {
 

@@ -1,37 +1,35 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Plus } from "lucide-react";
+import { Button, Card, EmptyState, ErrorState, PageHeader, Skeleton } from "../../../shared/ui";
 import { useVarieties, useVarietyBlocks } from "../hooks/useVarieties";
 import { useRecordPlanting } from "../hooks/useRecordPlanting";
-import PlantsEmptyState from "./PlantsEmptyState";
 import BlockFilter from "./BlockFilter";
 import RecordPlantingModal from "./RecordPlantingModal";
 import VarietiesTable from "./VarietiesTable";
 import VarietyDetailModal from "./VarietyDetailModal";
 import YieldComparisonSection from "./YieldComparisonSection";
-import { PAGE, PRIMARY_BUTTON } from "./plantsStyles";
 
 function RecordPlantingButton({ onClick }) {
+    const { t } = useTranslation("plants");
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={PRIMARY_BUTTON}
-        >
-            <Plus size={16} />
-            Record a planting
-        </button>
+        <Button icon={Plus} onClick={onClick}>
+            {t("varieties.recordPlanting")}
+        </Button>
     );
 }
 
 export default function VarietiesPage() {
+    const { t } = useTranslation("plants");
     // Raw stored block value ("A"); an empty string means "no filter".
     const [selectedBlock, setSelectedBlock] = useState("");
     const [selectedVariety, setSelectedVariety] = useState(null);
     const [isRecordingPlanting, setIsRecordingPlanting] = useState(false);
 
+    const documentTitle = t("varieties.documentTitle");
     useEffect(() => {
-        document.title = "Varieties — Plants";
-    }, []);
+        document.title = documentTitle;
+    }, [documentTitle]);
 
     const { data: varieties, isPending, isError, refetch, isFetching } = useVarieties({
         blockCode: selectedBlock || null,
@@ -54,88 +52,74 @@ export default function VarietiesPage() {
     }
 
     return (
-        <div className={PAGE}>
-            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
-                <header className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        {/* A gray 12 px overline: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
-                        <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
-                            Task 1
-                        </p>
-                        <h1 className="font-heading mt-1 text-2xl font-bold text-on-background">
-                            Varieties
-                        </h1>
-                        <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Trees and yield by variety and block.
-                        </p>
+        <div className="p-6 space-y-6">
+            <PageHeader
+                title={t("varieties.title")}
+                subtitle={t("varieties.subtitle")}
+                actions={<RecordPlantingButton onClick={openPlantingForm} />}
+            />
+
+            <BlockFilter
+                blocks={blocks ?? []}
+                value={selectedBlock}
+                onChange={setSelectedBlock}
+                disabled={isPending}
+            />
+
+            {isPending && (
+                <Card aria-busy="true">
+                    <p role="status" className="sr-only">
+                        {t("varieties.loading")}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        {[0, 1, 2, 3].map((index) => (
+                            <Skeleton key={index} className="h-6 w-full" />
+                        ))}
                     </div>
-                    <RecordPlantingButton onClick={openPlantingForm} />
-                </header>
+                </Card>
+            )}
 
-                <BlockFilter
-                    blocks={blocks ?? []}
-                    value={selectedBlock}
-                    onChange={setSelectedBlock}
-                    disabled={isPending}
-                />
+            {isError && (
+                <Card>
+                    <ErrorState
+                        message={
+                            <>
+                                <span className="block font-semibold">{t("varieties.loadError")}</span>
+                                <span className="block">{t("varieties.requestFailed")}</span>
+                            </>
+                        }
+                        onRetry={() => refetch()}
+                        retrying={isFetching}
+                        retryLabel={t("common.retry")}
+                    />
+                </Card>
+            )}
 
-                {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-16 text-sm text-gray-500">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading varieties…
-                    </div>
-                )}
-
-                {isError && (
-                    <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                        <TriangleAlert size={28} className="text-error" />
-                        <div>
-                            <p className="font-heading text-lg font-bold text-on-background">
-                                Varieties could not be loaded
-                            </p>
-                            {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                            <p className="mt-1 text-sm text-gray-600">
-                                The request to the server did not succeed.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className={PRIMARY_BUTTON}
-                        >
-                            {isFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
-                )}
-
-                {!isPending && !isError && varieties.length === 0 && (
-                    selectedBlock ? (
-                        <PlantsEmptyState
-                            title="No variety records match this filter"
-                            hint="Try another block, or select “All blocks”."
+            {!isPending && !isError && varieties.length === 0 && (
+                <Card>
+                    {selectedBlock ? (
+                        <EmptyState
+                            title={t("varieties.emptyFiltered")}
+                            message={t("varieties.emptyFilteredHint")}
                         />
                     ) : (
-                        <PlantsEmptyState
-                            title="No planting recorded yet"
+                        <EmptyState
+                            title={t("varieties.empty")}
+                            message=""
                             action={<RecordPlantingButton onClick={openPlantingForm} />}
                         />
-                    )
-                )}
+                    )}
+                </Card>
+            )}
 
-                {!isPending && !isError && varieties.length > 0 && (
-                    <VarietiesTable varieties={varieties} onSelect={setSelectedVariety} />
-                )}
+            {!isPending && !isError && varieties.length > 0 && (
+                <VarietiesTable varieties={varieties} onSelect={setSelectedVariety} />
+            )}
 
-                <YieldComparisonSection blockCode={selectedBlock || null} />
-            </div>
+            <YieldComparisonSection blockCode={selectedBlock || null} />
 
             {selectedVariety && (
-                <VarietyDetailModal
-                    variety={selectedVariety}
-                    onClose={() => setSelectedVariety(null)}
-                />
+                <VarietyDetailModal variety={selectedVariety} onClose={() => setSelectedVariety(null)} />
             )}
 
             {isRecordingPlanting && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alertPlace, alertTypeLabel, formatRelativeDays } from "./overviewLabels";
+import { alertPlace, alertTypeLabel, formatRelativeDays, MATURITY_STATUSES, maturityMeaning } from "./overviewLabels";
 
 describe("alertTypeLabel", () => {
     it("words each known type and points at its screen", () => {
@@ -63,5 +63,15 @@ describe("formatRelativeDays", () => {
         expect(formatRelativeDays(null)).toBeNull();
         expect(formatRelativeDays(undefined)).toBeNull();
         expect(formatRelativeDays(1.5)).toBeNull();
+    });
+});
+
+describe("maturityMeaning", () => {
+    it("words each maturity status of the server", () => {
+        expect(MATURITY_STATUSES.map(maturityMeaning)).toEqual([
+            "Harvest not near yet, young trees included",
+            "Harvest near, or on hold for a pre-harvest interval",
+            "Can be picked today",
+        ]);
     });
 });

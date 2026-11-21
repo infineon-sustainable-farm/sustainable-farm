@@ -27,7 +27,7 @@ public class GeneratorEventService {
                 .collect(Collectors.toList());
     }
 
-    public GeneratorEventResponseDto findById(String eventId) {
+    public GeneratorEventResponseDto findById(Long eventId) {
         return toResponse(findEntity(eventId));
     }
 
@@ -39,18 +39,18 @@ public class GeneratorEventService {
     }
 
     @Transactional
-    public GeneratorEventResponseDto update(String eventId, GeneratorEventRequest request) {
+    public GeneratorEventResponseDto update(Long eventId, GeneratorEventRequest request) {
         GeneratorEvent event = findEntity(eventId);
         applyRequest(event, request);
         return toResponse(energyGeneratorEventRepository.save(event));
     }
 
     @Transactional
-    public void delete(String eventId) {
+    public void delete(Long eventId) {
         energyGeneratorEventRepository.delete(findEntity(eventId));
     }
 
-    private GeneratorEvent findEntity(String eventId) {
+    private GeneratorEvent findEntity(Long eventId) {
         return energyGeneratorEventRepository.findById(eventId)
                 .orElseThrow(() -> new GeneratorEventNotFoundException(eventId));
     }
@@ -60,16 +60,16 @@ public class GeneratorEventService {
         event.setTriggerReason(request.triggerReason());
         event.setDurationHours(request.durationHours());
         event.setFuelLiters(request.fuelLiters());
-        event.setCostEur(request.costEur());
+        event.setCost(EnergyMoney.of(request.costEur()));
     }
 
     private GeneratorEventResponseDto toResponse(GeneratorEvent event) {
         return new GeneratorEventResponseDto(
-                event.getEventId(),
+                event.getId(),
                 event.getDate(),
                 event.getTriggerReason(),
                 event.getDurationHours(),
                 event.getFuelLiters(),
-                event.getCostEur());
+                EnergyMoney.amountOf(event.getCost()));
     }
 }

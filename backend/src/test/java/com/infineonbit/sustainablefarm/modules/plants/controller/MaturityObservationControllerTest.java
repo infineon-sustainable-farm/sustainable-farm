@@ -93,7 +93,7 @@ public class MaturityObservationControllerTest {
 
     private static MaturityObservationResponse brixObservation() {
         return new MaturityObservationResponse(300L, null, "A", 10L, "Keitt", LocalDate.of(2026, 10, 12),
-                MaturityStatus.READY_FOR_HARVEST, MaturityMethod.BRIX, 14.2, "°Bx", "Awa", "user_entry", NOW);
+                MaturityStatus.READY_FOR_HARVEST, MaturityMethod.BRIX, 14.2, "°Bx", "Awa", null, "user_entry", NOW);
     }
 
     @Test
@@ -104,12 +104,12 @@ public class MaturityObservationControllerTest {
         // Act
         ResultActions result = postObservation("""
                 {"blockCode":" a ","varietyName":"Keitt","observedOn":"2026-10-12",
-                 "maturityStatus":"READY_FOR_HARVEST","method":"BRIX","measuredValue":14.2,"observer":"Awa"}
+                 "maturityStatus":"READY_FOR_HARVEST","method":"BRIX","measuredValue":14.2,"observerPersonId":7}
                 """);
         // Assert: no Location header, every field of the observation in the body
         result.andExpect(status().isCreated())
                 .andExpect(header().doesNotExist("Location"))
-                .andExpect(jsonPath("$", aMapWithSize(13)))
+                .andExpect(jsonPath("$", aMapWithSize(14)))
                 .andExpect(jsonPath("$.id").value(300))
                 .andExpect(jsonPath("$.farmId").value(nullValue()))
                 .andExpect(jsonPath("$.blockCode").value("A"))
@@ -150,21 +150,19 @@ public class MaturityObservationControllerTest {
     void recordObservation_shouldReturn400WithEveryFailingField_whenValuesAreInvalid() throws Exception {
         // Arrange
         String future = LocalDate.now().plusYears(1).toString();
-        String longObserver = "A".repeat(256);
         // Act
         ResultActions result = postObservation("""
                 {"farmId":0,"blockCode":"Block A","varietyName":"   ","observedOn":"%s",
-                 "maturityStatus":"RIPE","method":"VISUAL","observer":"%s"}
-                """.formatted(future, longObserver));
+                 "maturityStatus":"RIPE","method":"VISUAL"}
+                """.formatted(future));
         // Assert
         assertApiError(result, 400, "Bad Request", "Validation failed");
-        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(5)))
+        result.andExpect(jsonPath("$.fieldErrors", aMapWithSize(4)))
                 .andExpect(jsonPath("$.fieldErrors.farmId").value("farmId must be at least 1"))
                 .andExpect(jsonPath("$.fieldErrors.blockCode")
                         .value("blockCode must be a short code such as A or B2, without prefix or space"))
                 .andExpect(jsonPath("$.fieldErrors.varietyName").value("varietyName is required"))
-                .andExpect(jsonPath("$.fieldErrors.observedOn").value("observedOn must be today or in the past"))
-                .andExpect(jsonPath("$.fieldErrors.observer").value("observer must be at most 255 characters"));
+                .andExpect(jsonPath("$.fieldErrors.observedOn").value("observedOn must be today or in the past"));
         verify(maturityObservationService, never()).recordObservation(any());
     }
 
@@ -296,7 +294,7 @@ public class MaturityObservationControllerTest {
     @Test
     void getAllObservations_shouldPassEveryFilter() throws Exception {
         // Arrange
-        when(maturityObservationService.getAllObservations(1, "A", LocalDate.of(2026, 10, 1),
+        when(maturityObservationService.getAllObservations(1L, "A", LocalDate.of(2026, 10, 1),
                 LocalDate.of(2026, 10, 31))).thenReturn(List.of(brixObservation()));
         // Act
         ResultActions result = mockMvc.perform(get(URL)

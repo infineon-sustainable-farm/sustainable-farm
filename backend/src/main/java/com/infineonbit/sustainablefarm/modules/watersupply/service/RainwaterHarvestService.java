@@ -1,9 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.service;
 
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
-import com.infineonbit.sustainablefarm.modules.watersupply.dto.PageResponse;
+import com.infineonbit.sustainablefarm.core.web.PageResponse;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestRequest;
 import com.infineonbit.sustainablefarm.modules.watersupply.dto.RainwaterHarvestResponse;
+import com.infineonbit.sustainablefarm.modules.watersupply.entity.RainwaterHarvest;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.RainwaterHarvestRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterSourceRepository;
@@ -13,7 +13,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,7 @@ public class RainwaterHarvestService {
     }
 
     /** Paginated list, with optional source filter: same contract as the other module lists. */
-    public PageResponse<RainwaterHarvestResponse> findAll(Pageable pageable, UUID sourceId) {
+    public PageResponse<RainwaterHarvestResponse> findAll(Pageable pageable, Long sourceId) {
         Page<RainwaterHarvest> page = sourceId == null
                 ? harvestRepository.findAll(pageable)
                 : harvestRepository.findBySourceId(sourceId, pageable);
@@ -59,12 +58,12 @@ public class RainwaterHarvestService {
         return RainwaterHarvestResponse.from(harvestRepository.save(harvest));
     }
 
-    public RainwaterHarvestResponse get(UUID harvestId) {
+    public RainwaterHarvestResponse get(Long harvestId) {
         return RainwaterHarvestResponse.from(getEntity(harvestId));
     }
 
     @Transactional
-    public RainwaterHarvestResponse update(UUID harvestId, RainwaterHarvestRequest request) {
+    public RainwaterHarvestResponse update(Long harvestId, RainwaterHarvestRequest request) {
         RainwaterHarvest harvest = getEntity(harvestId);
         harvest.setSourceId(request.sourceId() == null ? harvest.getSourceId() : request.sourceId());
         harvest.setCatchmentAreaM2(request.catchmentAreaM2() == null ? harvest.getCatchmentAreaM2() : request.catchmentAreaM2());
@@ -77,11 +76,11 @@ public class RainwaterHarvestService {
     }
 
     @Transactional
-    public void delete(UUID harvestId) {
+    public void delete(Long harvestId) {
         harvestRepository.delete(getEntity(harvestId));
     }
 
-    private RainwaterHarvest getEntity(UUID harvestId) {
+    private RainwaterHarvest getEntity(Long harvestId) {
         return harvestRepository.findById(harvestId)
                 .orElseThrow(() -> new NotFoundException("RainwaterHarvest"));
     }
@@ -115,7 +114,7 @@ public class RainwaterHarvestService {
         }
     }
 
-    private void requireSource(UUID sourceId) {
+    private void requireSource(Long sourceId) {
         if (sourceId == null || waterSourceRepository.findById(sourceId).isEmpty()) {
             throw new NotFoundException("WaterSource");
         }

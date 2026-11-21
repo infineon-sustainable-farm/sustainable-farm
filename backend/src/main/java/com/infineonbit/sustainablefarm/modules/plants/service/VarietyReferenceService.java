@@ -21,9 +21,9 @@ import java.util.Objects;
  * it: the yield of one tree in full production and the harvest season, each
  * with its source.
  *
- * <p>Outside the dev profile no reference is loaded at startup: a planted
- * variety stays out of the yield forecast, listed apart, until its reference
- * is entered here. The forecast and the plant alerts read the table on every
+ * <p>At startup only the five varieties of the catalogue are loaded, in every
+ * profile ({@link VarietyCatalogLoader}): another planted variety stays out of
+ * the yield forecast, listed apart, until its reference is entered here. The forecast and the plant alerts read the table on every
  * request, so an entry or a correction counts at once.
  *
  * <p>The reference holds a handful of rows, read whole: names are compared in
@@ -49,12 +49,13 @@ public class VarietyReferenceService {
         return new VarietyReferenceResponse(
                 reference.getId(),
                 reference.getVarietyName(),
-                reference.getYieldPerTreeKg(),
+                Decimals.toDouble(reference.getYieldPerTreeKg()),
                 reference.getYieldSource(),
                 reference.getHarvestStartMonth(),
                 reference.getHarvestEndMonth(),
                 reference.getSeasonSource(),
-                reference.getLastUpdated());
+                reference.getLastUpdated(),
+                reference.getVarietyKey());
     }
 
     /**
@@ -85,6 +86,26 @@ public class VarietyReferenceService {
                 .ifPresent(existing -> {
                     throw new ConflictException(nameTaken(existing.getVarietyName()));
                 });
+    }
+
+    /**
+     * Refuses a new name whose catalogue key another reference already has:
+     * "Tommy Atkins" and "Tommy-Atkins" are different names but share the key
+     * {@code TOMMY_ATKINS}, under which the other modules reference a variety.
+     *
+     * @param name the trimmed name
+     * @throws ConflictException if another reference has the key
+     */
+    private void refuseTakenKey(String name) {
+        String key = VarietyReference.keyOf(name);
+        varietyReferenceRepository.findByVarietyKey(key).ifPresent(existing -> {
+            // The same name written meanwhile by another request is reported as a taken name.
+            if (VarietyReferenceMatcher.matchKey(existing.getVarietyName()).equals(VarietyReferenceMatcher.matchKey(name))) {
+                throw new ConflictException(nameTaken(existing.getVarietyName()));
+            }
+            throw new ConflictException("The variety reference " + existing.getVarietyName()
+                    + " already has the catalogue key " + key);
+        });
     }
 
     private static String nameTaken(String name) {
@@ -143,9 +164,10 @@ public class VarietyReferenceService {
     VarietyReferenceResponse createReference(VarietyReferenceRequest request, Instant now) {
         String name = request.varietyName().trim();
         refuseTakenName(name, null);
+        refuseTakenKey(name);
         String yieldSource = normalizeSource(request.yieldSource());
         String seasonSource = normalizeSource(request.seasonSource());
-        return saveFlushed(new VarietyReference(null, name, request.yieldPerTreeKg(),
+        return saveFlushed(new VarietyReference(null, name, Decimals.of(request.yieldPerTreeKg(), VarietyReference.YIELD_SCALE),
                 yieldSource == null ? USER_ENTRY_SOURCE : yieldSource,
                 request.harvestStartMonth(), request.harvestEndMonth(),
                 seasonSource == null ? USER_ENTRY_SOURCE : seasonSource,
@@ -186,7 +208,7 @@ public class VarietyReferenceService {
 
         String yieldSource = normalizeSource(request.yieldSource());
         if (yieldSource == null) {
-            boolean sameYield = Objects.equals(request.yieldPerTreeKg(), reference.getYieldPerTreeKg());
+            boolean sameYield = Decimals.sameValue(request.yieldPerTreeKg(), reference.getYieldPerTreeKg());
             yieldSource = sameYield ? reference.getYieldSource() : USER_ENTRY_SOURCE;
         }
         String seasonSource = normalizeSource(request.seasonSource());
@@ -197,7 +219,7 @@ public class VarietyReferenceService {
         }
 
         reference.setVarietyName(name);
-        reference.setYieldPerTreeKg(request.yieldPerTreeKg());
+        reference.setYieldPerTreeKg(Decimals.of(request.yieldPerTreeKg(), VarietyReference.YIELD_SCALE));
         reference.setYieldSource(yieldSource);
         reference.setHarvestStartMonth(request.harvestStartMonth());
         reference.setHarvestEndMonth(request.harvestEndMonth());

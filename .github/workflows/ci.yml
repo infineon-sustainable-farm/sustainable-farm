@@ -8,9 +8,13 @@
 #  - the job is split into separate steps (connectivity, compile, tests) so a
 #    red check points at the failing phase directly from the GitHub UI.
 #
-# Note: the project does not use Flyway yet. When migrations are introduced
-# (backend/src/main/resources/db/migration), add a dedicated job that applies
-# them to a fresh PostgreSQL instance.
+# Migrations: the application builds its schema with Flyway (db/migration,
+# V1__baseline.sql then V2...) and Hibernate only validates it (ddl-auto=validate,
+# docs/adr/0002). The step "Apply the migrations to a fresh PostgreSQL" runs
+# BaselineMigrationTest first, on the still empty service database: Flyway applies
+# every migration, Hibernate validates the entities against the result, the
+# cross-module foreign keys are verified and the dev seeders load. The other tests
+# keep Flyway off and build their schema from the entities (ddl-auto=create).
 #
 # Required checks for branch protection (see docs/CI-AUTO-REVIEW.md):
 #   - "Backend tests (PostgreSQL)"
@@ -91,9 +95,15 @@ jobs:
         working-directory: backend
         run: ./mvnw --batch-mode --no-transfer-progress test-compile
 
+      # Before the other tests touch the database. A schema that differs from the
+      # entities, or a migration that fails on PostgreSQL 17, makes this step red.
+      - name: Apply the migrations to a fresh PostgreSQL
+        working-directory: backend
+        run: ./mvnw --batch-mode --no-transfer-progress test -Dtest=BaselineMigrationTest
+
       - name: Run backend tests against PostgreSQL
         working-directory: backend
-        run: ./mvnw --batch-mode --no-transfer-progress test
+        run: ./mvnw --batch-mode --no-transfer-progress test -Dtest='!BaselineMigrationTest' -Dsurefire.failIfNoSpecifiedTests=false
 
   frontend:
     name: Frontend build
@@ -106,13 +116,21 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Test frontend
+        working-directory: frontend
+        run: npm test
 
       - name: Build frontend
         working-directory: frontend

@@ -1,27 +1,16 @@
 import { useEffect, useState } from "react";
-import { Leaf, CalendarRange } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { CalendarRange, Leaf } from "lucide-react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useTranslation } from "react-i18next";
 import { getCarbonMetrics } from "../api/energyApi";
-
-function ScoreCard({ label, value, unit, icon: Icon }) {
-  return (
-    <div className="rounded-lg border border-border bg-surface-container-lowest p-5 shadow-sm border-t-[3px] border-t-primary">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.05em] text-on-surface-variant">{label}</p>
-          <p className="mt-2 font-heading text-[20px] font-bold tracking-tight text-on-background">
-            {value}<span className="ml-1 text-base font-semibold text-on-surface-variant">{unit}</span>
-          </p>
-        </div>
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Icon size={20} />
-        </div>
-      </div>
-    </div>
-  );
-}
+import { AXIS_TICK, GRID_STROKE, TOOLTIP_STYLE } from "../chartStyles";
+import { useEnergyFormat } from "../format";
+import { Card, EmptyState, ErrorState, PageHeader, Table } from "../../../shared/ui";
+import EnergyKpiCard from "./EnergyKpiCard";
 
 export default function CarbonFootprint() {
+  const { t } = useTranslation("energysupply");
+  const format = useEnergyFormat();
   const [metrics, setMetrics] = useState(null);
   const [error, setError] = useState(null);
 
@@ -31,8 +20,14 @@ export default function CarbonFootprint() {
       .catch((err) => setError(err.message));
   }, []);
 
-  if (error) return <p className="text-sm text-error">Failed to load carbon data: {error}</p>;
-  if (!metrics) return <p className="text-sm text-on-surface-variant">Loading carbon data...</p>;
+  if (error) {
+    return (
+      <div className="p-6">
+        <ErrorState message={t("carbon.loadError", { error })} />
+      </div>
+    );
+  }
+  if (!metrics) return <p role="status" className="p-6 text-sm text-text-muted">{t("carbon.loading")}</p>;
 
   const latest = metrics[metrics.length - 1] || null;
   const currentYear = new Date().getFullYear().toString();
@@ -47,69 +42,82 @@ export default function CarbonFootprint() {
       .reduce((total, item) => total + (item.co2AvoidedKg || 0), 0),
   }));
 
+  const columns = [
+    {
+      key: "period",
+      header: t("carbon.period"),
+      className: "whitespace-nowrap",
+      cell: (row) => <span className="font-normal">{format.date(row.period)}</span>,
+    },
+    { key: "scenario", header: t("carbon.scenario") },
+    {
+      key: "co2AvoidedKg",
+      header: t("carbon.co2AvoidedKg"),
+      className: "font-medium tabular-nums",
+      cell: (row) => format.number(row.co2AvoidedKg),
+    },
+    {
+      key: "emissionFactorUsed",
+      header: t("carbon.emissionFactor"),
+      className: "tabular-nums",
+      cell: (row) => format.number(row.emissionFactorUsed),
+    },
+  ];
+
   return (
-    <section>
-      <div className="mb-5">
-        <h1 className="font-heading text-[24px] font-bold uppercase tracking-[0.05em] text-on-background">Carbon Footprint</h1>
-        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
-          Emissions avoided by running the farm on solar instead of the grid or diesel generator.
-        </p>
-      </div>
+    <div className="space-y-6 p-6">
+      <PageHeader title={t("carbon.title")} subtitle={t("carbon.subtitle")} />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <ScoreCard label="CO₂ Avoided (Latest Period)" value={latest?.co2AvoidedKg ?? "—"} unit="kg" icon={Leaf} />
-        <ScoreCard label="CO₂ Avoided (YTD)" value={ytd} unit="kg" icon={CalendarRange} />
-        <ScoreCard label="Scenario (Latest)" value={latest?.scenario ?? "—"} unit="" icon={Leaf} />
+        <EnergyKpiCard
+          label={t("carbon.latestPeriod")}
+          value={latest?.co2AvoidedKg == null ? t("common.none") : format.number(latest.co2AvoidedKg)}
+          unit={t("units.kg")}
+          icon={Leaf}
+        />
+        <EnergyKpiCard label={t("carbon.ytd")} value={format.number(ytd)} unit={t("units.kg")} icon={CalendarRange} />
+        <EnergyKpiCard label={t("carbon.latestScenario")} value={latest?.scenario ?? t("common.none")} icon={Leaf} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-5">
-        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary xl:col-span-3">
-          <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Cumulative CO₂ Avoided</h2>
-          </div>
-          <div className="p-5" style={{ height: 260 }}>
-            {chartData.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">No carbon metrics recorded yet.</p>
-            ) : (
+      <div className="grid gap-6 xl:grid-cols-5">
+        <Card className="xl:col-span-3" title={t("carbon.chartTitle")}>
+          {chartData.length === 0 ? (
+            <EmptyState message={t("carbon.empty")} />
+          ) : (
+            <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid stroke="#dbe3e1" vertical={false} />
-                  <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v) => [`${v} kg`, "Cumulative CO₂"]} />
-                  <Line type="monotone" dataKey="cumulativeKg" stroke="var(--color-primary)" strokeWidth={2.5} dot={{ r: 3.5, fill: "var(--color-primary)" }} />
+                  <CartesianGrid stroke={GRID_STROKE} vertical={false} />
+                  <XAxis dataKey="period" tick={AXIS_TICK} tickFormatter={(period) => format.date(period)} />
+                  <YAxis tick={AXIS_TICK} tickFormatter={(value) => format.number(value)} />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    labelFormatter={(period) => format.date(period)}
+                    formatter={(value) => [t("units.kgValue", { value: format.number(value) }), t("carbon.cumulativeSeries")]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="cumulativeKg"
+                    stroke="var(--color-chart-1)"
+                    strokeWidth={2.5}
+                    dot={{ r: 3.5, fill: "var(--color-chart-1)" }}
+                    isAnimationActive={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-surface-container-lowest shadow-sm border-t-[3px] border-t-primary xl:col-span-2">
-          <div className="border-b border-border px-5 py-3.5">
-            <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.05em] text-on-background">Carbon Metrics by Period</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
-              <thead>
-                <tr>
-                  {["Period", "Scenario", "CO₂ Avoided (kg)", "Emission Factor"].map((h) => (
-                    <th key={h} className="border-b border-border bg-surface-container-low px-5 py-3 text-left text-xs font-bold uppercase text-on-surface-variant">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {metrics.map((m) => (
-                  <tr key={m.metricId} className="hover:bg-surface-container-low">
-                    <td className="border-b border-border px-5 py-3 whitespace-nowrap">{m.period}</td>
-                    <td className="border-b border-border px-5 py-3">{m.scenario}</td>
-                    <td className="border-b border-border px-5 py-3 tabular-nums font-medium">{m.co2AvoidedKg}</td>
-                    <td className="border-b border-border px-5 py-3 tabular-nums">{m.emissionFactorUsed}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+            </div>
+          )}
+        </Card>
+        <Card className="xl:col-span-2" title={t("carbon.tableTitle")}>
+          <Table
+            caption={t("carbon.tableTitle")}
+            columns={columns}
+            rows={metrics}
+            getRowKey={(row) => row.metricId}
+            emptyMessage={t("carbon.empty")}
+          />
+        </Card>
       </div>
-    </section>
+    </div>
   );
 }

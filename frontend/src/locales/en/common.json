@@ -1,0 +1,66 @@
+{
+  "appName": "Sustainable Farm",
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has moved.",
+    "backToModules": "Back to modules"
+  },
+  "actions": {
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "dismiss": "Dismiss"
+  },
+  "status": {
+    "loading": "Loading…",
+    "noResults": "No results",
+    "error": "Something went wrong. Please try again."
+  },
+  "confirm": {
+    "deleteTitle": "Delete this item?"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{total}}"
+  },
+  "table": {
+    "actions": "Actions"
+  },
+  "toast": {
+    "region": "Notifications"
+  },
+  "shell": {
+    "navigation": "Modules",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation",
+    "allModules": "All modules"
+  },
+  "launcher": {
+    "modules": "Modules"
+  },
+  "home": {
+    "eyebrow": "From Banfora, Burkina Faso, to Germany",
+    "hero": "From orchard to export, one farm platform.",
+    "lede": "Record farm operations and decide with shared data at every step of the dried mango chain."
+  },
+  "owner": {
+    "choose": "Choose…",
+    "none": "None available",
+    "loadError": "The list could not load.",
+    "askToAdd": "Ask the {{module}} module to add it.",
+    "notInList": "Not in the list? Ask the {{module}} module.",
+    "addIn": "Add it in {{module}}"
+  }
+}

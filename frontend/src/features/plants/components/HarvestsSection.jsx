@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Card, EmptyState, Input } from "../../../shared/ui";
 import { useHarvests } from "../hooks/useHarvests";
 import { formatDate } from "../utils/format";
+import { SectionError, SectionLoading } from "./HarvestSectionStates";
 import HarvestsTable from "./HarvestsTable";
-import PlantsEmptyState from "./PlantsEmptyState";
-import { FIELD_INPUT, PRIMARY_BUTTON } from "./plantsStyles";
-
-const LABEL_CLASS = "text-xs font-semibold text-gray-500";
-const CONTROL_CLASS = FIELD_INPUT;
 
 /**
  * One date filter of the list. Its accessible name joins the section title and
@@ -18,22 +15,20 @@ const CONTROL_CLASS = FIELD_INPUT;
 function DateFilter({ id, label, value, onChange }) {
     return (
         <div className="flex items-start gap-3">
-            <label id={`${id}-label`} htmlFor={id} className={`pt-2 ${LABEL_CLASS}`}>
+            <label id={`${id}-label`} htmlFor={id} className="pt-2 text-sm font-medium">
                 {label}
             </label>
             <div className="flex flex-col gap-1">
-                <input
+                <Input
                     id={id}
                     type="date"
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
                     aria-labelledby={`recorded-harvests-title ${id}-label`}
                     aria-describedby={value ? `${id}-chosen` : undefined}
-                    className={CONTROL_CLASS}
                 />
-                {/* gray-600: #4a5565 on white -> 7.56:1. */}
                 {value && (
-                    <p id={`${id}-chosen`} className="text-xs text-gray-600">
+                    <p id={`${id}-chosen`} className="text-xs text-text-muted">
                         {formatDate(value)}
                     </p>
                 )}
@@ -50,67 +45,47 @@ function DateFilter({ id, label, value, onChange }) {
  * no harvest is recorded at all.
  */
 export default function HarvestsSection({ blockCode, recordAction }) {
+    const { t } = useTranslation("plants");
     // "YYYY-MM-DD" as the date fields give it; an empty string means "no bound".
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
 
-    const { data: harvests, isPending, isError, refetch, isFetching } = useHarvests({
+    const query = useHarvests({
         blockCode,
         from: from || null,
         to: to || null,
     });
+    const { data: harvests, isPending, isError } = query;
     const isFiltered = Boolean(blockCode || from || to);
 
     return (
         <section aria-labelledby="recorded-harvests-title" className="flex flex-col gap-4">
-            <h2 id="recorded-harvests-title" className="font-heading text-lg font-bold text-on-background">
-                Recorded harvests
+            <h2 id="recorded-harvests-title" className="text-lg font-semibold">
+                {t("harvest.harvests.title")}
             </h2>
 
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-gray-200 bg-white shadow-card p-6">
-                <DateFilter id="recorded-harvests-from" label="From" value={from} onChange={setFrom} />
-                <DateFilter id="recorded-harvests-to" label="To" value={to} onChange={setTo} />
-            </div>
-
-            {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-12 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading harvests…
+            <Card>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <DateFilter id="recorded-harvests-from" label={t("harvest.harvests.from")} value={from} onChange={setFrom} />
+                    <DateFilter id="recorded-harvests-to" label={t("harvest.harvests.to")} value={to} onChange={setTo} />
                 </div>
-            )}
+            </Card>
 
-            {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-12 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-on-background">
-                            Harvests are unavailable.
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            Check your connection, then try again.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
-            )}
+            {isPending && <SectionLoading label={t("harvest.harvests.loading")} />}
+
+            {isError && <SectionError title={t("harvest.harvests.error")} query={query} />}
 
             {!isPending && !isError && harvests.length === 0 && (
-                isFiltered ? (
-                    <PlantsEmptyState
-                        title="No harvest matches these filters"
-                        hint="Try another block or date range, or select “All blocks”."
-                    />
-                ) : (
-                    <PlantsEmptyState title="No harvest recorded yet" action={recordAction} />
-                )
+                <Card>
+                    {isFiltered ? (
+                        <EmptyState
+                            title={t("harvest.harvests.filteredTitle")}
+                            message={t("harvest.harvests.filteredHint")}
+                        />
+                    ) : (
+                        <EmptyState message={t("harvest.harvests.emptyTitle")} action={recordAction} />
+                    )}
+                </Card>
             )}
 
             {!isPending && !isError && harvests.length > 0 && <HarvestsTable harvests={harvests} />}

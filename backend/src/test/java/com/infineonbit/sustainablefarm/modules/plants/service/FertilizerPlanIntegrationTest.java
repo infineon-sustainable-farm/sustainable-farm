@@ -14,6 +14,10 @@ import com.infineonbit.sustainablefarm.modules.plants.dto.Response.FertilizerPla
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerMovementType;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerPlanStatus;
 import com.infineonbit.sustainablefarm.modules.plants.entity.FertilizerUnit;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.TestPeople;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -57,6 +61,18 @@ class FertilizerPlanIntegrationTest {
     private FertilizerService fertilizerService;
 
     @Autowired
+    private PersonDirectory personDirectory;
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    /** The blocks of the tests, owned by the farm referential: plants picks them, never creates them. */
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("FPA", "FPB", "FPC", "FPD", "FPE", "FPF", "FPG", "FPH", "FPI");
+    }
+
+    @Autowired
     private FertilizerMovementService fertilizerMovementService;
 
     @Autowired
@@ -75,8 +91,9 @@ class FertilizerPlanIntegrationTest {
                 new FertilizerPlanRequest(fertilizerId, null, block, date, quantity, null));
     }
 
-    private static FertilizerPlanCompletionRequest completion(double quantity) {
-        return new FertilizerPlanCompletionRequest(TODAY, quantity, "Team A", "around the tree base");
+    private FertilizerPlanCompletionRequest completion(double quantity) {
+        return new FertilizerPlanCompletionRequest(TODAY, quantity, TestPeople.idOf(personDirectory, "Team A"),
+                "around the tree base");
     }
 
     private FertilizerPlanResponse reread(Long fertilizerId, Long planId) {
@@ -151,7 +168,7 @@ class FertilizerPlanIntegrationTest {
                 .getAllPlans(id, null, null, null, null, null).stream()
                 .map(FertilizerPlanResponse::id).toList());
         assertTrue(fertilizerPlanService.getAllPlans(id, FertilizerPlanStatus.DONE, null, null, null, null).isEmpty());
-        assertTrue(fertilizerPlanService.getAllPlans(id, null, 7, null, null, null).isEmpty());
+        assertTrue(fertilizerPlanService.getAllPlans(id, null, 7L, null, null, null).isEmpty());
     }
 
     @Test
@@ -277,7 +294,7 @@ class FertilizerPlanIntegrationTest {
         fertilizerPlanService.completePlan(done.id(), completion(18.0));
         fertilizerPlanService.cancelPlan(cancelled.id());
         fertilizerMovementService.recordApplication(id,
-                new ApplicationRequest(TODAY.minusDays(1), 2.0, null, "FPG", "Team B", null));
+                new ApplicationRequest(TODAY.minusDays(1), 2.0, null, "FPG", TestPeople.idOf(personDirectory, "Team B"), null));
         // Act: without dates, the current year; then a period that holds the plans only
         List<FertilizerPlanComparisonResponse.Row> year = fertilizerPlanService.getComparison(null, null).rows()
                 .stream().filter(row -> row.blockCode().equals("FPG")).toList();

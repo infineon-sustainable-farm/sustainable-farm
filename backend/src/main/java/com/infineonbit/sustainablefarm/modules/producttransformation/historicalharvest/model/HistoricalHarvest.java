@@ -1,11 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,37 +16,34 @@ import java.math.BigDecimal;
  * 
  * Business Rule: Minimum 7 years required for forecasting
  * Business Rule: Historical data aggregated from harvest events
+ * Business Rule: one row per year, month, week and variety (uk_historical_harvest_period_variety)
  * 
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
  */
 @Entity
-@Table(name = "historical_harvest")
-@IdClass(HistoricalHarvestId.class)
+@Table(name = "historical_harvest", uniqueConstraints = @UniqueConstraint(
+        name = "uk_historical_harvest_period_variety",
+        columnNames = {"\"year\"", "\"month\"", "\"week\"", "variety_key"}),
+        indexes = @Index(name = "idx_historical_harvest_variety_key", columnList = "variety_key"))
 @Getter
 @Setter
-@EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
-public class HistoricalHarvest {
+public class HistoricalHarvest extends BaseEntity {
 
-    @Id
     @Column(name = "\"year\"", nullable = false)
     private Integer year;
 
-    @Id
     @Column(name = "\"month\"", nullable = false)
     private Integer month;
 
-    @Id
     @Column(name = "\"week\"", nullable = false)
     private Integer week;
 
-    @Id
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mango_variety", nullable = false, length = 20)
-    private HarvestEvent.MangoVariety mangoVariety;
+    /** Catalogue key of the variety, for example {@code KENT}: foreign key to plants {@code variety_reference}. */
+    @Column(name = "variety_key", nullable = false, length = VarietyCatalog.KEY_LENGTH)
+    private String varietyKey;
 
     @Column(name = "harvest_quantity_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal harvestQuantityKg;
@@ -71,20 +66,4 @@ public class HistoricalHarvest {
     @Column(name = "temperature_avg_c", precision = 5, scale = 2)
     private BigDecimal temperatureAvgC;
 
-    @Column(name = "created_at", updatable = false)
-    private java.sql.Timestamp createdAt;
-
-    @Column(name = "updated_at")
-    private java.sql.Timestamp updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new java.sql.Timestamp(System.currentTimeMillis());
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = new java.sql.Timestamp(System.currentTimeMillis());
-    }
 }

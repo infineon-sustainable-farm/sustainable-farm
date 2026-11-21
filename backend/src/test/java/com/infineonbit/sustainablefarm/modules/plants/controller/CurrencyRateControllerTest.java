@@ -4,7 +4,7 @@ import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.CurrencyRateRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.CurrencyRateResponse;
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.exception.CurrencyRateNotFoundException;
 import com.infineonbit.sustainablefarm.modules.plants.service.CurrencyRateService;
 import org.junit.jupiter.api.Test;

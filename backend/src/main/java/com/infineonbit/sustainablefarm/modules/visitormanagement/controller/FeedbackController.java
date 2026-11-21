@@ -25,7 +25,7 @@ import java.time.Instant;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/visitor-management")
 public class FeedbackController {
 
     private final FeedbackService feedbackService;

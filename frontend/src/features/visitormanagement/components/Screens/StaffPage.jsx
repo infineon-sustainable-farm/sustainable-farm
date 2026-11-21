@@ -1,27 +1,33 @@
 import { useEffect, useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
-import {
-    useCreateStaff,
-    useStaffList,
-    useStaffStatusAction,
-    useUpdateStaff,
-} from "../../hooks/useStaff";
-import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
-import Modal from "../Modal";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useCreateStaff, useStaffList, useStaffStatusAction, useUpdateStaff } from "../../hooks/useStaff";
+import { Button, ConfirmDialog, Field, Modal, PageHeader, Select } from "../../../../shared/ui";
+import { useCreateParam } from "../../../../shared/hooks/useCreateParam";
+import { useLabels } from "../../utils/labels";
 import StaffForm from "../Forms/StaffForm";
 import StaffTable from "../StaffTable";
+import { LoadError, LoadingBlock } from "../LoadState";
 
 const ROLES = ["GUIDE", "RECEPTION", "MANAGER"];
+/** Role filter value of the people without a visitor role (farm workers). */
+const NO_ROLE = "NONE";
 
 export default function StaffPage() {
+    const { t } = useTranslation("visitormanagement");
+    const labels = useLabels();
+    const [deactivateTarget, setDeactivateTarget] = useState(null);
     const [formState, setFormState] = useState({ open: false, staff: null });
     const [formKey, setFormKey] = useState(0);
     const [roleFilter, setRoleFilter] = useState("");
     const [showInactive, setShowInactive] = useState(false);
+    // "?create=1": another module sent the user here to add a person (app/ownerLinks.js).
+    const [createRequested, clearCreateRequest] = useCreateParam();
+    const formOpen = formState.open || createRequested;
 
     useEffect(() => {
-        document.title = "Staff — Visitor Management";
-    }, []);
+        document.title = t("staff.documentTitle");
+    }, [t]);
 
     const {
         data: staff,
@@ -40,11 +46,13 @@ export default function StaffPage() {
 
     const visibleStaff = (staff ?? []).filter(
         (member) =>
-            (roleFilter === "" || member.role === roleFilter) &&
+            (roleFilter === "" ||
+                (roleFilter === NO_ROLE ? !member.role : member.role === roleFilter)) &&
             (showInactive || member.active),
     );
 
     function resetForm() {
+        clearCreateRequest();
         setFormState({ open: false, staff: null });
         setFormKey((current) => current + 1);
         createMutation.reset();
@@ -76,127 +84,104 @@ export default function StaffPage() {
         }
     }
 
+    function requestDeactivate(member) {
+        statusMutation.reset();
+        setDeactivateTarget(member);
+    }
+
+    function confirmDeactivate() {
+        const member = deactivateTarget;
+        setDeactivateTarget(null);
+        statusMutation.mutate({ staff: member, action: "deactivate" });
+    }
+
     const pendingAction = statusMutation.isPending ? statusMutation.variables : null;
     const actionError = statusMutation.isError
         ? { id: statusMutation.variables?.staff?.id, message: statusMutation.error.message }
         : null;
 
     return (
-        <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
-                <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
-                    Staff &amp; guides
-                </h2>
+        <div className="space-y-4 p-6">
+            <PageHeader
+                title={t("staff.title")}
+                subtitle={t("staff.subtitle")}
+                actions={
+                    <Button icon={Plus} onClick={openCreate}>
+                        {t("staff.new")}
+                    </Button>
+                }
+            />
 
-                <div className="mb-4 flex flex-wrap items-end gap-3.5">
-                    <div>
-                        <label
-                            htmlFor="staff-role-filter"
-                            className="mb-1 block text-xs tracking-wide text-primary uppercase"
-                        >
-                            Role
-                        </label>
-                        <select
-                            id="staff-role-filter"
-                            value={roleFilter}
-                            onChange={(event) => setRoleFilter(event.target.value)}
-                            className="min-w-[150px] rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm"
-                        >
-                            <option value="">All roles</option>
-                            {ROLES.map((role) => (
-                                <option key={role} value={role}>
-                                    {formatEnumLabel(role)}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <label className="flex items-center gap-2 pb-2.5 text-xs text-ink">
-                        <input
-                            type="checkbox"
-                            checked={showInactive}
-                            onChange={(event) => setShowInactive(event.target.checked)}
-                            className="h-4 w-4 accent-[#0a8276]"
-                        />
-                        Show inactive
-                    </label>
-                    <button
-                        type="button"
-                        onClick={openCreate}
-                        className="ml-auto rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
-                    >
-                        + New staff member
-                    </button>
-                </div>
+            <div className="flex flex-wrap items-end gap-4">
+                <Field className="min-w-40" label={t("staff.roleFilter")}>
+                    <Select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+                        <option value="">{t("staff.allRoles")}</option>
+                        <option value={NO_ROLE}>{t("staff.noRole")}</option>
+                        {ROLES.map((role) => (
+                            <option key={role} value={role}>
+                                {labels.enum(role)}
+                            </option>
+                        ))}
+                    </Select>
+                </Field>
+                <label className="flex min-h-10 items-center gap-2 text-sm text-text">
+                    <input
+                        type="checkbox"
+                        checked={showInactive}
+                        onChange={(event) => setShowInactive(event.target.checked)}
+                        className="h-4 w-4 accent-primary"
+                    />
+                    {t("staff.showInactive")}
+                </label>
+            </div>
 
-                {formState.open && (
-                    <Modal
-                        title={
-                            editingStaff
-                                ? `Edit staff member — ${editingStaff.fullName}`
-                                : "New staff member"
-                        }
-                        onClose={resetForm}
-                    >
-                        <StaffForm
-                            key={formKey}
-                            staff={editingStaff}
-                            isSubmitting={formMutation.isPending}
-                            submitError={formMutation.error?.message}
-                            serverFieldErrors={formMutation.error?.data?.fieldErrors}
-                            onSubmit={handleSubmit}
-                            onCancel={resetForm}
-                        />
-                    </Modal>
+            {isPending && <LoadingBlock label={t("staff.loading")} />}
+
+            {isError && <LoadError title={t("staff.loadError")} onRetry={() => refetch()} retrying={isFetching} />}
+
+            {!isPending && !isError && (
+                <>
+                    <StaffTable
+                        staff={visibleStaff}
+                        pendingAction={pendingAction}
+                        actionError={actionError}
+                        onAction={(member, action) => statusMutation.mutate({ staff: member, action })}
+                        onDeactivate={requestDeactivate}
+                        onEdit={openEdit}
+                    />
+                    <p className="text-xs text-text-muted">{t("staff.footnote")}</p>
+                </>
+            )}
+
+            <Modal
+                open={formOpen}
+                onClose={resetForm}
+                size="xl"
+                dismissible={!formMutation.isPending}
+                title={editingStaff ? t("staff.editTitle", { name: editingStaff.fullName }) : t("staff.new")}
+            >
+                {formOpen && (
+                    <StaffForm
+                        key={formKey}
+                        staff={editingStaff}
+                        isSubmitting={formMutation.isPending}
+                        submitError={formMutation.error?.message}
+                        serverFieldErrors={formMutation.error?.data?.fieldErrors}
+                        onSubmit={handleSubmit}
+                        onCancel={resetForm}
+                    />
                 )}
+            </Modal>
 
-                {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading staff…
-                    </div>
-                )}
-
-                {isError && (
-                    <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
-                        <TriangleAlert size={28} className="text-error" />
-                        <div>
-                            <p className="font-heading text-base font-bold text-ink">
-                                Staff could not be loaded
-                            </p>
-                            <p className="mt-1 text-sm text-muted">
-                                The request to the server did not succeed.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
-                        >
-                            {isFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
-                )}
-
-                {!isPending && !isError && (
-                    <>
-                        <StaffTable
-                            staff={visibleStaff}
-                            pendingAction={pendingAction}
-                            actionError={actionError}
-                            onAction={(member, action) =>
-                                statusMutation.mutate({ staff: member, action })
-                            }
-                            onEdit={openEdit}
-                        />
-                        <p className="mt-6 text-[11px] text-muted">
-                            Guides assigned to a time slot and staff recorded on a briefing come from
-                            this list. Deactivating a member keeps the record but removes them from
-                            every selector.
-                        </p>
-                    </>
-                )}
-            </section>
+            <ConfirmDialog
+                open={Boolean(deactivateTarget)}
+                title={t("staff.deactivateTitle")}
+                message={deactivateTarget ? t("staff.deactivateMessage", { name: deactivateTarget.fullName }) : ""}
+                confirmLabel={t("staff.yes")}
+                cancelLabel={t("staff.no")}
+                onClose={() => setDeactivateTarget(null)}
+                onConfirm={confirmDeactivate}
+            />
         </div>
     );
 }

@@ -32,7 +32,7 @@ import java.time.LocalDate;
 @MeasuredValueMatchesMethod
 public record MaturityObservationRequest(
         @Min(value = 1, message = "farmId must be at least 1")
-        Integer farmId,
+        Long farmId,
 
         @NotNull(message = "blockCode is required")
         @Pattern(regexp = "^\\s*[A-Za-z0-9]{1,10}\\s*$",
@@ -65,6 +65,6 @@ public record MaturityObservationRequest(
                 + "Above 0 and at most 100, with one decimal at most", example = "14.2")
         Double measuredValue,
 
-        @Size(max = 255, message = "observer must be at most 255 characters")
-        String observer) {
+        @Schema(description = "Person of the people directory (GET /api/staff/persons) who observed, or left out")
+        Long observerPersonId) {
 }

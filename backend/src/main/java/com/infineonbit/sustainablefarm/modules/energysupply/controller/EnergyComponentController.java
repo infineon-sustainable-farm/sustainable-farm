@@ -21,7 +21,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController("energyComponentController")
-@RequestMapping("/api/energy/components")
+@RequestMapping("/api/energy-supply/components")
 public class EnergyComponentController {
 
     private final EnergyComponentService service;

@@ -1,123 +1,67 @@
-import { useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock, X } from "lucide-react";
-import { cn } from "../utils/cn";
-import { useDialogFocus } from "../hooks/useDialogFocus";
-import { Avatar, Eyebrow, LevelChip, StatusChip } from "./ui";
-const TONE = {
-    Approved: {
-        bar: "bg-emerald-50 border-emerald-200",
-        icon: CheckCircle2,
-        title: "Access approved",
-        sub: "Credential matched the zone policy",
-    },
-    Denied: {
-        bar: "bg-rose-50 border-rose-200",
-        icon: AlertTriangle,
-        title: "Access denied",
-        sub: "Recorded in the access log",
-    },
-    Pending: {
-        bar: "bg-amber-50 border-amber-200",
-        icon: Clock,
-        title: "Awaiting approval",
-        sub: "Held at gate — supervisor decision required",
-    },
-};
-const ICON_TONE = {
-    Approved: "text-emerald-600",
-    Denied: "text-rose-600",
-    Pending: "text-amber-600",
-};
-const UNKNOWN_TONE = {
-    bar: "bg-slate-50 border-slate-200",
-    icon: Clock,
-    title: "Access event",
-    sub: "Recorded in the access log",
-};
+import { useTranslation } from "react-i18next";
+import { Button, Modal } from "../../../shared/ui";
+import { Avatar, LevelBadge, StatusLabel } from "./ui";
+import { translateEnum } from "../utils/status";
+
+const TYPE_GROUP = "type";
+const ACTION_GROUP = "action";
+
 function Row({ label, children }) {
-    return (<div className="flex items-start justify-between gap-6 py-3">
-      <span className="pt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-slate-600">{label}</span>
-      <span className="text-right text-[13px] font-medium text-navy-900">{children}</span>
-    </div>);
+  return (
+    <div className="flex items-start justify-between gap-6 py-3">
+      <dt className="text-xs font-medium uppercase tracking-wider text-text-muted">{label}</dt>
+      <dd className="text-right text-sm font-medium text-text">{children}</dd>
+    </div>
+  );
 }
-export default function LogDrawer({ entry, onClose, }) {
-    const dialogRef = useRef(null);
-    const tone = TONE[entry?.status] ?? UNKNOWN_TONE;
-    const ToneIcon = tone.icon;
-    useDialogFocus(dialogRef, Boolean(entry), onClose);
-    return (<AnimatePresence>
-      {entry && (<>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-navy-950/30 backdrop-blur-[2px]" onClick={onClose}/>
-          <motion.div ref={dialogRef} role="dialog" aria-modal="true" aria-label={`Access event ${entry.ref}`} tabIndex={-1} initial={{ x: "104%" }} animate={{ x: 0 }} exit={{ x: "104%" }} transition={{ type: "spring", stiffness: 340, damping: 34 }} className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[420px] flex-col bg-white shadow-[0_24px_80px_-20px_rgba(10,17,31,0.45)] outline-none">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <div>
-                <Eyebrow>Access event</Eyebrow>
-                <p className="mt-0.5 font-mono text-[12px] font-semibold text-navy-900">{entry.ref}</p>
-              </div>
-              <button type="button" data-autofocus onClick={onClose} aria-label="Close event details" className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-navy-900">
-                <X className="size-4"/>
-              </button>
+
+/* Details of one access event. The person is a reference to the shared directory. */
+export default function LogDrawer({ entry, onClose }) {
+  const { t } = useTranslation("sitesecurity");
+  const { t: tCommon } = useTranslation("common");
+  const unidentified = !entry?.personId;
+  const typeLabel = entry ? translateEnum(t, TYPE_GROUP, entry.type) : "";
+  const actionLabel = entry ? translateEnum(t, ACTION_GROUP, entry.action) : "";
+  return (
+    <Modal
+      open={Boolean(entry)}
+      onClose={onClose}
+      title={entry ? t("log.detail.title", { ref: entry.ref }) : ""}
+      description={entry ? t(`log.detail.outcome.${entry.status === "Denied" ? "denied" : entry.status === "Approved" ? "approved" : "other"}`) : ""}
+      size="md"
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          {tCommon("actions.close")}
+        </Button>
+      }
+    >
+      {entry && (
+        <div>
+          <div className="flex items-center gap-3 rounded-tile bg-surface-muted px-4 py-3">
+            <Avatar initials={entry.initials} level={unidentified ? undefined : entry.zone} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-text">{entry.user ?? t("log.unidentified")}</p>
+              <p className="text-xs text-text-muted">{typeLabel}</p>
             </div>
-
-            <div className="flex-1 overflow-y-auto px-6 py-5">
-              <div className={cn("flex items-center gap-3 rounded-xl border px-4 py-3.5", tone.bar)}>
-                <ToneIcon className={cn("size-5", ICON_TONE[entry.status] ?? "text-slate-600")} strokeWidth={2.2}/>
-                <div>
-                  <p className="text-[13.5px] font-semibold text-navy-900">{tone.title}</p>
-                  <p className="text-[11.5px] text-slate-600">{tone.sub}</p>
-                </div>
-                <span className="ml-auto">
-                  <StatusChip status={entry.status} size="sm"/>
-                </span>
-              </div>
-
-              <div className="mt-4 flex items-center gap-3.5 rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3.5">
-                <Avatar initials={entry.initials} level={entry.type === "Unknown" ? undefined : entry.zone}/>
-                <div className="min-w-0">
-                  <p className="truncate text-[14px] font-semibold text-navy-900">{entry.user}</p>
-                  <p className="text-[11.5px] text-slate-600">{entry.type}</p>
-                </div>
-                {entry.type === "Unknown" && (<span className="ml-auto rounded-full bg-rose-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
-                    Unidentified
-                  </span>)}
-              </div>
-
-              <div className="mt-2 divide-y divide-slate-100">
-                <Row label="Date">{entry.date}</Row>
-                <Row label="Time">
-                  <span className="font-mono">{entry.time}</span>
-                </Row>
-                <Row label="Zone">
-                  <span className="flex items-center justify-end gap-2">
-                    {entry.zoneName}
-                    <LevelChip level={entry.zone} size="sm"/>
-                  </span>
-                </Row>
-                <Row label="Action">
-                  <span className="inline-flex items-center gap-1.5">
-                    {entry.action}
-                    <ArrowRight className="size-3.5 text-slate-600"/>
-                    <span className="text-slate-600">{entry.gate}</span>
-                  </span>
-                </Row>
-                <Row label="Verification">
-                  <span className="max-w-[220px] leading-snug">{entry.method}</span>
-                </Row>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-slate-100 px-4 py-3.5">
-                <Eyebrow className="mb-1.5">Note</Eyebrow>
-                <p className="text-[12.5px] leading-relaxed text-slate-600">{entry.note}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 border-t border-slate-100 px-6 py-4">
-              <button onClick={onClose} className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:bg-slate-50">
-                Close
-              </button>
-            </div>
-          </motion.div>
-        </>)}
-    </AnimatePresence>);
+            <StatusLabel status={entry.status} />
+          </div>
+          <dl className="mt-2 divide-y divide-border-subtle">
+            <Row label={t("log.columns.date")}>{entry.date}</Row>
+            <Row label={t("log.columns.time")}>{entry.time}</Row>
+            <Row label={t("log.columns.zone")}>
+              <span className="flex items-center justify-end gap-2">
+                {entry.zoneName}
+                <LevelBadge level={entry.zone} />
+              </span>
+            </Row>
+            <Row label={t("log.columns.action")}>
+              {t("log.detail.actionAt", { action: actionLabel, gate: entry.gate })}
+            </Row>
+            <Row label={t("log.detail.method")}>{entry.method}</Row>
+            <Row label={t("log.detail.note")}>{entry.note}</Row>
+          </dl>
+        </div>
+      )}
+    </Modal>
+  );
 }

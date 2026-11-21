@@ -11,11 +11,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
+/**
+ * A physical site access granted to one person of the shared people directory (ADR 0004).
+ * The name and email are those of the {@code person} row, read through
+ * {@code staff.api.PersonDirectory}: they are not copied here.
+ */
 @Entity
 @Table(name = "site_security_users",
-        uniqueConstraints = @UniqueConstraint(name = "uk_site_security_users_name", columnNames = "name"))
+        uniqueConstraints = @UniqueConstraint(name = "uk_site_security_users_person_id", columnNames = "person_id"))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,20 +27,20 @@ import lombok.ToString;
 public class CredentialUserEntity {
     @Id
     private String id;
-    private String name;
+
+    /** The holder, a person of the shared directory. */
+    @Column(name = "person_id", nullable = false)
+    private Long personId;
+
+    /** The holder's function on site, for example "Facilities Tech". */
     private String role;
     private String type;
     private String level;
     private String validUntil;
     private String status;
-    private String initials;
     private String lastActive;
 
-    /** Empty for credentials created before emails were collected. */
-    @Column(length = 254)
-    @ToString.Exclude
-    private String email;
-
+    /** Result of the latest email; empty when the person has no email. */
     @Enumerated(EnumType.STRING)
     @Column(length = 16)
     private CredentialNotificationStatus notificationStatus;

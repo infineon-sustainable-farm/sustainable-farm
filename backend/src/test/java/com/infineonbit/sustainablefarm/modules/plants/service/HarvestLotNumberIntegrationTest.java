@@ -1,8 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +40,17 @@ class HarvestLotNumberIntegrationTest {
     private static final int TRIALS = 10;
     private static final LocalDate PLANTED_ON = LocalDate.of(2023, 9, 15);
     private static final LocalDate HARVESTED_ON = LocalDate.of(2026, 6, 10);
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void addTheBlocksOfTheTest() {
+        siteTestBlocks.ensureAll("LN1", "LN2", "LN3");
+    }
+
+    @Autowired
+    private PlantsBlocks plantsBlocks;
 
     @Autowired
     private PlantingService plantingService;
@@ -109,17 +122,20 @@ class HarvestLotNumberIntegrationTest {
     }
 
     @Test
-    void recordHarvest_shouldShareTheSequenceOfABlockBetweenFarms() {
-        // Arrange: block LN2 on no farm and on farm 1
+    void recordHarvest_shouldKeepOneSequencePerBlock_withOrWithoutTheFarmOfTheBlock() {
+        // Arrange: block LN2 planted without farm, then again with the farm the block belongs to
         plantingService.recordPlanting(new PlantingRequest(null, "LN2", "Keitt", PLANTED_ON, 40));
-        plantingService.recordPlanting(new PlantingRequest(1, "LN2", "Keitt", PLANTED_ON, 30));
+        Long farmOfTheBlock = plantsBlocks.find(null, "LN2").orElseThrow().farmId();
+        plantingService.recordPlanting(new PlantingRequest(farmOfTheBlock, "LN2", "Kent", PLANTED_ON, 30));
         // Act
         HarvestResponse noFarm = harvest("LN2", "Keitt", HARVESTED_ON);
-        HarvestResponse farm1 = harvestService.recordHarvest(new HarvestRequest(1, "LN2", "Keitt", HARVESTED_ON, 20.0));
-        // Assert: one lot number is never given twice, even on two farms
+        HarvestResponse withFarm = harvestService.recordHarvest(
+                new HarvestRequest(farmOfTheBlock, "LN2", "Kent", HARVESTED_ON, 20.0));
+        // Assert: one sequence per block, whether the request names its farm or not
         assertEquals("LOT-2026-LN2-001", noFarm.lotNumber());
-        assertEquals("LOT-2026-LN2-002", farm1.lotNumber());
-        assertEquals(1, farm1.farmId());
+        assertEquals("LOT-2026-LN2-002", withFarm.lotNumber());
+        assertEquals(farmOfTheBlock, noFarm.farmId());
+        assertEquals(farmOfTheBlock, withFarm.farmId());
     }
 
     @Test
@@ -140,6 +156,7 @@ class HarvestLotNumberIntegrationTest {
         for (int trial = 1; trial <= TRIALS; trial++) {
             // Arrange: two varieties of one block, so no lock on a variety row could keep them apart
             String blockCode = "LR" + trial;
+            siteTestBlocks.ensure(blockCode);
             plantingService.recordPlanting(new PlantingRequest(null, blockCode, "Keitt", PLANTED_ON, 40));
             plantingService.recordPlanting(new PlantingRequest(null, blockCode, "Kent", PLANTED_ON, 20));
             // Act

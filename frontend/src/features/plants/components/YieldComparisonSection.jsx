@@ -1,21 +1,15 @@
 import { useState } from "react";
-import { Info, Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Info } from "lucide-react";
+import { Card, EmptyState, ErrorState, Skeleton } from "../../../shared/ui";
 import { useYieldComparison } from "../hooks/useYieldComparison";
-import { formatBlock, formatCode, formatKilograms, formatMonth, formatNumber, formatPercent, formatText } from "../utils/format";
+import { formatBlock, formatEnum, formatKilograms, formatMonth, formatPercent, formatText } from "../utils/format";
 import MonthPeriodControls from "./MonthPeriodControls";
-import PlantsEmptyState from "./PlantsEmptyState";
 import YieldComparisonCards from "./YieldComparisonCards";
 import YieldComparisonTables from "./YieldComparisonTables";
-import { PRIMARY_BUTTON } from "./plantsStyles";
+import { useCountOf } from "./useCountOf";
 
 const DEFAULT_MONTHS = 12;
-
-// Why a planted variety row has no expected yield, keyed by the API's code.
-const REASONS = { NO_REFERENCE: "no reference value", NO_TREE_LEFT: "no tree left" };
-
-function countOf(count, word) {
-    return `${formatNumber(count)} ${Number(count) === 1 ? word : `${word}s`}`;
-}
 
 /**
  * The total of the period, in one sentence. The months are named by their
@@ -23,17 +17,30 @@ function countOf(count, word) {
  * out here.
  */
 function TotalSentence({ comparison, blockCode }) {
+    const { t } = useTranslation("plants");
+    const countOf = useCountOf();
     const { total } = comparison;
-    const scope = blockCode ? formatBlock(blockCode) : "All blocks";
-    const period = `${countOf(comparison.months, "month")} from ${formatMonth(comparison.from, "long")}`;
-    const figures = total.actualKg === null
-        ? `no harvest recorded, ${formatKilograms(total.expectedKg)} expected.`
-        : `${formatKilograms(total.actualKg)} harvested of ${formatKilograms(total.expectedKg)} expected`
-            + (total.achievedPct === null ? "." : ` (${formatPercent(total.achievedPct)}).`);
+    const scope = blockCode ? formatBlock(blockCode) : t("blockFilter.all");
+    const period = t("varieties.comparison.period", {
+        months: countOf(comparison.months, "months"),
+        month: formatMonth(comparison.from, "long"),
+    });
+    const expected = formatKilograms(total.expectedKg);
+    let figures;
+    if (total.actualKg === null) figures = t("varieties.comparison.totalNoHarvest", { expected });
+    else if (total.achievedPct === null) {
+        figures = t("varieties.comparison.totalHarvested", { actual: formatKilograms(total.actualKg), expected });
+    } else {
+        figures = t("varieties.comparison.totalHarvestedPct", {
+            actual: formatKilograms(total.actualKg),
+            expected,
+            pct: formatPercent(total.achievedPct),
+        });
+    }
     return (
-        <p className="text-sm text-gray-600">
-            {`${scope}, ${period}: `}
-            <span className="font-semibold text-on-background">{figures}</span>
+        <p className="text-sm text-text-muted">
+            {t("varieties.comparison.totalPrefix", { scope, period })}
+            <span className="font-semibold text-text">{figures}</span>
         </p>
     );
 }
@@ -43,27 +50,38 @@ function TotalSentence({ comparison, blockCode }) {
  * none of them is silently dropped.
  */
 function NotComparedNote({ rows }) {
+    const { t } = useTranslation("plants");
+    const countOf = useCountOf();
     if (rows.length === 0) return null;
     const listed = rows
         .map((row) => {
             const where = row.treeCount === null
                 ? formatBlock(row.blockCode)
-                : `${formatBlock(row.blockCode)}, ${countOf(row.treeCount, "tree")}`;
+                : t("varieties.comparison.whereWithTrees", {
+                    block: formatBlock(row.blockCode),
+                    trees: countOf(row.treeCount, "trees"),
+                });
             const harvested = row.harvestCount === 0
-                ? "no harvest"
-                : `${formatKilograms(row.actualKg)} in ${countOf(row.harvestCount, "harvest")}`;
-            return `${formatText(row.varietyName)} (${where}): ${harvested}, ${REASONS[row.reason] ?? formatCode(row.reason)}`;
+                ? t("varieties.comparison.noHarvest")
+                : t("varieties.comparison.harvestedIn", {
+                    kg: formatKilograms(row.actualKg),
+                    harvests: countOf(row.harvestCount, "harvests"),
+                });
+            return t("varieties.comparison.notComparedRow", {
+                variety: formatText(row.varietyName),
+                where,
+                harvested,
+                reason: formatEnum("comparisonReason", row.reason),
+            });
         })
-        .join("; ");
-    const hint = rows.some((row) => row.reason === "NO_REFERENCE")
-        ? " Reference values are entered on the Harvest & Maturity screen."
-        : "";
+        .join(t("varieties.comparison.listSeparator"));
+    const key = rows.some((row) => row.reason === "NO_REFERENCE") ? "notComparedWithHint" : "notCompared";
 
     return (
-        <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3 text-sm text-gray-600">
-            <Info size={18} className="mt-0.5 shrink-0 text-info" />
-            <p>{`Not compared: ${listed}.${hint}`}</p>
-        </div>
+        <Card className="flex gap-3 text-sm text-text-muted">
+            <Info size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-info-fg" />
+            <p>{t(`varieties.comparison.${key}`, { list: listed })}</p>
+        </Card>
     );
 }
 
@@ -74,6 +92,7 @@ function NotComparedNote({ rows }) {
  * out.
  */
 export default function YieldComparisonSection({ blockCode }) {
+    const { t } = useTranslation("plants");
     // Month sent to the API; null lets the API start at January of its current year.
     const [from, setFrom] = useState(null);
     const [months, setMonths] = useState(DEFAULT_MONTHS);
@@ -89,13 +108,10 @@ export default function YieldComparisonSection({ blockCode }) {
     return (
         <section aria-labelledby="yield-comparison-title" className="flex flex-col gap-4">
             <div>
-                <h2 id="yield-comparison-title" className="font-heading text-lg font-bold text-on-background">
-                    Expected vs actual yield
+                <h2 id="yield-comparison-title" className="text-lg font-semibold">
+                    {t("varieties.comparison.title")}
                 </h2>
-                <p className="mt-1 max-w-3xl text-sm text-gray-600">
-                    The harvests recorded over the period, against the yield the forecast expects for the same
-                    months.
-                </p>
+                <p className="max-w-3xl text-sm text-text-muted">{t("varieties.comparison.intro")}</p>
             </div>
 
             <MonthPeriodControls
@@ -108,46 +124,45 @@ export default function YieldComparisonSection({ blockCode }) {
             />
 
             {isPending && (
-                <div className="flex items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white shadow-card px-6 py-16 text-sm text-gray-500">
-                    <Loader2 size={18} className="animate-spin" />
-                    Loading yield comparison…
-                </div>
+                <Card aria-busy="true">
+                    <p role="status" className="sr-only">
+                        {t("varieties.comparison.loading")}
+                    </p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {[0, 1, 2].map((index) => (
+                            <Skeleton key={index} radius="tile" className="h-24" />
+                        ))}
+                    </div>
+                </Card>
             )}
 
             {isError && (
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-                    <TriangleAlert size={28} className="text-error" />
-                    <div>
-                        <p className="font-heading text-lg font-bold text-on-background">
-                            Yield comparison could not be loaded
-                        </p>
-                        {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                        <p className="mt-1 text-sm text-gray-600">
-                            The request to the server did not succeed.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        disabled={isFetching}
-                        className={PRIMARY_BUTTON}
-                    >
-                        {isFetching ? "Retrying…" : "Retry"}
-                    </button>
-                </div>
+                <Card>
+                    <ErrorState
+                        message={
+                            <>
+                                <span className="block font-semibold">{t("varieties.comparison.loadError")}</span>
+                                <span className="block">{t("varieties.requestFailed")}</span>
+                            </>
+                        }
+                        onRetry={() => refetch()}
+                        retrying={isFetching}
+                        retryLabel={t("common.retry")}
+                    />
+                </Card>
             )}
 
             {isLoaded && comparison.varieties.length === 0 && comparison.notCompared.length === 0 && (
-                <PlantsEmptyState
-                    title="No planted variety to compare over this period"
-                    hint="The comparison counts the recorded plantings and harvests. Record a planting, or choose another period."
-                />
+                <Card>
+                    <EmptyState
+                        title={t("varieties.comparison.empty")}
+                        message={t("varieties.comparison.emptyHint")}
+                    />
+                </Card>
             )}
 
             {isLoaded && comparison.varieties.length === 0 && comparison.notCompared.length > 0 && (
-                <p className="rounded-2xl border border-gray-200 bg-white shadow-card px-4 py-3 text-sm text-gray-700">
-                    No planted variety with a reference value over this period.
-                </p>
+                <Card className="text-sm text-text">{t("varieties.comparison.noReference")}</Card>
             )}
 
             {isLoaded && comparison.varieties.length > 0 && (
@@ -161,10 +176,7 @@ export default function YieldComparisonSection({ blockCode }) {
             {isLoaded && <NotComparedNote rows={comparison.notCompared} />}
 
             {isLoaded && comparison.varieties.length > 0 && (
-                <p className="px-1 text-xs text-gray-500">
-                    Expected yield: the rule of the forecast applied to today&apos;s trees and reference values, past
-                    months included. Actual yield: the harvests dated in the months.
-                </p>
+                <p className="px-1 text-xs text-text-muted">{t("varieties.comparison.footnote")}</p>
             )}
         </section>
     );

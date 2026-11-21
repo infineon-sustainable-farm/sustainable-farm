@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.exception.BadRequestException;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ApplicationRequest;
@@ -24,6 +25,7 @@ import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovem
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerMovementRepository.MovementTotal;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerPlanRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.FertilizerProductRepository;
+import com.infineonbit.sustainablefarm.modules.plants.support.TestBlocks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,6 +60,9 @@ public class FertilizerPlanServiceTest {
     private static final Instant NOW = Instant.parse("2026-11-14T10:00:00Z");
     private static final LocalDate TODAY = LocalDate.of(2026, 11, 14);
 
+    /** The block ids a list query binds when it keeps every block. */
+    private static final List<Long> ALL_BLOCKS = List.of(PlantsBlocks.NO_BLOCK);
+
     @Mock
     private FertilizerPlanRepository fertilizerPlanRepository;
 
@@ -75,10 +80,16 @@ public class FertilizerPlanServiceTest {
 
     private FertilizerPlanService fertilizerPlanService;
 
+    /** Blocks A and B of farm 1 in the farm referential; plants picks them, never creates them. */
+    private final PlantsBlocks plantsBlocks = new TestBlocks().with("A", 1L).with("B", 1L).asPlantsBlocks();
+
+    /** Person of the people directory who applies the fertilizer. */
+    private static final Long APPLICATOR = 7L;
+
     @BeforeEach
     void createService() {
         fertilizerPlanService = new FertilizerPlanService(fertilizerPlanRepository, fertilizerProductRepository,
-                fertilizerMovementRepository, currencyRateRepository, fertilizerMovementService,
+                fertilizerMovementRepository, currencyRateRepository, fertilizerMovementService, plantsBlocks,
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
@@ -94,8 +105,16 @@ public class FertilizerPlanServiceTest {
 
     private static FertilizerPlan plan(long id, FertilizerProduct product, String block, LocalDate date,
                                        String quantity, FertilizerPlanStatus status) {
-        return new FertilizerPlan(id, product, null, block, date, new BigDecimal(quantity), status, null, null,
-                "user_entry", NOW);
+        FertilizerPlan plan = new FertilizerPlan();
+        plan.setId(id);
+        plan.setProduct(product);
+        plan.setBlockCode(block);
+        plan.setPlannedDate(date);
+        plan.setPlannedQuantity(new BigDecimal(quantity));
+        plan.setStatus(status);
+        plan.setSource("user_entry");
+        plan.setLastUpdated(NOW);
+        return plan;
     }
 
     private static FertilizerMovement movement(long id, FertilizerProduct product, FertilizerMovementType type,
@@ -152,7 +171,7 @@ public class FertilizerPlanServiceTest {
     }
 
     private static FertilizerPlanCompletionRequest completion(double quantity) {
-        return new FertilizerPlanCompletionRequest(TODAY, quantity, " Team A ", null);
+        return new FertilizerPlanCompletionRequest(TODAY, quantity, APPLICATOR, null);
     }
 
     @Test
@@ -170,6 +189,7 @@ public class FertilizerPlanServiceTest {
         ArgumentCaptor<FertilizerPlan> captor = ArgumentCaptor.forClass(FertilizerPlan.class);
         verify(fertilizerPlanRepository).save(captor.capture());
         FertilizerPlan stored = captor.getValue();
+        assertEquals(TestBlocks.idOf("B"), stored.getBlockId());
         assertEquals("B", stored.getBlockCode());
         assertEquals(new BigDecimal("30.0"), stored.getPlannedQuantity());
         assertEquals(FertilizerPlanStatus.PLANNED, stored.getStatus());
@@ -179,7 +199,7 @@ public class FertilizerPlanServiceTest {
         assertNull(stored.getMovement());
         verifyNoInteractions(fertilizerMovementService);
 
-        assertEquals(new FertilizerPlanResponse(5L, 1L, "NPK 15-15-15", FertilizerUnit.KG, null, "B",
+        assertEquals(new FertilizerPlanResponse(5L, 1L, "NPK 15-15-15", FertilizerUnit.KG, 1L, "B",
                 TODAY.plusDays(10), 30.0, FertilizerPlanStatus.PLANNED, false, 10, 500L, 0.76,
                 LocalDate.of(2026, 11, 3), 15000L, 22.87, null, null, null, "before the rains", "user_entry", NOW),
                 response);
@@ -193,11 +213,11 @@ public class FertilizerPlanServiceTest {
         planSaveAssignsId(6L);
         // Act
         FertilizerPlanResponse response = fertilizerPlanService.createPlan(
-                new FertilizerPlanRequest(2L, 1, "A", TODAY, 4.5, "   "), NOW, TODAY);
+                new FertilizerPlanRequest(2L, 1L, "A", TODAY, 4.5, "   "), NOW, TODAY);
         // Assert: the unit is the fertilizer's, a blank note is not stored, and the rate is not read
         assertEquals(FertilizerUnit.L, response.unit());
         assertEquals(4.5, response.plannedQuantity());
-        assertEquals(1, response.farmId());
+        assertEquals(1L, response.farmId());
         assertEquals(0, response.daysFromToday());
         assertFalse(response.overdue());
         assertNull(response.unitPriceXof());
@@ -223,13 +243,40 @@ public class FertilizerPlanServiceTest {
     }
 
     @Test
+    void createPlan_shouldRefuseABlockTheFarmReferentialDoesNotHave_withoutCreatingIt() {
+        // Arrange
+        when(fertilizerProductRepository.findById(1L)).thenReturn(Optional.of(npk()));
+        // Act
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> fertilizerPlanService.createPlan(
+                        new FertilizerPlanRequest(1L, null, "Z", TODAY, 10.0, null), NOW, TODAY));
+        // Assert
+        assertEquals("Unknown block Z: pick a field of the Farms & fields screen (Water Supply)",
+                exception.getMessage());
+        verify(fertilizerPlanRepository, never()).save(any());
+    }
+
+    @Test
+    void createPlan_shouldRefuseAFarmThatDoesNotOwnTheBlock() {
+        // Arrange
+        when(fertilizerProductRepository.findById(1L)).thenReturn(Optional.of(npk()));
+        // Act
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> fertilizerPlanService.createPlan(
+                        new FertilizerPlanRequest(1L, 2L, "A", TODAY, 10.0, null), NOW, TODAY));
+        // Assert
+        assertEquals("Block A belongs to farm 1, not to farm 2", exception.getMessage());
+        verify(fertilizerPlanRepository, never()).save(any());
+    }
+
+    @Test
     void getAllPlans_shouldFlagALatePlan_andGiveTheRealApplicationOfADoneOne() {
         // Arrange
         FertilizerPlan late = plan(1L, npk(), "A", TODAY.minusDays(3), "40.000", FertilizerPlanStatus.PLANNED);
         FertilizerPlan done = plan(2L, npk(), "B", TODAY.minusDays(5), "20.000", FertilizerPlanStatus.DONE);
         done.setMovement(movement(77L, npk(), FertilizerMovementType.APPLICATION, TODAY.minusDays(4), "18.500"));
         FertilizerPlan cancelled = plan(3L, npk(), "B", TODAY.minusDays(1), "5.000", FertilizerPlanStatus.CANCELLED);
-        when(fertilizerPlanRepository.findByOptionalFilters(1L, null, null, "A", null, null))
+        when(fertilizerPlanRepository.findByOptionalFilters(1L, null, false, List.of(TestBlocks.idOf("A")), null, null))
                 .thenReturn(List.of(done, late, cancelled));
         npkLastBoughtAt500FcfaPerKg();
         rateIs("655.957");
@@ -259,11 +306,11 @@ public class FertilizerPlanServiceTest {
     @Test
     void getAllPlans_shouldReadNoPrice_whenNothingMatches() {
         // Arrange
-        when(fertilizerPlanRepository.findByOptionalFilters(null, FertilizerPlanStatus.DONE, 2, null,
+        when(fertilizerPlanRepository.findByOptionalFilters(null, FertilizerPlanStatus.DONE, false, TestBlocks.NO_IDS,
                 TODAY, TODAY.plusDays(1))).thenReturn(List.of());
         // Act
         List<FertilizerPlanResponse> responses = fertilizerPlanService.getAllPlans(
-                null, FertilizerPlanStatus.DONE, 2, "  ", TODAY, TODAY.plusDays(1), TODAY);
+                null, FertilizerPlanStatus.DONE, 2L, "  ", TODAY, TODAY.plusDays(1), TODAY);
         // Assert
         assertTrue(responses.isEmpty());
         verifyNoInteractions(fertilizerMovementRepository, currencyRateRepository);
@@ -273,12 +320,12 @@ public class FertilizerPlanServiceTest {
     void completePlan_shouldRecordTheRealApplication_andLinkItToThePlan() {
         // Arrange
         FertilizerPlan plan = plan(5L, npk(), "B", TODAY.minusDays(2), "30.000", FertilizerPlanStatus.PLANNED);
-        plan.setFarmId(3);
+        plan.setFarmId(3L);
         when(fertilizerPlanRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(plan));
         when(fertilizerMovementService.recordApplication(eq(1L), any(ApplicationRequest.class))).thenReturn(
                 new FertilizerMovementResponse(77L, 1L, "NPK 15-15-15", FertilizerMovementType.APPLICATION, TODAY,
-                        25.5, FertilizerUnit.KG, 3, "B", "Team A", null, null, null, null, null, null, null,
-                        "user_entry", NOW));
+                        25.5, FertilizerUnit.KG, 3L, "B", "Team A", APPLICATOR, null, null, null, null, null, null,
+                        null, "user_entry", NOW));
         when(fertilizerMovementRepository.getReferenceById(77L)).thenReturn(
                 movement(77L, npk(), FertilizerMovementType.APPLICATION, TODAY, "25.500"));
         when(fertilizerMovementRepository.findPricedPurchases(Set.of(1L))).thenReturn(List.of());
@@ -288,7 +335,7 @@ public class FertilizerPlanServiceTest {
         // Assert: the application is on the fertilizer, the farm and the block of the plan
         ArgumentCaptor<ApplicationRequest> captor = ArgumentCaptor.forClass(ApplicationRequest.class);
         verify(fertilizerMovementService).recordApplication(eq(1L), captor.capture());
-        assertEquals(new ApplicationRequest(TODAY, 25.5, 3, "B", " Team A ", null), captor.getValue());
+        assertEquals(new ApplicationRequest(TODAY, 25.5, 3L, "B", APPLICATOR, null), captor.getValue());
         assertEquals(FertilizerPlanStatus.DONE, plan.getStatus());
         assertEquals(NOW, plan.getLastUpdated());
         assertEquals(FertilizerPlanStatus.DONE, response.status());
@@ -385,9 +432,9 @@ public class FertilizerPlanServiceTest {
         FertilizerPlan done = plan(1L, npk, "A", TODAY.minusDays(20), "40.000", FertilizerPlanStatus.DONE);
         done.setMovement(applied);
         FertilizerPlan open = plan(2L, npk, "A", TODAY.plusDays(5), "20.000", FertilizerPlanStatus.PLANNED);
-        when(fertilizerPlanRepository.findByOptionalFilters(null, null, null, null, first, last))
+        when(fertilizerPlanRepository.findByOptionalFilters(null, null, true, ALL_BLOCKS, first, last))
                 .thenReturn(List.of(done, open));
-        when(fertilizerMovementRepository.findByOptionalFilters(null, FertilizerMovementType.APPLICATION, null, null,
+        when(fertilizerMovementRepository.findByOptionalFilters(null, FertilizerMovementType.APPLICATION, true, ALL_BLOCKS,
                 first, last)).thenReturn(List.of(
                 applied,
                 application(102L, npk, "A", "5.000")));
@@ -408,9 +455,9 @@ public class FertilizerPlanServiceTest {
     void getComparison_shouldKeepAnOpenSide_whenOneDateOnlyIsGiven() {
         // Arrange
         LocalDate from = LocalDate.of(2026, 6, 1);
-        when(fertilizerPlanRepository.findByOptionalFilters(null, null, null, null, from, null))
+        when(fertilizerPlanRepository.findByOptionalFilters(null, null, true, ALL_BLOCKS, from, null))
                 .thenReturn(List.of());
-        when(fertilizerMovementRepository.findByOptionalFilters(null, FertilizerMovementType.APPLICATION, null, null,
+        when(fertilizerMovementRepository.findByOptionalFilters(null, FertilizerMovementType.APPLICATION, true, ALL_BLOCKS,
                 from, null)).thenReturn(List.of());
         when(fertilizerPlanRepository.findLinkedMovementIds()).thenReturn(List.of());
         // Act
@@ -427,8 +474,8 @@ public class FertilizerPlanServiceTest {
         // Arrange
         LocalDate from = LocalDate.of(2026, 6, 1);
         LocalDate to = LocalDate.of(2026, 6, 30);
-        when(fertilizerPlanRepository.findByOptionalFilters(null, null, null, null, from, to)).thenReturn(List.of());
-        when(fertilizerMovementRepository.findByOptionalFilters(null, FertilizerMovementType.APPLICATION, null, null,
+        when(fertilizerPlanRepository.findByOptionalFilters(null, null, true, ALL_BLOCKS, from, to)).thenReturn(List.of());
+        when(fertilizerMovementRepository.findByOptionalFilters(null, FertilizerMovementType.APPLICATION, true, ALL_BLOCKS,
                 from, to)).thenReturn(List.of(application(103L, liquid(), "B", "2.500")));
         when(fertilizerPlanRepository.findLinkedMovementIds()).thenReturn(List.of());
         when(fertilizerMovementRepository.findPricedPurchases(Set.of(2L))).thenReturn(List.of());

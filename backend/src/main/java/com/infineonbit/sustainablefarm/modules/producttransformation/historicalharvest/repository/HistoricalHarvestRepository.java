@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvest;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +16,12 @@ import java.util.List;
  * @version 1.0.0
  */
 @Repository
-public interface HistoricalHarvestRepository extends JpaRepository<HistoricalHarvest, com.infineonbit.sustainablefarm.modules.producttransformation.historicalharvest.model.HistoricalHarvestId> {
+public interface HistoricalHarvestRepository extends JpaRepository<HistoricalHarvest, Long> {
+
+    /** The row of a period and variety, unique (uk_historical_harvest_period_variety). */
+    java.util.Optional<HistoricalHarvest> findByYearAndMonthAndWeekAndVarietyKey(Integer year, Integer month, Integer week,
+                                                                           String varietyKey);
+
 
     /**
      * Find historical harvest by year
@@ -37,14 +41,14 @@ public interface HistoricalHarvestRepository extends JpaRepository<HistoricalHar
     /**
      * Find historical harvest by variety
      */
-    List<HistoricalHarvest> findByMangoVariety(MangoVariety mangoVariety);
+    List<HistoricalHarvest> findByVarietyKey(String varietyKey);
 
     /**
      * Find historical harvest by year and variety
      */
-    @Query("SELECT h FROM HistoricalHarvest h WHERE h.year = :year AND h.mangoVariety = :variety")
+    @Query("SELECT h FROM HistoricalHarvest h WHERE h.year = :year AND h.varietyKey = :variety")
     List<HistoricalHarvest> findByYearAndVariety(@Param("year") Integer year, 
-                                          @Param("variety") MangoVariety variety);
+                                          @Param("variety") String variety);
 
     /**
      * Get total harvest quantity by year

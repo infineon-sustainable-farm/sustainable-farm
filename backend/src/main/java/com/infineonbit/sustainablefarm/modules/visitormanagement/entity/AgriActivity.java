@@ -1,16 +1,16 @@
 package com.infineonbit.sustainablefarm.modules.visitormanagement.entity;
 
 import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
-import java.math.BigDecimal;
 
 /**
  * A paid agritourism offer available for booking (tour, tasting, workshop...).
@@ -27,10 +27,14 @@ public class AgriActivity extends BaseEntity {
     @Column(name = "name", nullable = false, length = 150)
     private String name;
 
+    /** Price per person, in XOF (FCFA). */
     @NotNull(message = "price is required")
-    @DecimalMin(value = "0.0", message = "price must be positive or zero")
-    @Column(name = "price", nullable = false, precision = 12, scale = 2)
-    private BigDecimal price;
+    @Embedded
+    @AttributeOverride(name = "amount",
+            column = @Column(name = "price_amount", nullable = false, precision = 14, scale = 2))
+    @AttributeOverride(name = "currency",
+            column = @Column(name = "price_currency", nullable = false, length = 3))
+    private Money price;
 
     @NotNull(message = "capacity is required")
     @Min(value = 1, message = "capacity must be at least 1")
@@ -57,11 +61,11 @@ public class AgriActivity extends BaseEntity {
         this.name = name;
     }
 
-    public BigDecimal getPrice() {
+    public Money getPrice() {
         return price;
     }
 
-    public void setPrice(BigDecimal price) {
+    public void setPrice(Money price) {
         this.price = price;
     }
 

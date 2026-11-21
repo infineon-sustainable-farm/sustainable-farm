@@ -1,13 +1,31 @@
 import { useMemo, useState } from 'react'
-import { useWaterQualityTests, useWaterSources } from '../../hooks/useWaterData'
+import { useTranslation } from 'react-i18next'
+import { Badge, Card, EmptyState, ErrorState, Select, Table } from '../../../../shared/ui'
 import { useListControls } from '../../../../shared/hooks/useListControls'
-import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from './Pagination'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
+import { useWaterQualityTests, useWaterSources } from '../../hooks/useWaterData'
+import { useWaterFormat } from '../../format'
+import { Filters, Screen, SplitLayout } from '../common/Screen'
+import { ListPagination } from '../common/ListPagination'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { tableSort } from '../common/listSort'
+import { sameId } from './ids'
+
+const phOutOfRange = (ph) => ph != null && (ph < 6 || ph > 7.5)
+const turbidityOutOfRange = (ntu) => ntu != null && ntu > 5
 
 function isOutOfRange(test) {
-  return (test.ph != null && (test.ph < 6 || test.ph > 7.5)) || (test.turbidityNtu != null && test.turbidityNtu > 5)
+  return phOutOfRange(test.ph) || turbidityOutOfRange(test.turbidityNtu)
+}
+
+/** Label and value of the reference thresholds panel. */
+function Threshold({ label, children }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <dt className="text-text-muted">{label}</dt>
+      <dd className="font-semibold">{children}</dd>
+    </div>
+  )
 }
 
 /**
@@ -17,115 +35,98 @@ function isOutOfRange(test) {
  * Thresholds: pH 6 - 7.5 and turbidity < 5 NTU -> alert + automatic notification.
  */
 export function QualityView() {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { tests, loading, error } = useWaterQualityTests()
   const { sources } = useWaterSources()
   const [sourceFilter, setSourceFilter] = useState('')
 
   const sourceFiltered = useMemo(
     () => tests
-      .filter((test) => !sourceFilter || test.sourceId === sourceFilter)
+      .filter((test) => !sourceFilter || sameId(test.sourceId, sourceFilter))
       .sort((a, b) => Number(isOutOfRange(b)) - Number(isOutOfRange(a))),
     [tests, sourceFilter],
   )
 
   const list = useListControls(sourceFiltered, { searchFields: ['testDate'] })
-  const filtered = list.items
   const alertsCount = useMemo(() => sourceFiltered.filter(isOutOfRange).length, [sourceFiltered])
 
+  const sourceName = (test) =>
+    sources.find((source) => source.id === test.sourceId)?.name
+    || (test.sourceId != null ? String(test.sourceId).slice(0, 8) : null)
+    || t('quality.unknown')
+
+  const columns = [
+    { key: 'testDate', header: t('quality.columns.date'), sortable: true, cell: (test) => format.instant(test.testDate) },
+    { key: 'source', header: t('quality.columns.source'), cell: sourceName },
+    {
+      key: 'ph',
+      header: t('quality.columns.ph'),
+      cell: (test) => (
+        <strong className={phOutOfRange(test.ph) ? 'text-error-fg' : undefined}>
+          {test.ph == null ? t('quality.unknown') : format.number(test.ph)}
+        </strong>
+      ),
+    },
+    {
+      key: 'turbidity',
+      header: t('quality.columns.turbidity'),
+      cell: (test) => (
+        <strong className={turbidityOutOfRange(test.turbidityNtu) ? 'text-warning-fg' : undefined}>
+          {t('quality.ntu', { value: test.turbidityNtu == null ? t('quality.unknown') : format.number(test.turbidityNtu) })}
+        </strong>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('quality.columns.status'),
+      cell: (test) => (isOutOfRange(test)
+        ? <Badge tone="error">{t('quality.alert')}</Badge>
+        : <Badge tone="success">{t('quality.compliant')}</Badge>),
+    },
+  ]
+
+  function renderList() {
+    if (loading) return <LoadingState label={t('quality.loading')} />
+    if (error) return <ErrorState message={error.message || t('quality.loadError')} />
+    if (sourceFiltered.length === 0) return <EmptyState title={t('quality.emptyTitle')} message={t('quality.empty')} />
+    return <Table caption={t('quality.listTitle')} columns={columns} rows={list.items} {...tableSort(list)} />
+  }
+
   return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Water quality</h1>
-          <p>IoT probe measurements - automatic out-of-range alerts: pH 6-7.5 - turbidity &lt; 5 NTU.</p>
-        </div>
-      </div>
-
-      <div className="ws-layout-2">
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>Measurement history</h2>
-            <span>{alertsCount} alert(s)</span>
-          </div>
-          <div className="ws-filters">
-            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
-              <option value="">All sources</option>
-              {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
-            </select>
-            <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search by date..." />
-          </div>
-          <div className="ws-panel-body">
-            {loading ? (
-              <Spinner label="Loading measurements..." full />
-            ) : error ? (
-              <EmptyState title="Error" description={error.message || 'Unable to load measurements.'} />
-            ) : sourceFiltered.length === 0 ? (
-              <EmptyState title="No measurements" description="IoT probe measurements (pH, turbidity) will appear here as soon as they are reported." />
-            ) : (
-              <table className="ws-table">
-                <thead>
-                  <tr>
-                    <th onClick={() => list.toggleSort('testDate')} style={{ cursor: 'pointer' }}>
-                      Date {list.sort && list.sort.key === 'testDate' ? (list.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                    </th>
-                    <th>Source</th>
-                    <th>pH</th>
-                    <th>Turbidity</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((test) => {
-                    const out = isOutOfRange(test)
-                    return (
-                      <tr key={test.id}>
-                        <td>{(test.testDate || '').replace('T', ' ').slice(0, 16)}</td>
-                        <td>{sources.find((source) => source.id === test.sourceId)?.name || test.sourceId?.slice(0, 8) || '-'}</td>
-                        <td><strong style={{ color: test.ph < 6 || test.ph > 7.5 ? 'var(--ws-red)' : undefined }}>{test.ph ?? '-'}</strong></td>
-                        <td><strong style={{ color: test.turbidityNtu > 5 ? 'var(--ws-orange)' : undefined }}>{test.turbidityNtu ?? '-'} NTU</strong></td>
-                        <td><span className={`ws-tag ${out ? 'red' : 'green'}`}>{out ? 'Alert' : 'Compliant'}</span></td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
-            <Pagination page={list.page} pageCount={list.pageCount} onPage={list.setPage} total={list.total} unit="mesure" />
-          </div>
-        </div>
-
-        <div className="ws-stack">
-          <div className="ws-panel">
-            <div className="ws-panel-header">            <h2>Reference thresholds</h2></div>
-            <div className="ws-panel-body">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--ws-muted)' }}>Compliant pH</span>
-                  <strong>6.0 - 7.5</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--ws-muted)' }}>Maximum turbidity</span>
-                  <strong>5 NTU</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--ws-muted)' }}>Out of range</span>
-                  <span className="ws-tag red">Alert + automatic notification</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="ws-panel">
-            <div className="ws-panel-header">            <h2>Data source</h2></div>
-            <div className="ws-panel-body">
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--ws-muted)', lineHeight: 1.6 }}>
-                Measurements come from IoT probes installed on the sources.
-                They are reported automatically via the ingestion endpoint - no manual entry.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+    <Screen title={t('quality.title')} subtitle={t('quality.subtitle')}>
+      <SplitLayout
+        main={
+          <Card
+            title={t('quality.listTitle')}
+            actions={<span className="text-sm text-text-muted">{t('quality.alertsCount', { count: alertsCount })}</span>}
+          >
+            <Filters>
+              <Select aria-label={t('quality.sourceFilter')} value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="w-auto">
+                <option value="">{t('quality.allSources')}</option>
+                {sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}
+              </Select>
+              <SearchField value={list.query} onChange={list.setQuery} placeholder={t('quality.search')} />
+            </Filters>
+            {renderList()}
+            <ListPagination list={list} />
+          </Card>
+        }
+        aside={
+          <>
+            <Card title={t('quality.thresholdsTitle')}>
+              <dl className="flex flex-col gap-3 text-sm">
+                <Threshold label={t('quality.compliantPh')}>{t('quality.phRange')}</Threshold>
+                <Threshold label={t('quality.maxTurbidity')}>{t('quality.ntu', { value: format.number(5) })}</Threshold>
+                <Threshold label={t('quality.outOfRange')}><Badge tone="error">{t('quality.outOfRangeAction')}</Badge></Threshold>
+              </dl>
+            </Card>
+            <Card title={t('quality.dataSourceTitle')}>
+              <p className="text-sm text-text-muted">{t('quality.dataSourceText')}</p>
+            </Card>
+          </>
+        }
+      />
+    </Screen>
   )
 }

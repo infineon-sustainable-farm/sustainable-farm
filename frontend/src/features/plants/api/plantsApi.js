@@ -349,6 +349,19 @@ export function fetchHealthIssues() {
     return apiClient.get(PLANTS_ENDPOINTS.HEALTH_ISSUES);
 }
 
+/** Machines listed at most, enough for one farm. */
+const MACHINERY_EQUIPMENT_PAGE_SIZE = 100;
+
+/**
+ * Fetches the machines of the machinery register, the module that owns them,
+ * for the treatment form to pick one: a page of `{ id, code, name, ... }`.
+ */
+export function fetchMachineryEquipment() {
+    return apiClient.get(PLANTS_ENDPOINTS.MACHINERY_EQUIPMENT, {
+        params: { page: 0, size: MACHINERY_EQUIPMENT_PAGE_SIZE },
+    });
+}
+
 /**
  * Adds a pest or a disease to the catalogue. The API derives its code from the
  * name ("Powdery mildew" gives POWDERY_MILDEW), answers 400 with fieldErrors
@@ -571,4 +584,12 @@ export function updateScenario(id, body) {
  */
 export function fetchScenarioAnalysis(id, params = {}) {
     return apiClient.get(`${PLANTS_ENDPOINTS.SCENARIOS}/${id}/analysis`, { params });
+}
+
+/**
+ * Fetches the fields (blocks) of the farm referential, owned by the Farms & fields screen of
+ * Water Supply. Plants only picks one of them by its block code; it never creates a block.
+ */
+export function fetchFarmFields() {
+    return apiClient.get(PLANTS_ENDPOINTS.FARM_FIELDS);
 }

@@ -1,53 +1,81 @@
 import { useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import {
+  Badge,
+  Button,
+  Card,
+  ConfirmDialog,
+  EmptyState,
+  ErrorState,
+  Field,
+  IconButton,
+  Input,
+  Select,
+  Table,
+  Textarea,
+} from '../../../../shared/ui'
+import PersonSelect from '../../../../app/PersonSelect'
+import { useListControls } from '../../../../shared/hooks/useListControls'
 import { dripMaintenanceApi } from '../../api/watersupplyApi'
 import { useDripMaintenanceLogs } from '../../hooks/useWaterData'
 import { useZones } from '../../hooks/useFarms'
-import { useListControls } from '../../../../shared/hooks/useListControls'
-import { SearchInput } from '../../../../shared/components/SearchInput'
-import { Pagination } from './Pagination'
-import { Spinner } from '../../../../shared/components/Spinner'
-import { EmptyState } from './EmptyState'
-import { FormField } from '../../../../shared/components/FormField'
-import { inputStyle } from '../../../../shared/components/formStyles'
-import { ConfirmDialog } from '../../../../shared/components/ConfirmDialog'
+import { useWaterFormat } from '../../format'
+import { Filters, FormActions, Screen, SplitLayout } from '../common/Screen'
+import { ChoiceChips } from '../common/ChoiceChips'
+import { FormAlert } from '../common/FormAlert'
+import { ListPagination } from '../common/ListPagination'
+import { LoadingState } from '../common/LoadingState'
+import { SearchField } from '../common/SearchField'
+import { tableSort } from '../common/listSort'
+import { sameId } from './ids'
 
 const DAY_MS = 24 * 3600 * 1000
 const MAINTENANCE_TYPES = ['cleaning', 'filter_change', 'repair', 'inspection']
+const PERIODS = ['week', 'month', 'all']
+const SEVERITIES = ['low', 'medium', 'high']
+const EMPTY_FORM = {
+  zoneId: '',
+  maintenanceType: 'cleaning',
+  maintenanceDate: '',
+  filterCleaned: false,
+  cloggingDetected: false,
+  cloggingSeverity: '',
+  emitterReplacedCount: '',
+  notes: '',
+  performedByPersonId: '',
+  performedByName: '',
+}
+// Native checkbox (the kit has none), in the primary colour with the kit focus mark.
+const CHECKBOX = 'size-4 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring'
 
-function severityTag(severity) {
+function severityTone(severity) {
   switch ((severity || '').toLowerCase()) {
-    case 'high': return 'red'
-    case 'medium': return 'orange'
-    default: return 'green'
+    case 'high': return 'error'
+    case 'medium': return 'warning'
+    default: return 'success'
   }
 }
 
 /**
  * Drip view: maintenance interventions (full CRUD).
- * Contrat backend : DripMaintenanceLog { zoneId, maintenanceDate, maintenanceType,
- * filterCleaned, cloggingDetected, cloggingSeverity, emitterReplacedCount, notes, performedBy }.
+ * Backend contract: DripMaintenanceLog { zoneId, maintenanceDate, maintenanceType,
+ * filterCleaned, cloggingDetected, cloggingSeverity, emitterReplacedCount, notes, performedByPersonId }
+ * (performedBy, the name, in the responses). The person is picked in the farm people directory.
  */
 export function DripView({ notify }) {
+  const { t } = useTranslation('watersupply')
+  const format = useWaterFormat()
   const { logs, loading, error, refetch } = useDripMaintenanceLogs()
   const { zones } = useZones()
   const [period, setPeriod] = useState('all')
   const [zoneFilter, setZoneFilter] = useState('')
-  const [form, setForm] = useState({
-    zoneId: '',
-    maintenanceType: 'cleaning',
-    maintenanceDate: '',
-    filterCleaned: false,
-    cloggingDetected: false,
-    cloggingSeverity: '',
-    emitterReplacedCount: '',
-    notes: '',
-    performedBy: '',
-  })
+  const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
 
   // Filter based on the max data date (pure function - no Date.now() during render).
   const maxDateMs = useMemo(() => {
@@ -60,7 +88,7 @@ export function DripView({ notify }) {
   }, [logs])
 
   const zoneFiltered = useMemo(() => {
-    let list = logs.filter((item) => !zoneFilter || item.zoneId === zoneFilter)
+    let list = logs.filter((item) => !zoneFilter || sameId(item.zoneId, zoneFilter))
     if (period !== 'all') {
       const days = period === 'week' ? 7 : 30
       const cutoff = maxDateMs - days * DAY_MS
@@ -74,9 +102,10 @@ export function DripView({ notify }) {
     searchFields: ['maintenanceType', 'notes', 'performedBy'],
     defaultSort: { key: 'maintenanceDate', dir: 'desc' },
   })
-  const filtered = list.items
 
-  const zoneName = (zoneId) => zones.find((z) => z.id === zoneId)?.name || (zoneId ? `Zone ${String(zoneId).slice(0, 8)}` : '—')
+  const zoneName = (zoneId) =>
+    zones.find((z) => z.id === zoneId)?.name || (zoneId ? t('maintenance.zoneFallback', { id: String(zoneId).slice(0, 8) }) : t('common.none'))
+  const typeLabel = (type) => (type ? t(`maintenance.types.${type}`, { defaultValue: type }) : t('common.none'))
 
   const updateForm = (key) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
@@ -89,28 +118,18 @@ export function DripView({ notify }) {
 
   const resetForm = () => {
     setEditingId(null)
-    setForm({
-      zoneId: '',
-      maintenanceType: 'cleaning',
-      maintenanceDate: '',
-      filterCleaned: false,
-      cloggingDetected: false,
-      cloggingSeverity: '',
-      emitterReplacedCount: '',
-      notes: '',
-      performedBy: '',
-    })
+    setForm(EMPTY_FORM)
     setFormError(null)
   }
 
   const submitLog = (event) => {
     event.preventDefault()
     if (!form.zoneId) {
-      setFormError('The zone is required.')
+      setFormError(t('maintenance.errors.zoneRequired'))
       return
     }
     if (!form.maintenanceDate) {
-      setFormError("The intervention date is required.")
+      setFormError(t('maintenance.errors.dateRequired'))
       return
     }
     setBusy(true)
@@ -124,16 +143,16 @@ export function DripView({ notify }) {
       cloggingSeverity: form.cloggingDetected ? form.cloggingSeverity || 'low' : null,
       emitterReplacedCount: form.emitterReplacedCount === '' ? 0 : Number(form.emitterReplacedCount),
       notes: form.notes || null,
-      performedBy: form.performedBy || null,
+      performedByPersonId: form.performedByPersonId ? Number(form.performedByPersonId) : null,
     }
     const request = editingId ? dripMaintenanceApi.updateLog(editingId, payload) : dripMaintenanceApi.createLog(payload)
     request
       .then(() => refetch())
       .then(() => {
-        notify(editingId ? 'Intervention updated' : 'Intervention saved')
+        notify(editingId ? t('maintenance.updated') : t('maintenance.saved'))
         resetForm()
       })
-      .catch((err) => setFormError(err.message || 'Unable to save.'))
+      .catch((err) => setFormError(err.message || t('common.saveError')))
       .finally(() => setBusy(false))
   }
 
@@ -148,7 +167,8 @@ export function DripView({ notify }) {
       cloggingSeverity: item.cloggingSeverity || '',
       emitterReplacedCount: item.emitterReplacedCount ?? '',
       notes: item.notes || '',
-      performedBy: item.performedBy || '',
+      performedByPersonId: item.performedByPersonId != null ? String(item.performedByPersonId) : '',
+      performedByName: item.performedBy || '',
     })
     setFormError(null)
   }
@@ -156,178 +176,178 @@ export function DripView({ notify }) {
   const deleteLog = () => {
     if (!deleteTarget) return
     setBusy(true)
+    setDeleteError(null)
     dripMaintenanceApi
       .deleteLog(deleteTarget.id)
       .then(() => refetch())
       .then(() => {
-        notify('Intervention deleted')
+        notify(t('maintenance.deleted'))
         setDeleteTarget(null)
       })
-      .catch((err) => setFormError(err.message || 'Unable to delete.'))
+      .catch((err) => setDeleteError(err.message || t('common.deleteError')))
       .finally(() => setBusy(false))
   }
 
-  return (
-    <>
-      <div className="ws-topbar">
-        <div className="ws-title-block">
-          <h1>Maintenance</h1>
-          <p>Track interventions and plan emitter upkeep.</p>
-        </div>
-      </div>
+  const recentCount = logs.filter(
+    (item) => new Date(item.maintenanceDate || item.createdAt).getTime() >= maxDateMs - 7 * DAY_MS,
+  ).length
 
-      <div className="ws-layout-2">
-        <div className="ws-stack">
-          <div className="ws-panel">
-            <div className="ws-panel-header">
-              <h2>Intervention history</h2>
-              <div className="ws-switcher">
-                {['week', 'month', 'all'].map((item) => (
-                  <button key={item} className={`ws-chip ${period === item ? 'active' : ''}`} onClick={() => setPeriod(item)}>{item}</button>
-                ))}
-              </div>
+  const cloggingLabel = (severity) =>
+    t('maintenance.clogging', {
+      severity: severity ? t(`maintenance.severityInline.${severity}`, { defaultValue: severity }) : '',
+    }).trim()
+
+  const columns = [
+    {
+      key: 'maintenanceDate',
+      header: t('maintenance.columns.date'),
+      sortable: true,
+      cell: (item) => (item.maintenanceDate ? format.instant(item.maintenanceDate) : ''),
+    },
+    { key: 'zone', header: t('maintenance.columns.zone'), cell: (item) => zoneName(item.zoneId) },
+    { key: 'maintenanceType', header: t('maintenance.columns.type'), sortable: true, cell: (item) => typeLabel(item.maintenanceType) },
+    {
+      key: 'state',
+      header: t('maintenance.columns.state'),
+      cell: (item) =>
+        item.cloggingDetected ? (
+          <Badge tone={severityTone(item.cloggingSeverity)}>{cloggingLabel(item.cloggingSeverity)}</Badge>
+        ) : (
+          <Badge tone="success">{t('maintenance.ok')}</Badge>
+        ),
+    },
+    { key: 'emitters', header: t('maintenance.columns.emitters'), cell: (item) => format.number(item.emitterReplacedCount ?? 0) },
+  ]
+
+  function renderList() {
+    if (loading) return <LoadingState label={t('maintenance.loading')} />
+    if (error) return <ErrorState message={error.message || t('maintenance.loadError')} />
+    if (list.items.length === 0) return <EmptyState title={t('maintenance.emptyTitle')} message={t('maintenance.empty')} />
+    return (
+      <>
+        <Table
+          caption={t('maintenance.historyTitle')}
+          columns={columns}
+          rows={list.items}
+          {...tableSort(list)}
+          rowActions={(item) => (
+            <div className="flex justify-end gap-1">
+              <IconButton icon={Pencil} label={t('common.edit')} onClick={() => editLog(item)} />
+              <IconButton icon={Trash2} tone="danger" label={t('common.delete')} onClick={() => setDeleteTarget(item)} />
             </div>
-            <div className="ws-filters">
-              <select value={zoneFilter} onChange={(event) => setZoneFilter(event.target.value)}>
-                <option value="">All zones</option>
-                {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-              </select>
-              <SearchInput value={list.query} onChange={list.setQuery} placeholder="Search an intervention…" />
-            </div>
-            <div className="ws-panel-body">
-              {loading ? (
-                <Spinner label="Loading interventions..." full />
-              ) : error ? (
-                <EmptyState title="Error" description={error.message || 'Unable to load interventions.'} />
-              ) : filtered.length === 0 ? (
-                <EmptyState title="No interventions" description="Record a maintenance intervention to start the history." />
-              ) : (
-                <table className="ws-table">
-                  <thead>
-                    <tr>
-                      <th onClick={() => list.toggleSort('maintenanceDate')} style={{ cursor: 'pointer' }}>
-                        Date {list.sort?.key === 'maintenanceDate' ? (list.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                      </th>
-                      <th>Zone</th>
-                      <th onClick={() => list.toggleSort('maintenanceType')} style={{ cursor: 'pointer' }}>
-                        Type {list.sort?.key === 'maintenanceType' ? (list.sort.dir === 'asc' ? '↑' : '↓') : ''}
-                      </th>
-                      <th>State</th>
-                      <th>Emitters</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((item) => (
-                      <tr key={item.id}>
-                        <td>{(item.maintenanceDate || '').replace('T', ' ').slice(0, 16)}</td>
-                        <td>{zoneName(item.zoneId)}</td>
-                        <td>{item.maintenanceType || '—'}</td>
-                        <td>
-                          {item.cloggingDetected ? (
-                            <span className={`ws-tag ${severityTag(item.cloggingSeverity)}`}>Clogging {item.cloggingSeverity || ''}</span>
-                          ) : (
-                            <span className="ws-tag green">OK</span>
-                          )}
-                        </td>
-                        <td>{item.emitterReplacedCount ?? 0}</td>
-                        <td className="ws-table-actions">
-                          <button className="ws-chip" onClick={() => editLog(item)}>Edit</button>
-                          <button className="ws-icon-btn danger" title="Delete" onClick={() => setDeleteTarget(item)}>
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-              <Pagination page={list.page} pageCount={list.pageCount} onPage={list.setPage} total={list.total} unit="intervention" />
-            </div>
-          </div>
-          <div className="ws-panel">
-            <div className="ws-panel-header"><h2>Maintenance planning</h2></div>
-            <div className="ws-panel-body">
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--ws-muted)', lineHeight: 1.6 }}>
-                Recommended: check filters weekly and replace clogged emitters.
-                {(() => {
-                  const recent = logs
-                    .filter((item) => new Date(item.maintenanceDate || item.createdAt).getTime() >= maxDateMs - 7 * DAY_MS)
-                    .length
-                  return ` ${recent} intervention(s) in the last 7 days (relative to the latest data).`
-                })()}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="ws-panel">
-          <div className="ws-panel-header">
-            <h2>{editingId ? 'Edit intervention' : 'New intervention'}</h2>
-            <Plus size={16} />
-          </div>
-          <div className="ws-panel-body">
-            {formError && <div className="ws-inline-error">{formError}</div>}
-            <form className="ws-form-grid" onSubmit={submitLog}>
-              <FormField label="Zone" required>
-                <select style={inputStyle} value={form.zoneId} onChange={updateForm('zoneId')} required>
-                  <option value="">Select</option>
-                  {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-                </select>
-              </FormField>
-              <FormField label="Intervention type" required>
-                <select style={inputStyle} value={form.maintenanceType} onChange={updateForm('maintenanceType')} required>
-                  {MAINTENANCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-                </select>
-              </FormField>
-              <FormField label="Intervention date" required>
-                <input style={inputStyle} type="datetime-local" value={form.maintenanceDate} onChange={updateForm('maintenanceDate')} required />
-              </FormField>
-              <FormField label="Filter cleaned">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                  <input type="checkbox" checked={form.filterCleaned} onChange={updateForm('filterCleaned')} /> Yes
-                </label>
-              </FormField>
-              <FormField label="Clogging detected">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                  <input type="checkbox" checked={form.cloggingDetected} onChange={updateForm('cloggingDetected')} /> Yes
-                </label>
-              </FormField>
-              {form.cloggingDetected && (
-                <FormField label="Clogging severity">
-                  <select style={inputStyle} value={form.cloggingSeverity} onChange={updateForm('cloggingSeverity')}>
-                    <option value="">Select</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </FormField>
-              )}
-              <FormField label="Emitters replaced">
-                <input style={inputStyle} type="number" min="0" step="1" value={form.emitterReplacedCount} onChange={updateForm('emitterReplacedCount')} />
-              </FormField>
-              <FormField label="Performed by">
-                <input style={inputStyle} value={form.performedBy} onChange={updateForm('performedBy')} />
-              </FormField>
-              <FormField label="Notes">
-                <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} value={form.notes} onChange={updateForm('notes')} />
-              </FormField>
-              <div className="ws-form-actions">
-                {editingId && <button type="button" className="ws-chip" onClick={resetForm}>Cancel</button>}
-                <button type="submit" className="ws-action-btn" disabled={busy}>{busy ? '...' : 'Save'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {deleteTarget && (
-        <ConfirmDialog
-          title="Delete intervention"
-          message="This intervention will be removed from the maintenance history."
-          onConfirm={deleteLog}
-          onCancel={() => setDeleteTarget(null)}
-          busy={busy}
+          )}
         />
-      )}
-    </>
+        <ListPagination list={list} />
+      </>
+    )
+  }
+
+  return (
+    <Screen title={t('maintenance.title')} subtitle={t('maintenance.subtitle')}>
+      <SplitLayout
+        main={
+          <>
+            <Card
+              title={t('maintenance.historyTitle')}
+              actions={
+                <ChoiceChips
+                  label={t('maintenance.periodLabel')}
+                  options={PERIODS.map((value) => ({ value, label: t(`maintenance.periods.${value}`) }))}
+                  value={period}
+                  onChange={setPeriod}
+                />
+              }
+            >
+              <Filters>
+                <Select
+                  aria-label={t('maintenance.zoneFilter')}
+                  value={zoneFilter}
+                  onChange={(event) => setZoneFilter(event.target.value)}
+                  className="w-auto"
+                >
+                  <option value="">{t('maintenance.allZones')}</option>
+                  {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
+                </Select>
+                <SearchField value={list.query} onChange={list.setQuery} placeholder={t('maintenance.search')} />
+              </Filters>
+              {renderList()}
+            </Card>
+            <Card title={t('maintenance.planningTitle')}>
+              <p className="text-sm text-text-muted">
+                {t('maintenance.planning')} {t('maintenance.recent', { count: recentCount })}
+              </p>
+            </Card>
+          </>
+        }
+        aside={
+          <Card title={editingId ? t('maintenance.form.editTitle') : t('maintenance.form.newTitle')}>
+            <FormAlert>{formError}</FormAlert>
+            <form className="flex flex-col gap-4" onSubmit={submitLog}>
+              <Field label={t('maintenance.form.zone')} required>
+                <Select value={form.zoneId} onChange={updateForm('zoneId')}>
+                  <option value="">{t('common.select')}</option>
+                  {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
+                </Select>
+              </Field>
+              <Field label={t('maintenance.form.type')} required>
+                <Select value={form.maintenanceType} onChange={updateForm('maintenanceType')}>
+                  {MAINTENANCE_TYPES.map((type) => <option key={type} value={type}>{typeLabel(type)}</option>)}
+                </Select>
+              </Field>
+              <Field label={t('maintenance.form.date')} required>
+                <Input type="datetime-local" value={form.maintenanceDate} onChange={updateForm('maintenanceDate')} />
+              </Field>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" className={CHECKBOX} checked={form.filterCleaned} onChange={updateForm('filterCleaned')} />
+                {t('maintenance.form.filterCleaned')}
+              </label>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" className={CHECKBOX} checked={form.cloggingDetected} onChange={updateForm('cloggingDetected')} />
+                {t('maintenance.form.cloggingDetected')}
+              </label>
+              {form.cloggingDetected && (
+                <Field label={t('maintenance.form.severity')}>
+                  <Select value={form.cloggingSeverity} onChange={updateForm('cloggingSeverity')}>
+                    <option value="">{t('common.select')}</option>
+                    {SEVERITIES.map((severity) => (
+                      <option key={severity} value={severity}>{t(`maintenance.severities.${severity}`)}</option>
+                    ))}
+                  </Select>
+                </Field>
+              )}
+              <Field label={t('maintenance.form.emitters')}>
+                <Input type="number" min="0" step="1" value={form.emitterReplacedCount} onChange={updateForm('emitterReplacedCount')} />
+              </Field>
+              <PersonSelect
+                label={t('maintenance.form.performedBy')}
+                value={form.performedByPersonId}
+                currentName={form.performedByName}
+                onChange={(id) => setForm((current) => ({ ...current, performedByPersonId: id }))}
+                placeholder={t('maintenance.form.noPerformer')}
+              />
+              <Field label={t('maintenance.form.notes')}>
+                <Textarea value={form.notes} onChange={updateForm('notes')} />
+              </Field>
+              <FormActions>
+                {editingId && <Button variant="secondary" onClick={resetForm}>{t('common.cancel')}</Button>}
+                <Button type="submit" loading={busy}>{t('common.save')}</Button>
+              </FormActions>
+            </form>
+          </Card>
+        }
+      />
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t('maintenance.deleteTitle')}
+        message={t('maintenance.deleteMessage')}
+        onConfirm={deleteLog}
+        onClose={() => {
+          setDeleteTarget(null)
+          setDeleteError(null)
+        }}
+        loading={busy}
+        error={deleteError}
+      />
+    </Screen>
   )
 }

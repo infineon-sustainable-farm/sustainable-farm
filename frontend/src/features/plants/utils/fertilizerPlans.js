@@ -1,3 +1,6 @@
+import i18n from "../../../shared/i18n/i18n";
+import { formatDaysAhead, formatQuantity, formatSignedPercent, formatSignedQuantity } from "./format";
+
 /*
  * Rules and texts of the planned applications of fertilizer, kept apart from
  * their dialogs and tables so they can be tested.
@@ -7,7 +10,8 @@
  * the forms compare their dates with. No quantity is suggested either: every
  * quantity is the farmer's own figure.
  */
-import { formatDaysAhead, formatQuantity, formatUnit, NO_VALUE } from "./format";
+
+export { formatSignedPercent, formatSignedQuantity };
 
 /** The states of a planned application, as the API names them. */
 export const PLAN_STATUSES = ["PLANNED", "DONE", "CANCELLED"];
@@ -15,10 +19,13 @@ export const PLAN_STATUSES = ["PLANNED", "DONE", "CANCELLED"];
 /** Same rule as the API: a quantity above 0 with at most 3 decimals. */
 const QUANTITY_PATTERN = /^\d+(\.\d{1,3})?$/;
 
-/** Same rule as a planting: a short code such as "A" or "B2"; spaces around it are removed. */
-const BLOCK_CODE_PATTERN = /^\s*[A-Za-z0-9]{1,10}\s*$/;
+function t(key, options) {
+    return i18n.t(`plants:fertilizer.plans.${key}`, options);
+}
 
-const QUANTITY_MESSAGE = "Quantity must be a number greater than 0, with at most 3 decimals.";
+function message(key) {
+    return t(`errors.${key}`);
+}
 
 function isQuantity(text) {
     const trimmed = String(text ?? "").trim();
@@ -26,8 +33,10 @@ function isQuantity(text) {
 }
 
 /**
- * Errors of the form that plans an application, by field; empty when the
- * form can be sent. The checks mirror the API rules.
+ * Errors of the form that plans an application, by field, in the active
+ * language; empty when the form can be sent. The checks mirror the API rules.
+ * The block is picked among the blocks of the farm referential, so only its
+ * presence is checked here.
  *
  * `today` is the API's own day as "YYYY-MM-DD", or null while it is not
  * known: the date is then left to the API. `unreadableQuantity` is true when
@@ -36,30 +45,29 @@ function isQuantity(text) {
 export function validatePlan(values, { today = null, unreadableQuantity = false } = {}) {
     const errors = {};
     if (!values.fertilizerId) {
-        errors.fertilizerId = "Fertilizer is required.";
+        errors.fertilizerId = message("fertilizerRequired");
     }
     if (!values.blockCode.trim()) {
-        errors.blockCode = "Block is required.";
-    } else if (!BLOCK_CODE_PATTERN.test(values.blockCode)) {
-        errors.blockCode = "Block must be a short code such as A or B2, without prefix or space.";
+        errors.blockCode = message("blockRequired");
     }
     if (!values.plannedDate) {
-        errors.plannedDate = "Planned date is required.";
+        errors.plannedDate = message("plannedDateRequired");
     } else if (today && values.plannedDate < today) {
-        errors.plannedDate = "Planned date cannot be in the past.";
+        errors.plannedDate = message("plannedDatePast");
     }
     if (unreadableQuantity || !isQuantity(values.plannedQuantity)) {
-        errors.plannedQuantity = QUANTITY_MESSAGE;
+        errors.plannedQuantity = message("quantityInvalid");
     }
     if (values.note.length > 255) {
-        errors.note = "Note must be at most 255 characters.";
+        errors.note = message("noteTooLong");
     }
     return errors;
 }
 
 /**
  * Body of a new planned application, from the values of its form. The note
- * is optional and not sent when empty; no farm is sent, as for a planting.
+ * is optional and not sent when empty; no farm is sent, as for a planting:
+ * the block gives it.
  */
 export function planRequestBody(values) {
     const body = {
@@ -75,24 +83,23 @@ export function planRequestBody(values) {
 /**
  * Errors of the form that marks a planned application as done, by field.
  * Same conventions as validatePlan; the date applied cannot be after `today`.
+ * The applicator is a person of the farm people directory.
  */
 export function validateCompletion(values, { today = null, unreadableQuantity = false } = {}) {
     const errors = {};
     if (!values.applicationDate) {
-        errors.applicationDate = "Date is required.";
+        errors.applicationDate = message("dateRequired");
     } else if (today && values.applicationDate > today) {
-        errors.applicationDate = "Date cannot be in the future.";
+        errors.applicationDate = message("dateFuture");
     }
     if (unreadableQuantity || !isQuantity(values.quantity)) {
-        errors.quantity = QUANTITY_MESSAGE;
+        errors.quantity = message("quantityInvalid");
     }
-    if (!values.applicator.trim()) {
-        errors.applicator = "Applicator is required.";
-    } else if (values.applicator.length > 255) {
-        errors.applicator = "Applicator must be at most 255 characters.";
+    if (!values.applicatorPersonId) {
+        errors.applicatorPersonId = message("applicatorRequired");
     }
     if (values.method.length > 255) {
-        errors.method = "Method must be at most 255 characters.";
+        errors.method = message("methodTooLong");
     }
     return errors;
 }
@@ -102,28 +109,30 @@ export function completionRequestBody(values) {
     const body = {
         applicationDate: values.applicationDate,
         quantity: Number(String(values.quantity).trim()),
-        applicator: values.applicator,
+        applicatorPersonId: Number(values.applicatorPersonId),
     };
     if (values.method.trim()) body.method = values.method;
     return body;
 }
+
+const STATUS_TONES = { PLANNED: "warning", DONE: "success", CANCELLED: "neutral" };
 
 /**
  * Badge of a planned application: its state, or "Overdue" when the API says
  * a planned one is late. An unknown state is shown as received.
  */
 export function planBadge(plan) {
-    if (plan.status === "PLANNED" && plan.overdue) return { tone: "error", label: "Overdue" };
-    switch (plan.status) {
-        case "PLANNED":
-            return { tone: "warning", label: "Planned" };
-        case "DONE":
-            return { tone: "success", label: "Done" };
-        case "CANCELLED":
-            return { tone: "neutral", label: "Cancelled" };
-        default:
-            return { tone: "neutral", label: String(plan.status ?? NO_VALUE) };
-    }
+    if (plan.status === "PLANNED" && plan.overdue) return { tone: "error", label: t("status.OVERDUE") };
+    const status = String(plan.status ?? "");
+    return {
+        tone: STATUS_TONES[status] ?? "neutral",
+        label: t(`status.${status}`, { defaultValue: status || i18n.t("plants:common.none") }),
+    };
+}
+
+/** Label of a status code in the status filter. */
+export function planStatusLabel(status) {
+    return t(`status.${status}`, { defaultValue: status });
 }
 
 /**
@@ -135,22 +144,10 @@ export function planDelayLabel(plan) {
     const days = plan.daysFromToday;
     if (plan.status !== "PLANNED" || days === null || days === undefined) return null;
     if (days > 0) return formatDaysAhead(days);
-    if (days === 0) return "today";
+    if (days === 0) return t("delay.today");
     const late = Math.abs(days);
-    return `${late.toLocaleString("en-US")} ${late === 1 ? "day" : "days"} late`;
-}
-
-/** A gap in the unit of its fertilizer, with its sign: "+5 kg", "-20 kg", "0 L". */
-export function formatSignedQuantity(value, unit) {
-    if (value === null || value === undefined) return NO_VALUE;
-    const number = Number(value).toLocaleString("en-US", { signDisplay: "exceptZero" });
-    return `${number} ${formatUnit(unit)}`;
-}
-
-/** A gap as the percentage the API computed, with its sign: "-33.3%". Null when nothing was planned. */
-export function formatSignedPercent(value) {
-    if (value === null || value === undefined) return null;
-    return `${Number(value).toLocaleString("en-US", { signDisplay: "exceptZero", maximumFractionDigits: 1 })}%`;
+    const locale = { en: "en-US", de: "de-DE", fr: "fr-FR" }[i18n.resolvedLanguage] ?? "en-US";
+    return t("delay.late", { count: late, days: late.toLocaleString(locale) });
 }
 
 /**
@@ -159,10 +156,14 @@ export function formatSignedPercent(value) {
  */
 export function stockWarningText(warning, days) {
     const { unit } = warning;
-    const text = `${warning.fertilizerName}: ${formatQuantity(warning.plannedQuantity, unit)} planned in the next `
-        + `${days} days, ${formatQuantity(warning.currentStock, unit)} in stock, `
-        + `${formatQuantity(warning.shortfall, unit)} short.`;
+    const text = t("stockWarning.line", {
+        fertilizer: warning.fertilizerName,
+        planned: formatQuantity(warning.plannedQuantity, unit),
+        days,
+        stock: formatQuantity(warning.currentStock, unit),
+        shortfall: formatQuantity(warning.shortfall, unit),
+    });
     return warning.overdueQuantity > 0
-        ? `${text} ${formatQuantity(warning.overdueQuantity, unit)} of it is overdue.`
+        ? `${text} ${t("stockWarning.overdue", { quantity: formatQuantity(warning.overdueQuantity, unit) })}`
         : text;
 }

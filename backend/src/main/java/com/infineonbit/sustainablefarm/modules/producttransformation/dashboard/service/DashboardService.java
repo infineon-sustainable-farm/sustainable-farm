@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcResult;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.dto.response.DashboardKPIResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.dto.response.HarvestQuantityKPI;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.dto.response.ActiveBatchesKPI;
@@ -16,12 +19,13 @@ import com.infineonbit.sustainablefarm.modules.producttransformation.harvesteven
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.repository.DryingRunRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.repository.QcCheckpointRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.washsortrecord.repository.WashSortRecordRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.variety.MangoVarietyCodes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,7 +54,7 @@ public class DashboardService {
     private final BatchRepository batchRepository;
     private final QcCheckpointRepository qcCheckpointRepository;
     private final DryingRunRepository dryingRunRepository;
-    private final EquipmentRepository equipmentRepository;
+    private final EquipmentService equipmentService;
     private final WashSortRecordRepository washSortRecordRepository;
     
     /**
@@ -132,7 +136,7 @@ public class DashboardService {
     public ActiveBatchesKPI calculateActiveBatches() {
         log.debug("Calculating active batches");
         
-        List<Batch.BatchStatus> activeStatuses = List.of(Batch.BatchStatus.DRYING, Batch.BatchStatus.WASHING, Batch.BatchStatus.PACKAGING);
+        List<BatchStatus> activeStatuses = List.of(BatchStatus.DRYING, BatchStatus.WASHING, BatchStatus.PACKAGING);
         long totalBatchCount = batchRepository.count();
         long activeBatchCount = batchRepository.countByCurrentStatusIn(activeStatuses);
 
@@ -174,9 +178,9 @@ public class DashboardService {
         LocalDateTime to = endDate.atTime(23, 59, 59);
 
         long totalCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetween(from, to);
-        long passedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.PASS);
-        long failedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.FAIL);
-        long reworkCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcCheckpoint.QcResult.REWORK);
+        long passedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcResult.PASS);
+        long failedCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcResult.FAIL);
+        long reworkCheckpoints = qcCheckpointRepository.countByCheckpointTimeBetweenAndResult(from, to, QcResult.REWORK);
 
         BigDecimal passRate = totalCheckpoints == 0
             ? BigDecimal.ZERO
@@ -255,19 +259,19 @@ public class DashboardService {
     public EquipmentUtilizationKPI calculateEquipmentUtilization() {
         log.debug("Calculating equipment utilization");
         
-        List<Equipment> allEquipment = equipmentRepository.findAll();
+        List<Equipment> allEquipment = equipmentService.getAllEquipment();
         int totalEquipment = allEquipment.size();
         
         int activeEquipment = (int) allEquipment.stream()
-            .filter(eq -> eq.getMaintenanceStatus() == Equipment.MaintenanceStatus.ACTIVE)
+            .filter(eq -> eq.getMaintenanceStatus() == MaintenanceStatus.ACTIVE)
             .count();
         
         int maintenanceEquipment = (int) allEquipment.stream()
-            .filter(eq -> eq.getMaintenanceStatus() == Equipment.MaintenanceStatus.MAINTENANCE)
+            .filter(eq -> eq.getMaintenanceStatus() == MaintenanceStatus.MAINTENANCE)
             .count();
         
         int inactiveEquipment = (int) allEquipment.stream()
-            .filter(eq -> eq.getMaintenanceStatus() == Equipment.MaintenanceStatus.RETIRED)
+            .filter(eq -> eq.getMaintenanceStatus() == MaintenanceStatus.RETIRED)
             .count();
         
         BigDecimal utilizationRate = totalEquipment == 0 
@@ -399,7 +403,7 @@ public class DashboardService {
     public List<EquipmentUtilizationChartData> getEquipmentUtilizationChartData() {
         log.debug("Calculating equipment utilization chart data");
         
-        List<Equipment> allEquipment = equipmentRepository.findAll();
+        List<Equipment> allEquipment = equipmentService.getAllEquipment();
         int totalEquipment = allEquipment.size();
         
         List<EquipmentUtilizationChartData> utilizationData = new java.util.ArrayList<>();
@@ -435,7 +439,7 @@ public class DashboardService {
             LocalDate date = checkpoint.getCheckpointTime().toLocalDate();
             int[] counts = dateToCounts.getOrDefault(date, new int[]{0, 0});
             counts[0]++;
-            if (checkpoint.getResult() == QcCheckpoint.QcResult.PASS) {
+            if (checkpoint.getResult() == QcResult.PASS) {
                 counts[1]++;
             }
             dateToCounts.put(date, counts);
@@ -611,7 +615,7 @@ public class DashboardService {
     private ActiveBatchesKPI.BatchSummary mapToBatchSummary(Batch batch) {
         return ActiveBatchesKPI.BatchSummary.builder()
             .batchId(batch.getBatchId())
-            .productName(batch.getMangoVariety() != null ? batch.getMangoVariety().name() : "unknown")
+            .productName(batch.getVarietyKey() != null ? MangoVarietyCodes.toApi(batch.getVarietyKey()) : "unknown")
             .currentStage(batch.getCurrentStatus() != null ? batch.getCurrentStatus().name() : "unknown")
             .quantity(batch.getHarvestQuantityKg())
             .startDate(batch.getHarvestDate())

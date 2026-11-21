@@ -15,21 +15,23 @@ final class CredentialEmailBuilder {
     private CredentialEmailBuilder() {
     }
 
-    static MailContent build(CredentialNotificationEvent.Type type, CredentialUserEntity credential, String zoneName) {
+    static MailContent build(CredentialNotificationEvent.Type type, CredentialUserEntity credential, String holderName,
+            String zoneName) {
         return switch (type) {
             case GRANTED -> new MailContent("Votre accès au site a été accordé", html(
-                    "Accès accordé", "Un accès au site vous a été accordé.", credential, zoneName));
+                    "Accès accordé", "Un accès au site vous a été accordé.", credential, holderName, zoneName));
             case REVOKED -> new MailContent("Votre accès au site a été révoqué", html(
-                    "Accès révoqué", "Votre accès au site a été révoqué et n'est plus valable.", credential, zoneName));
+                    "Accès révoqué", "Votre accès au site a été révoqué et n'est plus valable.", credential, holderName, zoneName));
         };
     }
 
-    private static String html(String title, String intro, CredentialUserEntity credential, String zoneName) {
+    private static String html(String title, String intro, CredentialUserEntity credential, String holderName,
+            String zoneName) {
         return "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:auto;\">"
                 + "<h2>" + HtmlUtils.htmlEscape(title) + "</h2>"
                 + "<p>" + HtmlUtils.htmlEscape(intro) + "</p>"
                 + "<table style=\"border-collapse:collapse;font-size:14px;\">"
-                + row("Nom", credential.getName())
+                + row("Nom", holderName)
                 + row("Niveau d'accès", credential.getLevel())
                 + row("Zone", zoneName)
                 + row("Date de validité", credential.getValidUntil())

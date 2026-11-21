@@ -5,8 +5,8 @@
  * shared file untouched, so merging develop stays clean.
  */
 export const MACHINERY_ENDPOINTS = {
-  EQUIPMENTS: "/api/equipments",
-  OPERATOR_ASSIGNMENTS: "/api/operator-assignments",
+  EQUIPMENTS: "/api/machinery/equipment",
+  OPERATOR_ASSIGNMENTS: "/api/machinery/operator-assignments",
   SPARE_PARTS: "/api/machinery/spare-parts",
   MAINTENANCE_SCHEDULES: "/api/machinery/maintenance-schedules",
   USAGE_LOGS: "/api/machinery/usage-logs",

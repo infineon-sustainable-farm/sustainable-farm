@@ -2,6 +2,7 @@ package com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import org.springframework.data.jpa.repository.EntityGraph;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,36 +21,44 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Repository
-public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
+public interface DryingRunRepository extends JpaRepository<DryingRun, Long> {
+
+    /** Whether a drying run has this business code. */
+    boolean existsByRunId(String runId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByRunId(String runId);
+
 
     /**
      * Find drying runs by batch
      */
-    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findByBatchBatchId(String batchId);
 
     /**
      * Find drying runs by date range
      */
-    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findByStartTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     /**
-     * Find drying runs by equipment
+     * Find drying runs by equipment (register id)
      */
-    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
-    List<DryingRun> findByEquipmentEquipmentId(String equipmentId);
+    @EntityGraph(attributePaths = {"batch", "operator"})
+    List<DryingRun> findByEquipmentId(Long equipmentId);
 
     /**
      * Find drying runs by operator
      */
-    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findByOperatorOperatorId(String operatorId);
 
     /**
      * Find drying runs by batch and date range
      */
     @Query("SELECT d FROM DryingRun d WHERE d.batch.batchId = :batchId AND d.startTime BETWEEN :startDate AND :endDate")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findByBatchAndDateRange(@Param("batchId") String batchId,
                                           @Param("startDate") LocalDateTime startDate,
                                           @Param("endDate") LocalDateTime endDate);
@@ -59,29 +68,32 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
      * is disabled), and DryingRunResponse computes energy per kg from the batch
      * quantity: the associations must be fetched with the entity.
      */
-    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findAll();
 
-    @EntityGraph(attributePaths = {"batch", "equipment", "operator"})
-    Optional<DryingRun> findById(String runId);
+    @EntityGraph(attributePaths = {"batch", "operator"})
+    Optional<DryingRun> findByRunId(String runId);
 
     /**
      * Find drying runs with moisture content within target range
      * Business Rule: Target moisture 12-18% for EU compliance
      */
     @Query("SELECT d FROM DryingRun d WHERE d.endMoisturePct BETWEEN 12 AND 18")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findWithinTargetMoistureRange();
 
     /**
      * Find drying runs with moisture content below minimum
      */
     @Query("SELECT d FROM DryingRun d WHERE d.endMoisturePct < 6")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findBelowMinimumMoisture();
 
     /**
      * Find drying runs with moisture content above maximum
      */
     @Query("SELECT d FROM DryingRun d WHERE d.endMoisturePct > 18")
+    @EntityGraph(attributePaths = {"batch", "operator"})
     List<DryingRun> findAboveMaximumMoisture();
 
     /**
@@ -133,6 +145,7 @@ public interface DryingRunRepository extends JpaRepository<DryingRun, String> {
     /**
      * Find drying runs by drying method (equipment type)
      */
-    @Query("SELECT d FROM DryingRun d WHERE d.equipment.equipmentType = :equipmentType")
-    List<DryingRun> findByEquipmentType(@Param("equipmentType") String equipmentType);
+    @Query("SELECT d FROM DryingRun d JOIN EquipmentSpec s ON s.equipmentId = d.equipmentId WHERE s.equipmentType = :equipmentType")
+    @EntityGraph(attributePaths = {"batch", "operator"})
+    List<DryingRun> findByEquipmentType(@Param("equipmentType") EquipmentType equipmentType);
 }

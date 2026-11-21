@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,9 +30,8 @@ public interface FertilizerPlanRepository extends JpaRepository<FertilizerPlan, 
      *
      * @param fertilizerId fertilizer identifier, or {@code null} for every fertilizer
      * @param status       plan status, or {@code null} for every status
-     * @param farmId       farm identifier, or {@code null} to ignore the farm
-     * @param blockCode    raw block value as stored (for example {@code "B"}),
-     *                     or {@code null} to ignore the block
+     * @param allBlocks    {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds     ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @param from         first planned date, included, or {@code null} for no lower bound
      * @param to           last planned date, included, or {@code null} for no upper bound
      * @return the matching planned applications, ordered by planned date then identifier
@@ -40,16 +40,15 @@ public interface FertilizerPlanRepository extends JpaRepository<FertilizerPlan, 
             SELECT p FROM FertilizerPlan p JOIN FETCH p.product f LEFT JOIN FETCH p.movement
             WHERE (CAST(:fertilizerId AS Long) IS NULL OR f.id = :fertilizerId)
               AND (CAST(:status AS String) IS NULL OR p.status = :status)
-              AND (CAST(:farmId AS Integer) IS NULL OR p.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR p.blockCode = :blockCode)
+              AND (:allBlocks = true OR p.blockId IN :blockIds)
               AND (CAST(:from AS LocalDate) IS NULL OR p.plannedDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR p.plannedDate <= :to)
             ORDER BY p.plannedDate ASC, p.id ASC
             """)
     List<FertilizerPlan> findByOptionalFilters(@Param("fertilizerId") Long fertilizerId,
                                                @Param("status") FertilizerPlanStatus status,
-                                               @Param("farmId") Integer farmId,
-                                               @Param("blockCode") String blockCode,
+                                               @Param("allBlocks") boolean allBlocks,
+                                               @Param("blockIds") Collection<Long> blockIds,
                                                @Param("from") LocalDate from,
                                                @Param("to") LocalDate to);
 

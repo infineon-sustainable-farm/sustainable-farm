@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.equipment.controller;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.dashboard.service.DtoMapper;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.dto.request.EquipmentCreateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.dto.request.EquipmentUpdateRequest;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.dto.response.EquipmentResponse;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +17,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller for Equipment operations
+ * REST Controller for Equipment operations: the processing and drying machines of the farm
+ * equipment register owned by machinery, with their product transformation attributes
+ * (rules in {@code EquipmentRegisterMapping}).
+ *
+ * <p>Machinery owns the machines: it alone creates, renames, changes the status of and deletes
+ * them ({@code /api/machinery/equipment}). This route lists them and edits only their product
+ * transformation attributes ({@code pt_equipment_spec}); it has no create and no delete.</p>
  * 
  * @author Abdoul Ben Fatao SANON
  * @version 1.0.0
@@ -28,8 +32,8 @@ import java.util.stream.Collectors;
 // @RestController classes with the same simple name make the Spring context
 // fail (ConflictingBeanDefinitionException).
 @RestController("prodTransEquipmentController")
-@RequestMapping("/api/equipment")
-@Tag(name = "Equipment Management", description = "APIs for managing equipment and machinery")
+@RequestMapping("/api/product-transformation/equipment")
+@Tag(name = "Equipment Management", description = "Processing and drying machines of machinery, with their product transformation attributes")
 public class EquipmentController {
 
     private final EquipmentService equipmentService;
@@ -39,15 +43,6 @@ public class EquipmentController {
     public EquipmentController(EquipmentService equipmentService, DtoMapper dtoMapper) {
         this.equipmentService = equipmentService;
         this.dtoMapper = dtoMapper;
-    }
-
-    @PostMapping
-    @Operation(summary = "Create new equipment", description = "Creates a new equipment record")
-    public ResponseEntity<EquipmentResponse> createEquipment(@Valid @RequestBody EquipmentCreateRequest request) {
-        Equipment equipment = dtoMapper.toEntity(request);
-        Equipment createdEquipment = equipmentService.createEquipment(equipment);
-        EquipmentResponse response = dtoMapper.toResponse(createdEquipment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{equipmentId}")
@@ -70,51 +65,39 @@ public class EquipmentController {
     }
 
     @PutMapping("/{equipmentId}")
-    @Operation(summary = "Update equipment", description = "Updates an existing equipment record")
+    @Operation(summary = "Update the product transformation attributes of a machine",
+            description = "Updates type, capacity, energy consumption, location and last maintenance date; "
+                    + "the machine itself (name, status) is changed in machinery")
     public ResponseEntity<EquipmentResponse> updateEquipment(
             @Parameter(description = "Equipment ID") @PathVariable String equipmentId,
             @Valid @RequestBody EquipmentUpdateRequest request) {
-        Equipment existingEquipment = equipmentService.getEquipmentById(equipmentId);
-        
-        if (request.getEquipmentName() != null) {
-            existingEquipment.setEquipmentName(request.getEquipmentName());
-        }
+        Equipment spec = equipmentService.getEquipmentById(equipmentId);
+
         if (request.getEquipmentType() != null) {
-            existingEquipment.setEquipmentType(request.getEquipmentType());
+            spec.setEquipmentType(request.getEquipmentType());
         }
         if (request.getCapacityKgPerHour() != null) {
-            existingEquipment.setCapacityKgPerHour(request.getCapacityKgPerHour());
+            spec.setCapacityKgPerHour(request.getCapacityKgPerHour());
         }
         if (request.getEnergyConsumptionKwhPerKg() != null) {
-            existingEquipment.setEnergyConsumptionKwhPerKg(request.getEnergyConsumptionKwhPerKg());
+            spec.setEnergyConsumptionKwhPerKg(request.getEnergyConsumptionKwhPerKg());
         }
         if (request.getLocation() != null) {
-            existingEquipment.setLocation(request.getLocation());
-        }
-        if (request.getMaintenanceStatus() != null) {
-            existingEquipment.setMaintenanceStatus(request.getMaintenanceStatus());
+            spec.setLocation(request.getLocation());
         }
         if (request.getLastMaintenanceDate() != null) {
-            existingEquipment.setLastMaintenanceDate(request.getLastMaintenanceDate());
+            spec.setLastMaintenanceDate(request.getLastMaintenanceDate());
         }
-        
-        Equipment updatedEquipment = equipmentService.updateEquipment(equipmentId, existingEquipment);
+
+        Equipment updatedEquipment = equipmentService.updateSpec(equipmentId, spec);
         EquipmentResponse response = dtoMapper.toResponse(updatedEquipment);
         return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/{equipmentId}")
-    @Operation(summary = "Delete equipment", description = "Deletes an equipment record by its ID")
-    public ResponseEntity<Void> deleteEquipment(
-            @Parameter(description = "Equipment ID") @PathVariable String equipmentId) {
-        equipmentService.deleteEquipment(equipmentId);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/type/{equipmentType}")
     @Operation(summary = "Get equipment by type", description = "Retrieves equipment filtered by type")
     public ResponseEntity<List<EquipmentResponse>> getEquipmentByType(
-            @Parameter(description = "Equipment type") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.EquipmentType equipmentType) {
+            @Parameter(description = "Equipment type") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.EquipmentType equipmentType) {
         List<Equipment> equipmentList = equipmentService.getEquipmentByType(equipmentType);
         List<EquipmentResponse> responses = equipmentList.stream()
                 .map(dtoMapper::toResponse)
@@ -125,7 +108,7 @@ public class EquipmentController {
     @GetMapping("/status/{maintenanceStatus}")
     @Operation(summary = "Get equipment by maintenance status", description = "Retrieves equipment filtered by maintenance status")
     public ResponseEntity<List<EquipmentResponse>> getEquipmentByStatus(
-            @Parameter(description = "Maintenance status") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus maintenanceStatus) {
+            @Parameter(description = "Maintenance status") @PathVariable com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus maintenanceStatus) {
         List<Equipment> equipmentList = equipmentService.getEquipmentByStatus(maintenanceStatus);
         List<EquipmentResponse> responses = equipmentList.stream()
                 .map(dtoMapper::toResponse)
@@ -136,7 +119,7 @@ public class EquipmentController {
     @GetMapping("/available")
     @Operation(summary = "Get available equipment", description = "Retrieves equipment with ACTIVE maintenance status")
     public ResponseEntity<List<EquipmentResponse>> getAvailableEquipment() {
-        List<Equipment> equipmentList = equipmentService.getEquipmentByStatus(com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment.MaintenanceStatus.ACTIVE);
+        List<Equipment> equipmentList = equipmentService.getEquipmentByStatus(com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.MaintenanceStatus.ACTIVE);
         List<EquipmentResponse> responses = equipmentList.stream()
                 .map(dtoMapper::toResponse)
                 .collect(Collectors.toList());

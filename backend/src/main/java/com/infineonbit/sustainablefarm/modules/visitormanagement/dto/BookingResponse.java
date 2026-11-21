@@ -44,7 +44,8 @@ public class BookingResponse {
         r.reference = "BK-" + String.format("%05d", booking.getId() == null ? 0 : booking.getId());
         r.activityId = booking.getActivity().getId();
         r.activityName = booking.getActivity().getName();
-        r.activityPrice = booking.getActivity().getPrice();
+        r.activityPrice = booking.getActivity().getPrice() == null
+                ? null : booking.getActivity().getPrice().amount();
         r.timeSlotId = booking.getTimeSlot().getId();
         r.slotDate = booking.getTimeSlot().getDate();
         r.slotStartTime = booking.getTimeSlot().getStartTime();
@@ -53,9 +54,9 @@ public class BookingResponse {
         r.visitorEmail = booking.getVisitorEmail();
         r.visitorPhone = booking.getVisitorPhone();
         r.peopleCount = booking.getPeopleCount();
-        r.totalAmount = booking.getTotalAmount() != null
-                ? booking.getTotalAmount()
-                : booking.getActivity().getPrice().multiply(BigDecimal.valueOf(booking.getPeopleCount()));
+        r.totalAmount = booking.getTotal() != null
+                ? booking.getTotal().amount()
+                : booking.getActivity().getPrice().multiply(BigDecimal.valueOf(booking.getPeopleCount())).amount();
         r.paymentMethod = booking.getPaymentMethod();
         r.paymentStatus = booking.getPaymentStatus();
         r.status = booking.getStatus();

@@ -15,37 +15,38 @@ export const operatorApi = {
   /**
    * Get all operators
    */
-  getAllOperators: () => apiClient.get('/api/operators'),
+  getAllOperators: () => apiClient.get('/api/product-transformation/operators'),
 
   /**
    * Get operator by ID
    */
-  getOperatorById: (operatorId) => apiClient.get(`/api/operators/${operatorId}`),
+  getOperatorById: (operatorId) => apiClient.get(`/api/product-transformation/operators/${operatorId}`),
 
   /**
-   * Create a new operator
+   * Create the operator role of an existing person of the people directory:
+   * { operatorId, personId, role, certifications, activeStatus, hireDate }. The name is the person's.
    */
-  createOperator: (operatorData) => apiClient.post('/api/operators', operatorData),
+  createOperator: (operatorData) => apiClient.post('/api/product-transformation/operators', operatorData),
 
   /**
    * Update an operator
    */
-  updateOperator: (operatorId, operatorData) => apiClient.put(`/api/operators/${operatorId}`, operatorData),
+  updateOperator: (operatorId, operatorData) => apiClient.put(`/api/product-transformation/operators/${operatorId}`, operatorData),
 
   /**
    * Delete an operator
    */
-  deleteOperator: (operatorId) => apiClient.delete(`/api/operators/${operatorId}`),
+  deleteOperator: (operatorId) => apiClient.delete(`/api/product-transformation/operators/${operatorId}`),
 
   /**
    * Get operators by role
    */
-  getOperatorsByRole: (role) => apiClient.get(`/api/operators/role/${role}`),
+  getOperatorsByRole: (role) => apiClient.get(`/api/product-transformation/operators/role/${role}`),
 
   /**
    * Get active operators
    */
-  getActiveOperators: () => apiClient.get('/api/operators/active'),
+  getActiveOperators: () => apiClient.get('/api/product-transformation/operators/active'),
 };
 
 export default operatorApi;

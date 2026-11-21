@@ -1,18 +1,16 @@
 import { useState } from "react";
-import { formatEnumLabel } from "../../../../shared/utils/formatEnumLabel";
-
-const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
-const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
-const ERROR_CLASS = "mt-1 text-xs text-error";
+import { useTranslation } from "react-i18next";
+import { Field, Input, Select } from "../../../../shared/ui";
+import { useLabels } from "../../utils/labels";
+import FormActions from "../FormActions";
+import FormAlert from "../FormAlert";
+import { EMAIL_PATTERN, PHONE_PATTERN, VISITOR_LANGUAGES } from "./visitorRules";
 
 const TYPES = ["INDIVIDUAL", "GROUP", "SCHOOL", "PARTNER"];
-const LANGUAGES = ["French", "Moore", "German", "English"];
-const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
-const PHONE_PATTERN = /^\+?[0-9][0-9()\-. ]{5,28}$/;
 
 /**
- * Visitor create/edit form of the directory. It sends a VisitorRequest, the
- * same payload the registration screen builds.
+ * Visitor create/edit form of the directory. It sends a VisitorRequest, the same payload the
+ * registration screen builds.
  */
 export default function VisitorForm({
     visitor,
@@ -22,6 +20,8 @@ export default function VisitorForm({
     onSubmit,
     onCancel,
 }) {
+    const { t } = useTranslation("visitormanagement");
+    const labels = useLabels();
     const isEditing = Boolean(visitor);
 
     const [fullName, setFullName] = useState(visitor?.fullName ?? "");
@@ -36,24 +36,24 @@ export default function VisitorForm({
     function validate() {
         const errors = {};
         if (!fullName.trim()) {
-            errors.fullName = "Full name is required.";
+            errors.fullName = t("visitors.validation.fullNameRequired");
         } else if (fullName.trim().length > 150) {
-            errors.fullName = "Full name must be at most 150 characters.";
+            errors.fullName = t("visitors.validation.fullNameTooLong");
         }
         const size = Number(groupSize);
         if (!Number.isInteger(size) || size < 1) {
-            errors.groupSize = "Group size must be a whole number of at least 1.";
+            errors.groupSize = t("visitors.validation.groupSizeInvalid");
         }
         if (email.trim() && !EMAIL_PATTERN.test(email.trim())) {
-            errors.email = "Enter a valid email address.";
+            errors.email = t("visitors.validation.emailInvalid");
         } else if (email.trim().length > 200) {
-            errors.email = "Email must be at most 200 characters.";
+            errors.email = t("visitors.validation.emailTooLong");
         }
         if (phone.trim() && !PHONE_PATTERN.test(phone.trim())) {
-            errors.phone = "Enter a valid phone number.";
+            errors.phone = t("visitors.validation.phoneInvalid");
         }
         if (specialNeeds.trim().length > 500) {
-            errors.specialNeeds = "Special requirements must be at most 500 characters.";
+            errors.specialNeeds = t("visitors.validation.specialNeedsTooLong");
         }
         return errors;
     }
@@ -78,152 +78,84 @@ export default function VisitorForm({
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
 
     return (
-        <form
-            onSubmit={handleSubmit}
-           
-        >
+        <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div>
-                    <label htmlFor="vi-name" className={LABEL_CLASS}>
-                        Full name
-                    </label>
-                    <input
-                        id="vi-name"
+                <Field id="vi-name" label={t("visitors.fields.fullName")} error={fieldError("fullName")}>
+                    <Input
                         type="text"
                         value={fullName}
                         onChange={(event) => setFullName(event.target.value)}
-                        placeholder="e.g. Marie Dubois"
-                        className={INPUT_CLASS}
                     />
-                    {fieldError("fullName") && (
-                        <p className={ERROR_CLASS}>{fieldError("fullName")}</p>
-                    )}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="vi-group" className={LABEL_CLASS}>
-                        Group size
-                    </label>
-                    <input
-                        id="vi-group"
+                <Field id="vi-group" label={t("visitors.fields.groupSize")} error={fieldError("groupSize")}>
+                    <Input
                         type="number"
                         min="1"
                         value={groupSize}
                         onChange={(event) => setGroupSize(event.target.value)}
-                        className={INPUT_CLASS}
                     />
-                    {fieldError("groupSize") && (
-                        <p className={ERROR_CLASS}>{fieldError("groupSize")}</p>
-                    )}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="vi-type" className={LABEL_CLASS}>
-                        Visitor type
-                    </label>
-                    <select
-                        id="vi-type"
+                <Field id="vi-type" label={t("visitors.fields.type")}>
+                    <Select
                         value={type}
                         onChange={(event) => setType(event.target.value)}
-                        className={INPUT_CLASS}
-                    >
-                        {TYPES.map((option) => (
-                            <option key={option} value={option}>
-                                {formatEnumLabel(option)}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                        options={TYPES.map((option) => ({ value: option, label: labels.enum(option) }))}
+                    />
+                </Field>
 
-                <div>
-                    <label htmlFor="vi-email" className={LABEL_CLASS}>
-                        Email
-                    </label>
-                    <input
-                        id="vi-email"
+                <Field id="vi-email" label={t("visitors.fields.email")} error={fieldError("email")}>
+                    <Input
                         type="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
-                        placeholder="email@example.com"
-                        className={INPUT_CLASS}
+                        placeholder={t("visitors.placeholders.email")}
                     />
-                    {fieldError("email") && <p className={ERROR_CLASS}>{fieldError("email")}</p>}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="vi-phone" className={LABEL_CLASS}>
-                        Phone
-                    </label>
-                    <input
-                        id="vi-phone"
+                <Field id="vi-phone" label={t("visitors.fields.phone")} error={fieldError("phone")}>
+                    <Input
                         type="tel"
                         value={phone}
                         onChange={(event) => setPhone(event.target.value)}
-                        placeholder="+226 ..."
-                        className={INPUT_CLASS}
+                        placeholder={t("visitors.placeholders.phone")}
                     />
-                    {fieldError("phone") && <p className={ERROR_CLASS}>{fieldError("phone")}</p>}
-                </div>
+                </Field>
 
-                <div>
-                    <label htmlFor="vi-language" className={LABEL_CLASS}>
-                        Preferred language
-                    </label>
-                    <select
-                        id="vi-language"
+                <Field id="vi-language" label={t("visitors.fields.language")}>
+                    <Select
                         value={language}
                         onChange={(event) => setLanguage(event.target.value)}
-                        className={INPUT_CLASS}
-                    >
-                        {LANGUAGES.map((option) => (
-                            <option key={option} value={option}>
-                                {option}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                        options={VISITOR_LANGUAGES.map((option) => ({
+                            value: option,
+                            label: labels.language(option),
+                        }))}
+                    />
+                </Field>
             </div>
 
-            <div className="mt-4">
-                <label htmlFor="vi-needs" className={LABEL_CLASS}>
-                    Special requirements
-                </label>
-                <input
-                    id="vi-needs"
+            <Field
+                id="vi-needs"
+                className="mt-4"
+                label={t("visitors.fields.specialNeeds")}
+                error={fieldError("specialNeeds")}
+            >
+                <Input
                     type="text"
                     value={specialNeeds}
                     onChange={(event) => setSpecialNeeds(event.target.value)}
-                    placeholder="Allergies, mobility needs, etc."
-                    className={INPUT_CLASS}
+                    placeholder={t("visitors.placeholders.specialNeeds")}
                 />
-                {fieldError("specialNeeds") && (
-                    <p className={ERROR_CLASS}>{fieldError("specialNeeds")}</p>
-                )}
-            </div>
+            </Field>
 
-            {submitError && (
-                <p className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
+            {submitError && <FormAlert className="mt-4">{submitError}</FormAlert>}
 
-            <div className="mt-4 flex gap-2.5">
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isSubmitting ? "Saving…" : isEditing ? "Save visitor" : "Create visitor"}
-                </button>
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
-                >
-                    Cancel
-                </button>
-            </div>
+            <FormActions
+                onCancel={onCancel}
+                isSubmitting={isSubmitting}
+                submitLabel={isEditing ? t("visitors.form.save") : t("visitors.form.create")}
+            />
         </form>
     );
 }

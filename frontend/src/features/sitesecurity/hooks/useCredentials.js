@@ -56,14 +56,10 @@ export function useCredentials() {
         setError(null);
     };
 
+    /* Rejects on failure: the confirmation dialog shows the error. */
     const revokeCredential = async (id) => {
-        try {
-            const revoked = await revokeCredentialApi(id);
-            setUsers((prev) => prev.map((u) => (u.id === revoked.id ? revoked : u)));
-            setError(null);
-        } catch (err) {
-            setError(err.message);
-        }
+        const revoked = await revokeCredentialApi(id);
+        setUsers((prev) => prev.map((u) => (u.id === revoked.id ? revoked : u)));
     };
 
     return { users, freshId, addCredential, revokeCredential, isLoading, error };

@@ -2,7 +2,7 @@
 // DOM environment and between-test cleanup declared in the file: the module requires
 // no shared Vitest configuration (see SourcesView.test.jsx).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { controlByLabel, renderView as render } from './testRender'
 import { VisitorsView } from './VisitorsView'
 import { iotCommandApi, visitorApi } from '../../api/watersupplyApi'
@@ -57,13 +57,17 @@ describe('VisitorsView', () => {
     expect(screen.getByText('electric pump room')).toBeTruthy()
   })
 
-  it('publishes a new briefing version from one entry per line', async () => {
+  it('publishes a new briefing version with the areas picked among the zones', async () => {
     visitorApi.publishSafetyBriefing.mockResolvedValue({})
     render(<VisitorsView {...props} />)
     fireEvent.click(await screen.findByText('Publish a new version'))
     const form = screen.getByRole('button', { name: 'Publish' }).closest('form')
+    const forbidden = within(screen.getByRole('group', { name: 'Forbidden areas' }))
 
-    fireEvent.change(controlByLabel(form, 'Forbidden areas'), { target: { value: 'pump room\n\n chemical storage ' } })
+    // The published names that are not a zone stay choices, already ticked.
+    expect(forbidden.getByLabelText('electric pump room').checked).toBe(true)
+    fireEvent.click(forbidden.getByLabelText('Demo zone'))
+    fireEvent.click(forbidden.getByLabelText('electric pump room'))
     fireEvent.change(controlByLabel(form, 'Maximum group size'), { target: { value: '8' } })
     fireEvent.submit(form)
 
@@ -71,7 +75,7 @@ describe('VisitorsView', () => {
       version: null,
       text: 'Default text',
       allowedZones: ['reservoir surroundings'],
-      forbiddenZones: ['pump room', 'chemical storage'],
+      forbiddenZones: ['Demo zone'],
       risks: ['slippery ground near the basin'],
       maxCapacity: 8,
       guideRequired: true,
@@ -102,7 +106,7 @@ describe('VisitorsView', () => {
 
     await waitFor(() => expect(iotCommandApi.sendCommand).toHaveBeenCalledWith('valve-demo-01',
       { command: 'OPEN_VALVE', durationSeconds: 10, reason: 'visitor_demo' }))
-    await waitFor(() => expect(props.notify).toHaveBeenCalledWith('No device gateway yet: the command was recorded but not sent.'))
+    await waitFor(() => expect(props.notify).toHaveBeenCalledWith('No device gateway yet: the command was recorded but not sent.', 'warning'))
     await waitFor(() => expect(screen.getByText('Not sent')).toBeTruthy())
   })
 })

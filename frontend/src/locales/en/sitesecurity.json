@@ -1,0 +1,277 @@
+{
+  "name": "Site security",
+  "nav": {
+    "dashboard": "Overview",
+    "access": "Access control",
+    "zones": "Perimeter & zones",
+    "log": "Access log"
+  },
+  "gate": {
+    "loading": "Loading your Site Security permissions…",
+    "noIdentityTitle": "Platform sign-in not available yet",
+    "noIdentity": "Site Security uses the platform account. It opens once the platform authentication is in place.",
+    "noRoleTitle": "No Site Security role",
+    "noRole": "Your account has no Site Security role. Ask a Site Security administrator to assign one.",
+    "error": "Your Site Security permissions could not be loaded.",
+    "noScreensTitle": "No screens assigned",
+    "noScreens": "Your role has no view permission yet. Ask a Site Security administrator to grant one.",
+    "notPermittedTitle": "Not available for your role",
+    "notPermitted": "Your Site Security permissions do not include this screen."
+  },
+  "levels": {
+    "open": "Open",
+    "controlled": "Controlled",
+    "restricted": "Restricted",
+    "critical": "Critical",
+    "unknown": "Unknown",
+    "strength": "Verification strength {{value}} of {{max}}"
+  },
+  "enums": {
+    "status": {
+      "approved": "Approved",
+      "active": "Active",
+      "online": "Online",
+      "secure": "Secure",
+      "openAccess": "Open access",
+      "authorized": "Authorized",
+      "monitored": "Monitored",
+      "protected": "Protected",
+      "pending": "Pending",
+      "locked": "Locked",
+      "lockedDown": "Locked down",
+      "denied": "Denied",
+      "revoked": "Revoked",
+      "offline": "Offline",
+      "expired": "Expired",
+      "unknown": "Unknown"
+    },
+    "type": {
+      "staff": "Staff",
+      "visitor": "Visitor",
+      "service": "Service",
+      "security": "Security",
+      "unknown": "Unidentified"
+    },
+    "action": {
+      "entry": "Entry",
+      "exit": "Exit"
+    }
+  },
+  "ladder": {
+    "title": "Access level model",
+    "subtitle": "Deeper zones demand stronger proof",
+    "open": "Visitor check-in",
+    "controlled": "Staff credential",
+    "restricted": "Authorised personnel only",
+    "critical": "Dual verification and alert"
+  },
+  "dashboard": {
+    "title": "Security overview",
+    "subtitle": "Farm perimeter and access control",
+    "loadError": "The security overview could not be loaded.",
+    "stats": {
+      "points": "Active access points",
+      "pointsHint": "Of {{count}} defined",
+      "zones": "Controlled zones",
+      "zonesHint": "Of {{count}} zones defined",
+      "visitors": "Valid visitor credentials",
+      "visitorsHint": "Passes, not a live on-site count",
+      "denied": "Denied access events",
+      "deniedHint": "Recorded in the access log"
+    },
+    "perimeter": {
+      "title": "Perimeter status",
+      "subtitle": "Conceptual layout, not a geographic map",
+      "selectHint": "Select a zone to open its details",
+      "noSensors": "Perimeter integrity is unknown: no fence sensors are connected."
+    },
+    "gates": {
+      "title": "Access points",
+      "empty": "No access points are defined."
+    },
+    "activity": {
+      "title": "Recent access activity",
+      "viewAll": "View full log",
+      "empty": "No access events have been recorded.",
+      "attempted": "{{user}} attempted entry at {{zone}}",
+      "entered": "{{user}} entered {{zone}}",
+      "exited": "{{user}} exited {{zone}}"
+    }
+  },
+  "access": {
+    "admin": "Administrator access",
+    "legacyRead": "Read-only access",
+    "user": "User access",
+    "title": "Access control",
+    "subtitle": "Who is allowed where, and until when",
+    "add": "Grant access",
+    "loadError": "The credentials could not be loaded.",
+    "emailsFailed": "The access changes were saved, but some emails could not be sent ({{count}}).",
+    "tableCaption": "Credential holders",
+    "empty": "No credentials have been granted yet.",
+    "unknownPerson": "Person #{{id}}",
+    "permanent": "Permanent",
+    "created": "Access granted.",
+    "revoked": "Access revoked.",
+    "revoke": "Revoke",
+    "revokeFor": "Revoke access for {{name}}",
+    "revokeTitle": "Revoke this access?",
+    "revokeMessage": "{{name}} will no longer be allowed on site with this credential.",
+    "revokeError": "The access could not be revoked.",
+    "columns": {
+      "holder": "Holder",
+      "type": "Type",
+      "level": "Access level",
+      "validUntil": "Valid until",
+      "lastActive": "Last activity",
+      "status": "Status"
+    },
+    "email": {
+      "grant": {
+        "pending": "Access email sending…",
+        "sent": "Access email sent",
+        "failed": "Access email not sent"
+      },
+      "revocation": {
+        "pending": "Revocation email sending…",
+        "sent": "Revocation email sent",
+        "failed": "Revocation email not sent"
+      }
+    },
+    "form": {
+      "title": "Grant access",
+      "description": "Give a person of the farm directory access to the site.",
+      "submit": "Grant access",
+      "saveError": "The access could not be granted.",
+      "person": "Person",
+      "personHint": "People are added on the Visitor management Staff screen.",
+      "role": "Function on site",
+      "roleHint": "For example: grounds supervisor",
+      "type": "Credential type",
+      "level": "Access level",
+      "levelHint": {
+        "open": "Open areas only: visitor check-in applies.",
+        "controlled": "Adds the controlled zone: staff credential required at gates.",
+        "restricted": "Adds the restricted zone: authorised personnel, entry is guarded.",
+        "critical": "Adds the critical zone: dual verification and supervisor alert on entry."
+      },
+      "validUntil": "Valid until"
+    }
+  },
+  "map": {
+    "label": "Conceptual perimeter diagram",
+    "zoneLabel": "{{zone}} zone",
+    "boundary": "FARM BOUNDARY",
+    "north": "N",
+    "notToScale": "CONCEPT, NOT TO SCALE",
+    "validationRequired": "PRELIMINARY CONCEPT, SITE VALIDATION REQUIRED",
+    "zone": {
+      "open": "OPEN ZONE",
+      "controlled": "CONTROLLED ZONE",
+      "restricted": "RESTRICTED ZONE",
+      "critical": "CRITICAL"
+    },
+    "gates": {
+      "main": "Main entrance",
+      "visitor": "Visitor gate",
+      "staff": "Staff / operational gate",
+      "service": "Service / emergency gate"
+    }
+  },
+  "zones": {
+    "title": "Perimeter & zones",
+    "subtitle": "How the farm is divided, and who may cross each line",
+    "loadError": "The zones could not be loaded.",
+    "empty": "No zones have been configured.",
+    "preliminary": "Preliminary concept: the layout, zone geometry and gate positions require a physical survey before implementation.",
+    "authorizedUsers": "Authorized users",
+    "entryPoints": "Entry points",
+    "status": "Status",
+    "requirements": "Access requirements",
+    "viewActivity": "View zone activity",
+    "diagram": {
+      "title": "Site diagram",
+      "subtitle": "Conceptual ring model: deeper rings require stronger verification"
+    },
+    "reference": {
+      "open": {
+        "name": "Open zone",
+        "tagline": "Visitor-facing areas",
+        "description": "Public access areas including the farm shop, main drive and visitor centre.",
+        "requirements": {
+          "0": "No clearance needed",
+          "1": "Visitor check-in recommended"
+        }
+      },
+      "controlled": {
+        "name": "Controlled zone",
+        "tagline": "Operational farm grounds",
+        "description": "Active farming zones including barns, storage sheds and equipment yards.",
+        "requirements": {
+          "0": "Staff or escorted visitor pass",
+          "1": "Safety briefing completed"
+        }
+      },
+      "restricted": {
+        "name": "Restricted zone",
+        "tagline": "Processing and chemical storage",
+        "description": "High-value equipment, product transformation and hazardous chemical stores.",
+        "requirements": {
+          "0": "Level 3 badge clearance",
+          "1": "Dual-custody access protocol"
+        }
+      },
+      "critical": {
+        "name": "Critical zone",
+        "tagline": "Server, power and water control",
+        "description": "Infrastructure backbone: primary power distribution, main water valves and security control room.",
+        "requirements": {
+          "0": "Level 4 clearance and biometric check",
+          "1": "Security escort required",
+          "2": "Continuous audit logging"
+        }
+      }
+    }
+  },
+  "log": {
+    "title": "Access log",
+    "subtitle": "Every entry, exit and refusal, in order",
+    "simulated": "Recording simulated: prototype data",
+    "loadError": "The access log could not be loaded.",
+    "filterLabel": "Filter events",
+    "showAllZones": "Show all zones",
+    "count": "{{shown}} of {{total}} events",
+    "tableCaption": "Access events",
+    "empty": "No events match this filter.",
+    "openEvent": "Open event {{ref}}",
+    "unidentified": "Unidentified subject",
+    "filters": {
+      "all": "All",
+      "approved": "Approved",
+      "denied": "Denied",
+      "visitors": "Visitors",
+      "staff": "Staff",
+      "service": "Service"
+    },
+    "columns": {
+      "date": "Date",
+      "time": "Time",
+      "person": "Person",
+      "type": "Type",
+      "zone": "Zone",
+      "action": "Action",
+      "status": "Status"
+    },
+    "detail": {
+      "title": "Access event {{ref}}",
+      "actionAt": "{{action}} at {{gate}}",
+      "method": "Verification",
+      "note": "Note",
+      "outcome": {
+        "approved": "Access approved: the credential matched the zone policy.",
+        "denied": "Access denied: recorded in the access log.",
+        "other": "Access event recorded in the access log."
+      }
+    }
+  }
+}

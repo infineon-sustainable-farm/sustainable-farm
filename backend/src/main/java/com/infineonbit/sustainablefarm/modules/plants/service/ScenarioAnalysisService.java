@@ -1,15 +1,15 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.ScenarioVariantParams;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.GrowthPhaseYieldShareResponse;
-import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Amount;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.BenefitLine;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Change;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Projection;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse.Year;
-import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyCode;
+import com.infineonbit.sustainablefarm.modules.plants.dto.Response.ScenarioAnalysisResponse;
 import com.infineonbit.sustainablefarm.modules.plants.entity.CurrencyRate;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PlantScenario;
 import com.infineonbit.sustainablefarm.modules.plants.exception.PlantScenarioNotFoundException;
@@ -95,8 +95,8 @@ public class ScenarioAnalysisService {
     private static Plan planOf(PlantScenario scenario, CurrencyCode currency) {
         return new Plan(
                 scenario.getTreeCount(),
-                decimal(scenario.getYieldPerTreeKg()),
-                decimal(scenario.getLossRate()),
+                scenario.getYieldPerTreeKg(),
+                scenario.getLossRate(),
                 scenario.getPricePerKg(),
                 currency,
                 scenario.getAnnualFixedCost(),

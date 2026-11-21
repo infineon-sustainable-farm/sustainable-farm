@@ -3,7 +3,9 @@
 // extra Vitest configuration (same approach as the Water Supply view tests).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import PackagingRecordList from './PackagingRecordList';
+import { LocationProbe } from '../../../test/LocationProbe';
 import { packagingApi } from '../api/packagingApi';
 import { batchApi } from '../api/batchApi';
 import { equipmentApi } from '../api/equipmentApi';
@@ -82,9 +84,11 @@ beforeEach(() => {
 
 describe('PackagingRecordList', () => {
   it('renders records, quantities and per-type summary', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
 
-    const table = await screen.findByRole('table');
+    // The loading state is a skeleton table: wait for the rows before reading the table.
+    await screen.findByText('PK-1');
+    const table = screen.getByRole('table');
     expect(within(table).getByText('PK-1')).toBeTruthy();
     expect(within(table).getByText('PK-2')).toBeTruthy();
     expect(within(table).getByText('100.00 kg')).toBeTruthy();
@@ -99,7 +103,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('filters by package type', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     fireEvent.change(screen.getByLabelText('Filter by package type'), {
@@ -112,7 +116,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('filters by export readiness', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     fireEvent.change(screen.getByLabelText('Filter by export readiness'), {
@@ -124,7 +128,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('filters by packaging date', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     fireEvent.change(screen.getByLabelText('Filter by packaging date'), {
@@ -136,7 +140,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('suggests an editable lot code without overwriting a manual value', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Packaging Record/i }));
@@ -153,7 +157,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('creates a record through the API and reloads the list', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Packaging Record/i }));
@@ -200,7 +204,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('blocks creation when required fields are missing', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Packaging Record/i }));
@@ -211,7 +215,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('rejects a non-positive package quantity', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     fireEvent.click(screen.getByRole('button', { name: /New Packaging Record/i }));
@@ -232,7 +236,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('edits an existing record, keeping traceability fields read-only', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     const row = screen.getByText('PK-1').closest('tr');
@@ -264,7 +268,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('marks a record as export ready', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-2');
 
     const row = screen.getByText('PK-2').closest('tr');
@@ -275,7 +279,7 @@ describe('PackagingRecordList', () => {
   });
 
   it('deletes a record after confirmation', async () => {
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     const row = screen.getByText('PK-1').closest('tr');
@@ -292,7 +296,7 @@ describe('PackagingRecordList', () => {
 
   it('opens the compliance view for a record batch', async () => {
     const onOpenCompliance = vi.fn();
-    render(<PackagingRecordList onOpenCompliance={onOpenCompliance} />);
+    render(<PackagingRecordList onOpenCompliance={onOpenCompliance} />, { wrapper: MemoryRouter });
     await screen.findByText('PK-1');
 
     const row = screen.getByText('PK-1').closest('tr');
@@ -304,12 +308,68 @@ describe('PackagingRecordList', () => {
   it('shows an error state and retries the load', async () => {
     packagingApi.getAllPackagingRecords.mockRejectedValueOnce(new Error('Network down'));
 
-    render(<PackagingRecordList />);
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText('Network down')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 
     expect(await screen.findByText('PK-1')).toBeTruthy();
+  });
+  it('keeps the delete dialog open with the server error when the deletion fails', async () => {
+    packagingApi.deletePackagingRecord.mockRejectedValueOnce(new Error('Record is shipped'));
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
+    await screen.findByText('PK-1');
+
+    const row = screen.getByText('PK-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+
+    expect(await within(dialog).findByText('Record is shipped')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('shows the server error in the form and keeps it open', async () => {
+    packagingApi.updatePackagingRecord.mockRejectedValueOnce(new Error('Lot already shipped'));
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
+    await screen.findByText('PK-1');
+
+    const row = screen.getByText('PK-1').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit Packaging Record' });
+    expect(within(dialog).queryByText('Editable suggestion; the backend enforces uniqueness.')).toBeNull();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(await within(dialog).findByText('Lot already shipped')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('reports a failed export readiness change above the list', async () => {
+    packagingApi.markExportReady.mockRejectedValueOnce(new Error(''));
+    render(<PackagingRecordList />, { wrapper: MemoryRouter });
+    await screen.findByText('PK-2');
+
+    const row = screen.getByText('PK-2').closest('tr');
+    fireEvent.click(within(row).getByRole('button', { name: 'Mark ready' }));
+
+    expect(await screen.findByText('Failed to mark the record as export ready')).toBeTruthy();
+    expect(screen.getByText('PK-2')).toBeTruthy();
+  });
+
+  it('opens the new packaging record dialog from a create link and removes the link on close', async () => {
+    render(
+      <MemoryRouter initialEntries={['/product-transformation/packaging?create=1']}>
+        <PackagingRecordList />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'New Packaging Record' });
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByTestId('location').textContent).toBe('/product-transformation/packaging');
   });
 });

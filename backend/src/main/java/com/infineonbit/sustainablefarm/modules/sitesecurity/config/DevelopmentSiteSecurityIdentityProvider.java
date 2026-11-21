@@ -6,17 +6,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Temporary deterministic development identity. It is deliberately profile
- * scoped and does not create an administrator row in the database.
+ * Development profile only: every request acts as a Site Security administrator, so that the
+ * screens can be used before the platform authentication exists. It is not a sign-in: it asks
+ * for nothing, issues no session and writes no row.
  */
 @Component
 @Profile("dev")
 public class DevelopmentSiteSecurityIdentityProvider implements SiteSecurityIdentityProvider {
 
-    public static final String DEVELOPMENT_USER_ID = "dev-sitesecurity-admin";
+    /** The actor recorded in the audit trail for changes made with this identity. */
+    public static final String DEVELOPMENT_ACTOR = "development";
 
     @Override
     public Optional<SiteSecurityIdentity> current() {
-        return Optional.of(new SiteSecurityIdentity(DEVELOPMENT_USER_ID, Set.of("PLATFORM_USER"), true));
+        return Optional.of(new SiteSecurityIdentity(null, Set.of("PLATFORM_USER"), true));
     }
 }

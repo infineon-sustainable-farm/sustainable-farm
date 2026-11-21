@@ -1,7 +1,7 @@
 # Module Sales & Marketing
 
-Les appels API ci-dessous utilisent le préfixe `/api`, indiqué directement
-dans les routes de `api/api.js`. Le client partagé est importé depuis
+Les appels API ci-dessous utilisent le préfixe `/api/sales-marketing`, indiqué
+directement dans les routes de `api/api.js` (ADR 0002). Le client partagé est importé depuis
 `shared/api/client.js`. Les chemins sont relevés dans `routes.jsx` et les
 contrôleurs du backend.
 

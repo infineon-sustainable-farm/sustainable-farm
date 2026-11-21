@@ -22,8 +22,8 @@ public class WorkshopRequest {
     @Size(max = 60, message = "targetGroup must be at most 60 characters")
     private String targetGroup;
 
-    @Size(max = 100, message = "facilitator must be at most 100 characters")
-    private String facilitator;
+    /** Person of the people directory who facilitates the workshop, or {@code null}. */
+    private Long facilitatorPersonId;
 
     @Size(max = 1000, message = "description must be at most 1000 characters")
     private String description;
@@ -52,12 +52,12 @@ public class WorkshopRequest {
         this.targetGroup = targetGroup;
     }
 
-    public String getFacilitator() {
-        return facilitator;
+    public Long getFacilitatorPersonId() {
+        return facilitatorPersonId;
     }
 
-    public void setFacilitator(String facilitator) {
-        this.facilitator = facilitator;
+    public void setFacilitatorPersonId(Long facilitatorPersonId) {
+        this.facilitatorPersonId = facilitatorPersonId;
     }
 
     public String getDescription() {

@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface CredentialUserRepository extends JpaRepository<CredentialUserEntity, String> {
-    boolean existsByName(String name);
+    boolean existsByPersonId(Long personId);
 
     /** Locks the credential being revoked, so that two concurrent revocations apply (and are audited) once. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

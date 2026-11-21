@@ -1,14 +1,13 @@
 import { useState } from "react";
-
-const LABEL_CLASS = "mb-1.5 block text-xs tracking-wide text-primary uppercase";
-const INPUT_CLASS = "w-full rounded-md border border-line bg-[#F7FDFB] px-2.5 py-2 text-sm";
-const ERROR_CLASS = "mt-1 text-xs text-error";
+import { useTranslation } from "react-i18next";
+import PersonSelect from "../../../../app/PersonSelect";
+import FormActions from "../FormActions";
+import FormAlert from "../FormAlert";
 
 /**
- * Briefing delivery form, opened from a tracker row. The staff name is a free
- * input backed by a datalist of the active staff, so a guest can still be
- * recorded if they are not in the list. The group leader's signature is a
- * plain checkbox: ticking it records the proof of delivery.
+ * Briefing delivery form, opened from a tracker row. Who delivered it is picked in the farm people
+ * directory (the Staff screen of this module adds a missing person). The group leader's signature is a plain checkbox: ticking it records the
+ * proof of delivery.
  */
 export default function BriefingForm({
     registrationId,
@@ -18,96 +17,66 @@ export default function BriefingForm({
     onSubmit,
     onCancel,
 }) {
-    const [staffMember, setStaffMember] = useState("");
+    const { t } = useTranslation("visitormanagement");
+    const [staffMemberPersonId, setStaffMemberPersonId] = useState("");
     const [signed, setSigned] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
 
     function handleSubmit(event) {
         event.preventDefault();
         const errors = {};
-        if (!staffMember.trim()) {
-            errors.staffMember = "Who delivered the briefing is required.";
-        } else if (staffMember.trim().length > 150) {
-            errors.staffMember = "Staff member must be at most 150 characters.";
+        if (!staffMemberPersonId) {
+            errors.staffMemberPersonId = t("safety.form.staffRequired");
         }
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
 
         onSubmit({
-            staffMember: staffMember.trim(),
+            staffMemberPersonId: Number(staffMemberPersonId),
             signature: signed ? "signed" : null,
         });
     }
 
     const fieldError = (field) => fieldErrors[field] ?? serverFieldErrors?.[field];
+    const signatureId = `briefing-signature-${registrationId}`;
+    const signatureError = fieldError("signature");
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                    <label
-                        htmlFor={`briefing-staff-${registrationId}`}
-                        className={LABEL_CLASS}
-                    >
-                        Delivered by
+                <PersonSelect
+                    id={`briefing-staff-${registrationId}`}
+                    label={t("safety.form.deliveredBy")}
+                    value={staffMemberPersonId}
+                    onChange={(id) => setStaffMemberPersonId(id)}
+                    error={fieldError("staffMemberPersonId") ?? fieldError("staffMember")}
+                    required
+                />
+                <div className="flex flex-col justify-end pb-2">
+                    <label htmlFor={signatureId} className="flex items-center gap-2 text-sm">
+                        <input
+                            id={signatureId}
+                            type="checkbox"
+                            checked={signed}
+                            onChange={(event) => setSigned(event.target.checked)}
+                            className="h-4 w-4 accent-primary"
+                        />
+                        <span>
+                            {t("safety.form.signature")}{" "}
+                            <span className="text-text-muted">{t("safety.form.tickToSign")}</span>
+                        </span>
                     </label>
-                    <input
-                        id={`briefing-staff-${registrationId}`}
-                        type="text"
-                        list="briefing-staff-names"
-                        value={staffMember}
-                        onChange={(event) => setStaffMember(event.target.value)}
-                        placeholder="e.g. S. Traoré"
-                        className={INPUT_CLASS}
-                    />
-                    {fieldError("staffMember") && (
-                        <p className={ERROR_CLASS}>{fieldError("staffMember")}</p>
-                    )}
+                    {signatureError && <p className="mt-1 text-xs text-error-fg">{signatureError}</p>}
                 </div>
-                <label
-                    htmlFor={`briefing-signature-${registrationId}`}
-                    className="flex items-end gap-2 pb-2 text-sm text-ink"
-                >
-                    <input
-                        id={`briefing-signature-${registrationId}`}
-                        type="checkbox"
-                        checked={signed}
-                        onChange={(event) => setSigned(event.target.checked)}
-                        className="mb-0.5 h-4 w-4 accent-[#0a8276]"
-                    />
-                    <span>
-                        Signature (group leader) —{" "}
-                        <span className="text-muted">tick to sign</span>
-                    </span>
-                    {fieldError("signature") && (
-                        <span className={ERROR_CLASS}>{fieldError("signature")}</span>
-                    )}
-                </label>
             </div>
 
-            {submitError && (
-                <p className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
+            {submitError && <FormAlert>{submitError}</FormAlert>}
 
-            <div className="mt-4 flex gap-2.5">
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isSubmitting ? "Recording…" : "Record briefing"}
-                </button>
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-line bg-white px-4 py-2.5 text-xs text-primary hover:bg-[#F2FBF9] disabled:opacity-60"
-                >
-                    Cancel
-                </button>
-            </div>
+            <FormActions
+                submitLabel={t("safety.form.submit")}
+                onCancel={onCancel}
+                isSubmitting={isSubmitting}
+            />
         </form>
     );
 }

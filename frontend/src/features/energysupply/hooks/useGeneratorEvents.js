@@ -6,9 +6,10 @@ import {
   getGeneratorEvents,
   updateGeneratorEvent,
 } from "../api/energyApi";
+import { i18n } from "../../../shared/i18n";
 
 function messageFrom(error) {
-  return error?.message || "An unexpected error occurred.";
+  return error?.message || i18n.t("energysupply:errors.unexpected");
 }
 
 export function useGeneratorEvents() {

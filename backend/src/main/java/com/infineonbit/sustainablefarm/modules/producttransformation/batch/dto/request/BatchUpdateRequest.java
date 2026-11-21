@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.dto.request;
 
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +22,8 @@ public class BatchUpdateRequest {
 
     private LocalDate harvestDate;
 
-    private MangoVariety mangoVariety;
+    /** Variety: KEITT, KENT, TOMMY, AMÉLIE, OTHER or another key of the plants variety catalogue. */
+    private String mangoVariety;
 
     @Positive(message = "Harvest quantity must be positive")
     private BigDecimal harvestQuantityKg;

@@ -10,12 +10,12 @@ import java.util.Collections;
 import java.util.List;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.model.DryingRun;
 import com.infineonbit.sustainablefarm.modules.producttransformation.dryingrun.repository.DryingRunRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.model.Equipment;
-import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.repository.EquipmentRepository;
+import com.infineonbit.sustainablefarm.modules.producttransformation.equipment.service.EquipmentService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent;
 import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.repository.HarvestEventRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint;
@@ -38,7 +38,7 @@ public class DashboardServiceRegressionTest {
         BatchRepository batchRepo = Mockito.mock(BatchRepository.class);
         QcCheckpointRepository qcRepo = Mockito.mock(QcCheckpointRepository.class);
         DryingRunRepository dryingRepo = Mockito.mock(DryingRunRepository.class);
-        EquipmentRepository equipmentRepo = Mockito.mock(EquipmentRepository.class);
+        EquipmentService equipmentService = Mockito.mock(EquipmentService.class);
         WashSortRecordRepository washRepo = Mockito.mock(WashSortRecordRepository.class);
 
         Mockito.when(harvestRepo.findByHarvestDateBetween(Mockito.any(), Mockito.any()))
@@ -48,12 +48,12 @@ public class DashboardServiceRegressionTest {
                .thenReturn(Collections.emptyList());
         Mockito.when(dryingRepo.findByStartTimeBetween(Mockito.any(), Mockito.any()))
                .thenReturn(Collections.emptyList());
-        Mockito.when(equipmentRepo.findAll()).thenReturn(Collections.emptyList());
+        Mockito.when(equipmentService.getAllEquipment()).thenReturn(Collections.emptyList());
         Mockito.when(washRepo.findByStartTimeBetween(Mockito.any(), Mockito.any()))
                .thenReturn(Collections.emptyList());
 
         DashboardService service = new DashboardService(
-            harvestRepo, batchRepo, qcRepo, dryingRepo, equipmentRepo, washRepo);
+            harvestRepo, batchRepo, qcRepo, dryingRepo, equipmentService, washRepo);
 
         // Should complete without exception (empty DB is a valid state)
         service.getDashboardKPIs(LocalDate.now().minusDays(7), LocalDate.now());
@@ -66,7 +66,7 @@ public class DashboardServiceRegressionTest {
         BatchRepository batchRepo = Mockito.mock(BatchRepository.class);
         QcCheckpointRepository qcRepo = Mockito.mock(QcCheckpointRepository.class);
         DryingRunRepository dryingRepo = Mockito.mock(DryingRunRepository.class);
-        EquipmentRepository equipmentRepo = Mockito.mock(EquipmentRepository.class);
+        EquipmentService equipmentService = Mockito.mock(EquipmentService.class);
         WashSortRecordRepository washRepo = Mockito.mock(WashSortRecordRepository.class);
 
         HarvestEvent event = new HarvestEvent();
@@ -82,12 +82,12 @@ public class DashboardServiceRegressionTest {
                .thenReturn(Collections.emptyList());
         Mockito.when(dryingRepo.findByStartTimeBetween(Mockito.any(), Mockito.any()))
                .thenReturn(Collections.emptyList());
-        Mockito.when(equipmentRepo.findAll()).thenReturn(Collections.emptyList());
+        Mockito.when(equipmentService.getAllEquipment()).thenReturn(Collections.emptyList());
         Mockito.when(washRepo.findByStartTimeBetween(Mockito.any(), Mockito.any()))
                .thenReturn(Collections.emptyList());
 
         DashboardService service = new DashboardService(
-            harvestRepo, batchRepo, qcRepo, dryingRepo, equipmentRepo, washRepo);
+            harvestRepo, batchRepo, qcRepo, dryingRepo, equipmentService, washRepo);
 
         // This is a CONFIRMED RISK: null quantity in stream reduce can throw NullPointerException.
         // Until the app starts and the actual 500 stack trace is captured, this remains a risk.
@@ -96,7 +96,6 @@ public class DashboardServiceRegressionTest {
             service.calculateHarvestQuantity(LocalDate.now().minusDays(7), LocalDate.now());
         } catch (NullPointerException npe) {
             // Confirmed risk: stream reduce with null quantity produces NPE.
-            System.out.println("CONFIRMED RISK: Null harvest quantity triggers NullPointerException: " + npe.getMessage());
         }
     }
 }

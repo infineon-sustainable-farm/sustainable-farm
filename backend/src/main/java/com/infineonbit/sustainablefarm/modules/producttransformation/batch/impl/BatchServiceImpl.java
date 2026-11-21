@@ -1,11 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.batch.impl;
 
+import com.infineonbit.sustainablefarm.modules.producttransformation.block.ProductTransformationBlocks;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.BusinessRuleViolationException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.exception.InvalidStateException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch;
-import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.Batch.BatchStatus;
-import com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety;
+import com.infineonbit.sustainablefarm.modules.producttransformation.batch.model.BatchStatus;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.repository.BatchRepository;
 import com.infineonbit.sustainablefarm.modules.producttransformation.batch.service.BatchService;
 import com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.service.QcCheckpointService;
@@ -35,12 +35,15 @@ public class BatchServiceImpl implements BatchService {
 
     private final BatchRepository batchRepository;
     private final QcCheckpointService qcCheckpointService;
+    private final ProductTransformationBlocks blocks;
 
     @Autowired
     public BatchServiceImpl(BatchRepository batchRepository,
-                            QcCheckpointService qcCheckpointService) {
+                            QcCheckpointService qcCheckpointService,
+                            ProductTransformationBlocks blocks) {
         this.batchRepository = batchRepository;
         this.qcCheckpointService = qcCheckpointService;
+        this.blocks = blocks;
     }
 
     @Override
@@ -58,10 +61,11 @@ public class BatchServiceImpl implements BatchService {
         
         // Update fields
         existingBatch.setHarvestDate(batch.getHarvestDate());
-        existingBatch.setMangoVariety(batch.getMangoVariety());
+        existingBatch.setVarietyKey(batch.getVarietyKey());
         existingBatch.setHarvestQuantityKg(batch.getHarvestQuantityKg());
-        existingBatch.setFarmId(batch.getFarmId());
-        existingBatch.setBlockId(batch.getBlockId());
+        if (batch.getFarmBlockId() != null) {
+            existingBatch.setFarmBlockId(batch.getFarmBlockId());
+        }
         
         // Only update status if explicitly set and valid
         if (batch.getCurrentStatus() != null) {
@@ -73,16 +77,16 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     public void deleteBatch(String batchId) {
-        if (!batchRepository.existsById(batchId)) {
+        if (!batchRepository.existsByBatchId(batchId)) {
             throw new ResourceNotFoundException("Batch not found with ID: " + batchId);
         }
-        batchRepository.deleteById(batchId);
+        batchRepository.deleteByBatchId(batchId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Batch getBatchById(String batchId) {
-        return batchRepository.findById(batchId)
+        return batchRepository.findByBatchId(batchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Batch not found with ID: " + batchId));
     }
 
@@ -106,25 +110,27 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Batch> getBatchesByVariety(MangoVariety variety) {
-        return batchRepository.findByMangoVariety(variety);
+    public List<Batch> getBatchesByVariety(String variety) {
+        return batchRepository.findByVarietyKey(variety);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByFarm(String farmId) {
-        return batchRepository.findByFarmId(farmId);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farmId);
+        return blockIds.isEmpty() ? List.of() : batchRepository.findByFarmBlockIdIn(blockIds);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByFarmAndStatus(String farmId, BatchStatus status) {
-        return batchRepository.findByFarmAndStatus(farmId, status);
+        List<Long> blockIds = blocks.blockIdsOfFarm(farmId);
+        return blockIds.isEmpty() ? List.of() : batchRepository.findByFarmBlockIdInAndCurrentStatus(blockIds, status);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Batch> getBatchesByVarietyAndStatus(MangoVariety variety, BatchStatus status) {
+    public List<Batch> getBatchesByVarietyAndStatus(String variety, BatchStatus status) {
         return batchRepository.findByVarietyAndStatus(variety, status);
     }
 
@@ -136,7 +142,7 @@ public class BatchServiceImpl implements BatchService {
 
     @Override
     @Transactional(readOnly = true)
-    public Double getTotalHarvestQuantityByVariety(MangoVariety variety) {
+    public Double getTotalHarvestQuantityByVariety(String variety) {
         return batchRepository.getTotalHarvestQuantityByVariety(variety);
     }
 
@@ -149,13 +155,16 @@ public class BatchServiceImpl implements BatchService {
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByBlock(String blockId) {
-        return batchRepository.findByBlockId(blockId);
+        return blocks.findBlockId(blockId).map(batchRepository::findByFarmBlockId).orElse(List.of());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Batch> getBatchesByFarmAndBlock(String farmId, String blockId) {
-        return batchRepository.findByFarmAndBlock(farmId, blockId);
+        return blocks.findBlockId(blockId)
+                .filter(id -> blocks.blockIdsOfFarm(farmId).contains(id))
+                .map(batchRepository::findByFarmBlockId)
+                .orElse(List.of());
     }
 
     @Override
@@ -166,7 +175,7 @@ public class BatchServiceImpl implements BatchService {
         // WASHING checkpoint must be completed before advancing from WASHING to DRYING
         if (batch.getCurrentStatus() == BatchStatus.WASHING) {
             long washingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId,
-                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage.WASHING);
+                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage.WASHING);
             if (washingCheckpointCount == 0) {
                 throw new BusinessRuleViolationException(
                     "Cannot advance batch from WASHING: mandatory WASHING QC checkpoint not completed"
@@ -177,7 +186,7 @@ public class BatchServiceImpl implements BatchService {
         // Business Rule: COOLING checkpoint must be completed before advancing from DRYING to PACKAGING
         if (batch.getCurrentStatus() == BatchStatus.DRYING) {
             long coolingCheckpointCount = qcCheckpointService.countByBatchAndStage(batchId,
-                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcCheckpoint.QcStage.COOLING);
+                com.infineonbit.sustainablefarm.modules.producttransformation.qccheckpoint.model.QcStage.COOLING);
             if (coolingCheckpointCount == 0) {
                 throw new BusinessRuleViolationException(
                     "Cannot advance batch from DRYING: mandatory COOLING QC checkpoint not completed"

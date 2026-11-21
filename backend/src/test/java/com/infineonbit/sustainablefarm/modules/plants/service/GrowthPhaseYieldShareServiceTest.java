@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.Period;
 import java.util.List;
@@ -88,7 +89,7 @@ public class GrowthPhaseYieldShareServiceTest {
     @Test
     void getAllShares_shouldGiveTheCorrection_withTheDefaultBesideIt() {
         // Arrange: an agronomist corrected gradual production
-        corrections(new GrowthPhaseYieldShare(7L, "gradual production", 0.3, "agronomist_visit_2026", CORRECTED));
+        corrections(new GrowthPhaseYieldShare(7L, "gradual production", BigDecimal.valueOf(0.3), "agronomist_visit_2026", CORRECTED));
         // Act & Assert: the other phases keep their defaults
         assertEquals(List.of(ESTABLISHMENT_DEFAULT,
                         new GrowthPhaseYieldShareResponse("GRADUAL_PRODUCTION", "gradual production", "3–5 yrs",
@@ -100,7 +101,7 @@ public class GrowthPhaseYieldShareServiceTest {
     @Test
     void getAllShares_shouldIgnoreARowWhoseLabelIsNoPhase() {
         // Arrange: a row written by hand under a label the calculator never returns
-        corrections(new GrowthPhaseYieldShare(8L, "adult", 0.8, "user_entry", CORRECTED));
+        corrections(new GrowthPhaseYieldShare(8L, "adult", BigDecimal.valueOf(0.8), "user_entry", CORRECTED));
         // Act & Assert
         assertEquals(List.of(ESTABLISHMENT_DEFAULT, GRADUAL_DEFAULT, FULL_DEFAULT),
                 growthPhaseYieldShareService.getAllShares());
@@ -130,7 +131,7 @@ public class GrowthPhaseYieldShareServiceTest {
         // Assert: the row holds the label the forecast looks up
         GrowthPhaseYieldShare inserted = insertedRow();
         assertEquals("gradual production", inserted.getGrowthPhase());
-        assertEquals(0.3, inserted.getYieldShare());
+        assertEquals(0.3, inserted.getYieldShare().doubleValue());
         assertEquals("user_entry", inserted.getSource());
         assertEquals(NOW, inserted.getLastUpdated());
         assertEquals(new GrowthPhaseYieldShareResponse("GRADUAL_PRODUCTION", "gradual production", "3–5 yrs",
@@ -141,7 +142,7 @@ public class GrowthPhaseYieldShareServiceTest {
     void saveShare_shouldReplaceTheCorrection_inItsOwnRow_withItsSourceTrimmed() {
         // Arrange
         GrowthPhaseYieldShare recorded = new GrowthPhaseYieldShare(
-                7L, "gradual production", 0.3, "user_entry", CORRECTED);
+                7L, "gradual production", BigDecimal.valueOf(0.3), "user_entry", CORRECTED);
         when(growthPhaseYieldShareRepository.findByGrowthPhase("gradual production"))
                 .thenReturn(Optional.of(recorded));
         when(growthPhaseYieldShareRepository.save(recorded)).thenReturn(recorded);
@@ -150,7 +151,7 @@ public class GrowthPhaseYieldShareServiceTest {
                 "GRADUAL_PRODUCTION", new GrowthPhaseYieldShareRequest(0.35, " agronomist_visit_2026 "), NOW);
         // Assert: the same row, share, source and date changed together; no second row
         assertEquals(7L, recorded.getId());
-        assertEquals(0.35, recorded.getYieldShare());
+        assertEquals(0.35, recorded.getYieldShare().doubleValue());
         assertEquals("agronomist_visit_2026", recorded.getSource());
         assertEquals(NOW, recorded.getLastUpdated());
         assertEquals(new GrowthPhaseYieldShareResponse("GRADUAL_PRODUCTION", "gradual production", "3–5 yrs",

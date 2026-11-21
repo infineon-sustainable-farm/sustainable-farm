@@ -1,17 +1,20 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Transient;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,33 +35,34 @@ import java.time.LocalDate;
  * <p>No cost is stored. The planned cost is computed on every read from the
  * price of the last purchase of the fertilizer, so it follows the prices.
  *
- * <p>Like an application, a plan belongs to a block and needs no recorded
- * planting. The table and its columns follow the naming of the other modules:
- * English snake_case and a singular table name.
+ * <p>Like an application, a plan belongs to a block of the farm referential
+ * ({@code block_id}, foreign key {@code fk_fertilizer_plan_block}; plants picks
+ * the block and never creates one) and needs no recorded planting. Its farm and
+ * block code are read from the farm referential, as for a {@link FertilizerMovement}.
  */
 @Entity
-@Table(name = "fertilizer_plan")
+@EntityListeners(BlockLabelListener.class)
+@Table(name = "fertilizer_plan", indexes = {
+        @Index(name = "idx_fertilizer_plan_block_id", columnList = "block_id"),
+        @Index(name = "idx_fertilizer_plan_product_id", columnList = "product_id"),
+        @Index(name = "idx_fertilizer_plan_status_planned_date", columnList = "status, planned_date")})
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class FertilizerPlan {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class FertilizerPlan extends BaseEntity implements BlockRow {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     private FertilizerProduct product;
 
-    /** Farm of the block, or NULL. */
-    @Column(name = "farm_id")
-    private Integer farmId;
+    /** Block the fertilizer is planned on, a {@code farm.block} row. */
+    @Column(name = "block_id", nullable = false)
+    private Long blockId;
 
-    /** Block the fertilizer is planned on, trimmed and upper-cased. */
-    @Column(name = "block_code", nullable = false)
-    private String blockCode;
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink block = new BlockLink();
 
     @Column(name = "planned_date", nullable = false)
     private LocalDate plannedDate;
@@ -86,4 +90,41 @@ public class FertilizerPlan {
 
     @Column(name = "last_updated")
     private Instant lastUpdated;
+
+    /** Farm of the block, read from the farm referential. */
+    public Long getFarmId() {
+        return block.label(blockId).farmId();
+    }
+
+    /** Sets the farm by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setFarmId(Long farmId) {
+        block.setFarmId(farmId);
+    }
+
+    /** Code of the block, read from the farm referential. */
+    public String getBlockCode() {
+        return block.label(blockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setBlockCode(String blockCode) {
+        block.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignBlock(Long blockId, BlockLabel label) {
+        this.blockId = blockId;
+        block.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        block.useSource(source);
+    }
+
+    @PrePersist
+    @PreUpdate
+    void requireResolvedBlock() {
+        block.requireResolved("planned fertilizer application");
+    }
 }

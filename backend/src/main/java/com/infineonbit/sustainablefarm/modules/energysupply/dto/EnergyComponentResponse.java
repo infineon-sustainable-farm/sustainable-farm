@@ -15,7 +15,7 @@ public record EnergyComponentResponse(
 
     public static EnergyComponentResponse from(EnergyComponent component) {
         return new EnergyComponentResponse(
-                component.getComponentId(),
+                component.getCode(),
                 component.getName(),
                 component.getCategory(),
                 component.getCapacityValue(),

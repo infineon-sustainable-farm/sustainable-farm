@@ -57,7 +57,7 @@ class WhatIfServiceTest {
 
     private EnergyComponent pvComponent() {
         EnergyComponent component = new EnergyComponent();
-        component.setComponentId("ENG-001");
+        component.setCode("ENG-001");
         component.setCategory(ComponentCategory.PV_ARRAY);
         component.setCapacityValue(new BigDecimal("10.5"));
         return component;

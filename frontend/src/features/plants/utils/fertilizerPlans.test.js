@@ -24,7 +24,7 @@ const PLAN_FORM = {
 const COMPLETION_FORM = {
     applicationDate: "2026-11-14",
     quantity: "25.5",
-    applicator: "Team A",
+    applicatorPersonId: "7",
     method: "",
 };
 
@@ -65,11 +65,10 @@ describe("validatePlan", () => {
         expect(validatePlan({ ...PLAN_FORM, plannedQuantity: "0.001" })).toEqual({});
     });
 
-    it("refuses a block with a prefix and a note over 255 characters", () => {
-        const errors = validatePlan({ ...PLAN_FORM, blockCode: "Block B", note: "n".repeat(256) });
+    it("refuses a note over 255 characters; the block is picked from the farm referential", () => {
+        const errors = validatePlan({ ...PLAN_FORM, note: "n".repeat(256) });
 
         expect(errors).toEqual({
-            blockCode: "Block must be a short code such as A or B2, without prefix or space.",
             note: "Note must be at most 255 characters.",
         });
     });
@@ -101,26 +100,25 @@ describe("validateCompletion", () => {
 
     it("names every missing field of an empty form", () => {
         const errors = validateCompletion(
-            { applicationDate: "", quantity: "", applicator: " ", method: "" },
+            { applicationDate: "", quantity: "", applicatorPersonId: "", method: "" },
             { today: TODAY },
         );
 
         expect(errors).toEqual({
             applicationDate: "Date is required.",
             quantity: "Quantity must be a number greater than 0, with at most 3 decimals.",
-            applicator: "Applicator is required.",
+            applicatorPersonId: "Applicator is required.",
         });
     });
 
-    it("refuses a date after the day of the API, and long texts", () => {
+    it("refuses a date after the day of the API, and a long method", () => {
         const errors = validateCompletion(
-            { ...COMPLETION_FORM, applicationDate: "2026-11-15", applicator: "a".repeat(256), method: "m".repeat(256) },
+            { ...COMPLETION_FORM, applicationDate: "2026-11-15", method: "m".repeat(256) },
             { today: TODAY },
         );
 
         expect(errors).toEqual({
             applicationDate: "Date cannot be in the future.",
-            applicator: "Applicator must be at most 255 characters.",
             method: "Method must be at most 255 characters.",
         });
     });
@@ -131,7 +129,7 @@ describe("completionRequestBody", () => {
         expect(completionRequestBody(COMPLETION_FORM)).toEqual({
             applicationDate: "2026-11-14",
             quantity: 25.5,
-            applicator: "Team A",
+            applicatorPersonId: 7,
         });
         expect(completionRequestBody({ ...COMPLETION_FORM, method: "around the tree base" }).method)
             .toBe("around the tree base");

@@ -1,114 +1,124 @@
 import { Check, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Badge, Button, Card, Table } from "../../../shared/ui";
 import { formatBlock, formatDate, formatQuantity, formatText } from "../utils/format";
 import { planBadge, planDelayLabel } from "../utils/fertilizerPlans";
+import CellNote from "./CellNote";
 import PlanCost from "./PlanCost";
-import PlantsBadge from "./PlantsBadge";
-import { CELL_NOTE, ROW_BUTTON, TABLE_CARD, TABLE_HEAD, TABLE_HEAD_NUM } from "./plantsStyles";
 
-// The unit sits in each cell rather than in the header: the plans can mix
-// kilograms and litres. The cost in euros sits under the cost in FCFA, and
-// the note of a plan under its fertilizer.
-const COLUMNS = [
-    "Planned date",
-    "Block",
-    "Fertilizer",
-    "Quantity",
-    "Planned cost",
-    "Status",
-    "Actions",
-];
-
-// Quantities and amounts line up on the right, header included.
-const NUMERIC = new Set(["Quantity", "Planned cost"]);
 
 /**
  * Planned applications, one row each, in the order the API sends them. The
  * delay, the late flag and the costs are the API's own; nothing is computed
  * here. A planned row offers "Mark done" and "Cancel"; a done one shows what
- * was really applied.
+ * was really applied. The unit sits in each cell rather than in the header:
+ * the plans can mix kilograms and litres.
  */
 export default function FertilizerPlansTable({ plans, onComplete, onCancel }) {
+    const { t } = useTranslation("plants");
+    const header = (key) => t(`fertilizer.plans.columns.${key}`);
+    const planLabel = (plan) => t("fertilizer.plans.planLabel", {
+        fertilizer: formatText(plan.fertilizerName),
+        block: formatBlock(plan.blockCode),
+        date: formatDate(plan.plannedDate),
+    });
+
+    const columns = [
+        {
+            key: "plannedDate",
+            header: header("plannedDate"),
+            className: "whitespace-nowrap align-top",
+            cell: (plan) => {
+                const delay = planDelayLabel(plan);
+                return (
+                    <>
+                        <span className="font-semibold">{formatDate(plan.plannedDate)}</span>
+                        {delay && <CellNote>{delay}</CellNote>}
+                    </>
+                );
+            },
+        },
+        { key: "blockCode", header: header("block"), className: "whitespace-nowrap align-top", cell: (plan) => formatBlock(plan.blockCode) },
+        {
+            key: "fertilizerName",
+            header: header("fertilizer"),
+            className: "align-top",
+            cell: (plan) => (
+                <>
+                    {formatText(plan.fertilizerName)}
+                    {plan.note && <CellNote className="max-w-56">{plan.note}</CellNote>}
+                </>
+            ),
+        },
+        {
+            key: "plannedQuantity",
+            header: header("quantity"),
+            align: "right",
+            className: "whitespace-nowrap align-top",
+            cell: (plan) => formatQuantity(plan.plannedQuantity, plan.unit),
+        },
+        {
+            key: "plannedCost",
+            header: header("plannedCost"),
+            align: "right",
+            className: "whitespace-nowrap align-top",
+            cell: (plan) => <PlanCost xof={plan.plannedCostXof} eur={plan.plannedCostEur} />,
+        },
+        {
+            key: "status",
+            header: header("status"),
+            className: "whitespace-nowrap align-top",
+            cell: (plan) => {
+                const badge = planBadge(plan);
+                return (
+                    <>
+                        <Badge tone={badge.tone}>{badge.label}</Badge>
+                        {plan.status === "DONE" && (
+                            <CellNote className="mt-1">
+                                {t("fertilizer.plans.applied", {
+                                    quantity: formatQuantity(plan.actualQuantity, plan.unit),
+                                    date: formatDate(plan.actualDate),
+                                })}
+                            </CellNote>
+                        )}
+                    </>
+                );
+            },
+        },
+    ];
+
     return (
-        <div className={TABLE_CARD}>
-            <table className="w-full border-collapse text-sm whitespace-nowrap">
-                <thead>
-                    <tr>
-                        {COLUMNS.map((column) => (
-                            <th
-                                key={column}
-                                scope="col"
-                                className={NUMERIC.has(column) ? TABLE_HEAD_NUM : TABLE_HEAD}
+        <Card>
+            <Table
+                caption={t("fertilizer.plans.title")}
+                columns={columns}
+                rows={plans}
+                actionsHeader={header("actions")}
+                rowActions={(plan) =>
+                    plan.status === "PLANNED" && (
+                        <div className="flex gap-2">
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                icon={Check}
+                                onClick={() => onComplete(plan)}
+                                aria-label={t("fertilizer.plans.markDoneLabel", { plan: planLabel(plan) })}
                             >
-                                {column}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {plans.map((plan) => {
-                        const badge = planBadge(plan);
-                        const delay = planDelayLabel(plan);
-                        const label = `${formatText(plan.fertilizerName)}, ${formatBlock(plan.blockCode)}, `
-                            + formatDate(plan.plannedDate);
-                        return (
-                            <tr key={plan.id} className="border-b border-gray-100 align-top last:border-b-0">
-                                <td className="px-4 py-3 font-semibold text-gray-800">
-                                    {formatDate(plan.plannedDate)}
-                                    {delay && <span className={`${CELL_NOTE} font-normal`}>{delay}</span>}
-                                </td>
-                                <td className="px-4 py-3 text-gray-700">
-                                    {formatBlock(plan.blockCode)}
-                                </td>
-                                <td className="px-4 py-3 text-gray-700">
-                                    {formatText(plan.fertilizerName)}
-                                    {plan.note && (
-                                        <span className={`${CELL_NOTE} w-56 whitespace-normal`}>{plan.note}</span>
-                                    )}
-                                </td>
-                                <td className="px-4 py-3 text-right text-gray-700">
-                                    {formatQuantity(plan.plannedQuantity, plan.unit)}
-                                </td>
-                                <td className="px-4 py-3 text-right text-gray-700">
-                                    <PlanCost xof={plan.plannedCostXof} eur={plan.plannedCostEur} />
-                                </td>
-                                <td className="px-4 py-3 text-gray-700">
-                                    <PlantsBadge tone={badge.tone}>{badge.label}</PlantsBadge>
-                                    {plan.status === "DONE" && (
-                                        <span className={`${CELL_NOTE} mt-1`}>
-                                            {`Applied ${formatQuantity(plan.actualQuantity, plan.unit)} on `
-                                                + formatDate(plan.actualDate)}
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="px-4 py-3">
-                                    {plan.status === "PLANNED" && (
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => onComplete(plan)}
-                                                aria-label={`Mark done: ${label}`}
-                                                className={ROW_BUTTON}
-                                            >
-                                                <Check size={14} />
-                                                Mark done
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => onCancel(plan)}
-                                                aria-label={`Cancel: ${label}`}
-                                                className={ROW_BUTTON}
-                                            >
-                                                <X size={14} />
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
+                                {t("fertilizer.plans.markDone")}
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                icon={X}
+                                onClick={() => onCancel(plan)}
+                                aria-label={t("fertilizer.plans.cancelLabel", { plan: planLabel(plan) })}
+                            >
+                                {t("fertilizer.plans.cancel")}
+                            </Button>
+                        </div>
+                    )
+                }
+            />
+        </Card>
     );
 }

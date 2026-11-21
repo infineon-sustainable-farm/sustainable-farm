@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Loader2, Plus, TriangleAlert } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Card, EmptyState, Input, Select } from "../../../shared/ui";
 import {
     useCancelFertilizerPlan,
     useCompleteFertilizerPlan,
@@ -10,17 +12,15 @@ import {
     useFertilizerPlans,
     useFertilizerPlanStockCheck,
 } from "../hooks/useFertilizerPlans";
-import { formatCode, formatDate } from "../utils/format";
-import { PLAN_STATUSES, stockWarningText } from "../utils/fertilizerPlans";
+import { formatDate } from "../utils/format";
+import { PLAN_STATUSES, planStatusLabel, stockWarningText } from "../utils/fertilizerPlans";
 import CancelPlanModal from "./CancelPlanModal";
 import CompletePlanModal from "./CompletePlanModal";
 import FertilizerPlanComparisonTable from "./FertilizerPlanComparisonTable";
 import FertilizerPlansTable from "./FertilizerPlansTable";
+import { SectionLoadError, SectionLoading } from "./FertilizerSectionStatus";
+import FormAlert from "./FormAlert";
 import PlanApplicationModal from "./PlanApplicationModal";
-import PlantsEmptyState from "./PlantsEmptyState";
-import { CARD_FRAME, FIELD_INPUT, FIELD_LABEL, ICON_SIZE, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
-
-const CONTROL_CLASS = `min-w-0 max-w-full ${FIELD_INPUT}`;
 
 /**
  * One filter on a title row. Its accessible name joins the title it filters
@@ -29,46 +29,21 @@ const CONTROL_CLASS = `min-w-0 max-w-full ${FIELD_INPUT}`;
 function FilterField({ id, titleId, label, children }) {
     return (
         <div className="flex max-w-full min-w-0 items-center gap-3">
-            <label id={`${id}-label`} htmlFor={id} className={`${FIELD_LABEL} shrink-0`}>
+            <label id={`${id}-label`} htmlFor={id} className="shrink-0 text-sm font-medium">
                 {label}
             </label>
-            {children({ id, "aria-labelledby": `${titleId} ${id}-label`, className: CONTROL_CLASS })}
-        </div>
-    );
-}
-
-function LoadingCard({ children }) {
-    return (
-        <div className={`flex items-center justify-center gap-3 px-6 py-16 text-sm text-gray-500 ${CARD_FRAME}`}>
-            <Loader2 size={18} className="animate-spin" />
-            {children}
-        </div>
-    );
-}
-
-function ErrorCard({ title, onRetry, isRetrying }) {
-    return (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-error/30 bg-error/5 px-6 py-16 text-center">
-            <TriangleAlert size={28} className="text-error" />
-            <div>
-                <p className="font-heading text-lg font-bold text-on-background">{title}</p>
-                {/* gray-600: #4a5565 on the tinted box (#f5f1f5) -> 6.76:1; gray-500 gave 4.32:1. */}
-                <p className="mt-1 text-sm text-gray-600">The request to the server did not succeed.</p>
-            </div>
-            <button type="button" onClick={onRetry} disabled={isRetrying} className={PRIMARY_BUTTON}>
-                {isRetrying ? "Retrying…" : "Retry"}
-            </button>
+            <div className="min-w-0 max-w-full">{children({ id, "aria-labelledby": `${titleId} ${id}-label` })}</div>
         </div>
     );
 }
 
 /** The period the API compared, in words: both ends, or the one that is set. */
-function periodLabel(comparison) {
+function periodLabel(comparison, t) {
     const { from, to } = comparison;
-    if (from && to) return `${formatDate(from)} – ${formatDate(to)}`;
-    if (from) return `From ${formatDate(from)}`;
-    if (to) return `Until ${formatDate(to)}`;
-    return "All dates";
+    if (from && to) return t("format.range", { start: formatDate(from), end: formatDate(to) });
+    if (from) return t("fertilizer.plans.comparison.periodFrom", { date: formatDate(from) });
+    if (to) return t("fertilizer.plans.comparison.periodUntil", { date: formatDate(to) });
+    return t("fertilizer.plans.comparison.periodAll");
 }
 
 /**
@@ -85,6 +60,7 @@ function periodLabel(comparison) {
  * application, so the stock and the history above and below refresh with it.
  */
 export default function FertilizerPlansSection() {
+    const { t } = useTranslation("plants");
     // Raw values as the API takes them; an empty string means "no filter".
     const [status, setStatus] = useState("");
     const [from, setFrom] = useState("");
@@ -134,80 +110,72 @@ export default function FertilizerPlansSection() {
     }
 
     const planButton = (
-        <button type="button" onClick={openPlanForm} className={SECONDARY_BUTTON}>
-            <Plus size={16} />
-            Plan an application
-        </button>
+        <Button variant="secondary" icon={Plus} onClick={openPlanForm}>
+            {t("fertilizer.plans.planAction")}
+        </Button>
     );
 
     return (
         <section aria-labelledby="planned-applications-title" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
                 <div className="min-w-0">
-                    <h2 id="planned-applications-title" className="font-heading text-lg font-bold text-on-background">
-                        Planned applications
+                    <h2 id="planned-applications-title" className="text-lg font-semibold">
+                        {t("fertilizer.plans.title")}
                     </h2>
-                    {/* gray-600 #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
-                    <p className="mt-1 text-sm text-gray-600">
-                        Your own quantities: no rate is recommended. Costs at last purchase price.
-                    </p>
+                    <p className="mt-1 text-sm text-text-muted">{t("fertilizer.plans.subtitle")}</p>
                 </div>
                 <div className="flex max-w-full flex-wrap items-center gap-x-6 gap-y-3">
-                    <FilterField id="planned-applications-status" titleId="planned-applications-title" label="Status">
+                    <FilterField
+                        id="planned-applications-status"
+                        titleId="planned-applications-title"
+                        label={t("fertilizer.plans.statusFilter")}
+                    >
                         {(props) => (
-                            <select {...props} value={status} onChange={(event) => setStatus(event.target.value)}>
-                                <option value="">All statuses</option>
+                            <Select {...props} value={status} onChange={(event) => setStatus(event.target.value)}>
+                                <option value="">{t("fertilizer.plans.allStatuses")}</option>
                                 {PLAN_STATUSES.map((code) => (
                                     <option key={code} value={code}>
-                                        {formatCode(code)}
+                                        {planStatusLabel(code)}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         )}
                     </FilterField>
                     {planButton}
                 </div>
             </div>
 
-            {/* Title in the main text colour, lines in gray-700 #364153: both above 9:1 on the tinted box. */}
             {warnings.length > 0 && (
-                <div
-                    role="status"
-                    className="flex items-start gap-3 rounded-2xl border border-warning/50 bg-warning/10 px-4 py-3"
-                >
-                    <TriangleAlert size={ICON_SIZE} aria-hidden="true" className="mt-0.5 shrink-0 text-[#8a631b]" />
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold text-on-background">
-                            {`Planned applications exceed the stock in the next ${stockCheck.data.days} days`}
+                <div role="status">
+                    <FormAlert tone="warning">
+                        <p className="font-semibold">
+                            {t("fertilizer.plans.stockWarning.title", { days: stockCheck.data.days })}
                         </p>
-                        <ul className="mt-1 flex flex-col gap-1 text-sm text-gray-700">
+                        <ul className="mt-1 flex flex-col gap-1">
                             {warnings.map((warning) => (
                                 <li key={warning.fertilizerId}>{stockWarningText(warning, stockCheck.data.days)}</li>
                             ))}
                         </ul>
-                    </div>
+                    </FormAlert>
                 </div>
             )}
 
-            {plans.isPending && <LoadingCard>Loading planned applications…</LoadingCard>}
+            {plans.isPending && <SectionLoading>{t("fertilizer.plans.loading")}</SectionLoading>}
 
-            {plans.isError && (
-                <ErrorCard
-                    title="Planned applications could not be loaded"
-                    onRetry={() => plans.refetch()}
-                    isRetrying={plans.isFetching}
-                />
-            )}
+            {plans.isError && <SectionLoadError title={t("fertilizer.plans.loadError")} query={plans} />}
 
             {plans.isSuccess && plans.data.length === 0 && (
-                status ? (
-                    <PlantsEmptyState
-                        title="No planned application has this status"
-                        hint="Try another status."
-                    />
-                ) : (
-                    <PlantsEmptyState title="No application planned yet" action={planButton} />
-                )
+                <Card>
+                    {status ? (
+                        <EmptyState
+                            className="py-8"
+                            title={t("fertilizer.plans.emptyFiltered")}
+                            message={t("fertilizer.plans.emptyFilteredHint")}
+                        />
+                    ) : (
+                        <EmptyState className="py-8" message={t("fertilizer.plans.empty")} action={planButton} />
+                    )}
+                </Card>
             )}
 
             {plans.isSuccess && plans.data.length > 0 && (
@@ -216,50 +184,51 @@ export default function FertilizerPlansSection() {
 
             <div className="mt-2 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
                 <div className="min-w-0">
-                    <h3 id="planned-vs-applied-title" className="font-heading text-sm font-bold text-on-background">
-                        Planned and applied by block
+                    <h3 id="planned-vs-applied-title" className="text-base font-semibold">
+                        {t("fertilizer.plans.comparison.title")}
                     </h3>
-                    {/* gray-600 #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
-                    <p className="mt-1 text-xs text-gray-600">
+                    <p className="mt-1 text-xs text-text-muted">
                         {comparison.isSuccess
-                            ? `${periodLabel(comparison.data)} · costs at last purchase price`
-                            : "Costs at last purchase price"}
+                            ? t("fertilizer.plans.comparison.subtitle", { period: periodLabel(comparison.data, t) })
+                            : t("fertilizer.plans.comparison.subtitleNoPeriod")}
                     </p>
                 </div>
                 <div className="flex max-w-full flex-wrap items-center gap-x-6 gap-y-3">
-                    <FilterField id="planned-vs-applied-from" titleId="planned-vs-applied-title" label="From">
+                    <FilterField
+                        id="planned-vs-applied-from"
+                        titleId="planned-vs-applied-title"
+                        label={t("fertilizer.plans.comparison.from")}
+                    >
                         {(props) => (
-                            <input
-                                {...props}
-                                type="date"
-                                value={from}
-                                onChange={(event) => setFrom(event.target.value)}
-                            />
+                            <Input {...props} type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
                         )}
                     </FilterField>
-                    <FilterField id="planned-vs-applied-to" titleId="planned-vs-applied-title" label="To">
+                    <FilterField
+                        id="planned-vs-applied-to"
+                        titleId="planned-vs-applied-title"
+                        label={t("fertilizer.plans.comparison.to")}
+                    >
                         {(props) => (
-                            <input {...props} type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+                            <Input {...props} type="date" value={to} onChange={(event) => setTo(event.target.value)} />
                         )}
                     </FilterField>
                 </div>
             </div>
 
-            {comparison.isPending && <LoadingCard>Loading the comparison…</LoadingCard>}
+            {comparison.isPending && <SectionLoading>{t("fertilizer.plans.comparison.loading")}</SectionLoading>}
 
             {comparison.isError && (
-                <ErrorCard
-                    title="The comparison could not be loaded"
-                    onRetry={() => comparison.refetch()}
-                    isRetrying={comparison.isFetching}
-                />
+                <SectionLoadError title={t("fertilizer.plans.comparison.loadError")} query={comparison} />
             )}
 
             {comparison.isSuccess && comparison.data.rows.length === 0 && (
-                <PlantsEmptyState
-                    title="Nothing planned or applied over this period"
-                    hint="Plan an application, or choose other dates."
-                />
+                <Card>
+                    <EmptyState
+                        className="py-8"
+                        title={t("fertilizer.plans.comparison.empty")}
+                        message={t("fertilizer.plans.comparison.emptyHint")}
+                    />
+                </Card>
             )}
 
             {comparison.isSuccess && comparison.data.rows.length > 0 && (

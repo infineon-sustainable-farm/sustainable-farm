@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +19,7 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      * Returns the harvests matching the given filters, with their variety row.
      *
      * <p>Every parameter is optional: a {@code null} parameter disables its own
-     * filter, as in {@link VarietyRepository#findByOptionalFilters}. The farm and
+     * filter, as in {@link BlockVarietyRepository#findByOptionalFilters}. The farm and
      * the block are those of the variety row. Both dates are included; a
      * {@code from} after {@code to} matches nothing and is not an error.
      *
@@ -28,9 +29,8 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      * "could not determine data type of parameter" as soon as a date is given.
      * H2 infers the type, so the tests do not catch this case.
      *
-     * @param farmId    farm identifier, or {@code null} to ignore the farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} to ignore the block
+     * @param allBlocks   {@code true} for every block, then {@code blockIds} is ignored
+     * @param blockIds  ids of the blocks to keep, never empty ({@code service.PlantsBlocks.BlockFilter})
      * @param lotNumber lot number as stored (for example {@code "LOT-2026-A-002"}),
      *                  matched exactly, or {@code null} to ignore the lot number
      * @param from      first harvest date, included, or {@code null} for no lower bound
@@ -39,15 +39,14 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Lo
      */
     @Query("""
             SELECT h FROM HarvestRecord h JOIN FETCH h.variety v
-            WHERE (CAST(:farmId AS Integer) IS NULL OR v.farmId = :farmId)
-              AND (CAST(:blockCode AS String) IS NULL OR v.blockCode = :blockCode)
+            WHERE (:allBlocks = true OR v.blockId IN :blockIds)
               AND (CAST(:lotNumber AS String) IS NULL OR h.lotNumber = :lotNumber)
               AND (CAST(:from AS LocalDate) IS NULL OR h.harvestDate >= :from)
               AND (CAST(:to AS LocalDate) IS NULL OR h.harvestDate <= :to)
             ORDER BY h.harvestDate ASC, h.id ASC
             """)
-    List<HarvestRecord> findByOptionalFilters(@Param("farmId") Integer farmId,
-                                              @Param("blockCode") String blockCode,
+    List<HarvestRecord> findByOptionalFilters(@Param("allBlocks") boolean allBlocks,
+                                              @Param("blockIds") Collection<Long> blockIds,
                                               @Param("lotNumber") String lotNumber,
                                               @Param("from") LocalDate from,
                                               @Param("to") LocalDate to);

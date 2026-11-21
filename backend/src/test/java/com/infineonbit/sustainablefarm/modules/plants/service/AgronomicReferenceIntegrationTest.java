@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.plants.service;
 
+import com.infineonbit.sustainablefarm.core.config.DemoDataSeeder;
+import com.infineonbit.sustainablefarm.modules.farm.dto.FarmCreateRequest;
+import com.infineonbit.sustainablefarm.modules.farm.service.FarmService;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.GrowthPhaseYieldShareRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.PlantingRequest;
@@ -13,6 +16,7 @@ import com.infineonbit.sustainablefarm.modules.plants.entity.PlantAlertType;
 import com.infineonbit.sustainablefarm.modules.plants.repository.GrowthPhaseYieldShareRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyReferenceRepository;
 import org.junit.jupiter.api.AfterEach;
+import com.infineonbit.sustainablefarm.modules.farm.support.SiteTestBlocks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,9 +42,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The agronomic reference as the user enters it, through the real services,
- * their transactions and the database. Outside the dev profile nothing is
- * loaded at startup: each test starts and ends with no correction of the
- * shares and without the varieties it enters.
+ * their transactions and the database. Outside the dev profile only the
+ * variety catalogue is loaded at startup: each test starts and ends with no
+ * correction of the shares and without the varieties it enters.
  *
  * <p>Farm 6, block R and the varieties "Sensation" and "Race mango" are used
  * by no other test.
@@ -52,7 +56,25 @@ class AgronomicReferenceIntegrationTest {
     /** Each race runs this many times, since H2 does not reproduce it on every trial. */
     private static final int TRIALS = 10;
 
-    private static final int FARM = 6;
+    /**
+     * Farm of this test class, created once: block codes are unique across the farms of the
+     * referential, and a requested farm must exist.
+     */
+    private static Long FARM;
+
+    @Autowired
+    private FarmService farmService;
+
+    @Autowired
+    private SiteTestBlocks siteTestBlocks;
+
+    @BeforeEach
+    void createTheFarmOfTheTestOnce() {
+        if (FARM == null) {
+            FARM = farmService.createFarm(new FarmCreateRequest("AgronomicReference test farm", null, null, null, null, null)).id();
+        }
+        siteTestBlocks.ensure(FARM, "R");
+    }
     private static final String SENSATION = "Sensation";
     private static final String RACE_MANGO = "Race mango";
     private static final LocalDate APRIL_1_2026 = LocalDate.of(2026, 4, 1);
@@ -164,9 +186,13 @@ class AgronomicReferenceIntegrationTest {
     }
 
     @Test
-    void startup_shouldLoadNoReference_outsideTheDevProfile() {
-        // Assert: the loader is not even a bean, so no default reference reaches another environment
-        assertTrue(applicationContext.getBeansOfType(AgronomicReferenceLoader.class).isEmpty());
+    void startup_shouldLoadTheCatalogue_andNoDevData_outsideTheDevProfile() {
+        // Assert: the five varieties the other modules reference are there in every profile
+        for (String key : List.of("KEITT", "KENT", "AMELIE", "TOMMY", "OTHER")) {
+            assertTrue(varietyReferenceRepository.findByVarietyKey(key).isPresent(), key);
+        }
+        // Assert: the demo data seeder is not even a bean
+        assertTrue(applicationContext.getBeansOfType(DemoDataSeeder.class).isEmpty());
     }
 
     @Test

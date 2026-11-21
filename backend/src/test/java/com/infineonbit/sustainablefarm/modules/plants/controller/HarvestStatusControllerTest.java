@@ -63,24 +63,24 @@ public class HarvestStatusControllerTest {
 
     private static HarvestStatusResponse statuses() {
         return new HarvestStatusResponse(LocalDate.of(2027, 6, 15), 30, List.of(
-                new VarietyHarvestStatus(7, "A", 1L, "Keitt", 40, MaturityStatus.RIPE, "estimate",
+                new VarietyHarvestStatus(7L, "A", 1L, "Keitt", 40, MaturityStatus.RIPE, "estimate",
                         MaturityStatus.RIPE, null, LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45,
                         LocalDate.of(2027, 6, 24), 21L, LocalDate.of(2027, 5, 20),
                         "varietal_guide_west_africa", "Bally_2002"),
-                new VarietyHarvestStatus(7, "C", 3L, "Brooks", 30, null, null, null, null, null, null, null, null,
+                new VarietyHarvestStatus(7L, "C", 3L, "Brooks", 30, null, null, null, null, null, null, null, null,
                         null, null, null, null)));
     }
 
     /** Keitt on A observed ripe while its window is open, and Brooks observed without reference. */
     private static HarvestStatusResponse observedStatuses() {
         return new HarvestStatusResponse(LocalDate.of(2027, 6, 15), 30, List.of(
-                new VarietyHarvestStatus(7, "A", 1L, "Keitt", 40, MaturityStatus.RIPE, "field_observation",
+                new VarietyHarvestStatus(7L, "A", 1L, "Keitt", 40, MaturityStatus.RIPE, "field_observation",
                         MaturityStatus.READY_FOR_HARVEST,
                         new FieldObservation(30L, LocalDate.of(2027, 6, 12), MaturityStatus.RIPE, MaturityMethod.BRIX,
                                 11.5, "°Bx", "Awa", "user_entry", LocalDate.of(2027, 7, 31)),
                         LocalDate.of(2027, 5, 1), LocalDate.of(2027, 7, 31), -45, null, null, null,
                         "varietal_guide_west_africa", "Bally_2002"),
-                new VarietyHarvestStatus(7, "C", 3L, "Brooks", 30, null, null, null,
+                new VarietyHarvestStatus(7L, "C", 3L, "Brooks", 30, null, null, null,
                         new FieldObservation(31L, LocalDate.of(2027, 6, 1), MaturityStatus.RIPE, MaturityMethod.VISUAL,
                                 null, null, null, "user_entry", null),
                         null, null, null, null, null, null, null, null)));
@@ -89,7 +89,7 @@ public class HarvestStatusControllerTest {
     @Test
     void getHarvestStatus_shouldReturnTheStatusOfEveryVariety() throws Exception {
         // Arrange
-        when(harvestStatusService.getHarvestStatus(7, "A", 20)).thenReturn(statuses());
+        when(harvestStatusService.getHarvestStatus(7L, "A", 20)).thenReturn(statuses());
         // Act
         ResultActions result = mockMvc.perform(get(URL)
                 .param("farmId", "7")

@@ -36,7 +36,7 @@ public record FertilizerPlanResponse(
         Long fertilizerId,
         String fertilizerName,
         FertilizerUnit unit,
-        Integer farmId,
+        Long farmId,
         String blockCode,
         LocalDate plannedDate,
         Double plannedQuantity,

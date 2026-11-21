@@ -1,27 +1,29 @@
 package com.infineonbit.sustainablefarm.modules.plants.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
 /**
  * Planting calendar of a block of the farm.
  *
- * <p>Column names are the domain names of the schema and are mapped explicitly,
- * like {@link Variety}.
+ * <p>The table and its columns follow the naming of the other modules: English
+ * snake_case and a singular table name, mapped explicitly like {@link BlockVariety}.
  *
  * <p>There is deliberately no tree-age column. The age of the trees is never
  * stored nor entered: it is computed from {@code plantingDate} and the
@@ -30,55 +32,55 @@ import java.time.LocalDate;
  * <p>{@code currentStage} is a field observation, not the computed growth phase.
  * It stays NULL until someone records it.
  *
- * <p>One row per (farm, block): {@code blockKey} holds that pair and carries a
+ * <p>One row per block: {@code blockKey} holds its id and carries a
  * unique constraint, so two plantings of a new block sent at the same time
  * cannot both create a row.
  */
 @Entity
-@Table(name = "calendrier_croissance",
-        uniqueConstraints = @UniqueConstraint(name = GrowthCalendar.KEY_CONSTRAINT, columnNames = "block_key"))
+@EntityListeners(BlockLabelListener.class)
+@Table(name = "growth_calendar",
+        uniqueConstraints = @UniqueConstraint(name = GrowthCalendar.KEY_CONSTRAINT, columnNames = "block_key"),
+        indexes = @Index(name = "idx_growth_calendar_block_id", columnList = "block_id"))
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class GrowthCalendar {
+public class GrowthCalendar extends BaseEntity implements BlockRow {
 
     /** Name of the unique constraint on {@code block_key}. */
-    public static final String KEY_CONSTRAINT = "uk_calendrier_croissance_block_key";
+    public static final String KEY_CONSTRAINT = "uk_growth_calendar_block_key";
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    /** Block of the calendar, a {@code farm.block} row (foreign key {@code fk_growth_calendar_block}). */
+    @Column(name = "block_id", nullable = false)
+    private Long blockId;
 
-    @Column(name = "id_ferme")
-    private Integer farmId;
-
-    @Column(name = "bloc_parcelle", nullable = false)
-    private String blockCode;
+    @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final BlockLink block = new BlockLink();
 
     /** Not provided by the source study. Stays NULL until recorded. */
-    @Column(name = "date_plantation")
+    @Column(name = "planting_date")
     private LocalDate plantingDate;
 
     /** How precise the planting date is, in the words the source allows. */
-    @Column(name = "precision_date")
+    @Column(name = "date_precision")
     private String datePrecision;
 
     /** Observed growth stage. Not the computed phase. Stays NULL until observed. */
-    @Column(name = "stade_actuel")
+    @Column(name = "current_stage")
     private String currentStage;
 
-    @Column(name = "phase_annees")
+    @Column(name = "phase_years")
     private String phaseYears;
 
     /** Local rainfall for this block. The source only gives a farm-wide range. */
-    @Column(name = "pluviometrie_locale_mm")
-    private Double localRainfallMm;
+    @Column(name = "local_rainfall_mm", precision = 7, scale = 1)
+    private BigDecimal localRainfallMm;
 
     @Column(name = "source")
     private String source;
 
-    @Column(name = "date_maj")
+    @Column(name = "last_updated")
     private Instant lastUpdated;
 
     /**
@@ -87,33 +89,59 @@ public class GrowthCalendar {
      * it existed, until they are updated or, in the dev profile, the startup
      * filling reaches them.
      *
-     * <p>267 characters hold the longest farm (11) and block (255) with the
-     * separator.
+     * <p>20 characters hold the longest block id.
      */
-    @Column(name = "block_key", length = 267)
+    @Column(name = "block_key", length = 20)
     private String blockKey;
 
     /**
-     * Natural key of a calendar row: the farm, 0 for a row without a farm (farm
-     * identifiers start at 1), and the block, joined by {@code "|"}. For example
-     * {@code "0|C"}. It follows the rule of the planting lookup
-     * ({@code GrowthCalendarRepository.findByFarmAndBlock}): a NULL farm is a
-     * value of its own, and the block is taken as stored.
+     * Natural key of a calendar row: the block id, for example {@code "3"}.
+     * It follows the rule of the planting lookup
+     * ({@code GrowthCalendarRepository.findByBlock}). The block gives the farm,
+     * so the farm is not part of the key.
      *
-     * @param farmId    farm identifier, or {@code null} for no farm
-     * @param blockCode block code as stored
+     * @param blockId id of the block
      * @return the key, or {@code null} when the block is missing
      */
-    public static String keyOf(Integer farmId, String blockCode) {
-        if (blockCode == null) {
-            return null;
-        }
-        return (farmId == null ? 0 : farmId) + "|" + blockCode;
+    public static String keyOf(Long blockId) {
+        return blockId == null ? null : String.valueOf(blockId);
     }
 
     @PrePersist
     @PreUpdate
     void refreshBlockKey() {
-        blockKey = keyOf(farmId, blockCode);
+        block.requireResolved("growth calendar row");
+        blockKey = keyOf(blockId);
+    }
+
+    /** Farm of the block, read from the farm referential; {@code null} without a block. */
+    public Long getFarmId() {
+        return block.label(blockId).farmId();
+    }
+
+    /** Sets the farm by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setFarmId(Long farmId) {
+        block.setFarmId(farmId);
+    }
+
+    /** Code of the block, for example {@code "A"}, read from the farm referential. */
+    public String getBlockCode() {
+        return block.label(blockId).code();
+    }
+
+    /** Sets the block code by hand, on a row built in memory; a saved row takes it from its block. */
+    public void setBlockCode(String blockCode) {
+        block.setCode(blockCode);
+    }
+
+    /** Points the row to a block of the farm referential, with the label plants shows for it. */
+    public void assignBlock(Long blockId, BlockLabel label) {
+        this.blockId = blockId;
+        block.set(blockId, label);
+    }
+
+    @Override
+    public void useBlockLabels(BlockLabelSource source) {
+        block.useSource(source);
     }
 }

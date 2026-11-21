@@ -38,7 +38,7 @@ import java.time.LocalDate;
 @SupplierMatchesOrigin
 public record NurseryBatchRequest(
         @Min(value = 1, message = "farmId must be at least 1")
-        Integer farmId,
+        Long farmId,
 
         @Schema(description = "Up to 20 letters, digits or hyphens. Case and surrounding spaces are ignored",
                 example = "P1")

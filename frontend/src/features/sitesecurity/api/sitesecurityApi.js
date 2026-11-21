@@ -1,43 +1,32 @@
 import { apiClient } from "../../../shared/api/client";
 import { SITESECURITY_ENDPOINTS as ENDPOINTS } from "./endpoints";
-const WITH_COOKIE = {};
 
-function authorizedGet(endpoint, config = {}) {
-    return apiClient.get(endpoint, { ...config, ...WITH_COOKIE });
+/* The caller's Site Security role, permissions and zones. Site Security signs nobody in. */
+export function fetchAuthorization() {
+  return apiClient.get(ENDPOINTS.AUTHORIZATION);
 }
-
-function authorizedPost(endpoint, body) {
-    return apiClient.post(endpoint, body, WITH_COOKIE);
-}
-
-export const restoreSession = () => authorizedGet(ENDPOINTS.SESSION);
-
-/* ---------------------------- operations ----------------------------- */
 
 export function fetchSecurityOverview() {
-    return authorizedGet(ENDPOINTS.OVERVIEW);
+  return apiClient.get(ENDPOINTS.OVERVIEW);
 }
 
 export function fetchZones() {
-    return authorizedGet(ENDPOINTS.ZONES);
+  return apiClient.get(ENDPOINTS.ZONES);
 }
 
 export function fetchCredentials() {
-    return authorizedGet(ENDPOINTS.CREDENTIALS);
+  return apiClient.get(ENDPOINTS.CREDENTIALS);
 }
 
+/* The holder is a person of the shared directory: the payload carries its id, never its name. */
 export function createCredentialApi(credential) {
-    return authorizedPost(ENDPOINTS.CREDENTIALS, credential);
+  return apiClient.post(ENDPOINTS.CREDENTIALS, credential);
 }
 
 export function revokeCredentialApi(id) {
-    return authorizedPost(`${ENDPOINTS.CREDENTIALS}/${encodeURIComponent(id)}/revoke`, null);
+  return apiClient.post(`${ENDPOINTS.CREDENTIALS}/${encodeURIComponent(id)}/revoke`, null);
 }
 
 export function fetchAccessLogs(filter) {
-    return authorizedGet(ENDPOINTS.LOGS, { params: { filter } });
-}
-
-export function fetchAuthorization() {
-    return authorizedGet(ENDPOINTS.AUTHORIZATION);
+  return apiClient.get(ENDPOINTS.LOGS, { params: { filter } });
 }

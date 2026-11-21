@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
     useCreateTourStop,
     useCreateWorkshop,
@@ -10,14 +11,31 @@ import {
     useWorkshopStatusAction,
     useWorkshops,
 } from "../../hooks/useEducation";
-import { useGuides } from "../../hooks/useScheduling";
-import Modal from "../Modal";
+import { Button, Card, Modal, PageHeader } from "../../../../shared/ui";
+import { LoadError, LoadingBlock } from "../LoadState";
 import TourStopsTimeline from "../TourStopsTimeline";
 import TourStopForm from "../Forms/TourStopForm";
 import WorkshopForm from "../Forms/WorkshopForm";
 import WorkshopsTable from "../WorkshopsTable";
 
+/** "Show inactive" switch of a section header. */
+function ShowInactiveToggle({ checked, onChange }) {
+    const { t } = useTranslation("visitormanagement");
+    return (
+        <label className="flex items-center gap-2 text-sm text-text">
+            <input
+                type="checkbox"
+                checked={checked}
+                onChange={(event) => onChange(event.target.checked)}
+                className="h-4 w-4 accent-primary"
+            />
+            {t("education.showInactive")}
+        </label>
+    );
+}
+
 export default function EducationPage() {
+    const { t } = useTranslation("visitormanagement");
     const [formState, setFormState] = useState({ open: false, workshop: null });
     const [formKey, setFormKey] = useState(0);
     const [stopFormState, setStopFormState] = useState({ open: false, stop: null });
@@ -26,8 +44,8 @@ export default function EducationPage() {
     const [showInactiveWorkshops, setShowInactiveWorkshops] = useState(false);
 
     useEffect(() => {
-        document.title = "Educational Program — Visitor Management";
-    }, []);
+        document.title = t("education.documentTitle");
+    }, [t]);
 
     const {
         data: stops,
@@ -43,7 +61,6 @@ export default function EducationPage() {
         refetch: refetchWorkshops,
         isFetching: workshopsFetching,
     } = useWorkshops();
-    const { data: guides } = useGuides();
 
     const createMutation = useCreateWorkshop();
     const updateMutation = useUpdateWorkshop();
@@ -142,194 +159,134 @@ export default function EducationPage() {
         : null;
 
     return (
-        <div className="min-h-full bg-[#F5F7FA] px-8 py-7">
-            <section className="rounded-lg border border-line bg-white p-7 animate-fade-up">
-                <h2 className="font-heading mb-5 inline-block border-b-[3px] border-accent pb-2 text-2xl font-bold text-primary-dark">
-                    Educational program
-                </h2>
+        <div className="p-6 space-y-6">
+            <PageHeader title={t("education.title")} />
 
-                {stopsPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading tour stops…
-                    </div>
-                )}
+            {stopsPending && <LoadingBlock label={t("education.stops.loading")} />}
 
-                {stopsError && (
-                    <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
-                        <TriangleAlert size={28} className="text-error" />
-                        <div>
-                            <p className="font-heading text-base font-bold text-ink">
-                                Tour stops could not be loaded
-                            </p>
-                            <p className="mt-1 text-sm text-muted">
-                                The request to the server did not succeed.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetchStops()}
-                            disabled={stopsFetching}
-                            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
-                        >
-                            {stopsFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
-                )}
+            {stopsError && (
+                <LoadError
+                    title={t("education.stops.loadError")}
+                    onRetry={() => refetchStops()}
+                    retrying={stopsFetching}
+                />
+            )}
 
-                {!stopsPending && !stopsError && (
+            {!stopsPending && !stopsError && (
+                <Card
+                    title={t("education.stops.title")}
+                    actions={
+                        <>
+                            <ShowInactiveToggle
+                                checked={showInactiveStops}
+                                onChange={setShowInactiveStops}
+                            />
+                            <Button icon={Plus} onClick={openCreateStop}>
+                                {t("education.stops.add")}
+                            </Button>
+                        </>
+                    }
+                >
+                    <TourStopsTimeline
+                        stops={showInactiveStops ? (stops ?? []) : activeStops}
+                        pendingDeactivateId={pendingStopDeactivateId}
+                        deactivateError={stopDeactivateError}
+                        onEdit={openEditStop}
+                        onDeactivate={(stop) => deactivateStopMutation.mutate(stop.id)}
+                    />
+
+                    {!showInactiveStops && inactiveStopCount > 0 && (
+                        <p className="mt-3 text-xs text-text-muted">
+                            {inactiveStopCount === 1
+                                ? t("education.stops.hiddenOne", { count: inactiveStopCount })
+                                : t("education.stops.hiddenMany", { count: inactiveStopCount })}
+                        </p>
+                    )}
+                </Card>
+            )}
+
+            <Card
+                title={t("education.workshops.title")}
+                actions={
                     <>
-                        <div className="mb-4 flex flex-wrap items-center gap-4">
-                            <h3 className="font-heading text-[17px] font-bold text-ink">
-                                Standard tour stops
-                            </h3>
-                            <label className="ml-auto flex items-center gap-2 text-xs text-ink">
-                                <input
-                                    type="checkbox"
-                                    checked={showInactiveStops}
-                                    onChange={(event) =>
-                                        setShowInactiveStops(event.target.checked)
-                                    }
-                                    className="h-4 w-4 accent-[#0a8276]"
-                                />
-                                Show inactive
-                            </label>
-                            <button
-                                type="button"
-                                onClick={openCreateStop}
-                                className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
-                            >
-                                + New stop
-                            </button>
-                        </div>
-
-                        <TourStopsTimeline
-                            stops={showInactiveStops ? (stops ?? []) : activeStops}
-                            pendingDeactivateId={pendingStopDeactivateId}
-                            deactivateError={stopDeactivateError}
-                            onEdit={openEditStop}
-                            onDeactivate={(stop) => deactivateStopMutation.mutate(stop.id)}
-                        />
-
-                        {!showInactiveStops && inactiveStopCount > 0 && (
-                            <p className="mt-3 text-[11px] text-muted">
-                                {inactiveStopCount} deactivated stop
-                                {inactiveStopCount > 1 ? "s are" : " is"} hidden from the tour —
-                                the API offers no reactivation.
-                            </p>
-                        )}
-                    </>
-                )}
-
-                <div className="mb-3 mt-6.5 flex flex-wrap items-center gap-4">
-                    <h3 className="font-heading text-[17px] font-bold text-ink">
-                        Workshops &amp; tour templates
-                    </h3>
-                    <label className="ml-auto flex items-center gap-2 text-xs text-ink">
-                        <input
-                            type="checkbox"
+                        <ShowInactiveToggle
                             checked={showInactiveWorkshops}
-                            onChange={(event) => setShowInactiveWorkshops(event.target.checked)}
-                            className="h-4 w-4 accent-[#0a8276]"
+                            onChange={setShowInactiveWorkshops}
                         />
-                        Show inactive
-                    </label>
-                    <button
-                        type="button"
-                        onClick={openCreate}
-                        className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark"
-                    >
-                        + New workshop
-                    </button>
-                </div>
-
-                {workshopsPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-white px-6 py-16 text-sm text-muted">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading workshops…
-                    </div>
-                )}
+                        <Button icon={Plus} onClick={openCreate}>
+                            {t("education.workshops.add")}
+                        </Button>
+                    </>
+                }
+            >
+                {workshopsPending && <LoadingBlock label={t("education.workshops.loading")} />}
 
                 {workshopsError && (
-                    <div className="flex flex-col items-center gap-4 rounded-lg border border-error/30 bg-error/5 px-6 py-16 text-center">
-                        <TriangleAlert size={28} className="text-error" />
-                        <div>
-                            <p className="font-heading text-base font-bold text-ink">
-                                Workshops could not be loaded
-                            </p>
-                            <p className="mt-1 text-sm text-muted">
-                                The request to the server did not succeed.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetchWorkshops()}
-                            disabled={workshopsFetching}
-                            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold tracking-wider text-white uppercase hover:bg-primary-dark disabled:opacity-60"
-                        >
-                            {workshopsFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
+                    <LoadError
+                        title={t("education.workshops.loadError")}
+                        onRetry={() => refetchWorkshops()}
+                        retrying={workshopsFetching}
+                    />
                 )}
 
                 {!workshopsPending && !workshopsError && (
-                    <>
-                        <WorkshopsTable
-                            workshops={visibleWorkshops}
-                            pendingAction={pendingAction}
-                            actionError={actionError}
-                            onAction={(workshop, action) =>
-                                statusMutation.mutate({ id: workshop.id, action })
-                            }
-                            onEdit={openEdit}
-                        />
-                        <p className="mt-6 text-[11px] text-muted">
-                            Tour stops define the standard visit, ordered by position. Workshops are
-                            created as drafts and published once ready; deactivating a workshop keeps
-                            its record but removes it from the offer.
-                        </p>
-                    </>
-                )}
-
-                {stopFormState.open && (
-                    <Modal
-                        title={editingStop ? `Edit stop — ${editingStop.name}` : "New tour stop"}
-                        onClose={resetStopForm}
-                    >
-                        <TourStopForm
-                            key={stopFormKey}
-                            stop={editingStop}
-                            isSubmitting={stopFormMutation.isPending}
-                            submitError={stopFormMutation.error?.message}
-                            serverFieldErrors={stopFormMutation.error?.data?.fieldErrors}
-                            onSubmit={handleStopSubmit}
-                            onCancel={resetStopForm}
-                        />
-                    </Modal>
-                )}
-
-                {formState.open && (
-                    <Modal
-                        title={
-                            editingWorkshop
-                                ? `Edit workshop — ${editingWorkshop.name}`
-                                : "New workshop"
+                    <WorkshopsTable
+                        workshops={visibleWorkshops}
+                        pendingAction={pendingAction}
+                        actionError={actionError}
+                        onAction={(workshop, action) =>
+                            statusMutation.mutate({ id: workshop.id, action })
                         }
-                        onClose={resetForm}
-                    >
-                        <WorkshopForm
-                            key={formKey}
-                            workshop={editingWorkshop}
-                            guides={guides ?? []}
-                            isSubmitting={formMutation.isPending}
-                            submitError={formMutation.error?.message}
-                            serverFieldErrors={formMutation.error?.data?.fieldErrors}
-                            onSubmit={handleSubmit}
-                            onCancel={resetForm}
-                        />
-                    </Modal>
+                        onEdit={openEdit}
+                    />
                 )}
-            </section>
+            </Card>
+
+            {!workshopsPending && !workshopsError && (
+                <p className="text-xs text-text-muted">{t("education.footnote")}</p>
+            )}
+
+            <Modal
+                open={stopFormState.open}
+                onClose={resetStopForm}
+                size="xl"
+                title={
+                    editingStop
+                        ? t("education.stops.editTitle", { name: editingStop.name })
+                        : t("education.stops.newTitle")
+                }
+            >
+                <TourStopForm
+                    key={stopFormKey}
+                    stop={editingStop}
+                    isSubmitting={stopFormMutation.isPending}
+                    submitError={stopFormMutation.error?.message}
+                    serverFieldErrors={stopFormMutation.error?.data?.fieldErrors}
+                    onSubmit={handleStopSubmit}
+                    onCancel={resetStopForm}
+                />
+            </Modal>
+
+            <Modal
+                open={formState.open}
+                onClose={resetForm}
+                size="xl"
+                title={
+                    editingWorkshop
+                        ? t("education.workshops.editTitle", { name: editingWorkshop.name })
+                        : t("education.workshops.newTitle")
+                }
+            >
+                <WorkshopForm
+                    key={formKey}
+                    workshop={editingWorkshop}
+                    isSubmitting={formMutation.isPending}
+                    submitError={formMutation.error?.message}
+                    serverFieldErrors={formMutation.error?.data?.fieldErrors}
+                    onSubmit={handleSubmit}
+                    onCancel={resetForm}
+                />
+            </Modal>
         </div>
     );
 }

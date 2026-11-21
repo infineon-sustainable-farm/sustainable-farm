@@ -8,18 +8,16 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.infineonbit.sustainablefarm.modules.watersupply.entity.IrrigationLog;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Notification;
-import com.infineonbit.sustainablefarm.modules.watersupply.entity.Zone;
+import com.infineonbit.sustainablefarm.modules.notification.api.AlertDto;
 import com.infineonbit.sustainablefarm.modules.watersupply.exception.NotFoundException;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.IrrigationLogRepository;
 import com.infineonbit.sustainablefarm.modules.watersupply.repository.WaterConsumptionRepository;
-import com.infineonbit.sustainablefarm.modules.watersupply.repository.FieldZoneRepository;
+import com.infineonbit.sustainablefarm.modules.farm.api.FarmDirectory;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,7 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DripFlowCheckServiceTest {
 
     @Mock
-    private FieldZoneRepository fieldZoneRepository;
+    private FarmDirectory farmDirectory;
 
     @Mock
     private WaterConsumptionRepository consumptionRepository;
@@ -46,11 +44,11 @@ class DripFlowCheckServiceTest {
 
     @Test
     void reportsPossibleCloggingWhenMeasuredVolumeIsBelowNinetyPercent() {
-        UUID zoneId = stubZoneWithRating();
+        Long zoneId = stubZoneWithRating();
         stubTwoHourCycle(zoneId);
         when(consumptionRepository.sumConsumptionByZoneIdBetween(any(), any(), eq(zoneId))).thenReturn(300d);
         when(alertService.raiseOnce(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(Optional.of(new Notification()));
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(AlertDto.class)));
 
         Map<String, Object> result = service().check(zoneId);
 
@@ -63,11 +61,11 @@ class DripFlowCheckServiceTest {
 
     @Test
     void reportsPossibleLeakWhenMeasuredVolumeIsAboveHundredTenPercent() {
-        UUID zoneId = stubZoneWithRating();
+        Long zoneId = stubZoneWithRating();
         stubTwoHourCycle(zoneId);
         when(consumptionRepository.sumConsumptionByZoneIdBetween(any(), any(), eq(zoneId))).thenReturn(500d);
         when(alertService.raiseOnce(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(Optional.of(new Notification()));
+                .thenReturn(Optional.of(org.mockito.Mockito.mock(AlertDto.class)));
 
         Map<String, Object> result = service().check(zoneId);
 
@@ -77,7 +75,7 @@ class DripFlowCheckServiceTest {
 
     @Test
     void reportsOkWhenMeasuredVolumeMatchesTheNetworkRating() {
-        UUID zoneId = stubZoneWithRating();
+        Long zoneId = stubZoneWithRating();
         stubTwoHourCycle(zoneId);
         when(consumptionRepository.sumConsumptionByZoneIdBetween(any(), any(), eq(zoneId))).thenReturn(400d);
 
@@ -89,10 +87,8 @@ class DripFlowCheckServiceTest {
 
     @Test
     void doesNotConcludeWithoutEmitterData() {
-        UUID zoneId = UUID.randomUUID();
-        Zone zone = new Zone();
-        zone.setName("Zone A");
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(zone));
+        Long zoneId = 5L;
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().id(zoneId).name("Zone A").build()));
 
         Map<String, Object> result = service().check(zoneId);
 
@@ -101,7 +97,7 @@ class DripFlowCheckServiceTest {
 
     @Test
     void doesNotConcludeWithoutIrrigationCycle() {
-        UUID zoneId = stubZoneWithRating();
+        Long zoneId = stubZoneWithRating();
         when(logRepository.findForZoneBetween(eq(zoneId), any(), any())).thenReturn(List.of());
 
         Map<String, Object> result = service().check(zoneId);
@@ -111,7 +107,7 @@ class DripFlowCheckServiceTest {
 
     @Test
     void doesNotConcludeWithoutMeasurement() {
-        UUID zoneId = stubZoneWithRating();
+        Long zoneId = stubZoneWithRating();
         stubTwoHourCycle(zoneId);
         when(consumptionRepository.sumConsumptionByZoneIdBetween(any(), any(), eq(zoneId))).thenReturn(0d);
 
@@ -122,25 +118,21 @@ class DripFlowCheckServiceTest {
 
     @Test
     void rejectsUnknownZone() {
-        UUID zoneId = UUID.randomUUID();
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.empty());
+        Long zoneId = 6L;
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service().check(zoneId));
     }
 
     /** Drip zone of 100 emitters at 2 L/h: 200 L/h expected. */
-    private UUID stubZoneWithRating() {
-        UUID zoneId = UUID.randomUUID();
-        Zone zone = new Zone();
-        zone.setName("Zone A");
-        zone.setIrrigationMethod("drip");
-        zone.setEmitterCount(100);
-        zone.setEmitterNominalFlowLh(2.0);
-        when(fieldZoneRepository.findById(zoneId)).thenReturn(Optional.of(zone));
+    private Long stubZoneWithRating() {
+        Long zoneId = 7L;
+        when(farmDirectory.findZone(zoneId)).thenReturn(Optional.of(TestZones.zone().id(zoneId).name("Zone A")
+                .irrigationMethod("drip").emitterCount(100).emitterNominalFlowLh(2.0).build()));
         return zoneId;
     }
 
-    private void stubTwoHourCycle(UUID zoneId) {
+    private void stubTwoHourCycle(Long zoneId) {
         Instant now = Instant.now();
         IrrigationLog log = new IrrigationLog();
         log.setActualStartTime(now.minus(3, ChronoUnit.HOURS));
@@ -149,6 +141,6 @@ class DripFlowCheckServiceTest {
     }
 
     private DripFlowCheckService service() {
-        return new DripFlowCheckService(fieldZoneRepository, consumptionRepository, logRepository, alertService);
+        return new DripFlowCheckService(farmDirectory, consumptionRepository, logRepository, alertService);
     }
 }

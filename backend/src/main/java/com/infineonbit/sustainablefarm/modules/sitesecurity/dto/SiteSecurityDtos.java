@@ -1,13 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.sitesecurity.dto;
 
-import com.infineonbit.sustainablefarm.modules.sitesecurity.config.SiteSecurityPrincipal;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -72,6 +70,9 @@ public class SiteSecurityDtos {
     @Builder
     public static class UserDto {
         private String id;
+        /** The holder in the shared people directory. */
+        private Long personId;
+        /** The holder's full name, read from the directory; empty if the person is unknown. */
         private String name;
         private String role;
         private String type;
@@ -80,7 +81,7 @@ public class SiteSecurityDtos {
         private String status;
         private String initials;
         private String lastActive;
-        /** Only filled for the admin role. */
+        /** The holder's email, read from the directory. Only filled for the admin role. */
         @ToString.Exclude
         private String email;
         private String notificationStatus;
@@ -91,15 +92,9 @@ public class SiteSecurityDtos {
     @AllArgsConstructor
     @Builder(toBuilder = true)
     public static class CreateUserRequestDto {
-        @NotBlank(message = "Name is required")
-        @Size(max = 100, message = "Name must not exceed 100 characters")
-        private String name;
-
-        @NotBlank(message = "Email is required")
-        @Email(message = "Email must be a valid address")
-        @Size(max = 254, message = "Email must not exceed 254 characters")
-        @ToString.Exclude
-        private String email;
+        /** The holder: a person of the shared directory, picked in GET /api/staff/persons. */
+        @NotNull(message = "Person is required")
+        private Long personId;
 
         @NotBlank(message = "Role is required")
         @Size(max = 100, message = "Role must not exceed 100 characters")
@@ -123,27 +118,15 @@ public class SiteSecurityDtos {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SessionDto {
-        private String role;
-        private String centralUserId;
-        private List<String> permissions;
-
-        public static SessionDto of(SiteSecurityPrincipal principal) {
-            return new SessionDto(principal.role().name().toLowerCase(), principal.operatorId(),
-                    principal.isAdmin() ? List.of()
-                            : principal.permissions().stream().map(p -> p.toLowerCase(Locale.ROOT)).sorted().toList());
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     @Builder
     public static class LogEntryDto {
         private String id;
         private String ref;
         private String time;
         private String date;
+        /** The person who passed, empty for an unidentified subject. */
+        private Long personId;
+        /** The person's full name, read from the directory; empty for an unidentified subject. */
         private String user;
         private String initials;
         private String type;

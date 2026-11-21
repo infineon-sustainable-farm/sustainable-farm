@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.repository;
 
 import com.infineonbit.sustainablefarm.modules.producttransformation.rawintake.model.RawIntake;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,51 +19,71 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Repository
-public interface RawIntakeRepository extends JpaRepository<RawIntake, String> {
+public interface RawIntakeRepository extends JpaRepository<RawIntake, Long> {
+
+    /** The RawIntake of a business code, shown as {@code intakeId}. */
+    @EntityGraph(attributePaths = {"batch"})
+    Optional<RawIntake> findByIntakeId(String intakeId);
+
+    /** Whether a RawIntake has this business code. */
+    boolean existsByIntakeId(String intakeId);
+
+    /** Deletes the row of a business code, with what it cascades to. */
+    void deleteByIntakeId(String intakeId);
+
 
     /**
      * Find raw intake by batch ID
      * Business Rule: One intake initializes exactly one batch
      */
+    @EntityGraph(attributePaths = {"batch"})
     Optional<RawIntake> findByBatchBatchId(String batchId);
 
     /**
      * Find raw intake by date range
      */
+    @EntityGraph(attributePaths = {"batch"})
     List<RawIntake> findByIntakeDateBetween(LocalDate startDate, LocalDate endDate);
 
     /**
-     * Find raw intake by source farm
+     * Find raw intake of several source blocks (the blocks of a farm)
      */
-    List<RawIntake> findBySourceFarm(String sourceFarm);
+    @EntityGraph(attributePaths = {"batch"})
+    List<RawIntake> findBySourceBlockIdIn(java.util.Collection<Long> sourceBlockIds);
 
     /**
      * Find raw intake by variety
      */
-    List<RawIntake> findByReceivedVariety(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety receivedVariety);
+    @EntityGraph(attributePaths = {"batch"})
+    List<RawIntake> findByReceivedVarietyKey(String receivedVarietyKey);
 
     /**
      * Find raw intake by quality grade
      */
-    List<RawIntake> findByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade receivedGrade);
+    @EntityGraph(attributePaths = {"batch"})
+    List<RawIntake> findByReceivedGrade(com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade receivedGrade);
 
     /**
      * Find raw intake by farm and date range
      */
-    @Query("SELECT r FROM RawIntake r WHERE r.sourceFarm = :farm AND r.intakeDate BETWEEN :startDate AND :endDate")
-    List<RawIntake> findBySourceFarmAndDateRange(@Param("farm") String farm,
-                                                 @Param("startDate") LocalDate startDate,
-                                                 @Param("endDate") LocalDate endDate);
+    @EntityGraph(attributePaths = {"batch"})
+    List<RawIntake> findBySourceBlockIdInAndIntakeDateBetween(java.util.Collection<Long> sourceBlockIds,
+                                                              LocalDate startDate, LocalDate endDate);
 
     /**
      * Get total received quantity by variety
      */
-    @Query("SELECT SUM(r.receivedQuantityKg) FROM RawIntake r WHERE r.receivedVariety = :variety")
-    Double getTotalReceivedQuantityByVariety(@Param("variety") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.MangoVariety variety);
+    @Query("SELECT SUM(r.receivedQuantityKg) FROM RawIntake r WHERE r.receivedVarietyKey = :variety")
+    Double getTotalReceivedQuantityByVariety(@Param("variety") String variety);
 
     /**
      * Get average quality grade distribution
      */
     @Query("SELECT COUNT(r) FROM RawIntake r WHERE r.receivedGrade = :grade")
-    long countByReceivedGrade(@Param("grade") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.HarvestEvent.QualityGrade grade);
+    long countByReceivedGrade(@Param("grade") com.infineonbit.sustainablefarm.modules.producttransformation.harvestevent.model.QualityGrade grade);
+
+    /** Every row, with what the responses show fetched in the same query (no N+1). */
+    @Override
+    @EntityGraph(attributePaths = {"batch"})
+    List<RawIntake> findAll();
 }

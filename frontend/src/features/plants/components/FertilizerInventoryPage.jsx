@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, PageHeader } from "../../../shared/ui";
 import { useAddFertilizer } from "../hooks/useAddFertilizer";
 import { useRecordFertilizerMovement } from "../hooks/useRecordFertilizerMovement";
 import AddFertilizerModal from "./AddFertilizerModal";
@@ -8,31 +10,22 @@ import FertilizerMovementsSection from "./FertilizerMovementsSection";
 import FertilizerPlansSection from "./FertilizerPlansSection";
 import FertilizerStockSection from "./FertilizerStockSection";
 import RecordMovementModal from "./RecordMovementModal";
-import { PAGE, PRIMARY_BUTTON, SECONDARY_BUTTON } from "./plantsStyles";
 
 function AddFertilizerButton({ onClick }) {
+    const { t } = useTranslation("plants");
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={SECONDARY_BUTTON}
-        >
-            <Plus size={16} />
-            Add a fertilizer
-        </button>
+        <Button variant="secondary" icon={Plus} onClick={onClick}>
+            {t("fertilizer.addFertilizer")}
+        </Button>
     );
 }
 
 function RecordMovementButton({ onClick }) {
+    const { t } = useTranslation("plants");
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={PRIMARY_BUTTON}
-        >
-            <Plus size={16} />
-            Record a movement
-        </button>
+        <Button icon={Plus} onClick={onClick}>
+            {t("fertilizer.recordMovement")}
+        </Button>
     );
 }
 
@@ -49,12 +42,14 @@ function RecordMovementButton({ onClick }) {
  * moves into the history, the only part of the page kept by block.
  */
 export default function FertilizerInventoryPage() {
+    const { t } = useTranslation("plants");
     const [isAddingFertilizer, setIsAddingFertilizer] = useState(false);
     const [isRecordingMovement, setIsRecordingMovement] = useState(false);
+    const pageTitle = t("fertilizer.pageTitle");
 
     useEffect(() => {
-        document.title = "Fertilizer Inventory — Plants";
-    }, []);
+        document.title = pageTitle;
+    }, [pageTitle]);
 
     const addFertilizer = useAddFertilizer();
     const recordMovement = useRecordFertilizerMovement();
@@ -88,36 +83,25 @@ export default function FertilizerInventoryPage() {
     }
 
     return (
-        <div className={PAGE}>
-            {/* pt-20 under md: the fixed menu button would otherwise cover the title on a phone. */}
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-20 pb-8 sm:px-6 md:pt-8">
-                <header className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        {/* A gray 12 px overline: #4a5565 on the page (#f8f9ff) -> 7.19:1. */}
-                        <p className="font-heading text-xs font-semibold tracking-widest text-gray-600 uppercase">
-                            Task 3
-                        </p>
-                        <h1 className="font-heading mt-1 text-2xl font-bold text-on-background">
-                            Fertilizer Inventory
-                        </h1>
-                        <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Stock, purchases, applications and losses.
-                        </p>
-                    </div>
+        <div className="p-6 space-y-6">
+            <PageHeader
+                title={t("fertilizer.title")}
+                subtitle={t("fertilizer.subtitle")}
+                actions={
                     <div className="flex flex-wrap gap-2">
                         <AddFertilizerButton onClick={openFertilizerForm} />
                         <RecordMovementButton onClick={openMovementForm} />
                     </div>
-                </header>
+                }
+            />
 
-                <ExchangeRateSection />
+            <ExchangeRateSection />
 
-                <FertilizerStockSection addAction={<AddFertilizerButton onClick={openFertilizerForm} />} />
+            <FertilizerStockSection addAction={<AddFertilizerButton onClick={openFertilizerForm} />} />
 
-                <FertilizerPlansSection />
+            <FertilizerPlansSection />
 
-                <FertilizerMovementsSection recordAction={<RecordMovementButton onClick={openMovementForm} />} />
-            </div>
+            <FertilizerMovementsSection recordAction={<RecordMovementButton onClick={openMovementForm} />} />
 
             {isAddingFertilizer && (
                 <AddFertilizerModal

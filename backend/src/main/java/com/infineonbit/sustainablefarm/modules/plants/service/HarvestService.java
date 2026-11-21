@@ -3,14 +3,14 @@ package com.infineonbit.sustainablefarm.modules.plants.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Request.HarvestRequest;
 import com.infineonbit.sustainablefarm.modules.plants.dto.Response.HarvestResponse;
+import com.infineonbit.sustainablefarm.modules.plants.entity.BlockVariety;
 import com.infineonbit.sustainablefarm.modules.plants.entity.HarvestRecord;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEvent;
 import com.infineonbit.sustainablefarm.modules.plants.entity.PopulationEventType;
-import com.infineonbit.sustainablefarm.modules.plants.entity.Variety;
 import com.infineonbit.sustainablefarm.modules.plants.exception.HarvestNotFoundException;
+import com.infineonbit.sustainablefarm.modules.plants.repository.BlockVarietyRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.HarvestRecordRepository;
 import com.infineonbit.sustainablefarm.modules.plants.repository.PopulationEventRepository;
-import com.infineonbit.sustainablefarm.modules.plants.repository.VarietyRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +27,10 @@ public class HarvestService {
     /** {@code source} of every harvest written through the API. */
     static final String USER_ENTRY_SOURCE = "user_entry";
 
-    private final VarietyRepository varietyRepository;
+    private final BlockVarietyRepository blockVarietyRepository;
     private final PopulationEventRepository populationEventRepository;
     private final HarvestRecordRepository harvestRecordRepository;
+    private final PlantsBlocks plantsBlocks;
 
     /**
      * Block code as stored: trimmed and upper-cased, so {@code " b "} becomes
@@ -78,7 +79,7 @@ public class HarvestService {
      * @return the API representation of that harvest
      */
     private static HarvestResponse toResponse(HarvestRecord harvest) {
-        Variety variety = harvest.getVariety();
+        BlockVariety variety = harvest.getVariety();
         return new HarvestResponse(
                 harvest.getId(),
                 harvest.getLotNumber(),
@@ -87,7 +88,7 @@ public class HarvestService {
                 variety.getId(),
                 variety.getName(),
                 harvest.getHarvestDate(),
-                harvest.getQuantityKg(),
+                Decimals.toDouble(harvest.getQuantityKg()),
                 harvest.getSource(),
                 harvest.getLastUpdated());
     }
@@ -108,9 +109,10 @@ public class HarvestService {
      * Records a harvest of a variety planted on a block, in a single transaction.
      *
      * <ol>
-     *     <li>Finds the variety row of the (farm, block, name) triple, as a
-     *         planting does: a NULL farm matches only the rows without a farm,
-     *         and the name ignores case but not accents.</li>
+     *     <li>Finds the variety row of the (block, name) pair, as a planting
+     *         does: the block of the code, which must belong to the requested
+     *         farm when one is given (no block is created), and the name, which
+     *         ignores case but not accents.</li>
      *     <li>Refuses a harvest of a variety with no recorded planting.</li>
      *     <li>Refuses a harvest dated before the planting of that variety.</li>
      *     <li>Stores the harvest with the next lot number of its block for the
@@ -133,13 +135,13 @@ public class HarvestService {
      * so the {@code lastUpdated} value can be tested.
      */
     HarvestResponse recordHarvest(HarvestRequest request, Instant now) {
-        Integer farmId = request.farmId();
         String blockCode = normalizeBlockCode(request.blockCode());
         String varietyName = request.varietyName().trim();
 
-        Variety variety = varietyRepository.findByFarmBlockAndName(farmId, blockCode, varietyName)
-                .stream()
-                .findFirst()
+        // A harvest designates an existing variety row: an unknown block, or a block of
+        // another farm than the one requested, has no planting, and no block is created.
+        BlockVariety variety = plantsBlocks.find(request.farmId(), blockCode)
+                .flatMap(block -> blockVarietyRepository.findByBlockAndName(block.id(), varietyName).stream().findFirst())
                 .orElse(null);
         if (variety == null) {
             throw noPlanting(varietyName, blockCode);
@@ -157,7 +159,7 @@ public class HarvestService {
         harvest.setLotNumber(nextLotNumber(variety.getBlockCode(), request.harvestDate().getYear()));
         harvest.setVariety(variety);
         harvest.setHarvestDate(request.harvestDate());
-        harvest.setQuantityKg(request.quantityKg());
+        harvest.setQuantityKg(Decimals.of(request.quantityKg(), HarvestRecord.QUANTITY_SCALE));
         harvest.setSource(USER_ENTRY_SOURCE);
         harvest.setLastUpdated(now);
         return toResponse(harvestRecordRepository.save(harvest));
@@ -174,8 +176,7 @@ public class HarvestService {
      * same number: the unique constraint on the lot number refuses the second
      * one, which {@link ConcurrentPlantingRetry} runs once more.
      *
-     * <p>Public for {@link HarvestLotNumberBackfill}, which numbers the earlier
-     * harvests the same way. It opens no transaction of its own.
+     * <p>It opens no transaction of its own.
      *
      * @param blockCode block code as stored, for example {@code "A"}
      * @param year      year of the harvest date, not of the day it is recorded
@@ -201,17 +202,18 @@ public class HarvestService {
      * {@code to}, returns an empty list and is never an error.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored (for example {@code "A"}),
-     *                  or {@code null} for every block
+     * @param blockCode block code (for example {@code "A"}), or {@code null}
+     *                  or blank for every block
      * @param lotNumber lot number (for example {@code "LOT-2026-A-002"}), or
      *                  {@code null} for every harvest
      * @param from      first harvest date, included, or {@code null}
      * @param to        last harvest date, included, or {@code null}
      * @return the matching harvests, ordered by date then identifier
      */
-    public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, String lotNumber,
+    public List<HarvestResponse> getAllHarvests(Long farmId, String blockCode, String lotNumber,
                                                 LocalDate from, LocalDate to) {
-        return harvestRecordRepository.findByOptionalFilters(farmId, normalizeFilter(blockCode),
+        PlantsBlocks.BlockFilter blocks = plantsBlocks.filter(farmId, blockCode);
+        return harvestRecordRepository.findByOptionalFilters(blocks.all(), blocks.ids(),
                         normalizeLotNumberFilter(lotNumber), from, to)
                 .stream()
                 .map(HarvestService::toResponse)
@@ -219,17 +221,17 @@ public class HarvestService {
     }
 
     /**
-     * Same as {@link #getAllHarvests(Integer, String, String, LocalDate, LocalDate)}
+     * Same as {@link #getAllHarvests(Long, String, String, LocalDate, LocalDate)}
      * without the lot number: the harvests of a farm, block and period, as the
      * harvest status and the yield comparison read them.
      *
      * @param farmId    farm identifier, or {@code null} for every farm
-     * @param blockCode raw block value as stored, or {@code null} for every block
+     * @param blockCode block code, or {@code null} or blank for every block
      * @param from      first harvest date, included, or {@code null}
      * @param to        last harvest date, included, or {@code null}
      * @return the matching harvests, ordered by date then identifier
      */
-    public List<HarvestResponse> getAllHarvests(Integer farmId, String blockCode, LocalDate from, LocalDate to) {
+    public List<HarvestResponse> getAllHarvests(Long farmId, String blockCode, LocalDate from, LocalDate to) {
         return getAllHarvests(farmId, blockCode, null, from, to);
     }
 

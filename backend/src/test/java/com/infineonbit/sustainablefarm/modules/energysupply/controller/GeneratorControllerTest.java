@@ -1,7 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.energysupply.controller;
 
 import com.infineonbit.sustainablefarm.modules.energysupply.dto.GeneratorEventResponseDto;
-import com.infineonbit.sustainablefarm.modules.energysupply.exception.EnergySupplyExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.energysupply.exception.GeneratorEventNotFoundException;
 import com.infineonbit.sustainablefarm.modules.energysupply.service.GeneratorEventService;
 import org.junit.jupiter.api.Test;
@@ -9,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GeneratorController.class)
-@Import(EnergySupplyExceptionHandler.class)
 class GeneratorControllerTest {
 
     @Autowired
@@ -43,48 +40,48 @@ class GeneratorControllerTest {
 
     @Test
     void createReturnsCreatedResponseAndLocation() throws Exception {
-        when(energyGeneratorEventService.create(any())).thenReturn(eventResponse("event-1"));
+        when(energyGeneratorEventService.create(any())).thenReturn(eventResponse(1L));
 
-        mockMvc.perform(post("/api/energy/generator-events")
+        mockMvc.perform(post("/api/energy-supply/generator-events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validRequest()))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/energy/generator-events/event-1")))
-                .andExpect(jsonPath("$.eventId").value("event-1"))
+                .andExpect(header().string("Location", containsString("/api/energy-supply/generator-events/1")))
+                .andExpect(jsonPath("$.eventId").value(1))
                 .andExpect(jsonPath("$.date").value(LocalDate.now().toString()));
     }
 
     @Test
     void updateReturnsUpdatedResponse() throws Exception {
-        when(energyGeneratorEventService.update(eq("event-1"), any())).thenReturn(eventResponse("event-1"));
+        when(energyGeneratorEventService.update(eq(1L), any())).thenReturn(eventResponse(1L));
 
-        mockMvc.perform(put("/api/energy/generator-events/event-1")
+        mockMvc.perform(put("/api/energy-supply/generator-events/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validRequest()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.eventId").value("event-1"));
+                .andExpect(jsonPath("$.eventId").value(1));
     }
 
     @Test
     void deleteReturnsNoContent() throws Exception {
-        doNothing().when(energyGeneratorEventService).delete("event-1");
+        doNothing().when(energyGeneratorEventService).delete(1L);
 
-        mockMvc.perform(delete("/api/energy/generator-events/event-1"))
+        mockMvc.perform(delete("/api/energy-supply/generator-events/1"))
                 .andExpect(status().isNoContent());
 
-        verify(energyGeneratorEventService).delete("event-1");
+        verify(energyGeneratorEventService).delete(1L);
     }
 
     @Test
     void missingEventReturnsNotFoundJson() throws Exception {
-        when(energyGeneratorEventService.findById("missing"))
-                .thenThrow(new GeneratorEventNotFoundException("missing"));
+        when(energyGeneratorEventService.findById(99L))
+                .thenThrow(new GeneratorEventNotFoundException(99L));
 
-        mockMvc.perform(get("/api/energy/generator-events/missing"))
+        mockMvc.perform(get("/api/energy-supply/generator-events/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Generator event not found: missing"));
+                .andExpect(jsonPath("$.message").value("Generator event not found: 99"));
     }
 
     @Test
@@ -99,30 +96,30 @@ class GeneratorControllerTest {
                 }
                 """.formatted(LocalDate.now().plusDays(1));
 
-        mockMvc.perform(post("/api/energy/generator-events")
+        mockMvc.perform(post("/api/energy-supply/generator-events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message", containsString("date")))
-                .andExpect(jsonPath("$.message", containsString("durationHours")));
+                .andExpect(jsonPath("$.fieldErrors.date").exists())
+                .andExpect(jsonPath("$.fieldErrors.durationHours").exists());
     }
 
     @Test
     void listReturnsResponseDtos() throws Exception {
-        when(energyGeneratorEventService.findAll()).thenReturn(List.of(eventResponse("event-1")));
+        when(energyGeneratorEventService.findAll()).thenReturn(List.of(eventResponse(1L)));
 
-        mockMvc.perform(get("/api/energy/generator-events"))
+        mockMvc.perform(get("/api/energy-supply/generator-events"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].eventId").value("event-1"));
+                .andExpect(jsonPath("$[0].eventId").value(1));
     }
 
     @Test
     void deleteMissingEventReturnsNotFound() throws Exception {
-        doThrow(new GeneratorEventNotFoundException("missing"))
-                .when(energyGeneratorEventService).delete("missing");
+        doThrow(new GeneratorEventNotFoundException(99L))
+                .when(energyGeneratorEventService).delete(99L);
 
-        mockMvc.perform(delete("/api/energy/generator-events/missing"))
+        mockMvc.perform(delete("/api/energy-supply/generator-events/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
     }
@@ -139,7 +136,7 @@ class GeneratorControllerTest {
                 """.formatted(LocalDate.now());
     }
 
-    private GeneratorEventResponseDto eventResponse(String eventId) {
+    private GeneratorEventResponseDto eventResponse(Long eventId) {
         return new GeneratorEventResponseDto(
                 eventId, LocalDate.now(), "Grid outage",
                 new BigDecimal("2.50"), null, new BigDecimal("30.00"));

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -19,7 +20,8 @@ import java.time.Instant;
  * before site access; gates access strictly per the Site Security module.
  */
 @Entity
-@Table(name = "briefing")
+@Table(name = "briefing",
+        indexes = @Index(name = "idx_briefing_staff_member_person_id", columnList = "staff_member_person_id"))
 public class Briefing extends BaseEntity {
 
     @NotNull
@@ -30,9 +32,9 @@ public class Briefing extends BaseEntity {
     @Column(name = "delivered_at")
     private Instant deliveredAt;
 
-    @Size(max = 150)
-    @Column(name = "staff_member", length = 150)
-    private String staffMember;
+    /** Person of the staff referential who delivered the briefing. */
+    @Column(name = "staff_member_person_id")
+    private Long staffMemberPersonId;
 
     @Size(max = 500)
     @Column(name = "signature", length = 500)
@@ -59,12 +61,12 @@ public class Briefing extends BaseEntity {
         this.deliveredAt = deliveredAt;
     }
 
-    public String getStaffMember() {
-        return staffMember;
+    public Long getStaffMemberPersonId() {
+        return staffMemberPersonId;
     }
 
-    public void setStaffMember(String staffMember) {
-        this.staffMember = staffMember;
+    public void setStaffMemberPersonId(Long staffMemberPersonId) {
+        this.staffMemberPersonId = staffMemberPersonId;
     }
 
     public String getSignature() {

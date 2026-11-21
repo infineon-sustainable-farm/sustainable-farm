@@ -7,16 +7,13 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface StaffRepository extends JpaRepository<Staff, Long> {
 
-    Optional<Staff> findByEmail(String email);
+    Optional<Staff> findByPersonId(Long personId);
 
-    boolean existsByEmail(String email);
-
-    List<Staff> findAllByOrderByFullNameAsc();
+    boolean existsByPersonId(Long personId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from Staff s where s.id = :id")

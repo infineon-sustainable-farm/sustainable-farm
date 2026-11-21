@@ -1,18 +1,23 @@
 package com.infineonbit.sustainablefarm.modules.watersupply.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
-@Table(name = "drip_maintenance_logs")
+@Table(name = "drip_maintenance_logs", indexes = {
+        @Index(name = "idx_drip_maintenance_logs_zone_id", columnList = "zone_id"),
+        @Index(name = "idx_drip_maintenance_logs_maintenance_date", columnList = "maintenance_date"),
+        @Index(name = "idx_drip_maintenance_logs_performed_by_person_id", columnList = "performed_by_person_id")
+})
 public class DripMaintenanceLog extends BaseEntity {
     @NotNull
     @Column(name = "zone_id", nullable = false)
-    private UUID zoneId;
+    private Long zoneId;
 
     @NotNull
     @Column(name = "maintenance_date", nullable = false)
@@ -37,14 +42,15 @@ public class DripMaintenanceLog extends BaseEntity {
     @Column(name = "notes", length = 1000)
     private String notes;
 
-    @Column(name = "performed_by")
-    private String performedBy;
+    /** Who did the work: a person of the staff referential (docs/adr/0004), by id. */
+    @Column(name = "performed_by_person_id")
+    private Long performedByPersonId;
 
-    public UUID getZoneId() {
+    public Long getZoneId() {
         return zoneId;
     }
 
-    public void setZoneId(UUID zoneId) {
+    public void setZoneId(Long zoneId) {
         this.zoneId = zoneId;
     }
 
@@ -104,11 +110,11 @@ public class DripMaintenanceLog extends BaseEntity {
         this.notes = notes;
     }
 
-    public String getPerformedBy() {
-        return performedBy;
+    public Long getPerformedByPersonId() {
+        return performedByPersonId;
     }
 
-    public void setPerformedBy(String performedBy) {
-        this.performedBy = performedBy;
+    public void setPerformedByPersonId(Long performedByPersonId) {
+        this.performedByPersonId = performedByPersonId;
     }
 }

@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/registrations")
+@RequestMapping("/api/visitor-management/registrations")
 public class RegistrationController {
 
     private final RegistrationService registrationService;

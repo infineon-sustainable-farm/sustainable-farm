@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Assignment management remains owned by the central platform integration.
  */
 @RestController
-@RequestMapping("/api/v1/sitesecurity/authorization")
+@RequestMapping("/api/site-security/authorization")
 @RequiredArgsConstructor
 public class SiteSecurityAuthorizationController {
 

@@ -3,7 +3,6 @@ package com.infineonbit.sustainablefarm.modules.watersupply.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * Irrigation need of a Plants block. Only {@code blockCode} is required: without {@code growthPhase}
@@ -12,7 +11,7 @@ import java.util.UUID;
  */
 public record BlockIrrigationNeedRequest(
         @NotBlank String blockCode,
-        UUID farmId,
+        Long farmId,
         @PositiveOrZero Integer treeCount,
         String growthPhase,
         @PositiveOrZero Integer ageYears,

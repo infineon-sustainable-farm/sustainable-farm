@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -17,7 +18,8 @@ import jakarta.validation.constraints.Size;
  * facilitator. Templates follow a DRAFT -> ACTIVE -> INACTIVE lifecycle.
  */
 @Entity
-@Table(name = "workshop")
+@Table(name = "workshop",
+        indexes = @Index(name = "idx_workshop_facilitator_person_id", columnList = "facilitator_person_id"))
 public class Workshop extends BaseEntity {
 
     @NotBlank
@@ -35,9 +37,9 @@ public class Workshop extends BaseEntity {
     @Column(name = "target_group", nullable = false, length = 60)
     private String targetGroup = "All";
 
-    @Size(max = 100)
-    @Column(name = "facilitator", length = 100)
-    private String facilitator;
+    /** Person of the staff referential who facilitates the workshop. */
+    @Column(name = "facilitator_person_id")
+    private Long facilitatorPersonId;
 
     @Size(max = 1000)
     @Column(name = "description", length = 1000)
@@ -72,12 +74,12 @@ public class Workshop extends BaseEntity {
         this.targetGroup = targetGroup;
     }
 
-    public String getFacilitator() {
-        return facilitator;
+    public Long getFacilitatorPersonId() {
+        return facilitatorPersonId;
     }
 
-    public void setFacilitator(String facilitator) {
-        this.facilitator = facilitator;
+    public void setFacilitatorPersonId(Long facilitatorPersonId) {
+        this.facilitatorPersonId = facilitatorPersonId;
     }
 
     public String getDescription() {

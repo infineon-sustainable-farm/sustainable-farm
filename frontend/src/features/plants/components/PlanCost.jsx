@@ -1,5 +1,5 @@
+import { useTranslation } from "react-i18next";
 import { formatEur, formatXof } from "../utils/format";
-import { CELL_NOTE } from "./plantsStyles";
 
 /**
  * A cost at the last purchase price, as the API converts it: the amount in
@@ -9,16 +9,17 @@ import { CELL_NOTE } from "./plantsStyles";
  * showing 0.
  */
 export default function PlanCost({ xof, eur }) {
+    const { t } = useTranslation("plants");
     const hasXof = xof !== null && xof !== undefined;
     const hasEur = eur !== null && eur !== undefined;
     if (!hasXof && !hasEur) {
-        return <span className="text-gray-600">No price yet</span>;
+        return <span className="text-text-muted">{t("fertilizer.plans.noPrice")}</span>;
     }
     if (!hasXof) return formatEur(eur);
     return (
         <>
             {formatXof(xof)}
-            {hasEur && <span className={CELL_NOTE}>{formatEur(eur)}</span>}
+            {hasEur && <span className="block text-xs text-text-muted">{formatEur(eur)}</span>}
         </>
     );
 }
