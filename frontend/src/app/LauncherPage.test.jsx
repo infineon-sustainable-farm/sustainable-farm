@@ -32,7 +32,7 @@ describe('LauncherPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Language' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true')
-    expect(tiles.getAllByRole('link')).toHaveLength(7)
+    expect(tiles.getAllByRole('link')).toHaveLength(8)
     expect(tiles.getByRole('link', { name: 'Machinery' })).toHaveAttribute('href', '/machinery')
     expect(screen.queryByRole('button', { name: 'Open navigation' })).not.toBeInTheDocument()
   })

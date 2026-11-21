@@ -1,150 +1,137 @@
-import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronRight, DoorOpen, IdCard, Lock, ShieldAlert } from "lucide-react";
+import { Badge, Card, StatusBadge } from "../../../shared/ui";
+import { LEVEL_ORDER, levelMeta } from "../api/sitesecurityTypes";
+import { statusTone, translateEnum } from "../utils/status";
 import { cn } from "../utils/cn";
-import { LEVEL_META, LEVEL_ORDER } from "../api/sitesecurityTypes";
-/* ------------------------------ primitives ----------------------------- */
-export function Card({ className, children, }) {
-    return (<div className={cn("rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(16,27,46,0.04),0_10px_30px_-14px_rgba(16,27,46,0.12)]", className)}>
-      {children}
-    </div>);
+
+/*
+ * Site Security visuals with no equivalent in the shared kit (access level badge, verification
+ * meter, level ladder), built on the shared components and the design tokens only.
+ */
+
+const STATUS_GROUP = "status";
+
+export function LevelBadge({ level, size = "sm" }) {
+  const { t } = useTranslation("sitesecurity");
+  const meta = levelMeta(level);
+  return (
+    <Badge tone={meta.tone} size={size}>
+      {t(`levels.${meta.id}`)}
+    </Badge>
+  );
 }
-export function Eyebrow({ children, className }) {
-    return (<p className={cn("font-sans text-[12px] font-medium uppercase tracking-wider text-slate-400", className)}>
-      {children}
-    </p>);
+
+export function StatusLabel({ status }) {
+  const { t } = useTranslation("sitesecurity");
+  const label = translateEnum(t, STATUS_GROUP, status);
+  return <StatusBadge tone={statusTone(status)} label={label} />;
 }
-export function ScreenHeader({ kicker, title, subtitle, actions, }) {
-    return (<div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <Eyebrow className="mb-1.5 text-primary-600 font-semibold">{kicker}</Eyebrow>
-        <h1 className="font-display text-[24px] font-semibold leading-tight tracking-tight text-navy-900">
-          {title}
-        </h1>
-        <p className="mt-1 text-[14px] text-slate-500 font-sans">{subtitle}</p>
-      </div>
-      {actions && <div className="flex items-center gap-3">{actions}</div>}
-    </div>);
-}
-export function LevelChip({ level, size = "md" }) {
-    const meta = LEVEL_META[level];
-    return (<span className={cn("inline-flex items-center gap-1.5 rounded-full border font-sans font-medium", meta.chip, size === "sm" ? "px-2 py-0.5 text-[12px]" : "px-2.5 py-1 text-[12px]")}>
-      <span className={cn("size-1.5 rounded-full", meta.dot)}/>
-      {meta.label}
-    </span>);
-}
-const STATUS_TONE = {
-    Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Active: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Online: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Secure: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    "Open Access": "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Authorized: "bg-blue-50 text-blue-700 border-blue-200",
-    Monitored: "bg-blue-50 text-blue-700 border-blue-200",
-    Protected: "bg-blue-50 text-blue-700 border-blue-200",
-    Pending: "bg-amber-50 text-amber-700 border-amber-200",
-    Locked: "bg-amber-50 text-amber-700 border-amber-200",
-    "Locked Down": "bg-amber-50 text-amber-700 border-amber-200",
-    Denied: "bg-rose-50 text-rose-700 border-rose-200",
-    Offline: "bg-rose-50 text-rose-700 border-rose-200",
-    Expired: "bg-slate-100 text-slate-500 border-slate-200",
-    Unknown: "bg-slate-100 text-slate-500 border-slate-200",
-};
-const STATUS_DOT = {
-    Approved: "bg-emerald-500",
-    Active: "bg-emerald-500",
-    Online: "bg-emerald-500",
-    Secure: "bg-emerald-500",
-    "Open Access": "bg-emerald-500",
-    Authorized: "bg-blue-500",
-    Monitored: "bg-blue-500",
-    Protected: "bg-blue-500",
-    Pending: "bg-amber-500",
-    Locked: "bg-amber-500",
-    "Locked Down": "bg-amber-500",
-    Denied: "bg-rose-500",
-    Offline: "bg-rose-500",
-    Expired: "bg-slate-400",
-    Unknown: "bg-slate-400",
-};
-export function StatusChip({ status, size = "md" }) {
-    return (<span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-sans font-medium", STATUS_TONE[status] ?? "bg-slate-100 text-slate-600 border-slate-200", size === "sm" ? "px-2.5 py-0.5 text-[12px]" : "px-3 py-1 text-[12px]")}>
-      <span className={cn("size-1.5 rounded-full", STATUS_DOT[status] ?? "bg-slate-400", (status === "Pending" || status === "Denied") && "status-pulse")}/>
-      {status}
-    </span>);
-}
+
 export function SensitivityMeter({ level }) {
-    const meta = LEVEL_META[level];
-    return (<span className="inline-flex items-center gap-[3px]" title={`Verification strength ${meta.meter}/4`}>
-      {LEVEL_ORDER.map((_, i) => (<span key={i} className="h-[8px] w-[7px] rounded-[2px]" style={{
-                backgroundColor: i < meta.meter ? meta.solid : "#E5E9F0",
-                opacity: i < meta.meter ? 0.55 + 0.45 * ((i + 1) / 4) : 1,
-            }}/>))}
-    </span>);
+  const { t } = useTranslation("sitesecurity");
+  const meta = levelMeta(level);
+  const label = t("levels.strength", { value: meta.meter, max: LEVEL_ORDER.length });
+  return (
+    <span role="img" aria-label={label} title={label} className="inline-flex items-center gap-1">
+      {LEVEL_ORDER.map((step, i) => (
+        <span
+          key={step}
+          className="h-2 w-2 rounded-sm"
+          style={{ backgroundColor: i < meta.meter ? meta.solid : "var(--color-border-divider)" }}
+        />
+      ))}
+    </span>
+  );
 }
+
 export function Avatar({ initials, level }) {
-    const tone = level ? LEVEL_META[level].avatar : "bg-slate-100 text-slate-500";
-    return (<span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-wide font-sans", tone)}>
-      {initials}
-    </span>);
+  const meta = levelMeta(level);
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-9 shrink-0 items-center justify-center rounded-pill text-xs font-semibold"
+      style={{ backgroundColor: meta.fill, color: meta.solid }}
+    >
+      {initials ?? "?"}
+    </span>
+  );
 }
-export function FilterPill({ active, onClick, children, count, }) {
-    return (<button onClick={onClick} className={cn("inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-medium font-sans transition-all duration-200", active
-            ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-            : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-navy-900")}>
+
+/* A filter button with its count, as a toggle. */
+export function FilterButton({ active, onClick, children, count }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-pill border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring",
+        active
+          ? "border-primary bg-primary text-on-primary"
+          : "border-border-input bg-surface-raised text-text-muted hover:text-text"
+      )}
+    >
       {children}
-      {typeof count === "number" && (<span className={cn("rounded-full px-1.5 py-px font-mono text-[11px]", active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>
-          {count}
-        </span>)}
-    </button>);
+      {typeof count === "number" && (
+        <span className={cn("rounded-pill px-1.5 text-xs", active ? "bg-primary-pressed" : "bg-surface-muted")}>{count}</span>
+      )}
+    </button>
+  );
 }
-export function LiveClock() {
-    const [now, setNow] = useState(() => new Date());
-    useEffect(() => {
-        const t = setInterval(() => setNow(new Date()), 1000);
-        return () => clearInterval(t);
-    }, []);
-    return (<span className="font-mono text-[11.5px] tabular-nums text-slate-500">
-      {now.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" })}
-      <span className="mx-1.5 text-slate-300">·</span>
-      {now.toLocaleTimeString("en-GB", { hour12: false })}
-    </span>);
+
+/* An inline message of the screen (error or warning), in the tokens of the kit. */
+export function InlineAlert({ tone = "error", children }) {
+  return (
+    <div
+      role={tone === "error" ? "alert" : "status"}
+      className={cn(
+        "rounded-tile border px-4 py-3 text-sm",
+        tone === "error" ? "border-error-fg bg-error-tint text-error-fg" : "border-warning-fg bg-warning-tint text-warning-fg"
+      )}
+    >
+      {children}
+    </div>
+  );
 }
-/* ------------------------- sensitivity ladder strip --------------------- */
+
 const LADDER = [
-    { level: "open", icon: DoorOpen, caption: "Visitor check-in" },
-    { level: "controlled", icon: IdCard, caption: "Staff credential" },
-    { level: "restricted", icon: Lock, caption: "Authorised personnel only" },
-    { level: "critical", icon: ShieldAlert, caption: "Dual verification + alert" },
+  { level: "open", icon: DoorOpen },
+  { level: "controlled", icon: IdCard },
+  { level: "restricted", icon: Lock },
+  { level: "critical", icon: ShieldAlert },
 ];
+
 export function SecurityLadder() {
-    return (<Card className="flex flex-wrap items-center gap-y-3 px-5 py-4">
-      <div className="mr-2 min-w-[150px]">
-        <Eyebrow>Access level model</Eyebrow>
-        <p className="mt-0.5 text-[12px] text-slate-500">Deeper zones demand stronger proof</p>
-      </div>
-      <div className="flex flex-1 flex-wrap items-center gap-x-1 gap-y-3">
+  const { t } = useTranslation("sitesecurity");
+  return (
+    <Card title={t("ladder.title")} subtitle={t("ladder.subtitle")}>
+      <div className="flex flex-wrap items-center gap-x-1 gap-y-3">
         {LADDER.map((step, i) => {
-            const meta = LEVEL_META[step.level];
-            const Icon = step.icon;
-            return (<div key={step.level} className="flex items-center">
-              {i > 0 && <ChevronRight className="mx-1.5 size-4 text-slate-300" strokeWidth={2.5}/>}
+          const meta = levelMeta(step.level);
+          const Icon = step.icon;
+          return (
+            <div key={step.level} className="flex items-center">
+              {i > 0 && <ChevronRight aria-hidden="true" className="mx-1.5 size-4 text-text-muted" />}
               <div className="flex items-center gap-2.5">
-                <span className="flex size-9 items-center justify-center rounded-xl border" style={{ backgroundColor: meta.fill, borderColor: `${meta.solid}33`, color: meta.solid }}>
-                  <Icon className="size-4" strokeWidth={2.2}/>
+                <span
+                  className="flex size-9 items-center justify-center rounded-tile"
+                  style={{ backgroundColor: meta.fill, color: meta.solid }}
+                >
+                  <Icon aria-hidden="true" className="size-4" />
                 </span>
                 <span>
-                  <span className="flex items-center gap-2 text-[12.5px] font-semibold text-navy-900">
-                    {meta.label}
-                    <SensitivityMeter level={step.level}/>
+                  <span className="flex items-center gap-2 text-sm font-semibold text-text">
+                    {t(`levels.${step.level}`)}
+                    <SensitivityMeter level={step.level} />
                   </span>
-                  <span className="block text-[11px] text-slate-400">{step.caption}</span>
+                  <span className="block text-xs text-text-muted">{t(`ladder.${step.level}`)}</span>
                 </span>
               </div>
-            </div>);
+            </div>
+          );
         })}
       </div>
-      <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400 lg:block">
-        Verification strength →
-      </span>
-    </Card>);
+    </Card>
+  );
 }

@@ -1,24 +1,30 @@
 import { useEffect, useState } from "react";
 import { fetchAccessLogs } from "../api/sitesecurityApi";
+import { countLogs } from "../utils/accessLogs";
 
-export function useAccessLogs(initialFilter = "all") {
-    const [filter, setFilter] = useState(initialFilter);
-    const [logs, setLogs] = useState([]);
+const ALL = "all";
+
+export function useAccessLogs(initialFilter = ALL) {
+    const [filter, setFilterValue] = useState(initialFilter);
+    const [filteredLogs, setFilteredLogs] = useState([]);
     const [allLogs, setAllLogs] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingAll, setIsLoadingAll] = useState(true);
+    const [isLoadingFiltered, setIsLoadingFiltered] = useState(initialFilter !== ALL);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         let isMounted = true;
-        fetchAccessLogs("all")
+        fetchAccessLogs(ALL)
             .then((res) => {
                 if (isMounted) {
                     setAllLogs(res);
+                    setIsLoadingAll(false);
                 }
             })
             .catch((err) => {
                 if (isMounted) {
                     setError(err.message);
+                    setIsLoadingAll(false);
                 }
             });
         return () => {
@@ -27,18 +33,21 @@ export function useAccessLogs(initialFilter = "all") {
     }, []);
 
     useEffect(() => {
+        if (filter === ALL) {
+            return undefined;
+        }
         let isMounted = true;
         fetchAccessLogs(filter)
             .then((res) => {
                 if (isMounted) {
-                    setLogs(res);
-                    setIsLoading(false);
+                    setFilteredLogs(res);
+                    setIsLoadingFiltered(false);
                 }
             })
             .catch((err) => {
                 if (isMounted) {
                     setError(err.message);
-                    setIsLoading(false);
+                    setIsLoadingFiltered(false);
                 }
             });
         return () => {
@@ -46,13 +55,23 @@ export function useAccessLogs(initialFilter = "all") {
         };
     }, [filter]);
 
-    const counts = {
-        all: allLogs.length,
-        approved: allLogs.filter((e) => e.status === "Approved").length,
-        denied: allLogs.filter((e) => e.status === "Denied").length,
-        visitors: allLogs.filter((e) => e.type === "Visitor").length,
-        staff: allLogs.filter((e) => e.type === "Staff").length,
-        service: allLogs.filter((e) => e.type === "Service").length,
+    const setFilter = (next) => {
+        if (next === filter) {
+            return;
+        }
+        setFilteredLogs([]);
+        setIsLoadingFiltered(next !== ALL);
+        setError(null);
+        setFilterValue(next);
     };
-    return { filter, setFilter, logs, allLogs, counts, isLoading, error };
+
+    return {
+        filter,
+        setFilter,
+        logs: filter === ALL ? allLogs : filteredLogs,
+        allLogs,
+        counts: countLogs(allLogs),
+        isLoading: filter === ALL ? isLoadingAll : isLoadingFiltered,
+        error,
+    };
 }

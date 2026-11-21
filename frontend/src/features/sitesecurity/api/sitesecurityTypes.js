@@ -1,50 +1,26 @@
-export const SCREEN_LABEL = {
-    dashboard: "Dashboard",
-    access: "Access Control",
-    zones: "Perimeter & Zones",
-    log: "Access Log",
+/*
+ * Access levels, from the least to the most sensitive: a level also covers the zones below it.
+ * Colours are design tokens of src/index.css (no hex): the badge tone of the shared kit, and the
+ * CSS variables the diagram and the meters read.
+ */
+export const LEVEL_ORDER = ["open", "controlled", "restricted", "critical"];
+
+const UNKNOWN_LEVEL = {
+  id: "unknown",
+  tone: "neutral",
+  meter: 0,
+  solid: "var(--color-neutral-fg)",
+  fill: "var(--color-surface-muted)",
 };
 
-export const LEVEL_ORDER = ["open", "controlled", "restricted", "critical"];
 export const LEVEL_META = {
-    open: {
-        label: "Open",
-        solid: "#64748B",
-        chip: "bg-slate-50 text-slate-600 border-slate-200",
-        dot: "bg-slate-400",
-        avatar: "bg-slate-100 text-slate-600",
-        meter: 1,
-        fill: "#F7F9FB",
-        stroke: "#94A3B8",
-    },
-    controlled: {
-        label: "Controlled",
-        solid: "#2F6BFF",
-        chip: "bg-blue-50 text-blue-700 border-blue-200",
-        dot: "bg-blue-500",
-        avatar: "bg-blue-50 text-blue-700",
-        meter: 2,
-        fill: "#EEF3FE",
-        stroke: "#2F6BFF",
-    },
-    restricted: {
-        label: "Restricted",
-        solid: "#D97706",
-        chip: "bg-amber-50 text-amber-700 border-amber-200",
-        dot: "bg-amber-500",
-        avatar: "bg-amber-50 text-amber-700",
-        meter: 3,
-        fill: "#FDF6E7",
-        stroke: "#D97706",
-    },
-    critical: {
-        label: "Critical",
-        solid: "#E11D48",
-        chip: "bg-rose-50 text-rose-700 border-rose-200",
-        dot: "bg-rose-500",
-        avatar: "bg-rose-50 text-rose-700",
-        meter: 4,
-        fill: "#FDECEF",
-        stroke: "#E11D48",
-    },
+  open: { id: "open", tone: "neutral", meter: 1, solid: "var(--color-neutral-fg)", fill: "var(--color-surface-muted)" },
+  controlled: { id: "controlled", tone: "info", meter: 2, solid: "var(--color-info-fg)", fill: "var(--color-info-tint)" },
+  restricted: { id: "restricted", tone: "warning", meter: 3, solid: "var(--color-warning-fg)", fill: "var(--color-warning-tint)" },
+  critical: { id: "critical", tone: "error", meter: 4, solid: "var(--color-error-fg)", fill: "var(--color-error-tint)" },
 };
+
+/* A value the frontend does not know must not break a whole screen. */
+export function levelMeta(level) {
+  return LEVEL_META[level] ?? UNKNOWN_LEVEL;
+}

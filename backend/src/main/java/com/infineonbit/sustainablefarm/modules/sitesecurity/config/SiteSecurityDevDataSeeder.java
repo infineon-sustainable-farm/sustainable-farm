@@ -3,35 +3,50 @@ package com.infineonbit.sustainablefarm.modules.sitesecurity.config;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.CredentialUserEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.GateEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.LogEntryEntity;
-import com.infineonbit.sustainablefarm.modules.sitesecurity.entity.ZoneEntity;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.CredentialUserRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.GateRepository;
 import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.LogEntryRepository;
-import com.infineonbit.sustainablefarm.modules.sitesecurity.repository.ZoneRepository;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDto;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Site security demo data (gates, zones, credentials, access logs), loaded at
- * startup under the {@code dev} profile only. Each table is seeded only when
- * it is empty, so a restart never duplicates rows.
+ * Site Security demo data (gates, credentials, access log), {@code dev} profile only. The zones
+ * are reference data ({@link SiteSecurityReferenceDataSeeder}).
+ *
+ * <p>Credentials and log entries reference people of the shared directory: the first active
+ * people, as loaded by the platform demo data set ({@code core.config.DemoDataSeeder}). This
+ * seeder never creates a person, so it runs once the application is ready, after every startup
+ * runner. Each table is seeded only when it is empty, so a restart never duplicates rows.</p>
  */
 @Component
 @Profile("dev")
 @RequiredArgsConstructor
-public class SiteSecurityDevDataSeeder implements ApplicationRunner {
+public class SiteSecurityDevDataSeeder {
+
+    /** Function, type and level of the demo credentials, given to the first active people. */
+    private static final List<String[]> DEMO_CREDENTIALS = List.of(
+            new String[] {"Chief Agronomist", "Staff", "restricted", "Permanent", "Active", "10 min ago"},
+            new String[] {"Facilities Tech", "Service", "controlled", "2027-12-31", "Active", "1 hour ago"},
+            new String[] {"Security Lead", "Security", "critical", "Permanent", "Active", "Just now"},
+            new String[] {"Harvest Contractor", "Visitor", "open", "2027-06-30", "Authorized", "3 hours ago"});
 
     private final GateRepository gateRepository;
-    private final ZoneRepository zoneRepository;
     private final CredentialUserRepository userRepository;
     private final LogEntryRepository logRepository;
+    private final PersonDirectory personDirectory;
 
-    @Override
-    public void run(ApplicationArguments args) {
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void onApplicationReady() {
         seed();
     }
 
@@ -45,33 +60,42 @@ public class SiteSecurityDevDataSeeder implements ApplicationRunner {
             ));
         }
 
-        if (zoneRepository.count() == 0) {
-            zoneRepository.saveAll(Arrays.asList(
-                ZoneEntity.builder().id("open").name("Open Zone").tagline("Visitor-facing areas").authorizedUsers(24).entryPoints(2).status("Open Access").description("Public access areas including farm shop, main drive, and visitor center.").requirements(Arrays.asList("No clearance needed", "Visitor check-in recommended")).build(),
-                ZoneEntity.builder().id("controlled").name("Controlled Zone").tagline("Operational farm grounds").authorizedUsers(14).entryPoints(3).status("Monitored").description("Active farming zones including barns, storage sheds, and equipment yards.").requirements(Arrays.asList("Staff or escorted visitor pass", "Safety briefing completed")).build(),
-                ZoneEntity.builder().id("restricted").name("Restricted Zone").tagline("Processing & chemical storage").authorizedUsers(6).entryPoints(1).status("Protected").description("High-value equipment, product transformation, and hazardous chemical stores.").requirements(Arrays.asList("Level 3 badge clearance", "Dual-custody access protocol")).build(),
-                ZoneEntity.builder().id("critical").name("Critical Zone").tagline("Server, power & water control").authorizedUsers(2).entryPoints(1).status("Locked Down").description("Infrastructure backbone: primary power distribution, main water valves, and security control room.").requirements(Arrays.asList("Level 4 clearance + biometric", "Security escort required", "Continuous audit logging")).build()
-            ));
-        }
+        List<Long> people = personDirectory.listActive().stream()
+                .map(PersonDto::id)
+                .limit(DEMO_CREDENTIALS.size())
+                .toList();
 
-        if (userRepository.count() == 0) {
-            userRepository.saveAll(Arrays.asList(
-                CredentialUserEntity.builder().id("u1").name("Dr. Elena Rostova").role("Chief Agonomist").type("Staff").level("restricted").validUntil("Permanent").status("Active").initials("ER").lastActive("10 min ago").build(),
-                CredentialUserEntity.builder().id("u2").name("Marcus Vance").role("Facilities Tech").type("Service").level("controlled").validUntil("2026-12-31").status("Active").initials("MV").lastActive("1 hour ago").build(),
-                CredentialUserEntity.builder().id("u3").name("Amina Diallo").role("Security Lead").type("Security").level("critical").validUntil("Permanent").status("Active").initials("AD").lastActive("Just now").build(),
-                CredentialUserEntity.builder().id("u4").name("Lucas Meyer").role("Harvest Contractor").type("Visitor").level("open").validUntil("Today, 18:00").status("Authorized").initials("LM").lastActive("3 hours ago").build()
-            ));
+        if (userRepository.count() == 0 && !people.isEmpty()) {
+            List<CredentialUserEntity> credentials = new ArrayList<>();
+            for (int i = 0; i < people.size(); i++) {
+                String[] demo = DEMO_CREDENTIALS.get(i);
+                credentials.add(CredentialUserEntity.builder().id("u" + (i + 1)).personId(people.get(i))
+                        .role(demo[0]).type(demo[1]).level(demo[2]).validUntil(demo[3]).status(demo[4])
+                        .lastActive(demo[5]).build());
+            }
+            userRepository.saveAll(credentials);
         }
 
         if (logRepository.count() == 0) {
             logRepository.saveAll(Arrays.asList(
-                LogEntryEntity.builder().id("l1").ref("LOG-8821").time("10:28:14").date("2026-09-05").user("Amina Diallo").initials("AD").type("Security").zone("critical").zoneName("Critical Zone").action("Entry").status("Approved").gate("Gate 4").method("Biometric Scan").note("Routine perimeter sweep").build(),
-                LogEntryEntity.builder().id("l2").ref("LOG-8820").time("10:27:02").date("2026-09-05").user("Unknown Subject").initials("??").type("Unknown").zone("restricted").zoneName("Restricted Zone").action("Entry").status("Denied").gate("Gate 3").method("Keycard Reject").note("Invalid badge ID — escalated").build(),
-                LogEntryEntity.builder().id("l3").ref("LOG-8819").time("10:14:50").date("2026-09-05").user("Marcus Vance").initials("MV").type("Service").zone("controlled").zoneName("Controlled Zone").action("Entry").status("Approved").gate("Gate 2").method("RFID Pass").note("HVAC maintenance").build(),
-                LogEntryEntity.builder().id("l4").ref("LOG-8818").time("09:45:11").date("2026-09-05").user("Lucas Meyer").initials("LM").type("Visitor").zone("open").zoneName("Open Zone").action("Entry").status("Approved").gate("Gate 1").method("QR Guest Code").note("Temp visitor pass").build(),
-                LogEntryEntity.builder().id("l5").ref("LOG-8817").time("09:30:00").date("2026-09-05").user("Dr. Elena Rostova").initials("ER").type("Staff").zone("restricted").zoneName("Restricted Zone").action("Entry").status("Approved").gate("Gate 3").method("PIN + Keycard").note("Crop analysis").build(),
-                LogEntryEntity.builder().id("l6").ref("LOG-8816").time("08:15:22").date("2026-09-05").user("Amina Diallo").initials("AD").type("Security").zone("open").zoneName("Open Zone").action("Exit").status("Approved").gate("Gate 1").method("Manual Gate Open").note("Perimeter check").build()
+                log("l1", "LOG-8821", "10:28:14", person(people, 2), "Security", "critical", "Critical Zone", "Entry", "Approved", "Gate 4", "Biometric Scan", "Routine perimeter sweep"),
+                log("l2", "LOG-8820", "10:27:02", null, "Unknown", "restricted", "Restricted Zone", "Entry", "Denied", "Gate 3", "Keycard Reject", "Invalid badge ID — escalated"),
+                log("l3", "LOG-8819", "10:14:50", person(people, 1), "Service", "controlled", "Controlled Zone", "Entry", "Approved", "Gate 2", "RFID Pass", "HVAC maintenance"),
+                log("l4", "LOG-8818", "09:45:11", person(people, 3), "Visitor", "open", "Open Zone", "Entry", "Approved", "Gate 1", "QR Guest Code", "Temp visitor pass"),
+                log("l5", "LOG-8817", "09:30:00", person(people, 0), "Staff", "restricted", "Restricted Zone", "Entry", "Approved", "Gate 3", "PIN + Keycard", "Crop analysis"),
+                log("l6", "LOG-8816", "08:15:22", person(people, 2), "Security", "open", "Open Zone", "Exit", "Approved", "Gate 1", "Manual Gate Open", "Perimeter check")
             ));
         }
+    }
+
+    private static Long person(List<Long> people, int index) {
+        return index < people.size() ? people.get(index) : null;
+    }
+
+    private static LogEntryEntity log(String id, String ref, String time, Long personId, String type, String zone,
+            String zoneName, String action, String status, String gate, String method, String note) {
+        return LogEntryEntity.builder().id(id).ref(ref).time(time).date("2026-09-05").personId(personId)
+                .type(type).zone(zone).zoneName(zoneName).action(action).status(status).gate(gate)
+                .method(method).note(note).build();
     }
 }

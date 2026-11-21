@@ -1,98 +1,155 @@
 import { useState } from "react";
-import { HardHat, Plus, ShieldCheck, UserRound, Wrench } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Ban, Plus } from "lucide-react";
+import { Button, ConfirmDialog, ErrorState, IconButton, PageHeader, Table, useToast } from "../../../shared/ui";
+import ScreenAccess from "../components/ScreenAccess";
 import AddAccessModal from "../components/AddAccessModal";
-import { Avatar, Card, LevelChip, ScreenHeader, SecurityLadder, SensitivityMeter, StatusChip, } from "../components/ui";
-import { cn } from "../utils/cn";
+import { Avatar, InlineAlert, LevelBadge, SecurityLadder, SensitivityMeter, StatusLabel } from "../components/ui";
 import { useCredentials } from "../hooks/useCredentials";
-const TYPE_ICON = {
-    Staff: HardHat,
-    Visitor: UserRound,
-    Service: Wrench,
-    Security: ShieldCheck,
-};
-export default function AccessControl() {
-    const { users, freshId, addCredential, error } = useCredentials();
-    const [open, setOpen] = useState(false);
-    const addUser = (u) => {
-        addCredential(u).catch(() => {
-            // error state is exposed by the hook and rendered below
-        });
-    };
-    return (<div className="space-y-5">
-      <ScreenHeader kicker="02 · Credentials" title="Access Control" subtitle="Who is allowed where — and until when" actions={<button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-700 font-sans">
-            <Plus className="size-4" strokeWidth={2.5}/>
-            Add Access
-          </button>}/>
+import { useSiteSecurityAccess } from "../hooks/useSiteSecurityAccess";
+import { isAdmin } from "../utils/accessRights";
+import { canRevoke, emailStatusKey } from "../utils/credentialForm";
+import { translateEnum } from "../utils/status";
 
-      {error && (<div role="alert" className="rounded-xl border border-sec-red/30 bg-sec-red/5 px-4 py-3 font-sans text-[13px] text-sec-red">
-        {error}
-      </div>)}
+function AccessControlContent() {
+  const { t } = useTranslation("sitesecurity");
+  const toast = useToast();
+  const { authorization } = useSiteSecurityAccess();
+  const canManage = isAdmin(authorization);
+  const { users, addCredential, revokeCredential, isLoading, error } = useCredentials();
+  const [open, setOpen] = useState(false);
+  const [revokeTarget, setRevokeTarget] = useState(null);
+  const [revokeError, setRevokeError] = useState(null);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const failedEmails = canManage ? users.filter((u) => u.notificationStatus === "failed").length : 0;
+
+  const add = async (payload) => {
+    await addCredential(payload);
+    toast.success(t("access.created"));
+  };
+
+  const confirmRevoke = async () => {
+    setIsRevoking(true);
+    setRevokeError(null);
+    try {
+      await revokeCredential(revokeTarget.id);
+      toast.success(t("access.revoked"));
+      setRevokeTarget(null);
+    } catch (err) {
+      setRevokeError(err.message || t("access.revokeError"));
+    } finally {
+      setIsRevoking(false);
+    }
+  };
+
+  const columns = [
+    {
+      key: "name",
+      header: t("access.columns.holder"),
+      cell: (u) => (
+        <div className="flex items-center gap-3">
+          <Avatar initials={u.initials} level={u.level} />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-text">{u.name ?? t("access.unknownPerson", { id: u.personId })}</p>
+            <p className="truncate text-xs text-text-muted">{u.role}</p>
+            {canManage && u.email && <p className="truncate text-xs text-text-muted">{u.email}</p>}
+          </div>
+        </div>
+      ),
+    },
+    { key: "type", header: t("access.columns.type"), cell: (u) => translateEnum(t, "type", u.type) },
+    {
+      key: "level",
+      header: t("access.columns.level"),
+      cell: (u) => (
+        <span className="flex items-center gap-2">
+          <SensitivityMeter level={u.level} />
+          <LevelBadge level={u.level} />
+        </span>
+      ),
+    },
+    {
+      key: "validUntil",
+      header: t("access.columns.validUntil"),
+      cell: (u) => (u.validUntil === "Permanent" ? t("access.permanent") : u.validUntil),
+    },
+    { key: "lastActive", header: t("access.columns.lastActive") },
+    {
+      key: "status",
+      header: t("access.columns.status"),
+      cell: (u) => (
+        <div>
+          <StatusLabel status={u.status} />
+          {canManage && emailStatusKey(u) && <p className="mt-1 text-xs text-text-muted">{t(emailStatusKey(u))}</p>}
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-5 p-6">
+      <PageHeader
+        title={t("access.title")}
+        subtitle={t("access.subtitle")}
+        actions={
+          canManage && (
+            <Button icon={Plus} onClick={() => setOpen(true)}>
+              {t("access.add")}
+            </Button>
+          )
+        }
+      />
+
+      {error && <ErrorState message={t("access.loadError")} />}
+      {failedEmails > 0 && <InlineAlert tone="warning">{t("access.emailsFailed", { count: failedEmails })}</InlineAlert>}
 
       <SecurityLadder />
 
-      <Card className="overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <h2 className="font-display text-[17px] font-semibold text-navy-900">Credential Holders</h2>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
-              {users.length}
-            </span>
-          </div>
-          <p className="font-sans text-[12px] text-slate-400">
-            Prototype data — no directory connected
-          </p>
-        </div>
-        <table className="w-full border-t border-slate-100 font-sans text-[13px]">
-          <thead>
-            <tr className="text-left font-sans text-[12px] font-medium uppercase tracking-wider text-slate-400">
-              <th className="px-6 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">Access Level</th>
-              <th className="hidden px-4 py-3 font-medium xl:table-cell">Valid Until</th>
-              <th className="hidden px-4 py-3 font-medium lg:table-cell">Last Activity</th>
-              <th className="px-6 py-3 text-right font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => {
-            const TypeIcon = TYPE_ICON[u.type];
-            return (<tr key={u.id} className={cn("border-t border-slate-100 transition-colors hover:bg-slate-50/70", u.id === freshId && "row-in")}>
-                  <td className="px-6 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={u.initials} level={u.level}/>
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-semibold text-navy-900 font-sans">{u.name}</p>
-                        <p className="truncate text-[12px] text-slate-400 font-sans">{u.role}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className="inline-flex items-center gap-1.5 text-[13px] font-normal text-slate-600 font-sans">
-                      <TypeIcon className="size-3.5 text-slate-400"/>
-                      {u.type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <SensitivityMeter level={u.level}/>
-                      <LevelChip level={u.level} size="sm"/>
-                    </div>
-                  </td>
-                  <td className="hidden px-4 py-3.5 xl:table-cell">
-                    <span className="font-sans text-[13px] text-slate-500">{u.validUntil}</span>
-                  </td>
-                  <td className="hidden px-4 py-3.5 lg:table-cell">
-                    <span className="font-sans text-[13px] text-slate-400">{u.lastActive}</span>
-                  </td>
-                  <td className="px-6 py-3.5 text-right">
-                    <StatusChip status={u.status} size="sm"/>
-                  </td>
-                </tr>);
-        })}
-          </tbody>
-        </table>
-      </Card>
+      <Table
+        caption={t("access.tableCaption")}
+        columns={columns}
+        rows={users}
+        getRowKey={(u) => u.id}
+        loading={isLoading}
+        emptyMessage={t("access.empty")}
+        rowActions={
+          canManage
+            ? (u) =>
+                canRevoke(u) && (
+                  <IconButton
+                    icon={Ban}
+                    tone="danger"
+                    label={t("access.revokeFor", { name: u.name ?? u.personId })}
+                    onClick={() => {
+                      setRevokeError(null);
+                      setRevokeTarget(u);
+                    }}
+                  />
+                )
+            : undefined
+        }
+      />
 
-      <AddAccessModal open={open} onClose={() => setOpen(false)} onAdd={addUser}/>
-    </div>);
+      {canManage && <AddAccessModal open={open} onClose={() => setOpen(false)} onAdd={add} />}
+      <ConfirmDialog
+        open={Boolean(revokeTarget)}
+        onClose={() => setRevokeTarget(null)}
+        onConfirm={confirmRevoke}
+        title={t("access.revokeTitle")}
+        message={revokeTarget ? t("access.revokeMessage", { name: revokeTarget.name ?? revokeTarget.personId }) : ""}
+        confirmLabel={t("access.revoke")}
+        variant="danger"
+        loading={isRevoking}
+        error={revokeError}
+      />
+    </div>
+  );
+}
+
+export default function AccessControl() {
+  return (
+    <ScreenAccess screen="access">
+      <AccessControlContent />
+    </ScreenAccess>
+  );
 }

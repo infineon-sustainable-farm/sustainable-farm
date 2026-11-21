@@ -1,0 +1,277 @@
+{
+  "name": "Standortsicherheit",
+  "nav": {
+    "dashboard": "Übersicht",
+    "access": "Zutrittskontrolle",
+    "zones": "Perimeter & Zonen",
+    "log": "Zutrittsprotokoll"
+  },
+  "gate": {
+    "loading": "Ihre Berechtigungen für die Standortsicherheit werden geladen…",
+    "noIdentityTitle": "Plattform-Anmeldung noch nicht verfügbar",
+    "noIdentity": "Die Standortsicherheit nutzt das Plattformkonto. Sie wird freigeschaltet, sobald die Plattform-Authentifizierung eingerichtet ist.",
+    "noRoleTitle": "Keine Rolle in der Standortsicherheit",
+    "noRole": "Ihr Konto hat keine Rolle in der Standortsicherheit. Bitten Sie einen Administrator der Standortsicherheit, Ihnen eine zuzuweisen.",
+    "error": "Ihre Berechtigungen für die Standortsicherheit konnten nicht geladen werden.",
+    "noScreensTitle": "Keine Ansichten zugewiesen",
+    "noScreens": "Ihre Rolle hat noch keine Leseberechtigung. Bitten Sie einen Administrator der Standortsicherheit, Ihnen eine zu erteilen.",
+    "notPermittedTitle": "Für Ihre Rolle nicht verfügbar",
+    "notPermitted": "Ihre Berechtigungen umfassen diese Ansicht nicht."
+  },
+  "levels": {
+    "open": "Offen",
+    "controlled": "Kontrolliert",
+    "restricted": "Eingeschränkt",
+    "critical": "Kritisch",
+    "unknown": "Unbekannt",
+    "strength": "Prüfstärke {{value}} von {{max}}"
+  },
+  "enums": {
+    "status": {
+      "approved": "Genehmigt",
+      "active": "Aktiv",
+      "online": "Online",
+      "secure": "Gesichert",
+      "openAccess": "Freier Zutritt",
+      "authorized": "Autorisiert",
+      "monitored": "Überwacht",
+      "protected": "Geschützt",
+      "pending": "Ausstehend",
+      "locked": "Verriegelt",
+      "lockedDown": "Abgeriegelt",
+      "denied": "Abgelehnt",
+      "revoked": "Widerrufen",
+      "offline": "Offline",
+      "expired": "Abgelaufen",
+      "unknown": "Unbekannt"
+    },
+    "type": {
+      "staff": "Personal",
+      "visitor": "Besucher",
+      "service": "Dienstleister",
+      "security": "Sicherheit",
+      "unknown": "Nicht identifiziert"
+    },
+    "action": {
+      "entry": "Eintritt",
+      "exit": "Austritt"
+    }
+  },
+  "ladder": {
+    "title": "Modell der Zutrittsstufen",
+    "subtitle": "Tiefere Zonen verlangen stärkere Nachweise",
+    "open": "Besucheranmeldung",
+    "controlled": "Mitarbeiterausweis",
+    "restricted": "Nur befugtes Personal",
+    "critical": "Doppelte Prüfung und Alarm"
+  },
+  "dashboard": {
+    "title": "Sicherheitsübersicht",
+    "subtitle": "Perimeter und Zutrittskontrolle des Hofs",
+    "loadError": "Die Sicherheitsübersicht konnte nicht geladen werden.",
+    "stats": {
+      "points": "Aktive Zutrittspunkte",
+      "pointsHint": "Von {{count}} definierten",
+      "zones": "Kontrollierte Zonen",
+      "zonesHint": "Von {{count}} definierten Zonen",
+      "visitors": "Gültige Besucherausweise",
+      "visitorsHint": "Ausweise, keine Live-Zählung vor Ort",
+      "denied": "Abgelehnte Zutrittsereignisse",
+      "deniedHint": "Im Zutrittsprotokoll erfasst"
+    },
+    "perimeter": {
+      "title": "Perimeterstatus",
+      "subtitle": "Konzeptionelle Darstellung, keine geografische Karte",
+      "selectHint": "Wählen Sie eine Zone, um ihre Details zu öffnen",
+      "noSensors": "Der Zustand des Perimeters ist unbekannt: Es sind keine Zaunsensoren angeschlossen."
+    },
+    "gates": {
+      "title": "Zutrittspunkte",
+      "empty": "Es sind keine Zutrittspunkte definiert."
+    },
+    "activity": {
+      "title": "Letzte Zutrittsaktivität",
+      "viewAll": "Gesamtes Protokoll anzeigen",
+      "empty": "Es wurden keine Zutrittsereignisse erfasst.",
+      "attempted": "{{user}} hat versucht, {{zone}} zu betreten",
+      "entered": "{{user}} hat {{zone}} betreten",
+      "exited": "{{user}} hat {{zone}} verlassen"
+    }
+  },
+  "access": {
+    "admin": "Administratorzugang",
+    "legacyRead": "Nur-Lese-Zugang",
+    "user": "Benutzerzugang",
+    "title": "Zutrittskontrolle",
+    "subtitle": "Wer wohin darf, und bis wann",
+    "add": "Zutritt gewähren",
+    "loadError": "Die Ausweise konnten nicht geladen werden.",
+    "emailsFailed": "Die Änderungen wurden gespeichert, aber einige E-Mails konnten nicht gesendet werden ({{count}}).",
+    "tableCaption": "Ausweisinhaber",
+    "empty": "Es wurden noch keine Ausweise erteilt.",
+    "unknownPerson": "Person Nr. {{id}}",
+    "permanent": "Unbefristet",
+    "created": "Zutritt gewährt.",
+    "revoked": "Zutritt widerrufen.",
+    "revoke": "Widerrufen",
+    "revokeFor": "Zutritt für {{name}} widerrufen",
+    "revokeTitle": "Diesen Zutritt widerrufen?",
+    "revokeMessage": "{{name}} darf das Gelände mit diesem Ausweis nicht mehr betreten.",
+    "revokeError": "Der Zutritt konnte nicht widerrufen werden.",
+    "columns": {
+      "holder": "Inhaber",
+      "type": "Typ",
+      "level": "Zutrittsstufe",
+      "validUntil": "Gültig bis",
+      "lastActive": "Letzte Aktivität",
+      "status": "Status"
+    },
+    "email": {
+      "grant": {
+        "pending": "Zutritts-E-Mail wird gesendet…",
+        "sent": "Zutritts-E-Mail gesendet",
+        "failed": "Zutritts-E-Mail nicht gesendet"
+      },
+      "revocation": {
+        "pending": "Widerrufs-E-Mail wird gesendet…",
+        "sent": "Widerrufs-E-Mail gesendet",
+        "failed": "Widerrufs-E-Mail nicht gesendet"
+      }
+    },
+    "form": {
+      "title": "Zutritt gewähren",
+      "description": "Gewähren Sie einer Person aus dem Personenverzeichnis des Hofs Zutritt zum Gelände.",
+      "submit": "Zutritt gewähren",
+      "saveError": "Der Zutritt konnte nicht gewährt werden.",
+      "person": "Person",
+      "personHint": "Personen werden in der Besucherverwaltung unter „Personal“ angelegt.",
+      "role": "Funktion vor Ort",
+      "roleHint": "Zum Beispiel: Geländeaufsicht",
+      "type": "Ausweistyp",
+      "level": "Zutrittsstufe",
+      "levelHint": {
+        "open": "Nur offene Bereiche: Besucheranmeldung erforderlich.",
+        "controlled": "Zusätzlich die kontrollierte Zone: Mitarbeiterausweis an den Toren erforderlich.",
+        "restricted": "Zusätzlich die eingeschränkte Zone: befugtes Personal, bewachter Zutritt.",
+        "critical": "Zusätzlich die kritische Zone: doppelte Prüfung und Alarm an die Aufsicht beim Betreten."
+      },
+      "validUntil": "Gültig bis"
+    }
+  },
+  "map": {
+    "label": "Konzeptionelles Perimeterdiagramm",
+    "zoneLabel": "Zone {{zone}}",
+    "boundary": "HOFGRENZE",
+    "north": "N",
+    "notToScale": "KONZEPT, NICHT MASSSTABSGETREU",
+    "validationRequired": "VORLÄUFIGES KONZEPT, PRÜFUNG VOR ORT ERFORDERLICH",
+    "zone": {
+      "open": "OFFENE ZONE",
+      "controlled": "KONTROLLIERTE ZONE",
+      "restricted": "EINGESCHRÄNKTE ZONE",
+      "critical": "KRITISCH"
+    },
+    "gates": {
+      "main": "Haupteingang",
+      "visitor": "Besuchertor",
+      "staff": "Personal- / Betriebstor",
+      "service": "Service- / Notfalltor"
+    }
+  },
+  "zones": {
+    "title": "Perimeter & Zonen",
+    "subtitle": "Wie der Hof aufgeteilt ist, und wer welche Grenze überschreiten darf",
+    "loadError": "Die Zonen konnten nicht geladen werden.",
+    "empty": "Es sind keine Zonen konfiguriert.",
+    "preliminary": "Vorläufiges Konzept: Aufteilung, Zonengeometrie und Torpositionen erfordern vor der Umsetzung eine Vermessung vor Ort.",
+    "authorizedUsers": "Berechtigte Personen",
+    "entryPoints": "Zutrittspunkte",
+    "status": "Status",
+    "requirements": "Zutrittsvoraussetzungen",
+    "viewActivity": "Aktivität der Zone anzeigen",
+    "diagram": {
+      "title": "Geländeplan",
+      "subtitle": "Konzeptionelles Ringmodell: Innere Ringe erfordern stärkere Prüfungen"
+    },
+    "reference": {
+      "open": {
+        "name": "Offene Zone",
+        "tagline": "Bereiche für Besucher",
+        "description": "Öffentlich zugängliche Bereiche wie Hofladen, Hauptzufahrt und Besucherzentrum.",
+        "requirements": {
+          "0": "Keine Freigabe erforderlich",
+          "1": "Besucheranmeldung empfohlen"
+        }
+      },
+      "controlled": {
+        "name": "Kontrollierte Zone",
+        "tagline": "Betriebsgelände des Hofs",
+        "description": "Aktive landwirtschaftliche Bereiche wie Ställe, Lagerschuppen und Maschinenhöfe.",
+        "requirements": {
+          "0": "Mitarbeiterausweis oder begleiteter Besucherausweis",
+          "1": "Sicherheitseinweisung abgeschlossen"
+        }
+      },
+      "restricted": {
+        "name": "Eingeschränkte Zone",
+        "tagline": "Verarbeitung und Chemikalienlager",
+        "description": "Hochwertige Geräte, Produktverarbeitung und Lager für gefährliche Chemikalien.",
+        "requirements": {
+          "0": "Ausweis mit Freigabestufe 3",
+          "1": "Zutritt nur nach dem Vier-Augen-Prinzip"
+        }
+      },
+      "critical": {
+        "name": "Kritische Zone",
+        "tagline": "Server-, Strom- und Wassersteuerung",
+        "description": "Rückgrat der Infrastruktur: Hauptstromverteilung, Hauptwasserventile und Sicherheitsleitstand.",
+        "requirements": {
+          "0": "Freigabestufe 4 und biometrische Prüfung",
+          "1": "Begleitung durch den Sicherheitsdienst erforderlich",
+          "2": "Durchgehende Protokollierung"
+        }
+      }
+    }
+  },
+  "log": {
+    "title": "Zutrittsprotokoll",
+    "subtitle": "Jeder Eintritt, Austritt und jede Ablehnung, in zeitlicher Reihenfolge",
+    "simulated": "Aufzeichnung simuliert: Prototypdaten",
+    "loadError": "Das Zutrittsprotokoll konnte nicht geladen werden.",
+    "filterLabel": "Ereignisse filtern",
+    "showAllZones": "Alle Zonen anzeigen",
+    "count": "{{shown}} von {{total}} Ereignissen",
+    "tableCaption": "Zutrittsereignisse",
+    "empty": "Keine Ereignisse entsprechen diesem Filter.",
+    "openEvent": "Ereignis {{ref}} öffnen",
+    "unidentified": "Nicht identifizierte Person",
+    "filters": {
+      "all": "Alle",
+      "approved": "Genehmigt",
+      "denied": "Abgelehnt",
+      "visitors": "Besucher",
+      "staff": "Personal",
+      "service": "Dienstleister"
+    },
+    "columns": {
+      "date": "Datum",
+      "time": "Uhrzeit",
+      "person": "Person",
+      "type": "Typ",
+      "zone": "Zone",
+      "action": "Aktion",
+      "status": "Status"
+    },
+    "detail": {
+      "title": "Zutrittsereignis {{ref}}",
+      "actionAt": "{{action}} an {{gate}}",
+      "method": "Prüfung",
+      "note": "Notiz",
+      "outcome": {
+        "approved": "Zutritt genehmigt: Der Ausweis entsprach der Zonenregel.",
+        "denied": "Zutritt abgelehnt: im Zutrittsprotokoll erfasst.",
+        "other": "Zutrittsereignis im Zutrittsprotokoll erfasst."
+      }
+    }
+  }
+}

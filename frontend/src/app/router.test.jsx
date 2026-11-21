@@ -27,23 +27,23 @@ describe('application router', () => {
       Plants: '/plants',
       'Product transformation': '/product-transformation',
       'Sales & marketing': '/salesmarketing',
+      'Site security': '/sitesecurity',
       'Visitor management': '/visitormanagement',
       'Water supply': '/watersupply',
     })
   })
 
-  it('keeps sitesecurity and cropstorage out of the navigation', () => {
+  it('keeps cropstorage out of the navigation', () => {
     const navs = collectModules(realFiles).map((module) => module.nav?.id).filter(Boolean)
-    expect(navs).not.toContain('sitesecurity')
     expect(navs).not.toContain('cropstorage')
-    expect(navs).toHaveLength(7)
+    expect(navs).toHaveLength(8)
   })
 
   it('opts the migrated modules into the shell, the others not yet', () => {
     const shellIds = collectModules(realFiles)
       .filter((module) => module.shell)
       .map((module) => module.nav?.id)
-    expect(shellIds).toEqual(['energysupply', 'machinery', 'plants', 'producttransformation', 'salesmarketing', 'visitormanagement', 'watersupply'])
+    expect(shellIds).toEqual(['energysupply', 'machinery', 'plants', 'producttransformation', 'salesmarketing', 'sitesecurity', 'visitormanagement', 'watersupply'])
   })
 
   it('renders the sidebar footer of the current shell module', () => {

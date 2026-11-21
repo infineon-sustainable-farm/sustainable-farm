@@ -1,0 +1,277 @@
+{
+  "name": "Sécurité du site",
+  "nav": {
+    "dashboard": "Vue d'ensemble",
+    "access": "Contrôle d'accès",
+    "zones": "Périmètre et zones",
+    "log": "Journal des accès"
+  },
+  "gate": {
+    "loading": "Chargement de vos autorisations Sécurité du site…",
+    "noIdentityTitle": "Connexion à la plateforme pas encore disponible",
+    "noIdentity": "La sécurité du site utilise le compte de la plateforme. Elle s'ouvrira dès que l'authentification de la plateforme sera en place.",
+    "noRoleTitle": "Aucun rôle Sécurité du site",
+    "noRole": "Votre compte n'a aucun rôle Sécurité du site. Demandez à un administrateur de la sécurité du site de vous en attribuer un.",
+    "error": "Vos autorisations Sécurité du site n'ont pas pu être chargées.",
+    "noScreensTitle": "Aucun écran attribué",
+    "noScreens": "Votre rôle n'a encore aucune permission de consultation. Demandez à un administrateur de la sécurité du site de vous en accorder une.",
+    "notPermittedTitle": "Non disponible pour votre rôle",
+    "notPermitted": "Vos autorisations Sécurité du site ne comprennent pas cet écran."
+  },
+  "levels": {
+    "open": "Ouvert",
+    "controlled": "Contrôlé",
+    "restricted": "Restreint",
+    "critical": "Critique",
+    "unknown": "Inconnu",
+    "strength": "Niveau de vérification {{value}} sur {{max}}"
+  },
+  "enums": {
+    "status": {
+      "approved": "Autorisé",
+      "active": "Actif",
+      "online": "En ligne",
+      "secure": "Sécurisé",
+      "openAccess": "Accès libre",
+      "authorized": "Habilité",
+      "monitored": "Surveillé",
+      "protected": "Protégé",
+      "pending": "En attente",
+      "locked": "Verrouillé",
+      "lockedDown": "Confiné",
+      "denied": "Refusé",
+      "revoked": "Révoqué",
+      "offline": "Hors ligne",
+      "expired": "Expiré",
+      "unknown": "Inconnu"
+    },
+    "type": {
+      "staff": "Personnel",
+      "visitor": "Visiteur",
+      "service": "Prestataire",
+      "security": "Sécurité",
+      "unknown": "Non identifié"
+    },
+    "action": {
+      "entry": "Entrée",
+      "exit": "Sortie"
+    }
+  },
+  "ladder": {
+    "title": "Modèle des niveaux d'accès",
+    "subtitle": "Plus la zone est profonde, plus la preuve exigée est forte",
+    "open": "Enregistrement des visiteurs",
+    "controlled": "Badge du personnel",
+    "restricted": "Personnel habilité uniquement",
+    "critical": "Double vérification et alerte"
+  },
+  "dashboard": {
+    "title": "Vue d'ensemble de la sécurité",
+    "subtitle": "Périmètre de la ferme et contrôle d'accès",
+    "loadError": "La vue d'ensemble de la sécurité n'a pas pu être chargée.",
+    "stats": {
+      "points": "Points d'accès actifs",
+      "pointsHint": "Sur {{count}} définis",
+      "zones": "Zones contrôlées",
+      "zonesHint": "Sur {{count}} zones définies",
+      "visitors": "Badges visiteurs valides",
+      "visitorsHint": "Badges délivrés, pas un comptage en temps réel",
+      "denied": "Accès refusés",
+      "deniedHint": "Enregistrés dans le journal des accès"
+    },
+    "perimeter": {
+      "title": "État du périmètre",
+      "subtitle": "Schéma de principe, pas une carte géographique",
+      "selectHint": "Sélectionnez une zone pour en ouvrir le détail",
+      "noSensors": "L'intégrité du périmètre est inconnue : aucun capteur de clôture n'est connecté."
+    },
+    "gates": {
+      "title": "Points d'accès",
+      "empty": "Aucun point d'accès n'est défini."
+    },
+    "activity": {
+      "title": "Activité d'accès récente",
+      "viewAll": "Voir tout le journal",
+      "empty": "Aucun événement d'accès n'a été enregistré.",
+      "attempted": "{{user}} a tenté d'entrer dans {{zone}}",
+      "entered": "{{user}} est entré dans {{zone}}",
+      "exited": "{{user}} est sorti de {{zone}}"
+    }
+  },
+  "access": {
+    "admin": "Accès administrateur",
+    "legacyRead": "Accès en lecture seule",
+    "user": "Accès utilisateur",
+    "title": "Contrôle d'accès",
+    "subtitle": "Qui peut aller où, et jusqu'à quand",
+    "add": "Accorder un accès",
+    "loadError": "Les badges n'ont pas pu être chargés.",
+    "emailsFailed": "Les modifications ont été enregistrées, mais certains e-mails n'ont pas pu être envoyés ({{count}}).",
+    "tableCaption": "Titulaires de badges",
+    "empty": "Aucun badge n'a encore été délivré.",
+    "unknownPerson": "Personne n° {{id}}",
+    "permanent": "Permanent",
+    "created": "Accès accordé.",
+    "revoked": "Accès révoqué.",
+    "revoke": "Révoquer",
+    "revokeFor": "Révoquer l'accès de {{name}}",
+    "revokeTitle": "Révoquer cet accès ?",
+    "revokeMessage": "{{name}} ne pourra plus entrer sur le site avec ce badge.",
+    "revokeError": "L'accès n'a pas pu être révoqué.",
+    "columns": {
+      "holder": "Titulaire",
+      "type": "Type",
+      "level": "Niveau d'accès",
+      "validUntil": "Valable jusqu'au",
+      "lastActive": "Dernière activité",
+      "status": "Statut"
+    },
+    "email": {
+      "grant": {
+        "pending": "E-mail d'accès en cours d'envoi…",
+        "sent": "E-mail d'accès envoyé",
+        "failed": "E-mail d'accès non envoyé"
+      },
+      "revocation": {
+        "pending": "E-mail de révocation en cours d'envoi…",
+        "sent": "E-mail de révocation envoyé",
+        "failed": "E-mail de révocation non envoyé"
+      }
+    },
+    "form": {
+      "title": "Accorder un accès",
+      "description": "Donnez accès au site à une personne de l'annuaire de la ferme.",
+      "submit": "Accorder l'accès",
+      "saveError": "L'accès n'a pas pu être accordé.",
+      "person": "Personne",
+      "personHint": "Les personnes sont ajoutées dans l'écran Personnel de la gestion des visiteurs.",
+      "role": "Fonction sur le site",
+      "roleHint": "Par exemple : responsable des terrains",
+      "type": "Type de badge",
+      "level": "Niveau d'accès",
+      "levelHint": {
+        "open": "Zones ouvertes uniquement : enregistrement des visiteurs.",
+        "controlled": "Ajoute la zone contrôlée : badge du personnel exigé aux portails.",
+        "restricted": "Ajoute la zone restreinte : personnel habilité, entrée surveillée.",
+        "critical": "Ajoute la zone critique : double vérification et alerte au superviseur à l'entrée."
+      },
+      "validUntil": "Valable jusqu'au"
+    }
+  },
+  "map": {
+    "label": "Schéma de principe du périmètre",
+    "zoneLabel": "Zone {{zone}}",
+    "boundary": "LIMITE DE LA FERME",
+    "north": "N",
+    "notToScale": "SCHÉMA, PAS À L'ÉCHELLE",
+    "validationRequired": "CONCEPT PRÉLIMINAIRE, VALIDATION SUR SITE REQUISE",
+    "zone": {
+      "open": "ZONE OUVERTE",
+      "controlled": "ZONE CONTRÔLÉE",
+      "restricted": "ZONE RESTREINTE",
+      "critical": "CRITIQUE"
+    },
+    "gates": {
+      "main": "Entrée principale",
+      "visitor": "Portail visiteurs",
+      "staff": "Portail du personnel",
+      "service": "Portail de service / secours"
+    }
+  },
+  "zones": {
+    "title": "Périmètre et zones",
+    "subtitle": "Comment la ferme est découpée, et qui peut franchir chaque limite",
+    "loadError": "Les zones n'ont pas pu être chargées.",
+    "empty": "Aucune zone n'est configurée.",
+    "preliminary": "Concept préliminaire : le plan, la géométrie des zones et la position des portails doivent être relevés sur le terrain avant toute mise en œuvre.",
+    "authorizedUsers": "Personnes autorisées",
+    "entryPoints": "Points d'entrée",
+    "status": "Statut",
+    "requirements": "Conditions d'accès",
+    "viewActivity": "Voir l'activité de la zone",
+    "diagram": {
+      "title": "Plan du site",
+      "subtitle": "Modèle en anneaux : plus l'anneau est intérieur, plus la vérification est forte"
+    },
+    "reference": {
+      "open": {
+        "name": "Zone ouverte",
+        "tagline": "Espaces d'accueil des visiteurs",
+        "description": "Espaces ouverts au public : boutique de la ferme, allée principale et centre d'accueil.",
+        "requirements": {
+          "0": "Aucune habilitation requise",
+          "1": "Enregistrement des visiteurs recommandé"
+        }
+      },
+      "controlled": {
+        "name": "Zone contrôlée",
+        "tagline": "Terrains d'exploitation",
+        "description": "Zones agricoles en activité : granges, hangars de stockage et parcs à matériel.",
+        "requirements": {
+          "0": "Badge du personnel ou visiteur accompagné",
+          "1": "Consignes de sécurité suivies"
+        }
+      },
+      "restricted": {
+        "name": "Zone restreinte",
+        "tagline": "Transformation et stockage des produits chimiques",
+        "description": "Équipements de valeur, transformation des produits et stocks de produits chimiques dangereux.",
+        "requirements": {
+          "0": "Badge d'habilitation de niveau 3",
+          "1": "Accès en double présence"
+        }
+      },
+      "critical": {
+        "name": "Zone critique",
+        "tagline": "Contrôle des serveurs, de l'énergie et de l'eau",
+        "description": "Cœur de l'infrastructure : distribution électrique principale, vannes d'eau principales et salle de contrôle de la sécurité.",
+        "requirements": {
+          "0": "Habilitation de niveau 4 et contrôle biométrique",
+          "1": "Escorte de sécurité obligatoire",
+          "2": "Journalisation continue"
+        }
+      }
+    }
+  },
+  "log": {
+    "title": "Journal des accès",
+    "subtitle": "Chaque entrée, sortie et refus, dans l'ordre",
+    "simulated": "Enregistrement simulé : données de prototype",
+    "loadError": "Le journal des accès n'a pas pu être chargé.",
+    "filterLabel": "Filtrer les événements",
+    "showAllZones": "Afficher toutes les zones",
+    "count": "{{shown}} sur {{total}} événements",
+    "tableCaption": "Événements d'accès",
+    "empty": "Aucun événement ne correspond à ce filtre.",
+    "openEvent": "Ouvrir l'événement {{ref}}",
+    "unidentified": "Personne non identifiée",
+    "filters": {
+      "all": "Tous",
+      "approved": "Autorisés",
+      "denied": "Refusés",
+      "visitors": "Visiteurs",
+      "staff": "Personnel",
+      "service": "Prestataires"
+    },
+    "columns": {
+      "date": "Date",
+      "time": "Heure",
+      "person": "Personne",
+      "type": "Type",
+      "zone": "Zone",
+      "action": "Action",
+      "status": "Statut"
+    },
+    "detail": {
+      "title": "Événement d'accès {{ref}}",
+      "actionAt": "{{action}} par {{gate}}",
+      "method": "Vérification",
+      "note": "Note",
+      "outcome": {
+        "approved": "Accès autorisé : le badge correspond à la règle de la zone.",
+        "denied": "Accès refusé : enregistré dans le journal des accès.",
+        "other": "Événement enregistré dans le journal des accès."
+      }
+    }
+  }
+}

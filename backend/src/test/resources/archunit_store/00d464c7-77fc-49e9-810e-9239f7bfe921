@@ -1,3 +1,0 @@
-Class <com.infineonbit.sustainablefarm.modules.sitesecurity.exception.SiteSecurityExceptionHandler> has simple name ending with 'ExceptionHandler' in (SiteSecurityExceptionHandler.java:0)
-Class <com.infineonbit.sustainablefarm.modules.sitesecurity.exception.SiteSecurityExceptionHandler> is annotated with @ControllerAdvice in (SiteSecurityExceptionHandler.java:0)
-Class <com.infineonbit.sustainablefarm.modules.sitesecurity.exception.SiteSecurityExceptionHandler> is meta-annotated with @ControllerAdvice in (SiteSecurityExceptionHandler.java:0)

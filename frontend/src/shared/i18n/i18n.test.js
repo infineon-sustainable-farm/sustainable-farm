@@ -9,6 +9,7 @@ const MODULES = [
   'energysupply',
   'watersupply',
   'salesmarketing',
+  'sitesecurity',
   'visitormanagement',
 ]
 

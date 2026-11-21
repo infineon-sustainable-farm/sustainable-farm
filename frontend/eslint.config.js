@@ -6,12 +6,11 @@ import i18next from 'eslint-plugin-i18next'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 // Interface text goes through i18next (t('...')) everywhere: hard-coded text in JSX is refused,
-// except in tests and test fixtures and in the two excluded modules, not migrated (ADR 0001).
+// except in tests and test fixtures and in the excluded module cropstorage, not migrated (ADR 0001).
 const I18N_FILES = ['src/**/*.{js,jsx}']
 const I18N_EXCLUDED = [
   '**/*.test.{js,jsx}',
   'src/test/**',
-  'src/features/sitesecurity/**',
   'src/features/cropstorage/**',
 ]
 
