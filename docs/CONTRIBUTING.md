@@ -45,6 +45,7 @@ Owners are listed in `.github/module-owners.conf`. A module owner changes only t
 | `backend/src/main/resources/<module>/`, `backend/src/test/resources/<module>/` | The module owner |
 | `backend/src/main/resources/seed/<module>-*` | The module owner (demo data, `dev` profile only) |
 | `frontend/src/features/<module>/` | The module owner |
+| `frontend/src/locales/<en\|de\|fr>/<module>.json` | The module owner (the translations of the module, one file per language) |
 | New migration `backend/src/main/resources/db/migration/V<n>__<module>_<description>.sql` | The module owner; existing migrations, the baseline included, are never edited |
 | `backend/.../core/` | Admin |
 | `backend/.../modules/farm/`, `modules/staff/`, `modules/notification/` (shared referentials) | Admin (listed with owner PANK4SS) |
