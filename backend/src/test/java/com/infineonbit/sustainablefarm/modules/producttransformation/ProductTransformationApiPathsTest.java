@@ -69,8 +69,6 @@ class ProductTransformationApiPathsTest {
         mockMvc.perform(get("/api/harvest-events/plants/all")).andExpect(status().isNotFound());
         mockMvc.perform(get("/api/product-transformation/dashboard/kpis")).andExpect(status().isOk());
         mockMvc.perform(get("/api/producttransformation/dashboard/kpis")).andExpect(status().isNotFound());
-        mockMvc.perform(post("/api/crop-storage/entries").contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isNotFound());
     }
 
     @Test

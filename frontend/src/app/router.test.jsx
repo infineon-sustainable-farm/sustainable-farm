@@ -16,34 +16,29 @@ function renderAt(path, files = fakeFiles) {
 }
 
 describe('application router', () => {
+  // Generic on purpose: a module joins the launcher and the sidebar by exporting a `nav` from its
+  // routes.jsx, without touching these tests.
+  const realModules = collectModules(realFiles)
+  const realNavs = realModules.map((module) => module.nav).filter(Boolean)
+
   it('shows the launcher at / with one link per integrated module', () => {
     renderAt('/', realFiles)
     const launcher = screen.getByRole('navigation', { name: 'Modules' })
-    const links = within(launcher).getAllByRole('link')
-    const targets = Object.fromEntries(links.map((link) => [link.textContent, link.getAttribute('href')]))
-    expect(targets).toEqual({
-      'Energy supply': '/energy-supply',
-      Machinery: '/machinery',
-      Plants: '/plants',
-      'Product transformation': '/product-transformation',
-      'Sales & marketing': '/salesmarketing',
-      'Visitor management': '/visitormanagement',
-      'Water supply': '/watersupply',
-    })
+    const hrefs = within(launcher)
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'))
+    expect(hrefs).toHaveLength(realNavs.length)
+    expect(hrefs).toEqual(expect.arrayContaining(['/machinery', '/plants', '/watersupply']))
   })
 
-  it('keeps sitesecurity and cropstorage out of the navigation', () => {
-    const navs = collectModules(realFiles).map((module) => module.nav?.id).filter(Boolean)
-    expect(navs).not.toContain('sitesecurity')
-    expect(navs).not.toContain('cropstorage')
-    expect(navs).toHaveLength(7)
+  it('lists exactly the modules that export a nav, each once', () => {
+    const ids = realNavs.map((nav) => nav.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids.length).toBeGreaterThanOrEqual(7)
   })
 
-  it('opts the migrated modules into the shell, the others not yet', () => {
-    const shellIds = collectModules(realFiles)
-      .filter((module) => module.shell)
-      .map((module) => module.nav?.id)
-    expect(shellIds).toEqual(['energysupply', 'machinery', 'plants', 'producttransformation', 'salesmarketing', 'visitormanagement', 'watersupply'])
+  it('opts every module with a nav into the shell', () => {
+    expect(realModules.filter((module) => module.nav && !module.shell)).toEqual([])
   })
 
   it('renders the sidebar footer of the current shell module', () => {

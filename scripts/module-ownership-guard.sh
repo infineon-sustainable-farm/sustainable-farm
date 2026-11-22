@@ -23,6 +23,7 @@
 #        backend/src/test/resources/<module>/
 #        backend/src/main/resources/seed/<module>-*  or  <module>_*
 #        frontend/src/features/<module>/
+#        frontend/src/locales/<en|de|fr>/<module>.json (the module's translations)
 #      plus NEW Flyway migrations named V<n>__<module>_<description>.sql
 #      (existing migrations are never edited: Flyway checksums);
 #   - everything else (docs, scripts, .github, core/, shared/, pom.xml,
@@ -149,6 +150,7 @@ path_allowed() { # <status> <path>
         "backend/src/main/resources/$M/"*|"backend/src/test/resources/$M/"*) return 0 ;;
         "backend/src/main/resources/seed/$M-"*|"backend/src/main/resources/seed/${M}_"*) return 0 ;;
         "frontend/src/features/$M/"*) return 0 ;;
+        "frontend/src/locales/en/$M.json"|"frontend/src/locales/de/$M.json"|"frontend/src/locales/fr/$M.json") return 0 ;;
     esac
     if [ "$status" = "A" ] && [[ "$p" =~ ^backend/src/main/resources/db/migration/V[0-9_]+__${M}_[a-z0-9_]+\.sql$ ]]; then
         return 0
